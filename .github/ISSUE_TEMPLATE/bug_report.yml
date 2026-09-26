@@ -1,0 +1,31 @@
+name: Bug report
+description: Something behaves differently from the specification or documentation
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: Include commands, logs, and error output.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+      description: Reference the requirement ID if one applies, e.g. SYN-005.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: output of `plux version`, or a commit SHA
+    validations:
+      required: true

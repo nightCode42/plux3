@@ -1,0 +1,55 @@
+# Build output
+/bin/
+/dist/
+build/
+*.exe
+*.test
+*.out
+
+# Coverage and profiling
+coverage.*
+*.prof
+
+# Secrets and local credentials — never commit these
+certs/
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+*.keystore
+.env
+.env.*
+key.properties
+google-services.json
+GoogleService-Info.plist
+
+# Dart / Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+**/ios/Pods/
+**/android/.gradle/
+**/android/local.properties
+
+# Bun / Node
+node_modules/
+.bun/
+*.tsbuildinfo
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+
+# Editors and OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+
+# Local data
+/data/

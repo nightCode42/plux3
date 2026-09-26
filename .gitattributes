@@ -1,0 +1,14 @@
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.pxb binary
+*.wasm binary
+
+# Generated code: collapsed in diffs, excluded from language stats (CI-003).
+gen/** linguist-generated=true
+**/*.pb.go linguist-generated=true
+**/*_generated.dart linguist-generated=true
+**/*.g.dart linguist-generated=true

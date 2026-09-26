@@ -1,0 +1,34 @@
+version: 2
+updates:
+  # Only GitHub Actions exists today. Uncomment each block when its directory lands (§33).
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }
+    groups:
+      actions: { patterns: ["*"] }
+
+  # - package-ecosystem: gomod
+  #   directory: /backend
+  #   schedule: { interval: weekly }
+  #   groups:
+  #     go-minor: { update-types: [minor, patch] }
+
+  # - package-ecosystem: pub
+  #   directories: ["/packages/*", "/apps/*"]
+  #   schedule: { interval: weekly }
+  #   groups:
+  #     dart-minor: { update-types: [minor, patch] }
+
+  # - package-ecosystem: bun
+  #   directory: /studio
+  #   schedule: { interval: weekly }
+  #   groups:
+  #     studio-minor: { update-types: [minor, patch] }
+
+  # - package-ecosystem: docker
+  #   directory: /deploy
+  #   schedule: { interval: weekly }
+
+  # - package-ecosystem: pre-commit
+  #   directory: /
+  #   schedule: { interval: monthly }
