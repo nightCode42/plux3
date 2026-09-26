@@ -151,7 +151,10 @@ jobs:
         run: make trace
       - name: Publish report
         if: always()
-        run: '[ -f reqtrace.md ] && cat reqtrace.md >> "$GITHUB_STEP_SUMMARY" || true'
+        run: |
+          if [ -f reqtrace.md ]; then
+            cat reqtrace.md >> "$GITHUB_STEP_SUMMARY"
+          fi
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
@@ -278,6 +281,13 @@ jobs:
             Apache-2.0, MIT, BSD-2-Clause, BSD-3-Clause, ISC, MPL-2.0, 0BSD,
             Unlicense, CC0-1.0, Zlib, BlueOak-1.0.0, Python-2.0, OFL-1.1,
             BSL-1.0, Unicode-3.0
+          # pub.dev reports these licences in lower case, which the action
+          # cannot validate as SPDX. Each was checked by hand (Dart team
+          # packages): clock and material_color_utilities are Apache-2.0;
+          # stack_trace, test_api and vector_math are BSD-3-Clause.
+          allow-dependencies-licenses: >-
+            pkg:pub/clock, pkg:pub/material_color_utilities,
+            pkg:pub/stack_trace, pkg:pub/test_api, pkg:pub/vector_math
           comment-summary-in-pr: never
 
   # ── Go ───────────────────────────────────────────────────────────────────
