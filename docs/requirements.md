@@ -508,7 +508,7 @@ plux_flutter/lib/src/
   data/         REST, GraphQL, WebSocket, SSE clients, cache, outbox
   db/           adapter interface; drift adapter lives in plux_db_drift
   anim/         timelines, transitions, gesture- and scroll-linked animation
-  theme/        tokens, Material/Cupertino mapping, white-label overlays
+  theme/        design tokens mapped to Material and Cupertino, white-label overlays
   l10n/         ICU formatter, locale resolution, calendar systems
   telemetry/    event buffer, batching, consent, crash capture
   devtools_api/ hooks consumed by plux_devtools (no-op in release)

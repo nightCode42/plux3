@@ -26,10 +26,14 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Run file hygiene hooks
         run: |
-          pipx run pre-commit run --all-files --show-diff-on-failure \
-            trailing-whitespace end-of-file-fixer mixed-line-ending check-yaml \
-            check-toml check-json check-merge-conflict check-case-conflict \
-            check-added-large-files detect-private-key
+          pipx install pre-commit
+          status=0
+          for hook in trailing-whitespace end-of-file-fixer mixed-line-ending \
+                      check-yaml check-toml check-json check-merge-conflict \
+                      check-case-conflict check-added-large-files detect-private-key; do
+            pre-commit run "$hook" --all-files --show-diff-on-failure || status=1
+          done
+          exit $status
 
   secrets:
     name: Secret scan
