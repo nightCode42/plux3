@@ -76,6 +76,7 @@ Tests with no requirement (helpers, regressions) omit the ID but still describe 
 
 - Floors (`QA-001`), defined in [coverage.json](../../coverage.json) and enforced by `covgate`: 85% for the compiler, PXL, bundle, delta, DPoP, approval, sync and security packages; 80% for all other Go and Dart code; 70% for Studio.
 - Coverage is a floor, not a goal: a test that executes code without asserting behaviour is not coverage.
+- Files carrying the generated-code marker (`// Code generated … DO NOT EDIT.`, or flatc's Dart header) are excluded: generated code is verified by regenerating it (`make gen-check`, `CI-003`), and the floors measure hand-written code.
 - Floors are never lowered to pass a change (`AGENTS.md` §5).
 
 ## 8. Flaky tests

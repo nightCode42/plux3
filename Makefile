@@ -30,6 +30,10 @@ GO_TOOLCHAIN  := $(shell sed -n 's/^toolchain //p' backend/go.mod)
 GO_INSTALL    := GOTOOLCHAIN=$(GO_TOOLCHAIN) $(GO) install
 GO_MODULES    := backend tools
 DART_PACKAGES := packages/plux_flutter
+# Generated Dart code is verified by regeneration (CI-003), not by the formatter.
+DART_SOURCES  := find packages -name '*.dart' ! -name '*.g.dart' ! -name '*_generated.dart' ! -path '*/build/*' -print0
+# Everything `make gen` writes; `go-gen-check` fails if any of it changes.
+GEN_PATHS     := backend tools docs/reference packages studio/packages schema
 TOOLS_BIN     := $(subst \,/,$(shell $(GO) env GOPATH | tr -d '\r'))/bin
 GOLANGCI_LINT ?= $(TOOLS_BIN)/golangci-lint
 GOVULNCHECK   ?= $(TOOLS_BIN)/govulncheck
@@ -107,7 +111,8 @@ test: go-test dart-test studio-test ## Run the unit tests of every component
 
 build: go-build ## Build every binary into bin/
 
-gen: ## Regenerate all generated code (CI-003)
+gen: ## Regenerate all generated code and reference documents (CI-003)
+	$(GO) run ./tools/cmd/schemagen -root .
 	@for m in $(GO_MODULES); do (cd $$m && $(GO) generate ./...); done
 
 gen-check: go-gen-check dart-lock-check studio-install ## Fail if generated code or lockfiles are not committed; run on a clean tree (CI-003)
@@ -135,9 +140,9 @@ go-tidy-check: ## Fail if a go.mod or go.sum is not tidy
 	@for m in $(GO_MODULES); do (cd $$m && $(GO) mod tidy -diff); done
 
 # Verifies: CI-003.
-go-gen-check: gen ## Fail if regenerating Go code changes any file (CI-003)
-	@changed=$$(git status --porcelain -- $(GO_MODULES)); if [ -n "$$changed" ]; then \
-		echo "$$changed"; echo "✗ Generated Go code is out of date or uncommitted. Run 'make gen' and commit."; exit 1; fi
+go-gen-check: gen ## Fail if regenerating code changes any file (CI-003)
+	@changed=$$(git status --porcelain -- $(GEN_PATHS)); if [ -n "$$changed" ]; then \
+		echo "$$changed"; echo "✗ Generated code is out of date or uncommitted. Run 'make gen' and commit."; exit 1; fi
 
 go-test: ## Run Go unit tests
 	@for m in $(GO_MODULES); do (cd $$m && $(GO) test ./...); done
@@ -178,11 +183,11 @@ dart-lock-check: dart-get ## Fail if pubspec.lock is not in sync with the pubspe
 	@changed=$$(git status --porcelain -- pubspec.lock); if [ -n "$$changed" ]; then \
 		echo "$$changed"; echo "✗ pubspec.lock is out of date or uncommitted. Run 'make dart-get' and commit."; exit 1; fi
 
-dart-fmt: ## Format Dart code
-	dart format packages
+dart-fmt: ## Format hand-written Dart code
+	$(DART_SOURCES) | xargs -0 dart format
 
-dart-fmt-check: ## Fail if Dart code is not formatted
-	dart format --output=none --set-exit-if-changed packages
+dart-fmt-check: ## Fail if hand-written Dart code is not formatted
+	$(DART_SOURCES) | xargs -0 dart format --output=none --set-exit-if-changed
 
 dart-analyze: ## Analyze Dart code with strict rules; infos are fatal
 	flutter analyze --fatal-infos --fatal-warnings

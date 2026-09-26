@@ -1,0 +1,10 @@
+{
+  "name": "@plux/schema",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Plux contracts for Studio: document types, widget and action registries and limits, generated from schema/ (SCH-001, WGT-002, LIM-001).",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

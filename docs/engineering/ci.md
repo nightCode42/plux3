@@ -34,7 +34,7 @@ How the pipeline is built and why. The requirements are spec §29 (`CI-001`–`C
 | SBOM | always | CycloneDX via Syft | `CI-001` |
 | Commit messages | pull requests | `scripts/check-commit-msg.sh` on title and commits | `CI-009` |
 | Dependency review | pull requests | vulnerabilities and licences of new dependencies | `CI-007` |
-| Go lint | Go changes | `go-fmt-check go-lint go-tidy-check go-gen-check` | `CI-001`, `CI-003` |
+| Go lint | Go changes | `go-fmt-check go-lint go-tidy-check go-gen-check` (regenerates everything `make gen` writes and fails on any difference) | `CI-001`, `CI-003` |
 | Go test | Go changes | `go-cover` (race detector, coverage floors) | `QA-001` |
 | Go build | Go changes | `go-build go-reproducible` | `CI-006` |
 | Go vulnerabilities | Go changes | `go-vuln` | `CI-001` |
@@ -44,7 +44,11 @@ How the pipeline is built and why. The requirements are spec §29 (`CI-001`–`C
 
 The traceability report and coverage tables are written to each job's summary; the report and the SBOM are uploaded as artifacts.
 
-## 4. Tool versions
+## 4. Generated code
+
+`make gen` is the only way generated code changes (`CI-003`): `tools/cmd/schemagen` writes the Go, Dart and TypeScript code and reference documents derived from `schema/`, and `go generate` writes the rest (for example the error catalogue). Every generated file carries the marker `Code generated … DO NOT EDIT.` The Go lint job regenerates everything and fails on any difference. Generated files are excluded from formatting checks (`dart format`, Biome) and coverage floors, and are checked instead by regeneration, compilation and the tests that use them.
+
+## 5. Tool versions
 
 | Tool | Where it is pinned |
 |---|---|
@@ -55,7 +59,7 @@ The traceability report and coverage tables are written to each job's summary; t
 
 Versions in the Makefile and in workflows are changed **together, in one pull request**. Go-based tools are built with the project toolchain (`make install-*`), because a tool built with an older Go cannot analyse code that needs a newer one.
 
-## 5. Adding a component
+## 6. Adding a component
 
 1. Add its gates as Makefile targets and include them in `check`.
 2. Add a path filter and a job in `ci.yml`, and add the job to the `needs` of CI OK.
@@ -63,7 +67,7 @@ Versions in the Makefile and in workflows are changed **together, in one pull re
 4. Declare its licence in `REUSE.toml`.
 5. Add its coverage floors to `coverage.json` if they differ from the defaults.
 
-## 6. Repository settings
+## 7. Repository settings
 
 These live in GitHub settings, not in the repository, and are recorded here so they can be audited:
 

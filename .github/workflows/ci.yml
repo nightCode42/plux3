@@ -64,6 +64,7 @@ jobs:
               - coverage.json
               - tools/**
               - go.work
+              - schema/**
               - .github/workflows/ci.yml
             go:
               - *shared

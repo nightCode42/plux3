@@ -32,7 +32,7 @@ Every component — server, CLI, runtime, Studio — speaks the same error vocab
 
 ## 4. The catalogue
 
-The registry of codes and reasons lives in `backend/internal/plxerr`. `go generate` publishes it as `docs/reference/errors.md` and as `schema/errors.json` for the Dart and TypeScript generators; a test regenerates both and fails on any difference, so the catalogue cannot drift from the registry. A new failure mode adds its registry entry and the regenerated catalogue in the same change.
+The registry of codes and reasons lives in `backend/internal/plxerr`. `go generate` publishes it as [docs/reference/errors.md](../reference/errors.md) and as `schema/errors.json` for the Dart and TypeScript generators; a test regenerates both and fails on any difference, so the catalogue cannot drift from the registry. A new failure mode adds its registry entry and the regenerated catalogue in the same change.
 
 ## 5. Diagnostics
 

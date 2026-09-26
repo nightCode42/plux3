@@ -49,10 +49,18 @@ func run(args []string, stdout, stderr io.Writer) int {
 		_, _ = fmt.Fprintln(stderr, err)
 		return exitError
 	}
+	files, dropped, err := coverage.DropGenerated(files, *root)
+	if err != nil {
+		_, _ = fmt.Fprintln(stderr, err)
+		return exitError
+	}
 	passed, err := coverage.WriteTable(stdout, *kind, coverage.Evaluate(rule, files))
 	if err != nil {
 		_, _ = fmt.Fprintln(stderr, err)
 		return exitError
+	}
+	if dropped > 0 {
+		_, _ = fmt.Fprintf(stdout, "\n%d generated files excluded; `make gen-check` verifies them (CI-003).\n", dropped)
 	}
 	if !passed {
 		_, _ = fmt.Fprintf(stderr, "covgate: %s coverage is below its floor (QA-001)\n", *kind)

@@ -1,0 +1,546 @@
+{
+  "$schema": "./json/limits.schema.json",
+  "$comment": "The limits registry (LIM-001, spec \u00a730.4). Every size and count in Plux is read from here; nothing is hard-coded. Generated code: make gen.",
+  "limits": [
+    {
+      "key": "action.forEachItems",
+      "unit": "count",
+      "default": 1000,
+      "max": 100000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "ACT-005"
+      ],
+      "description": "Items one forEach step may iterate over."
+    },
+    {
+      "key": "action.runTimeout",
+      "unit": "milliseconds",
+      "default": 120000,
+      "max": 3600000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "ACT-005"
+      ],
+      "description": "Time one action run may take."
+    },
+    {
+      "key": "action.stepTimeout",
+      "unit": "milliseconds",
+      "default": 30000,
+      "max": 600000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "ACT-005"
+      ],
+      "description": "Time one action step may take."
+    },
+    {
+      "key": "action.stepsPerRun",
+      "unit": "count",
+      "default": 10000,
+      "max": 100000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "ACT-005"
+      ],
+      "description": "Steps one action run may execute."
+    },
+    {
+      "key": "app.plugins",
+      "unit": "count",
+      "default": 200,
+      "max": 1000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server"
+      ],
+      "phase": "P1",
+      "requirements": [
+        "SCH-005"
+      ],
+      "description": "Plugins per app."
+    },
+    {
+      "key": "bundle.deviceFunctionModuleSize",
+      "unit": "bytes",
+      "default": 4194304,
+      "max": 67108864,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server"
+      ],
+      "phase": "P7",
+      "requirements": [
+        "FN-050"
+      ],
+      "description": "Size of the WebAssembly module of the device-placed functions of one plugin."
+    },
+    {
+      "key": "bundle.pageSectionSize",
+      "unit": "bytes",
+      "default": 1048576,
+      "max": 16777216,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server"
+      ],
+      "phase": "P1",
+      "requirements": [
+        "BND-010"
+      ],
+      "description": "Size of one page section in a bundle."
+    },
+    {
+      "key": "bundle.pluginSize",
+      "unit": "bytes",
+      "default": 20971520,
+      "max": 268435456,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server"
+      ],
+      "phase": "P1",
+      "requirements": [
+        "BND-010"
+      ],
+      "description": "Size of one plugin bundle."
+    },
+    {
+      "key": "bundle.verifierDepth",
+      "unit": "count",
+      "default": 64,
+      "max": 256,
+      "scopes": [
+        "installation"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server",
+        "runtime"
+      ],
+      "phase": "P1",
+      "requirements": [
+        "BND-006",
+        "QA-004"
+      ],
+      "description": "Maximum nesting of tables the FlatBuffers verifier accepts in one section."
+    },
+    {
+      "key": "bundle.verifierTables",
+      "unit": "count",
+      "default": 1000000,
+      "max": 10000000,
+      "scopes": [
+        "installation"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server",
+        "runtime"
+      ],
+      "phase": "P1",
+      "requirements": [
+        "BND-006",
+        "QA-004"
+      ],
+      "description": "Maximum number of tables and vectors the FlatBuffers verifier visits in one section."
+    },
+    {
+      "key": "device.diskQuota",
+      "unit": "bytes",
+      "default": 209715200,
+      "max": 4294967296,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P3",
+      "requirements": [
+        "SYN-012"
+      ],
+      "description": "Disk space the runtime may use for releases on one device."
+    },
+    {
+      "key": "document.fileSize",
+      "unit": "bytes",
+      "default": 8388608,
+      "max": 67108864,
+      "scopes": [
+        "installation",
+        "organization"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server"
+      ],
+      "phase": "P1",
+      "requirements": [
+        "SCH-006"
+      ],
+      "description": "Size of one document file in the project layout, checked before parsing."
+    },
+    {
+      "key": "document.jsonDepth",
+      "unit": "count",
+      "default": 512,
+      "max": 4096,
+      "scopes": [
+        "installation"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server"
+      ],
+      "phase": "P1",
+      "requirements": [
+        "SCH-003"
+      ],
+      "description": "Nesting of arrays and objects in one document, checked while parsing."
+    },
+    {
+      "key": "document.stringPropSize",
+      "unit": "bytes",
+      "default": 65536,
+      "max": 1048576,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server"
+      ],
+      "phase": "P1",
+      "requirements": [
+        "SCH-005"
+      ],
+      "description": "Size of one string prop value, in UTF-8 bytes."
+    },
+    {
+      "key": "page.animations",
+      "unit": "count",
+      "default": 30,
+      "warning": 10,
+      "max": 200,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server"
+      ],
+      "phase": "P1",
+      "requirements": [
+        "CMP-040"
+      ],
+      "description": "Animations that can run at the same time on one page."
+    },
+    {
+      "key": "page.buildCost",
+      "unit": "microseconds",
+      "default": 16000,
+      "warning": 8000,
+      "max": 100000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server"
+      ],
+      "phase": "P1",
+      "requirements": [
+        "CMP-040"
+      ],
+      "description": "Estimated build time of a page on the mid-tier reference device, the sum of its widgets' cost hints."
+    },
+    {
+      "key": "page.depth",
+      "unit": "count",
+      "default": 64,
+      "warning": 32,
+      "max": 128,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server"
+      ],
+      "phase": "P1",
+      "requirements": [
+        "SCH-005",
+        "CMP-040"
+      ],
+      "description": "Depth of a page's node tree."
+    },
+    {
+      "key": "page.imageBytes",
+      "unit": "bytes",
+      "default": 5242880,
+      "warning": 1048576,
+      "max": 67108864,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server"
+      ],
+      "phase": "P1",
+      "requirements": [
+        "CMP-040"
+      ],
+      "description": "Bytes of images bundled for one page."
+    },
+    {
+      "key": "page.nodes",
+      "unit": "count",
+      "default": 5000,
+      "warning": 1000,
+      "max": 50000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server"
+      ],
+      "phase": "P1",
+      "requirements": [
+        "SCH-005",
+        "CMP-040"
+      ],
+      "description": "Nodes in one page document. Above the warning threshold the compiler reports the page."
+    },
+    {
+      "key": "plugin.pages",
+      "unit": "count",
+      "default": 500,
+      "max": 2000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server"
+      ],
+      "phase": "P1",
+      "requirements": [
+        "SCH-005"
+      ],
+      "description": "Pages per plugin."
+    },
+    {
+      "key": "pxl.collectionSize",
+      "unit": "count",
+      "default": 10000,
+      "max": 1000000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server",
+        "runtime"
+      ],
+      "phase": "P1",
+      "requirements": [
+        "PXL-001"
+      ],
+      "description": "Elements of a list or map produced during one PXL evaluation."
+    },
+    {
+      "key": "pxl.expressionLength",
+      "unit": "codepoints",
+      "default": 4096,
+      "max": 65536,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server"
+      ],
+      "phase": "P1",
+      "requirements": [
+        "PXL-001"
+      ],
+      "description": "Length of one PXL expression."
+    },
+    {
+      "key": "pxl.nestingDepth",
+      "unit": "count",
+      "default": 64,
+      "max": 256,
+      "scopes": [
+        "installation"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server"
+      ],
+      "phase": "P1",
+      "requirements": [
+        "PXL-001"
+      ],
+      "description": "Nesting depth of one PXL expression's syntax tree."
+    },
+    {
+      "key": "pxl.operationBudget",
+      "unit": "operations",
+      "default": 10000,
+      "max": 1000000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server",
+        "runtime"
+      ],
+      "phase": "P1",
+      "requirements": [
+        "PXL-001"
+      ],
+      "description": "Operations one PXL evaluation may perform before it stops with a typed error."
+    },
+    {
+      "key": "pxl.stringLength",
+      "unit": "codepoints",
+      "default": 65536,
+      "max": 1048576,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server",
+        "runtime"
+      ],
+      "phase": "P1",
+      "requirements": [
+        "PXL-001"
+      ],
+      "description": "Length of a string produced during one PXL evaluation."
+    },
+    {
+      "key": "release.appSize",
+      "unit": "bytes",
+      "default": 104857600,
+      "max": 1073741824,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server"
+      ],
+      "phase": "P1",
+      "requirements": [
+        "BND-010"
+      ],
+      "description": "Total size of one app release: the app bundle and every plugin bundle."
+    }
+  ]
+}

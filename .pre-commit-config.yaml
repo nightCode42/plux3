@@ -60,6 +60,8 @@ repos:
         language: system
         entry: dart format
         types: [dart]
+        # Generated code is checked by regeneration (make gen-check), not formatted.
+        exclude: '(\.g|_generated)\.dart$'
 
       - id: studio-format
         name: biome (Studio)

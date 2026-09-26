@@ -1,0 +1,675 @@
+{
+  "areas": [
+    {
+      "name": "Schema and validation",
+      "first": "PLX-1000",
+      "last": "PLX-1999"
+    },
+    {
+      "name": "Compiler and PXL",
+      "first": "PLX-2000",
+      "last": "PLX-2999"
+    },
+    {
+      "name": "Release and sync",
+      "first": "PLX-3000",
+      "last": "PLX-3999"
+    },
+    {
+      "name": "Runtime rendering and navigation",
+      "first": "PLX-4000",
+      "last": "PLX-4999"
+    },
+    {
+      "name": "Actions, data and local database",
+      "first": "PLX-5000",
+      "last": "PLX-5999"
+    },
+    {
+      "name": "Security",
+      "first": "PLX-6000",
+      "last": "PLX-6999"
+    },
+    {
+      "name": "Functions",
+      "first": "PLX-7000",
+      "last": "PLX-7999"
+    },
+    {
+      "name": "Governance",
+      "first": "PLX-8000",
+      "last": "PLX-8999"
+    },
+    {
+      "name": "Studio, CLI and AI",
+      "first": "PLX-9000",
+      "last": "PLX-9999"
+    }
+  ],
+  "codes": [
+    {
+      "code": "PLX-1001",
+      "reason": "UNKNOWN_PROPERTY",
+      "severity": "error",
+      "title": "Unknown property",
+      "cause": "The document contains a property that its schema does not define. Only properties prefixed with `x-` may be added freely; they are preserved and ignored by the compiler (SCH-004).",
+      "fix": "Remove the property, correct its spelling, or prefix it with `x-` to keep it as an extension."
+    },
+    {
+      "code": "PLX-1002",
+      "reason": "MISSING_PROPERTY",
+      "severity": "error",
+      "title": "Missing required property",
+      "cause": "A property that the schema requires is absent.",
+      "fix": "Add the property with a valid value."
+    },
+    {
+      "code": "PLX-1003",
+      "reason": "WRONG_JSON_TYPE",
+      "severity": "error",
+      "title": "Wrong JSON type",
+      "cause": "A value has a different JSON type from the one the schema allows, for example a number where a string is expected.",
+      "fix": "Change the value to the expected type."
+    },
+    {
+      "code": "PLX-1004",
+      "reason": "INVALID_ENUM_VALUE",
+      "severity": "error",
+      "title": "Value not allowed",
+      "cause": "The value is not one of the values the schema allows.",
+      "fix": "Use one of the allowed values listed in the message."
+    },
+    {
+      "code": "PLX-1005",
+      "reason": "INVALID_FORMAT",
+      "severity": "error",
+      "title": "Invalid format",
+      "cause": "A string does not have the required format, such as a UUIDv7 identifier, a lower-kebab key, a BCP 47 locale or a semantic version.",
+      "fix": "Correct the string to the documented format."
+    },
+    {
+      "code": "PLX-1006",
+      "reason": "OUT_OF_RANGE",
+      "severity": "error",
+      "title": "Value out of range",
+      "cause": "A number, a string length or an item count is outside the bounds the schema allows.",
+      "fix": "Choose a value within the bounds given in the message."
+    },
+    {
+      "code": "PLX-1007",
+      "reason": "INVALID_STRUCTURE",
+      "severity": "error",
+      "title": "Invalid structure",
+      "cause": "The value matches none of the forms the schema allows, for example a prop value that is neither a literal nor exactly one of `$expr`, `$token`, `$t` or `$asset` (SCH-011).",
+      "fix": "Restructure the value into one of the allowed forms."
+    },
+    {
+      "code": "PLX-1008",
+      "reason": "INVALID_JSON",
+      "severity": "error",
+      "title": "Invalid JSON",
+      "cause": "The file is not well-formed JSON: a syntax error, a duplicate key in one object, invalid UTF-8 or an unpaired surrogate escape.",
+      "fix": "Fix the file at the reported position; each key may appear only once per object."
+    },
+    {
+      "code": "PLX-1009",
+      "reason": "UNSUPPORTED_SCHEMA_VERSION",
+      "severity": "error",
+      "title": "Unsupported schema version",
+      "cause": "The document's `schemaVersion` is not a released version, or is newer than this compiler understands (SCH-000).",
+      "fix": "Upgrade the Plux CLI or server, or correct `schemaVersion`."
+    },
+    {
+      "code": "PLX-1010",
+      "reason": "MIGRATION_FAILED",
+      "severity": "error",
+      "title": "Schema migration failed",
+      "cause": "The document could not be migrated from its `schemaVersion` to the current version (SCH-043).",
+      "fix": "Report the document to the Plux maintainers: migrations must accept every valid document of a released version."
+    },
+    {
+      "code": "PLX-1011",
+      "reason": "DUPLICATE_ID",
+      "severity": "error",
+      "title": "Duplicate identifier",
+      "cause": "Two entities in the project share an identifier. Identifiers are unique and immutable, and every reference uses them (SCH-002).",
+      "fix": "Give the copied entity a fresh UUIDv7. Inserting a template assigns fresh identifiers automatically (SCH-031)."
+    },
+    {
+      "code": "PLX-1020",
+      "reason": "INVALID_PROJECT_LAYOUT",
+      "severity": "error",
+      "title": "Invalid project layout",
+      "cause": "A file is not where the project layout expects a document of its kind, its name does not match its key, or a required file is missing (SCH-006).",
+      "fix": "Move or rename the file as described in the document-model reference."
+    },
+    {
+      "code": "PLX-1101",
+      "reason": "DUPLICATE_KEY",
+      "severity": "error",
+      "title": "Duplicate key",
+      "cause": "Two entities with the same parent share a key. Keys are unique within their parent (SCH-002).",
+      "fix": "Rename one of them."
+    },
+    {
+      "code": "PLX-1102",
+      "reason": "UNRESOLVED_REFERENCE",
+      "severity": "error",
+      "title": "Unresolved reference",
+      "cause": "A reference names an identifier that does not exist in the project: a page, component, action graph, translation key, design token, asset, state entry, data source, collection, function or native route.",
+      "fix": "Correct the identifier, or create the entity it refers to."
+    },
+    {
+      "code": "PLX-1103",
+      "reason": "DUPLICATE_ROUTE_NAME",
+      "severity": "error",
+      "title": "Duplicate route name",
+      "cause": "Two pages or native routes use the same route name. Route names are unique across the whole app, because callers address screens by route name only (SCH-025).",
+      "fix": "Rename one of the routes."
+    },
+    {
+      "code": "PLX-1104",
+      "reason": "UNKNOWN_WIDGET_TYPE",
+      "severity": "error",
+      "title": "Unknown widget type",
+      "cause": "A node's `type` is neither a registered widget (WGT-001) nor a native slot declared in the native catalogue.",
+      "fix": "Use a widget from the catalogue, or expose the host widget as a native slot."
+    },
+    {
+      "code": "PLX-1105",
+      "reason": "UNKNOWN_PROP",
+      "severity": "error",
+      "title": "Unknown prop",
+      "cause": "A node sets a prop that its widget's descriptor does not declare.",
+      "fix": "Remove the prop or correct its name; the widget reference lists every supported prop."
+    },
+    {
+      "code": "PLX-1106",
+      "reason": "PROP_TYPE_MISMATCH",
+      "severity": "error",
+      "title": "Prop type mismatch",
+      "cause": "A prop's literal or binding does not have the type its descriptor declares.",
+      "fix": "Provide a value of the declared type, or convert the binding explicitly."
+    },
+    {
+      "code": "PLX-1107",
+      "reason": "MISSING_REQUIRED_PROP",
+      "severity": "error",
+      "title": "Missing required prop",
+      "cause": "The widget's descriptor marks a prop as required and the node does not set it.",
+      "fix": "Set the prop."
+    },
+    {
+      "code": "PLX-1108",
+      "reason": "UNKNOWN_EVENT",
+      "severity": "error",
+      "title": "Unknown event",
+      "cause": "A node handles an event that its widget does not emit.",
+      "fix": "Remove the handler or correct the event name."
+    },
+    {
+      "code": "PLX-1109",
+      "reason": "INVALID_CHILDREN",
+      "severity": "error",
+      "title": "Invalid children",
+      "cause": "The node has `children` although its widget takes named slots or no children, or it has more or fewer children than the widget allows.",
+      "fix": "Use the widget's slots, or adjust the number of children."
+    },
+    {
+      "code": "PLX-1110",
+      "reason": "UNKNOWN_SLOT",
+      "severity": "error",
+      "title": "Unknown slot",
+      "cause": "A node fills a slot that its widget does not declare.",
+      "fix": "Use one of the widget's declared slots."
+    },
+    {
+      "code": "PLX-1111",
+      "reason": "MISSING_REQUIRED_SLOT",
+      "severity": "error",
+      "title": "Missing required slot",
+      "cause": "The widget's descriptor requires a slot that the node does not fill.",
+      "fix": "Fill the slot."
+    },
+    {
+      "code": "PLX-1112",
+      "reason": "UNKNOWN_ACTION",
+      "severity": "error",
+      "title": "Unknown action",
+      "cause": "An action-graph step uses an action that is neither built in (spec Appendix D) nor a custom action declared in the native catalogue.",
+      "fix": "Use a catalogued action, or register the custom action in the host app."
+    },
+    {
+      "code": "PLX-1113",
+      "reason": "INVALID_ACTION_GRAPH",
+      "severity": "error",
+      "title": "Invalid action graph",
+      "cause": "An action graph has a cycle, an edge to a missing step, an unreachable step or no entry step (ACT-001).",
+      "fix": "Make the graph acyclic, starting at its first step, with every edge naming an existing step."
+    },
+    {
+      "code": "PLX-1114",
+      "reason": "COMPONENT_VERSION_NOT_FOUND",
+      "severity": "error",
+      "title": "Component version not found",
+      "cause": "An instance references a version of a component that the project does not contain (SCH-030).",
+      "fix": "Reference the component's current version."
+    },
+    {
+      "code": "PLX-1115",
+      "reason": "UNKNOWN_TYPE",
+      "severity": "error",
+      "title": "Unknown type",
+      "cause": "A type expression names a type that is neither built in (SCH-010) nor declared in the app or plugin.",
+      "fix": "Declare the named type, or correct its name."
+    },
+    {
+      "code": "PLX-1116",
+      "reason": "INVALID_TYPE_EXPRESSION",
+      "severity": "error",
+      "title": "Invalid type expression",
+      "cause": "A type expression is not well formed, for example `list\u003c` without a closing bracket.",
+      "fix": "Write the type as the type grammar describes, e.g. `list\u003cstring\u003e`, `map\u003cstring,int\u003e` or `decimal?`."
+    },
+    {
+      "code": "PLX-1117",
+      "reason": "VALUE_TYPE_MISMATCH",
+      "severity": "error",
+      "title": "Value does not match its declared type",
+      "cause": "A default value, mock value or parameter value does not have its declared type.",
+      "fix": "Change the value, or the declared type."
+    },
+    {
+      "code": "PLX-1118",
+      "reason": "MISSING_MOCK",
+      "severity": "error",
+      "title": "Missing design-time mock",
+      "cause": "A data source or page parameter has no design-time mock, so Studio and tests cannot render the page without a live backend (SCH-024).",
+      "fix": "Add a mock value of the declared type."
+    },
+    {
+      "code": "PLX-1119",
+      "reason": "RUNTIME_TOO_OLD",
+      "severity": "error",
+      "title": "Newer than the minimum runtime",
+      "cause": "A node uses a widget, prop, event or slot introduced after the app's `minRuntimeVersion`, and the app does not allow raising the required features (WGT-004).",
+      "fix": "Raise `minRuntimeVersion`, avoid the newer member, or allow raising required features in the app document."
+    },
+    {
+      "code": "PLX-1120",
+      "reason": "REQUIRED_FEATURES_RAISED",
+      "severity": "warning",
+      "title": "Required features raised",
+      "cause": "The release uses members newer than the app's `minRuntimeVersion`, so the compiler added required features; devices with older runtimes keep their last compatible release (WGT-004).",
+      "fix": "Check how many installed devices are affected before releasing."
+    },
+    {
+      "code": "PLX-1121",
+      "reason": "CONSTRAINT_VIOLATION",
+      "severity": "error",
+      "title": "Prop constraint violated",
+      "cause": "A literal prop value violates a constraint in its descriptor, such as a minimum, a maximum or a pattern.",
+      "fix": "Choose a value that meets the constraint given in the message."
+    },
+    {
+      "code": "PLX-1122",
+      "reason": "DEPRECATED_MEMBER",
+      "severity": "warning",
+      "title": "Deprecated widget or prop",
+      "cause": "The node uses a widget, prop, event or slot that its descriptor marks as deprecated.",
+      "fix": "Replace it as the deprecation note describes."
+    },
+    {
+      "code": "PLX-1201",
+      "reason": "UNKNOWN_ROUTE",
+      "severity": "error",
+      "title": "Unknown route",
+      "cause": "A navigate action targets a route name that no page and no native route declares.",
+      "fix": "Correct the route name, or add the page."
+    },
+    {
+      "code": "PLX-1203",
+      "reason": "ROUTE_PARAMETER_MISSING",
+      "severity": "error",
+      "title": "Route parameter missing at navigate",
+      "cause": "A navigate action does not supply a required parameter of the target page or native route.",
+      "fix": "Pass the parameter in the action's `params`."
+    },
+    {
+      "code": "PLX-1204",
+      "reason": "ROUTE_PARAMETER_TYPE_INVALID",
+      "severity": "error",
+      "title": "Route parameter has the wrong type",
+      "cause": "A navigate action passes a parameter value whose type differs from the parameter's declared type.",
+      "fix": "Pass a value of the declared type."
+    },
+    {
+      "code": "PLX-1205",
+      "reason": "UNKNOWN_ROUTE_PARAMETER",
+      "severity": "error",
+      "title": "Unknown route parameter",
+      "cause": "A navigate action passes a parameter that the target page or native route does not declare.",
+      "fix": "Remove the parameter, or declare it on the target."
+    },
+    {
+      "code": "PLX-1206",
+      "reason": "REDIRECT_LOOP",
+      "severity": "error",
+      "title": "Redirect loop",
+      "cause": "Pages redirect to each other unconditionally from `onEnter` in a cycle, so navigation would never settle.",
+      "fix": "Break the cycle by guarding one of the redirects with a condition."
+    },
+    {
+      "code": "PLX-1310",
+      "reason": "PAGE_NODE_BUDGET",
+      "severity": "warning",
+      "title": "Page exceeds its node budget",
+      "cause": "The page has more nodes than its budget. Above the warning threshold it is reported; above the hard budget publication fails (CMP-040, spec §30.3).",
+      "fix": "Split the page, move repeated content into a list with an item template, or reuse a component."
+    },
+    {
+      "code": "PLX-1311",
+      "reason": "PAGE_DEPTH_BUDGET",
+      "severity": "warning",
+      "title": "Page tree too deep",
+      "cause": "The page's node tree is deeper than its budget (CMP-040).",
+      "fix": "Flatten redundant wrappers, or extract subtrees into components."
+    },
+    {
+      "code": "PLX-1312",
+      "reason": "PAGE_BUILD_COST_BUDGET",
+      "severity": "warning",
+      "title": "Page build cost too high",
+      "cause": "The page's estimated build cost, the sum of its widgets' cost hints, exceeds its budget (CMP-040).",
+      "fix": "Replace eagerly built content with lazily built lists, or split the page."
+    },
+    {
+      "code": "PLX-1313",
+      "reason": "PAGE_IMAGE_BUDGET",
+      "severity": "warning",
+      "title": "Page images too large",
+      "cause": "The images bundled for the page exceed their byte budget (CMP-040).",
+      "fix": "Use smaller images or load them from the network."
+    },
+    {
+      "code": "PLX-1314",
+      "reason": "PAGE_ANIMATION_BUDGET",
+      "severity": "warning",
+      "title": "Too many animations",
+      "cause": "The page can run more concurrent animations than its budget (CMP-040).",
+      "fix": "Reduce the number of simultaneous animations."
+    },
+    {
+      "code": "PLX-1320",
+      "reason": "LIMIT_EXCEEDED",
+      "severity": "error",
+      "title": "Limit exceeded",
+      "cause": "A document or release exceeds a limit from the limits registry, such as pages per plugin, string prop size or bundle size (spec §30.4).",
+      "fix": "Reduce the size, or ask an administrator to raise the limit at a higher level."
+    },
+    {
+      "code": "PLX-1321",
+      "reason": "LIMIT_APPROACHING",
+      "severity": "warning",
+      "title": "Limit nearly reached",
+      "cause": "A value has reached its warning threshold, by default 80% of its limit (LIM-003).",
+      "fix": "Plan to reduce the size before the limit is reached."
+    },
+    {
+      "code": "PLX-1401",
+      "reason": "ACCESSIBLE_NAME_MISSING",
+      "severity": "warning",
+      "title": "Interactive node without accessible name",
+      "cause": "An interactive node has no semantics label and no visible text from which one can be derived, so screen readers cannot announce it (WGT-013, A11Y-002).",
+      "fix": "Set `semantics.label`, or give the node visible text."
+    },
+    {
+      "code": "PLX-1500",
+      "reason": "SECRET_LIKE_VALUE",
+      "severity": "error",
+      "title": "Secret-like value detected",
+      "cause": "A literal looks like an API key, token, private key or password. Bundles are readable on devices, so secrets must never be shipped in them (DAT-003).",
+      "fix": "Keep the secret on the server and use it through a Plux Function or the host's auth delegate."
+    },
+    {
+      "code": "PLX-1501",
+      "reason": "SENSITIVE_VALUE_EXPOSED",
+      "severity": "error",
+      "title": "Sensitive value exposed",
+      "cause": "A value tagged `sensitive` flows into analytics, logs or another sink where sensitive data is forbidden (SCH-012).",
+      "fix": "Remove the value from the sink, or pass a non-sensitive derivative such as a masked form."
+    },
+    {
+      "code": "PLX-1502",
+      "reason": "INSECURE_URL",
+      "severity": "error",
+      "title": "Insecure URL",
+      "cause": "A literal URL uses `http:`. All network access from Plux uses TLS.",
+      "fix": "Use an `https:` URL."
+    },
+    {
+      "code": "PLX-1503",
+      "reason": "EXECUTABLE_CONTENT",
+      "severity": "error",
+      "title": "Executable content not allowed",
+      "cause": "A document or asset carries code in a form that would run outside the PXL VM and the action interpreter (SEC-054).",
+      "fix": "Express the logic with actions and PXL, or as a Plux Function."
+    },
+    {
+      "code": "PLX-2001",
+      "reason": "PXL_SYNTAX_ERROR",
+      "severity": "error",
+      "title": "PXL syntax error",
+      "cause": "The expression does not follow the PXL grammar at the reported position.",
+      "fix": "Correct the expression; the PXL reference describes the grammar."
+    },
+    {
+      "code": "PLX-2002",
+      "reason": "PXL_TYPE_MISMATCH",
+      "severity": "error",
+      "title": "PXL type mismatch",
+      "cause": "An operator, function or use site receives a value of a type it does not accept.",
+      "fix": "Convert the value explicitly, e.g. `double(x)` or `decimal(x)`, or use a matching operator."
+    },
+    {
+      "code": "PLX-2003",
+      "reason": "PXL_UNKNOWN_IDENTIFIER",
+      "severity": "error",
+      "title": "Unknown identifier",
+      "cause": "The expression uses a root or variable that is not available at this use site (spec Appendix E.2).",
+      "fix": "Use a root available here, such as `page`, `params` or `item`, or declare the state entry."
+    },
+    {
+      "code": "PLX-2004",
+      "reason": "PXL_UNKNOWN_FUNCTION",
+      "severity": "error",
+      "title": "Unknown function",
+      "cause": "The expression calls a function that is not in the PXL standard library.",
+      "fix": "Correct the function name; the PXL reference lists every function."
+    },
+    {
+      "code": "PLX-2005",
+      "reason": "PXL_WRONG_ARGUMENT_COUNT",
+      "severity": "error",
+      "title": "Wrong number of arguments",
+      "cause": "A function or macro is called with more or fewer arguments than it takes.",
+      "fix": "Pass the arguments given by the function's signature."
+    },
+    {
+      "code": "PLX-2006",
+      "reason": "PXL_NULLABLE_ACCESS",
+      "severity": "error",
+      "title": "Access on a nullable value",
+      "cause": "The expression reads a field of, or calls a function on, a value that may be null.",
+      "fix": "Use null-safe navigation (`a?.b`) or provide a default (`a ?? b`)."
+    },
+    {
+      "code": "PLX-2007",
+      "reason": "PXL_DECIMAL_DIVISION",
+      "severity": "error",
+      "title": "Decimal division needs a scale and rounding mode",
+      "cause": "Decimal division can produce infinitely many digits, so PXL requires the scale and rounding mode to be stated (PXL-005).",
+      "fix": "Write `div(a, b, scale, mode)`, e.g. `div(total, 3d, 2, \"halfEven\")`."
+    },
+    {
+      "code": "PLX-2008",
+      "reason": "PXL_CURRENCY_MISMATCH",
+      "severity": "error",
+      "title": "Currency mismatch",
+      "cause": "Money values in different currencies are added, subtracted or compared.",
+      "fix": "Convert one amount into the other currency before combining them."
+    },
+    {
+      "code": "PLX-2009",
+      "reason": "PXL_INVALID_LITERAL",
+      "severity": "error",
+      "title": "Invalid literal",
+      "cause": "A literal is malformed or out of range, such as an integer beyond 64 bits or an invalid string escape.",
+      "fix": "Correct the literal."
+    },
+    {
+      "code": "PLX-2010",
+      "reason": "PXL_BUDGET_EXCEEDED",
+      "severity": "error",
+      "title": "Operation budget exceeded at compile time",
+      "cause": "Evaluating a constant expression at compile time needed more operations than the budget allows (PXL-001).",
+      "fix": "Simplify the expression."
+    },
+    {
+      "code": "PLX-2011",
+      "reason": "PXL_CONSTANT_ERROR",
+      "severity": "error",
+      "title": "Constant expression always fails",
+      "cause": "The expression is constant, and evaluating it at compile time fails, for example by dividing by zero or overflowing.",
+      "fix": "Correct the expression so it evaluates without error."
+    },
+    {
+      "code": "PLX-2012",
+      "reason": "PXL_UNKNOWN_FIELD",
+      "severity": "error",
+      "title": "Unknown field",
+      "cause": "The expression reads a field that the value's type does not declare.",
+      "fix": "Correct the field name, or declare the field in the type."
+    },
+    {
+      "code": "PLX-2013",
+      "reason": "PXL_FEATURE_REQUIRED",
+      "severity": "info",
+      "title": "Function needs a runtime feature",
+      "cause": "The expression calls a standard-library function that runtimes evaluate from a later feature, such as locale-aware formatting. The bundle declares the feature, and runtimes without it keep their last compatible release (ADR-0009).",
+      "fix": "No action is needed if the app's installed runtimes support the feature."
+    },
+    {
+      "code": "PLX-2014",
+      "reason": "PXL_UNKNOWN_ENUM_MEMBER",
+      "severity": "error",
+      "title": "Unknown enum member",
+      "cause": "A string compared with an enum value is not one of the enum's members.",
+      "fix": "Use one of the members listed in the message."
+    },
+    {
+      "code": "PLX-2015",
+      "reason": "PXL_INVALID_MACRO",
+      "severity": "error",
+      "title": "Invalid macro call",
+      "cause": "A macro such as `map` or `filter` needs a variable name and an expression over it, called on a list, e.g. `items.map(x, x.price)`.",
+      "fix": "Call the macro on a list with a variable name and an expression."
+    },
+    {
+      "code": "PLX-2016",
+      "reason": "PXL_EXPRESSION_TOO_COMPLEX",
+      "severity": "error",
+      "title": "Expression too complex",
+      "cause": "The expression exceeds the length or nesting depth the compiler accepts.",
+      "fix": "Split the logic into computed state entries or a Plux Function."
+    },
+    {
+      "code": "PLX-2201",
+      "reason": "INTERNAL_COMPILER_ERROR",
+      "severity": "error",
+      "title": "Internal compiler error",
+      "cause": "The compiler met an unexpected condition. This is a bug: the compiler must report problems as diagnostics and never crash (CMP-052).",
+      "fix": "Report the input to the Plux maintainers."
+    },
+    {
+      "code": "PLX-2202",
+      "reason": "CONTENT_ID_COLLISION",
+      "severity": "error",
+      "title": "Content identifier collision",
+      "cause": "Two different PXL programs or style objects received the same 64-bit content identifier (ADR-0002). This is extremely unlikely.",
+      "fix": "Report the input to the Plux maintainers; changing either value avoids the collision."
+    },
+    {
+      "code": "PLX-3010",
+      "reason": "UNSUPPORTED_REQUIRED_FEATURE",
+      "severity": "error",
+      "title": "Unsupported required feature",
+      "cause": "The bundle requires a feature that this runtime does not support (BND-008).",
+      "fix": "Devices keep their last compatible release. Update the app to a runtime with the feature, or avoid the feature in the release."
+    },
+    {
+      "code": "PLX-3040",
+      "reason": "BUNDLE_MALFORMED",
+      "severity": "error",
+      "title": "Malformed bundle",
+      "cause": "The container header or section directory is invalid: wrong magic or version, unknown flags, overlapping or misaligned sections, a size mismatch or a header hash mismatch (BND-003).",
+      "fix": "Rebuild the bundle. A malformed bundle is never loaded."
+    },
+    {
+      "code": "PLX-3041",
+      "reason": "SECTION_HASH_MISMATCH",
+      "severity": "error",
+      "title": "Section hash mismatch",
+      "cause": "A section's SHA-256 differs from the hash in the directory: the bundle is corrupt or has been tampered with (BND-005).",
+      "fix": "Download or rebuild the bundle."
+    },
+    {
+      "code": "PLX-3042",
+      "reason": "SECTION_VERIFICATION_FAILED",
+      "severity": "error",
+      "title": "Section failed verification",
+      "cause": "A section is not a well-formed FlatBuffers buffer of its kind, or exceeds the verifier's limits (BND-006).",
+      "fix": "Rebuild the bundle; a section that fails verification is never read."
+    },
+    {
+      "code": "PLX-3043",
+      "reason": "BUNDLE_ENCRYPTED_UNSUPPORTED",
+      "severity": "error",
+      "title": "Encrypted bundle not supported",
+      "cause": "The bundle is marked as encrypted, which this reader does not support (SEC-053).",
+      "fix": "Use a reader that supports confidential bundles."
+    },
+    {
+      "code": "PLX-3044",
+      "reason": "TRANSPORT_DECODING_FAILED",
+      "severity": "error",
+      "title": "Transport decoding failed",
+      "cause": "The zstd transport encoding is corrupt, or it decompresses to more than the declared size or the configured limit (BND-007).",
+      "fix": "Download the bundle again."
+    },
+    {
+      "code": "PLX-9100",
+      "reason": "CLI_CONFIGURATION_INVALID",
+      "severity": "error",
+      "title": "Invalid CLI configuration",
+      "cause": "A command-line argument, flag or configuration value is invalid.",
+      "fix": "Run the command with `--help` to see the accepted arguments."
+    },
+    {
+      "code": "PLX-9101",
+      "reason": "PROJECT_NOT_FOUND",
+      "severity": "error",
+      "title": "Project not found",
+      "cause": "The directory does not contain a Plux project: `app.json` is missing (SCH-006).",
+      "fix": "Run the command in a project directory, or pass the project's path."
+    },
+    {
+      "code": "PLX-9102",
+      "reason": "FILE_SYSTEM_ERROR",
+      "severity": "error",
+      "title": "File system error",
+      "cause": "A file or directory could not be read or written.",
+      "fix": "Check that the path exists and is accessible."
+    }
+  ]
+}
