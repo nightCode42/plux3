@@ -33,6 +33,9 @@ In order. Each item is one branch and one pull request.
 
 ## Hand-off notes
 
+Newest first. Keep the latest ten; move older notes to [worklog-archive.md](worklog-archive.md) unchanged.
+
+- 2026-09-26 — **Context-loss hardening.** SessionStart hook (`scripts/session-start.sh`) installs pinned toolchains in web sessions; work-log rotation to `worklog-archive.md`; `tools/AGENTS.md`; handbook links the spec glossary; issue templates ask for requirement IDs, phase and acceptance criteria.
 - 2026-09-26 — **P0 foundations built.**
   - Monorepo: Go modules `backend` (`plux`, `plux-server`, `internal/buildinfo`) and `tools` joined by `go.work`; Dart pub workspace with `plux_flutter`; Bun workspace `studio` with `@plux/brand`; placeholder directories with phase READMEs for `apps`, `schema`, `proto`, `deploy`, `test`, `ee`, `docs/*`.
   - Tooling in `tools/` (standard library only): `reqtrace lint` (spec consistency), `reqtrace report` (traceability, strict in CI), `covgate` (coverage floors from `coverage.json`), policy tests for `SECURITY.md` and Dependabot coverage. The linter found and fixed two spec defects: an area pattern mismatch (tool) and `RT-051`'s withdrawal wording (spec).

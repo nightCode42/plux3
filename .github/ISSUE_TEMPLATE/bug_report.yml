@@ -29,3 +29,10 @@ body:
       placeholder: output of `plux version`, or a commit SHA
     validations:
       required: true
+  - type: input
+    id: requirements
+    attributes:
+      label: Violated requirement IDs
+      description: Spec IDs the behaviour breaks (docs/requirements.md), e.g. SYN-005, or "none".
+    validations:
+      required: true

@@ -16,3 +16,26 @@ body:
       description: How it could work, and any trade-offs you see.
     validations:
       required: true
+  - type: input
+    id: requirements
+    attributes:
+      label: Requirement IDs
+      description: Spec IDs this affects or adds (docs/requirements.md), e.g. SYN-005. Write "new" if none exists yet.
+    validations:
+      required: true
+  - type: dropdown
+    id: phase
+    attributes:
+      label: Phase
+      description: The spec §5 phase this belongs to.
+      options: [P0, P1, P2, P3, P4, P5, P6, P7, P8, P9, P10, P11, P12, P13, P14, P15, Unsure]
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Testable conditions that must hold when this is done. Each becomes a test naming its requirement ID.
+      placeholder: "- [ ] ..."
+    validations:
+      required: true

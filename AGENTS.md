@@ -45,7 +45,7 @@ Context is finite. Rules, specification details and project state must always be
 
 **At the end of every task:**
 
-1. Update [docs/WORKLOG.md](docs/WORKLOG.md): what changed, what was verified, what is next, and any open question.
+1. Update [docs/WORKLOG.md](docs/WORKLOG.md): what changed, what was verified, what is next, and any open question. Keep the latest ten hand-off notes there and move older ones, unchanged, to [docs/worklog-archive.md](docs/worklog-archive.md).
 2. Report to the maintainer using the format in §9.
 
 ---
@@ -79,7 +79,7 @@ The maintainer decides. The chosen document change lands in the **same pull requ
 | If the task touches… | Read first |
 |---|---|
 | Anything at all | This file, `docs/WORKLOG.md`, the current phase in spec §5 |
-| Go code (`backend/`, `tools/`) | `backend/AGENTS.md`, [go-standards.md](docs/engineering/go-standards.md) |
+| Go code (`backend/`, `tools/`) | `backend/AGENTS.md` or `tools/AGENTS.md`, [go-standards.md](docs/engineering/go-standards.md) |
 | Dart or Flutter code (`packages/`, `apps/`) | `packages/AGENTS.md`, [dart-standards.md](docs/engineering/dart-standards.md) |
 | Studio (`studio/`) | `studio/AGENTS.md`, [typescript-standards.md](docs/engineering/typescript-standards.md), spec §21 |
 | Contracts (`schema/`, `proto/`, bundle format) | `schema/README.md`, spec §7–§9, [system-invariants.md](docs/engineering/system-invariants.md) §2 |
@@ -213,4 +213,4 @@ End every task with:
 | `docs/requirements.md` | The specification |
 | `docs/engineering/` | The engineering handbook |
 | `docs/adr/` | Architecture Decision Records |
-| `docs/WORKLOG.md` | Current focus and hand-off notes |
+| `docs/WORKLOG.md` | Current focus and hand-off notes (older notes in `docs/worklog-archive.md`) |

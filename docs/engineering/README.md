@@ -16,4 +16,6 @@ How Plux is built. The [specification](../requirements.md) says *what* the syste
 | [workflow.md](workflow.md) | Branches, commits, pull requests, definition of done, releases |
 | [ci.md](ci.md) | The CI pipeline, the Makefile, git hooks and tool versions |
 
+Terms used across the handbook — bundle, manifest, delta, DPoP, PXL and others — are defined in the [specification glossary](../requirements.md#35-glossary).
+
 Changes to this handbook go through pull requests like code. A rule that no longer serves the project is changed here, explicitly — never ignored quietly.
