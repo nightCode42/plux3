@@ -30,7 +30,7 @@ GO_TOOLCHAIN  := $(shell sed -n 's/^toolchain //p' backend/go.mod)
 GO_INSTALL    := GOTOOLCHAIN=$(GO_TOOLCHAIN) $(GO) install
 GO_MODULES    := backend tools
 DART_PACKAGES := packages/plux_flutter
-TOOLS_BIN     := $(shell $(GO) env GOPATH)/bin
+TOOLS_BIN     := $(subst \,/,$(shell $(GO) env GOPATH | tr -d '\r'))/bin
 GOLANGCI_LINT ?= $(TOOLS_BIN)/golangci-lint
 GOVULNCHECK   ?= $(TOOLS_BIN)/govulncheck
 GITLEAKS      ?= $(TOOLS_BIN)/gitleaks
