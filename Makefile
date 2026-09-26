@@ -87,8 +87,15 @@ install-gitleaks: ## Install the pinned gitleaks
 install-actionlint: ## Install the pinned actionlint
 	$(GO_INSTALL) github.com/rhysd/actionlint/cmd/actionlint@$(ACTIONLINT_VERSION)
 
+PYTHON_TOOLS := pre-commit==$(PRE_COMMIT_VERSION) zizmor==$(ZIZMOR_VERSION) reuse==$(REUSE_VERSION)
+
+# pipx where available (required on PEP 668 "externally managed" systems such as Ubuntu 23.04+), pip --user otherwise.
 install-python-tools: ## Install the pinned pre-commit, zizmor and reuse
-	python3 -m pip install --user --quiet "pre-commit==$(PRE_COMMIT_VERSION)" "zizmor==$(ZIZMOR_VERSION)" "reuse==$(REUSE_VERSION)"
+	@if command -v pipx >/dev/null; then \
+		for t in $(PYTHON_TOOLS); do pipx install --force "$$t" || exit 1; done; \
+	else \
+		python3 -m pip install --user --quiet $(PYTHON_TOOLS) || { echo "✗ pip refused; install pipx (e.g. apt install pipx) and rerun" >&2; exit 1; }; \
+	fi
 
 hooks-install: ## Register the git hooks (pre-commit, commit-msg, pre-push)
 	pre-commit install --hook-type pre-commit --hook-type commit-msg --hook-type pre-push
