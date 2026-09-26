@@ -17,6 +17,8 @@ on:
   push:
     branches: [main]
   pull_request:
+    # edited: re-check the PR title after a rename (it becomes the squash commit).
+    types: [opened, synchronize, reopened, edited]
   merge_group:
   schedule:
     - cron: "17 5 * * *" # daily: newly published vulnerabilities
