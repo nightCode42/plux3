@@ -1,0 +1,18 @@
+name: Feature request
+description: Suggest a capability or a change to the design
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do, and why does the current design not support it?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: How it could work, and any trade-offs you see.
+    validations:
+      required: true

@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="880" height="460" viewBox="0 0 880 460" role="img" aria-labelledby="t d">
+  <title id="t">Bundled navigation arrows</title>
+  <desc id="d">Top: three links from Home to Loans drawn as one arrow with a count badge. Bottom: on hover the arrow leaves Home as one stem, fans out into three labelled lanes, and merges into one stem at Loans.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#5B3DF5"/></marker>
+    <filter id="s" x="-10%" y="-10%" width="120%" height="140%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0F1222" flood-opacity="0.12"/></filter>
+  </defs>
+  <style>
+    text { font-family: Inter, "Segoe UI", Arial, sans-serif; fill: #0F1222; }
+    .cap { font-size: 13px; fill: #5A6072; font-weight: 600; letter-spacing: .04em; }
+    .box { fill: #FFFFFF; stroke: #D9DCE6; }
+    .name { font-size: 16px; font-weight: 600; }
+    .lane { font-size: 13px; }
+    .edge { fill: none; stroke: #5B3DF5; stroke-width: 2.5; }
+  </style>
+  <rect width="880" height="460" fill="#F7F8FB"/>
+  <text class="cap" x="32" y="36">COLLAPSED</text>
+  <rect class="box" x="60" y="70" width="170" height="80" rx="14" filter="url(#s)"/><text class="name" x="145" y="115" text-anchor="middle">Home</text>
+  <rect class="box" x="650" y="70" width="170" height="80" rx="14" filter="url(#s)"/><text class="name" x="735" y="115" text-anchor="middle">Loans</text>
+  <path class="edge" d="M230 110 C 400 110, 480 110, 648 110" marker-end="url(#a)"/>
+  <circle cx="440" cy="110" r="15" fill="#5B3DF5"/><text x="440" y="115" text-anchor="middle" style="fill:#fff;font-size:13px;font-weight:700">3</text>
+  <line x1="32" y1="190" x2="848" y2="190" stroke="#E4E6EE"/>
+  <text class="cap" x="32" y="226">EXPANDED ON HOVER</text>
+  <rect class="box" x="60" y="290" width="170" height="80" rx="14" filter="url(#s)"/><text class="name" x="145" y="335" text-anchor="middle">Home</text>
+  <rect class="box" x="650" y="290" width="170" height="80" rx="14" filter="url(#s)"/><text class="name" x="735" y="335" text-anchor="middle">Loans</text>
+  <path class="edge" d="M230 330 L 290 330"/>
+  <path class="edge" d="M290 330 C 330 330, 330 270, 370 270 L 510 270 C 550 270, 550 330, 590 330"/>
+  <path class="edge" d="M290 330 L 590 330"/>
+  <path class="edge" d="M290 330 C 330 330, 330 390, 370 390 L 510 390 C 550 390, 550 330, 590 330"/>
+  <path class="edge" d="M590 330 L 648 330" marker-end="url(#a)"/>
+  <rect x="362" y="256" width="156" height="26" rx="13" fill="#EEEAFE"/><text class="lane" x="440" y="274" text-anchor="middle">Apply now → Loan form</text>
+  <rect x="362" y="317" width="156" height="26" rx="13" fill="#EEEAFE"/><text class="lane" x="440" y="335" text-anchor="middle">Rates banner → Rates</text>
+  <rect x="362" y="377" width="156" height="26" rx="13" fill="#EEEAFE"/><text class="lane" x="440" y="395" text-anchor="middle">Menu → Loan overview</text>
+</svg>

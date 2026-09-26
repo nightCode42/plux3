@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GITLEAKS_VERSION: v8.30.1
+
+# Component jobs (Go, Dart, Bun) are added in P0 as the toolchains land (CI-001).
+jobs:
+  hygiene:
+    name: Hygiene
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Run file hygiene hooks
+        run: |
+          pipx install pre-commit
+          status=0
+          for hook in trailing-whitespace end-of-file-fixer mixed-line-ending \
+                      check-yaml check-toml check-json check-merge-conflict \
+                      check-case-conflict check-added-large-files detect-private-key; do
+            pre-commit run "$hook" --all-files --show-diff-on-failure || status=1
+          done
+          exit $status
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # scan the full history, not just the tip
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: stable
+      - name: Scan history for secrets
+        run: |
+          go install github.com/zricethezav/gitleaks/v8@${{ env.GITLEAKS_VERSION }}
+          "$(go env GOPATH)/bin/gitleaks" git --config=.gitleaks.toml --redact --verbose
+
+  commits:
+    name: Commit messages
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Check Conventional Commits
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          status=0
+          for sha in $(git rev-list --no-merges "$BASE_SHA..$HEAD_SHA"); do
+            git log -1 --format=%B "$sha" > /tmp/msg
+            ./scripts/check-commit-msg.sh /tmp/msg || { echo "  in commit $sha"; status=1; }
+          done
+          exit $status

@@ -1,0 +1,8 @@
+# Default owner. Security-sensitive paths require owner review (CI-009).
+*                        @nightCode42
+/docs/requirements.md    @nightCode42
+/.github/                @nightCode42
+/schema/                 @nightCode42
+/backend/internal/signing/ @nightCode42
+/backend/internal/dpop/  @nightCode42
+/packages/plux_security/ @nightCode42

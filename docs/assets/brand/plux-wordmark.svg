@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="120" viewBox="0 0 320 120" role="img" aria-labelledby="t">
+  <title id="t">Plux</title>
+  <style>
+    .w { font-family: Sora, "Inter", "Segoe UI", Arial, sans-serif; font-weight: 600; font-size: 88px; letter-spacing: -2px; }
+    .ink { fill: #0F1222; } .x { fill: #5B3DF5; }
+    @media (prefers-color-scheme: dark) { .ink { fill: #F5F6FA; } .x { fill: #8B74FF; } }
+  </style>
+  <text class="w" x="12" y="88"><tspan class="ink">Plu</tspan><tspan class="x">x</tspan></text>
+</svg>

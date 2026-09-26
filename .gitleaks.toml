@@ -1,0 +1,15 @@
+# gitleaks configuration — https://github.com/gitleaks/gitleaks
+# Extends the built-in rule set; add narrowly scoped allowlist entries only.
+
+title = "plux"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Files that cannot contain real secrets"
+paths = [
+  '''go\.sum$''',
+  '''pubspec\.lock$''',
+  '''bun\.lockb?$''',
+]
