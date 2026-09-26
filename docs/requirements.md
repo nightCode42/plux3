@@ -1,12 +1,12 @@
 # Plux — System Requirements Specification
 
 **Document ID:** `SRS-PLUX-001`
-**Version:** 1.0.0
+**Version:** 1.1.0
 **Status:** Draft — living document, revised as implementation proceeds
-**Date:** 2026-09-25
+**Date:** 2026-09-26
 **Applies to:** Plux Schema, Plux Compiler, Plux Server, Plux Functions, `plux_flutter` runtime, Plux Dev app, Plux Studio, Plux CLI, Plux AI
 
-> **Plux — Plugin Experience.** Build native Flutter screens visually, compile them into signed binary plugins, and ship them to every device in seconds — with bank-grade security, zero parse cost, and full control over who changes what.
+> **Plux — Plugin Experience.** Build native Flutter screens visually, compile them into signed binary plugins, and ship them to every device in seconds — with high-assurance security, zero parse cost, and full control over who changes what.
 
 ---
 
@@ -37,7 +37,7 @@
 23. [AI Generation](#23-ai-generation)
 24. [Payments](#24-payments)
 25. [Collaboration](#25-collaboration)
-26. [Hosted SaaS](#26-hosted-saas)
+26. [Multi-tenant Operation](#26-multi-tenant-operation)
 27. [Deployment and Operations](#27-deployment-and-operations)
 28. [Quality Assurance and Verification](#28-quality-assurance-and-verification)
 29. [CI/CD and Software Supply Chain](#29-cicd-and-software-supply-chain)
@@ -45,18 +45,19 @@
 31. [Standards and Compliance Mapping](#31-standards-and-compliance-mapping)
 32. [Architecture Decision Records](#32-architecture-decision-records)
 33. [Repository Layout](#33-repository-layout)
-34. [Open Decisions and Risks](#34-open-decisions-and-risks)
+34. [Decisions, Editions and Risks](#34-decisions-editions-and-risks)
 35. [Glossary](#35-glossary)
 - [Appendix A — Plux Document Example](#appendix-a--plux-document-example)
-- [Appendix B — Bundle Container and FlatBuffers Outline](#appendix-b--bundle-container-and-flatbuffers-outline)
+- [Appendix B — Bundle Container](#appendix-b--bundle-container)
 - [Appendix C — Widget Catalogue](#appendix-c--widget-catalogue)
 - [Appendix D — Built-in Action Catalogue](#appendix-d--built-in-action-catalogue)
-- [Appendix E — PXL Expression Language Reference](#appendix-e--pxl-expression-language-reference)
+- [Appendix E — Binding Expressions (PXL)](#appendix-e--binding-expressions-pxl)
 - [Appendix F — Error Code Catalogue](#appendix-f--error-code-catalogue)
 - [Appendix G — Metrics and Telemetry Events](#appendix-g--metrics-and-telemetry-events)
 - [Appendix H — Configuration Reference](#appendix-h--configuration-reference)
 - [Appendix I — Host Integration API Sketch](#appendix-i--host-integration-api-sketch)
-- [Appendix J — Requirement Index](#appendix-j--requirement-index)
+- [Appendix J — Brand](#appendix-j--brand)
+- [Appendix K — Requirement Index](#appendix-k--requirement-index)
 - [Document Control](#document-control)
 
 ---
@@ -65,32 +66,33 @@
 
 ### 1.1 Purpose
 
-This document is the authoritative requirements baseline for **Plux**, a server-driven UI and plugin platform for Flutter mobile applications. It specifies *what* every Plux component must do, how well, and in which delivery phase. The engineering handbook (to be written under `docs/engineering/`) specifies *how* it is built. When this document and any other source disagree, this document wins until it is amended by pull request.
+This document is the authoritative requirements baseline for **Plux**, a server-driven UI and plugin platform for Flutter mobile applications — highly secure, and suitable for financial applications such as banking. It specifies *what* every Plux component must do, how well, and in which delivery phase. The engineering handbook (to be written under `docs/engineering/`) specifies *how* it is built. When this document and any other source disagree, this document wins until it is amended by pull request.
 
 ### 1.2 Product vision
 
-Mobile teams lose weeks to app-store release cycles for changes that are "just UI" — a new loan product page, a campaign banner, an onboarding tweak, a regulatory disclosure. Existing answers force a trade-off: code generators still need a store release; JSON-driven UI frameworks are slow to parse and hard to secure; code-push tools patch Dart code and sit uneasily with store policies and bank security teams.
+Mobile teams lose weeks to app-store release cycles for changes that are "just UI" — a new loan product page, a campaign banner, an onboarding tweak, a regulatory disclosure. Existing answers force a trade-off: code generators still need a store release; JSON-driven UI frameworks are slow to parse and hard to secure; code-push tools patch Dart code and sit uneasily with store policies and security teams.
 
 Plux removes the trade-off:
 
 - Developers design **apps → plugins → pages → actions** in **Plux Studio**, or author them as JSON, or generate them with AI.
 - The **Plux Server** validates, compiles and **signs** every published plugin into a **FlatBuffers binary**, and computes **binary deltas against every older version**.
+- Teams can build a **complete app without code**: creating an app in Studio generates a ready-to-build Flutter project, and every screen and flow after that is built in Studio (§22.4). Existing apps instead add the package and adopt Plux one screen — or one widget — at a time.
 - The **`plux_flutter`** package — added to any new or existing Flutter app with `flutter pub get` — downloads **all plugins at app start** (deltas only), caches them, verifies them, and renders them as **native Flutter widgets with zero parse cost**. Any plugin screen can navigate to any other plugin screen or to any native screen.
-- Logic that declarative actions cannot express — a loan amortisation schedule, a fee engine, an eligibility rule — runs as **Plux Functions**: Go code compiled to WebAssembly and executed in a sandbox on the server.
-- Every request from a device is **bound to a hardware-backed key (DPoP)** and **backed by platform attestation**, so a bank can trust that the caller is its genuine, unmodified app on a genuine device.
+- Logic that declarative actions cannot express — a loan amortisation schedule, a fee engine, an eligibility rule — runs as **Plux Functions**: unrestricted Go code compiled to WebAssembly and executed in a sandbox — on the server for trusted results, or on the device for offline logic.
+- Every request from a device is **bound to a hardware-backed key (DPoP)** and **backed by platform attestation**, so an operator can trust that the caller is its genuine, unmodified app on a genuine device.
 
 ### 1.3 Design goals
 
 | # | Goal | Consequence for the design |
 |---|---|---|
 | G1 | **Performance is a feature.** | Binary bundles read zero-copy from memory-mapped files; expressions are pre-compiled bytecode; rebuilds are fine-grained; deltas are tiny. Every performance claim has a benchmark in CI (§30). |
-| G2 | **Bank-grade security by default.** | Hardware-bound keys, DPoP on every request, Play Integrity / App Attest, signed and anti-rollback updates, sandboxed compute, tamper-evident audit. The `banking` security profile (§15.12) is one switch. |
+| G2 | **High-assurance security by default.** | Hardware-bound keys, DPoP on every request, Play Integrity / App Attest, signed and anti-rollback updates, sandboxed compute, tamper-evident audit. The `maximum` security profile (§15.12) is one switch. |
 | G3 | **Developer joy.** | Ten minutes from `flutter create` to a Studio-built page on a real phone. Typed routes, typed functions, clear errors with fix-its, live device preview with logs and action traces. |
-| G4 | **Incremental adoption.** | Plux works inside existing apps: one screen, one banner slot, or one whole flow at a time. Two-way routing between plugin screens and native screens. |
-| G5 | **Offline-first and resilient.** | All plugins are cached locally; the last known good release always runs; a broken release is rolled back automatically; a failing page never crashes the host app. |
+| G4 | **No-code or incremental — the team chooses.** | New apps can be built entirely in Studio from a generated project. Existing apps adopt Plux one screen, one widget slot or one flow at a time, with two-way navigation and two-way embedding between plugin and native content on the same screen. |
+| G5 | **Offline-first, resilient and bounded.** | All plugins are cached locally; the last known good release always runs; a broken release is rolled back automatically; a failing page never crashes the host app; every size and resource is governed by configurable limits (§30.4). |
 | G6 | **Correct by construction.** | Everything is validated and type-checked at publish time — references, route parameters, expressions, accessibility, performance budgets — so errors are caught in Studio, not on a customer's phone. |
 | G7 | **Governed change.** | Immutable versions, four-eyes approvals bound to content hashes, staged rollouts, kill switches, and a full answer to "what exactly did this user see on this date?". |
-| G8 | **Sovereign and self-hosted first.** | Every capability works on a customer's own infrastructure, including air-gapped networks. Hosted SaaS comes later and is not a prerequisite for anything. |
+| G8 | **Self-hosted by design.** | Every capability runs on the operator's own infrastructure, including air-gapped networks, with no dependency on a vendor cloud. |
 | G9 | **Standards over invention.** | RFC 9449 DPoP, TUF-style update security, OpenTelemetry, OpenAPI, ICU/CLDR, WCAG 2.2, OWASP MASVS/ASVS, W3C Design Tokens, SLSA. Invent only where no standard exists, and document why in an ADR. |
 | G10 | **Readable end to end.** | An experienced engineer can read the repository and understand why each decision was made. Every significant decision has an ADR; every requirement has a test. |
 
@@ -108,17 +110,17 @@ When requirements conflict, resolve in this order:
 
 | Market | Why Plux | What they need most |
 |---|---|---|
-| **Banks, microfinance and fintech (Ethiopia, EU/DACH)** | Regulated products change often (rates, fees, disclosures, campaigns) but store releases are slow and risky. | Security (§15), four-eyes governance (§18), audit reconstruction (`SEC-142`), Functions for financial logic (§16), Amharic/Afaan Oromo/German localisation (§17), self-hosting (§27). |
+| **Financial services, fintech and payments** | Regulated products change often (rates, fees, disclosures, campaigns) but store releases are slow and risky. | Security (§15), four-eyes governance (§18), audit reconstruction (`SEC-142`), Functions for financial logic (§16), deep localisation (§17), self-hosting (§27). |
 | **Quick-commerce, delivery and logistics** | Campaigns, flash sales and rider flows change daily; couriers work on poor networks. | Tiny deltas, offline outbox, real-time tracking, scheduled campaigns, A/B tests, geo targeting (§10, §14, §18). |
 | **Enterprises with platform teams** | Many apps, many teams, shared design systems, compliance. | SSO/SCIM, RBAC, approval policies, shared component libraries, GitOps export, SIEM export (§18, §21). |
-| **Solo developers and startups** | Ship fast, iterate without resubmitting to stores. | Free local stack, templates, AI generation, one-command setup, live device preview (§20, §22, §23). |
-| **Super-apps** | Host partner mini-apps safely inside one binary (a common pattern in Ethiopian payment apps). | Mini-app mode with isolation and capability grants (`HST-020`). |
+| **Solo developers and startups** | Ship fast, iterate without resubmitting to stores — or without writing code at all. | Free local stack, generated no-code projects, templates, AI generation, live device preview (§20, §22, §23). |
+| **Super-apps** | Host partner mini-apps safely inside one binary — a common pattern in payment and lifestyle apps. | Mini-app mode with isolation and capability grants (`HST-020`). |
 
 ### 1.6 Intended audience
 
 - Engineers building any Plux component, human or AI agent.
 - Reviewers and maintainers deciding scope.
-- Security, risk and compliance reviewers at customer institutions.
+- Security, risk and compliance reviewers at operator organisations.
 - Prospective customers and employers evaluating the engineering quality of the project.
 
 ---
@@ -132,12 +134,12 @@ When requirements conflict, resolve in this order:
 | **Plux Schema** | JSON Schema 2020-12, widget descriptors | The versioned document model for apps, plugins, pages, components, actions, state, data, themes and translations. Single source for validation, code generation, Studio panels and AI grounding. |
 | **Plux Compiler** | Go library | Validates, type-checks, optimises and encodes documents into signed FlatBuffers bundles. Runs in the server, in the CLI and in CI — same code everywhere. |
 | **Plux Server** | Go, ConnectRPC, PostgreSQL, S3-compatible storage | Stores documents, runs the publish pipeline, manages releases, deltas, rollouts, experiments, approvals, devices, telemetry and Functions. One binary, deployable as separate roles (`api`, `worker`, `fnrunner`). |
-| **Plux Functions** | Go → WebAssembly, `wazero` | Sandboxed server-side compute for logic that declarative actions cannot express. |
+| **Plux Functions** | Go → WebAssembly | Sandboxed compute for logic that declarative actions cannot express, running on the server (`wazero`) or on the device (interpreter). |
 | **`plux_flutter`** | Dart, Flutter, Riverpod, FFI | The runtime package: sync, verification, rendering, navigation, actions, state, local database, animations, security. |
 | **Plux Dev app** | Flutter | A ready-made host app that pairs with Studio by QR code, shows drafts live on a real device, and streams logs, action traces, state and network to Studio. |
-| **Example host apps** | Flutter | *Plux Bank* and *Plux Express*: reference integrations demonstrating banking and delivery use cases end to end. |
-| **Plux Studio** | Bun, TypeScript, React, shadcn/ui | The web workspace: apps grid, plugin graph, screen canvas, editors, releases, approvals, experiments, localisation, analytics and administration. |
-| **Plux CLI** | Go (single static binary) | `plux init`, `pull`, `codegen`, `validate`, `publish`, `fn`, `test`, `ai` and more — for developers and CI. |
+| **Reference host apps** | Flutter | *Plux Bank* and *Plux Express*: reference integrations demonstrating financial and delivery use cases end to end. |
+| **Plux Studio** | Bun, TypeScript, React, shadcn/ui, WebGL canvas | The web workspace: apps grid, plugin graph, a Figma-like design canvas, editors, releases, approvals, experiments, localisation, analytics and administration. |
+| **Plux CLI** | Go (single static binary) | `plux create`, `init`, `pull`, `codegen`, `validate`, `publish`, `fn`, `test`, `ai` and more — for developers and CI. |
 | **Plux AI** | Provider-agnostic adapter in Go | Generates pages, flows, actions, translations, mock data and function scaffolds as schema-valid JSON. |
 
 ### 2.2 Core concepts
@@ -146,8 +148,8 @@ When requirements conflict, resolve in this order:
 |---|---|
 | **Organization** | A tenant. Owns apps, teams, members, keys, policies. |
 | **App** | A product that runs inside one host application (e.g. "CBE Mobile"). Owns plugins, theme, locales, data sources, environments, the native route catalogue and security policy. |
-| **Plugin** | A cohesive feature area of an app (e.g. "Loans", "Onboarding", "Campaigns"). Owns pages, plugin state, local database collections and capability requests. The unit of ownership, locking, versioning and delta sync. |
-| **Page** (screen) | A navigable screen, dialog or bottom sheet within a plugin, with typed parameters, state, data sources and a widget tree. |
+| **Plugin** | A versioned collection of resources — pages, components, assets, translations, state, data bindings, local collections, action flows and function references — that together form one cohesive feature area of an app (e.g. "Loans", "Onboarding", "Campaigns"). The unit of ownership, locking, versioning and delta sync. |
+| **Page** (screen) | A navigable screen, dialog or bottom sheet within a plugin, with an app-wide unique route name, typed parameters, state, data sources and a widget tree. |
 | **Node** | One widget instance in a page tree. |
 | **Component** | A reusable, linked widget subtree with typed props, slots and events. Editing the master updates all instances. |
 | **Template** | A saved snapshot of a widget subtree that is copied on insert. Visibility: private, organization or public. |
@@ -160,7 +162,9 @@ When requirements conflict, resolve in this order:
 | **Delta** | A binary patch that transforms an installed bundle into a newer one. |
 | **Environment** | An isolated deployment target for an app (development, staging, production, custom). |
 | **Channel** | A release stream within an environment (e.g. `production`, `beta`, `internal`). |
-| **Native route** | A screen implemented in the host app's own Flutter code and registered with Plux, so plugin pages can navigate to it. |
+| **Native route** | A screen implemented in the host app's own Flutter code and made known to Plux (by router discovery or one-place registration), so plugin pages can navigate to it. |
+| **Native slot** | A widget implemented in the host app's own code, placed inside a plugin page and rendered natively on the device. |
+| **Generated project** | A complete, ready-to-build Flutter project produced by Plux for no-code apps. |
 | **Plux Function** | A versioned, sandboxed Go/WASM function invoked from actions. |
 | **Assurance level** | The server's confidence in a device, derived from attestation (AL0–AL3, `SEC-007`). |
 
@@ -188,17 +192,17 @@ flowchart LR
 
 ### 2.4 Personas and usage models
 
-#### 2.4.1 Solo developer — "Sara ships a side project"
+#### 2.4.1 Solo developer — "Sara ships a side project without code"
 
-Sara runs `docker compose up` for a free local Plux stack, runs `plux init` in her Flutter app, opens Studio, types *"onboarding with three slides and a sign-up form"* into the AI prompt, tweaks it on the canvas, scans a QR code with the Plux Dev app and sees it on her phone. She publishes; her app picks it up on next launch. When she wants a paywall experiment, she clones a template and starts an A/B test. No store release after the first one.
+Sara runs `docker compose up` for a free local Plux stack, creates an app in Studio and downloads the generated Flutter project, builds it once for the stores, opens Studio, types *"onboarding with three slides and a sign-up form"* into the AI prompt, tweaks it on the canvas, scans a QR code with the Plux Dev app and sees it on her phone. She publishes; her app picks it up on next launch. When she wants a paywall experiment, she clones a template and starts an A/B test. No store release after the first one.
 
 #### 2.4.2 Enterprise platform team — "Many squads, one design system"
 
 The platform team connects Plux to Entra ID via OIDC and SCIM, locks a shared component library built from the corporate design tokens, and defines approval policies: staging needs one reviewer, production needs two approvers from different teams. Each squad owns plugins. Releases are exported to Git for audit, published from CI with OIDC workload identity, and monitored in Grafana through the shipped dashboards.
 
-#### 2.4.3 Bank — "Launch a new loan product this week, not next quarter"
+#### 2.4.3 Financial services — "Launch a new loan product this week, not next quarter"
 
-The product team builds the loan application plugin in Studio. The rate and schedule logic is a Plux Function (`loan.calculateSchedule@v3`) using exact decimal arithmetic. The security profile is `banking`: hardware-bound DPoP keys, strong device integrity required for the application flow, screenshots blocked, confidential (encrypted) bundles, secure PIN pad with randomised layout, transaction signing bound to biometrics. Compliance approves the release with a WebAuthn step-up; the approval is bound to the exact bundle hash. A staged rollout reaches 5% of customers in Addis Ababa first. When the regulator asks what a customer saw on 3 March, the audit trail reconstructs the exact release and page.
+The product team builds the loan application plugin in Studio. The rate and schedule logic is a Plux Function (`loan.calculateSchedule@v3`) using exact decimal arithmetic. The security profile is `maximum`: hardware-bound DPoP keys, strong device integrity required for the application flow, screenshots blocked, confidential (encrypted) bundles, secure PIN pad with randomised layout, transaction signing bound to biometrics. Compliance approves the release with a WebAuthn step-up; the approval is bound to the exact bundle hash. A staged rollout reaches 5% of customers in one city first. When the regulator asks what a customer saw on 3 March, the audit trail reconstructs the exact release and page.
 
 #### 2.4.4 Quick-commerce — "Flash sale at 18:00, rider flow change at 20:00"
 
@@ -222,17 +226,16 @@ Marketing schedules a campaign plugin to go live at 18:00 and expire at midnight
 
 - All components in §2.1, delivered in the phases of §5.
 - Android and iOS host applications built with Flutter, including Flutter modules embedded in native apps (add-to-app).
-- Self-hosted and air-gapped deployment for enterprises and banks (§27); hosted SaaS later (§26).
+- Self-hosted and air-gapped deployment (§27), and multi-tenant operation by one operator for many organisations (§26).
+- No-code app generation: complete Flutter projects produced by Plux (§22.4).
 - The reference host apps *Plux Bank* and *Plux Express* and a public demonstration environment.
 
 ### 3.2 Explicit non-goals
 
 | Non-goal | Rationale |
 |---|---|
-| Downloading or executing native code, Dart code or JavaScript on the device. | Store policies and bank security. Plux ships declarative data and sandboxed bytecode for a bounded expression VM only (`SEC-054`). |
+| Downloading or executing native code, Dart code or JavaScript on the device. | Store policies and security. Plux ships declarative data, PXL bytecode and, optionally, WebAssembly run by a sandboxed interpreter with no direct platform access (`SEC-054`). |
 | Changing an app's primary purpose after review. | Store policy. Plux documents responsible use and provides policy lints. |
-| Exporting Plux pages as Flutter source code. | Not in 1.0. May be reconsidered after 1.0 (§34). |
-| Flutter web and desktop **host** applications. | The runtime compiles to web only to power the Studio canvas. Web and desktop hosts may be added after 1.0. |
 | Hosting end-user data (a backend-as-a-service). | Plux calls customers' own APIs and Functions. It is not a general database for app users. |
 | Real-time multi-user editing before Phase 14. | Exclusive per-plugin editing locks are used until then (`SRV-040`). |
 | Lazy, per-plugin download on first navigation. | By design, **all plugins are synced at app start** so that any screen can reach any screen offline (`SYN-001`). |
@@ -282,14 +285,16 @@ Every normative requirement carries a stable identifier `<AREA>-<NNN>`. Identifi
 | `CLI` | Plux CLI | §22 |
 | `TST` | Testing toolkit for Plux users | §22 |
 | `DX` | Developer experience and documentation | §22 |
+| `GEN` | No-code app generation | §22 |
 | `AI` | AI generation | §23 |
 | `PAY` | Payments | §24 |
 | `COL` | Collaboration | §25 |
-| `SAAS` | Hosted SaaS | §26 |
+| `SAAS` | Multi-tenant operation | §26 |
 | `DEP` | Deployment and operations | §27 |
 | `QA` | Verification of Plux itself | §28 |
 | `CI` | CI/CD and supply chain | §29 |
 | `NFR` | Non-functional targets | §30 |
+| `LIM` | Limits and quotas | §30 |
 
 ### 4.3 Phase and status tags
 
@@ -323,14 +328,14 @@ flowchart LR
     subgraph M1["M1 — Engine"]
       P0[P0 Foundations] --> P1[P1 Schema + compiler] --> P2[P2 Backend core] --> P3[P3 Runtime rendering] --> P4[P4 Routing + host] --> P5[P5 Actions, state, DB, animation]
     end
-    subgraph M2["M2 — Bank-grade"]
+    subgraph M2["M2 — High-assurance"]
       P6[P6 Security hardening] --> P7[P7 Plux Functions] --> P8[P8 Localisation + a11y] --> P9[P9 Enterprise + operations]
     end
     subgraph M3["M3 — Plux 1.0"]
       P10[P10 Dev app + debugging] --> P11[P11 Studio] --> P12[P12 AI generation]
     end
     subgraph M4["M4 — Growth"]
-      P13[P13 Payments] --> P14[P14 Collaboration] --> P15[P15 Hosted SaaS]
+      P13[P13 Payments] --> P14[P14 Collaboration] --> P15[P15 Multi-tenant operation]
     end
     P5 --> P6
     P9 --> P10
@@ -345,27 +350,27 @@ flowchart LR
 | **P1** | **Schema and compiler** | JSON Schema for the document model (§7); widget descriptor registry and generated coverage table (§8); FlatBuffers bundle schema and container format (§9); deterministic Go compiler with validation, PXL type-checking and optimisation; diagnostics with codes and JSON paths; generated types for Go, Dart and TypeScript; conformance test vectors. | Golden tests pass; the same input produces byte-identical output across runs and platforms; every Layer 1 widget in scope for P3 has a descriptor. |
 | **P2** | **Backend core** | Plux Server (`api` and `worker` roles); ConnectRPC API (§11); PostgreSQL schema and migrations; object storage; organisations, apps, plugins, pages; drafts with snapshots and per-plugin editing locks; publish pipeline (validate → compile → sign → store); immutable plugin versions and app releases; delta generation against every older version; signed manifest endpoint; CLI `login`, `validate`, `publish`, `pull`; Docker Compose stack; baseline logging, metrics and tracing. | A plugin authored as JSON is published via the CLI; the manifest and deltas are fetched and verified by a test client; compose stack starts with one command. |
 | **P3** | **Runtime rendering** | `plux_flutter` package on Riverpod; memory-mapped zero-copy bundle reader; FlatBuffers verifier; signature and hash verification; renderer for P3 widget set; theming and assets; **sync of all plugins at app start** with deltas, manual sync API, atomic activation, last-known-good rollback, baseline bundles; error boundaries; minimal example host app. | Example host app renders published pages offline; render and sync benchmarks recorded; corrupted and tampered bundles are rejected in tests. |
-| **P4** | **Routing and host integration** | Route addressing; plugin → plugin and plugin → native navigation; native → plugin via API and embeddable `PluxView`; typed parameters and results; `go_router` adapter; deep links; guards; native route, custom widget and custom action registries with annotations and generator; `plux codegen` typed routes; `plux native sync`. | Example host app mixes native and plugin screens freely in both directions with typed routes; unknown routes and bad parameters fail safely. |
+| **P4** | **Routing and host integration** | Route addressing; plugin → plugin and plugin → native navigation; native → plugin screen by app-wide route name; **mixed screens**: native slots inside plugin pages and `PluxView` inside native screens, with shared exposed state; typed parameters and results; `go_router`/`auto_route` discovery; deep links; guards; one-place registration of native routes, widgets and actions without changes to existing code; `plux native scan`; `plux codegen` typed routes; **`plux create`** generated projects for no-code apps. | The example host app mixes native and plugin content in both directions — across screens and within one screen — with typed routes; a generated project builds and runs unchanged; unknown routes and bad parameters fail safely. |
 | **P5** | **Actions, state, data, local DB, animation** | Action graph engine and built-in catalogue (Appendix D); PXL VM; Riverpod-based scoped state with fine-grained rebuilds; forms and validators; data sources (REST, GraphQL, WebSocket, SSE) with caching, pagination and offline outbox; local database adapter layer (Drift default, others pluggable); animations (implicit, timelines, transitions, Hero, Lottie, Rive). | A complete multi-page flow (login → dashboard → form → result) built from JSON alone runs on device with API calls, local persistence and animations, meeting §30 performance targets. |
 | **P6** | **Security hardening** | Hardware-backed device keys; Play Integrity, Android Key Attestation and App Attest; device registration and assurance levels; **DPoP (RFC 9449)** on every request with nonces and replay protection; sender-constrained tokens; certificate pinning; TUF-style update metadata and key rotation; confidential (encrypted) bundles; RASP; secure widgets; encrypted local storage; security profiles; audit log; threat model; OWASP MASVS L2 + resilience checklist. | Security test suite passes: replayed, forged, mis-bound and expired requests are rejected; tampered and rolled-back bundles are rejected; MASVS checklist complete with evidence. |
-| **P7** | **Plux Functions** | Go SDK; WASM build pipeline; `fnrunner` role on `wazero` with resource limits and deny-by-default capabilities; typed schemas for binding; versioning and aliases; invocation protected by DPoP and assurance levels; `plux fn` CLI; financial and decimal helpers. | A loan calculator function runs end to end from a device; limit, fuzz and isolation tests pass; latency targets met. |
-| **P8** | **Localisation and accessibility** | ICU MessageFormat and CLDR; Amharic, English and German at launch; Ethiopian calendar; RTL; runtime locale switch; translation workflow and import/export; WCAG 2.2 AA checks at publish; accessibility report. | One plugin runs in all launch locales and RTL; publish-time accessibility checks pass on reference apps. |
-| **P9** | **Enterprise and operations** | Teams, roles and custom roles; SSO (OIDC, SAML) and SCIM; generic approval engine with four-eyes and step-up; break-glass; change freezes; environments and promotion; staged rollouts, targeting, scheduling, health-based auto-pause and rollback; kill switch; experiment and feature-flag engine; telemetry ingestion and dashboards; observability stack; Helm chart; HA; backups; air-gapped install; license files. | A self-hosted HA install passes a scripted bank audit walkthrough: approvals, rollout, kill switch, rollback, audit export and "what did the user see" reconstruction. |
+| **P7** | **Plux Functions** | Interface-only Go SDK; standard-Go WASM build pipeline; `fnrunner` role on `wazero` with resource limits and deny-by-default capabilities; **on-device execution** through a sandboxed WASM interpreter for functions placed on the device; typed schemas for binding; versioning and aliases; server invocation protected by DPoP and assurance levels; `plux fn` CLI. | A loan calculator runs on the device offline and on the server with a trusted result; limit, fuzz and isolation tests pass on both; latency targets met. |
+| **P8** | **Localisation and accessibility** | ICU MessageFormat and CLDR; English, German, Arabic and Amharic at launch; non-Gregorian calendar support (Ethiopian first); RTL; runtime locale switch; translation workflow and import/export; WCAG 2.2 AA checks at publish; accessibility report. | One plugin runs in all launch locales and RTL; publish-time accessibility checks pass on reference apps. |
+| **P9** | **Enterprise and operations** | Teams, roles and custom roles; SSO (OIDC, SAML) and SCIM; generic approval engine with four-eyes and step-up; break-glass; change freezes; environments and promotion; staged rollouts, targeting, scheduling, health-based auto-pause and rollback; kill switch; experiment and feature-flag engine; telemetry ingestion and dashboards; observability stack; Helm chart; HA; backups; air-gapped install; license files. | A self-hosted HA install passes a scripted regulated-industry audit walkthrough: approvals, rollout, kill switch, rollback, audit export and "what did the user see" reconstruction. |
 | **P10** | **Dev app and live debugging** | Plux Dev app; QR pairing; live draft push with incremental compile; streaming of logs, action traces (process flow), state, network, function calls, sync and performance; on-device inspect mode; mocks and network simulation; `plux_devtools` for developers' own host apps (debug builds only). | Edit-to-device latency target met; a Studio-less developer can debug a flow using the CLI viewer; devtools proven absent from release builds. |
-| **P11** | **Plux Studio** | Studio shell, design system and themes; apps grid; plugin graph with bundled arrows; plugin canvas with ghost screens; screen editor with panels, full-screen overlays and bottom drawer; multi-device frames; components and templates; release, approval, experiment, function, localisation, design system, data, analytics, device and admin screens. | A complete app is built in Studio alone, previewed on a paired device, approved and released; Studio performance targets met. |
+| **P11** | **Plux Studio** | Studio shell, design system and themes; **Plux Canvas** (WebGL design surface with a Flutter-compatible layout engine and conformance suite); apps grid; plugin graph with bundled arrows; plugin canvas with ghost screens; no-code project generation and shell-update detection; screen editor with panels, full-screen overlays and bottom drawer; multi-device frames; components and templates; release, approval, experiment, function, localisation, design system, data, analytics, device and admin screens. | A complete app is built in Studio alone, previewed on a paired device, approved and released; Studio performance targets met. |
 | **P12** | **AI generation** | Provider-agnostic AI adapter with structured JSON output; prompt → page/plugin/flow; screenshot → page; edit selection; actions, translations, mock data and function scaffolds; review-before-apply; evaluation suite; MCP server. | ≥ 95% of the evaluation prompts produce schema-valid, publishable output with a supported free provider. **Plux 1.0 is tagged at the end of P12.** |
 | **P13** | **Payments** | Payment action and server-side provider interface; adapters for Telebirr, Chapa, M-Pesa and Stripe; SCA transaction signing; webhooks; reconciliation. | Sandbox payments complete end to end for every adapter with SCA; PCI DSS scope stays at SAQ A. |
 | **P14** | **Collaboration** | Real-time co-editing (CRDT), presence, comments, mentions, notifications. | Two editors edit one plugin concurrently without data loss; validation remains authoritative on the server. |
-| **P15** | **Hosted SaaS** | Multi-tenant hosting, sign-up, plans and quotas, billing, usage metering, public marketplace, status page. | A new tenant signs up and ships a plugin without operator involvement. |
+| **P15** | **Multi-tenant operation** | Strict tenant isolation, per-tenant keys, quotas, usage metering interfaces, self-service organisation creation, public template gallery, status endpoint. | A new organisation is created and ships a plugin on a shared installation without operator involvement; isolation tests pass. |
 
 ### 5.2 Milestones
 
 | Milestone | Phases | Demonstrates |
 |---|---|---|
 | **M1 — Engine** | P0–P5 | JSON → signed binary → device rendering with navigation, actions, state, data and animations. The core technical claim. |
-| **M2 — Bank-grade** | P6–P9 | Security, compute, localisation and governance sufficient for a bank pilot. |
+| **M2 — High-assurance** | P6–P9 | Security, compute, localisation and governance sufficient for a pilot in a regulated industry. |
 | **M3 — Plux 1.0** | P10–P12 | The complete developer product: live device debugging, Studio and AI. |
-| **M4 — Growth** | P13–P15 | Payments, collaboration and hosted SaaS. |
+| **M4 — Growth** | P13–P15 | Payments, collaboration and multi-tenant operation. |
 
 ### 5.3 Definition of Done for a phase
 
@@ -389,7 +394,7 @@ flowchart LR
 
 > **SRV-000** `P2` **MUST** — The public API contract under `proto/plux/v1/` **MUST** be checked with `buf breaking` against the last tagged release; breaking changes require a new API version package (`v2`) and a deprecation period of at least two minor releases.
 
-Rationale: an app installed from the store today must keep working, unmodified, against every future Plux server and every future bundle — or refuse cleanly and keep running its last good release. This is what makes over-the-air UI safe for banks.
+Rationale: an app installed from the store today must keep working, unmodified, against every future Plux server and every future bundle — or refuse cleanly and keep running its last good release. This is what makes over-the-air UI safe for regulated industries.
 
 ---
 
@@ -433,12 +438,12 @@ flowchart TB
 | Job queue | PostgreSQL-backed (River) | No extra infrastructure for self-hosters. |
 | Object storage | S3 API (MinIO for self-host) | Bundles, deltas, assets, thumbnails, exports. |
 | Shared cache | Valkey (Redis-compatible) | DPoP `jti` replay cache, nonces, rate limits. In-memory fallback for single-node. |
-| Function runtime | WebAssembly on `wazero` | Pure Go, no CGO, AOT compilation cache. |
+| Function runtime | WebAssembly compiled with standard Go (`GOOS=wasip1`); `wazero` on the server; a sandboxed interpreter on the device | One artifact, two placements (ADR-0011). |
 | Mobile runtime | Flutter (latest stable), Dart 3, Riverpod 3 | FFI for `mmap` and `zstd`. Impeller renderer. |
 | Bundle format | FlatBuffers | Zero-copy reads, forward-compatible evolution. |
 | Local database | Drift on SQLite (SQLCipher) by default | Adapter interface for ObjectBox, Hive CE, Sembast and custom stores. |
 | Studio | Bun, TypeScript (strict), React, TanStack Router and Query, shadcn/ui, Radix, Tailwind CSS, Monaco | Bun serves the SPA and acts as backend-for-frontend (BFF). |
-| Studio canvas | The Plux runtime compiled to Flutter Web (WASM) in *design mode*, plus a TypeScript overlay for selection, guides and arrows | Screens on the canvas are rendered by the same code as on the device (ADR-0013). |
+| Studio canvas | **Plux Canvas**: a TypeScript WebGL2 scene graph with a Flutter-compatible layout engine | A Figma-like design surface; the device is the source of truth, and a layout conformance suite keeps the canvas faithful (ADR-0013). |
 | Observability | OpenTelemetry, Prometheus, Grafana, structured JSON logs | Dashboards and alerts shipped in `deploy/`. |
 | Packaging | Distroless multi-arch container images, Helm, Docker Compose | Signed with cosign; SBOMs in CycloneDX. |
 
@@ -490,10 +495,11 @@ internal/
 ```
 plux_flutter/lib/src/
   core/         Plux facade, config, lifecycle, Riverpod container integration
+  functions/    on-device WASM interpreter bridge (FFI), capability host, limits
   sync/         manifest client, planner, downloader, patcher, verifier, activator, storage GC
   bundle/       mmap reader (FFI), FlatBuffers accessors, verifier, section cache
   security/     device keys, attestation clients, DPoP signer, token manager, pinning, RASP hooks
-  render/       node → widget factory, prop decoders, error boundaries, layer registries
+  render/       node → widget factory, prop decoders, error boundaries, layer registries, native slots
   widgets/      Layer 1 builders; layer2/ Layer 2 components
   nav/          route model, navigator integration, go_router adapter, deep links, guards
   actions/      graph executor, built-in actions, custom action registry, tracing
@@ -503,7 +509,7 @@ plux_flutter/lib/src/
   db/           adapter interface; drift adapter lives in plux_db_drift
   anim/         timelines, transitions, gesture- and scroll-linked animation
   theme/        tokens, Material/Cupertino mapping, white-label overlays
-  l10n/         ICU formatter, locale resolution, Ethiopian calendar
+  l10n/         ICU formatter, locale resolution, calendar systems
   telemetry/    event buffer, batching, consent, crash capture
   devtools_api/ hooks consumed by plux_devtools (no-op in release)
 ```
@@ -569,15 +575,13 @@ The document model is the contract between every author (Studio, CLI, AI, Git) a
 
 ### 7.1 Hierarchy
 
-```
-Organization
-└── App ─────────────── theme, locales, environments, data sources, native route catalogue,
-    │                     security policy, sync policy, app state, shared DB collections,
-    │                     shared components, feature flags
-    └── Plugin ───────── plugin state, DB collections, capabilities, fallback page
-        └── Page ─────── params, page state, data sources, lifecycle events, route options
-            └── Node ─── widget instance: props, bindings, events, children / slots
-```
+| Level | Contains | Owns |
+|---|---|---|
+| **Organization** | Apps, teams, members | Keys, policies, limits |
+| **App** | Plugins | Theme, locales, environments, data sources, native catalogue, security and sync policy, app state, shared collections, shared components, feature flags |
+| **Plugin** | Pages | Plugin state, local collections, capabilities, fallback page, flows, function references |
+| **Page** | Nodes | Route name, parameters, page state, data sources, lifecycle events, route options |
+| **Node** | Child nodes or slots | Widget type, props, bindings, events |
 
 ### 7.2 General structure
 
@@ -587,7 +591,7 @@ Organization
 | `SCH-002` | P1 | MUST | Every entity (app, plugin, page, node, component, template, action graph, state entry, data source, collection, translation key, function reference) **MUST** have an immutable identifier (UUIDv7) and, where addressable by humans, a `key` (lower-kebab slug, unique within its parent). All cross-references **MUST** use identifiers, so renaming a key never breaks a reference. | SPEC |
 | `SCH-003` | P1 | MUST | Documents **MUST** be canonicalised with the JSON Canonicalization Scheme (RFC 8785) before hashing, diffing and storage, so that equal content has equal hashes. | SPEC |
 | `SCH-004` | P1 | MUST | Authoring validation **MUST** reject unknown properties, except properties prefixed with `x-`, which are preserved but ignored by the compiler. | SPEC |
-| `SCH-005` | P1 | MUST | Documents **MUST** respect size limits: at most 5,000 nodes per page (warning above 1,000), tree depth at most 64, at most 500 pages per plugin, at most 200 plugins per app, string props at most 64 KiB. Limits are configurable downwards per organisation. | SPEC |
+| `SCH-005` | P1 | MUST | Documents **MUST** respect size limits: at most 5,000 nodes per page (warning above 1,000), tree depth at most 64, at most 500 pages per plugin, at most 200 plugins per app, string props at most 64 KiB. These defaults are part of the limits framework of §30.4 and are configurable per installation, organisation, app and plugin. | SPEC |
 | `SCH-006` | P1 | MUST | The storage and Git export format **MUST** be one JSON file per page, component and action graph, plus one manifest file per plugin and app, so that diffs are reviewable line by line (`GOV-011`). | SPEC |
 
 ### 7.3 Value types
@@ -604,8 +608,9 @@ Organization
 |---|---|---|---|---|
 | `SCH-020` | P1 | MUST | An **app** document **MUST** declare: key, name, description, icon (uploaded image or generated monogram), default and supported locales, theme reference, entry route, environments with variables, data source definitions, native route catalogue reference, security profile (§15.12), sync policy (§10.4), minimum runtime version and feature flags. | SPEC |
 | `SCH-021` | P1 | MUST | A **plugin** document **MUST** declare: key, name, description, icon, owning team, entry page, pages, plugin-scoped state, local DB collections, requested capabilities (network domains, functions, device APIs, native routes), tags and an optional fallback page shown when the plugin is disabled by kill switch. | SPEC |
-| `SCH-022` | P1 | MUST | A **page** document **MUST** declare: key, kind (`screen`, `dialog`, `bottomSheet`, `fullscreenDialog`), title (translatable), typed parameters with required/optional and defaults, page state, data sources, lifecycle events (`onInit`, `onEnter`, `onResume`, `onLeave`, `onDispose`), route options (transition, guards) and security flags (`secure` to block screenshots, `requiresAssurance`). | SPEC |
+| `SCH-022` | P1 | MUST | A **page** document **MUST** declare: key, route name (`SCH-025`), kind (`screen`, `dialog`, `bottomSheet`, `fullscreenDialog`), title (translatable), typed parameters with required/optional and defaults, page state, data sources, lifecycle events (`onInit`, `onEnter`, `onResume`, `onLeave`, `onDispose`), route options (transition, guards) and security flags (`secure` to block screenshots, `requiresAssurance`). | SPEC |
 | `SCH-023` | P1 | MUST | A **node** **MUST** consist of: `id`, `type` (a registered widget type), `props`, `events` (event name → action graph reference or inline graph), `children` or named `slots` as the widget descriptor allows, optional `visible` (PXL boolean), optional `semantics`, optional `testId`, and optional responsive overrides per breakpoint (`WGT-010`). | SPEC |
+| `SCH-025` | P1 | MUST | Every page **MUST** have a **route name** that is unique across the whole app (default derived from its key, editable, e.g. `loan-calculator`). Native code, deep links and generated APIs address screens by route name only, never by plugin, so a screen can move between plugins without breaking any caller. | SPEC |
 | `SCH-024` | P1 | MUST | Page and plugin documents **MUST** declare a design-time mock for each data source and parameter so that Studio and tests can render pages without a live backend (`DAT-080`). | SPEC |
 
 ### 7.5 Components, templates and the native catalogue
@@ -614,7 +619,7 @@ Organization
 |---|---|---|---|---|
 | `SCH-030` | P1 | MUST | A **component** **MUST** declare typed props with defaults, named slots, emitted events, internal state and a version. Instances **MUST** reference a component by ID and version and **MAY** override props and fill slots. Components **MUST** be compiled once per bundle and instantiated by reference (`CMP-021`). | SPEC |
 | `SCH-031` | P1 | MUST | A **template** **MUST** store a snapshot subtree with name, description, category, tags, thumbnail, exposed parameters, visibility (`private`, `organization`, `public`) and a dependency list (tokens, assets, components). Inserting a template **MUST** copy it with fresh IDs. | SPEC |
-| `SCH-032` | P1 | MUST | The **native route catalogue** **MUST** declare each host-app native route with key, description, typed parameters and typed result, and each custom widget and custom action with its descriptor (`WGT-030`, `ACT-060`). The catalogue is uploaded by the CLI (`CLI-006`) and versioned per host app build. | SPEC |
+| `SCH-032` | P1 | MUST | The **native catalogue** **MUST** declare each host-app native route (key, description, typed parameters and result), each native slot widget and each custom action with its descriptor (`WGT-030`, `ACT-060`). It is produced without changing existing host code — by router discovery and static analysis (`HST-031`) — uploaded by the CLI (`CLI-006`) and versioned per host app build. | SPEC |
 
 ### 7.6 Validation and the reference graph
 
@@ -634,8 +639,8 @@ Plux does **not** mirror all ~400 public Flutter widgets one-to-one. Many are fr
 | Layer | What | Size | Rule |
 |---|---|---|---|
 | **Layer 1 — Core primitives** | Curated Flutter widgets mirrored with the same name and semantics, plus a few structural primitives (`If`, `ForEach`, `Responsive`, `Slot`, `DataScope`, `FormScope`). | ~95 | Every property expressible as data is supported; callbacks become events, controllers become state bindings, builders become item templates. |
-| **Layer 2 — Plux components** | Higher-level components built only from Layer 1 plus runtime services: secure inputs, money, KYC capture, OTP, tracking timelines, carousels, skeletons, charts… | ~50 | Opinionated, accessible, themeable; where banks and delivery companies get ready-made value. |
-| **Layer 3 — Custom widgets** | Widgets registered by the host app from its own Dart code with a typed descriptor. | Unbounded | The escape hatch that makes mirroring everything unnecessary. |
+| **Layer 2 — Plux components** | Higher-level components built only from Layer 1 plus runtime services: secure inputs, money, KYC capture, OTP, tracking timelines, carousels, skeletons, charts… | ~50 | Opinionated, accessible, themeable; where financial and delivery teams get ready-made value. |
+| **Layer 3 — Native slots** | Widgets from the host app's own Dart code, placed inside plugin pages and rendered natively, with typed props. | Unbounded | The escape hatch that makes mirroring everything unnecessary — and the way native and plugin content share one screen. |
 
 The full catalogue with phases is in Appendix C.
 
@@ -665,8 +670,9 @@ The full catalogue with phases is in Appendix C.
 |---|---|---|---|---|
 | `WGT-020` | P3 | MUST | Layer 2 components **MUST** be implemented in Dart inside the Plux packages using only Layer 1 widgets, the theme, and runtime services, and **MUST** each have a descriptor, widget tests, golden tests in light/dark/RTL/200% text, and a screen-reader test script. | SPEC |
 | `WGT-021` | P3 | SHOULD | Heavy Layer 2 components with third-party dependencies (charts, maps, Lottie, Rive, video, camera, QR scanning) **SHOULD** live in optional packages so that apps pay only for what they use (`RT-060`). | SPEC |
-| `WGT-030` | P4 | MUST | Host apps **MUST** be able to register custom widgets (Layer 3) with a descriptor generated from an annotated Dart class (`@PluxWidget`) by a `build_runner` generator. Studio **MUST** show registered custom widgets in its catalogue with their props. | SPEC |
-| `WGT-031` | P11 | SHOULD | A custom widget **SHOULD** be able to provide a web-compiled preview so the Studio canvas renders it faithfully; otherwise Studio renders a labelled placeholder with the widget's declared size. | SPEC |
+| `WGT-030` | P4 | MUST | Host apps **MUST** be able to expose existing widgets as **native slots** (Layer 3) without modifying them: the widget class names are listed in `plux.yaml`, `plux native scan` derives their prop descriptors from constructor parameters using the Dart analyzer, and the builders are registered in one place at startup. Studio **MUST** show native slots in its catalogue with their props. | SPEC |
+| `WGT-031` | P11 | MUST | On the Studio canvas a native slot **MUST** render as a labelled placeholder at its declared or constrained size, and **SHOULD** show a screenshot of the real widget captured from a paired device (`DEV-033`). | SPEC |
+| `WGT-033` | P4 | MUST | A native slot **MUST** receive its props from plugin bindings (reactively, like any node), **MUST** be able to emit typed events into the page's action graphs, and **MUST** participate in layout like any other child (constraints in, size out). A failure inside a native slot is contained by the page's error boundary (`RT-020`). | SPEC |
 | `WGT-032` | P4 | MUST | Publishing a plugin that uses a custom widget or custom action **MUST** be validated against the native catalogues of the host app builds targeted by the release; builds lacking the widget receive the last compatible release (`REL-080`). | SPEC |
 
 ---
@@ -701,7 +707,7 @@ The full catalogue with phases is in Appendix C.
 | `CMP-031` | P2 | MUST | SVGs **MUST** be compiled to Flutter's `vector_graphics` binary format at publish time; raw SVG parsing on the device is not permitted. | SPEC |
 | `CMP-032` | P2 | SHOULD | Icon fonts **SHOULD** be subset to the glyphs used; text fonts **MAY** be subset by Unicode script ranges declared for the app's locales, never below full coverage of those scripts (Ethiopic, Latin, Arabic…). | SPEC |
 | `CMP-033` | P2 | MUST | Lottie animations **MUST** be packaged as dotLottie; Rive files are stored as-is. | SPEC |
-| `CMP-040` | P1 | MUST | The compiler **MUST** compute per-page budgets — node count, depth, estimated build cost (from descriptor cost hints), image bytes, animation count — and **MUST** fail publication when a configured hard budget is exceeded. Defaults are in §30. | SPEC |
+| `CMP-040` | P1 | MUST | The compiler **MUST** compute per-page budgets — node count, depth, estimated build cost (from descriptor cost hints), image bytes, animation count — and **MUST** fail publication when a configured hard budget is exceeded. Defaults are in §30.3; limits are governed by §30.4. | SPEC |
 | `CMP-041` | P1 | MUST | Development bundles **MUST** include a source map from compiled node and action indices to document JSON paths, used for errors and inspect mode (`DEV-030`). Release bundles **MUST NOT** include source maps; the server retains them for crash symbolication (`ANL-040`). | SPEC |
 
 ### 9.4 Speed
@@ -714,7 +720,7 @@ The full catalogue with phases is in Appendix C.
 
 ### 9.5 Bundle format
 
-A **plugin bundle** (`.pxb`) is a small container of independently addressable sections. Each section is an independent FlatBuffers buffer, so changing one page changes one section, and deltas are computed per section (ADR-0002, ADR-0003). Appendix B gives the normative outline.
+A **plugin bundle** (`.pxb`) is a small container of independently addressable sections. Each section is an independent FlatBuffers buffer, so changing one page changes one section, and deltas are computed per section (ADR-0002, ADR-0003). The exact FlatBuffers schema lives in `schema/fbs/` and is decided in ADR-0002; this specification fixes the **design principles** (`BND-011`–`BND-018`) rather than an early sketch of the IDL. Appendix B describes the container.
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
@@ -727,7 +733,20 @@ A **plugin bundle** (`.pxb`) is a small container of independently addressable s
 | `BND-007` | P1 | MUST | Bundles **MUST** be compressed with zstd for transport only; at rest on the device they are stored uncompressed (or encrypted, `SEC-053`) to allow memory mapping. | SPEC |
 | `BND-008` | P1 | MUST | The header **MUST** list `required_features` (e.g. `pxl.v2`, `widget.SecurePinPad.v3`). A runtime that does not support every listed feature **MUST** refuse the bundle, report `PLX-3010`, and keep its last compatible release. | SPEC |
 | `BND-009` | P1 | MUST | Bundles **MUST NOT** contain native code, Dart code, JavaScript or any format executable outside the Plux PXL VM and action interpreter (`SEC-054`). | SPEC |
-| `BND-010` | P1 | MUST | A plugin bundle **MUST NOT** exceed 20 MiB and a single page section 1 MiB (configurable downwards). | SPEC |
+| `BND-010` | P1 | MUST | Bundle sizes **MUST** be governed by the limits framework (§30.4), with defaults of 20 MiB per plugin bundle, 1 MiB per page section and 100 MiB per app release. | SPEC |
+
+### 9.6 Bundle design principles
+
+| ID | Phase | Priority | Requirement | Status |
+|---|---|---|---|---|
+| `BND-011` | P1 | MUST | Widget types, props, actions and enum values **MUST** be encoded by **permanent numeric IDs** assigned by the registry; an ID is never reused or reassigned, so registry order can change without breaking installed runtimes. | SPEC |
+| `BND-012` | P1 | MUST | Each section kind **MUST** have its own root type and FlatBuffers file identifier, so each section is independently verifiable and readable. | SPEC |
+| `BND-013` | P1 | MUST | All indices and counts inside sections **MUST** be 32-bit; the format **MUST NOT** impose smaller structural caps than the limits in §30.4. | SPEC |
+| `BND-014` | P1 | MUST | Sections **MUST** reference each other only by stable IDs (never by offsets into another section), so any section can be replaced by a delta independently. | SPEC |
+| `BND-015` | P1 | MUST | Node trees **MUST** be stored as flat arrays with index references and props as typed values keyed by prop ID, matching the value types of `SCH-010`, so the runtime reads them zero-copy. | SPEC |
+| `BND-016` | P1 | MUST | Variants — experiment variants, platform variants, responsive overrides and locale overrides — **MUST** be encoded as override layers over a base node, not as duplicated subtrees. | SPEC |
+| `BND-017` | P1 | MUST | The format **MUST** encode component definitions and instances with overrides and slot fills, animation timelines, action graphs (including parallel and bounded iteration), state and data-source schemas, local collection schemas and device-placed function modules. | SPEC |
+| `BND-018` | P1 | MUST | Runtimes **MUST** ignore unknown props, sections and fields unless they are listed in `required_features` (`BND-008`), so new optional capabilities never break older runtimes. | SPEC |
 
 ---
 
@@ -812,7 +831,7 @@ sequenceDiagram
 | `SYN-008` | P3 | MUST | All bundles of the active release **MUST** be available locally so that navigation from any plugin page to any plugin page works fully offline. | SPEC |
 | `SYN-010` | P3 | MUST | Downloads **MUST** run on a background isolate over HTTP/2 with configurable parallelism (default 4), resume with HTTP range requests, retry with exponential backoff and jitter, and honour server `Retry-After`. | SPEC |
 | `SYN-011` | P3 | MUST | After patching, every section and bundle hash **MUST** match the manifest; on mismatch the runtime **MUST** discard the result and download the full bundle once before failing the sync. | SPEC |
-| `SYN-012` | P3 | MUST | The runtime **MUST** garbage-collect releases other than active, staged and last known good, enforce a configurable disk quota, and handle low-storage conditions without corrupting the active release. | SPEC |
+| `SYN-012` | P3 | MUST | The runtime **MUST** garbage-collect releases other than active, staged and last known good, enforce the device disk quota of the limits framework (§30.4), and handle low-storage conditions without corrupting the active release. | SPEC |
 | `SYN-013` | P3 | MUST | The runtime **MUST** publish typed sync events (`checking`, `upToDate`, `downloading(progress)`, `staged`, `activated`, `failed(error)`, `rolledBack`) on `Plux.syncEvents`. | SPEC |
 | `SYN-014` | P3 | SHOULD | The runtime **SHOULD** offer opt-in background sync (Android WorkManager, iOS BGTaskScheduler) so updates are staged before the next app start. | SPEC |
 | `SYN-015` | P3 | MUST | Sync **MUST** emit telemetry: duration, bytes transferred, delta ratio, number of plugins updated, failures by reason (`ANL-001`). | SPEC |
@@ -907,7 +926,7 @@ Branching is deliberately **not** part of the model (ADR-0015). Each plugin has 
 | `RT-013` | P3 | MUST | Decoded page descriptors and component definitions **MUST** be cached in a bounded LRU keyed by section hash and released on memory-pressure signals. | SPEC |
 | `RT-014` | P3 | MUST | Network images **MUST** be decoded at their laid-out size (`cacheWidth`/`cacheHeight`) and cached on disk and in memory with bounded sizes; placeholders **SHOULD** use ThumbHash or BlurHash when the document provides one. | SPEC |
 | `RT-015` | P3 | MUST | The runtime **MUST** emit timeline events for page build, first frame and action execution, visible in Flutter DevTools and aggregated into telemetry (`ANL-001`). | SPEC |
-| `RT-016` | P3 | MUST | Rendering **MUST** be identical on device and on the Studio canvas for the same bundle, device frame, locale, theme and text scale, because both use this runtime (`RT-050`). | SPEC |
+| `RT-016` | P3 | MUST | The device is the **source of truth** for rendering. The Studio canvas reproduces layout through a Flutter-compatible engine kept faithful by the layout conformance suite (`STU-005`); interactive behaviour is verified only on devices (§20). | SPEC |
 
 ### 12.3 Fault isolation
 
@@ -917,18 +936,20 @@ Branching is deliberately **not** part of the model (ADR-0015). Each plugin has 
 | `RT-021` | P3 | MUST | Uncaught errors in action execution **MUST** be contained to the action run, routed to the nearest `onError` handler (`ACT-020`), and reported. | SPEC |
 | `RT-022` | P3 | MUST | A plugin disabled by kill switch or failing verification **MUST** render its declared fallback page, or the app-level fallback, for every route into it. | SPEC |
 
-### 12.4 Web target for Studio
+### 12.4 Web target (withdrawn)
+
+The Studio canvas no longer uses a Flutter Web build of the runtime (ADR-0013); see §21.1.
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `RT-050` | P11 | MUST | The runtime **MUST** compile to Flutter Web (WASM renderer) in a **design mode** used by the Studio canvas: it renders documents or development bundles, exposes node geometry and hit-testing to the host page, renders design-time mocks, and does not execute navigation, network or function actions. | SPEC |
-| `RT-051` | P11 | MUST | Design mode **MUST** support rendering many screens at once and **MUST** allow the host page to request a rasterised snapshot of any screen for thumbnails and level-of-detail rendering (`STU-120`). | SPEC |
+| `RT-050` | P11 | — | Withdrawn: the runtime is not compiled to Flutter Web; the Studio canvas is a separate design surface (`STU-003`). | WITHDRAWN |
+| `RT-051` | P11 | — | Withdrawn together with `RT-050`. | WITHDRAWN |
 
 ### 12.5 Modularity and size
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `RT-060` | P3 | MUST | Optional capabilities **MUST** ship as separate packages so apps pay only for what they use: `plux_flutter` (core), `plux_db_drift`, `plux_lottie`, `plux_rive`, `plux_maps`, `plux_charts`, `plux_media`, `plux_scanner`, `plux_security` (RASP), `plux_payments`, `plux_devtools` (debug only), `plux_annotations`, `plux_generator`. | SPEC |
+| `RT-060` | P3 | MUST | Optional capabilities **MUST** ship as separate packages so apps pay only for what they use: `plux_flutter` (core), `plux_db_drift`, `plux_lottie`, `plux_rive`, `plux_maps`, `plux_charts`, `plux_media`, `plux_scanner`, `plux_security` (RASP), `plux_payments`, `plux_devtools` (debug only). The on-device function interpreter **MUST** be part of an optional package (`plux_functions`) so apps that do not place functions on the device do not ship it. | SPEC |
 | `RT-061` | P3 | MUST | The core package **MUST** add ≤ 3 MiB to a release APK (arm64) and ≤ 3 MiB to an iOS IPA (thinned), measured in CI against a blank Flutter app. | SPEC |
 
 ---
@@ -937,7 +958,7 @@ Branching is deliberately **not** part of the model (ADR-0015). Each plugin has 
 
 ### 13.1 Routes
 
-A Plux route is addressed as `<pluginKey>/<pageKey>` with typed parameters, e.g. `loans/apply?productId=…`. Native routes are addressed as `native:<routeKey>`.
+A Plux screen is addressed by its **app-wide unique route name** with typed parameters, e.g. `loan-calculator?productId=…` — never by plugin (`SCH-025`). Native routes are addressed as `native:<routeKey>`.
 
 **Direction rule:** Plux knows where plugin pages navigate (it compiled the actions), so plugin → plugin and plugin → native links are part of the reference graph and appear as arrows in Studio. Plux does **not** know which native screens open plugin pages — native code can call Plux from anywhere — so native → plugin navigation is supported at runtime but is **not** part of the reference graph and has no arrows in Studio.
 
@@ -945,12 +966,12 @@ A Plux route is addressed as `<pluginKey>/<pageKey>` with typed parameters, e.g.
 |---|---|---|---|---|
 | `NAV-001` | P4 | MUST | Any plugin page **MUST** be able to navigate to any page of any plugin in the same app, with typed parameters checked at compile time (`SCH-040`). | SPEC |
 | `NAV-002` | P4 | MUST | Any plugin page **MUST** be able to navigate to any native route declared in the native catalogue, with typed parameters and an optional typed result. | SPEC |
-| `NAV-003` | P4 | MUST | Native code **MUST** be able to open any plugin page from anywhere via `Plux.open(context, route, params)` (returning a typed `Future` result when the page pops with a value) and via `PluxRoutes` generated by `plux codegen` (`HST-030`). | SPEC |
-| `NAV-004` | P4 | MUST | Native code **MUST** be able to embed a plugin page or component inline inside any native widget tree with `PluxView` (e.g. a campaign slot on a native home screen), with its own error boundary and sizing modes (intrinsic, fixed, expand). | SPEC |
+| `NAV-003` | P4 | MUST | Native code **MUST** be able to open any plugin page from anywhere by route name only — `Plux.open(context, 'loan-calculator', params)` — without knowing which plugin contains it, (returning a typed `Future` result when the page pops with a value) and via `PluxScreens` generated by `plux codegen` (`HST-030`). | SPEC |
+| `NAV-004` | P4 | MUST | Native code **MUST** be able to embed a plugin page or exported component inline inside any native widget tree with `PluxView('<route or component name>')` — again without naming a plugin — with typed inputs, events back to native code, its own error boundary and sizing modes (intrinsic, fixed, expand). | SPEC |
 | `NAV-005` | P4 | MUST | Navigation operations **MUST** include push, replace, pop (with result), pop until route, clear stack and push, present as dialog / bottom sheet / full-screen dialog, and switch tab in a tabbed shell. | SPEC |
 | `NAV-006` | P4 | MUST | The runtime **MUST** integrate with Navigator 2.0 and **MUST** ship an adapter for `go_router` (Plux pages as routes, shells with independent tab stacks); an adapter for `auto_route` **SHOULD** be provided. Apps using plain `Navigator` **MUST** also work. | SPEC |
 | `NAV-007` | P4 | MUST | Parameters **MUST** be validated at runtime on entry; missing or invalid parameters **MUST** render the error fallback and report `PLX-4101`, never crash. | SPEC |
-| `NAV-008` | P4 | MUST | Deep links (`https://<host>/p/<plugin>/<page>?…` and custom schemes) and push-notification payloads **MUST** be resolvable to Plux routes through a documented mapping, with guards applied. | SPEC |
+| `NAV-008` | P4 | MUST | Deep links (`https://<host>/p/<route-name>?…` and custom schemes) and push-notification payloads **MUST** be resolvable to Plux routes through a documented mapping, with guards applied. | SPEC |
 | `NAV-009` | P4 | MUST | Route guards **MUST** support: authentication required (delegated to the host, `HST-010`), minimum assurance level (`SEC-007`), feature flag, kill switch and custom PXL conditions, each with a redirect or fallback. | SPEC |
 | `NAV-010` | P4 | MUST | Page transitions **MUST** be configurable per route (platform default, fade, slide in four directions, scale, shared axis, none, or a custom timeline) and **MUST** support Android predictive back. | SPEC |
 | `NAV-011` | P4 | MUST | Unknown routes **MUST** resolve to a configurable not-found page and report `PLX-4100`. | SPEC |
@@ -960,7 +981,7 @@ A Plux route is addressed as `<pluginKey>/<pageKey>` with typed parameters, e.g.
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `HST-001` | P3 | MUST | The host API **MUST** provide: `initialize`, `open`, `PluxView`, `sync`, `syncEvents`, `registerNativeRoute`, `registerWidget`, `registerAction`, `setAuthDelegate`, `setUserContext`, `events` (typed events emitted by plugins), exposed state read/write, `setLocale`, `setThemeMode`, `setConsent` and `dispose` (Appendix I). | SPEC |
+| `HST-001` | P3 | MUST | The host API **MUST** provide: `initialize`, `open`, `PluxView`, `sync`, `syncEvents`, `nativeRoutes`, `nativeSlots` and `nativeActions` registration, `setAuthDelegate`, `setUserContext`, `events` (typed events emitted by plugins), exposed state read/write, `setLocale`, `setThemeMode`, `setConsent` and `dispose` (Appendix I). | SPEC |
 | `HST-010` | P4 | MUST | Host apps **MUST** supply an **auth delegate** that provides the end-user access token for data sources and functions, refreshes it on `401`, and receives logout signals. Plux **MUST NOT** implement end-user login itself. | SPEC |
 | `HST-011` | P4 | MUST | `setUserContext` **MUST** accept a pseudonymous user ID and targeting attributes (tier, segment, region…) used for rollouts and experiments; attributes are never sent to analytics unless declared non-sensitive. | SPEC |
 | `HST-012` | P3 | MUST | Plux pages **MUST** inherit the host's `ThemeData` by default and **MAY** override it with the app's Plux theme or a white-label overlay (`THM-003`). | SPEC |
@@ -970,9 +991,10 @@ A Plux route is addressed as `<pluginKey>/<pageKey>` with typed parameters, e.g.
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `HST-020` | P9 | SHOULD | The runtime **SHOULD** support a **mini-app mode** in which one host binary runs several Plux apps (e.g. partner mini-apps in a super-app), each with its own bundles, state, storage namespace, theme and capability grants approved by the host; one mini-app **MUST NOT** read another's state, storage or events. | SPEC |
+| `HST-020` | P9 | MUST | The runtime **MUST** support a **mini-app mode** in which one host binary runs several Plux apps (e.g. partner mini-apps in a super-app), each with its own bundles, state, storage namespace, theme and capability grants approved by the host; one mini-app **MUST NOT** read another's state, storage or events. | SPEC |
 | `HST-030` | P4 | MUST | `plux codegen` **MUST** generate typed Dart APIs from the app document: route builders with typed parameters and results, event classes, exposed-state accessors and feature-flag accessors, so misuse is a compile error in the host app. | SPEC |
-| `HST-031` | P4 | MUST | Native routes, custom widgets and custom actions **MUST** be declarable with annotations (`@PluxNativeRoute`, `@PluxWidget`, `@PluxAction`) from which `plux_generator` produces registration code and catalogue descriptors; `plux native sync` uploads the catalogue for a host build. | SPEC |
+| `HST-031` | P4 | MUST | Integrating native routes, native slots and custom actions **MUST NOT** require changing existing host code beyond one registration point at startup: apps using `go_router` or `auto_route` have their existing named routes discovered automatically; other apps register routes, slot builders and actions in the `Plux.initialize` configuration; `plux native scan` derives descriptors by static analysis (`WGT-030`) and `plux native sync` uploads the catalogue for a host build. | SPEC |
+| `HST-021` | P4 | MUST | **Mixed screens** **MUST** be supported in both directions: a plugin page may contain native slots (`WGT-033`), and a native screen may contain any number of `PluxView`s (`NAV-004`). Both sides share state through exposed state entries (`STA-030`), which are observable from native code as streams, so native and plugin content on one screen stay consistent. | SPEC |
 | `HST-032` | P4 | MUST | `plux init` **MUST** add the dependencies, create configuration, embed the signing root public keys, wire initialisation into `main.dart` where it can do so safely (or print exact instructions), and run `plux doctor`. | SPEC |
 | `HST-033` | P4 | MUST | The runtime **MUST** work inside Flutter modules embedded in native Android and iOS apps (add-to-app). | SPEC |
 | `HST-034` | P4 | MUST | Time from `flutter create` to rendering a published Plux page on a device, following the quick-start guide, **MUST** be ≤ 10 minutes for a developer new to Plux (verified by recorded usability sessions, `DX-001`). | SPEC |
@@ -998,7 +1020,7 @@ An **action graph** is a small, typed, bounded program attached to a trigger. No
 | `ACT-020` | P5 | MUST | Errors **MUST** be typed (`network`, `http(status)`, `timeout`, `validation`, `function(code)`, `permission`, `cancelled`, `custom`) and routed to the step's `onError` edge, then the page, plugin and app error handlers in that order; unhandled errors show a themed, localised error message and are reported. | SPEC |
 | `ACT-030` | P5 | MUST | Every action run **MUST** produce a structured trace (run ID, trigger, steps with start/end, status, redacted inputs/outputs, errors). Traces are streamed to paired Studio sessions in development (`DEV-020`) and sampled into telemetry in production. | SPEC |
 | `ACT-031` | P5 | MUST | Values tagged `sensitive` **MUST** never appear in traces, logs or telemetry, even in development. | SPEC |
-| `ACT-060` | P4 | MUST | Host apps **MUST** be able to register custom actions with typed inputs and outputs (`@PluxAction`); Studio lists them in the action catalogue. | SPEC |
+| `ACT-060` | P4 | MUST | Host apps **MUST** be able to register custom actions with typed inputs and outputs in the one-place startup registration (`HST-031`), without modifying existing code; Studio lists them in the action catalogue. | SPEC |
 | `ACT-061` | P5 | MUST | Plugins **MUST** be able to declare reusable named action graphs ("flows") callable from other graphs with typed inputs and outputs, within the plugin or across plugins through declared exports. | SPEC |
 
 ### 14.2 PXL — Plux Expression Language
@@ -1025,8 +1047,8 @@ PXL is a small, typed, side-effect-free expression language with CEL-like syntax
 | `STA-003` | P5 | MUST | State entries **MUST** declare persistence: `memory` (default), `session` (until app kill), `persisted` (local storage), or `secure` (encrypted, keys in Keystore/Keychain). | SPEC |
 | `STA-004` | P5 | MUST | Computed state (PXL over other state) **MUST** be supported, memoised and recomputed only when its dependencies change. | SPEC |
 | `STA-010` | P5 | MUST | State **MUST** be implemented with Riverpod providers so that each binding rebuilds only when the exact path it reads changes (`RT-012`). | SPEC |
-| `STA-020` | P5 | MUST | Forms **MUST** have first-class state: fields, values, validators, dirty/touched flags, submit status and error messages. Built-in validators **MUST** include required, length, range, regex, email, Ethiopian phone number (`+251`), international phone (E.164), IBAN (with checksum), date range, decimal precision, and custom PXL; asynchronous validators via API or function **MUST** be supported with debouncing. | SPEC |
-| `STA-030` | P5 | MUST | State entries marked `exposed` **MUST** be readable and writable by the host through typed accessors (`HST-030`). | SPEC |
+| `STA-020` | P5 | MUST | Forms **MUST** have first-class state: fields, values, validators, dirty/touched flags, submit status and error messages. Built-in validators **MUST** include required, length, range, regex, email, phone number by region (E.164, default region from the device locale), IBAN (with checksum), date range, decimal precision, and custom PXL; asynchronous validators via API or function **MUST** be supported with debouncing. | SPEC |
+| `STA-030` | P5 | MUST | State entries marked `exposed` **MUST** be readable, writable and observable (as streams) by the host through typed accessors (`HST-030`), so native and plugin content on the same screen stay in sync (`HST-021`). | SPEC |
 | `STA-040` | P5 | MUST | Persisted state **MUST** be versioned; a release changing the type of persisted state **MUST** provide a migration expression or explicitly reset the value, validated at publish. | SPEC |
 
 ### 14.4 Data sources
@@ -1050,7 +1072,7 @@ PXL is a small, typed, side-effect-free expression language with CEL-like syntax
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `DB-001` | P5 | MUST | Local persistence **MUST** be accessed only through a `PluxDatabaseAdapter` interface (collections, typed queries, reactive watches, transactions, migrations). | SPEC |
-| `DB-002` | P5 | MUST | The default adapter **MUST** be Drift on SQLite, with SQLCipher encryption available and required under the `banking` profile. | SPEC |
+| `DB-002` | P5 | MUST | The default adapter **MUST** be Drift on SQLite, with SQLCipher encryption available and required under the `strict` and `maximum` profiles. | SPEC |
 | `DB-003` | P5 | SHOULD | Additional adapters **SHOULD** be provided for ObjectBox, Hive CE and Sembast, and host apps **MUST** be able to supply a custom adapter (e.g. to reuse an existing database). | SPEC |
 | `DB-004` | P5 | MUST | Collections **MUST** be declared in documents with typed fields, primary keys, indexes and scope (plugin-private or app-shared); plugin-private collections are namespaced so plugins cannot read each other's private data. | SPEC |
 | `DB-005` | P5 | MUST | Schema changes **MUST** produce versioned migrations at publish time; destructive changes (dropping a field or collection, narrowing a type) **MUST** require an explicit migration plan and a warning acknowledged by the publisher. | SPEC |
@@ -1079,7 +1101,7 @@ PXL is a small, typed, side-effect-free expression language with CEL-like syntax
 | `THM-001` | P3 | MUST | Themes **MUST** be defined as design tokens (color, typography, spacing, radius, elevation, motion, breakpoints) in the W3C Design Tokens Community Group format and mapped to Material 3 and Cupertino themes. | SPEC |
 | `THM-002` | P3 | MUST | Themes **MUST** provide light and dark modes and follow the system setting by default; high-contrast variants **SHOULD** be supported. | SPEC |
 | `THM-003` | P3 | MUST | Plux **MUST** inherit the host theme by default, and **MUST** support white-label **brand overlays** selectable at runtime by the host (one app, many brands). | SPEC |
-| `THM-004` | P3 | MUST | Typography **MUST** define per-script font families with fallbacks (e.g. Noto Sans Ethiopic for Amharic, Afaan Oromo in Latin script, Tigrinya) so no text renders as missing glyphs. | SPEC |
+| `THM-004` | P3 | MUST | Typography **MUST** define per-script font families with fallbacks (e.g. Latin, Cyrillic, Arabic, Devanagari, Ethiopic) so no text renders as missing glyphs. | SPEC |
 | `THM-005` | P3 | MUST | Icons **MUST** include Material Symbols and Cupertino icons (subset at compile time) and custom SVG icon sets. | SPEC |
 
 ### 14.8 Assets
@@ -1103,7 +1125,7 @@ Security is the first priority (§1.4). Plux targets **OWASP MASVS v2 level L2 p
 | Network attacker | Read or modify traffic; inject UI | TLS 1.3, certificate pinning, signed manifests and bundles, DPoP |
 | Token thief (malware, logs, proxy) | Replay a stolen access token | DPoP sender-constraint to a non-exportable hardware key; short token lifetime |
 | Repackaged or modified app | Talk to the backend as the genuine app | Play Integrity, Key Attestation, App Attest, signature checks, RASP |
-| Compromised or rooted device, hooking frameworks | Extract secrets, bypass checks, automate fraud | Hardware-backed keys, assurance levels, RASP, fail-closed banking policy |
+| Compromised or rooted device, hooking frameworks | Extract secrets, bypass checks, automate fraud | Hardware-backed keys, assurance levels, RASP, fail-closed `maximum` profile |
 | Update-channel attacker (CDN or storage compromise) | Push malicious UI, freeze or roll back updates | TUF-style signed metadata, anti-rollback, expiry, verify-before-load |
 | Malicious or careless insider | Publish harmful changes | RBAC, four-eyes approvals bound to hashes, step-up auth, audit, break-glass review |
 | Compromised CI or dependency | Inject code into Plux itself | SLSA provenance, signed artifacts, SBOM, pinned toolchains, reviews |
@@ -1125,7 +1147,7 @@ Security is the first priority (§1.4). Plux targets **OWASP MASVS v2 level L2 p
 | `SEC-006` | P6 | MUST | Devices **MUST** re-attest periodically (default every 24 h), on app update, and when risk signals appear (RASP detection, anomaly), and the server **MUST** be able to revoke a device, forcing re-registration. | SPEC |
 | `SEC-007` | P6 | MUST | Attestation results **MUST** map to an **assurance level**: `AL0` unverified; `AL1` app integrity verified; `AL2` app integrity and hardware-backed key on a device meeting basic device integrity; `AL3` AL2 plus strong device integrity (Play `MEETS_STRONG_INTEGRITY`, or App Attest with a clean risk profile) and no RASP findings. Pages (`requiresAssurance`), routes, data sources and functions **MUST** be able to require a minimum level. | SPEC |
 | `SEC-008` | P6 | MUST | Debug builds, emulators and simulators **MUST** use an explicit development attestation provider that is accepted only by non-production environments; production environments **MUST** reject it. | SPEC |
-| `SEC-009` | P6 | MUST | The behaviour when an attestation provider is unavailable **MUST** be policy-driven: `failClosed` (banking), or `grace(duration)` with the last known assurance level (standard). | SPEC |
+| `SEC-009` | P6 | MUST | The behaviour when an attestation provider is unavailable **MUST** be policy-driven: `failClosed` (`maximum`), or `grace(duration)` with the last known assurance level (standard). | SPEC |
 
 ### 15.3 Tokens and DPoP
 
@@ -1136,7 +1158,7 @@ Every device → server request is protected by an OAuth 2.0 access token that i
 | `SEC-020` | P6 | MUST | The server **MUST** issue short-lived access tokens (default 5 min, max 15 min) in the JWT profile of RFC 9068, signed by a server key, containing `cnf.jkt` = JWK SHA-256 thumbprint (RFC 7638) of the device's DPoP key, the device ID, app ID, environment and assurance level. | SPEC |
 | `SEC-021` | P6 | MUST | Every device request (manifest, control, functions, telemetry, token refresh, dev session) **MUST** carry a DPoP proof: a JWT with header `typ: dpop+jwt`, `alg: ES256` and the public `jwk`, and claims `htm`, `htu`, `iat`, `jti`, `ath` (hash of the access token) and `nonce` when required. | SPEC |
 | `SEC-022` | P6 | MUST | The server **MUST** reject a request unless: the proof signature verifies with the embedded key; the key's thumbprint equals the token's `cnf.jkt`; `htm` and the normalised `htu` match the request; `iat` is within the configured window (default ±60 s); `ath` matches; the nonce is valid; and `jti` has not been seen within the window. | SPEC |
-| `SEC-023` | P6 | MUST | The `jti` replay cache **MUST** be shared across all `api` replicas (Valkey) and **MUST** fail closed if unavailable under the `banking` profile. | SPEC |
+| `SEC-023` | P6 | MUST | The `jti` replay cache **MUST** be shared across all `api` replicas (Valkey) and **MUST** fail closed if unavailable under the `maximum` profile. | SPEC |
 | `SEC-024` | P6 | MUST | The server **MUST** issue DPoP nonces (`DPoP-Nonce` response header, `use_dpop_nonce` error) and rotate them at least every 5 minutes, so proofs cannot be pre-generated. | SPEC |
 | `SEC-025` | P6 | MUST | Token refresh **MUST** require a fresh DPoP proof and fresh attestation evidence (Play Integrity token or App Attest assertion); refresh does not use long-lived bearer refresh tokens. | SPEC |
 | `SEC-026` | P6 | MUST | End-user identity **MUST** be kept separate from device identity: when a function or data source needs the user, the host's user token is exchanged or forwarded (OAuth 2.0 Token Exchange, RFC 8693) and verified by the server against the customer's IdP JWKS; functions receive verified user claims (`FN-002`). | SPEC |
@@ -1163,7 +1185,7 @@ The update channel follows the design of **The Update Framework (TUF)**: separat
 | `SEC-051` | P3 | MUST | Host apps **MUST** embed the root public keys at build time (`plux init`, `plux pull`); the runtime **MUST** accept root rotations only when signed by the previous root threshold. | SPEC |
 | `SEC-052` | P3 | MUST | The runtime **MUST** verify, before loading anything: metadata signatures and expiry, the manifest's release against the metadata, every bundle and section hash, and the FlatBuffers verifier (`BND-006`). Nothing unverified is ever parsed beyond the container header. | SPEC |
 | `SEC-053` | P6 | MUST | **Confidential bundles** **MUST** be supported: each release is encrypted with AES-256-GCM using a per-release content key, delivered only to devices meeting the configured assurance level, wrapped to a device-held key-agreement key (ECDH P-256 in secure hardware). On the device, bundles are stored encrypted and decrypted into memory. | SPEC |
-| `SEC-054` | P1 | MUST | Bundles and manifests **MUST NOT** carry executable code for any platform VM other than the PXL VM and the action interpreter; the compiler **MUST** reject documents attempting to embed scripts, and the runtime **MUST NOT** provide any facility to execute downloaded code. | SPEC |
+| `SEC-054` | P1 | MUST | Bundles and manifests **MUST NOT** carry native code, Dart code or scripts. The only executable content permitted is PXL bytecode, action graphs and WebAssembly modules of device-placed functions, and each **MUST** run in a sandboxed interpreter with no direct access to platform APIs — only to host capabilities the plugin declared (`FN-012`). The runtime **MUST NOT** compile downloaded code to native instructions (no JIT, no AOT on device). | SPEC |
 | `SEC-055` | P3 | MUST | The runtime **MUST** refuse any manifest whose release sequence is lower than the highest sequence it has accepted for that channel (anti-rollback); rollbacks are delivered as new sequences (`REL-006`). | SPEC |
 | `SEC-056` | P6 | MUST | Signing keys for development environments **MUST** differ from production keys; a production runtime **MUST** reject bundles signed with development keys. | SPEC |
 
@@ -1171,10 +1193,10 @@ The update channel follows the design of **The Update Framework (TUF)**: separat
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `SEC-070` | P6 | MUST | The `plux_security` package **MUST** detect: root/jailbreak, hooking frameworks (e.g. Frida, Xposed/LSPosed, Substrate), debugger attachment, emulator/simulator, app repackaging (signature mismatch), untrusted installer source, active screen mirroring or recording, overlay (tapjacking) attempts and accessibility services with suspicious capabilities (a common vector for banking trojans). | SPEC |
+| `SEC-070` | P6 | MUST | The `plux_security` package **MUST** detect: root/jailbreak, hooking frameworks (e.g. Frida, Xposed/LSPosed, Substrate), debugger attachment, emulator/simulator, app repackaging (signature mismatch), untrusted installer source, active screen mirroring or recording, overlay (tapjacking) attempts and accessibility services with suspicious capabilities (a common vector for financial malware). | SPEC |
 | `SEC-071` | P6 | MUST | Each detection **MUST** trigger a policy-defined response — `report`, `warn` (show a message), `degrade` (disable pages or functions requiring `AL3`), or `block` (show a blocking screen) — and be reported to the server, where it lowers the device's assurance level. | SPEC |
 | `SEC-072` | P6 | MUST | Tokens, keys and secure state **MUST** be stored only in Keystore/Keychain-protected storage; nothing sensitive may be stored in plain shared preferences, files or logs. | SPEC |
-| `SEC-073` | P6 | MUST | The local database, response cache and outbox **MUST** be encrypted at rest under the `hardened` and `banking` profiles, with keys wrapped by secure hardware. | SPEC |
+| `SEC-073` | P6 | MUST | The local database, response cache and outbox **MUST** be encrypted at rest under the `strict` and `maximum` profiles, with keys wrapped by secure hardware. | SPEC |
 | `SEC-074` | P6 | MUST | Release builds **MUST** contain no Plux dev tooling, verbose logging or source maps; this **MUST** be enforced by compile-time constants and verified by a test inspecting a release build (`DEV-050`). | SPEC |
 | `SEC-080` | P5 | MUST | Plugins **MUST** only perform operations covered by their declared capabilities (network domains, functions, device APIs such as camera, location, contacts, biometrics, native routes); the host **MUST** approve the capability set per app, and undeclared operations **MUST** be blocked and reported. | SPEC |
 
@@ -1224,16 +1246,16 @@ The update channel follows the design of **The Update Framework (TUF)**: separat
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `SEC-160` | P6 | MUST | Plux **MUST** be designed for compliance with the EU GDPR (DSGVO) and Ethiopia's Personal Data Protection Proclamation No. 1321/2024: data minimisation, purpose limitation, pseudonymous device identifiers, configurable retention, and documented processing activities. | SPEC |
+| `SEC-160` | P6 | MUST | Plux **MUST** be designed for compliance with the EU GDPR (DSGVO) and comparable national data-protection laws (§31): data minimisation, purpose limitation, pseudonymous device identifiers, configurable retention, and documented processing activities. | SPEC |
 | `SEC-161` | P6 | MUST | Telemetry and analytics **MUST** be gated by a host-provided consent state (`setConsent`), with categories (`necessary`, `analytics`, `experiments`, `replay`); only `necessary` operational telemetry is sent without consent, and it contains no personal data. | SPEC |
 | `SEC-162` | P9 | MUST | Administrators **MUST** be able to export and erase all data associated with a device or pseudonymous user ID (data subject requests) and see where personal data is stored. | SPEC |
 | `SEC-163` | P9 | MUST | By default no data **MUST** leave a self-hosted installation except calls the customer configures (attestation verification, AI provider, push, webhooks); a documented egress list **MUST** be maintained (`DEP-040`). | SPEC |
 
 ### 15.12 Security profiles
 
-Security profiles bundle settings so that a bank does not need to understand fifty switches. Profiles are chosen per app and environment and can be tightened, never loosened, per plugin or page.
+Security profiles bundle settings so that operators do not need to understand fifty switches. Each profile maps to an OWASP MASVS verification level, so the choice is easy to explain to auditors. Profiles are chosen per app and environment and can be tightened, never loosened, per plugin or page.
 
-| Setting | `standard` | `hardened` | `banking` |
+| Setting | `standard` (MASVS L1) | `strict` (MASVS L2) | `maximum` (MASVS L2 + R) |
 |---|---|---|---|
 | DPoP on all requests | ✔ | ✔ | ✔ |
 | Minimum assurance for sync | AL0 | AL1 | AL2 |
@@ -1248,6 +1270,7 @@ Security profiles bundle settings so that a bank does not need to understand fif
 | Publish approvals (production) | 1 | 2 (four-eyes) | 2 from distinct teams + compliance |
 | Accessibility errors block publish | – | ✔ | ✔ |
 | Plux tests required for release | – | optional | ✔ |
+| Device-placed functions | ✔ | ✔ | disabled by default |
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
@@ -1263,31 +1286,47 @@ Security profiles bundle settings so that a bank does not need to understand fif
 | `SEC-192` | P0 | MUST | `SECURITY.md` **MUST** define a coordinated vulnerability disclosure process with a response SLA. | SPEC |
 
 ---
-
 ## 16. Plux Functions — the Compute Layer
 
-Declarative actions cover UI logic. Business logic that needs real computation — a loan amortisation schedule, a fee engine, an eligibility check, a price calculation, data aggregation — runs as **Plux Functions**: Go code written in Studio or in a repository, compiled to WebAssembly, and executed in a sandbox in the `fnrunner` role. This is the same model used by production edge and plugin platforms: portable, fast to start, and isolated by construction (ADR-0011).
+Declarative actions and PXL bindings cover UI logic. Business logic that needs real computation — a loan amortisation schedule, a fee engine, an eligibility check, a price calculation, data aggregation — runs as **Plux Functions**: **unrestricted Go**, written in Studio or in a repository, using the full standard library and any pure-Go module declared in `go.mod`. The only restrictions come from the sandbox, not from a limited library.
+
+Functions are compiled to WebAssembly (ADR-0011) for two reasons:
+
+1. **Isolation without containers.** A native Go binary cannot be sandboxed inside a host process (Go's `plugin` package cannot be unloaded and gives no memory isolation), and running each function as its own process or container costs hundreds of milliseconds per cold start and makes tenant isolation and resource limits harder. WebAssembly gives memory-safe isolation, deny-by-default capabilities, millisecond instantiation and hard CPU and memory limits in one process.
+2. **One artifact, two placements.** The same compiled module runs on the server or on the device.
+
+Each function declares exactly one **placement**:
+
+| Placement | Runs in | Use for | Trust |
+|---|---|---|---|
+| `server` | `fnrunner` role on `wazero` | Trusted results, secrets, calls to external APIs, anything the backend must rely on | Results are authoritative |
+| `device` | Sandboxed WebAssembly interpreter inside the runtime | Offline and low-latency logic: live calculators, previews, validation, formatting | Results are for display only; the server never trusts them |
 
 ```go
 package loan
 
-import "plux.dev/sdk/fn"
+import (
+    "math/big"
+
+    "plux.dev/sdk/fn"
+)
 
 type Input struct {
-    Principal  fn.Decimal `json:"principal"  plux:"min=1000"`
-    AnnualRate fn.Decimal `json:"annualRate" plux:"min=0,max=1"`
-    Months     int        `json:"months"     plux:"min=1,max=360"`
+    Principal  string `json:"principal"  plux:"decimal,min=1000"`
+    AnnualRate string `json:"annualRate" plux:"decimal,min=0,max=1"`
+    Months     int    `json:"months"     plux:"min=1,max=360"`
 }
 
 type Output struct {
-    MonthlyPayment fn.Money        `json:"monthlyPayment"`
-    Schedule       []Installment   `json:"schedule"`
+    MonthlyPayment string        `json:"monthlyPayment" plux:"money"`
+    Schedule       []Installment `json:"schedule"`
 }
 
-//plux:function name=loan.calculateSchedule assurance=AL2 pure
+//plux:function name=loan.calculateSchedule placement=device
 func CalculateSchedule(ctx fn.Context, in Input) (Output, error) {
-    pmt := fn.Finance.PMT(in.AnnualRate.Div(fn.D(12)), in.Months, in.Principal)
-    return Output{MonthlyPayment: fn.ETB(pmt.Round(2, fn.HalfEven)), Schedule: amortise(in, pmt)}, nil
+    // Any Go code: standard library, math/big, third-party modules…
+    principal, _ := new(big.Rat).SetString(in.Principal)
+    return amortise(principal, in.AnnualRate, in.Months)
 }
 ```
 
@@ -1295,43 +1334,57 @@ func CalculateSchedule(ctx fn.Context, in Input) (Output, error) {
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `FN-001` | P7 | MUST | Functions **MUST** be written in Go against the `plux.dev/sdk/fn` module and compiled to WebAssembly (WASI preview 1) by the `worker`, using a pinned toolchain (standard Go or TinyGo, decided in ADR-0011). | SPEC |
-| `FN-002` | P7 | MUST | The SDK **MUST** provide a typed handler signature and a context exposing: structured logger, verified user claims (`SEC-026`), device assurance level, app and environment IDs, environment variables, named secrets, a per-app key-value store, an allowlisted HTTP client, a clock, exact decimal and money types, and helpers for finance (PMT, IPMT, amortisation, effective annual rate, APR) and date arithmetic (including the Ethiopian calendar). | SPEC |
-| `FN-003` | P7 | MUST | Input and output schemas **MUST** be derived from the Go types (with validation tags) at build time and published with the function, so that Studio binds inputs and outputs with type checking and the compiler validates `invokeFunction` steps (`ACT-001`). | SPEC |
-| `FN-004` | P7 | MUST | Builds **MUST** record provenance: source hash, SDK and toolchain versions, build time and builder identity; artifacts are signed. | SPEC |
-| `FN-005` | P7 | MUST | Function versions **MUST** be immutable; aliases (e.g. `@prod`, `@stable`) **MAY** point to versions. App releases **MUST** capture the resolved version of every referenced function, so a release's behaviour is reproducible. | SPEC |
-| `FN-006` | P7 | MUST | Deploying a function to production **MUST** go through the approval engine (`GOV-020`). | SPEC |
+| `FN-001` | P7 | MUST | Functions **MUST** be written in Go and compiled with the **standard Go toolchain** to WebAssembly (`GOOS=wasip1`, exported with `go:wasmexport`), pinned per release, and post-processed with a WebAssembly optimiser to reduce size. TinyGo is not used: full standard-library, reflection and `encoding/json` compatibility matters more than module size (ADR-0011). | SPEC |
+| `FN-002` | P7 | MUST | The SDK (`plux.dev/sdk/fn`) **MUST** be **interface-only**: a typed handler signature and a context exposing logging, verified user claims (`SEC-026`, server placement), device assurance level, app and environment IDs, environment variables, named secrets (server placement), a per-app key-value store, an HTTP client routed through the host (server placement), a clock and input/output schema declaration. It **MUST NOT** restrict which Go packages a function may use. | SPEC |
+| `FN-003` | P7 | MUST | Functions **MUST** be able to use any standard-library package and any third-party Go module declared in `go.mod` that compiles for `wasip1`; dependencies are vendored and recorded in the function's provenance. | SPEC |
+| `FN-004` | P7 | MUST | Input and output schemas **MUST** be derived from the Go types (with validation tags) at build time and published with the function, so that Studio binds inputs and outputs with type checking and the compiler validates `invokeFunction` steps (`ACT-001`). | SPEC |
+| `FN-005` | P7 | MUST | Builds **MUST** record provenance: source hash, dependency list, toolchain version, build time and builder identity; artifacts are signed. | SPEC |
+| `FN-006` | P7 | MUST | Function versions **MUST** be immutable; aliases (e.g. `@prod`, `@stable`) **MAY** point to versions. App releases **MUST** capture the resolved version of every referenced function, so a release's behaviour is reproducible. | SPEC |
+| `FN-007` | P7 | MUST | Deploying a function to production **MUST** go through the approval engine (`GOV-020`). | SPEC |
+| `FN-008` | P7 | MUST | Each function **MUST** declare exactly one placement, `server` or `device`; the compiler **MUST** reject device-placed functions that request server-only capabilities (secrets, HTTP, user claims). | SPEC |
 
 ### 16.2 Execution and isolation
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `FN-010` | P7 | MUST | Functions **MUST** execute on `wazero`, with modules compiled ahead of time at deploy and cached, and a fresh instance (fresh linear memory) per invocation, so no state leaks between invocations or tenants. | SPEC |
-| `FN-011` | P7 | MUST | Each invocation **MUST** be bounded by wall time (default 2 s, max 30 s), memory (default 64 MiB, max 512 MiB), output size (default 1 MiB), outbound HTTP calls (default 10) and nested function calls (depth ≤ 3). Limits are configurable per function within org-level maxima. | SPEC |
+| `FN-010` | P7 | MUST | Server-placed functions **MUST** execute on `wazero`, with modules compiled ahead of time at deploy and cached, and a fresh instance (fresh linear memory) per invocation, so no state leaks between invocations or tenants. | SPEC |
+| `FN-011` | P7 | MUST | Each invocation **MUST** be bounded by wall time (default 2 s, max 30 s), memory (default 64 MiB, max 512 MiB), output size (default 1 MiB), outbound HTTP calls (default 10) and nested function calls (depth ≤ 3), within the limits framework (§30.4). | SPEC |
 | `FN-012` | P7 | MUST | Capabilities **MUST** be deny-by-default and granted by declaration: HTTP to allowlisted domains, the app's key-value namespace, named secrets and other functions. There is no filesystem, raw socket, process or environment access. | SPEC |
 | `FN-013` | P7 | MUST | The `fnrunner` role **MUST** hold no database credentials and no signing keys, and **MUST** reach the network only through an egress proxy enforcing each function's allowlist (layering rule L-4). | SPEC |
-| `FN-014` | P7 | MAY | Functions declared `pure` **MAY** have results cached by input hash for a declared TTL. | SPEC |
-| `FN-015` | P7 | MUST | The host ABI between `fnrunner` and function modules **MUST** be language-neutral (no Go-specific types at the boundary), versioned, and documented in `docs/functions/abi.md`. | SPEC |
+| `FN-014` | P7 | MAY | Server functions declared `pure` **MAY** have results cached by input hash for a declared TTL. | SPEC |
+| `FN-015` | P7 | MUST | The host ABI between the function hosts (server and device) and function modules **MUST** be language-neutral (no Go-specific types at the boundary), versioned, identical for both placements, and documented in `docs/functions/abi.md`. | SPEC |
 
-### 16.3 Invocation
+### 16.3 Device placement
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `FN-020` | P7 | MUST | Devices **MUST** invoke functions through `FunctionService.Invoke` with DPoP and a valid access token; the server **MUST** enforce the function's required assurance level and, where declared, a fresh App Attest assertion or Play Integrity request binding (`SEC-004`, `SEC-003`) and SCA signature (`SEC-027`). | SPEC |
+| `FN-050` | P7 | MUST | Device-placed functions **MUST** run in an **interpreter-only** WebAssembly engine embedded through FFI (candidates: `wasmi`, WAMR in interpreter mode, wasmtime's Pulley interpreter — chosen in ADR-0011), never compiled to native code on the device, consistent with store policies (`SEC-054`). | SPEC |
+| `FN-051` | P7 | MUST | Device-placed modules **MUST** be delivered inside the plugin bundle, signed and verified like every other section (`SEC-052`), and all device functions of a plugin **MUST** be compiled into one module to share runtime overhead. | SPEC |
+| `FN-052` | P7 | MUST | Device-placed functions **MUST** have no network, no secrets and no access to device APIs; they receive only their declared input and the capabilities `log`, `clock` and the plugin's key-value namespace. | SPEC |
+| `FN-053` | P7 | MUST | Device invocations **MUST** run off the UI isolate with the same time and memory limits as server functions (device defaults: 500 ms, 32 MiB) and **MUST** be cancellable. | SPEC |
+| `FN-054` | P7 | MUST | Results of device-placed functions **MUST NOT** be accepted by the server as evidence for any decision; flows that need a trusted result call a server-placed function (which may run the same code). | SPEC |
+| `FN-055` | P7 | MUST | Device placement **MUST** be disabled by default under the `maximum` security profile and enableable per function with approval. | SPEC |
+| `FN-056` | P7 | MUST | Device module size **MUST** be governed by the limits framework (default 4 MiB per plugin module), and a typical calculation (≤ 10,000 arithmetic operations) **MUST** complete in ≤ 20 ms p95 on the mid-tier reference device. | SPEC |
+
+### 16.4 Server invocation
+
+| ID | Phase | Priority | Requirement | Status |
+|---|---|---|---|---|
+| `FN-020` | P7 | MUST | Devices **MUST** invoke server functions through `FunctionService.Invoke` with DPoP and a valid access token; the server **MUST** enforce the function's required assurance level and, where declared, a fresh App Attest assertion or Play Integrity request binding (`SEC-004`, `SEC-003`) and SCA signature (`SEC-027`). | SPEC |
 | `FN-021` | P7 | MUST | Invocations **MUST** accept an idempotency key; retries with the same key **MUST** return the same result without re-execution for 24 h. | SPEC |
 | `FN-022` | P7 | MUST | Errors **MUST** distinguish **business errors** (declared by the function with a code and a localisable message key, surfaced to action graphs) from **system errors** (timeouts, limits, crashes), which are reported and shown generically. | SPEC |
 | `FN-023` | P7 | MUST | Warm invocation overhead **MUST** be ≤ 1 ms p99 and first invocation after deploy ≤ 50 ms p99 on the reference deployment, excluding the function's own work. | SPEC |
 | `FN-024` | P7 | MUST | Rate limits and quotas **MUST** apply per function, per app and per device. | SPEC |
-| `FN-025` | P9 | SHOULD | Functions **SHOULD** also be triggerable by schedules (cron) and by signed inbound webhooks (e.g. payment provider callbacks, `PAY-006`). | SPEC |
+| `FN-025` | P9 | SHOULD | Server functions **SHOULD** also be triggerable by schedules (cron) and by signed inbound webhooks (e.g. payment provider callbacks, `PAY-006`). | SPEC |
 
-### 16.4 Testing and operations
+### 16.5 Testing and operations
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `FN-030` | P7 | MUST | `plux fn test` **MUST** run the function's Go unit tests natively and then run the same test cases against the compiled WASM module, failing if results differ. | SPEC |
+| `FN-030` | P7 | MUST | `plux fn test` **MUST** run the function's Go unit tests natively and then run the same test cases against the compiled WASM module — on `wazero` and on the device interpreter for device-placed functions — failing if results differ. | SPEC |
 | `FN-031` | P7 | MUST | Test cases (input → expected output or error) **MUST** be storable with the function and runnable in Studio and CI; a function with failing tests **MUST NOT** be deployable to production. | SPEC |
-| `FN-032` | P7 | MUST | Per-function metrics (invocations, errors by kind, latency percentiles, memory peak, cache hits) and logs **MUST** be available in Studio and Prometheus, and each invocation's trace **MUST** link to the calling device request. | SPEC |
-| `FN-033` | P11 | MUST | Studio **MUST** provide a Go editor (Monaco) with `gopls`-backed completion, diagnostics and formatting (served through a language-server bridge in the `worker`), function templates (loan schedule, fee calculator, eligibility, currency conversion), and a test runner. | SPEC |
+| `FN-032` | P7 | MUST | Per-function metrics (invocations, errors by kind, latency percentiles, memory peak, cache hits) and logs **MUST** be available in Studio and Prometheus; server invocation traces **MUST** link to the calling device request, and device invocations **MUST** appear in dev-session traces (`DEV-020`). | SPEC |
+| `FN-033` | P11 | MUST | Studio **MUST** provide a Go editor (Monaco) with `gopls`-backed completion, diagnostics and formatting (served through a language-server bridge in the `worker`), starter templates (loan schedule, fee calculator, eligibility, currency conversion), dependency management and a test runner. | SPEC |
 | `FN-040` | P15 | MAY | Additional source languages that compile to WASM (e.g. Rust, AssemblyScript) **MAY** be supported later, using the language-neutral ABI of `FN-015`. | SPEC |
 
 ---
@@ -1343,8 +1396,8 @@ func CalculateSchedule(ctx fn.Context, in Input) (Output, error) {
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `I18N-001` | P8 | MUST | Translatable text **MUST** use ICU MessageFormat with plural, select and gender forms; plural rules, number, date, time and currency formats **MUST** come from CLDR. | SPEC |
-| `I18N-002` | P8 | MUST | Launch locales **MUST** be Amharic (`am-ET`), English (`en`) and German (`de-DE`); Afaan Oromo (`om-ET`) and Tigrinya (`ti-ET`) **SHOULD** follow; Arabic (`ar`) **MUST** be supported for RTL verification. Any CLDR locale **MUST** be addable without code changes. | SPEC |
-| `I18N-003` | P8 | MUST | Date display and date pickers **MUST** support the **Ethiopian calendar** alongside the Gregorian calendar (per-app and per-field choice, with conversion), and **MAY** render Ethiopic numerals where configured. | SPEC |
+| `I18N-002` | P8 | MUST | Launch locales **MUST** be English (`en`), German (`de-DE`), Arabic (`ar`, proving right-to-left layout) and Amharic (`am-ET`, proving a non-Latin script and a non-Gregorian calendar). Any CLDR locale **MUST** be addable without code changes. | SPEC |
+| `I18N-003` | P8 | MUST | Date display and date pickers **MUST** support **non-Gregorian calendars** alongside the Gregorian calendar (per-app and per-field choice, with conversion) through a calendar-system interface; the Ethiopian calendar **MUST** ship at launch, and further systems (e.g. Islamic Hijri, Persian) **SHOULD** follow. Native numerals **MAY** be rendered where configured. | SPEC |
 | `I18N-004` | P8 | MUST | Layouts **MUST** mirror automatically for RTL locales; nodes **MAY** override directionality (e.g. for phone numbers and IBANs). | SPEC |
 | `I18N-005` | P8 | MUST | The runtime **MUST** follow the host's locale by default and switch locale at runtime without restart. | SPEC |
 | `I18N-006` | P8 | MUST | Missing translations **MUST** fall back along a chain (e.g. `de-AT` → `de` → app default locale) and be reported in development and telemetry; the key itself is never shown to end users in release builds. | SPEC |
@@ -1352,18 +1405,18 @@ func CalculateSchedule(ctx fn.Context, in Input) (Output, error) {
 | `I18N-008` | P8 | MUST | Translation workflow **MUST** track per-locale status (`new`, `translated`, `reviewed`, `approved`), support a translator role, and optionally require approval before a release uses a translation. | SPEC |
 | `I18N-009` | P8 | MUST | Translations **MUST** be importable and exportable as XLIFF 2.0, ARB, JSON and CSV. | SPEC |
 | `I18N-010` | P8 | MUST | Studio **MUST** offer pseudo-localisation (accented, expanded by 30–40%, RTL pseudo-locale) to find truncation and hard-coded text before translation. | SPEC |
-| `I18N-011` | P8 | MUST | Money **MUST** format per locale and currency (e.g. `ETB` as "Br" in Amharic contexts, `EUR` as "1.234,56 €" in German). | SPEC |
+| `I18N-011` | P8 | MUST | Money **MUST** format per locale and currency (e.g. `EUR` as "1.234,56 €" in German, `USD` as "$1,234.56" in US English). | SPEC |
 | `I18N-012` | P8 | SHOULD | Assets and layout props **SHOULD** be overridable per locale (images with text, longer labels). | SPEC |
 | `I18N-013` | P12 | SHOULD | AI-assisted translation suggestions **SHOULD** be offered with an org glossary and a "do not translate" list (`AI-030`). | SPEC |
 
 ### 17.2 Accessibility
 
-Plux targets **WCAG 2.2 level AA** and the harmonised European standard **EN 301 549**, which underpins the **European Accessibility Act** obligations for consumer banking and e-commerce services in the EU.
+Plux targets **WCAG 2.2 level AA** and the harmonised European standard **EN 301 549**, which underpins the **European Accessibility Act** obligations for consumer financial and e-commerce services in the EU.
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `A11Y-001` | P8 | MUST | Every Layer 1 and Layer 2 widget **MUST** expose correct semantics (role, label, value, state, actions) to TalkBack and VoiceOver. | SPEC |
-| `A11Y-002` | P8 | MUST | The compiler **MUST** require an accessible name for every interactive node (explicit or derived from visible text) and an alternative text or `decorative` flag for every image; violations are errors under the `hardened` and `banking` profiles and warnings otherwise. | SPEC |
+| `A11Y-002` | P8 | MUST | The compiler **MUST** require an accessible name for every interactive node (explicit or derived from visible text) and an alternative text or `decorative` flag for every image; violations are errors under the `strict` and `maximum` profiles and warnings otherwise. | SPEC |
 | `A11Y-003` | P8 | MUST | The compiler **MUST** check text/background contrast from theme tokens (4.5:1 for normal text, 3:1 for large text and UI components) in light and dark themes. | SPEC |
 | `A11Y-004` | P8 | MUST | Touch targets **MUST** be at least 48 × 48 dp on Android and 44 × 44 pt on iOS; smaller targets produce diagnostics. | SPEC |
 | `A11Y-005` | P8 | MUST | Pages **MUST** remain usable at 200% text scale; the Dev app and Studio **MUST** provide a text-scale preview, and the compiler **SHOULD** flag fixed-height containers holding text. | SPEC |
@@ -1429,7 +1482,7 @@ Approvals are generic: the same engine governs publishing, function deployment, 
 | `ABT-004` | P9 | MUST | Mutually exclusive experiment layers and global holdouts **MUST** be supported. | SPEC |
 | `ABT-005` | P9 | MUST | Promoting a winning variant **MUST** create a release in which the winner is the default and the experiment code paths are removed. | SPEC |
 | `ABT-006` | P9 | MUST | Typed **feature flags** (bool, number, string, JSON) with per-segment values **MUST** be available in PXL as `flags.<key>` and to the host through generated accessors, updated through the control document without a new release. | SPEC |
-| `ABT-007` | P9 | MUST | Experiments touching pages marked `secure` or flows involving money **MUST** require approval under the `banking` profile. | SPEC |
+| `ABT-007` | P9 | MUST | Experiments touching pages marked `secure` or flows involving money **MUST** require approval under the `maximum` profile. | SPEC |
 
 ---
 
@@ -1452,12 +1505,12 @@ Approvals are generic: the same engine governs publishing, function deployment, 
 | `ANL-001` | P3 | MUST | The runtime **MUST** emit events for screen views, action runs and errors, data-source calls (timing and status only, never payloads), render performance (build time, first frame, janky frames), sync results, function calls, experiment exposures, RASP detections and custom `trackEvent` calls (Appendix G). | SPEC |
 | `ANL-002` | P3 | MUST | Events **MUST** be batched, compressed, buffered offline with a bounded size, sent with DPoP, and **MUST** cost less than 1% of battery and less than 100 KiB per day of data for a typical user (measured on reference devices). | SPEC |
 | `ANL-003` | P3 | MUST | Telemetry **MUST** respect consent (`SEC-161`), support sampling per event type, and strip sensitive fields. | SPEC |
-| `ANL-010` | P9 | MUST | Analytics storage **MUST** be pluggable: PostgreSQL by default for small installations and ClickHouse for scale. | SPEC |
+| `ANL-010` | P9 | MUST | Analytics storage **MUST** be pluggable: PostgreSQL by default (time-partitioned event tables with pre-computed rollups) and ClickHouse as the supported alternative, with documented guidance to switch at around 10 million events per day or 1 million active devices. | SPEC |
 | `ANL-011` | P9 | MUST | Events **MUST** be exportable via OTLP, signed webhooks and periodic Parquet files to object storage, so customers can use their own analytics stack. | SPEC |
 | `ANL-020` | P9 | MUST | Dashboards **MUST** include: organisation overview; app overview (active devices, sessions, release adoption over time); page and plugin usage; funnels defined from page sequences or events; crash-free sessions and error rates per release, plugin and page; performance (build time and jank percentiles by device class); sync health (success, bytes, delta ratio); function health; security (attestation failures, DPoP rejections, RASP detections by type, assurance-level distribution); experiment results. | SPEC |
 | `ANL-030` | P9 | MUST | Alerts **MUST** be configurable on any dashboard metric and routed to notification channels (`SRV-062`). | SPEC |
 | `ANL-040` | P9 | MUST | Errors and crashes **MUST** be grouped by fingerprint and symbolicated to document JSON paths using the retained source maps (`CMP-041`), with a link to open the offending node in Studio. | SPEC |
-| `ANL-050` | P11 | SHOULD | **Structural session replay** **SHOULD** be offered as opt-in: because pages are declarative, the runtime can record page, node and state changes (not video) and Studio can replay them on the canvas. Sensitive values are never recorded; replay is disabled and cannot be enabled under the `banking` profile. | SPEC |
+| `ANL-050` | P11 | SHOULD | **Structural session replay** **SHOULD** be offered as opt-in: because pages are declarative, the runtime can record page, node and state changes (not video) and Studio can replay them on the canvas. Sensitive values are never recorded; replay is disabled and cannot be enabled under the `maximum` profile. | SPEC |
 
 ---
 
@@ -1495,7 +1548,7 @@ sequenceDiagram
 | `DEV-030` | P10 | MUST | **Inspect mode** **MUST** let a developer tap any widget on the device to select the corresponding node in Studio, and selecting a node in Studio **MUST** highlight it on the device. | SPEC |
 | `DEV-031` | P10 | MUST | Developers **MUST** be able to edit state values, switch data-source mocks and states, simulate network conditions (offline, 2G, 3G, high latency, packet loss), fake the clock, and trigger lifecycle events from Studio. | SPEC |
 | `DEV-032` | P10 | SHOULD | Studio **SHOULD** offer a PXL console that evaluates expressions against the live state of a paired device. | SPEC |
-| `DEV-033` | P10 | SHOULD | Device screenshots **SHOULD** be capturable into Studio (for app and plugin card thumbnails, translation context and documentation). | SPEC |
+| `DEV-033` | P10 | SHOULD | Device screenshots **SHOULD** be capturable into Studio (for app and plugin card thumbnails, native slot previews on the canvas (`WGT-031`), translation context and documentation). | SPEC |
 | `DEV-034` | P10 | MUST | Performance and accessibility overlays (frame chart, rebuild counters, touch-target and contrast highlights) **MUST** be toggleable on the device. | SPEC |
 | `DEV-040` | P10 | MUST | Developers **MUST** be able to pair their own host app in debug builds with `plux_devtools`, with the same capabilities as the Dev app. | SPEC |
 | `DEV-041` | P10 | MUST | A terminal viewer (`plux dev logs`) **MUST** stream the same data for developers who are not using Studio. | SPEC |
@@ -1507,20 +1560,21 @@ sequenceDiagram
 
 Studio is where developers, designers, translators, reviewers and administrators work. It is inspired by Figma's canvas and zoom levels, and organised around three levels of zoom: **apps → plugins → screens**.
 
-```
-Sign in (SSO / account + MFA) → organisation switcher → Home
-├── Apps grid ─→ App canvas (plugin graph) ─→ Plugin canvas (screens) ─→ Screen editor
-├── Releases          (publish, rollouts, rollback, kill switch)
-├── Approvals         (inbox, history, policies)
-├── Experiments       (A/B tests, feature flags)
-├── Functions         (Go editor, tests, versions, metrics)
-├── Localisation      (keys × locales, workflow)
-├── Design system     (tokens, themes, brands, component library, templates)
-├── Data              (API definitions, mocks, DB collections)
-├── Analytics         (dashboards, funnels, crashes, performance, security)
-├── Devices & security (paired dev devices, registered devices, assurance, keys, pins)
-└── Admin             (organisation, teams, members, roles, SSO/SCIM, audit, tokens, license, installation health)
-```
+Users sign in (SSO or account with MFA), choose an organisation, and land on Home.
+
+| Area | Purpose |
+|---|---|
+| **Apps** | Apps grid → app canvas (plugin graph) → plugin canvas (screens) → screen editor |
+| **Releases** | Publish, rollouts, rollback, kill switch |
+| **Approvals** | Inbox, history, policies |
+| **Experiments** | A/B tests and feature flags |
+| **Functions** | Go editor, tests, versions, metrics |
+| **Localisation** | Keys × locales, translation workflow |
+| **Design system** | Tokens, themes, brands, component library, templates |
+| **Data** | API definitions, mocks, local collections |
+| **Analytics** | Dashboards, funnels, crashes, performance, security |
+| **Devices & security** | Paired dev devices, registered devices, assurance, keys, pins |
+| **Admin** | Organisation, teams, members, roles, SSO/SCIM, audit, tokens, limits, license, installation health |
 
 ### 21.1 Architecture and technology
 
@@ -1528,7 +1582,9 @@ Sign in (SSO / account + MFA) → organisation switcher → Home
 |---|---|---|---|---|
 | `STU-001` | P11 | MUST | Studio **MUST** be a TypeScript (strict) single-page application built and served with **Bun**, using React, TanStack Router and Query, shadcn/ui on Radix primitives, Tailwind CSS and Monaco. API clients **MUST** be generated from the protobuf contract (Connect-ES). | SPEC |
 | `STU-002` | P11 | MUST | The Bun server **MUST** act as backend-for-frontend (`SEC-101`): OIDC authorisation code flow with PKCE, server-side token storage, session cookies, CSRF protection, CSP with nonces, and proxying of API calls with the user's identity. | SPEC |
-| `STU-003` | P11 | MUST | Screens on canvases **MUST** be rendered by the Plux runtime in design mode (`RT-050`); selection handles, guides, rulers, ghost regions and arrows **MUST** be drawn by a separate TypeScript overlay synchronised to the canvas transform (ADR-0013). | SPEC |
+| `STU-003` | P11 | MUST | Canvases **MUST** be rendered by **Plux Canvas**, a Figma-like design surface implemented in TypeScript on a WebGL2 scene graph: screens are frames, widgets are items that are placed, moved, resized and nested; selection handles, guides, rulers, ghost regions and arrows are part of the same scene (ADR-0013). No Flutter Web build is used. | SPEC |
+| `STU-005` | P11 | MUST | Plux Canvas **MUST** lay out widgets with an engine that follows Flutter's layout model (constraints down, sizes up; flex, stack, sliver and text layout) and styles them from widget descriptors and theme tokens. A **layout conformance suite** **MUST** render every Layer 1 and Layer 2 widget in headless Flutter tests and on the canvas across device frames, locales and text scales, and CI **MUST** fail when positions or sizes differ beyond a defined tolerance. | SPEC |
+| `STU-006` | P11 | MUST | Text on the canvas **MUST** use the same font files as the device and browser text shaping; where exact metrics cannot be guaranteed (e.g. complex scripts), the canvas **MUST** indicate that the device preview is authoritative. | SPEC |
 | `STU-004` | P11 | MUST | Studio state **MUST** be split into server state (TanStack Query caches keyed by document revision) and local UI state; document edits **MUST** be applied optimistically and autosaved as JSON Patch (`SRV-030`) with debouncing (default 500 ms). | SPEC |
 
 ### 21.2 Visual design and shell
@@ -1537,10 +1593,11 @@ Sign in (SSO / account + MFA) → organisation switcher → Home
 |---|---|---|---|---|
 | `STU-010` | P11 | MUST | Studio's visual language **MUST** be light and whitish by default, with generously rounded corners (radius tokens 12–20 px), **floating panels** with soft shadows over the canvas, restrained colour used for meaning (selection, status, arrows), and a dark theme; users switch between light, dark and system. | SPEC |
 | `STU-011` | P11 | MUST | Studio **MUST** itself meet WCAG 2.2 AA: full keyboard operability, visible focus, screen-reader labels and sufficient contrast in both themes. | SPEC |
-| `STU-012` | P11 | MUST | Studio's own UI **MUST** be localised, at least in English, German and Amharic. | SPEC |
+| `STU-012` | P11 | MUST | Studio's own UI **MUST** be localised, at least in English and German, with right-to-left support. | SPEC |
 | `STU-013` | P11 | MUST | A global **command palette** (⌘K / Ctrl+K) **MUST** search and jump to apps, plugins, screens, nodes, components, templates, translation keys, functions and commands; a shortcut sheet (`?`) **MUST** list all keyboard shortcuts. | SPEC |
 | `STU-014` | P11 | MUST | The shell **MUST** provide an organisation switcher, notifications inbox, help and documentation links, and profile settings (theme, language, density, shortcuts). | SPEC |
 | `STU-015` | P11 | MUST | First-run onboarding **MUST** offer a guided checklist (create or import a sample app → pair a device → edit → publish) and importable sample apps (*Plux Bank*, *Plux Express*, *Starter*). | SPEC |
+| `STU-016` | P11 | MUST | Studio **MUST** display the Plux wordmark and use the brand tokens of Appendix J. | SPEC |
 
 ### 21.3 Apps grid
 
@@ -1550,7 +1607,8 @@ Sign in (SSO / account + MFA) → organisation switcher → Home
 | `STU-021` | P11 | MUST | Each card's visual **MUST** be, in order of preference: a live screenshot of the app's plugin canvas, an uploaded image, or a monogram of the app name's first character on a colour derived from the app. | SPEC |
 | `STU-022` | P11 | MUST | Each card **MUST** show the app's name, description, owning team, environment badges with live release per environment, last publish (who, when), active devices, number of plugins, and a health indicator (crash-free rate and error trend). | SPEC |
 | `STU-023` | P11 | MUST | The grid **MUST** support search, filters (team, tag, status, my apps), sort (name, last activity, health), pinning favourites, and card actions (open, settings, duplicate, export `.plux` archive, archive). | SPEC |
-| `STU-024` | P11 | MUST | Creating an app **MUST** offer: blank, from template, from `.plux` import, or from an AI prompt (`AI-010`); then locales, theme, security profile and environments. | SPEC |
+| `STU-024` | P11 | MUST | Creating an app **MUST** offer: blank, from template, from `.plux` import, or from an AI prompt (`AI-010`); then locales, theme, security profile and environments. Every new app **MUST** start with a default plugin and entry screen, and offer the **generated Flutter project** for download (`GEN-001`). | SPEC |
+| `STU-025` | P11 | MUST | Each app card and app settings **MUST** show the app's limits usage (release size, plugins, pages, assets, functions) against its configured limits (§30.4). | SPEC |
 
 ### 21.4 App canvas — the plugin graph
 
@@ -1569,14 +1627,9 @@ The app canvas shows every plugin of an app as a box on an infinite canvas, with
 
 These rules apply to arrows on the app canvas (plugin → plugin, plugin → native) and on the plugin canvas (screen → screen, screen → ghost screen, screen → native).
 
-```
-Collapsed (default):                          Expanded (hover / focus):
+![Bundled navigation arrows: collapsed with a count badge, and expanded on hover into labelled lanes that merge back into single stems at both boxes](assets/requirements/bundled-arrows.svg)
 
- ┌────────┐                    ┌────────┐      ┌────────┐     ╭── Apply now → Loan form ──╮     ┌────────┐
- │ Home   │────────(3)────────▶│ Loans  │      │ Home   │─────┼── Rates banner → Rates ───┼────▶│ Loans  │
- └────────┘                    └────────┘      └────────┘     ╰── Menu › Loans → Overview ╯     └────────┘
-                                                        single stem → fans out → labelled lanes → merges → single stem
-```
+*Figure 21-1. A bundle of three links, collapsed (top) and expanded on hover (bottom).*
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
@@ -1603,27 +1656,16 @@ The plugin canvas shows **all screens of the plugin at the same time**, with arr
 | `STU-054` | P11 | MUST | Native routes targeted by this plugin's screens **MUST** appear as native nodes that only receive arrows (`STU-033`). | SPEC |
 | `STU-055` | P11 | MUST | Screens **MUST** be creatable (blank, from template, from AI prompt), duplicated (with new IDs and internal links remapped), renamed, moved to another plugin (links updated), set as the plugin's entry screen, and deleted subject to `STU-070`. | SPEC |
 | `STU-056` | P11 | MUST | Content that extends beyond a screen's viewport (e.g. a long list or scroll view) **MUST** be shown on the canvas as a translucent **overflow region** below or beside the device frame, so designers see the whole scrollable content. | SPEC |
-| `STU-057` | P11 | MUST | Studio **MUST** support **multiple device frames**: presets (small Android phone 360×800, Pixel, Galaxy A-series, Tecno/Infinix class, iPhone SE, iPhone standard and Pro Max, iPad, foldable), custom sizes, orientation, and a **device matrix** mode showing one screen on several devices side by side. | SPEC |
+| `STU-057` | P11 | MUST | Studio **MUST** support **multiple device frames**: presets (small Android phone 360×800, Pixel, Galaxy A-series, entry-level Android, iPhone SE, iPhone standard and Pro Max, iPad, foldable), custom sizes, orientation, and a **device matrix** mode showing one screen on several devices side by side. | SPEC |
 | `STU-058` | P11 | MUST | Canvas-wide preview switches **MUST** include theme (light/dark, brand overlay), locale (including RTL and pseudo-locales), text scale, platform style (Material/Cupertino) and data-source mock state (`loading`, `empty`, `error`, `success`). | SPEC |
 
 ### 21.7 Screen editor
 
 The screen editor is the canvas of §21.6 with a screen selected for editing and the full set of panels.
 
-```
-┌────────────────────────────────────────────────────────────────────────────────────────────┐
-│             ╭ ↶ ↷ │ 100% │ 📱 Pixel 8 ▾ │ ☀︎ │ am ▾ │ Aa 1.0 │ ▶ Send to device ▾ │ ✓ 0 │ ✦ AI │ Publish ╮  │  top-centre action bar
-│ ╭──────────╮                                                                  ╭──────────╮ │
-│ │ Insert   │        ┌───────┐        ┌───────┐        ┌ ─ ─ ─ ┐                │Properties│ │
-│ │ Layers   │        │Screen │───────▶│Screen │───────▶  ghost   ─ ─ ▶ native   │Actions   │ │
-│ │ Screens  │        │  A    │        │  B    │        │ Cards › │                │JSON  ⤢   │ │
-│ │ Assets   │        └───────┘        └───────┘        └ ─ ─ ─ ┘                │Code  ⤢   │ │
-│ │ State    │                                                                  │L10n  ⤢   │ │
-│ │ Data     │             floating left panel      canvas      floating right panel │A11y/Perf │ │
-│ ╰──────────╯                                                                  ╰──────────╯ │
-│ ╭ Problems │ Logs │ Process flow │ State │ Network │ Functions │ Sync │ Perf │ Console ╮  │  bottom drawer
-└────────────────────────────────────────────────────────────────────────────────────────────┘
-```
+![Screen editor layout: floating action bar at the top centre, floating left and right panels over the canvas, and the bottom drawer](assets/requirements/screen-editor.svg)
+
+*Figure 21-2. Screen editor layout. Panels float over the canvas; heavy editors open as full-screen overlays.*
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
@@ -1635,7 +1677,7 @@ The screen editor is the canvas of §21.6 with a screen selected for editing and
 | `STU-065` | P11 | MUST | The action graph editor **MUST** be a node-based editor with typed ports, the action catalogue (built-in, custom, functions, flows), inline PXL editing with autocompletion, and validation of every path. | SPEC |
 | `STU-066` | P11 | MUST | A resizable, collapsible **bottom drawer** **MUST** provide tabs fed by paired devices (`DEV-020`): **Problems** (validation), **Logs**, **Process flow** (visual timeline and graph of action runs; clicking a step selects the node or action in the editor), **State**, **Network**, **Functions** (with server-side logs), **Sync**, **Performance** and **Console** (PXL against device state). The drawer **MUST** support choosing the source device, filters, search, pause and export. | SPEC |
 | `STU-067` | P11 | MUST | Canvas interactions **MUST** include: click, shift-click and marquee selection; select parent (Esc) and children (Enter); deep select; drag and drop from the Insert panel onto the canvas or the layer tree with insertion indicators for rows, columns and stacks; reparenting by drag; wrap selection in a layout widget and unwrap; copy, paste and duplicate across screens, plugins and apps (with ID remapping and dependency reporting); smart guides and distance measurement; keyboard nudging; zoom 10–400%, fit screen and fit all. | SPEC |
-| `STU-068` | P11 | MUST | Widgets on the canvas **MUST** behave as they do on the device as far as design mode allows: lists and scroll views scroll, tabs and page views switch, text wraps and overflows identically, animations can be scrubbed. Actions that navigate, call networks or functions are **not** executed on the canvas; interactive testing happens on the device (§20). | SPEC |
+| `STU-068` | P11 | MUST | The canvas is a design surface: lists and scroll views can be scrolled, tabs and page views switched, text wraps and overflows as laid out by the conformance-tested engine, and animation timelines can be scrubbed. Actions that navigate, call networks or functions are **not** executed on the canvas; interactive testing happens on the device (§20). | SPEC |
 | `STU-069` | P11 | MUST | Every edit **MUST** be undoable (per-plugin undo history persisted across reloads for the session) and autosaved; the history panel **MUST** list snapshots with author and time, compare any two and restore any one (`SRV-031`). | SPEC |
 
 ### 21.8 Safety rules
@@ -1656,7 +1698,7 @@ The screen editor is the canvas of §21.6 with a screen selected for editing and
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `STU-080` | P11 | MUST | Selecting one or more nodes (with all nested nodes) **MUST** allow **Save as template** in at most two steps: name, description, category, tags, auto-generated thumbnail, parameters to expose (chosen from props of the selection), and visibility. | SPEC |
-| `STU-081` | P11 | MUST | Template visibility **MUST** be `private` (only the author can see and reuse it), `organization` (every member of the organization — "Team" in the UI — can see and reuse it) or `public` (everyone on the installation, and on the public marketplace in SaaS, `SAAS-006`). Changing visibility to `public` **MUST** run an automated scan (no secrets, no private URLs, no personal data) and **MAY** require moderation. | SPEC |
+| `STU-081` | P11 | MUST | Template visibility **MUST** be `private` (only the author can see and reuse it), `organization` (every member of the organization — "Team" in the UI — can see and reuse it) or `public` (everyone on the installation, and, on multi-tenant installations, in the public gallery, `SAAS-006`). Changing visibility to `public` **MUST** run an automated scan (no secrets, no private URLs, no personal data) and **MAY** require moderation. | SPEC |
 | `STU-082` | P11 | MUST | Saving a template **MUST** capture its dependencies (tokens, assets, components) and convert references to page state into parameters, or flag what cannot be converted. | SPEC |
 | `STU-083` | P11 | MUST | Inserting a template **MUST** copy it with new IDs and prompt for its parameters; inserted content is independent of the template afterwards. | SPEC |
 | `STU-084` | P11 | MUST | **Extract to component** **MUST** turn a selection into a linked component with props, slots and events; the original selection is replaced by an instance. Editing the component **MUST** show which instances will change before saving; instances **MAY** override props and **MAY** be detached. | SPEC |
@@ -1688,9 +1730,9 @@ The screen editor is the canvas of §21.6 with a screen selected for editing and
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `STU-120` | P11 | MUST | Canvases **MUST** pan and zoom at 60 fps with 100 screens (plugin canvas) or 200 plugins (app canvas) on the reference laptop (§30). Screens outside the viewport or below a zoom threshold **MUST** be drawn from cached snapshots (`RT-051`) and re-rendered live only when visible at sufficient zoom. | SPEC |
+| `STU-120` | P11 | MUST | Canvases **MUST** pan and zoom at 60 fps with 100 screens (plugin canvas) or 200 plugins (app canvas) on the reference laptop (§30). Screens outside the viewport or below a zoom threshold **MUST** be drawn from cached rasterised snapshots and re-rendered only when visible at sufficient zoom. | SPEC |
 | `STU-121` | P11 | MUST | A property change **MUST** be reflected on the canvas within 50 ms p95. | SPEC |
-| `STU-122` | P11 | MUST | Studio's initial load **MUST** reach Largest Contentful Paint in ≤ 2.5 s on a typical broadband connection; the initial JavaScript **MUST** stay under 1.5 MiB compressed, with editors, the canvas runtime and overlays code-split and loaded on demand. | SPEC |
+| `STU-122` | P11 | MUST | Studio's initial load **MUST** reach Largest Contentful Paint in ≤ 2.5 s on a typical broadband connection; the initial JavaScript **MUST** stay under 1.5 MiB compressed, with editors, the canvas and overlays code-split and loaded on demand. | SPEC |
 | `STU-123` | P11 | MUST | Opening a full-screen overlay **MUST** take ≤ 150 ms after its code is loaded. | SPEC |
 
 ---
@@ -1703,10 +1745,10 @@ The screen editor is the canvas of §21.6 with a screen selected for editing and
 |---|---|---|---|---|
 | `CLI-001` | P2 | MUST | `plux` **MUST** be a single static Go binary for Linux, macOS and Windows (amd64, arm64), installable via Homebrew, Scoop, a verified install script, container image and `go install`. | SPEC |
 | `CLI-002` | P2 | MUST | `plux login` **MUST** use the OAuth 2.0 device authorization grant; CI **MUST** authenticate with OIDC workload identity or scoped tokens (`SRV-064`). | SPEC |
-| `CLI-003` | P2 | MUST | Commands **MUST** include: `login`, `logout`, `whoami`, `init`, `doctor`, `validate`, `build` (local compile), `diff`, `publish`, `pull`, `release list/promote/rollback`, `export`, `import`, `keys`. P4 adds `codegen` and `native sync`; P7 adds `fn new/build/test/deploy/logs`; P8 adds `l10n pull/push`; P10 adds `dev pair/logs`; P12 adds `ai`. | SPEC |
+| `CLI-003` | P2 | MUST | Commands **MUST** include: `login`, `logout`, `whoami`, `init`, `doctor`, `validate`, `build` (local compile), `diff`, `publish`, `pull`, `release list/promote/rollback`, `export`, `import`, `keys`. P4 adds `create`, `codegen`, `native scan` and `native sync`; P7 adds `fn new/build/test/deploy/logs`; P8 adds `l10n pull/push`; P10 adds `dev pair/logs`; P12 adds `ai`. | SPEC |
 | `CLI-004` | P2 | MUST | `plux pull` **MUST** download the current release for an environment and channel into the host project as a baseline (`SYN-007`), together with the root public keys. | SPEC |
 | `CLI-005` | P1 | MUST | `validate` and `build` **MUST** work fully offline against a local directory (Git layout, `SCH-006`) so CI can validate changes without a server. | SPEC |
-| `CLI-006` | P4 | MUST | `plux native sync` **MUST** upload the host build's native catalogue (native routes, custom widgets, custom actions) generated by `plux_generator`. | SPEC |
+| `CLI-006` | P4 | MUST | `plux native scan` **MUST** build the host's native catalogue (native routes from router discovery or startup registration, native slots from `plux.yaml`, custom actions) by static analysis, without changes to host code, and `plux native sync` **MUST** upload it for a host build. | SPEC |
 | `CLI-007` | P2 | MUST | Every command **MUST** support `--json` output, documented exit codes and a non-interactive mode; interactive prompts **MUST** never block in CI. | SPEC |
 | `CLI-008` | P2 | SHOULD | Shell completion for bash, zsh, fish and PowerShell **SHOULD** be generated. | SPEC |
 
@@ -1718,18 +1760,31 @@ The screen editor is the canvas of §21.6 with a screen selected for editing and
 | `TST-002` | P5 | MUST | `plux test` **MUST** run scenarios headlessly in CI using Flutter's test harness with the real runtime, and report results in JUnit XML and to Studio. | SPEC |
 | `TST-003` | P8 | MUST | Golden (visual regression) tests **MUST** render pages per device frame, locale, theme and text scale, compare them with approved baselines, and optionally block publication on unapproved differences. | SPEC |
 | `TST-004` | P5 | SHOULD | Mock servers **SHOULD** be generated from imported OpenAPI definitions for local development and tests. | SPEC |
-| `TST-005` | P9 | MUST | Release policies **MUST** be able to require passing Plux tests and golden tests before production (mandatory under the `banking` profile). | SPEC |
+| `TST-005` | P9 | MUST | Release policies **MUST** be able to require passing Plux tests and golden tests before production (mandatory under the `maximum` profile). | SPEC |
 
 ### 22.3 Developer experience and documentation
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `DX-001` | P4 | MUST | The quick start **MUST** get a new developer from `flutter create` to a published Plux page on a device in ≤ 10 minutes (`HST-034`). | SPEC |
-| `DX-002` | P3 | MUST | A documentation site **MUST** cover concepts, quick start, guides per use case (banking, delivery, campaigns, super-app), the widget catalogue (generated from descriptors), the action catalogue, PXL reference, API references (dartdoc, Go doc, protobuf docs), the security whitepaper, the compliance pack and runbooks. | SPEC |
+| `DX-002` | P3 | MUST | A documentation site **MUST** cover concepts, quick start, guides per use case (financial services, delivery, campaigns, super-app, no-code apps), the widget catalogue (generated from descriptors), the action catalogue, PXL reference, API references (dartdoc, Go doc, protobuf docs), the security whitepaper, the compliance pack and runbooks. | SPEC |
 | `DX-003` | P1 | MUST | Every error and diagnostic **MUST** have a stable code (Appendix F), a clear message, the likely cause, a suggested fix and a link to its documentation page. | SPEC |
-| `DX-004` | P5 | MUST | Reference host apps **MUST** be maintained: **Plux Bank** (accounts, transfers with SCA, loan calculator via Functions, KYC capture, secure PIN, Amharic/English/German, `banking` profile) and **Plux Express** (catalogue, cart, scheduled campaign, A/B banners, live order tracking via WebSocket, courier flow with offline outbox), plus a minimal **Starter** app. | SPEC |
+| `DX-004` | P5 | MUST | Reference host apps **MUST** be maintained: **Plux Bank** (accounts, transfers with SCA, loan calculator via Functions, KYC capture, secure PIN, English/German/Arabic/Amharic, `maximum` profile) and **Plux Express** (catalogue, cart, scheduled campaign, A/B banners, live order tracking via WebSocket, courier flow with offline outbox), plus a minimal **Starter** app. | SPEC |
 | `DX-005` | P9 | MAY | A VS Code extension **MAY** provide schema validation, PXL highlighting and completion, and CLI integration for developers authoring Plux JSON in repositories. | SPEC |
 | `DX-006` | P3 | MUST | Every release of every component **MUST** have release notes and, where needed, an upgrade guide. | SPEC |
+
+### 22.4 No-code app generation
+
+Two adoption modes are first-class: **no-code** (Plux generates the whole Flutter project and everything else is built in Studio) and **embedded** (an existing app adds the package). In no-code mode developers never need to open the generated code.
+
+| ID | Phase | Priority | Requirement | Status |
+|---|---|---|---|---|
+| `GEN-001` | P4 | MUST | Creating an app **MUST** be able to produce a complete, ready-to-build Flutter project — via `plux create` (P4) and Studio download (P11) — containing: app name, bundle and application IDs, icons and splash screen, the Plux runtime wired in with root keys and configuration, an embedded baseline release whose entry is the app's default plugin, platform permissions and usage descriptions derived from the plugins' declared capabilities, push-notification configuration, and build scripts. | SPEC |
+| `GEN-002` | P4 | MUST | The generated project **MUST** build and run unchanged with the pinned Flutter version on Android and iOS, and **MUST** be verified in CI by generating, building and launching a sample app. | SPEC |
+| `GEN-003` | P4 | MUST | The generated project **MUST** be deliverable as a zip download, as a push to a Git repository, or into a local directory, and **MUST** include CI templates (GitHub Actions and GitLab CI) for signed release builds. | SPEC |
+| `GEN-004` | P11 | MUST | Studio **MUST** manage the native shell settings of a no-code app — name, icons, splash, identifiers, version, permissions, optional packages, push configuration — and **MUST** detect when a change requires a new store build ("shell update required"), showing exactly what changed and offering a regenerated project or a patch. | SPEC |
+| `GEN-005` | P4 | MUST | Everything that does not change the native shell (screens, flows, state, data, functions, translations, themes) **MUST** ship through Plux releases without regenerating or rebuilding the project. | SPEC |
+| `GEN-006` | P4 | MUST | Generated projects **MUST** remain valid embedded-mode projects: a team **MAY** later add native code to them without losing any Plux capability. | SPEC |
 
 ---
 
@@ -1739,7 +1794,8 @@ AI is a first-class authoring method in Plux 1.0. It is **provider-agnostic**, d
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `AI-001` | P12 | MUST | AI access **MUST** go through a provider interface with adapters for Google Gemini (free tier), Groq, OpenRouter, Ollama (local and on-premises) and any OpenAI-compatible endpoint (e.g. vLLM, LM Studio). Providers and models are configured per installation and organisation; AI is disabled until configured. | SPEC |
+| `AI-001` | P12 | MUST | AI access **MUST** use the **OpenAI-compatible chat completions API** as its primary interface, because most providers and local servers speak it (Ollama, vLLM, LM Studio, Groq, OpenRouter, Google Gemini's compatibility endpoint and others); native adapters are added only where a needed feature is missing. Providers and models are configured per installation and organisation; AI is disabled until configured. | SPEC |
+| `AI-007` | P12 | MUST | Documentation and setup **MUST** recommend two free defaults — a local Ollama model (private, no data leaves the installation) and a free hosted model through any OpenAI-compatible provider — while allowing operators to configure any paid provider. | SPEC |
 | `AI-002` | P12 | MUST | Requests **MUST** use the provider's structured-output (JSON Schema) mode where available and JSON mode plus schema instructions otherwise. Every response **MUST** be validated by the same structural and semantic validators as human edits. | SPEC |
 | `AI-003` | P12 | MUST | Invalid output **MUST** trigger an automatic repair loop that sends the validator's diagnostics back to the model, up to 3 attempts, before reporting failure. | SPEC |
 | `AI-004` | P12 | MUST | Prompts **MUST** be grounded in the organisation's own context: compact widget descriptors, design tokens, available components and templates, state and data-source schemas, translation keys and functions, selected by relevance to fit the model's context window, so that output uses the organisation's design system. | SPEC |
@@ -1763,7 +1819,7 @@ Payments are the lowest-priority capability and build on the security foundation
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `PAY-001` | P13 | MUST | A server-side `PaymentProvider` interface **MUST** support creating payment intents, redirects or in-app confirmations, status queries, refunds and webhooks; adapters **MUST** be provided for Telebirr, Chapa, M-Pesa (Ethiopia) and Stripe. | SPEC |
+| `PAY-001` | P13 | MUST | A server-side `PaymentProvider` interface **MUST** support creating payment intents, redirects or in-app confirmations, status queries, refunds and webhooks; first-party adapters **MUST** be provided for Stripe and Adyen, and **SHOULD** be provided for PayPal/Braintree; regional providers (e.g. M-Pesa, Flutterwave, Chapa, Telebirr) plug into the same interface. | SPEC |
 | `PAY-002` | P13 | MUST | Amounts **MUST** be computed or verified server-side (in a Function or the payment service); the client-supplied amount is never trusted. | SPEC |
 | `PAY-003` | P13 | MUST | Card data **MUST** never pass through Plux state, bundles, logs or servers; card entry uses the provider's hosted fields or SDK, keeping Plux deployments in PCI DSS SAQ A scope. | SPEC |
 | `PAY-004` | P13 | MUST | Payments above a configurable threshold **MUST** require SCA transaction signing with dynamic linking (`SEC-027`, `SEC-028`); card 3-D Secure is delegated to the provider. | SPEC |
@@ -1789,19 +1845,21 @@ Until Phase 14, one person edits a plugin at a time (`SRV-040`). Phase 14 adds r
 
 ---
 
-## 26. Hosted SaaS
+## 26. Multi-tenant Operation
+
+One Plux installation can serve many independent organisations — for example an internal platform team serving many business units, or an operator offering Plux as a service. This section covers the engineering required for that; commercial matters (pricing, billing, contracts) are outside the scope of this specification.
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `SAAS-001` | P15 | MUST | The hosted service **MUST** isolate tenants with row-level security, per-tenant encryption keys for secrets and confidential bundles, and per-tenant rate limits and quotas. | SPEC |
-| `SAAS-002` | P15 | MUST | Users **MUST** be able to sign up, verify email, create an organisation and invite members without operator involvement. | SPEC |
-| `SAAS-003` | P15 | MUST | Plans **MUST** define quotas (apps, plugins, monthly active devices, function invocations, AI tokens, storage, retention) with a free tier suitable for solo developers. | SPEC |
-| `SAAS-004` | P15 | MUST | Billing **MUST** support card and SEPA payments through Stripe and local payment through Chapa or Telebirr, with invoices and correct VAT handling. | SPEC |
-| `SAAS-005` | P15 | MUST | Usage metering **MUST** be accurate, auditable and visible to customers. | SPEC |
-| `SAAS-006` | P15 | MUST | A public marketplace **MUST** list public templates and components with previews, ratings and moderation. | SPEC |
-| `SAAS-007` | P15 | MUST | A public status page and documented SLAs **MUST** be provided. | SPEC |
-| `SAAS-008` | P15 | SHOULD | Customers **SHOULD** be able to choose a data region (at least EU — Frankfurt). | SPEC |
-| `SAAS-009` | P15 | MUST | Legal documents **MUST** be published: terms, privacy policy, data processing agreement, sub-processor list and, for operation from Germany, an Impressum. | SPEC |
+| `SAAS-001` | P15 | MUST | A multi-tenant installation **MUST** isolate organisations with row-level security, per-tenant encryption keys for secrets and confidential bundles, and per-tenant rate limits; isolation **MUST** be verified by automated cross-tenant access tests. | SPEC |
+| `SAAS-002` | P15 | MUST | When enabled by the operator, users **MUST** be able to sign up, verify email, create an organisation and invite members without operator involvement. | SPEC |
+| `SAAS-003` | P15 | MUST | Operators **MUST** be able to assign limit profiles (§30.4) to organisations, covering apps, plugins, monthly active devices, function invocations, AI usage, storage and retention. | SPEC |
+| `SAAS-004` | P15 | — | Withdrawn: billing is a commercial concern outside this specification. | WITHDRAWN |
+| `SAAS-005` | P15 | MUST | Usage metering **MUST** be accurate and auditable, visible to each organisation, and exported through a documented interface that external billing systems can consume. | SPEC |
+| `SAAS-006` | P15 | MUST | A public gallery **MUST** list templates and components with visibility `public`, with previews, ratings and moderation. | SPEC |
+| `SAAS-007` | P15 | MUST | The installation **MUST** expose a machine-readable status endpoint suitable for a public status page. | SPEC |
+| `SAAS-008` | P15 | SHOULD | Operators **SHOULD** be able to run region-specific installations and assign organisations to a data region. | SPEC |
+| `SAAS-009` | P15 | — | Withdrawn: legal documents are a commercial concern outside this specification. | WITHDRAWN |
 
 ---
 
@@ -1818,7 +1876,7 @@ Until Phase 14, one person edits a plugin at a time (`SRV-040`). Phase 14 adds r
 | `DEP-030` | P2 | MUST | Upgrades **MUST** be supported from any N-1 minor version with automatic migrations; release notes **MUST** state upgrade steps and any required actions. | SPEC |
 | `DEP-040` | P9 | MUST | **Air-gapped** installation **MUST** be supported: an offline bundle (images, charts, docs), no required outbound connections except those the customer enables, a documented egress list (attestation revocation lists and roots, optional Play Integrity verification endpoint, push services) with instructions for mirroring, and local AI via Ollama. | SPEC |
 | `DEP-041` | P2 | MUST | The server **MUST** serve bundles and deltas itself when no CDN is configured, and **MUST** support any CDN in front of object storage because artifacts are immutable and content-addressed. | SPEC |
-| `DEP-050` | P9 | SHOULD | Reference infrastructure-as-code modules (OpenTofu/Terraform) **SHOULD** be provided for AWS, Google Cloud and Azure, and an on-premises reference architecture for banks. | SPEC |
+| `DEP-050` | P9 | SHOULD | Reference infrastructure-as-code modules (OpenTofu/Terraform) **SHOULD** be provided for AWS, Google Cloud and Azure, and an on-premises reference architecture for regulated industries. | SPEC |
 | `DEP-051` | P9 | MUST | A sizing guide **MUST** document resource needs by active devices, apps and publish frequency, backed by load-test results (`QA-007`). | SPEC |
 | `DEP-060` | P5 | SHOULD | A public demonstration environment **SHOULD** run the latest release with the reference apps, reset nightly, with abuse and cost controls. | SPEC |
 
@@ -1870,7 +1928,7 @@ This section concerns how Plux itself is verified. §22.2 covers the testing too
 
 | Profile | Definition |
 |---|---|
-| **Low-end Android** | 2–3 GB RAM, entry-level octa-core SoC, Android 11+ (representative of popular Tecno/Itel/Infinix devices) |
+| **Low-end Android** | 2–3 GB RAM, entry-level octa-core SoC, Android 11+ (representative of entry-level devices common in emerging markets) |
 | **Mid-tier Android** | Pixel 6a / Galaxy A-series class, Android 14+ |
 | **iOS reference** | iPhone 11 / SE (2nd gen) class, iOS 16+ |
 | **Slow network** | 750 kbit/s down, 250 kbit/s up, 300 ms RTT, 1% loss ("3G") |
@@ -1914,6 +1972,26 @@ This section concerns how Plux itself is verified. §22.2 covers the testing too
 | Bundled image bytes | 1 MiB | 5 MiB |
 | Concurrent animations | 10 | 30 |
 
+### 30.4 Limits and quotas
+
+Every size and resource in Plux is governed by one limits framework. Limits are set hierarchically — installation → organisation → app → plugin — and a lower level can only tighten a limit set above it.
+
+| Scope | Limits (defaults in Appendix H) |
+|---|---|
+| **Release and bundles** | Total app release size; per-plugin bundle size; per-page section size; total and per-asset bytes; fonts; device function module size |
+| **Counts** | Plugins per app; pages per plugin; nodes per page; components; locales; translation keys; functions; data sources; experiments |
+| **Device** | Disk quota for releases; memory cache; local database size; outbox size; telemetry buffer; image cache |
+| **Server** | Function time, memory, output and HTTP calls; publish frequency; AI usage; API rate limits; storage and retention |
+
+| ID | Phase | Priority | Requirement | Status |
+|---|---|---|---|---|
+| `LIM-001` | P2 | MUST | All limits **MUST** be defined in one registry with a key, unit, default, hard maximum and the scopes at which it can be set; the compiler, server, runtime and Studio **MUST** read limits from this registry rather than hard-coding values. | SPEC |
+| `LIM-002` | P2 | MUST | Limits **MUST** be configurable at installation, organisation, app and plugin level, and a lower level **MUST NOT** be able to raise a limit set above it. | SPEC |
+| `LIM-003` | P2 | MUST | Publication **MUST** fail with a clear diagnostic when a release would exceed a limit, and **MUST** warn at 80% of any limit. | SPEC |
+| `LIM-004` | P3 | MUST | Device-side limits **MUST** be delivered in the signed app bundle and enforced by the runtime, which **MUST** degrade gracefully (evict caches, pause telemetry, refuse new outbox entries with a typed error) rather than fail. | SPEC |
+| `LIM-005` | P2 | MUST | Current usage against every limit **MUST** be readable through the API and shown in Studio per app and plugin (`STU-025`). | SPEC |
+| `LIM-006` | P9 | MUST | Changing a limit **MUST** be audited, and raising an organisation-level limit **MUST** be subject to the approval engine when a policy requires it. | SPEC |
+
 ---
 
 ## 31. Standards and Compliance Mapping
@@ -1922,7 +2000,7 @@ Plux is designed to *support* customers' compliance; certification of a customer
 
 | Standard / regulation | Relevance | Plux requirements |
 |---|---|---|
-| OWASP MASVS v2 (L2 + RESILIENCE), OWASP MASTG | Mobile app security baseline expected by banks | §15.2–15.7, `SEC-190` |
+| OWASP MASVS v2 (L2 + RESILIENCE), OWASP MASTG | Mobile app security baseline expected in regulated industries | §15.2–15.7, `SEC-190` |
 | OWASP ASVS 5.0 (L2), OWASP API Security Top 10 (2023) | Server, API and Studio security | §15.8, `SEC-109` |
 | RFC 9449 (DPoP), RFC 9068 (JWT access tokens), RFC 7638 (JWK thumbprint), RFC 8693 (token exchange), RFC 8628 (device authorization grant) | Sender-constrained tokens and identity | §15.3, `CLI-002` |
 | Android Key Attestation, Play Integrity API, Apple App Attest | Device and app integrity | `SEC-002`–`SEC-004` |
@@ -1930,10 +2008,10 @@ Plux is designed to *support* customers' compliance; certification of a customer
 | PSD2 RTS on SCA (Commission Delegated Regulation (EU) 2018/389) | Strong customer authentication, dynamic linking | `SEC-027`, `SEC-028`, `PAY-004` |
 | PCI DSS v4.0.1 | Card payments | `PAY-003` (SAQ A scope) |
 | GDPR / DSGVO | Personal data in the EU | §15.11 |
-| Ethiopia Personal Data Protection Proclamation No. 1321/2024 | Personal data in Ethiopia | §15.11 |
-| National Bank of Ethiopia directives (electronic payments, cyber-risk, outsourcing) | Ethiopian banking customers | Self-hosting (§27), audit (§15.10), governance (§18) — mapping maintained in `docs/compliance/` |
+| Other national data-protection laws (e.g. UK GDPR, Brazil's LGPD, Ethiopia's Proclamation No. 1321/2024) | Personal data outside the EU | §15.11, mappings in `docs/compliance/` |
+| National financial-regulator directives (electronic payments, cyber-risk, outsourcing) | Regulated customers in each jurisdiction | Self-hosting (§27), audit (§15.10), governance (§18) — mappings maintained in `docs/compliance/` |
 | DORA (Regulation (EU) 2022/2554) | EU financial entities' ICT third-party risk | Self-hosting, audit export, exit (data export), incident information, documented SLAs — `docs/compliance/dora.md` |
-| European Accessibility Act (Directive (EU) 2019/882), EN 301 549, WCAG 2.2 AA | Accessibility of banking and e-commerce apps | §17.2 |
+| European Accessibility Act (Directive (EU) 2019/882), EN 301 549, WCAG 2.2 AA | Accessibility of financial and e-commerce apps | §17.2 |
 | SLSA v1.0 L3, Sigstore, CycloneDX | Supply-chain integrity | §29, `DEP-001` |
 | OpenTelemetry, W3C Trace Context | Observability interoperability | §19 |
 | OpenAPI 3.1, GraphQL, Standard Webhooks | Integration | `DAT-002`, `SRV-002`, `SRV-063` |
@@ -1941,7 +2019,7 @@ Plux is designed to *support* customers' compliance; certification of a customer
 | W3C Design Tokens (DTCG) | Design system interchange | `THM-001` |
 | RFC 8785 (JCS), RFC 6902 (JSON Patch), JSON Schema 2020-12 | Document model | §7 |
 | Conventional Commits, SemVer | Engineering process | §29 |
-| Apple App Store Review Guidelines (2.5.2), Google Play Device and Network Abuse policy | No downloaded executable code | `SEC-054`, `BND-009` |
+| Apple App Store Review Guidelines (2.5.2), Google Play Device and Network Abuse policy | No downloaded native code; interpreted code only without direct platform access | `SEC-054`, `BND-009`, `FN-050` |
 
 ---
 
@@ -1961,9 +2039,9 @@ Significant decisions are recorded as ADRs in `docs/adr/` using MADR. These ADRs
 | 0008 | Riverpod as the runtime state engine | P3 |
 | 0009 | PXL: a typed expression language compiled to bytecode instead of embedding a scripting engine | P1 |
 | 0010 | Layered widget model instead of one-to-one mirroring of Flutter | P1 |
-| 0011 | Plux Functions as Go compiled to WebAssembly on `wazero`; choice of standard Go vs TinyGo | P7 |
+| 0011 | Plux Functions: standard Go compiled to WebAssembly; `wazero` on the server, an interpreter on the device; explicit placement | P7 |
 | 0012 | DPoP with hardware-backed keys plus platform attestation for device trust | P6 |
-| 0013 | Studio canvas rendered by the Plux runtime compiled to Flutter Web (design mode) | P11 |
+| 0013 | Plux Canvas: TypeScript WebGL2 design surface with a Flutter-compatible layout engine and conformance suite | P11 |
 | 0014 | Studio on Bun with a backend-for-frontend; React and shadcn/ui | P11 |
 | 0015 | Single draft with snapshots and exclusive plugin locks instead of branching (to be superseded by CRDTs in P14) | P2 |
 | 0016 | Local database adapter model with Drift as default | P5 |
@@ -1972,7 +2050,9 @@ Significant decisions are recorded as ADRs in `docs/adr/` using MADR. These ADRs
 | 0019 | Approvals bound to artifact content hashes | P9 |
 | 0020 | Build-once-promote app releases as the unit of activation | P2 |
 | 0021 | Sync all plugins at app start instead of lazy loading | P3 |
-| 0022 | Licensing model of the project | P0 |
+| 0022 | Open-core licensing: Apache-2.0 client side, AGPL-3.0 server and Studio, commercial `ee/` | P0 |
+| 0023 | Mixed native/plugin screens: native slots and `PluxView` with shared exposed state | P4 |
+| 0024 | No-code generated projects and shell-update detection | P4 |
 
 ---
 
@@ -2009,43 +2089,61 @@ plux/
 │   ├── plux_flutter/          # core runtime
 │   ├── plux_devtools/  plux_security/  plux_db_drift/
 │   ├── plux_lottie/  plux_rive/  plux_maps/  plux_charts/  plux_media/  plux_scanner/  plux_payments/
-│   └── plux_annotations/  plux_generator/
+│   └── plux_functions/        # on-device WASM interpreter (optional)
 ├── apps/
 │   ├── plux_dev/              # Plux Dev companion app
-│   ├── plux_bank/             # reference banking host app
+│   ├── plux_bank/             # reference financial host app
 │   ├── plux_express/          # reference delivery host app
 │   └── starter/               # minimal host app
 ├── studio/                    # Bun workspace
 │   ├── apps/web/              # React SPA
 │   ├── apps/bff/              # Bun backend-for-frontend
-│   └── packages/              # ui (shadcn), canvas overlay, api-client, schema types, pxl language service
+│   └── packages/              # ui (shadcn), canvas (Plux Canvas + layout engine), api-client, schema types, pxl language service
 ├── tools/                     # code generators, coverage checkers, scripts
+├── ee/                        # enterprise-edition modules (commercial license)
 ├── deploy/
 │   ├── compose/  helm/  terraform/
 │   └── observability/         # Grafana dashboards, Prometheus rules
 ├── test/
-│   ├── e2e/  load/  security/  compat/
+│   ├── e2e/  load/  security/  compat/  layout-conformance/
 └── .github/                   # workflows, CODEOWNERS, templates
 ```
 
 ---
 
-## 34. Open Decisions and Risks
+## 34. Decisions, Editions and Risks
 
-### 34.1 Open decisions
+### 34.1 Decisions taken
 
-| Decision | Owner | Notes |
+| Decision | Outcome | Record |
 |---|---|---|
-| Licensing model (open source core with commercial enterprise features, source-available, or proprietary) | Maintainer | Affects adoption, sales to banks and the portfolio value of the repository. ADR-0022. |
-| Delta algorithm | Maintainer | zstd `--patch-from` is the working assumption; confirm with benchmarks on real bundles. ADR-0003. |
-| Functions toolchain: standard Go vs TinyGo | Maintainer | Trade-off between compatibility and module size / start-up time. ADR-0011. |
-| Canvas rendering performance with many live screens in Flutter Web | Maintainer | Spike at the start of P11; fallback is snapshot-based rendering with live rendering of the focused screen only. |
-| Default free AI provider | Maintainer | Free-tier terms change; the adapter layer keeps this reversible. |
-| Default analytics store at scale | Maintainer | PostgreSQL vs ClickHouse threshold. |
-| Future support for web and desktop hosts and "export to Flutter code" | Maintainer | Post-1.0. |
-| Trademark and naming check for "Plux" | Maintainer | Before public launch. |
+| Delta algorithm | Section-level content addressing plus zstd `--patch-from` for changed sections. One small library on the device serves both transport compression and patching; decoding is fast and memory-light; bsdiff is slow, memory-hungry and tuned for executables rather than structured data. Benchmarks against bsdiff and HDiffPatch remain as verification (`QA-007`). | ADR-0003 |
+| Functions toolchain | Standard Go (`GOOS=wasip1`, `go:wasmexport`), not TinyGo: full standard library, reflection and `encoding/json` compatibility outweigh module size, which is controlled by optimisation, one module per plugin, and limits. | ADR-0011 |
+| Function placement | Each function runs on the `server` or on the `device`, never both implicitly. | ADR-0011 |
+| Studio canvas | Plux Canvas: a TypeScript WebGL2 design surface with a Flutter-compatible layout engine and a conformance suite; no Flutter Web build. The device is the source of truth. | ADR-0013 |
+| Default AI provider | OpenAI-compatible API as the primary interface; recommended free defaults are a local Ollama model and a free hosted model; any paid provider can be configured. | ADR-0017 |
+| Analytics store | PostgreSQL by default; ClickHouse as the supported alternative above roughly 10 million events per day. | ANL-010 |
+| Name and brand | "Plux" with the wordmark and tokens of Appendix J. | Appendix J |
 
-### 34.2 Risks
+### 34.2 Editions and licensing
+
+Plux is developed in **one public repository**, including this specification, under an **open-core** model (ADR-0022):
+
+| Part | License | Rationale |
+|---|---|---|
+| Runtime packages, CLI, schema, Functions SDK | Apache-2.0 | Anyone can ship the runtime inside their apps without copyleft obligations, maximising adoption. |
+| Server and Studio core | AGPL-3.0 | Free to self-host and modify; a hosted derivative must publish its changes. Organisations that cannot accept AGPL can obtain a commercial license. |
+| Enterprise features (`ee/` directory) | Commercial license | Source visible; production use requires a license. |
+
+| ID | Phase | Priority | Requirement | Status |
+|---|---|---|---|---|
+| `GOV-032` | P0 | MUST | Security capabilities — DPoP, attestation, signed and anti-rollback updates, sandboxing, encryption — **MUST** be part of the open-source core and **MUST NOT** be gated by edition. | SPEC |
+| `GOV-033` | P9 | MUST | Enterprise-edition code **MUST** live under `ee/` with a clean interface boundary, so the open-source core builds, tests and runs without it; enterprise features **MUST** be enabled only by the offline license file (`GOV-030`). | SPEC |
+| `GOV-034` | P0 | MUST | Contributions **MUST** be accepted under a Contributor License Agreement that permits dual licensing. | SPEC |
+
+Candidate enterprise-edition features are SSO/SCIM, advanced approval policies, SIEM export, the air-gapped installation bundle, mini-app mode for third-party partners, and HA support tooling. The final split is recorded in ADR-0022 before P9, and reviewed legally before the first public release.
+
+### 34.3 Risks
 
 | Risk | Impact | Mitigation |
 |---|---|---|
@@ -2054,7 +2152,9 @@ plux/
 | Scope size for a small team | High | Strict phasing; each phase demonstrable; Studio last; `SHOULD`/`MAY` deferrable. |
 | Flutter breaking changes | Medium | Pinned SDK, coverage table, quarterly upgrades, compatibility tests (`QA-010`). |
 | Performance claims not met on low-end devices | High | Benchmarks from P3 on real low-end devices; budgets enforced at compile time. |
-| Free AI tiers become unavailable | Low | Local Ollama path; provider-agnostic adapter. |
+| Free AI tiers become unavailable | Low | Local Ollama path; OpenAI-compatible interface. |
+| Canvas layout diverges from device rendering | Medium | Layout conformance suite in CI (`STU-005`); device preview is authoritative. |
+| On-device interpreter too slow for heavy functions | Medium | Performance target `FN-056`; heavy logic stays server-placed. |
 
 ---
 
@@ -2072,13 +2172,16 @@ plux/
 | Confidential bundle | A bundle encrypted per release and delivered only to sufficiently assured devices. |
 | Control document | A small signed document for kill switches, mandatory updates and flags, checked frequently. |
 | Delta | A patch transforming an installed bundle into a newer one. |
-| Design mode | The runtime mode used by the Studio canvas: renders without executing side effects. |
 | DPoP | Demonstrating Proof of Possession (RFC 9449): binds tokens to a client key. |
 | Ghost screen | A translucent representation, on a plugin canvas, of a screen in another plugin that is linked to this plugin. |
 | Last known good | The previous release kept on the device for automatic rollback. |
 | Layer 1 / 2 / 3 | Core mirrored Flutter widgets / Plux components / host-registered custom widgets. |
 | Manifest | The signed description of the release a device should run. |
-| Native route | A host-app screen registered with Plux so plugin pages can navigate to it. |
+| Native route | A host-app screen known to Plux so plugin pages can navigate to it. |
+| Native slot | A host-app widget placed inside a plugin page and rendered natively. |
+| Placement | Where a Plux Function runs: `server` or `device`. |
+| Plux Canvas | Studio's design surface with a Flutter-compatible layout engine. |
+| Route name | A screen's app-wide unique name, used to open it without naming its plugin. |
 | PXL | Plux Expression Language. |
 | RASP | Runtime application self-protection: on-device detection of tampering and hostile environments. |
 | SCA | Strong customer authentication (two of possession, knowledge, inherence). |
@@ -2175,98 +2278,40 @@ A loan calculator page in the `loans` plugin. IDs are shortened for readability;
 
 ---
 
-## Appendix B — Bundle Container and FlatBuffers Outline
+## Appendix B — Bundle Container
 
-This outline is normative in structure; exact field lists are finalised in ADR-0002 and `schema/fbs/`.
+The container layout below is normative. The FlatBuffers schemas of the individual sections are deliberately **not** fixed in this specification: they are designed in P1 under the principles `BND-011`–`BND-018`, recorded in ADR-0002 and maintained in `schema/fbs/`.
 
 ### B.1 Container layout
 
-```
-Offset  Size  Field
-0       4     magic "PLUX"
-4       2     container_version (uint16, little-endian)
-6       2     bundle_kind (1 = plugin, 2 = app, 3 = dev)
-8       4     flags (bit 0 = encrypted, bit 1 = has source map)
-12      4     section_count (uint32)
-16      32    header_hash (SHA-256 of bytes [0,16) || directory)
-48      n×64  section directory entries:
-                 id (16 bytes, UUID or derived key) | kind (uint16) | reserved (uint16)
-                 offset (uint64) | length (uint64) | sha256 (32 bytes) | reserved (4 bytes)
-…       …     section payloads, each 8-byte aligned, each an independent FlatBuffers buffer
-```
+| Offset | Size | Field | Notes |
+|---|---|---|---|
+| 0 | 4 | `magic` | ASCII `PLUX` |
+| 4 | 2 | `container_version` | uint16, little-endian |
+| 6 | 2 | `bundle_kind` | 1 = plugin, 2 = app, 3 = development |
+| 8 | 4 | `flags` | bit 0 = encrypted, bit 1 = has source map |
+| 12 | 4 | `section_count` | uint32 |
+| 16 | 32 | `header_hash` | SHA-256 of bytes 0–15 and the section directory |
+| 48 | 64 × n | section directory | per entry: section ID (16), kind (2), reserved (2), offset (8), length (8), SHA-256 (32), reserved (4) |
+| … | … | section payloads | each 8-byte aligned; each an independent FlatBuffers buffer with its own root type and file identifier |
 
-### B.2 FlatBuffers IDL (abridged)
+### B.2 Section kinds
 
-```fbs
-namespace plux.bundle.v1;
-
-file_identifier "PXB1";
-
-table Meta {
-  app_id: string (required);
-  plugin_id: string;
-  plugin_key: string;
-  version: uint32;
-  schema_version: string;
-  compiler_version: string;
-  min_runtime: string;
-  required_features: [string];
-  entry_page: string;
-  capabilities: Capabilities;
-}
-
-table Page {
-  id: string (required);
-  key: string (required);
-  kind: PageKind;
-  params: [ParamDecl];
-  state: [StateDecl];
-  lifecycle: [EventBinding];
-  root: uint32;                 // index into nodes
-  nodes: [Node];                // flat array, children by index
-  security: PageSecurity;
-}
-
-table Node {
-  id: uint32;                   // compact per-page node id (source map → document id)
-  type: uint16;                 // widget registry index
-  props: [Prop];
-  children: [uint32];
-  slots: [Slot];
-  events: [EventBinding];
-  visible: int32 = -1;          // PXL expression index, -1 = always
-  responsive: [ResponsiveOverride];
-  semantics: Semantics;
-  test_id: string;
-}
-
-table Prop { key: uint16; value: Value; }
-
-union Value {
-  BoolV, IntV, DoubleV, StrRef, DecimalV, MoneyV, ColorV, EnumV,
-  ExprRef, TokenRef, TransRef, AssetRef, EdgeInsetsV, BorderRadiusV,
-  ListV, MapV, NodeRef, StyleRef
-}
-
-table ExprRef { index: uint32; }          // into the pxl section
-table TransRef { key: uint32; args: [NamedExpr]; }
-
-table ActionGraph { id: string; steps: [Step]; entry: uint16; }
-table Step {
-  id: string; action: uint16; input: [NamedValue];
-  next: int16 = -1; on_success: int16 = -1; on_error: int16 = -1;
-  branches: [Branch]; retry: RetryPolicy; timeout_ms: uint32;
-}
-
-table PxlProgram {
-  constants: [Value];
-  code: [ubyte];                // bytecode
-  reads: [string];              // state paths read, for precise subscriptions
-  result_type: TypeRef;
-}
-
-root_type Page;                 // each section declares its own root via file_identifier per kind
-```
+| Kind | Content | One per |
+|---|---|---|
+| `meta` | App/plugin identity, version, compiler and schema versions, required features, capabilities, limits | bundle |
+| `page` | Page declaration, flat node array, override layers, lifecycle bindings | page |
+| `component` | Component definition: props, slots, events, internal state, node array | component |
+| `actions` | Action graphs and flows | plugin |
+| `pxl` | Compiled expression programs and their read sets | plugin |
+| `styles` | Deduplicated style objects | plugin |
+| `strings` | Interned strings | plugin |
+| `l10n` | Translations and locale overrides | locale |
+| `timelines` | Animation timelines | plugin |
+| `schemas` | State, data-source and local-collection schemas | plugin |
+| `assets-index` | Content-addressed asset references | plugin |
+| `wasm` | Device-placed function module | plugin (optional) |
+| `sourcemap` | Node and action indices → document JSON paths (development bundles only) | bundle (optional) |
 
 ### B.3 Manifest (abridged)
 
@@ -2293,7 +2338,7 @@ root_type Page;                 // each section declares its own root via file_i
 
 ## Appendix C — Widget Catalogue
 
-Phase indicates when the widget must be supported by the runtime. Layer 1 names follow Flutter; all serialisable properties are supported unless the coverage table (`WGT-003`) records an exclusion.
+Phase indicates when the widget must be supported by the runtime. Layer 1 names follow Flutter; all serialisable properties are supported unless the coverage table (`WGT-003`) records an exclusion. Layer 3 (native slots) is not listed: its members are whatever widgets each host app exposes (`WGT-030`).
 
 ### C.1 Layer 1 — structural primitives (Plux-specific)
 
@@ -2305,6 +2350,7 @@ Phase indicates when the widget must be supported by the runtime. Layer 1 names 
 | `Responsive` | Different subtrees per window size class | P3 |
 | `Slot` | Placeholder filled by a component instance | P3 |
 | `DataScope` | Binds a data source and exposes loading/empty/error/success states to its subtree | P5 |
+| `NativeSlot` | Places a host-app widget (Layer 3) in the tree with bound props and events | P4 |
 | `FormScope` | Form state container with validation and submission | P5 |
 
 ### C.2 Layer 1 — layout
@@ -2411,9 +2457,9 @@ Dialogs, bottom sheets and snack bars are page kinds and actions (Appendix D), n
 | `AmountInput` | Money entry with currency, limits, locale formatting | P5 | core |
 | `MoneyText` | Locale- and currency-correct money display | P5 | core |
 | `MaskedText` | Masked display (card, account, phone) with reveal | P5 | core |
-| `PhoneInput` | E.164 entry, `+251` default for Ethiopia, country picker | P5 | core |
+| `PhoneInput` | E.164 entry, default region from the device locale, country picker | P5 | core |
 | `IbanInput` | IBAN entry with checksum validation and grouping | P5 | core |
-| `DualCalendarDatePicker` | Gregorian and Ethiopian calendar date picker | P8 | core |
+| `DualCalendarDatePicker` | Gregorian and non-Gregorian calendar date picker | P8 | core |
 | `CountryPicker`, `CurrencyPicker` | Searchable pickers | P5 | core |
 | `ConsentCheckbox` | Versioned consent with linked legal text, records accepted version | P5 | core |
 | `TermsViewer`, `MarkdownView` | Rich legal and content text | P5 | core |
@@ -2427,7 +2473,7 @@ Dialogs, bottom sheets and snack bars are page kinds and actions (Appendix D), n
 | `OnboardingPager` | Paged onboarding with indicators | P5 | core |
 | `SettingsList` | Grouped settings rows | P5 | core |
 | `ProfileHeader` | Avatar, name, actions | P5 | core |
-| `AccountCard` / `BankCard` | Masked card or account with balance, flip animation | P5 | core |
+| `AccountCard` / `PaymentCard` | Masked card or account with balance, flip animation | P5 | core |
 | `TransactionListItem` | Transaction row with amount colouring and status | P5 | core |
 | `StatusTimeline` | Order or application status steps | P5 | core |
 | `LiveEtaCard` | Real-time ETA bound to a stream | P5 | core |
@@ -2466,7 +2512,7 @@ Dialogs, bottom sheets and snack bars are page kinds and actions (Appendix D), n
 | `subscribe`, `unsubscribe` | Data | WebSocket / SSE stream control | P5 |
 | `dbInsert`, `dbUpdate`, `dbUpsert`, `dbDelete`, `dbQuery` | Local DB | Local database operations | P5 |
 | `kvGet`, `kvSet`, `kvRemove` | Local DB | Key-value store | P5 |
-| `invokeFunction` | Compute | Call a Plux Function with typed input/output | P7 |
+| `invokeFunction` | Compute | Call a Plux Function with typed input/output — on the device or the server, according to the function's placement | P7 |
 | `callFlow` | Control | Call a reusable named action graph | P5 |
 | `condition`, `switch` | Control | Branch on PXL | P5 |
 | `forEach` | Control | Bounded iteration over a list | P5 |
@@ -2491,7 +2537,18 @@ Dialogs, bottom sheets and snack bars are page kinds and actions (Appendix D), n
 
 ---
 
-## Appendix E — PXL Expression Language Reference
+## Appendix E — Binding Expressions (PXL)
+
+**PXL is not Go.** It is the small expression language used *inside Studio property fields and conditions* so that screens react to data without code — for example:
+
+| Where | Expression | Meaning |
+|---|---|---|
+| A button's `enabled` prop | `form.loan.valid && page.amount > 0d` | Enable only when the form is valid and an amount is entered |
+| A text's `data` prop | `format.money(page.result.monthlyPayment)` | Show a locale-formatted amount |
+| A node's `visible` condition | `user.tier == "gold"` | Show only to gold customers |
+| A list item's subtitle | `item.status ?? "pending"` | Fallback when a value is missing |
+
+PXL is deliberately small: no loops, no assignments, no I/O, and every evaluation is bounded. Anything that needs real programming is written as a **Plux Function in unrestricted Go** (§16). The functions below are PXL built-ins available in bindings; they do not limit what Go functions can do.
 
 ### E.1 Grammar (abridged, EBNF)
 
@@ -2531,14 +2588,14 @@ decimal     = number "d" ;            (* 12.50d is a decimal literal *)
 | `user` | Host-provided user context attributes |
 | `now` | Current time (frozen per evaluation for determinism) |
 
-### E.3 Standard library
+### E.3 Built-in functions
 
 | Group | Functions |
 |---|---|
 | Strings | `len`, `upper`, `lower`, `trim`, `contains`, `startsWith`, `endsWith`, `replace`, `split`, `join`, `substring`, `padLeft`, `padRight`, `matches` (RE2 subset, bounded) |
 | Numbers | `abs`, `min`, `max`, `round`, `floor`, `ceil`, `clamp`, `int`, `double` |
 | Decimal & money | `decimal`, `money`, `add`, `sub`, `mul`, `div(scale, mode)`, `round(scale, mode)`, `currency`, `amount`, `isZero`, `compare` |
-| Dates | `date`, `dateTime`, `duration`, `addDays`, `addMonths`, `diffDays`, `startOfDay`, `toEthiopian`, `fromEthiopian`, `weekday`, `isBefore`, `isAfter` |
+| Dates | `date`, `dateTime`, `duration`, `addDays`, `addMonths`, `diffDays`, `startOfDay`, `toCalendar(system)`, `fromCalendar(system)`, `weekday`, `isBefore`, `isAfter` |
 | Lists & maps | `size`, `isEmpty`, `first`, `last`, `at`, `slice`, `map`, `filter`, `any`, `all`, `sum`, `sortBy`, `distinct`, `keys`, `values`, `has` (all bounded by the operation budget) |
 | Formatting | `format.number`, `format.money`, `format.date`, `format.percent`, `format.compact`, `format.phone`, `format.iban` (all locale-aware) |
 | Localisation | `t(key, args)`, `plural(n, forms)` |
@@ -2616,7 +2673,7 @@ Every error and diagnostic has a stable code `PLX-NNNN` (`DX-003`). Codes are gr
 server:
   roles: [api, worker, fnrunner]     # or a subset per deployment
   listen: ":8080"
-  publicBaseURL: "https://plux.bank.example"
+  publicBaseURL: "https://plux.acme.example"
 database:
   url: "postgres://plux@db:5432/plux?sslmode=verify-full"
   maxConnections: 50
@@ -2634,16 +2691,17 @@ signing:
     timestamp: "pkcs11:token=plux;object=timestamp-2026-q3"
 auth:
   studio:
-    oidc: { issuer: "https://idp.bank.example", clientID: "plux-studio" }
+    oidc: { issuer: "https://idp.acme.example", clientID: "plux-studio" }
     mfaRequiredFor: [publish, approve, keys, members]
   device:
     accessTokenTTL: "5m"
     dpop: { iatWindow: "60s", nonceRotation: "5m" }
 attestation:
-  android: { packageNames: ["et.bank.app"], certDigests: ["…"], playIntegrity: { mode: "server" } }
-  ios: { teamID: "ABCDE12345", bundleIDs: ["et.bank.app"], environment: "production" }
+  android: { packageNames: ["com.acme.app"], certDigests: ["…"], playIntegrity: { mode: "server" } }
+  ios: { teamID: "ABCDE12345", bundleIDs: ["com.acme.app"], environment: "production" }
 functions:
   defaults: { timeout: "2s", memory: "64MiB", maxHTTPCalls: 10 }
+  device: { enabled: true, timeout: "500ms", memory: "32MiB" }
   egressProxy: "http://fn-egress:3128"
 ai:
   enabled: true
@@ -2653,6 +2711,15 @@ ai:
 telemetry:
   store: "postgres"                  # postgres | clickhouse
   otlpEndpoint: "http://otel-collector:4317"
+limits:                              # installation-level defaults (§30.4)
+  appReleaseSize: "100MiB"
+  pluginBundleSize: "20MiB"
+  pageSectionSize: "1MiB"
+  deviceFunctionModule: "4MiB"
+  pluginsPerApp: 200
+  pagesPerPlugin: 500
+  nodesPerPage: 5000
+  deviceDiskQuota: "200MiB"
 retention:
   auditYears: 10
   developmentReleasesDays: 90
@@ -2673,7 +2740,10 @@ retention:
 | `downloadParallelism` | `int` | 4 | `SYN-010` |
 | `diskQuota` | `int` | 200 MiB | `SYN-012` |
 | `authDelegate` | `PluxAuthDelegate?` | – | `HST-010` |
-| `nativeRoutes` | generated | – | `HST-031` |
+| `router` | `PluxRouterDiscovery?` | – | `HST-031` |
+| `nativeRoutes` | `Map<String, PluxRouteBuilder>` | – | `HST-031` |
+| `nativeSlots` | `Map<String, PluxSlotBuilder>` | – | `WGT-030` |
+| `nativeActions` | `Map<String, PluxActionHandler>` | – | `ACT-060` |
 | `databaseAdapter` | `PluxDatabaseAdapter` | Drift | `DB-001` |
 | `themeMode` | `ThemeMode` | host | `THM-002` |
 | `locale` | `Locale?` | host | `I18N-005` |
@@ -2684,100 +2754,151 @@ retention:
 
 ## Appendix I — Host Integration API Sketch
 
-Illustrative, not final; the generated API reference is authoritative once published.
+Illustrative, not final; the generated API reference is authoritative once published. Existing screens and widgets are **not modified**: everything is registered in one place at startup, and apps using `go_router` or `auto_route` have their routes discovered automatically (`HST-031`).
 
 ```dart
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Plux.initialize(PluxConfig(
-    appId: 'cbe-mobile',
-    endpoint: Uri.parse('https://plux.bank.example'),
+    appId: 'acme-mobile',
+    endpoint: Uri.parse('https://plux.acme.example'),
     environment: 'production',
     startup: const StartupPolicy.useCacheThenSync(),
     activation: ActivationPolicy.atSafePoint,
-    authDelegate: BankAuthDelegate(),          // supplies and refreshes the user token
-    nativeRoutes: $pluxNativeRoutes,           // generated from @PluxNativeRoute annotations
-    customWidgets: $pluxWidgets,               // generated from @PluxWidget
-    customActions: $pluxActions,               // generated from @PluxAction
+    authDelegate: AcmeAuthDelegate(),            // supplies and refreshes the user token
+
+    router: PluxRouterDiscovery.goRouter(appRouter), // existing named routes become native routes
+
+    // Apps without a router package register native routes here instead:
+    // nativeRoutes: {'kyc': (context, params) => const KycScreen()},
+
+    nativeSlots: {                                // existing widgets usable inside plugin pages
+      'AccountCard': (context, props) => AccountCard(account: props.get('account')),
+    },
+    nativeActions: {
+      'openSupportChat': (context, input) => SupportChat.open(context),
+    },
   ));
 
-  Plux.setUserContext(PluxUser(id: pseudonymousId, attributes: {'tier': 'gold', 'region': 'addis'}));
-  Plux.setConsent(PluxConsent(analytics: true, experiments: true));
+  Plux.setUserContext(PluxUser(id: pseudonymousId, attributes: {'tier': 'gold', 'region': 'north'}));
+  Plux.setConsent(const PluxConsent(analytics: true, experiments: true));
 
-  runApp(const ProviderScope(child: BankApp()));
+  runApp(const ProviderScope(child: AcmeApp()));
 }
 
-// A native screen exposed to Plux
-@PluxNativeRoute('native.kyc', params: KycParams, result: KycResult)
-class KycScreen extends StatelessWidget { /* … */ }
+// Opening a plugin screen from native code — by route name only, no plugin involved
+final result = await Plux.open(context, 'loan-calculator', params: {'productId': 'personal-12m'});
 
-// Opening a plugin page from native code with generated, typed routes
-final result = await PluxRoutes.loans.apply(productId: 'personal-12m').push(context);
+// The same, with generated typed APIs (plux codegen)
+final typed = await PluxScreens.loanCalculator(productId: 'personal-12m').push(context);
 
-// Embedding a plugin slot in a native screen
-PluxView(route: PluxRoutes.campaigns.homeBanner, sizing: PluxViewSizing.intrinsic);
+// Mixed screen: plugin content inside a native screen, with inputs and events
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
 
-// go_router integration
-final router = GoRouter(routes: [
-  ...nativeRoutes,
-  ...Plux.goRoutes(prefix: '/p'),              // /p/<plugin>/<page>
+  @override
+  Widget build(BuildContext context) => Column(children: [
+        const NativeHeader(),
+        PluxView('promo-banner',                       // a plugin screen or exported component
+            inputs: {'segment': 'gold'},
+            onEvent: (e) => debugPrint('$e'),
+            sizing: PluxViewSizing.intrinsic),
+        const NativeTransactionsList(),
+      ]);
+}
+
+// Shared state between native code and plugin content on the same screen
+Plux.state<int>('cart.count').watch().listen(updateBadge);
+await Plux.state<int>('cart.count').set(3);
+
+// go_router integration for plugin screens
+final appRouter = GoRouter(routes: [
+  ...existingRoutes,
+  ...Plux.goRoutes(prefix: '/p'),                // /p/<route-name>
 ]);
 
 // Listening to plugin events and sync
 Plux.events.on<LoanApplicationSubmitted>((e) => analytics.log(e));
 Plux.syncEvents.listen((e) => debugPrint('$e'));
-await Plux.sync();                               // manual sync
+await Plux.sync();                                 // manual sync
 ```
 
 ---
 
-## Appendix J — Requirement Index
+## Appendix J — Brand
 
-### J.1 Counts by area
+![Plux wordmark](assets/brand/plux-wordmark.svg)
+
+| Element | Specification |
+|---|---|
+| Wordmark | "Plux" set in **Sora SemiBold** (Open Font License), letter spacing −2%. The letters "Plu" are in Ink, the **x** in Plux Violet — the x reads as a connection point between plugins. |
+| App icon | Plux Violet rounded square (radius 22% of the size) with a white "x" ([`plux-icon.svg`](assets/brand/plux-icon.svg)). |
+| Clear space | At least the height of the "x" on every side. |
+| Minimum size | 16 px height on screen. |
+
+| Token | Light | Dark | Use |
+|---|---|---|---|
+| `brand.ink` | `#0F1222` | `#F5F6FA` | Wordmark letters, primary text |
+| `brand.violet` | `#5B3DF5` | `#8B74FF` | The x, primary actions, selection, arrows |
+| `brand.violet.subtle` | `#EEEAFE` | `#2A2250` | Selected items, lane labels |
+| `brand.mint` | `#12B886` | `#38D9A9` | Success |
+| `brand.amber` | `#F59F00` | `#FFC53D` | Warnings |
+| `brand.surface` | `#F7F8FB` | `#0B0D17` | Canvas background |
+
+Studio, the documentation site and the reference apps use these tokens (`STU-016`). The wordmark files live in `docs/assets/brand/`.
+
+---
+
+## Appendix K — Requirement Index
+
+### K.1 Counts by area (active requirements)
 
 | Area | Count | Area | Count | Area | Count |
 |---|---|---|---|---|---|
-| `SCH` | 22 | `ACT` | 13 | `ANL` | 9 |
-| `WGT` | 15 | `PXL` | 8 | `DEV` | 15 |
-| `CMP` | 19 | `STA` | 8 | `STU` | 79 |
-| `BND` | 11 | `DAT` | 11 | `CLI` | 8 |
-| `REL` | 25 | `DB` | 9 | `TST` | 5 |
-| `SYN` | 15 | `ANI` | 8 | `DX` | 6 |
-| `SRV` | 29 | `THM` | 5 | `AI` | 15 |
-| `RT` | 18 | `AST` | 3 | `PAY` | 8 |
-| `NAV` | 12 | `SEC` | 68 | `COL` | 6 |
-| `HST` | 11 | `FN` | 23 | `SAAS` | 9 |
-| `I18N` | 13 | `GOV` | 16 | `DEP` | 12 |
-| `A11Y` | 8 | `ABT` | 7 | `QA` | 15 |
-| `OBS` | 5 | `CI` | 9 | `NFR` | 22 |
-| | | | | **Total** | **600** |
+| `SCH` | 23 | `WGT` | 16 | `CMP` | 19 |
+| `BND` | 19 | `REL` | 25 | `SYN` | 15 |
+| `SRV` | 29 | `RT` | 16 | `NAV` | 12 |
+| `HST` | 12 | `ACT` | 13 | `PXL` | 8 |
+| `STA` | 8 | `DAT` | 11 | `DB` | 9 |
+| `ANI` | 8 | `THM` | 5 | `AST` | 3 |
+| `SEC` | 68 | `FN` | 32 | `I18N` | 13 |
+| `A11Y` | 8 | `GOV` | 19 | `ABT` | 7 |
+| `OBS` | 5 | `ANL` | 9 | `DEV` | 15 |
+| `STU` | 83 | `CLI` | 8 | `TST` | 5 |
+| `DX` | 6 | `GEN` | 6 | `AI` | 16 |
+| `PAY` | 8 | `COL` | 6 | `SAAS` | 7 |
+| `DEP` | 12 | `QA` | 15 | `CI` | 9 |
+| `NFR` | 22 | `LIM` | 6 |  |  |
+| | | | | **Total** | **636** |
 
-### J.2 Distribution by phase and priority
+Four requirements are `WITHDRAWN` (`RT-050`, `RT-051`, `SAAS-004`, `SAAS-009`) and are kept for traceability.
+
+### K.2 Distribution by phase and priority
 
 | Phase | Theme | MUST | SHOULD | MAY | Total |
 |---|---|---|---|---|---|
-| P0 | Foundations | 12 | 1 | 0 | 13 |
-| P1 | Schema and compiler | 63 | 1 | 0 | 64 |
-| P2 | Backend core | 81 | 2 | 0 | 83 |
-| P3 | Runtime rendering | 66 | 2 | 0 | 68 |
-| P4 | Routing and host integration | 24 | 0 | 0 | 24 |
+| P0 | Foundations | 14 | 1 | 0 | 15 |
+| P1 | Schema and compiler | 72 | 1 | 0 | 73 |
+| P2 | Backend core | 85 | 2 | 0 | 87 |
+| P3 | Runtime rendering | 67 | 2 | 0 | 69 |
+| P4 | Routing, host integration and no-code generation | 31 | 0 | 0 | 31 |
 | P5 | Actions, state, data, DB, animation | 55 | 4 | 0 | 59 |
 | P6 | Security hardening | 44 | 2 | 0 | 46 |
-| P7 | Plux Functions | 20 | 0 | 1 | 21 |
+| P7 | Plux Functions | 29 | 0 | 1 | 30 |
 | P8 | Localisation and accessibility | 21 | 1 | 0 | 22 |
-| P9 | Enterprise and operations | 50 | 5 | 1 | 56 |
+| P9 | Enterprise and operations | 53 | 4 | 1 | 58 |
 | P10 | Dev app and debugging | 15 | 2 | 0 | 17 |
-| P11 | Studio | 84 | 3 | 0 | 87 |
-| P12 | AI generation | 12 | 4 | 0 | 16 |
+| P11 | Studio | 88 | 2 | 0 | 90 |
+| P12 | AI generation | 13 | 4 | 0 | 17 |
 | P13 | Payments | 8 | 0 | 0 | 8 |
 | P14 | Collaboration | 4 | 2 | 0 | 6 |
-| P15 | Hosted SaaS | 8 | 1 | 1 | 10 |
-| | **Total** | **567** | **30** | **3** | **600** |
+| P15 | Multi-tenant operation | 6 | 1 | 1 | 8 |
+| | **Total** | **605** | **28** | **3** | **636** |
 
 > **Note.** These tables are indicative; the authoritative counts are those produced by the traceability report (`QA-070`), which supersedes any hand-maintained figure here.
 
-The distribution is deliberate. Phases P1–P3 carry the largest share of the engine's requirements because they fix the contracts that everything else depends on and that cannot change later (the document model, the bundle format, the release model, verification and sync). P6 is smaller than its importance suggests: many security properties (signing, anti-rollback, verify-before-load) are already binding from P1–P3, and P6 adds the device-trust layer on top. Studio (P11) is the largest single area, because it is where developer experience lives — and it comes last so that it is built on a proven engine rather than shaping one.
+The distribution is deliberate. Phases P1–P3 carry the largest share of the engine's requirements because they fix the contracts everything else depends on and that cannot change later: the document model, the bundle format, the release model, verification and sync. P6 is smaller than its importance suggests because many security properties — signing, anti-rollback, verify-before-load — are already binding from P1–P3; P6 adds the device-trust layer on top. Studio (P11) is the largest single area because it is where developer experience lives, and it comes last so that it is built on a proven engine rather than shaping one.
 
 ---
 
@@ -2786,8 +2907,15 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | Field | Value |
 |---|---|
 | Document ID | `SRS-PLUX-001` |
-| Version | 1.0.0 |
+| Version | 1.1.0 |
 | Status | Draft (living document) |
-| Date | 2026-09-25 |
-| Supersedes | — |
+| Date | 2026-09-26 |
+| Supersedes | 1.0.0 |
 | Change process | Amendments are made by pull request against `docs/requirements.md`. A change to a `MUST` requirement requires a corresponding ADR. The version is incremented per Semantic Versioning: a breaking change to an existing requirement is a major increment, a new requirement is a minor increment, and a clarification is a patch increment. |
+
+### Revision history
+
+| Version | Date | Summary |
+|---|---|---|
+| 1.0.0 | 2026-09-25 | Initial baseline. |
+| 1.1.0 | 2026-09-26 | Functions with explicit `server`/`device` placement and standard Go; no-code app generation; mixed native/plugin screens and route-name addressing without host code changes; Plux Canvas replaces the Flutter Web renderer; limits and quotas framework; bundle design principles replace the IDL sketch; security profiles renamed `standard`/`strict`/`maximum`; multi-tenant operation replaces hosted SaaS; editions and licensing; decisions on delta algorithm, AI provider and analytics store; brand; international positioning. |
