@@ -288,6 +288,11 @@ func widening(from, to *Type) (Opcode, bool) {
 	}
 }
 
+// Assignable reports whether a value of type from is accepted where to is
+// expected without conversion, for example an expression's result where a
+// prop of type to is bound.
+func Assignable(from, to *Type) bool { return assignable(from, to) }
+
 // assignable reports whether a value of type from is accepted where to is
 // expected without conversion.
 func assignable(from, to *Type) bool {

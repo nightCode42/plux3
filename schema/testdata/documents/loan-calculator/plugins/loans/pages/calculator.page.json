@@ -68,10 +68,10 @@
                       "$t": "01a0c450-6c00-7003-8000-000000005ccd"
                     }
                   },
-                  "initialValue": {
+                  "keyboardType": "number",
+                  "value": {
                     "$expr": "string(page.amount)"
-                  },
-                  "keyboardType": "number"
+                  }
                 },
                 "testId": "amount",
                 "type": "TextField"
@@ -95,7 +95,7 @@
                         "input": {
                           "path": "page.months",
                           "value": {
-                            "$expr": "int(event.value)"
+                            "$expr": "int(event)"
                           }
                         }
                       }
@@ -109,6 +109,11 @@
                   "min": 3,
                   "value": {
                     "$expr": "double(page.months)"
+                  }
+                },
+                "semantics": {
+                  "label": {
+                    "$t": "01a0c450-6c00-7004-8000-000000007bbc"
                   }
                 },
                 "testId": "months",

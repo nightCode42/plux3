@@ -37,7 +37,7 @@ ident    = letter { letter | digit } ;   (* ASCII letters and "_"; not true, fal
 
 Types are the `SCH-010` types of the [document model](document-model.md#3-types-and-values): `bool`, `int`, `double`, `string`, `decimal`, `money`, `date`, `dateTime`, `duration`, `color`, `asset`, `route`, enums, object types, `list<T>`, `map<string,T>`, each optionally nullable (`T?`). There is no dynamic type. The built-in enums are `RoundingMode` (`halfEven`, `halfUp`, `down`, `up`, `ceiling`, `floor`) and `DateStyle`.
 
-- **Roots.** An expression can read the roots available at its use site (Appendix E.2) — for example `page`, `params`, `item`, `event` — with the types of their declarations. `now` is always available: a `dateTime` frozen for the whole evaluation.
+- **Roots.** An expression can read the roots available at its use site (Appendix E.2) — for example `page`, `params`, `item`, `event` — with the types of their declarations; the compiler's table of roots per use site is in [compiler.md §3](compiler.md#3-scopes). `now` is always available: a `dateTime` frozen for the whole evaluation.
 - **Nullability.** `a.b` on a nullable `a` is `PLX-2006`; write `a?.b`, which yields `null` when `a` is `null`, or give a default with `a ?? b`. Operators other than `==`, `!=` and `??` reject nullable operands.
 - **Widening.** An `int` converts implicitly to `double` or `decimal` where the other operand, the branch or the parameter needs it. Nothing else converts implicitly: `double(d)`, `decimal(x)`, `int(x)`, `string(x)` are explicit, and collections never convert (`list<int>` is not a `list<double>`).
 - **Enums** compare with, and are passed as, string literals naming one of their members (`tier == "gold"`); any other string is `PLX-2014`.

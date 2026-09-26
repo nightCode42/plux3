@@ -185,8 +185,10 @@ enum NodeHints : ubyte (bit_flags) {
 
 // A node of a flat node array (BND-015). `widget` is the permanent widget
 // ID, or zero for a component instance, which names `component` and
-// `component_version`; instance prop and slot IDs are indices into the
-// component's declared props and slots.
+// `component_version`, or for a host widget of the native catalogue,
+// which `native_slot` names (a string index; Layer 3, from P4). Instance
+// and native-slot prop, event and slot IDs are indices into their
+// declarations.
 table Node {
   id: Uuid;
   widget: uint;
@@ -202,6 +204,7 @@ table Node {
   overrides: [Override];
   hints: NodeHints;
   type_arguments: [uint];
+  native_slot: uint;
 }
 
 // ── Section meta ──────────────────────────────────────────────────────────
@@ -454,11 +457,13 @@ table Style {
   value: Value;
 }
 
-// A design token with its dark-mode value (THM-001).
+// A design token with its dark-mode value (THM-001): the W3C token
+// value as JSON-shaped values and its $type.
 table Token {
   path: string (key);
   light: Value;
   dark: Value;
+  type: string;
 }
 
 table Styles {
@@ -598,7 +603,8 @@ table WasmModule {
 
 
 
-// A node of a page or component section, or a step of a graph.
+// A node of a page or component section, by the section's UUID and the
+// node's index, or a step, by its graph's UUID and the step's index.
 table Location {
   section: Uuid;
   index: uint;

@@ -1722,10 +1722,11 @@ class Node {
   List<Override>? get overrides => const fb.ListReader<Override>(Override.reader).vTableGetNullable(_bc, _bcOffset, 26);
   NodeHints get hints => NodeHints.fromValue(const fb.Uint8Reader().vTableGet(_bc, _bcOffset, 28, 0));
   List<int>? get typeArguments => const fb.ListReader<int>(fb.Uint32Reader()).vTableGetNullable(_bc, _bcOffset, 30);
+  int get nativeSlot => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 32, 0);
 
   @override
   String toString() {
-    return 'Node{id: ${id}, widget: ${widget}, component: ${component}, componentVersion: ${componentVersion}, props: ${props}, handlers: ${handlers}, children: ${children}, slots: ${slots}, visible: ${visible}, semantics: ${semantics}, testId: ${testId}, overrides: ${overrides}, hints: ${hints}, typeArguments: ${typeArguments}}';
+    return 'Node{id: ${id}, widget: ${widget}, component: ${component}, componentVersion: ${componentVersion}, props: ${props}, handlers: ${handlers}, children: ${children}, slots: ${slots}, visible: ${visible}, semantics: ${semantics}, testId: ${testId}, overrides: ${overrides}, hints: ${hints}, typeArguments: ${typeArguments}, nativeSlot: ${nativeSlot}}';
   }
 }
 
@@ -1743,7 +1744,7 @@ class NodeBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable(14);
+    fbBuilder.startTable(15);
   }
 
   int addId(int offset) {
@@ -1802,6 +1803,10 @@ class NodeBuilder {
     fbBuilder.addOffset(13, offset);
     return fbBuilder.offset;
   }
+  int addNativeSlot(int? nativeSlot) {
+    fbBuilder.addUint32(14, nativeSlot);
+    return fbBuilder.offset;
+  }
 
   int finish() {
     return fbBuilder.endTable();
@@ -1823,6 +1828,7 @@ class NodeObjectBuilder extends fb.ObjectBuilder {
   final List<OverrideObjectBuilder>? _overrides;
   final NodeHints? _hints;
   final List<int>? _typeArguments;
+  final int? _nativeSlot;
 
   NodeObjectBuilder({
     UuidObjectBuilder? id,
@@ -1839,6 +1845,7 @@ class NodeObjectBuilder extends fb.ObjectBuilder {
     List<OverrideObjectBuilder>? overrides,
     NodeHints? hints,
     List<int>? typeArguments,
+    int? nativeSlot,
   })
       : _id = id,
         _widget = widget,
@@ -1853,7 +1860,8 @@ class NodeObjectBuilder extends fb.ObjectBuilder {
         _testId = testId,
         _overrides = overrides,
         _hints = hints,
-        _typeArguments = typeArguments;
+        _typeArguments = typeArguments,
+        _nativeSlot = nativeSlot;
 
   /// Finish building, and store into the [fbBuilder].
   @override
@@ -1872,7 +1880,7 @@ class NodeObjectBuilder extends fb.ObjectBuilder {
         : fbBuilder.writeList(_overrides!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
     final int? typeArgumentsOffset = _typeArguments == null ? null
         : fbBuilder.writeListUint32(_typeArguments!);
-    fbBuilder.startTable(14);
+    fbBuilder.startTable(15);
     if (_id != null) {
       fbBuilder.addStruct(0, _id!.finish(fbBuilder));
     }
@@ -1891,6 +1899,7 @@ class NodeObjectBuilder extends fb.ObjectBuilder {
     fbBuilder.addOffset(11, overridesOffset);
     fbBuilder.addUint8(12, _hints?.value);
     fbBuilder.addOffset(13, typeArgumentsOffset);
+    fbBuilder.addUint32(14, _nativeSlot);
     return fbBuilder.endTable();
   }
 
@@ -4005,10 +4014,11 @@ class Token {
   String? get path => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 4);
   Value? get light => Value.reader.vTableGetNullable(_bc, _bcOffset, 6);
   Value? get dark => Value.reader.vTableGetNullable(_bc, _bcOffset, 8);
+  String? get type => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 10);
 
   @override
   String toString() {
-    return 'Token{path: ${path}, light: ${light}, dark: ${dark}}';
+    return 'Token{path: ${path}, light: ${light}, dark: ${dark}, type: ${type}}';
   }
 }
 
@@ -4026,7 +4036,7 @@ class TokenBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable(3);
+    fbBuilder.startTable(4);
   }
 
   int addPathOffset(int? offset) {
@@ -4041,6 +4051,10 @@ class TokenBuilder {
     fbBuilder.addOffset(2, offset);
     return fbBuilder.offset;
   }
+  int addTypeOffset(int? offset) {
+    fbBuilder.addOffset(3, offset);
+    return fbBuilder.offset;
+  }
 
   int finish() {
     return fbBuilder.endTable();
@@ -4051,15 +4065,18 @@ class TokenObjectBuilder extends fb.ObjectBuilder {
   final String? _path;
   final ValueObjectBuilder? _light;
   final ValueObjectBuilder? _dark;
+  final String? _type;
 
   TokenObjectBuilder({
     String? path,
     ValueObjectBuilder? light,
     ValueObjectBuilder? dark,
+    String? type,
   })
       : _path = path,
         _light = light,
-        _dark = dark;
+        _dark = dark,
+        _type = type;
 
   /// Finish building, and store into the [fbBuilder].
   @override
@@ -4068,10 +4085,13 @@ class TokenObjectBuilder extends fb.ObjectBuilder {
         : fbBuilder.writeString(_path!);
     final int? lightOffset = _light?.getOrCreateOffset(fbBuilder);
     final int? darkOffset = _dark?.getOrCreateOffset(fbBuilder);
-    fbBuilder.startTable(3);
+    final int? typeOffset = _type == null ? null
+        : fbBuilder.writeString(_type!);
+    fbBuilder.startTable(4);
     fbBuilder.addOffset(0, pathOffset);
     fbBuilder.addOffset(1, lightOffset);
     fbBuilder.addOffset(2, darkOffset);
+    fbBuilder.addOffset(3, typeOffset);
     return fbBuilder.endTable();
   }
 

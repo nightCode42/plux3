@@ -12,7 +12,7 @@
       "input": {
         "path": "page.amount",
         "value": {
-          "$expr": "decimal(event.value ?? \"0\")"
+          "$expr": "decimal(event)"
         }
       }
     }

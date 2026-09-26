@@ -1,0 +1,65 @@
+{
+  "id": "01b0c450-6c00-7000-8000-000000000002",
+  "key": "tour",
+  "kind": "theme",
+  "name": "Tour",
+  "schemaVersion": "1.0.0",
+  "tokens": {
+    "color": {
+      "$type": "color",
+      "onPrimary": {
+        "$value": "#FFFFFF"
+      },
+      "primary": {
+        "$extensions": {
+          "dev.plux.dark": "#8B78FF"
+        },
+        "$value": "#5B3DF5"
+      },
+      "surface": {
+        "$extensions": {
+          "dev.plux.dark": "#121218"
+        },
+        "$value": "#FFFFFF"
+      }
+    },
+    "radius": {
+      "$type": "dimension",
+      "md": {
+        "$value": {
+          "unit": "px",
+          "value": 12
+        }
+      }
+    },
+    "space": {
+      "$type": "dimension",
+      "md": {
+        "$value": {
+          "unit": "px",
+          "value": 16
+        }
+      },
+      "sm": {
+        "$value": {
+          "unit": "px",
+          "value": 8
+        }
+      }
+    },
+    "type": {
+      "$type": "typography",
+      "headlineMedium": {
+        "$value": {
+          "fontFamily": "Inter",
+          "fontSize": {
+            "unit": "px",
+            "value": 28
+          },
+          "fontWeight": 600,
+          "lineHeight": 1.25
+        }
+      }
+    }
+  }
+}

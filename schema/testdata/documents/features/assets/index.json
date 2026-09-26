@@ -1,0 +1,14 @@
+{
+  "assets": [
+    {
+      "description": "Logo.",
+      "file": "images/logo.png",
+      "id": "01b0c450-6c00-7000-8000-000000000007",
+      "key": "logo",
+      "mediaType": "image/png"
+    }
+  ],
+  "id": "01b0c450-6c00-7000-8000-000000000006",
+  "kind": "assetIndex",
+  "schemaVersion": "1.0.0"
+}

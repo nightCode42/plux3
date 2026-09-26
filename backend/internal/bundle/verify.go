@@ -145,7 +145,7 @@ func (v *verifier) table(pos, t, depth int) error {
 			}
 			continue
 		}
-		if err := v.field(pos, tableSize, off, f, depth); err != nil {
+		if err := v.field(pos, off, f, depth); err != nil {
 			return err
 		}
 	}
@@ -153,13 +153,17 @@ func (v *verifier) table(pos, t, depth int) error {
 }
 
 // field checks one present field at offset off of the table at pos.
-func (v *verifier) field(pos, tableSize, off int, f *fieldLayout, depth int) error {
+func (v *verifier) field(pos, off int, f *fieldLayout, depth int) error {
 	size, align := f.size, f.align
 	if f.kind != fieldScalar && f.kind != fieldStruct {
 		size, align = 4, 4
 	}
+	// Like FlatBuffers' own verifier, a field must lie in the buffer, not
+	// within the vtable's table size: builders share a vtable between
+	// tables with equal field offsets but different sizes (the Go builder
+	// compares offsets only).
 	at := pos + off
-	if off < 4 || off+size > tableSize || at%align != 0 {
+	if off < 4 || !v.inBounds(at, size) || at%align != 0 {
 		return v.fail("field %s at %d is misplaced", f.name, at)
 	}
 	if f.kind == fieldScalar || f.kind == fieldStruct {

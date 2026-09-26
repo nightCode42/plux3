@@ -352,7 +352,7 @@ func checkSection(s Section, lim limits.Set) error {
 		return newErr(plxerr.SectionHashMismatch, "%s section %x", s.Kind, s.ID)
 	}
 	if !s.Kind.Known() {
-		if format := executableFormat(s.Data); format != "" {
+		if format := ExecutableFormat(s.Data); format != "" {
 			return newErr(plxerr.ExecutableContent, "%s section %x holds %s code", s.Kind, s.ID, format)
 		}
 		return nil // skipped (BND-018); a needed one is named by a required feature
@@ -394,8 +394,9 @@ var executableFormats = []struct{ name, prefix string }{
 	{"script", "#!"},
 }
 
-// executableFormat names the executable format data starts with, if any.
-func executableFormat(data []byte) string {
+// ExecutableFormat names the executable format data starts with, or ""
+// when it starts with none. The compiler uses it on asset files too.
+func ExecutableFormat(data []byte) string {
 	for _, f := range executableFormats {
 		if bytes.HasPrefix(data, []byte(f.prefix)) {
 			return f.name

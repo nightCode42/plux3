@@ -30,7 +30,7 @@ Files are named after the document's key; a plugin's directory is named after it
 | Identifier | UUIDv7, lower-case `8-4-4-4-12` | Every entity; every cross-reference uses it, so renaming never breaks a reference (`SCH-002`) |
 | Key | lower-kebab slug, unique within the parent | Human-addressable entities and file names: apps, plugins, pages, components, graphs, templates, collections |
 | Name | lowerCamelCase | What PXL and generated code address: state entries, parameters, data sources, flags, variables, fields, props, slots |
-| Type name | UpperCamelCase | Declared object and enum types |
+| Type name | UpperCamelCase | Declared object and enum types; names starting with `Plux`, primitives and registry types are reserved |
 | Route name | lower-kebab slug, unique across the app | How native code, deep links and navigation address a page, whichever plugin holds it (`SCH-025`); defaults to the page key |
 
 A document's `kind` and `schemaVersion` are required. The current schema version is `1.0.0`.

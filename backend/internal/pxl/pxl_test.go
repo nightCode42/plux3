@@ -244,3 +244,30 @@ func TestCompileLimits(t *testing.T) {
 		t.Errorf("ranges count code points: %+v", r)
 	}
 }
+
+func TestAssignable(t *testing.T) {
+	t.Parallel()
+	env := propertyEnv(t)
+	parse := func(s string) *Type {
+		typ, err := env.ParseType(s)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return typ
+	}
+	for _, tt := range []struct {
+		from, to string
+		want     bool
+	}{
+		{"int", "int", true},
+		{"int", "int?", true},
+		{"int?", "int", false},
+		{"int", "double", false},
+		{"list<int>", "list<int>", true},
+		{"list<int>", "list<string>", false},
+	} {
+		if got := Assignable(parse(tt.from), parse(tt.to)); got != tt.want {
+			t.Errorf("Assignable(%s, %s) = %t", tt.from, tt.to, got)
+		}
+	}
+}

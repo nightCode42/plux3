@@ -159,6 +159,7 @@ var tableLayouts = [...]tableLayout{
 		{name: "overrides", id: 11, kind: fieldVectorTable, size: 0, align: 0, table: 23, required: false},
 		{name: "hints", id: 12, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
 		{name: "type_arguments", id: 13, kind: fieldVectorScalar, size: 4, align: 4, table: -1, required: false},
+		{name: "native_slot", id: 14, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 	}},
 	23: {name: "Override", fields: []fieldLayout{
 		{name: "kind", id: 0, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
@@ -285,6 +286,7 @@ var tableLayouts = [...]tableLayout{
 		{name: "path", id: 0, kind: fieldString, size: 0, align: 0, table: -1, required: true},
 		{name: "light", id: 1, kind: fieldTable, size: 0, align: 0, table: 45, required: false},
 		{name: "dark", id: 2, kind: fieldTable, size: 0, align: 0, table: 45, required: false},
+		{name: "type", id: 3, kind: fieldString, size: 0, align: 0, table: -1, required: false},
 	}},
 	43: {name: "Track", fields: []fieldLayout{
 		{name: "prop", id: 0, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},

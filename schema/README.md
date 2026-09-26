@@ -11,7 +11,7 @@ Language-neutral contracts shared by the compiler, the runtime and Studio. Every
 | `fbs/` | FlatBuffers IDL for bundle sections: every type in `bundle.fbs`, the root type and file identifier of each section kind in `sections/` (§9, ADR-0002, [bundle-format.md](../docs/reference/bundle-format.md)) | Generated Go and Dart accessors, verifier layout tables |
 | `limits.json` | The limits registry: key, unit, default, hard maximum, scopes (§30.4) | Compiler, server, runtime, Studio |
 | `errors.json` | The error catalogue exported from `backend/internal/plxerr` (generated, ADR-0018) | Dart and TypeScript generators |
-| `testdata/` | Cross-language conformance vectors: canonicalisation, PXL (`testdata/pxl/`, format in [pxl.md](../docs/reference/pxl.md#9-conformance-vectors)), bundles written by Go and read by Dart (`testdata/bundles/`), documents → bundles and diagnostics (`QA-003`) | Go, Dart and TypeScript tests |
+| `testdata/` | Cross-language conformance vectors: canonicalisation, PXL (`testdata/pxl/`, format in [pxl.md](../docs/reference/pxl.md#9-conformance-vectors)), bundles written by Go and read by Dart (`testdata/bundles/`), conformance projects (`testdata/documents/`) compiled to golden bundles ([compiler.md](../docs/reference/compiler.md#7-conformance-projects), `QA-003`) | Go, Dart and TypeScript tests |
 
 Everything generated from these files is committed and regenerated only with `make gen` (`CI-003`).
 

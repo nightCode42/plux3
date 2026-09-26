@@ -97,6 +97,10 @@ func (d Decimal) int() *big.Int {
 // Scale returns the number of fraction digits.
 func (d Decimal) Scale() int { return d.scale }
 
+// Unscaled returns the unscaled integer: d is Unscaled × 10^-Scale. The
+// result is a copy the caller may modify.
+func (d Decimal) Unscaled() *big.Int { return new(big.Int).Set(d.int()) }
+
 // Sign returns -1, 0 or +1.
 func (d Decimal) Sign() int { return d.int().Sign() }
 

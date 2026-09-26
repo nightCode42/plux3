@@ -108,8 +108,16 @@ func (rcv *Token) Dark(obj *Value) *Value {
 	return nil
 }
 
+func (rcv *Token) Type() []byte {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(10))
+	if o != 0 {
+		return rcv._tab.ByteVector(o + rcv._tab.Pos)
+	}
+	return nil
+}
+
 func TokenStart(builder *flatbuffers.Builder) {
-	builder.StartObject(3)
+	builder.StartObject(4)
 }
 func TokenAddPath(builder *flatbuffers.Builder, path flatbuffers.UOffsetT) {
 	builder.PrependUOffsetTSlot(0, flatbuffers.UOffsetT(path), 0)
@@ -119,6 +127,9 @@ func TokenAddLight(builder *flatbuffers.Builder, light flatbuffers.UOffsetT) {
 }
 func TokenAddDark(builder *flatbuffers.Builder, dark flatbuffers.UOffsetT) {
 	builder.PrependUOffsetTSlot(2, flatbuffers.UOffsetT(dark), 0)
+}
+func TokenAddType(builder *flatbuffers.Builder, type_ flatbuffers.UOffsetT) {
+	builder.PrependUOffsetTSlot(3, flatbuffers.UOffsetT(type_), 0)
 }
 func TokenEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
 	return builder.EndObject()

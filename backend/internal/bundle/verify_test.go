@@ -122,6 +122,42 @@ func TestVerifierAcceptsWellFormedSections(t *testing.T) {
 	}
 }
 
+// Verifies: BND-006.
+// The Go builder shares one vtable between a Prop holding only a value
+// and a Handler holding only a graph: equal field offsets, different
+// table sizes. The verifier accepts it, as FlatBuffers' own does.
+func TestVerifierAcceptsSharedVtables(t *testing.T) {
+	t.Parallel()
+	b := flatbuffers.NewBuilder(0)
+	v := value(b)
+	fbs.PropStart(b)
+	fbs.PropAddValue(b, v)
+	prop := fbs.PropEnd(b)
+	fbs.HandlerStart(b)
+	fbs.HandlerAddGraph(b, fbs.CreateUuid(b, 7, 9))
+	h := fbs.HandlerEnd(b)
+	props := offsetVector(b, []flatbuffers.UOffsetT{prop}, fbs.NodeStartPropsVector)
+	hs := offsetVector(b, []flatbuffers.UOffsetT{h}, fbs.NodeStartHandlersVector)
+	fbs.NodeStart(b)
+	fbs.NodeAddProps(b, props)
+	fbs.NodeAddHandlers(b, hs)
+	node := fbs.NodeEnd(b)
+	nodes := offsetVector(b, []flatbuffers.UOffsetT{node}, fbs.PageStartNodesVector)
+	fbs.PageStart(b)
+	fbs.PageAddNodes(b, nodes)
+	Finish(b, fbs.PageEnd(b), SectionPage)
+	data := b.FinishedBytes()
+	if err := verify(SectionPage, data, limits.Defaults()); err != nil {
+		t.Fatal(err)
+	}
+	var n fbs.Node
+	var got fbs.Handler
+	fbs.GetRootAsPage(data, 0).Nodes(&n, 0)
+	if !n.Handlers(&got, 0) || got.Graph(nil).Lo() != 9 {
+		t.Error("the handler's graph does not read back")
+	}
+}
+
 // Verifies: BND-006, QA-004.
 func TestVerifierRejectsMalformedBuffers(t *testing.T) {
 	t.Parallel()

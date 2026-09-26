@@ -12,7 +12,15 @@
       "input": {
         "path": "plugin.lastSchedule",
         "value": {
-          "$expr": "{\"monthlyPayment\": page.monthlyPayment, \"totalInterest\": page.monthlyPayment * decimal(page.months) - page.amount, \"months\": page.months}"
+          "monthlyPayment": {
+            "$expr": "page.monthlyPayment"
+          },
+          "months": {
+            "$expr": "page.months"
+          },
+          "totalInterest": {
+            "$expr": "page.monthlyPayment * decimal(page.months) - page.amount"
+          }
         }
       },
       "next": "track"
@@ -36,7 +44,15 @@
       "input": {
         "params": {
           "schedule": {
-            "$expr": "plugin.lastSchedule"
+            "monthlyPayment": {
+              "$expr": "page.monthlyPayment"
+            },
+            "months": {
+              "$expr": "page.months"
+            },
+            "totalInterest": {
+              "$expr": "page.monthlyPayment * decimal(page.months) - page.amount"
+            }
           }
         },
         "route": "result"

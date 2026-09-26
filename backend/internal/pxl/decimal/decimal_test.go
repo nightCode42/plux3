@@ -240,3 +240,22 @@ func TestProperties(t *testing.T) {
 		}
 	})
 }
+
+func TestUnscaledIsACopy(t *testing.T) {
+	t.Parallel()
+	d, err := Parse("-12.50")
+	if err != nil {
+		t.Fatal(err)
+	}
+	u := d.Unscaled()
+	if u.String() != "-1250" || d.Scale() != 2 {
+		t.Fatalf("Unscaled = %s, scale %d", u, d.Scale())
+	}
+	u.SetInt64(7)
+	if d.String() != "-12.50" {
+		t.Errorf("modifying the result changed the decimal to %s", d)
+	}
+	if (Decimal{}).Unscaled().Sign() != 0 {
+		t.Error("the zero decimal is not zero")
+	}
+}

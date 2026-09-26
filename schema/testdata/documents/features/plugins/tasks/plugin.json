@@ -1,0 +1,97 @@
+{
+  "capabilities": {
+    "deviceApis": [
+      "haptics"
+    ],
+    "functions": [
+      {
+        "alias": "archive",
+        "function": "tasks.archive",
+        "id": "01b0c450-6c00-7000-8000-000000000028"
+      }
+    ],
+    "nativeRoutes": [
+      "settings"
+    ],
+    "networkDomains": [
+      "api.example.com"
+    ]
+  },
+  "collections": [
+    {
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        }
+      ],
+      "id": "01b0c450-6c00-7000-8000-00000000002b",
+      "key": "drafts",
+      "primaryKey": [
+        "id"
+      ]
+    }
+  ],
+  "dataSources": [
+    {
+      "config": {
+        "method": "GET",
+        "path": "/tasks"
+      },
+      "id": "01b0c450-6c00-7000-8000-00000000002c",
+      "kind": "rest",
+      "mock": [
+        {
+          "done": true,
+          "note": "P1",
+          "priority": "high",
+          "title": "Write docs"
+        }
+      ],
+      "name": "tasks",
+      "type": "list<Item>"
+    }
+  ],
+  "entryPage": "01b0c450-6c00-7000-8000-00000000000b",
+  "fallbackPage": "01b0c450-6c00-7000-8000-00000000000c",
+  "icon": {
+    "$asset": "01b0c450-6c00-7000-8000-000000000007"
+  },
+  "id": "01b0c450-6c00-7000-8000-00000000000a",
+  "key": "tasks",
+  "kind": "plugin",
+  "name": "Tasks",
+  "pages": [
+    "01b0c450-6c00-7000-8000-00000000000b",
+    "01b0c450-6c00-7000-8000-00000000000c"
+  ],
+  "schemaVersion": "1.0.0",
+  "state": [
+    {
+      "default": "all",
+      "id": "01b0c450-6c00-7000-8000-000000000029",
+      "name": "filter",
+      "persistence": "session",
+      "type": "Filter"
+    },
+    {
+      "default": null,
+      "id": "01b0c450-6c00-7000-8000-00000000002a",
+      "name": "selected",
+      "type": "Item?"
+    }
+  ],
+  "tags": [
+    "tour"
+  ],
+  "team": "tour",
+  "types": [
+    {
+      "enum": [
+        "all",
+        "open"
+      ],
+      "name": "Filter"
+    }
+  ]
+}
