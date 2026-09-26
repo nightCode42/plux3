@@ -1,0 +1,72 @@
+# CI, Makefile and Hooks
+
+How the pipeline is built and why. The requirements are spec §29 (`CI-001`–`CI-009`) and §28.
+
+---
+
+## 1. Principles
+
+- **One definition of every check.** CI jobs, git hooks and developers all run the same Makefile targets. A green `make check` locally means a green pipeline.
+- **Fast feedback, complete coverage.** Toolchain jobs run only when their files change on a pull request, and always on `main`, on schedule and on manual runs. Repository-wide checks always run.
+- **One required check.** The job **CI OK** depends on every other job and fails if any of them failed or was cancelled; skipped jobs count as passed. The `main` ruleset requires only CI OK, so path filtering never blocks a merge and adding a job never requires a settings change.
+- **Least privilege.** Workflows start with `permissions: {}`; each job requests only what it needs. Checkouts never persist credentials. Actions are pinned to full commit SHAs. `actionlint` and `zizmor` check every workflow.
+
+## 2. Workflows
+
+| Workflow | Trigger | Purpose |
+|---|---|---|
+| [ci.yml](../../.github/workflows/ci.yml) | Pull requests, pushes to `main`, merge queue, daily, manual | Every quality gate |
+| [scorecard.yml](../../.github/workflows/scorecard.yml) | Pushes to `main`, weekly, ruleset changes | OpenSSF Scorecard; results in code scanning |
+| [release.yml](../../.github/workflows/release.yml) | Component tags `<component>/v*` | Verify the signed tag and publish the release (`CI-008`) |
+| CodeQL | GitHub default setup | Static analysis of Go, TypeScript and Actions |
+
+## 3. CI jobs
+
+| Job | Runs | Make target | Requirements |
+|---|---|---|---|
+| Detect changes | always | — | `CI-002` |
+| Hygiene | always | `hygiene` | — |
+| Secret scan | always | `secrets` (full history) | — |
+| Specification and traceability | always | `spec-lint`, `trace` | `QA-070`, `QA-073` |
+| Workflow lint | always | `workflows-lint` | — |
+| Licensing (REUSE) | always | `reuse-lint` | — |
+| Documentation links | always | lychee, offline | — |
+| SBOM | always | CycloneDX via Syft | `CI-001` |
+| Commit messages | pull requests | `scripts/check-commit-msg.sh` on title and commits | `CI-009` |
+| Dependency review | pull requests | vulnerabilities and licences of new dependencies | `CI-007` |
+| Go lint | Go changes | `go-fmt-check go-lint go-tidy-check go-gen-check` | `CI-001`, `CI-003` |
+| Go test | Go changes | `go-cover` (race detector, coverage floors) | `QA-001` |
+| Go build | Go changes | `go-build go-reproducible` | `CI-006` |
+| Go vulnerabilities | Go changes | `go-vuln` | `CI-001` |
+| Dart and Flutter | Dart changes | `dart-lock-check dart-fmt-check dart-analyze dart-cover` | `CI-001`, `CI-003`, `QA-001` |
+| Studio | Studio changes | `studio-check` (frozen install, Biome, types, coverage) | `CI-001`, `QA-001` |
+| CI OK | always | — | `CI-009` |
+
+The traceability report and coverage tables are written to each job's summary; the report and the SBOM are uploaded as artifacts.
+
+## 4. Tool versions
+
+| Tool | Where it is pinned |
+|---|---|
+| Go | `toolchain` line in `backend/go.mod` and `tools/go.mod`; `go.work` |
+| Flutter, Bun, golangci-lint, govulncheck, gitleaks, actionlint, pre-commit, zizmor, reuse | Makefile header; `env:` of `ci.yml` (Flutter, Bun, pre-commit, zizmor, reuse) |
+| git-cliff | `release.yml` |
+| GitHub Actions | Full commit SHA with the tag in a comment; updated by Dependabot |
+
+Versions in the Makefile and in workflows are changed **together, in one pull request**. Go-based tools are built with the project toolchain (`make install-*`), because a tool built with an older Go cannot analyse code that needs a newer one.
+
+## 5. Adding a component
+
+1. Add its gates as Makefile targets and include them in `check`.
+2. Add a path filter and a job in `ci.yml`, and add the job to the `needs` of CI OK.
+3. Add its manifest directory to `.github/dependabot.yml` — the policy test fails otherwise (`CI-007`).
+4. Declare its licence in `REUSE.toml`.
+5. Add its coverage floors to `coverage.json` if they differ from the defaults.
+
+## 6. Repository settings
+
+These live in GitHub settings, not in the repository, and are recorded here so they can be audited:
+
+- Ruleset on `main`: pull request required; required status check **CI OK**; linear history; block force pushes and deletions; Code Owners review; squash merge only (`CI-009`).
+- Dependabot alerts and security updates, secret scanning with push protection, private vulnerability reporting, CodeQL default setup.
+- Actions: read-only default token; Actions cannot approve pull requests; approval required for first-time contributors' workflows.

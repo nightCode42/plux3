@@ -1,0 +1,10 @@
+# Dart pub workspace for every Dart and Flutter package in the monorepo.
+# Members declare `resolution: workspace`; one lockfile covers them all.
+name: plux_workspace
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+
+workspace:
+  - packages/plux_flutter

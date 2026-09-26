@@ -1,0 +1,23 @@
+# studio — Agent Notes
+
+The Bun workspace for Plux Studio (spec §21): `apps/` for the web app and backend-for-frontend (from P11), `packages/` for shared libraries. Studio code is AGPL-3.0-only (ADR-0022). Read [typescript-standards.md](../docs/engineering/typescript-standards.md) and the root [AGENTS.md](../AGENTS.md) before editing.
+
+## Layout
+
+| Path | Contents | Arrives |
+|---|---|---|
+| `packages/brand/` | Brand tokens (spec Appendix J) and WCAG contrast utilities | P0 |
+| `apps/web/` | React single-page application | P11 |
+| `apps/bff/` | Bun backend-for-frontend (`STU-002`, `SEC-101`) | P11 |
+| `packages/canvas/` | Plux Canvas and its Flutter-compatible layout engine (`STU-003`, `STU-005`) | P11 |
+
+## Invariants
+
+- TypeScript is strict (see `tsconfig.json`); no `any`, no non-null assertions, no `console` in shipped code.
+- Dependencies are installed exactly as locked (`bun install --frozen-lockfile`); `bun.lock` is committed.
+- Brand values come from `@plux/brand`; they change only together with spec Appendix J (`STU-016`).
+- Studio never talks to the database or object storage directly; all access goes through the API (layering rule L-7).
+
+## Required checks
+
+`make studio-check` — frozen install, Biome, type-check, tests with coverage floors.

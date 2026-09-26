@@ -1,0 +1,21 @@
+# packages — Agent Notes
+
+Dart and Flutter packages, managed as one pub workspace from the repository root (`pubspec.yaml`, one `pubspec.lock`). `plux_flutter` is the runtime (spec §12); optional capabilities ship as separate packages (`RT-060`). Read [dart-standards.md](../docs/engineering/dart-standards.md) and the root [AGENTS.md](../AGENTS.md) before editing.
+
+## Invariants
+
+- Every package declares `resolution: workspace` and is listed under `workspace:` in the root `pubspec.yaml`.
+- The public API is semantically versioned and fully documented; `public_member_api_docs` is enforced (`RT-001`).
+- `PluxRuntimeInfo.version` equals the `version` in `pubspec.yaml`; a test enforces it, and the release workflow checks the tag against it (`CI-008`).
+- Nothing on the UI isolate performs network I/O, decompression, patching or hashing of more than 64 KiB (layering rule L-6).
+- Nothing is loaded before it is verified (`SEC-052`); failures are contained by error boundaries and never crash the host app (`RT-020`).
+- The core package stays within its size budget (`RT-061`); heavy features belong in optional packages.
+
+## Stop and ask before
+
+- Adding a dependency to `plux_flutter` (it ships inside every host app).
+- Changing the public API of `plux_flutter` in a way that is not additive.
+
+## Required checks
+
+`make dart-check` — lockfile committed, formatting, `flutter analyze --fatal-infos`, tests with coverage floors.

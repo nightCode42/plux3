@@ -8,17 +8,18 @@
 
 ## How it was verified
 
-<!-- Tests added or run, and manual checks. -->
+<!-- The make targets and tests run, and any manual checks. -->
 
 ## Checklist
 
 <!-- Tick what applies. Leave an item unticked and append "N/A" when it does not apply to this change. -->
 
-- [ ] `make check` passes locally
-- [ ] Docs, doc comments, and `docs/WORKLOG.md` updated where behaviour or rules changed
+- [ ] `make check` (or the gates of the changed components) passes locally
+- [ ] Docs, doc comments, component `AGENTS.md` and `docs/WORKLOG.md` updated where behaviour or rules changed
 - [ ] ADR added for any new design decision or dependency
+- [ ] New files carry SPDX headers (`make reuse-lint`)
 
 **Implements requirements** (`feat` and `fix` only):
 
 - [ ] Tests name the requirement IDs they verify (`QA-071`)
-- [ ] `Status` updated in `docs/requirements.md` (`QA-072`)
+- [ ] `Status` updated in `docs/requirements.md` and `make trace` passes (`QA-070`, `QA-072`)

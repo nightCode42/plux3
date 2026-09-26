@@ -1,34 +1,75 @@
+# Dependabot — automated dependency updates (CI-007).
+#
+# Every manifest in the monorepo is covered; tools/internal/policy fails CI if
+# a new module is added without an entry here. Each entry:
+#   - groups minor and patch updates into one pull request per ecosystem;
+#   - waits out a cooldown, so brand-new releases (the window in which a
+#     compromised package is usually caught) are not adopted immediately —
+#     security updates are exempt;
+#   - uses Conventional Commits messages: "chore(deps): …".
+# Merging still requires a pull request with passing checks (CI-009), and new
+# dependencies follow docs/engineering/dependencies.md.
+
 version: 2
+
 updates:
-  # Only GitHub Actions exists today. Uncomment each block when its directory lands (§33).
   - package-ecosystem: github-actions
-    directory: /
-    schedule: { interval: weekly }
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: chore
+      include: scope
     groups:
-      actions: { patterns: ["*"] }
+      github-actions:
+        patterns: ["*"]
 
-  # - package-ecosystem: gomod
-  #   directory: /backend
-  #   schedule: { interval: weekly }
-  #   groups:
-  #     go-minor: { update-types: [minor, patch] }
+  - package-ecosystem: gomod
+    directories:
+      - "/backend"
+      - "/tools"
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      go:
+        update-types: [minor, patch]
 
-  # - package-ecosystem: pub
-  #   directories: ["/packages/*", "/apps/*"]
-  #   schedule: { interval: weekly }
-  #   groups:
-  #     dart-minor: { update-types: [minor, patch] }
+  - package-ecosystem: pub
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      dart:
+        update-types: [minor, patch]
 
-  # - package-ecosystem: bun
-  #   directory: /studio
-  #   schedule: { interval: weekly }
-  #   groups:
-  #     studio-minor: { update-types: [minor, patch] }
-
-  # - package-ecosystem: docker
-  #   directory: /deploy
-  #   schedule: { interval: weekly }
-
-  # - package-ecosystem: pre-commit
-  #   directory: /
-  #   schedule: { interval: monthly }
+  - package-ecosystem: bun
+    directory: "/studio"
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      studio:
+        update-types: [minor, patch]

@@ -7,7 +7,8 @@ build/
 *.out
 
 # Coverage and profiling
-coverage.*
+coverage.out
+coverage.html
 *.prof
 
 # Secrets and local credentials — never commit these
@@ -53,3 +54,11 @@ node_modules/
 
 # Local data
 /data/
+
+# Coverage and report output of every toolchain. Listed by location: a bare
+# `coverage/` pattern would also ignore source packages named "coverage".
+/studio/coverage/
+/packages/*/coverage/
+/apps/*/coverage/
+reqtrace.md
+reqtrace.json
