@@ -21,8 +21,11 @@ import (
 // PXLSource names the PXL sources in generated headers.
 const PXLSource = "schema/pxl"
 
-// pxlGoPath is the generated Go table file.
-const pxlGoPath = "backend/internal/pxl/tables_gen.go"
+// Generated table files.
+const (
+	pxlGoPath   = "backend/internal/pxl/tables_gen.go"
+	pxlDartPath = "packages/plux_flutter/lib/src/pxl/tables.g.dart"
+)
 
 // PXL describes the bytecode, standard library and currency sources.
 type PXL struct {
@@ -299,7 +302,7 @@ func PXLFiles(p *PXL) ([]File, error) {
 	if err != nil {
 		return nil, err
 	}
-	return []File{goSrc, {Path: "docs/reference/pxl-stdlib.md", Content: pxlMarkdown(p)}}, nil
+	return []File{goSrc, {Path: pxlDartPath, Content: pxlDart(p)}, {Path: "docs/reference/pxl-stdlib.md", Content: pxlMarkdown(p)}}, nil
 }
 
 // pxlMarkdown renders docs/reference/pxl-stdlib.md.

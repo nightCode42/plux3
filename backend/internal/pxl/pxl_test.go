@@ -78,7 +78,10 @@ func TestValuesRoundTripThroughJSON(t *testing.T) {
 		{"date", `"2023-02-29"`, false},
 		{"dateTime", `"2026-09-26T10:00:00.5-03:30"`, true},
 		{"dateTime", `"2026-09-26 10:00:00Z"`, false},
-		{"duration", `1500`, false},
+		{"duration", `1500`, true}, // whole milliseconds, not negative (document-model.md §3)
+		{"duration", `-1`, false},
+		{"duration", `1.5`, false},
+		{"duration", `"PT1S"`, false},
 		{"color", `"#5B3DF5"`, true},
 		{"color", `"#5B3DF5CC"`, true},
 		{"color", `"red"`, false},
@@ -159,6 +162,7 @@ func TestDecodeRejectsMalformedPrograms(t *testing.T) {
 		"call argc":          mutate(func(q *Program) { q.Code = []byte{byte(OpPushNull), byte(OpCall), 1, 0, 2} }),
 		"sort kind":          mutate(func(q *Program) { q.Code = []byte{byte(OpSortBy), 99} }),
 		"root not a string":  mutate(func(q *Program) { q.Constants = []Value{int64(1)}; q.Code = []byte{byte(OpLoadRoot), 0, 0} }),
+		"invalid UTF-8":      mutate(func(q *Program) { q.Result = "\xff" }),
 	}
 	for name, data := range tests {
 		if _, err := Decode(data); !errors.Is(err, ErrInvalidProgram) {

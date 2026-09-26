@@ -11,6 +11,7 @@ import (
 	"math"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/nightCode42/plux3/backend/internal/pxl/decimal"
 )
@@ -170,7 +171,13 @@ func (r *reader) bytes(n uint64) []byte {
 	return out
 }
 
-func (r *reader) str() string { return string(r.bytes(r.uvarint())) }
+func (r *reader) str() string {
+	b := r.bytes(r.uvarint())
+	if !utf8.Valid(b) {
+		r.fail("invalid UTF-8")
+	}
+	return string(b)
+}
 
 // count reads a collection length, bounded by the remaining bytes so that
 // a forged count cannot allocate.

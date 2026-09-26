@@ -200,17 +200,9 @@ func FromJSON(t *Type, v any) (Value, error) {
 		if b, ok := v.(bool); ok {
 			return b, nil
 		}
-	case KindInt:
+	case KindInt, KindDouble, KindDuration:
 		if n, ok := v.(json.Number); ok {
-			if i, err := strconv.ParseInt(n.String(), 10, 64); err == nil {
-				return i, nil
-			}
-		}
-	case KindDouble:
-		if n, ok := v.(json.Number); ok {
-			if f, err := n.Float64(); err == nil && !math.IsInf(f, 0) {
-				return f, nil
-			}
+			return numberFromJSON(t, n)
 		}
 	case KindList:
 		return listFromJSON(t, v)
@@ -224,6 +216,26 @@ func FromJSON(t *Type, v any) (Value, error) {
 		}
 	}
 	return nil, fmt.Errorf("%v is not a %s", v, t)
+}
+
+// numberFromJSON converts a JSON number into an int, a double or a
+// duration (whole milliseconds, not negative).
+func numberFromJSON(t *Type, n json.Number) (Value, error) {
+	switch t.kind {
+	case KindDouble:
+		if f, err := n.Float64(); err == nil && !math.IsInf(f, 0) {
+			return f, nil
+		}
+	default:
+		i, err := strconv.ParseInt(n.String(), 10, 64)
+		if err == nil && t.kind == KindInt {
+			return i, nil
+		}
+		if err == nil && i >= 0 {
+			return Duration(i), nil
+		}
+	}
+	return nil, fmt.Errorf("%s is not a %s", n, t)
 }
 
 // listFromJSON converts a JSON array.
@@ -313,8 +325,6 @@ func scalarFromString(t *Type, s string) (Value, error) {
 		v, ok = parseDateTime(s)
 	case KindColor:
 		v, ok = parseColor(s)
-	case KindDuration:
-		return nil, fmt.Errorf("a duration is whole milliseconds, not %q", s)
 	default:
 		ok = false
 	}
