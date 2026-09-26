@@ -22,6 +22,9 @@ ACTIONLINT_VERSION    := v1.7.12
 PRE_COMMIT_VERSION    := 4.6.2
 ZIZMOR_VERSION        := 1.30.1
 REUSE_VERSION         := 6.2.0
+# flatc is built from source at the commit of its release tag (ADR-0002).
+FLATC_VERSION         := 25.9.23
+FLATC_COMMIT          := 187240970746d00bbd26b0f5873ed54d2477f9f3
 
 GO            := go
 # Tools are built with the project's toolchain; a tool built with an older Go
@@ -42,6 +45,12 @@ ACTIONLINT    ?= $(TOOLS_BIN)/actionlint
 REQTRACE      := $(GO) run ./tools/cmd/reqtrace
 COVGATE       := $(GO) run ./tools/cmd/covgate
 BIN_DIR       := bin
+FLATC_DIR     ?= $(HOME)/.cache/plux/flatc-$(FLATC_VERSION)
+FLATC         ?= $(FLATC_DIR)/flatc
+FBS_SCHEMA    := schema/fbs/bundle.fbs
+FBS_SECTIONS  := schema/fbs/sections/*.fbs
+FBS_GO_DIR    := backend/internal/bundle/fbs
+FBS_DART_DIR  := packages/plux_flutter/lib/src/bundle/fbs
 HYGIENE_HOOKS := trailing-whitespace end-of-file-fixer mixed-line-ending check-yaml check-toml \
 	check-json check-merge-conflict check-case-conflict check-added-large-files detect-private-key
 
@@ -59,7 +68,7 @@ GO_BUILD_FLAGS  := -trimpath -buildvcs=false -ldflags "-s -w -buildid= \
 	-X $(BUILDINFO_PKG).commitDate=$(COMMIT_DATE)"
 
 .PHONY: help setup hooks-install check test build gen gen-check clean \
-	install-go-tools install-golangci-lint install-govulncheck install-gitleaks install-actionlint install-python-tools \
+	install-go-tools install-golangci-lint install-govulncheck install-gitleaks install-actionlint install-python-tools install-flatc \
 	go-check go-fmt go-fmt-check go-lint go-tidy go-tidy-check go-gen-check registry-lock-check go-test go-test-race go-cover go-vuln go-build go-reproducible \
 	dart-check dart-get dart-lock-check dart-fmt dart-fmt-check dart-analyze dart-test dart-cover widgets-api widgets-api-check \
 	studio-check studio-install studio-fmt studio-lint studio-typecheck studio-test studio-cover \
@@ -72,7 +81,7 @@ help: ## Show this help
 
 ##@ Everyday
 
-setup: install-go-tools install-python-tools ## Install pinned tools and git hooks (run once after cloning)
+setup: install-go-tools install-python-tools install-flatc ## Install pinned tools and git hooks (run once after cloning)
 	@command -v flutter >/dev/null || echo "! Install Flutter $(FLUTTER_VERSION): https://docs.flutter.dev/get-started/install"
 	@command -v bun >/dev/null || echo "! Install Bun $(BUN_VERSION): https://bun.sh/docs/installation"
 	$(MAKE) hooks-install
@@ -101,6 +110,18 @@ install-python-tools: ## Install the pinned pre-commit, zizmor and reuse
 		python3 -m pip install --user --quiet $(PYTHON_TOOLS) || { echo "✗ pip refused; install pipx (e.g. apt install pipx) and rerun" >&2; exit 1; }; \
 	fi
 
+# Builds only the flatc target (needs git, CMake and a C++ compiler); the
+# tag is checked against the pinned commit before anything is built.
+install-flatc: ## Build the pinned flatc from source into FLATC_DIR (ADR-0002)
+	@if "$(FLATC)" --version 2>/dev/null | grep -qx "flatc version $(FLATC_VERSION)"; then echo "flatc $(FLATC_VERSION): $(FLATC)"; exit 0; fi; \
+	src=$$(mktemp -d); trap 'rm -rf "$$src"' EXIT; \
+	git -c advice.detachedHead=false clone --quiet --depth 1 --branch "v$(FLATC_VERSION)" https://github.com/google/flatbuffers.git "$$src"; \
+	if [ "$$(git -C "$$src" rev-parse HEAD)" != "$(FLATC_COMMIT)" ]; then echo "✗ flatc tag v$(FLATC_VERSION) is not commit $(FLATC_COMMIT)" >&2; exit 1; fi; \
+	cmake -S "$$src" -B "$$src/build" -DCMAKE_BUILD_TYPE=Release \
+		-DFLATBUFFERS_BUILD_TESTS=OFF -DFLATBUFFERS_BUILD_FLATLIB=OFF -DFLATBUFFERS_BUILD_FLATHASH=OFF >/dev/null; \
+	cmake --build "$$src/build" --target flatc --parallel >/dev/null; \
+	mkdir -p "$(FLATC_DIR)"; cp "$$src/build/flatc" "$(FLATC)"; "$(FLATC)" --version
+
 hooks-install: ## Register the git hooks (pre-commit, commit-msg, pre-push)
 	pre-commit install --hook-type pre-commit --hook-type commit-msg --hook-type pre-push
 
@@ -111,8 +132,17 @@ test: go-test dart-test studio-test ## Run the unit tests of every component
 
 build: go-build ## Build every binary into bin/
 
+# flatc writes the section accessors for Go and Dart from the one schema
+# file, and the binary schema of each section kind, from which schemagen
+# derives the verifier's layout tables (BND-001, BND-012).
 gen: ## Regenerate all generated code and reference documents (CI-003)
-	$(GO) run ./tools/cmd/schemagen -root .
+	@"$(FLATC)" --version 2>/dev/null | grep -qx "flatc version $(FLATC_VERSION)" || { echo "✗ flatc $(FLATC_VERSION) not found at $(FLATC); run 'make install-flatc'" >&2; exit 1; }
+	@bfbs=$$(mktemp -d); trap 'rm -rf "$$bfbs"' EXIT; \
+	rm -rf $(FBS_GO_DIR) $(FBS_DART_DIR); \
+	"$(FLATC)" --go -o $(dir $(FBS_GO_DIR)) $(FBS_SCHEMA); \
+	"$(FLATC)" --dart -o $(FBS_DART_DIR) $(FBS_SCHEMA); \
+	"$(FLATC)" --binary --schema -o "$$bfbs" $(FBS_SECTIONS); \
+	$(GO) run ./tools/cmd/schemagen -root . -bfbs "$$bfbs"
 	@for m in $(GO_MODULES); do (cd $$m && $(GO) generate ./...); done
 
 gen-check: go-gen-check dart-lock-check studio-install ## Fail if generated code or lockfiles are not committed; run on a clean tree (CI-003)

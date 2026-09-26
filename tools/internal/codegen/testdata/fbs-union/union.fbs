@@ -1,0 +1,17 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+// A schema with a union, which the layout generator refuses.
+// Regenerate union.bfbs with: flatc --binary --schema union.fbs
+
+namespace test;
+
+table A { x: int; }
+
+union U { A }
+
+table Holder {
+  u: U;
+}
+
+root_type Holder;

@@ -20,9 +20,12 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
+      # flatc's Dart output is checked by regeneration (make gen-check), as is.
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
+        exclude: '_generated\.dart$'
       - id: end-of-file-fixer
+        exclude: '_generated\.dart$'
       - id: mixed-line-ending
         args: [--fix=lf]
       - id: check-yaml

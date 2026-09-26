@@ -106,6 +106,8 @@ Bundles are stored uncompressed so that devices can memory-map them (`BND-007`);
 
 Generated Go and Dart code is committed and checked by `make gen-check` (`BND-001`, `CI-003`).
 
+**Schema files.** Every type is declared in one file, `schema/fbs/bundle.fbs`, in one namespace; each section kind's root type and file identifier are declared in `schema/fbs/sections/<kind>.fbs`, which includes it. Go and Dart accessors are generated from `bundle.fbs` — one package, one library — and the binary schema of each section from its root file. Separate files per section with shared types in an included file would be the obvious layout, but flatc's Dart generator (v25.9.23) refers to types from an included file of the same namespace without the import prefix it declares, so the generated library does not compile. Because the generated Go code then has no per-type file identifiers, `bundle.Finish` writes the identifier of each section kind.
+
 ## Consequences
 
 - **Positive:** pages are read in place with generated accessors; one edited page is one changed section; each section is hashed, verified and patched on its own; additive evolution follows FlatBuffers' field rules; output is deterministic by construction.
