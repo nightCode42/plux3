@@ -7,6 +7,7 @@
  * this index and the helpers below.
  */
 
+export type * from "./document.gen.ts";
 export { type LimitDefinition, type LimitKey, type LimitScope, type LimitUnit, limits } from "./limits.gen.ts";
 
 import { type LimitDefinition, type LimitKey, limits } from "./limits.gen.ts";

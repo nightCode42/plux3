@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://plux.dev/schema/v1/translation-keys.schema.json",
+  "title": "Plux translation keys document",
+  "description": "The translation keys of an app, referenced by identifier (I18N-007). File: `translations/keys.json`.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "keys"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "$ref": "common.schema.json#/$defs/schemaVersion"
+    },
+    "kind": {
+      "const": "translationKeys"
+    },
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "keys": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "x-plux-type": "TranslationKey",
+        "description": "A translation key.",
+        "required": [
+          "id",
+          "key"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "key": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]*([.-][a-z0-9]+)*$",
+            "maxLength": 128
+          },
+          "description": {
+            "$ref": "common.schema.json#/$defs/description"
+          },
+          "maxLength": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "args": {
+            "type": "array",
+            "items": {
+              "$ref": "common.schema.json#/$defs/field"
+            }
+          }
+        },
+        "patternProperties": {
+          "^x-": true
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "patternProperties": {
+    "^x-": true
+  },
+  "additionalProperties": false
+}

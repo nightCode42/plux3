@@ -12,18 +12,27 @@ import (
 )
 
 // TestRunGeneratesAndIsIdempotent runs schemagen on a copy of the real
-// registry: the first run writes every file, the second none.
+// schema sources: the first run writes every file, the second none.
 func TestRunGeneratesAndIsIdempotent(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
-	src, err := os.ReadFile(filepath.Join("..", "..", "..", "schema", "limits.json"))
+	src := filepath.Join("..", "..", "..", "schema")
+	err := filepath.WalkDir(src, func(path string, d os.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".json") || strings.Contains(path, "testdata") {
+			return err
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		rel, _ := filepath.Rel(src, path)
+		dst := filepath.Join(root, "schema", rel)
+		if err := os.MkdirAll(filepath.Dir(dst), 0o750); err != nil {
+			return err
+		}
+		return os.WriteFile(dst, data, 0o600)
+	})
 	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.MkdirAll(filepath.Join(root, "schema"), 0o750); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(root, "schema", "limits.json"), src, 0o600); err != nil {
 		t.Fatal(err)
 	}
 	var out, errOut bytes.Buffer
@@ -31,8 +40,10 @@ func TestRunGeneratesAndIsIdempotent(t *testing.T) {
 	if code := run([]string{"-root", root}, &out, &errOut); code != exitOK {
 		t.Fatalf("exit %d: %s", code, errOut.String())
 	}
-	if !strings.Contains(out.String(), "limits_gen.go") {
-		t.Errorf("first run output: %s", out.String())
+	for _, want := range []string{"limits_gen.go", "model_gen.go", "document.g.dart", "document.gen.ts", "document-schema.md"} {
+		if !strings.Contains(out.String(), want) {
+			t.Errorf("first run did not write %s:\n%s", want, out.String())
+		}
 	}
 	out.Reset()
 	if code := run([]string{"-root", root}, &out, &errOut); code != exitOK || out.Len() != 0 {

@@ -2203,62 +2203,65 @@ Candidate enterprise-edition features are SSO/SCIM, advanced approval policies, 
 
 ## Appendix A — Plux Document Example
 
-A loan calculator page in the `loans` plugin. IDs are shortened for readability; real IDs are UUIDv7.
+A loan calculator page in the `loans` plugin and one of its action graphs, as two files of the Git layout (`SCH-006`). Identifiers are shortened for readability; real identifiers are UUIDv7. The complete, valid project is `schema/testdata/documents/loan-calculator`, and every property is described in `docs/reference/document-schema.md`.
+
+`plugins/loans/pages/calculator.page.json`:
 
 ```json
 {
   "schemaVersion": "1.0.0",
   "kind": "page",
-  "id": "pg_01J…calc",
+  "id": "01J…calc",
   "key": "calculator",
+  "route": "loan-calculator",
   "pageKind": "screen",
-  "title": { "$t": "tk_loans_calc_title" },
+  "title": { "$t": "01J…tk-title" },
   "security": { "secure": false, "requiresAssurance": "AL1" },
   "params": [
-    { "name": "productId", "type": "string", "required": true }
+    { "id": "01J…p1", "name": "productId", "type": "string", "required": true, "mock": "personal-loan" }
   ],
   "state": [
-    { "name": "amount", "type": "decimal", "default": "50000", "persistence": "memory" },
-    { "name": "months", "type": "int", "default": 12 },
-    { "name": "result", "type": "LoanSchedule?", "default": null }
+    { "id": "01J…s1", "name": "amount", "type": "decimal", "default": "50000", "persistence": "memory" },
+    { "id": "01J…s2", "name": "months", "type": "int", "default": 12 },
+    { "id": "01J…s3", "name": "result", "type": "LoanSchedule?", "default": null }
   ],
   "root": {
-    "id": "n_scaffold", "type": "Scaffold",
+    "id": "01J…n1", "type": "Scaffold",
     "slots": {
       "appBar": {
-        "id": "n_appbar", "type": "AppBar",
-        "slots": { "title": { "id": "n_title", "type": "Text", "props": { "data": { "$t": "tk_loans_calc_title" } } } }
+        "id": "01J…n2", "type": "AppBar",
+        "slots": { "title": { "id": "01J…n3", "type": "Text", "props": { "data": { "$t": "01J…tk-title" } } } }
       },
       "body": {
-        "id": "n_col", "type": "Column",
+        "id": "01J…n4", "type": "Column",
         "props": { "crossAxisAlignment": "stretch", "spacing": { "$token": "space.md" } },
         "children": [
           {
-            "id": "n_amount", "type": "AmountInput", "testId": "amount",
+            "id": "01J…n5", "type": "AmountInput", "testId": "amount",
             "props": {
-              "label": { "$t": "tk_loans_amount" },
+              "label": { "$t": "01J…tk-amount" },
               "currency": "ETB",
               "value": { "$expr": "page.amount" },
               "min": "1000", "max": "5000000"
             },
-            "events": { "onChanged": { "$graph": "ag_set_amount" } }
+            "events": { "onChanged": { "$graph": "01J…g-set-amount" } }
           },
           {
-            "id": "n_months", "type": "Slider", "testId": "months",
+            "id": "01J…n6", "type": "Slider", "testId": "months",
             "props": { "min": 3, "max": 60, "divisions": 19, "value": { "$expr": "double(page.months)" } },
-            "events": { "onChanged": { "$graph": "ag_set_months" } }
+            "events": { "onChanged": { "$graph": "01J…g-set-months" } }
           },
           {
-            "id": "n_calc", "type": "FilledButton", "testId": "calculate",
-            "slots": { "child": { "id": "n_calc_label", "type": "Text", "props": { "data": { "$t": "tk_loans_calculate" } } } },
-            "events": { "onPressed": { "$graph": "ag_calculate", "concurrency": "drop" } }
+            "id": "01J…n7", "type": "FilledButton", "testId": "calculate",
+            "slots": { "child": { "id": "01J…n8", "type": "Text", "props": { "data": { "$t": "01J…tk-calculate" } } } },
+            "events": { "onPressed": { "$graph": "01J…g-calculate", "concurrency": "drop" } }
           },
           {
-            "id": "n_result", "type": "If",
+            "id": "01J…n9", "type": "If",
             "props": { "condition": { "$expr": "page.result != null" } },
             "slots": {
               "then": {
-                "id": "n_payment", "type": "MoneyText",
+                "id": "01J…n10", "type": "MoneyText",
                 "props": { "value": { "$expr": "page.result.monthlyPayment" }, "style": { "$token": "type.headlineMedium" } }
               }
             }
@@ -2266,24 +2269,32 @@ A loan calculator page in the `loans` plugin. IDs are shortened for readability;
         ]
       }
     }
-  },
-  "actionGraphs": {
-    "ag_calculate": {
-      "steps": [
-        {
-          "id": "call", "action": "invokeFunction",
-          "input": {
-            "function": "loan.calculateSchedule@prod",
-            "args": { "principal": { "$expr": "page.amount" }, "annualRate": { "$expr": "flags.loanBaseRate" }, "months": { "$expr": "page.months" } }
-          },
-          "onSuccess": "store", "onError": "showError"
-        },
-        { "id": "store", "action": "setState", "input": { "path": "page.result", "value": { "$expr": "steps.call.output" } }, "next": "track" },
-        { "id": "track", "action": "trackEvent", "input": { "name": "loan_calculated", "props": { "months": { "$expr": "page.months" } } } },
-        { "id": "showError", "action": "showSnackbar", "input": { "message": { "$expr": "steps.call.error.message" } } }
-      ]
-    }
   }
+}
+```
+
+`plugins/loans/actions/calculate.graph.json`:
+
+```json
+{
+  "schemaVersion": "1.0.0",
+  "kind": "actionGraph",
+  "id": "01J…g-calculate",
+  "key": "calculate",
+  "page": "01J…calc",
+  "steps": [
+    {
+      "id": "call", "action": "invokeFunction",
+      "input": {
+        "function": "loan.calculateSchedule@prod",
+        "args": { "principal": { "$expr": "page.amount" }, "annualRate": { "$expr": "flags.loanBaseRate" }, "months": { "$expr": "page.months" } }
+      },
+      "onSuccess": "store", "onError": "showError"
+    },
+    { "id": "store", "action": "setState", "input": { "path": "page.result", "value": { "$expr": "steps.call.output" } }, "next": "track" },
+    { "id": "track", "action": "trackEvent", "input": { "name": "loan_calculated", "props": { "months": { "$expr": "page.months" } } } },
+    { "id": "showError", "action": "showSnackbar", "input": { "message": { "$expr": "steps.call.error.message" } } }
+  ]
 }
 ```
 
@@ -2933,4 +2944,4 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | 1.0.0 | 2026-09-25 | Initial baseline. |
 | 1.1.0 | 2026-09-26 | Functions with explicit `server`/`device` placement and standard Go; no-code app generation; mixed native/plugin screens and route-name addressing without host code changes; Plux Canvas replaces the Flutter Web renderer; limits and quotas framework; bundle design principles replace the IDL sketch; security profiles renamed `standard`/`strict`/`maximum`; multi-tenant operation replaces hosted SaaS; editions and licensing; decisions on delta algorithm, AI provider and analytics store; brand; international positioning. |
 | 1.1.1 | 2026-09-26 | Phase 0 delivered: P0 requirement statuses updated; §33 and the P0 deliverables describe the actual workspace layout, tooling and licensing files; `RT-051` withdrawal worded as a rationale (found by `reqtrace lint`). |
-| 1.1.2 | 2026-09-26 | Phase 1 clarifications: section-directory entries are 72 bytes, matching their fields (App. B.1); `BND-004` names the `schemas` section as App. B.2 does; the structural primitive `Switch` is renamed `Match` (App. C.1); App. E.1 points to the complete PXL grammar; ADR-0025 added to §32 (ADR-0002, ADR-0010). |
+| 1.1.2 | 2026-09-26 | Phase 1 clarifications: section-directory entries are 72 bytes, matching their fields (App. B.1); `BND-004` names the `schemas` section as App. B.2 does; the structural primitive `Switch` is renamed `Match` (App. C.1); App. E.1 points to the complete PXL grammar; App. A shows action graphs as their own documents, as `SCH-006` requires, with identifiers on state entries and parameters (`SCH-002`); ADR-0025 added to §32 (ADR-0002, ADR-0010, ADR-0025). |

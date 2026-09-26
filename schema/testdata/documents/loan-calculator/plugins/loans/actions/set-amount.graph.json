@@ -1,0 +1,20 @@
+{
+  "description": "Stores the amount the user typed.",
+  "id": "01a0c450-6c00-701b-8000-000000034335",
+  "key": "set-amount",
+  "kind": "actionGraph",
+  "page": "01a0c450-6c00-7012-8000-000000022cce",
+  "schemaVersion": "1.0.0",
+  "steps": [
+    {
+      "action": "setState",
+      "id": "store",
+      "input": {
+        "path": "page.amount",
+        "value": {
+          "$expr": "decimal(event.value ?? \"0\")"
+        }
+      }
+    }
+  ]
+}

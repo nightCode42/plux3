@@ -33,7 +33,7 @@ Chosen option: **1**.
 
 ### Schema profile
 
-Documents under `schema/json/` use a documented subset of 2020-12 so that generated code stays idiomatic: objects with `properties`, `required` and `unevaluatedProperties: false`; `patternProperties` `^x-` for extensions (`SCH-004`); arrays; string-keyed maps (`additionalProperties` with a schema); string enums; `$ref` into `$defs`; `oneOf` either discriminated by a `const` property or by a single `$`-prefixed key (prop values: `$expr`, `$token`, `$t`, `$asset`); and raw values (`x-plux-raw: true`) that the compiler interprets using descriptors. `schemagen` rejects any schema outside the profile.
+Documents under `schema/json/` use a documented subset of 2020-12 so that generated code stays idiomatic: objects with `properties`, `required` and `unevaluatedProperties: false`; `patternProperties` `^x-` for extensions (`SCH-004`); arrays; string-keyed maps (`additionalProperties` with a schema); string enums; `$ref` into `$defs`; named enums; `x-plux-type` names for inline objects; one union shape, `oneOf [X, array of X]` (a slot holds one node or a list); `oneOf` branches that only constrain which properties are present; and raw values (`x-plux-raw: true`), such as prop values with their bindings `$expr`, `$token`, `$t` and `$asset`, that the compiler interprets using descriptors. `schemagen` rejects any schema outside the profile.
 
 ### Canonicalisation
 
@@ -45,11 +45,13 @@ RFC 8785 is implemented in `backend/internal/schema/jcs` with the standard libra
 
 | Output | Location |
 |---|---|
-| Go structs, enums and unions with `x-` extension maps and deterministic JSON marshalling | `backend/internal/schema/*_gen.go` |
-| Dart immutable classes with `fromJson`/`toJson` and sealed unions | `packages/plux_flutter/lib/src/schema/*.g.dart` |
+| Go structs, enums and the single-or-list union, with JSON tags | `backend/internal/schema/model_gen.go` |
+| Dart immutable classes and enums with `fromJson`/`toJson` | `packages/plux_flutter/lib/src/schema/*.g.dart` |
 | TypeScript types and discriminated unions | `studio/packages/schema/src/*.gen.ts` |
 
-It also generates the widget, action and limits registries (ADR-0010). Output is deterministic and committed; `make gen-check` fails when it is stale (`CI-003`). An in-house generator was preferred to quicktype because it needs no Node toolchain in the Go and Dart jobs, supports the profile's unions and extensions precisely, and produces code that follows the project's standards.
+It also generates the widget, action and limits registries (ADR-0010), the reference `docs/reference/document-schema.md`, and copies of the schemas that the Go validator embeds. Output is deterministic and committed; `make gen-check` fails when it is stale (`CI-003`).
+
+Extension properties (`x-…`) are preserved because documents are stored and hashed as canonical bytes, not re-serialised from the generated types; the types ignore them, and the TypeScript interfaces declare them with an index signature. Optional raw values (defaults, mocks) keep the difference between an absent value and an explicit `null` in every language. An in-house generator was preferred to quicktype because it needs no Node toolchain in the Go and Dart jobs, supports the profile's unions and extensions precisely, and produces code that follows the project's standards.
 
 ### Identifiers
 

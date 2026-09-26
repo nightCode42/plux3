@@ -1,0 +1,14 @@
+{
+  "assets": [
+    {
+      "description": "App logo.",
+      "file": "images/logo.png",
+      "id": "01a0c450-6c00-700d-8000-000000019223",
+      "key": "logo",
+      "mediaType": "image/png"
+    }
+  ],
+  "id": "01a0c450-6c00-700c-8000-000000017334",
+  "kind": "assetIndex",
+  "schemaVersion": "1.0.0"
+}

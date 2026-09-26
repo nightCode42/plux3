@@ -1,0 +1,44 @@
+{
+  "category": "display",
+  "description": "A label above a value.",
+  "id": "01a0c450-6c00-702d-8000-000000057003",
+  "key": "labelled-value",
+  "kind": "template",
+  "name": "Labelled value",
+  "parameters": [
+    {
+      "default": "Label",
+      "name": "label",
+      "path": "/children/0/props/data",
+      "type": "string"
+    }
+  ],
+  "root": {
+    "children": [
+      {
+        "id": "01a0c450-6c00-702e-8000-000000058ef2",
+        "props": {
+          "data": "Label"
+        },
+        "type": "Text"
+      },
+      {
+        "id": "01a0c450-6c00-702f-8000-00000005ade1",
+        "props": {
+          "data": "Value"
+        },
+        "type": "Text"
+      }
+    ],
+    "id": "01a0c450-6c00-7030-8000-00000005ccd0",
+    "props": {
+      "crossAxisAlignment": "start"
+    },
+    "type": "Column"
+  },
+  "schemaVersion": "1.0.0",
+  "tags": [
+    "text"
+  ],
+  "visibility": "organization"
+}

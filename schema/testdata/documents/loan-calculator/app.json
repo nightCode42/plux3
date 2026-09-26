@@ -1,0 +1,103 @@
+{
+  "defaultLocale": "en",
+  "description": "Conformance project for the compiler and the runtime.",
+  "entryRoute": "loan-calculator",
+  "environments": [
+    {
+      "key": "production",
+      "name": "Production",
+      "values": {
+        "apiBaseUrl": "https://api.example.com"
+      }
+    },
+    {
+      "key": "staging",
+      "name": "Staging",
+      "values": {
+        "apiBaseUrl": "https://staging.api.example.com"
+      }
+    }
+  ],
+  "flags": [
+    {
+      "default": 0.089,
+      "description": "Annual base rate used by the calculator.",
+      "name": "loanBaseRate",
+      "type": "double"
+    }
+  ],
+  "icon": {
+    "monogram": {
+      "background": "#5B3DF5",
+      "text": "PD"
+    }
+  },
+  "id": "01a0c450-6c00-7010-8000-00000001eef0",
+  "key": "demo",
+  "kind": "app",
+  "minRuntimeVersion": "0.1.0",
+  "name": "Plux Demo",
+  "nativeCatalogue": "01a0c450-6c00-700f-8000-00000001d001",
+  "plugins": [
+    "loans"
+  ],
+  "requiredFeatures": "reject",
+  "schemaVersion": "1.0.0",
+  "securityProfile": "strict",
+  "supportedLocales": [
+    "en",
+    "de-DE",
+    "am-ET"
+  ],
+  "sync": {
+    "activation": "atSafePoint",
+    "startup": {
+      "mode": "useCacheThenSync"
+    }
+  },
+  "theme": "01a0c450-6c00-700e-8000-00000001b112",
+  "types": [
+    {
+      "fields": [
+        {
+          "name": "monthlyPayment",
+          "type": "decimal"
+        },
+        {
+          "name": "totalInterest",
+          "type": "decimal"
+        },
+        {
+          "name": "months",
+          "type": "int"
+        }
+      ],
+      "name": "LoanSchedule"
+    },
+    {
+      "enum": [
+        "standard",
+        "gold"
+      ],
+      "name": "Tier"
+    }
+  ],
+  "userContext": [
+    {
+      "name": "tier",
+      "type": "Tier"
+    },
+    {
+      "name": "displayName",
+      "sensitive": true,
+      "type": "string"
+    }
+  ],
+  "variables": [
+    {
+      "description": "Base URL of the lending API.",
+      "name": "apiBaseUrl",
+      "type": "string"
+    }
+  ]
+}

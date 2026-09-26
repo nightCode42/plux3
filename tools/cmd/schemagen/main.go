@@ -61,5 +61,18 @@ func generate(root string) ([]codegen.File, error) {
 	if err != nil {
 		return nil, fmt.Errorf("limits: %w", err)
 	}
-	return files, nil
+	dir := filepath.Join(root, filepath.FromSlash(codegen.SchemaDir))
+	model, err := codegen.LoadModel(dir)
+	if err != nil {
+		return nil, fmt.Errorf("document model: %w", err)
+	}
+	schemas, err := codegen.Schemas(dir)
+	if err != nil {
+		return nil, fmt.Errorf("document model: %w", err)
+	}
+	modelFiles, err := codegen.ModelFiles(model, schemas)
+	if err != nil {
+		return nil, fmt.Errorf("document model: %w", err)
+	}
+	return append(files, modelFiles...), nil
 }

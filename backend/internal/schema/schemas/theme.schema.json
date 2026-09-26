@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://plux.dev/schema/v1/theme.schema.json",
+  "title": "Plux theme document",
+  "description": "Design tokens for light and dark modes (THM-001, THM-002). File: `theme.json`.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "key",
+    "name",
+    "tokens"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "$ref": "common.schema.json#/$defs/schemaVersion"
+    },
+    "kind": {
+      "const": "theme"
+    },
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "key": {
+      "$ref": "common.schema.json#/$defs/key"
+    },
+    "name": {
+      "$ref": "common.schema.json#/$defs/text"
+    },
+    "tokens": {
+      "$ref": "#/$defs/token"
+    }
+  },
+  "patternProperties": {
+    "^x-": true
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "token": {
+      "description": "A design token or a group of tokens in the W3C Design Tokens format (THM-001). Dark-mode values are given in `$extensions.dev.plux.dark`.",
+      "type": "object",
+      "x-plux-raw": true,
+      "properties": {
+        "$value": {},
+        "$type": {
+          "enum": [
+            "color",
+            "dimension",
+            "fontFamily",
+            "fontWeight",
+            "duration",
+            "cubicBezier",
+            "number",
+            "typography",
+            "shadow",
+            "border",
+            "strokeStyle",
+            "gradient",
+            "transition"
+          ]
+        },
+        "$description": {
+          "type": "string"
+        },
+        "$extensions": {
+          "type": "object"
+        }
+      },
+      "patternProperties": {
+        "^[a-zA-Z0-9][a-zA-Z0-9-]*$": {
+          "$ref": "#/$defs/token"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

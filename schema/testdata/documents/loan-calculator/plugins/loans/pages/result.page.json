@@ -1,0 +1,59 @@
+{
+  "id": "01a0c450-6c00-7013-8000-000000024bbd",
+  "key": "result",
+  "kind": "page",
+  "pageKind": "screen",
+  "params": [
+    {
+      "id": "01a0c450-6c00-7027-8000-00000004b669",
+      "mock": {
+        "monthlyPayment": "4535.42",
+        "months": 12,
+        "totalInterest": "4425.04"
+      },
+      "name": "schedule",
+      "required": true,
+      "type": "LoanSchedule"
+    }
+  ],
+  "root": {
+    "id": "01a0c450-6c00-702c-8000-000000055114",
+    "slots": {
+      "appBar": {
+        "id": "01a0c450-6c00-7029-8000-00000004f447",
+        "slots": {
+          "title": {
+            "id": "01a0c450-6c00-7028-8000-00000004d558",
+            "props": {
+              "data": {
+                "$t": "01a0c450-6c00-7006-8000-00000000b99a"
+              }
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "id": "01a0c450-6c00-702b-8000-000000053225",
+        "slots": {
+          "child": {
+            "id": "01a0c450-6c00-702a-8000-000000051336",
+            "props": {
+              "data": {
+                "$expr": "string(params.schedule.monthlyPayment)"
+              }
+            },
+            "type": "Text"
+          }
+        },
+        "type": "Center"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "schemaVersion": "1.0.0",
+  "title": {
+    "$t": "01a0c450-6c00-7006-8000-00000000b99a"
+  }
+}

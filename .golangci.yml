@@ -63,10 +63,12 @@ linters:
       - std-error-handling
     rules:
       # Tests may be long and table-heavy; readability is enforced in review.
+      # Errors in test helpers end the test, so wrapping adds nothing.
       - path: _test\.go
         linters:
           - funlen
           - gocognit
+          - wrapcheck
       # Repository tooling reads files named on its own command line.
       - path: ^tools/
         linters:
@@ -77,7 +79,7 @@ linters:
       - path: _test\.go
         linters:
           - gosec
-        text: "G304|G703"
+        text: "G304|G703|G122"
 
 formatters:
   enable:

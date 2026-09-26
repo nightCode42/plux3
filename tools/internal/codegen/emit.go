@@ -39,7 +39,7 @@ const (
 // code is AGPL-3.0-only (ADR-0022); everything else is Apache-2.0. The
 // marker follows https://go.dev/s/generatedcode in every language, which is
 // what covgate and the linters recognise.
-func header(lang Lang, source string) string { //nolint:unparam // each generator passes its own source; more arrive with the schema generators.
+func header(lang Lang, source string) string {
 	licence := "Apache-2.0"
 	if lang == LangTS {
 		licence = "AGPL-3.0-only"
