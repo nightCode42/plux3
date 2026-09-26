@@ -27,6 +27,7 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | `page.nodes` | count | 5000 | 1000 | 50000 | installation, organization, app, plugin | P1 | SCH-005, CMP-040 | Nodes in one page document. Above the warning threshold the compiler reports the page. |
 | `plugin.pages` | count | 500 | 80% | 2000 | installation, organization, app, plugin | P1 | SCH-005 | Pages per plugin. |
 | `pxl.collectionSize` | count | 10000 | 80% | 1000000 | installation, organization, app, plugin | P1 | PXL-001 | Elements of a list or map produced during one PXL evaluation. |
+| `pxl.decimalDigits` | count | 1000 | 80% | 10000 | installation, organization, app, plugin | P1 | PXL-001, PXL-005 | Digits of a decimal produced during one PXL evaluation, in plain notation. |
 | `pxl.expressionLength` | codepoints | 4096 | 80% | 65536 | installation, organization, app, plugin | P1 | PXL-001 | Length of one PXL expression. |
 | `pxl.nestingDepth` | count | 64 | 80% | 256 | installation | P1 | PXL-001 | Nesting depth of one PXL expression's syntax tree. |
 | `pxl.operationBudget` | operations | 10000 | 80% | 1000000 | installation, organization, app, plugin | P1 | PXL-001 | Operations one PXL evaluation may perform before it stops with a typed error. |

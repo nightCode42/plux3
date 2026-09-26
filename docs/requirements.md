@@ -2601,6 +2601,7 @@ The complete grammar — including the receiver-style macros `map`, `filter`, `a
 |---|---|
 | `app`, `plugin`, `page`, `component` | State of the respective scope |
 | `params` | Page parameters |
+| `event` | Payload of the widget or lifecycle event that triggered the handler, typed by the event's declared payload (inside event handlers) |
 | `props` | Component props (inside components) |
 | `item`, `index` | Current item and index inside item templates and `forEach` |
 | `steps.<id>.output`, `steps.<id>.error` | Earlier action step results |
@@ -2944,4 +2945,4 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | 1.0.0 | 2026-09-25 | Initial baseline. |
 | 1.1.0 | 2026-09-26 | Functions with explicit `server`/`device` placement and standard Go; no-code app generation; mixed native/plugin screens and route-name addressing without host code changes; Plux Canvas replaces the Flutter Web renderer; limits and quotas framework; bundle design principles replace the IDL sketch; security profiles renamed `standard`/`strict`/`maximum`; multi-tenant operation replaces hosted SaaS; editions and licensing; decisions on delta algorithm, AI provider and analytics store; brand; international positioning. |
 | 1.1.1 | 2026-09-26 | Phase 0 delivered: P0 requirement statuses updated; §33 and the P0 deliverables describe the actual workspace layout, tooling and licensing files; `RT-051` withdrawal worded as a rationale (found by `reqtrace lint`). |
-| 1.1.2 | 2026-09-26 | Phase 1 clarifications: section-directory entries are 72 bytes, matching their fields (App. B.1); `BND-004` names the `schemas` section as App. B.2 does; the structural primitive `Switch` is renamed `Match` (App. C.1); App. E.1 points to the complete PXL grammar; App. A shows action graphs as their own documents, as `SCH-006` requires, with identifiers on state entries and parameters (`SCH-002`); ADR-0025 added to §32 (ADR-0002, ADR-0010, ADR-0025). |
+| 1.1.2 | 2026-09-26 | Phase 1 clarifications: section-directory entries are 72 bytes, matching their fields (App. B.1); `BND-004` names the `schemas` section as App. B.2 does; the structural primitive `Switch` is renamed `Match` (App. C.1); App. E.1 points to the complete PXL grammar; App. A shows action graphs as their own documents, as `SCH-006` requires, with identifiers on state entries and parameters (`SCH-002`); ADR-0025 added to §32; App. E.2 adds the `event` root that event handlers read (ADR-0002, ADR-0010, ADR-0025). |

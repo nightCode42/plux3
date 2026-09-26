@@ -1,6 +1,6 @@
 {
   "$schema": "./json/limits.schema.json",
-  "$comment": "The limits registry (LIM-001, spec \u00a730.4). Every size and count in Plux is read from here; nothing is hard-coded. Generated code: make gen.",
+  "$comment": "The limits registry (LIM-001, spec §30.4). Every size and count in Plux is read from here; nothing is hard-coded. Generated code: make gen.",
   "limits": [
     {
       "key": "action.forEachItems",
@@ -438,6 +438,29 @@
         "PXL-001"
       ],
       "description": "Elements of a list or map produced during one PXL evaluation."
+    },
+    {
+      "key": "pxl.decimalDigits",
+      "unit": "count",
+      "default": 1000,
+      "max": 10000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server",
+        "runtime"
+      ],
+      "phase": "P1",
+      "requirements": [
+        "PXL-001",
+        "PXL-005"
+      ],
+      "description": "Digits of a decimal produced during one PXL evaluation, in plain notation."
     },
     {
       "key": "pxl.expressionLength",

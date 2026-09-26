@@ -234,6 +234,16 @@ export const limits = [
     description: "Elements of a list or map produced during one PXL evaluation.",
   },
   {
+    key: "pxl.decimalDigits",
+    unit: "count",
+    default: 1000,
+    warning: 0,
+    max: 10000,
+    scopes: ["installation", "organization", "app", "plugin"],
+    phase: "P1",
+    description: "Digits of a decimal produced during one PXL evaluation, in plain notation.",
+  },
+  {
     key: "pxl.expressionLength",
     unit: "codepoints",
     default: 4096,

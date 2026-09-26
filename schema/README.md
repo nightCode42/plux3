@@ -7,11 +7,11 @@ Language-neutral contracts shared by the compiler, the runtime and Studio. Every
 | `json/` | JSON Schema 2020-12 for documents (§7, ADR-0025); `json/registry/` for widget descriptors, value types, enums and actions | Go validator; generated Go, Dart and TypeScript types |
 | `widgets/` | Widget descriptors (Layers 1 and 2), value types, enums, the permanent-ID lock, the Flutter API snapshot and the generated coverage table (§8, ADR-0010) | Compiler registry, runtime decoders, Studio, AI grounding |
 | `actions/` | Built-in action descriptors with typed inputs and outputs (Appendix D) | Compiler, runtime, Studio |
-| `pxl/` | PXL standard-library signatures and currency data (ADR-0009) | Go checker and evaluator, Dart VM |
+| `pxl/` | PXL bytecode (opcodes, constant tags, error kinds), standard-library signatures and ISO 4217 currencies (ADR-0009) | Go checker and VM, Dart VM (generated tables) |
 | `fbs/` | FlatBuffers IDL for bundle sections (§9, ADR-0002) | Generated Go and Dart code, verifier layout tables |
 | `limits.json` | The limits registry: key, unit, default, hard maximum, scopes (§30.4) | Compiler, server, runtime, Studio |
 | `errors.json` | The error catalogue exported from `backend/internal/plxerr` (generated, ADR-0018) | Dart and TypeScript generators |
-| `testdata/` | Cross-language conformance vectors: canonicalisation, PXL, documents → bundles and diagnostics (`QA-003`) | Go, Dart and TypeScript tests |
+| `testdata/` | Cross-language conformance vectors: canonicalisation, PXL (`testdata/pxl/`, format in [pxl.md](../docs/reference/pxl.md#9-conformance-vectors)), documents → bundles and diagnostics (`QA-003`) | Go, Dart and TypeScript tests |
 
 Everything generated from these files is committed and regenerated only with `make gen` (`CI-003`).
 

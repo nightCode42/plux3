@@ -70,6 +70,8 @@ enum PluxLimit {
   pluginPages('plugin.pages', PluxLimitUnit.count, 500, 0, 2000),
   /// Elements of a list or map produced during one PXL evaluation.
   pxlCollectionSize('pxl.collectionSize', PluxLimitUnit.count, 10000, 0, 1000000),
+  /// Digits of a decimal produced during one PXL evaluation, in plain notation.
+  pxlDecimalDigits('pxl.decimalDigits', PluxLimitUnit.count, 1000, 0, 10000),
   /// Length of one PXL expression.
   pxlExpressionLength('pxl.expressionLength', PluxLimitUnit.codepoints, 4096, 0, 65536),
   /// Nesting depth of one PXL expression's syntax tree.

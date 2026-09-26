@@ -1,0 +1,403 @@
+{
+  "description": "Boolean logic, conditionals and null safety (PXL-006).",
+  "env": {
+    "types": {
+      "Loan": {
+        "fields": {
+          "amount": "decimal",
+          "fee": "money?",
+          "months": "int",
+          "rate": "double",
+          "status": "string?"
+        }
+      },
+      "Tier": {
+        "enum": [
+          "gold",
+          "silver",
+          "bronze"
+        ]
+      }
+    },
+    "roots": {
+      "day": "date",
+      "items": "list<Loan>",
+      "n": "int",
+      "name": "string?",
+      "none": "int?",
+      "page": "Loan",
+      "scores": "map<string,int>",
+      "tags": "list<string>",
+      "tier": "Tier",
+      "total": "money",
+      "when": "dateTime",
+      "x": "double"
+    }
+  },
+  "inputs": {
+    "day": "2024-02-29",
+    "items": [
+      {
+        "amount": "100.00",
+        "months": 6,
+        "rate": 0.1,
+        "status": "open"
+      },
+      {
+        "amount": "25.5",
+        "months": 3,
+        "rate": 0.2,
+        "status": "closed"
+      },
+      {
+        "amount": "300",
+        "months": 12,
+        "rate": 0.05
+      }
+    ],
+    "n": 7,
+    "name": null,
+    "none": null,
+    "now": "2026-09-26T08:00:00Z",
+    "page": {
+      "amount": "1200.50",
+      "fee": {
+        "amount": "9.99",
+        "currency": "EUR"
+      },
+      "months": 12,
+      "rate": 0.05,
+      "status": null
+    },
+    "scores": {
+      "alice": 3,
+      "bob": 2
+    },
+    "tags": [
+      "b",
+      "a",
+      "c",
+      "a"
+    ],
+    "tier": "gold",
+    "total": {
+      "amount": "12.34",
+      "currency": "EUR"
+    },
+    "when": "2026-09-26T10:30:00+02:00",
+    "x": 2.5
+  },
+  "cases": [
+    {
+      "name": "and short-circuits",
+      "expr": "n == 0 && n / 0 == 1",
+      "value": false,
+      "type": "bool",
+      "program": "AQACBGJvb2wDBAFuAgAAAAAAAAAAAgEAAAAAAAAAAQFuFwYAAAQBADUPFwAAAAYAAAQBABYEAgA1",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"n\"",
+        "0003 CONST 1 ; 0",
+        "0006 EQ",
+        "0007 AND_JUMP 23",
+        "0012 LOAD_ROOT 0 ; \"n\"",
+        "0015 CONST 1 ; 0",
+        "0018 DIV_INT",
+        "0019 CONST 2 ; 1",
+        "0022 EQ"
+      ],
+      "reads": [
+        "n"
+      ]
+    },
+    {
+      "name": "or short-circuits",
+      "expr": "n == 7 || n / 0 == 1",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wEBAFuAgcAAAAAAAAAAgAAAAAAAAAAAgEAAAAAAAAAAQFuFwYAAAQBADUQFwAAAAYAAAQCABYEAwA1",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"n\"",
+        "0003 CONST 1 ; 7",
+        "0006 EQ",
+        "0007 OR_JUMP 23",
+        "0012 LOAD_ROOT 0 ; \"n\"",
+        "0015 CONST 2 ; 0",
+        "0018 DIV_INT",
+        "0019 CONST 3 ; 1",
+        "0022 EQ"
+      ],
+      "reads": [
+        "n"
+      ]
+    },
+    {
+      "name": "not",
+      "expr": "!(n == 7)",
+      "value": false,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBAFuAgcAAAAAAAAAAQFuCAYAAAQBADVD",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"n\"",
+        "0003 CONST 1 ; 7",
+        "0006 EQ",
+        "0007 NOT"
+      ],
+      "reads": [
+        "n"
+      ]
+    },
+    {
+      "name": "conditional",
+      "expr": "n > 5 ? \"big\" : \"small\"",
+      "value": "big",
+      "type": "string",
+      "program": "AQACBnN0cmluZwQEAW4CBQAAAAAAAAAEA2JpZwQFc21hbGwBAW4YBgAABAEAN0ENFQAAAAQCAAwYAAAABAMA",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"n\"",
+        "0003 CONST 1 ; 5",
+        "0006 CMP_INT",
+        "0007 GT",
+        "0008 JUMP_IF_FALSE 21",
+        "0013 CONST 2 ; \"big\"",
+        "0016 JUMP 24",
+        "0021 CONST 3 ; \"small\""
+      ],
+      "reads": [
+        "n"
+      ]
+    },
+    {
+      "name": "conditional widens",
+      "expr": "n > 5 ? 1 : 2.5",
+      "value": 1,
+      "type": "double",
+      "program": "AQACBmRvdWJsZQQEAW4CBQAAAAAAAAADAAAAAAAA8D8DAAAAAAAABEABAW4YBgAABAEAN0ENFQAAAAQCAAwYAAAABAMA",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"n\"",
+        "0003 CONST 1 ; 5",
+        "0006 CMP_INT",
+        "0007 GT",
+        "0008 JUMP_IF_FALSE 21",
+        "0013 CONST 2 ; 1",
+        "0016 JUMP 24",
+        "0021 CONST 3 ; 2.5"
+      ],
+      "reads": [
+        "n"
+      ]
+    },
+    {
+      "name": "coalesce",
+      "expr": "name ?? \"anonymous\"",
+      "value": "anonymous",
+      "type": "string",
+      "program": "AQABBnN0cmluZwIEBG5hbWUECWFub255bW91cwEEbmFtZQsGAAASCwAAAAQBAA==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"name\"",
+        "0003 COALESCE_JUMP 11",
+        "0008 CONST 1 ; \"anonymous\""
+      ],
+      "reads": [
+        "name"
+      ]
+    },
+    {
+      "name": "coalesce chain",
+      "expr": "none ?? none ?? 3",
+      "value": 3,
+      "type": "int",
+      "program": "AQABA2ludAIEBG5vbmUCAwAAAAAAAAABBG5vbmUTBgAAEgsAAAAGAAASEwAAAAQBAA==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"none\"",
+        "0003 COALESCE_JUMP 11",
+        "0008 LOAD_ROOT 0 ; \"none\"",
+        "0011 COALESCE_JUMP 19",
+        "0016 CONST 1 ; 3"
+      ],
+      "reads": [
+        "none"
+      ]
+    },
+    {
+      "name": "null-safe field",
+      "expr": "first(items)?.months",
+      "value": 6,
+      "type": "int?",
+      "program": "AQABBGludD8CBAVpdGVtcwQGbW9udGhzAQVpdGVtcw8GAABJZwABEQ8AAAAIAQA=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"items\"",
+        "0003 CALL 103 1 ; first",
+        "0007 NULL_JUMP 15",
+        "0012 GET_FIELD 1 ; \"months\""
+      ],
+      "reads": [
+        "items"
+      ]
+    },
+    {
+      "name": "null-safe on null",
+      "expr": "first(items.filter(l, false))?.months ?? 0",
+      "value": 0,
+      "type": "int",
+      "program": "AQICA2ludAMEBWl0ZW1zBAZtb250aHMCAAAAAAAAAAABBWl0ZW1zMQYAAEoARgAASwABHQAAAAMNGAAAAAcBSAwIAAAASWcAAREpAAAACAEAEjEAAAAEAgA=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"items\"",
+        "0003 ITER_INIT 0",
+        "0005 NEW_LIST 0",
+        "0008 ITER_NEXT 0 1 29",
+        "0015 PUSH_FALSE",
+        "0016 JUMP_IF_FALSE 24",
+        "0021 LOAD_LOCAL 1",
+        "0023 LIST_APPEND",
+        "0024 JUMP 8",
+        "0029 CALL 103 1 ; first",
+        "0033 NULL_JUMP 41",
+        "0038 GET_FIELD 1 ; \"months\"",
+        "0041 COALESCE_JUMP 49",
+        "0046 CONST 2 ; 0"
+      ],
+      "reads": [
+        "items"
+      ]
+    },
+    {
+      "name": "coalesce function",
+      "expr": "coalesce(none, 4)",
+      "value": 4,
+      "type": "int",
+      "program": "AQABA2ludAIEBG5vbmUCBAAAAAAAAAABBG5vbmULBgAAEgsAAAAEAQA=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"none\"",
+        "0003 COALESCE_JUMP 11",
+        "0008 CONST 1 ; 4"
+      ],
+      "reads": [
+        "none"
+      ]
+    },
+    {
+      "name": "ifNull",
+      "expr": "ifNull(name, \"x\")",
+      "value": "x",
+      "type": "string",
+      "program": "AQABBnN0cmluZwIEBG5hbWUEAXgBBG5hbWULBgAAEgsAAAAEAQA=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"name\"",
+        "0003 COALESCE_JUMP 11",
+        "0008 CONST 1 ; \"x\""
+      ],
+      "reads": [
+        "name"
+      ]
+    },
+    {
+      "name": "isNull",
+      "expr": "isNull(name)",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wBBARuYW1lAQRuYW1lBQYAAAE1",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"name\"",
+        "0003 PUSH_NULL",
+        "0004 EQ"
+      ],
+      "reads": [
+        "name"
+      ]
+    },
+    {
+      "name": "typeOf",
+      "expr": "typeOf(items)",
+      "value": "list<Loan>",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEECmxpc3Q8TG9hbj4AAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; \"list<Loan>\""
+      ]
+    },
+    {
+      "name": "conditional on enum",
+      "expr": "tier == \"gold\" ? \"vip\" : \"regular\"",
+      "value": "vip",
+      "type": "string",
+      "program": "AQACBnN0cmluZwQEBHRpZXIEBGdvbGQEA3ZpcAQHcmVndWxhcgEEdGllchcGAAAEAQA1DRQAAAAEAgAMFwAAAAQDAA==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"tier\"",
+        "0003 CONST 1 ; \"gold\"",
+        "0006 EQ",
+        "0007 JUMP_IF_FALSE 20",
+        "0012 CONST 2 ; \"vip\"",
+        "0015 JUMP 23",
+        "0020 CONST 3 ; \"regular\""
+      ],
+      "reads": [
+        "tier"
+      ]
+    },
+    {
+      "name": "field of a nullable",
+      "expr": "first(items).months",
+      "diagnostics": [
+        {
+          "code": "PLX-2006",
+          "range": [
+            0,
+            19
+          ]
+        }
+      ]
+    },
+    {
+      "name": "condition is not a bool",
+      "expr": "n ? 1 : 2",
+      "diagnostics": [
+        {
+          "code": "PLX-2002",
+          "range": [
+            0,
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "name": "unknown root",
+      "expr": "user.tier",
+      "diagnostics": [
+        {
+          "code": "PLX-2003",
+          "range": [
+            0,
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "name": "unknown field",
+      "expr": "page.colour",
+      "diagnostics": [
+        {
+          "code": "PLX-2012",
+          "range": [
+            0,
+            11
+          ]
+        }
+      ]
+    },
+    {
+      "name": "branches differ",
+      "expr": "n > 1 ? 1 : \"a\"",
+      "diagnostics": [
+        {
+          "code": "PLX-2002",
+          "range": [
+            0,
+            15
+          ]
+        }
+      ]
+    }
+  ]
+}

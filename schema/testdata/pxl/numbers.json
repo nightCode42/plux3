@@ -1,0 +1,337 @@
+{
+  "description": "Number functions and conversions; rounding defaults to half-even.",
+  "env": {
+    "types": {
+      "Loan": {
+        "fields": {
+          "amount": "decimal",
+          "fee": "money?",
+          "months": "int",
+          "rate": "double",
+          "status": "string?"
+        }
+      },
+      "Tier": {
+        "enum": [
+          "gold",
+          "silver",
+          "bronze"
+        ]
+      }
+    },
+    "roots": {
+      "day": "date",
+      "items": "list<Loan>",
+      "n": "int",
+      "name": "string?",
+      "none": "int?",
+      "page": "Loan",
+      "scores": "map<string,int>",
+      "tags": "list<string>",
+      "tier": "Tier",
+      "total": "money",
+      "when": "dateTime",
+      "x": "double"
+    }
+  },
+  "inputs": {
+    "day": "2024-02-29",
+    "items": [
+      {
+        "amount": "100.00",
+        "months": 6,
+        "rate": 0.1,
+        "status": "open"
+      },
+      {
+        "amount": "25.5",
+        "months": 3,
+        "rate": 0.2,
+        "status": "closed"
+      },
+      {
+        "amount": "300",
+        "months": 12,
+        "rate": 0.05
+      }
+    ],
+    "n": 7,
+    "name": null,
+    "none": null,
+    "now": "2026-09-26T08:00:00Z",
+    "page": {
+      "amount": "1200.50",
+      "fee": {
+        "amount": "9.99",
+        "currency": "EUR"
+      },
+      "months": 12,
+      "rate": 0.05,
+      "status": null
+    },
+    "scores": {
+      "alice": 3,
+      "bob": 2
+    },
+    "tags": [
+      "b",
+      "a",
+      "c",
+      "a"
+    ],
+    "tier": "gold",
+    "total": {
+      "amount": "12.34",
+      "currency": "EUR"
+    },
+    "when": "2026-09-26T10:30:00+02:00",
+    "x": 2.5
+  },
+  "cases": [
+    {
+      "name": "abs",
+      "expr": "[abs(-3), abs(n - 10)]",
+      "value": [
+        3,
+        3
+      ],
+      "type": "list<int>",
+      "program": "AQADCWxpc3Q8aW50PgMCAwAAAAAAAAAEAW4CCgAAAAAAAAABAW4RBAAABgEABAIAFEkQAAFGAgA=",
+      "asm": [
+        "0000 CONST 0 ; 3",
+        "0003 LOAD_ROOT 1 ; \"n\"",
+        "0006 CONST 2 ; 10",
+        "0009 SUB_INT",
+        "0010 CALL 16 1 ; abs",
+        "0014 NEW_LIST 2"
+      ],
+      "reads": [
+        "n"
+      ]
+    },
+    {
+      "name": "abs decimal",
+      "expr": "abs(-2.50d)",
+      "value": "2.50",
+      "type": "decimal",
+      "program": "AQABB2RlY2ltYWwBBQQyLjUwAAMEAAA=",
+      "asm": [
+        "0000 CONST 0 ; 2.50d"
+      ]
+    },
+    {
+      "name": "min and max",
+      "expr": "[min(3, n), max(3, n)]",
+      "value": [
+        3,
+        7
+      ],
+      "type": "list<int>",
+      "program": "AQADCWxpc3Q8aW50PgICAwAAAAAAAAAEAW4BAW4XBAAABgEASRQAAgQAAAYBAEkZAAJGAgA=",
+      "asm": [
+        "0000 CONST 0 ; 3",
+        "0003 LOAD_ROOT 1 ; \"n\"",
+        "0006 CALL 20 2 ; min",
+        "0010 CONST 0 ; 3",
+        "0013 LOAD_ROOT 1 ; \"n\"",
+        "0016 CALL 25 2 ; max",
+        "0020 NEW_LIST 2"
+      ],
+      "reads": [
+        "n"
+      ]
+    },
+    {
+      "name": "round double half to even",
+      "expr": "[round(2.5), round(3.5), round(-2.5)]",
+      "value": [
+        2,
+        4,
+        -2
+      ],
+      "type": "list<int>",
+      "program": "AQABCWxpc3Q8aW50PgELAwICAAAAAAAAAAIEAAAAAAAAAAL+/////////wADBAAA",
+      "asm": [
+        "0000 CONST 0 ; [2 4 -2]"
+      ]
+    },
+    {
+      "name": "floor and ceil",
+      "expr": "[floor(-1.5), ceil(-1.5)]",
+      "value": [
+        -2,
+        -1
+      ],
+      "type": "list<int>",
+      "program": "AQABCWxpc3Q8aW50PgELAgL+/////////wL//////////wADBAAA",
+      "asm": [
+        "0000 CONST 0 ; [-2 -1]"
+      ]
+    },
+    {
+      "name": "clamp",
+      "expr": "[clamp(n, 0, 5), clamp(x, 3.0, 4.0)]",
+      "value": [
+        5,
+        3
+      ],
+      "type": "list<double>",
+      "program": "AQAEDGxpc3Q8ZG91YmxlPgYEAW4CAAAAAAAAAAACBQAAAAAAAAAEAXgDAAAAAAAACEADAAAAAAAAEEACAW4BeB4GAAAEAQAEAgBJKAADMwYDAAQEAAQFAEkpAANGAgA=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"n\"",
+        "0003 CONST 1 ; 0",
+        "0006 CONST 2 ; 5",
+        "0009 CALL 40 3 ; clamp",
+        "0013 INT_TO_DOUBLE",
+        "0014 LOAD_ROOT 3 ; \"x\"",
+        "0017 CONST 4 ; 3",
+        "0020 CONST 5 ; 4",
+        "0023 CALL 41 3 ; clamp",
+        "0027 NEW_LIST 2"
+      ],
+      "reads": [
+        "n",
+        "x"
+      ]
+    },
+    {
+      "name": "int conversions",
+      "expr": "[int(2.9), int(-2.9), int(12.99d), int(\"-42\")]",
+      "value": [
+        2,
+        -2,
+        12,
+        -42
+      ],
+      "type": "list<int>",
+      "program": "AQABCWxpc3Q8aW50PgELBAICAAAAAAAAAAL+/////////wIMAAAAAAAAAALW/////////wADBAAA",
+      "asm": [
+        "0000 CONST 0 ; [2 -2 12 -42]"
+      ]
+    },
+    {
+      "name": "double conversions",
+      "expr": "[double(n), double(0.1d), double(\"1e2\")]",
+      "value": [
+        7,
+        0.1,
+        100
+      ],
+      "type": "list<double>",
+      "program": "AQADDGxpc3Q8ZG91YmxlPgMEAW4DmpmZmZmZuT8DAAAAAAAAWUABAW4QBgAASS4AAQQBAAQCAEYDAA==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"n\"",
+        "0003 CALL 46 1 ; double",
+        "0007 CONST 1 ; 0.1",
+        "0010 CONST 2 ; 100",
+        "0013 NEW_LIST 3"
+      ],
+      "reads": [
+        "n"
+      ]
+    },
+    {
+      "name": "decimal conversions",
+      "expr": "[decimal(n), decimal(0.1), decimal(\"007.50\")]",
+      "value": [
+        "7",
+        "0.1",
+        "7.50"
+      ],
+      "type": "list<decimal>",
+      "program": "AQADDWxpc3Q8ZGVjaW1hbD4DBAFuBQMwLjEFBDcuNTABAW4QBgAASTEAAQQBAAQCAEYDAA==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"n\"",
+        "0003 CALL 49 1 ; decimal",
+        "0007 CONST 1 ; 0.1d",
+        "0010 CONST 2 ; 7.50d",
+        "0013 NEW_LIST 3"
+      ],
+      "reads": [
+        "n"
+      ]
+    },
+    {
+      "name": "int of a bad string",
+      "expr": "int(string(x))",
+      "error": "invalidArgument",
+      "type": "int",
+      "program": "AQABA2ludAEEAXgBAXgLBgAASYwAAUktAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"x\"",
+        "0003 CALL 140 1 ; string",
+        "0007 CALL 45 1 ; int"
+      ],
+      "reads": [
+        "x"
+      ]
+    },
+    {
+      "name": "int of a huge double",
+      "expr": "int(x * 1e19)",
+      "error": "overflow",
+      "type": "int",
+      "program": "AQACA2ludAIEAXgDAD2RYORY4UMBAXgLBgAABAEAG0krAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"x\"",
+        "0003 CONST 1 ; 10000000000000000000",
+        "0006 MUL_DOUBLE",
+        "0007 CALL 43 1 ; int"
+      ],
+      "reads": [
+        "x"
+      ]
+    },
+    {
+      "name": "abs overflows",
+      "expr": "abs(-9223372036854775807 - n + 6)",
+      "error": "overflow",
+      "type": "int",
+      "program": "AQACA2ludAMCAQAAAAAAAIAEAW4CBgAAAAAAAAABAW4PBAAABgEAFAQCABNJEAAB",
+      "asm": [
+        "0000 CONST 0 ; -9223372036854775807",
+        "0003 LOAD_ROOT 1 ; \"n\"",
+        "0006 SUB_INT",
+        "0007 CONST 2 ; 6",
+        "0010 ADD_INT",
+        "0011 CALL 16 1 ; abs"
+      ],
+      "reads": [
+        "n"
+      ]
+    },
+    {
+      "name": "clamp bounds reversed",
+      "expr": "clamp(n, 5, 1)",
+      "error": "invalidArgument",
+      "type": "int",
+      "program": "AQADA2ludAMEAW4CBQAAAAAAAAACAQAAAAAAAAABAW4NBgAABAEABAIASSgAAw==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"n\"",
+        "0003 CONST 1 ; 5",
+        "0006 CONST 2 ; 1",
+        "0009 CALL 40 3 ; clamp"
+      ],
+      "reads": [
+        "n"
+      ]
+    },
+    {
+      "name": "double of a bad string",
+      "expr": "double(string(n) + \".\")",
+      "error": "invalidArgument",
+      "type": "double",
+      "program": "AQACBmRvdWJsZQIEAW4EAS4BAW4PBgAASYsAAQQBADFJMAAB",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"n\"",
+        "0003 CALL 139 1 ; string",
+        "0007 CONST 1 ; \".\"",
+        "0010 CONCAT_STRING",
+        "0011 CALL 48 1 ; double"
+      ],
+      "reads": [
+        "n"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,168 @@
+{
+  "description": "Functions of later-phase groups are type-checked, add a required feature and are not evaluated by a P1 runtime (ADR-0009).",
+  "env": {
+    "types": {
+      "Loan": {
+        "fields": {
+          "amount": "decimal",
+          "fee": "money?",
+          "months": "int",
+          "rate": "double",
+          "status": "string?"
+        }
+      },
+      "Tier": {
+        "enum": [
+          "gold",
+          "silver",
+          "bronze"
+        ]
+      }
+    },
+    "roots": {
+      "day": "date",
+      "items": "list<Loan>",
+      "n": "int",
+      "name": "string?",
+      "none": "int?",
+      "page": "Loan",
+      "scores": "map<string,int>",
+      "tags": "list<string>",
+      "tier": "Tier",
+      "total": "money",
+      "when": "dateTime",
+      "x": "double"
+    }
+  },
+  "inputs": {
+    "day": "2024-02-29",
+    "items": [
+      {
+        "amount": "100.00",
+        "months": 6,
+        "rate": 0.1,
+        "status": "open"
+      },
+      {
+        "amount": "25.5",
+        "months": 3,
+        "rate": 0.2,
+        "status": "closed"
+      },
+      {
+        "amount": "300",
+        "months": 12,
+        "rate": 0.05
+      }
+    ],
+    "n": 7,
+    "name": null,
+    "none": null,
+    "now": "2026-09-26T08:00:00Z",
+    "page": {
+      "amount": "1200.50",
+      "fee": {
+        "amount": "9.99",
+        "currency": "EUR"
+      },
+      "months": 12,
+      "rate": 0.05,
+      "status": null
+    },
+    "scores": {
+      "alice": 3,
+      "bob": 2
+    },
+    "tags": [
+      "b",
+      "a",
+      "c",
+      "a"
+    ],
+    "tier": "gold",
+    "total": {
+      "amount": "12.34",
+      "currency": "EUR"
+    },
+    "when": "2026-09-26T10:30:00+02:00",
+    "x": 2.5
+  },
+  "cases": [
+    {
+      "name": "format needs pxl.format.v1",
+      "expr": "format.money(total)",
+      "error": "unsupported",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEEBXRvdGFsAQV0b3RhbAcGAABJeAAB",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"total\"",
+        "0003 CALL 120 1 ; format.money"
+      ],
+      "reads": [
+        "total"
+      ]
+    },
+    {
+      "name": "translations need pxl.l10n.v1",
+      "expr": "t(\"greeting\")",
+      "error": "unsupported",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEECGdyZWV0aW5nAAcEAABJhAAB",
+      "asm": [
+        "0000 CONST 0 ; \"greeting\"",
+        "0003 CALL 132 1 ; t"
+      ]
+    },
+    {
+      "name": "regex needs pxl.regex.v1",
+      "expr": "matches(\"abc\", \"a.c\")",
+      "error": "unsupported",
+      "type": "bool",
+      "program": "AQACBGJvb2wCBANhYmMEA2EuYwAKBAAABAEASQ8AAg==",
+      "asm": [
+        "0000 CONST 0 ; \"abc\"",
+        "0003 CONST 1 ; \"a.c\"",
+        "0006 CALL 15 2 ; matches"
+      ]
+    },
+    {
+      "name": "unknown function",
+      "expr": "format.currency(total)",
+      "diagnostics": [
+        {
+          "code": "PLX-2004",
+          "range": [
+            0,
+            22
+          ]
+        }
+      ]
+    },
+    {
+      "name": "wrong argument count",
+      "expr": "len(\"a\", \"b\")",
+      "diagnostics": [
+        {
+          "code": "PLX-2005",
+          "range": [
+            0,
+            13
+          ]
+        }
+      ]
+    },
+    {
+      "name": "wrong argument type",
+      "expr": "len(n)",
+      "diagnostics": [
+        {
+          "code": "PLX-2002",
+          "range": [
+            0,
+            6
+          ]
+        }
+      ]
+    }
+  ]
+}

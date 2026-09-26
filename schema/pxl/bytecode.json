@@ -1,0 +1,683 @@
+{
+  "$schema": "../json/pxl/bytecode.schema.json",
+  "version": 1,
+  "description": "The PXL bytecode (ADR-0009). Counts and lengths are unsigned LEB128, signed varints are zigzag LEB128, operands are fixed-width little-endian, jump targets are absolute code offsets. Codes are permanent.",
+  "opcodes": [
+    {
+      "name": "PUSH_NULL",
+      "code": 1,
+      "operands": [],
+      "description": "Push null."
+    },
+    {
+      "name": "PUSH_TRUE",
+      "code": 2,
+      "operands": [],
+      "description": "Push true."
+    },
+    {
+      "name": "PUSH_FALSE",
+      "code": 3,
+      "operands": [],
+      "description": "Push false."
+    },
+    {
+      "name": "CONST",
+      "code": 4,
+      "operands": [
+        "u16"
+      ],
+      "description": "Push constant k of the pool."
+    },
+    {
+      "name": "POP",
+      "code": 5,
+      "operands": [],
+      "description": "Discard the top value."
+    },
+    {
+      "name": "LOAD_ROOT",
+      "code": 6,
+      "operands": [
+        "u16"
+      ],
+      "description": "Push the input named by string constant k."
+    },
+    {
+      "name": "LOAD_LOCAL",
+      "code": 7,
+      "operands": [
+        "u8"
+      ],
+      "description": "Push local variable n."
+    },
+    {
+      "name": "GET_FIELD",
+      "code": 8,
+      "operands": [
+        "u16"
+      ],
+      "description": "Replace an object with its field named by string constant k; an absent field is null."
+    },
+    {
+      "name": "MAP_GET",
+      "code": 9,
+      "operands": [
+        "u16"
+      ],
+      "description": "Replace a map with its entry keyed by string constant k; fails with missingKey when absent."
+    },
+    {
+      "name": "INDEX_LIST",
+      "code": 10,
+      "operands": [],
+      "description": "Pop an int and a list; push the element; fails with indexOutOfRange."
+    },
+    {
+      "name": "INDEX_MAP",
+      "code": 11,
+      "operands": [],
+      "description": "Pop a string and a map; push the entry; fails with missingKey."
+    },
+    {
+      "name": "JUMP",
+      "code": 12,
+      "operands": [
+        "u32"
+      ],
+      "description": "Continue at offset t."
+    },
+    {
+      "name": "JUMP_IF_FALSE",
+      "code": 13,
+      "operands": [
+        "u32"
+      ],
+      "description": "Pop a bool; continue at t when it is false."
+    },
+    {
+      "name": "JUMP_IF_TRUE",
+      "code": 14,
+      "operands": [
+        "u32"
+      ],
+      "description": "Pop a bool; continue at t when it is true."
+    },
+    {
+      "name": "AND_JUMP",
+      "code": 15,
+      "operands": [
+        "u32"
+      ],
+      "description": "If the top bool is false, keep it and continue at t; otherwise pop it."
+    },
+    {
+      "name": "OR_JUMP",
+      "code": 16,
+      "operands": [
+        "u32"
+      ],
+      "description": "If the top bool is true, keep it and continue at t; otherwise pop it."
+    },
+    {
+      "name": "NULL_JUMP",
+      "code": 17,
+      "operands": [
+        "u32"
+      ],
+      "description": "If the top value is null, keep it and continue at t."
+    },
+    {
+      "name": "COALESCE_JUMP",
+      "code": 18,
+      "operands": [
+        "u32"
+      ],
+      "description": "If the top value is not null, keep it and continue at t; otherwise pop it."
+    },
+    {
+      "name": "ADD_INT",
+      "code": 19,
+      "operands": [],
+      "description": "int + int; fails with overflow."
+    },
+    {
+      "name": "SUB_INT",
+      "code": 20,
+      "operands": [],
+      "description": "int − int; fails with overflow."
+    },
+    {
+      "name": "MUL_INT",
+      "code": 21,
+      "operands": [],
+      "description": "int × int; fails with overflow."
+    },
+    {
+      "name": "DIV_INT",
+      "code": 22,
+      "operands": [],
+      "description": "int ÷ int truncated toward zero; fails with divisionByZero or overflow."
+    },
+    {
+      "name": "MOD_INT",
+      "code": 23,
+      "operands": [],
+      "description": "Remainder of truncated division, with the sign of the dividend; fails with divisionByZero."
+    },
+    {
+      "name": "NEG_INT",
+      "code": 24,
+      "operands": [],
+      "description": "−int; fails with overflow."
+    },
+    {
+      "name": "ADD_DOUBLE",
+      "code": 25,
+      "operands": [],
+      "description": "double + double; fails with nonFinite."
+    },
+    {
+      "name": "SUB_DOUBLE",
+      "code": 26,
+      "operands": [],
+      "description": "double − double; fails with nonFinite."
+    },
+    {
+      "name": "MUL_DOUBLE",
+      "code": 27,
+      "operands": [],
+      "description": "double × double; fails with nonFinite."
+    },
+    {
+      "name": "DIV_DOUBLE",
+      "code": 28,
+      "operands": [],
+      "description": "double ÷ double; fails with nonFinite."
+    },
+    {
+      "name": "MOD_DOUBLE",
+      "code": 29,
+      "operands": [],
+      "description": "Remainder of truncated division of doubles; fails with nonFinite."
+    },
+    {
+      "name": "NEG_DOUBLE",
+      "code": 30,
+      "operands": [],
+      "description": "−double."
+    },
+    {
+      "name": "ADD_DEC",
+      "code": 31,
+      "operands": [],
+      "description": "Exact decimal addition; fails with sizeLimit."
+    },
+    {
+      "name": "SUB_DEC",
+      "code": 32,
+      "operands": [],
+      "description": "Exact decimal subtraction; fails with sizeLimit."
+    },
+    {
+      "name": "MUL_DEC",
+      "code": 33,
+      "operands": [],
+      "description": "Exact decimal multiplication; fails with sizeLimit."
+    },
+    {
+      "name": "NEG_DEC",
+      "code": 34,
+      "operands": [],
+      "description": "−decimal."
+    },
+    {
+      "name": "ADD_MONEY",
+      "code": 35,
+      "operands": [],
+      "description": "money + money of the same currency; fails with currencyMismatch."
+    },
+    {
+      "name": "SUB_MONEY",
+      "code": 36,
+      "operands": [],
+      "description": "money − money of the same currency; fails with currencyMismatch."
+    },
+    {
+      "name": "MUL_MONEY_DEC",
+      "code": 37,
+      "operands": [],
+      "description": "money × decimal, exact."
+    },
+    {
+      "name": "MUL_DEC_MONEY",
+      "code": 38,
+      "operands": [],
+      "description": "decimal × money, exact."
+    },
+    {
+      "name": "NEG_MONEY",
+      "code": 39,
+      "operands": [],
+      "description": "−money."
+    },
+    {
+      "name": "ADD_DUR",
+      "code": 40,
+      "operands": [],
+      "description": "duration + duration; fails with overflow."
+    },
+    {
+      "name": "SUB_DUR",
+      "code": 41,
+      "operands": [],
+      "description": "duration − duration; fails with overflow."
+    },
+    {
+      "name": "NEG_DUR",
+      "code": 42,
+      "operands": [],
+      "description": "−duration; fails with overflow."
+    },
+    {
+      "name": "MUL_DUR_INT",
+      "code": 43,
+      "operands": [],
+      "description": "duration × int; fails with overflow."
+    },
+    {
+      "name": "MUL_INT_DUR",
+      "code": 44,
+      "operands": [],
+      "description": "int × duration; fails with overflow."
+    },
+    {
+      "name": "ADD_DT_DUR",
+      "code": 45,
+      "operands": [],
+      "description": "dateTime + duration, keeping the offset; fails with invalidArgument outside years 1–9999."
+    },
+    {
+      "name": "ADD_DUR_DT",
+      "code": 46,
+      "operands": [],
+      "description": "duration + dateTime, keeping the offset."
+    },
+    {
+      "name": "SUB_DT_DUR",
+      "code": 47,
+      "operands": [],
+      "description": "dateTime − duration, keeping the offset."
+    },
+    {
+      "name": "SUB_DT_DT",
+      "code": 48,
+      "operands": [],
+      "description": "The duration between two instants."
+    },
+    {
+      "name": "CONCAT_STRING",
+      "code": 49,
+      "operands": [],
+      "description": "string + string; fails with sizeLimit."
+    },
+    {
+      "name": "CONCAT_LIST",
+      "code": 50,
+      "operands": [],
+      "description": "list + list; fails with sizeLimit."
+    },
+    {
+      "name": "INT_TO_DOUBLE",
+      "code": 51,
+      "operands": [],
+      "description": "Widen an int to the nearest double."
+    },
+    {
+      "name": "INT_TO_DEC",
+      "code": 52,
+      "operands": [],
+      "description": "Widen an int to a decimal of scale 0."
+    },
+    {
+      "name": "EQ",
+      "code": 53,
+      "operands": [],
+      "description": "Deep equality of two values of one type."
+    },
+    {
+      "name": "NE",
+      "code": 54,
+      "operands": [],
+      "description": "Negated deep equality."
+    },
+    {
+      "name": "CMP_INT",
+      "code": 55,
+      "operands": [],
+      "description": "Compare two ints; push -1, 0 or 1."
+    },
+    {
+      "name": "CMP_DOUBLE",
+      "code": 56,
+      "operands": [],
+      "description": "Compare two doubles; push -1, 0 or 1."
+    },
+    {
+      "name": "CMP_DEC",
+      "code": 57,
+      "operands": [],
+      "description": "Compare two decimals numerically; push -1, 0 or 1."
+    },
+    {
+      "name": "CMP_MONEY",
+      "code": 58,
+      "operands": [],
+      "description": "Compare two money values of one currency; fails with currencyMismatch."
+    },
+    {
+      "name": "CMP_STRING",
+      "code": 59,
+      "operands": [],
+      "description": "Compare two strings by code point; push -1, 0 or 1."
+    },
+    {
+      "name": "CMP_DATE",
+      "code": 60,
+      "operands": [],
+      "description": "Compare two dates; push -1, 0 or 1."
+    },
+    {
+      "name": "CMP_DATETIME",
+      "code": 61,
+      "operands": [],
+      "description": "Compare two instants; push -1, 0 or 1."
+    },
+    {
+      "name": "CMP_DUR",
+      "code": 62,
+      "operands": [],
+      "description": "Compare two durations; push -1, 0 or 1."
+    },
+    {
+      "name": "LT",
+      "code": 63,
+      "operands": [],
+      "description": "Replace a comparison result with result < 0."
+    },
+    {
+      "name": "LE",
+      "code": 64,
+      "operands": [],
+      "description": "Replace a comparison result with result <= 0."
+    },
+    {
+      "name": "GT",
+      "code": 65,
+      "operands": [],
+      "description": "Replace a comparison result with result > 0."
+    },
+    {
+      "name": "GE",
+      "code": 66,
+      "operands": [],
+      "description": "Replace a comparison result with result >= 0."
+    },
+    {
+      "name": "NOT",
+      "code": 67,
+      "operands": [],
+      "description": "Negate a bool."
+    },
+    {
+      "name": "IN_LIST",
+      "code": 68,
+      "operands": [],
+      "description": "Pop a list and a value; push whether the list contains an equal element."
+    },
+    {
+      "name": "IN_MAP",
+      "code": 69,
+      "operands": [],
+      "description": "Pop a map and a string; push whether the key is present."
+    },
+    {
+      "name": "NEW_LIST",
+      "code": 70,
+      "operands": [
+        "u16"
+      ],
+      "description": "Pop n values and push them as a list, first pushed first."
+    },
+    {
+      "name": "NEW_MAP",
+      "code": 71,
+      "operands": [
+        "u16"
+      ],
+      "description": "Pop n key–value pairs and push them as a map; fails with duplicateKey."
+    },
+    {
+      "name": "LIST_APPEND",
+      "code": 72,
+      "operands": [],
+      "description": "Pop a value and append it to the list below it."
+    },
+    {
+      "name": "CALL",
+      "code": 73,
+      "operands": [
+        "u16",
+        "u8"
+      ],
+      "description": "Call standard-library overload f with argc arguments."
+    },
+    {
+      "name": "ITER_INIT",
+      "code": 74,
+      "operands": [
+        "u8"
+      ],
+      "description": "Pop a list and store an iterator over it in local n."
+    },
+    {
+      "name": "ITER_NEXT",
+      "code": 75,
+      "operands": [
+        "u8",
+        "u8",
+        "u32"
+      ],
+      "description": "Advance the iterator in local i and store the element in local v; continue at t when it is exhausted."
+    },
+    {
+      "name": "ITER_LIST",
+      "code": 76,
+      "operands": [
+        "u8"
+      ],
+      "description": "Push the list of the iterator in local n."
+    },
+    {
+      "name": "SORT_BY",
+      "code": 77,
+      "operands": [
+        "u8"
+      ],
+      "description": "Pop a list of keys and a list of items; push the items stably sorted by key, compared as comparison kind c."
+    }
+  ],
+  "comparisons": [
+    {
+      "name": "int",
+      "code": 1
+    },
+    {
+      "name": "double",
+      "code": 2
+    },
+    {
+      "name": "decimal",
+      "code": 3
+    },
+    {
+      "name": "money",
+      "code": 4
+    },
+    {
+      "name": "string",
+      "code": 5
+    },
+    {
+      "name": "date",
+      "code": 6
+    },
+    {
+      "name": "dateTime",
+      "code": 7
+    },
+    {
+      "name": "duration",
+      "code": 8
+    }
+  ],
+  "constants": [
+    {
+      "name": "bool",
+      "tag": 1,
+      "description": "One byte, 0 or 1."
+    },
+    {
+      "name": "int",
+      "tag": 2,
+      "description": "Eight bytes, two's complement, little-endian."
+    },
+    {
+      "name": "double",
+      "tag": 3,
+      "description": "Eight bytes, IEEE 754 binary64, little-endian."
+    },
+    {
+      "name": "string",
+      "tag": 4,
+      "description": "Length, then UTF-8 bytes."
+    },
+    {
+      "name": "decimal",
+      "tag": 5,
+      "description": "Length, then the plain notation in ASCII, e.g. -12.50."
+    },
+    {
+      "name": "money",
+      "tag": 6,
+      "description": "A decimal as above, then the three-letter currency code."
+    },
+    {
+      "name": "date",
+      "tag": 7,
+      "description": "Signed varint: days since 1970-01-01."
+    },
+    {
+      "name": "dateTime",
+      "tag": 8,
+      "description": "Signed varint: milliseconds since 1970-01-01T00:00Z; then signed varint: UTC offset in minutes."
+    },
+    {
+      "name": "duration",
+      "tag": 9,
+      "description": "Signed varint: milliseconds."
+    },
+    {
+      "name": "color",
+      "tag": 10,
+      "description": "Four bytes: red, green, blue, alpha."
+    },
+    {
+      "name": "list",
+      "tag": 11,
+      "description": "Count, then tagged elements."
+    },
+    {
+      "name": "map",
+      "tag": 12,
+      "description": "Count, then entries in key order: key as a string without tag, tagged value."
+    },
+    {
+      "name": "null",
+      "tag": 13,
+      "description": "No payload."
+    }
+  ],
+  "errors": [
+    {
+      "name": "budgetExceeded",
+      "code": 1,
+      "description": "The evaluation needed more operations than its budget (PXL-001)."
+    },
+    {
+      "name": "overflow",
+      "code": 2,
+      "description": "An int or duration result is outside the 64-bit range."
+    },
+    {
+      "name": "divisionByZero",
+      "code": 3,
+      "description": "A division or remainder by zero."
+    },
+    {
+      "name": "nonFinite",
+      "code": 4,
+      "description": "A double result is NaN or infinite."
+    },
+    {
+      "name": "currencyMismatch",
+      "code": 5,
+      "description": "Money values in different currencies are combined or compared."
+    },
+    {
+      "name": "unknownCurrency",
+      "code": 6,
+      "description": "A currency code is not in the ISO 4217 table."
+    },
+    {
+      "name": "indexOutOfRange",
+      "code": 7,
+      "description": "A list or string index is outside the value."
+    },
+    {
+      "name": "missingKey",
+      "code": 8,
+      "description": "A map has no entry for the key."
+    },
+    {
+      "name": "invalidArgument",
+      "code": 9,
+      "description": "A function argument is outside its domain, such as an unparsable date."
+    },
+    {
+      "name": "sizeLimit",
+      "code": 10,
+      "description": "A string, collection or decimal result exceeds the limits registry."
+    },
+    {
+      "name": "duplicateKey",
+      "code": 11,
+      "description": "A map literal has the same key twice."
+    },
+    {
+      "name": "unsupported",
+      "code": 12,
+      "description": "The function belongs to a feature group this evaluator does not implement."
+    },
+    {
+      "name": "invalidProgram",
+      "code": 13,
+      "description": "The bytecode is malformed."
+    },
+    {
+      "name": "invalidInput",
+      "code": 14,
+      "description": "An input does not match its declared type."
+    }
+  ]
+}

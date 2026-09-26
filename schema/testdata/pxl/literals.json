@@ -1,0 +1,352 @@
+{
+  "description": "Literals and constant folding.",
+  "env": {
+    "types": {
+      "Loan": {
+        "fields": {
+          "amount": "decimal",
+          "fee": "money?",
+          "months": "int",
+          "rate": "double",
+          "status": "string?"
+        }
+      },
+      "Tier": {
+        "enum": [
+          "gold",
+          "silver",
+          "bronze"
+        ]
+      }
+    },
+    "roots": {
+      "day": "date",
+      "items": "list<Loan>",
+      "n": "int",
+      "name": "string?",
+      "none": "int?",
+      "page": "Loan",
+      "scores": "map<string,int>",
+      "tags": "list<string>",
+      "tier": "Tier",
+      "total": "money",
+      "when": "dateTime",
+      "x": "double"
+    }
+  },
+  "inputs": {
+    "day": "2024-02-29",
+    "items": [
+      {
+        "amount": "100.00",
+        "months": 6,
+        "rate": 0.1,
+        "status": "open"
+      },
+      {
+        "amount": "25.5",
+        "months": 3,
+        "rate": 0.2,
+        "status": "closed"
+      },
+      {
+        "amount": "300",
+        "months": 12,
+        "rate": 0.05
+      }
+    ],
+    "n": 7,
+    "name": null,
+    "none": null,
+    "now": "2026-09-26T08:00:00Z",
+    "page": {
+      "amount": "1200.50",
+      "fee": {
+        "amount": "9.99",
+        "currency": "EUR"
+      },
+      "months": 12,
+      "rate": 0.05,
+      "status": null
+    },
+    "scores": {
+      "alice": 3,
+      "bob": 2
+    },
+    "tags": [
+      "b",
+      "a",
+      "c",
+      "a"
+    ],
+    "tier": "gold",
+    "total": {
+      "amount": "12.34",
+      "currency": "EUR"
+    },
+    "when": "2026-09-26T10:30:00+02:00",
+    "x": 2.5
+  },
+  "cases": [
+    {
+      "name": "int",
+      "expr": "42",
+      "value": 42,
+      "type": "int",
+      "program": "AQABA2ludAECKgAAAAAAAAAAAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; 42"
+      ]
+    },
+    {
+      "name": "negative int",
+      "expr": "-7",
+      "value": -7,
+      "type": "int",
+      "program": "AQABA2ludAEC+f////////8AAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; -7"
+      ]
+    },
+    {
+      "name": "smallest int",
+      "expr": "-9223372036854775808",
+      "value": -9223372036854775808,
+      "type": "int",
+      "program": "AQABA2ludAECAAAAAAAAAIAAAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; -9223372036854775808"
+      ]
+    },
+    {
+      "name": "double",
+      "expr": "1.5",
+      "value": 1.5,
+      "type": "double",
+      "program": "AQABBmRvdWJsZQEDAAAAAAAA+D8AAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; 1.5"
+      ]
+    },
+    {
+      "name": "exponent",
+      "expr": "2e3",
+      "value": 2000,
+      "type": "double",
+      "program": "AQABBmRvdWJsZQEDAAAAAABAn0AAAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; 2000"
+      ]
+    },
+    {
+      "name": "decimal keeps its scale",
+      "expr": "12.50d",
+      "value": "12.50",
+      "type": "decimal",
+      "program": "AQABB2RlY2ltYWwBBQUxMi41MAADBAAA",
+      "asm": [
+        "0000 CONST 0 ; 12.50d"
+      ]
+    },
+    {
+      "name": "double quotes",
+      "expr": "\"a\\\"b\"",
+      "value": "a\"b",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEEA2EiYgADBAAA",
+      "asm": [
+        "0000 CONST 0 ; \"a\\\"b\""
+      ]
+    },
+    {
+      "name": "single quotes",
+      "expr": "'it\\'s'",
+      "value": "it's",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEEBGl0J3MAAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; \"it's\""
+      ]
+    },
+    {
+      "name": "unicode escape",
+      "expr": "\"\\u{1F600}!\"",
+      "value": "😀!",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEEBfCfmIAhAAMEAAA=",
+      "asm": [
+        "0000 CONST 0 ; \"😀!\""
+      ]
+    },
+    {
+      "name": "escapes",
+      "expr": "\"a\\tb\\nc\"",
+      "value": "a\tb\nc",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEEBWEJYgpjAAMEAAA=",
+      "asm": [
+        "0000 CONST 0 ; \"a\\tb\\nc\""
+      ]
+    },
+    {
+      "name": "true",
+      "expr": "true",
+      "value": true,
+      "type": "bool",
+      "program": "AQABBGJvb2wAAAEC",
+      "asm": [
+        "0000 PUSH_TRUE"
+      ]
+    },
+    {
+      "name": "null",
+      "expr": "null",
+      "value": null,
+      "type": "null",
+      "program": "AQABBG51bGwAAAEB",
+      "asm": [
+        "0000 PUSH_NULL"
+      ]
+    },
+    {
+      "name": "list",
+      "expr": "[1, 2, 3]",
+      "value": [
+        1,
+        2,
+        3
+      ],
+      "type": "list<int>",
+      "program": "AQABCWxpc3Q8aW50PgELAwIBAAAAAAAAAAICAAAAAAAAAAIDAAAAAAAAAAADBAAA",
+      "asm": [
+        "0000 CONST 0 ; [1 2 3]"
+      ]
+    },
+    {
+      "name": "empty list",
+      "expr": "[]",
+      "value": [],
+      "type": "list<never>",
+      "program": "AQABC2xpc3Q8bmV2ZXI+AQsAAAMEAAA=",
+      "asm": [
+        "0000 CONST 0 ; []"
+      ]
+    },
+    {
+      "name": "map",
+      "expr": "{\"a\": 1, \"b\": 2}",
+      "value": {
+        "a": 1,
+        "b": 2
+      },
+      "type": "map<string,int>",
+      "program": "AQABD21hcDxzdHJpbmcsaW50PgEMAgFhAgEAAAAAAAAAAWICAgAAAAAAAAAAAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; map[a:1 b:2]"
+      ]
+    },
+    {
+      "name": "nested",
+      "expr": "[[1], []]",
+      "value": [
+        [
+          1
+        ],
+        []
+      ],
+      "type": "list<list<int>>",
+      "program": "AQABD2xpc3Q8bGlzdDxpbnQ+PgELAgsBAgEAAAAAAAAACwAAAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; [[1] []]"
+      ]
+    },
+    {
+      "name": "parentheses",
+      "expr": "(1 + 2) * 3",
+      "value": 9,
+      "type": "int",
+      "program": "AQABA2ludAECCQAAAAAAAAAAAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; 9"
+      ]
+    },
+    {
+      "name": "int too large",
+      "expr": "9223372036854775808",
+      "diagnostics": [
+        {
+          "code": "PLX-2009",
+          "range": [
+            0,
+            19
+          ]
+        }
+      ]
+    },
+    {
+      "name": "bad escape",
+      "expr": "\"\\q\"",
+      "diagnostics": [
+        {
+          "code": "PLX-2001",
+          "range": [
+            1,
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "name": "unterminated string",
+      "expr": "\"abc",
+      "diagnostics": [
+        {
+          "code": "PLX-2001",
+          "range": [
+            0,
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "name": "decimal exponent",
+      "expr": "1e3d",
+      "diagnostics": [
+        {
+          "code": "PLX-2001",
+          "range": [
+            0,
+            4
+          ]
+        }
+      ]
+    },
+    {
+      "name": "unexpected token",
+      "expr": "1 +",
+      "diagnostics": [
+        {
+          "code": "PLX-2001",
+          "range": [
+            3,
+            3
+          ]
+        }
+      ]
+    },
+    {
+      "name": "duplicate key",
+      "expr": "{\"a\": 1, \"a\": 2}",
+      "diagnostics": [
+        {
+          "code": "PLX-2009",
+          "range": [
+            9,
+            12
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,176 @@
+{
+  "description": "The operation budget stops every evaluation (PXL-001).",
+  "env": {
+    "types": {
+      "Loan": {
+        "fields": {
+          "amount": "decimal",
+          "fee": "money?",
+          "months": "int",
+          "rate": "double",
+          "status": "string?"
+        }
+      },
+      "Tier": {
+        "enum": [
+          "gold",
+          "silver",
+          "bronze"
+        ]
+      }
+    },
+    "roots": {
+      "day": "date",
+      "items": "list<Loan>",
+      "n": "int",
+      "name": "string?",
+      "none": "int?",
+      "page": "Loan",
+      "scores": "map<string,int>",
+      "tags": "list<string>",
+      "tier": "Tier",
+      "total": "money",
+      "when": "dateTime",
+      "x": "double"
+    }
+  },
+  "limits": {
+    "budget": 60,
+    "stringLength": 50
+  },
+  "inputs": {
+    "day": "2024-02-29",
+    "items": [
+      {
+        "amount": "100.00",
+        "months": 6,
+        "rate": 0.1,
+        "status": "open"
+      },
+      {
+        "amount": "25.5",
+        "months": 3,
+        "rate": 0.2,
+        "status": "closed"
+      },
+      {
+        "amount": "300",
+        "months": 12,
+        "rate": 0.05
+      }
+    ],
+    "n": 7,
+    "name": null,
+    "none": null,
+    "now": "2026-09-26T08:00:00Z",
+    "page": {
+      "amount": "1200.50",
+      "fee": {
+        "amount": "9.99",
+        "currency": "EUR"
+      },
+      "months": 12,
+      "rate": 0.05,
+      "status": null
+    },
+    "scores": {
+      "alice": 3,
+      "bob": 2
+    },
+    "tags": [
+      "b",
+      "a",
+      "c",
+      "a"
+    ],
+    "tier": "gold",
+    "total": {
+      "amount": "12.34",
+      "currency": "EUR"
+    },
+    "when": "2026-09-26T10:30:00+02:00",
+    "x": 2.5
+  },
+  "cases": [
+    {
+      "name": "within the budget",
+      "expr": "[1, 2, 3].map(a, a * 2)",
+      "value": [
+        2,
+        4,
+        6
+      ],
+      "type": "list<int>",
+      "program": "AQIBCWxpc3Q8aW50PgELAwICAAAAAAAAAAIEAAAAAAAAAAIGAAAAAAAAAAADBAAA",
+      "asm": [
+        "0000 CONST 0 ; [2 4 6]"
+      ]
+    },
+    {
+      "name": "a loop exceeds the budget",
+      "expr": "tags.map(a, tags.map(b, tags.map(c, a + b + c)))",
+      "error": "budgetExceeded",
+      "type": "list<list<list<string>>>",
+      "program": "AQYFGGxpc3Q8bGlzdDxsaXN0PHN0cmluZz4+PgEEBHRhZ3MBBHRhZ3NHBgAASgBGAABLAAFHAAAABgAASgJGAABLAgNBAAAABgAASgRGAABLBAU7AAAABwEHAzEHBTFIDCYAAABIDBcAAABIDAgAAAA=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"tags\"",
+        "0003 ITER_INIT 0",
+        "0005 NEW_LIST 0",
+        "0008 ITER_NEXT 0 1 71",
+        "0015 LOAD_ROOT 0 ; \"tags\"",
+        "0018 ITER_INIT 2",
+        "0020 NEW_LIST 0",
+        "0023 ITER_NEXT 2 3 65",
+        "0030 LOAD_ROOT 0 ; \"tags\"",
+        "0033 ITER_INIT 4",
+        "0035 NEW_LIST 0",
+        "0038 ITER_NEXT 4 5 59",
+        "0045 LOAD_LOCAL 1",
+        "0047 LOAD_LOCAL 3",
+        "0049 CONCAT_STRING",
+        "0050 LOAD_LOCAL 5",
+        "0052 CONCAT_STRING",
+        "0053 LIST_APPEND",
+        "0054 JUMP 38",
+        "0059 LIST_APPEND",
+        "0060 JUMP 23",
+        "0065 LIST_APPEND",
+        "0066 JUMP 8"
+      ],
+      "reads": [
+        "tags"
+      ]
+    },
+    {
+      "name": "a large string exceeds the size limit",
+      "expr": "padLeft(\"a\", n * 10, \" \")",
+      "error": "sizeLimit",
+      "type": "string",
+      "program": "AQADBnN0cmluZwQEAWEEAW4CCgAAAAAAAAAEASABAW4RBAAABgEABAIAFQQDAEkNAAM=",
+      "asm": [
+        "0000 CONST 0 ; \"a\"",
+        "0003 LOAD_ROOT 1 ; \"n\"",
+        "0006 CONST 2 ; 10",
+        "0009 MUL_INT",
+        "0010 CONST 3 ; \" \"",
+        "0013 CALL 13 3 ; padLeft"
+      ],
+      "reads": [
+        "n"
+      ]
+    },
+    {
+      "name": "a constant beyond the budget",
+      "expr": "[1, 2, 3].map(a, [1, 2, 3].map(b, [1, 2, 3].map(c, a + b + c)))",
+      "diagnostics": [
+        {
+          "code": "PLX-2010",
+          "range": [
+            0,
+            63
+          ]
+        }
+      ]
+    }
+  ]
+}

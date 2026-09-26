@@ -41,14 +41,14 @@ The grammar of spec Appendix E.1, plus:
 The value types of `SCH-010` — `string`, `int`, `double`, `bool`, `decimal`, `money`, `date`, `dateTime`, `duration`, `color`, enums, `list<T>`, `map<string,T>`, named object types — each optionally nullable (`T?`). There is no dynamic type.
 
 - Member access on a nullable value is a compile error; `?.` propagates `null` and `??` removes it.
-- `int` widens implicitly to `double` and to `decimal`; `decimal` and `double` never convert implicitly (`double(d)`, `decimal(x)`).
+- `int` widens implicitly to `double` and to `decimal`; `decimal` and `double` never convert implicitly (`double(d)`, `decimal(x)`). Collections never convert: a `list<int>` is not a `list<double>`.
 - An enum compares with a string literal naming one of its members; the checker rejects any other string.
 - `now` is frozen for the whole evaluation.
 
 ### Semantics that must match in every language
 
 - `int` is 64-bit; overflow and division by zero are typed errors, never wrap-around.
-- `decimal` has arbitrary precision. `+`, `-` and `*` are exact; `/` on decimals is a compile error with a fix suggesting `div(a, b, scale, mode)`, because every division that loses precision must state its rounding (`PXL-005`). Rounding modes: `halfEven` (default), `halfUp`, `down`, `up`, `ceiling`, `floor`.
+- `decimal` has arbitrary precision. `+`, `-` and `*` are exact; `/` on decimals is a compile error with a fix suggesting `div(a, b, scale, mode)`, because every division that loses precision must state its rounding (`PXL-005`). Rounding modes: `halfEven` (default for every rounding, also of doubles), `halfUp`, `down`, `up`, `ceiling`, `floor`.
 - `money` is a decimal plus an ISO 4217 code; `+` and `-` require the same currency (a compile error for constants, a typed error otherwise); `round(m)` uses the currency's minor units.
 - `double` operations that produce NaN or an infinity return a typed error, so every result is serialisable.
 - Strings are sequences of Unicode code points: `len`, `substring` and indices count code points, never UTF-16 units; `upper` and `lower` use simple (one-to-one) case mapping.
@@ -59,7 +59,8 @@ The value types of `SCH-010` — `string`, `int`, `double`, `bool`, `decimal`, `
 - A program is a constant pool of typed values, an instruction stream of one-byte opcodes with fixed-width little-endian operands, its maximum stack depth, its result type and its **read set** — the exact state paths it reads (`CMP-023`), from which the runtime subscribes only to what the binding uses.
 - Opcodes are **typed** (`ADD_INT`, `ADD_DEC`, `ADD_MONEY`, …): the checker resolves every overload, so the VM never inspects types to dispatch and cannot meet an operand of an unexpected type.
 - Standard-library functions and macros have permanent numeric IDs from `schema/pxl/stdlib.json`.
-- Every instruction costs one operation; functions over strings and collections cost in proportion to their input. When the budget (default 10,000, from the limits registry) is exhausted, evaluation stops with a typed error (`PXL-001`). Result sizes are bounded by the same registry.
+- Every instruction costs one operation; functions over strings and collections cost in proportion to their input and result, as the cost model of `docs/reference/pxl.md` specifies exactly, so Go and Dart exhaust a budget at the same instruction. When the budget (default 10,000, from the limits registry) is exhausted, evaluation stops with a typed error (`PXL-001`). Strings, collections and decimals produced are bounded by the same registry (`pxl.stringLength`, `pxl.collectionSize`, `pxl.decimalDigits`).
+- Programs are verified when decoded — operands in range, jumps onto instruction boundaries, argument counts, a stack depth no larger than the code — and the VM checks operand types, so malformed bytecode fails with a typed error instead of crashing. Opcodes, constant tags and error kinds are defined once in `schema/pxl/bytecode.json` and generated for Go and Dart.
 - Programs are stored in the `pxl` section and referenced by content-addressed IDs (ADR-0002).
 - The VM is data-driven and has no access to I/O, the clock (except the frozen `now`) or platform APIs (`SEC-054`).
 

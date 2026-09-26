@@ -60,6 +60,9 @@ const (
 	// PXLCollectionSize: Elements of a list or map produced during one PXL
 	// evaluation. (PXL-001)
 	PXLCollectionSize Key = "pxl.collectionSize"
+	// PXLDecimalDigits: Digits of a decimal produced during one PXL evaluation,
+	// in plain notation. (PXL-001, PXL-005)
+	PXLDecimalDigits Key = "pxl.decimalDigits"
 	// PXLExpressionLength: Length of one PXL expression. (PXL-001)
 	PXLExpressionLength Key = "pxl.expressionLength"
 	// PXLNestingDepth: Nesting depth of one PXL expression's syntax tree.
@@ -99,6 +102,7 @@ var registry = [...]Definition{
 	{Key: PageNodes, Unit: UnitCount, Default: 5000, Warning: 1000, Max: 50000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Nodes in one page document. Above the warning threshold the compiler reports the page."},
 	{Key: PluginPages, Unit: UnitCount, Default: 500, Warning: 0, Max: 2000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Pages per plugin."},
 	{Key: PXLCollectionSize, Unit: UnitCount, Default: 10000, Warning: 0, Max: 1000000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P1", Description: "Elements of a list or map produced during one PXL evaluation."},
+	{Key: PXLDecimalDigits, Unit: UnitCount, Default: 1000, Warning: 0, Max: 10000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P1", Description: "Digits of a decimal produced during one PXL evaluation, in plain notation."},
 	{Key: PXLExpressionLength, Unit: UnitCodepoints, Default: 4096, Warning: 0, Max: 65536, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Length of one PXL expression."},
 	{Key: PXLNestingDepth, Unit: UnitCount, Default: 64, Warning: 0, Max: 256, Scopes: ScopeInstallation, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Nesting depth of one PXL expression's syntax tree."},
 	{Key: PXLOperationBudget, Unit: UnitOperations, Default: 10000, Warning: 0, Max: 1000000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P1", Description: "Operations one PXL evaluation may perform before it stops with a typed error."},

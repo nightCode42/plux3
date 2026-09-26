@@ -90,7 +90,16 @@ func generate(root string) ([]codegen.File, error) {
 	if err != nil {
 		return nil, fmt.Errorf("registry: %w", err)
 	}
-	return append(files, regFiles...), nil
+	files = append(files, regFiles...)
+	pxl, err := codegen.LoadPXL(root)
+	if err != nil {
+		return nil, fmt.Errorf("pxl: %w", err)
+	}
+	pxlFiles, err := codegen.PXLFiles(pxl)
+	if err != nil {
+		return nil, fmt.Errorf("pxl: %w", err)
+	}
+	return append(files, pxlFiles...), nil
 }
 
 // checkLock fails unless the lock under root keeps every entry of base.
