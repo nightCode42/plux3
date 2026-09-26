@@ -1,7 +1,7 @@
 # Plux — System Requirements Specification
 
 **Document ID:** `SRS-PLUX-001`
-**Version:** 1.1.1
+**Version:** 1.1.2
 **Status:** Draft — living document, revised as implementation proceeds
 **Date:** 2026-09-26
 **Applies to:** Plux Schema, Plux Compiler, Plux Server, Plux Functions, `plux_flutter` runtime, Plux Dev app, Plux Studio, Plux CLI, Plux AI
@@ -727,7 +727,7 @@ A **plugin bundle** (`.pxb`) is a small container of independently addressable s
 | `BND-001` | P1 | MUST | Bundle schemas **MUST** be defined in FlatBuffers IDL under `schema/fbs/` with a pinned `flatc` version; generated Go and Dart code **MUST** be committed and verified in CI. | SPEC |
 | `BND-002` | P1 | MUST | The distributable units **MUST** be: one **plugin bundle** per plugin version; one **app bundle** per app release (theme, translations, shared components, shared collections, flags, native catalogue reference); and one **manifest** per channel release (`REL-030`). | SPEC |
 | `BND-003` | P1 | MUST | The container **MUST** consist of a fixed header (magic `PLUX`, container version, bundle kind, flags), a section directory (section ID, kind, offset, length, SHA-256) and 8-byte-aligned section payloads, so sections can be memory-mapped and read without copying. | SPEC |
-| `BND-004` | P1 | MUST | Section kinds **MUST** include at least: `meta`, `page` (one per page), `component` (one per component), `actions`, `pxl` (bytecode), `styles`, `strings`, `l10n` (one per locale), `assets-index` and `state-schema`. | SPEC |
+| `BND-004` | P1 | MUST | Section kinds **MUST** include at least: `meta`, `page` (one per page), `component` (one per component), `actions`, `pxl` (bytecode), `styles`, `strings`, `l10n` (one per locale), `assets-index` and `schemas` (state, data-source and local-collection schemas; Appendix B.2). | SPEC |
 | `BND-005` | P1 | MUST | Hashes **MUST** be SHA-256. The bundle hash is the hash of the header plus the section directory, which in turn commits to every section hash. | SPEC |
 | `BND-006` | P3 | MUST | The runtime **MUST** run the FlatBuffers verifier on each section before first use, even after signature verification, and **MUST** reject sections that fail. | SPEC |
 | `BND-007` | P1 | MUST | Bundles **MUST** be compressed with zstd for transport only; at rest on the device they are stored uncompressed (or encrypted, `SEC-053`) to allow memory mapping. | SPEC |
@@ -2053,6 +2053,7 @@ Significant decisions are recorded as ADRs in `docs/adr/` using MADR. These ADRs
 | 0022 | Open-core licensing: Apache-2.0 client side, AGPL-3.0 server and Studio, commercial `ee/` | P0 |
 | 0023 | Mixed native/plugin screens: native slots and `PluxView` with shared exposed state | P4 |
 | 0024 | No-code generated projects and shell-update detection | P4 |
+| 0025 | Document schema toolchain: JSON Schema validation library, RFC 8785 canonicalisation and in-house code generation | P1 |
 
 ---
 
@@ -2302,7 +2303,7 @@ The container layout below is normative. The FlatBuffers schemas of the individu
 | 8 | 4 | `flags` | bit 0 = encrypted, bit 1 = has source map |
 | 12 | 4 | `section_count` | uint32 |
 | 16 | 32 | `header_hash` | SHA-256 of bytes 0–15 and the section directory |
-| 48 | 64 × n | section directory | per entry: section ID (16), kind (2), reserved (2), offset (8), length (8), SHA-256 (32), reserved (4) |
+| 48 | 72 × n | section directory | per entry: section ID (16), kind (2), reserved (2), offset (8), length (8), SHA-256 (32), reserved (4) |
 | … | … | section payloads | each 8-byte aligned; each an independent FlatBuffers buffer with its own root type and file identifier |
 
 ### B.2 Section kinds
@@ -2355,7 +2356,7 @@ Phase indicates when the widget must be supported by the runtime. Layer 1 names 
 | Widget | Purpose | Phase |
 |---|---|---|
 | `If` | Conditional rendering with `then` / `else` slots | P3 |
-| `Switch` | Multi-branch rendering by value | P3 |
+| `Match` | Multi-branch rendering by value (named `Match` because Material's toggle keeps the Flutter name `Switch`, ADR-0010) | P3 |
 | `ForEach` | Repeat a template over a list (non-lazy, bounded) | P3 |
 | `Responsive` | Different subtrees per window size class | P3 |
 | `Slot` | Placeholder filled by a component instance | P3 |
@@ -2580,6 +2581,8 @@ map         = "{" [ entry { "," entry } ] "}" ;
 literal     = number | decimal | string | "true" | "false" | "null" ;
 decimal     = number "d" ;            (* 12.50d is a decimal literal *)
 ```
+
+The complete grammar — including the receiver-style macros `map`, `filter`, `any`, `all` and `sortBy`, literals and escapes — and the language semantics are defined in ADR-0009 and `docs/reference/pxl.md`.
 
 ### E.2 Roots available in expressions
 
@@ -2917,10 +2920,10 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | Field | Value |
 |---|---|
 | Document ID | `SRS-PLUX-001` |
-| Version | 1.1.1 |
+| Version | 1.1.2 |
 | Status | Draft (living document) |
 | Date | 2026-09-26 |
-| Supersedes | 1.1.0 |
+| Supersedes | 1.1.1 |
 | Change process | Amendments are made by pull request against `docs/requirements.md`. A change to a `MUST` requirement requires a corresponding ADR. The version is incremented per Semantic Versioning: a breaking change to an existing requirement is a major increment, a new requirement is a minor increment, and a clarification is a patch increment. |
 
 ### Revision history
@@ -2930,3 +2933,4 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | 1.0.0 | 2026-09-25 | Initial baseline. |
 | 1.1.0 | 2026-09-26 | Functions with explicit `server`/`device` placement and standard Go; no-code app generation; mixed native/plugin screens and route-name addressing without host code changes; Plux Canvas replaces the Flutter Web renderer; limits and quotas framework; bundle design principles replace the IDL sketch; security profiles renamed `standard`/`strict`/`maximum`; multi-tenant operation replaces hosted SaaS; editions and licensing; decisions on delta algorithm, AI provider and analytics store; brand; international positioning. |
 | 1.1.1 | 2026-09-26 | Phase 0 delivered: P0 requirement statuses updated; §33 and the P0 deliverables describe the actual workspace layout, tooling and licensing files; `RT-051` withdrawal worded as a rationale (found by `reqtrace lint`). |
+| 1.1.2 | 2026-09-26 | Phase 1 clarifications: section-directory entries are 72 bytes, matching their fields (App. B.1); `BND-004` names the `schemas` section as App. B.2 does; the structural primitive `Switch` is renamed `Match` (App. C.1); App. E.1 points to the complete PXL grammar; ADR-0025 added to §32 (ADR-0002, ADR-0010). |

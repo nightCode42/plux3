@@ -1,6 +1,6 @@
 # Error Handling
 
-How errors are modelled, propagated and reported across Plux. The binding decision is ADR-0018 (planned for P1); this document states the model it will implement and the rules that apply from P0.
+How errors are modelled, propagated and reported across Plux. The binding decision is [ADR-0018](../adr/0018-unified-error-model.md); this document summarises the model and the rules every component follows.
 
 ---
 
@@ -32,4 +32,8 @@ Every component — server, CLI, runtime, Studio — speaks the same error vocab
 
 ## 4. The catalogue
 
-The catalogue of codes and reasons is generated from the registry in code and published in the documentation; a test pins the published catalogue to the registry, so they cannot drift.
+The registry of codes and reasons lives in `backend/internal/plxerr`. `go generate` publishes it as `docs/reference/errors.md` and as `schema/errors.json` for the Dart and TypeScript generators; a test regenerates both and fails on any difference, so the catalogue cannot drift from the registry. A new failure mode adds its registry entry and the regenerated catalogue in the same change.
+
+## 5. Diagnostics
+
+Findings about documents are **diagnostics**, not errors: the compiler collects all of them instead of stopping at the first. Each has a code, reason and severity from the registry, the document's file, a JSON Pointer (RFC 6901) to the value, a code-point range inside PXL expressions, a message with the specific values involved, the cause and fix, and — where possible — a machine-applicable JSON Patch (ADR-0018). Output is sorted by file, path, range and code, so it is deterministic. The CLI prints `file#path: severity PLX-NNNN message` and the fix, or JSON with `--json`.

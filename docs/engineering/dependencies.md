@@ -17,21 +17,27 @@ Every third-party dependency is a long-term commitment: code we ship but did not
 
 ### Go (`backend/`, `tools/`)
 
-| Module | Used for | Status |
-|---|---|---|
-| Standard library only | Everything in P0 | In use |
+| Module | Used for | Licence | ADR | Status |
+|---|---|---|---|---|
+| Standard library | Everything in `tools/`; most of `backend/` | BSD-3-Clause | — | In use |
+| `github.com/google/flatbuffers` | Bundle section builders and accessors | Apache-2.0 | [0002](../adr/0002-flatbuffers-sectioned-bundles.md) | In use (`backend`) |
+| `github.com/klauspost/compress` | zstd transport compression of bundles | BSD-3-Clause, Apache-2.0 | [0002](../adr/0002-flatbuffers-sectioned-bundles.md) | In use (`backend`) |
+| `github.com/santhosh-tekuri/jsonschema/v6` | Structural validation of documents (JSON Schema 2020-12) | Apache-2.0 | [0025](../adr/0025-document-schema-toolchain.md) | In use (`backend`) |
+| `pgregory.net/rapid` | Property-based tests | MPL-2.0 | [0025](../adr/0025-document-schema-toolchain.md) | In use (`backend`, tests only) |
 
-Planned for P1–P2, each with its ADR: ConnectRPC and Protocol Buffers (ADR-0005), `pgx` and `sqlc` (ADR-0007), River job queue (ADR-0007), FlatBuffers runtime (ADR-0002), zstd (ADR-0003), testify and rapid for tests.
+`tools/` stays standard-library only (§3). Planned for P2, each with its ADR: ConnectRPC and Protocol Buffers (ADR-0005), `pgx` and `sqlc` (ADR-0007), River job queue (ADR-0007).
 
 ### Dart (`packages/`, `apps/`)
 
-| Package | Used for | Status |
-|---|---|---|
-| `flutter` SDK | Framework | In use |
-| `flutter_test` (SDK) | Tests | In use (dev) |
-| `flutter_lints` | Lint rule set | In use (dev) |
+| Package | Used for | Licence | Status |
+|---|---|---|---|
+| `flutter` SDK | Framework | BSD-3-Clause | In use |
+| `flutter_test` (SDK) | Tests | BSD-3-Clause | In use (dev) |
+| `flutter_lints` | Lint rule set | BSD-3-Clause | In use (dev) |
+| `flat_buffers` | Bundle section accessors in `plux_flutter` ([ADR-0002](../adr/0002-flatbuffers-sectioned-bundles.md)) | Apache-2.0 | In use |
+| `analyzer` | Flutter constructor extraction in the development-only `plux_widget_api` tool ([ADR-0010](../adr/0010-layered-widget-model.md)); never a dependency of a shipped package | BSD-3-Clause | In use (tool) |
 
-Planned for P3: `flutter_riverpod` (ADR-0008), `flat_buffers` (ADR-0002).
+Planned for P3: `flutter_riverpod` (ADR-0008).
 
 ### TypeScript (`studio/`)
 
@@ -52,6 +58,7 @@ Planned for P11 (ADR-0014): React, TanStack Router and Query, shadcn/ui on Radix
 | Bun | `studio/package.json`, Makefile, CI | Studio runtime and tests |
 | golangci-lint, govulncheck, gitleaks, actionlint | Makefile (built with the project toolchain), CI | Lint, vulnerabilities, secrets, workflows |
 | pre-commit, zizmor, reuse, git-cliff | Makefile, CI | Hooks, workflow security, licensing, release notes |
+| `flatc` (FlatBuffers compiler) | Makefile (`FLATC_VERSION`, tag commit), built from source; cached in CI | Bundle code generation ([ADR-0002](../adr/0002-flatbuffers-sectioned-bundles.md)) |
 | GitHub Actions | Full commit SHAs in `.github/workflows/` | CI |
 
 ## 3. Decisions made in P0
