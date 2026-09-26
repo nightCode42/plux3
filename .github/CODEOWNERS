@@ -1,8 +1,31 @@
-# Default owner. Security-sensitive paths require owner review (CI-009).
-*                        @nightCode42
-/docs/requirements.md    @nightCode42
-/.github/                @nightCode42
-/schema/                 @nightCode42
-/backend/internal/signing/ @nightCode42
-/backend/internal/dpop/  @nightCode42
-/packages/plux_security/ @nightCode42
+# Code owners. Review by a code owner is required for every change (CI-009);
+# the paths below are listed explicitly because they are security-sensitive
+# or contractual and must never change without the maintainer's review.
+
+*                                  @nightCode42
+
+# Specification, working agreement and licensing
+/docs/requirements.md              @nightCode42
+/docs/adr/                         @nightCode42
+/AGENTS.md                         @nightCode42
+/REUSE.toml                        @nightCode42
+/LICENSES/                         @nightCode42
+
+# CI, supply chain and quality gates
+/.github/                          @nightCode42
+/Makefile                          @nightCode42
+/coverage.json                     @nightCode42
+/.golangci.yml                     @nightCode42
+/tools/                            @nightCode42
+
+# Contracts
+/schema/                           @nightCode42
+/proto/                            @nightCode42
+
+# Security-sensitive code (as it arrives)
+/backend/internal/signing/         @nightCode42
+/backend/internal/dpop/            @nightCode42
+/backend/internal/device/          @nightCode42
+/backend/internal/fnrunner/        @nightCode42
+/packages/plux_flutter/lib/src/security/ @nightCode42
+/packages/plux_security/           @nightCode42

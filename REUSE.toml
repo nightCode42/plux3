@@ -1,0 +1,25 @@
+# Licensing and copyright information for every file, per the REUSE
+# specification (https://reuse.software). Checked in CI with `reuse lint`.
+# The model is recorded in docs/adr/0022-open-core-licensing.md:
+#   - Apache-2.0 by default: runtime packages, CLI, schema, tools, SDKs, docs;
+#   - AGPL-3.0-only for the server and Studio;
+#   - a commercial license for ee/ (from Phase 9).
+# Source files also carry SPDX headers; the entries below cover files that
+# cannot (lockfiles, JSON, images) and pin the licence of whole components.
+
+version = 1
+SPDX-PackageName = "Plux"
+SPDX-PackageSupplier = "Plux contributors"
+SPDX-PackageDownloadLocation = "https://github.com/nightCode42/plux3"
+
+[[annotations]]
+path = "**"
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 Plux contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ["backend/cmd/plux-server/**", "studio/**"]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Plux contributors"
+SPDX-License-Identifier = "AGPL-3.0-only"

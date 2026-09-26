@@ -1,0 +1,11 @@
+# Bun configuration for the Studio workspace.
+
+[install]
+# Reproducible installs: CI runs `bun install --frozen-lockfile`.
+exact = true
+
+[test]
+coverage = true
+coverageReporter = ["text", "lcov"]
+coverageDir = "coverage"
+coverageSkipTestFiles = true

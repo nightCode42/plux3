@@ -1,0 +1,26 @@
+{
+  "go": {
+    "floor": 80,
+    "packages": {
+      "backend/internal/approval": 85,
+      "backend/internal/bundle": 85,
+      "backend/internal/compiler": 85,
+      "backend/internal/delta": 85,
+      "backend/internal/dpop": 85,
+      "backend/internal/pxl": 85
+    }
+  },
+  "dart": {
+    "floor": 80,
+    "packages": {
+      "packages/plux_flutter/lib/src/bundle": 85,
+      "packages/plux_flutter/lib/src/pxl": 85,
+      "packages/plux_flutter/lib/src/security": 85,
+      "packages/plux_flutter/lib/src/sync": 85
+    }
+  },
+  "studio": {
+    "floor": 70,
+    "packages": {}
+  }
+}

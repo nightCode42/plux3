@@ -1,0 +1,69 @@
+# Release — publish a GitHub release when the maintainer pushes a component
+# tag (CI-008). Tags are `<component>/v<semver>` and must be annotated and
+# signed: `git tag -s backend/v0.1.0 -m "backend v0.1.0"`. The maintainer
+# creates tags; nothing in CI creates or moves them (docs/engineering/workflow.md §8).
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "backend/v*"
+      - "plux_flutter/v*"
+      - "studio/v*"
+
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  GIT_CLIFF_VERSION: 2.14.2
+
+jobs:
+  release:
+    name: Release ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write # create the GitHub release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # release notes need every earlier tag
+          persist-credentials: false
+      - name: Verify the tag is annotated, signed and semantic
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          [[ "$TAG" =~ ^(backend|plux_flutter|studio)/v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]] \
+            || { echo "::error::$TAG is not <component>/v<semver>"; exit 1; }
+          ref=$(gh api "repos/$REPO/git/ref/tags/$TAG")
+          [ "$(jq -r .object.type <<<"$ref")" = "tag" ] \
+            || { echo "::error::$TAG is a lightweight tag; releases need a signed, annotated tag"; exit 1; }
+          verified=$(gh api "repos/$REPO/git/tags/$(jq -r .object.sha <<<"$ref")" --jq .verification.verified)
+          [ "$verified" = "true" ] \
+            || { echo "::error::GitHub could not verify the signature of $TAG"; exit 1; }
+      - name: Verify the version matches the component manifest
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          component="${TAG%%/v*}" version="${TAG#*/v}"
+          if [ "$component" = "plux_flutter" ]; then
+            declared=$(sed -n 's/^version: *//p' packages/plux_flutter/pubspec.yaml)
+            [ "$declared" = "$version" ] \
+              || { echo "::error::pubspec.yaml declares $declared, the tag says $version"; exit 1; }
+          fi
+      - run: pipx install "git-cliff==${GIT_CLIFF_VERSION}"
+      - name: Release notes
+        env:
+          TAG: ${{ github.ref_name }}
+        run: make release-notes COMPONENT="${TAG%%/v*}" TAG="$TAG" > "$RUNNER_TEMP/notes.md"
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: gh release create "$TAG" --verify-tag --title "$TAG" --notes-file "$RUNNER_TEMP/notes.md"

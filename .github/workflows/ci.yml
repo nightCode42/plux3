@@ -1,73 +1,458 @@
+# CI — every quality gate for the monorepo (CI-001, CI-002).
+#
+# Design (docs/engineering/ci.md):
+#   - Toolchain jobs (Go, Dart, Studio) run only when their files change on a
+#     pull request, and always on main, on schedule and on manual runs.
+#   - Repository jobs (hygiene, secrets, specification, workflows, licensing,
+#     links, SBOM) always run; they are fast.
+#   - "CI OK" depends on every job and is the single required status check of
+#     the main ruleset, so path filtering never blocks a merge.
+#   - Every job runs the same Makefile target a developer runs locally.
+#   - Actions are pinned to full commit SHAs; permissions are read-only unless
+#     a job needs more; checkouts never persist credentials.
+
 name: CI
 
 on:
   push:
     branches: [main]
   pull_request:
+  merge_group:
+  schedule:
+    - cron: "17 5 * * *" # daily: newly published vulnerabilities
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+# Keep in sync with the pinned versions in the Makefile.
 env:
-  GITLEAKS_VERSION: v8.30.1
+  FLUTTER_VERSION: 3.47.5
+  BUN_VERSION: 1.3.11
+  PRE_COMMIT_VERSION: 4.6.2
+  ZIZMOR_VERSION: 1.30.1
+  REUSE_VERSION: 6.2.0
 
-# Component jobs (Go, Dart, Bun) are added in P0 as the toolchains land (CI-001).
 jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read # paths-filter lists the files changed by the pull request
+    outputs:
+      go: ${{ steps.decide.outputs.go }}
+      dart: ${{ steps.decide.outputs.dart }}
+      studio: ${{ steps.decide.outputs.studio }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        if: github.event_name == 'pull_request'
+        with:
+          filters: |
+            shared: &shared
+              - Makefile
+              - coverage.json
+              - tools/**
+              - go.work
+              - .github/workflows/ci.yml
+            go:
+              - *shared
+              - backend/**
+              - .golangci.yml
+            dart:
+              - *shared
+              - packages/**
+              - apps/**
+              - pubspec.yaml
+              - pubspec.lock
+              - analysis_options.yaml
+            studio:
+              - *shared
+              - studio/**
+      - name: Decide which toolchains to check
+        id: decide
+        env:
+          EVENT: ${{ github.event_name }}
+          GO_CHANGED: ${{ steps.filter.outputs.go }}
+          DART_CHANGED: ${{ steps.filter.outputs.dart }}
+          STUDIO_CHANGED: ${{ steps.filter.outputs.studio }}
+        run: |
+          if [ "$EVENT" != "pull_request" ]; then
+            GO_CHANGED=true DART_CHANGED=true STUDIO_CHANGED=true
+          fi
+          {
+            echo "go=${GO_CHANGED:-false}"
+            echo "dart=${DART_CHANGED:-false}"
+            echo "studio=${STUDIO_CHANGED:-false}"
+          } >> "$GITHUB_OUTPUT"
+
+  # ── Repository ───────────────────────────────────────────────────────────
+
   hygiene:
     name: Hygiene
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Run file hygiene hooks
-        run: |
-          pipx install pre-commit
-          status=0
-          for hook in trailing-whitespace end-of-file-fixer mixed-line-ending \
-                      check-yaml check-toml check-json check-merge-conflict \
-                      check-case-conflict check-added-large-files detect-private-key; do
-            pre-commit run "$hook" --all-files --show-diff-on-failure || status=1
-          done
-          exit $status
+        with:
+          persist-credentials: false
+      - run: pipx install "pre-commit==${PRE_COMMIT_VERSION}"
+      - name: File hygiene hooks
+        run: make hygiene
 
   secrets:
     name: Secret scan
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0 # scan the full history, not just the tip
+          persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
-          go-version: stable
+          go-version-file: backend/go.mod
+          cache: false
+      - run: make install-gitleaks
       - name: Scan history for secrets
-        run: |
-          go install github.com/zricethezav/gitleaks/v8@${{ env.GITLEAKS_VERSION }}
-          "$(go env GOPATH)/bin/gitleaks" git --config=.gitleaks.toml --redact --verbose
+        run: make secrets
+
+  spec:
+    name: Specification and traceability
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: backend/go.mod
+          cache: false
+      # Verifies: QA-073.
+      - name: Specification consistency
+        run: make spec-lint
+      # Verifies: QA-070.
+      - name: Traceability report
+        run: make trace
+      - name: Publish report
+        if: always()
+        run: '[ -f reqtrace.md ] && cat reqtrace.md >> "$GITHUB_STEP_SUMMARY" || true'
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: always()
+        with:
+          name: traceability-report
+          path: |
+            reqtrace.md
+            reqtrace.json
+          if-no-files-found: ignore
+
+  workflows:
+    name: Workflow lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: backend/go.mod
+          cache: false
+      - run: make install-actionlint
+      - run: pipx install "zizmor==${ZIZMOR_VERSION}"
+      - name: actionlint and zizmor
+        env:
+          GH_TOKEN: ${{ github.token }} # enables zizmor's online audits (read-only)
+        run: make workflows-lint
+
+  licensing:
+    name: Licensing (REUSE)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: pipx install "reuse==${REUSE_VERSION}"
+      - name: REUSE compliance
+        run: make reuse-lint
+
+  links:
+    name: Documentation links
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check relative links and anchors in Markdown
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: --offline --include-fragments --no-progress --exclude-path node_modules "./**/*.md"
+          fail: true
+
+  sbom:
+    name: SBOM
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Generate CycloneDX SBOM
+        uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: plux.cdx.json
+          artifact-name: sbom-cyclonedx.json
+          dependency-snapshot: false
 
   commits:
     name: Commit messages
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - name: Check Conventional Commits
+          persist-credentials: false
+      - name: Pull request title (becomes the squash commit)
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          printf '%s\n' "$PR_TITLE" > "$RUNNER_TEMP/title"
+          ./scripts/check-commit-msg.sh "$RUNNER_TEMP/title"
+      - name: Every commit
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           status=0
           for sha in $(git rev-list --no-merges "$BASE_SHA..$HEAD_SHA"); do
-            git log -1 --format=%B "$sha" > /tmp/msg
-            ./scripts/check-commit-msg.sh /tmp/msg || { echo "  in commit $sha"; status=1; }
+            git log -1 --format=%B "$sha" > "$RUNNER_TEMP/msg"
+            ./scripts/check-commit-msg.sh "$RUNNER_TEMP/msg" || { echo "  in commit $sha"; status=1; }
           done
-          exit $status
+          exit "$status"
+
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: moderate
+          # Licences compatible with the open-core model (ADR-0022,
+          # docs/engineering/dependencies.md §1).
+          allow-licenses: >-
+            Apache-2.0, MIT, BSD-2-Clause, BSD-3-Clause, ISC, MPL-2.0, 0BSD,
+            Unlicense, CC0-1.0, Zlib, BlueOak-1.0.0, Python-2.0, OFL-1.1,
+            BSL-1.0, Unicode-3.0
+          comment-summary-in-pr: never
+
+  # ── Go ───────────────────────────────────────────────────────────────────
+
+  go-lint:
+    name: Go lint
+    needs: changes
+    if: needs.changes.outputs.go == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: |
+            backend/go.mod
+            tools/go.mod
+      - run: make install-golangci-lint
+      - name: Format, lint, tidiness
+        run: make go-fmt-check go-lint go-tidy-check
+      # Verifies: CI-003.
+      - name: Generated code is committed
+        run: make go-gen-check
+
+  go-test:
+    name: Go test
+    needs: changes
+    if: needs.changes.outputs.go == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: |
+            backend/go.mod
+            tools/go.mod
+      # Verifies: QA-001.
+      - name: Tests with race detector and coverage floors
+        run: make go-cover | tee -a "$GITHUB_STEP_SUMMARY"
+
+  go-build:
+    name: Go build
+    needs: changes
+    if: needs.changes.outputs.go == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: backend/go.mod
+          cache: false # reproducibility is checked with cold caches
+      - name: Build
+        run: make go-build
+      # Verifies: CI-006.
+      - name: Reproducible build
+        run: make go-reproducible
+
+  go-vuln:
+    name: Go vulnerabilities
+    needs: changes
+    if: needs.changes.outputs.go == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: backend/go.mod
+          cache: false
+      - run: make install-govulncheck
+      - name: govulncheck
+        run: make go-vuln
+
+  # ── Dart and Flutter ─────────────────────────────────────────────────────
+
+  dart:
+    name: Dart and Flutter
+    needs: changes
+    if: needs.changes.outputs.dart == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: backend/go.mod
+          cache: false
+      # Verifies: CI-003.
+      - name: Lockfile is committed
+        run: make dart-lock-check
+      - name: Format, analyze, test with coverage floors
+        run: make dart-fmt-check dart-analyze dart-cover | tee -a "$GITHUB_STEP_SUMMARY"
+
+  # ── Studio ───────────────────────────────────────────────────────────────
+
+  studio:
+    name: Studio
+    needs: changes
+    if: needs.changes.outputs.studio == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: backend/go.mod
+          cache: false
+      - name: Install (frozen lockfile), lint, type-check, test with coverage floors
+        run: make studio-check | tee -a "$GITHUB_STEP_SUMMARY"
+
+  # ── Gate ─────────────────────────────────────────────────────────────────
+
+  ci-ok:
+    name: CI OK
+    if: always()
+    needs:
+      - changes
+      - hygiene
+      - secrets
+      - spec
+      - workflows
+      - licensing
+      - links
+      - sbom
+      - commits
+      - dependency-review
+      - go-lint
+      - go-test
+      - go-build
+      - go-vuln
+      - dart
+      - studio
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Fail unless every job succeeded or was skipped
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          echo "$NEEDS" | jq -e 'all(.[]; .result == "success" or .result == "skipped")' > /dev/null

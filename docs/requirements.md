@@ -1,7 +1,7 @@
 # Plux — System Requirements Specification
 
 **Document ID:** `SRS-PLUX-001`
-**Version:** 1.1.0
+**Version:** 1.1.1
 **Status:** Draft — living document, revised as implementation proceeds
 **Date:** 2026-09-26
 **Applies to:** Plux Schema, Plux Compiler, Plux Server, Plux Functions, `plux_flutter` runtime, Plux Dev app, Plux Studio, Plux CLI, Plux AI
@@ -346,7 +346,7 @@ flowchart LR
 
 | Phase | Theme | Deliverables | Exit criteria |
 |---|---|---|---|
-| **P0** | **Foundations** | Monorepo layout (§33); Makefile; CI for Go, Dart and Bun (lint, format, test, build, vulnerability and secret scanning, SBOM, Conventional Commits); this specification; `AGENTS.md`, `CLAUDE.md`, engineering handbook, ADR process, work log; pre-commit hooks; `CODEOWNERS`. | `make check` is green across all toolchains on a clean clone; CI required checks enforced on `main`. |
+| **P0** | **Foundations** | Monorepo layout (§33) with Go modules joined by `go.work`, a Dart pub workspace and a Bun workspace; Makefile as the single entry point; CI for Go, Dart and Bun (lint, format, test, build, vulnerability and secret scanning, SBOM, Conventional Commits) behind one required gate; requirement traceability, specification lint and coverage gates (`tools/`); reproducible Go builds; REUSE-compliant licensing (ADR-0022); release workflow; this specification; `AGENTS.md`, `CLAUDE.md`, engineering handbook, ADR process, work log; pre-commit hooks; `CODEOWNERS`. | `make check` is green across all toolchains on a clean clone; CI required checks enforced on `main`. |
 | **P1** | **Schema and compiler** | JSON Schema for the document model (§7); widget descriptor registry and generated coverage table (§8); FlatBuffers bundle schema and container format (§9); deterministic Go compiler with validation, PXL type-checking and optimisation; diagnostics with codes and JSON paths; generated types for Go, Dart and TypeScript; conformance test vectors. | Golden tests pass; the same input produces byte-identical output across runs and platforms; every Layer 1 widget in scope for P3 has a descriptor. |
 | **P2** | **Backend core** | Plux Server (`api` and `worker` roles); ConnectRPC API (§11); PostgreSQL schema and migrations; object storage; organisations, apps, plugins, pages; drafts with snapshots and per-plugin editing locks; publish pipeline (validate → compile → sign → store); immutable plugin versions and app releases; delta generation against every older version; signed manifest endpoint; CLI `login`, `validate`, `publish`, `pull`; Docker Compose stack; baseline logging, metrics and tracing. | A plugin authored as JSON is published via the CLI; the manifest and deltas are fetched and verified by a test client; compose stack starts with one command. |
 | **P3** | **Runtime rendering** | `plux_flutter` package on Riverpod; memory-mapped zero-copy bundle reader; FlatBuffers verifier; signature and hash verification; renderer for P3 widget set; theming and assets; **sync of all plugins at app start** with deltas, manual sync API, atomic activation, last-known-good rollback, baseline bundles; error boundaries; minimal example host app. | Example host app renders published pages offline; render and sync benchmarks recorded; corrupted and tampered bundles are rejected in tests. |
@@ -943,7 +943,7 @@ The Studio canvas no longer uses a Flutter Web build of the runtime (ADR-0013); 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `RT-050` | P11 | — | Withdrawn: the runtime is not compiled to Flutter Web; the Studio canvas is a separate design surface (`STU-003`). | WITHDRAWN |
-| `RT-051` | P11 | — | Withdrawn together with `RT-050`. | WITHDRAWN |
+| `RT-051` | P11 | — | Withdrawn: removed together with `RT-050`. | WITHDRAWN |
 
 ### 12.5 Modularity and size
 
@@ -1283,7 +1283,7 @@ Security profiles bundle settings so that operators do not need to understand fi
 |---|---|---|---|---|
 | `SEC-190` | P6 | MUST | The mobile runtime **MUST** be tested against the OWASP MASTG test cases applicable to MASVS L2 and MASVS-RESILIENCE, with results recorded per release. | SPEC |
 | `SEC-191` | P9 | MUST | An independent penetration test of the server, Studio and runtime **MUST** be completed before Plux 1.0, with findings tracked to closure. | SPEC |
-| `SEC-192` | P0 | MUST | `SECURITY.md` **MUST** define a coordinated vulnerability disclosure process with a response SLA. | SPEC |
+| `SEC-192` | P0 | MUST | `SECURITY.md` **MUST** define a coordinated vulnerability disclosure process with a response SLA. | DONE |
 
 ---
 ## 16. Plux Functions — the Compute Layer
@@ -1888,7 +1888,7 @@ This section concerns how Plux itself is verified. §22.2 covers the testing too
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `QA-001` | P0 | MUST | Coverage **MUST** be at least 85% for the compiler, PXL, bundle, delta, sync, security, DPoP and approval packages; at least 80% for the rest of the Go and Dart code; at least 70% for Studio. | SPEC |
+| `QA-001` | P0 | MUST | Coverage **MUST** be at least 85% for the compiler, PXL, bundle, delta, sync, security, DPoP and approval packages; at least 80% for the rest of the Go and Dart code; at least 70% for Studio. | DONE |
 | `QA-002` | P1 | MUST | Property-based tests **MUST** cover: compiler determinism; delta round-trip (`REL-025`); PXL evaluation laws; JSON canonicalisation; atomic activation under injected crashes. | SPEC |
 | `QA-003` | P1 | MUST | A cross-language **conformance suite** (in `schema/testdata/`) **MUST** hold shared vectors — documents → expected bundles, PXL expressions → results, DPoP proofs → accept/reject — run by Go, Dart and TypeScript implementations alike. | SPEC |
 | `QA-004` | P1 | MUST | Fuzzing **MUST** continuously cover the compiler, the bundle container and FlatBuffers verification (Go and Dart), manifest and metadata parsing, DPoP and attestation parsing, and PXL bytecode loading. | SPEC |
@@ -1899,10 +1899,10 @@ This section concerns how Plux itself is verified. §22.2 covers the testing too
 | `QA-009` | P3 | MUST | Failure-injection tests **MUST** cover network loss mid-download, corrupted and truncated deltas, disk full, process kill during activation, server errors and clock skew, and **MUST** prove the runtime always keeps a working release. | SPEC |
 | `QA-010` | P3 | MUST | Compatibility tests **MUST** run the last three released runtime versions against the current server and new bundles, and the current runtime against bundles from the last three compiler versions. | SPEC |
 | `QA-011` | P8 | MUST | Accessibility tests **MUST** run automated semantics checks for all Layer 1 and Layer 2 widgets and scripted screen-reader passes for the reference apps before each release. | SPEC |
-| `QA-070` | P0 | MUST | Every `MUST` requirement **MUST** be traceable to at least one automated test; a traceability report mapping requirement IDs to tests **MUST** be generated in CI. | SPEC |
-| `QA-071` | P0 | MUST | Tests **MUST** reference the requirements they verify in their names or a structured comment (e.g. `TestDPoPRejectsReplayedJTI_SEC_022`, `testWidgets('… [SYN-005]')`), so the mapping is generated from code. | SPEC |
-| `QA-072` | P0 | MUST | A pull request that implements a requirement **MUST** update its `Status` in the same change. | SPEC |
-| `QA-073` | P0 | SHOULD | A requirement that proves unworkable **SHOULD** be marked `WITHDRAWN` with a rationale rather than deleted. | SPEC |
+| `QA-070` | P0 | MUST | Every `MUST` requirement **MUST** be traceable to at least one automated test; a traceability report mapping requirement IDs to tests **MUST** be generated in CI. | DONE |
+| `QA-071` | P0 | MUST | Tests **MUST** reference the requirements they verify in their names or a structured comment (e.g. `TestDPoPRejectsReplayedJTI_SEC_022`, `testWidgets('… [SYN-005]')`), so the mapping is generated from code. | DONE |
+| `QA-072` | P0 | MUST | A pull request that implements a requirement **MUST** update its `Status` in the same change. | WIP |
+| `QA-073` | P0 | SHOULD | A requirement that proves unworkable **SHOULD** be marked `WITHDRAWN` with a rationale rather than deleted. | DONE |
 
 ---
 
@@ -1910,15 +1910,15 @@ This section concerns how Plux itself is verified. §22.2 covers the testing too
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `CI-001` | P0 | MUST | Required checks on `main` **MUST** include: format and lint (golangci-lint, `dart analyze` with strict rules, Biome or ESLint for TypeScript), unit tests, integration tests, `buf lint` and `buf breaking`, FlatBuffers and JSON Schema compatibility checks, builds for all targets, vulnerability scanning (`govulncheck`, OSV-Scanner), secret scanning (gitleaks), license compliance, and Conventional Commits. | SPEC |
-| `CI-002` | P0 | MUST | The monorepo **MUST** have a top-level `Makefile` (`make check`, `make test`, `make dev`, `make gen`) delegating to per-component tooling, with path-filtered CI jobs and dependency caching. | SPEC |
-| `CI-003` | P0 | MUST | Generated code (protobuf, FlatBuffers, JSON Schema types, widget decoders) **MUST** be committed and CI **MUST** fail if regeneration produces a diff. | SPEC |
+| `CI-001` | P0 | MUST | Required checks on `main` **MUST** include: format and lint (golangci-lint, `dart analyze` with strict rules, Biome or ESLint for TypeScript), unit tests, integration tests, `buf lint` and `buf breaking`, FlatBuffers and JSON Schema compatibility checks, builds for all targets, vulnerability scanning (`govulncheck`, OSV-Scanner), secret scanning (gitleaks), license compliance, and Conventional Commits. | WIP |
+| `CI-002` | P0 | MUST | The monorepo **MUST** have a top-level `Makefile` (`make check`, `make test`, `make dev`, `make gen`) delegating to per-component tooling, with path-filtered CI jobs and dependency caching. | WIP |
+| `CI-003` | P0 | MUST | Generated code (protobuf, FlatBuffers, JSON Schema types, widget decoders) **MUST** be committed and CI **MUST** fail if regeneration produces a diff. | DONE |
 | `CI-004` | P2 | MUST | Release artifacts **MUST** carry SLSA v1.0 Build Level 3 provenance and be signed keylessly with Sigstore cosign via CI OIDC. | SPEC |
 | `CI-005` | P3 | MUST | Dart packages **MUST** be published to pub.dev by automated publishing with CI OIDC, never with personal credentials. | SPEC |
-| `CI-006` | P0 | MUST | Go binaries **MUST** be built reproducibly (pinned toolchain, `-trimpath`, fixed build IDs) and CI **MUST** verify reproducibility for release builds. | SPEC |
-| `CI-007` | P0 | MUST | Dependency updates **MUST** be automated (Renovate or Dependabot) with grouping and required review; new dependencies require justification per the dependency policy in the handbook. | SPEC |
-| `CI-008` | P0 | MUST | Releases **MUST** be versioned per component with SemVer, generated changelogs and signed tags. | SPEC |
-| `CI-009` | P0 | MUST | `main` **MUST** be protected: pull requests only, passing required checks, linear history, `CODEOWNERS` review for security-sensitive paths. | SPEC |
+| `CI-006` | P0 | MUST | Go binaries **MUST** be built reproducibly (pinned toolchain, `-trimpath`, fixed build IDs) and CI **MUST** verify reproducibility for release builds. | DONE |
+| `CI-007` | P0 | MUST | Dependency updates **MUST** be automated (Renovate or Dependabot) with grouping and required review; new dependencies require justification per the dependency policy in the handbook. | DONE |
+| `CI-008` | P0 | MUST | Releases **MUST** be versioned per component with SemVer, generated changelogs and signed tags. | WIP |
+| `CI-009` | P0 | MUST | `main` **MUST** be protected: pull requests only, passing required checks, linear history, `CODEOWNERS` review for security-sensitive paths. | WIP |
 
 ---
 
@@ -2062,15 +2062,25 @@ Significant decisions are recorded as ADRs in `docs/adr/` using MADR. These ADRs
 plux/
 ├── AGENTS.md                  # working agreement for humans and AI agents
 ├── CLAUDE.md                  # imports AGENTS.md; Claude Code specifics
-├── README.md, CONTRIBUTING.md, SECURITY.md, LICENSE
-├── Makefile                   # check, test, gen, dev, build
+├── README.md, CONTRIBUTING.md, SECURITY.md, CODE_OF_CONDUCT.md, LICENSE
+├── Makefile                   # single entry point: check, test, gen, build, release-notes (dev from P2)
+├── go.work                    # joins the Go modules backend/ and tools/
+├── pubspec.yaml, pubspec.lock # Dart pub workspace root (one lockfile for all packages and apps)
+├── analysis_options.yaml      # shared strict Dart analysis
+├── .golangci.yml              # shared Go lint configuration
+├── coverage.json              # coverage floors per toolchain (QA-001)
+├── cliff.toml                 # release-note generation per component (CI-008)
+├── REUSE.toml, LICENSES/      # licence of every path (ADR-0022), REUSE-checked
+├── scripts/                   # commit-message check and other small scripts
 ├── docs/
 │   ├── requirements.md        # this specification — source of truth
 │   ├── WORKLOG.md             # current focus and hand-off notes
-│   ├── engineering/           # handbook: standards, testing, workflow, invariants, dependencies
+│   ├── engineering/           # handbook: context, invariants, standards, security, testing, dependencies, workflow, CI
 │   ├── adr/                   # architecture decision records
+│   ├── legal/                 # contributor licence agreement
+│   ├── assets/                # figures and brand assets
 │   ├── security/              # threat model, MASVS/ASVS checklists, key ceremonies
-│   ├── compliance/            # mapping documents (GDPR, PDPP, NBE, DORA, EAA, PCI)
+│   ├── compliance/            # mapping documents (GDPR, national laws, DORA, EAA, PCI)
 │   ├── functions/             # Functions ABI and SDK documentation
 │   ├── benchmarks/            # committed benchmark results and methodology
 │   └── runbooks/              # operational runbooks per alert and failure mode
@@ -2084,8 +2094,9 @@ plux/
 │   ├── cmd/plux-server/
 │   ├── cmd/plux/
 │   ├── internal/              # modules listed in §6.3
-│   └── sdk/fn/                # plux.dev/sdk/fn
-├── packages/                  # Dart packages
+│   └── sdk/fn/                # Functions SDK
+├── tools/                     # Go module, standard library only: reqtrace (spec lint, traceability), covgate, policy checks
+├── packages/                  # Dart packages (pub workspace members)
 │   ├── plux_flutter/          # core runtime
 │   ├── plux_devtools/  plux_security/  plux_db_drift/
 │   ├── plux_lottie/  plux_rive/  plux_maps/  plux_charts/  plux_media/  plux_scanner/  plux_payments/
@@ -2098,15 +2109,14 @@ plux/
 ├── studio/                    # Bun workspace
 │   ├── apps/web/              # React SPA
 │   ├── apps/bff/              # Bun backend-for-frontend
-│   └── packages/              # ui (shadcn), canvas (Plux Canvas + layout engine), api-client, schema types, pxl language service
-├── tools/                     # code generators, coverage checkers, scripts
+│   └── packages/              # brand, ui (shadcn), canvas (Plux Canvas + layout engine), api-client, schema types, pxl language service
 ├── ee/                        # enterprise-edition modules (commercial license)
 ├── deploy/
 │   ├── compose/  helm/  terraform/
 │   └── observability/         # Grafana dashboards, Prometheus rules
 ├── test/
 │   ├── e2e/  load/  security/  compat/  layout-conformance/
-└── .github/                   # workflows, CODEOWNERS, templates
+└── .github/                   # workflows (CI, Scorecard, release), Dependabot, CODEOWNERS, templates
 ```
 
 ---
@@ -2137,9 +2147,9 @@ Plux is developed in **one public repository**, including this specification, un
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `GOV-032` | P0 | MUST | Security capabilities — DPoP, attestation, signed and anti-rollback updates, sandboxing, encryption — **MUST** be part of the open-source core and **MUST NOT** be gated by edition. | SPEC |
+| `GOV-032` | P0 | MUST | Security capabilities — DPoP, attestation, signed and anti-rollback updates, sandboxing, encryption — **MUST** be part of the open-source core and **MUST NOT** be gated by edition. | WIP |
 | `GOV-033` | P9 | MUST | Enterprise-edition code **MUST** live under `ee/` with a clean interface boundary, so the open-source core builds, tests and runs without it; enterprise features **MUST** be enabled only by the offline license file (`GOV-030`). | SPEC |
-| `GOV-034` | P0 | MUST | Contributions **MUST** be accepted under a Contributor License Agreement that permits dual licensing. | SPEC |
+| `GOV-034` | P0 | MUST | Contributions **MUST** be accepted under a Contributor License Agreement that permits dual licensing. | WIP |
 
 Candidate enterprise-edition features are SSO/SCIM, advanced approval policies, SIEM export, the air-gapped installation bundle, mini-app mode for third-party partners, and HA support tooling. The final split is recorded in ADR-0022 before P9, and reviewed legally before the first public release.
 
@@ -2907,10 +2917,10 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | Field | Value |
 |---|---|
 | Document ID | `SRS-PLUX-001` |
-| Version | 1.1.0 |
+| Version | 1.1.1 |
 | Status | Draft (living document) |
 | Date | 2026-09-26 |
-| Supersedes | 1.0.0 |
+| Supersedes | 1.1.0 |
 | Change process | Amendments are made by pull request against `docs/requirements.md`. A change to a `MUST` requirement requires a corresponding ADR. The version is incremented per Semantic Versioning: a breaking change to an existing requirement is a major increment, a new requirement is a minor increment, and a clarification is a patch increment. |
 
 ### Revision history
@@ -2919,3 +2929,4 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 |---|---|---|
 | 1.0.0 | 2026-09-25 | Initial baseline. |
 | 1.1.0 | 2026-09-26 | Functions with explicit `server`/`device` placement and standard Go; no-code app generation; mixed native/plugin screens and route-name addressing without host code changes; Plux Canvas replaces the Flutter Web renderer; limits and quotas framework; bundle design principles replace the IDL sketch; security profiles renamed `standard`/`strict`/`maximum`; multi-tenant operation replaces hosted SaaS; editions and licensing; decisions on delta algorithm, AI provider and analytics store; brand; international positioning. |
+| 1.1.1 | 2026-09-26 | Phase 0 delivered: P0 requirement statuses updated; §33 and the P0 deliverables describe the actual workspace layout, tooling and licensing files; `RT-051` withdrawal worded as a rationale (found by `reqtrace lint`). |

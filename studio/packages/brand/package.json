@@ -1,0 +1,10 @@
+{
+  "name": "@plux/brand",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Plux brand tokens and colour utilities (spec Appendix J).",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

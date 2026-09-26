@@ -1,11 +1,22 @@
 # .pre-commit-config.yaml — git hooks for Plux. Docs: https://pre-commit.com
-# Install: pre-commit install   ·   Run all: pre-commit run --all-files
-# Language-specific hooks (Go, Dart, Bun) are added as each component lands.
+#
+# Install: make setup (or: make hooks-install)
+# Run all: pre-commit run --all-files
+#
+# Stages:
+#   pre-commit  fast checks on every commit: hygiene, secrets, formatting,
+#               specification consistency
+#   commit-msg  Conventional Commits
+#   pre-push    Go unit tests
+#
+# Language hooks call the Makefile, so hooks, CI and local runs share one
+# definition of each check (docs/engineering/workflow.md §7).
 
-default_install_hook_types: [pre-commit, commit-msg]
+default_install_hook_types: [pre-commit, commit-msg, pre-push]
 default_stages: [pre-commit]
 
 repos:
+  # ── File hygiene ─────────────────────────────────────────────────────────
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
@@ -27,14 +38,51 @@ repos:
       - id: no-commit-to-branch
         args: [--branch=main]
 
+  # ── Secret scanning ──────────────────────────────────────────────────────
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.30.1
     hooks:
       - id: gitleaks
         args: [--config=.gitleaks.toml]
 
+  # ── Toolchains (pinned tools from `make setup`) ──────────────────────────
   - repo: local
     hooks:
+      - id: go-fmt
+        name: go format (gofumpt, goimports)
+        language: system
+        entry: make -s go-fmt
+        files: \.go$
+        pass_filenames: false
+
+      - id: dart-format
+        name: dart format
+        language: system
+        entry: dart format
+        types: [dart]
+
+      - id: studio-format
+        name: biome (Studio)
+        language: system
+        entry: make -s studio-fmt
+        files: ^studio/.*\.(ts|tsx|js|json|jsonc)$
+        pass_filenames: false
+
+      - id: spec-lint
+        name: specification consistency
+        language: system
+        entry: make -s spec-lint
+        files: ^docs/requirements\.md$
+        pass_filenames: false
+
+      - id: go-test
+        name: go test
+        language: system
+        entry: make -s go-test
+        files: \.go$
+        pass_filenames: false
+        stages: [pre-push]
+
       - id: conventional-commit-msg
         name: conventional commit message
         language: script
