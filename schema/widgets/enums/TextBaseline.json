@@ -1,0 +1,27 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "TextBaseline",
+  "id": 52,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum TextBaseline.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "TextBaseline"
+  },
+  "values": [
+    {
+      "name": "alphabetic",
+      "id": 1
+    },
+    {
+      "name": "ideographic",
+      "id": 2
+    }
+  ]
+}

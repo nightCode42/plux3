@@ -1,0 +1,33 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "emitHostEvent",
+  "id": 51,
+  "phase": "P5",
+  "category": "host",
+  "description": "Sends a typed event to the host app.",
+  "typeParameters": [
+    {
+      "name": "E",
+      "description": "The payload object type the referenced host event declares."
+    }
+  ],
+  "inputs": [
+    {
+      "name": "event",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "hostEvent",
+      "description": "The host event."
+    },
+    {
+      "name": "payload",
+      "id": 2,
+      "type": "E",
+      "description": "The event payload."
+    }
+  ],
+  "effects": [
+    "host"
+  ]
+}

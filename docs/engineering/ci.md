@@ -34,11 +34,11 @@ How the pipeline is built and why. The requirements are spec §29 (`CI-001`–`C
 | SBOM | always | CycloneDX via Syft | `CI-001` |
 | Commit messages | pull requests | `scripts/check-commit-msg.sh` on title and commits | `CI-009` |
 | Dependency review | pull requests | vulnerabilities and licences of new dependencies | `CI-007` |
-| Go lint | Go changes | `go-fmt-check go-lint go-tidy-check go-gen-check` (regenerates everything `make gen` writes and fails on any difference) | `CI-001`, `CI-003` |
+| Go lint | Go changes | `go-fmt-check go-lint go-tidy-check go-gen-check` (regenerates everything `make gen` writes and fails on any difference), `registry-lock-check` (no permanent ID of the base commit changed or removed) | `CI-001`, `CI-003`, `BND-011` |
 | Go test | Go changes | `go-cover` (race detector, coverage floors) | `QA-001` |
 | Go build | Go changes | `go-build go-reproducible` | `CI-006` |
 | Go vulnerabilities | Go changes | `go-vuln` | `CI-001` |
-| Dart and Flutter | Dart changes | `dart-lock-check dart-fmt-check dart-analyze dart-cover` | `CI-001`, `CI-003`, `QA-001` |
+| Dart and Flutter | Dart changes | `dart-lock-check dart-fmt-check dart-analyze dart-cover`, `widgets-api-check` (the Flutter snapshot matches the pinned SDK) | `CI-001`, `CI-003`, `QA-001`, `WGT-003` |
 | Studio | Studio changes | `studio-check` (frozen install, Biome, types, coverage) | `CI-001`, `QA-001` |
 | CI OK | always | — | `CI-009` |
 
@@ -47,6 +47,8 @@ The traceability report and coverage tables are written to each job's summary; t
 ## 4. Generated code
 
 `make gen` is the only way generated code changes (`CI-003`): `tools/cmd/schemagen` writes the Go, Dart and TypeScript code and reference documents derived from `schema/`, and `go generate` writes the rest (for example the error catalogue). Every generated file carries the marker `Code generated … DO NOT EDIT.` The Go lint job regenerates everything and fails on any difference. Generated files are excluded from formatting checks (`dart format`, Biome) and coverage floors, and are checked instead by regeneration, compilation and the tests that use them.
+
+One input of `make gen` needs Flutter and is therefore refreshed separately: `schema/widgets/flutter-api.json`, the snapshot of the pinned Flutter SDK that the widget coverage table is computed from. `make widgets-api` rewrites it (it refuses to run on any other Flutter version) and the Dart job's `widgets-api-check` fails when it is stale, so a Flutter upgrade runs `make widgets-api gen` in the same pull request (`WGT-003`, [ADR-0010](../adr/0010-layered-widget-model.md)).
 
 ## 5. Tool versions
 

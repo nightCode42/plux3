@@ -1,0 +1,29 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "ScanResult",
+  "id": 36,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "A decoded barcode or two-dimensional code.",
+  "fields": [
+    {
+      "name": "value",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "description": "The decoded text."
+    },
+    {
+      "name": "format",
+      "id": 2,
+      "type": "BarcodeFormat",
+      "required": true,
+      "description": "The format that was read."
+    }
+  ]
+}

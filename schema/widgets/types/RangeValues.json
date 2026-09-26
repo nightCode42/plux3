@@ -1,0 +1,36 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "RangeValues",
+  "id": 21,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "The start and end of a range.",
+  "flutter": [
+    {
+      "library": "package:flutter/material.dart",
+      "class": "RangeValues",
+      "constructors": [
+        ""
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "name": "start",
+      "id": 1,
+      "type": "double",
+      "flutter": "start"
+    },
+    {
+      "name": "end",
+      "id": 2,
+      "type": "double",
+      "flutter": "end"
+    }
+  ]
+}

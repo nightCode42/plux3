@@ -1,0 +1,27 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "Axis",
+  "id": 2,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum Axis.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "Axis"
+  },
+  "values": [
+    {
+      "name": "horizontal",
+      "id": 1
+    },
+    {
+      "name": "vertical",
+      "id": 2
+    }
+  ]
+}

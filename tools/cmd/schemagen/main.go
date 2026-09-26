@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 
 	"github.com/nightCode42/plux3/tools/internal/codegen"
+	"github.com/nightCode42/plux3/tools/internal/registry"
 )
 
 // Exit codes: 0 success, 1 invalid source, 2 usage or I/O error.
@@ -28,12 +29,18 @@ func main() {
 }
 
 // run generates every output under -root and lists the files it changed.
+// With -lock-base it instead checks that the committed permanent-ID lock
+// keeps every entry of an earlier version of the lock (BND-011).
 func run(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("schemagen", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	root := fs.String("root", ".", "repository root")
+	lockBase := fs.String("lock-base", "", "check the ID lock against this earlier `file` and write nothing")
 	if err := fs.Parse(args); err != nil || fs.NArg() != 0 {
 		return exitError
+	}
+	if *lockBase != "" {
+		return checkLock(*root, *lockBase, stdout, stderr)
 	}
 	files, err := generate(*root)
 	if err != nil {
@@ -74,5 +81,34 @@ func generate(root string) ([]codegen.File, error) {
 	if err != nil {
 		return nil, fmt.Errorf("document model: %w", err)
 	}
-	return append(files, modelFiles...), nil
+	files = append(files, modelFiles...)
+	reg, err := registry.Load(root)
+	if err != nil {
+		return nil, fmt.Errorf("registry: %w", err)
+	}
+	regFiles, err := codegen.RegistryFiles(reg)
+	if err != nil {
+		return nil, fmt.Errorf("registry: %w", err)
+	}
+	return append(files, regFiles...), nil
+}
+
+// checkLock fails unless the lock under root keeps every entry of base.
+func checkLock(root, base string, stdout, stderr io.Writer) int {
+	old, err := registry.ReadLock(base)
+	if err != nil {
+		_, _ = fmt.Fprintln(stderr, "schemagen: lock base:", err)
+		return exitError
+	}
+	cur, err := registry.ReadLock(filepath.Join(root, filepath.FromSlash(registry.LockFile)))
+	if err != nil {
+		_, _ = fmt.Fprintln(stderr, "schemagen:", err)
+		return exitInvalid
+	}
+	if err := cur.CheckAppendOnly(old); err != nil {
+		_, _ = fmt.Fprintln(stderr, "schemagen:", err)
+		return exitInvalid
+	}
+	_, _ = fmt.Fprintf(stdout, "schemagen: %s keeps all %d entries of %s\n", registry.LockFile, len(old.IDs), base)
+	return exitOK
 }

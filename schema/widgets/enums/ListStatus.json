@@ -1,0 +1,27 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "ListStatus",
+  "id": 30,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Which state of a lazily built list is shown (WGT-012).",
+  "values": [
+    {
+      "name": "ready",
+      "id": 1
+    },
+    {
+      "name": "loading",
+      "id": 2
+    },
+    {
+      "name": "error",
+      "id": 3
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "BoxConstraints",
+  "id": 5,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Minimum and maximum width and height.",
+  "flutter": [
+    {
+      "library": "package:flutter/widgets.dart",
+      "class": "BoxConstraints",
+      "constructors": [
+        ""
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "name": "minWidth",
+      "id": 1,
+      "type": "double",
+      "default": 0.0,
+      "flutter": "minWidth"
+    },
+    {
+      "name": "maxWidth",
+      "id": 2,
+      "type": "double",
+      "flutter": "maxWidth"
+    },
+    {
+      "name": "minHeight",
+      "id": 3,
+      "type": "double",
+      "default": 0.0,
+      "flutter": "minHeight"
+    },
+    {
+      "name": "maxHeight",
+      "id": 4,
+      "type": "double",
+      "flutter": "maxHeight"
+    }
+  ]
+}

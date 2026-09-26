@@ -1,0 +1,57 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "ButtonSegment",
+  "id": 8,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "One segment of a SegmentedButton.",
+  "flutter": [
+    {
+      "library": "package:flutter/material.dart",
+      "class": "ButtonSegment",
+      "constructors": [
+        ""
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "name": "value",
+      "id": 1,
+      "type": "string",
+      "flutter": "value"
+    },
+    {
+      "name": "icon",
+      "id": 2,
+      "type": "IconData",
+      "flutter": "icon",
+      "description": "Icon of the segment."
+    },
+    {
+      "name": "label",
+      "id": 3,
+      "type": "string",
+      "flutter": "label",
+      "description": "Text of the segment."
+    },
+    {
+      "name": "tooltip",
+      "id": 4,
+      "type": "string",
+      "flutter": "tooltip"
+    },
+    {
+      "name": "enabled",
+      "id": 5,
+      "type": "bool",
+      "default": true,
+      "flutter": "enabled"
+    }
+  ]
+}

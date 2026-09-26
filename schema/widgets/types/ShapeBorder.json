@@ -1,0 +1,80 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "ShapeBorder",
+  "id": 23,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "The outline of a Material surface.",
+  "flutter": [
+    {
+      "library": "package:flutter/painting.dart",
+      "class": "RoundedRectangleBorder",
+      "constructors": [
+        ""
+      ]
+    },
+    {
+      "library": "package:flutter/painting.dart",
+      "class": "StadiumBorder",
+      "constructors": [
+        ""
+      ]
+    },
+    {
+      "library": "package:flutter/painting.dart",
+      "class": "CircleBorder",
+      "constructors": [
+        ""
+      ]
+    },
+    {
+      "library": "package:flutter/painting.dart",
+      "class": "BeveledRectangleBorder",
+      "constructors": [
+        ""
+      ]
+    },
+    {
+      "library": "package:flutter/painting.dart",
+      "class": "ContinuousRectangleBorder",
+      "constructors": [
+        ""
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "name": "kind",
+      "id": 1,
+      "type": "ShapeKind",
+      "required": true,
+      "description": "The shape."
+    },
+    {
+      "name": "side",
+      "id": 2,
+      "type": "BorderSide",
+      "flutter": "side",
+      "description": "The outline stroke."
+    },
+    {
+      "name": "borderRadius",
+      "id": 3,
+      "type": "BorderRadius",
+      "flutter": "borderRadius",
+      "description": "Corner radii of rectangular shapes."
+    },
+    {
+      "name": "eccentricity",
+      "id": 4,
+      "type": "double",
+      "flutter": "eccentricity",
+      "description": "How elliptical a circle may become, from 0 to 1."
+    }
+  ]
+}

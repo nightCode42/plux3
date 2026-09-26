@@ -1,0 +1,240 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "SelectableText",
+  "id": 48,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "SelectableText",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "display",
+  "icon": "select_all",
+  "description": "Text the user can select and copy.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 40,
+  "accessibility": {
+    "role": "text",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "data",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "flutter": "data"
+    },
+    {
+      "name": "style",
+      "id": 2,
+      "type": "TextStyle",
+      "flutter": "style"
+    },
+    {
+      "name": "textAlign",
+      "id": 3,
+      "type": "TextAlign",
+      "flutter": "textAlign"
+    },
+    {
+      "name": "textDirection",
+      "id": 4,
+      "type": "TextDirection",
+      "flutter": "textDirection"
+    },
+    {
+      "name": "showCursor",
+      "id": 5,
+      "type": "bool",
+      "default": false,
+      "flutter": "showCursor"
+    },
+    {
+      "name": "autofocus",
+      "id": 6,
+      "type": "bool",
+      "default": false,
+      "flutter": "autofocus"
+    },
+    {
+      "name": "minLines",
+      "id": 7,
+      "type": "int",
+      "constraints": {
+        "min": 1
+      },
+      "flutter": "minLines"
+    },
+    {
+      "name": "maxLines",
+      "id": 8,
+      "type": "int",
+      "constraints": {
+        "min": 1
+      },
+      "flutter": "maxLines"
+    },
+    {
+      "name": "cursorWidth",
+      "id": 9,
+      "type": "double",
+      "default": 2.0,
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "cursorWidth"
+    },
+    {
+      "name": "cursorHeight",
+      "id": 10,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "cursorHeight"
+    },
+    {
+      "name": "cursorRadius",
+      "id": 11,
+      "type": "Radius",
+      "flutter": "cursorRadius"
+    },
+    {
+      "name": "cursorColor",
+      "id": 12,
+      "type": "color",
+      "flutter": "cursorColor"
+    },
+    {
+      "name": "selectionColor",
+      "id": 13,
+      "type": "color",
+      "flutter": "selectionColor"
+    },
+    {
+      "name": "selectionHeightStyle",
+      "id": 14,
+      "type": "BoxHeightStyle",
+      "flutter": "selectionHeightStyle"
+    },
+    {
+      "name": "selectionWidthStyle",
+      "id": 15,
+      "type": "BoxWidthStyle",
+      "flutter": "selectionWidthStyle"
+    },
+    {
+      "name": "dragStartBehavior",
+      "id": 16,
+      "type": "DragStartBehavior",
+      "default": "start",
+      "flutter": "dragStartBehavior"
+    },
+    {
+      "name": "enableInteractiveSelection",
+      "id": 17,
+      "type": "bool",
+      "default": true,
+      "flutter": "enableInteractiveSelection"
+    },
+    {
+      "name": "scrollPhysics",
+      "id": 18,
+      "type": "ScrollPhysics",
+      "flutter": "scrollPhysics"
+    },
+    {
+      "name": "semanticsLabel",
+      "id": 19,
+      "type": "string",
+      "flutter": "semanticsLabel"
+    },
+    {
+      "name": "textWidthBasis",
+      "id": 20,
+      "type": "TextWidthBasis",
+      "flutter": "textWidthBasis"
+    }
+  ],
+  "events": [
+    {
+      "name": "onTap",
+      "id": 1,
+      "flutter": "onTap"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "focusNode",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "strutStyle",
+      "reason": "deferred",
+      "note": "Strut styles are rarely needed; TextStyle.height covers line height."
+    },
+    {
+      "flutter": "textScaleFactor",
+      "reason": "deprecated",
+      "note": "Deprecated in Flutter."
+    },
+    {
+      "flutter": "textScaler",
+      "reason": "deferred",
+      "note": "Text scaling follows the device accessibility setting."
+    },
+    {
+      "flutter": "toolbarOptions",
+      "reason": "deprecated",
+      "note": "Deprecated in Flutter."
+    },
+    {
+      "flutter": "selectionControls",
+      "reason": "non-serialisable"
+    },
+    {
+      "flutter": "scrollBehavior",
+      "reason": "non-serialisable"
+    },
+    {
+      "flutter": "textHeightBehavior",
+      "reason": "deferred",
+      "note": "Fine-grained line-height behaviour is deferred."
+    },
+    {
+      "flutter": "onSelectionChanged",
+      "reason": "deferred",
+      "note": "Event payload not yet expressible."
+    },
+    {
+      "flutter": "contextMenuBuilder",
+      "reason": "deferred",
+      "note": "Custom builders are deferred."
+    },
+    {
+      "flutter": "magnifierConfiguration",
+      "reason": "deferred",
+      "note": "Platform text services use their defaults."
+    }
+  ]
+}

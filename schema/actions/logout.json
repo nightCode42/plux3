@@ -1,0 +1,13 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "logout",
+  "id": 54,
+  "phase": "P5",
+  "category": "host",
+  "description": "Signals logout to the host app, which wipes plugin data according to its policy.",
+  "effects": [
+    "storage",
+    "security",
+    "host"
+  ]
+}

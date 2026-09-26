@@ -1,0 +1,35 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "NavigationMode",
+  "id": 68,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "How navigate changes the navigation stack.",
+  "values": [
+    {
+      "name": "push",
+      "id": 1,
+      "description": "Push the route on top of the stack."
+    },
+    {
+      "name": "replace",
+      "id": 2,
+      "description": "Replace the current route."
+    },
+    {
+      "name": "popUntil",
+      "id": 3,
+      "description": "Pop routes until the named route is on top."
+    },
+    {
+      "name": "clearAndPush",
+      "id": 4,
+      "description": "Clear the stack, then push the route."
+    }
+  ]
+}

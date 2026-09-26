@@ -1,0 +1,64 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "BorderRadius",
+  "id": 3,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Corner radii. `all` sets every corner to a circular radius.",
+  "flutter": [
+    {
+      "library": "package:flutter/painting.dart",
+      "class": "BorderRadius",
+      "constructors": [
+        "circular",
+        "only"
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "name": "all",
+      "id": 1,
+      "type": "double",
+      "flutter": "radius",
+      "description": "Circular radius of every corner."
+    },
+    {
+      "name": "topLeft",
+      "id": 2,
+      "type": "Radius",
+      "flutter": "topLeft"
+    },
+    {
+      "name": "topRight",
+      "id": 3,
+      "type": "Radius",
+      "flutter": "topRight"
+    },
+    {
+      "name": "bottomLeft",
+      "id": 4,
+      "type": "Radius",
+      "flutter": "bottomLeft"
+    },
+    {
+      "name": "bottomRight",
+      "id": 5,
+      "type": "Radius",
+      "flutter": "bottomRight"
+    }
+  ],
+  "constants": [
+    {
+      "name": "zero",
+      "value": {
+        "all": 0
+      }
+    }
+  ]
+}

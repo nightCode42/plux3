@@ -1,0 +1,200 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Chip",
+  "id": 57,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "Chip",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "display",
+  "icon": "label",
+  "description": "A compact element representing an attribute, with an optional delete action.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 25,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "labelStyle",
+      "id": 1,
+      "type": "TextStyle",
+      "flutter": "labelStyle"
+    },
+    {
+      "name": "labelPadding",
+      "id": 2,
+      "type": "EdgeInsets",
+      "flutter": "labelPadding"
+    },
+    {
+      "name": "deleteIconColor",
+      "id": 3,
+      "type": "color",
+      "flutter": "deleteIconColor"
+    },
+    {
+      "name": "deleteButtonTooltipMessage",
+      "id": 4,
+      "type": "string",
+      "flutter": "deleteButtonTooltipMessage"
+    },
+    {
+      "name": "side",
+      "id": 5,
+      "type": "BorderSide",
+      "flutter": "side"
+    },
+    {
+      "name": "shape",
+      "id": 6,
+      "type": "ShapeBorder",
+      "flutter": "shape"
+    },
+    {
+      "name": "clipBehavior",
+      "id": 7,
+      "type": "Clip",
+      "default": "none",
+      "flutter": "clipBehavior"
+    },
+    {
+      "name": "autofocus",
+      "id": 8,
+      "type": "bool",
+      "default": false,
+      "flutter": "autofocus"
+    },
+    {
+      "name": "color",
+      "id": 9,
+      "type": "WidgetStateColor",
+      "flutter": "color"
+    },
+    {
+      "name": "backgroundColor",
+      "id": 10,
+      "type": "color",
+      "flutter": "backgroundColor"
+    },
+    {
+      "name": "padding",
+      "id": 11,
+      "type": "EdgeInsets",
+      "flutter": "padding"
+    },
+    {
+      "name": "visualDensity",
+      "id": 12,
+      "type": "VisualDensity",
+      "flutter": "visualDensity"
+    },
+    {
+      "name": "materialTapTargetSize",
+      "id": 13,
+      "type": "MaterialTapTargetSize",
+      "flutter": "materialTapTargetSize"
+    },
+    {
+      "name": "elevation",
+      "id": 14,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "elevation"
+    },
+    {
+      "name": "shadowColor",
+      "id": 15,
+      "type": "color",
+      "flutter": "shadowColor"
+    },
+    {
+      "name": "surfaceTintColor",
+      "id": 16,
+      "type": "color",
+      "flutter": "surfaceTintColor"
+    },
+    {
+      "name": "avatarBoxConstraints",
+      "id": 17,
+      "type": "BoxConstraints",
+      "flutter": "avatarBoxConstraints"
+    },
+    {
+      "name": "deleteIconBoxConstraints",
+      "id": 18,
+      "type": "BoxConstraints",
+      "flutter": "deleteIconBoxConstraints"
+    }
+  ],
+  "events": [
+    {
+      "name": "onDeleted",
+      "id": 1,
+      "flutter": "onDeleted"
+    }
+  ],
+  "slots": [
+    {
+      "name": "avatar",
+      "id": 1,
+      "flutter": "avatar"
+    },
+    {
+      "name": "label",
+      "id": 2,
+      "required": true,
+      "flutter": "label"
+    },
+    {
+      "name": "deleteIcon",
+      "id": 3,
+      "flutter": "deleteIcon"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "focusNode",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "iconTheme",
+      "reason": "deferred",
+      "note": "Icon theming comes from the app theme (THM-001)."
+    },
+    {
+      "flutter": "chipAnimationStyle",
+      "reason": "deferred",
+      "note": "Custom animation styles arrive with animations (P5)."
+    },
+    {
+      "flutter": "mouseCursor",
+      "reason": "deferred",
+      "note": "Pointer cursors matter only for desktop and web targets."
+    }
+  ]
+}

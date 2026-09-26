@@ -1,0 +1,92 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "SafeArea",
+  "id": 23,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "SafeArea",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "layout",
+  "icon": "security",
+  "description": "Insets its child to avoid system intrusions such as the status bar and notch.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 6,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "left",
+      "id": 1,
+      "type": "bool",
+      "default": true,
+      "flutter": "left"
+    },
+    {
+      "name": "top",
+      "id": 2,
+      "type": "bool",
+      "default": true,
+      "flutter": "top"
+    },
+    {
+      "name": "right",
+      "id": 3,
+      "type": "bool",
+      "default": true,
+      "flutter": "right"
+    },
+    {
+      "name": "bottom",
+      "id": 4,
+      "type": "bool",
+      "default": true,
+      "flutter": "bottom"
+    },
+    {
+      "name": "minimum",
+      "id": 5,
+      "type": "EdgeInsets",
+      "default": "zero",
+      "flutter": "minimum"
+    },
+    {
+      "name": "maintainBottomViewPadding",
+      "id": 6,
+      "type": "bool",
+      "default": false,
+      "flutter": "maintainBottomViewPadding"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "required": true,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

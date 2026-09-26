@@ -1,0 +1,35 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "callFlow",
+  "id": 29,
+  "phase": "P5",
+  "category": "control",
+  "description": "Runs a reusable named action graph with typed input and returns its output (ACT-061).",
+  "typeParameters": [
+    {
+      "name": "I",
+      "description": "The input object type the referenced flow declares."
+    },
+    {
+      "name": "O",
+      "description": "The output type the referenced flow declares."
+    }
+  ],
+  "inputs": [
+    {
+      "name": "flow",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "flow",
+      "description": "The flow."
+    },
+    {
+      "name": "input",
+      "id": 2,
+      "type": "I",
+      "description": "The flow input."
+    }
+  ],
+  "output": "O"
+}

@@ -1,0 +1,45 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "Offset",
+  "id": 18,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "A two-dimensional offset.",
+  "flutter": [
+    {
+      "library": "package:flutter/painting.dart",
+      "class": "Offset",
+      "constructors": [
+        ""
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "name": "dx",
+      "id": 1,
+      "type": "double",
+      "flutter": "dx"
+    },
+    {
+      "name": "dy",
+      "id": 2,
+      "type": "double",
+      "flutter": "dy"
+    }
+  ],
+  "constants": [
+    {
+      "name": "zero",
+      "value": {
+        "dx": 0,
+        "dy": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "GradientKind",
+  "id": 24,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "The kind of a gradient.",
+  "values": [
+    {
+      "name": "linear",
+      "id": 1
+    },
+    {
+      "name": "radial",
+      "id": 2
+    },
+    {
+      "name": "sweep",
+      "id": 3
+    }
+  ]
+}

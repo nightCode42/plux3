@@ -1,0 +1,162 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Checkbox",
+  "id": 68,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "Checkbox",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "input",
+  "icon": "check_box",
+  "description": "A Material checkbox.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 20,
+  "accessibility": {
+    "role": "checkbox",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "value",
+      "id": 1,
+      "type": "bool",
+      "flutter": "value"
+    },
+    {
+      "name": "tristate",
+      "id": 2,
+      "type": "bool",
+      "default": false,
+      "flutter": "tristate"
+    },
+    {
+      "name": "activeColor",
+      "id": 3,
+      "type": "color",
+      "flutter": "activeColor"
+    },
+    {
+      "name": "fillColor",
+      "id": 4,
+      "type": "WidgetStateColor",
+      "flutter": "fillColor"
+    },
+    {
+      "name": "checkColor",
+      "id": 5,
+      "type": "color",
+      "flutter": "checkColor"
+    },
+    {
+      "name": "focusColor",
+      "id": 6,
+      "type": "color",
+      "flutter": "focusColor"
+    },
+    {
+      "name": "hoverColor",
+      "id": 7,
+      "type": "color",
+      "flutter": "hoverColor"
+    },
+    {
+      "name": "overlayColor",
+      "id": 8,
+      "type": "WidgetStateColor",
+      "flutter": "overlayColor"
+    },
+    {
+      "name": "splashRadius",
+      "id": 9,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "splashRadius"
+    },
+    {
+      "name": "materialTapTargetSize",
+      "id": 10,
+      "type": "MaterialTapTargetSize",
+      "flutter": "materialTapTargetSize"
+    },
+    {
+      "name": "visualDensity",
+      "id": 11,
+      "type": "VisualDensity",
+      "flutter": "visualDensity"
+    },
+    {
+      "name": "autofocus",
+      "id": 12,
+      "type": "bool",
+      "default": false,
+      "flutter": "autofocus"
+    },
+    {
+      "name": "shape",
+      "id": 13,
+      "type": "ShapeBorder",
+      "flutter": "shape"
+    },
+    {
+      "name": "side",
+      "id": 14,
+      "type": "BorderSide",
+      "flutter": "side"
+    },
+    {
+      "name": "isError",
+      "id": 15,
+      "type": "bool",
+      "default": false,
+      "flutter": "isError"
+    },
+    {
+      "name": "semanticLabel",
+      "id": 16,
+      "type": "string",
+      "flutter": "semanticLabel"
+    }
+  ],
+  "events": [
+    {
+      "name": "onChanged",
+      "id": 1,
+      "payload": "bool?",
+      "flutter": "onChanged"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "mouseCursor",
+      "reason": "deferred",
+      "note": "Pointer cursors matter only for desktop and web targets."
+    },
+    {
+      "flutter": "focusNode",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    }
+  ]
+}

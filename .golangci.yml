@@ -39,9 +39,11 @@ linters:
     misspell:
       locale: UK
       # Identifiers of the document model keep the specification's spelling
-      # (e.g. the `color` type of SCH-010, the `organization` scope); prose
-      # stays British.
+      # (e.g. the `color` type of SCH-010, the `organization` scope), and
+      # registry names keep Flutter's (e.g. `TextAlign.center`); prose stays
+      # British.
       ignore-rules:
+        - center
         - color
         - organization
     wrapcheck:

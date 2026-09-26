@@ -1,0 +1,56 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "AspectRatio",
+  "id": 14,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "AspectRatio",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "layout",
+  "icon": "aspect_ratio",
+  "description": "Sizes its child to a specific aspect ratio.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 6,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "aspectRatio",
+      "id": 1,
+      "type": "double",
+      "required": true,
+      "flutter": "aspectRatio"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

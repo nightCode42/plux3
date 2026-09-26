@@ -1,0 +1,104 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "CupertinoSlider",
+  "id": 93,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/cupertino.dart",
+    "class": "CupertinoSlider",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "cupertino",
+  "icon": "tune",
+  "description": "An iOS-style slider.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 30,
+  "accessibility": {
+    "role": "slider",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "value",
+      "id": 1,
+      "type": "double",
+      "required": true,
+      "flutter": "value"
+    },
+    {
+      "name": "min",
+      "id": 2,
+      "type": "double",
+      "default": 0.0,
+      "flutter": "min"
+    },
+    {
+      "name": "max",
+      "id": 3,
+      "type": "double",
+      "default": 1.0,
+      "flutter": "max"
+    },
+    {
+      "name": "divisions",
+      "id": 4,
+      "type": "int",
+      "constraints": {
+        "min": 1
+      },
+      "flutter": "divisions"
+    },
+    {
+      "name": "activeColor",
+      "id": 5,
+      "type": "color",
+      "flutter": "activeColor"
+    },
+    {
+      "name": "thumbColor",
+      "id": 6,
+      "type": "color",
+      "flutter": "thumbColor"
+    }
+  ],
+  "events": [
+    {
+      "name": "onChanged",
+      "id": 1,
+      "payload": "double",
+      "flutter": "onChanged"
+    },
+    {
+      "name": "onChangeStart",
+      "id": 2,
+      "payload": "double",
+      "flutter": "onChangeStart"
+    },
+    {
+      "name": "onChangeEnd",
+      "id": 3,
+      "payload": "double",
+      "flutter": "onChangeEnd"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

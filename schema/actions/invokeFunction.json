@@ -1,0 +1,38 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "invokeFunction",
+  "id": 28,
+  "phase": "P7",
+  "category": "compute",
+  "description": "Calls a Plux Function with typed input and output, on the device or the server according to its placement.",
+  "typeParameters": [
+    {
+      "name": "I",
+      "description": "The input type the referenced function declares."
+    },
+    {
+      "name": "O",
+      "description": "The output type the referenced function declares."
+    }
+  ],
+  "inputs": [
+    {
+      "name": "function",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "function",
+      "description": "The function."
+    },
+    {
+      "name": "input",
+      "id": 2,
+      "type": "I",
+      "description": "The function input."
+    }
+  ],
+  "output": "O",
+  "effects": [
+    "network"
+  ]
+}

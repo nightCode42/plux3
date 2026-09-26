@@ -1,0 +1,35 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "Clip",
+  "id": 11,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum Clip.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "Clip"
+  },
+  "values": [
+    {
+      "name": "none",
+      "id": 1
+    },
+    {
+      "name": "hardEdge",
+      "id": 2
+    },
+    {
+      "name": "antiAlias",
+      "id": 3
+    },
+    {
+      "name": "antiAliasWithSaveLayer",
+      "id": 4
+    }
+  ]
+}

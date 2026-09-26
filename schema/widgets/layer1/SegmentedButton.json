@@ -1,0 +1,111 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "SegmentedButton",
+  "id": 77,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "SegmentedButton",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "input",
+  "icon": "view_week",
+  "description": "Selects one or more options from a small set of segments.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 50,
+  "accessibility": {
+    "role": "button",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "segments",
+      "id": 1,
+      "type": "list<ButtonSegment>",
+      "required": true,
+      "flutter": "segments"
+    },
+    {
+      "name": "selected",
+      "id": 2,
+      "type": "list<string>",
+      "required": true,
+      "flutter": "selected"
+    },
+    {
+      "name": "multiSelectionEnabled",
+      "id": 3,
+      "type": "bool",
+      "default": false,
+      "flutter": "multiSelectionEnabled"
+    },
+    {
+      "name": "emptySelectionAllowed",
+      "id": 4,
+      "type": "bool",
+      "default": false,
+      "flutter": "emptySelectionAllowed"
+    },
+    {
+      "name": "expandedInsets",
+      "id": 5,
+      "type": "EdgeInsets",
+      "flutter": "expandedInsets"
+    },
+    {
+      "name": "style",
+      "id": 6,
+      "type": "ButtonStyle",
+      "flutter": "style"
+    },
+    {
+      "name": "showSelectedIcon",
+      "id": 7,
+      "type": "bool",
+      "default": true,
+      "flutter": "showSelectedIcon"
+    },
+    {
+      "name": "direction",
+      "id": 8,
+      "type": "Axis",
+      "default": "horizontal",
+      "flutter": "direction"
+    }
+  ],
+  "events": [
+    {
+      "name": "onSelectionChanged",
+      "id": 1,
+      "payload": "list<string>",
+      "flutter": "onSelectionChanged"
+    }
+  ],
+  "slots": [
+    {
+      "name": "selectedIcon",
+      "id": 1,
+      "flutter": "selectedIcon"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

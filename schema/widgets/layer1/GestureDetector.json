@@ -1,0 +1,418 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "GestureDetector",
+  "id": 89,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "GestureDetector",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "interaction",
+  "icon": "touch_app",
+  "description": "Detects taps, long presses, drags and scale gestures on its child.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 15,
+  "accessibility": {
+    "role": "button",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "behavior",
+      "id": 1,
+      "type": "HitTestBehavior",
+      "flutter": "behavior"
+    },
+    {
+      "name": "excludeFromSemantics",
+      "id": 2,
+      "type": "bool",
+      "default": false,
+      "flutter": "excludeFromSemantics"
+    },
+    {
+      "name": "dragStartBehavior",
+      "id": 3,
+      "type": "DragStartBehavior",
+      "default": "start",
+      "flutter": "dragStartBehavior"
+    },
+    {
+      "name": "trackpadScrollCausesScale",
+      "id": 4,
+      "type": "bool",
+      "default": false,
+      "flutter": "trackpadScrollCausesScale"
+    },
+    {
+      "name": "trackpadScrollToScaleFactor",
+      "id": 5,
+      "type": "Offset",
+      "flutter": "trackpadScrollToScaleFactor"
+    }
+  ],
+  "events": [
+    {
+      "name": "onTapDown",
+      "id": 1,
+      "payload": "GestureDetails",
+      "flutter": "onTapDown"
+    },
+    {
+      "name": "onTapUp",
+      "id": 2,
+      "payload": "GestureDetails",
+      "flutter": "onTapUp"
+    },
+    {
+      "name": "onTap",
+      "id": 3,
+      "flutter": "onTap"
+    },
+    {
+      "name": "onTapMove",
+      "id": 4,
+      "payload": "GestureDetails",
+      "flutter": "onTapMove"
+    },
+    {
+      "name": "onTapCancel",
+      "id": 5,
+      "flutter": "onTapCancel"
+    },
+    {
+      "name": "onSecondaryTap",
+      "id": 6,
+      "flutter": "onSecondaryTap"
+    },
+    {
+      "name": "onSecondaryTapDown",
+      "id": 7,
+      "payload": "GestureDetails",
+      "flutter": "onSecondaryTapDown"
+    },
+    {
+      "name": "onSecondaryTapUp",
+      "id": 8,
+      "payload": "GestureDetails",
+      "flutter": "onSecondaryTapUp"
+    },
+    {
+      "name": "onSecondaryTapCancel",
+      "id": 9,
+      "flutter": "onSecondaryTapCancel"
+    },
+    {
+      "name": "onTertiaryTapDown",
+      "id": 10,
+      "payload": "GestureDetails",
+      "flutter": "onTertiaryTapDown"
+    },
+    {
+      "name": "onTertiaryTapUp",
+      "id": 11,
+      "payload": "GestureDetails",
+      "flutter": "onTertiaryTapUp"
+    },
+    {
+      "name": "onTertiaryTapCancel",
+      "id": 12,
+      "flutter": "onTertiaryTapCancel"
+    },
+    {
+      "name": "onDoubleTapDown",
+      "id": 13,
+      "payload": "GestureDetails",
+      "flutter": "onDoubleTapDown"
+    },
+    {
+      "name": "onDoubleTap",
+      "id": 14,
+      "flutter": "onDoubleTap"
+    },
+    {
+      "name": "onDoubleTapCancel",
+      "id": 15,
+      "flutter": "onDoubleTapCancel"
+    },
+    {
+      "name": "onLongPressDown",
+      "id": 16,
+      "payload": "GestureDetails",
+      "flutter": "onLongPressDown"
+    },
+    {
+      "name": "onLongPressCancel",
+      "id": 17,
+      "flutter": "onLongPressCancel"
+    },
+    {
+      "name": "onLongPress",
+      "id": 18,
+      "flutter": "onLongPress"
+    },
+    {
+      "name": "onLongPressStart",
+      "id": 19,
+      "payload": "GestureDetails",
+      "flutter": "onLongPressStart"
+    },
+    {
+      "name": "onLongPressMoveUpdate",
+      "id": 20,
+      "payload": "GestureDetails",
+      "flutter": "onLongPressMoveUpdate"
+    },
+    {
+      "name": "onLongPressUp",
+      "id": 21,
+      "flutter": "onLongPressUp"
+    },
+    {
+      "name": "onLongPressEnd",
+      "id": 22,
+      "payload": "GestureDetails",
+      "flutter": "onLongPressEnd"
+    },
+    {
+      "name": "onSecondaryLongPressDown",
+      "id": 23,
+      "payload": "GestureDetails",
+      "flutter": "onSecondaryLongPressDown"
+    },
+    {
+      "name": "onSecondaryLongPressCancel",
+      "id": 24,
+      "flutter": "onSecondaryLongPressCancel"
+    },
+    {
+      "name": "onSecondaryLongPress",
+      "id": 25,
+      "flutter": "onSecondaryLongPress"
+    },
+    {
+      "name": "onSecondaryLongPressStart",
+      "id": 26,
+      "payload": "GestureDetails",
+      "flutter": "onSecondaryLongPressStart"
+    },
+    {
+      "name": "onSecondaryLongPressMoveUpdate",
+      "id": 27,
+      "payload": "GestureDetails",
+      "flutter": "onSecondaryLongPressMoveUpdate"
+    },
+    {
+      "name": "onSecondaryLongPressUp",
+      "id": 28,
+      "flutter": "onSecondaryLongPressUp"
+    },
+    {
+      "name": "onSecondaryLongPressEnd",
+      "id": 29,
+      "payload": "GestureDetails",
+      "flutter": "onSecondaryLongPressEnd"
+    },
+    {
+      "name": "onTertiaryLongPressDown",
+      "id": 30,
+      "payload": "GestureDetails",
+      "flutter": "onTertiaryLongPressDown"
+    },
+    {
+      "name": "onTertiaryLongPressCancel",
+      "id": 31,
+      "flutter": "onTertiaryLongPressCancel"
+    },
+    {
+      "name": "onTertiaryLongPress",
+      "id": 32,
+      "flutter": "onTertiaryLongPress"
+    },
+    {
+      "name": "onTertiaryLongPressStart",
+      "id": 33,
+      "payload": "GestureDetails",
+      "flutter": "onTertiaryLongPressStart"
+    },
+    {
+      "name": "onTertiaryLongPressMoveUpdate",
+      "id": 34,
+      "payload": "GestureDetails",
+      "flutter": "onTertiaryLongPressMoveUpdate"
+    },
+    {
+      "name": "onTertiaryLongPressUp",
+      "id": 35,
+      "flutter": "onTertiaryLongPressUp"
+    },
+    {
+      "name": "onTertiaryLongPressEnd",
+      "id": 36,
+      "payload": "GestureDetails",
+      "flutter": "onTertiaryLongPressEnd"
+    },
+    {
+      "name": "onVerticalDragDown",
+      "id": 37,
+      "payload": "GestureDetails",
+      "flutter": "onVerticalDragDown"
+    },
+    {
+      "name": "onVerticalDragStart",
+      "id": 38,
+      "payload": "GestureDetails",
+      "flutter": "onVerticalDragStart"
+    },
+    {
+      "name": "onVerticalDragUpdate",
+      "id": 39,
+      "payload": "GestureDetails",
+      "flutter": "onVerticalDragUpdate"
+    },
+    {
+      "name": "onVerticalDragEnd",
+      "id": 40,
+      "payload": "GestureDetails",
+      "flutter": "onVerticalDragEnd"
+    },
+    {
+      "name": "onVerticalDragCancel",
+      "id": 41,
+      "flutter": "onVerticalDragCancel"
+    },
+    {
+      "name": "onHorizontalDragDown",
+      "id": 42,
+      "payload": "GestureDetails",
+      "flutter": "onHorizontalDragDown"
+    },
+    {
+      "name": "onHorizontalDragStart",
+      "id": 43,
+      "payload": "GestureDetails",
+      "flutter": "onHorizontalDragStart"
+    },
+    {
+      "name": "onHorizontalDragUpdate",
+      "id": 44,
+      "payload": "GestureDetails",
+      "flutter": "onHorizontalDragUpdate"
+    },
+    {
+      "name": "onHorizontalDragEnd",
+      "id": 45,
+      "payload": "GestureDetails",
+      "flutter": "onHorizontalDragEnd"
+    },
+    {
+      "name": "onHorizontalDragCancel",
+      "id": 46,
+      "flutter": "onHorizontalDragCancel"
+    },
+    {
+      "name": "onForcePressStart",
+      "id": 47,
+      "payload": "GestureDetails",
+      "flutter": "onForcePressStart"
+    },
+    {
+      "name": "onForcePressPeak",
+      "id": 48,
+      "payload": "GestureDetails",
+      "flutter": "onForcePressPeak"
+    },
+    {
+      "name": "onForcePressUpdate",
+      "id": 49,
+      "payload": "GestureDetails",
+      "flutter": "onForcePressUpdate"
+    },
+    {
+      "name": "onForcePressEnd",
+      "id": 50,
+      "payload": "GestureDetails",
+      "flutter": "onForcePressEnd"
+    },
+    {
+      "name": "onPanDown",
+      "id": 51,
+      "payload": "GestureDetails",
+      "flutter": "onPanDown"
+    },
+    {
+      "name": "onPanStart",
+      "id": 52,
+      "payload": "GestureDetails",
+      "flutter": "onPanStart"
+    },
+    {
+      "name": "onPanUpdate",
+      "id": 53,
+      "payload": "GestureDetails",
+      "flutter": "onPanUpdate"
+    },
+    {
+      "name": "onPanEnd",
+      "id": 54,
+      "payload": "GestureDetails",
+      "flutter": "onPanEnd"
+    },
+    {
+      "name": "onPanCancel",
+      "id": 55,
+      "flutter": "onPanCancel"
+    },
+    {
+      "name": "onScaleStart",
+      "id": 56,
+      "payload": "GestureDetails",
+      "flutter": "onScaleStart"
+    },
+    {
+      "name": "onScaleUpdate",
+      "id": 57,
+      "payload": "GestureDetails",
+      "flutter": "onScaleUpdate"
+    },
+    {
+      "name": "onScaleEnd",
+      "id": 58,
+      "payload": "GestureDetails",
+      "flutter": "onScaleEnd"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "supportedDevices",
+      "reason": "deferred",
+      "note": "Pointer-device filtering matters only for desktop and web targets."
+    }
+  ]
+}

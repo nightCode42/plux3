@@ -1,0 +1,67 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "TextInputType",
+  "id": 58,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "The keyboard shown for a text input.",
+  "values": [
+    {
+      "name": "text",
+      "id": 1
+    },
+    {
+      "name": "multiline",
+      "id": 2
+    },
+    {
+      "name": "number",
+      "id": 3
+    },
+    {
+      "name": "decimal",
+      "id": 4
+    },
+    {
+      "name": "signedNumber",
+      "id": 5
+    },
+    {
+      "name": "phone",
+      "id": 6
+    },
+    {
+      "name": "datetime",
+      "id": 7
+    },
+    {
+      "name": "emailAddress",
+      "id": 8
+    },
+    {
+      "name": "url",
+      "id": 9
+    },
+    {
+      "name": "visiblePassword",
+      "id": 10
+    },
+    {
+      "name": "name",
+      "id": 11
+    },
+    {
+      "name": "streetAddress",
+      "id": 12
+    },
+    {
+      "name": "none",
+      "id": 13
+    }
+  ]
+}

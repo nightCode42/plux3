@@ -1,0 +1,56 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Match",
+  "id": 2,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "category": "structure",
+  "icon": "alt_route",
+  "description": "Renders the branch whose case equals `value`, or `otherwise`. `cases[i]` selects `branches[i]`.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 3,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "value",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "description": "The value compared with each case."
+    },
+    {
+      "name": "cases",
+      "id": 2,
+      "type": "list<string>",
+      "required": true,
+      "description": "Case values; `cases[i]` selects `branches[i]`."
+    }
+  ],
+  "slots": [
+    {
+      "name": "branches",
+      "id": 1,
+      "list": true,
+      "required": true,
+      "description": "One subtree per case, in the order of `cases`."
+    },
+    {
+      "name": "otherwise",
+      "id": 2,
+      "description": "Rendered when no case matches."
+    }
+  ]
+}

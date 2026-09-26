@@ -1,0 +1,46 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "Radius",
+  "id": 19,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "A circular or elliptical corner radius.",
+  "flutter": [
+    {
+      "library": "package:flutter/painting.dart",
+      "class": "Radius",
+      "constructors": [
+        "circular",
+        "elliptical"
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "name": "circular",
+      "id": 1,
+      "type": "double",
+      "flutter": "radius",
+      "description": "Circular radius."
+    },
+    {
+      "name": "x",
+      "id": 2,
+      "type": "double",
+      "flutter": "x",
+      "description": "Horizontal radius of an ellipse."
+    },
+    {
+      "name": "y",
+      "id": 3,
+      "type": "double",
+      "flutter": "y",
+      "description": "Vertical radius of an ellipse."
+    }
+  ]
+}

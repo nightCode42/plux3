@@ -1,0 +1,197 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "IconButton",
+  "id": 82,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "IconButton",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "input",
+  "icon": "radio_button_unchecked",
+  "description": "A Material icon button.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 25,
+  "accessibility": {
+    "role": "button",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "iconSize",
+      "id": 1,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "iconSize"
+    },
+    {
+      "name": "visualDensity",
+      "id": 2,
+      "type": "VisualDensity",
+      "flutter": "visualDensity"
+    },
+    {
+      "name": "padding",
+      "id": 3,
+      "type": "EdgeInsets",
+      "flutter": "padding"
+    },
+    {
+      "name": "alignment",
+      "id": 4,
+      "type": "Alignment",
+      "flutter": "alignment"
+    },
+    {
+      "name": "splashRadius",
+      "id": 5,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "splashRadius"
+    },
+    {
+      "name": "color",
+      "id": 6,
+      "type": "color",
+      "flutter": "color"
+    },
+    {
+      "name": "focusColor",
+      "id": 7,
+      "type": "color",
+      "flutter": "focusColor"
+    },
+    {
+      "name": "hoverColor",
+      "id": 8,
+      "type": "color",
+      "flutter": "hoverColor"
+    },
+    {
+      "name": "highlightColor",
+      "id": 9,
+      "type": "color",
+      "flutter": "highlightColor"
+    },
+    {
+      "name": "splashColor",
+      "id": 10,
+      "type": "color",
+      "flutter": "splashColor"
+    },
+    {
+      "name": "disabledColor",
+      "id": 11,
+      "type": "color",
+      "flutter": "disabledColor"
+    },
+    {
+      "name": "autofocus",
+      "id": 12,
+      "type": "bool",
+      "default": false,
+      "flutter": "autofocus"
+    },
+    {
+      "name": "tooltip",
+      "id": 13,
+      "type": "string",
+      "flutter": "tooltip"
+    },
+    {
+      "name": "enableFeedback",
+      "id": 14,
+      "type": "bool",
+      "flutter": "enableFeedback"
+    },
+    {
+      "name": "constraints",
+      "id": 15,
+      "type": "BoxConstraints",
+      "flutter": "constraints"
+    },
+    {
+      "name": "style",
+      "id": 16,
+      "type": "ButtonStyle",
+      "flutter": "style"
+    },
+    {
+      "name": "isSelected",
+      "id": 17,
+      "type": "bool",
+      "flutter": "isSelected"
+    }
+  ],
+  "events": [
+    {
+      "name": "onPressed",
+      "id": 1,
+      "flutter": "onPressed"
+    },
+    {
+      "name": "onHover",
+      "id": 2,
+      "payload": "bool",
+      "flutter": "onHover"
+    },
+    {
+      "name": "onLongPress",
+      "id": 3,
+      "flutter": "onLongPress"
+    }
+  ],
+  "slots": [
+    {
+      "name": "selectedIcon",
+      "id": 1,
+      "flutter": "selectedIcon"
+    },
+    {
+      "name": "icon",
+      "id": 2,
+      "required": true,
+      "flutter": "icon"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "mouseCursor",
+      "reason": "deferred",
+      "note": "Pointer cursors matter only for desktop and web targets."
+    },
+    {
+      "flutter": "focusNode",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "statesController",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    }
+  ]
+}

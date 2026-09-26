@@ -1,0 +1,48 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "apiCall",
+  "id": 16,
+  "phase": "P5",
+  "category": "data",
+  "description": "Calls a declared REST or GraphQL operation and returns its typed response.",
+  "typeParameters": [
+    {
+      "name": "I",
+      "description": "The input object type the operation declares."
+    },
+    {
+      "name": "O",
+      "description": "The response type the operation declares."
+    },
+    {
+      "name": "T",
+      "description": "The type of each optimistic state value, checked per entry against its state path."
+    }
+  ],
+  "inputs": [
+    {
+      "name": "operation",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "operation",
+      "description": "The operation."
+    },
+    {
+      "name": "input",
+      "id": 2,
+      "type": "I",
+      "description": "The operation's input: path, query and body values."
+    },
+    {
+      "name": "optimistic",
+      "id": 3,
+      "type": "map<string,T>",
+      "description": "State entries to set immediately and roll back if the call fails (ACT-007)."
+    }
+  ],
+  "output": "O",
+  "effects": [
+    "network"
+  ]
+}

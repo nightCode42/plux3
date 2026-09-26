@@ -1,0 +1,52 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Spacer",
+  "id": 33,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "Spacer",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "layout",
+  "icon": "space_bar",
+  "description": "Takes up flexible empty space in a Row, Column or Flex.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 2,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "flex",
+      "id": 1,
+      "type": "int",
+      "default": 1,
+      "constraints": {
+        "min": 1
+      },
+      "flutter": "flex"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

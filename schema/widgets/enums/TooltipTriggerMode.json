@@ -1,0 +1,31 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "TooltipTriggerMode",
+  "id": 63,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum TooltipTriggerMode.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "TooltipTriggerMode"
+  },
+  "values": [
+    {
+      "name": "manual",
+      "id": 1
+    },
+    {
+      "name": "longPress",
+      "id": 2
+    },
+    {
+      "name": "tap",
+      "id": 3
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "Size",
+  "id": 24,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "A width and a height.",
+  "flutter": [
+    {
+      "library": "package:flutter/painting.dart",
+      "class": "Size",
+      "constructors": [
+        ""
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "name": "width",
+      "id": 1,
+      "type": "double",
+      "flutter": "width"
+    },
+    {
+      "name": "height",
+      "id": 2,
+      "type": "double",
+      "flutter": "height"
+    }
+  ]
+}

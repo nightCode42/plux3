@@ -1,0 +1,61 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "LimitedBox",
+  "id": 12,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "LimitedBox",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "layout",
+  "icon": "aspect_ratio",
+  "description": "Limits its size only when it is unconstrained.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 5,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "maxWidth",
+      "id": 1,
+      "type": "double",
+      "flutter": "maxWidth"
+    },
+    {
+      "name": "maxHeight",
+      "id": 2,
+      "type": "double",
+      "flutter": "maxHeight"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

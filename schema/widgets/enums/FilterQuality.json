@@ -1,0 +1,35 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "FilterQuality",
+  "id": 17,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum FilterQuality.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "FilterQuality"
+  },
+  "values": [
+    {
+      "name": "none",
+      "id": 1
+    },
+    {
+      "name": "low",
+      "id": 2
+    },
+    {
+      "name": "medium",
+      "id": 3
+    },
+    {
+      "name": "high",
+      "id": 4
+    }
+  ]
+}

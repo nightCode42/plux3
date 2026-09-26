@@ -1,0 +1,35 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "ScrollbarOrientation",
+  "id": 41,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum ScrollbarOrientation.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "ScrollbarOrientation"
+  },
+  "values": [
+    {
+      "name": "left",
+      "id": 1
+    },
+    {
+      "name": "right",
+      "id": 2
+    },
+    {
+      "name": "top",
+      "id": 3
+    },
+    {
+      "name": "bottom",
+      "id": 4
+    }
+  ]
+}

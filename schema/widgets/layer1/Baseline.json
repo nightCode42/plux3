@@ -1,0 +1,63 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Baseline",
+  "id": 16,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "Baseline",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "layout",
+  "icon": "vertical_align_bottom",
+  "description": "Positions its child according to the child's baseline.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 6,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "baseline",
+      "id": 1,
+      "type": "double",
+      "required": true,
+      "flutter": "baseline"
+    },
+    {
+      "name": "baselineType",
+      "id": 2,
+      "type": "TextBaseline",
+      "required": true,
+      "flutter": "baselineType"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

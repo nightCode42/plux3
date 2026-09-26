@@ -34,6 +34,7 @@ Every third-party dependency is a long-term commitment: code we ship but did not
 | `flutter` SDK | Framework | BSD-3-Clause | In use |
 | `flutter_test` (SDK) | Tests | BSD-3-Clause | In use (dev) |
 | `flutter_lints` | Lint rule set | BSD-3-Clause | In use (dev) |
+| `test` | Tests of the pure-Dart `plux_widget_api` tool | BSD-3-Clause | In use (dev) |
 | `flat_buffers` | Bundle section accessors in `plux_flutter` ([ADR-0002](../adr/0002-flatbuffers-sectioned-bundles.md)) | Apache-2.0 | In use |
 | `analyzer` | Flutter constructor extraction in the development-only `plux_widget_api` tool ([ADR-0010](../adr/0010-layered-widget-model.md)); never a dependency of a shipped package | BSD-3-Clause | In use (tool) |
 

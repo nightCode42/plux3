@@ -1,0 +1,228 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "FloatingActionButton",
+  "id": 83,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "FloatingActionButton",
+    "constructors": [
+      "",
+      "extended"
+    ]
+  },
+  "category": "input",
+  "icon": "add_circle",
+  "description": "A Material floating action button; `extended` shows an icon and a label.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 35,
+  "accessibility": {
+    "role": "button",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "tooltip",
+      "id": 1,
+      "type": "string",
+      "flutter": "tooltip"
+    },
+    {
+      "name": "foregroundColor",
+      "id": 2,
+      "type": "color",
+      "flutter": "foregroundColor"
+    },
+    {
+      "name": "backgroundColor",
+      "id": 3,
+      "type": "color",
+      "flutter": "backgroundColor"
+    },
+    {
+      "name": "focusColor",
+      "id": 4,
+      "type": "color",
+      "flutter": "focusColor"
+    },
+    {
+      "name": "hoverColor",
+      "id": 5,
+      "type": "color",
+      "flutter": "hoverColor"
+    },
+    {
+      "name": "splashColor",
+      "id": 6,
+      "type": "color",
+      "flutter": "splashColor"
+    },
+    {
+      "name": "elevation",
+      "id": 7,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "elevation"
+    },
+    {
+      "name": "focusElevation",
+      "id": 8,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "focusElevation"
+    },
+    {
+      "name": "hoverElevation",
+      "id": 9,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "hoverElevation"
+    },
+    {
+      "name": "highlightElevation",
+      "id": 10,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "highlightElevation"
+    },
+    {
+      "name": "disabledElevation",
+      "id": 11,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "disabledElevation"
+    },
+    {
+      "name": "mini",
+      "id": 12,
+      "type": "bool",
+      "default": false,
+      "flutter": "mini"
+    },
+    {
+      "name": "shape",
+      "id": 13,
+      "type": "ShapeBorder",
+      "flutter": "shape"
+    },
+    {
+      "name": "clipBehavior",
+      "id": 14,
+      "type": "Clip",
+      "default": "none",
+      "flutter": "clipBehavior"
+    },
+    {
+      "name": "autofocus",
+      "id": 15,
+      "type": "bool",
+      "default": false,
+      "flutter": "autofocus"
+    },
+    {
+      "name": "materialTapTargetSize",
+      "id": 16,
+      "type": "MaterialTapTargetSize",
+      "flutter": "materialTapTargetSize"
+    },
+    {
+      "name": "isExtended",
+      "id": 17,
+      "type": "bool",
+      "default": false,
+      "flutter": "isExtended"
+    },
+    {
+      "name": "enableFeedback",
+      "id": 18,
+      "type": "bool",
+      "flutter": "enableFeedback"
+    },
+    {
+      "name": "extendedIconLabelSpacing",
+      "id": 19,
+      "type": "double",
+      "flutter": "extendedIconLabelSpacing"
+    },
+    {
+      "name": "extendedPadding",
+      "id": 20,
+      "type": "EdgeInsets",
+      "flutter": "extendedPadding"
+    },
+    {
+      "name": "extendedTextStyle",
+      "id": 21,
+      "type": "TextStyle",
+      "flutter": "extendedTextStyle"
+    }
+  ],
+  "events": [
+    {
+      "name": "onPressed",
+      "id": 1,
+      "flutter": "onPressed"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    },
+    {
+      "name": "icon",
+      "id": 2,
+      "flutter": "icon"
+    },
+    {
+      "name": "label",
+      "id": 3,
+      "required": true,
+      "flutter": "label"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "heroTag",
+      "reason": "deferred",
+      "note": "Hero animations arrive in P5."
+    },
+    {
+      "flutter": "mouseCursor",
+      "reason": "deferred",
+      "note": "Pointer cursors matter only for desktop and web targets."
+    },
+    {
+      "flutter": "focusNode",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    }
+  ]
+}

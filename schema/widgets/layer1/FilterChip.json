@@ -1,0 +1,264 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "FilterChip",
+  "id": 60,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "FilterChip",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "display",
+  "icon": "filter_alt",
+  "description": "A chip that filters content by a tag or description.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 30,
+  "accessibility": {
+    "role": "button",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "labelStyle",
+      "id": 1,
+      "type": "TextStyle",
+      "flutter": "labelStyle"
+    },
+    {
+      "name": "labelPadding",
+      "id": 2,
+      "type": "EdgeInsets",
+      "flutter": "labelPadding"
+    },
+    {
+      "name": "selected",
+      "id": 3,
+      "type": "bool",
+      "default": false,
+      "flutter": "selected"
+    },
+    {
+      "name": "deleteIconColor",
+      "id": 4,
+      "type": "color",
+      "flutter": "deleteIconColor"
+    },
+    {
+      "name": "deleteButtonTooltipMessage",
+      "id": 5,
+      "type": "string",
+      "flutter": "deleteButtonTooltipMessage"
+    },
+    {
+      "name": "pressElevation",
+      "id": 6,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "pressElevation"
+    },
+    {
+      "name": "disabledColor",
+      "id": 7,
+      "type": "color",
+      "flutter": "disabledColor"
+    },
+    {
+      "name": "selectedColor",
+      "id": 8,
+      "type": "color",
+      "flutter": "selectedColor"
+    },
+    {
+      "name": "tooltip",
+      "id": 9,
+      "type": "string",
+      "flutter": "tooltip"
+    },
+    {
+      "name": "side",
+      "id": 10,
+      "type": "BorderSide",
+      "flutter": "side"
+    },
+    {
+      "name": "shape",
+      "id": 11,
+      "type": "ShapeBorder",
+      "flutter": "shape"
+    },
+    {
+      "name": "clipBehavior",
+      "id": 12,
+      "type": "Clip",
+      "default": "none",
+      "flutter": "clipBehavior"
+    },
+    {
+      "name": "autofocus",
+      "id": 13,
+      "type": "bool",
+      "default": false,
+      "flutter": "autofocus"
+    },
+    {
+      "name": "color",
+      "id": 14,
+      "type": "WidgetStateColor",
+      "flutter": "color"
+    },
+    {
+      "name": "backgroundColor",
+      "id": 15,
+      "type": "color",
+      "flutter": "backgroundColor"
+    },
+    {
+      "name": "padding",
+      "id": 16,
+      "type": "EdgeInsets",
+      "flutter": "padding"
+    },
+    {
+      "name": "visualDensity",
+      "id": 17,
+      "type": "VisualDensity",
+      "flutter": "visualDensity"
+    },
+    {
+      "name": "materialTapTargetSize",
+      "id": 18,
+      "type": "MaterialTapTargetSize",
+      "flutter": "materialTapTargetSize"
+    },
+    {
+      "name": "elevation",
+      "id": 19,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "elevation"
+    },
+    {
+      "name": "shadowColor",
+      "id": 20,
+      "type": "color",
+      "flutter": "shadowColor"
+    },
+    {
+      "name": "surfaceTintColor",
+      "id": 21,
+      "type": "color",
+      "flutter": "surfaceTintColor"
+    },
+    {
+      "name": "selectedShadowColor",
+      "id": 22,
+      "type": "color",
+      "flutter": "selectedShadowColor"
+    },
+    {
+      "name": "showCheckmark",
+      "id": 23,
+      "type": "bool",
+      "flutter": "showCheckmark"
+    },
+    {
+      "name": "checkmarkColor",
+      "id": 24,
+      "type": "color",
+      "flutter": "checkmarkColor"
+    },
+    {
+      "name": "avatarBorder",
+      "id": 25,
+      "type": "ShapeBorder",
+      "flutter": "avatarBorder"
+    },
+    {
+      "name": "avatarBoxConstraints",
+      "id": 26,
+      "type": "BoxConstraints",
+      "flutter": "avatarBoxConstraints"
+    },
+    {
+      "name": "deleteIconBoxConstraints",
+      "id": 27,
+      "type": "BoxConstraints",
+      "flutter": "deleteIconBoxConstraints"
+    }
+  ],
+  "events": [
+    {
+      "name": "onSelected",
+      "id": 1,
+      "payload": "bool",
+      "flutter": "onSelected"
+    },
+    {
+      "name": "onDeleted",
+      "id": 2,
+      "flutter": "onDeleted"
+    }
+  ],
+  "slots": [
+    {
+      "name": "avatar",
+      "id": 1,
+      "flutter": "avatar"
+    },
+    {
+      "name": "label",
+      "id": 2,
+      "required": true,
+      "flutter": "label"
+    },
+    {
+      "name": "deleteIcon",
+      "id": 3,
+      "flutter": "deleteIcon"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "focusNode",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "iconTheme",
+      "reason": "deferred",
+      "note": "Icon theming comes from the app theme (THM-001)."
+    },
+    {
+      "flutter": "chipAnimationStyle",
+      "reason": "deferred",
+      "note": "Custom animation styles arrive with animations (P5)."
+    },
+    {
+      "flutter": "mouseCursor",
+      "reason": "deferred",
+      "note": "Pointer cursors matter only for desktop and web targets."
+    }
+  ]
+}

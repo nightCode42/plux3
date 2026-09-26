@@ -1,0 +1,35 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "SliderInteraction",
+  "id": 44,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum SliderInteraction.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "SliderInteraction"
+  },
+  "values": [
+    {
+      "name": "tapAndSlide",
+      "id": 1
+    },
+    {
+      "name": "tapOnly",
+      "id": 2
+    },
+    {
+      "name": "slideOnly",
+      "id": 3
+    },
+    {
+      "name": "slideThumb",
+      "id": 4
+    }
+  ]
+}

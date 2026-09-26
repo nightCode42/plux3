@@ -1,0 +1,191 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "PageView",
+  "id": 38,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "PageView",
+    "constructors": [
+      "builder"
+    ]
+  },
+  "category": "scrolling",
+  "icon": "view_carousel",
+  "description": "Pages through `item` templates over `items`, one page at a time (WGT-012).",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 30,
+  "accessibility": {
+    "role": "list",
+    "interactive": false
+  },
+  "typeParameters": [
+    "T"
+  ],
+  "props": [
+    {
+      "name": "items",
+      "id": 1,
+      "type": "list<T>",
+      "required": true,
+      "flutter": "itemCount",
+      "description": "The list the template repeats over; bind it with `$expr`. The item is available as `item`, its position as `index`."
+    },
+    {
+      "name": "scrollDirection",
+      "id": 2,
+      "type": "Axis",
+      "default": "horizontal",
+      "flutter": "scrollDirection"
+    },
+    {
+      "name": "reverse",
+      "id": 3,
+      "type": "bool",
+      "default": false,
+      "flutter": "reverse"
+    },
+    {
+      "name": "physics",
+      "id": 4,
+      "type": "ScrollPhysics",
+      "flutter": "physics"
+    },
+    {
+      "name": "pageSnapping",
+      "id": 5,
+      "type": "bool",
+      "default": true,
+      "flutter": "pageSnapping"
+    },
+    {
+      "name": "dragStartBehavior",
+      "id": 6,
+      "type": "DragStartBehavior",
+      "default": "start",
+      "flutter": "dragStartBehavior"
+    },
+    {
+      "name": "allowImplicitScrolling",
+      "id": 7,
+      "type": "bool",
+      "default": false,
+      "flutter": "allowImplicitScrolling"
+    },
+    {
+      "name": "clipBehavior",
+      "id": 8,
+      "type": "Clip",
+      "default": "hardEdge",
+      "flutter": "clipBehavior"
+    },
+    {
+      "name": "hitTestBehavior",
+      "id": 9,
+      "type": "HitTestBehavior",
+      "default": "opaque",
+      "flutter": "hitTestBehavior"
+    },
+    {
+      "name": "padEnds",
+      "id": 10,
+      "type": "bool",
+      "default": true,
+      "flutter": "padEnds"
+    },
+    {
+      "name": "status",
+      "id": 11,
+      "type": "ListStatus",
+      "default": "ready",
+      "description": "Loading, error or ready; selects the `loading` or `error` slot (WGT-012)."
+    },
+    {
+      "name": "hasMore",
+      "id": 12,
+      "type": "bool",
+      "default": false,
+      "description": "More items can be loaded; `onEndReached` fires near the end (P5 pagination)."
+    }
+  ],
+  "events": [
+    {
+      "name": "onPageChanged",
+      "id": 1,
+      "payload": "int",
+      "flutter": "onPageChanged"
+    },
+    {
+      "name": "onEndReached",
+      "id": 2,
+      "description": "Fired when the end of the list comes into view and `hasMore` is true."
+    }
+  ],
+  "slots": [
+    {
+      "name": "item",
+      "id": 1,
+      "required": true,
+      "template": true,
+      "flutter": "itemBuilder",
+      "description": "The template built for each item, lazily."
+    },
+    {
+      "name": "empty",
+      "id": 2,
+      "description": "Shown when `items` is empty."
+    },
+    {
+      "name": "loading",
+      "id": 3,
+      "description": "Shown while `status` is loading."
+    },
+    {
+      "name": "error",
+      "id": 4,
+      "description": "Shown while `status` is error."
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "controller",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "findChildIndexCallback",
+      "reason": "non-serialisable",
+      "note": "Item identity comes from item keys managed by the runtime."
+    },
+    {
+      "flutter": "scrollCacheExtent",
+      "reason": "deferred",
+      "note": "Cache extents are tuned by the runtime."
+    },
+    {
+      "flutter": "restorationId",
+      "reason": "non-serialisable",
+      "note": "State restoration is managed by the runtime."
+    },
+    {
+      "flutter": "scrollBehavior",
+      "reason": "non-serialisable"
+    }
+  ]
+}

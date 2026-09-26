@@ -1,0 +1,157 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "CupertinoButton",
+  "id": 91,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/cupertino.dart",
+    "class": "CupertinoButton",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "cupertino",
+  "icon": "smart_button",
+  "description": "An iOS-style button.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 25,
+  "accessibility": {
+    "role": "button",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "sizeStyle",
+      "id": 1,
+      "type": "CupertinoButtonSize",
+      "default": "large",
+      "flutter": "sizeStyle"
+    },
+    {
+      "name": "padding",
+      "id": 2,
+      "type": "EdgeInsets",
+      "flutter": "padding"
+    },
+    {
+      "name": "color",
+      "id": 3,
+      "type": "color",
+      "flutter": "color"
+    },
+    {
+      "name": "foregroundColor",
+      "id": 4,
+      "type": "color",
+      "flutter": "foregroundColor"
+    },
+    {
+      "name": "disabledColor",
+      "id": 5,
+      "type": "color",
+      "flutter": "disabledColor"
+    },
+    {
+      "name": "minimumSize",
+      "id": 6,
+      "type": "Size",
+      "flutter": "minimumSize"
+    },
+    {
+      "name": "pressedOpacity",
+      "id": 7,
+      "type": "double",
+      "default": 0.4,
+      "constraints": {
+        "min": 0.0,
+        "max": 1.0
+      },
+      "flutter": "pressedOpacity"
+    },
+    {
+      "name": "borderRadius",
+      "id": 8,
+      "type": "BorderRadius",
+      "flutter": "borderRadius"
+    },
+    {
+      "name": "alignment",
+      "id": 9,
+      "type": "Alignment",
+      "default": "center",
+      "flutter": "alignment"
+    },
+    {
+      "name": "focusColor",
+      "id": 10,
+      "type": "color",
+      "flutter": "focusColor"
+    },
+    {
+      "name": "autofocus",
+      "id": 11,
+      "type": "bool",
+      "default": false,
+      "flutter": "autofocus"
+    }
+  ],
+  "events": [
+    {
+      "name": "onFocusChange",
+      "id": 1,
+      "payload": "bool",
+      "flutter": "onFocusChange"
+    },
+    {
+      "name": "onLongPress",
+      "id": 2,
+      "flutter": "onLongPress"
+    },
+    {
+      "name": "onPressed",
+      "id": 3,
+      "flutter": "onPressed"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "required": true,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "minSize",
+      "reason": "deprecated",
+      "note": "Deprecated in Flutter."
+    },
+    {
+      "flutter": "focusNode",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "mouseCursor",
+      "reason": "deferred",
+      "note": "Pointer cursors matter only for desktop and web targets."
+    }
+  ]
+}

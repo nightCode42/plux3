@@ -1,0 +1,67 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Flexible",
+  "id": 32,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "Flexible",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "layout",
+  "icon": "expand",
+  "description": "Controls how its child flexes along the main axis of a Row, Column or Flex.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 3,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "flex",
+      "id": 1,
+      "type": "int",
+      "default": 1,
+      "constraints": {
+        "min": 0
+      },
+      "flutter": "flex"
+    },
+    {
+      "name": "fit",
+      "id": 2,
+      "type": "FlexFit",
+      "default": "loose",
+      "flutter": "fit"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "required": true,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

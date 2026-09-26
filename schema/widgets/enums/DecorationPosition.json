@@ -1,0 +1,27 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "DecorationPosition",
+  "id": 14,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum DecorationPosition.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "DecorationPosition"
+  },
+  "values": [
+    {
+      "name": "background",
+      "id": 1
+    },
+    {
+      "name": "foreground",
+      "id": 2
+    }
+  ]
+}

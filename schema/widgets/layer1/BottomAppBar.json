@@ -1,0 +1,107 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "BottomAppBar",
+  "id": 88,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "BottomAppBar",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "structure",
+  "icon": "call_to_action",
+  "description": "A Material bottom app bar.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 25,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "color",
+      "id": 1,
+      "type": "color",
+      "flutter": "color"
+    },
+    {
+      "name": "elevation",
+      "id": 2,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "elevation"
+    },
+    {
+      "name": "clipBehavior",
+      "id": 3,
+      "type": "Clip",
+      "default": "none",
+      "flutter": "clipBehavior"
+    },
+    {
+      "name": "notchMargin",
+      "id": 4,
+      "type": "double",
+      "default": 4.0,
+      "flutter": "notchMargin"
+    },
+    {
+      "name": "padding",
+      "id": 5,
+      "type": "EdgeInsets",
+      "flutter": "padding"
+    },
+    {
+      "name": "surfaceTintColor",
+      "id": 6,
+      "type": "color",
+      "flutter": "surfaceTintColor"
+    },
+    {
+      "name": "shadowColor",
+      "id": 7,
+      "type": "color",
+      "flutter": "shadowColor"
+    },
+    {
+      "name": "height",
+      "id": 8,
+      "type": "double",
+      "flutter": "height"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "shape",
+      "reason": "deferred",
+      "note": "Notched bottom-bar shapes are deferred."
+    }
+  ]
+}

@@ -307,6 +307,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0 # the permanent-ID lock is compared with the base commit's
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         with:
           go-version-file: backend/go.mod
@@ -319,6 +320,11 @@ jobs:
       # Verifies: CI-003.
       - name: Generated code is committed
         run: make go-gen-check
+      # Verifies: BND-011.
+      - name: Permanent IDs are append-only
+        env:
+          LOCK_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: make registry-lock-check LOCK_BASE="$LOCK_BASE"
 
   go-test:
     name: Go test
@@ -412,6 +418,9 @@ jobs:
         run: make dart-lock-check
       - name: Format, analyze, test with coverage floors
         run: make dart-fmt-check dart-analyze dart-cover | tee -a "$GITHUB_STEP_SUMMARY"
+      # Verifies: WGT-003.
+      - name: Flutter snapshot matches the pinned SDK
+        run: make widgets-api-check
 
   # ── Studio ───────────────────────────────────────────────────────────────
 

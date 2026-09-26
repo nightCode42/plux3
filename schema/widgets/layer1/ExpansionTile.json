@@ -1,0 +1,246 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "ExpansionTile",
+  "id": 56,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "ExpansionTile",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "display",
+  "icon": "expand_more",
+  "description": "A list tile that expands to reveal its children.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 45,
+  "accessibility": {
+    "role": "button",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "showTrailingIcon",
+      "id": 1,
+      "type": "bool",
+      "default": true,
+      "flutter": "showTrailingIcon"
+    },
+    {
+      "name": "initiallyExpanded",
+      "id": 2,
+      "type": "bool",
+      "default": false,
+      "flutter": "initiallyExpanded"
+    },
+    {
+      "name": "maintainState",
+      "id": 3,
+      "type": "bool",
+      "default": false,
+      "flutter": "maintainState"
+    },
+    {
+      "name": "tilePadding",
+      "id": 4,
+      "type": "EdgeInsets",
+      "flutter": "tilePadding"
+    },
+    {
+      "name": "expandedCrossAxisAlignment",
+      "id": 5,
+      "type": "CrossAxisAlignment",
+      "flutter": "expandedCrossAxisAlignment"
+    },
+    {
+      "name": "expandedAlignment",
+      "id": 6,
+      "type": "Alignment",
+      "flutter": "expandedAlignment"
+    },
+    {
+      "name": "childrenPadding",
+      "id": 7,
+      "type": "EdgeInsets",
+      "flutter": "childrenPadding"
+    },
+    {
+      "name": "backgroundColor",
+      "id": 8,
+      "type": "color",
+      "flutter": "backgroundColor"
+    },
+    {
+      "name": "collapsedBackgroundColor",
+      "id": 9,
+      "type": "color",
+      "flutter": "collapsedBackgroundColor"
+    },
+    {
+      "name": "textColor",
+      "id": 10,
+      "type": "color",
+      "flutter": "textColor"
+    },
+    {
+      "name": "collapsedTextColor",
+      "id": 11,
+      "type": "color",
+      "flutter": "collapsedTextColor"
+    },
+    {
+      "name": "iconColor",
+      "id": 12,
+      "type": "color",
+      "flutter": "iconColor"
+    },
+    {
+      "name": "collapsedIconColor",
+      "id": 13,
+      "type": "color",
+      "flutter": "collapsedIconColor"
+    },
+    {
+      "name": "shape",
+      "id": 14,
+      "type": "ShapeBorder",
+      "flutter": "shape"
+    },
+    {
+      "name": "collapsedShape",
+      "id": 15,
+      "type": "ShapeBorder",
+      "flutter": "collapsedShape"
+    },
+    {
+      "name": "clipBehavior",
+      "id": 16,
+      "type": "Clip",
+      "flutter": "clipBehavior"
+    },
+    {
+      "name": "controlAffinity",
+      "id": 17,
+      "type": "ListTileControlAffinity",
+      "flutter": "controlAffinity"
+    },
+    {
+      "name": "dense",
+      "id": 18,
+      "type": "bool",
+      "flutter": "dense"
+    },
+    {
+      "name": "splashColor",
+      "id": 19,
+      "type": "color",
+      "flutter": "splashColor"
+    },
+    {
+      "name": "visualDensity",
+      "id": 20,
+      "type": "VisualDensity",
+      "flutter": "visualDensity"
+    },
+    {
+      "name": "minTileHeight",
+      "id": 21,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "minTileHeight"
+    },
+    {
+      "name": "enableFeedback",
+      "id": 22,
+      "type": "bool",
+      "default": true,
+      "flutter": "enableFeedback"
+    },
+    {
+      "name": "enabled",
+      "id": 23,
+      "type": "bool",
+      "default": true,
+      "flutter": "enabled"
+    }
+  ],
+  "events": [
+    {
+      "name": "onExpansionChanged",
+      "id": 1,
+      "payload": "bool",
+      "flutter": "onExpansionChanged"
+    }
+  ],
+  "slots": [
+    {
+      "name": "leading",
+      "id": 1,
+      "flutter": "leading"
+    },
+    {
+      "name": "title",
+      "id": 2,
+      "required": true,
+      "flutter": "title"
+    },
+    {
+      "name": "subtitle",
+      "id": 3,
+      "flutter": "subtitle"
+    },
+    {
+      "name": "trailing",
+      "id": 4,
+      "flutter": "trailing"
+    },
+    {
+      "name": "children",
+      "id": 5,
+      "list": true,
+      "flutter": "children",
+      "description": "The content shown when expanded."
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "controller",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "expansionAnimationStyle",
+      "reason": "deferred",
+      "note": "Custom animation styles arrive with animations (P5)."
+    },
+    {
+      "flutter": "internalAddSemanticForOnTap",
+      "reason": "non-serialisable",
+      "note": "A framework-internal flag."
+    },
+    {
+      "flutter": "statesController",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    }
+  ]
+}

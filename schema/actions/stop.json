@@ -1,0 +1,28 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "stop",
+  "id": 35,
+  "phase": "P5",
+  "category": "control",
+  "description": "Ends the run, returning an optional result or failing with a custom error.",
+  "typeParameters": [
+    {
+      "name": "T",
+      "description": "The output type of the enclosing graph."
+    }
+  ],
+  "inputs": [
+    {
+      "name": "result",
+      "id": 1,
+      "type": "T?",
+      "description": "The run's result."
+    },
+    {
+      "name": "error",
+      "id": 2,
+      "type": "string?",
+      "description": "A custom error code; the run fails with it."
+    }
+  ]
+}

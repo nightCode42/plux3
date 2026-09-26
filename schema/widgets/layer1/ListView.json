@@ -1,0 +1,239 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "ListView",
+  "id": 36,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "ListView",
+    "constructors": [
+      "builder"
+    ]
+  },
+  "category": "scrolling",
+  "icon": "list",
+  "description": "A lazily built, scrollable list of `item` templates over `items`, with empty, loading and error states (WGT-012).",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 30,
+  "accessibility": {
+    "role": "list",
+    "interactive": false
+  },
+  "typeParameters": [
+    "T"
+  ],
+  "props": [
+    {
+      "name": "items",
+      "id": 1,
+      "type": "list<T>",
+      "required": true,
+      "flutter": "itemCount",
+      "description": "The list the template repeats over; bind it with `$expr`. The item is available as `item`, its position as `index`."
+    },
+    {
+      "name": "scrollDirection",
+      "id": 2,
+      "type": "Axis",
+      "default": "vertical",
+      "flutter": "scrollDirection"
+    },
+    {
+      "name": "reverse",
+      "id": 3,
+      "type": "bool",
+      "default": false,
+      "flutter": "reverse"
+    },
+    {
+      "name": "primary",
+      "id": 4,
+      "type": "bool",
+      "flutter": "primary"
+    },
+    {
+      "name": "physics",
+      "id": 5,
+      "type": "ScrollPhysics",
+      "flutter": "physics"
+    },
+    {
+      "name": "shrinkWrap",
+      "id": 6,
+      "type": "bool",
+      "default": false,
+      "flutter": "shrinkWrap"
+    },
+    {
+      "name": "padding",
+      "id": 7,
+      "type": "EdgeInsets",
+      "flutter": "padding"
+    },
+    {
+      "name": "itemExtent",
+      "id": 8,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "itemExtent"
+    },
+    {
+      "name": "addAutomaticKeepAlives",
+      "id": 9,
+      "type": "bool",
+      "default": true,
+      "flutter": "addAutomaticKeepAlives"
+    },
+    {
+      "name": "addRepaintBoundaries",
+      "id": 10,
+      "type": "bool",
+      "default": true,
+      "flutter": "addRepaintBoundaries"
+    },
+    {
+      "name": "addSemanticIndexes",
+      "id": 11,
+      "type": "bool",
+      "default": true,
+      "flutter": "addSemanticIndexes"
+    },
+    {
+      "name": "semanticChildCount",
+      "id": 12,
+      "type": "int",
+      "constraints": {
+        "min": 0
+      },
+      "flutter": "semanticChildCount"
+    },
+    {
+      "name": "dragStartBehavior",
+      "id": 13,
+      "type": "DragStartBehavior",
+      "default": "start",
+      "flutter": "dragStartBehavior"
+    },
+    {
+      "name": "keyboardDismissBehavior",
+      "id": 14,
+      "type": "ScrollViewKeyboardDismissBehavior",
+      "flutter": "keyboardDismissBehavior"
+    },
+    {
+      "name": "clipBehavior",
+      "id": 15,
+      "type": "Clip",
+      "default": "hardEdge",
+      "flutter": "clipBehavior"
+    },
+    {
+      "name": "hitTestBehavior",
+      "id": 16,
+      "type": "HitTestBehavior",
+      "default": "opaque",
+      "flutter": "hitTestBehavior"
+    },
+    {
+      "name": "status",
+      "id": 17,
+      "type": "ListStatus",
+      "default": "ready",
+      "description": "Loading, error or ready; selects the `loading` or `error` slot (WGT-012)."
+    },
+    {
+      "name": "hasMore",
+      "id": 18,
+      "type": "bool",
+      "default": false,
+      "description": "More items can be loaded; `onEndReached` fires near the end (P5 pagination)."
+    }
+  ],
+  "events": [
+    {
+      "name": "onEndReached",
+      "id": 1,
+      "description": "Fired when the end of the list comes into view and `hasMore` is true."
+    }
+  ],
+  "slots": [
+    {
+      "name": "item",
+      "id": 1,
+      "required": true,
+      "template": true,
+      "flutter": "itemBuilder",
+      "description": "The template built for each item, lazily."
+    },
+    {
+      "name": "prototypeItem",
+      "id": 2,
+      "flutter": "prototypeItem"
+    },
+    {
+      "name": "empty",
+      "id": 3,
+      "description": "Shown when `items` is empty."
+    },
+    {
+      "name": "loading",
+      "id": 4,
+      "description": "Shown while `status` is loading."
+    },
+    {
+      "name": "error",
+      "id": 5,
+      "description": "Shown while `status` is error."
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "controller",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "itemExtentBuilder",
+      "reason": "non-serialisable",
+      "note": "A Dart callback; use itemExtent."
+    },
+    {
+      "flutter": "findChildIndexCallback",
+      "reason": "non-serialisable",
+      "note": "Item identity comes from item keys managed by the runtime."
+    },
+    {
+      "flutter": "cacheExtent",
+      "reason": "deprecated",
+      "note": "Deprecated in Flutter."
+    },
+    {
+      "flutter": "scrollCacheExtent",
+      "reason": "deferred",
+      "note": "Cache extents are tuned by the runtime."
+    },
+    {
+      "flutter": "restorationId",
+      "reason": "non-serialisable",
+      "note": "State restoration is managed by the runtime."
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Wrap",
+  "id": 30,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "Wrap",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "layout",
+  "icon": "wrap_text",
+  "description": "Lays out its children in runs, wrapping to the next run when a run is full.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 10,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "direction",
+      "id": 1,
+      "type": "Axis",
+      "default": "horizontal",
+      "flutter": "direction"
+    },
+    {
+      "name": "alignment",
+      "id": 2,
+      "type": "WrapAlignment",
+      "default": "start",
+      "flutter": "alignment"
+    },
+    {
+      "name": "spacing",
+      "id": 3,
+      "type": "double",
+      "default": 0.0,
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "spacing"
+    },
+    {
+      "name": "runAlignment",
+      "id": 4,
+      "type": "WrapAlignment",
+      "default": "start",
+      "flutter": "runAlignment"
+    },
+    {
+      "name": "runSpacing",
+      "id": 5,
+      "type": "double",
+      "default": 0.0,
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "runSpacing"
+    },
+    {
+      "name": "crossAxisAlignment",
+      "id": 6,
+      "type": "WrapCrossAlignment",
+      "default": "start",
+      "flutter": "crossAxisAlignment"
+    },
+    {
+      "name": "textDirection",
+      "id": 7,
+      "type": "TextDirection",
+      "flutter": "textDirection"
+    },
+    {
+      "name": "verticalDirection",
+      "id": 8,
+      "type": "VerticalDirection",
+      "default": "down",
+      "flutter": "verticalDirection"
+    },
+    {
+      "name": "clipBehavior",
+      "id": 9,
+      "type": "Clip",
+      "default": "none",
+      "flutter": "clipBehavior"
+    }
+  ],
+  "children": {
+    "flutter": "children"
+  },
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

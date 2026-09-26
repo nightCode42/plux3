@@ -1,0 +1,100 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "EdgeInsets",
+  "id": 11,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Insets on each side. Set `all`, `horizontal`/`vertical`, or individual sides; `start`/`end` follow the text direction.",
+  "flutter": [
+    {
+      "library": "package:flutter/painting.dart",
+      "class": "EdgeInsets",
+      "constructors": [
+        "all",
+        "only",
+        "symmetric"
+      ]
+    },
+    {
+      "library": "package:flutter/painting.dart",
+      "class": "EdgeInsetsDirectional",
+      "constructors": [
+        "only"
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "name": "all",
+      "id": 1,
+      "type": "double",
+      "flutter": "value",
+      "description": "Inset on every side."
+    },
+    {
+      "name": "horizontal",
+      "id": 2,
+      "type": "double",
+      "flutter": "horizontal",
+      "description": "Inset on the left and right."
+    },
+    {
+      "name": "vertical",
+      "id": 3,
+      "type": "double",
+      "flutter": "vertical",
+      "description": "Inset on the top and bottom."
+    },
+    {
+      "name": "left",
+      "id": 4,
+      "type": "double",
+      "flutter": "left"
+    },
+    {
+      "name": "top",
+      "id": 5,
+      "type": "double",
+      "flutter": "top"
+    },
+    {
+      "name": "right",
+      "id": 6,
+      "type": "double",
+      "flutter": "right"
+    },
+    {
+      "name": "bottom",
+      "id": 7,
+      "type": "double",
+      "flutter": "bottom"
+    },
+    {
+      "name": "start",
+      "id": 8,
+      "type": "double",
+      "flutter": "start",
+      "description": "Inset on the leading side."
+    },
+    {
+      "name": "end",
+      "id": 9,
+      "type": "double",
+      "flutter": "end",
+      "description": "Inset on the trailing side."
+    }
+  ],
+  "constants": [
+    {
+      "name": "zero",
+      "value": {
+        "all": 0
+      }
+    }
+  ]
+}

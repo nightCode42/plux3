@@ -1,0 +1,39 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "ListTileTitleAlignment",
+  "id": 33,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum ListTileTitleAlignment.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "ListTileTitleAlignment"
+  },
+  "values": [
+    {
+      "name": "threeLine",
+      "id": 1
+    },
+    {
+      "name": "titleHeight",
+      "id": 2
+    },
+    {
+      "name": "top",
+      "id": 3
+    },
+    {
+      "name": "center",
+      "id": 4
+    },
+    {
+      "name": "bottom",
+      "id": 5
+    }
+  ]
+}

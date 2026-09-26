@@ -1,0 +1,43 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "BoxHeightStyle",
+  "id": 7,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum BoxHeightStyle.",
+  "flutter": {
+    "library": "dart:ui",
+    "enum": "BoxHeightStyle"
+  },
+  "values": [
+    {
+      "name": "tight",
+      "id": 1
+    },
+    {
+      "name": "max",
+      "id": 2
+    },
+    {
+      "name": "includeLineSpacingMiddle",
+      "id": 3
+    },
+    {
+      "name": "includeLineSpacingTop",
+      "id": 4
+    },
+    {
+      "name": "includeLineSpacingBottom",
+      "id": 5
+    },
+    {
+      "name": "strut",
+      "id": 6
+    }
+  ]
+}

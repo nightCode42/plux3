@@ -1,0 +1,21 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "switchTab",
+  "id": 5,
+  "phase": "P4",
+  "category": "navigation",
+  "description": "Switches to a tab of the enclosing tabbed shell.",
+  "inputs": [
+    {
+      "name": "tab",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "tab",
+      "description": "The tab to show."
+    }
+  ],
+  "effects": [
+    "navigation"
+  ]
+}

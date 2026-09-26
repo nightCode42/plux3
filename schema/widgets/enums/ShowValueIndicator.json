@@ -1,0 +1,43 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "ShowValueIndicator",
+  "id": 43,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum ShowValueIndicator.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "ShowValueIndicator"
+  },
+  "values": [
+    {
+      "name": "onlyForDiscrete",
+      "id": 1
+    },
+    {
+      "name": "onlyForContinuous",
+      "id": 2
+    },
+    {
+      "name": "always",
+      "id": 3
+    },
+    {
+      "name": "onDrag",
+      "id": 4
+    },
+    {
+      "name": "alwaysVisible",
+      "id": 5
+    },
+    {
+      "name": "never",
+      "id": 6
+    }
+  ]
+}

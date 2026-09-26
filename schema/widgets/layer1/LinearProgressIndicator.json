@@ -1,0 +1,127 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "LinearProgressIndicator",
+  "id": 65,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "LinearProgressIndicator",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "display",
+  "icon": "linear_scale",
+  "description": "A linear progress indicator, determinate or indeterminate.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 15,
+  "accessibility": {
+    "role": "progress",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "value",
+      "id": 1,
+      "type": "double",
+      "constraints": {
+        "min": 0.0,
+        "max": 1.0
+      },
+      "flutter": "value"
+    },
+    {
+      "name": "backgroundColor",
+      "id": 2,
+      "type": "color",
+      "flutter": "backgroundColor"
+    },
+    {
+      "name": "color",
+      "id": 3,
+      "type": "color",
+      "flutter": "color"
+    },
+    {
+      "name": "minHeight",
+      "id": 4,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "minHeight"
+    },
+    {
+      "name": "semanticsLabel",
+      "id": 5,
+      "type": "string",
+      "flutter": "semanticsLabel"
+    },
+    {
+      "name": "semanticsValue",
+      "id": 6,
+      "type": "string",
+      "flutter": "semanticsValue"
+    },
+    {
+      "name": "borderRadius",
+      "id": 7,
+      "type": "BorderRadius",
+      "flutter": "borderRadius"
+    },
+    {
+      "name": "stopIndicatorColor",
+      "id": 8,
+      "type": "color",
+      "flutter": "stopIndicatorColor"
+    },
+    {
+      "name": "stopIndicatorRadius",
+      "id": 9,
+      "type": "double",
+      "flutter": "stopIndicatorRadius"
+    },
+    {
+      "name": "trackGap",
+      "id": 10,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "trackGap"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "valueColor",
+      "reason": "deferred",
+      "note": "Timeline-driven values arrive with animations (P5)."
+    },
+    {
+      "flutter": "year2023",
+      "reason": "deprecated",
+      "note": "Deprecated in Flutter."
+    },
+    {
+      "flutter": "controller",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    }
+  ]
+}

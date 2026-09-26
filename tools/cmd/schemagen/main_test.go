@@ -40,7 +40,10 @@ func TestRunGeneratesAndIsIdempotent(t *testing.T) {
 	if code := run([]string{"-root", root}, &out, &errOut); code != exitOK {
 		t.Fatalf("exit %d: %s", code, errOut.String())
 	}
-	for _, want := range []string{"limits_gen.go", "model_gen.go", "document.g.dart", "document.gen.ts", "document-schema.md"} {
+	for _, want := range []string{
+		"limits_gen.go", "model_gen.go", "document.g.dart", "document.gen.ts", "document-schema.md",
+		"registry_gen.go", "registry.g.dart", "registry.gen.ts", "widgets.md", "actions.md", "COVERAGE.md",
+	} {
 		if !strings.Contains(out.String(), want) {
 			t.Errorf("first run did not write %s:\n%s", want, out.String())
 		}
@@ -60,5 +63,45 @@ func TestRunReportsFailures(t *testing.T) {
 	}
 	if code := run([]string{"-root", t.TempDir()}, &out, &errOut); code != exitInvalid {
 		t.Errorf("missing registry: exit %d", code)
+	}
+}
+
+// TestLockBase checks the append-only comparison against an earlier lock.
+//
+// Verifies: BND-011.
+func TestLockBase(t *testing.T) {
+	t.Parallel()
+	root := t.TempDir()
+	write := func(path, content string) string {
+		t.Helper()
+		full := filepath.Join(root, filepath.FromSlash(path))
+		if err := os.MkdirAll(filepath.Dir(full), 0o750); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte(content), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		return full
+	}
+	write("schema/widgets/ids.lock.json", `{"$comment": "", "ids": {"widget/A": 1, "widget/B": 2}}`)
+	tests := []struct {
+		name, base string
+		code       int
+	}{
+		{"kept", `{"$comment": "", "ids": {"widget/A": 1}}`, exitOK},
+		{"removed", `{"$comment": "", "ids": {"widget/C": 3}}`, exitInvalid},
+		{"changed", `{"$comment": "", "ids": {"widget/A": 4}}`, exitInvalid},
+		{"malformed base", `{"ids": `, exitError},
+	}
+	for i, tt := range tests {
+		base := write("base"+string(rune('0'+i))+".json", tt.base)
+		var out, errOut bytes.Buffer
+		if code := run([]string{"-root", root, "-lock-base", base}, &out, &errOut); code != tt.code {
+			t.Errorf("%s: exit %d, want %d: %s", tt.name, code, tt.code, errOut.String())
+		}
+	}
+	var out, errOut bytes.Buffer
+	if code := run([]string{"-root", t.TempDir(), "-lock-base", filepath.Join(root, "base0.json")}, &out, &errOut); code != exitInvalid {
+		t.Errorf("no current lock: exit %d", code)
 	}
 }

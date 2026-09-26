@@ -1,0 +1,47 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "BoxFit",
+  "id": 6,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum BoxFit.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "BoxFit"
+  },
+  "values": [
+    {
+      "name": "fill",
+      "id": 1
+    },
+    {
+      "name": "contain",
+      "id": 2
+    },
+    {
+      "name": "cover",
+      "id": 3
+    },
+    {
+      "name": "fitWidth",
+      "id": 4
+    },
+    {
+      "name": "fitHeight",
+      "id": 5
+    },
+    {
+      "name": "none",
+      "id": 6
+    },
+    {
+      "name": "scaleDown",
+      "id": 7
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "OfflineBanner",
+  "id": 102,
+  "layer": 2,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "category": "feedback",
+  "icon": "cloud_off",
+  "description": "A banner shown while the device is offline.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 15,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "message",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "description": "The text shown while offline."
+    },
+    {
+      "name": "visible",
+      "id": 2,
+      "type": "bool",
+      "default": true,
+      "description": "Show only while offline when true."
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "share",
+  "id": 40,
+  "phase": "P5",
+  "category": "device",
+  "description": "Opens the platform share sheet with text, a URL or a picked file.",
+  "inputs": [
+    {
+      "name": "text",
+      "id": 1,
+      "type": "string?",
+      "description": "The text to share."
+    },
+    {
+      "name": "url",
+      "id": 2,
+      "type": "string?",
+      "description": "A URL to share."
+    },
+    {
+      "name": "file",
+      "id": 3,
+      "type": "PickedFile?",
+      "description": "A file to share."
+    }
+  ],
+  "effects": [
+    "device"
+  ]
+}

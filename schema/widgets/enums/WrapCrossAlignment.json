@@ -1,0 +1,31 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "WrapCrossAlignment",
+  "id": 67,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum WrapCrossAlignment.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "WrapCrossAlignment"
+  },
+  "values": [
+    {
+      "name": "start",
+      "id": 1
+    },
+    {
+      "name": "end",
+      "id": 2
+    },
+    {
+      "name": "center",
+      "id": 3
+    }
+  ]
+}

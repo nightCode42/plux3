@@ -1,0 +1,56 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "ConstrainedBox",
+  "id": 11,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "ConstrainedBox",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "layout",
+  "icon": "fit_screen",
+  "description": "Imposes additional constraints on its child.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 5,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "constraints",
+      "id": 1,
+      "type": "BoxConstraints",
+      "required": true,
+      "flutter": "constraints"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

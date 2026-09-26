@@ -1,0 +1,274 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "GridView",
+  "id": 37,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "GridView",
+    "constructors": [
+      "builder"
+    ]
+  },
+  "category": "scrolling",
+  "icon": "grid_view",
+  "description": "A lazily built, scrollable grid of `item` templates over `items` (WGT-012).",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 35,
+  "accessibility": {
+    "role": "list",
+    "interactive": false
+  },
+  "typeParameters": [
+    "T"
+  ],
+  "props": [
+    {
+      "name": "items",
+      "id": 1,
+      "type": "list<T>",
+      "required": true,
+      "flutter": "itemCount",
+      "description": "The list the template repeats over; bind it with `$expr`. The item is available as `item`, its position as `index`."
+    },
+    {
+      "name": "scrollDirection",
+      "id": 2,
+      "type": "Axis",
+      "default": "vertical",
+      "flutter": "scrollDirection"
+    },
+    {
+      "name": "reverse",
+      "id": 3,
+      "type": "bool",
+      "default": false,
+      "flutter": "reverse"
+    },
+    {
+      "name": "primary",
+      "id": 4,
+      "type": "bool",
+      "flutter": "primary"
+    },
+    {
+      "name": "physics",
+      "id": 5,
+      "type": "ScrollPhysics",
+      "flutter": "physics"
+    },
+    {
+      "name": "shrinkWrap",
+      "id": 6,
+      "type": "bool",
+      "default": false,
+      "flutter": "shrinkWrap"
+    },
+    {
+      "name": "padding",
+      "id": 7,
+      "type": "EdgeInsets",
+      "flutter": "padding"
+    },
+    {
+      "name": "addAutomaticKeepAlives",
+      "id": 8,
+      "type": "bool",
+      "default": true,
+      "flutter": "addAutomaticKeepAlives"
+    },
+    {
+      "name": "addRepaintBoundaries",
+      "id": 9,
+      "type": "bool",
+      "default": true,
+      "flutter": "addRepaintBoundaries"
+    },
+    {
+      "name": "addSemanticIndexes",
+      "id": 10,
+      "type": "bool",
+      "default": true,
+      "flutter": "addSemanticIndexes"
+    },
+    {
+      "name": "semanticChildCount",
+      "id": 11,
+      "type": "int",
+      "constraints": {
+        "min": 0
+      },
+      "flutter": "semanticChildCount"
+    },
+    {
+      "name": "dragStartBehavior",
+      "id": 12,
+      "type": "DragStartBehavior",
+      "default": "start",
+      "flutter": "dragStartBehavior"
+    },
+    {
+      "name": "keyboardDismissBehavior",
+      "id": 13,
+      "type": "ScrollViewKeyboardDismissBehavior",
+      "flutter": "keyboardDismissBehavior"
+    },
+    {
+      "name": "clipBehavior",
+      "id": 14,
+      "type": "Clip",
+      "default": "hardEdge",
+      "flutter": "clipBehavior"
+    },
+    {
+      "name": "hitTestBehavior",
+      "id": 15,
+      "type": "HitTestBehavior",
+      "default": "opaque",
+      "flutter": "hitTestBehavior"
+    },
+    {
+      "name": "status",
+      "id": 16,
+      "type": "ListStatus",
+      "default": "ready",
+      "description": "Loading, error or ready; selects the `loading` or `error` slot (WGT-012)."
+    },
+    {
+      "name": "hasMore",
+      "id": 17,
+      "type": "bool",
+      "default": false,
+      "description": "More items can be loaded; `onEndReached` fires near the end (P5 pagination)."
+    },
+    {
+      "name": "crossAxisCount",
+      "id": 18,
+      "type": "int",
+      "constraints": {
+        "min": 1
+      },
+      "flutter": "gridDelegate",
+      "description": "Fixed number of columns; or set maxCrossAxisExtent."
+    },
+    {
+      "name": "maxCrossAxisExtent",
+      "id": 19,
+      "type": "double",
+      "flutter": "gridDelegate",
+      "description": "Maximum column width; used when crossAxisCount is not set."
+    },
+    {
+      "name": "mainAxisSpacing",
+      "id": 20,
+      "type": "double",
+      "default": 0.0,
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "gridDelegate",
+      "description": "Space between rows."
+    },
+    {
+      "name": "crossAxisSpacing",
+      "id": 21,
+      "type": "double",
+      "default": 0.0,
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "gridDelegate",
+      "description": "Space between columns."
+    },
+    {
+      "name": "childAspectRatio",
+      "id": 22,
+      "type": "double",
+      "default": 1.0,
+      "flutter": "gridDelegate",
+      "description": "Width-to-height ratio of each cell."
+    },
+    {
+      "name": "mainAxisExtent",
+      "id": 23,
+      "type": "double",
+      "flutter": "gridDelegate",
+      "description": "Fixed cell extent along the main axis."
+    }
+  ],
+  "events": [
+    {
+      "name": "onEndReached",
+      "id": 1,
+      "description": "Fired when the end of the list comes into view and `hasMore` is true."
+    }
+  ],
+  "slots": [
+    {
+      "name": "item",
+      "id": 1,
+      "required": true,
+      "template": true,
+      "flutter": "itemBuilder",
+      "description": "The template built for each item, lazily."
+    },
+    {
+      "name": "empty",
+      "id": 2,
+      "description": "Shown when `items` is empty."
+    },
+    {
+      "name": "loading",
+      "id": 3,
+      "description": "Shown while `status` is loading."
+    },
+    {
+      "name": "error",
+      "id": 4,
+      "description": "Shown while `status` is error."
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "controller",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "findChildIndexCallback",
+      "reason": "non-serialisable",
+      "note": "Item identity comes from item keys managed by the runtime."
+    },
+    {
+      "flutter": "cacheExtent",
+      "reason": "deprecated",
+      "note": "Deprecated in Flutter."
+    },
+    {
+      "flutter": "scrollCacheExtent",
+      "reason": "deferred",
+      "note": "Cache extents are tuned by the runtime."
+    },
+    {
+      "flutter": "restorationId",
+      "reason": "non-serialisable",
+      "note": "State restoration is managed by the runtime."
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "InputBorderKind",
+  "id": 29,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "The kind of a text-input border.",
+  "values": [
+    {
+      "name": "outline",
+      "id": 1
+    },
+    {
+      "name": "underline",
+      "id": 2
+    },
+    {
+      "name": "none",
+      "id": 3
+    }
+  ]
+}

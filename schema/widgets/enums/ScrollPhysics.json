@@ -1,0 +1,39 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "ScrollPhysics",
+  "id": 39,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "How a scrollable responds to input.",
+  "values": [
+    {
+      "name": "platform",
+      "id": 1
+    },
+    {
+      "name": "bouncing",
+      "id": 2
+    },
+    {
+      "name": "clamping",
+      "id": 3
+    },
+    {
+      "name": "never",
+      "id": 4
+    },
+    {
+      "name": "always",
+      "id": 5
+    },
+    {
+      "name": "page",
+      "id": 6
+    }
+  ]
+}

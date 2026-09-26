@@ -1,0 +1,36 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "showSnackbar",
+  "id": 7,
+  "phase": "P5",
+  "category": "feedback",
+  "description": "Shows a transient message at the bottom of the screen, with an optional action.",
+  "inputs": [
+    {
+      "name": "message",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "description": "The message."
+    },
+    {
+      "name": "actionLabel",
+      "id": 2,
+      "type": "string?",
+      "description": "Label of the action button."
+    },
+    {
+      "name": "duration",
+      "id": 3,
+      "type": "duration",
+      "default": 4000,
+      "description": "How long the message stays, in milliseconds."
+    }
+  ],
+  "branches": [
+    "action"
+  ],
+  "effects": [
+    "ui"
+  ]
+}

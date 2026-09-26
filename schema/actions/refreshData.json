@@ -1,0 +1,22 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "refreshData",
+  "id": 17,
+  "phase": "P5",
+  "category": "data",
+  "description": "Reloads a data source, bypassing its cache.",
+  "inputs": [
+    {
+      "name": "source",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "dataSource",
+      "description": "The data source."
+    }
+  ],
+  "effects": [
+    "state",
+    "network"
+  ]
+}

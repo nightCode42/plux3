@@ -1,0 +1,26 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "forEach",
+  "id": 32,
+  "phase": "P5",
+  "category": "control",
+  "description": "Runs the body branch once per item of a list, in order, bounded by the list length and the action.forEachItems limit (ACT-005).",
+  "typeParameters": [
+    {
+      "name": "T",
+      "description": "The element type of `items`; the body branch sees the element as `item` and its position as `index`."
+    }
+  ],
+  "inputs": [
+    {
+      "name": "items",
+      "id": 1,
+      "type": "list<T>",
+      "required": true,
+      "description": "The items."
+    }
+  ],
+  "branches": [
+    "body"
+  ]
+}

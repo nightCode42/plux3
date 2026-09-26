@@ -1,0 +1,75 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Stack",
+  "id": 27,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "Stack",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "layout",
+  "icon": "layers",
+  "description": "Places its children on top of each other.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 8,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "alignment",
+      "id": 1,
+      "type": "Alignment",
+      "default": {
+        "start": -1,
+        "y": -1
+      },
+      "flutter": "alignment"
+    },
+    {
+      "name": "textDirection",
+      "id": 2,
+      "type": "TextDirection",
+      "flutter": "textDirection"
+    },
+    {
+      "name": "fit",
+      "id": 3,
+      "type": "StackFit",
+      "default": "loose",
+      "flutter": "fit"
+    },
+    {
+      "name": "clipBehavior",
+      "id": 4,
+      "type": "Clip",
+      "default": "hardEdge",
+      "flutter": "clipBehavior"
+    }
+  ],
+  "children": {
+    "flutter": "children"
+  },
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

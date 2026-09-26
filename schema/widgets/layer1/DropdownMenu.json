@@ -1,0 +1,286 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "DropdownMenu",
+  "id": 76,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "DropdownMenu",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "input",
+  "icon": "arrow_drop_down_circle",
+  "description": "A Material 3 dropdown menu with optional text filtering.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 80,
+  "accessibility": {
+    "role": "button",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "enabled",
+      "id": 1,
+      "type": "bool",
+      "default": true,
+      "flutter": "enabled"
+    },
+    {
+      "name": "width",
+      "id": 2,
+      "type": "double",
+      "flutter": "width"
+    },
+    {
+      "name": "menuHeight",
+      "id": 3,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "menuHeight"
+    },
+    {
+      "name": "showTrailingIcon",
+      "id": 4,
+      "type": "bool",
+      "default": true,
+      "flutter": "showTrailingIcon"
+    },
+    {
+      "name": "hintText",
+      "id": 5,
+      "type": "string",
+      "flutter": "hintText"
+    },
+    {
+      "name": "helperText",
+      "id": 6,
+      "type": "string",
+      "flutter": "helperText"
+    },
+    {
+      "name": "errorText",
+      "id": 7,
+      "type": "string",
+      "flutter": "errorText"
+    },
+    {
+      "name": "enableFilter",
+      "id": 8,
+      "type": "bool",
+      "default": false,
+      "flutter": "enableFilter"
+    },
+    {
+      "name": "enableSearch",
+      "id": 9,
+      "type": "bool",
+      "default": true,
+      "flutter": "enableSearch"
+    },
+    {
+      "name": "keyboardType",
+      "id": 10,
+      "type": "TextInputType",
+      "flutter": "keyboardType"
+    },
+    {
+      "name": "textStyle",
+      "id": 11,
+      "type": "TextStyle",
+      "flutter": "textStyle"
+    },
+    {
+      "name": "textAlign",
+      "id": 12,
+      "type": "TextAlign",
+      "default": "start",
+      "flutter": "textAlign"
+    },
+    {
+      "name": "initialSelection",
+      "id": 13,
+      "type": "string",
+      "flutter": "initialSelection"
+    },
+    {
+      "name": "requestFocusOnTap",
+      "id": 14,
+      "type": "bool",
+      "flutter": "requestFocusOnTap"
+    },
+    {
+      "name": "selectOnly",
+      "id": 15,
+      "type": "bool",
+      "default": false,
+      "flutter": "selectOnly"
+    },
+    {
+      "name": "expandedInsets",
+      "id": 16,
+      "type": "EdgeInsets",
+      "flutter": "expandedInsets"
+    },
+    {
+      "name": "alignmentOffset",
+      "id": 17,
+      "type": "Offset",
+      "flutter": "alignmentOffset"
+    },
+    {
+      "name": "dropdownMenuEntries",
+      "id": 18,
+      "type": "list<DropdownMenuEntry>",
+      "required": true,
+      "flutter": "dropdownMenuEntries"
+    },
+    {
+      "name": "closeBehavior",
+      "id": 19,
+      "type": "DropdownMenuCloseBehavior",
+      "default": "all",
+      "flutter": "closeBehavior"
+    },
+    {
+      "name": "maxLines",
+      "id": 20,
+      "type": "int",
+      "default": 1,
+      "constraints": {
+        "min": 1
+      },
+      "flutter": "maxLines"
+    },
+    {
+      "name": "textInputAction",
+      "id": 21,
+      "type": "TextInputAction",
+      "flutter": "textInputAction"
+    },
+    {
+      "name": "cursorHeight",
+      "id": 22,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "cursorHeight"
+    },
+    {
+      "name": "scrollPadding",
+      "id": 23,
+      "type": "EdgeInsets",
+      "default": {
+        "all": 20.0
+      },
+      "flutter": "scrollPadding"
+    }
+  ],
+  "events": [
+    {
+      "name": "onSelected",
+      "id": 1,
+      "payload": "string?",
+      "flutter": "onSelected"
+    }
+  ],
+  "slots": [
+    {
+      "name": "leadingIcon",
+      "id": 1,
+      "flutter": "leadingIcon"
+    },
+    {
+      "name": "trailingIcon",
+      "id": 2,
+      "flutter": "trailingIcon"
+    },
+    {
+      "name": "label",
+      "id": 3,
+      "flutter": "label"
+    },
+    {
+      "name": "selectedTrailingIcon",
+      "id": 4,
+      "flutter": "selectedTrailingIcon"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "trailingIconFocusNode",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "inputDecorationTheme",
+      "reason": "deferred",
+      "note": "Input decoration themes come from the app theme."
+    },
+    {
+      "flutter": "decorationBuilder",
+      "reason": "deferred",
+      "note": "Custom builders are deferred."
+    },
+    {
+      "flutter": "menuStyle",
+      "reason": "deferred",
+      "note": "Menu styling is deferred."
+    },
+    {
+      "flutter": "controller",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "focusNode",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "filterCallback",
+      "reason": "non-serialisable",
+      "note": "A Dart callback; filtering uses enableFilter."
+    },
+    {
+      "flutter": "searchCallback",
+      "reason": "non-serialisable",
+      "note": "A Dart callback; searching uses enableSearch."
+    },
+    {
+      "flutter": "inputFormatters",
+      "reason": "deferred",
+      "note": "Input masks arrive with forms (STA-020, P5)."
+    },
+    {
+      "flutter": "restorationId",
+      "reason": "non-serialisable",
+      "note": "State restoration is managed by the runtime."
+    },
+    {
+      "flutter": "menuController",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "DropdownMenuEntry",
+  "id": 10,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "One entry of a DropdownMenu.",
+  "flutter": [
+    {
+      "library": "package:flutter/material.dart",
+      "class": "DropdownMenuEntry",
+      "constructors": [
+        ""
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "name": "value",
+      "id": 1,
+      "type": "string",
+      "flutter": "value"
+    },
+    {
+      "name": "label",
+      "id": 2,
+      "type": "string",
+      "flutter": "label"
+    },
+    {
+      "name": "leadingIcon",
+      "id": 3,
+      "type": "IconData",
+      "flutter": "leadingIcon",
+      "description": "Icon before the label."
+    },
+    {
+      "name": "trailingIcon",
+      "id": 4,
+      "type": "IconData",
+      "flutter": "trailingIcon",
+      "description": "Icon after the label."
+    },
+    {
+      "name": "enabled",
+      "id": 5,
+      "type": "bool",
+      "default": true,
+      "flutter": "enabled"
+    },
+    {
+      "name": "style",
+      "id": 6,
+      "type": "ButtonStyle",
+      "flutter": "style"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "labelWidget",
+      "reason": "deferred",
+      "note": "Custom label widgets are deferred; `label` is shown."
+    }
+  ]
+}

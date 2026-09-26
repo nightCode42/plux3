@@ -1,0 +1,64 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "CupertinoActivityIndicator",
+  "id": 95,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/cupertino.dart",
+    "class": "CupertinoActivityIndicator",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "cupertino",
+  "icon": "progress_activity",
+  "description": "An iOS-style activity indicator.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 12,
+  "accessibility": {
+    "role": "progress",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "color",
+      "id": 1,
+      "type": "color",
+      "flutter": "color"
+    },
+    {
+      "name": "animating",
+      "id": 2,
+      "type": "bool",
+      "default": true,
+      "flutter": "animating"
+    },
+    {
+      "name": "radius",
+      "id": 3,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "radius"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

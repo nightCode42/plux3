@@ -1,0 +1,56 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "SliverPadding",
+  "id": 43,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "SliverPadding",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "scrolling",
+  "icon": "padding",
+  "description": "Insets a sliver by the given padding.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 4,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "padding",
+      "id": 1,
+      "type": "EdgeInsets",
+      "required": true,
+      "flutter": "padding"
+    }
+  ],
+  "slots": [
+    {
+      "name": "sliver",
+      "id": 1,
+      "flutter": "sliver"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "ListTileControlAffinity",
+  "id": 31,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum ListTileControlAffinity.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "ListTileControlAffinity"
+  },
+  "values": [
+    {
+      "name": "leading",
+      "id": 1
+    },
+    {
+      "name": "trailing",
+      "id": 2
+    },
+    {
+      "name": "platform",
+      "id": 3
+    }
+  ]
+}

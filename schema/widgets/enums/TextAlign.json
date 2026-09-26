@@ -1,0 +1,43 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "TextAlign",
+  "id": 50,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum TextAlign.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "TextAlign"
+  },
+  "values": [
+    {
+      "name": "left",
+      "id": 1
+    },
+    {
+      "name": "right",
+      "id": 2
+    },
+    {
+      "name": "center",
+      "id": 3
+    },
+    {
+      "name": "justify",
+      "id": 4
+    },
+    {
+      "name": "start",
+      "id": 5
+    },
+    {
+      "name": "end",
+      "id": 6
+    }
+  ]
+}

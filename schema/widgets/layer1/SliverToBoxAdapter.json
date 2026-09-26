@@ -1,0 +1,48 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "SliverToBoxAdapter",
+  "id": 42,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "SliverToBoxAdapter",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "scrolling",
+  "icon": "crop_free",
+  "description": "Places an ordinary widget inside a CustomScrollView.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 4,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

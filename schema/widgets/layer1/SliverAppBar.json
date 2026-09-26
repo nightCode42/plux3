@@ -1,0 +1,297 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "SliverAppBar",
+  "id": 41,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "SliverAppBar",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "scrolling",
+  "icon": "web_asset",
+  "description": "A Material app bar that integrates with a CustomScrollView and can expand, float and pin.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 40,
+  "accessibility": {
+    "role": "header",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "automaticallyImplyLeading",
+      "id": 1,
+      "type": "bool",
+      "default": true,
+      "flutter": "automaticallyImplyLeading"
+    },
+    {
+      "name": "automaticallyImplyActions",
+      "id": 2,
+      "type": "bool",
+      "default": true,
+      "flutter": "automaticallyImplyActions"
+    },
+    {
+      "name": "elevation",
+      "id": 3,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "elevation"
+    },
+    {
+      "name": "scrolledUnderElevation",
+      "id": 4,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "scrolledUnderElevation"
+    },
+    {
+      "name": "shadowColor",
+      "id": 5,
+      "type": "color",
+      "flutter": "shadowColor"
+    },
+    {
+      "name": "surfaceTintColor",
+      "id": 6,
+      "type": "color",
+      "flutter": "surfaceTintColor"
+    },
+    {
+      "name": "forceElevated",
+      "id": 7,
+      "type": "bool",
+      "default": false,
+      "flutter": "forceElevated"
+    },
+    {
+      "name": "backgroundColor",
+      "id": 8,
+      "type": "color",
+      "flutter": "backgroundColor"
+    },
+    {
+      "name": "foregroundColor",
+      "id": 9,
+      "type": "color",
+      "flutter": "foregroundColor"
+    },
+    {
+      "name": "primary",
+      "id": 10,
+      "type": "bool",
+      "default": true,
+      "flutter": "primary"
+    },
+    {
+      "name": "centerTitle",
+      "id": 11,
+      "type": "bool",
+      "flutter": "centerTitle"
+    },
+    {
+      "name": "excludeHeaderSemantics",
+      "id": 12,
+      "type": "bool",
+      "default": false,
+      "flutter": "excludeHeaderSemantics"
+    },
+    {
+      "name": "titleSpacing",
+      "id": 13,
+      "type": "double",
+      "flutter": "titleSpacing"
+    },
+    {
+      "name": "collapsedHeight",
+      "id": 14,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "collapsedHeight"
+    },
+    {
+      "name": "expandedHeight",
+      "id": 15,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "expandedHeight"
+    },
+    {
+      "name": "floating",
+      "id": 16,
+      "type": "bool",
+      "default": false,
+      "flutter": "floating"
+    },
+    {
+      "name": "pinned",
+      "id": 17,
+      "type": "bool",
+      "default": false,
+      "flutter": "pinned"
+    },
+    {
+      "name": "snap",
+      "id": 18,
+      "type": "bool",
+      "default": false,
+      "flutter": "snap"
+    },
+    {
+      "name": "stretch",
+      "id": 19,
+      "type": "bool",
+      "default": false,
+      "flutter": "stretch"
+    },
+    {
+      "name": "stretchTriggerOffset",
+      "id": 20,
+      "type": "double",
+      "default": 100.0,
+      "flutter": "stretchTriggerOffset"
+    },
+    {
+      "name": "shape",
+      "id": 21,
+      "type": "ShapeBorder",
+      "flutter": "shape"
+    },
+    {
+      "name": "toolbarHeight",
+      "id": 22,
+      "type": "double",
+      "default": 56.0,
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "toolbarHeight"
+    },
+    {
+      "name": "leadingWidth",
+      "id": 23,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "leadingWidth"
+    },
+    {
+      "name": "toolbarTextStyle",
+      "id": 24,
+      "type": "TextStyle",
+      "flutter": "toolbarTextStyle"
+    },
+    {
+      "name": "titleTextStyle",
+      "id": 25,
+      "type": "TextStyle",
+      "flutter": "titleTextStyle"
+    },
+    {
+      "name": "forceMaterialTransparency",
+      "id": 26,
+      "type": "bool",
+      "default": false,
+      "flutter": "forceMaterialTransparency"
+    },
+    {
+      "name": "useDefaultSemanticsOrder",
+      "id": 27,
+      "type": "bool",
+      "default": true,
+      "flutter": "useDefaultSemanticsOrder"
+    },
+    {
+      "name": "clipBehavior",
+      "id": 28,
+      "type": "Clip",
+      "flutter": "clipBehavior"
+    },
+    {
+      "name": "actionsPadding",
+      "id": 29,
+      "type": "EdgeInsets",
+      "flutter": "actionsPadding"
+    }
+  ],
+  "events": [
+    {
+      "name": "onStretchTrigger",
+      "id": 1,
+      "flutter": "onStretchTrigger"
+    }
+  ],
+  "slots": [
+    {
+      "name": "leading",
+      "id": 1,
+      "flutter": "leading"
+    },
+    {
+      "name": "title",
+      "id": 2,
+      "flutter": "title"
+    },
+    {
+      "name": "actions",
+      "id": 3,
+      "list": true,
+      "flutter": "actions"
+    },
+    {
+      "name": "flexibleSpace",
+      "id": 4,
+      "flutter": "flexibleSpace"
+    },
+    {
+      "name": "bottom",
+      "id": 5,
+      "flutter": "bottom"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "iconTheme",
+      "reason": "deferred",
+      "note": "Icon theming comes from the app theme (THM-001)."
+    },
+    {
+      "flutter": "actionsIconTheme",
+      "reason": "deferred",
+      "note": "Icon theming comes from the app theme (THM-001)."
+    },
+    {
+      "flutter": "systemOverlayStyle",
+      "reason": "deferred",
+      "note": "System overlay styling is deferred."
+    }
+  ]
+}

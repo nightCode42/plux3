@@ -1,0 +1,33 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "trackEvent",
+  "id": 36,
+  "phase": "P5",
+  "category": "analytics",
+  "description": "Records a custom telemetry event with typed properties.",
+  "typeParameters": [
+    {
+      "name": "P",
+      "description": "The object type of `props`, inferred from its entries; every field must be a string, int, double, bool or decimal and none may be sensitive (ACT-031)."
+    }
+  ],
+  "inputs": [
+    {
+      "name": "name",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "telemetryEvent",
+      "description": "The event name, in snake_case."
+    },
+    {
+      "name": "props",
+      "id": 2,
+      "type": "P",
+      "description": "The event properties."
+    }
+  ],
+  "effects": [
+    "telemetry"
+  ]
+}

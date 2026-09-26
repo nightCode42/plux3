@@ -1,0 +1,104 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "FilledButton",
+  "id": 79,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "FilledButton",
+    "constructors": [
+      "",
+      "tonal"
+    ]
+  },
+  "category": "input",
+  "icon": "smart_button",
+  "description": "A Material filled button; `tonal` selects the filled-tonal style.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 30,
+  "accessibility": {
+    "role": "button",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "style",
+      "id": 1,
+      "type": "ButtonStyle",
+      "flutter": "style"
+    },
+    {
+      "name": "autofocus",
+      "id": 2,
+      "type": "bool",
+      "default": false,
+      "flutter": "autofocus"
+    },
+    {
+      "name": "clipBehavior",
+      "id": 3,
+      "type": "Clip",
+      "default": "none",
+      "flutter": "clipBehavior"
+    }
+  ],
+  "events": [
+    {
+      "name": "onPressed",
+      "id": 1,
+      "flutter": "onPressed"
+    },
+    {
+      "name": "onLongPress",
+      "id": 2,
+      "flutter": "onLongPress"
+    },
+    {
+      "name": "onHover",
+      "id": 3,
+      "payload": "bool",
+      "flutter": "onHover"
+    },
+    {
+      "name": "onFocusChange",
+      "id": 4,
+      "payload": "bool",
+      "flutter": "onFocusChange"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "focusNode",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "statesController",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    }
+  ]
+}

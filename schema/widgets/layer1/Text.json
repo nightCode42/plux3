@@ -1,0 +1,138 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Text",
+  "id": 46,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "Text",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "display",
+  "icon": "text_fields",
+  "description": "A run of text with a single style.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 20,
+  "accessibility": {
+    "role": "text",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "data",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "flutter": "data"
+    },
+    {
+      "name": "style",
+      "id": 2,
+      "type": "TextStyle",
+      "flutter": "style"
+    },
+    {
+      "name": "textAlign",
+      "id": 3,
+      "type": "TextAlign",
+      "flutter": "textAlign"
+    },
+    {
+      "name": "textDirection",
+      "id": 4,
+      "type": "TextDirection",
+      "flutter": "textDirection"
+    },
+    {
+      "name": "locale",
+      "id": 5,
+      "type": "string",
+      "flutter": "locale"
+    },
+    {
+      "name": "softWrap",
+      "id": 6,
+      "type": "bool",
+      "flutter": "softWrap"
+    },
+    {
+      "name": "overflow",
+      "id": 7,
+      "type": "TextOverflow",
+      "flutter": "overflow"
+    },
+    {
+      "name": "maxLines",
+      "id": 8,
+      "type": "int",
+      "constraints": {
+        "min": 1
+      },
+      "flutter": "maxLines"
+    },
+    {
+      "name": "semanticsLabel",
+      "id": 9,
+      "type": "string",
+      "flutter": "semanticsLabel"
+    },
+    {
+      "name": "semanticsIdentifier",
+      "id": 10,
+      "type": "string",
+      "flutter": "semanticsIdentifier"
+    },
+    {
+      "name": "textWidthBasis",
+      "id": 11,
+      "type": "TextWidthBasis",
+      "flutter": "textWidthBasis"
+    },
+    {
+      "name": "selectionColor",
+      "id": 12,
+      "type": "color",
+      "flutter": "selectionColor"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "strutStyle",
+      "reason": "deferred",
+      "note": "Strut styles are rarely needed; TextStyle.height covers line height."
+    },
+    {
+      "flutter": "textScaleFactor",
+      "reason": "deprecated",
+      "note": "Deprecated in Flutter."
+    },
+    {
+      "flutter": "textScaler",
+      "reason": "deferred",
+      "note": "Text scaling follows the device accessibility setting."
+    },
+    {
+      "flutter": "textHeightBehavior",
+      "reason": "deferred",
+      "note": "Fine-grained line-height behaviour is deferred."
+    }
+  ]
+}

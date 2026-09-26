@@ -1,0 +1,26 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "requestPermission",
+  "id": 41,
+  "phase": "P5",
+  "category": "device",
+  "description": "Requests a device permission the plugin declares; takes the granted or denied branch.",
+  "inputs": [
+    {
+      "name": "permission",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "permission",
+      "description": "The permission."
+    }
+  ],
+  "output": "bool",
+  "branches": [
+    "granted",
+    "denied"
+  ],
+  "effects": [
+    "device"
+  ]
+}

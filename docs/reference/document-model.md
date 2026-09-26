@@ -46,7 +46,28 @@ base  = "string" | "int" | "double" | "bool" | "decimal" | "money" | "date" | "d
       | "list" "<" type ">" | "map" "<" "string" "," type ">" | TypeName ;
 ```
 
-`TypeName` is an object type or enum declared in `types` of the app (visible everywhere) or of a plugin. `decimal` values are written as strings; `?` makes a type nullable.
+`TypeName` is an object type or enum declared in `types` of the app (visible everywhere) or of a plugin, or — in widget props and action inputs — a value type or enum of the [widget registry](widgets.md). `?` makes a type nullable.
+
+Literals are written as follows; the compiler checks them against the declared type, and `schemagen` checks the defaults of the registry the same way.
+
+| Type | Literal | Example |
+|---|---|---|
+| `string` | JSON string | `"Loan"` |
+| `int` | JSON integer within ±(2⁵³ − 1), the exact range of I-JSON; larger values come from bindings | `12` |
+| `double` | JSON number | `0.5` |
+| `bool` | `true` or `false` | `true` |
+| `decimal` | string of digits with an optional fraction, no exponent | `"1250.00"` |
+| `money` | object of a decimal `amount` and an ISO 4217 `currency` | `{"amount": "9.99", "currency": "EUR"}` |
+| `date` | `YYYY-MM-DD` | `"2026-09-26"` |
+| `dateTime` | RFC 3339 with an offset | `"2026-09-26T10:00:00+02:00"` |
+| `duration` | whole milliseconds, not negative | `300` |
+| `color` | `#RRGGBB` or `#RRGGBBAA`, as in design tokens | `"#5B3DF5"` |
+| `asset` | no literal: `{"$asset": "<asset-id>"}` | — |
+| `route` | route name | `"loan-result"` |
+| enum | value name | `"center"` |
+| value type | object of its fields, or the name of one of its constants | `{"all": 16}`, `"zero"` |
+| `list<T>`, `map<string,T>` | JSON array, JSON object | `[1, 2]` |
+| `T?` | also `null` | `null` |
 
 A **prop value** is exactly one of (`SCH-011`): a literal of the prop's type; `{"$expr": "<PXL>"}`; `{"$token": "color.primary"}`; `{"$t": "<translation-key-id>", "args": {…}}`; or `{"$asset": "<asset-id>"}`. Fields and items of a literal object or list may themselves be bindings, such as a padding whose inset is a spacing token.
 

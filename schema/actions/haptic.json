@@ -1,0 +1,20 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "haptic",
+  "id": 9,
+  "phase": "P5",
+  "category": "feedback",
+  "description": "Plays a haptic feedback pattern.",
+  "inputs": [
+    {
+      "name": "pattern",
+      "id": 1,
+      "type": "HapticPattern",
+      "default": "light",
+      "description": "The pattern."
+    }
+  ],
+  "effects": [
+    "device"
+  ]
+}

@@ -1,0 +1,159 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "Alignment",
+  "id": 1,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "A point in a rectangle: -1 is the start edge, 0 the centre, 1 the end edge. `start` replaces `x` to follow the text direction.",
+  "flutter": [
+    {
+      "library": "package:flutter/painting.dart",
+      "class": "Alignment",
+      "constructors": [
+        ""
+      ]
+    },
+    {
+      "library": "package:flutter/painting.dart",
+      "class": "AlignmentDirectional",
+      "constructors": [
+        ""
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "name": "x",
+      "id": 1,
+      "type": "double",
+      "flutter": "x",
+      "description": "Horizontal position."
+    },
+    {
+      "name": "y",
+      "id": 2,
+      "type": "double",
+      "flutter": "y",
+      "description": "Vertical position."
+    },
+    {
+      "name": "start",
+      "id": 3,
+      "type": "double",
+      "flutter": "start",
+      "description": "Horizontal position along the text direction."
+    }
+  ],
+  "constants": [
+    {
+      "name": "topLeft",
+      "value": {
+        "x": -1,
+        "y": -1
+      }
+    },
+    {
+      "name": "topCenter",
+      "value": {
+        "x": 0,
+        "y": -1
+      }
+    },
+    {
+      "name": "topRight",
+      "value": {
+        "x": 1,
+        "y": -1
+      }
+    },
+    {
+      "name": "centerLeft",
+      "value": {
+        "x": -1,
+        "y": 0
+      }
+    },
+    {
+      "name": "center",
+      "value": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "name": "centerRight",
+      "value": {
+        "x": 1,
+        "y": 0
+      }
+    },
+    {
+      "name": "bottomLeft",
+      "value": {
+        "x": -1,
+        "y": 1
+      }
+    },
+    {
+      "name": "bottomCenter",
+      "value": {
+        "x": 0,
+        "y": 1
+      }
+    },
+    {
+      "name": "bottomRight",
+      "value": {
+        "x": 1,
+        "y": 1
+      }
+    },
+    {
+      "name": "topStart",
+      "value": {
+        "start": -1,
+        "y": -1
+      }
+    },
+    {
+      "name": "topEnd",
+      "value": {
+        "start": 1,
+        "y": -1
+      }
+    },
+    {
+      "name": "centerStart",
+      "value": {
+        "start": -1,
+        "y": 0
+      }
+    },
+    {
+      "name": "centerEnd",
+      "value": {
+        "start": 1,
+        "y": 0
+      }
+    },
+    {
+      "name": "bottomStart",
+      "value": {
+        "start": -1,
+        "y": 1
+      }
+    },
+    {
+      "name": "bottomEnd",
+      "value": {
+        "start": 1,
+        "y": 1
+      }
+    }
+  ]
+}

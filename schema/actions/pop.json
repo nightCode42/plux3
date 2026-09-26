@@ -1,0 +1,25 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "pop",
+  "id": 2,
+  "phase": "P4",
+  "category": "navigation",
+  "description": "Pops the current page, optionally returning a typed result to the page that opened it.",
+  "typeParameters": [
+    {
+      "name": "R",
+      "description": "The result type the current page declares."
+    }
+  ],
+  "inputs": [
+    {
+      "name": "result",
+      "id": 1,
+      "type": "R?",
+      "description": "The result to return."
+    }
+  ],
+  "effects": [
+    "navigation"
+  ]
+}

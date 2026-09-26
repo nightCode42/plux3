@@ -1,0 +1,27 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "FontStyle",
+  "id": 22,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum FontStyle.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "FontStyle"
+  },
+  "values": [
+    {
+      "name": "normal",
+      "id": 1
+    },
+    {
+      "name": "italic",
+      "id": 2
+    }
+  ]
+}

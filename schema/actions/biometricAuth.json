@@ -1,0 +1,33 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "biometricAuth",
+  "id": 47,
+  "phase": "P6",
+  "category": "security",
+  "description": "Asks the user to confirm with a biometric or the device credential; takes the success or failure branch.",
+  "inputs": [
+    {
+      "name": "reason",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "description": "Why the app asks, shown by the system prompt."
+    },
+    {
+      "name": "allowDeviceCredential",
+      "id": 2,
+      "type": "bool",
+      "default": true,
+      "description": "Accept the device PIN, pattern or password as a fallback."
+    }
+  ],
+  "output": "bool",
+  "branches": [
+    "success",
+    "failure"
+  ],
+  "effects": [
+    "device",
+    "security"
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "TextSpan",
+  "id": 25,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "A run of styled text with optional child spans.",
+  "flutter": [
+    {
+      "library": "package:flutter/painting.dart",
+      "class": "TextSpan",
+      "constructors": [
+        ""
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "name": "text",
+      "id": 1,
+      "type": "string",
+      "flutter": "text"
+    },
+    {
+      "name": "children",
+      "id": 2,
+      "type": "list<TextSpan>",
+      "flutter": "children",
+      "description": "Child spans, styled on top of this one."
+    },
+    {
+      "name": "style",
+      "id": 3,
+      "type": "TextStyle",
+      "flutter": "style"
+    },
+    {
+      "name": "semanticsLabel",
+      "id": 4,
+      "type": "string",
+      "flutter": "semanticsLabel"
+    },
+    {
+      "name": "semanticsIdentifier",
+      "id": 5,
+      "type": "string",
+      "flutter": "semanticsIdentifier"
+    },
+    {
+      "name": "locale",
+      "id": 6,
+      "type": "string",
+      "flutter": "locale"
+    },
+    {
+      "name": "spellOut",
+      "id": 7,
+      "type": "bool",
+      "flutter": "spellOut"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "recognizer",
+      "reason": "deferred",
+      "note": "Tappable spans arrive with actions (P5)."
+    },
+    {
+      "flutter": "mouseCursor",
+      "reason": "deferred",
+      "note": "Pointer cursors matter only for desktop and web targets."
+    },
+    {
+      "flutter": "onEnter",
+      "reason": "deferred",
+      "note": "Pointer hover matters only for desktop and web targets."
+    },
+    {
+      "flutter": "onExit",
+      "reason": "deferred",
+      "note": "Pointer hover matters only for desktop and web targets."
+    }
+  ]
+}

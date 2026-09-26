@@ -29,7 +29,7 @@ GO            := go
 GO_TOOLCHAIN  := $(shell sed -n 's/^toolchain //p' backend/go.mod)
 GO_INSTALL    := GOTOOLCHAIN=$(GO_TOOLCHAIN) $(GO) install
 GO_MODULES    := backend tools
-DART_PACKAGES := packages/plux_flutter
+DART_PACKAGES := packages/plux_flutter packages/plux_widget_api
 # Generated Dart code is verified by regeneration (CI-003), not by the formatter.
 DART_SOURCES  := find packages -name '*.dart' ! -name '*.g.dart' ! -name '*_generated.dart' ! -path '*/build/*' -print0
 # Everything `make gen` writes; `go-gen-check` fails if any of it changes.
@@ -60,8 +60,8 @@ GO_BUILD_FLAGS  := -trimpath -buildvcs=false -ldflags "-s -w -buildid= \
 
 .PHONY: help setup hooks-install check test build gen gen-check clean \
 	install-go-tools install-golangci-lint install-govulncheck install-gitleaks install-actionlint install-python-tools \
-	go-check go-fmt go-fmt-check go-lint go-tidy go-tidy-check go-gen-check go-test go-test-race go-cover go-vuln go-build go-reproducible \
-	dart-check dart-get dart-lock-check dart-fmt dart-fmt-check dart-analyze dart-test dart-cover \
+	go-check go-fmt go-fmt-check go-lint go-tidy go-tidy-check go-gen-check registry-lock-check go-test go-test-race go-cover go-vuln go-build go-reproducible \
+	dart-check dart-get dart-lock-check dart-fmt dart-fmt-check dart-analyze dart-test dart-cover widgets-api widgets-api-check \
 	studio-check studio-install studio-fmt studio-lint studio-typecheck studio-test studio-cover \
 	release-notes repo-check spec-lint trace secrets workflows-lint reuse-lint hygiene
 
@@ -122,7 +122,7 @@ clean: ## Remove build and coverage output
 
 ##@ Go (backend, tools)
 
-go-check: go-fmt-check go-lint go-tidy-check go-gen-check go-cover go-vuln go-build go-reproducible ## All Go gates
+go-check: go-fmt-check go-lint go-tidy-check go-gen-check registry-lock-check go-cover go-vuln go-build go-reproducible ## All Go gates
 
 go-fmt: ## Format Go code (gofumpt, goimports)
 	@for m in $(GO_MODULES); do (cd $$m && "$(GOLANGCI_LINT)" fmt); done
@@ -143,6 +143,17 @@ go-tidy-check: ## Fail if a go.mod or go.sum is not tidy
 go-gen-check: gen ## Fail if regenerating code changes any file (CI-003)
 	@changed=$$(git status --porcelain -- $(GEN_PATHS)); if [ -n "$$changed" ]; then \
 		echo "$$changed"; echo "✗ Generated code is out of date or uncommitted. Run 'make gen' and commit."; exit 1; fi
+
+# The ref whose permanent-ID lock registry-lock-check compares against.
+LOCK_BASE ?= origin/main
+
+# Verifies: BND-011.
+registry-lock-check: ## Fail if a permanent ID recorded in the lock at LOCK_BASE was changed or removed (BND-011)
+	@if git cat-file -e "$(LOCK_BASE):schema/widgets/ids.lock.json" 2>/dev/null; then \
+		base=$$(mktemp); trap 'rm -f "$$base"' EXIT; \
+		git show "$(LOCK_BASE):schema/widgets/ids.lock.json" > "$$base"; \
+		$(GO) run ./tools/cmd/schemagen -root . -lock-base "$$base"; \
+	else echo "registry-lock-check: no lock at $(LOCK_BASE); nothing to compare"; fi
 
 go-test: ## Run Go unit tests
 	@for m in $(GO_MODULES); do (cd $$m && $(GO) test ./...); done
@@ -174,7 +185,7 @@ go-reproducible: ## Build twice with cold caches and fail unless the binaries ar
 
 ##@ Dart and Flutter (packages, apps)
 
-dart-check: dart-lock-check dart-fmt-check dart-analyze dart-cover ## All Dart gates
+dart-check: dart-lock-check dart-fmt-check dart-analyze widgets-api-check dart-cover ## All Dart gates
 
 dart-get: ## Resolve the pub workspace (updates pubspec.lock)
 	flutter pub get
@@ -198,6 +209,15 @@ dart-test: ## Run Dart and Flutter tests
 dart-cover: ## Run Dart tests with coverage and enforce floors (QA-001)
 	@for p in $(DART_PACKAGES); do (cd $$p && flutter test --coverage); done
 	$(COVGATE) -kind dart $(addsuffix /coverage/lcov.info,$(DART_PACKAGES))
+
+WIDGETS_API := cd packages/plux_widget_api && dart run bin/extract.dart --root ../.. --flutter-version $(FLUTTER_VERSION)
+
+widgets-api: ## Snapshot the pinned Flutter SDK's constructors and enums for the coverage table; then run 'make gen' (WGT-003)
+	$(WIDGETS_API)
+
+# Verifies: WGT-003.
+widgets-api-check: ## Fail if schema/widgets/flutter-api.json does not match the pinned Flutter SDK (WGT-003)
+	$(WIDGETS_API) --check
 
 ##@ Studio (Bun, TypeScript)
 

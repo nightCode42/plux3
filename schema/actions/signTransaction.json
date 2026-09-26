@@ -1,0 +1,39 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "signTransaction",
+  "id": 48,
+  "phase": "P6",
+  "category": "security",
+  "description": "Signs a transaction for strong customer authentication with dynamic linking of amount and payee (SEC-027).",
+  "inputs": [
+    {
+      "name": "transaction",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "description": "The server-issued transaction challenge."
+    },
+    {
+      "name": "amount",
+      "id": 2,
+      "type": "money",
+      "required": true,
+      "description": "The amount shown to and confirmed by the user."
+    },
+    {
+      "name": "payee",
+      "id": 3,
+      "type": "string",
+      "required": true,
+      "description": "The payee shown to and confirmed by the user."
+    }
+  ],
+  "output": "string",
+  "branches": [
+    "declined"
+  ],
+  "effects": [
+    "network",
+    "security"
+  ]
+}

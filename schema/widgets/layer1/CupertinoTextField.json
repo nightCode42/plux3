@@ -1,0 +1,498 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "CupertinoTextField",
+  "id": 96,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/cupertino.dart",
+    "class": "CupertinoTextField",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "cupertino",
+  "icon": "input",
+  "description": "An iOS-style text input whose text is bound to `value`.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 110,
+  "accessibility": {
+    "role": "textField",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "value",
+      "id": 1,
+      "type": "string",
+      "flutter": "controller",
+      "description": "The text, bound two-way: the runtime owns the controller and updates bound state on every change."
+    },
+    {
+      "name": "decoration",
+      "id": 2,
+      "type": "BoxDecoration",
+      "flutter": "decoration"
+    },
+    {
+      "name": "padding",
+      "id": 3,
+      "type": "EdgeInsets",
+      "default": {
+        "all": 7.0
+      },
+      "flutter": "padding"
+    },
+    {
+      "name": "placeholder",
+      "id": 4,
+      "type": "string",
+      "flutter": "placeholder"
+    },
+    {
+      "name": "placeholderStyle",
+      "id": 5,
+      "type": "TextStyle",
+      "flutter": "placeholderStyle"
+    },
+    {
+      "name": "prefixMode",
+      "id": 6,
+      "type": "OverlayVisibilityMode",
+      "default": "always",
+      "flutter": "prefixMode"
+    },
+    {
+      "name": "suffixMode",
+      "id": 7,
+      "type": "OverlayVisibilityMode",
+      "default": "always",
+      "flutter": "suffixMode"
+    },
+    {
+      "name": "crossAxisAlignment",
+      "id": 8,
+      "type": "CrossAxisAlignment",
+      "default": "center",
+      "flutter": "crossAxisAlignment"
+    },
+    {
+      "name": "clearButtonMode",
+      "id": 9,
+      "type": "OverlayVisibilityMode",
+      "default": "never",
+      "flutter": "clearButtonMode"
+    },
+    {
+      "name": "clearButtonSemanticLabel",
+      "id": 10,
+      "type": "string",
+      "flutter": "clearButtonSemanticLabel"
+    },
+    {
+      "name": "keyboardType",
+      "id": 11,
+      "type": "TextInputType",
+      "flutter": "keyboardType"
+    },
+    {
+      "name": "textInputAction",
+      "id": 12,
+      "type": "TextInputAction",
+      "flutter": "textInputAction"
+    },
+    {
+      "name": "textCapitalization",
+      "id": 13,
+      "type": "TextCapitalization",
+      "default": "none",
+      "flutter": "textCapitalization"
+    },
+    {
+      "name": "style",
+      "id": 14,
+      "type": "TextStyle",
+      "flutter": "style"
+    },
+    {
+      "name": "textAlign",
+      "id": 15,
+      "type": "TextAlign",
+      "default": "start",
+      "flutter": "textAlign"
+    },
+    {
+      "name": "textAlignVertical",
+      "id": 16,
+      "type": "TextAlignVertical",
+      "flutter": "textAlignVertical"
+    },
+    {
+      "name": "textDirection",
+      "id": 17,
+      "type": "TextDirection",
+      "flutter": "textDirection"
+    },
+    {
+      "name": "readOnly",
+      "id": 18,
+      "type": "bool",
+      "default": false,
+      "flutter": "readOnly"
+    },
+    {
+      "name": "showCursor",
+      "id": 19,
+      "type": "bool",
+      "flutter": "showCursor"
+    },
+    {
+      "name": "autofocus",
+      "id": 20,
+      "type": "bool",
+      "default": false,
+      "flutter": "autofocus"
+    },
+    {
+      "name": "obscuringCharacter",
+      "id": 21,
+      "type": "string",
+      "default": "•",
+      "flutter": "obscuringCharacter"
+    },
+    {
+      "name": "obscureText",
+      "id": 22,
+      "type": "bool",
+      "default": false,
+      "flutter": "obscureText"
+    },
+    {
+      "name": "autocorrect",
+      "id": 23,
+      "type": "bool",
+      "default": true,
+      "flutter": "autocorrect"
+    },
+    {
+      "name": "smartDashesType",
+      "id": 24,
+      "type": "SmartDashesType",
+      "flutter": "smartDashesType"
+    },
+    {
+      "name": "smartQuotesType",
+      "id": 25,
+      "type": "SmartQuotesType",
+      "flutter": "smartQuotesType"
+    },
+    {
+      "name": "enableSuggestions",
+      "id": 26,
+      "type": "bool",
+      "default": true,
+      "flutter": "enableSuggestions"
+    },
+    {
+      "name": "maxLines",
+      "id": 27,
+      "type": "int",
+      "default": 1,
+      "constraints": {
+        "min": 1
+      },
+      "flutter": "maxLines"
+    },
+    {
+      "name": "minLines",
+      "id": 28,
+      "type": "int",
+      "constraints": {
+        "min": 1
+      },
+      "flutter": "minLines"
+    },
+    {
+      "name": "expands",
+      "id": 29,
+      "type": "bool",
+      "default": false,
+      "flutter": "expands"
+    },
+    {
+      "name": "maxLength",
+      "id": 30,
+      "type": "int",
+      "flutter": "maxLength"
+    },
+    {
+      "name": "maxLengthEnforcement",
+      "id": 31,
+      "type": "MaxLengthEnforcement",
+      "flutter": "maxLengthEnforcement"
+    },
+    {
+      "name": "enabled",
+      "id": 32,
+      "type": "bool",
+      "default": true,
+      "flutter": "enabled"
+    },
+    {
+      "name": "cursorWidth",
+      "id": 33,
+      "type": "double",
+      "default": 2.0,
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "cursorWidth"
+    },
+    {
+      "name": "cursorHeight",
+      "id": 34,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "cursorHeight"
+    },
+    {
+      "name": "cursorRadius",
+      "id": 35,
+      "type": "Radius",
+      "flutter": "cursorRadius"
+    },
+    {
+      "name": "cursorOpacityAnimates",
+      "id": 36,
+      "type": "bool",
+      "default": true,
+      "flutter": "cursorOpacityAnimates"
+    },
+    {
+      "name": "cursorColor",
+      "id": 37,
+      "type": "color",
+      "flutter": "cursorColor"
+    },
+    {
+      "name": "selectionHeightStyle",
+      "id": 38,
+      "type": "BoxHeightStyle",
+      "flutter": "selectionHeightStyle"
+    },
+    {
+      "name": "selectionWidthStyle",
+      "id": 39,
+      "type": "BoxWidthStyle",
+      "flutter": "selectionWidthStyle"
+    },
+    {
+      "name": "keyboardAppearance",
+      "id": 40,
+      "type": "Brightness",
+      "flutter": "keyboardAppearance"
+    },
+    {
+      "name": "scrollPadding",
+      "id": 41,
+      "type": "EdgeInsets",
+      "default": {
+        "all": 20.0
+      },
+      "flutter": "scrollPadding"
+    },
+    {
+      "name": "dragStartBehavior",
+      "id": 42,
+      "type": "DragStartBehavior",
+      "default": "start",
+      "flutter": "dragStartBehavior"
+    },
+    {
+      "name": "enableInteractiveSelection",
+      "id": 43,
+      "type": "bool",
+      "flutter": "enableInteractiveSelection"
+    },
+    {
+      "name": "selectAllOnFocus",
+      "id": 44,
+      "type": "bool",
+      "flutter": "selectAllOnFocus"
+    },
+    {
+      "name": "scrollPhysics",
+      "id": 45,
+      "type": "ScrollPhysics",
+      "flutter": "scrollPhysics"
+    },
+    {
+      "name": "autofillHints",
+      "id": 46,
+      "type": "list<string>",
+      "flutter": "autofillHints"
+    },
+    {
+      "name": "clipBehavior",
+      "id": 47,
+      "type": "Clip",
+      "default": "hardEdge",
+      "flutter": "clipBehavior"
+    },
+    {
+      "name": "stylusHandwritingEnabled",
+      "id": 48,
+      "type": "bool",
+      "flutter": "stylusHandwritingEnabled"
+    },
+    {
+      "name": "enableIMEPersonalizedLearning",
+      "id": 49,
+      "type": "bool",
+      "default": true,
+      "flutter": "enableIMEPersonalizedLearning"
+    },
+    {
+      "name": "enableInlinePrediction",
+      "id": 50,
+      "type": "bool",
+      "flutter": "enableInlinePrediction"
+    }
+  ],
+  "events": [
+    {
+      "name": "onChanged",
+      "id": 1,
+      "payload": "string",
+      "flutter": "onChanged"
+    },
+    {
+      "name": "onEditingComplete",
+      "id": 2,
+      "flutter": "onEditingComplete"
+    },
+    {
+      "name": "onSubmitted",
+      "id": 3,
+      "payload": "string",
+      "flutter": "onSubmitted"
+    },
+    {
+      "name": "onTapOutside",
+      "id": 4,
+      "payload": "GestureDetails",
+      "flutter": "onTapOutside"
+    },
+    {
+      "name": "onTapUpOutside",
+      "id": 5,
+      "payload": "GestureDetails",
+      "flutter": "onTapUpOutside"
+    },
+    {
+      "name": "onTap",
+      "id": 6,
+      "flutter": "onTap"
+    }
+  ],
+  "slots": [
+    {
+      "name": "prefix",
+      "id": 1,
+      "flutter": "prefix"
+    },
+    {
+      "name": "suffix",
+      "id": 2,
+      "flutter": "suffix"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "groupId",
+      "reason": "non-serialisable",
+      "note": "Text-field grouping is managed by the runtime."
+    },
+    {
+      "flutter": "focusNode",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "undoController",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "strutStyle",
+      "reason": "deferred",
+      "note": "Strut styles are rarely needed; TextStyle.height covers line height."
+    },
+    {
+      "flutter": "toolbarOptions",
+      "reason": "deprecated",
+      "note": "Deprecated in Flutter."
+    },
+    {
+      "flutter": "inputFormatters",
+      "reason": "deferred",
+      "note": "Input masks arrive with forms (STA-020, P5)."
+    },
+    {
+      "flutter": "selectionControls",
+      "reason": "non-serialisable"
+    },
+    {
+      "flutter": "scrollController",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "contentInsertionConfiguration",
+      "reason": "deferred",
+      "note": "Platform text services use their defaults."
+    },
+    {
+      "flutter": "restorationId",
+      "reason": "non-serialisable",
+      "note": "State restoration is managed by the runtime."
+    },
+    {
+      "flutter": "scribbleEnabled",
+      "reason": "deprecated",
+      "note": "Deprecated in Flutter."
+    },
+    {
+      "flutter": "contextMenuBuilder",
+      "reason": "deferred",
+      "note": "Custom builders are deferred."
+    },
+    {
+      "flutter": "spellCheckConfiguration",
+      "reason": "deferred",
+      "note": "Platform text services use their defaults."
+    },
+    {
+      "flutter": "magnifierConfiguration",
+      "reason": "deferred",
+      "note": "Platform text services use their defaults."
+    }
+  ]
+}

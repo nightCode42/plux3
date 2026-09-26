@@ -1,0 +1,67 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Center",
+  "id": 9,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "Center",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "layout",
+  "icon": "filter_center_focus",
+  "description": "Centres its child within itself.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 5,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "widthFactor",
+      "id": 1,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "widthFactor"
+    },
+    {
+      "name": "heightFactor",
+      "id": 2,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "heightFactor"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

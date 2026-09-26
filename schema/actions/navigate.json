@@ -1,0 +1,45 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "navigate",
+  "id": 1,
+  "phase": "P4",
+  "category": "navigation",
+  "description": "Pushes, replaces, pops until or clears and pushes a Plux route or native route with typed parameters.",
+  "typeParameters": [
+    {
+      "name": "P",
+      "description": "The parameter object type of the target route; each field of `params` is checked against the route parameter of the same name (SCH-025)."
+    }
+  ],
+  "inputs": [
+    {
+      "name": "route",
+      "id": 1,
+      "type": "route",
+      "required": true,
+      "description": "The target route."
+    },
+    {
+      "name": "params",
+      "id": 2,
+      "type": "P",
+      "description": "Parameters of the target route."
+    },
+    {
+      "name": "mode",
+      "id": 3,
+      "type": "NavigationMode",
+      "default": "push",
+      "description": "How the navigation stack changes."
+    },
+    {
+      "name": "until",
+      "id": 4,
+      "type": "route?",
+      "description": "For popUntil: the route to pop back to."
+    }
+  ],
+  "effects": [
+    "navigation"
+  ]
+}

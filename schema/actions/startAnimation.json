@@ -1,0 +1,21 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "startAnimation",
+  "id": 49,
+  "phase": "P5",
+  "category": "animation",
+  "description": "Plays a timeline from the start.",
+  "inputs": [
+    {
+      "name": "animation",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "animation",
+      "description": "The timeline."
+    }
+  ],
+  "effects": [
+    "ui"
+  ]
+}

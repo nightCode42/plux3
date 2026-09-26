@@ -1,0 +1,209 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Scaffold",
+  "id": 86,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "Scaffold",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "structure",
+  "icon": "web",
+  "description": "The basic Material page structure: app bar, body, floating action button, bottom bar.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 60,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "floatingActionButtonLocation",
+      "id": 1,
+      "type": "FloatingActionButtonLocation",
+      "flutter": "floatingActionButtonLocation"
+    },
+    {
+      "name": "persistentFooterAlignment",
+      "id": 2,
+      "type": "Alignment",
+      "default": {
+        "start": 1,
+        "y": 0
+      },
+      "flutter": "persistentFooterAlignment"
+    },
+    {
+      "name": "persistentFooterDecoration",
+      "id": 3,
+      "type": "BoxDecoration",
+      "flutter": "persistentFooterDecoration"
+    },
+    {
+      "name": "backgroundColor",
+      "id": 4,
+      "type": "color",
+      "flutter": "backgroundColor"
+    },
+    {
+      "name": "resizeToAvoidBottomInset",
+      "id": 5,
+      "type": "bool",
+      "flutter": "resizeToAvoidBottomInset"
+    },
+    {
+      "name": "primary",
+      "id": 6,
+      "type": "bool",
+      "default": true,
+      "flutter": "primary"
+    },
+    {
+      "name": "drawerDragStartBehavior",
+      "id": 7,
+      "type": "DragStartBehavior",
+      "default": "start",
+      "flutter": "drawerDragStartBehavior"
+    },
+    {
+      "name": "extendBody",
+      "id": 8,
+      "type": "bool",
+      "default": false,
+      "flutter": "extendBody"
+    },
+    {
+      "name": "drawerBarrierDismissible",
+      "id": 9,
+      "type": "bool",
+      "default": true,
+      "flutter": "drawerBarrierDismissible"
+    },
+    {
+      "name": "extendBodyBehindAppBar",
+      "id": 10,
+      "type": "bool",
+      "default": false,
+      "flutter": "extendBodyBehindAppBar"
+    },
+    {
+      "name": "drawerScrimColor",
+      "id": 11,
+      "type": "color",
+      "flutter": "drawerScrimColor"
+    },
+    {
+      "name": "drawerEdgeDragWidth",
+      "id": 12,
+      "type": "double",
+      "flutter": "drawerEdgeDragWidth"
+    },
+    {
+      "name": "drawerEnableOpenDragGesture",
+      "id": 13,
+      "type": "bool",
+      "default": true,
+      "flutter": "drawerEnableOpenDragGesture"
+    },
+    {
+      "name": "endDrawerEnableOpenDragGesture",
+      "id": 14,
+      "type": "bool",
+      "default": true,
+      "flutter": "endDrawerEnableOpenDragGesture"
+    }
+  ],
+  "events": [
+    {
+      "name": "onDrawerChanged",
+      "id": 1,
+      "payload": "bool",
+      "flutter": "onDrawerChanged"
+    },
+    {
+      "name": "onEndDrawerChanged",
+      "id": 2,
+      "payload": "bool",
+      "flutter": "onEndDrawerChanged"
+    }
+  ],
+  "slots": [
+    {
+      "name": "appBar",
+      "id": 1,
+      "flutter": "appBar"
+    },
+    {
+      "name": "body",
+      "id": 2,
+      "flutter": "body"
+    },
+    {
+      "name": "floatingActionButton",
+      "id": 3,
+      "flutter": "floatingActionButton"
+    },
+    {
+      "name": "persistentFooterButtons",
+      "id": 4,
+      "list": true,
+      "flutter": "persistentFooterButtons"
+    },
+    {
+      "name": "drawer",
+      "id": 5,
+      "flutter": "drawer"
+    },
+    {
+      "name": "endDrawer",
+      "id": 6,
+      "flutter": "endDrawer"
+    },
+    {
+      "name": "bottomNavigationBar",
+      "id": 7,
+      "flutter": "bottomNavigationBar"
+    },
+    {
+      "name": "bottomSheet",
+      "id": 8,
+      "flutter": "bottomSheet"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "floatingActionButtonAnimator",
+      "reason": "deferred",
+      "note": "Custom animators arrive with animations (P5)."
+    },
+    {
+      "flutter": "bottomSheetScrimBuilder",
+      "reason": "deferred",
+      "note": "Custom builders are deferred."
+    },
+    {
+      "flutter": "restorationId",
+      "reason": "non-serialisable",
+      "note": "State restoration is managed by the runtime."
+    }
+  ]
+}

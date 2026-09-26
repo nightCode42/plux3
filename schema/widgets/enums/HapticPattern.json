@@ -1,0 +1,40 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "HapticPattern",
+  "id": 69,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "A haptic feedback pattern.",
+  "values": [
+    {
+      "name": "light",
+      "id": 1,
+      "description": "A light impact."
+    },
+    {
+      "name": "medium",
+      "id": 2,
+      "description": "A medium impact."
+    },
+    {
+      "name": "heavy",
+      "id": 3,
+      "description": "A heavy impact."
+    },
+    {
+      "name": "selection",
+      "id": 4,
+      "description": "A selection click."
+    },
+    {
+      "name": "vibrate",
+      "id": 5,
+      "description": "A short vibration."
+    }
+  ]
+}

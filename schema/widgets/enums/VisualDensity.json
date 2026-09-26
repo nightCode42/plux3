@@ -1,0 +1,31 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "VisualDensity",
+  "id": 65,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Density of Material components.",
+  "values": [
+    {
+      "name": "standard",
+      "id": 1
+    },
+    {
+      "name": "comfortable",
+      "id": 2
+    },
+    {
+      "name": "compact",
+      "id": 3
+    },
+    {
+      "name": "adaptivePlatformDensity",
+      "id": 4
+    }
+  ]
+}

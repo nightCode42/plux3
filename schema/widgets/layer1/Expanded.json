@@ -1,0 +1,60 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Expanded",
+  "id": 31,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "Expanded",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "layout",
+  "icon": "open_in_full",
+  "description": "Makes its child fill the available space along the main axis of a Row, Column or Flex.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 3,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "flex",
+      "id": 1,
+      "type": "int",
+      "default": 1,
+      "constraints": {
+        "min": 0
+      },
+      "flutter": "flex"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "required": true,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

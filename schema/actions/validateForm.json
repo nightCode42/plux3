@@ -1,0 +1,26 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "validateForm",
+  "id": 13,
+  "phase": "P5",
+  "category": "forms",
+  "description": "Validates every field of a form and shows the errors; takes the valid or invalid branch.",
+  "inputs": [
+    {
+      "name": "form",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "form",
+      "description": "The form scope."
+    }
+  ],
+  "output": "bool",
+  "branches": [
+    "valid",
+    "invalid"
+  ],
+  "effects": [
+    "ui"
+  ]
+}

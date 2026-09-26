@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://plux.dev/schema/v1/registry/action.schema.json",
+  "title": "Plux action descriptor",
+  "description": "A built-in action of the action catalogue (spec Appendix D, BND-011). Files: schema/actions/<name>.json.",
+  "type": "object",
+  "required": [
+    "name",
+    "id",
+    "phase",
+    "category",
+    "description"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "name": {
+      "$ref": "common.schema.json#/$defs/name"
+    },
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "phase": {
+      "$ref": "common.schema.json#/$defs/phase"
+    },
+    "category": {
+      "enum": [
+        "navigation",
+        "feedback",
+        "state",
+        "forms",
+        "data",
+        "localDb",
+        "compute",
+        "control",
+        "analytics",
+        "app",
+        "device",
+        "security",
+        "animation",
+        "host",
+        "plux",
+        "payments"
+      ]
+    },
+    "description": {
+      "$ref": "common.schema.json#/$defs/description"
+    },
+    "typeParameters": {
+      "type": "array",
+      "description": "Type parameters, bound by the compiler from the step's context as each description states (ACT-001).",
+      "items": {
+        "type": "object",
+        "description": "A type parameter.",
+        "required": [
+          "name",
+          "description"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Z]$"
+          },
+          "description": {
+            "$ref": "common.schema.json#/$defs/description"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "A typed input.",
+        "required": [
+          "name",
+          "id",
+          "type"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "common.schema.json#/$defs/name"
+          },
+          "id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "type": {
+            "$ref": "common.schema.json#/$defs/typeExpr"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "default": {},
+          "ref": {
+            "enum": [
+              "state",
+              "dataSource",
+              "operation",
+              "stream",
+              "collection",
+              "flow",
+              "form",
+              "function",
+              "animation",
+              "permission",
+              "tab",
+              "hostEvent",
+              "nativeAction",
+              "telemetryEvent"
+            ],
+            "description": "What a string input names; the compiler resolves it and Studio offers a picker."
+          },
+          "description": {
+            "$ref": "common.schema.json#/$defs/description"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "output": {
+      "$ref": "common.schema.json#/$defs/typeExpr"
+    },
+    "branches": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "common.schema.json#/$defs/name"
+      },
+      "description": "Named outgoing edges besides next, onSuccess and onError."
+    },
+    "branchesFrom": {
+      "$ref": "common.schema.json#/$defs/name",
+      "description": "A list<string> input whose values name further branches, as the cases of switch."
+    },
+    "effects": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "navigation",
+          "state",
+          "network",
+          "storage",
+          "device",
+          "ui",
+          "telemetry",
+          "security",
+          "host"
+        ]
+      }
+    },
+    "deprecated": {
+      "$ref": "common.schema.json#/$defs/deprecation"
+    }
+  },
+  "additionalProperties": false
+}

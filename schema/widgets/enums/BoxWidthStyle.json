@@ -1,0 +1,27 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "BoxWidthStyle",
+  "id": 9,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum BoxWidthStyle.",
+  "flutter": {
+    "library": "dart:ui",
+    "enum": "BoxWidthStyle"
+  },
+  "values": [
+    {
+      "name": "tight",
+      "id": 1
+    },
+    {
+      "name": "max",
+      "id": 2
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "BackButton",
+  "id": 84,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "BackButton",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "input",
+  "icon": "arrow_back",
+  "description": "A back-arrow button that pops the current route.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 20,
+  "accessibility": {
+    "role": "button",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "color",
+      "id": 1,
+      "type": "color",
+      "flutter": "color"
+    },
+    {
+      "name": "style",
+      "id": 2,
+      "type": "ButtonStyle",
+      "flutter": "style"
+    }
+  ],
+  "events": [
+    {
+      "name": "onPressed",
+      "id": 1,
+      "flutter": "onPressed"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

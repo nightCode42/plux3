@@ -1,0 +1,179 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Slider",
+  "id": 74,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "Slider",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "input",
+  "icon": "tune",
+  "description": "Selects a value from a continuous or discrete range.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 30,
+  "accessibility": {
+    "role": "slider",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "value",
+      "id": 1,
+      "type": "double",
+      "required": true,
+      "flutter": "value"
+    },
+    {
+      "name": "secondaryTrackValue",
+      "id": 2,
+      "type": "double",
+      "flutter": "secondaryTrackValue"
+    },
+    {
+      "name": "min",
+      "id": 3,
+      "type": "double",
+      "default": 0.0,
+      "flutter": "min"
+    },
+    {
+      "name": "max",
+      "id": 4,
+      "type": "double",
+      "default": 1.0,
+      "flutter": "max"
+    },
+    {
+      "name": "divisions",
+      "id": 5,
+      "type": "int",
+      "constraints": {
+        "min": 1
+      },
+      "flutter": "divisions"
+    },
+    {
+      "name": "label",
+      "id": 6,
+      "type": "string",
+      "flutter": "label"
+    },
+    {
+      "name": "activeColor",
+      "id": 7,
+      "type": "color",
+      "flutter": "activeColor"
+    },
+    {
+      "name": "inactiveColor",
+      "id": 8,
+      "type": "color",
+      "flutter": "inactiveColor"
+    },
+    {
+      "name": "secondaryActiveColor",
+      "id": 9,
+      "type": "color",
+      "flutter": "secondaryActiveColor"
+    },
+    {
+      "name": "thumbColor",
+      "id": 10,
+      "type": "color",
+      "flutter": "thumbColor"
+    },
+    {
+      "name": "overlayColor",
+      "id": 11,
+      "type": "WidgetStateColor",
+      "flutter": "overlayColor"
+    },
+    {
+      "name": "autofocus",
+      "id": 12,
+      "type": "bool",
+      "default": false,
+      "flutter": "autofocus"
+    },
+    {
+      "name": "allowedInteraction",
+      "id": 13,
+      "type": "SliderInteraction",
+      "flutter": "allowedInteraction"
+    },
+    {
+      "name": "padding",
+      "id": 14,
+      "type": "EdgeInsets",
+      "flutter": "padding"
+    },
+    {
+      "name": "showValueIndicator",
+      "id": 15,
+      "type": "ShowValueIndicator",
+      "flutter": "showValueIndicator"
+    }
+  ],
+  "events": [
+    {
+      "name": "onChanged",
+      "id": 1,
+      "payload": "double",
+      "flutter": "onChanged"
+    },
+    {
+      "name": "onChangeStart",
+      "id": 2,
+      "payload": "double",
+      "flutter": "onChangeStart"
+    },
+    {
+      "name": "onChangeEnd",
+      "id": 3,
+      "payload": "double",
+      "flutter": "onChangeEnd"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "mouseCursor",
+      "reason": "deferred",
+      "note": "Pointer cursors matter only for desktop and web targets."
+    },
+    {
+      "flutter": "semanticFormatterCallback",
+      "reason": "non-serialisable",
+      "note": "A Dart callback; value semantics come from the value."
+    },
+    {
+      "flutter": "focusNode",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "year2023",
+      "reason": "deprecated",
+      "note": "Deprecated in Flutter."
+    }
+  ]
+}

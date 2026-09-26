@@ -1,0 +1,44 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "Shadow",
+  "id": 22,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "A shadow cast by text or an icon.",
+  "flutter": [
+    {
+      "library": "package:flutter/painting.dart",
+      "class": "Shadow",
+      "constructors": [
+        ""
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "name": "color",
+      "id": 1,
+      "type": "color",
+      "flutter": "color"
+    },
+    {
+      "name": "offset",
+      "id": 2,
+      "type": "Offset",
+      "default": "zero",
+      "flutter": "offset"
+    },
+    {
+      "name": "blurRadius",
+      "id": 3,
+      "type": "double",
+      "default": 0.0,
+      "flutter": "blurRadius"
+    }
+  ]
+}

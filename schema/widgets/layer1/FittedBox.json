@@ -1,0 +1,70 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "FittedBox",
+  "id": 15,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "FittedBox",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "layout",
+  "icon": "fit_screen",
+  "description": "Scales and positions its child within itself according to `fit`.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 8,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "fit",
+      "id": 1,
+      "type": "BoxFit",
+      "default": "contain",
+      "flutter": "fit"
+    },
+    {
+      "name": "alignment",
+      "id": 2,
+      "type": "Alignment",
+      "default": "center",
+      "flutter": "alignment"
+    },
+    {
+      "name": "clipBehavior",
+      "id": 3,
+      "type": "Clip",
+      "default": "none",
+      "flutter": "clipBehavior"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

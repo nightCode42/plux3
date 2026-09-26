@@ -1,0 +1,36 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "RangeLabels",
+  "id": 20,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Labels for the start and end of a range.",
+  "flutter": [
+    {
+      "library": "package:flutter/material.dart",
+      "class": "RangeLabels",
+      "constructors": [
+        ""
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "name": "start",
+      "id": 1,
+      "type": "string",
+      "flutter": "start"
+    },
+    {
+      "name": "end",
+      "id": 2,
+      "type": "string",
+      "flutter": "end"
+    }
+  ]
+}

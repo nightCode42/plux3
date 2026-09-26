@@ -1,0 +1,19 @@
+name: plux_widget_api
+description: >-
+  Development tool that extracts the constructor signatures of Flutter
+  widgets from the pinned Flutter SDK for the widget coverage table
+  (WGT-003, ADR-0010). Never a dependency of a shipped package.
+version: 0.0.1
+repository: https://github.com/nightCode42/plux3
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+
+resolution: workspace
+
+dependencies:
+  analyzer: ^13.3.0
+
+dev_dependencies:
+  test: ^1.26.0

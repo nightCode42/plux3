@@ -1,0 +1,30 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "pickFile",
+  "id": 44,
+  "phase": "P5",
+  "category": "device",
+  "description": "Lets the user pick files.",
+  "inputs": [
+    {
+      "name": "mimeTypes",
+      "id": 1,
+      "type": "list<string>",
+      "description": "Accepted media types; any type when empty."
+    },
+    {
+      "name": "multiple",
+      "id": 2,
+      "type": "bool",
+      "default": false,
+      "description": "Allow picking more than one file."
+    }
+  ],
+  "output": "list<PickedFile>",
+  "branches": [
+    "cancelled"
+  ],
+  "effects": [
+    "device"
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "WidgetStateTextStyle",
+  "id": 33,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "A TextStyle per interaction state. The first matching state wins, in the order disabled, error, dragged, pressed, hovered, focused, selected; otherwise `value`.",
+  "fields": [
+    {
+      "name": "value",
+      "id": 1,
+      "type": "TextStyle",
+      "description": "Used when no listed state applies."
+    },
+    {
+      "name": "disabled",
+      "id": 2,
+      "type": "TextStyle"
+    },
+    {
+      "name": "error",
+      "id": 3,
+      "type": "TextStyle"
+    },
+    {
+      "name": "dragged",
+      "id": 4,
+      "type": "TextStyle"
+    },
+    {
+      "name": "pressed",
+      "id": 5,
+      "type": "TextStyle"
+    },
+    {
+      "name": "hovered",
+      "id": 6,
+      "type": "TextStyle"
+    },
+    {
+      "name": "focused",
+      "id": 7,
+      "type": "TextStyle"
+    },
+    {
+      "name": "selected",
+      "id": 8,
+      "type": "TextStyle"
+    }
+  ]
+}

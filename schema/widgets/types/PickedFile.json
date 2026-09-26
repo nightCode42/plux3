@@ -1,0 +1,43 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "PickedFile",
+  "id": 34,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "A file the user picked or captured, held by the runtime; plugins address it by its handle.",
+  "fields": [
+    {
+      "name": "handle",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "description": "Opaque handle of the file in the runtime's storage."
+    },
+    {
+      "name": "name",
+      "id": 2,
+      "type": "string",
+      "required": true,
+      "description": "The file name."
+    },
+    {
+      "name": "mimeType",
+      "id": 3,
+      "type": "string",
+      "required": true,
+      "description": "The media type, such as image/jpeg."
+    },
+    {
+      "name": "sizeBytes",
+      "id": 4,
+      "type": "int",
+      "required": true,
+      "description": "The size in bytes."
+    }
+  ]
+}

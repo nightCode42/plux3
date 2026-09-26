@@ -1,0 +1,23 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "FloatingLabelAlignment",
+  "id": 20,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Horizontal position of a floating label.",
+  "values": [
+    {
+      "name": "start",
+      "id": 1
+    },
+    {
+      "name": "center",
+      "id": 2
+    }
+  ]
+}

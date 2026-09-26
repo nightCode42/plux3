@@ -1,0 +1,67 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "ClipRRect",
+  "id": 20,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "ClipRRect",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "layout",
+  "icon": "rounded_corner",
+  "description": "Clips its child to a rounded rectangle.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 8,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "borderRadius",
+      "id": 1,
+      "type": "BorderRadius",
+      "default": "zero",
+      "flutter": "borderRadius"
+    },
+    {
+      "name": "clipBehavior",
+      "id": 2,
+      "type": "Clip",
+      "default": "antiAlias",
+      "flutter": "clipBehavior"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "clipper",
+      "reason": "non-serialisable"
+    }
+  ]
+}

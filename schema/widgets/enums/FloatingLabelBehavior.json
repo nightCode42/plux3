@@ -1,0 +1,31 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "FloatingLabelBehavior",
+  "id": 21,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum FloatingLabelBehavior.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "FloatingLabelBehavior"
+  },
+  "values": [
+    {
+      "name": "never",
+      "id": 1
+    },
+    {
+      "name": "auto",
+      "id": 2
+    },
+    {
+      "name": "always",
+      "id": 3
+    }
+  ]
+}

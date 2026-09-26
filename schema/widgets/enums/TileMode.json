@@ -1,0 +1,35 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "TileMode",
+  "id": 62,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum TileMode.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "TileMode"
+  },
+  "values": [
+    {
+      "name": "clamp",
+      "id": 1
+    },
+    {
+      "name": "repeated",
+      "id": 2
+    },
+    {
+      "name": "mirror",
+      "id": 3
+    },
+    {
+      "name": "decal",
+      "id": 4
+    }
+  ]
+}

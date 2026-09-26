@@ -1,0 +1,52 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "SkeletonLoader",
+  "id": 99,
+  "layer": 2,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "category": "feedback",
+  "icon": "hourglass_empty",
+  "description": "Shimmering placeholder blocks shown while content loads.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 25,
+  "accessibility": {
+    "role": "progress",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "lines",
+      "id": 1,
+      "type": "int",
+      "default": 3,
+      "constraints": {
+        "min": 1
+      },
+      "description": "Number of text-line placeholders."
+    },
+    {
+      "name": "avatar",
+      "id": 2,
+      "type": "bool",
+      "default": false,
+      "description": "Show a round avatar placeholder."
+    },
+    {
+      "name": "shimmer",
+      "id": 3,
+      "type": "bool",
+      "default": true,
+      "description": "Animate a shimmer; disabled when the device reduces motion."
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "ClipOval",
+  "id": 21,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "ClipOval",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "layout",
+  "icon": "circle",
+  "description": "Clips its child to an oval.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 8,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "clipBehavior",
+      "id": 1,
+      "type": "Clip",
+      "default": "antiAlias",
+      "flutter": "clipBehavior"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "clipper",
+      "reason": "non-serialisable"
+    }
+  ]
+}

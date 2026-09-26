@@ -1,0 +1,35 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "TextOverflow",
+  "id": 60,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum TextOverflow.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "TextOverflow"
+  },
+  "values": [
+    {
+      "name": "clip",
+      "id": 1
+    },
+    {
+      "name": "fade",
+      "id": 2
+    },
+    {
+      "name": "ellipsis",
+      "id": 3
+    },
+    {
+      "name": "visible",
+      "id": 4
+    }
+  ]
+}

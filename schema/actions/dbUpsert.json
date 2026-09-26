@@ -1,0 +1,41 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "dbUpsert",
+  "id": 22,
+  "phase": "P5",
+  "category": "localDb",
+  "description": "Inserts a record, or replaces the record with the same key.",
+  "typeParameters": [
+    {
+      "name": "T",
+      "description": "The record type of the referenced collection."
+    }
+  ],
+  "inputs": [
+    {
+      "name": "collection",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "collection",
+      "description": "The collection."
+    },
+    {
+      "name": "key",
+      "id": 2,
+      "type": "string",
+      "required": true,
+      "description": "The record key."
+    },
+    {
+      "name": "record",
+      "id": 3,
+      "type": "T",
+      "required": true,
+      "description": "The record."
+    }
+  ],
+  "effects": [
+    "storage"
+  ]
+}

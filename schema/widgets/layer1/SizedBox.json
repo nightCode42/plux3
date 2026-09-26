@@ -1,0 +1,61 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "SizedBox",
+  "id": 10,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "SizedBox",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "layout",
+  "icon": "crop_square",
+  "description": "A box with a fixed width and height, or a spacer.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 4,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "width",
+      "id": 1,
+      "type": "double",
+      "flutter": "width"
+    },
+    {
+      "name": "height",
+      "id": 2,
+      "type": "double",
+      "flutter": "height"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

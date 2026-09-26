@@ -1,0 +1,21 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "resetState",
+  "id": 11,
+  "phase": "P5",
+  "category": "state",
+  "description": "Resets a state entry to its declared initial value.",
+  "inputs": [
+    {
+      "name": "path",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "state",
+      "description": "The state entry."
+    }
+  ],
+  "effects": [
+    "state"
+  ]
+}

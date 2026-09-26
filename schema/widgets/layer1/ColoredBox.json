@@ -1,0 +1,63 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "ColoredBox",
+  "id": 19,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "ColoredBox",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "layout",
+  "icon": "format_color_fill",
+  "description": "Paints a colour behind its child.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 4,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "color",
+      "id": 1,
+      "type": "color",
+      "required": true,
+      "flutter": "color"
+    },
+    {
+      "name": "isAntiAlias",
+      "id": 2,
+      "type": "bool",
+      "default": true,
+      "flutter": "isAntiAlias"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

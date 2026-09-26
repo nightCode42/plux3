@@ -1,0 +1,23 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "capturePhoto",
+  "id": 43,
+  "phase": "P5",
+  "category": "device",
+  "description": "Takes a photo with the camera.",
+  "inputs": [
+    {
+      "name": "maxDimension",
+      "id": 1,
+      "type": "int?",
+      "description": "Scale the photo down so neither side exceeds this many pixels."
+    }
+  ],
+  "output": "PickedFile",
+  "branches": [
+    "cancelled"
+  ],
+  "effects": [
+    "device"
+  ]
+}

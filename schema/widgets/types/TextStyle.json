@@ -1,0 +1,175 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "TextStyle",
+  "id": 26,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "The style of text.",
+  "flutter": [
+    {
+      "library": "package:flutter/painting.dart",
+      "class": "TextStyle",
+      "constructors": [
+        ""
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "name": "inherit",
+      "id": 1,
+      "type": "bool",
+      "default": true,
+      "flutter": "inherit"
+    },
+    {
+      "name": "color",
+      "id": 2,
+      "type": "color",
+      "flutter": "color"
+    },
+    {
+      "name": "backgroundColor",
+      "id": 3,
+      "type": "color",
+      "flutter": "backgroundColor"
+    },
+    {
+      "name": "fontSize",
+      "id": 4,
+      "type": "double",
+      "flutter": "fontSize"
+    },
+    {
+      "name": "fontWeight",
+      "id": 5,
+      "type": "FontWeight",
+      "flutter": "fontWeight"
+    },
+    {
+      "name": "fontStyle",
+      "id": 6,
+      "type": "FontStyle",
+      "flutter": "fontStyle"
+    },
+    {
+      "name": "letterSpacing",
+      "id": 7,
+      "type": "double",
+      "flutter": "letterSpacing"
+    },
+    {
+      "name": "wordSpacing",
+      "id": 8,
+      "type": "double",
+      "flutter": "wordSpacing"
+    },
+    {
+      "name": "textBaseline",
+      "id": 9,
+      "type": "TextBaseline",
+      "flutter": "textBaseline"
+    },
+    {
+      "name": "height",
+      "id": 10,
+      "type": "double",
+      "flutter": "height"
+    },
+    {
+      "name": "leadingDistribution",
+      "id": 11,
+      "type": "TextLeadingDistribution",
+      "flutter": "leadingDistribution"
+    },
+    {
+      "name": "locale",
+      "id": 12,
+      "type": "string",
+      "flutter": "locale"
+    },
+    {
+      "name": "shadows",
+      "id": 13,
+      "type": "list<Shadow>",
+      "flutter": "shadows"
+    },
+    {
+      "name": "decoration",
+      "id": 14,
+      "type": "TextDecoration",
+      "flutter": "decoration"
+    },
+    {
+      "name": "decorationColor",
+      "id": 15,
+      "type": "color",
+      "flutter": "decorationColor"
+    },
+    {
+      "name": "decorationStyle",
+      "id": 16,
+      "type": "TextDecorationStyle",
+      "flutter": "decorationStyle"
+    },
+    {
+      "name": "decorationThickness",
+      "id": 17,
+      "type": "double",
+      "flutter": "decorationThickness"
+    },
+    {
+      "name": "fontFamily",
+      "id": 18,
+      "type": "string",
+      "flutter": "fontFamily"
+    },
+    {
+      "name": "fontFamilyFallback",
+      "id": 19,
+      "type": "list<string>",
+      "flutter": "fontFamilyFallback"
+    },
+    {
+      "name": "overflow",
+      "id": 20,
+      "type": "TextOverflow",
+      "flutter": "overflow"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "foreground",
+      "reason": "non-serialisable"
+    },
+    {
+      "flutter": "background",
+      "reason": "non-serialisable"
+    },
+    {
+      "flutter": "fontFeatures",
+      "reason": "deferred",
+      "note": "OpenType feature settings are deferred."
+    },
+    {
+      "flutter": "fontVariations",
+      "reason": "deferred",
+      "note": "Variable-font axes are deferred; use fontWeight."
+    },
+    {
+      "flutter": "debugLabel",
+      "reason": "non-serialisable",
+      "note": "Debugging aid of the Flutter framework."
+    },
+    {
+      "flutter": "package",
+      "reason": "non-serialisable",
+      "note": "Asset packages are resolved by the runtime."
+    }
+  ]
+}
