@@ -1,5 +1,8 @@
 # Build output
 /bin/
+# `go build ./cmd/...` without -o writes the binary beside the module.
+/backend/plux
+/backend/plux-server
 /dist/
 build/
 *.exe

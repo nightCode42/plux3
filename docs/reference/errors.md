@@ -104,6 +104,38 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Move or rename the file as described in the document-model reference.
 
+### PLX-1021
+
+`REQUEST_TOO_LARGE` · error · Request too large
+
+**Cause.** The request body, or a value inside it, is larger than the limit the installation allows. Limits bound every input so that one caller cannot exhaust the server (SEC-104).
+
+**Fix.** Send less in one call, or ask an administrator to raise the limit for this installation.
+
+### PLX-1030
+
+`REVISION_CONFLICT` · error · The document changed
+
+**Cause.** The document has been written since the revision this call is based on, so applying the change would overwrite that work (SRV-030).
+
+**Fix.** Read the document again, reapply the change to the current revision, and send it.
+
+### PLX-1031
+
+`IDEMPOTENCY_CONFLICT` · error · Idempotency key reused
+
+**Cause.** The idempotency key was used before with a different request. A key identifies one request, so that a retry returns the original result rather than acting twice (SRV-005).
+
+**Fix.** Use a new idempotency key for a different request, or repeat the original request unchanged.
+
+### PLX-1032
+
+`INVALID_PAGE_TOKEN` · error · Invalid page token
+
+**Cause.** The page token is not one this server issued, or it belongs to a different filter or ordering. Tokens are integrity-protected and bound to the query they continue (SRV-004).
+
+**Fix.** Start the list again without a page token.
+
 ### PLX-1101
 
 `DUPLICATE_KEY` · error · Duplicate key
@@ -611,6 +643,74 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 **Cause.** The zstd transport encoding is corrupt, or it decompresses to more than the declared size or the configured limit (BND-007).
 
 **Fix.** Download the bundle again.
+
+## Security (PLX-6000–6999)
+
+### PLX-6030
+
+`OUTBOUND_REQUEST_BLOCKED` · error · Outbound request blocked
+
+**Cause.** A request to a user-supplied URL would have reached a private, loopback, link-local or metadata address. Those are refused unless the installation allows them explicitly (SEC-105).
+
+**Fix.** Use a publicly reachable address, or ask an administrator to allow the range this installation should reach.
+
+## Governance (PLX-8000–8999)
+
+### PLX-8010
+
+`AUTHENTICATION_REQUIRED` · error · Authentication required
+
+**Cause.** The call carried no credential, or one that has expired or been revoked.
+
+**Fix.** Sign in again, or use a valid access token.
+
+### PLX-8011
+
+`MULTI_FACTOR_REQUIRED` · error · Second factor required
+
+**Cause.** The capability this call needs — publishing, approving, managing keys or managing members — requires a second factor, and the session has not completed one (SEC-100).
+
+**Fix.** Complete the second factor and repeat the call.
+
+### PLX-8020
+
+`EDITING_LOCK_HELD` · error · Editing lock held by another user
+
+**Cause.** Editing a plugin requires holding its lock, and someone else holds it. The lock expires two minutes after the holder's last heartbeat (SRV-040).
+
+**Fix.** Ask the holder for the lock, wait for it to expire, or take it over if you may (SRV-041).
+
+### PLX-8030
+
+`PERMISSION_DENIED` · error · Permission denied
+
+**Cause.** The caller does not hold the permission this call needs on this resource. Authorisation is deny-by-default (SEC-102).
+
+**Fix.** Ask an administrator of the organisation for the permission the message names.
+
+### PLX-8031
+
+`RESOURCE_NOT_FOUND` · error · Not found
+
+**Cause.** The resource does not exist, or the caller may not see it. The two are reported the same way, so that the API does not disclose what exists in another organisation.
+
+**Fix.** Check the identifier, and that you have access to the organisation that owns it.
+
+### PLX-8040
+
+`RATE_LIMITED` · error · Rate limit exceeded
+
+**Cause.** The caller has made more requests than the limit for this principal, device or address allows (SRV-065).
+
+**Fix.** Retry after the interval the response reports.
+
+### PLX-8090
+
+`INTERNAL_SERVER_ERROR` · error · Internal error
+
+**Cause.** The server failed in a way it does not recognise. The incident identifier in the message appears in the server's logs; nothing else about the failure is returned.
+
+**Fix.** Retry the call. If it keeps failing, give the incident identifier to the operator of the installation.
 
 ## Studio, CLI and AI (PLX-9000–9999)
 

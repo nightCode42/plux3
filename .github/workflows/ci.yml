@@ -387,9 +387,28 @@ jobs:
     needs: changes
     if: needs.changes.outputs.go == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     permissions:
       contents: read
+    # Integration tests run against real infrastructure, never fakes
+    # (QA-005). Without PLUX_TEST_DATABASE_URL they skip, so the same
+    # command is useful on a developer's machine.
+    services:
+      postgres:
+        image: postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
+        env:
+          POSTGRES_USER: plux
+          POSTGRES_PASSWORD: plux
+          POSTGRES_DB: plux_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U plux"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PLUX_TEST_DATABASE_URL: postgres://plux:plux@127.0.0.1:5432/plux_test?sslmode=disable
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

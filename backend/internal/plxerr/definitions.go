@@ -67,6 +67,26 @@ var registry = []Definition{
 		"A file is not where the project layout expects a document of its kind, its name does not match its key, or a required file is missing (SCH-006).",
 		"Move or rename the file as described in the document-model reference.", false,
 	},
+	{
+		RequestTooLarge, "REQUEST_TOO_LARGE", SeverityError, "Request too large",
+		"The request body, or a value inside it, is larger than the limit the installation allows. Limits bound every input so that one caller cannot exhaust the server (SEC-104).",
+		"Send less in one call, or ask an administrator to raise the limit for this installation.", false,
+	},
+	{
+		RevisionConflict, "REVISION_CONFLICT", SeverityError, "The document changed",
+		"The document has been written since the revision this call is based on, so applying the change would overwrite that work (SRV-030).",
+		"Read the document again, reapply the change to the current revision, and send it.", false,
+	},
+	{
+		IdempotencyConflict, "IDEMPOTENCY_CONFLICT", SeverityError, "Idempotency key reused",
+		"The idempotency key was used before with a different request. A key identifies one request, so that a retry returns the original result rather than acting twice (SRV-005).",
+		"Use a new idempotency key for a different request, or repeat the original request unchanged.", false,
+	},
+	{
+		InvalidPageToken, "INVALID_PAGE_TOKEN", SeverityError, "Invalid page token",
+		"The page token is not one this server issued, or it belongs to a different filter or ordering. Tokens are integrity-protected and bound to the query they continue (SRV-004).",
+		"Start the list again without a page token.", false,
+	},
 
 	// Schema and validation: references and semantics.
 	{
@@ -391,6 +411,50 @@ var registry = []Definition{
 		TransportDecodingFailed, "TRANSPORT_DECODING_FAILED", SeverityError, "Transport decoding failed",
 		"The zstd transport encoding is corrupt, or it decompresses to more than the declared size or the configured limit (BND-007).",
 		"Download the bundle again.", false,
+	},
+
+	// Security.
+	{
+		OutboundRequestBlocked, "OUTBOUND_REQUEST_BLOCKED", SeverityError, "Outbound request blocked",
+		"A request to a user-supplied URL would have reached a private, loopback, link-local or metadata address. Those are refused unless the installation allows them explicitly (SEC-105).",
+		"Use a publicly reachable address, or ask an administrator to allow the range this installation should reach.", false,
+	},
+
+	// Governance.
+	{
+		AuthenticationRequired, "AUTHENTICATION_REQUIRED", SeverityError, "Authentication required",
+		"The call carried no credential, or one that has expired or been revoked.",
+		"Sign in again, or use a valid access token.", false,
+	},
+	{
+		MultiFactorRequired, "MULTI_FACTOR_REQUIRED", SeverityError, "Second factor required",
+		"The capability this call needs — publishing, approving, managing keys or managing members — requires a second factor, and the session has not completed one (SEC-100).",
+		"Complete the second factor and repeat the call.", false,
+	},
+	{
+		EditingLockHeld, "EDITING_LOCK_HELD", SeverityError, "Editing lock held by another user",
+		"Editing a plugin requires holding its lock, and someone else holds it. The lock expires two minutes after the holder's last heartbeat (SRV-040).",
+		"Ask the holder for the lock, wait for it to expire, or take it over if you may (SRV-041).", false,
+	},
+	{
+		PermissionDenied, "PERMISSION_DENIED", SeverityError, "Permission denied",
+		"The caller does not hold the permission this call needs on this resource. Authorisation is deny-by-default (SEC-102).",
+		"Ask an administrator of the organisation for the permission the message names.", false,
+	},
+	{
+		ResourceNotFound, "RESOURCE_NOT_FOUND", SeverityError, "Not found",
+		"The resource does not exist, or the caller may not see it. The two are reported the same way, so that the API does not disclose what exists in another organisation.",
+		"Check the identifier, and that you have access to the organisation that owns it.", false,
+	},
+	{
+		RateLimited, "RATE_LIMITED", SeverityError, "Rate limit exceeded",
+		"The caller has made more requests than the limit for this principal, device or address allows (SRV-065).",
+		"Retry after the interval the response reports.", false,
+	},
+	{
+		InternalServerError, "INTERNAL_SERVER_ERROR", SeverityError, "Internal error",
+		"The server failed in a way it does not recognise. The incident identifier in the message appears in the server's logs; nothing else about the failure is returned.",
+		"Retry the call. If it keeps failing, give the incident identifier to the operator of the installation.", false,
 	},
 
 	// Studio, CLI and AI.

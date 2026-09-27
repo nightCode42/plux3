@@ -22,6 +22,10 @@ const (
 	MigrationFailed          Code = 1010
 	DuplicateID              Code = 1011
 	InvalidProjectLayout     Code = 1020
+	RequestTooLarge          Code = 1021
+	RevisionConflict         Code = 1030
+	IdempotencyConflict      Code = 1031
+	InvalidPageToken         Code = 1032
 
 	// Schema and validation: references and semantics (PLX-1100–1199).
 
@@ -101,6 +105,20 @@ const (
 	SectionVerificationFailed  Code = 3042
 	BundleEncryptedUnsupported Code = 3043
 	TransportDecodingFailed    Code = 3044
+
+	// Security (PLX-6000–6999).
+
+	OutboundRequestBlocked Code = 6030
+
+	// Governance (PLX-8000–8999).
+
+	AuthenticationRequired Code = 8010
+	MultiFactorRequired    Code = 8011
+	EditingLockHeld        Code = 8020
+	PermissionDenied       Code = 8030
+	ResourceNotFound       Code = 8031
+	RateLimited            Code = 8040
+	InternalServerError    Code = 8090
 
 	// Studio, CLI and AI (PLX-9000–9999).
 

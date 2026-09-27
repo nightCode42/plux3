@@ -37,7 +37,7 @@ How the pipeline is built and why. The requirements are spec §29 (`CI-001`–`C
 | Dependency review | pull requests | vulnerabilities and licences of new dependencies | `CI-007` |
 | Go lint | Go changes | `go-fmt-check go-lint go-tidy-check go-gen-check` (regenerates everything `make gen` writes and fails on any difference), `registry-lock-check` (no permanent ID of the base commit changed or removed) | `CI-001`, `CI-003`, `BND-011` |
 | API contract | `proto/` changes | `proto-check`: `buf lint`, `buf format --diff --exit-code` and `buf breaking` against the last `backend/v*` tag | `CI-001`, `SRV-000`, `SRV-002` |
-| Go test | Go changes | `go-cover` (race detector, coverage floors); `go-budgets` (compiler timing budgets; `ubuntu-latest` is the reference runner) | `QA-001`, `CMP-050`, `SCH-042` |
+| Go test | Go changes | `go-cover` (race detector, coverage floors) against a real PostgreSQL service, with `PLUX_TEST_DATABASE_URL` set so the integration tests run rather than skip; `go-budgets` (compiler timing budgets; `ubuntu-latest` is the reference runner) | `QA-001`, `QA-005`, `CMP-050`, `SCH-042` |
 | Go determinism | Go changes, on Linux, macOS and Windows | `go-determinism` (the conformance vectors and projects compile to the committed goldens byte for byte) | `CMP-002` |
 | Go build | Go changes | `go-build go-reproducible` | `CI-006` |
 | Go vulnerabilities | Go changes | `go-vuln` | `CI-001` |

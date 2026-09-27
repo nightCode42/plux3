@@ -852,24 +852,24 @@ sequenceDiagram
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `SRV-001` | P2 | MUST | The server **MUST** be a single Go binary, `plux-server`, runnable in roles `api`, `worker` and `fnrunner` (or all roles in one process for single-node installs), selected by configuration. | SPEC |
+| `SRV-001` | P2 | MUST | The server **MUST** be a single Go binary, `plux-server`, runnable in roles `api`, `worker` and `fnrunner` (or all roles in one process for single-node installs), selected by configuration. | WIP |
 | `SRV-002` | P2 | MUST | All APIs **MUST** be defined in Protocol Buffers under `proto/plux/v1/`, linted with `buf lint`, and served with ConnectRPC (gRPC, gRPC-Web and Connect JSON). An OpenAPI 3.1 description **MUST** be generated for integrators who prefer plain HTTP/JSON. | WIP |
 | `SRV-003` | P2 | MUST | The server **MUST** expose at least these services: `OrgService`, `IdentityService`, `AppService`, `PluginService`, `DocumentService`, `ComponentService`, `TemplateService`, `AssetService`, `PublishService`, `ReleaseService`, `ManifestService`, `DeviceService`, `TokenService`, `TelemetryService`, `ControlService`, and later `RolloutService`, `ExperimentService`, `FunctionService`, `LocalisationService`, `ApprovalService`, `AuditService`, `DevSessionService`, `AIService`, `PaymentService`, `AdminService`. | SPEC |
 | `SRV-004` | P2 | MUST | List endpoints **MUST** use opaque, integrity-protected page tokens, filtering, ordering and field masks; no endpoint may return an unbounded list. | SPEC |
 | `SRV-005` | P2 | MUST | Mutating endpoints **MUST** accept an idempotency key; retries with the same key within 24 h **MUST** return the original result. | SPEC |
-| `SRV-006` | P2 | MUST | Errors **MUST** follow one unified model: a typed domain error with a registered reason, translated only at the edge into a Connect code plus `google.rpc.ErrorInfo` (reason, domain `plux.dev`, metadata) and a Plux error code from Appendix F (ADR-0018). | SPEC |
-| `SRV-007` | P2 | MUST | The server **MUST** implement `/livez`, `/readyz` (checking PostgreSQL, object storage and, where configured, Valkey and KMS) and graceful shutdown that drains in-flight requests and jobs. | SPEC |
-| `SRV-008` | P2 | MUST | Configuration **MUST** be loaded from a file plus environment variables, reject unknown keys, validate every section at startup, and be checkable offline with `plux-server config validate` (Appendix H). | SPEC |
+| `SRV-006` | P2 | MUST | Errors **MUST** follow one unified model: a typed domain error with a registered reason, translated only at the edge into a Connect code plus `google.rpc.ErrorInfo` (reason, domain `plux.dev`, metadata) and a Plux error code from Appendix F (ADR-0018). | DONE |
+| `SRV-007` | P2 | MUST | The server **MUST** implement `/livez`, `/readyz` (checking PostgreSQL, object storage and, where configured, Valkey and KMS) and graceful shutdown that drains in-flight requests and jobs. | WIP |
+| `SRV-008` | P2 | MUST | Configuration **MUST** be loaded from a file plus environment variables, reject unknown keys, validate every section at startup, and be checkable offline with `plux-server config validate` (Appendix H). | DONE |
 
 ### 11.2 Storage
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `SRV-020` | P2 | MUST | PostgreSQL **MUST** be the system of record. Documents are stored as canonical JSON (`JSONB`) with relational metadata; queries are written in SQL and type-checked with `sqlc`. | SPEC |
-| `SRV-021` | P2 | MUST | Schema migrations **MUST** be versioned, applied automatically on start behind an advisory lock, and follow expand/contract so that rolling upgrades never require downtime (`DEP-030`). | SPEC |
-| `SRV-022` | P2 | MUST | Every table holding tenant data **MUST** carry the organisation ID, and PostgreSQL row-level security **MUST** enforce tenant isolation as defence in depth beneath application-level authorisation. | SPEC |
-| `SRV-023` | P2 | MUST | Bundles, deltas, assets and exports **MUST** be stored in S3-compatible object storage under content-addressed keys; the server **MUST** issue short-lived signed URLs or serve them itself when no CDN is configured. | SPEC |
-| `SRV-024` | P2 | MUST | Background work **MUST** run as durable jobs in PostgreSQL with retries, backoff, uniqueness keys and visibility in the admin UI. | SPEC |
+| `SRV-020` | P2 | MUST | PostgreSQL **MUST** be the system of record. Documents are stored as canonical JSON (`JSONB`) with relational metadata; queries are written in SQL and type-checked with `sqlc`. | WIP |
+| `SRV-021` | P2 | MUST | Schema migrations **MUST** be versioned, applied automatically on start behind an advisory lock, and follow expand/contract so that rolling upgrades never require downtime (`DEP-030`). | DONE |
+| `SRV-022` | P2 | MUST | Every table holding tenant data **MUST** carry the organisation ID, and PostgreSQL row-level security **MUST** enforce tenant isolation as defence in depth beneath application-level authorisation. | WIP |
+| `SRV-023` | P2 | MUST | Bundles, deltas, assets and exports **MUST** be stored in S3-compatible object storage under content-addressed keys; the server **MUST** issue short-lived signed URLs or serve them itself when no CDN is configured. | DONE |
+| `SRV-024` | P2 | MUST | Background work **MUST** run as durable jobs in PostgreSQL with retries, backoff, uniqueness keys and visibility in the admin UI. | WIP |
 
 ### 11.3 Documents, drafts and editing locks
 
@@ -1218,8 +1218,8 @@ The update channel follows the design of **The Update Framework (TUF)**: separat
 | `SEC-101` | P2 | MUST | Studio **MUST** use a backend-for-frontend: OAuth tokens stay server-side; the browser holds only a `__Host-` prefixed, `HttpOnly`, `Secure`, `SameSite=Strict` session cookie; state-changing requests require a CSRF token; a strict nonce-based Content Security Policy with Trusted Types is enforced. | SPEC |
 | `SEC-102` | P2 | MUST | Authorisation **MUST** be deny-by-default, evaluated in the service layer for every call against RBAC permissions and resource scope (`GOV-002`), with PostgreSQL row-level security as a second barrier. | SPEC |
 | `SEC-103` | P9 | MUST | Approving releases, publishing to production, key operations, role changes, secret changes and break-glass actions **MUST** require WebAuthn step-up authentication performed within the last 5 minutes. | SPEC |
-| `SEC-104` | P2 | MUST | All inputs **MUST** be validated with size limits (request body, JSON depth, string length, array length) to prevent resource-exhaustion attacks. | SPEC |
-| `SEC-105` | P2 | MUST | Every server-side fetch of a user-supplied URL (OpenAPI import, AI providers, function HTTP, webhooks) **MUST** go through an SSRF-safe client that blocks private, link-local and metadata address ranges unless explicitly allowlisted, and re-validates after DNS resolution and redirects. | SPEC |
+| `SEC-104` | P2 | MUST | All inputs **MUST** be validated with size limits (request body, JSON depth, string length, array length) to prevent resource-exhaustion attacks. | WIP |
+| `SEC-105` | P2 | MUST | Every server-side fetch of a user-supplied URL (OpenAPI import, AI providers, function HTTP, webhooks) **MUST** go through an SSRF-safe client that blocks private, link-local and metadata address ranges unless explicitly allowlisted, and re-validates after DNS resolution and redirects. | DONE |
 | `SEC-106` | P2 | MUST | Secrets (environment secrets, provider credentials) **MUST** be encrypted with envelope encryption under a KMS key, never returned in full after creation, and accessible only to the components that need them. | SPEC |
 | `SEC-107` | P2 | MUST | The compiler **MUST** detect secret-like values (API keys, private keys, tokens, by pattern and entropy) in documents and fail publication. | SPEC |
 | `SEC-108` | P2 | MUST | Containers **MUST** run as non-root on distroless images with a read-only root filesystem, dropped capabilities, and seccomp `RuntimeDefault`. | SPEC |
@@ -1492,9 +1492,9 @@ Approvals are generic: the same engine governs publishing, function deployment, 
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `OBS-001` | P2 | MUST | The server **MUST** emit OpenTelemetry traces for every request and job, propagating W3C Trace Context from Studio, the CLI and devices through `api`, `worker` and `fnrunner`. | SPEC |
-| `OBS-002` | P2 | MUST | The server **MUST** expose Prometheus metrics as catalogued in Appendix G, with bounded label cardinality. | SPEC |
-| `OBS-003` | P2 | MUST | Logs **MUST** be structured JSON (`log/slog`) with request ID, trace ID, org and app IDs where applicable, and **MUST** redact secrets, tokens and sensitive fields. | SPEC |
+| `OBS-001` | P2 | MUST | The server **MUST** emit OpenTelemetry traces for every request and job, propagating W3C Trace Context from Studio, the CLI and devices through `api`, `worker` and `fnrunner`. | DONE |
+| `OBS-002` | P2 | MUST | The server **MUST** expose Prometheus metrics as catalogued in Appendix G, with bounded label cardinality. | DONE |
+| `OBS-003` | P2 | MUST | Logs **MUST** be structured JSON (`log/slog`) with request ID, trace ID, org and app IDs where applicable, and **MUST** redact secrets, tokens and sensitive fields. | DONE |
 | `OBS-004` | P9 | MUST | Grafana dashboards, Prometheus alert rules and runbooks for each alert **MUST** ship in `deploy/`. | SPEC |
 | `OBS-005` | P9 | MUST | Service level objectives **MUST** be defined and measured: manifest endpoint availability 99.95%, function invocation success 99.9% (excluding business errors), publish job success 99.5%, control-document propagation ≤ 60 s p95. | SPEC |
 
@@ -1873,9 +1873,9 @@ One Plux installation can serve many independent organisations — for example a
 | `DEP-004` | P9 | MUST | HA **MUST** be supported with ≥ 2 replicas per role, PostgreSQL HA (e.g. CloudNativePG or Patroni), HA object storage and Valkey with replication; rolling upgrades **MUST** cause no downtime. | SPEC |
 | `DEP-010` | P9 | MUST | Backups **MUST** include point-in-time recovery for PostgreSQL and versioning or replication for object storage, consistent with each other; restore **MUST** be documented and drilled in CI. Enterprise targets: RPO ≤ 5 min, RTO ≤ 1 h. | SPEC |
 | `DEP-020` | P2 | MUST | `make dev` **MUST** start the full stack locally with hot reload for Go, Bun and Flutter, and seed sample apps. | SPEC |
-| `DEP-030` | P2 | MUST | Upgrades **MUST** be supported from any N-1 minor version with automatic migrations; release notes **MUST** state upgrade steps and any required actions. | SPEC |
+| `DEP-030` | P2 | MUST | Upgrades **MUST** be supported from any N-1 minor version with automatic migrations; release notes **MUST** state upgrade steps and any required actions. | WIP |
 | `DEP-040` | P9 | MUST | **Air-gapped** installation **MUST** be supported: an offline bundle (images, charts, docs), no required outbound connections except those the customer enables, a documented egress list (attestation revocation lists and roots, optional Play Integrity verification endpoint, push services) with instructions for mirroring, and local AI via Ollama. | SPEC |
-| `DEP-041` | P2 | MUST | The server **MUST** serve bundles and deltas itself when no CDN is configured, and **MUST** support any CDN in front of object storage because artifacts are immutable and content-addressed. | SPEC |
+| `DEP-041` | P2 | MUST | The server **MUST** serve bundles and deltas itself when no CDN is configured, and **MUST** support any CDN in front of object storage because artifacts are immutable and content-addressed. | WIP |
 | `DEP-050` | P9 | SHOULD | Reference infrastructure-as-code modules (OpenTofu/Terraform) **SHOULD** be provided for AWS, Google Cloud and Azure, and an on-premises reference architecture for regulated industries. | SPEC |
 | `DEP-051` | P9 | MUST | A sizing guide **MUST** document resource needs by active devices, apps and publish frequency, backed by load-test results (`QA-007`). | SPEC |
 | `DEP-060` | P5 | SHOULD | A public demonstration environment **SHOULD** run the latest release with the reference apps, reset nightly, with abuse and cost controls. | SPEC |
@@ -1892,7 +1892,7 @@ This section concerns how Plux itself is verified. §22.2 covers the testing too
 | `QA-002` | P1 | MUST | Property-based tests **MUST** cover: compiler determinism; delta round-trip (`REL-025`); PXL evaluation laws; JSON canonicalisation; atomic activation under injected crashes. | WIP |
 | `QA-003` | P1 | MUST | A cross-language **conformance suite** (in `schema/testdata/`) **MUST** hold shared vectors — documents → expected bundles, PXL expressions → results, DPoP proofs → accept/reject — run by Go, Dart and TypeScript implementations alike. | WIP |
 | `QA-004` | P1 | MUST | Fuzzing **MUST** continuously cover the compiler, the bundle container and FlatBuffers verification (Go and Dart), manifest and metadata parsing, DPoP and attestation parsing, and PXL bytecode loading. | WIP |
-| `QA-005` | P2 | MUST | Integration tests **MUST** run the server against real PostgreSQL, object storage and Valkey (Testcontainers or Compose). | SPEC |
+| `QA-005` | P2 | MUST | Integration tests **MUST** run the server against real PostgreSQL, object storage and Valkey (Testcontainers or Compose). | WIP |
 | `QA-006` | P3 | MUST | End-to-end tests **MUST** run the example host apps on Android emulators and iOS simulators in CI (Patrol or `integration_test`), and on a real-device farm nightly including at least one low-end Android device. | SPEC |
 | `QA-007` | P3 | MUST | Performance benchmarks **MUST** run in CI and fail on regressions beyond 10%: runtime (init, page build, first frame, frame times, PXL, action overhead) in profile mode on reference devices; sync (bytes and time on simulated 3G); server (k6 load tests for manifest, functions, telemetry); Studio (Lighthouse CI and canvas frame-time tests). | SPEC |
 | `QA-008` | P6 | MUST | Security tests **MUST** include the DPoP and attestation negative suite (`SEC-029`), bundle tampering and rollback attacks, MASTG checks (`SEC-190`), OWASP ZAP baseline scans of Studio and the API, and authorisation matrix tests for every role and permission. | SPEC |
@@ -1985,8 +1985,8 @@ Every size and resource in Plux is governed by one limits framework. Limits are 
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `LIM-001` | P2 | MUST | All limits **MUST** be defined in one registry with a key, unit, default, hard maximum and the scopes at which it can be set; the compiler, server, runtime and Studio **MUST** read limits from this registry rather than hard-coding values. | SPEC |
-| `LIM-002` | P2 | MUST | Limits **MUST** be configurable at installation, organisation, app and plugin level, and a lower level **MUST NOT** be able to raise a limit set above it. | SPEC |
+| `LIM-001` | P2 | MUST | All limits **MUST** be defined in one registry with a key, unit, default, hard maximum and the scopes at which it can be set; the compiler, server, runtime and Studio **MUST** read limits from this registry rather than hard-coding values. | WIP |
+| `LIM-002` | P2 | MUST | Limits **MUST** be configurable at installation, organisation, app and plugin level, and a lower level **MUST NOT** be able to raise a limit set above it. | WIP |
 | `LIM-003` | P2 | MUST | Publication **MUST** fail with a clear diagnostic when a release would exceed a limit, and **MUST** warn at 80% of any limit. | SPEC |
 | `LIM-004` | P3 | MUST | Device-side limits **MUST** be delivered in the signed app bundle and enforced by the runtime, which **MUST** degrade gracefully (evict caches, pause telemetry, refuse new outbox entries with a typed error) rather than fail. | SPEC |
 | `LIM-005` | P2 | MUST | Current usage against every limit **MUST** be readable through the API and shown in Studio per app and plugin (`STU-025`). | SPEC |

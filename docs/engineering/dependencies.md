@@ -26,8 +26,17 @@ Every third-party dependency is a long-term commitment: code we ship but did not
 | `pgregory.net/rapid` | Property-based tests | MPL-2.0 | [0025](../adr/0025-document-schema-toolchain.md) | In use (`backend`, tests only) |
 | `connectrpc.com/connect` | ConnectRPC handlers and clients for the API contract | Apache-2.0 | [0005](../adr/0005-connectrpc-and-protobuf.md) | In use (`backend`) |
 | `google.golang.org/protobuf` | Generated API messages | BSD-3-Clause | [0005](../adr/0005-connectrpc-and-protobuf.md) | In use (`backend`) |
+| `google.golang.org/genproto/googleapis/rpc` | `google.rpc.ErrorInfo` on API errors (`SRV-006`) | Apache-2.0 | [0005](../adr/0005-connectrpc-and-protobuf.md) | In use (`backend`) |
+| `github.com/jackc/pgx/v5` | PostgreSQL driver and pool | MIT | [0007](../adr/0007-postgresql-and-object-storage.md) | In use (`backend`) |
+| `github.com/riverqueue/river` | Durable jobs in PostgreSQL | MPL-2.0 | [0007](../adr/0007-postgresql-and-object-storage.md) | In use (`backend`) |
+| `github.com/aws/aws-sdk-go-v2` (config, credentials, s3) | S3-compatible object storage | Apache-2.0 | [0007](../adr/0007-postgresql-and-object-storage.md) | In use (`backend`) |
+| `go.opentelemetry.io/otel` (+ sdk, otlptracehttp) | Traces (`OBS-001`) | Apache-2.0 | [0006](../adr/0006-modular-monolith-with-roles.md) | In use (`backend`) |
+| `github.com/prometheus/client_golang` | Metrics (`OBS-002`) | Apache-2.0 | [0006](../adr/0006-modular-monolith-with-roles.md) | In use (`backend`) |
+| `sigs.k8s.io/yaml` | The server configuration file, decoded strictly as JSON (`SRV-008`) | Apache-2.0, BSD-3-Clause | [0007](../adr/0007-postgresql-and-object-storage.md) | In use (`backend`) |
 
-`tools/` stays standard-library only (§3). Planned for the rest of P2, each named in its ADR: `jackc/pgx` and `sqlc` ([0007](../adr/0007-postgresql-and-object-storage.md)), the River job queue ([0007](../adr/0007-postgresql-and-object-storage.md)), `aws-sdk-go-v2` for S3-compatible storage ([0007](../adr/0007-postgresql-and-object-storage.md)), OpenTelemetry and `prometheus/client_golang` ([0006](../adr/0006-modular-monolith-with-roles.md)), `golang.org/x/crypto` for Argon2id ([0004](../adr/0004-tuf-style-update-security.md)), `go-webauthn/webauthn`, `sigs.k8s.io/yaml` for the server configuration file, and `tetratelabs/wazero` for the WebAssembly image codecs of the asset pipeline.
+`tools/` stays standard-library only (§3). Planned for the rest of P2, each named in its ADR: `sqlc` as a build tool ([0007](../adr/0007-postgresql-and-object-storage.md)), `golang.org/x/crypto` for Argon2id ([0004](../adr/0004-tuf-style-update-security.md)), `go-webauthn/webauthn` for passkeys, and `tetratelabs/wazero` for the WebAssembly image codecs of the asset pipeline.
+
+Valkey is reached with a small RESP client in `backend/internal/cache`, so no Redis client is a dependency; section deltas use the zstd raw-dictionary support of `klauspost/compress`, so no patching library is one either ([ADR-0003](../adr/0003-section-level-deltas.md)).
 
 ### Dart (`packages/`, `apps/`)
 

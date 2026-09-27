@@ -14,7 +14,16 @@ The Go module `github.com/nightCode42/plux3/backend`: the Plux Server (`plux-ser
 | `internal/pxl/` | PXL: parser, checker, standard library, bytecode, VM, folding; exact decimals in `decimal/` (ADR-0009) | Apache-2.0 |
 | `internal/bundle/` | Bundle container writer and reader, SHA-256 hashes, the FlatBuffers verifier, zstd transport; flatc accessors in `fbs/` (ADR-0002) | Apache-2.0 |
 | `internal/compiler/` | The compiler: pipeline stages, reference graph, optimiser, section encoder, incremental page validation ([compiler.md](../docs/reference/compiler.md)) | Apache-2.0 |
-| `internal/<module>/` | Server and compiler modules as listed in spec §6.3, added phase by phase | per `REUSE.toml` |
+| `internal/pluxv1/` | Generated API messages and ConnectRPC handlers and clients (ADR-0005); never edited by hand | Apache-2.0 |
+| `internal/config/` | Server configuration: strict loading, environment overrides, validation (`SRV-008`, Appendix H) | AGPL-3.0-only |
+| `internal/observability/` | Logger with redaction, the Prometheus registry of Appendix G, the tracer (`OBS-001`–`OBS-003`) | AGPL-3.0-only |
+| `internal/storage/` | PostgreSQL pool, migrations, tenant transactions; object storage in `objects/`; the integration-test helper in `storagetest/` (ADR-0007) | AGPL-3.0-only |
+| `internal/cache/` | The shared, expendable cache: in-memory and Valkey (RESP) backends | AGPL-3.0-only |
+| `internal/jobs/` | Durable background work on River (`SRV-024`) | AGPL-3.0-only |
+| `internal/httpx/` | The SSRF-safe outbound client and request size guards (`SEC-104`, `SEC-105`) | AGPL-3.0-only |
+| `internal/api/` | The ConnectRPC edge: interceptors and error translation (`SRV-006`, L-1) | AGPL-3.0-only |
+| `internal/server/` | Role wiring, health, lifecycle ([server.md](../docs/reference/server.md)) | AGPL-3.0-only |
+| `internal/<module>/` | Further server modules as listed in spec §6.3, added phase by phase | per `REUSE.toml` |
 
 Server-only packages are AGPL-3.0-only; packages the CLI or third parties link (compiler, PXL, bundle, schema, SDK) are Apache-2.0 so they can be embedded anywhere (ADR-0022). A package's licence is declared in `REUSE.toml` before its first file is committed, and its files carry the matching SPDX header.
 
