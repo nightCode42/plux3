@@ -1,0 +1,57 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package plux.v1;
+
+import "google/protobuf/timestamp.proto";
+import "plux/v1/common.proto";
+
+option go_package = "github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1";
+
+// TelemetryService ingests the runtime's batched events (Appendix G.2).
+// P2 provides the endpoint, validation and bounded storage; dashboards,
+// rollups and export arrive with the analytics requirements in P9. Events
+// never carry payloads, and fields tagged sensitive are refused rather
+// than stored (SCH-012, ANL-003).
+service TelemetryService {
+  rpc IngestEvents(IngestEventsRequest) returns (IngestEventsResponse) {}
+  rpc ListEvents(ListEventsRequest) returns (ListEventsResponse) {}
+}
+
+message Event {
+  // name is one of the catalogued event names of Appendix G.2.
+  string name = 1;
+  google.protobuf.Timestamp time = 2;
+  string device_id = 3;
+  int64 release_sequence = 4;
+  string plugin_key = 5;
+  string route = 6;
+  // fields are the event's declared non-sensitive properties, as
+  // canonical JSON.
+  bytes fields = 7;
+}
+
+message IngestEventsRequest {
+  string app_id = 1;
+  string environment = 2;
+  repeated Event events = 3;
+}
+message IngestEventsResponse {
+  int32 accepted = 1;
+  int32 rejected = 2;
+  repeated Diagnostic diagnostics = 3;
+}
+
+message ListEventsRequest {
+  string app_id = 1;
+  string environment = 2;
+  string name = 3;
+  google.protobuf.Timestamp since = 4;
+  Page page = 5;
+}
+message ListEventsResponse {
+  repeated Event events = 1;
+  PageResult page = 2;
+}

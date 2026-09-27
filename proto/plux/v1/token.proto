@@ -1,0 +1,39 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package plux.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1";
+
+// TokenService issues the short-lived access tokens devices use. In P2 a
+// token is bearer-only and scoped to one app, environment and device; from
+// P6 it is sender-constrained to the device's hardware key with DPoP
+// (SEC-020) and carries the device's assurance level.
+service TokenService {
+  rpc IssueDeviceToken(IssueDeviceTokenRequest) returns (IssueDeviceTokenResponse) {}
+  rpc RefreshDeviceToken(RefreshDeviceTokenRequest) returns (RefreshDeviceTokenResponse) {}
+}
+
+message IssueDeviceTokenRequest {
+  string device_id = 1;
+  string app_id = 2;
+  string environment = 3;
+}
+message IssueDeviceTokenResponse {
+  string access_token = 1;
+  google.protobuf.Timestamp expires_at = 2;
+  string refresh_token = 3;
+}
+
+message RefreshDeviceTokenRequest {
+  string refresh_token = 1;
+}
+message RefreshDeviceTokenResponse {
+  string access_token = 1;
+  google.protobuf.Timestamp expires_at = 2;
+  string refresh_token = 3;
+}

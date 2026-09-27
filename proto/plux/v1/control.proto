@@ -1,0 +1,55 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package plux.v1;
+
+import "google/protobuf/timestamp.proto";
+import "plux/v1/common.proto";
+
+option go_package = "github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1";
+
+// ControlService sets the switches that reach devices with the next
+// manifest: kill switches for a plugin or a whole app, and the mandatory
+// update flag (REL-030). Staged rollouts, targeting and health-based
+// auto-pause build on this in P9.
+service ControlService {
+  rpc GetControl(GetControlRequest) returns (GetControlResponse) {}
+  rpc SetControl(SetControlRequest) returns (SetControlResponse) {}
+}
+
+// Control is the current set of switches for one channel.
+message Control {
+  string app_id = 1;
+  string environment_id = 2;
+  string channel_key = 3;
+  repeated string kill_switch_plugins = 4;
+  bool app_kill_switch = 5;
+  bool mandatory_update = 6;
+  string message = 7;
+  Actor updated_by = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+message GetControlRequest {
+  string app_id = 1;
+  string environment_id = 2;
+  string channel_key = 3;
+}
+message GetControlResponse {
+  Control control = 1;
+}
+
+message SetControlRequest {
+  string app_id = 1;
+  string environment_id = 2;
+  string channel_key = 3;
+  repeated string kill_switch_plugins = 4;
+  bool app_kill_switch = 5;
+  bool mandatory_update = 6;
+  string message = 7;
+}
+message SetControlResponse {
+  Control control = 1;
+}

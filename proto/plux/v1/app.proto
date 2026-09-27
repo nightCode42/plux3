@@ -1,0 +1,263 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package plux.v1;
+
+import "google/protobuf/timestamp.proto";
+import "plux/v1/common.proto";
+
+option go_package = "github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1";
+
+// AppService manages apps, their environments and channels (GOV-010), and
+// the trash that deleted apps, plugins and pages go to (GOV-031).
+service AppService {
+  rpc CreateApp(CreateAppRequest) returns (CreateAppResponse) {}
+  rpc GetApp(GetAppRequest) returns (GetAppResponse) {}
+  rpc ListApps(ListAppsRequest) returns (ListAppsResponse) {}
+  rpc UpdateApp(UpdateAppRequest) returns (UpdateAppResponse) {}
+  rpc DeleteApp(DeleteAppRequest) returns (DeleteAppResponse) {}
+
+  rpc CreateEnvironment(CreateEnvironmentRequest) returns (CreateEnvironmentResponse) {}
+  rpc ListEnvironments(ListEnvironmentsRequest) returns (ListEnvironmentsResponse) {}
+  rpc UpdateEnvironment(UpdateEnvironmentRequest) returns (UpdateEnvironmentResponse) {}
+  rpc DeleteEnvironment(DeleteEnvironmentRequest) returns (DeleteEnvironmentResponse) {}
+
+  rpc SetVariable(SetVariableRequest) returns (SetVariableResponse) {}
+  rpc ListVariables(ListVariablesRequest) returns (ListVariablesResponse) {}
+  // SetSecret stores a secret with envelope encryption under the KMS key.
+  // A secret's value is never returned after creation (SEC-106).
+  rpc SetSecret(SetSecretRequest) returns (SetSecretResponse) {}
+  rpc ListSecrets(ListSecretsRequest) returns (ListSecretsResponse) {}
+  rpc DeleteSecret(DeleteSecretRequest) returns (DeleteSecretResponse) {}
+
+  rpc CreateChannel(CreateChannelRequest) returns (CreateChannelResponse) {}
+  rpc ListChannels(ListChannelsRequest) returns (ListChannelsResponse) {}
+  rpc DeleteChannel(DeleteChannelRequest) returns (DeleteChannelResponse) {}
+
+  rpc ListTrash(ListTrashRequest) returns (ListTrashResponse) {}
+  rpc RestoreFromTrash(RestoreFromTrashRequest) returns (RestoreFromTrashResponse) {}
+  rpc PurgeFromTrash(PurgeFromTrashRequest) returns (PurgeFromTrashResponse) {}
+
+  rpc ListAppLimits(ListAppLimitsRequest) returns (ListAppLimitsResponse) {}
+  rpc SetAppLimit(SetAppLimitRequest) returns (SetAppLimitResponse) {}
+}
+
+message App {
+  string id = 1;
+  string organization_id = 2;
+  string key = 3;
+  string name = 4;
+  // default_plugin_key is the plugin whose entry page the app opens.
+  string default_plugin_key = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+// Environment isolates variables, secrets, data-source URLs, signing keys
+// and device registrations (GOV-010).
+message Environment {
+  string id = 1;
+  string app_id = 2;
+  // key is "development", "staging", "production" or a custom name.
+  string key = 3;
+  string name = 4;
+  // production marks an environment as production for retention and for
+  // the refusal of file-backed signing keys (SEC-056).
+  bool production = 5;
+  // signing_key_ref names the key in the signing backend (SEC-120).
+  string signing_key_ref = 6;
+  google.protobuf.Timestamp created_at = 7;
+}
+
+message Channel {
+  string id = 1;
+  string environment_id = 2;
+  // key is "production" by default, plus any others such as "beta".
+  string key = 3;
+  // release_sequence is the release this channel currently serves; zero
+  // when nothing has been promoted yet.
+  int64 release_sequence = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+message Variable {
+  string key = 1;
+  string value = 2;
+}
+
+// Secret never carries its value after creation (SEC-106).
+message Secret {
+  string key = 1;
+  // hint is the last few characters, for recognising which value is stored.
+  string hint = 2;
+  google.protobuf.Timestamp updated_at = 3;
+  Actor updated_by = 4;
+}
+
+message CreateAppRequest {
+  string organization_id = 1;
+  string key = 2;
+  string name = 3;
+}
+message CreateAppResponse {
+  App app = 1;
+}
+
+message GetAppRequest {
+  string id = 1;
+}
+message GetAppResponse {
+  App app = 1;
+}
+
+message ListAppsRequest {
+  string organization_id = 1;
+  Page page = 2;
+}
+message ListAppsResponse {
+  repeated App apps = 1;
+  PageResult page = 2;
+}
+
+message UpdateAppRequest {
+  string id = 1;
+  string name = 2;
+  string default_plugin_key = 3;
+}
+message UpdateAppResponse {
+  App app = 1;
+}
+
+message DeleteAppRequest {
+  string id = 1;
+}
+message DeleteAppResponse {
+  TrashItem trash = 1;
+}
+
+message CreateEnvironmentRequest {
+  string app_id = 1;
+  string key = 2;
+  string name = 3;
+  bool production = 4;
+}
+message CreateEnvironmentResponse {
+  Environment environment = 1;
+}
+
+message ListEnvironmentsRequest {
+  string app_id = 1;
+}
+message ListEnvironmentsResponse {
+  repeated Environment environments = 1;
+}
+
+message UpdateEnvironmentRequest {
+  string id = 1;
+  string name = 2;
+  string signing_key_ref = 3;
+}
+message UpdateEnvironmentResponse {
+  Environment environment = 1;
+}
+
+message DeleteEnvironmentRequest {
+  string id = 1;
+}
+message DeleteEnvironmentResponse {}
+
+message SetVariableRequest {
+  string environment_id = 1;
+  string key = 2;
+  string value = 3;
+}
+message SetVariableResponse {
+  Variable variable = 1;
+}
+
+message ListVariablesRequest {
+  string environment_id = 1;
+}
+message ListVariablesResponse {
+  repeated Variable variables = 1;
+}
+
+message SetSecretRequest {
+  string environment_id = 1;
+  string key = 2;
+  string value = 3;
+}
+message SetSecretResponse {
+  Secret secret = 1;
+}
+
+message ListSecretsRequest {
+  string environment_id = 1;
+}
+message ListSecretsResponse {
+  repeated Secret secrets = 1;
+}
+
+message DeleteSecretRequest {
+  string environment_id = 1;
+  string key = 2;
+}
+message DeleteSecretResponse {}
+
+message CreateChannelRequest {
+  string environment_id = 1;
+  string key = 2;
+}
+message CreateChannelResponse {
+  Channel channel = 1;
+}
+
+message ListChannelsRequest {
+  string environment_id = 1;
+}
+message ListChannelsResponse {
+  repeated Channel channels = 1;
+}
+
+message DeleteChannelRequest {
+  string id = 1;
+}
+message DeleteChannelResponse {}
+
+message ListTrashRequest {
+  string organization_id = 1;
+  string app_id = 2;
+  Page page = 3;
+}
+message ListTrashResponse {
+  repeated TrashItem items = 1;
+  PageResult page = 2;
+}
+
+message RestoreFromTrashRequest {
+  string id = 1;
+}
+message RestoreFromTrashResponse {}
+
+message PurgeFromTrashRequest {
+  string id = 1;
+}
+message PurgeFromTrashResponse {}
+
+message ListAppLimitsRequest {
+  string app_id = 1;
+}
+message ListAppLimitsResponse {
+  repeated LimitUsage limits = 1;
+}
+
+message SetAppLimitRequest {
+  string app_id = 1;
+  string key = 2;
+  int64 value = 3;
+}
+message SetAppLimitResponse {
+  LimitUsage limit = 1;
+}

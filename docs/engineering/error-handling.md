@@ -26,7 +26,7 @@ Every component — server, CLI, runtime, Studio — speaks the same error vocab
 
 ## 3. At the edges (from P1 and P2)
 
-- Server: domain errors carry a registered reason and are translated only in the ConnectRPC handlers into a Connect code, `google.rpc.ErrorInfo` (reason, domain `plux.dev`, metadata) and the Plux code (`SRV-006`).
+- Server: domain errors carry a registered reason and are translated only at the ConnectRPC edge — one interceptor, not the handlers — into a Connect code, `google.rpc.ErrorInfo` (reason, domain `plux.dev`, metadata) and the Plux code (`SRV-006`, [ADR-0005](../adr/0005-connectrpc-and-protobuf.md)). Each registered reason maps to exactly one Connect code, and the mapping is a table, not a chain of type switches; an error with no registered reason becomes `internal` with a generated incident ID that is logged and never returned. Governance failures use the `PLX-8xxx` range of Appendix F: `PLX-8020` editing lock held by another user, `PLX-8030` permission denied.
 - Compiler: diagnostics are structured — code, severity, JSON path, range, message, fix (`CMP-004`).
 - Runtime: errors are typed (`network`, `http`, `timeout`, `validation`, `function`, `permission`, `cancelled`, `custom`) and routed to `onError` handlers (`ACT-020`); failures render fallbacks and are reported, never thrown into the host app (`RT-020`).
 

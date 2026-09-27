@@ -1,0 +1,169 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package plux.v1;
+
+import "google/protobuf/timestamp.proto";
+import "plux/v1/common.proto";
+
+option go_package = "github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1";
+
+// OrgService manages the Installation → Organization → Teams hierarchy
+// (GOV-001). Apps are owned by an organization; access is granted to teams
+// or to users per app.
+service OrgService {
+  rpc CreateOrganization(CreateOrganizationRequest) returns (CreateOrganizationResponse) {}
+  rpc GetOrganization(GetOrganizationRequest) returns (GetOrganizationResponse) {}
+  rpc ListOrganizations(ListOrganizationsRequest) returns (ListOrganizationsResponse) {}
+  rpc UpdateOrganization(UpdateOrganizationRequest) returns (UpdateOrganizationResponse) {}
+
+  rpc CreateTeam(CreateTeamRequest) returns (CreateTeamResponse) {}
+  rpc ListTeams(ListTeamsRequest) returns (ListTeamsResponse) {}
+  rpc UpdateTeam(UpdateTeamRequest) returns (UpdateTeamResponse) {}
+  rpc DeleteTeam(DeleteTeamRequest) returns (DeleteTeamResponse) {}
+
+  rpc AddMember(AddMemberRequest) returns (AddMemberResponse) {}
+  rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResponse) {}
+  rpc ListMembers(ListMembersRequest) returns (ListMembersResponse) {}
+
+  // ListLimits reports usage against every limit at this scope (LIM-005).
+  rpc ListOrganizationLimits(ListOrganizationLimitsRequest) returns (ListOrganizationLimitsResponse) {}
+  // SetLimit tightens a limit for this organization; it can never raise one
+  // set above it (LIM-002).
+  rpc SetOrganizationLimit(SetOrganizationLimitRequest) returns (SetOrganizationLimitResponse) {}
+}
+
+message Organization {
+  string id = 1;
+  // key is the stable, URL-safe identifier, unique per installation.
+  string key = 2;
+  string name = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+message Team {
+  string id = 1;
+  string organization_id = 2;
+  string key = 3;
+  string name = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+// Member binds a user to an organization or a team with a role.
+message Member {
+  string user_id = 1;
+  string organization_id = 2;
+  // team_id is empty for a direct organization membership.
+  string team_id = 3;
+  // role is a registered role name evaluated by RBAC (SEC-102).
+  string role = 4;
+  google.protobuf.Timestamp added_at = 5;
+}
+
+message CreateOrganizationRequest {
+  string key = 1;
+  string name = 2;
+}
+message CreateOrganizationResponse {
+  Organization organization = 1;
+}
+
+message GetOrganizationRequest {
+  string id = 1;
+}
+message GetOrganizationResponse {
+  Organization organization = 1;
+}
+
+message ListOrganizationsRequest {
+  Page page = 1;
+}
+message ListOrganizationsResponse {
+  repeated Organization organizations = 1;
+  PageResult page = 2;
+}
+
+message UpdateOrganizationRequest {
+  string id = 1;
+  string name = 2;
+}
+message UpdateOrganizationResponse {
+  Organization organization = 1;
+}
+
+message CreateTeamRequest {
+  string organization_id = 1;
+  string key = 2;
+  string name = 3;
+}
+message CreateTeamResponse {
+  Team team = 1;
+}
+
+message ListTeamsRequest {
+  string organization_id = 1;
+  Page page = 2;
+}
+message ListTeamsResponse {
+  repeated Team teams = 1;
+  PageResult page = 2;
+}
+
+message UpdateTeamRequest {
+  string id = 1;
+  string name = 2;
+}
+message UpdateTeamResponse {
+  Team team = 1;
+}
+
+message DeleteTeamRequest {
+  string id = 1;
+}
+message DeleteTeamResponse {}
+
+message AddMemberRequest {
+  string organization_id = 1;
+  string team_id = 2;
+  string user_id = 3;
+  string role = 4;
+}
+message AddMemberResponse {
+  Member member = 1;
+}
+
+message RemoveMemberRequest {
+  string organization_id = 1;
+  string team_id = 2;
+  string user_id = 3;
+}
+message RemoveMemberResponse {}
+
+message ListMembersRequest {
+  string organization_id = 1;
+  string team_id = 2;
+  Page page = 3;
+}
+message ListMembersResponse {
+  repeated Member members = 1;
+  PageResult page = 2;
+}
+
+message ListOrganizationLimitsRequest {
+  string organization_id = 1;
+}
+message ListOrganizationLimitsResponse {
+  repeated LimitUsage limits = 1;
+}
+
+message SetOrganizationLimitRequest {
+  string organization_id = 1;
+  string key = 2;
+  int64 value = 3;
+}
+message SetOrganizationLimitResponse {
+  LimitUsage limit = 1;
+}

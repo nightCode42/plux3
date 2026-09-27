@@ -1,0 +1,97 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package plux.v1;
+
+import "google/protobuf/timestamp.proto";
+import "plux/v1/common.proto";
+
+option go_package = "github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1";
+
+// PublishService turns a plugin draft into an immutable plugin version.
+// Publishing is an idempotent, durable job that freezes the draft at a
+// revision and streams its progress (SRV-050). It fails without side
+// effects when any diagnostic is an error (SRV-051).
+service PublishService {
+  // Publish starts or re-attaches to a publish job. Repeating a call with
+  // the same idempotency key within 24 hours returns the original job
+  // (SRV-005).
+  rpc Publish(PublishRequest) returns (PublishResponse) {}
+  // WatchPublish streams a job's progress until it finishes.
+  rpc WatchPublish(WatchPublishRequest) returns (stream WatchPublishResponse) {}
+  rpc GetPublishJob(GetPublishJobRequest) returns (GetPublishJobResponse) {}
+  rpc ListPublishJobs(ListPublishJobsRequest) returns (ListPublishJobsResponse) {}
+  rpc CancelPublishJob(CancelPublishJobRequest) returns (CancelPublishJobResponse) {}
+}
+
+message PublishJob {
+  string id = 1;
+  string app_id = 2;
+  string plugin_id = 3;
+  string environment_id = 4;
+  // revision is the draft revision the job froze.
+  int64 revision = 5;
+  // state is "queued", "running", "succeeded", "failed" or "cancelled".
+  string state = 6;
+  // stage is the pipeline stage currently running (CMP-003).
+  string stage = 7;
+  int32 percent = 8;
+  // version is the plugin version created, once the job succeeds.
+  int64 version = 9;
+  repeated Diagnostic diagnostics = 10;
+  Actor actor = 11;
+  google.protobuf.Timestamp created_at = 12;
+  google.protobuf.Timestamp finished_at = 13;
+}
+
+message WatchPublishResponse {
+  PublishJob job = 1;
+  // new_diagnostics are those reported since the previous message.
+  repeated Diagnostic new_diagnostics = 2;
+}
+
+message PublishRequest {
+  string app_id = 1;
+  string plugin_id = 2;
+  string environment_id = 3;
+  // revision freezes a specific draft revision; zero uses the current one.
+  int64 revision = 4;
+  string label = 5;
+  string notes = 6;
+  // acknowledge_warnings publishes despite warnings; without it a warning
+  // that policy does not allow stops the publish (SRV-051).
+  bool acknowledge_warnings = 7;
+}
+message PublishResponse {
+  PublishJob job = 1;
+}
+
+message WatchPublishRequest {
+  string job_id = 1;
+}
+
+message GetPublishJobRequest {
+  string job_id = 1;
+}
+message GetPublishJobResponse {
+  PublishJob job = 1;
+}
+
+message ListPublishJobsRequest {
+  string app_id = 1;
+  string plugin_id = 2;
+  Page page = 3;
+}
+message ListPublishJobsResponse {
+  repeated PublishJob jobs = 1;
+  PageResult page = 2;
+}
+
+message CancelPublishJobRequest {
+  string job_id = 1;
+}
+message CancelPublishJobResponse {
+  PublishJob job = 1;
+}

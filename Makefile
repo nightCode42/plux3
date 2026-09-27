@@ -22,6 +22,10 @@ ACTIONLINT_VERSION    := v1.7.12
 PRE_COMMIT_VERSION    := 4.6.2
 ZIZMOR_VERSION        := 1.30.1
 REUSE_VERSION         := 6.2.0
+BUF_VERSION           := v1.73.0
+PROTOC_GEN_GO_VERSION := v1.36.12
+PROTOC_GEN_CONNECT_GO_VERSION := v1.21.0
+PROTOC_GEN_CONNECT_OPENAPI_VERSION := v0.27.3
 # flatc is built from source at the commit of its release tag (ADR-0002).
 FLATC_VERSION         := 25.9.23
 FLATC_COMMIT          := 187240970746d00bbd26b0f5873ed54d2477f9f3
@@ -44,6 +48,13 @@ GOLANGCI_LINT ?= $(TOOLS_BIN)/golangci-lint
 GOVULNCHECK   ?= $(TOOLS_BIN)/govulncheck
 GITLEAKS      ?= $(TOOLS_BIN)/gitleaks
 ACTIONLINT    ?= $(TOOLS_BIN)/actionlint
+BUF           ?= $(TOOLS_BIN)/buf
+PROTO_DIR     := proto
+PROTO_GO_DIR  := backend/internal/pluxv1
+PROTO_API_DIR := docs/reference/api
+# The base of `buf breaking`: the last tagged release of the contract
+# (SRV-000). Override to compare with another ref.
+PROTO_BASE    ?= $(shell git describe --tags --match 'backend/v*' --abbrev=0 2>/dev/null)
 REQTRACE      := $(GO) run ./tools/cmd/reqtrace
 COVGATE       := $(GO) run ./tools/cmd/covgate
 BIN_DIR       := bin
@@ -70,8 +81,8 @@ GO_BUILD_FLAGS  := -trimpath -buildvcs=false -ldflags "-s -w -buildid= \
 	-X $(BUILDINFO_PKG).commitDate=$(COMMIT_DATE)"
 
 .PHONY: help setup hooks-install check test build gen gen-check clean \
-	install-go-tools install-golangci-lint install-govulncheck install-gitleaks install-actionlint install-python-tools install-flatc \
-	go-check go-fmt go-fmt-check go-lint go-tidy go-tidy-check go-gen-check registry-lock-check go-test go-test-race go-cover \
+	install-go-tools install-golangci-lint install-govulncheck install-gitleaks install-actionlint install-buf install-python-tools install-flatc \
+	go-check proto proto-check proto-lint proto-format-check proto-breaking go-fmt go-fmt-check go-lint go-tidy go-tidy-check go-gen-check registry-lock-check go-test go-test-race go-cover \
 	go-determinism go-budgets go-fuzz currencies-check go-vuln go-build go-reproducible \
 	dart-check dart-get dart-lock-check dart-fmt dart-fmt-check dart-analyze dart-test dart-cover widgets-api widgets-api-check \
 	studio-check studio-install studio-fmt studio-lint studio-typecheck studio-test studio-cover \
@@ -89,7 +100,7 @@ setup: install-go-tools install-python-tools install-flatc ## Install pinned too
 	@command -v bun >/dev/null || echo "! Install Bun $(BUN_VERSION): https://bun.sh/docs/installation"
 	$(MAKE) hooks-install
 
-install-go-tools: install-golangci-lint install-govulncheck install-gitleaks install-actionlint ## Install the pinned Go-based tools
+install-go-tools: install-golangci-lint install-govulncheck install-gitleaks install-actionlint install-buf ## Install the pinned Go-based tools
 
 install-golangci-lint: ## Install the pinned golangci-lint
 	$(GO_INSTALL) github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
@@ -102,6 +113,12 @@ install-gitleaks: ## Install the pinned gitleaks
 
 install-actionlint: ## Install the pinned actionlint
 	$(GO_INSTALL) github.com/rhysd/actionlint/cmd/actionlint@$(ACTIONLINT_VERSION)
+
+install-buf: ## Install buf and the protoc plugins the API contract needs (ADR-0005)
+	$(GO_INSTALL) github.com/bufbuild/buf/cmd/buf@$(BUF_VERSION)
+	$(GO_INSTALL) google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GEN_GO_VERSION)
+	$(GO_INSTALL) connectrpc.com/connect/cmd/protoc-gen-connect-go@$(PROTOC_GEN_CONNECT_GO_VERSION)
+	$(GO_INSTALL) github.com/sudorandom/protoc-gen-connect-openapi@$(PROTOC_GEN_CONNECT_OPENAPI_VERSION)
 
 PYTHON_TOOLS := pre-commit==$(PRE_COMMIT_VERSION) zizmor==$(ZIZMOR_VERSION) reuse==$(REUSE_VERSION)
 
@@ -148,7 +165,18 @@ gen: ## Regenerate all generated code and reference documents (CI-003)
 	"$(FLATC)" --dart -o $(FBS_DART_DIR) $(FBS_SCHEMA); \
 	"$(FLATC)" --binary --schema -o "$$bfbs" $(FBS_SECTIONS); \
 	$(GO) run ./tools/cmd/schemagen -root . -bfbs "$$bfbs"
+	@$(MAKE) proto
 	@for m in $(GO_MODULES); do (cd $$m && $(GO) generate ./...); done
+
+# The API contract generates the Go messages and handlers and the OpenAPI
+# description; buf runs with locally built plugins, never remote ones
+# (SRV-002, CI-003).
+proto: ## Regenerate the API contract's Go code and OpenAPI description (SRV-002)
+	@command -v "$(BUF)" >/dev/null || { echo "✗ buf not found at $(BUF); run 'make install-buf'" >&2; exit 1; }
+	rm -rf $(PROTO_GO_DIR) $(PROTO_API_DIR)
+	@mkdir -p $(PROTO_API_DIR)
+	cd $(PROTO_DIR) && PATH="$(TOOLS_BIN):$$PATH" "$(BUF)" format -w .
+	cd $(PROTO_DIR) && PATH="$(TOOLS_BIN):$$PATH" "$(BUF)" generate
 
 gen-check: go-gen-check dart-lock-check studio-install ## Fail if generated code or lockfiles are not committed; run on a clean tree (CI-003)
 
@@ -157,7 +185,24 @@ clean: ## Remove build and coverage output
 
 ##@ Go (backend, tools)
 
-go-check: go-fmt-check go-lint go-tidy-check go-gen-check registry-lock-check go-cover go-vuln go-build go-reproducible ## All Go gates
+go-check: go-fmt-check go-lint go-tidy-check go-gen-check registry-lock-check proto-check go-cover go-vuln go-build go-reproducible ## All Go gates
+
+proto-check: proto-lint proto-format-check proto-breaking ## All API contract gates (SRV-000, SRV-002)
+
+proto-lint: ## Lint the API contract with buf (SRV-002)
+	"$(BUF)" lint $(PROTO_DIR)
+
+proto-format-check: ## Fail if the API contract is not formatted
+	"$(BUF)" format --diff --exit-code $(PROTO_DIR)
+
+# With no tagged release of the contract yet there is no baseline to
+# compare against, and the check reports that instead of failing (SRV-000).
+proto-breaking: ## Fail on a breaking API change against the last release (SRV-000)
+	@if [ -z "$(PROTO_BASE)" ]; then \
+		echo "· no backend release tag yet; buf breaking has no baseline"; \
+	else \
+		"$(BUF)" breaking $(PROTO_DIR) --against ".git#tag=$(PROTO_BASE),subdir=$(PROTO_DIR)"; \
+	fi
 
 go-fmt: ## Format Go code (gofumpt, goimports)
 	@for m in $(GO_MODULES); do (cd $$m && "$(GOLANGCI_LINT)" fmt); done

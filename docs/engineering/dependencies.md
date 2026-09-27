@@ -24,8 +24,10 @@ Every third-party dependency is a long-term commitment: code we ship but did not
 | `github.com/klauspost/compress` | zstd transport compression of bundles | BSD-3-Clause, Apache-2.0 | [0002](../adr/0002-flatbuffers-sectioned-bundles.md) | In use (`backend`) |
 | `github.com/santhosh-tekuri/jsonschema/v6` | Structural validation of documents (JSON Schema 2020-12) | Apache-2.0 | [0025](../adr/0025-document-schema-toolchain.md) | In use (`backend`) |
 | `pgregory.net/rapid` | Property-based tests | MPL-2.0 | [0025](../adr/0025-document-schema-toolchain.md) | In use (`backend`, tests only) |
+| `connectrpc.com/connect` | ConnectRPC handlers and clients for the API contract | Apache-2.0 | [0005](../adr/0005-connectrpc-and-protobuf.md) | In use (`backend`) |
+| `google.golang.org/protobuf` | Generated API messages | BSD-3-Clause | [0005](../adr/0005-connectrpc-and-protobuf.md) | In use (`backend`) |
 
-`tools/` stays standard-library only (§3). Planned for P2, each with its ADR: ConnectRPC and Protocol Buffers (ADR-0005), `pgx` and `sqlc` (ADR-0007), River job queue (ADR-0007).
+`tools/` stays standard-library only (§3). Planned for the rest of P2, each named in its ADR: `jackc/pgx` and `sqlc` ([0007](../adr/0007-postgresql-and-object-storage.md)), the River job queue ([0007](../adr/0007-postgresql-and-object-storage.md)), `aws-sdk-go-v2` for S3-compatible storage ([0007](../adr/0007-postgresql-and-object-storage.md)), OpenTelemetry and `prometheus/client_golang` ([0006](../adr/0006-modular-monolith-with-roles.md)), `golang.org/x/crypto` for Argon2id ([0004](../adr/0004-tuf-style-update-security.md)), `go-webauthn/webauthn`, `sigs.k8s.io/yaml` for the server configuration file, and `tetratelabs/wazero` for the WebAssembly image codecs of the asset pipeline.
 
 ### Dart (`packages/`, `apps/`)
 
@@ -59,6 +61,7 @@ Planned for P11 (ADR-0014): React, TanStack Router and Query, shadcn/ui on Radix
 | Bun | `studio/package.json`, Makefile, CI | Studio runtime and tests |
 | golangci-lint, govulncheck, gitleaks, actionlint | Makefile (built with the project toolchain), CI | Lint, vulnerabilities, secrets, workflows |
 | pre-commit, zizmor, reuse, git-cliff | Makefile, CI | Hooks, workflow security, licensing, release notes |
+| `buf`, `protoc-gen-go`, `protoc-gen-connect-go`, `protoc-gen-connect-openapi` | Makefile (`BUF_VERSION` and the plugin versions), built with the project toolchain | API contract lint, breaking-change detection and code generation ([ADR-0005](../adr/0005-connectrpc-and-protobuf.md)) |
 | `flatc` (FlatBuffers compiler) | Makefile (`FLATC_VERSION`, tag commit), built from source; cached in CI | Bundle code generation ([ADR-0002](../adr/0002-flatbuffers-sectioned-bundles.md)) |
 | GitHub Actions | Full commit SHAs in `.github/workflows/` | CI |
 

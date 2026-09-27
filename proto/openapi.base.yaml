@@ -1,0 +1,15 @@
+# SPDX-FileCopyrightText: 2026 Plux contributors
+# SPDX-License-Identifier: Apache-2.0
+
+openapi: 3.1.0
+info:
+  title: Plux Server API
+  version: v1
+  description: >-
+    The Plux Server API (SRV-002). Every operation is generated from the
+    Protocol Buffers contract in proto/plux/v1 and is served by ConnectRPC
+    over gRPC, gRPC-Web and Connect; this description covers the plain
+    HTTP/JSON form for integrators who do not use a generated client.
+  license:
+    name: AGPL-3.0-only
+    identifier: AGPL-3.0-only

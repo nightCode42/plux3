@@ -1,0 +1,74 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package plux.v1;
+
+import "google/protobuf/timestamp.proto";
+import "plux/v1/common.proto";
+
+option go_package = "github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1";
+
+// DeviceService registers devices and reports what they have installed, so
+// that compatibility gating (REL-080) and retention (REL-007) have real
+// numbers. Hardware-backed keys, platform attestation and assurance levels
+// arrive in P6; in P2 a registration is an identity and a declared runtime,
+// and its assurance level is always the lowest.
+service DeviceService {
+  rpc RegisterDevice(RegisterDeviceRequest) returns (RegisterDeviceResponse) {}
+  rpc GetDevice(GetDeviceRequest) returns (GetDeviceResponse) {}
+  rpc ListDevices(ListDevicesRequest) returns (ListDevicesResponse) {}
+  // ReportInstalled records the release a device activated.
+  rpc ReportInstalled(ReportInstalledRequest) returns (ReportInstalledResponse) {}
+}
+
+message Device {
+  string id = 1;
+  string app_id = 2;
+  string environment_id = 3;
+  string platform = 4;
+  string os_version = 5;
+  string runtime_version = 6;
+  string host_build = 7;
+  // assurance_level is "none" until attestation arrives in P6.
+  string assurance_level = 8;
+  int64 installed_sequence = 9;
+  google.protobuf.Timestamp registered_at = 10;
+  google.protobuf.Timestamp last_seen_at = 11;
+}
+
+message RegisterDeviceRequest {
+  string app_id = 1;
+  string environment = 2;
+  string platform = 3;
+  string os_version = 4;
+  string runtime_version = 5;
+  string host_build = 6;
+}
+message RegisterDeviceResponse {
+  Device device = 1;
+}
+
+message GetDeviceRequest {
+  string id = 1;
+}
+message GetDeviceResponse {
+  Device device = 1;
+}
+
+message ListDevicesRequest {
+  string app_id = 1;
+  string environment_id = 2;
+  Page page = 3;
+}
+message ListDevicesResponse {
+  repeated Device devices = 1;
+  PageResult page = 2;
+}
+
+message ReportInstalledRequest {
+  string device_id = 1;
+  int64 release_sequence = 2;
+}
+message ReportInstalledResponse {}
