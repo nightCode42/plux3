@@ -235,16 +235,16 @@ func (rcv *Node) OverridesLength() int {
 	return 0
 }
 
-func (rcv *Node) Hints() NodeHints {
+func (rcv *Node) Hints() byte {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(28))
 	if o != 0 {
-		return NodeHints(rcv._tab.GetByte(o + rcv._tab.Pos))
+		return rcv._tab.GetByte(o + rcv._tab.Pos)
 	}
 	return 0
 }
 
-func (rcv *Node) MutateHints(n NodeHints) bool {
-	return rcv._tab.MutateByteSlot(28, byte(n))
+func (rcv *Node) MutateHints(n byte) bool {
+	return rcv._tab.MutateByteSlot(28, n)
 }
 
 func (rcv *Node) TypeArguments(j int) uint32 {
@@ -339,8 +339,8 @@ func NodeAddOverrides(builder *flatbuffers.Builder, overrides flatbuffers.UOffse
 func NodeStartOverridesVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
 	return builder.StartVector(4, numElems, 4)
 }
-func NodeAddHints(builder *flatbuffers.Builder, hints NodeHints) {
-	builder.PrependByteSlot(12, byte(hints), 0)
+func NodeAddHints(builder *flatbuffers.Builder, hints byte) {
+	builder.PrependByteSlot(12, hints, 0)
 }
 func NodeAddTypeArguments(builder *flatbuffers.Builder, typeArguments flatbuffers.UOffsetT) {
 	builder.PrependUOffsetTSlot(13, flatbuffers.UOffsetT(typeArguments), 0)

@@ -27,6 +27,8 @@ FLATC_VERSION         := 25.9.23
 FLATC_COMMIT          := 187240970746d00bbd26b0f5873ed54d2477f9f3
 
 GO            := go
+# How long `make go-fuzz` runs each fuzz target.
+FUZZTIME      ?= 30s
 # Tools are built with the project's toolchain; a tool built with an older Go
 # cannot analyse code that requires a newer one.
 GO_TOOLCHAIN  := $(shell sed -n 's/^toolchain //p' backend/go.mod)
@@ -69,7 +71,8 @@ GO_BUILD_FLAGS  := -trimpath -buildvcs=false -ldflags "-s -w -buildid= \
 
 .PHONY: help setup hooks-install check test build gen gen-check clean \
 	install-go-tools install-golangci-lint install-govulncheck install-gitleaks install-actionlint install-python-tools install-flatc \
-	go-check go-fmt go-fmt-check go-lint go-tidy go-tidy-check go-gen-check registry-lock-check go-test go-test-race go-cover go-vuln go-build go-reproducible \
+	go-check go-fmt go-fmt-check go-lint go-tidy go-tidy-check go-gen-check registry-lock-check go-test go-test-race go-cover \
+	go-determinism go-budgets go-fuzz go-vuln go-build go-reproducible \
 	dart-check dart-get dart-lock-check dart-fmt dart-fmt-check dart-analyze dart-test dart-cover widgets-api widgets-api-check \
 	studio-check studio-install studio-fmt studio-lint studio-typecheck studio-test studio-cover \
 	release-notes repo-check spec-lint trace secrets workflows-lint reuse-lint hygiene
@@ -194,6 +197,20 @@ go-test-race: ## Run Go unit tests with the race detector (needs cgo)
 go-cover: ## Run Go tests with race detector and coverage; enforce floors (QA-001)
 	@for m in $(GO_MODULES); do (cd $$m && CGO_ENABLED=1 $(GO) test -race -covermode=atomic -coverprofile=coverage.out ./...); done
 	$(COVGATE) -kind go $(addsuffix /coverage.out,$(GO_MODULES))
+
+# Verifies: CMP-002.
+go-determinism: ## Compile the conformance vectors and projects and compare with the goldens byte for byte (CMP-002)
+	cd backend && $(GO) test -count=1 -run 'Golden|Determinism|Repeated|Conformance' ./internal/pxl ./internal/bundle ./internal/compiler ./cmd/plux
+
+go-budgets: ## Check the compiler's timing budgets on this machine (CMP-050, SCH-042)
+	cd backend && PLUX_BUDGETS=1 $(GO) test -count=1 -v -run '^TestPerformanceBudgets$$' ./internal/compiler
+
+go-fuzz: ## Run every Go fuzz target for FUZZTIME each (QA-004, CMP-052)
+	@for m in $(GO_MODULES); do (cd $$m && for pkg in $$($(GO) list ./...); do \
+		for target in $$($(GO) test -list '^Fuzz' $$pkg | grep '^Fuzz' || true); do \
+			echo "── $$pkg $$target"; \
+			$(GO) test -run '^$$' -fuzz "^$$target$$" -fuzztime $(FUZZTIME) $$pkg; \
+		done; done); done
 
 go-vuln: ## Scan Go dependencies for known vulnerabilities
 	@for m in $(GO_MODULES); do (cd $$m && "$(GOVULNCHECK)" ./...); done

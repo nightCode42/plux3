@@ -63,6 +63,13 @@ func TestValidatePage(t *testing.T) {
 			redirect(t, r, resultPage, resultRedirect)
 			return r[resultPage].Data
 		}(), code: plxerr.RedirectLoop, ptr: "/lifecycle/onEnter"},
+		// The calculator page is listed first, so it claims the ID first.
+		{name: "ID of another page", file: calculatorPage, data: pageEdit(t, func(doc map[string]any) {
+			at(t, doc, amountNode)["id"] = "01a0c450-6c00-702c-8000-000000055114" // the result page's root
+		}), code: plxerr.DuplicateID, ptr: "/" + amountNode + "/id"},
+		{name: "route of another page", file: calculatorPage, data: pageEdit(t, func(doc map[string]any) {
+			doc["route"] = "result"
+		}), code: plxerr.DuplicateRouteName, ptr: "/route"},
 		{name: "outside a plugin", file: "pages/extra.page.json", data: m[calculatorPage].Data, code: plxerr.InvalidProjectLayout},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

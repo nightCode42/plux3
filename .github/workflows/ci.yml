@@ -8,6 +8,8 @@
 #   - "CI OK" depends on every job and is the single required status check of
 #     the main ruleset, so path filtering never blocks a merge.
 #   - Every job runs the same Makefile target a developer runs locally.
+#   - Compiler output is checked against the goldens on Linux, macOS and
+#     Windows (CMP-002); fuzzing runs on a schedule in fuzz.yml.
 #   - Actions are pinned to full commit SHAs; permissions are read-only unless
 #     a job needs more; checkouts never persist credentials.
 
@@ -358,6 +360,42 @@ jobs:
       # Verifies: QA-001.
       - name: Tests with race detector and coverage floors
         run: make go-cover | tee -a "$GITHUB_STEP_SUMMARY"
+      # ubuntu-latest is the reference runner of the timing budgets.
+      - name: Compiler timing budgets
+        run: make go-budgets | tee -a "$GITHUB_STEP_SUMMARY"
+
+  go-determinism:
+    name: Go determinism (${{ matrix.os }})
+    needs: changes
+    if: needs.changes.outputs.go == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: |
+            backend/go.mod
+            tools/go.mod
+      - name: Install make (Windows)
+        if: runner.os == 'Windows'
+        run: command -v make || choco install make --no-progress
+      # Every platform compiles the conformance vectors and projects to the
+      # committed goldens, byte for byte.
+      - name: Goldens are reproduced
+        run: make go-determinism
 
   go-build:
     name: Go build
@@ -475,6 +513,7 @@ jobs:
       - dependency-review
       - go-lint
       - go-test
+      - go-determinism
       - go-build
       - go-vuln
       - dart

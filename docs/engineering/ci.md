@@ -16,6 +16,7 @@ How the pipeline is built and why. The requirements are spec §29 (`CI-001`–`C
 | Workflow | Trigger | Purpose |
 |---|---|---|
 | [ci.yml](../../.github/workflows/ci.yml) | Pull requests, pushes to `main`, merge queue, daily, manual | Every quality gate |
+| [fuzz.yml](../../.github/workflows/fuzz.yml) | Nightly, manual (time per target as input) | `make go-fuzz`: every Go fuzz target for 5 minutes; failing inputs are kept as an artifact (`QA-004`, `CMP-052`) |
 | [scorecard.yml](../../.github/workflows/scorecard.yml) | Pushes to `main`, weekly, ruleset changes | OpenSSF Scorecard; results in code scanning |
 | [release.yml](../../.github/workflows/release.yml) | Component tags `<component>/v*` | Verify the signed tag and publish the release (`CI-008`) |
 | CodeQL | GitHub default setup | Static analysis of Go, TypeScript and Actions |
@@ -35,7 +36,8 @@ How the pipeline is built and why. The requirements are spec §29 (`CI-001`–`C
 | Commit messages | pull requests | `scripts/check-commit-msg.sh` on title and commits | `CI-009` |
 | Dependency review | pull requests | vulnerabilities and licences of new dependencies | `CI-007` |
 | Go lint | Go changes | `go-fmt-check go-lint go-tidy-check go-gen-check` (regenerates everything `make gen` writes and fails on any difference), `registry-lock-check` (no permanent ID of the base commit changed or removed) | `CI-001`, `CI-003`, `BND-011` |
-| Go test | Go changes | `go-cover` (race detector, coverage floors) | `QA-001` |
+| Go test | Go changes | `go-cover` (race detector, coverage floors); `go-budgets` (compiler timing budgets; `ubuntu-latest` is the reference runner) | `QA-001`, `CMP-050`, `SCH-042` |
+| Go determinism | Go changes, on Linux, macOS and Windows | `go-determinism` (the conformance vectors and projects compile to the committed goldens byte for byte) | `CMP-002` |
 | Go build | Go changes | `go-build go-reproducible` | `CI-006` |
 | Go vulnerabilities | Go changes | `go-vuln` | `CI-001` |
 | Dart and Flutter | Dart changes | `dart-lock-check dart-fmt-check dart-analyze dart-cover`, `widgets-api-check` (the Flutter snapshot matches the pinned SDK) | `CI-001`, `CI-003`, `QA-001`, `WGT-003` |

@@ -1720,7 +1720,7 @@ class Node {
   Semantics? get semantics => Semantics.reader.vTableGetNullable(_bc, _bcOffset, 22);
   int get testId => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 24, 0);
   List<Override>? get overrides => const fb.ListReader<Override>(Override.reader).vTableGetNullable(_bc, _bcOffset, 26);
-  NodeHints get hints => NodeHints.fromValue(const fb.Uint8Reader().vTableGet(_bc, _bcOffset, 28, 0));
+  int get hints => const fb.Uint8Reader().vTableGet(_bc, _bcOffset, 28, 0);
   List<int>? get typeArguments => const fb.ListReader<int>(fb.Uint32Reader()).vTableGetNullable(_bc, _bcOffset, 30);
   int get nativeSlot => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 32, 0);
 
@@ -1795,8 +1795,8 @@ class NodeBuilder {
     fbBuilder.addOffset(11, offset);
     return fbBuilder.offset;
   }
-  int addHints(NodeHints? hints) {
-    fbBuilder.addUint8(12, hints?.value);
+  int addHints(int? hints) {
+    fbBuilder.addUint8(12, hints);
     return fbBuilder.offset;
   }
   int addTypeArgumentsOffset(int? offset) {
@@ -1826,7 +1826,7 @@ class NodeObjectBuilder extends fb.ObjectBuilder {
   final SemanticsObjectBuilder? _semantics;
   final int? _testId;
   final List<OverrideObjectBuilder>? _overrides;
-  final NodeHints? _hints;
+  final int? _hints;
   final List<int>? _typeArguments;
   final int? _nativeSlot;
 
@@ -1843,7 +1843,7 @@ class NodeObjectBuilder extends fb.ObjectBuilder {
     SemanticsObjectBuilder? semantics,
     int? testId,
     List<OverrideObjectBuilder>? overrides,
-    NodeHints? hints,
+    int? hints,
     List<int>? typeArguments,
     int? nativeSlot,
   })
@@ -1897,7 +1897,7 @@ class NodeObjectBuilder extends fb.ObjectBuilder {
     fbBuilder.addOffset(9, semanticsOffset);
     fbBuilder.addUint32(10, _testId);
     fbBuilder.addOffset(11, overridesOffset);
-    fbBuilder.addUint8(12, _hints?.value);
+    fbBuilder.addUint8(12, _hints);
     fbBuilder.addOffset(13, typeArgumentsOffset);
     fbBuilder.addUint32(14, _nativeSlot);
     return fbBuilder.endTable();

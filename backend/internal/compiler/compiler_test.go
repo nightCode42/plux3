@@ -68,7 +68,7 @@ func readAll(t *testing.T, res *Result) []*bundle.Bundle {
 	return out
 }
 
-// Verifies: CMP-001, CMP-003, BND-002, BND-004, QA-003.
+// Verifies: CMP-001, CMP-003, CMP-005, BND-002, BND-004, QA-003.
 func TestCompileConformanceProject(t *testing.T) {
 	t.Parallel()
 	res := compileFS(fixture(t))

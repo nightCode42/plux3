@@ -298,7 +298,8 @@ func (u *unit) lintString(file, ptr, s string) {
 		}
 	}
 	if len(s) >= 7 && strings.EqualFold(s[:7], "http://") {
-		u.report(plxerr.InsecureURL, file, ptr, "%q uses http:", s)
+		// The URL is not quoted: it may carry credentials.
+		u.report(plxerr.InsecureURL, file, ptr, "the URL uses http:, which sends it in cleartext; use https:")
 	}
 }
 

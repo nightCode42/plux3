@@ -55,7 +55,7 @@ All types are declared in [`schema/fbs/bundle.fbs`](../../schema/fbs/bundle.fbs)
 
 ## 3. Nodes and values
 
-A **node** is a widget, by its permanent ID (`BND-011`), or a component instance. It holds props, event handlers, children, slot fills, `visible`, semantics, a test ID, override layers and rendering hints (`CMP-024`). Props, action inputs and overrides are `{id, value}` pairs keyed by permanent IDs (`BND-015`). Responsive, platform, experiment and locale variants are **override layers** — a condition and prop overrides — over the base node, never duplicated subtrees (`BND-016`). An event handler names an action graph in the actions section by UUID, with its concurrency policy.
+A **node** is a widget, by its permanent ID (`BND-011`), or a component instance. It holds props, event handlers, children, slot fills, `visible`, semantics, a test ID, override layers and rendering hints (`CMP-024`) — a byte of `NodeHints` bits, stored as a plain `ubyte` because flatc's Dart generator reads a `bit_flags` field as one enum value and fails on combined flags. Props, action inputs and overrides are `{id, value}` pairs keyed by permanent IDs (`BND-015`). Responsive, platform, experiment and locale variants are **override layers** — a condition and prop overrides — over the base node, never duplicated subtrees (`BND-016`). An event handler names an action graph in the actions section by UUID, with its concurrency policy.
 
 A **value** is one table: a `kind` and one field per representation, so a read is a single indirection and Go and Dart treat it identically.
 

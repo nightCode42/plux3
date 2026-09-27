@@ -17,7 +17,7 @@
 
 Plux is a server-driven UI and plugin platform for Flutter. Teams design screens and flows in **Plux Studio**; the **Plux Server** compiles them into signed **FlatBuffers** bundles and computes binary deltas against every older version; the **`plux_flutter`** runtime syncs all plugins at app start, verifies them, and renders them as native widgets — with no app-store release for changes that are "just UI". Logic that declarative actions cannot express runs as **Plux Functions**: Go compiled to WebAssembly, on the server or on the device.
 
-> **Status: Phase 0 — Foundations.** The repository, CI, supply-chain controls, specification and engineering handbook are in place. Product capabilities arrive phase by phase; see the [roadmap](#roadmap).
+> **Status: Phase 1 — Schema and compiler.** The document model, widget and action registries, PXL (Go compiler and VM, Dart VM), the bundle format and the compiler are in place, with `plux validate` and `plux build` working offline ([compiler](docs/reference/compiler.md), [CLI](docs/reference/cli.md)). Product capabilities arrive phase by phase; see the [roadmap](#roadmap).
 
 ## Why Plux
 
@@ -67,7 +67,7 @@ make help    # all tasks
 
 ## Engineering
 
-- **Specification-driven.** [`docs/requirements.md`](docs/requirements.md) defines 636 requirements with stable IDs, phases and status. Tests cite the IDs they verify, and CI generates the [traceability report](docs/engineering/testing.md#3-naming-and-traceability) from code — a requirement marked done without a test fails the build.
+- **Specification-driven.** [`docs/requirements.md`](docs/requirements.md) defines 640 requirements with stable IDs, phases and status. Tests cite the IDs they verify, and CI generates the [traceability report](docs/engineering/testing.md#3-naming-and-traceability) from code — a requirement marked done without a test fails the build.
 - **One pipeline definition.** CI, git hooks and developers run the same Makefile targets; a single **CI OK** gate aggregates path-filtered jobs for Go, Dart and Studio.
 - **Supply chain.** Actions pinned by SHA, least-privilege workflows checked by actionlint and zizmor, reproducible Go builds verified in CI, CycloneDX SBOMs, dependency review, Dependabot with cooldowns, OpenSSF Scorecard, REUSE-compliant licensing.
 - **Decisions are written down.** [Architecture Decision Records](docs/adr/README.md) explain every choice a future reader would question.

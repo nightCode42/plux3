@@ -84,7 +84,7 @@ func propValue(n *fbs.Node, id uint32) (*fbs.Value, bool) {
 	return nil, false
 }
 
-// Verifies: CMP-003, CMP-021, CMP-022, CMP-024, BND-015, BND-016, WGT-010, SCH-032.
+// Verifies: CMP-003, CMP-021, CMP-022, CMP-024, BND-015, BND-016, BND-017, WGT-010, SCH-030, SCH-032.
 func TestCompileFeaturesProject(t *testing.T) {
 	t.Parallel()
 	res := compileFeatures(t, Release)
@@ -126,7 +126,7 @@ func TestCompileFeaturesProject(t *testing.T) {
 		if !ok || v.Kind() != fbs.ValueKindString || strs[v.S()] != "Tasks 3" {
 			t.Errorf("the folded text is %v", v)
 		}
-		if nodes[foldedText].Hints()&fbs.NodeHintsStatic == 0 {
+		if nodes[foldedText].Hints()&byte(fbs.NodeHintsStatic) == 0 {
 			t.Error("the folded text is not static")
 		}
 	})
@@ -145,13 +145,13 @@ func TestCompileFeaturesProject(t *testing.T) {
 		if o.Kind() != fbs.OverrideKindSizeClass || strs[o.Key()] != "medium" {
 			t.Errorf("first override %v %q", o.Kind(), strs[o.Key()])
 		}
-		if n.Hints()&fbs.NodeHintsStatic != 0 {
+		if n.Hints()&byte(fbs.NodeHintsStatic) != 0 {
 			t.Error("a node with overrides is static")
 		}
 	})
 	t.Run("template item", func(t *testing.T) {
 		n := nodes[listItem]
-		if n.Hints()&fbs.NodeHintsRepaintBoundary == 0 || n.Component(nil) == nil {
+		if n.Hints()&byte(fbs.NodeHintsRepaintBoundary) == 0 || n.Component(nil) == nil {
 			t.Errorf("list item: hints %v", n.Hints())
 		}
 	})
@@ -165,7 +165,7 @@ func TestCompileFeaturesProject(t *testing.T) {
 		pg := fbs.GetRootAsPage(mustSection(t, read[1], bundle.SectionPage, listPageID).Data, 0)
 		var root fbs.Node
 		pg.Nodes(&root, 0)
-		if root.Hints()&fbs.NodeHintsRepaintBoundary == 0 {
+		if root.Hints()&byte(fbs.NodeHintsRepaintBoundary) == 0 {
 			t.Error("the page root has no repaint boundary")
 		}
 	})
@@ -325,5 +325,66 @@ func TestNestedForEachScope(t *testing.T) {
 			continue
 		}
 		wantDiag(t, res, code, listFile, "/"+steps+"/2/input/props/title")
+	}
+}
+
+// Verifies: CMP-020.
+// Strings are interned per section, identical style objects are stored
+// once, and props equal to their descriptor default are omitted.
+func TestInterningDeduplicationAndDefaults(t *testing.T) {
+	t.Parallel()
+	m := fixture(t)
+	edit(t, m, calculatorPage, func(doc map[string]any) {
+		col := at(t, doc, column)
+		col["props"].(map[string]any)["mainAxisAlignment"] = "start" // the default
+		col["props"].(map[string]any)["mainAxisSize"] = "min"
+		children := col["children"].([]any)
+		for i, id := range map[int]string{1: "01a0c450-6c00-7fff-8000-000000000101", 3: "01a0c450-6c00-7fff-8000-000000000103"} {
+			children[i] = map[string]any{
+				"id": id, "type": "Padding", "props": raw(t, `{"padding": {"all": 4}}`),
+				"slots": map[string]any{"child": children[i]},
+			}
+		}
+	})
+	res := compileFS(m)
+	if len(res.Diagnostics) > 0 {
+		t.Fatalf("diagnostics:\n%s", list(res.Diagnostics))
+	}
+	b := readAll(t, res)[1]
+	nodes, strs := pageNodes(t, b, calculatorID)
+	seen := map[string]bool{}
+	for _, s := range strs {
+		if seen[s] {
+			t.Errorf("string %q is stored twice", s)
+		}
+		seen[s] = true
+	}
+	colWidget, _ := registry.LookupWidget("Column")
+	alignment, _ := colWidget.Prop("mainAxisAlignment")
+	size, _ := colWidget.Prop("mainAxisSize")
+	col := nodes["01a0c450-6c00-7024-8000-00000004599c"]
+	if _, ok := propValue(col, alignment.ID); ok {
+		t.Error("the default mainAxisAlignment is encoded")
+	}
+	if _, ok := propValue(col, size.ID); !ok {
+		t.Error("mainAxisSize is missing")
+	}
+	padding, _ := registry.LookupWidget("Padding")
+	pad, _ := padding.Prop("padding")
+	a, _ := propValue(nodes["01a0c450-6c00-7fff-8000-000000000101"], pad.ID)
+	c, _ := propValue(nodes["01a0c450-6c00-7fff-8000-000000000103"], pad.ID)
+	if a == nil || c == nil || a.Kind() != fbs.ValueKindStyle || a.I() != c.I() {
+		t.Fatal("the two paddings do not share a style")
+	}
+	count := func(b *bundle.Bundle) (n int) {
+		for _, s := range b.Sections {
+			if s.Kind == bundle.SectionStyles {
+				n += fbs.GetRootAsStyles(s.Data, 0).StylesLength()
+			}
+		}
+		return n
+	}
+	if got, base := count(b), count(readAll(t, compileFS(fixture(t)))[1]); got != base+1 {
+		t.Errorf("%d styles, want %d and the one shared EdgeInsets", got, base)
 	}
 }

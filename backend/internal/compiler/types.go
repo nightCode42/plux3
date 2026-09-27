@@ -170,6 +170,9 @@ type scope struct {
 	ids map[string]map[string]string
 	// sources are the data sources visible as data.<name>.
 	sources []sourceField
+	// envKey caches key: a scope is complete before any expression is
+	// compiled in it and never changes afterwards.
+	envKey string
 }
 
 // with returns a copy of s with one more root.
@@ -196,6 +199,9 @@ func (s *scope) withTypes(types map[string]pxl.TypeSpec) *scope {
 
 // key identifies the environment a scope needs.
 func (s *scope) key() string {
+	if s.envKey != "" {
+		return s.envKey
+	}
 	var b strings.Builder
 	if s.plugin != nil {
 		b.WriteString(s.plugin.key)
@@ -210,7 +216,8 @@ func (s *scope) key() string {
 			fmt.Fprintf(&b, ",%s:%s", f, spec.Fields[f])
 		}
 	}
-	return b.String()
+	s.envKey = b.String()
+	return s.envKey
 }
 
 // env returns the PXL environment of a scope, built once per distinct

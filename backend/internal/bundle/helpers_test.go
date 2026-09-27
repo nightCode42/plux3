@@ -111,7 +111,7 @@ func pageSection() []byte {
 	fbs.NodeAddHandlers(b, handlers)
 	fbs.NodeAddSlots(b, slots)
 	fbs.NodeAddOverrides(b, override)
-	fbs.NodeAddHints(b, fbs.NodeHintsRepaintBoundary)
+	fbs.NodeAddHints(b, byte(fbs.NodeHintsRepaintBoundary))
 	root := fbs.NodeEnd(b)
 	fbs.NodeStart(b)
 	fbs.NodeAddWidget(b, 8)

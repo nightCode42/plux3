@@ -48,10 +48,21 @@ func (u *unit) claimID(id, file, ptr string) {
 	}
 	loc := plxerr.Location{File: file, Path: ptr}
 	if first, seen := u.ids[id]; seen {
-		u.diags = append(u.diags, plxerr.NewDiagnostic(plxerr.DuplicateID, loc, "identifier %s is already used", id).WithRelated(first))
+		u.duplicate(plxerr.DuplicateID, loc, first, "identifier %s is already used", id)
 		return
 	}
 	u.ids[id] = loc
+}
+
+// duplicate reports a second declaration at loc, relating it to the first.
+// ValidatePage returns only the edited page's diagnostics, so when the
+// first declaration is there and the second elsewhere, it is reported at
+// the first.
+func (u *unit) duplicate(code plxerr.Code, loc, first plxerr.Location, format string, args ...any) {
+	if u.focus != "" && first.File == u.focus && loc.File != u.focus {
+		loc, first = first, loc
+	}
+	u.diags = append(u.diags, plxerr.NewDiagnostic(code, loc, format, args...).WithRelated(first))
 }
 
 // keys reports duplicate keys or names within one parent (PLX-1101).
@@ -68,7 +79,7 @@ func (u *unit) newKeys(what string) *keys {
 func (k *keys) claim(key, file, ptr string) {
 	loc := plxerr.Location{File: file, Path: ptr}
 	if first, seen := k.seen[key]; seen {
-		k.u.diags = append(k.u.diags, plxerr.NewDiagnostic(plxerr.DuplicateKey, loc, "%s %q is declared twice", k.what, key).WithRelated(first))
+		k.u.duplicate(plxerr.DuplicateKey, loc, first, "%s %q is declared twice", k.what, key)
 		return
 	}
 	k.seen[key] = loc
@@ -425,8 +436,8 @@ func (u *unit) resolveApp() {
 		for _, pg := range pl.pages {
 			r := &route{name: pg.route, page: pg, file: pg.file, ptr: "/route"}
 			if first, dup := names[pg.route]; dup {
-				u.diags = append(u.diags, plxerr.NewDiagnostic(plxerr.DuplicateRouteName, plxerr.Location{File: pg.file, Path: "/route"},
-					"route name %q is already used", pg.route).WithRelated(plxerr.Location{File: first.file, Path: first.ptr}))
+				u.duplicate(plxerr.DuplicateRouteName, plxerr.Location{File: pg.file, Path: "/route"}, plxerr.Location{File: first.file, Path: first.ptr},
+					"route name %q is already used", pg.route)
 				continue
 			}
 			names[pg.route] = r
@@ -466,21 +477,14 @@ func (u *unit) buildPage(pg *page) {
 		sources.claim(s.Name, pg.file, ptr+"/name")
 	}
 	o := owner{page: pg}
-	pg.root = u.buildNode(o, &doc.Root, nil, "", "/root", &pg.nodes)
-	pg.graphs = map[string]*graph{}
-	if lc := doc.Lifecycle; lc != nil {
-		for _, h := range []struct {
-			name string
-			eh   *schema.EventHandler
-		}{{"onInit", lc.OnInit}, {"onEnter", lc.OnEnter}, {"onResume", lc.OnResume}, {"onLeave", lc.OnLeave}, {"onDispose", lc.OnDispose}} {
-			if h.eh == nil {
-				continue
-			}
-			if g := u.handlerGraph(o, h.eh, doc.ID, h.name, pg.file, plxerr.Pointer("lifecycle", h.name)); g != nil {
-				pg.graphs[h.name] = g
-			}
-		}
+	if u.inFocus(pg.file) {
+		pg.root = u.buildNode(o, &doc.Root, nil, "", "/root", &pg.nodes)
+	} else {
+		// ValidatePage checks another page: this one's node IDs are
+		// claimed, so duplicates are found, but its tree is not built.
+		u.claimNodeIDs(&doc.Root, pg.file, "/root")
 	}
+	u.lifecycleGraphs(pg, o)
 	u.scanRefs(doc.ID, pg.file, "/title", doc.Title)
 	if doc.RouteOptions != nil {
 		for i, g := range doc.RouteOptions.Guards {
@@ -488,6 +492,43 @@ func (u *unit) buildPage(pg *page) {
 			if gr := u.graphRef(pg.plugin, pg, g.Graph, pg.doc.ID, pg.file, ptr); gr != nil {
 				pg.guards = append(pg.guards, gr)
 			}
+		}
+	}
+}
+
+// lifecycleGraphs resolves the handlers of a page's lifecycle events.
+func (u *unit) lifecycleGraphs(pg *page, o owner) {
+	pg.graphs = map[string]*graph{}
+	lc := pg.doc.Lifecycle
+	if lc == nil {
+		return
+	}
+	for _, h := range []struct {
+		name string
+		eh   *schema.EventHandler
+	}{{"onInit", lc.OnInit}, {"onEnter", lc.OnEnter}, {"onResume", lc.OnResume}, {"onLeave", lc.OnLeave}, {"onDispose", lc.OnDispose}} {
+		if h.eh == nil {
+			continue
+		}
+		if g := u.handlerGraph(o, h.eh, pg.doc.ID, h.name, pg.file, plxerr.Pointer("lifecycle", h.name)); g != nil {
+			pg.graphs[h.name] = g
+		}
+	}
+}
+
+// claimNodeIDs claims the IDs of a node tree without building it.
+func (u *unit) claimNodeIDs(doc *schema.Node, file, ptr string) {
+	u.claimID(doc.ID, file, ptr+"/id")
+	for i := range doc.Children {
+		u.claimNodeIDs(&doc.Children[i], file, ptr+"/children/"+strconv.Itoa(i))
+	}
+	for _, name := range sortedKeys(doc.Slots) {
+		fill, sp := doc.Slots[name], ptr+plxerr.Pointer("slots", name)
+		if fill.One != nil {
+			u.claimNodeIDs(fill.One, file, sp)
+		}
+		for i := range fill.Many {
+			u.claimNodeIDs(&fill.Many[i], file, sp+"/"+strconv.Itoa(i))
 		}
 	}
 }

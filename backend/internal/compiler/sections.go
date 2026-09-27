@@ -137,7 +137,7 @@ func encodeNode(e *valueEnc, n *node) flatbuffers.UOffsetT {
 	}
 	fbs.NodeAddOverrides(b, overrides)
 	if n.hints != 0 {
-		fbs.NodeAddHints(b, n.hints)
+		fbs.NodeAddHints(b, byte(n.hints))
 	}
 	fbs.NodeAddTypeArguments(b, ta)
 	return fbs.NodeEnd(b)

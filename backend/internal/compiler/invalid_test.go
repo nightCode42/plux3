@@ -4,6 +4,7 @@
 package compiler
 
 import (
+	"strings"
 	"testing"
 	"testing/fstest"
 
@@ -340,5 +341,19 @@ func TestInvalidProjects(t *testing.T) {
 				t.Error("bundles were produced despite errors")
 			}
 		})
+	}
+}
+
+// Diagnostics never repeat a literal that may carry a credential.
+func TestDiagnosticsDoNotEchoCredentials(t *testing.T) {
+	t.Parallel()
+	m := fixture(t)
+	setProp(column+"/children/1", "data", `"http://user:hunter2hunter2@example.com/"`)(t, m)
+	res := compileFS(m)
+	wantDiag(t, res, plxerr.InsecureURL, calculatorPage, "/"+column+"/children/1/props/data")
+	for _, d := range res.Diagnostics {
+		if strings.Contains(d.Message, "hunter2") {
+			t.Errorf("the diagnostic repeats the credential: %s", d)
+		}
 	}
 }

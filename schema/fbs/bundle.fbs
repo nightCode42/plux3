@@ -177,7 +177,9 @@ table SlotFill {
   nodes: [uint];
 }
 
-// Rendering hints (CMP-024).
+// Rendering hints (CMP-024), the bits of Node.hints. The field is a plain
+// ubyte because flatc's Dart generator decodes a bit_flags field as a
+// single enum value and fails on combined flags.
 enum NodeHints : ubyte (bit_flags) {
   RepaintBoundary,
   Static
@@ -202,7 +204,7 @@ table Node {
   semantics: Semantics;
   test_id: uint;
   overrides: [Override];
-  hints: NodeHints;
+  hints: ubyte; // NodeHints bits
   type_arguments: [uint];
   native_slot: uint;
 }

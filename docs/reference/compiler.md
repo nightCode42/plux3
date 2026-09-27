@@ -70,7 +70,7 @@ The optimiser rewrites the checked trees without changing what they render (`CMP
 
 ## 5. Incremental validation
 
-`ValidatePage` serves Studio as the user types (`SCH-042`): the project is loaded once by `NewValidator`, and each call re-parses only the edited page, puts it in a copy of the project and runs the checking stages with the edited page in **focus** — only that page, its lifecycle and inline graphs and its page-scoped action graphs are checked, while redirect loops are still followed through every page. It returns the diagnostics located in the page and in the graphs it owns, which an edit of its state or parameters can break. The loaded project is never modified. A file outside a plugin's `pages/` directory is refused with `PLX-1020`, as is a new page until its `plugin.json` lists it.
+`ValidatePage` serves Studio as the user types (`SCH-042`): the project is loaded once by `NewValidator`, and each call re-parses only the edited page, puts it in a copy of the project and runs the checking stages with the edited page in **focus** — only that page, its lifecycle and inline graphs and its page-scoped action graphs are checked. Other pages contribute their IDs, keys and routes, so a duplicate is still found and is reported in the edited page even when the other declaration comes first, and their lifecycle graphs, so redirect loops are still followed through every page; their node trees are not built. It returns the diagnostics located in the page and in the graphs it owns, which an edit of its state or parameters can break. The loaded project is never modified. A file outside a plugin's `pages/` directory is refused with `PLX-1020`, as is a new page until its `plugin.json` lists it.
 
 ## 6. Encoding and determinism
 
@@ -91,4 +91,4 @@ Each compiles without diagnostics; `TestInvalidProjects` breaks the loan calcula
 
 ## 8. Performance
 
-`BenchmarkCompile50Pages` compiles the loan calculator with 48 copies of its calculator page and their graphs (a 50-page plugin, `CMP-050`: ≤ 1 s); `BenchmarkValidatePage` validates one page of that project (`SCH-042`, `NFR-033`: ≤ 50 ms p95). Results are recorded in `docs/benchmarks/`.
+The benchmark project is the loan calculator with 48 copies of its calculator page and their graphs, each padded to 100 nodes that bind their own expressions: a 50-page plugin. `make go-budgets` asserts that it compiles within 1 s (`CMP-050`) and that one of its pages validates within 50 ms at the 95th percentile (`SCH-042`, `NFR-033`); CI runs it on its reference runner. `BenchmarkCompile50Pages` and `BenchmarkValidatePage` measure the same work for profiling. Results: [p1-compiler.md](../benchmarks/p1-compiler.md).
