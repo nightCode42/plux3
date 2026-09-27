@@ -11,6 +11,7 @@ library;
 
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
 import 'package:plux_widget_api/plux_widget_api.dart';
 
 Future<void> main(List<String> args) async {
@@ -48,14 +49,18 @@ Future<void> main(List<String> args) async {
     exitCode = 1;
     return;
   }
-  final targets = readTargets(Directory('${rootDir.path}/schema/widgets'));
+  final targets = readTargets(
+    Directory(p.join(rootDir.path, 'schema', 'widgets')),
+  );
   final snapshot = await extract(
     targets,
-    contextRoot: Directory('${rootDir.path}/packages/plux_flutter')
+    contextRoot: Directory(p.join(rootDir.path, 'packages', 'plux_flutter'))
         .resolveSymbolicLinksSync(),
     flutterVersion: version,
   );
-  final out = File('${rootDir.path}/schema/widgets/flutter-api.json');
+  final out = File(
+    p.join(rootDir.path, 'schema', 'widgets', 'flutter-api.json'),
+  );
   final text = encode(snapshot);
   if (check) {
     if (!out.existsSync() || out.readAsStringSync() != text) {

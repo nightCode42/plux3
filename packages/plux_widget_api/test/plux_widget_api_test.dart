@@ -4,6 +4,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:path/path.dart' as p;
 import 'package:plux_widget_api/plux_widget_api.dart';
 import 'package:test/test.dart';
 
@@ -12,7 +13,7 @@ Directory _tree(Map<String, Object?> files) {
   final dir = Directory.systemTemp.createTempSync('plux_widget_api');
   addTearDown(() => dir.deleteSync(recursive: true));
   files.forEach((path, content) {
-    File('${dir.path}/$path')
+    File(p.joinAll([dir.path, ...path.split('/')]))
       ..createSync(recursive: true)
       ..writeAsStringSync(content is String ? content : jsonEncode(content));
   });
@@ -136,7 +137,7 @@ void main() {
           }),
         );
       expect(flutterSdkVersion(dir), '3.47.5');
-      expect(flutterSdk(dir)!.path, endsWith('/sdk/'));
+      expect(p.basename(flutterSdk(dir)!.path), 'sdk');
     });
 
     test('is null when it cannot be determined', () {
@@ -171,7 +172,12 @@ void main() {
     // The analysis context of plux_flutter resolves the pinned Flutter SDK;
     // the analyzer needs its Dart SDK named when running under flutter test.
     final contextRoot = Directory('../plux_flutter').resolveSymbolicLinksSync();
-    final sdkPath = '${flutterSdk(Directory('../..'))!.path}bin/cache/dart-sdk';
+    final sdkPath = p.join(
+      flutterSdk(Directory('../..'))!.path,
+      'bin',
+      'cache',
+      'dart-sdk',
+    );
 
     test(
       'snapshots constructor parameters and enum values [WGT-003]',

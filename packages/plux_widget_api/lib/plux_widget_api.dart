@@ -18,6 +18,7 @@ import 'dart:io';
 import 'package:analyzer/dart/analysis/analysis_context_collection.dart';
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:path/path.dart' as p;
 
 /// A Flutter declaration to extract, identified by the public library that
 /// exports it and its name.
@@ -134,11 +135,14 @@ Future<Map<String, Object?>> extract(
   required String flutterVersion,
   String? sdkPath,
 }) async {
+  // The analyzer takes absolute paths in the platform's own form; a path
+  // built by joining with "/" is not one on Windows.
+  final root = p.normalize(p.absolute(contextRoot));
   final collection = AnalysisContextCollection(
-    includedPaths: [contextRoot],
-    sdkPath: sdkPath,
+    includedPaths: [root],
+    sdkPath: sdkPath == null ? null : p.normalize(p.absolute(sdkPath)),
   );
-  final session = collection.contextFor(contextRoot).currentSession;
+  final session = collection.contextFor(root).currentSession;
   final classes = <String, Object?>{};
   final enums = <String, Object?>{};
   final errors = <String>[];
@@ -219,7 +223,8 @@ Map<String, Object?> _parameter(FormalParameterElement p) => {
 /// Returns the root of the Flutter SDK the workspace at [root] resolves
 /// `package:flutter` to, or `null` when it cannot be determined.
 Directory? flutterSdk(Directory root) {
-  final config = File('${root.path}/.dart_tool/package_config.json');
+  // The path is normalised for the platform and has no trailing separator.
+  final config = File(p.join(root.path, '.dart_tool', 'package_config.json'));
   if (!config.existsSync()) return null;
   final packages = switch (jsonDecode(config.readAsStringSync())) {
     {'packages': final List<Object?> list} => list,
@@ -230,7 +235,9 @@ Directory? flutterSdk(Directory root) {
       final flutter = config.parent.uri.resolve(
         rootUri.endsWith('/') ? rootUri : '$rootUri/',
       );
-      final sdk = Directory.fromUri(flutter.resolve('../../'));
+      final sdk = Directory(
+        p.normalize(Directory.fromUri(flutter.resolve('../../')).path),
+      );
       return sdk.existsSync() ? sdk : null;
     }
   }
@@ -241,8 +248,10 @@ Directory? flutterSdk(Directory root) {
 /// read from the SDK's `bin/cache/flutter.version.json`, or `null` when it
 /// cannot be determined.
 String? flutterSdkVersion(Directory root) {
+  final sdk = flutterSdk(root);
+  if (sdk == null) return null;
   final version = File(
-    '${flutterSdk(root)?.path}/bin/cache/flutter.version.json',
+    p.join(sdk.path, 'bin', 'cache', 'flutter.version.json'),
   );
   if (!version.existsSync()) return null;
   return switch (jsonDecode(version.readAsStringSync())) {
