@@ -117,6 +117,8 @@ install-python-tools: ## Install the pinned pre-commit, zizmor and reuse
 # tag is checked against the pinned commit before anything is built.
 install-flatc: ## Build the pinned flatc from source into FLATC_DIR (ADR-0002)
 	@if "$(FLATC)" --version 2>/dev/null | grep -qx "flatc version $(FLATC_VERSION)"; then echo "flatc $(FLATC_VERSION): $(FLATC)"; exit 0; fi; \
+	for tool in git cmake c++; do command -v $$tool >/dev/null || { \
+		echo "✗ install-flatc needs $$tool: sudo apt-get install -y git cmake g++ (Debian/Ubuntu/WSL) or brew install cmake (macOS)" >&2; exit 1; }; done; \
 	src=$$(mktemp -d); trap 'rm -rf "$$src"' EXIT; \
 	git -c advice.detachedHead=false clone --quiet --depth 1 --branch "v$(FLATC_VERSION)" https://github.com/google/flatbuffers.git "$$src"; \
 	if [ "$$(git -C "$$src" rev-parse HEAD)" != "$(FLATC_COMMIT)" ]; then echo "✗ flatc tag v$(FLATC_VERSION) is not commit $(FLATC_COMMIT)" >&2; exit 1; fi; \
