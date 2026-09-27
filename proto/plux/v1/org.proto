@@ -62,7 +62,9 @@ message Member {
   string organization_id = 2;
   // team_id is empty for a direct organization membership.
   string team_id = 3;
-  // role is "owner", "admin", "developer" or "viewer" (SEC-102).
+  // role is "owner", "admin", "developer" or "viewer" for a direct
+  // membership (SEC-102), and "member" for a team membership: a team's
+  // members hold the roles the team is granted on apps (GOV-001).
   string role = 4;
   google.protobuf.Timestamp added_at = 5;
   string display_name = 6;

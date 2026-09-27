@@ -26,6 +26,7 @@ BUF_VERSION           := v1.73.0
 PROTOC_GEN_GO_VERSION := v1.36.12
 PROTOC_GEN_CONNECT_GO_VERSION := v1.21.0
 PROTOC_GEN_CONNECT_OPENAPI_VERSION := v0.27.3
+SQLC_VERSION          := v1.31.1
 # flatc is built from source at the commit of its release tag (ADR-0002).
 FLATC_VERSION         := 25.9.23
 FLATC_COMMIT          := 187240970746d00bbd26b0f5873ed54d2477f9f3
@@ -49,6 +50,7 @@ GOVULNCHECK   ?= $(TOOLS_BIN)/govulncheck
 GITLEAKS      ?= $(TOOLS_BIN)/gitleaks
 ACTIONLINT    ?= $(TOOLS_BIN)/actionlint
 BUF           ?= $(TOOLS_BIN)/buf
+SQLC          ?= $(TOOLS_BIN)/sqlc
 PROTO_DIR     := proto
 PROTO_GO_DIR  := backend/internal/pluxv1
 PROTO_API_DIR := docs/reference/api
@@ -81,8 +83,8 @@ GO_BUILD_FLAGS  := -trimpath -buildvcs=false -ldflags "-s -w -buildid= \
 	-X $(BUILDINFO_PKG).commitDate=$(COMMIT_DATE)"
 
 .PHONY: help setup hooks-install check test build gen gen-check clean \
-	install-go-tools install-golangci-lint install-govulncheck install-gitleaks install-actionlint install-buf install-python-tools install-flatc \
-	go-check proto proto-check proto-lint proto-format-check proto-breaking go-fmt go-fmt-check go-lint go-tidy go-tidy-check go-gen-check registry-lock-check go-test go-test-race go-cover \
+	install-go-tools install-golangci-lint install-govulncheck install-gitleaks install-actionlint install-buf install-sqlc install-python-tools install-flatc \
+	go-check proto proto-check proto-lint proto-format-check proto-breaking sqlc sqlc-check go-fmt go-fmt-check go-lint go-tidy go-tidy-check go-gen-check registry-lock-check go-test go-test-race go-cover \
 	go-determinism go-budgets go-fuzz currencies-check go-vuln go-build go-reproducible \
 	dart-check dart-get dart-lock-check dart-fmt dart-fmt-check dart-analyze dart-test dart-cover widgets-api widgets-api-check \
 	studio-check studio-install studio-fmt studio-lint studio-typecheck studio-test studio-cover \
@@ -100,7 +102,7 @@ setup: install-go-tools install-python-tools install-flatc ## Install pinned too
 	@command -v bun >/dev/null || echo "! Install Bun $(BUN_VERSION): https://bun.sh/docs/installation"
 	$(MAKE) hooks-install
 
-install-go-tools: install-golangci-lint install-govulncheck install-gitleaks install-actionlint install-buf ## Install the pinned Go-based tools
+install-go-tools: install-golangci-lint install-govulncheck install-gitleaks install-actionlint install-buf install-sqlc ## Install the pinned Go-based tools
 
 install-golangci-lint: ## Install the pinned golangci-lint
 	$(GO_INSTALL) github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
@@ -119,6 +121,9 @@ install-buf: ## Install buf and the protoc plugins the API contract needs (ADR-0
 	$(GO_INSTALL) google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GEN_GO_VERSION)
 	$(GO_INSTALL) connectrpc.com/connect/cmd/protoc-gen-connect-go@$(PROTOC_GEN_CONNECT_GO_VERSION)
 	$(GO_INSTALL) github.com/sudorandom/protoc-gen-connect-openapi@$(PROTOC_GEN_CONNECT_OPENAPI_VERSION)
+
+install-sqlc: ## Install the pinned sqlc, which type-checks the server's SQL (ADR-0007)
+	$(GO_INSTALL) github.com/sqlc-dev/sqlc/cmd/sqlc@$(SQLC_VERSION)
 
 PYTHON_TOOLS := pre-commit==$(PRE_COMMIT_VERSION) zizmor==$(ZIZMOR_VERSION) reuse==$(REUSE_VERSION)
 
@@ -166,6 +171,7 @@ gen: ## Regenerate all generated code and reference documents (CI-003)
 	"$(FLATC)" --binary --schema -o "$$bfbs" $(FBS_SECTIONS); \
 	$(GO) run ./tools/cmd/schemagen -root . -bfbs "$$bfbs"
 	@$(MAKE) proto
+	@$(MAKE) sqlc
 	@for m in $(GO_MODULES); do (cd $$m && $(GO) generate ./...); done
 
 # The API contract generates the Go messages and handlers and the OpenAPI
@@ -177,6 +183,16 @@ proto: ## Regenerate the API contract's Go code and OpenAPI description (SRV-002
 	@mkdir -p $(PROTO_API_DIR)
 	cd $(PROTO_DIR) && PATH="$(TOOLS_BIN):$$PATH" "$(BUF)" format -w .
 	cd $(PROTO_DIR) && PATH="$(TOOLS_BIN):$$PATH" "$(BUF)" generate
+
+# The server's queries are type-checked against its own migrations, so a
+# query that does not match the schema fails here rather than at run time
+# (SRV-020).
+sqlc: ## Regenerate the server's database access code from its SQL (SRV-020)
+	@command -v "$(SQLC)" >/dev/null || { echo "✗ sqlc not found at $(SQLC); run 'make install-sqlc'" >&2; exit 1; }
+	cd backend && "$(SQLC)" generate
+
+sqlc-check: ## Fail if a query does not type-check against the migrations
+	cd backend && "$(SQLC)" vet 2>/dev/null || cd backend && "$(SQLC)" compile
 
 gen-check: go-gen-check dart-lock-check studio-install ## Fail if generated code or lockfiles are not committed; run on a clean tree (CI-003)
 

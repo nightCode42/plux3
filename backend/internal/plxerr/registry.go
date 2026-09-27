@@ -112,11 +112,13 @@ const (
 
 	// Governance (PLX-8000–8999).
 
-	AuthenticationRequired Code = 8010
 	MultiFactorRequired    Code = 8011
+	AuthenticationRequired Code = 8012
 	EditingLockHeld        Code = 8020
 	PermissionDenied       Code = 8030
 	ResourceNotFound       Code = 8031
+	ResourceExists         Code = 8032
+	PreconditionFailed     Code = 8033
 	RateLimited            Code = 8040
 	InternalServerError    Code = 8090
 

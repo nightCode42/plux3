@@ -656,14 +656,6 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 ## Governance (PLX-8000–8999)
 
-### PLX-8010
-
-`AUTHENTICATION_REQUIRED` · error · Authentication required
-
-**Cause.** The call carried no credential, or one that has expired or been revoked.
-
-**Fix.** Sign in again, or use a valid access token.
-
 ### PLX-8011
 
 `MULTI_FACTOR_REQUIRED` · error · Second factor required
@@ -671,6 +663,14 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 **Cause.** The capability this call needs — publishing, approving, managing keys or managing members — requires a second factor, and the session has not completed one (SEC-100).
 
 **Fix.** Complete the second factor and repeat the call.
+
+### PLX-8012
+
+`AUTHENTICATION_REQUIRED` · error · Authentication required
+
+**Cause.** The call carried no credential, or one that has expired or been revoked.
+
+**Fix.** Sign in again, or use a valid access token.
 
 ### PLX-8020
 
@@ -695,6 +695,22 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 **Cause.** The resource does not exist, or the caller may not see it. The two are reported the same way, so that the API does not disclose what exists in another organisation.
 
 **Fix.** Check the identifier, and that you have access to the organisation that owns it.
+
+### PLX-8032
+
+`RESOURCE_EXISTS` · error · Already exists
+
+**Cause.** Something with this key already exists where keys must be unique, such as an organisation, team, app, environment or channel key.
+
+**Fix.** Choose another key, or use the existing resource.
+
+### PLX-8033
+
+`PRECONDITION_FAILED` · error · Precondition failed
+
+**Cause.** The call is valid but the resource is not in a state that allows it, such as removing an organisation's last owner or accepting an invitation that has expired.
+
+**Fix.** Read the message for the state that blocks the call, change it, and repeat the call.
 
 ### PLX-8040
 

@@ -15,6 +15,7 @@ import (
 	"syscall"
 
 	"github.com/nightCode42/plux3/backend/internal/buildinfo"
+	"github.com/nightCode42/plux3/backend/internal/cache"
 	"github.com/nightCode42/plux3/backend/internal/config"
 	"github.com/nightCode42/plux3/backend/internal/jobs"
 	"github.com/nightCode42/plux3/backend/internal/observability"
@@ -32,11 +33,13 @@ Commands:
   serve             Run the roles named in the configuration
   config validate   Check a configuration file without connecting to anything
   migrate           Apply pending database migrations and exit
+  bootstrap         Create the first installation administrator
   version           Print version information
   help              Show this help
 
 Flags:
   -config <path>    Configuration file (default plux-server.yaml)
+  -email <address>  The administrator's email address (bootstrap only)
 
 Every value may also come from the environment; run
 'plux-server config validate -h' for the variables that are read.
@@ -77,6 +80,8 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		return serve(ctx, args[1:], stdout, stderr)
 	case "migrate":
 		return migrate(ctx, args[1:], stdout, stderr)
+	case "bootstrap":
+		return bootstrap(ctx, args[1:], stdout, stderr)
 	case "config":
 		return configCommand(args[1:], stdout, stderr)
 	default:
@@ -161,6 +166,55 @@ func migrate(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		return exitFailed
 	}
 	_, _ = fmt.Fprintf(stdout, "✓ %d migrations applied or already present\n", len(migrations))
+	return exitOK
+}
+
+// bootstrap creates the first installation administrator and prints the
+// one-time invitation with which they set a password. It refuses once an
+// administrator exists, so it cannot add a second one unaudited.
+func bootstrap(ctx context.Context, args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet(name+" bootstrap", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	path := fs.String("config", "plux-server.yaml", "configuration file")
+	email := fs.String("email", "", "the administrator's email address")
+	if err := fs.Parse(args); err != nil || fs.NArg() > 0 || *email == "" {
+		_, _ = fmt.Fprintf(stderr, "%s: usage: bootstrap -email <address> [-config <path>]\n", name)
+		return exitUsage
+	}
+	cfg, err := config.Load(*path, os.LookupEnv)
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, "%s: %s:\n%s\n", name, *path, err)
+		return exitUsage
+	}
+	fail := func(err error) int {
+		_, _ = fmt.Fprintf(stderr, "%s: %s\n", name, err)
+		return exitFailed
+	}
+	db, err := storage.Open(ctx, storage.Options{URL: cfg.Database.URL.Value(), MaxConnections: 2, Log: logger(cfg, stderr)})
+	if err != nil {
+		return fail(err)
+	}
+	defer db.Close()
+	set, err := cfg.LimitSet()
+	if err != nil {
+		return fail(err)
+	}
+	backend, err := server.BuildSigning(cfg)
+	if err != nil {
+		return fail(err)
+	}
+	// The cache only counts failed sign-ins, which bootstrap never has.
+	services, err := server.BuildServices(ctx, cfg, db, cache.NewMemory(nil), set, backend)
+	if err != nil {
+		return fail(err)
+	}
+	user, invitation, err := services.Auth.Bootstrap(ctx, *email)
+	if err != nil {
+		return fail(err)
+	}
+	_, _ = fmt.Fprintf(stdout, "✓ created installation administrator %s (%s)\n", user.Email, user.ID)
+	_, _ = fmt.Fprintf(stdout, "  invitation (shown once, valid for 7 days): %s\n", invitation)
+	_, _ = fmt.Fprintln(stdout, "  accept it with IdentityService.AcceptInvitation to set a password")
 	return exitOK
 }
 

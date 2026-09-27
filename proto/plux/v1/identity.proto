@@ -186,9 +186,12 @@ message ConfirmFactorResponse {
   Factor factor = 1;
 }
 
-message ListFactorsRequest {}
+message ListFactorsRequest {
+  Page page = 1;
+}
 message ListFactorsResponse {
   repeated Factor factors = 1;
+  PageResult page = 2;
 }
 
 message DeleteFactorRequest {
@@ -308,9 +311,11 @@ message CreateWorkloadIdentityResponse {
 
 message ListWorkloadIdentitiesRequest {
   string organization_id = 1;
+  Page page = 2;
 }
 message ListWorkloadIdentitiesResponse {
   repeated WorkloadIdentity identities = 1;
+  PageResult page = 2;
 }
 
 message DeleteWorkloadIdentityRequest {

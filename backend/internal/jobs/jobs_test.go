@@ -168,3 +168,41 @@ func TestNewNeedsAPool(t *testing.T) {
 		t.Errorf("Queues() = %v", got)
 	}
 }
+
+// Verifies: SRV-024.
+// A periodic job is enqueued when a worker starts, without anyone
+// inserting it.
+func TestPeriodicJobsRunOnStart(t *testing.T) {
+	t.Parallel()
+	db := storagetest.Open(t)
+	ctx := context.Background()
+	if err := jobs.Migrate(ctx, db.Pool()); err != nil {
+		t.Fatalf("Migrate: %v", err)
+	}
+	w := &echoWorker{done: make(chan struct{}, 4)}
+	workers := jobs.NewWorkers()
+	jobs.AddWorker(workers, w)
+	c, err := jobs.New(jobs.Options{
+		Pool: db.Pool(), Workers: workers, Run: true,
+		Periodic: []*river.PeriodicJob{jobs.Every(time.Hour, echoArgs{Text: "tick"})},
+	})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if err := c.Start(ctx); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	t.Cleanup(func() {
+		stop, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		_ = c.Stop(stop)
+	})
+	select {
+	case <-w.done:
+	case <-time.After(20 * time.Second):
+		t.Fatal("the periodic job did not run on start")
+	}
+	if got := w.texts(); len(got) == 0 || got[0] != "tick" {
+		t.Errorf("ran %v", got)
+	}
+}

@@ -32,6 +32,9 @@ enum PluxLimit {
   actionStepTimeout('action.stepTimeout', PluxLimitUnit.milliseconds, 30000, 0, 600000),
   /// Steps one action run may execute.
   actionStepsPerRun('action.stepsPerRun', PluxLimitUnit.count, 10000, 0, 100000),
+  /// Items one page of a list call returns; a call asking for more gets this
+  /// many, and one asking for none gets this many too.
+  apiPageSize('api.pageSize', PluxLimitUnit.count, 100, 0, 1000),
   /// Size of one API request body, refused before a handler reads it.
   apiRequestSize('api.requestSize', PluxLimitUnit.bytes, 8388608, 0, 268435456),
   /// API calls one authenticated principal (a user or a token) may make per

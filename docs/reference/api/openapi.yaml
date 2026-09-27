@@ -6676,6 +6676,10 @@ components:
         appId:
           type: string
           title: app_id
+        page:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Page'
+          title: page
       title: ListAccessRequest
       additionalProperties: false
     plux.v1.ListAccessResponse:
@@ -6686,6 +6690,10 @@ components:
           items:
             $ref: '#/components/schemas/plux.v1.AccessGrant'
           title: grants
+        page:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.PageResult'
+          title: page
       title: ListAccessResponse
       additionalProperties: false
     plux.v1.ListAccessTokensRequest:
@@ -6819,6 +6827,10 @@ components:
         environmentId:
           type: string
           title: environment_id
+        page:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Page'
+          title: page
       title: ListChannelsRequest
       additionalProperties: false
     plux.v1.ListChannelsResponse:
@@ -6829,6 +6841,10 @@ components:
           items:
             $ref: '#/components/schemas/plux.v1.Channel'
           title: channels
+        page:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.PageResult'
+          title: page
       title: ListChannelsResponse
       additionalProperties: false
     plux.v1.ListComponentsRequest:
@@ -6928,6 +6944,10 @@ components:
         appId:
           type: string
           title: app_id
+        page:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Page'
+          title: page
       title: ListEnvironmentsRequest
       additionalProperties: false
     plux.v1.ListEnvironmentsResponse:
@@ -6938,6 +6958,10 @@ components:
           items:
             $ref: '#/components/schemas/plux.v1.Environment'
           title: environments
+        page:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.PageResult'
+          title: page
       title: ListEnvironmentsResponse
       additionalProperties: false
     plux.v1.ListEventsRequest:
@@ -6978,6 +7002,11 @@ components:
       additionalProperties: false
     plux.v1.ListFactorsRequest:
       type: object
+      properties:
+        page:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Page'
+          title: page
       title: ListFactorsRequest
       additionalProperties: false
     plux.v1.ListFactorsResponse:
@@ -6988,6 +7017,10 @@ components:
           items:
             $ref: '#/components/schemas/plux.v1.Factor'
           title: factors
+        page:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.PageResult'
+          title: page
       title: ListFactorsResponse
       additionalProperties: false
     plux.v1.ListMembersRequest:
@@ -7194,6 +7227,10 @@ components:
         environmentId:
           type: string
           title: environment_id
+        page:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Page'
+          title: page
       title: ListSecretsRequest
       additionalProperties: false
     plux.v1.ListSecretsResponse:
@@ -7204,6 +7241,10 @@ components:
           items:
             $ref: '#/components/schemas/plux.v1.Secret'
           title: secrets
+        page:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.PageResult'
+          title: page
       title: ListSecretsResponse
       additionalProperties: false
     plux.v1.ListSnapshotsRequest:
@@ -7360,6 +7401,10 @@ components:
         environmentId:
           type: string
           title: environment_id
+        page:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Page'
+          title: page
       title: ListVariablesRequest
       additionalProperties: false
     plux.v1.ListVariablesResponse:
@@ -7370,6 +7415,10 @@ components:
           items:
             $ref: '#/components/schemas/plux.v1.Variable'
           title: variables
+        page:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.PageResult'
+          title: page
       title: ListVariablesResponse
       additionalProperties: false
     plux.v1.ListWorkloadIdentitiesRequest:
@@ -7378,6 +7427,10 @@ components:
         organizationId:
           type: string
           title: organization_id
+        page:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Page'
+          title: page
       title: ListWorkloadIdentitiesRequest
       additionalProperties: false
     plux.v1.ListWorkloadIdentitiesResponse:
@@ -7388,6 +7441,10 @@ components:
           items:
             $ref: '#/components/schemas/plux.v1.WorkloadIdentity'
           title: identities
+        page:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.PageResult'
+          title: page
       title: ListWorkloadIdentitiesResponse
       additionalProperties: false
     plux.v1.Location:
@@ -7533,7 +7590,10 @@ components:
         role:
           type: string
           title: role
-          description: role is "owner", "admin", "developer" or "viewer" (SEC-102).
+          description: |-
+            role is "owner", "admin", "developer" or "viewer" for a direct
+             membership (SEC-102), and "member" for a team membership: a team's
+             members hold the roles the team is granted on apps (GOV-001).
         addedAt:
           allOf:
             - $ref: '#/components/schemas/google.protobuf.Timestamp'
@@ -8828,9 +8888,6 @@ components:
         name:
           type: string
           title: name
-        signingKeyRef:
-          type: string
-          title: signing_key_ref
       title: UpdateEnvironmentRequest
       additionalProperties: false
     plux.v1.UpdateEnvironmentResponse:

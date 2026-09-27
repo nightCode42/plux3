@@ -860,8 +860,8 @@ sequenceDiagram
 | `SRV-001` | P2 | MUST | The server **MUST** be a single Go binary, `plux-server`, runnable in roles `api`, `worker` and `fnrunner` (or all roles in one process for single-node installs), selected by configuration. | WIP |
 | `SRV-002` | P2 | MUST | All APIs **MUST** be defined in Protocol Buffers under `proto/plux/v1/`, linted with `buf lint`, and served with ConnectRPC (gRPC, gRPC-Web and Connect JSON). An OpenAPI 3.1 description **MUST** be generated for integrators who prefer plain HTTP/JSON. | WIP |
 | `SRV-003` | P2 | MUST | The server **MUST** expose at least these services: `OrgService`, `IdentityService`, `AppService`, `PluginService`, `DocumentService`, `ComponentService`, `TemplateService`, `AssetService`, `PublishService`, `ReleaseService`, `ManifestService`, `DeviceService`, `TokenService`, `TelemetryService`, `ControlService`, and later `RolloutService`, `ExperimentService`, `FunctionService`, `LocalisationService`, `ApprovalService`, `AuditService`, `DevSessionService`, `AIService`, `PaymentService`, `AdminService`. | SPEC |
-| `SRV-004` | P2 | MUST | List endpoints **MUST** use opaque, integrity-protected page tokens, filtering, ordering and field masks; no endpoint may return an unbounded list. | SPEC |
-| `SRV-005` | P2 | MUST | Mutating endpoints **MUST** accept an idempotency key; retries with the same key within 24 h **MUST** return the original result. | SPEC |
+| `SRV-004` | P2 | MUST | List endpoints **MUST** use opaque, integrity-protected page tokens, filtering, ordering and field masks; no endpoint may return an unbounded list. | DONE |
+| `SRV-005` | P2 | MUST | Mutating endpoints **MUST** accept an idempotency key; retries with the same key within 24 h **MUST** return the original result. | DONE |
 | `SRV-006` | P2 | MUST | Errors **MUST** follow one unified model: a typed domain error with a registered reason, translated only at the edge into a Connect code plus `google.rpc.ErrorInfo` (reason, domain `plux.dev`, metadata) and a Plux error code from Appendix F (ADR-0018). | DONE |
 | `SRV-007` | P2 | MUST | The server **MUST** implement `/livez`, `/readyz` (checking PostgreSQL, object storage and, where configured, Valkey and KMS) and graceful shutdown that drains in-flight requests and jobs. | WIP |
 | `SRV-008` | P2 | MUST | Configuration **MUST** be loaded from a file plus environment variables, reject unknown keys, validate every section at startup, and be checkable offline with `plux-server config validate` (Appendix H). | DONE |
@@ -872,7 +872,7 @@ sequenceDiagram
 |---|---|---|---|---|
 | `SRV-020` | P2 | MUST | PostgreSQL **MUST** be the system of record. Documents are stored as canonical JSON (`JSONB`) with relational metadata; queries are written in SQL and type-checked with `sqlc`. | WIP |
 | `SRV-021` | P2 | MUST | Schema migrations **MUST** be versioned, applied automatically on start behind an advisory lock, and follow expand/contract so that rolling upgrades never require downtime (`DEP-030`). | DONE |
-| `SRV-022` | P2 | MUST | Every table holding tenant data **MUST** carry the organisation ID, and PostgreSQL row-level security **MUST** enforce tenant isolation as defence in depth beneath application-level authorisation. | WIP |
+| `SRV-022` | P2 | MUST | Every table holding tenant data **MUST** carry the organisation ID, and PostgreSQL row-level security **MUST** enforce tenant isolation as defence in depth beneath application-level authorisation. | DONE |
 | `SRV-023` | P2 | MUST | Bundles, deltas, assets and exports **MUST** be stored in S3-compatible object storage under content-addressed keys; the server **MUST** issue short-lived signed URLs or serve them itself when no CDN is configured. | DONE |
 | `SRV-024` | P2 | MUST | Background work **MUST** run as durable jobs in PostgreSQL with retries, backoff, uniqueness keys and visibility in the admin UI. | WIP |
 
@@ -905,8 +905,8 @@ Branching is deliberately **not** part of the model (ADR-0015). Each plugin has 
 | `SRV-061` | P9 | SHOULD | The server **SHOULD** provide full-text search across apps, plugins, pages, components, templates, translation keys and functions, scoped by the caller's permissions. | SPEC |
 | `SRV-062` | P9 | MUST | The server **MUST** send notifications (approval requested, release published, rollout paused, lock requested, function failing) via in-app inbox, email (SMTP), and webhooks to Slack, Microsoft Teams and Telegram. | SPEC |
 | `SRV-063` | P9 | MUST | Outbound webhooks **MUST** follow the Standard Webhooks specification (signed with HMAC, timestamped, with IDs for deduplication) and retry with backoff. | SPEC |
-| `SRV-064` | P2 | MUST | A public API **MUST** be available to personal access tokens (scoped, expiring, revocable) and to CI via OIDC workload identity federation (e.g. GitHub Actions) without long-lived secrets. | SPEC |
-| `SRV-065` | P2 | MUST | Rate limits **MUST** apply per principal, per device and per IP, returning `RESOURCE_EXHAUSTED` with retry information. | SPEC |
+| `SRV-064` | P2 | MUST | A public API **MUST** be available to personal access tokens (scoped, expiring, revocable) and to CI via OIDC workload identity federation (e.g. GitHub Actions) without long-lived secrets. | DONE |
+| `SRV-065` | P2 | MUST | Rate limits **MUST** apply per principal, per device and per IP, returning `RESOURCE_EXHAUSTED` with retry information. | WIP |
 
 ---
 
@@ -1219,13 +1219,13 @@ The update channel follows the design of **The Update Framework (TUF)**: separat
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `SEC-100` | P2 | MUST | Studio users **MUST** authenticate via OIDC (any compliant IdP) or built-in accounts with Argon2id password hashing; multi-factor authentication (TOTP or WebAuthn/passkeys) **MUST** be mandatory for roles that can publish, approve, manage keys or manage members. | SPEC |
-| `SEC-101` | P2 | MUST | Studio **MUST** use a backend-for-frontend: OAuth tokens stay server-side; the browser holds only a `__Host-` prefixed, `HttpOnly`, `Secure`, `SameSite=Strict` session cookie; state-changing requests require a CSRF token; a strict nonce-based Content Security Policy with Trusted Types is enforced. | SPEC |
-| `SEC-102` | P2 | MUST | Authorisation **MUST** be deny-by-default, evaluated in the service layer for every call against RBAC permissions and resource scope (`GOV-002`), with PostgreSQL row-level security as a second barrier. | SPEC |
+| `SEC-100` | P2 | MUST | Studio users **MUST** authenticate via OIDC (any compliant IdP) or built-in accounts with Argon2id password hashing; multi-factor authentication (TOTP or WebAuthn/passkeys) **MUST** be mandatory for roles that can publish, approve, manage keys or manage members. | DONE |
+| `SEC-101` | P2 | MUST | Studio **MUST** use a backend-for-frontend: OAuth tokens stay server-side; the browser holds only a `__Host-` prefixed, `HttpOnly`, `Secure`, `SameSite=Strict` session cookie; state-changing requests require a CSRF token; a strict nonce-based Content Security Policy with Trusted Types is enforced. | WIP |
+| `SEC-102` | P2 | MUST | Authorisation **MUST** be deny-by-default, evaluated in the service layer for every call against RBAC permissions and resource scope (`GOV-002`), with PostgreSQL row-level security as a second barrier. | DONE |
 | `SEC-103` | P9 | MUST | Approving releases, publishing to production, key operations, role changes, secret changes and break-glass actions **MUST** require WebAuthn step-up authentication performed within the last 5 minutes. | SPEC |
 | `SEC-104` | P2 | MUST | All inputs **MUST** be validated with size limits (request body, JSON depth, string length, array length) to prevent resource-exhaustion attacks. | WIP |
 | `SEC-105` | P2 | MUST | Every server-side fetch of a user-supplied URL (OpenAPI import, AI providers, function HTTP, webhooks) **MUST** go through an SSRF-safe client that blocks private, link-local and metadata address ranges unless explicitly allowlisted, and re-validates after DNS resolution and redirects. | DONE |
-| `SEC-106` | P2 | MUST | Secrets (environment secrets, provider credentials) **MUST** be encrypted with envelope encryption under a KMS key, never returned in full after creation, and accessible only to the components that need them. | SPEC |
+| `SEC-106` | P2 | MUST | Secrets (environment secrets, provider credentials) **MUST** be encrypted with envelope encryption under a KMS key, never returned in full after creation, and accessible only to the components that need them. | DONE |
 | `SEC-107` | P2 | MUST | The compiler **MUST** detect secret-like values (API keys, private keys, tokens, by pattern and entropy) in documents and fail publication. | SPEC |
 | `SEC-108` | P2 | MUST | Containers **MUST** run as non-root on distroless images with a read-only root filesystem, dropped capabilities, and seccomp `RuntimeDefault`. | SPEC |
 | `SEC-109` | P2 | MUST | The server and Studio **MUST** meet OWASP ASVS 5.0 level 2 and address the OWASP API Security Top 10 (2023), with a checklist and evidence in `docs/security/`. | SPEC |
@@ -1234,7 +1234,7 @@ The update channel follows the design of **The Update Framework (TUF)**: separat
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `SEC-120` | P2 | MUST | All signing and encryption keys **MUST** be accessed through a signing abstraction with backends for PKCS#11 HSMs, AWS KMS, Google Cloud KMS, Azure Key Vault and HashiCorp Vault Transit. File-based keys are allowed only in development. | SPEC |
+| `SEC-120` | P2 | MUST | All signing and encryption keys **MUST** be accessed through a signing abstraction with backends for PKCS#11 HSMs, AWS KMS, Google Cloud KMS, Azure Key Vault and HashiCorp Vault Transit. File-based keys are allowed only in development. | WIP |
 | `SEC-121` | P6 | MUST | Root keys **MUST** be offline and used only in documented key ceremonies with an *m*-of-*n* threshold; online role keys **MUST** be rotatable without an app store release. | SPEC |
 | `SEC-122` | P6 | MUST | Metadata **MUST** carry algorithm identifiers to allow future algorithm migration (crypto agility), including a path to post-quantum signatures. | SPEC |
 
@@ -1242,7 +1242,7 @@ The update channel follows the design of **The Update Framework (TUF)**: separat
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `SEC-140` | P2 | MUST | Every state-changing operation and every security-relevant event **MUST** be recorded in an append-only audit log: actor, action, target, timestamp, source IP, user agent, request ID, and hashes of before and after content. | SPEC |
+| `SEC-140` | P2 | MUST | Every state-changing operation and every security-relevant event **MUST** be recorded in an append-only audit log: actor, action, target, timestamp, source IP, user agent, request ID, and hashes of before and after content. | DONE |
 | `SEC-141` | P6 | MUST | Audit entries **MUST** be hash-chained (each entry includes the previous entry's hash), with periodic signed checkpoints, so any deletion or modification is detectable by `plux-server audit verify`. | SPEC |
 | `SEC-142` | P9 | MUST | Given an app, a device or user identifier, and a timestamp, the server **MUST** reconstruct which release was active, which bundle hashes were loaded, and render the page exactly as the user saw it (from the retained bundle) — "what did the user see". | SPEC |
 | `SEC-143` | P9 | MUST | Audit logs **MUST** be exportable to SIEMs via syslog (RFC 5424), CEF, OTLP logs and signed webhooks, with configurable retention (default 10 years for production audit data, reflecting financial-sector record-keeping obligations). | SPEC |
@@ -1437,7 +1437,7 @@ Plux targets **WCAG 2.2 level AA** and the harmonised European standard **EN 301
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `GOV-001` | P2 | MUST | The hierarchy **MUST** be Installation → Organization → Teams, with apps owned by an organization and access granted to teams or users per app. | SPEC |
+| `GOV-001` | P2 | MUST | The hierarchy **MUST** be Installation → Organization → Teams, with apps owned by an organization and access granted to teams or users per app. | DONE |
 | `GOV-002` | P9 | MUST | Predefined roles **MUST** include Owner, Admin, Release Manager, Developer, Designer, Translator, Reviewer, Compliance Officer, Auditor (read-only including audit log) and Viewer. Custom roles **MUST** be composable from a documented permission catalogue (e.g. `plugin.edit`, `release.publish:production`, `approval.grant`, `function.deploy`, `secrets.manage`, `keys.manage`, `members.manage`, `audit.read`). | SPEC |
 | `GOV-003` | P9 | MUST | Permissions **MUST** be scopable by environment (e.g. publish to staging but not production) and by app. | SPEC |
 | `GOV-004` | P9 | MUST | Single sign-on **MUST** support OIDC and SAML 2.0, with group-to-role mapping and just-in-time provisioning; SCIM 2.0 **MUST** support provisioning and deprovisioning of users and groups. | SPEC |
@@ -1461,10 +1461,10 @@ Approvals are generic: the same engine governs publishing, function deployment, 
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `GOV-010` | P2 | MUST | Apps **MUST** have environments (default development, staging, production; custom allowed) with their own variables, secrets, data source URLs, signing keys and device registrations. | SPEC |
+| `GOV-010` | P2 | MUST | Apps **MUST** have environments (default development, staging, production; custom allowed) with their own variables, secrets, data source URLs, signing keys and device registrations. | WIP |
 | `GOV-011` | P9 | SHOULD | Each app **SHOULD** be exportable to a Git repository in the file layout of `SCH-006` on every publish (for review and audit), and **MAY** be imported from Git through the CLI for teams that prefer docs-as-code. | SPEC |
 | `GOV-030` | P9 | MUST | Self-hosted installations **MUST** validate a signed, offline license file (organisation, limits, features, expiry, grace period) without calling home. | SPEC |
-| `GOV-031` | P2 | MUST | Deleted apps, plugins and pages **MUST** go to a trash with 30-day restore before permanent deletion, except where retention rules require longer. | SPEC |
+| `GOV-031` | P2 | MUST | Deleted apps, plugins and pages **MUST** go to a trash with 30-day restore before permanent deletion, except where retention rules require longer. | WIP |
 
 ### 18.4 Rollouts and kill switch
 
@@ -1749,7 +1749,7 @@ The screen editor is the canvas of §21.6 with a screen selected for editing and
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `CLI-001` | P2 | MUST | `plux` **MUST** be a single static Go binary for Linux, macOS and Windows (amd64, arm64), installable via Homebrew, Scoop, a verified install script, container image and `go install`. | SPEC |
-| `CLI-002` | P2 | MUST | `plux login` **MUST** use the OAuth 2.0 device authorization grant; CI **MUST** authenticate with OIDC workload identity or scoped tokens (`SRV-064`). | SPEC |
+| `CLI-002` | P2 | MUST | `plux login` **MUST** use the OAuth 2.0 device authorization grant; CI **MUST** authenticate with OIDC workload identity or scoped tokens (`SRV-064`). | WIP |
 | `CLI-003` | P2 | MUST | Commands **MUST** include: `login`, `logout`, `whoami`, `init`, `doctor`, `validate`, `build` (local compile), `diff`, `publish`, `pull`, `release list/promote/rollback`, `export`, `import`, `keys`. P4 adds `create`, `codegen`, `native scan` and `native sync`; P7 adds `fn new/build/test/deploy/logs`; P8 adds `l10n pull/push`; P10 adds `dev pair/logs`; P12 adds `ai`. | SPEC |
 | `CLI-004` | P2 | MUST | `plux pull` **MUST** download the current release for an environment and channel into the host project as a baseline (`SYN-007`), together with the root public keys. | SPEC |
 | `CLI-005` | P1 | MUST | `validate` and `build` **MUST** work fully offline against a local directory (Git layout, `SCH-006`) so CI can validate changes without a server. | DONE |

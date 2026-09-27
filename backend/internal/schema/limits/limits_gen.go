@@ -15,6 +15,9 @@ const (
 	ActionStepTimeout Key = "action.stepTimeout"
 	// ActionStepsPerRun: Steps one action run may execute. (ACT-005)
 	ActionStepsPerRun Key = "action.stepsPerRun"
+	// APIPageSize: Items one page of a list call returns; a call asking for more
+	// gets this many, and one asking for none gets this many too. (SRV-004)
+	APIPageSize Key = "api.pageSize"
 	// APIRequestSize: Size of one API request body, refused before a handler
 	// reads it. (SEC-104)
 	APIRequestSize Key = "api.requestSize"
@@ -106,6 +109,7 @@ var registry = [...]Definition{
 	{Key: ActionRunTimeout, Unit: UnitMilliseconds, Default: 120000, Warning: 0, Max: 3600000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Time one action run may take."},
 	{Key: ActionStepTimeout, Unit: UnitMilliseconds, Default: 30000, Warning: 0, Max: 600000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Time one action step may take."},
 	{Key: ActionStepsPerRun, Unit: UnitCount, Default: 10000, Warning: 0, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerRuntime, Phase: "P5", Description: "Steps one action run may execute."},
+	{Key: APIPageSize, Unit: UnitCount, Default: 100, Warning: 0, Max: 1000, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P2", Description: "Items one page of a list call returns; a call asking for more gets this many, and one asking for none gets this many too."},
 	{Key: APIRequestSize, Unit: UnitBytes, Default: 8388608, Warning: 0, Max: 268435456, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P2", Description: "Size of one API request body, refused before a handler reads it."},
 	{Key: APIRequestsPerMinute, Unit: UnitCount, Default: 600, Warning: 0, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization, EnforcedBy: EnforcerServer, Phase: "P2", Description: "API calls one authenticated principal (a user or a token) may make per minute."},
 	{Key: APIRequestsPerMinutePerAddress, Unit: UnitCount, Default: 300, Warning: 0, Max: 100000, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P2", Description: "API calls one client address may make per minute, whoever is calling."},

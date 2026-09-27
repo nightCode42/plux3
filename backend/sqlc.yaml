@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: 2026 Plux contributors
+# SPDX-License-Identifier: AGPL-3.0-only
+
+# Queries are written in SQL and type-checked against the migrations
+# (SRV-020, ADR-0007). `make sqlc`, inside `make gen`, writes the Go;
+# `make gen-check` fails when it is stale (CI-003).
+version: "2"
+sql:
+  - engine: postgresql
+    schema: internal/storage/migrations
+    queries: internal/storage/queries
+    gen:
+      go:
+        package: dbgen
+        out: internal/storage/dbgen
+        sql_package: pgx/v5
+        emit_pointers_for_null_types: true
+        emit_empty_slices: true

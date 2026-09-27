@@ -51,6 +51,8 @@ var codes = map[plxerr.Code]connect.Code{
 	plxerr.MultiFactorRequired:    connect.CodePermissionDenied,
 	plxerr.PermissionDenied:       connect.CodePermissionDenied,
 	plxerr.ResourceNotFound:       connect.CodeNotFound,
+	plxerr.ResourceExists:         connect.CodeAlreadyExists,
+	plxerr.PreconditionFailed:     connect.CodeFailedPrecondition,
 	plxerr.EditingLockHeld:        connect.CodeFailedPrecondition,
 
 	// The caller must slow down or ask for less.

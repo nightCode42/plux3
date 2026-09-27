@@ -35,5 +35,6 @@ Files are named `NNNN-short-title.md` with a four-digit, never-reused number. Th
 | 0023 | Mixed native/plugin screens: native slots and `PluxView` with shared exposed state | P4 | Planned |
 | 0024 | No-code generated projects and shell-update detection | P4 | Planned |
 | [0025](0025-document-schema-toolchain.md) | Document schema toolchain: validation, canonicalisation and code generation | P1 | Accepted |
+| [0026](0026-identity-tenancy-and-access.md) | Built-in accounts with TOTP, org-bound credentials and row-level scopes | P2 | Accepted |
 
 The decisions for planned ADRs are summarised in spec §32 and §34.1. Each is written in full before or alongside the first implementation that depends on it, and its status is updated here.

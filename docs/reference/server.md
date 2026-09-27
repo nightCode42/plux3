@@ -15,9 +15,11 @@ starts and stops. The API it serves is in [api.md](api.md).
 
 A process runs any subset; `[api, worker]` is the default and serves a
 single-node installation. The role decides what is built at all: a process
-without `worker` never constructs a signing client, so a bug in a handler
-cannot reach a key (L-3). `fnrunner` is refused by the configuration until
-P7.
+without `worker` is given only envelope encryption — wrapping and unwrapping
+the data keys of stored secrets — and never a signer, so a bug in a handler
+cannot sign anything (L-3). With Vault, give an api-only process a token
+whose policy allows only `encrypt` and `decrypt` on the wrapping key.
+`fnrunner` is refused by the configuration until P7.
 
 ## 2. Commands
 
@@ -26,6 +28,7 @@ P7.
 | `plux-server serve` | Runs the configured roles until the process is interrupted |
 | `plux-server migrate` | Applies pending migrations and exits, for deployments that migrate in a separate step |
 | `plux-server config validate` | Checks a configuration file offline, with no connection to anything (`SRV-008`) |
+| `plux-server bootstrap -email <address>` | Creates the first installation administrator and prints a one-time invitation, valid for seven days, with which they set a password; refused once an administrator exists (`SEC-100`, [ADR-0026](../adr/0026-identity-tenancy-and-access.md)) |
 | `plux-server version` | Prints the build version, commit and date |
 
 Every command takes `-config <path>` (default `plux-server.yaml`). Exit
@@ -61,15 +64,19 @@ cache:
   backend: "memory"             # memory (single-node only) | valkey
   valkeyURL: "rediss://valkey:6379"
 signing:
-  backend: "file"               # file (development only); the KMS backends arrive in P6
-  directory: "data/keys"
+  backend: "file"               # file (development only) | vault; PKCS#11 and cloud KMS arrive in P6
+  directory: "data/keys"        # the file backend's keys
+  vault:                        # HashiCorp Vault Transit (SEC-120)
+    address: "https://vault:8200"
+    mount: "transit"
+    wrapKey: "plux-secrets"     # AES-256-GCM key that wraps data keys (SEC-106)
+    # token: set with PLUX_SIGNING_VAULT_TOKEN
   keys:
-    targets: "targets"          # signs bundle hashes and manifests (ADR-0004)
+    targets: "targets"          # prefix of each environment's key, "<prefix>-<environment ID>" (ADR-0004)
 auth:
   studio:
-    allowPasswordLogin: true
-    oidc: { issuer: "", clientID: "", redirectURL: "" }
-    mfaRequiredFor: [publish, approve, keys, members]
+    allowPasswordLogin: true    # must be true until single sign-on arrives (GOV-004, P9)
+    mfaRequiredFor: [publish, approve, keys, members]   # at least these four (SEC-100)
     sessionTTL: "12h"
   device:
     accessTokenTTL: "5m"
@@ -113,7 +120,7 @@ variable is treated as unset:
 `PLUX_DATABASE_URL`, `PLUX_OBJECT_STORAGE_ENDPOINT`,
 `PLUX_OBJECT_STORAGE_BUCKET`, `PLUX_OBJECT_STORAGE_ACCESS_KEY_ID`,
 `PLUX_OBJECT_STORAGE_SECRET_ACCESS_KEY`, `PLUX_CACHE_VALKEY_URL`,
-`PLUX_AUTH_STUDIO_OIDC_CLIENT_SECRET`, `PLUX_OBSERVABILITY_LOG_LEVEL`,
+`PLUX_SIGNING_VAULT_TOKEN`, `PLUX_OBSERVABILITY_LOG_LEVEL`,
 `PLUX_OBSERVABILITY_OTLP_ENDPOINT`.
 
 ## 4. Endpoints the api role always serves
@@ -154,7 +161,19 @@ PostgreSQL is the system of record (`SRV-020`). Every table holding tenant
 data carries `organization_id` and has row-level security bound to
 `plux_current_organization()`, which the pool sets per transaction from the
 authenticated principal; authorisation happens in the service layer first,
-and row-level security is the second barrier (`SRV-022`, `SEC-102`).
+and row-level security is the second barrier (`SRV-022`, `SEC-102`). Two
+more settings widen a few policies, each for one purpose and never on a
+caller's behalf: the signed-in user may read their own memberships in every
+organisation, and a *scope* lets a token be found by its hash before its
+organisation is known (`authentication`) or the installation's own audit
+entries be written (`installation`). A test walks the catalogue and fails
+on any table that holds tenant data without the policy
+([ADR-0026](../adr/0026-identity-tenancy-and-access.md)).
+
+The audit log is one hash chain per organisation and one for the
+installation (sign-ins, invitations, second factors). A trigger refuses
+any `UPDATE`, `DELETE` or `TRUNCATE`, and appends to one chain are
+serialised by an advisory lock, so the chain never forks (`SEC-140`).
 
 Bundles, deltas, assets and exports are content-addressed objects under
 `<kind>/<first two hex digits>/<sha256>` (`SRV-023`). Two backends serve
@@ -184,3 +203,20 @@ address — carrier-grade NAT, multicast and documentation ranges are
 refused, and the address is checked again after DNS resolution and after
 every redirect, so a name that resolves differently the second time cannot
 reach an internal service (`SEC-105`).
+
+## 9. Background work
+
+The worker role runs the maintenance sweep hourly and once at start, on
+the `maintenance` queue: it purges trash past `retention.trashDays`
+(`GOV-031`), forgets idempotency keys older than a day (`SRV-005`) and
+deletes expired sessions, sign-in challenges and device grants. River's
+leader election makes one worker enqueue it however many replicas run.
+
+## 10. Identity
+
+People sign in with built-in accounts and TOTP; single sign-on and
+WebAuthn arrive in P9 ([ADR-0026](../adr/0026-identity-tenancy-and-access.md)).
+The first administrator is created with `plux-server bootstrap`; everyone
+else is invited by an organisation's owner. The API's credentials, the
+organisation header and the error each refusal returns are in
+[api.md](api.md) §4.

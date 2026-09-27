@@ -49,11 +49,16 @@ linters:
         - center
         - color
         - organization
+        - organizations
     wrapcheck:
       # Errors crossing a package boundary are wrapped with context.
+      # A registered Plux error is a new error with its own context, not
+      # one crossing a boundary, so its constructors need no wrapping.
       ignore-sig-regexps:
         - fmt\.Errorf\(
         - errors\.Join\(
+        - plxerr\.New\(
+        - plxerr\.Wrap\(
     revive:
       rules:
         - name: exported

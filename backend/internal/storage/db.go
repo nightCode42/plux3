@@ -89,16 +89,37 @@ func (db *DB) Migrate(ctx context.Context, migrations []Migration) error {
 	return Migrate(ctx, c.Conn(), migrations, db.log)
 }
 
-// Tenant is the organisation a transaction acts for. The zero value is
-// the installation scope, which sees no tenant rows at all.
+// Tenant is what a transaction may see. The zero value sees no tenant
+// rows at all.
 type Tenant struct {
 	// OrganizationID is the organisation, or "" outside any tenant.
 	OrganizationID string
+	// UserID is the signed-in user, who may read their own memberships
+	// in every organisation; "" for none.
+	UserID string
+	// Scope widens the policies of a few tables for one purpose: "" for
+	// none, ScopeAuthentication or ScopeInstallation.
+	Scope Scope
 }
 
-// InTx runs f in a transaction bound to a tenant. The organisation is
-// set for the transaction only, with set_config's local flag, so a
-// pooled connection never carries it to the next caller (SRV-022).
+// Scope names a purpose for which row-level security admits more than
+// the organisation's own rows. Each is declared by the one piece of code
+// that needs it, never on a caller's behalf.
+type Scope string
+
+// The scopes the policies know.
+const (
+	// ScopeAuthentication lets a credential be found by its hash before
+	// its organisation is known.
+	ScopeAuthentication Scope = "authentication"
+	// ScopeInstallation reads and writes the audit entries that belong
+	// to no organisation, such as a sign-in.
+	ScopeInstallation Scope = "installation"
+)
+
+// InTx runs f in a transaction bound to a tenant. The settings are set
+// for the transaction only, with set_config's local flag, so a pooled
+// connection never carries them to the next caller (SRV-022).
 //
 // f must not use the transaction after it returns. A panic rolls back and
 // is re-raised, so a bug cannot leave a transaction open.
@@ -115,8 +136,8 @@ func (db *DB) InTx(ctx context.Context, t Tenant, f func(context.Context, pgx.Tx
 			_ = tx.Rollback(context.WithoutCancel(ctx))
 		}
 	}()
-	if _, err := tx.Exec(ctx, `SELECT set_config('plux.organization_id', $1, true)`, t.OrganizationID); err != nil {
-		return fmt.Errorf("set the tenant: %w", err)
+	if err := Rescope(ctx, tx, t); err != nil {
+		return err
 	}
 	if err := f(ctx, tx); err != nil {
 		return err
@@ -125,6 +146,21 @@ func (db *DB) InTx(ctx context.Context, t Tenant, f func(context.Context, pgx.Tx
 		return fmt.Errorf("commit: %w", err)
 	}
 	committed = true
+	return nil
+}
+
+// Rescope changes what the rest of a transaction may see. It exists for
+// the rare flow that learns its organisation from a row it has just
+// locked, such as a device authorization approved for one; everything
+// else sets the tenant once, in InTx.
+func Rescope(ctx context.Context, tx pgx.Tx, t Tenant) error {
+	if _, err := tx.Exec(ctx,
+		`SELECT set_config('plux.organization_id', $1, true),
+		        set_config('plux.user_id', $2, true),
+		        set_config('plux.scope', $3, true)`,
+		t.OrganizationID, t.UserID, string(t.Scope)); err != nil {
+		return fmt.Errorf("set the tenant: %w", err)
+	}
 	return nil
 }
 

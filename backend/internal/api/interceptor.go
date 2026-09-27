@@ -10,8 +10,10 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"math"
 	"net/http"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"time"
 
@@ -265,12 +267,18 @@ func RateLimit(decide func(ctx context.Context, c Call) (retryAfter time.Duratio
 		retryAfter, err := decide(ctx, c)
 		if err != nil {
 			if retryAfter > 0 {
-				c.ResponseHeader.Set("Retry-After", fmt.Sprintf("%d", int(retryAfter.Seconds()+0.999)))
+				c.ResponseHeader.Set("Retry-After", retryAfterHeader(retryAfter))
 			}
 			return err
 		}
 		return next(ctx)
 	}
+}
+
+// retryAfterHeader renders a wait as whole seconds, rounded up, for the
+// Retry-After header.
+func retryAfterHeader(d time.Duration) string {
+	return strconv.Itoa(int(math.Ceil(d.Seconds())))
 }
 
 // split cuts "/plux.v1.AppService/CreateApp" into its service and

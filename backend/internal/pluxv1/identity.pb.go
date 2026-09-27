@@ -1194,6 +1194,7 @@ func (x *ConfirmFactorResponse) GetFactor() *Factor {
 
 type ListFactorsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Page          *Page                  `protobuf:"bytes,1,opt,name=page,proto3" json:"page,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1228,9 +1229,17 @@ func (*ListFactorsRequest) Descriptor() ([]byte, []int) {
 	return file_plux_v1_identity_proto_rawDescGZIP(), []int{22}
 }
 
+func (x *ListFactorsRequest) GetPage() *Page {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
 type ListFactorsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Factors       []*Factor              `protobuf:"bytes,1,rep,name=factors,proto3" json:"factors,omitempty"`
+	Page          *PageResult            `protobuf:"bytes,2,opt,name=page,proto3" json:"page,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1268,6 +1277,13 @@ func (*ListFactorsResponse) Descriptor() ([]byte, []int) {
 func (x *ListFactorsResponse) GetFactors() []*Factor {
 	if x != nil {
 		return x.Factors
+	}
+	return nil
+}
+
+func (x *ListFactorsResponse) GetPage() *PageResult {
+	if x != nil {
+		return x.Page
 	}
 	return nil
 }
@@ -2420,6 +2436,7 @@ func (x *CreateWorkloadIdentityResponse) GetIdentity() *WorkloadIdentity {
 type ListWorkloadIdentitiesRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	OrganizationId string                 `protobuf:"bytes,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	Page           *Page                  `protobuf:"bytes,2,opt,name=page,proto3" json:"page,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -2461,9 +2478,17 @@ func (x *ListWorkloadIdentitiesRequest) GetOrganizationId() string {
 	return ""
 }
 
+func (x *ListWorkloadIdentitiesRequest) GetPage() *Page {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
 type ListWorkloadIdentitiesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Identities    []*WorkloadIdentity    `protobuf:"bytes,1,rep,name=identities,proto3" json:"identities,omitempty"`
+	Page          *PageResult            `protobuf:"bytes,2,opt,name=page,proto3" json:"page,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2501,6 +2526,13 @@ func (*ListWorkloadIdentitiesResponse) Descriptor() ([]byte, []int) {
 func (x *ListWorkloadIdentitiesResponse) GetIdentities() []*WorkloadIdentity {
 	if x != nil {
 		return x.Identities
+	}
+	return nil
+}
+
+func (x *ListWorkloadIdentitiesResponse) GetPage() *PageResult {
+	if x != nil {
+		return x.Page
 	}
 	return nil
 }
@@ -2874,10 +2906,12 @@ const file_plux_v1_identity_proto_rawDesc = "" +
 	"\tfactor_id\x18\x01 \x01(\tR\bfactorId\x12\x12\n" +
 	"\x04code\x18\x02 \x01(\tR\x04code\"@\n" +
 	"\x15ConfirmFactorResponse\x12'\n" +
-	"\x06factor\x18\x01 \x01(\v2\x0f.plux.v1.FactorR\x06factor\"\x14\n" +
-	"\x12ListFactorsRequest\"@\n" +
+	"\x06factor\x18\x01 \x01(\v2\x0f.plux.v1.FactorR\x06factor\"7\n" +
+	"\x12ListFactorsRequest\x12!\n" +
+	"\x04page\x18\x01 \x01(\v2\r.plux.v1.PageR\x04page\"i\n" +
 	"\x13ListFactorsResponse\x12)\n" +
-	"\afactors\x18\x01 \x03(\v2\x0f.plux.v1.FactorR\afactors\"2\n" +
+	"\afactors\x18\x01 \x03(\v2\x0f.plux.v1.FactorR\afactors\x12'\n" +
+	"\x04page\x18\x02 \x01(\v2\x13.plux.v1.PageResultR\x04page\"2\n" +
 	"\x13DeleteFactorRequest\x12\x1b\n" +
 	"\tfactor_id\x18\x01 \x01(\tR\bfactorId\"\x16\n" +
 	"\x14DeleteFactorResponse\"Q\n" +
@@ -2958,13 +2992,15 @@ const file_plux_v1_identity_proto_rawDesc = "" +
 	"\x0fsubject_pattern\x18\x04 \x01(\tR\x0esubjectPattern\x12\x16\n" +
 	"\x06scopes\x18\x05 \x03(\tR\x06scopes\"W\n" +
 	"\x1eCreateWorkloadIdentityResponse\x125\n" +
-	"\bidentity\x18\x01 \x01(\v2\x19.plux.v1.WorkloadIdentityR\bidentity\"H\n" +
+	"\bidentity\x18\x01 \x01(\v2\x19.plux.v1.WorkloadIdentityR\bidentity\"k\n" +
 	"\x1dListWorkloadIdentitiesRequest\x12'\n" +
-	"\x0forganization_id\x18\x01 \x01(\tR\x0eorganizationId\"[\n" +
+	"\x0forganization_id\x18\x01 \x01(\tR\x0eorganizationId\x12!\n" +
+	"\x04page\x18\x02 \x01(\v2\r.plux.v1.PageR\x04page\"\x84\x01\n" +
 	"\x1eListWorkloadIdentitiesResponse\x129\n" +
 	"\n" +
 	"identities\x18\x01 \x03(\v2\x19.plux.v1.WorkloadIdentityR\n" +
-	"identities\"/\n" +
+	"identities\x12'\n" +
+	"\x04page\x18\x02 \x01(\v2\x13.plux.v1.PageResultR\x04page\"/\n" +
 	"\x1dDeleteWorkloadIdentityRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\" \n" +
 	"\x1eDeleteWorkloadIdentityResponse\"q\n" +
@@ -3094,75 +3130,79 @@ var file_plux_v1_identity_proto_depIdxs = []int32{
 	2,  // 12: plux.v1.VerifySecondFactorResponse.session:type_name -> plux.v1.Session
 	1,  // 13: plux.v1.EnrollTotpResponse.factor:type_name -> plux.v1.Factor
 	1,  // 14: plux.v1.ConfirmFactorResponse.factor:type_name -> plux.v1.Factor
-	1,  // 15: plux.v1.ListFactorsResponse.factors:type_name -> plux.v1.Factor
-	52, // 16: plux.v1.StartDeviceAuthorizationResponse.expires_at:type_name -> google.protobuf.Timestamp
-	34, // 17: plux.v1.PollDeviceAuthorizationResponse.token:type_name -> plux.v1.AccessToken
-	52, // 18: plux.v1.AccessToken.created_at:type_name -> google.protobuf.Timestamp
-	52, // 19: plux.v1.AccessToken.expires_at:type_name -> google.protobuf.Timestamp
-	52, // 20: plux.v1.AccessToken.last_used_at:type_name -> google.protobuf.Timestamp
-	52, // 21: plux.v1.AccessToken.revoked_at:type_name -> google.protobuf.Timestamp
-	34, // 22: plux.v1.CreateAccessTokenResponse.token:type_name -> plux.v1.AccessToken
-	54, // 23: plux.v1.ListAccessTokensRequest.page:type_name -> plux.v1.Page
-	34, // 24: plux.v1.ListAccessTokensResponse.tokens:type_name -> plux.v1.AccessToken
-	55, // 25: plux.v1.ListAccessTokensResponse.page:type_name -> plux.v1.PageResult
-	52, // 26: plux.v1.WorkloadIdentity.created_at:type_name -> google.protobuf.Timestamp
-	41, // 27: plux.v1.CreateWorkloadIdentityResponse.identity:type_name -> plux.v1.WorkloadIdentity
-	41, // 28: plux.v1.ListWorkloadIdentitiesResponse.identities:type_name -> plux.v1.WorkloadIdentity
-	34, // 29: plux.v1.ExchangeWorkloadIdentityResponse.token:type_name -> plux.v1.AccessToken
-	54, // 30: plux.v1.ListAuditEntriesRequest.page:type_name -> plux.v1.Page
-	56, // 31: plux.v1.ListAuditEntriesResponse.entries:type_name -> plux.v1.AuditEntry
-	55, // 32: plux.v1.ListAuditEntriesResponse.page:type_name -> plux.v1.PageResult
-	4,  // 33: plux.v1.IdentityService.GetCurrentUser:input_type -> plux.v1.GetCurrentUserRequest
-	6,  // 34: plux.v1.IdentityService.AcceptInvitation:input_type -> plux.v1.AcceptInvitationRequest
-	8,  // 35: plux.v1.IdentityService.StartPasswordLogin:input_type -> plux.v1.StartPasswordLoginRequest
-	10, // 36: plux.v1.IdentityService.CompleteMfa:input_type -> plux.v1.CompleteMfaRequest
-	12, // 37: plux.v1.IdentityService.VerifySecondFactor:input_type -> plux.v1.VerifySecondFactorRequest
-	14, // 38: plux.v1.IdentityService.ChangePassword:input_type -> plux.v1.ChangePasswordRequest
-	16, // 39: plux.v1.IdentityService.Logout:input_type -> plux.v1.LogoutRequest
-	18, // 40: plux.v1.IdentityService.EnrollTotp:input_type -> plux.v1.EnrollTotpRequest
-	20, // 41: plux.v1.IdentityService.ConfirmFactor:input_type -> plux.v1.ConfirmFactorRequest
-	22, // 42: plux.v1.IdentityService.ListFactors:input_type -> plux.v1.ListFactorsRequest
-	24, // 43: plux.v1.IdentityService.DeleteFactor:input_type -> plux.v1.DeleteFactorRequest
-	26, // 44: plux.v1.IdentityService.StartDeviceAuthorization:input_type -> plux.v1.StartDeviceAuthorizationRequest
-	28, // 45: plux.v1.IdentityService.PollDeviceAuthorization:input_type -> plux.v1.PollDeviceAuthorizationRequest
-	30, // 46: plux.v1.IdentityService.ApproveDeviceAuthorization:input_type -> plux.v1.ApproveDeviceAuthorizationRequest
-	32, // 47: plux.v1.IdentityService.DenyDeviceAuthorization:input_type -> plux.v1.DenyDeviceAuthorizationRequest
-	35, // 48: plux.v1.IdentityService.CreateAccessToken:input_type -> plux.v1.CreateAccessTokenRequest
-	37, // 49: plux.v1.IdentityService.ListAccessTokens:input_type -> plux.v1.ListAccessTokensRequest
-	39, // 50: plux.v1.IdentityService.RevokeAccessToken:input_type -> plux.v1.RevokeAccessTokenRequest
-	42, // 51: plux.v1.IdentityService.CreateWorkloadIdentity:input_type -> plux.v1.CreateWorkloadIdentityRequest
-	44, // 52: plux.v1.IdentityService.ListWorkloadIdentities:input_type -> plux.v1.ListWorkloadIdentitiesRequest
-	46, // 53: plux.v1.IdentityService.DeleteWorkloadIdentity:input_type -> plux.v1.DeleteWorkloadIdentityRequest
-	48, // 54: plux.v1.IdentityService.ExchangeWorkloadIdentity:input_type -> plux.v1.ExchangeWorkloadIdentityRequest
-	50, // 55: plux.v1.IdentityService.ListAuditEntries:input_type -> plux.v1.ListAuditEntriesRequest
-	5,  // 56: plux.v1.IdentityService.GetCurrentUser:output_type -> plux.v1.GetCurrentUserResponse
-	7,  // 57: plux.v1.IdentityService.AcceptInvitation:output_type -> plux.v1.AcceptInvitationResponse
-	9,  // 58: plux.v1.IdentityService.StartPasswordLogin:output_type -> plux.v1.StartPasswordLoginResponse
-	11, // 59: plux.v1.IdentityService.CompleteMfa:output_type -> plux.v1.CompleteMfaResponse
-	13, // 60: plux.v1.IdentityService.VerifySecondFactor:output_type -> plux.v1.VerifySecondFactorResponse
-	15, // 61: plux.v1.IdentityService.ChangePassword:output_type -> plux.v1.ChangePasswordResponse
-	17, // 62: plux.v1.IdentityService.Logout:output_type -> plux.v1.LogoutResponse
-	19, // 63: plux.v1.IdentityService.EnrollTotp:output_type -> plux.v1.EnrollTotpResponse
-	21, // 64: plux.v1.IdentityService.ConfirmFactor:output_type -> plux.v1.ConfirmFactorResponse
-	23, // 65: plux.v1.IdentityService.ListFactors:output_type -> plux.v1.ListFactorsResponse
-	25, // 66: plux.v1.IdentityService.DeleteFactor:output_type -> plux.v1.DeleteFactorResponse
-	27, // 67: plux.v1.IdentityService.StartDeviceAuthorization:output_type -> plux.v1.StartDeviceAuthorizationResponse
-	29, // 68: plux.v1.IdentityService.PollDeviceAuthorization:output_type -> plux.v1.PollDeviceAuthorizationResponse
-	31, // 69: plux.v1.IdentityService.ApproveDeviceAuthorization:output_type -> plux.v1.ApproveDeviceAuthorizationResponse
-	33, // 70: plux.v1.IdentityService.DenyDeviceAuthorization:output_type -> plux.v1.DenyDeviceAuthorizationResponse
-	36, // 71: plux.v1.IdentityService.CreateAccessToken:output_type -> plux.v1.CreateAccessTokenResponse
-	38, // 72: plux.v1.IdentityService.ListAccessTokens:output_type -> plux.v1.ListAccessTokensResponse
-	40, // 73: plux.v1.IdentityService.RevokeAccessToken:output_type -> plux.v1.RevokeAccessTokenResponse
-	43, // 74: plux.v1.IdentityService.CreateWorkloadIdentity:output_type -> plux.v1.CreateWorkloadIdentityResponse
-	45, // 75: plux.v1.IdentityService.ListWorkloadIdentities:output_type -> plux.v1.ListWorkloadIdentitiesResponse
-	47, // 76: plux.v1.IdentityService.DeleteWorkloadIdentity:output_type -> plux.v1.DeleteWorkloadIdentityResponse
-	49, // 77: plux.v1.IdentityService.ExchangeWorkloadIdentity:output_type -> plux.v1.ExchangeWorkloadIdentityResponse
-	51, // 78: plux.v1.IdentityService.ListAuditEntries:output_type -> plux.v1.ListAuditEntriesResponse
-	56, // [56:79] is the sub-list for method output_type
-	33, // [33:56] is the sub-list for method input_type
-	33, // [33:33] is the sub-list for extension type_name
-	33, // [33:33] is the sub-list for extension extendee
-	0,  // [0:33] is the sub-list for field type_name
+	54, // 15: plux.v1.ListFactorsRequest.page:type_name -> plux.v1.Page
+	1,  // 16: plux.v1.ListFactorsResponse.factors:type_name -> plux.v1.Factor
+	55, // 17: plux.v1.ListFactorsResponse.page:type_name -> plux.v1.PageResult
+	52, // 18: plux.v1.StartDeviceAuthorizationResponse.expires_at:type_name -> google.protobuf.Timestamp
+	34, // 19: plux.v1.PollDeviceAuthorizationResponse.token:type_name -> plux.v1.AccessToken
+	52, // 20: plux.v1.AccessToken.created_at:type_name -> google.protobuf.Timestamp
+	52, // 21: plux.v1.AccessToken.expires_at:type_name -> google.protobuf.Timestamp
+	52, // 22: plux.v1.AccessToken.last_used_at:type_name -> google.protobuf.Timestamp
+	52, // 23: plux.v1.AccessToken.revoked_at:type_name -> google.protobuf.Timestamp
+	34, // 24: plux.v1.CreateAccessTokenResponse.token:type_name -> plux.v1.AccessToken
+	54, // 25: plux.v1.ListAccessTokensRequest.page:type_name -> plux.v1.Page
+	34, // 26: plux.v1.ListAccessTokensResponse.tokens:type_name -> plux.v1.AccessToken
+	55, // 27: plux.v1.ListAccessTokensResponse.page:type_name -> plux.v1.PageResult
+	52, // 28: plux.v1.WorkloadIdentity.created_at:type_name -> google.protobuf.Timestamp
+	41, // 29: plux.v1.CreateWorkloadIdentityResponse.identity:type_name -> plux.v1.WorkloadIdentity
+	54, // 30: plux.v1.ListWorkloadIdentitiesRequest.page:type_name -> plux.v1.Page
+	41, // 31: plux.v1.ListWorkloadIdentitiesResponse.identities:type_name -> plux.v1.WorkloadIdentity
+	55, // 32: plux.v1.ListWorkloadIdentitiesResponse.page:type_name -> plux.v1.PageResult
+	34, // 33: plux.v1.ExchangeWorkloadIdentityResponse.token:type_name -> plux.v1.AccessToken
+	54, // 34: plux.v1.ListAuditEntriesRequest.page:type_name -> plux.v1.Page
+	56, // 35: plux.v1.ListAuditEntriesResponse.entries:type_name -> plux.v1.AuditEntry
+	55, // 36: plux.v1.ListAuditEntriesResponse.page:type_name -> plux.v1.PageResult
+	4,  // 37: plux.v1.IdentityService.GetCurrentUser:input_type -> plux.v1.GetCurrentUserRequest
+	6,  // 38: plux.v1.IdentityService.AcceptInvitation:input_type -> plux.v1.AcceptInvitationRequest
+	8,  // 39: plux.v1.IdentityService.StartPasswordLogin:input_type -> plux.v1.StartPasswordLoginRequest
+	10, // 40: plux.v1.IdentityService.CompleteMfa:input_type -> plux.v1.CompleteMfaRequest
+	12, // 41: plux.v1.IdentityService.VerifySecondFactor:input_type -> plux.v1.VerifySecondFactorRequest
+	14, // 42: plux.v1.IdentityService.ChangePassword:input_type -> plux.v1.ChangePasswordRequest
+	16, // 43: plux.v1.IdentityService.Logout:input_type -> plux.v1.LogoutRequest
+	18, // 44: plux.v1.IdentityService.EnrollTotp:input_type -> plux.v1.EnrollTotpRequest
+	20, // 45: plux.v1.IdentityService.ConfirmFactor:input_type -> plux.v1.ConfirmFactorRequest
+	22, // 46: plux.v1.IdentityService.ListFactors:input_type -> plux.v1.ListFactorsRequest
+	24, // 47: plux.v1.IdentityService.DeleteFactor:input_type -> plux.v1.DeleteFactorRequest
+	26, // 48: plux.v1.IdentityService.StartDeviceAuthorization:input_type -> plux.v1.StartDeviceAuthorizationRequest
+	28, // 49: plux.v1.IdentityService.PollDeviceAuthorization:input_type -> plux.v1.PollDeviceAuthorizationRequest
+	30, // 50: plux.v1.IdentityService.ApproveDeviceAuthorization:input_type -> plux.v1.ApproveDeviceAuthorizationRequest
+	32, // 51: plux.v1.IdentityService.DenyDeviceAuthorization:input_type -> plux.v1.DenyDeviceAuthorizationRequest
+	35, // 52: plux.v1.IdentityService.CreateAccessToken:input_type -> plux.v1.CreateAccessTokenRequest
+	37, // 53: plux.v1.IdentityService.ListAccessTokens:input_type -> plux.v1.ListAccessTokensRequest
+	39, // 54: plux.v1.IdentityService.RevokeAccessToken:input_type -> plux.v1.RevokeAccessTokenRequest
+	42, // 55: plux.v1.IdentityService.CreateWorkloadIdentity:input_type -> plux.v1.CreateWorkloadIdentityRequest
+	44, // 56: plux.v1.IdentityService.ListWorkloadIdentities:input_type -> plux.v1.ListWorkloadIdentitiesRequest
+	46, // 57: plux.v1.IdentityService.DeleteWorkloadIdentity:input_type -> plux.v1.DeleteWorkloadIdentityRequest
+	48, // 58: plux.v1.IdentityService.ExchangeWorkloadIdentity:input_type -> plux.v1.ExchangeWorkloadIdentityRequest
+	50, // 59: plux.v1.IdentityService.ListAuditEntries:input_type -> plux.v1.ListAuditEntriesRequest
+	5,  // 60: plux.v1.IdentityService.GetCurrentUser:output_type -> plux.v1.GetCurrentUserResponse
+	7,  // 61: plux.v1.IdentityService.AcceptInvitation:output_type -> plux.v1.AcceptInvitationResponse
+	9,  // 62: plux.v1.IdentityService.StartPasswordLogin:output_type -> plux.v1.StartPasswordLoginResponse
+	11, // 63: plux.v1.IdentityService.CompleteMfa:output_type -> plux.v1.CompleteMfaResponse
+	13, // 64: plux.v1.IdentityService.VerifySecondFactor:output_type -> plux.v1.VerifySecondFactorResponse
+	15, // 65: plux.v1.IdentityService.ChangePassword:output_type -> plux.v1.ChangePasswordResponse
+	17, // 66: plux.v1.IdentityService.Logout:output_type -> plux.v1.LogoutResponse
+	19, // 67: plux.v1.IdentityService.EnrollTotp:output_type -> plux.v1.EnrollTotpResponse
+	21, // 68: plux.v1.IdentityService.ConfirmFactor:output_type -> plux.v1.ConfirmFactorResponse
+	23, // 69: plux.v1.IdentityService.ListFactors:output_type -> plux.v1.ListFactorsResponse
+	25, // 70: plux.v1.IdentityService.DeleteFactor:output_type -> plux.v1.DeleteFactorResponse
+	27, // 71: plux.v1.IdentityService.StartDeviceAuthorization:output_type -> plux.v1.StartDeviceAuthorizationResponse
+	29, // 72: plux.v1.IdentityService.PollDeviceAuthorization:output_type -> plux.v1.PollDeviceAuthorizationResponse
+	31, // 73: plux.v1.IdentityService.ApproveDeviceAuthorization:output_type -> plux.v1.ApproveDeviceAuthorizationResponse
+	33, // 74: plux.v1.IdentityService.DenyDeviceAuthorization:output_type -> plux.v1.DenyDeviceAuthorizationResponse
+	36, // 75: plux.v1.IdentityService.CreateAccessToken:output_type -> plux.v1.CreateAccessTokenResponse
+	38, // 76: plux.v1.IdentityService.ListAccessTokens:output_type -> plux.v1.ListAccessTokensResponse
+	40, // 77: plux.v1.IdentityService.RevokeAccessToken:output_type -> plux.v1.RevokeAccessTokenResponse
+	43, // 78: plux.v1.IdentityService.CreateWorkloadIdentity:output_type -> plux.v1.CreateWorkloadIdentityResponse
+	45, // 79: plux.v1.IdentityService.ListWorkloadIdentities:output_type -> plux.v1.ListWorkloadIdentitiesResponse
+	47, // 80: plux.v1.IdentityService.DeleteWorkloadIdentity:output_type -> plux.v1.DeleteWorkloadIdentityResponse
+	49, // 81: plux.v1.IdentityService.ExchangeWorkloadIdentity:output_type -> plux.v1.ExchangeWorkloadIdentityResponse
+	51, // 82: plux.v1.IdentityService.ListAuditEntries:output_type -> plux.v1.ListAuditEntriesResponse
+	60, // [60:83] is the sub-list for method output_type
+	37, // [37:60] is the sub-list for method input_type
+	37, // [37:37] is the sub-list for extension type_name
+	37, // [37:37] is the sub-list for extension extendee
+	0,  // [0:37] is the sub-list for field type_name
 }
 
 func init() { file_plux_v1_identity_proto_init() }

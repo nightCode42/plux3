@@ -17,11 +17,15 @@ The Go module `github.com/nightCode42/plux3/backend`: the Plux Server (`plux-ser
 | `internal/pluxv1/` | Generated API messages and ConnectRPC handlers and clients (ADR-0005); never edited by hand | Apache-2.0 |
 | `internal/config/` | Server configuration: strict loading, environment overrides, validation (`SRV-008`, Appendix H) | AGPL-3.0-only |
 | `internal/observability/` | Logger with redaction, the Prometheus registry of Appendix G, the tracer (`OBS-001`–`OBS-003`) | AGPL-3.0-only |
-| `internal/storage/` | PostgreSQL pool, migrations, tenant transactions; object storage in `objects/`; the integration-test helper in `storagetest/` (ADR-0007) | AGPL-3.0-only |
+| `internal/storage/` | PostgreSQL pool, migrations, tenant transactions; sqlc queries in `queries/` generating `dbgen/`; object storage in `objects/`; idempotency keys in `idempotency/`; the integration-test helper in `storagetest/` (ADR-0007) | AGPL-3.0-only |
 | `internal/cache/` | The shared, expendable cache: in-memory and Valkey (RESP) backends | AGPL-3.0-only |
 | `internal/jobs/` | Durable background work on River (`SRV-024`) | AGPL-3.0-only |
 | `internal/httpx/` | The SSRF-safe outbound client and request size guards (`SEC-104`, `SEC-105`) | AGPL-3.0-only |
-| `internal/api/` | The ConnectRPC edge: interceptors and error translation (`SRV-006`, L-1) | AGPL-3.0-only |
+| `internal/api/` | The ConnectRPC edge: interceptors, authentication, page tokens, idempotent mutation, error translation, and the thin service handlers (`SRV-006`, L-1) | AGPL-3.0-only |
+| `internal/auth/` | Accounts, sessions, TOTP, tokens, the device grant, CI federation, RBAC ([ADR-0026](../docs/adr/0026-identity-tenancy-and-access.md)) | AGPL-3.0-only |
+| `internal/tenancy/` | Organisations, teams, members, apps, environments, channels, variables, secrets, app access, trash, limit overrides | AGPL-3.0-only |
+| `internal/audit/` | The hash-chained, append-only audit log (`SEC-140`) | AGPL-3.0-only |
+| `internal/signing/` | The only package that touches keys: file and Vault Transit backends, envelope encryption (`SEC-106`, `SEC-120`, L-3) | AGPL-3.0-only |
 | `internal/server/` | Role wiring, health, lifecycle ([server.md](../docs/reference/server.md)) | AGPL-3.0-only |
 | `internal/<module>/` | Further server modules as listed in spec §6.3, added phase by phase | per `REUSE.toml` |
 

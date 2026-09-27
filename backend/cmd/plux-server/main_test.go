@@ -96,7 +96,7 @@ func TestConfigValidateReportsProblems(t *testing.T) {
 // The whole process is built from a configuration, migrates, serves
 // /livez, /readyz and /metrics, and drains when the context ends.
 func TestServeRunsAndDrains(t *testing.T) {
-	url := storagetest.Skip(t)
+	url := storagetest.SchemaURL(t)
 	dir := t.TempDir()
 	path := configFile(t, ""+
 		"server:\n"+
@@ -108,6 +108,8 @@ func TestServeRunsAndDrains(t *testing.T) {
 		"  url: \""+url+"\"\n"+
 		"objectStorage:\n"+
 		"  directory: \""+filepath.Join(dir, "objects")+"\"\n"+
+		"signing:\n"+
+		"  directory: \""+filepath.Join(dir, "keys")+"\"\n"+
 		"observability:\n"+
 		"  logLevel: warn\n")
 
@@ -165,9 +167,39 @@ func waitFor(t *testing.T, c *http.Client, url string, want int) bool {
 	return false
 }
 
+// Verifies: SEC-100.
+// bootstrap creates the first administrator once, printing the
+// invitation, and refuses a second time.
+func TestBootstrapCommand(t *testing.T) {
+	url := storagetest.SchemaURL(t)
+	dir := t.TempDir()
+	path := configFile(t, "server:\n  publicBaseURL: \"https://p.example\"\ndatabase:\n  url: \""+url+"\"\n"+
+		"signing:\n  directory: \""+filepath.Join(dir, "keys")+"\"\n")
+	var stdout, stderr bytes.Buffer
+	if code := run(context.Background(), []string{"migrate", "-config", path}, &stdout, &stderr); code != exitOK {
+		t.Fatalf("migrate: %d; %s", code, stderr.String())
+	}
+	stdout.Reset()
+	if code := run(context.Background(), []string{"bootstrap", "-config", path, "-email", "admin@example.com"}, &stdout, &stderr); code != exitOK {
+		t.Fatalf("bootstrap: %d; %s", code, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "invitation") || !strings.Contains(stdout.String(), "plux_inv_") {
+		t.Errorf("stdout = %q", stdout.String())
+	}
+	stderr.Reset()
+	if code := run(context.Background(), []string{"bootstrap", "-config", path, "-email", "other@example.com"}, &stdout, &stderr); code != exitFailed {
+		t.Errorf("a second bootstrap: exit %d", code)
+	}
+	for _, args := range [][]string{{"bootstrap"}, {"bootstrap", "-config", path}, {"bootstrap", "-email", "a@b.c", "-config", "nowhere.yaml"}} {
+		if code := run(context.Background(), args, &stdout, &stderr); code != exitUsage {
+			t.Errorf("%v: exit %d; want %d", args, code, exitUsage)
+		}
+	}
+}
+
 // Verifies: SRV-021.
 func TestMigrateCommand(t *testing.T) {
-	url := storagetest.Skip(t)
+	url := storagetest.SchemaURL(t)
 	path := configFile(t, "server:\n  publicBaseURL: \"https://p.example\"\ndatabase:\n  url: \""+url+"\"\n")
 	var stdout, stderr bytes.Buffer
 	if code := run(context.Background(), []string{"migrate", "-config", path}, &stdout, &stderr); code != exitOK {

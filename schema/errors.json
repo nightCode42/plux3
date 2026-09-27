@@ -688,20 +688,20 @@
       "fix": "Use a publicly reachable address, or ask an administrator to allow the range this installation should reach."
     },
     {
-      "code": "PLX-8010",
-      "reason": "AUTHENTICATION_REQUIRED",
-      "severity": "error",
-      "title": "Authentication required",
-      "cause": "The call carried no credential, or one that has expired or been revoked.",
-      "fix": "Sign in again, or use a valid access token."
-    },
-    {
       "code": "PLX-8011",
       "reason": "MULTI_FACTOR_REQUIRED",
       "severity": "error",
       "title": "Second factor required",
       "cause": "The capability this call needs — publishing, approving, managing keys or managing members — requires a second factor, and the session has not completed one (SEC-100).",
       "fix": "Complete the second factor and repeat the call."
+    },
+    {
+      "code": "PLX-8012",
+      "reason": "AUTHENTICATION_REQUIRED",
+      "severity": "error",
+      "title": "Authentication required",
+      "cause": "The call carried no credential, or one that has expired or been revoked.",
+      "fix": "Sign in again, or use a valid access token."
     },
     {
       "code": "PLX-8020",
@@ -726,6 +726,22 @@
       "title": "Not found",
       "cause": "The resource does not exist, or the caller may not see it. The two are reported the same way, so that the API does not disclose what exists in another organisation.",
       "fix": "Check the identifier, and that you have access to the organisation that owns it."
+    },
+    {
+      "code": "PLX-8032",
+      "reason": "RESOURCE_EXISTS",
+      "severity": "error",
+      "title": "Already exists",
+      "cause": "Something with this key already exists where keys must be unique, such as an organisation, team, app, environment or channel key.",
+      "fix": "Choose another key, or use the existing resource."
+    },
+    {
+      "code": "PLX-8033",
+      "reason": "PRECONDITION_FAILED",
+      "severity": "error",
+      "title": "Precondition failed",
+      "cause": "The call is valid but the resource is not in a state that allows it, such as removing an organisation's last owner or accepting an invitation that has expired.",
+      "fix": "Read the message for the state that blocks the call, change it, and repeat the call."
     },
     {
       "code": "PLX-8040",

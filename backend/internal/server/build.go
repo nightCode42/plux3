@@ -14,6 +14,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/config"
 	"github.com/nightCode42/plux3/backend/internal/jobs"
 	"github.com/nightCode42/plux3/backend/internal/observability"
+	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 	"github.com/nightCode42/plux3/backend/internal/storage"
 	"github.com/nightCode42/plux3/backend/internal/storage/objects"
 )
@@ -65,14 +66,7 @@ func Build(ctx context.Context, cfg *config.Config, log *slog.Logger, version st
 	closers = append(closers, db.Close)
 
 	if cfg.Database.MigrateOnStart {
-		migrations, err := storage.LoadMigrations(storage.Migrations())
-		if err != nil {
-			return fail(err)
-		}
-		if err := db.Migrate(ctx, migrations); err != nil {
-			return fail(err)
-		}
-		if err := jobs.Migrate(ctx, db.Pool()); err != nil {
+		if err := migrateAll(ctx, db); err != nil {
 			return fail(err)
 		}
 	}
@@ -88,16 +82,12 @@ func Build(ctx context.Context, cfg *config.Config, log *slog.Logger, version st
 	}
 	closers = append(closers, func() { _ = shared.Close() })
 
-	jobClient, err := jobs.New(jobs.Options{
-		Pool: db.Pool(),
-		Run:  cfg.Has(config.RoleWorker),
-		Log:  log,
-	})
+	limitSet, err := cfg.LimitSet()
 	if err != nil {
 		return fail(err)
 	}
 
-	limitSet, err := cfg.LimitSet()
+	services, jobClient, err := buildWork(ctx, cfg, log, db, shared, limitSet)
 	if err != nil {
 		return fail(err)
 	}
@@ -109,7 +99,54 @@ func Build(ctx context.Context, cfg *config.Config, log *slog.Logger, version st
 	if err != nil {
 		return fail(err)
 	}
+	if cfg.Has(config.RoleAPI) {
+		srv.RegisterAPI(services)
+	}
 	return &Built{Server: srv, Close: closeAll}, nil
+}
+
+// buildWork assembles the domain services and the job client that runs
+// their background work (SRV-024).
+func buildWork(ctx context.Context, cfg *config.Config, log *slog.Logger, db *storage.DB, shared cache.Cache, set limits.Set) (*Services, *jobs.Client, error) {
+	backend, err := BuildSigning(cfg)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !backend.AllowedInProduction() {
+		log.WarnContext(ctx, "the file signing backend keeps keys on disk; it is for development only, and production environments refuse it (SEC-056, SEC-120)",
+			slog.String("directory", cfg.Signing.Directory))
+	}
+	services, err := BuildServices(ctx, cfg, db, shared, set, backend)
+	if err != nil {
+		return nil, nil, err
+	}
+	workers := jobs.NewWorkers()
+	jobClient, err := jobs.New(jobs.Options{
+		Pool:     db.Pool(),
+		Workers:  workers,
+		Run:      cfg.Has(config.RoleWorker),
+		Periodic: MaintenanceJobs(workers, services, log),
+		Log:      log,
+	})
+	if err != nil {
+		return nil, nil, fmt.Errorf("server: %w", err)
+	}
+	return services, jobClient, nil
+}
+
+// migrateAll applies the server's migrations and River's (SRV-021).
+func migrateAll(ctx context.Context, db *storage.DB) error {
+	migrations, err := storage.LoadMigrations(storage.Migrations())
+	if err != nil {
+		return fmt.Errorf("server: %w", err)
+	}
+	if err := db.Migrate(ctx, migrations); err != nil {
+		return fmt.Errorf("server: %w", err)
+	}
+	if err := jobs.Migrate(ctx, db.Pool()); err != nil {
+		return fmt.Errorf("server: %w", err)
+	}
+	return nil
 }
 
 // buildObjects opens the configured object store (SRV-023).

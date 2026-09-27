@@ -42,6 +42,41 @@ func Skip(t testing.TB) string {
 	return url
 }
 
+// SchemaURL returns a connection URL whose search path is a fresh,
+// empty schema of the test's own, dropped when the test ends. It is for
+// tests that start a whole process, which migrates the schema itself.
+func SchemaURL(t testing.TB) string {
+	t.Helper()
+	url := Skip(t)
+	schema := "test_" + token()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	admin, err := pgx.Connect(ctx, url)
+	if err != nil {
+		t.Fatalf("connect to %s: %v", URLVariable, err)
+	}
+	defer func() { _ = admin.Close(ctx) }()
+	//nolint:misspell // Sanitize is pgx's own spelling
+	if _, err := admin.Exec(ctx, "CREATE SCHEMA "+pgx.Identifier{schema}.Sanitize()); err != nil {
+		t.Fatalf("create schema: %v", err)
+	}
+	t.Cleanup(func() {
+		drop, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		c, err := pgx.Connect(drop, url)
+		if err != nil {
+			t.Logf("drop schema %s: %v", schema, err)
+			return
+		}
+		defer func() { _ = c.Close(drop) }()
+		//nolint:misspell // Sanitize is pgx's own spelling
+		if _, err := c.Exec(drop, "DROP SCHEMA "+pgx.Identifier{schema}.Sanitize()+" CASCADE"); err != nil {
+			t.Logf("drop schema %s: %v", schema, err)
+		}
+	})
+	return withSchema(url, schema)
+}
+
 // Open returns a database whose search path is a schema of its own, with
 // every migration applied. The schema is dropped when the test ends.
 func Open(t testing.TB) *storage.DB {

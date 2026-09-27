@@ -43,7 +43,9 @@ the single-node default.
 | `fnrunner` | WASM function sandboxes (P7) | nothing | internal only, mTLS |
 
 The role decides which dependencies are constructed at all. A process without `worker`
-never builds a signing client, so a bug in an API handler cannot reach a key (L-3); a
+is given only the envelope-encryption half of the signing abstraction — wrapping and
+unwrapping data keys for stored secrets, never a signer — so a bug in an API handler cannot
+sign anything (L-3); a
 `fnrunner` process is never given a database pool (L-4). This is enforced by construction
 in `internal/server`, and by a test that asserts the dependency set of each role.
 

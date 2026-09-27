@@ -422,14 +422,14 @@ var registry = []Definition{
 
 	// Governance.
 	{
-		AuthenticationRequired, "AUTHENTICATION_REQUIRED", SeverityError, "Authentication required",
-		"The call carried no credential, or one that has expired or been revoked.",
-		"Sign in again, or use a valid access token.", false,
-	},
-	{
 		MultiFactorRequired, "MULTI_FACTOR_REQUIRED", SeverityError, "Second factor required",
 		"The capability this call needs — publishing, approving, managing keys or managing members — requires a second factor, and the session has not completed one (SEC-100).",
 		"Complete the second factor and repeat the call.", false,
+	},
+	{
+		AuthenticationRequired, "AUTHENTICATION_REQUIRED", SeverityError, "Authentication required",
+		"The call carried no credential, or one that has expired or been revoked.",
+		"Sign in again, or use a valid access token.", false,
 	},
 	{
 		EditingLockHeld, "EDITING_LOCK_HELD", SeverityError, "Editing lock held by another user",
@@ -445,6 +445,16 @@ var registry = []Definition{
 		ResourceNotFound, "RESOURCE_NOT_FOUND", SeverityError, "Not found",
 		"The resource does not exist, or the caller may not see it. The two are reported the same way, so that the API does not disclose what exists in another organisation.",
 		"Check the identifier, and that you have access to the organisation that owns it.", false,
+	},
+	{
+		ResourceExists, "RESOURCE_EXISTS", SeverityError, "Already exists",
+		"Something with this key already exists where keys must be unique, such as an organisation, team, app, environment or channel key.",
+		"Choose another key, or use the existing resource.", false,
+	},
+	{
+		PreconditionFailed, "PRECONDITION_FAILED", SeverityError, "Precondition failed",
+		"The call is valid but the resource is not in a state that allows it, such as removing an organisation's last owner or accepting an invitation that has expired.",
+		"Read the message for the state that blocks the call, change it, and repeat the call.", false,
 	},
 	{
 		RateLimited, "RATE_LIMITED", SeverityError, "Rate limit exceeded",

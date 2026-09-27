@@ -225,3 +225,77 @@ func TestOpenRefusesABadURLWithoutEchoingIt(t *testing.T) {
 		t.Errorf("the password leaked into %q", err)
 	}
 }
+
+// nonTenantTables are the tables that deliberately hold no tenant data:
+// the tenant boundary itself, installation-wide identity, and the
+// bookkeeping of the migration runner and the job queue.
+var nonTenantTables = map[string]string{ //nolint:gosec // table names, not credentials
+	"organizations":         "a row is the tenant",
+	"users":                 "users belong to the installation; memberships grant access",
+	"mfa_factors":           "a second factor belongs to a user, not to an organisation",
+	"sessions":              "a session belongs to a user",
+	"mfa_challenges":        "a challenge belongs to a user",
+	"device_authorizations": "a grant is anonymous until it is approved",
+	"installation_secrets":  "keys of the installation itself, sealed",
+	"idempotency_keys":      "keyed by the credential's subject, which may act in no organisation; responses are sealed",
+	"plux_migrations":       "schema bookkeeping",
+}
+
+// Verifies: SRV-022.
+// Every table that holds tenant data carries organization_id and has
+// row-level security enabled with the policy bound to the setting. The
+// catalogue is walked rather than a list being maintained, so the
+// guarantee cannot be lost by adding a table.
+func TestEveryTenantTableIsProtected(t *testing.T) {
+	t.Parallel()
+	db := storagetest.Open(t)
+	ctx := context.Background()
+	rows, err := db.Pool().Query(ctx, `
+		SELECT c.relname,
+		       c.relrowsecurity,
+		       c.relforcerowsecurity,
+		       EXISTS (SELECT 1 FROM pg_policy p WHERE p.polrelid = c.oid AND p.polname = 'plux_tenant'),
+		       EXISTS (SELECT 1 FROM pg_attribute a
+		               WHERE a.attrelid = c.oid AND a.attname = 'organization_id' AND NOT a.attisdropped)
+		  FROM pg_class c
+		  JOIN pg_namespace n ON n.oid = c.relnamespace
+		 WHERE c.relkind = 'r'
+		   AND n.nspname = current_schema()
+		 ORDER BY c.relname`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+	seen := 0
+	for rows.Next() {
+		var name string
+		var rls, forced, policy, hasOrg bool
+		if err := rows.Scan(&name, &rls, &forced, &policy, &hasOrg); err != nil {
+			t.Fatal(err)
+		}
+		seen++
+		if reason, ok := nonTenantTables[name]; ok {
+			if hasOrg {
+				t.Errorf("%s carries organization_id but is listed as non-tenant (%s)", name, reason)
+			}
+			continue
+		}
+		if strings.HasPrefix(name, "river_") {
+			continue // the job queue's own tables
+		}
+		if !hasOrg {
+			t.Errorf("%s holds tenant data but has no organization_id; add one or list it in nonTenantTables", name)
+			continue
+		}
+		if !rls || !forced || !policy {
+			t.Errorf("%s: row-level security enabled=%v forced=%v policy=%v; call plux_tenant_policy on it",
+				name, rls, forced, policy)
+		}
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatal(err)
+	}
+	if seen < len(nonTenantTables) {
+		t.Fatalf("only %d tables were examined", seen)
+	}
+}

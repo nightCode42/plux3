@@ -94,6 +94,10 @@ type Options struct {
 	Workers *Workers
 	// Run starts the queues; only the worker role sets it.
 	Run bool
+	// Periodic are jobs enqueued on a schedule, such as the maintenance
+	// sweep. River's leader election makes one worker enqueue each, however
+	// many replicas run.
+	Periodic []*river.PeriodicJob
 	// Log receives job events.
 	Log *slog.Logger
 }
@@ -113,6 +117,7 @@ func New(opts Options) (*Client, error) {
 		cfg.Workers = opts.Workers.river
 		cfg.FetchCooldown = 100 * time.Millisecond
 		cfg.JobTimeout = 30 * time.Minute
+		cfg.PeriodicJobs = opts.Periodic
 	}
 	c, err := river.NewClient(riverpgxv5.New(opts.Pool), cfg)
 	if err != nil {
@@ -190,6 +195,14 @@ func (c *Client) QueueDepths(ctx context.Context) (map[string]int, error) {
 		return nil, fmt.Errorf("jobs: queue depths: %w", err)
 	}
 	return out, nil
+}
+
+// Every returns a periodic job that enqueues args at an interval, and
+// once when a worker starts.
+func Every(interval time.Duration, args river.JobArgs) *river.PeriodicJob {
+	return river.NewPeriodicJob(river.PeriodicInterval(interval),
+		func() (river.JobArgs, *river.InsertOpts) { return args, nil },
+		&river.PeriodicJobOpts{RunOnStart: true})
 }
 
 // Queues returns the queue names a worker serves, in a stable order.

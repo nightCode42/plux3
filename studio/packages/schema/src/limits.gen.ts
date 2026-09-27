@@ -64,6 +64,16 @@ export const limits = [
     description: "Steps one action run may execute.",
   },
   {
+    key: "api.pageSize",
+    unit: "count",
+    default: 100,
+    warning: 0,
+    max: 1000,
+    scopes: ["installation"],
+    phase: "P2",
+    description: "Items one page of a list call returns; a call asking for more gets this many, and one asking for none gets this many too.",
+  },
+  {
     key: "api.requestSize",
     unit: "bytes",
     default: 8388608,

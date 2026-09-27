@@ -18,7 +18,7 @@ import (
 // Build opens every dependency the configured roles need, migrates, and
 // the running process reports each one on /readyz.
 func TestBuildAndRunAllRoles(t *testing.T) {
-	url := storagetest.Skip(t)
+	url := storagetest.SchemaURL(t)
 	dir := t.TempDir()
 	cfg := testConfig(t, ""+
 		"server:\n"+
@@ -30,6 +30,8 @@ func TestBuildAndRunAllRoles(t *testing.T) {
 		"  url: \""+url+"\"\n"+
 		"objectStorage:\n"+
 		"  directory: \""+filepath.Join(dir, "objects")+"\"\n"+
+		"signing:\n"+
+		"  directory: \""+filepath.Join(dir, "keys")+"\"\n"+
 		"limits:\n"+
 		"  \"page.nodes\": \"2000\"\n")
 

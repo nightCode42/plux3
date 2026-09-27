@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/netip"
 	"net/url"
+	"regexp"
 	"slices"
 	"sort"
 	"strconv"
@@ -158,35 +159,55 @@ func (c *Config) validateSigning(p *problems) {
 		"file", "pkcs11", "awskms", "gcpkms", "azurekv", "vault") {
 		return
 	}
-	if c.Signing.Backend != "file" {
-		p.addf("signing.backend", "%q arrives in P6; P2 supports the file backend, which is refused for production environments", c.Signing.Backend)
+	switch c.Signing.Backend {
+	case "file":
+		if c.Signing.Directory == "" {
+			p.addf("signing.directory", "must be set for the file backend")
+		}
+	case "vault":
+		v := c.Signing.Vault
+		if v.Address == "" {
+			p.addf("signing.vault.address", "must be set for the vault backend")
+		} else {
+			checkURL(p, "signing.vault.address", v.Address)
+		}
+		if v.Token == "" {
+			p.addf("signing.vault.token", "must be set for the vault backend; use PLUX_SIGNING_VAULT_TOKEN")
+		}
+		if v.WrapKey != "" && !keyPattern.MatchString(v.WrapKey) {
+			p.addf("signing.vault.wrapKey", "must be lower-case letters, digits and hyphens")
+		}
+	default:
+		p.addf("signing.backend", "%q arrives in P6; P2 supports vault and the file backend, which is refused for production environments", c.Signing.Backend)
 	}
-	if c.Signing.Backend == "file" && c.Signing.Directory == "" {
-		p.addf("signing.directory", "must be set for the file backend")
-	}
-	if c.Signing.Keys.Targets == "" {
-		p.addf("signing.keys.targets", "must name the key that signs bundle hashes and manifests")
+	// The prefix leaves room for "-" and a 36-character identifier within
+	// the 64 characters a key reference may have.
+	if !keyPattern.MatchString(c.Signing.Keys.Targets) || len(c.Signing.Keys.Targets) > 27 {
+		p.addf("signing.keys.targets", "must be a prefix of at most 27 lower-case letters, digits and hyphens")
 	}
 }
 
+// keyPattern is the form of a key reference (SEC-120).
+var keyPattern = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]{0,62}[a-z0-9])?$`)
+
 func (c *Config) validateAuth(p *problems) {
 	s := c.Auth.Studio
-	if s.OIDC.Issuer == "" && !s.AllowPasswordLogin {
-		p.addf("auth.studio", "enable allowPasswordLogin or configure an OIDC issuer; otherwise nobody can sign in")
+	if s.OIDC != (OIDC{}) {
+		p.addf("auth.studio.oidc", "single sign-on arrives with GOV-004 in P9; P2 signs in with built-in accounts")
 	}
-	if s.OIDC.Issuer != "" {
-		checkURL(p, "auth.studio.oidc.issuer", s.OIDC.Issuer)
-		if s.OIDC.ClientID == "" {
-			p.addf("auth.studio.oidc.clientID", "must be set when an issuer is configured")
-		}
-		if s.OIDC.RedirectURL == "" {
-			p.addf("auth.studio.oidc.redirectURL", "must be set when an issuer is configured")
-		} else {
-			checkURL(p, "auth.studio.oidc.redirectURL", s.OIDC.RedirectURL)
-		}
+	if !s.AllowPasswordLogin {
+		p.addf("auth.studio.allowPasswordLogin", "must be true: built-in accounts are the only sign-in until P9, so otherwise nobody can sign in")
+	}
+	if s.CookieDomain != "" {
+		p.addf("auth.studio.cookieDomain", "must be empty: the __Host- prefix of the session cookie forbids a Domain attribute (SEC-101)")
 	}
 	for i, m := range s.MFARequiredFor {
 		p.oneOf("auth.studio.mfaRequiredFor["+strconv.Itoa(i)+"]", m, "publish", "approve", "keys", "members")
+	}
+	for _, m := range []string{"publish", "approve", "keys", "members"} {
+		if !slices.Contains(s.MFARequiredFor, m) {
+			p.addf("auth.studio.mfaRequiredFor", "must include %q: SEC-100 makes a second factor mandatory for it", m)
+		}
 	}
 	p.positive("auth.studio.sessionTTL", int64(s.SessionTTL))
 	p.positive("auth.device.accessTokenTTL", int64(c.Auth.Device.AccessTokenTTL))

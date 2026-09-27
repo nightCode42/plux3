@@ -155,15 +155,21 @@ message CreateEnvironmentResponse {
 
 message ListEnvironmentsRequest {
   string app_id = 1;
+  Page page = 2;
 }
 message ListEnvironmentsResponse {
   repeated Environment environments = 1;
+  PageResult page = 2;
 }
 
 message UpdateEnvironmentRequest {
+  // The signing key is not chosen by the caller: each environment has
+  // its own, named by the server, and rotation arrives with SEC-121 in
+  // P6.
+  reserved 3;
+  reserved "signing_key_ref";
   string id = 1;
   string name = 2;
-  string signing_key_ref = 3;
 }
 message UpdateEnvironmentResponse {
   Environment environment = 1;
@@ -185,9 +191,11 @@ message SetVariableResponse {
 
 message ListVariablesRequest {
   string environment_id = 1;
+  Page page = 2;
 }
 message ListVariablesResponse {
   repeated Variable variables = 1;
+  PageResult page = 2;
 }
 
 message SetSecretRequest {
@@ -201,9 +209,11 @@ message SetSecretResponse {
 
 message ListSecretsRequest {
   string environment_id = 1;
+  Page page = 2;
 }
 message ListSecretsResponse {
   repeated Secret secrets = 1;
+  PageResult page = 2;
 }
 
 message DeleteSecretRequest {
@@ -222,9 +232,11 @@ message CreateChannelResponse {
 
 message ListChannelsRequest {
   string environment_id = 1;
+  Page page = 2;
 }
 message ListChannelsResponse {
   repeated Channel channels = 1;
+  PageResult page = 2;
 }
 
 message DeleteChannelRequest {
@@ -296,7 +308,9 @@ message RevokeAccessResponse {}
 
 message ListAccessRequest {
   string app_id = 1;
+  Page page = 2;
 }
 message ListAccessResponse {
   repeated AccessGrant grants = 1;
+  PageResult page = 2;
 }

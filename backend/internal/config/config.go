@@ -106,17 +106,37 @@ type Signing struct {
 	// Backend is "file", "pkcs11", "awskms", "gcpkms", "azurekv" or
 	// "vault". "file" is refused for production environments (SEC-056).
 	Backend string `json:"backend"`
-	// Keys maps a role of the update metadata to a key reference. P2 uses
-	// the targets role only (ADR-0004); the others arrive in P6.
+	// Keys names the keys of the update-metadata roles. P2 uses the
+	// targets role only (ADR-0004); the others arrive in P6.
 	Keys SigningKeys `json:"keys"`
 	// Directory is the root of the file backend's keys.
 	Directory string `json:"directory"`
+	// Vault configures the HashiCorp Vault Transit backend.
+	Vault Vault `json:"vault"`
 }
 
-// SigningKeys names the key of each update-metadata role.
+// SigningKeys names the keys of each update-metadata role.
 type SigningKeys struct {
-	// Targets signs bundle hashes and manifests (SRV-052, REL-031).
+	// Targets is the prefix of every environment's targets key, which
+	// signs bundle hashes and manifests (SRV-052, REL-031). Each
+	// environment has its own key, "<prefix>-<environment ID>"
+	// (ADR-0004, GOV-010).
 	Targets string `json:"targets"`
+}
+
+// Vault is a HashiCorp Vault Transit engine (SEC-120).
+type Vault struct {
+	// Address is Vault's base URL.
+	Address string `json:"address"`
+	// Token authenticates to Vault; set it with PLUX_SIGNING_VAULT_TOKEN.
+	Token Secret `json:"token"`
+	// Mount is the Transit engine's mount path; "" is "transit".
+	Mount string `json:"mount"`
+	// Namespace is the Vault Enterprise namespace, or "".
+	Namespace string `json:"namespace"`
+	// WrapKey names the key that wraps the data keys of stored secrets
+	// (SEC-106); "" is "plux-secrets".
+	WrapKey string `json:"wrapKey"`
 }
 
 // Auth configures who may call the server.
@@ -128,18 +148,20 @@ type Auth struct {
 
 // StudioAuth is how people sign in (SEC-100, SEC-101).
 type StudioAuth struct {
-	// OIDC is the identity provider; leaving the issuer empty allows only
-	// built-in accounts.
+	// OIDC is the single sign-on provider. It arrives with GOV-004 in P9;
+	// until then a configured issuer is refused and only built-in
+	// accounts sign in.
 	OIDC OIDC `json:"oidc"`
 	// AllowPasswordLogin enables built-in accounts with Argon2id hashing.
 	AllowPasswordLogin bool `json:"allowPasswordLogin"`
-	// MFARequiredFor lists the capabilities that demand a second factor:
-	// "publish", "approve", "keys", "members".
+	// MFARequiredFor lists the capabilities that demand a second factor.
+	// It must name at least "publish", "approve", "keys" and "members",
+	// the capabilities SEC-100 makes it mandatory for.
 	MFARequiredFor []string `json:"mfaRequiredFor"`
 	// SessionTTL is how long a browser session lasts.
 	SessionTTL Duration `json:"sessionTTL"`
-	// CookieDomain scopes the session cookie; empty uses the host only,
-	// which is what the __Host- prefix requires.
+	// CookieDomain must stay empty: the __Host- prefix the session
+	// cookie carries forbids a Domain attribute (SEC-101).
 	CookieDomain string `json:"cookieDomain"`
 }
 

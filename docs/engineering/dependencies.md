@@ -33,8 +33,9 @@ Every third-party dependency is a long-term commitment: code we ship but did not
 | `go.opentelemetry.io/otel` (+ sdk, otlptracehttp) | Traces (`OBS-001`) | Apache-2.0 | [0006](../adr/0006-modular-monolith-with-roles.md) | In use (`backend`) |
 | `github.com/prometheus/client_golang` | Metrics (`OBS-002`) | Apache-2.0 | [0006](../adr/0006-modular-monolith-with-roles.md) | In use (`backend`) |
 | `sigs.k8s.io/yaml` | The server configuration file, decoded strictly as JSON (`SRV-008`) | Apache-2.0, BSD-3-Clause | [0007](../adr/0007-postgresql-and-object-storage.md) | In use (`backend`) |
+| `golang.org/x/crypto` (argon2) | Argon2id password hashing (`SEC-100`) | BSD-3-Clause | [0026](../adr/0026-identity-tenancy-and-access.md) | In use (`backend`) |
 
-`tools/` stays standard-library only (§3). Planned for the rest of P2, each named in its ADR: `sqlc` as a build tool ([0007](../adr/0007-postgresql-and-object-storage.md)), `golang.org/x/crypto` for Argon2id ([0004](../adr/0004-tuf-style-update-security.md)), `go-webauthn/webauthn` for passkeys, and `tetratelabs/wazero` for the WebAssembly image codecs of the asset pipeline.
+`tools/` stays standard-library only (§3). Build tools pinned in the Makefile: `sqlc` v1.31.1 generates the query code from the migrations ([0007](../adr/0007-postgresql-and-object-storage.md)). Planned for the rest of P2: `tetratelabs/wazero` for the WebAssembly image codecs of the asset pipeline. `go-webauthn/webauthn` moves to P9 with WebAuthn step-up (`SEC-103`, [0026](../adr/0026-identity-tenancy-and-access.md)). HashiCorp Vault Transit is reached over its HTTP API with the standard library, so no Vault client is a dependency ([0004](../adr/0004-tuf-style-update-security.md)).
 
 Valkey is reached with a small RESP client in `backend/internal/cache`, so no Redis client is a dependency; section deltas use the zstd raw-dictionary support of `klauspost/compress`, so no patching library is one either ([ADR-0003](../adr/0003-section-level-deltas.md)).
 
