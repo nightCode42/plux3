@@ -290,13 +290,24 @@ jobs:
             Apache-2.0, MIT, BSD-2-Clause, BSD-3-Clause, ISC, MPL-2.0, 0BSD,
             Unlicense, CC0-1.0, Zlib, BlueOak-1.0.0, Python-2.0, OFL-1.1,
             BSL-1.0, Unicode-3.0
-          # pub.dev reports these licences in lower case, which the action
-          # cannot validate as SPDX. Each was checked by hand (Dart team
-          # packages): clock and material_color_utilities are Apache-2.0;
-          # stack_trace, test_api and vector_math are BSD-3-Clause.
+          # Dependencies whose licence the action cannot validate: pub.dev
+          # reports licences in lower case, some packages report none, and
+          # Go's x/text adds the Go patent grant to BSD-3-Clause, which the
+          # action reads as a non-SPDX "AND LicenseRef-…" expression. Each
+          # was checked by hand against the package's LICENSE file:
+          #   Apache-2.0    clock, material_color_utilities
+          #   BSD-3-Clause  the Dart team packages below, golang.org/x/text
+          #                 (plus the Go PATENTS grant, which adds rights)
+          #   MIT           node_preamble; yaml is BSD-3-Clause and MIT
           allow-dependencies-licenses: >-
-            pkg:pub/clock, pkg:pub/material_color_utilities,
-            pkg:pub/stack_trace, pkg:pub/test_api, pkg:pub/vector_math
+            pkg:golang/golang.org/x/text,
+            pkg:pub/_fe_analyzer_shared, pkg:pub/analyzer, pkg:pub/clock,
+            pkg:pub/frontend_server_client, pkg:pub/glob, pkg:pub/io,
+            pkg:pub/material_color_utilities, pkg:pub/mime,
+            pkg:pub/node_preamble, pkg:pub/path, pkg:pub/pool,
+            pkg:pub/pub_semver, pkg:pub/source_maps, pkg:pub/stack_trace,
+            pkg:pub/test, pkg:pub/test_api, pkg:pub/test_core,
+            pkg:pub/vector_math, pkg:pub/yaml
           comment-summary-in-pr: never
 
   # ── Go ───────────────────────────────────────────────────────────────────
