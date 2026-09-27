@@ -1,0 +1,118 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "SingleChildScrollView",
+  "id": 34,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "SingleChildScrollView",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "scrolling",
+  "icon": "swipe_vertical",
+  "description": "Makes a single child scrollable.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 20,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "scrollDirection",
+      "id": 1,
+      "type": "Axis",
+      "default": "vertical",
+      "flutter": "scrollDirection"
+    },
+    {
+      "name": "reverse",
+      "id": 2,
+      "type": "bool",
+      "default": false,
+      "flutter": "reverse"
+    },
+    {
+      "name": "padding",
+      "id": 3,
+      "type": "EdgeInsets",
+      "flutter": "padding"
+    },
+    {
+      "name": "primary",
+      "id": 4,
+      "type": "bool",
+      "flutter": "primary"
+    },
+    {
+      "name": "physics",
+      "id": 5,
+      "type": "ScrollPhysics",
+      "flutter": "physics"
+    },
+    {
+      "name": "dragStartBehavior",
+      "id": 6,
+      "type": "DragStartBehavior",
+      "default": "start",
+      "flutter": "dragStartBehavior"
+    },
+    {
+      "name": "clipBehavior",
+      "id": 7,
+      "type": "Clip",
+      "default": "hardEdge",
+      "flutter": "clipBehavior"
+    },
+    {
+      "name": "hitTestBehavior",
+      "id": 8,
+      "type": "HitTestBehavior",
+      "default": "opaque",
+      "flutter": "hitTestBehavior"
+    },
+    {
+      "name": "keyboardDismissBehavior",
+      "id": 9,
+      "type": "ScrollViewKeyboardDismissBehavior",
+      "flutter": "keyboardDismissBehavior"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "controller",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "restorationId",
+      "reason": "non-serialisable",
+      "note": "State restoration is managed by the runtime."
+    }
+  ]
+}

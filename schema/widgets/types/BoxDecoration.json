@@ -1,0 +1,74 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "BoxDecoration",
+  "id": 6,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Paint behind a box: colour, border, radius, shadow, gradient or shape.",
+  "flutter": [
+    {
+      "library": "package:flutter/painting.dart",
+      "class": "BoxDecoration",
+      "constructors": [
+        ""
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "name": "color",
+      "id": 1,
+      "type": "color",
+      "flutter": "color"
+    },
+    {
+      "name": "border",
+      "id": 2,
+      "type": "Border",
+      "flutter": "border"
+    },
+    {
+      "name": "borderRadius",
+      "id": 3,
+      "type": "BorderRadius",
+      "flutter": "borderRadius"
+    },
+    {
+      "name": "boxShadow",
+      "id": 4,
+      "type": "list<BoxShadow>",
+      "flutter": "boxShadow"
+    },
+    {
+      "name": "gradient",
+      "id": 5,
+      "type": "Gradient",
+      "flutter": "gradient"
+    },
+    {
+      "name": "backgroundBlendMode",
+      "id": 6,
+      "type": "BlendMode",
+      "flutter": "backgroundBlendMode"
+    },
+    {
+      "name": "shape",
+      "id": 7,
+      "type": "BoxShape",
+      "default": "rectangle",
+      "flutter": "shape"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "image",
+      "reason": "deferred",
+      "note": "Decoration images are deferred; use an Image in a Stack."
+    }
+  ]
+}

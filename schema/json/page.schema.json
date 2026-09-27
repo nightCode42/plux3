@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://plux.dev/schema/v1/page.schema.json",
+  "title": "Plux page document",
+  "description": "A page: route, parameters, state, data, lifecycle and node tree (SCH-022). File: `plugins/<plugin>/pages/<key>.page.json`.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "key",
+    "pageKind",
+    "title",
+    "root"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "$ref": "common.schema.json#/$defs/schemaVersion"
+    },
+    "kind": {
+      "const": "page"
+    },
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "key": {
+      "$ref": "common.schema.json#/$defs/key"
+    },
+    "route": {
+      "$ref": "common.schema.json#/$defs/routeName"
+    },
+    "pageKind": {
+      "$ref": "common.schema.json#/$defs/pageKind"
+    },
+    "title": {
+      "$ref": "common.schema.json#/$defs/propValue"
+    },
+    "description": {
+      "$ref": "common.schema.json#/$defs/description"
+    },
+    "params": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/param"
+      }
+    },
+    "state": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/stateEntry"
+      }
+    },
+    "dataSources": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/dataSource"
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "x-plux-type": "Lifecycle",
+      "description": "Lifecycle handlers (SCH-022).",
+      "properties": {
+        "onInit": {
+          "$ref": "common.schema.json#/$defs/eventHandler"
+        },
+        "onEnter": {
+          "$ref": "common.schema.json#/$defs/eventHandler"
+        },
+        "onResume": {
+          "$ref": "common.schema.json#/$defs/eventHandler"
+        },
+        "onLeave": {
+          "$ref": "common.schema.json#/$defs/eventHandler"
+        },
+        "onDispose": {
+          "$ref": "common.schema.json#/$defs/eventHandler"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false
+    },
+    "routeOptions": {
+      "type": "object",
+      "x-plux-type": "RouteOptions",
+      "description": "Route options (SCH-022, NAV-010).",
+      "properties": {
+        "transition": {
+          "$ref": "common.schema.json#/$defs/transition"
+        },
+        "guards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "x-plux-type": "RouteGuard",
+            "description": "A guard graph run before entry (NAV-009).",
+            "required": [
+              "$graph"
+            ],
+            "properties": {
+              "$graph": {
+                "$ref": "common.schema.json#/$defs/id"
+              }
+            },
+            "patternProperties": {
+              "^x-": true
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false
+    },
+    "security": {
+      "type": "object",
+      "x-plux-type": "PageSecurity",
+      "description": "Security flags (SCH-022).",
+      "properties": {
+        "secure": {
+          "type": "boolean",
+          "description": "Blocks screenshots and screen recording (SEC-090)."
+        },
+        "requiresAssurance": {
+          "$ref": "common.schema.json#/$defs/assuranceLevel"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false
+    },
+    "root": {
+      "$ref": "common.schema.json#/$defs/node"
+    }
+  },
+  "patternProperties": {
+    "^x-": true
+  },
+  "additionalProperties": false
+}

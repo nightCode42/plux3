@@ -1,0 +1,56 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "WidgetStateShapeBorder",
+  "id": 31,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "A ShapeBorder per interaction state. The first matching state wins, in the order disabled, error, dragged, pressed, hovered, focused, selected; otherwise `value`.",
+  "fields": [
+    {
+      "name": "value",
+      "id": 1,
+      "type": "ShapeBorder",
+      "description": "Used when no listed state applies."
+    },
+    {
+      "name": "disabled",
+      "id": 2,
+      "type": "ShapeBorder"
+    },
+    {
+      "name": "error",
+      "id": 3,
+      "type": "ShapeBorder"
+    },
+    {
+      "name": "dragged",
+      "id": 4,
+      "type": "ShapeBorder"
+    },
+    {
+      "name": "pressed",
+      "id": 5,
+      "type": "ShapeBorder"
+    },
+    {
+      "name": "hovered",
+      "id": 6,
+      "type": "ShapeBorder"
+    },
+    {
+      "name": "focused",
+      "id": 7,
+      "type": "ShapeBorder"
+    },
+    {
+      "name": "selected",
+      "id": 8,
+      "type": "ShapeBorder"
+    }
+  ]
+}

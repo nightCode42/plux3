@@ -1,0 +1,31 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "DropdownMenuCloseBehavior",
+  "id": 16,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum DropdownMenuCloseBehavior.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "DropdownMenuCloseBehavior"
+  },
+  "values": [
+    {
+      "name": "all",
+      "id": 1
+    },
+    {
+      "name": "self",
+      "id": 2
+    },
+    {
+      "name": "none",
+      "id": 3
+    }
+  ]
+}

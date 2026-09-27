@@ -1,0 +1,86 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Positioned",
+  "id": 28,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "Positioned",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "layout",
+  "icon": "open_with",
+  "description": "Positions its child inside a Stack.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 4,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "left",
+      "id": 1,
+      "type": "double",
+      "flutter": "left"
+    },
+    {
+      "name": "top",
+      "id": 2,
+      "type": "double",
+      "flutter": "top"
+    },
+    {
+      "name": "right",
+      "id": 3,
+      "type": "double",
+      "flutter": "right"
+    },
+    {
+      "name": "bottom",
+      "id": 4,
+      "type": "double",
+      "flutter": "bottom"
+    },
+    {
+      "name": "width",
+      "id": 5,
+      "type": "double",
+      "flutter": "width"
+    },
+    {
+      "name": "height",
+      "id": 6,
+      "type": "double",
+      "flutter": "height"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "required": true,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

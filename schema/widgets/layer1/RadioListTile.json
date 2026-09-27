@@ -1,0 +1,292 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "RadioListTile",
+  "id": 71,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "RadioListTile",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "input",
+  "icon": "radio_button_checked",
+  "description": "A list tile with a radio button.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 45,
+  "accessibility": {
+    "role": "radio",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "value",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "flutter": "value"
+    },
+    {
+      "name": "groupValue",
+      "id": 2,
+      "type": "string?",
+      "flutter": "groupValue",
+      "description": "The selected value of the group; the runtime provides the RadioGroup."
+    },
+    {
+      "name": "toggleable",
+      "id": 3,
+      "type": "bool",
+      "default": false,
+      "flutter": "toggleable"
+    },
+    {
+      "name": "activeColor",
+      "id": 4,
+      "type": "color",
+      "flutter": "activeColor"
+    },
+    {
+      "name": "fillColor",
+      "id": 5,
+      "type": "WidgetStateColor",
+      "flutter": "fillColor"
+    },
+    {
+      "name": "hoverColor",
+      "id": 6,
+      "type": "color",
+      "flutter": "hoverColor"
+    },
+    {
+      "name": "overlayColor",
+      "id": 7,
+      "type": "WidgetStateColor",
+      "flutter": "overlayColor"
+    },
+    {
+      "name": "splashRadius",
+      "id": 8,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "splashRadius"
+    },
+    {
+      "name": "materialTapTargetSize",
+      "id": 9,
+      "type": "MaterialTapTargetSize",
+      "flutter": "materialTapTargetSize"
+    },
+    {
+      "name": "isThreeLine",
+      "id": 10,
+      "type": "bool",
+      "flutter": "isThreeLine"
+    },
+    {
+      "name": "dense",
+      "id": 11,
+      "type": "bool",
+      "flutter": "dense"
+    },
+    {
+      "name": "selected",
+      "id": 12,
+      "type": "bool",
+      "default": false,
+      "flutter": "selected"
+    },
+    {
+      "name": "controlAffinity",
+      "id": 13,
+      "type": "ListTileControlAffinity",
+      "flutter": "controlAffinity"
+    },
+    {
+      "name": "autofocus",
+      "id": 14,
+      "type": "bool",
+      "default": false,
+      "flutter": "autofocus"
+    },
+    {
+      "name": "contentPadding",
+      "id": 15,
+      "type": "EdgeInsets",
+      "flutter": "contentPadding"
+    },
+    {
+      "name": "shape",
+      "id": 16,
+      "type": "ShapeBorder",
+      "flutter": "shape"
+    },
+    {
+      "name": "tileColor",
+      "id": 17,
+      "type": "color",
+      "flutter": "tileColor"
+    },
+    {
+      "name": "selectedTileColor",
+      "id": 18,
+      "type": "color",
+      "flutter": "selectedTileColor"
+    },
+    {
+      "name": "visualDensity",
+      "id": 19,
+      "type": "VisualDensity",
+      "flutter": "visualDensity"
+    },
+    {
+      "name": "enableFeedback",
+      "id": 20,
+      "type": "bool",
+      "flutter": "enableFeedback"
+    },
+    {
+      "name": "horizontalTitleGap",
+      "id": 21,
+      "type": "double",
+      "flutter": "horizontalTitleGap"
+    },
+    {
+      "name": "minVerticalPadding",
+      "id": 22,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "minVerticalPadding"
+    },
+    {
+      "name": "minLeadingWidth",
+      "id": 23,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "minLeadingWidth"
+    },
+    {
+      "name": "minTileHeight",
+      "id": 24,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "minTileHeight"
+    },
+    {
+      "name": "radioScaleFactor",
+      "id": 25,
+      "type": "double",
+      "default": 1.0,
+      "flutter": "radioScaleFactor"
+    },
+    {
+      "name": "titleAlignment",
+      "id": 26,
+      "type": "ListTileTitleAlignment",
+      "flutter": "titleAlignment"
+    },
+    {
+      "name": "enabled",
+      "id": 27,
+      "type": "bool",
+      "flutter": "enabled"
+    },
+    {
+      "name": "radioBackgroundColor",
+      "id": 28,
+      "type": "WidgetStateColor",
+      "flutter": "radioBackgroundColor"
+    },
+    {
+      "name": "radioSide",
+      "id": 29,
+      "type": "BorderSide",
+      "flutter": "radioSide"
+    },
+    {
+      "name": "radioInnerRadius",
+      "id": 30,
+      "type": "WidgetStateDouble",
+      "flutter": "radioInnerRadius"
+    }
+  ],
+  "events": [
+    {
+      "name": "onChanged",
+      "id": 1,
+      "payload": "string?",
+      "flutter": "onChanged",
+      "description": "Fired with the value when the user selects this radio."
+    },
+    {
+      "name": "onFocusChange",
+      "id": 2,
+      "payload": "bool",
+      "flutter": "onFocusChange"
+    }
+  ],
+  "slots": [
+    {
+      "name": "title",
+      "id": 1,
+      "flutter": "title"
+    },
+    {
+      "name": "subtitle",
+      "id": 2,
+      "flutter": "subtitle"
+    },
+    {
+      "name": "secondary",
+      "id": 3,
+      "flutter": "secondary"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "mouseCursor",
+      "reason": "deferred",
+      "note": "Pointer cursors matter only for desktop and web targets."
+    },
+    {
+      "flutter": "focusNode",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "statesController",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "internalAddSemanticForOnTap",
+      "reason": "non-serialisable",
+      "note": "A framework-internal flag."
+    }
+  ]
+}

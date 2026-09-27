@@ -1,0 +1,35 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "TextCapitalization",
+  "id": 53,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum TextCapitalization.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "TextCapitalization"
+  },
+  "values": [
+    {
+      "name": "words",
+      "id": 1
+    },
+    {
+      "name": "sentences",
+      "id": 2
+    },
+    {
+      "name": "characters",
+      "id": 3
+    },
+    {
+      "name": "none",
+      "id": 4
+    }
+  ]
+}

@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://plux.dev/schema/v1/registry/common.schema.json",
+  "title": "Plux registry: shared definitions",
+  "$defs": {
+    "id": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4294967295,
+      "description": "Permanent numeric ID (BND-011): never reused or reassigned."
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-zA-Z0-9]*$",
+      "maxLength": 64
+    },
+    "typeName": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Za-z0-9]*$",
+      "maxLength": 64
+    },
+    "typeExpr": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9<>, ?]*$",
+      "maxLength": 256,
+      "description": "Type expression of SCH-010, value types and enums; `T` is the descriptor's type parameter."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4000
+    },
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+    },
+    "phase": {
+      "type": "string",
+      "pattern": "^P([0-9]|1[0-5])$"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "A revision of the registry entry (WGT-004). On a member: the revision that added it; defaults to 1."
+    },
+    "revisions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "description": "The first runtime version implementing a revision.",
+        "required": [
+          "revision",
+          "runtime"
+        ],
+        "properties": {
+          "revision": {
+            "$ref": "common.schema.json#/$defs/revision"
+          },
+          "runtime": {
+            "$ref": "common.schema.json#/$defs/semver"
+          }
+        },
+        "additionalProperties": false
+      },
+      "description": "Maps each revision to the first runtime version implementing it (WGT-004); revisions are numbered from 1 without gaps."
+    },
+    "flutterNames": {
+      "description": "The Flutter parameter or parameters the member covers.",
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-zA-Z][a-zA-Z0-9]*$"
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-zA-Z][a-zA-Z0-9]*$"
+          }
+        }
+      ]
+    },
+    "flutterLibrary": {
+      "type": "string",
+      "pattern": "^(package:flutter/[a-z_]+\\.dart|dart:ui)$",
+      "description": "A public Flutter library, or dart:ui for engine types Flutter does not re-export."
+    },
+    "flutterClass": {
+      "type": "object",
+      "description": "A Flutter class and the constructors the entry mirrors.",
+      "required": [
+        "library",
+        "class",
+        "constructors"
+      ],
+      "properties": {
+        "library": {
+          "$ref": "#/$defs/flutterLibrary"
+        },
+        "class": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*$"
+        },
+        "constructors": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z]*[a-zA-Z0-9]*$"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "excluded": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "A Flutter parameter or enum value that is not supported, with its reason (WGT-003).",
+        "required": [
+          "flutter",
+          "reason"
+        ],
+        "properties": {
+          "flutter": {
+            "type": "string",
+            "pattern": "^[a-zA-Z][a-zA-Z0-9]*$"
+          },
+          "reason": {
+            "enum": [
+              "callback→event",
+              "controller→state",
+              "builder→template",
+              "non-serialisable",
+              "deprecated",
+              "deferred"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "deprecation": {
+      "type": "object",
+      "description": "Deprecation of a member; members are never removed (WGT-004).",
+      "required": [
+        "revision",
+        "message"
+      ],
+      "properties": {
+        "revision": {
+          "$ref": "#/$defs/revision"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "constraints": {
+      "type": "object",
+      "description": "Constraints on literal values, checked by the compiler.",
+      "properties": {
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        },
+        "minLength": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxLength": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "pattern": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

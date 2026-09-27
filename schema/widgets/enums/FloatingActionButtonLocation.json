@@ -1,0 +1,91 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "FloatingActionButtonLocation",
+  "id": 19,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Where a Scaffold places its floating action button.",
+  "values": [
+    {
+      "name": "startTop",
+      "id": 1
+    },
+    {
+      "name": "miniStartTop",
+      "id": 2
+    },
+    {
+      "name": "centerTop",
+      "id": 3
+    },
+    {
+      "name": "miniCenterTop",
+      "id": 4
+    },
+    {
+      "name": "endTop",
+      "id": 5
+    },
+    {
+      "name": "miniEndTop",
+      "id": 6
+    },
+    {
+      "name": "startFloat",
+      "id": 7
+    },
+    {
+      "name": "miniStartFloat",
+      "id": 8
+    },
+    {
+      "name": "centerFloat",
+      "id": 9
+    },
+    {
+      "name": "miniCenterFloat",
+      "id": 10
+    },
+    {
+      "name": "endFloat",
+      "id": 11
+    },
+    {
+      "name": "miniEndFloat",
+      "id": 12
+    },
+    {
+      "name": "startDocked",
+      "id": 13
+    },
+    {
+      "name": "miniStartDocked",
+      "id": 14
+    },
+    {
+      "name": "centerDocked",
+      "id": 15
+    },
+    {
+      "name": "miniCenterDocked",
+      "id": 16
+    },
+    {
+      "name": "endDocked",
+      "id": 17
+    },
+    {
+      "name": "miniEndDocked",
+      "id": 18
+    },
+    {
+      "name": "endContained",
+      "id": 19
+    }
+  ]
+}

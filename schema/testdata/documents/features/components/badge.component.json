@@ -1,0 +1,66 @@
+{
+  "events": [
+    {
+      "name": "onTap"
+    }
+  ],
+  "id": "01b0c450-6c00-7000-8000-00000000000f",
+  "key": "badge",
+  "kind": "component",
+  "name": "Badge",
+  "props": [
+    {
+      "name": "label",
+      "required": true,
+      "type": "string"
+    },
+    {
+      "default": "low",
+      "name": "tone",
+      "type": "Priority"
+    }
+  ],
+  "root": {
+    "events": {
+      "onTap": {
+        "steps": [
+          {
+            "action": "haptic",
+            "id": "buzz",
+            "input": {
+              "pattern": "light"
+            }
+          }
+        ]
+      }
+    },
+    "id": "01b0c450-6c00-7000-8000-00000000001f",
+    "slots": {
+      "child": {
+        "id": "01b0c450-6c00-7000-8000-000000000020",
+        "props": {
+          "data": {
+            "$expr": "props.label + (component.pressed ? \"!\" : \"\")"
+          }
+        },
+        "type": "Text"
+      }
+    },
+    "type": "GestureDetector"
+  },
+  "schemaVersion": "1.0.0",
+  "slots": [
+    {
+      "name": "icon"
+    }
+  ],
+  "state": [
+    {
+      "default": false,
+      "id": "01b0c450-6c00-7000-8000-00000000001e",
+      "name": "pressed",
+      "type": "bool"
+    }
+  ],
+  "version": 2
+}

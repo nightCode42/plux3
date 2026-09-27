@@ -1,0 +1,26 @@
+{
+  "actions": [],
+  "host": {
+    "appId": "com.example.demo",
+    "build": 1,
+    "version": "1.0.0"
+  },
+  "id": "01a0c450-6c00-700f-8000-00000001d001",
+  "kind": "nativeCatalogue",
+  "routes": [
+    {
+      "description": "The host's account overview screen.",
+      "name": "account-overview",
+      "params": [
+        {
+          "mock": "acc-1",
+          "name": "accountId",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": "1.0.0",
+  "slots": []
+}

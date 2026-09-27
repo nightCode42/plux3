@@ -1,0 +1,149 @@
+{
+  "description": "Validation functions.",
+  "env": {
+    "types": {
+      "Loan": {
+        "fields": {
+          "amount": "decimal",
+          "fee": "money?",
+          "months": "int",
+          "rate": "double",
+          "status": "string?"
+        }
+      },
+      "Tier": {
+        "enum": [
+          "gold",
+          "silver",
+          "bronze"
+        ]
+      }
+    },
+    "roots": {
+      "day": "date",
+      "items": "list<Loan>",
+      "n": "int",
+      "name": "string?",
+      "none": "int?",
+      "page": "Loan",
+      "scores": "map<string,int>",
+      "tags": "list<string>",
+      "tier": "Tier",
+      "total": "money",
+      "when": "dateTime",
+      "x": "double"
+    }
+  },
+  "inputs": {
+    "day": "2024-02-29",
+    "items": [
+      {
+        "amount": "100.00",
+        "months": 6,
+        "rate": 0.1,
+        "status": "open"
+      },
+      {
+        "amount": "25.5",
+        "months": 3,
+        "rate": 0.2,
+        "status": "closed"
+      },
+      {
+        "amount": "300",
+        "months": 12,
+        "rate": 0.05
+      }
+    ],
+    "n": 7,
+    "name": null,
+    "none": null,
+    "now": "2026-09-26T08:00:00Z",
+    "page": {
+      "amount": "1200.50",
+      "fee": {
+        "amount": "9.99",
+        "currency": "EUR"
+      },
+      "months": 12,
+      "rate": 0.05,
+      "status": null
+    },
+    "scores": {
+      "alice": 3,
+      "bob": 2
+    },
+    "tags": [
+      "b",
+      "a",
+      "c",
+      "a"
+    ],
+    "tier": "gold",
+    "total": {
+      "amount": "12.34",
+      "currency": "EUR"
+    },
+    "when": "2026-09-26T10:30:00+02:00",
+    "x": 2.5
+  },
+  "cases": [
+    {
+      "name": "isEmail",
+      "expr": "[isEmail(\"a.b+c@example.co.uk\"), isEmail(\"a..b@example.com\"), isEmail(\"a@b\"), isEmail(\"a@example.c0m\")]",
+      "value": [
+        true,
+        false,
+        false,
+        false
+      ],
+      "type": "list<bool>",
+      "program": "AQABCmxpc3Q8Ym9vbD4BCwQBAQEAAQABAAADBAAA",
+      "asm": [
+        "0000 CONST 0 ; [true false false false]"
+      ]
+    },
+    {
+      "name": "isIban",
+      "expr": "[isIban(\"DE89 3704 0044 0532 0130 00\"), isIban(\"DE88 3704 0044 0532 0130 00\"), isIban(\"GB82WEST12345698765432\")]",
+      "value": [
+        true,
+        false,
+        true
+      ],
+      "type": "list<bool>",
+      "program": "AQABCmxpc3Q8Ym9vbD4BCwMBAQEAAQEAAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; [true false true]"
+      ]
+    },
+    {
+      "name": "isNumeric",
+      "expr": "[isNumeric(\"-12.50\"), isNumeric(\"1e3\"), isNumeric(\"\")]",
+      "value": [
+        true,
+        false,
+        false
+      ],
+      "type": "list<bool>",
+      "program": "AQABCmxpc3Q8Ym9vbD4BCwMBAQEAAQAAAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; [true false false]"
+      ]
+    },
+    {
+      "name": "luhn",
+      "expr": "[luhn(\"79927398713\"), luhn(\"79927398710\"), luhn(\"7\")]",
+      "value": [
+        true,
+        false,
+        false
+      ],
+      "type": "list<bool>",
+      "program": "AQABCmxpc3Q8Ym9vbD4BCwMBAQEAAQAAAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; [true false false]"
+      ]
+    }
+  ]
+}

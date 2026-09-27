@@ -1,0 +1,35 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "OverlayVisibilityMode",
+  "id": 38,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum OverlayVisibilityMode.",
+  "flutter": {
+    "library": "package:flutter/cupertino.dart",
+    "enum": "OverlayVisibilityMode"
+  },
+  "values": [
+    {
+      "name": "never",
+      "id": 1
+    },
+    {
+      "name": "editing",
+      "id": 2
+    },
+    {
+      "name": "notEditing",
+      "id": 3
+    },
+    {
+      "name": "always",
+      "id": 4
+    }
+  ]
+}

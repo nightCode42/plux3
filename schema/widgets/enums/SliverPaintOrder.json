@@ -1,0 +1,27 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "SliverPaintOrder",
+  "id": 45,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum SliverPaintOrder.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "SliverPaintOrder"
+  },
+  "values": [
+    {
+      "name": "firstIsTop",
+      "id": 1
+    },
+    {
+      "name": "lastIsTop",
+      "id": 2
+    }
+  ]
+}

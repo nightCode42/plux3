@@ -1,0 +1,17 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "delay",
+  "id": 34,
+  "phase": "P5",
+  "category": "control",
+  "description": "Waits for a duration; the wait is cancelled with the run.",
+  "inputs": [
+    {
+      "name": "duration",
+      "id": 1,
+      "type": "duration",
+      "required": true,
+      "description": "How long to wait, in milliseconds."
+    }
+  ]
+}

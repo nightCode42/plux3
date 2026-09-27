@@ -1,0 +1,62 @@
+{
+  "description": "Stores the schedule and opens the result page.",
+  "id": "01a0c450-6c00-7021-8000-00000003fccf",
+  "key": "calculate",
+  "kind": "actionGraph",
+  "page": "01a0c450-6c00-7012-8000-000000022cce",
+  "schemaVersion": "1.0.0",
+  "steps": [
+    {
+      "action": "setState",
+      "id": "store",
+      "input": {
+        "path": "plugin.lastSchedule",
+        "value": {
+          "monthlyPayment": {
+            "$expr": "page.monthlyPayment"
+          },
+          "months": {
+            "$expr": "page.months"
+          },
+          "totalInterest": {
+            "$expr": "page.monthlyPayment * decimal(page.months) - page.amount"
+          }
+        }
+      },
+      "next": "track"
+    },
+    {
+      "action": "trackEvent",
+      "id": "track",
+      "input": {
+        "name": "loan_calculated",
+        "props": {
+          "months": {
+            "$expr": "page.months"
+          }
+        }
+      },
+      "next": "open"
+    },
+    {
+      "action": "navigate",
+      "id": "open",
+      "input": {
+        "params": {
+          "schedule": {
+            "monthlyPayment": {
+              "$expr": "page.monthlyPayment"
+            },
+            "months": {
+              "$expr": "page.months"
+            },
+            "totalInterest": {
+              "$expr": "page.monthlyPayment * decimal(page.months) - page.amount"
+            }
+          }
+        },
+        "route": "result"
+      }
+    }
+  ]
+}

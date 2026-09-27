@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://plux.dev/schema/v1/template.schema.json",
+  "title": "Plux template document",
+  "description": "A reusable subtree snapshot, copied with fresh identifiers when inserted (SCH-031). File: `templates/<key>.template.json`.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "key",
+    "name",
+    "category",
+    "visibility",
+    "root"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "$ref": "common.schema.json#/$defs/schemaVersion"
+    },
+    "kind": {
+      "const": "template"
+    },
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "key": {
+      "$ref": "common.schema.json#/$defs/key"
+    },
+    "name": {
+      "$ref": "common.schema.json#/$defs/text"
+    },
+    "description": {
+      "$ref": "common.schema.json#/$defs/description"
+    },
+    "category": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "maxLength": 64
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9-]*$",
+        "maxLength": 32
+      },
+      "uniqueItems": true
+    },
+    "thumbnail": {
+      "$ref": "common.schema.json#/$defs/assetRef"
+    },
+    "parameters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "x-plux-type": "TemplateParameter",
+        "description": "An exposed parameter.",
+        "required": [
+          "name",
+          "type",
+          "path"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "common.schema.json#/$defs/name"
+          },
+          "type": {
+            "$ref": "common.schema.json#/$defs/typeExpr"
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^(/[^/]*)+$",
+            "description": "JSON Pointer to the value inside `root` that the parameter sets."
+          },
+          "default": {
+            "$ref": "common.schema.json#/$defs/value"
+          },
+          "description": {
+            "$ref": "common.schema.json#/$defs/description"
+          }
+        },
+        "patternProperties": {
+          "^x-": true
+        },
+        "additionalProperties": false
+      }
+    },
+    "visibility": {
+      "$ref": "common.schema.json#/$defs/templateVisibility"
+    },
+    "dependencies": {
+      "type": "object",
+      "x-plux-type": "TemplateDependencies",
+      "description": "What the subtree uses.",
+      "properties": {
+        "tokens": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/tokenPath"
+          },
+          "uniqueItems": true
+        },
+        "assets": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/componentRef"
+          }
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false
+    },
+    "root": {
+      "$ref": "common.schema.json#/$defs/node"
+    }
+  },
+  "patternProperties": {
+    "^x-": true
+  },
+  "additionalProperties": false
+}

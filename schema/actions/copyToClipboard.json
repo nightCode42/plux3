@@ -1,0 +1,20 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "copyToClipboard",
+  "id": 39,
+  "phase": "P5",
+  "category": "device",
+  "description": "Copies text to the clipboard; blocked on secure pages.",
+  "inputs": [
+    {
+      "name": "text",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "description": "The text."
+    }
+  ],
+  "effects": [
+    "device"
+  ]
+}

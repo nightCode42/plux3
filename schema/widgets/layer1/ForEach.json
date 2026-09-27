@@ -1,0 +1,47 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "ForEach",
+  "id": 3,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "category": "structure",
+  "icon": "repeat",
+  "description": "Repeats its `item` template for every element of a bounded list, eagerly; use ListView for long or lazy lists.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 3,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "typeParameters": [
+    "T"
+  ],
+  "props": [
+    {
+      "name": "items",
+      "id": 1,
+      "type": "list<T>",
+      "required": true,
+      "description": "The bounded list to repeat over; the item is `item`, its position `index`."
+    }
+  ],
+  "slots": [
+    {
+      "name": "item",
+      "id": 1,
+      "required": true,
+      "template": true,
+      "description": "The template built for each item."
+    }
+  ]
+}

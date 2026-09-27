@@ -1,0 +1,67 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "ErrorState",
+  "id": 101,
+  "layer": 2,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "category": "feedback",
+  "icon": "error",
+  "description": "A standard error state: icon, title, message and an optional retry action.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 30,
+  "accessibility": {
+    "role": "none",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "icon",
+      "id": 1,
+      "type": "IconData?",
+      "description": "The illustration icon."
+    },
+    {
+      "name": "title",
+      "id": 2,
+      "type": "string",
+      "required": true,
+      "description": "The headline."
+    },
+    {
+      "name": "message",
+      "id": 3,
+      "type": "string?",
+      "description": "An explanation below the title."
+    },
+    {
+      "name": "retryLabel",
+      "id": 4,
+      "type": "string?",
+      "description": "Label of a built-in retry button; hidden when absent."
+    }
+  ],
+  "events": [
+    {
+      "name": "onRetry",
+      "id": 1,
+      "description": "Fired when the built-in retry button is pressed."
+    }
+  ],
+  "slots": [
+    {
+      "name": "action",
+      "id": 1,
+      "description": "An optional call to action, typically a button."
+    }
+  ]
+}

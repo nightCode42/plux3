@@ -1,0 +1,67 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "BarcodeFormat",
+  "id": 71,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "A barcode or two-dimensional code format.",
+  "values": [
+    {
+      "name": "qrCode",
+      "id": 1
+    },
+    {
+      "name": "aztec",
+      "id": 2
+    },
+    {
+      "name": "dataMatrix",
+      "id": 3
+    },
+    {
+      "name": "pdf417",
+      "id": 4
+    },
+    {
+      "name": "code39",
+      "id": 5
+    },
+    {
+      "name": "code93",
+      "id": 6
+    },
+    {
+      "name": "code128",
+      "id": 7
+    },
+    {
+      "name": "codabar",
+      "id": 8
+    },
+    {
+      "name": "ean8",
+      "id": 9
+    },
+    {
+      "name": "ean13",
+      "id": 10
+    },
+    {
+      "name": "itf",
+      "id": 11
+    },
+    {
+      "name": "upcA",
+      "id": 12
+    },
+    {
+      "name": "upcE",
+      "id": 13
+    }
+  ]
+}

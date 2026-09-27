@@ -1,0 +1,33 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "subscribe",
+  "id": 18,
+  "phase": "P5",
+  "category": "data",
+  "description": "Opens a WebSocket or server-sent-events stream; messages arrive as the stream's events.",
+  "typeParameters": [
+    {
+      "name": "P",
+      "description": "The parameter object type the stream declares."
+    }
+  ],
+  "inputs": [
+    {
+      "name": "stream",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "stream",
+      "description": "The stream."
+    },
+    {
+      "name": "params",
+      "id": 2,
+      "type": "P",
+      "description": "Parameters of the stream."
+    }
+  ],
+  "effects": [
+    "network"
+  ]
+}

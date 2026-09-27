@@ -1,0 +1,137 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "RangeSlider",
+  "id": 75,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "RangeSlider",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "input",
+  "icon": "tune",
+  "description": "Selects a range from a continuous or discrete set of values.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 40,
+  "accessibility": {
+    "role": "slider",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "values",
+      "id": 1,
+      "type": "RangeValues",
+      "required": true,
+      "flutter": "values"
+    },
+    {
+      "name": "min",
+      "id": 2,
+      "type": "double",
+      "default": 0.0,
+      "flutter": "min"
+    },
+    {
+      "name": "max",
+      "id": 3,
+      "type": "double",
+      "default": 1.0,
+      "flutter": "max"
+    },
+    {
+      "name": "divisions",
+      "id": 4,
+      "type": "int",
+      "constraints": {
+        "min": 1
+      },
+      "flutter": "divisions"
+    },
+    {
+      "name": "labels",
+      "id": 5,
+      "type": "RangeLabels",
+      "flutter": "labels"
+    },
+    {
+      "name": "activeColor",
+      "id": 6,
+      "type": "color",
+      "flutter": "activeColor"
+    },
+    {
+      "name": "inactiveColor",
+      "id": 7,
+      "type": "color",
+      "flutter": "inactiveColor"
+    },
+    {
+      "name": "overlayColor",
+      "id": 8,
+      "type": "WidgetStateColor",
+      "flutter": "overlayColor"
+    },
+    {
+      "name": "padding",
+      "id": 9,
+      "type": "EdgeInsets",
+      "flutter": "padding"
+    }
+  ],
+  "events": [
+    {
+      "name": "onChanged",
+      "id": 1,
+      "payload": "RangeValues",
+      "flutter": "onChanged"
+    },
+    {
+      "name": "onChangeStart",
+      "id": 2,
+      "payload": "RangeValues",
+      "flutter": "onChangeStart"
+    },
+    {
+      "name": "onChangeEnd",
+      "id": 3,
+      "payload": "RangeValues",
+      "flutter": "onChangeEnd"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "mouseCursor",
+      "reason": "deferred",
+      "note": "Pointer cursors matter only for desktop and web targets."
+    },
+    {
+      "flutter": "semanticFormatterCallback",
+      "reason": "non-serialisable",
+      "note": "A Dart callback; value semantics come from the value."
+    },
+    {
+      "flutter": "year2023",
+      "reason": "deprecated",
+      "note": "Deprecated in Flutter."
+    }
+  ]
+}

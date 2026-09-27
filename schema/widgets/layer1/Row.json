@@ -1,0 +1,95 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Row",
+  "id": 24,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "Row",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "layout",
+  "icon": "view_column",
+  "description": "Lays out its children horizontally.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 8,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "mainAxisAlignment",
+      "id": 1,
+      "type": "MainAxisAlignment",
+      "default": "start",
+      "flutter": "mainAxisAlignment"
+    },
+    {
+      "name": "mainAxisSize",
+      "id": 2,
+      "type": "MainAxisSize",
+      "default": "max",
+      "flutter": "mainAxisSize"
+    },
+    {
+      "name": "crossAxisAlignment",
+      "id": 3,
+      "type": "CrossAxisAlignment",
+      "default": "center",
+      "flutter": "crossAxisAlignment"
+    },
+    {
+      "name": "textDirection",
+      "id": 4,
+      "type": "TextDirection",
+      "flutter": "textDirection"
+    },
+    {
+      "name": "verticalDirection",
+      "id": 5,
+      "type": "VerticalDirection",
+      "default": "down",
+      "flutter": "verticalDirection"
+    },
+    {
+      "name": "textBaseline",
+      "id": 6,
+      "type": "TextBaseline",
+      "flutter": "textBaseline"
+    },
+    {
+      "name": "spacing",
+      "id": 7,
+      "type": "double",
+      "default": 0.0,
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "spacing"
+    }
+  ],
+  "children": {
+    "flutter": "children"
+  },
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "switch",
+  "id": 31,
+  "phase": "P5",
+  "category": "control",
+  "description": "Takes the branch named by the value of a PXL expression, or the default branch.",
+  "inputs": [
+    {
+      "name": "value",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "description": "The value to branch on."
+    },
+    {
+      "name": "cases",
+      "id": 2,
+      "type": "list<string>",
+      "required": true,
+      "description": "The values with their own branch."
+    }
+  ],
+  "branches": [
+    "default"
+  ],
+  "branchesFrom": "cases"
+}

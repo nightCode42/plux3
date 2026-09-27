@@ -1,0 +1,109 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Badge",
+  "id": 62,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "Badge",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "display",
+  "icon": "notifications",
+  "description": "A small label, typically a count, on top of its child.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 10,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "backgroundColor",
+      "id": 1,
+      "type": "color",
+      "flutter": "backgroundColor"
+    },
+    {
+      "name": "textColor",
+      "id": 2,
+      "type": "color",
+      "flutter": "textColor"
+    },
+    {
+      "name": "smallSize",
+      "id": 3,
+      "type": "double",
+      "flutter": "smallSize"
+    },
+    {
+      "name": "largeSize",
+      "id": 4,
+      "type": "double",
+      "flutter": "largeSize"
+    },
+    {
+      "name": "textStyle",
+      "id": 5,
+      "type": "TextStyle",
+      "flutter": "textStyle"
+    },
+    {
+      "name": "padding",
+      "id": 6,
+      "type": "EdgeInsets",
+      "flutter": "padding"
+    },
+    {
+      "name": "alignment",
+      "id": 7,
+      "type": "Alignment",
+      "flutter": "alignment"
+    },
+    {
+      "name": "offset",
+      "id": 8,
+      "type": "Offset",
+      "flutter": "offset"
+    },
+    {
+      "name": "isLabelVisible",
+      "id": 9,
+      "type": "bool",
+      "default": true,
+      "flutter": "isLabelVisible"
+    }
+  ],
+  "slots": [
+    {
+      "name": "label",
+      "id": 1,
+      "flutter": "label"
+    },
+    {
+      "name": "child",
+      "id": 2,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

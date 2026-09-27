@@ -15,17 +15,23 @@ import (
 const name = "plux"
 
 // usage lists the commands this binary accepts.
-const usage = `Usage: plux <command>
+const usage = `Usage: plux <command> [flags]
 
 Commands:
+  validate  Validate a project directory offline
+  build     Compile a project directory into bundles offline
   version   Print version information
   help      Show this help
+
+Run 'plux <command> -h' for the flags of a command.
 `
 
-// Exit codes follow the common convention: 0 success, 2 usage error.
+// Exit codes: 0 success, 1 the command ran and failed (a project with
+// errors, output that cannot be written), 2 usage error.
 const (
-	exitOK    = 0
-	exitUsage = 2
+	exitOK     = 0
+	exitFailed = 1
+	exitUsage  = 2
 )
 
 // main delegates to run so that the command logic is testable without
@@ -36,6 +42,14 @@ func main() {
 
 // run executes the command given by args and returns the process exit code.
 func run(args []string, stdout, stderr io.Writer) int {
+	if len(args) > 0 {
+		switch args[0] {
+		case "validate":
+			return validate(args[1:], stdout, stderr)
+		case "build":
+			return build(args[1:], stdout, stderr)
+		}
+	}
 	if len(args) != 1 {
 		_, _ = fmt.Fprint(stderr, usage)
 		return exitUsage

@@ -1,0 +1,156 @@
+{
+  "collections": [
+    {
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "text",
+          "type": "string"
+        }
+      ],
+      "id": "01b0c450-6c00-7000-8000-000000000017",
+      "indexes": [
+        [
+          "text"
+        ]
+      ],
+      "key": "notes",
+      "primaryKey": [
+        "id"
+      ]
+    }
+  ],
+  "dataSources": [
+    {
+      "config": {
+        "items": 3,
+        "label": "catalog"
+      },
+      "id": "01b0c450-6c00-7000-8000-000000000016",
+      "kind": "static",
+      "mock": [
+        {
+          "done": false,
+          "priority": "low",
+          "title": "Milk"
+        }
+      ],
+      "name": "catalog",
+      "type": "list<Item>"
+    }
+  ],
+  "defaultLocale": "en",
+  "entryRoute": "tasks",
+  "environments": [
+    {
+      "key": "production",
+      "name": "Production",
+      "values": {
+        "apiBaseUrl": "https://api.example.com"
+      }
+    }
+  ],
+  "flags": [
+    {
+      "default": false,
+      "name": "compact",
+      "type": "bool"
+    },
+    {
+      "default": "Hello",
+      "name": "greeting",
+      "type": "string"
+    }
+  ],
+  "icon": {
+    "monogram": {
+      "background": "#0B6E4F",
+      "text": "FT"
+    }
+  },
+  "id": "01b0c450-6c00-7000-8000-000000000001",
+  "key": "features",
+  "kind": "app",
+  "minRuntimeVersion": "0.1.0",
+  "name": "Feature Tour",
+  "nativeCatalogue": "01b0c450-6c00-7000-8000-000000000003",
+  "plugins": [
+    "tasks"
+  ],
+  "requiredFeatures": "raise",
+  "schemaVersion": "1.0.0",
+  "securityProfile": "standard",
+  "state": [
+    {
+      "default": 0,
+      "id": "01b0c450-6c00-7000-8000-000000000014",
+      "name": "visits",
+      "persistence": "persisted",
+      "type": "int"
+    },
+    {
+      "computed": {
+        "$expr": "app.visits * 2"
+      },
+      "id": "01b0c450-6c00-7000-8000-000000000015",
+      "name": "twice",
+      "type": "int"
+    }
+  ],
+  "supportedLocales": [
+    "en"
+  ],
+  "sync": {
+    "activation": "immediate",
+    "startup": {
+      "mode": "useCacheThenSync"
+    }
+  },
+  "theme": "01b0c450-6c00-7000-8000-000000000002",
+  "types": [
+    {
+      "enum": [
+        "low",
+        "high"
+      ],
+      "name": "Priority"
+    },
+    {
+      "fields": [
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "done",
+          "type": "bool"
+        },
+        {
+          "name": "priority",
+          "type": "Priority"
+        },
+        {
+          "name": "note",
+          "type": "string?"
+        }
+      ],
+      "name": "Item"
+    }
+  ],
+  "userContext": [
+    {
+      "name": "email",
+      "sensitive": true,
+      "type": "string"
+    }
+  ],
+  "variables": [
+    {
+      "name": "apiBaseUrl",
+      "type": "string"
+    }
+  ]
+}

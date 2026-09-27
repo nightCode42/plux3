@@ -1,0 +1,15 @@
+{
+  "id": "01a0c450-6c00-700a-8000-000000013556",
+  "kind": "translations",
+  "locale": "de-DE",
+  "messages": {
+    "01a0c450-6c00-7002-8000-000000003dde": "Kreditrechner",
+    "01a0c450-6c00-7003-8000-000000005ccd": "Betrag",
+    "01a0c450-6c00-7004-8000-000000007bbc": "Laufzeit in Monaten",
+    "01a0c450-6c00-7005-8000-000000009aab": "Berechnen",
+    "01a0c450-6c00-7006-8000-00000000b99a": "Ihr Tilgungsplan",
+    "01a0c450-6c00-7007-8000-00000000d889": "Monatliche Rate",
+    "01a0c450-6c00-7008-8000-00000000f778": "Plux Demo"
+  },
+  "schemaVersion": "1.0.0"
+}

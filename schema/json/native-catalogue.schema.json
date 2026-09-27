@@ -1,0 +1,177 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://plux.dev/schema/v1/native-catalogue.schema.json",
+  "title": "Plux native catalogue document",
+  "description": "The native routes, native slots and custom actions of one host app build (SCH-032). File: `native-catalogue.json`.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "host"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "$ref": "common.schema.json#/$defs/schemaVersion"
+    },
+    "kind": {
+      "const": "nativeCatalogue"
+    },
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "host": {
+      "type": "object",
+      "x-plux-type": "HostBuild",
+      "description": "The host app build the catalogue describes.",
+      "required": [
+        "version",
+        "build"
+      ],
+      "properties": {
+        "appId": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "version": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "build": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false
+    },
+    "routes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "x-plux-type": "NativeRoute",
+        "description": "A native route (NAV-002).",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "common.schema.json#/$defs/routeName"
+          },
+          "description": {
+            "$ref": "common.schema.json#/$defs/description"
+          },
+          "params": {
+            "type": "array",
+            "items": {
+              "$ref": "common.schema.json#/$defs/param"
+            }
+          },
+          "result": {
+            "$ref": "common.schema.json#/$defs/typeExpr"
+          }
+        },
+        "patternProperties": {
+          "^x-": true
+        },
+        "additionalProperties": false
+      }
+    },
+    "slots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "x-plux-type": "NativeSlot",
+        "description": "A native slot widget (WGT-030).",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Za-z0-9]*$",
+            "maxLength": 64
+          },
+          "description": {
+            "$ref": "common.schema.json#/$defs/description"
+          },
+          "props": {
+            "type": "array",
+            "items": {
+              "$ref": "common.schema.json#/$defs/param"
+            }
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "x-plux-type": "NativeSlotEvent",
+              "description": "An event the native slot emits.",
+              "required": [
+                "name"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "pattern": "^on[A-Z][A-Za-z0-9]*$"
+                },
+                "payload": {
+                  "$ref": "common.schema.json#/$defs/typeExpr"
+                }
+              },
+              "patternProperties": {
+                "^x-": true
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "patternProperties": {
+          "^x-": true
+        },
+        "additionalProperties": false
+      }
+    },
+    "actions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "x-plux-type": "NativeAction",
+        "description": "A custom host action (ACT-060).",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "common.schema.json#/$defs/name"
+          },
+          "description": {
+            "$ref": "common.schema.json#/$defs/description"
+          },
+          "inputs": {
+            "type": "array",
+            "items": {
+              "$ref": "common.schema.json#/$defs/param"
+            }
+          },
+          "output": {
+            "$ref": "common.schema.json#/$defs/typeExpr"
+          }
+        },
+        "patternProperties": {
+          "^x-": true
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "patternProperties": {
+    "^x-": true
+  },
+  "additionalProperties": false
+}

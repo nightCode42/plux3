@@ -1,0 +1,23 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "IconSet",
+  "id": 27,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "An icon set.",
+  "values": [
+    {
+      "name": "material",
+      "id": 1
+    },
+    {
+      "name": "cupertino",
+      "id": 2
+    }
+  ]
+}

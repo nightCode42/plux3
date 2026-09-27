@@ -1,0 +1,31 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "submitForm",
+  "id": 14,
+  "phase": "P5",
+  "category": "forms",
+  "description": "Validates a form and, when valid, returns its values as a typed object.",
+  "typeParameters": [
+    {
+      "name": "T",
+      "description": "The values object type the form declares."
+    }
+  ],
+  "inputs": [
+    {
+      "name": "form",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "form",
+      "description": "The form scope."
+    }
+  ],
+  "output": "T",
+  "branches": [
+    "invalid"
+  ],
+  "effects": [
+    "ui"
+  ]
+}

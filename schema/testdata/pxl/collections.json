@@ -1,0 +1,733 @@
+{
+  "description": "Lists, maps, indexing and the receiver macros.",
+  "env": {
+    "types": {
+      "Loan": {
+        "fields": {
+          "amount": "decimal",
+          "fee": "money?",
+          "months": "int",
+          "rate": "double",
+          "status": "string?"
+        }
+      },
+      "Tier": {
+        "enum": [
+          "gold",
+          "silver",
+          "bronze"
+        ]
+      }
+    },
+    "roots": {
+      "day": "date",
+      "items": "list<Loan>",
+      "n": "int",
+      "name": "string?",
+      "none": "int?",
+      "page": "Loan",
+      "scores": "map<string,int>",
+      "tags": "list<string>",
+      "tier": "Tier",
+      "total": "money",
+      "when": "dateTime",
+      "x": "double"
+    }
+  },
+  "inputs": {
+    "day": "2024-02-29",
+    "items": [
+      {
+        "amount": "100.00",
+        "months": 6,
+        "rate": 0.1,
+        "status": "open"
+      },
+      {
+        "amount": "25.5",
+        "months": 3,
+        "rate": 0.2,
+        "status": "closed"
+      },
+      {
+        "amount": "300",
+        "months": 12,
+        "rate": 0.05
+      }
+    ],
+    "n": 7,
+    "name": null,
+    "none": null,
+    "now": "2026-09-26T08:00:00Z",
+    "page": {
+      "amount": "1200.50",
+      "fee": {
+        "amount": "9.99",
+        "currency": "EUR"
+      },
+      "months": 12,
+      "rate": 0.05,
+      "status": null
+    },
+    "scores": {
+      "alice": 3,
+      "bob": 2
+    },
+    "tags": [
+      "b",
+      "a",
+      "c",
+      "a"
+    ],
+    "tier": "gold",
+    "total": {
+      "amount": "12.34",
+      "currency": "EUR"
+    },
+    "when": "2026-09-26T10:30:00+02:00",
+    "x": 2.5
+  },
+  "cases": [
+    {
+      "name": "map macro",
+      "expr": "items.map(l, l.months)",
+      "value": [
+        6,
+        3,
+        12
+      ],
+      "type": "list<int>",
+      "program": "AQICCWxpc3Q8aW50PgIEBWl0ZW1zBAZtb250aHMBBWl0ZW1zGgYAAEoARgAASwABGgAAAAcBCAEASAwIAAAA",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"items\"",
+        "0003 ITER_INIT 0",
+        "0005 NEW_LIST 0",
+        "0008 ITER_NEXT 0 1 26",
+        "0015 LOAD_LOCAL 1",
+        "0017 GET_FIELD 1 ; \"months\"",
+        "0020 LIST_APPEND",
+        "0021 JUMP 8"
+      ],
+      "reads": [
+        "items"
+      ]
+    },
+    {
+      "name": "filter macro",
+      "expr": "items.filter(l, l.months > 3).map(l, l.status ?? \"?\")",
+      "value": [
+        "open",
+        "?"
+      ],
+      "type": "list<string>",
+      "program": "AQIDDGxpc3Q8c3RyaW5nPgUEBWl0ZW1zBAZtb250aHMCAwAAAAAAAAAEBnN0YXR1cwQBPwEFaXRlbXNFBgAASgBGAABLAAEmAAAABwEIAQAEAgA3QQ0hAAAABwFIDAgAAABKAEYAAEsAAUUAAAAHAQgDABI/AAAABAQASAwrAAAA",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"items\"",
+        "0003 ITER_INIT 0",
+        "0005 NEW_LIST 0",
+        "0008 ITER_NEXT 0 1 38",
+        "0015 LOAD_LOCAL 1",
+        "0017 GET_FIELD 1 ; \"months\"",
+        "0020 CONST 2 ; 3",
+        "0023 CMP_INT",
+        "0024 GT",
+        "0025 JUMP_IF_FALSE 33",
+        "0030 LOAD_LOCAL 1",
+        "0032 LIST_APPEND",
+        "0033 JUMP 8",
+        "0038 ITER_INIT 0",
+        "0040 NEW_LIST 0",
+        "0043 ITER_NEXT 0 1 69",
+        "0050 LOAD_LOCAL 1",
+        "0052 GET_FIELD 3 ; \"status\"",
+        "0055 COALESCE_JUMP 63",
+        "0060 CONST 4 ; \"?\"",
+        "0063 LIST_APPEND",
+        "0064 JUMP 43"
+      ],
+      "reads": [
+        "items"
+      ]
+    },
+    {
+      "name": "any",
+      "expr": "items.any(l, l.amount > 200d)",
+      "value": true,
+      "type": "bool",
+      "program": "AQICBGJvb2wDBAVpdGVtcwQGYW1vdW50BQMyMDABBWl0ZW1zJwYAAEoASwABIAAAAAcBCAEABAIAOUEOJgAAAAwFAAAAAwwnAAAAAg==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"items\"",
+        "0003 ITER_INIT 0",
+        "0005 ITER_NEXT 0 1 32",
+        "0012 LOAD_LOCAL 1",
+        "0014 GET_FIELD 1 ; \"amount\"",
+        "0017 CONST 2 ; 200d",
+        "0020 CMP_DEC",
+        "0021 GT",
+        "0022 JUMP_IF_TRUE 38",
+        "0027 JUMP 5",
+        "0032 PUSH_FALSE",
+        "0033 JUMP 39",
+        "0038 PUSH_TRUE"
+      ],
+      "reads": [
+        "items"
+      ]
+    },
+    {
+      "name": "all",
+      "expr": "items.all(l, l.rate < 0.15)",
+      "value": false,
+      "type": "bool",
+      "program": "AQICBGJvb2wDBAVpdGVtcwQEcmF0ZQMzMzMzMzPDPwEFaXRlbXMnBgAASgBLAAEgAAAABwEIAQAEAgA4Pw0mAAAADAUAAAACDCcAAAAD",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"items\"",
+        "0003 ITER_INIT 0",
+        "0005 ITER_NEXT 0 1 32",
+        "0012 LOAD_LOCAL 1",
+        "0014 GET_FIELD 1 ; \"rate\"",
+        "0017 CONST 2 ; 0.15",
+        "0020 CMP_DOUBLE",
+        "0021 LT",
+        "0022 JUMP_IF_FALSE 38",
+        "0027 JUMP 5",
+        "0032 PUSH_TRUE",
+        "0033 JUMP 39",
+        "0038 PUSH_FALSE"
+      ],
+      "reads": [
+        "items"
+      ]
+    },
+    {
+      "name": "sortBy is stable and ascending",
+      "expr": "items.sortBy(l, l.months).map(l, l.months)",
+      "value": [
+        3,
+        6,
+        12
+      ],
+      "type": "list<int>",
+      "program": "AQICCWxpc3Q8aW50PgIEBWl0ZW1zBAZtb250aHMBBWl0ZW1zNQYAAEoARgAASwABGgAAAAcBCAEASAwIAAAATABNAUoARgAASwABNQAAAAcBCAEASAwjAAAA",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"items\"",
+        "0003 ITER_INIT 0",
+        "0005 NEW_LIST 0",
+        "0008 ITER_NEXT 0 1 26",
+        "0015 LOAD_LOCAL 1",
+        "0017 GET_FIELD 1 ; \"months\"",
+        "0020 LIST_APPEND",
+        "0021 JUMP 8",
+        "0026 ITER_LIST 0",
+        "0028 SORT_BY 1",
+        "0030 ITER_INIT 0",
+        "0032 NEW_LIST 0",
+        "0035 ITER_NEXT 0 1 53",
+        "0042 LOAD_LOCAL 1",
+        "0044 GET_FIELD 1 ; \"months\"",
+        "0047 LIST_APPEND",
+        "0048 JUMP 35"
+      ],
+      "reads": [
+        "items"
+      ]
+    },
+    {
+      "name": "sortBy strings",
+      "expr": "tags.sortBy(t, t)",
+      "value": [
+        "a",
+        "a",
+        "b",
+        "c"
+      ],
+      "type": "list<string>",
+      "program": "AQICDGxpc3Q8c3RyaW5nPgEEBHRhZ3MBBHRhZ3MbBgAASgBGAABLAAEXAAAABwFIDAgAAABMAE0F",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"tags\"",
+        "0003 ITER_INIT 0",
+        "0005 NEW_LIST 0",
+        "0008 ITER_NEXT 0 1 23",
+        "0015 LOAD_LOCAL 1",
+        "0017 LIST_APPEND",
+        "0018 JUMP 8",
+        "0023 ITER_LIST 0",
+        "0025 SORT_BY 5"
+      ],
+      "reads": [
+        "tags"
+      ]
+    },
+    {
+      "name": "nested macros",
+      "expr": "[1, 2].map(a, [10, 20].map(b, a * b))",
+      "value": [
+        [
+          10,
+          20
+        ],
+        [
+          20,
+          40
+        ]
+      ],
+      "type": "list<list<int>>",
+      "program": "AQQBD2xpc3Q8bGlzdDxpbnQ+PgELAgsCAgoAAAAAAAAAAhQAAAAAAAAACwICFAAAAAAAAAACKAAAAAAAAAAAAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; [[10 20] [20 40]]"
+      ]
+    },
+    {
+      "name": "index",
+      "expr": "tags[1]",
+      "value": "a",
+      "type": "string",
+      "program": "AQACBnN0cmluZwIEBHRhZ3MCAQAAAAAAAAABBHRhZ3MHBgAABAEACg==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"tags\"",
+        "0003 CONST 1 ; 1",
+        "0006 INDEX_LIST"
+      ],
+      "reads": [
+        "tags"
+      ]
+    },
+    {
+      "name": "map index",
+      "expr": "scores[\"alice\"]",
+      "value": 3,
+      "type": "int",
+      "program": "AQACA2ludAIEBnNjb3JlcwQFYWxpY2UBBnNjb3JlcwcGAAAEAQAL",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"scores\"",
+        "0003 CONST 1 ; \"alice\"",
+        "0006 INDEX_MAP"
+      ],
+      "reads": [
+        "scores"
+      ]
+    },
+    {
+      "name": "map field",
+      "expr": "scores.bob",
+      "value": 2,
+      "type": "int",
+      "program": "AQABA2ludAIEBnNjb3JlcwQDYm9iAQpzY29yZXMuYm9iBgYAAAkBAA==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"scores\"",
+        "0003 MAP_GET 1 ; \"bob\""
+      ],
+      "reads": [
+        "scores.bob"
+      ]
+    },
+    {
+      "name": "size",
+      "expr": "size(items) + size(scores)",
+      "value": 5,
+      "type": "int",
+      "program": "AQACA2ludAIEBWl0ZW1zBAZzY29yZXMCBWl0ZW1zBnNjb3Jlcw8GAABJYgABBgEASWMAARM=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"items\"",
+        "0003 CALL 98 1 ; size",
+        "0007 LOAD_ROOT 1 ; \"scores\"",
+        "0010 CALL 99 1 ; size",
+        "0014 ADD_INT"
+      ],
+      "reads": [
+        "items",
+        "scores"
+      ]
+    },
+    {
+      "name": "isEmpty",
+      "expr": "isEmpty([]) && !isEmpty(tags)",
+      "value": true,
+      "type": "bool",
+      "program": "AQABBGJvb2wBBAR0YWdzAQR0YWdzDgIPDgAAAAYAAElkAAFD",
+      "asm": [
+        "0000 PUSH_TRUE",
+        "0001 AND_JUMP 14",
+        "0006 LOAD_ROOT 0 ; \"tags\"",
+        "0009 CALL 100 1 ; isEmpty",
+        "0013 NOT"
+      ],
+      "reads": [
+        "tags"
+      ]
+    },
+    {
+      "name": "first and last",
+      "expr": "[first(tags), last(tags)]",
+      "value": [
+        "b",
+        "a"
+      ],
+      "type": "list<string?>",
+      "program": "AQACDWxpc3Q8c3RyaW5nPz4BBAR0YWdzAQR0YWdzEQYAAElnAAEGAABJaAABRgIA",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"tags\"",
+        "0003 CALL 103 1 ; first",
+        "0007 LOAD_ROOT 0 ; \"tags\"",
+        "0010 CALL 104 1 ; last",
+        "0014 NEW_LIST 2"
+      ],
+      "reads": [
+        "tags"
+      ]
+    },
+    {
+      "name": "first of empty",
+      "expr": "first(items.filter(l, l.months > 99))?.months",
+      "value": null,
+      "type": "int?",
+      "program": "AQIDBGludD8DBAVpdGVtcwQGbW9udGhzAmMAAAAAAAAAAQVpdGVtczIGAABKAEYAAEsAASYAAAAHAQgBAAQCADdBDSEAAAAHAUgMCAAAAElnAAERMgAAAAgBAA==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"items\"",
+        "0003 ITER_INIT 0",
+        "0005 NEW_LIST 0",
+        "0008 ITER_NEXT 0 1 38",
+        "0015 LOAD_LOCAL 1",
+        "0017 GET_FIELD 1 ; \"months\"",
+        "0020 CONST 2 ; 99",
+        "0023 CMP_INT",
+        "0024 GT",
+        "0025 JUMP_IF_FALSE 33",
+        "0030 LOAD_LOCAL 1",
+        "0032 LIST_APPEND",
+        "0033 JUMP 8",
+        "0038 CALL 103 1 ; first",
+        "0042 NULL_JUMP 50",
+        "0047 GET_FIELD 1 ; \"months\""
+      ],
+      "reads": [
+        "items"
+      ]
+    },
+    {
+      "name": "at outside",
+      "expr": "at(tags, 9)",
+      "value": null,
+      "type": "string?",
+      "program": "AQACB3N0cmluZz8CBAR0YWdzAgkAAAAAAAAAAQR0YWdzCgYAAAQBAElpAAI=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"tags\"",
+        "0003 CONST 1 ; 9",
+        "0006 CALL 105 2 ; at"
+      ],
+      "reads": [
+        "tags"
+      ]
+    },
+    {
+      "name": "slice",
+      "expr": "slice(tags, 1, 3)",
+      "value": [
+        "a",
+        "c"
+      ],
+      "type": "list<string>",
+      "program": "AQADDGxpc3Q8c3RyaW5nPgMEBHRhZ3MCAQAAAAAAAAACAwAAAAAAAAABBHRhZ3MNBgAABAEABAIASWoAAw==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"tags\"",
+        "0003 CONST 1 ; 1",
+        "0006 CONST 2 ; 3",
+        "0009 CALL 106 3 ; slice"
+      ],
+      "reads": [
+        "tags"
+      ]
+    },
+    {
+      "name": "sum of decimals",
+      "expr": "sum(items.map(l, l.amount))",
+      "value": "425.50",
+      "type": "decimal",
+      "program": "AQICB2RlY2ltYWwCBAVpdGVtcwQGYW1vdW50AQVpdGVtcx4GAABKAEYAAEsAARoAAAAHAQgBAEgMCAAAAEltAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"items\"",
+        "0003 ITER_INIT 0",
+        "0005 NEW_LIST 0",
+        "0008 ITER_NEXT 0 1 26",
+        "0015 LOAD_LOCAL 1",
+        "0017 GET_FIELD 1 ; \"amount\"",
+        "0020 LIST_APPEND",
+        "0021 JUMP 8",
+        "0026 CALL 109 1 ; sum"
+      ],
+      "reads": [
+        "items"
+      ]
+    },
+    {
+      "name": "sum of empty",
+      "expr": "sum(items.filter(l, false).map(l, l.months))",
+      "value": 0,
+      "type": "int",
+      "program": "AQICA2ludAIEBWl0ZW1zBAZtb250aHMBBWl0ZW1zOAYAAEoARgAASwABHQAAAAMNGAAAAAcBSAwIAAAASgBGAABLAAE0AAAABwEIAQBIDCIAAABJawAB",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"items\"",
+        "0003 ITER_INIT 0",
+        "0005 NEW_LIST 0",
+        "0008 ITER_NEXT 0 1 29",
+        "0015 PUSH_FALSE",
+        "0016 JUMP_IF_FALSE 24",
+        "0021 LOAD_LOCAL 1",
+        "0023 LIST_APPEND",
+        "0024 JUMP 8",
+        "0029 ITER_INIT 0",
+        "0031 NEW_LIST 0",
+        "0034 ITER_NEXT 0 1 52",
+        "0041 LOAD_LOCAL 1",
+        "0043 GET_FIELD 1 ; \"months\"",
+        "0046 LIST_APPEND",
+        "0047 JUMP 34",
+        "0052 CALL 107 1 ; sum"
+      ],
+      "reads": [
+        "items"
+      ]
+    },
+    {
+      "name": "distinct keeps first",
+      "expr": "distinct(tags)",
+      "value": [
+        "b",
+        "a",
+        "c"
+      ],
+      "type": "list<string>",
+      "program": "AQABDGxpc3Q8c3RyaW5nPgEEBHRhZ3MBBHRhZ3MHBgAASW8AAQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"tags\"",
+        "0003 CALL 111 1 ; distinct"
+      ],
+      "reads": [
+        "tags"
+      ]
+    },
+    {
+      "name": "distinct decimals by value",
+      "expr": "distinct([1.0d, 1.00d, 2d])",
+      "value": [
+        "1.0",
+        "2"
+      ],
+      "type": "list<decimal>",
+      "program": "AQABDWxpc3Q8ZGVjaW1hbD4BCwIFAzEuMAUBMgADBAAA",
+      "asm": [
+        "0000 CONST 0 ; [1.0 2]"
+      ]
+    },
+    {
+      "name": "keys are sorted",
+      "expr": "keys(scores)",
+      "value": [
+        "alice",
+        "bob"
+      ],
+      "type": "list<string>",
+      "program": "AQABDGxpc3Q8c3RyaW5nPgEEBnNjb3JlcwEGc2NvcmVzBwYAAElwAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"scores\"",
+        "0003 CALL 112 1 ; keys"
+      ],
+      "reads": [
+        "scores"
+      ]
+    },
+    {
+      "name": "values in key order",
+      "expr": "values(scores)",
+      "value": [
+        3,
+        2
+      ],
+      "type": "list<int>",
+      "program": "AQABCWxpc3Q8aW50PgEEBnNjb3JlcwEGc2NvcmVzBwYAAElxAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"scores\"",
+        "0003 CALL 113 1 ; values"
+      ],
+      "reads": [
+        "scores"
+      ]
+    },
+    {
+      "name": "has",
+      "expr": "has(scores, \"bob\")",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBAZzY29yZXMEA2JvYgEGc2NvcmVzCgYAAAQBAElyAAI=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"scores\"",
+        "0003 CONST 1 ; \"bob\"",
+        "0006 CALL 114 2 ; has"
+      ],
+      "reads": [
+        "scores"
+      ]
+    },
+    {
+      "name": "constant macro is folded",
+      "expr": "[1, 2, 3].filter(v, v > 1)",
+      "value": [
+        2,
+        3
+      ],
+      "type": "list<int>",
+      "program": "AQIBCWxpc3Q8aW50PgELAgICAAAAAAAAAAIDAAAAAAAAAAADBAAA",
+      "asm": [
+        "0000 CONST 0 ; [2 3]"
+      ]
+    },
+    {
+      "name": "index out of range",
+      "expr": "tags[4]",
+      "error": "indexOutOfRange",
+      "type": "string",
+      "program": "AQACBnN0cmluZwIEBHRhZ3MCBAAAAAAAAAABBHRhZ3MHBgAABAEACg==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"tags\"",
+        "0003 CONST 1 ; 4",
+        "0006 INDEX_LIST"
+      ],
+      "reads": [
+        "tags"
+      ]
+    },
+    {
+      "name": "negative index",
+      "expr": "tags[n - 8]",
+      "error": "indexOutOfRange",
+      "type": "string",
+      "program": "AQADBnN0cmluZwMEBHRhZ3MEAW4CCAAAAAAAAAACAW4EdGFncwsGAAAGAQAEAgAUCg==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"tags\"",
+        "0003 LOAD_ROOT 1 ; \"n\"",
+        "0006 CONST 2 ; 8",
+        "0009 SUB_INT",
+        "0010 INDEX_LIST"
+      ],
+      "reads": [
+        "n",
+        "tags"
+      ]
+    },
+    {
+      "name": "missing key",
+      "expr": "scores[\"carol\"]",
+      "error": "missingKey",
+      "type": "int",
+      "program": "AQACA2ludAIEBnNjb3JlcwQFY2Fyb2wBBnNjb3JlcwcGAAAEAQAL",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"scores\"",
+        "0003 CONST 1 ; \"carol\"",
+        "0006 INDEX_MAP"
+      ],
+      "reads": [
+        "scores"
+      ]
+    },
+    {
+      "name": "slice out of range",
+      "expr": "slice(tags, 2, 9)",
+      "error": "indexOutOfRange",
+      "type": "list<string>",
+      "program": "AQADDGxpc3Q8c3RyaW5nPgMEBHRhZ3MCAgAAAAAAAAACCQAAAAAAAAABBHRhZ3MNBgAABAEABAIASWoAAw==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"tags\"",
+        "0003 CONST 1 ; 2",
+        "0006 CONST 2 ; 9",
+        "0009 CALL 106 3 ; slice"
+      ],
+      "reads": [
+        "tags"
+      ]
+    },
+    {
+      "name": "duplicate dynamic key",
+      "expr": "{\"a\": 1, name ?? \"a\": 2}",
+      "error": "duplicateKey",
+      "type": "map<string,int>",
+      "program": "AQAED21hcDxzdHJpbmcsaW50PgQEAWECAQAAAAAAAAAEBG5hbWUCAgAAAAAAAAABBG5hbWUXBAAABAEABgIAEhEAAAAEAAAEAwBHAgA=",
+      "asm": [
+        "0000 CONST 0 ; \"a\"",
+        "0003 CONST 1 ; 1",
+        "0006 LOAD_ROOT 2 ; \"name\"",
+        "0009 COALESCE_JUMP 17",
+        "0014 CONST 0 ; \"a\"",
+        "0017 CONST 3 ; 2",
+        "0020 NEW_MAP 2"
+      ],
+      "reads": [
+        "name"
+      ]
+    },
+    {
+      "name": "macro variable hides a root",
+      "expr": "items.map(page, 1)",
+      "diagnostics": [
+        {
+          "code": "PLX-2015",
+          "range": [
+            10,
+            14
+          ]
+        }
+      ]
+    },
+    {
+      "name": "unknown macro",
+      "expr": "items.reduce(a, 1)",
+      "diagnostics": [
+        {
+          "code": "PLX-2004",
+          "range": [
+            0,
+            18
+          ]
+        }
+      ]
+    },
+    {
+      "name": "macro needs a variable",
+      "expr": "items.map(1, 2)",
+      "diagnostics": [
+        {
+          "code": "PLX-2015",
+          "range": [
+            0,
+            15
+          ]
+        }
+      ]
+    },
+    {
+      "name": "filter needs a bool",
+      "expr": "items.filter(l, l.months)",
+      "diagnostics": [
+        {
+          "code": "PLX-2002",
+          "range": [
+            16,
+            24
+          ]
+        }
+      ]
+    },
+    {
+      "name": "sortBy needs an ordered key",
+      "expr": "items.sortBy(l, l.status)",
+      "diagnostics": [
+        {
+          "code": "PLX-2002",
+          "range": [
+            16,
+            24
+          ]
+        }
+      ]
+    }
+  ]
+}

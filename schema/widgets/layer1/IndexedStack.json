@@ -1,0 +1,85 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "IndexedStack",
+  "id": 29,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "IndexedStack",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "layout",
+  "icon": "layers",
+  "description": "Shows the child at `index` from a stack of children.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 8,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "alignment",
+      "id": 1,
+      "type": "Alignment",
+      "default": {
+        "start": -1,
+        "y": -1
+      },
+      "flutter": "alignment"
+    },
+    {
+      "name": "textDirection",
+      "id": 2,
+      "type": "TextDirection",
+      "flutter": "textDirection"
+    },
+    {
+      "name": "clipBehavior",
+      "id": 3,
+      "type": "Clip",
+      "default": "hardEdge",
+      "flutter": "clipBehavior"
+    },
+    {
+      "name": "sizing",
+      "id": 4,
+      "type": "StackFit",
+      "default": "loose",
+      "flutter": "sizing"
+    },
+    {
+      "name": "index",
+      "id": 5,
+      "type": "int",
+      "default": 0,
+      "constraints": {
+        "min": 0
+      },
+      "flutter": "index"
+    }
+  ],
+  "children": {
+    "flutter": "children"
+  },
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

@@ -1,0 +1,169 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Radio",
+  "id": 70,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "Radio",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "input",
+  "icon": "radio_button_checked",
+  "description": "A Material radio button, selected when `groupValue` equals `value`.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 20,
+  "accessibility": {
+    "role": "radio",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "value",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "flutter": "value"
+    },
+    {
+      "name": "groupValue",
+      "id": 2,
+      "type": "string?",
+      "flutter": "groupValue",
+      "description": "The selected value of the group; the runtime provides the RadioGroup."
+    },
+    {
+      "name": "toggleable",
+      "id": 3,
+      "type": "bool",
+      "default": false,
+      "flutter": "toggleable"
+    },
+    {
+      "name": "activeColor",
+      "id": 4,
+      "type": "color",
+      "flutter": "activeColor"
+    },
+    {
+      "name": "fillColor",
+      "id": 5,
+      "type": "WidgetStateColor",
+      "flutter": "fillColor"
+    },
+    {
+      "name": "focusColor",
+      "id": 6,
+      "type": "color",
+      "flutter": "focusColor"
+    },
+    {
+      "name": "hoverColor",
+      "id": 7,
+      "type": "color",
+      "flutter": "hoverColor"
+    },
+    {
+      "name": "overlayColor",
+      "id": 8,
+      "type": "WidgetStateColor",
+      "flutter": "overlayColor"
+    },
+    {
+      "name": "splashRadius",
+      "id": 9,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "splashRadius"
+    },
+    {
+      "name": "materialTapTargetSize",
+      "id": 10,
+      "type": "MaterialTapTargetSize",
+      "flutter": "materialTapTargetSize"
+    },
+    {
+      "name": "visualDensity",
+      "id": 11,
+      "type": "VisualDensity",
+      "flutter": "visualDensity"
+    },
+    {
+      "name": "autofocus",
+      "id": 12,
+      "type": "bool",
+      "default": false,
+      "flutter": "autofocus"
+    },
+    {
+      "name": "enabled",
+      "id": 13,
+      "type": "bool",
+      "flutter": "enabled"
+    },
+    {
+      "name": "backgroundColor",
+      "id": 14,
+      "type": "WidgetStateColor",
+      "flutter": "backgroundColor"
+    },
+    {
+      "name": "side",
+      "id": 15,
+      "type": "BorderSide",
+      "flutter": "side"
+    },
+    {
+      "name": "innerRadius",
+      "id": 16,
+      "type": "WidgetStateDouble",
+      "flutter": "innerRadius"
+    }
+  ],
+  "events": [
+    {
+      "name": "onChanged",
+      "id": 1,
+      "payload": "string?",
+      "flutter": "onChanged",
+      "description": "Fired with the value when the user selects this radio."
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "mouseCursor",
+      "reason": "deferred",
+      "note": "Pointer cursors matter only for desktop and web targets."
+    },
+    {
+      "flutter": "focusNode",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "groupRegistry",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    }
+  ]
+}

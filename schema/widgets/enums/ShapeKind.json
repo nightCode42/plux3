@@ -1,0 +1,35 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "ShapeKind",
+  "id": 42,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "The kind of a shape border.",
+  "values": [
+    {
+      "name": "roundedRectangle",
+      "id": 1
+    },
+    {
+      "name": "stadium",
+      "id": 2
+    },
+    {
+      "name": "circle",
+      "id": 3
+    },
+    {
+      "name": "beveledRectangle",
+      "id": 4
+    },
+    {
+      "name": "continuousRectangle",
+      "id": 5
+    }
+  ]
+}

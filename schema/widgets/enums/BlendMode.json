@@ -1,0 +1,135 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "BlendMode",
+  "id": 3,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum BlendMode.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "BlendMode"
+  },
+  "values": [
+    {
+      "name": "clear",
+      "id": 1
+    },
+    {
+      "name": "src",
+      "id": 2
+    },
+    {
+      "name": "dst",
+      "id": 3
+    },
+    {
+      "name": "srcOver",
+      "id": 4
+    },
+    {
+      "name": "dstOver",
+      "id": 5
+    },
+    {
+      "name": "srcIn",
+      "id": 6
+    },
+    {
+      "name": "dstIn",
+      "id": 7
+    },
+    {
+      "name": "srcOut",
+      "id": 8
+    },
+    {
+      "name": "dstOut",
+      "id": 9
+    },
+    {
+      "name": "srcATop",
+      "id": 10
+    },
+    {
+      "name": "dstATop",
+      "id": 11
+    },
+    {
+      "name": "xor",
+      "id": 12
+    },
+    {
+      "name": "plus",
+      "id": 13
+    },
+    {
+      "name": "modulate",
+      "id": 14
+    },
+    {
+      "name": "screen",
+      "id": 15
+    },
+    {
+      "name": "overlay",
+      "id": 16
+    },
+    {
+      "name": "darken",
+      "id": 17
+    },
+    {
+      "name": "lighten",
+      "id": 18
+    },
+    {
+      "name": "colorDodge",
+      "id": 19
+    },
+    {
+      "name": "colorBurn",
+      "id": 20
+    },
+    {
+      "name": "hardLight",
+      "id": 21
+    },
+    {
+      "name": "softLight",
+      "id": 22
+    },
+    {
+      "name": "difference",
+      "id": 23
+    },
+    {
+      "name": "exclusion",
+      "id": 24
+    },
+    {
+      "name": "multiply",
+      "id": 25
+    },
+    {
+      "name": "hue",
+      "id": 26
+    },
+    {
+      "name": "saturation",
+      "id": 27
+    },
+    {
+      "name": "color",
+      "id": 28
+    },
+    {
+      "name": "luminosity",
+      "id": 29
+    }
+  ]
+}

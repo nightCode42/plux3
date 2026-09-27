@@ -1,0 +1,113 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "CupertinoSlidingSegmentedControl",
+  "id": 94,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/cupertino.dart",
+    "class": "CupertinoSlidingSegmentedControl",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "cupertino",
+  "icon": "view_week",
+  "description": "An iOS-style sliding segmented control; `values[i]` identifies segment `children[i]`.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 50,
+  "accessibility": {
+    "role": "button",
+    "interactive": true
+  },
+  "typeParameters": [],
+  "props": [
+    {
+      "name": "values",
+      "id": 1,
+      "type": "list<string>",
+      "required": true,
+      "flutter": "children",
+      "description": "The value of each segment, in order."
+    },
+    {
+      "name": "disabledChildren",
+      "id": 2,
+      "type": "list<string>",
+      "flutter": "disabledChildren"
+    },
+    {
+      "name": "groupValue",
+      "id": 3,
+      "type": "string",
+      "flutter": "groupValue"
+    },
+    {
+      "name": "thumbColor",
+      "id": 4,
+      "type": "color",
+      "flutter": "thumbColor"
+    },
+    {
+      "name": "padding",
+      "id": 5,
+      "type": "EdgeInsets",
+      "flutter": "padding"
+    },
+    {
+      "name": "backgroundColor",
+      "id": 6,
+      "type": "color",
+      "flutter": "backgroundColor"
+    },
+    {
+      "name": "proportionalWidth",
+      "id": 7,
+      "type": "bool",
+      "default": false,
+      "flutter": "proportionalWidth"
+    },
+    {
+      "name": "isMomentary",
+      "id": 8,
+      "type": "bool",
+      "default": false,
+      "flutter": "isMomentary"
+    }
+  ],
+  "events": [
+    {
+      "name": "onValueChanged",
+      "id": 1,
+      "payload": "string?",
+      "flutter": "onValueChanged"
+    }
+  ],
+  "slots": [
+    {
+      "name": "segments",
+      "id": 1,
+      "list": true,
+      "required": true,
+      "flutter": "children",
+      "description": "The label of each segment, in the order of `values`."
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

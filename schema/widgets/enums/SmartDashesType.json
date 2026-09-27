@@ -1,0 +1,27 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "SmartDashesType",
+  "id": 46,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum SmartDashesType.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "SmartDashesType"
+  },
+  "values": [
+    {
+      "name": "disabled",
+      "id": 1
+    },
+    {
+      "name": "enabled",
+      "id": 2
+    }
+  ]
+}

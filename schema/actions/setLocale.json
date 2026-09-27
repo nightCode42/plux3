@@ -1,0 +1,21 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "setLocale",
+  "id": 37,
+  "phase": "P8",
+  "category": "app",
+  "description": "Changes the app's locale to one it supports.",
+  "inputs": [
+    {
+      "name": "locale",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "description": "A BCP 47 language tag the app declares."
+    }
+  ],
+  "effects": [
+    "ui",
+    "host"
+  ]
+}

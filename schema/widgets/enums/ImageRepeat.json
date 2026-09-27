@@ -1,0 +1,35 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "ImageRepeat",
+  "id": 28,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum ImageRepeat.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "ImageRepeat"
+  },
+  "values": [
+    {
+      "name": "repeat",
+      "id": 1
+    },
+    {
+      "name": "repeatX",
+      "id": 2
+    },
+    {
+      "name": "repeatY",
+      "id": 3
+    },
+    {
+      "name": "noRepeat",
+      "id": 4
+    }
+  ]
+}

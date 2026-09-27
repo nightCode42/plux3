@@ -30,7 +30,7 @@ Chosen option: **1**. The repository holds every component; each uses its native
 
 - **Positive:** a contract change is one pull request with one review and one CI run; the specification, the handbook and the code version together; each component keeps familiar tooling; `make check` is the complete definition of "green".
 - **Negative:** the Makefile must be maintained by hand; CI needs three toolchains; contributors to one component still clone the whole repository.
-- **Follow-up:** each new component adds Makefile targets, a CI job, a Dependabot entry and a licence entry (docs/engineering/ci.md §5).
+- **Follow-up:** each new component adds Makefile targets, a CI job, a Dependabot entry and a licence entry (docs/engineering/ci.md §6).
 
 ## Options in detail
 

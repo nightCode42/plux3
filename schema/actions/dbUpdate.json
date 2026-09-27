@@ -1,0 +1,41 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "dbUpdate",
+  "id": 21,
+  "phase": "P5",
+  "category": "localDb",
+  "description": "Updates fields of the record with a key; fails if it does not exist.",
+  "typeParameters": [
+    {
+      "name": "T",
+      "description": "The record type of the referenced collection."
+    }
+  ],
+  "inputs": [
+    {
+      "name": "collection",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "collection",
+      "description": "The collection."
+    },
+    {
+      "name": "key",
+      "id": 2,
+      "type": "string",
+      "required": true,
+      "description": "The record key."
+    },
+    {
+      "name": "patch",
+      "id": 3,
+      "type": "T",
+      "required": true,
+      "description": "The fields to replace."
+    }
+  ],
+  "effects": [
+    "storage"
+  ]
+}

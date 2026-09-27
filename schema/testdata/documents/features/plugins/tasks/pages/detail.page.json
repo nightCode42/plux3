@@ -1,0 +1,43 @@
+{
+  "id": "01b0c450-6c00-7000-8000-00000000000c",
+  "key": "detail",
+  "kind": "page",
+  "pageKind": "dialog",
+  "params": [
+    {
+      "id": "01b0c450-6c00-7000-8000-00000000005f",
+      "mock": {
+        "done": false,
+        "priority": "low",
+        "title": "Mock"
+      },
+      "name": "item",
+      "required": true,
+      "type": "Item"
+    }
+  ],
+  "root": {
+    "id": "01b0c450-6c00-7000-8000-000000000060",
+    "slots": {
+      "child": {
+        "id": "01b0c450-6c00-7000-8000-000000000061",
+        "props": {
+          "data": {
+            "$expr": "params.item.title + \" \" + string(size(data.tasks.value ?? []))"
+          }
+        },
+        "type": "Text"
+      }
+    },
+    "type": "Center"
+  },
+  "route": "task-detail",
+  "schemaVersion": "1.0.0",
+  "security": {
+    "requiresAssurance": "AL2",
+    "secure": true
+  },
+  "title": {
+    "$t": "01b0c450-6c00-7000-8000-000000000068"
+  }
+}

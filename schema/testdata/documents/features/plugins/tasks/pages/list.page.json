@@ -1,0 +1,502 @@
+{
+  "dataSources": [
+    {
+      "id": "01b0c450-6c00-7000-8000-000000000040",
+      "kind": "static",
+      "mock": 3,
+      "name": "summary",
+      "type": "int"
+    }
+  ],
+  "id": "01b0c450-6c00-7000-8000-00000000000b",
+  "key": "list",
+  "kind": "page",
+  "lifecycle": {
+    "onInit": {
+      "steps": [
+        {
+          "action": "refreshData",
+          "id": "load",
+          "input": {
+            "source": "tasks"
+          }
+        }
+      ]
+    },
+    "onResume": {
+      "concurrency": "restart",
+      "steps": [
+        {
+          "action": "setState",
+          "id": "count",
+          "input": {
+            "path": "app.visits",
+            "value": {
+              "$expr": "app.visits + 1"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "pageKind": "screen",
+  "root": {
+    "id": "01b0c450-6c00-7000-8000-000000000046",
+    "slots": {
+      "appBar": {
+        "id": "01b0c450-6c00-7000-8000-000000000047",
+        "slots": {
+          "title": {
+            "id": "01b0c450-6c00-7000-8000-000000000048",
+            "props": {
+              "data": {
+                "$t": "01b0c450-6c00-7000-8000-000000000064"
+              }
+            },
+            "semantics": {
+              "header": true,
+              "label": {
+                "$t": "01b0c450-6c00-7000-8000-000000000064"
+              }
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "children": [
+          {
+            "id": "01b0c450-6c00-7000-8000-00000000004a",
+            "props": {
+              "padding": {
+                "all": 8
+              }
+            },
+            "slots": {
+              "child": {
+                "id": "01b0c450-6c00-7000-8000-00000000004b",
+                "props": {
+                  "padding": {
+                    "horizontal": 4
+                  }
+                },
+                "slots": {
+                  "child": {
+                    "id": "01b0c450-6c00-7000-8000-00000000004c",
+                    "props": {
+                      "data": {
+                        "$expr": "\"Tasks \" + string(1 + 2)"
+                      }
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "Padding"
+              }
+            },
+            "type": "Padding"
+          },
+          {
+            "id": "01b0c450-6c00-7000-8000-00000000004d",
+            "props": {
+              "data": {
+                "$t": "01b0c450-6c00-7000-8000-000000000065",
+                "args": {
+                  "count": {
+                    "$expr": "size(page.items)"
+                  }
+                }
+              }
+            },
+            "responsive": {
+              "expanded": {
+                "maxLines": 2,
+                "textAlign": "end"
+              },
+              "medium": {
+                "textAlign": "center"
+              }
+            },
+            "type": "Text"
+          },
+          {
+            "id": "01b0c450-6c00-7000-8000-00000000004e",
+            "props": {
+              "condition": {
+                "$expr": "size(page.items) > 0"
+              }
+            },
+            "slots": {
+              "else": {
+                "id": "01b0c450-6c00-7000-8000-000000000052",
+                "props": {
+                  "data": {
+                    "$t": "01b0c450-6c00-7000-8000-000000000067"
+                  }
+                },
+                "type": "Text"
+              },
+              "then": {
+                "id": "01b0c450-6c00-7000-8000-00000000004f",
+                "props": {
+                  "items": {
+                    "$expr": "page.items"
+                  },
+                  "shrinkWrap": true
+                },
+                "slots": {
+                  "empty": {
+                    "id": "01b0c450-6c00-7000-8000-000000000051",
+                    "props": {
+                      "data": {
+                        "$t": "01b0c450-6c00-7000-8000-000000000067"
+                      }
+                    },
+                    "type": "Text"
+                  },
+                  "item": {
+                    "component": {
+                      "id": "01b0c450-6c00-7000-8000-000000000010",
+                      "version": 1
+                    },
+                    "id": "01b0c450-6c00-7000-8000-000000000050",
+                    "props": {
+                      "item": {
+                        "$expr": "item"
+                      }
+                    }
+                  }
+                },
+                "type": "ListView"
+              }
+            },
+            "type": "If"
+          },
+          {
+            "id": "01b0c450-6c00-7000-8000-000000000053",
+            "props": {
+              "items": [
+                "a",
+                "b"
+              ]
+            },
+            "slots": {
+              "item": {
+                "id": "01b0c450-6c00-7000-8000-000000000054",
+                "props": {
+                  "data": {
+                    "$expr": "item + string(index)"
+                  }
+                },
+                "type": "Text"
+              }
+            },
+            "type": "ForEach"
+          },
+          {
+            "component": {
+              "id": "01b0c450-6c00-7000-8000-00000000000f",
+              "version": 2
+            },
+            "events": {
+              "onTap": {
+                "steps": [
+                  {
+                    "action": "navigate",
+                    "id": "open",
+                    "input": {
+                      "params": {
+                        "section": "tasks"
+                      },
+                      "route": "settings"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01b0c450-6c00-7000-8000-000000000055",
+            "props": {
+              "label": {
+                "$t": "01b0c450-6c00-7000-8000-000000000069"
+              }
+            },
+            "slots": {
+              "icon": {
+                "id": "01b0c450-6c00-7000-8000-000000000056",
+                "props": {
+                  "icon": {
+                    "name": "star"
+                  }
+                },
+                "type": "Icon"
+              }
+            }
+          },
+          {
+            "events": {
+              "onPan": {
+                "steps": [
+                  {
+                    "action": "setState",
+                    "id": "keep",
+                    "input": {
+                      "path": "page.draft",
+                      "value": {
+                        "$expr": "string(event)"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01b0c450-6c00-7000-8000-000000000057",
+            "props": {
+              "zoom": 3
+            },
+            "type": "MapView"
+          },
+          {
+            "id": "01b0c450-6c00-7000-8000-000000000058",
+            "props": {
+              "semanticLabel": "Logo",
+              "source": {
+                "asset": {
+                  "$asset": "01b0c450-6c00-7000-8000-000000000007"
+                }
+              },
+              "width": 48
+            },
+            "type": "Image"
+          },
+          {
+            "id": "01b0c450-6c00-7000-8000-000000000059",
+            "props": {
+              "data": "hidden"
+            },
+            "type": "Text",
+            "visible": {
+              "$expr": "1 > 2"
+            }
+          },
+          {
+            "events": {
+              "onPressed": {
+                "concurrency": "debounce:300",
+                "steps": [
+                  {
+                    "action": "condition",
+                    "branches": {
+                      "else": "stop",
+                      "then": "each"
+                    },
+                    "id": "check",
+                    "input": {
+                      "when": {
+                        "$expr": "size(page.items) < 10"
+                      }
+                    }
+                  },
+                  {
+                    "action": "forEach",
+                    "branches": {
+                      "body": "log"
+                    },
+                    "id": "each",
+                    "input": {
+                      "items": {
+                        "$expr": "page.items"
+                      }
+                    },
+                    "next": "both"
+                  },
+                  {
+                    "action": "trackEvent",
+                    "id": "log",
+                    "input": {
+                      "name": "task_seen",
+                      "props": {
+                        "n": 1,
+                        "title": {
+                          "$expr": "item.title + string(index)"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "action": "parallel",
+                    "branches": {
+                      "save": "save",
+                      "share": "share"
+                    },
+                    "id": "both",
+                    "input": {
+                      "lanes": [
+                        "save",
+                        "share"
+                      ]
+                    },
+                    "next": "flow"
+                  },
+                  {
+                    "action": "dbInsert",
+                    "id": "save",
+                    "input": {
+                      "collection": "notes",
+                      "record": {
+                        "id": "n1",
+                        "text": {
+                          "$expr": "flags.greeting"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "action": "shareNote",
+                    "id": "share",
+                    "input": {
+                      "text": {
+                        "$expr": "env.apiBaseUrl"
+                      }
+                    }
+                  },
+                  {
+                    "action": "callFlow",
+                    "id": "flow",
+                    "input": {
+                      "flow": "notify",
+                      "input": {
+                        "message": {
+                          "$expr": "user.email"
+                        }
+                      }
+                    },
+                    "next": "archive"
+                  },
+                  {
+                    "action": "invokeFunction",
+                    "id": "archive",
+                    "input": {
+                      "function": "archive"
+                    },
+                    "onError": "stop",
+                    "onSuccess": "show",
+                    "retry": {
+                      "backoffMs": 100,
+                      "count": 2,
+                      "jitter": true,
+                      "maxBackoffMs": 1000,
+                      "on": [
+                        "network",
+                        "timeout"
+                      ]
+                    },
+                    "timeoutMs": 5000
+                  },
+                  {
+                    "action": "navigate",
+                    "id": "show",
+                    "input": {
+                      "params": {
+                        "item": {
+                          "done": false,
+                          "priority": {
+                            "$expr": "page.priority"
+                          },
+                          "title": {
+                            "$expr": "steps.flow.output == true ? \"done\" : \"open\""
+                          }
+                        }
+                      },
+                      "route": "task-detail"
+                    }
+                  },
+                  {
+                    "action": "stop",
+                    "id": "stop"
+                  }
+                ]
+              }
+            },
+            "id": "01b0c450-6c00-7000-8000-00000000005a",
+            "slots": {
+              "child": {
+                "id": "01b0c450-6c00-7000-8000-00000000005b",
+                "props": {
+                  "data": {
+                    "$t": "01b0c450-6c00-7000-8000-000000000066"
+                  }
+                },
+                "type": "Text"
+              }
+            },
+            "testId": "add",
+            "type": "FilledButton"
+          }
+        ],
+        "id": "01b0c450-6c00-7000-8000-000000000049",
+        "props": {
+          "spacing": 8
+        },
+        "type": "Column"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "tasks",
+  "routeOptions": {
+    "guards": [
+      {
+        "$graph": "01b0c450-6c00-7000-8000-00000000000e"
+      }
+    ],
+    "transition": "fade"
+  },
+  "schemaVersion": "1.0.0",
+  "state": [
+    {
+      "default": [
+        {
+          "done": false,
+          "priority": "high",
+          "title": "Plan"
+        },
+        {
+          "done": true,
+          "note": null,
+          "priority": "low",
+          "title": "Ship"
+        }
+      ],
+      "id": "01b0c450-6c00-7000-8000-00000000003c",
+      "name": "items",
+      "type": "list<Item>"
+    },
+    {
+      "default": {
+        "done": 1,
+        "open": 1
+      },
+      "id": "01b0c450-6c00-7000-8000-00000000003d",
+      "name": "counts",
+      "type": "map<string,int>"
+    },
+    {
+      "default": "high",
+      "id": "01b0c450-6c00-7000-8000-00000000003e",
+      "name": "priority",
+      "type": "Priority"
+    },
+    {
+      "default": "",
+      "id": "01b0c450-6c00-7000-8000-00000000003f",
+      "name": "draft",
+      "persistence": "secure",
+      "sensitive": true,
+      "type": "string"
+    }
+  ],
+  "title": {
+    "$t": "01b0c450-6c00-7000-8000-000000000064"
+  }
+}

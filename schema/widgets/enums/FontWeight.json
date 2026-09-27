@@ -1,0 +1,51 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "FontWeight",
+  "id": 23,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Font weight, from thin (w100) to black (w900).",
+  "values": [
+    {
+      "name": "w100",
+      "id": 1
+    },
+    {
+      "name": "w200",
+      "id": 2
+    },
+    {
+      "name": "w300",
+      "id": 3
+    },
+    {
+      "name": "w400",
+      "id": 4
+    },
+    {
+      "name": "w500",
+      "id": 5
+    },
+    {
+      "name": "w600",
+      "id": 6
+    },
+    {
+      "name": "w700",
+      "id": 7
+    },
+    {
+      "name": "w800",
+      "id": 8
+    },
+    {
+      "name": "w900",
+      "id": 9
+    }
+  ]
+}

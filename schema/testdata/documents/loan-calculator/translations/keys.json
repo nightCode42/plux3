@@ -1,0 +1,42 @@
+{
+  "id": "01a0c450-6c00-7001-8000-000000001eef",
+  "keys": [
+    {
+      "description": "Title of the loan calculator page.",
+      "id": "01a0c450-6c00-7002-8000-000000003dde",
+      "key": "loans.calculator.title"
+    },
+    {
+      "description": "Label of the amount field.",
+      "id": "01a0c450-6c00-7003-8000-000000005ccd",
+      "key": "loans.amount"
+    },
+    {
+      "description": "Label of the term slider.",
+      "id": "01a0c450-6c00-7004-8000-000000007bbc",
+      "key": "loans.months"
+    },
+    {
+      "description": "Button that calculates the schedule.",
+      "id": "01a0c450-6c00-7005-8000-000000009aab",
+      "key": "loans.calculate"
+    },
+    {
+      "description": "Title of the result page.",
+      "id": "01a0c450-6c00-7006-8000-00000000b99a",
+      "key": "loans.result.title"
+    },
+    {
+      "description": "Label of the monthly payment.",
+      "id": "01a0c450-6c00-7007-8000-00000000d889",
+      "key": "loans.monthly-payment"
+    },
+    {
+      "description": "Name of the app.",
+      "id": "01a0c450-6c00-7008-8000-00000000f778",
+      "key": "app.name"
+    }
+  ],
+  "kind": "translationKeys",
+  "schemaVersion": "1.0.0"
+}

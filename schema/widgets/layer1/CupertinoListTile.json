@@ -1,0 +1,107 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "CupertinoListTile",
+  "id": 98,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/cupertino.dart",
+    "class": "CupertinoListTile",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "cupertino",
+  "icon": "list_alt",
+  "description": "An iOS-style list row.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 30,
+  "accessibility": {
+    "role": "button",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "backgroundColor",
+      "id": 1,
+      "type": "color",
+      "flutter": "backgroundColor"
+    },
+    {
+      "name": "backgroundColorActivated",
+      "id": 2,
+      "type": "color",
+      "flutter": "backgroundColorActivated"
+    },
+    {
+      "name": "padding",
+      "id": 3,
+      "type": "EdgeInsets",
+      "flutter": "padding"
+    },
+    {
+      "name": "leadingSize",
+      "id": 4,
+      "type": "double",
+      "flutter": "leadingSize"
+    },
+    {
+      "name": "leadingToTitle",
+      "id": 5,
+      "type": "double",
+      "flutter": "leadingToTitle"
+    }
+  ],
+  "events": [
+    {
+      "name": "onTap",
+      "id": 1,
+      "flutter": "onTap"
+    }
+  ],
+  "slots": [
+    {
+      "name": "title",
+      "id": 1,
+      "required": true,
+      "flutter": "title"
+    },
+    {
+      "name": "subtitle",
+      "id": 2,
+      "flutter": "subtitle"
+    },
+    {
+      "name": "additionalInfo",
+      "id": 3,
+      "flutter": "additionalInfo"
+    },
+    {
+      "name": "leading",
+      "id": 4,
+      "flutter": "leading"
+    },
+    {
+      "name": "trailing",
+      "id": 5,
+      "flutter": "trailing"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

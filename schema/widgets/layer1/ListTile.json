@@ -1,0 +1,270 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "ListTile",
+  "id": 55,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "ListTile",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "display",
+  "icon": "list_alt",
+  "description": "A fixed-height row with leading and trailing content and one to three lines of text.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 35,
+  "accessibility": {
+    "role": "button",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "isThreeLine",
+      "id": 1,
+      "type": "bool",
+      "flutter": "isThreeLine"
+    },
+    {
+      "name": "dense",
+      "id": 2,
+      "type": "bool",
+      "flutter": "dense"
+    },
+    {
+      "name": "visualDensity",
+      "id": 3,
+      "type": "VisualDensity",
+      "flutter": "visualDensity"
+    },
+    {
+      "name": "shape",
+      "id": 4,
+      "type": "ShapeBorder",
+      "flutter": "shape"
+    },
+    {
+      "name": "style",
+      "id": 5,
+      "type": "ListTileStyle",
+      "flutter": "style"
+    },
+    {
+      "name": "selectedColor",
+      "id": 6,
+      "type": "color",
+      "flutter": "selectedColor"
+    },
+    {
+      "name": "iconColor",
+      "id": 7,
+      "type": "color",
+      "flutter": "iconColor"
+    },
+    {
+      "name": "textColor",
+      "id": 8,
+      "type": "color",
+      "flutter": "textColor"
+    },
+    {
+      "name": "titleTextStyle",
+      "id": 9,
+      "type": "TextStyle",
+      "flutter": "titleTextStyle"
+    },
+    {
+      "name": "subtitleTextStyle",
+      "id": 10,
+      "type": "TextStyle",
+      "flutter": "subtitleTextStyle"
+    },
+    {
+      "name": "leadingAndTrailingTextStyle",
+      "id": 11,
+      "type": "TextStyle",
+      "flutter": "leadingAndTrailingTextStyle"
+    },
+    {
+      "name": "contentPadding",
+      "id": 12,
+      "type": "EdgeInsets",
+      "flutter": "contentPadding"
+    },
+    {
+      "name": "enabled",
+      "id": 13,
+      "type": "bool",
+      "default": true,
+      "flutter": "enabled"
+    },
+    {
+      "name": "selected",
+      "id": 14,
+      "type": "bool",
+      "default": false,
+      "flutter": "selected"
+    },
+    {
+      "name": "focusColor",
+      "id": 15,
+      "type": "color",
+      "flutter": "focusColor"
+    },
+    {
+      "name": "hoverColor",
+      "id": 16,
+      "type": "color",
+      "flutter": "hoverColor"
+    },
+    {
+      "name": "splashColor",
+      "id": 17,
+      "type": "color",
+      "flutter": "splashColor"
+    },
+    {
+      "name": "autofocus",
+      "id": 18,
+      "type": "bool",
+      "default": false,
+      "flutter": "autofocus"
+    },
+    {
+      "name": "tileColor",
+      "id": 19,
+      "type": "color",
+      "flutter": "tileColor"
+    },
+    {
+      "name": "selectedTileColor",
+      "id": 20,
+      "type": "color",
+      "flutter": "selectedTileColor"
+    },
+    {
+      "name": "enableFeedback",
+      "id": 21,
+      "type": "bool",
+      "flutter": "enableFeedback"
+    },
+    {
+      "name": "horizontalTitleGap",
+      "id": 22,
+      "type": "double",
+      "flutter": "horizontalTitleGap"
+    },
+    {
+      "name": "minVerticalPadding",
+      "id": 23,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "minVerticalPadding"
+    },
+    {
+      "name": "minLeadingWidth",
+      "id": 24,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "minLeadingWidth"
+    },
+    {
+      "name": "minTileHeight",
+      "id": 25,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "minTileHeight"
+    },
+    {
+      "name": "titleAlignment",
+      "id": 26,
+      "type": "ListTileTitleAlignment",
+      "flutter": "titleAlignment"
+    }
+  ],
+  "events": [
+    {
+      "name": "onTap",
+      "id": 1,
+      "flutter": "onTap"
+    },
+    {
+      "name": "onLongPress",
+      "id": 2,
+      "flutter": "onLongPress"
+    },
+    {
+      "name": "onFocusChange",
+      "id": 3,
+      "payload": "bool",
+      "flutter": "onFocusChange"
+    }
+  ],
+  "slots": [
+    {
+      "name": "leading",
+      "id": 1,
+      "flutter": "leading"
+    },
+    {
+      "name": "title",
+      "id": 2,
+      "flutter": "title"
+    },
+    {
+      "name": "subtitle",
+      "id": 3,
+      "flutter": "subtitle"
+    },
+    {
+      "name": "trailing",
+      "id": 4,
+      "flutter": "trailing"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "mouseCursor",
+      "reason": "deferred",
+      "note": "Pointer cursors matter only for desktop and web targets."
+    },
+    {
+      "flutter": "focusNode",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "internalAddSemanticForOnTap",
+      "reason": "non-serialisable",
+      "note": "A framework-internal flag."
+    },
+    {
+      "flutter": "statesController",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    }
+  ]
+}

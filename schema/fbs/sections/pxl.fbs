@@ -1,0 +1,11 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+// The root of a pxl section (BND-012).
+
+include "../bundle.fbs";
+
+namespace fbs;
+
+root_type Programs;
+file_identifier "PXEX";

@@ -1,0 +1,996 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://plux.dev/schema/v1/common.schema.json",
+  "title": "Plux document model: shared definitions",
+  "description": "Definitions shared by every Plux document (spec §7, ADR-0025).",
+  "$defs": {
+    "schemaVersion": {
+      "description": "Version of the document schema (SCH-000). Older documents are migrated before validation.",
+      "const": "1.0.0"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
+      "description": "Immutable UUIDv7 identifier in canonical lower-case form (SCH-002)."
+    },
+    "key": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+      "maxLength": 64,
+      "description": "Human-readable lower-kebab slug, unique within its parent (SCH-002). Files in the Git layout are named after it."
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-zA-Z0-9]*$",
+      "maxLength": 64,
+      "description": "Identifier used in PXL and generated code: lowerCamelCase."
+    },
+    "typeName": {
+      "type": "string",
+      "pattern": "^[A-Z][A-Za-z0-9]*$",
+      "maxLength": 64,
+      "description": "Name of a declared object or enum type: UpperCamelCase."
+    },
+    "routeName": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$",
+      "maxLength": 100,
+      "description": "App-wide unique route name (SCH-025)."
+    },
+    "locale": {
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$",
+      "maxLength": 16,
+      "description": "BCP 47 language tag: language, optional script, optional region."
+    },
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$",
+      "description": "Semantic version major.minor.patch."
+    },
+    "typeExpr": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9<>, ?]*$",
+      "maxLength": 256,
+      "description": "Type expression of SCH-010, e.g. `string`, `decimal?`, `list<Transaction>`, `map<string,int>`."
+    },
+    "text": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 4000,
+      "description": "Human-readable description."
+    },
+    "tokenPath": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9-]*(\\.[a-zA-Z0-9][a-zA-Z0-9-]*)+$",
+      "maxLength": 200,
+      "description": "Dotted path of a design token, e.g. `color.primary`."
+    },
+    "value": {
+      "description": "A JSON value interpreted against a declared type (defaults, mocks, environment values).",
+      "x-plux-raw": true
+    },
+    "expr": {
+      "type": "object",
+      "description": "PXL binding (SCH-011).",
+      "required": [
+        "$expr"
+      ],
+      "properties": {
+        "$expr": {
+          "type": "string",
+          "minLength": 1,
+          "description": "PXL expression (Appendix E)."
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "Expr"
+    },
+    "tokenRef": {
+      "type": "object",
+      "description": "Design token reference (SCH-011).",
+      "required": [
+        "$token"
+      ],
+      "properties": {
+        "$token": {
+          "$ref": "#/$defs/tokenPath"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false
+    },
+    "translationRef": {
+      "type": "object",
+      "description": "Translation reference with optional message arguments (SCH-011).",
+      "required": [
+        "$t"
+      ],
+      "properties": {
+        "$t": {
+          "$ref": "#/$defs/id"
+        },
+        "args": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/name"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/propValue"
+          }
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "TranslationRef"
+    },
+    "assetRef": {
+      "type": "object",
+      "description": "Asset reference (SCH-011).",
+      "required": [
+        "$asset"
+      ],
+      "properties": {
+        "$asset": {
+          "$ref": "#/$defs/id"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "AssetRef"
+    },
+    "binding": {
+      "description": "A binding: exactly one of `$expr`, `$token`, `$t` or `$asset`.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/expr"
+        },
+        {
+          "$ref": "#/$defs/tokenRef"
+        },
+        {
+          "$ref": "#/$defs/translationRef"
+        },
+        {
+          "$ref": "#/$defs/assetRef"
+        }
+      ]
+    },
+    "propValue": {
+      "description": "A prop value: a literal of the prop's type, or a binding (SCH-011). Literal objects and lists may contain bindings in their fields and items.",
+      "x-plux-raw": true,
+      "anyOf": [
+        {
+          "$ref": "#/$defs/binding"
+        },
+        {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "null"
+          ]
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/propValue"
+          }
+        },
+        {
+          "type": "object",
+          "propertyNames": {
+            "not": {
+              "pattern": "^\\$"
+            }
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/propValue"
+          }
+        }
+      ]
+    },
+    "props": {
+      "description": "Prop values by prop name.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/name"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/propValue"
+      }
+    },
+    "monogram": {
+      "type": "object",
+      "description": "Generated monogram icon.",
+      "required": [
+        "text",
+        "background"
+      ],
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 3
+        },
+        "background": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$",
+          "description": "Background colour as #RRGGBB."
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "Monogram"
+    },
+    "icon": {
+      "type": "object",
+      "description": "An uploaded image or a generated monogram (SCH-020).",
+      "properties": {
+        "$asset": {
+          "$ref": "#/$defs/id"
+        },
+        "monogram": {
+          "$ref": "#/$defs/monogram"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "required": [
+            "$asset"
+          ]
+        },
+        {
+          "required": [
+            "monogram"
+          ]
+        }
+      ],
+      "x-plux-type": "Icon"
+    },
+    "field": {
+      "type": "object",
+      "description": "A typed field.",
+      "required": [
+        "name",
+        "type"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/name"
+        },
+        "type": {
+          "$ref": "#/$defs/typeExpr"
+        },
+        "sensitive": {
+          "type": "boolean",
+          "description": "Excluded from logs, traces, analytics and replays; stored only encrypted (SCH-012)."
+        },
+        "description": {
+          "$ref": "#/$defs/description"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "Field"
+    },
+    "enumMember": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9]*$",
+      "maxLength": 64
+    },
+    "typeDecl": {
+      "type": "object",
+      "description": "A named object type or enum (SCH-010).",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/typeName"
+        },
+        "description": {
+          "$ref": "#/$defs/description"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/field"
+          }
+        },
+        "enum": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/enumMember"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "required": [
+            "fields"
+          ]
+        },
+        {
+          "required": [
+            "enum"
+          ]
+        }
+      ],
+      "x-plux-type": "TypeDecl"
+    },
+    "param": {
+      "type": "object",
+      "description": "A typed parameter with an optional default and design-time mock (SCH-022, SCH-024).",
+      "required": [
+        "name",
+        "type"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "$ref": "#/$defs/name"
+        },
+        "type": {
+          "$ref": "#/$defs/typeExpr"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "default": {
+          "$ref": "#/$defs/value"
+        },
+        "mock": {
+          "$ref": "#/$defs/value"
+        },
+        "sensitive": {
+          "type": "boolean"
+        },
+        "description": {
+          "$ref": "#/$defs/description"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "Param"
+    },
+    "persistence": {
+      "description": "Where a state entry lives (STA-003).",
+      "enum": [
+        "memory",
+        "session",
+        "persisted",
+        "secure"
+      ]
+    },
+    "stateEntry": {
+      "type": "object",
+      "description": "A typed state entry with a default or a computed expression (STA-002, STA-004).",
+      "required": [
+        "id",
+        "name",
+        "type"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "$ref": "#/$defs/name"
+        },
+        "type": {
+          "$ref": "#/$defs/typeExpr"
+        },
+        "default": {
+          "$ref": "#/$defs/value"
+        },
+        "computed": {
+          "$ref": "#/$defs/expr"
+        },
+        "persistence": {
+          "$ref": "#/$defs/persistence"
+        },
+        "sensitive": {
+          "type": "boolean"
+        },
+        "exposed": {
+          "type": "boolean",
+          "description": "Readable and writable by the host (STA-030)."
+        },
+        "description": {
+          "$ref": "#/$defs/description"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "required": [
+            "default"
+          ]
+        },
+        {
+          "required": [
+            "computed"
+          ]
+        }
+      ],
+      "x-plux-type": "StateEntry"
+    },
+    "dataSourceKind": {
+      "enum": [
+        "rest",
+        "graphql",
+        "websocket",
+        "sse",
+        "function",
+        "database",
+        "static"
+      ]
+    },
+    "dataSource": {
+      "type": "object",
+      "description": "A data source with its value type and design-time mock (SCH-024, DAT-080).",
+      "required": [
+        "id",
+        "name",
+        "kind",
+        "type",
+        "mock"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "$ref": "#/$defs/name"
+        },
+        "kind": {
+          "$ref": "#/$defs/dataSourceKind"
+        },
+        "type": {
+          "$ref": "#/$defs/typeExpr"
+        },
+        "mock": {
+          "$ref": "#/$defs/value"
+        },
+        "config": {
+          "description": "Kind-specific configuration, validated from P5 (DAT-001).",
+          "type": "object",
+          "x-plux-raw": true
+        },
+        "description": {
+          "$ref": "#/$defs/description"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "DataSource"
+    },
+    "collection": {
+      "type": "object",
+      "description": "A local database collection (DB-004).",
+      "required": [
+        "id",
+        "key",
+        "fields",
+        "primaryKey"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "key": {
+          "$ref": "#/$defs/key"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/field"
+          },
+          "minItems": 1
+        },
+        "primaryKey": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/name"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "indexes": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/name"
+            },
+            "minItems": 1,
+            "uniqueItems": true
+          }
+        },
+        "description": {
+          "$ref": "#/$defs/description"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "Collection"
+    },
+    "concurrency": {
+      "type": "string",
+      "pattern": "^(parallel|drop|restart|queue|(debounce|throttle):[1-9][0-9]{0,5})$",
+      "description": "Concurrency policy of a trigger (ACT-003): parallel, drop, restart, queue, debounce:<ms> or throttle:<ms>."
+    },
+    "errorKind": {
+      "enum": [
+        "network",
+        "http",
+        "timeout",
+        "validation",
+        "function",
+        "permission",
+        "cancelled",
+        "custom"
+      ]
+    },
+    "retry": {
+      "type": "object",
+      "description": "Retry policy of a step (ACT-006).",
+      "required": [
+        "count"
+      ],
+      "properties": {
+        "count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "backoffMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 600000
+        },
+        "maxBackoffMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 600000
+        },
+        "jitter": {
+          "type": "boolean"
+        },
+        "on": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/errorKind"
+          },
+          "uniqueItems": true
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "Retry"
+    },
+    "step": {
+      "type": "object",
+      "description": "One step of an action graph; edges name other steps (§14.1).",
+      "required": [
+        "id",
+        "action"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/name"
+        },
+        "action": {
+          "type": "string",
+          "pattern": "^[a-z][a-zA-Z0-9]*$",
+          "description": "Action name from the catalogue (Appendix D)."
+        },
+        "input": {
+          "$ref": "#/$defs/props"
+        },
+        "next": {
+          "$ref": "#/$defs/name"
+        },
+        "onSuccess": {
+          "$ref": "#/$defs/name"
+        },
+        "onError": {
+          "$ref": "#/$defs/name"
+        },
+        "branches": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/name"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/name"
+          }
+        },
+        "retry": {
+          "$ref": "#/$defs/retry"
+        },
+        "timeoutMs": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "description": {
+          "$ref": "#/$defs/description"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "Step"
+    },
+    "eventHandler": {
+      "type": "object",
+      "description": "A trigger's handler: a reference to an action graph or an inline graph (SCH-023).",
+      "properties": {
+        "$graph": {
+          "$ref": "#/$defs/id"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/step"
+          },
+          "minItems": 1
+        },
+        "concurrency": {
+          "$ref": "#/$defs/concurrency"
+        },
+        "detached": {
+          "type": "boolean",
+          "description": "Not cancelled when the owner is disposed (ACT-004)."
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "required": [
+            "$graph"
+          ]
+        },
+        {
+          "required": [
+            "steps"
+          ]
+        }
+      ],
+      "x-plux-type": "EventHandler"
+    },
+    "semantics": {
+      "type": "object",
+      "description": "Accessibility semantics of a node (A11Y-002).",
+      "properties": {
+        "label": {
+          "$ref": "#/$defs/propValue"
+        },
+        "hint": {
+          "$ref": "#/$defs/propValue"
+        },
+        "value": {
+          "$ref": "#/$defs/propValue"
+        },
+        "header": {
+          "type": "boolean"
+        },
+        "button": {
+          "type": "boolean"
+        },
+        "liveRegion": {
+          "type": "boolean"
+        },
+        "excludeSemantics": {
+          "type": "boolean"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "Semantics"
+    },
+    "responsive": {
+      "type": "object",
+      "description": "Prop overrides per window size class; `compact` is the base and overrides cascade (WGT-010).",
+      "properties": {
+        "medium": {
+          "$ref": "#/$defs/props"
+        },
+        "expanded": {
+          "$ref": "#/$defs/props"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "Responsive"
+    },
+    "componentRef": {
+      "type": "object",
+      "description": "A component and the version the instance was built against (SCH-030).",
+      "required": [
+        "id",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "ComponentRef"
+    },
+    "node": {
+      "type": "object",
+      "description": "A node of a page or component tree: a widget or a component instance (SCH-023).",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "type": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*$",
+          "maxLength": 64,
+          "description": "Widget type from the registry (WGT-001) or a native slot."
+        },
+        "component": {
+          "$ref": "#/$defs/componentRef"
+        },
+        "props": {
+          "$ref": "#/$defs/props"
+        },
+        "events": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^on[A-Z][A-Za-z0-9]*$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/eventHandler"
+          }
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          }
+        },
+        "slots": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/name"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/slotFill"
+          }
+        },
+        "visible": {
+          "description": "Rendered only while true (SCH-023).",
+          "x-plux-raw": true,
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "$ref": "#/$defs/expr"
+            }
+          ]
+        },
+        "semantics": {
+          "$ref": "#/$defs/semantics"
+        },
+        "testId": {
+          "type": "string",
+          "pattern": "^[a-z][a-zA-Z0-9_-]*$",
+          "maxLength": 64,
+          "description": "Stable identifier for tests (WGT-013)."
+        },
+        "responsive": {
+          "$ref": "#/$defs/responsive"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "required": [
+            "type"
+          ]
+        },
+        {
+          "required": [
+            "component"
+          ]
+        }
+      ],
+      "not": {
+        "required": [
+          "children",
+          "slots"
+        ]
+      },
+      "x-plux-type": "Node"
+    },
+    "slotFill": {
+      "description": "The content of a slot: one node, or a list of nodes for list slots.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/node"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/node"
+          },
+          "minItems": 1
+        }
+      ]
+    },
+    "assuranceLevel": {
+      "enum": [
+        "AL0",
+        "AL1",
+        "AL2",
+        "AL3"
+      ]
+    },
+    "pageKind": {
+      "enum": [
+        "screen",
+        "dialog",
+        "bottomSheet",
+        "fullscreenDialog"
+      ],
+      "description": "How the page is presented (SCH-022)."
+    },
+    "securityProfile": {
+      "enum": [
+        "standard",
+        "strict",
+        "maximum"
+      ],
+      "description": "Security profile (§15.12)."
+    },
+    "startupMode": {
+      "enum": [
+        "useCacheThenSync",
+        "blockUntilSynced"
+      ],
+      "description": "Start-up mode (SYN-003)."
+    },
+    "activationPolicy": {
+      "enum": [
+        "immediate",
+        "atSafePoint",
+        "nextLaunch"
+      ],
+      "description": "When a staged release activates (SYN-004)."
+    },
+    "requiredFeaturesPolicy": {
+      "enum": [
+        "reject",
+        "raise"
+      ],
+      "description": "What the compiler does when a release needs a newer runtime than `minRuntimeVersion`: reject the publish, or raise the release's required features with a warning (WGT-004)."
+    },
+    "flagType": {
+      "enum": [
+        "bool",
+        "int",
+        "double",
+        "string"
+      ],
+      "description": "Type of a feature flag (ABT-006)."
+    },
+    "deviceApi": {
+      "enum": [
+        "camera",
+        "photos",
+        "files",
+        "location",
+        "contacts",
+        "biometrics",
+        "notifications",
+        "clipboard",
+        "share",
+        "haptics"
+      ],
+      "description": "A device API a plugin may request (SEC-080)."
+    },
+    "transition": {
+      "enum": [
+        "platform",
+        "fade",
+        "slideLeft",
+        "slideRight",
+        "slideUp",
+        "slideDown",
+        "scale",
+        "sharedAxis",
+        "none"
+      ],
+      "description": "Page transition (NAV-010)."
+    },
+    "templateVisibility": {
+      "enum": [
+        "private",
+        "organization",
+        "public"
+      ],
+      "description": "Who can insert the template (SCH-031)."
+    },
+    "mediaType": {
+      "enum": [
+        "image/png",
+        "image/jpeg",
+        "image/webp",
+        "image/gif",
+        "image/svg+xml",
+        "font/ttf",
+        "font/otf",
+        "application/lottie+zip",
+        "application/riv"
+      ],
+      "description": "Media type of an asset."
+    }
+  }
+}

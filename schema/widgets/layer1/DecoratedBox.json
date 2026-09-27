@@ -1,0 +1,63 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "DecoratedBox",
+  "id": 18,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "DecoratedBox",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "layout",
+  "icon": "format_paint",
+  "description": "Paints a decoration behind or in front of its child.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 8,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "decoration",
+      "id": 1,
+      "type": "BoxDecoration",
+      "required": true,
+      "flutter": "decoration"
+    },
+    {
+      "name": "position",
+      "id": 2,
+      "type": "DecorationPosition",
+      "default": "background",
+      "flutter": "position"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

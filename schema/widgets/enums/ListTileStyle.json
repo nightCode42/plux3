@@ -1,0 +1,27 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "ListTileStyle",
+  "id": 32,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum ListTileStyle.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "ListTileStyle"
+  },
+  "values": [
+    {
+      "name": "list",
+      "id": 1
+    },
+    {
+      "name": "drawer",
+      "id": 2
+    }
+  ]
+}

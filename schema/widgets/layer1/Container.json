@@ -1,0 +1,128 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Container",
+  "id": 6,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "Container",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "layout",
+  "icon": "check_box_outline_blank",
+  "description": "A box with optional padding, margin, size constraints, alignment, colour and decoration.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 15,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "alignment",
+      "id": 1,
+      "type": "Alignment",
+      "flutter": "alignment"
+    },
+    {
+      "name": "padding",
+      "id": 2,
+      "type": "EdgeInsets",
+      "flutter": "padding"
+    },
+    {
+      "name": "color",
+      "id": 3,
+      "type": "color",
+      "flutter": "color"
+    },
+    {
+      "name": "isAntiAlias",
+      "id": 4,
+      "type": "bool",
+      "default": true,
+      "flutter": "isAntiAlias"
+    },
+    {
+      "name": "decoration",
+      "id": 5,
+      "type": "BoxDecoration",
+      "flutter": "decoration"
+    },
+    {
+      "name": "foregroundDecoration",
+      "id": 6,
+      "type": "BoxDecoration",
+      "flutter": "foregroundDecoration"
+    },
+    {
+      "name": "width",
+      "id": 7,
+      "type": "double",
+      "flutter": "width"
+    },
+    {
+      "name": "height",
+      "id": 8,
+      "type": "double",
+      "flutter": "height"
+    },
+    {
+      "name": "constraints",
+      "id": 9,
+      "type": "BoxConstraints",
+      "flutter": "constraints"
+    },
+    {
+      "name": "margin",
+      "id": 10,
+      "type": "EdgeInsets",
+      "flutter": "margin"
+    },
+    {
+      "name": "transformAlignment",
+      "id": 11,
+      "type": "Alignment",
+      "flutter": "transformAlignment"
+    },
+    {
+      "name": "clipBehavior",
+      "id": 12,
+      "type": "Clip",
+      "default": "none",
+      "flutter": "clipBehavior"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "transform",
+      "reason": "deferred",
+      "note": "Arbitrary matrices are not expressible as data; use the rotate, scale, translate and flip props of Transform."
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "id": "01b0c450-6c00-7000-8000-00000000000e",
+  "key": "guard",
+  "kind": "actionGraph",
+  "page": "01b0c450-6c00-7000-8000-00000000000b",
+  "schemaVersion": "1.0.0",
+  "steps": [
+    {
+      "action": "condition",
+      "branches": {
+        "else": "leave"
+      },
+      "id": "gate",
+      "input": {
+        "when": {
+          "$expr": "app.visits >= 0"
+        }
+      }
+    },
+    {
+      "action": "pop",
+      "id": "leave"
+    }
+  ]
+}

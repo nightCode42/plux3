@@ -1,0 +1,35 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "BlurStyle",
+  "id": 4,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum BlurStyle.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "BlurStyle"
+  },
+  "values": [
+    {
+      "name": "normal",
+      "id": 1
+    },
+    {
+      "name": "solid",
+      "id": 2
+    },
+    {
+      "name": "outer",
+      "id": 3
+    },
+    {
+      "name": "inner",
+      "id": 4
+    }
+  ]
+}

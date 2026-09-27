@@ -1,0 +1,39 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "AutovalidateMode",
+  "id": 1,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum AutovalidateMode.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "AutovalidateMode"
+  },
+  "values": [
+    {
+      "name": "disabled",
+      "id": 1
+    },
+    {
+      "name": "always",
+      "id": 2
+    },
+    {
+      "name": "onUserInteraction",
+      "id": 3
+    },
+    {
+      "name": "onUnfocus",
+      "id": 4
+    },
+    {
+      "name": "onUserInteractionIfError",
+      "id": 5
+    }
+  ]
+}

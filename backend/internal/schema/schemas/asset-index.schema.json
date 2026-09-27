@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://plux.dev/schema/v1/asset-index.schema.json",
+  "title": "Plux asset index document",
+  "description": "The assets of an app, stored under `assets/` and referenced by identifier (§14.8). File: `assets/index.json`.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "assets"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "$ref": "common.schema.json#/$defs/schemaVersion"
+    },
+    "kind": {
+      "const": "assetIndex"
+    },
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "x-plux-type": "AssetEntry",
+        "description": "An asset file.",
+        "required": [
+          "id",
+          "key",
+          "file",
+          "mediaType"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "key": {
+            "$ref": "common.schema.json#/$defs/key"
+          },
+          "file": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*(/[a-z0-9][a-z0-9._-]*)*$",
+            "maxLength": 255,
+            "description": "Path under `assets/`."
+          },
+          "mediaType": {
+            "$ref": "common.schema.json#/$defs/mediaType"
+          },
+          "description": {
+            "$ref": "common.schema.json#/$defs/description"
+          }
+        },
+        "patternProperties": {
+          "^x-": true
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "patternProperties": {
+    "^x-": true
+  },
+  "additionalProperties": false
+}

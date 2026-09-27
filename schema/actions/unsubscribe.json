@@ -1,0 +1,21 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "unsubscribe",
+  "id": 19,
+  "phase": "P5",
+  "category": "data",
+  "description": "Closes a stream opened by subscribe.",
+  "inputs": [
+    {
+      "name": "stream",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "stream",
+      "description": "The stream."
+    }
+  ],
+  "effects": [
+    "network"
+  ]
+}

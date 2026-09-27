@@ -9,6 +9,11 @@ The Go module `github.com/nightCode42/plux3/backend`: the Plux Server (`plux-ser
 | `cmd/plux-server/` | Server wiring only: configuration, construction, run, shutdown | AGPL-3.0-only |
 | `cmd/plux/` | CLI wiring only | Apache-2.0 |
 | `internal/buildinfo/` | Link-time version metadata (`CI-006`) | Apache-2.0 |
+| `internal/plxerr/` | Error codes, reasons, diagnostics and the generated catalogue (ADR-0018, `DX-003`) | Apache-2.0 |
+| `internal/schema/` | Document model: canonicalisation (`jcs/`), identifiers (`uuid7/`), the limits registry (`limits/`), the widget and action registries (`registry/`), validation and generated types (ADR-0025, ADR-0010) | Apache-2.0 |
+| `internal/pxl/` | PXL: parser, checker, standard library, bytecode, VM, folding; exact decimals in `decimal/` (ADR-0009) | Apache-2.0 |
+| `internal/bundle/` | Bundle container writer and reader, SHA-256 hashes, the FlatBuffers verifier, zstd transport; flatc accessors in `fbs/` (ADR-0002) | Apache-2.0 |
+| `internal/compiler/` | The compiler: pipeline stages, reference graph, optimiser, section encoder, incremental page validation ([compiler.md](../docs/reference/compiler.md)) | Apache-2.0 |
 | `internal/<module>/` | Server and compiler modules as listed in spec §6.3, added phase by phase | per `REUSE.toml` |
 
 Server-only packages are AGPL-3.0-only; packages the CLI or third parties link (compiler, PXL, bundle, schema, SDK) are Apache-2.0 so they can be embedded anywhere (ADR-0022). A package's licence is declared in `REUSE.toml` before its first file is committed, and its files carry the matching SPDX header.

@@ -1,0 +1,21 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "getLocation",
+  "id": 46,
+  "phase": "P5",
+  "category": "device",
+  "description": "Reads the device's current position once.",
+  "inputs": [
+    {
+      "name": "accuracy",
+      "id": 1,
+      "type": "LocationAccuracy",
+      "default": "balanced",
+      "description": "The accuracy to ask for."
+    }
+  ],
+  "output": "GeoLocation",
+  "effects": [
+    "device"
+  ]
+}

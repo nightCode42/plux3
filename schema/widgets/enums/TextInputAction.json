@@ -1,0 +1,71 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "TextInputAction",
+  "id": 57,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum TextInputAction.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "TextInputAction"
+  },
+  "values": [
+    {
+      "name": "none",
+      "id": 1
+    },
+    {
+      "name": "unspecified",
+      "id": 2
+    },
+    {
+      "name": "done",
+      "id": 3
+    },
+    {
+      "name": "go",
+      "id": 4
+    },
+    {
+      "name": "search",
+      "id": 5
+    },
+    {
+      "name": "send",
+      "id": 6
+    },
+    {
+      "name": "next",
+      "id": 7
+    },
+    {
+      "name": "previous",
+      "id": 8
+    },
+    {
+      "name": "continueAction",
+      "id": 9
+    },
+    {
+      "name": "join",
+      "id": 10
+    },
+    {
+      "name": "route",
+      "id": 11
+    },
+    {
+      "name": "emergencyCall",
+      "id": 12
+    },
+    {
+      "name": "newline",
+      "id": 13
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "TextDirection",
+  "id": 56,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum TextDirection.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "TextDirection"
+  },
+  "values": [
+    {
+      "name": "rtl",
+      "id": 1
+    },
+    {
+      "name": "ltr",
+      "id": 2
+    }
+  ]
+}

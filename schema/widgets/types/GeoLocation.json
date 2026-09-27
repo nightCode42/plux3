@@ -1,0 +1,49 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "GeoLocation",
+  "id": 35,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "A position reported by the device.",
+  "fields": [
+    {
+      "name": "latitude",
+      "id": 1,
+      "type": "double",
+      "required": true,
+      "description": "Latitude in degrees (WGS 84)."
+    },
+    {
+      "name": "longitude",
+      "id": 2,
+      "type": "double",
+      "required": true,
+      "description": "Longitude in degrees (WGS 84)."
+    },
+    {
+      "name": "accuracy",
+      "id": 3,
+      "type": "double",
+      "required": true,
+      "description": "Horizontal accuracy radius in metres."
+    },
+    {
+      "name": "altitude",
+      "id": 4,
+      "type": "double?",
+      "description": "Altitude in metres, if known."
+    },
+    {
+      "name": "timestamp",
+      "id": 5,
+      "type": "dateTime",
+      "required": true,
+      "description": "When the position was measured."
+    }
+  ]
+}

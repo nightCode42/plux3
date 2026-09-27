@@ -1,0 +1,32 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+// A schema with every field kind, for the layout generator's tests.
+// Regenerate sample.bfbs with: flatc --binary --schema sample.fbs
+
+namespace test;
+
+struct Pair {
+  a: ulong;
+  b: int;
+}
+
+table Leaf {
+  n: short;
+}
+
+table Root {
+  scalar: ubyte;
+  pair: Pair;
+  name: string (required);
+  leaf: Leaf;
+  bytes: [ubyte];
+  pairs: [Pair];
+  names: [string];
+  leaves: [Leaf];
+  old: int (deprecated);
+  wide: long;
+}
+
+root_type Root;
+file_identifier "TEST";

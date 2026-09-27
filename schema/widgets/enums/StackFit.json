@@ -1,0 +1,31 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "StackFit",
+  "id": 48,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum StackFit.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "StackFit"
+  },
+  "values": [
+    {
+      "name": "loose",
+      "id": 1
+    },
+    {
+      "name": "expand",
+      "id": 2
+    },
+    {
+      "name": "passthrough",
+      "id": 3
+    }
+  ]
+}

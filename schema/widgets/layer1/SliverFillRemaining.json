@@ -1,0 +1,63 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "SliverFillRemaining",
+  "id": 44,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "SliverFillRemaining",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "scrolling",
+  "icon": "fullscreen",
+  "description": "Fills the remaining space of a CustomScrollView with its child.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 6,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "hasScrollBody",
+      "id": 1,
+      "type": "bool",
+      "default": true,
+      "flutter": "hasScrollBody"
+    },
+    {
+      "name": "fillOverscroll",
+      "id": 2,
+      "type": "bool",
+      "default": false,
+      "flutter": "fillOverscroll"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

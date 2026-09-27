@@ -1,0 +1,34 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "setState",
+  "id": 10,
+  "phase": "P5",
+  "category": "state",
+  "description": "Writes a value to a state entry.",
+  "typeParameters": [
+    {
+      "name": "T",
+      "description": "The declared type of the state entry at `path`."
+    }
+  ],
+  "inputs": [
+    {
+      "name": "path",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "state",
+      "description": "The state entry, such as page.amount."
+    },
+    {
+      "name": "value",
+      "id": 2,
+      "type": "T",
+      "required": true,
+      "description": "The new value."
+    }
+  ],
+  "effects": [
+    "state"
+  ]
+}

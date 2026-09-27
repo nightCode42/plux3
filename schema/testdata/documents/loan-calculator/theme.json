@@ -1,0 +1,65 @@
+{
+  "id": "01a0c450-6c00-700e-8000-00000001b112",
+  "key": "demo",
+  "kind": "theme",
+  "name": "Demo",
+  "schemaVersion": "1.0.0",
+  "tokens": {
+    "color": {
+      "$type": "color",
+      "onPrimary": {
+        "$value": "#FFFFFF"
+      },
+      "primary": {
+        "$extensions": {
+          "dev.plux.dark": "#8B78FF"
+        },
+        "$value": "#5B3DF5"
+      },
+      "surface": {
+        "$extensions": {
+          "dev.plux.dark": "#121218"
+        },
+        "$value": "#FFFFFF"
+      }
+    },
+    "radius": {
+      "$type": "dimension",
+      "md": {
+        "$value": {
+          "unit": "px",
+          "value": 12
+        }
+      }
+    },
+    "space": {
+      "$type": "dimension",
+      "md": {
+        "$value": {
+          "unit": "px",
+          "value": 16
+        }
+      },
+      "sm": {
+        "$value": {
+          "unit": "px",
+          "value": 8
+        }
+      }
+    },
+    "type": {
+      "$type": "typography",
+      "headlineMedium": {
+        "$value": {
+          "fontFamily": "Inter",
+          "fontSize": {
+            "unit": "px",
+            "value": 28
+          },
+          "fontWeight": 600,
+          "lineHeight": 1.25
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "GestureDetails",
+  "id": 12,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "The payload of a gesture event.",
+  "fields": [
+    {
+      "name": "localPosition",
+      "id": 1,
+      "type": "Offset?",
+      "description": "Position relative to the widget."
+    },
+    {
+      "name": "globalPosition",
+      "id": 2,
+      "type": "Offset?",
+      "description": "Position relative to the screen."
+    },
+    {
+      "name": "delta",
+      "id": 3,
+      "type": "Offset?",
+      "description": "Movement since the previous update."
+    },
+    {
+      "name": "velocity",
+      "id": 4,
+      "type": "Offset?",
+      "description": "Velocity at the end of a drag, in dp per second."
+    },
+    {
+      "name": "scale",
+      "id": 5,
+      "type": "double?",
+      "description": "Scale factor of a scale gesture."
+    },
+    {
+      "name": "rotation",
+      "id": 6,
+      "type": "double?",
+      "description": "Rotation of a scale gesture, in radians."
+    },
+    {
+      "name": "pointerCount",
+      "id": 7,
+      "type": "int?",
+      "description": "Number of pointers in contact."
+    }
+  ]
+}

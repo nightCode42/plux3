@@ -1,0 +1,222 @@
+{
+  "id": "01a0c450-6c00-7012-8000-000000022cce",
+  "key": "calculator",
+  "kind": "page",
+  "lifecycle": {
+    "onEnter": {
+      "steps": [
+        {
+          "action": "trackEvent",
+          "id": "track",
+          "input": {
+            "name": "loan_calculator_opened"
+          }
+        }
+      ]
+    }
+  },
+  "pageKind": "screen",
+  "params": [
+    {
+      "id": "01a0c450-6c00-7015-8000-00000002899b",
+      "mock": "personal-loan",
+      "name": "productId",
+      "required": true,
+      "type": "string"
+    }
+  ],
+  "root": {
+    "id": "01a0c450-6c00-7026-8000-00000004977a",
+    "slots": {
+      "appBar": {
+        "id": "01a0c450-6c00-701a-8000-000000032446",
+        "slots": {
+          "title": {
+            "id": "01a0c450-6c00-7019-8000-000000030557",
+            "props": {
+              "data": {
+                "$t": "01a0c450-6c00-7002-8000-000000003dde"
+              }
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "id": "01a0c450-6c00-7025-8000-00000004788b",
+        "props": {
+          "padding": {
+            "all": {
+              "$token": "space.md"
+            }
+          }
+        },
+        "slots": {
+          "child": {
+            "children": [
+              {
+                "events": {
+                  "onChanged": {
+                    "$graph": "01a0c450-6c00-701b-8000-000000034335"
+                  }
+                },
+                "id": "01a0c450-6c00-701c-8000-000000036224",
+                "props": {
+                  "decoration": {
+                    "labelText": {
+                      "$t": "01a0c450-6c00-7003-8000-000000005ccd"
+                    }
+                  },
+                  "keyboardType": "number",
+                  "value": {
+                    "$expr": "string(page.amount)"
+                  }
+                },
+                "testId": "amount",
+                "type": "TextField"
+              },
+              {
+                "id": "01a0c450-6c00-701d-8000-000000038113",
+                "props": {
+                  "data": {
+                    "$t": "01a0c450-6c00-7004-8000-000000007bbc"
+                  }
+                },
+                "type": "Text"
+              },
+              {
+                "events": {
+                  "onChanged": {
+                    "steps": [
+                      {
+                        "action": "setState",
+                        "id": "set",
+                        "input": {
+                          "path": "page.months",
+                          "value": {
+                            "$expr": "int(event)"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01a0c450-6c00-701e-8000-00000003a002",
+                "props": {
+                  "divisions": 19,
+                  "max": 60,
+                  "min": 3,
+                  "value": {
+                    "$expr": "double(page.months)"
+                  }
+                },
+                "semantics": {
+                  "label": {
+                    "$t": "01a0c450-6c00-7004-8000-000000007bbc"
+                  }
+                },
+                "testId": "months",
+                "type": "Slider"
+              },
+              {
+                "id": "01a0c450-6c00-701f-8000-00000003bef1",
+                "props": {
+                  "data": {
+                    "$expr": "string(page.monthlyPayment)"
+                  },
+                  "style": {
+                    "$token": "type.headlineMedium"
+                  }
+                },
+                "responsive": {
+                  "expanded": {
+                    "textAlign": "center"
+                  }
+                },
+                "semantics": {
+                  "label": {
+                    "$t": "01a0c450-6c00-7007-8000-00000000d889"
+                  }
+                },
+                "type": "Text"
+              },
+              {
+                "events": {
+                  "onPressed": {
+                    "$graph": "01a0c450-6c00-7021-8000-00000003fccf",
+                    "concurrency": "drop"
+                  }
+                },
+                "id": "01a0c450-6c00-7022-8000-000000041bbe",
+                "slots": {
+                  "child": {
+                    "id": "01a0c450-6c00-7020-8000-00000003dde0",
+                    "props": {
+                      "data": {
+                        "$t": "01a0c450-6c00-7005-8000-000000009aab"
+                      }
+                    },
+                    "type": "Text"
+                  }
+                },
+                "testId": "calculate",
+                "type": "FilledButton"
+              },
+              {
+                "id": "01a0c450-6c00-7023-8000-000000043aad",
+                "props": {
+                  "data": "debug"
+                },
+                "type": "Text",
+                "visible": false
+              }
+            ],
+            "id": "01a0c450-6c00-7024-8000-00000004599c",
+            "props": {
+              "crossAxisAlignment": "stretch",
+              "spacing": {
+                "$token": "space.md"
+              }
+            },
+            "type": "Column"
+          }
+        },
+        "type": "Padding"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "loan-calculator",
+  "schemaVersion": "1.0.0",
+  "security": {
+    "requiresAssurance": "AL1",
+    "secure": false
+  },
+  "state": [
+    {
+      "default": "50000",
+      "id": "01a0c450-6c00-7016-8000-00000002a88a",
+      "name": "amount",
+      "persistence": "memory",
+      "type": "decimal"
+    },
+    {
+      "default": 12,
+      "id": "01a0c450-6c00-7017-8000-00000002c779",
+      "name": "months",
+      "type": "int"
+    },
+    {
+      "computed": {
+        "$expr": "div(page.amount * (1d + decimal(flags.loanBaseRate)), decimal(page.months), 2, \"halfEven\")"
+      },
+      "id": "01a0c450-6c00-7018-8000-00000002e668",
+      "name": "monthlyPayment",
+      "type": "decimal"
+    }
+  ],
+  "title": {
+    "$t": "01a0c450-6c00-7002-8000-000000003dde"
+  }
+}

@@ -1,0 +1,161 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "CustomScrollView",
+  "id": 35,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "CustomScrollView",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "scrolling",
+  "icon": "view_stream",
+  "description": "A scroll view composed of slivers.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 25,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "scrollDirection",
+      "id": 1,
+      "type": "Axis",
+      "default": "vertical",
+      "flutter": "scrollDirection"
+    },
+    {
+      "name": "reverse",
+      "id": 2,
+      "type": "bool",
+      "default": false,
+      "flutter": "reverse"
+    },
+    {
+      "name": "primary",
+      "id": 3,
+      "type": "bool",
+      "flutter": "primary"
+    },
+    {
+      "name": "physics",
+      "id": 4,
+      "type": "ScrollPhysics",
+      "flutter": "physics"
+    },
+    {
+      "name": "shrinkWrap",
+      "id": 5,
+      "type": "bool",
+      "default": false,
+      "flutter": "shrinkWrap"
+    },
+    {
+      "name": "anchor",
+      "id": 6,
+      "type": "double",
+      "default": 0.0,
+      "flutter": "anchor"
+    },
+    {
+      "name": "paintOrder",
+      "id": 7,
+      "type": "SliverPaintOrder",
+      "default": "firstIsTop",
+      "flutter": "paintOrder"
+    },
+    {
+      "name": "semanticChildCount",
+      "id": 8,
+      "type": "int",
+      "constraints": {
+        "min": 0
+      },
+      "flutter": "semanticChildCount"
+    },
+    {
+      "name": "dragStartBehavior",
+      "id": 9,
+      "type": "DragStartBehavior",
+      "default": "start",
+      "flutter": "dragStartBehavior"
+    },
+    {
+      "name": "keyboardDismissBehavior",
+      "id": 10,
+      "type": "ScrollViewKeyboardDismissBehavior",
+      "flutter": "keyboardDismissBehavior"
+    },
+    {
+      "name": "clipBehavior",
+      "id": 11,
+      "type": "Clip",
+      "default": "hardEdge",
+      "flutter": "clipBehavior"
+    },
+    {
+      "name": "hitTestBehavior",
+      "id": 12,
+      "type": "HitTestBehavior",
+      "default": "opaque",
+      "flutter": "hitTestBehavior"
+    }
+  ],
+  "slots": [
+    {
+      "name": "slivers",
+      "id": 1,
+      "list": true,
+      "flutter": "slivers"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "controller",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "scrollBehavior",
+      "reason": "non-serialisable"
+    },
+    {
+      "flutter": "center",
+      "reason": "non-serialisable"
+    },
+    {
+      "flutter": "cacheExtent",
+      "reason": "deprecated",
+      "note": "Deprecated in Flutter."
+    },
+    {
+      "flutter": "scrollCacheExtent",
+      "reason": "deferred",
+      "note": "Cache extents are tuned by the runtime."
+    },
+    {
+      "flutter": "restorationId",
+      "reason": "non-serialisable",
+      "note": "State restoration is managed by the runtime."
+    }
+  ]
+}

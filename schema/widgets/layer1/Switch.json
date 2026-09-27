@@ -1,0 +1,206 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Switch",
+  "id": 72,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "Switch",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "input",
+  "icon": "toggle_on",
+  "description": "A Material on/off switch.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 25,
+  "accessibility": {
+    "role": "switch",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "value",
+      "id": 1,
+      "type": "bool",
+      "required": true,
+      "flutter": "value"
+    },
+    {
+      "name": "activeThumbColor",
+      "id": 2,
+      "type": "color",
+      "flutter": "activeThumbColor"
+    },
+    {
+      "name": "activeTrackColor",
+      "id": 3,
+      "type": "color",
+      "flutter": "activeTrackColor"
+    },
+    {
+      "name": "inactiveThumbColor",
+      "id": 4,
+      "type": "color",
+      "flutter": "inactiveThumbColor"
+    },
+    {
+      "name": "inactiveTrackColor",
+      "id": 5,
+      "type": "color",
+      "flutter": "inactiveTrackColor"
+    },
+    {
+      "name": "activeThumbImage",
+      "id": 6,
+      "type": "ImageSource",
+      "flutter": "activeThumbImage"
+    },
+    {
+      "name": "inactiveThumbImage",
+      "id": 7,
+      "type": "ImageSource",
+      "flutter": "inactiveThumbImage"
+    },
+    {
+      "name": "thumbColor",
+      "id": 8,
+      "type": "WidgetStateColor",
+      "flutter": "thumbColor"
+    },
+    {
+      "name": "trackColor",
+      "id": 9,
+      "type": "WidgetStateColor",
+      "flutter": "trackColor"
+    },
+    {
+      "name": "trackOutlineColor",
+      "id": 10,
+      "type": "WidgetStateColor",
+      "flutter": "trackOutlineColor"
+    },
+    {
+      "name": "trackOutlineWidth",
+      "id": 11,
+      "type": "WidgetStateDouble",
+      "flutter": "trackOutlineWidth"
+    },
+    {
+      "name": "materialTapTargetSize",
+      "id": 12,
+      "type": "MaterialTapTargetSize",
+      "flutter": "materialTapTargetSize"
+    },
+    {
+      "name": "dragStartBehavior",
+      "id": 13,
+      "type": "DragStartBehavior",
+      "default": "start",
+      "flutter": "dragStartBehavior"
+    },
+    {
+      "name": "focusColor",
+      "id": 14,
+      "type": "color",
+      "flutter": "focusColor"
+    },
+    {
+      "name": "hoverColor",
+      "id": 15,
+      "type": "color",
+      "flutter": "hoverColor"
+    },
+    {
+      "name": "overlayColor",
+      "id": 16,
+      "type": "WidgetStateColor",
+      "flutter": "overlayColor"
+    },
+    {
+      "name": "splashRadius",
+      "id": 17,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "splashRadius"
+    },
+    {
+      "name": "autofocus",
+      "id": 18,
+      "type": "bool",
+      "default": false,
+      "flutter": "autofocus"
+    },
+    {
+      "name": "padding",
+      "id": 19,
+      "type": "EdgeInsets",
+      "flutter": "padding"
+    }
+  ],
+  "events": [
+    {
+      "name": "onChanged",
+      "id": 1,
+      "payload": "bool",
+      "flutter": "onChanged"
+    },
+    {
+      "name": "onActiveThumbImageError",
+      "id": 2,
+      "flutter": "onActiveThumbImageError"
+    },
+    {
+      "name": "onInactiveThumbImageError",
+      "id": 3,
+      "flutter": "onInactiveThumbImageError"
+    },
+    {
+      "name": "onFocusChange",
+      "id": 4,
+      "payload": "bool",
+      "flutter": "onFocusChange"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "activeColor",
+      "reason": "deprecated",
+      "note": "Deprecated in Flutter."
+    },
+    {
+      "flutter": "thumbIcon",
+      "reason": "deferred",
+      "note": "State-dependent icons are deferred."
+    },
+    {
+      "flutter": "mouseCursor",
+      "reason": "deferred",
+      "note": "Pointer cursors matter only for desktop and web targets."
+    },
+    {
+      "flutter": "focusNode",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    }
+  ]
+}

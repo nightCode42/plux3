@@ -1,0 +1,40 @@
+{
+  "$comment": "RFC 8785 canonicalisation vectors (SCH-003). input and canonical are JSON texts carried as strings so that their exact bytes are preserved.",
+  "vectors": [
+    {
+      "name": "rfc8785-3.2.2-example",
+      "input": "{\n  \"numbers\": [333333333.33333329, 1E30, 4.50, 2e-3, 0.000000000000000000000000001],\n  \"string\": \"\\u20ac$\\u000F\\u000aA'\\u0042\\u0022\\u005c\\\\\\\"\\/\",\n  \"literals\": [null, true, false]\n}",
+      "canonical": "{\"literals\":[null,true,false],\"numbers\":[333333333.3333333,1e+30,4.5,0.002,1e-27],\"string\":\"\u20ac$\\u000f\\nA'B\\\"\\\\\\\\\\\"/\"}"
+    },
+    {
+      "name": "rfc8785-3.2.3-sorting",
+      "input": "{\n  \"\\u20ac\": \"Euro Sign\",\n  \"\\u000d\": \"Carriage Return\",\n  \"\\ufb33\": \"Hebrew Letter Dalet With Dagesh\",\n  \"1\": \"One\",\n  \"\\ud83d\\ude00\": \"Emoji: Grinning Face\",\n  \"\\u0080\": \"Control\",\n  \"\\u00f6\": \"Latin Small Letter O With Diaeresis\"\n}",
+      "canonical": "{\"\\r\":\"Carriage Return\",\"1\":\"One\",\"\u0080\":\"Control\",\"\u00f6\":\"Latin Small Letter O With Diaeresis\",\"\u20ac\":\"Euro Sign\",\"\ud83d\ude00\":\"Emoji: Grinning Face\",\"\ufb33\":\"Hebrew Letter Dalet With Dagesh\"}"
+    },
+    {
+      "name": "nesting-and-empty-containers",
+      "input": " { \"b\" : [ {}, [], { \"z\": 1, \"a\": [ 2 , 1 ] } ] , \"a\" : { } } ",
+      "canonical": "{\"a\":{},\"b\":[{},[],{\"a\":[2,1],\"z\":1}]}"
+    },
+    {
+      "name": "negative-zero-and-integers",
+      "input": "[-0, 0.0, -0.0, 1.0, 100, 1e2, -9007199254740991, 9007199254740991]",
+      "canonical": "[0,0,0,1,100,100,-9007199254740991,9007199254740991]"
+    },
+    {
+      "name": "control-characters-and-solidus",
+      "input": "\"\\u0000\\u001f\\u007f\\/\\b\\f\\t\"",
+      "canonical": "\"\\u0000\\u001f\u007f/\\b\\f\\t\""
+    },
+    {
+      "name": "top-level-scalar",
+      "input": " true ",
+      "canonical": "true"
+    },
+    {
+      "name": "large-exact-integers",
+      "input": "[9007199254740992, -9007199254740992, 1e20, 100000000000000000000, 1E21]",
+      "canonical": "[9007199254740992,-9007199254740992,100000000000000000000,100000000000000000000,1e+21]"
+    }
+  ]
+}

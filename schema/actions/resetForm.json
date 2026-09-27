@@ -1,0 +1,22 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "resetForm",
+  "id": 15,
+  "phase": "P5",
+  "category": "forms",
+  "description": "Resets every field of a form to its initial value and clears its errors.",
+  "inputs": [
+    {
+      "name": "form",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "form",
+      "description": "The form scope."
+    }
+  ],
+  "effects": [
+    "state",
+    "ui"
+  ]
+}

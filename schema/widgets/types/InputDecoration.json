@@ -1,0 +1,372 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "InputDecoration",
+  "id": 17,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Labels, hints, icons and borders of a text input.",
+  "flutter": [
+    {
+      "library": "package:flutter/material.dart",
+      "class": "InputDecoration",
+      "constructors": [
+        ""
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "name": "icon",
+      "id": 1,
+      "type": "IconData",
+      "flutter": "icon",
+      "description": "An icon (Plux expresses icon widgets as icon data)."
+    },
+    {
+      "name": "iconColor",
+      "id": 2,
+      "type": "color",
+      "flutter": "iconColor"
+    },
+    {
+      "name": "labelText",
+      "id": 3,
+      "type": "string",
+      "flutter": "labelText"
+    },
+    {
+      "name": "labelStyle",
+      "id": 4,
+      "type": "TextStyle",
+      "flutter": "labelStyle"
+    },
+    {
+      "name": "floatingLabelStyle",
+      "id": 5,
+      "type": "TextStyle",
+      "flutter": "floatingLabelStyle"
+    },
+    {
+      "name": "helperText",
+      "id": 6,
+      "type": "string",
+      "flutter": "helperText"
+    },
+    {
+      "name": "helperStyle",
+      "id": 7,
+      "type": "TextStyle",
+      "flutter": "helperStyle"
+    },
+    {
+      "name": "helperMaxLines",
+      "id": 8,
+      "type": "int",
+      "flutter": "helperMaxLines"
+    },
+    {
+      "name": "hintText",
+      "id": 9,
+      "type": "string",
+      "flutter": "hintText"
+    },
+    {
+      "name": "hintStyle",
+      "id": 10,
+      "type": "TextStyle",
+      "flutter": "hintStyle"
+    },
+    {
+      "name": "hintTextDirection",
+      "id": 11,
+      "type": "TextDirection",
+      "flutter": "hintTextDirection"
+    },
+    {
+      "name": "hintMaxLines",
+      "id": 12,
+      "type": "int",
+      "flutter": "hintMaxLines"
+    },
+    {
+      "name": "hintFadeDuration",
+      "id": 13,
+      "type": "duration",
+      "flutter": "hintFadeDuration"
+    },
+    {
+      "name": "maintainHintSize",
+      "id": 14,
+      "type": "bool",
+      "default": true,
+      "flutter": "maintainHintSize"
+    },
+    {
+      "name": "maintainLabelSize",
+      "id": 15,
+      "type": "bool",
+      "default": false,
+      "flutter": "maintainLabelSize"
+    },
+    {
+      "name": "errorText",
+      "id": 16,
+      "type": "string",
+      "flutter": "errorText"
+    },
+    {
+      "name": "errorStyle",
+      "id": 17,
+      "type": "TextStyle",
+      "flutter": "errorStyle"
+    },
+    {
+      "name": "errorMaxLines",
+      "id": 18,
+      "type": "int",
+      "flutter": "errorMaxLines"
+    },
+    {
+      "name": "floatingLabelBehavior",
+      "id": 19,
+      "type": "FloatingLabelBehavior",
+      "flutter": "floatingLabelBehavior"
+    },
+    {
+      "name": "floatingLabelAlignment",
+      "id": 20,
+      "type": "FloatingLabelAlignment",
+      "flutter": "floatingLabelAlignment"
+    },
+    {
+      "name": "isCollapsed",
+      "id": 21,
+      "type": "bool",
+      "flutter": "isCollapsed"
+    },
+    {
+      "name": "isDense",
+      "id": 22,
+      "type": "bool",
+      "flutter": "isDense"
+    },
+    {
+      "name": "contentPadding",
+      "id": 23,
+      "type": "EdgeInsets",
+      "flutter": "contentPadding"
+    },
+    {
+      "name": "prefixIcon",
+      "id": 24,
+      "type": "IconData",
+      "flutter": "prefixIcon",
+      "description": "An icon (Plux expresses icon widgets as icon data)."
+    },
+    {
+      "name": "prefixIconConstraints",
+      "id": 25,
+      "type": "BoxConstraints",
+      "flutter": "prefixIconConstraints"
+    },
+    {
+      "name": "prefixText",
+      "id": 26,
+      "type": "string",
+      "flutter": "prefixText"
+    },
+    {
+      "name": "prefixStyle",
+      "id": 27,
+      "type": "TextStyle",
+      "flutter": "prefixStyle"
+    },
+    {
+      "name": "prefixIconColor",
+      "id": 28,
+      "type": "color",
+      "flutter": "prefixIconColor"
+    },
+    {
+      "name": "suffixIcon",
+      "id": 29,
+      "type": "IconData",
+      "flutter": "suffixIcon",
+      "description": "An icon (Plux expresses icon widgets as icon data)."
+    },
+    {
+      "name": "suffixText",
+      "id": 30,
+      "type": "string",
+      "flutter": "suffixText"
+    },
+    {
+      "name": "suffixStyle",
+      "id": 31,
+      "type": "TextStyle",
+      "flutter": "suffixStyle"
+    },
+    {
+      "name": "suffixIconColor",
+      "id": 32,
+      "type": "color",
+      "flutter": "suffixIconColor"
+    },
+    {
+      "name": "suffixIconConstraints",
+      "id": 33,
+      "type": "BoxConstraints",
+      "flutter": "suffixIconConstraints"
+    },
+    {
+      "name": "counterText",
+      "id": 34,
+      "type": "string",
+      "flutter": "counterText"
+    },
+    {
+      "name": "counterStyle",
+      "id": 35,
+      "type": "TextStyle",
+      "flutter": "counterStyle"
+    },
+    {
+      "name": "filled",
+      "id": 36,
+      "type": "bool",
+      "flutter": "filled"
+    },
+    {
+      "name": "fillColor",
+      "id": 37,
+      "type": "color",
+      "flutter": "fillColor"
+    },
+    {
+      "name": "focusColor",
+      "id": 38,
+      "type": "color",
+      "flutter": "focusColor"
+    },
+    {
+      "name": "hoverColor",
+      "id": 39,
+      "type": "color",
+      "flutter": "hoverColor"
+    },
+    {
+      "name": "errorBorder",
+      "id": 40,
+      "type": "InputBorder",
+      "flutter": "errorBorder"
+    },
+    {
+      "name": "focusedBorder",
+      "id": 41,
+      "type": "InputBorder",
+      "flutter": "focusedBorder"
+    },
+    {
+      "name": "focusedErrorBorder",
+      "id": 42,
+      "type": "InputBorder",
+      "flutter": "focusedErrorBorder"
+    },
+    {
+      "name": "disabledBorder",
+      "id": 43,
+      "type": "InputBorder",
+      "flutter": "disabledBorder"
+    },
+    {
+      "name": "enabledBorder",
+      "id": 44,
+      "type": "InputBorder",
+      "flutter": "enabledBorder"
+    },
+    {
+      "name": "border",
+      "id": 45,
+      "type": "InputBorder",
+      "flutter": "border"
+    },
+    {
+      "name": "enabled",
+      "id": 46,
+      "type": "bool",
+      "default": true,
+      "flutter": "enabled"
+    },
+    {
+      "name": "semanticCounterText",
+      "id": 47,
+      "type": "string",
+      "flutter": "semanticCounterText"
+    },
+    {
+      "name": "alignLabelWithHint",
+      "id": 48,
+      "type": "bool",
+      "flutter": "alignLabelWithHint"
+    },
+    {
+      "name": "constraints",
+      "id": 49,
+      "type": "BoxConstraints",
+      "flutter": "constraints"
+    },
+    {
+      "name": "visualDensity",
+      "id": 50,
+      "type": "VisualDensity",
+      "flutter": "visualDensity"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "label",
+      "reason": "deferred",
+      "note": "Widget content is expressed with the matching *Text property."
+    },
+    {
+      "flutter": "helper",
+      "reason": "deferred",
+      "note": "Widget content is expressed with the matching *Text property."
+    },
+    {
+      "flutter": "hint",
+      "reason": "deferred",
+      "note": "Widget content is expressed with the matching *Text property."
+    },
+    {
+      "flutter": "maintainHintHeight",
+      "reason": "deprecated",
+      "note": "Deprecated in Flutter."
+    },
+    {
+      "flutter": "error",
+      "reason": "deferred",
+      "note": "Widget content is expressed with the matching *Text property."
+    },
+    {
+      "flutter": "prefix",
+      "reason": "deferred",
+      "note": "Widget content is expressed with the matching *Text property."
+    },
+    {
+      "flutter": "suffix",
+      "reason": "deferred",
+      "note": "Widget content is expressed with the matching *Text property."
+    },
+    {
+      "flutter": "counter",
+      "reason": "deferred",
+      "note": "Widget content is expressed with the matching *Text property."
+    }
+  ]
+}

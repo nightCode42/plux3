@@ -1,0 +1,127 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Icon",
+  "id": 49,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "Icon",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "display",
+  "icon": "star",
+  "description": "An icon from the Material or Cupertino icon set.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 8,
+  "accessibility": {
+    "role": "image",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "icon",
+      "id": 1,
+      "type": "IconData",
+      "flutter": "icon"
+    },
+    {
+      "name": "size",
+      "id": 2,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "size"
+    },
+    {
+      "name": "fill",
+      "id": 3,
+      "type": "double",
+      "constraints": {
+        "min": 0.0,
+        "max": 1.0
+      },
+      "flutter": "fill"
+    },
+    {
+      "name": "weight",
+      "id": 4,
+      "type": "double",
+      "flutter": "weight"
+    },
+    {
+      "name": "grade",
+      "id": 5,
+      "type": "double",
+      "flutter": "grade"
+    },
+    {
+      "name": "opticalSize",
+      "id": 6,
+      "type": "double",
+      "flutter": "opticalSize"
+    },
+    {
+      "name": "color",
+      "id": 7,
+      "type": "color",
+      "flutter": "color"
+    },
+    {
+      "name": "shadows",
+      "id": 8,
+      "type": "list<Shadow>",
+      "flutter": "shadows"
+    },
+    {
+      "name": "semanticLabel",
+      "id": 9,
+      "type": "string",
+      "flutter": "semanticLabel"
+    },
+    {
+      "name": "textDirection",
+      "id": 10,
+      "type": "TextDirection",
+      "flutter": "textDirection"
+    },
+    {
+      "name": "applyTextScaling",
+      "id": 11,
+      "type": "bool",
+      "flutter": "applyTextScaling"
+    },
+    {
+      "name": "blendMode",
+      "id": 12,
+      "type": "BlendMode",
+      "flutter": "blendMode"
+    },
+    {
+      "name": "fontWeight",
+      "id": 13,
+      "type": "FontWeight",
+      "flutter": "fontWeight"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

@@ -1,0 +1,3718 @@
+{
+  "description": "Every core overload evaluated at run time on root values, so that no case is folded at compile time (PXL-006, PXL-007).",
+  "env": {
+    "types": {
+      "Page": {
+        "fields": {
+          "status": "string?"
+        }
+      },
+      "Tier": {
+        "enum": [
+          "gold",
+          "silver"
+        ]
+      }
+    },
+    "roots": {
+      "csv": "string",
+      "day": "date",
+      "dec": "decimal",
+      "digits": "string",
+      "dur": "duration",
+      "e": "string",
+      "i": "int",
+      "maxInt": "int",
+      "minInt": "int",
+      "mode": "RoundingMode",
+      "neg": "int",
+      "none": "int?",
+      "nums": "list<int>",
+      "one": "int",
+      "page": "Page?",
+      "price": "money",
+      "s": "string",
+      "scores": "map<string,int>",
+      "sp": "string",
+      "tags": "list<string>",
+      "tier": "Tier",
+      "tint": "color",
+      "usd": "money",
+      "when": "dateTime",
+      "x": "double"
+    }
+  },
+  "limits": {
+    "stringLength": 50,
+    "collectionSize": 30,
+    "decimalDigits": 40
+  },
+  "inputs": {
+    "csv": "a,,b",
+    "day": "2024-01-31",
+    "dec": "1.25",
+    "digits": "123456789",
+    "dur": 90061001,
+    "e": "",
+    "i": 7,
+    "maxInt": 9223372036854775807,
+    "minInt": -9223372036854775808,
+    "mode": "halfUp",
+    "neg": -5,
+    "none": null,
+    "nums": [
+      3,
+      1,
+      2
+    ],
+    "one": 1,
+    "page": {
+      "status": null
+    },
+    "price": {
+      "amount": "10.00",
+      "currency": "EUR"
+    },
+    "s": "Grüñ😀",
+    "scores": {
+      "a": 1,
+      "b": 2,
+      "ä": 3
+    },
+    "sp": "  hi　\n",
+    "tags": [
+      "b",
+      "a",
+      "b",
+      "é"
+    ],
+    "tier": "gold",
+    "tint": "#FF8000",
+    "usd": {
+      "amount": "1",
+      "currency": "USD"
+    },
+    "when": "2024-03-01T01:30:00+02:00",
+    "x": 2.5
+  },
+  "cases": [
+    {
+      "name": "len of a root",
+      "expr": "len(s)",
+      "value": 5,
+      "type": "int",
+      "program": "AQABA2ludAEEAXMBAXMHBgAASQEAAQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"s\"",
+        "0003 CALL 1 1 ; len"
+      ],
+      "reads": [
+        "s"
+      ]
+    },
+    {
+      "name": "upper of a root",
+      "expr": "upper(s)",
+      "value": "GRÜÑ😀",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEEAXMBAXMHBgAASQIAAQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"s\"",
+        "0003 CALL 2 1 ; upper"
+      ],
+      "reads": [
+        "s"
+      ]
+    },
+    {
+      "name": "lower of a root",
+      "expr": "lower(s)",
+      "value": "grüñ😀",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEEAXMBAXMHBgAASQMAAQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"s\"",
+        "0003 CALL 3 1 ; lower"
+      ],
+      "reads": [
+        "s"
+      ]
+    },
+    {
+      "name": "trim removes Unicode white space",
+      "expr": "trim(sp)",
+      "value": "hi",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEEAnNwAQJzcAcGAABJBAAB",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"sp\"",
+        "0003 CALL 4 1 ; trim"
+      ],
+      "reads": [
+        "sp"
+      ]
+    },
+    {
+      "name": "trim of only spaces",
+      "expr": "trim(\"  \" + e)",
+      "value": "",
+      "type": "string",
+      "program": "AQACBnN0cmluZwIEAiAgBAFlAQFlCwQAAAYBADFJBAAB",
+      "asm": [
+        "0000 CONST 0 ; \"  \"",
+        "0003 LOAD_ROOT 1 ; \"e\"",
+        "0006 CONCAT_STRING",
+        "0007 CALL 4 1 ; trim"
+      ],
+      "reads": [
+        "e"
+      ]
+    },
+    {
+      "name": "contains",
+      "expr": "contains(s, \"ñ\")",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBAFzBALDsQEBcwoGAAAEAQBJBQAC",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"s\"",
+        "0003 CONST 1 ; \"ñ\"",
+        "0006 CALL 5 2 ; contains"
+      ],
+      "reads": [
+        "s"
+      ]
+    },
+    {
+      "name": "startsWith",
+      "expr": "startsWith(s, \"Gr\")",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBAFzBAJHcgEBcwoGAAAEAQBJBgAC",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"s\"",
+        "0003 CONST 1 ; \"Gr\"",
+        "0006 CALL 6 2 ; startsWith"
+      ],
+      "reads": [
+        "s"
+      ]
+    },
+    {
+      "name": "endsWith",
+      "expr": "endsWith(s, \"x\")",
+      "value": false,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBAFzBAF4AQFzCgYAAAQBAEkHAAI=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"s\"",
+        "0003 CONST 1 ; \"x\"",
+        "0006 CALL 7 2 ; endsWith"
+      ],
+      "reads": [
+        "s"
+      ]
+    },
+    {
+      "name": "replace",
+      "expr": "replace(s, \"ü\", \"ue\")",
+      "value": "Grueñ😀",
+      "type": "string",
+      "program": "AQADBnN0cmluZwMEAXMEAsO8BAJ1ZQEBcw0GAAAEAQAEAgBJCAAD",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"s\"",
+        "0003 CONST 1 ; \"ü\"",
+        "0006 CONST 2 ; \"ue\"",
+        "0009 CALL 8 3 ; replace"
+      ],
+      "reads": [
+        "s"
+      ]
+    },
+    {
+      "name": "replace with an empty needle",
+      "expr": "replace(s, e, \"x\")",
+      "value": "Grüñ😀",
+      "type": "string",
+      "program": "AQADBnN0cmluZwMEAXMEAWUEAXgCAWUBcw0GAAAGAQAEAgBJCAAD",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"s\"",
+        "0003 LOAD_ROOT 1 ; \"e\"",
+        "0006 CONST 2 ; \"x\"",
+        "0009 CALL 8 3 ; replace"
+      ],
+      "reads": [
+        "e",
+        "s"
+      ]
+    },
+    {
+      "name": "replace beyond the string limit",
+      "expr": "replace(s, \"G\", padLeft(e, 60, \"x\"))",
+      "error": "sizeLimit",
+      "type": "string",
+      "program": "AQAFBnN0cmluZwUEAXMEAUcEAWUCPAAAAAAAAAAEAXgCAWUBcxcGAAAEAQAGAgAEAwAEBABJDQADSQgAAw==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"s\"",
+        "0003 CONST 1 ; \"G\"",
+        "0006 LOAD_ROOT 2 ; \"e\"",
+        "0009 CONST 3 ; 60",
+        "0012 CONST 4 ; \"x\"",
+        "0015 CALL 13 3 ; padLeft",
+        "0019 CALL 8 3 ; replace"
+      ],
+      "reads": [
+        "e",
+        "s"
+      ]
+    },
+    {
+      "name": "split",
+      "expr": "split(csv, \",\")",
+      "value": [
+        "a",
+        "",
+        "b"
+      ],
+      "type": "list<string>",
+      "program": "AQACDGxpc3Q8c3RyaW5nPgIEA2NzdgQBLAEDY3N2CgYAAAQBAEkJAAI=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"csv\"",
+        "0003 CONST 1 ; \",\"",
+        "0006 CALL 9 2 ; split"
+      ],
+      "reads": [
+        "csv"
+      ]
+    },
+    {
+      "name": "split into code points",
+      "expr": "split(s, e)",
+      "value": [
+        "G",
+        "r",
+        "ü",
+        "ñ",
+        "😀"
+      ],
+      "type": "list<string>",
+      "program": "AQACDGxpc3Q8c3RyaW5nPgIEAXMEAWUCAWUBcwoGAAAGAQBJCQAC",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"s\"",
+        "0003 LOAD_ROOT 1 ; \"e\"",
+        "0006 CALL 9 2 ; split"
+      ],
+      "reads": [
+        "e",
+        "s"
+      ]
+    },
+    {
+      "name": "split beyond the collection limit",
+      "expr": "split(padLeft(e, 40, \",\"), \",\")",
+      "error": "sizeLimit",
+      "type": "list<string>",
+      "program": "AQADDGxpc3Q8c3RyaW5nPgMEAWUCKAAAAAAAAAAEASwBAWUUBgAABAEABAIASQ0AAwQCAEkJAAI=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"e\"",
+        "0003 CONST 1 ; 40",
+        "0006 CONST 2 ; \",\"",
+        "0009 CALL 13 3 ; padLeft",
+        "0013 CONST 2 ; \",\"",
+        "0016 CALL 9 2 ; split"
+      ],
+      "reads": [
+        "e"
+      ]
+    },
+    {
+      "name": "join",
+      "expr": "join(tags, \"-\")",
+      "value": "b-a-b-é",
+      "type": "string",
+      "program": "AQACBnN0cmluZwIEBHRhZ3MEAS0BBHRhZ3MKBgAABAEASQoAAg==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"tags\"",
+        "0003 CONST 1 ; \"-\"",
+        "0006 CALL 10 2 ; join"
+      ],
+      "reads": [
+        "tags"
+      ]
+    },
+    {
+      "name": "join of an empty list",
+      "expr": "join(slice(tags, 0, 0), \"-\")",
+      "value": "",
+      "type": "string",
+      "program": "AQADBnN0cmluZwMEBHRhZ3MCAAAAAAAAAAAEAS0BBHRhZ3MUBgAABAEABAEASWoAAwQCAEkKAAI=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"tags\"",
+        "0003 CONST 1 ; 0",
+        "0006 CONST 1 ; 0",
+        "0009 CALL 106 3 ; slice",
+        "0013 CONST 2 ; \"-\"",
+        "0016 CALL 10 2 ; join"
+      ],
+      "reads": [
+        "tags"
+      ]
+    },
+    {
+      "name": "join beyond the string limit",
+      "expr": "join(split(padLeft(e, 30, \"a\"), e), \"--\")",
+      "error": "sizeLimit",
+      "type": "string",
+      "program": "AQADBnN0cmluZwQEAWUCHgAAAAAAAAAEAWEEAi0tAQFlGwYAAAQBAAQCAEkNAAMGAABJCQACBAMASQoAAg==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"e\"",
+        "0003 CONST 1 ; 30",
+        "0006 CONST 2 ; \"a\"",
+        "0009 CALL 13 3 ; padLeft",
+        "0013 LOAD_ROOT 0 ; \"e\"",
+        "0016 CALL 9 2 ; split",
+        "0020 CONST 3 ; \"--\"",
+        "0023 CALL 10 2 ; join"
+      ],
+      "reads": [
+        "e"
+      ]
+    },
+    {
+      "name": "substring from",
+      "expr": "substring(s, 2)",
+      "value": "üñ😀",
+      "type": "string",
+      "program": "AQACBnN0cmluZwIEAXMCAgAAAAAAAAABAXMKBgAABAEASQsAAg==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"s\"",
+        "0003 CONST 1 ; 2",
+        "0006 CALL 11 2 ; substring"
+      ],
+      "reads": [
+        "s"
+      ]
+    },
+    {
+      "name": "substring range",
+      "expr": "substring(s, 1, 3)",
+      "value": "rü",
+      "type": "string",
+      "program": "AQADBnN0cmluZwMEAXMCAQAAAAAAAAACAwAAAAAAAAABAXMNBgAABAEABAIASQwAAw==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"s\"",
+        "0003 CONST 1 ; 1",
+        "0006 CONST 2 ; 3",
+        "0009 CALL 12 3 ; substring"
+      ],
+      "reads": [
+        "s"
+      ]
+    },
+    {
+      "name": "substring out of range",
+      "expr": "substring(s, 3, 2)",
+      "error": "indexOutOfRange",
+      "type": "string",
+      "program": "AQADBnN0cmluZwMEAXMCAwAAAAAAAAACAgAAAAAAAAABAXMNBgAABAEABAIASQwAAw==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"s\"",
+        "0003 CONST 1 ; 3",
+        "0006 CONST 2 ; 2",
+        "0009 CALL 12 3 ; substring"
+      ],
+      "reads": [
+        "s"
+      ]
+    },
+    {
+      "name": "padLeft",
+      "expr": "padLeft(s, 8, \"*\")",
+      "value": "***Grüñ😀",
+      "type": "string",
+      "program": "AQADBnN0cmluZwMEAXMCCAAAAAAAAAAEASoBAXMNBgAABAEABAIASQ0AAw==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"s\"",
+        "0003 CONST 1 ; 8",
+        "0006 CONST 2 ; \"*\"",
+        "0009 CALL 13 3 ; padLeft"
+      ],
+      "reads": [
+        "s"
+      ]
+    },
+    {
+      "name": "padRight",
+      "expr": "padRight(s, 8, \"😀\")",
+      "value": "Grüñ😀😀😀😀",
+      "type": "string",
+      "program": "AQADBnN0cmluZwMEAXMCCAAAAAAAAAAEBPCfmIABAXMNBgAABAEABAIASQ4AAw==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"s\"",
+        "0003 CONST 1 ; 8",
+        "0006 CONST 2 ; \"😀\"",
+        "0009 CALL 14 3 ; padRight"
+      ],
+      "reads": [
+        "s"
+      ]
+    },
+    {
+      "name": "pad already wide",
+      "expr": "padRight(s, 2, \"*\")",
+      "value": "Grüñ😀",
+      "type": "string",
+      "program": "AQADBnN0cmluZwMEAXMCAgAAAAAAAAAEASoBAXMNBgAABAEABAIASQ4AAw==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"s\"",
+        "0003 CONST 1 ; 2",
+        "0006 CONST 2 ; \"*\"",
+        "0009 CALL 14 3 ; padRight"
+      ],
+      "reads": [
+        "s"
+      ]
+    },
+    {
+      "name": "pad with two code points",
+      "expr": "padLeft(s, 8, \"ab\")",
+      "error": "invalidArgument",
+      "type": "string",
+      "program": "AQADBnN0cmluZwMEAXMCCAAAAAAAAAAEAmFiAQFzDQYAAAQBAAQCAEkNAAM=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"s\"",
+        "0003 CONST 1 ; 8",
+        "0006 CONST 2 ; \"ab\"",
+        "0009 CALL 13 3 ; padLeft"
+      ],
+      "reads": [
+        "s"
+      ]
+    },
+    {
+      "name": "pad beyond the string limit",
+      "expr": "padLeft(s, 100, \"a\")",
+      "error": "sizeLimit",
+      "type": "string",
+      "program": "AQADBnN0cmluZwMEAXMCZAAAAAAAAAAEAWEBAXMNBgAABAEABAIASQ0AAw==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"s\"",
+        "0003 CONST 1 ; 100",
+        "0006 CONST 2 ; \"a\"",
+        "0009 CALL 13 3 ; padLeft"
+      ],
+      "reads": [
+        "s"
+      ]
+    },
+    {
+      "name": "isEmpty string",
+      "expr": "isEmpty(e)",
+      "value": true,
+      "type": "bool",
+      "program": "AQABBGJvb2wBBAFlAQFlBwYAAElmAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"e\"",
+        "0003 CALL 102 1 ; isEmpty"
+      ],
+      "reads": [
+        "e"
+      ]
+    },
+    {
+      "name": "string concatenation",
+      "expr": "s + e + s",
+      "value": "Grüñ😀Grüñ😀",
+      "type": "string",
+      "program": "AQACBnN0cmluZwIEAXMEAWUCAWUBcwsGAAAGAQAxBgAAMQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"s\"",
+        "0003 LOAD_ROOT 1 ; \"e\"",
+        "0006 CONCAT_STRING",
+        "0007 LOAD_ROOT 0 ; \"s\"",
+        "0010 CONCAT_STRING"
+      ],
+      "reads": [
+        "e",
+        "s"
+      ]
+    },
+    {
+      "name": "string comparison by code point",
+      "expr": "compare(s, \"Grüß\") > 0 && \"😀\" + e > \"￿\" && compare(\"😀\" + e, \"￿\") == 1",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wHBAFzBAZHcsO8w58CAAAAAAAAAAAEBPCfmIAEAWUEA++/vwIBAAAAAAAAAAIBZQFzNwYAAAQBAElKAAIEAgA3QQ8gAAAABAMABgQAMQQFADtBDzcAAAAEAwAGBAAxBAUASUoAAgQGADU=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"s\"",
+        "0003 CONST 1 ; \"Grüß\"",
+        "0006 CALL 74 2 ; compare",
+        "0010 CONST 2 ; 0",
+        "0013 CMP_INT",
+        "0014 GT",
+        "0015 AND_JUMP 32",
+        "0020 CONST 3 ; \"😀\"",
+        "0023 LOAD_ROOT 4 ; \"e\"",
+        "0026 CONCAT_STRING",
+        "0027 CONST 5 ; \"\\uffff\"",
+        "0030 CMP_STRING",
+        "0031 GT",
+        "0032 AND_JUMP 55",
+        "0037 CONST 3 ; \"😀\"",
+        "0040 LOAD_ROOT 4 ; \"e\"",
+        "0043 CONCAT_STRING",
+        "0044 CONST 5 ; \"\\uffff\"",
+        "0047 CALL 74 2 ; compare",
+        "0051 CONST 6 ; 1",
+        "0054 EQ"
+      ],
+      "reads": [
+        "e",
+        "s"
+      ]
+    },
+    {
+      "name": "compare strings",
+      "expr": "compare(e, s)",
+      "value": -1,
+      "type": "int",
+      "program": "AQACA2ludAIEAWUEAXMCAWUBcwoGAAAGAQBJSgAC",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"e\"",
+        "0003 LOAD_ROOT 1 ; \"s\"",
+        "0006 CALL 74 2 ; compare"
+      ],
+      "reads": [
+        "e",
+        "s"
+      ]
+    },
+    {
+      "name": "abs int",
+      "expr": "abs(neg)",
+      "value": 5,
+      "type": "int",
+      "program": "AQABA2ludAEEA25lZwEDbmVnBwYAAEkQAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"neg\"",
+        "0003 CALL 16 1 ; abs"
+      ],
+      "reads": [
+        "neg"
+      ]
+    },
+    {
+      "name": "abs int overflow",
+      "expr": "abs(minInt)",
+      "error": "overflow",
+      "type": "int",
+      "program": "AQABA2ludAEEBm1pbkludAEGbWluSW50BwYAAEkQAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"minInt\"",
+        "0003 CALL 16 1 ; abs"
+      ],
+      "reads": [
+        "minInt"
+      ]
+    },
+    {
+      "name": "abs double",
+      "expr": "abs(-x)",
+      "value": 2.5,
+      "type": "double",
+      "program": "AQABBmRvdWJsZQEEAXgBAXgIBgAAHkkRAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"x\"",
+        "0003 NEG_DOUBLE",
+        "0004 CALL 17 1 ; abs"
+      ],
+      "reads": [
+        "x"
+      ]
+    },
+    {
+      "name": "abs decimal",
+      "expr": "abs(-dec)",
+      "value": "1.25",
+      "type": "decimal",
+      "program": "AQABB2RlY2ltYWwBBANkZWMBA2RlYwgGAAAiSRIAAQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 NEG_DEC",
+        "0004 CALL 18 1 ; abs"
+      ],
+      "reads": [
+        "dec"
+      ]
+    },
+    {
+      "name": "abs money",
+      "expr": "abs(-price)",
+      "value": {
+        "amount": "10.00",
+        "currency": "EUR"
+      },
+      "type": "money",
+      "program": "AQABBW1vbmV5AQQFcHJpY2UBBXByaWNlCAYAACdJEwAB",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"price\"",
+        "0003 NEG_MONEY",
+        "0004 CALL 19 1 ; abs"
+      ],
+      "reads": [
+        "price"
+      ]
+    },
+    {
+      "name": "round double",
+      "expr": "round(x)",
+      "value": 2,
+      "type": "int",
+      "program": "AQABA2ludAEEAXgBAXgHBgAASR4AAQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"x\"",
+        "0003 CALL 30 1 ; round"
+      ],
+      "reads": [
+        "x"
+      ]
+    },
+    {
+      "name": "round double to nearest",
+      "expr": "round(x + 0.25)",
+      "value": 3,
+      "type": "int",
+      "program": "AQACA2ludAIEAXgDAAAAAAAA0D8BAXgLBgAABAEAGUkeAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"x\"",
+        "0003 CONST 1 ; 0.25",
+        "0006 ADD_DOUBLE",
+        "0007 CALL 30 1 ; round"
+      ],
+      "reads": [
+        "x"
+      ]
+    },
+    {
+      "name": "floor double",
+      "expr": "floor(-x)",
+      "value": -3,
+      "type": "int",
+      "program": "AQABA2ludAEEAXgBAXgIBgAAHkkkAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"x\"",
+        "0003 NEG_DOUBLE",
+        "0004 CALL 36 1 ; floor"
+      ],
+      "reads": [
+        "x"
+      ]
+    },
+    {
+      "name": "ceil double",
+      "expr": "ceil(x)",
+      "value": 3,
+      "type": "int",
+      "program": "AQABA2ludAEEAXgBAXgHBgAASSYAAQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"x\"",
+        "0003 CALL 38 1 ; ceil"
+      ],
+      "reads": [
+        "x"
+      ]
+    },
+    {
+      "name": "int double truncates",
+      "expr": "int(-x)",
+      "value": -2,
+      "type": "int",
+      "program": "AQABA2ludAEEAXgBAXgIBgAAHkkrAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"x\"",
+        "0003 NEG_DOUBLE",
+        "0004 CALL 43 1 ; int"
+      ],
+      "reads": [
+        "x"
+      ]
+    },
+    {
+      "name": "int double outside the range",
+      "expr": "int(x * 1e30)",
+      "error": "overflow",
+      "type": "int",
+      "program": "AQACA2ludAIEAXgD6oygOVk+KUYBAXgLBgAABAEAG0krAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"x\"",
+        "0003 CONST 1 ; 1e+30",
+        "0006 MUL_DOUBLE",
+        "0007 CALL 43 1 ; int"
+      ],
+      "reads": [
+        "x"
+      ]
+    },
+    {
+      "name": "int decimal",
+      "expr": "int(-dec)",
+      "value": -1,
+      "type": "int",
+      "program": "AQABA2ludAEEA2RlYwEDZGVjCAYAACJJLAAB",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 NEG_DEC",
+        "0004 CALL 44 1 ; int"
+      ],
+      "reads": [
+        "dec"
+      ]
+    },
+    {
+      "name": "int string",
+      "expr": "int(\"-\" + digits)",
+      "value": -123456789,
+      "type": "int",
+      "program": "AQACA2ludAIEAS0EBmRpZ2l0cwEGZGlnaXRzCwQAAAYBADFJLQAB",
+      "asm": [
+        "0000 CONST 0 ; \"-\"",
+        "0003 LOAD_ROOT 1 ; \"digits\"",
+        "0006 CONCAT_STRING",
+        "0007 CALL 45 1 ; int"
+      ],
+      "reads": [
+        "digits"
+      ]
+    },
+    {
+      "name": "int string with plus",
+      "expr": "int(\"+\" + digits)",
+      "error": "invalidArgument",
+      "type": "int",
+      "program": "AQACA2ludAIEASsEBmRpZ2l0cwEGZGlnaXRzCwQAAAYBADFJLQAB",
+      "asm": [
+        "0000 CONST 0 ; \"+\"",
+        "0003 LOAD_ROOT 1 ; \"digits\"",
+        "0006 CONCAT_STRING",
+        "0007 CALL 45 1 ; int"
+      ],
+      "reads": [
+        "digits"
+      ]
+    },
+    {
+      "name": "int string too large",
+      "expr": "int(digits + digits + digits)",
+      "error": "invalidArgument",
+      "type": "int",
+      "program": "AQACA2ludAEEBmRpZ2l0cwEGZGlnaXRzDwYAAAYAADEGAAAxSS0AAQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"digits\"",
+        "0003 LOAD_ROOT 0 ; \"digits\"",
+        "0006 CONCAT_STRING",
+        "0007 LOAD_ROOT 0 ; \"digits\"",
+        "0010 CONCAT_STRING",
+        "0011 CALL 45 1 ; int"
+      ],
+      "reads": [
+        "digits"
+      ]
+    },
+    {
+      "name": "double int",
+      "expr": "double(i)",
+      "value": 7,
+      "type": "double",
+      "program": "AQABBmRvdWJsZQEEAWkBAWkHBgAASS4AAQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"i\"",
+        "0003 CALL 46 1 ; double"
+      ],
+      "reads": [
+        "i"
+      ]
+    },
+    {
+      "name": "double decimal",
+      "expr": "double(dec)",
+      "value": 1.25,
+      "type": "double",
+      "program": "AQABBmRvdWJsZQEEA2RlYwEDZGVjBwYAAEkvAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 CALL 47 1 ; double"
+      ],
+      "reads": [
+        "dec"
+      ]
+    },
+    {
+      "name": "double string",
+      "expr": "double(\"1.5e3\" + e)",
+      "value": 1500,
+      "type": "double",
+      "program": "AQACBmRvdWJsZQIEBTEuNWUzBAFlAQFlCwQAAAYBADFJMAAB",
+      "asm": [
+        "0000 CONST 0 ; \"1.5e3\"",
+        "0003 LOAD_ROOT 1 ; \"e\"",
+        "0006 CONCAT_STRING",
+        "0007 CALL 48 1 ; double"
+      ],
+      "reads": [
+        "e"
+      ]
+    },
+    {
+      "name": "double string not JSON",
+      "expr": "double(\"01\" + e)",
+      "error": "invalidArgument",
+      "type": "double",
+      "program": "AQACBmRvdWJsZQIEAjAxBAFlAQFlCwQAAAYBADFJMAAB",
+      "asm": [
+        "0000 CONST 0 ; \"01\"",
+        "0003 LOAD_ROOT 1 ; \"e\"",
+        "0006 CONCAT_STRING",
+        "0007 CALL 48 1 ; double"
+      ],
+      "reads": [
+        "e"
+      ]
+    },
+    {
+      "name": "double string too large",
+      "expr": "double(\"1e400\" + e)",
+      "error": "nonFinite",
+      "type": "double",
+      "program": "AQACBmRvdWJsZQIEBTFlNDAwBAFlAQFlCwQAAAYBADFJMAAB",
+      "asm": [
+        "0000 CONST 0 ; \"1e400\"",
+        "0003 LOAD_ROOT 1 ; \"e\"",
+        "0006 CONCAT_STRING",
+        "0007 CALL 48 1 ; double"
+      ],
+      "reads": [
+        "e"
+      ]
+    },
+    {
+      "name": "min int",
+      "expr": "min(i, neg)",
+      "value": -5,
+      "type": "int",
+      "program": "AQACA2ludAIEAWkEA25lZwIBaQNuZWcKBgAABgEASRQAAg==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"i\"",
+        "0003 LOAD_ROOT 1 ; \"neg\"",
+        "0006 CALL 20 2 ; min"
+      ],
+      "reads": [
+        "i",
+        "neg"
+      ]
+    },
+    {
+      "name": "max double",
+      "expr": "max(x, -x)",
+      "value": 2.5,
+      "type": "double",
+      "program": "AQACBmRvdWJsZQEEAXgBAXgLBgAABgAAHkkaAAI=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"x\"",
+        "0003 LOAD_ROOT 0 ; \"x\"",
+        "0006 NEG_DOUBLE",
+        "0007 CALL 26 2 ; max"
+      ],
+      "reads": [
+        "x"
+      ]
+    },
+    {
+      "name": "min decimal",
+      "expr": "min(dec, -dec)",
+      "value": "-1.25",
+      "type": "decimal",
+      "program": "AQACB2RlY2ltYWwBBANkZWMBA2RlYwsGAAAGAAAiSRYAAg==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 LOAD_ROOT 0 ; \"dec\"",
+        "0006 NEG_DEC",
+        "0007 CALL 22 2 ; min"
+      ],
+      "reads": [
+        "dec"
+      ]
+    },
+    {
+      "name": "max money",
+      "expr": "max(price, -price)",
+      "value": {
+        "amount": "10.00",
+        "currency": "EUR"
+      },
+      "type": "money",
+      "program": "AQACBW1vbmV5AQQFcHJpY2UBBXByaWNlCwYAAAYAACdJHAAC",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"price\"",
+        "0003 LOAD_ROOT 0 ; \"price\"",
+        "0006 NEG_MONEY",
+        "0007 CALL 28 2 ; max"
+      ],
+      "reads": [
+        "price"
+      ]
+    },
+    {
+      "name": "min duration",
+      "expr": "min(dur, -dur)",
+      "value": -90061001,
+      "type": "duration",
+      "program": "AQACCGR1cmF0aW9uAQQDZHVyAQNkdXILBgAABgAAKkkYAAI=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dur\"",
+        "0003 LOAD_ROOT 0 ; \"dur\"",
+        "0006 NEG_DUR",
+        "0007 CALL 24 2 ; min"
+      ],
+      "reads": [
+        "dur"
+      ]
+    },
+    {
+      "name": "max money currency mismatch",
+      "expr": "max(price, usd)",
+      "error": "currencyMismatch",
+      "type": "money",
+      "program": "AQACBW1vbmV5AgQFcHJpY2UEA3VzZAIFcHJpY2UDdXNkCgYAAAYBAEkcAAI=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"price\"",
+        "0003 LOAD_ROOT 1 ; \"usd\"",
+        "0006 CALL 28 2 ; max"
+      ],
+      "reads": [
+        "price",
+        "usd"
+      ]
+    },
+    {
+      "name": "clamp int low",
+      "expr": "clamp(neg, 0, 10)",
+      "value": 0,
+      "type": "int",
+      "program": "AQADA2ludAMEA25lZwIAAAAAAAAAAAIKAAAAAAAAAAEDbmVnDQYAAAQBAAQCAEkoAAM=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"neg\"",
+        "0003 CONST 1 ; 0",
+        "0006 CONST 2 ; 10",
+        "0009 CALL 40 3 ; clamp"
+      ],
+      "reads": [
+        "neg"
+      ]
+    },
+    {
+      "name": "clamp int high",
+      "expr": "clamp(i, 0, 5)",
+      "value": 5,
+      "type": "int",
+      "program": "AQADA2ludAMEAWkCAAAAAAAAAAACBQAAAAAAAAABAWkNBgAABAEABAIASSgAAw==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"i\"",
+        "0003 CONST 1 ; 0",
+        "0006 CONST 2 ; 5",
+        "0009 CALL 40 3 ; clamp"
+      ],
+      "reads": [
+        "i"
+      ]
+    },
+    {
+      "name": "clamp double inside",
+      "expr": "clamp(x, 0.0, 10.0)",
+      "value": 2.5,
+      "type": "double",
+      "program": "AQADBmRvdWJsZQMEAXgDAAAAAAAAAAADAAAAAAAAJEABAXgNBgAABAEABAIASSkAAw==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"x\"",
+        "0003 CONST 1 ; 0",
+        "0006 CONST 2 ; 10",
+        "0009 CALL 41 3 ; clamp"
+      ],
+      "reads": [
+        "x"
+      ]
+    },
+    {
+      "name": "clamp decimal",
+      "expr": "clamp(dec, -dec, dec)",
+      "value": "1.25",
+      "type": "decimal",
+      "program": "AQADB2RlY2ltYWwBBANkZWMBA2RlYw4GAAAGAAAiBgAASSoAAw==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 LOAD_ROOT 0 ; \"dec\"",
+        "0006 NEG_DEC",
+        "0007 LOAD_ROOT 0 ; \"dec\"",
+        "0010 CALL 42 3 ; clamp"
+      ],
+      "reads": [
+        "dec"
+      ]
+    },
+    {
+      "name": "clamp bad bounds",
+      "expr": "clamp(i, 10, 0)",
+      "error": "invalidArgument",
+      "type": "int",
+      "program": "AQADA2ludAMEAWkCCgAAAAAAAAACAAAAAAAAAAABAWkNBgAABAEABAIASSgAAw==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"i\"",
+        "0003 CONST 1 ; 10",
+        "0006 CONST 2 ; 0",
+        "0009 CALL 40 3 ; clamp"
+      ],
+      "reads": [
+        "i"
+      ]
+    },
+    {
+      "name": "isZero int",
+      "expr": "isZero(i - i)",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wBBAFpAQFpCwYAAAYAABRJQgAB",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"i\"",
+        "0003 LOAD_ROOT 0 ; \"i\"",
+        "0006 SUB_INT",
+        "0007 CALL 66 1 ; isZero"
+      ],
+      "reads": [
+        "i"
+      ]
+    },
+    {
+      "name": "isZero double",
+      "expr": "isZero(x)",
+      "value": false,
+      "type": "bool",
+      "program": "AQABBGJvb2wBBAF4AQF4BwYAAElDAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"x\"",
+        "0003 CALL 67 1 ; isZero"
+      ],
+      "reads": [
+        "x"
+      ]
+    },
+    {
+      "name": "isZero decimal",
+      "expr": "isZero(dec - dec)",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wBBANkZWMBA2RlYwsGAAAGAAAgSUQAAQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 LOAD_ROOT 0 ; \"dec\"",
+        "0006 SUB_DEC",
+        "0007 CALL 68 1 ; isZero"
+      ],
+      "reads": [
+        "dec"
+      ]
+    },
+    {
+      "name": "isZero money",
+      "expr": "isZero(price)",
+      "value": false,
+      "type": "bool",
+      "program": "AQABBGJvb2wBBAVwcmljZQEFcHJpY2UHBgAASUUAAQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"price\"",
+        "0003 CALL 69 1 ; isZero"
+      ],
+      "reads": [
+        "price"
+      ]
+    },
+    {
+      "name": "int add overflow",
+      "expr": "maxInt + i",
+      "error": "overflow",
+      "type": "int",
+      "program": "AQACA2ludAIEBm1heEludAQBaQIBaQZtYXhJbnQHBgAABgEAEw==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"maxInt\"",
+        "0003 LOAD_ROOT 1 ; \"i\"",
+        "0006 ADD_INT"
+      ],
+      "reads": [
+        "i",
+        "maxInt"
+      ]
+    },
+    {
+      "name": "int sub overflow",
+      "expr": "minInt - i",
+      "error": "overflow",
+      "type": "int",
+      "program": "AQACA2ludAIEBm1pbkludAQBaQIBaQZtaW5JbnQHBgAABgEAFA==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"minInt\"",
+        "0003 LOAD_ROOT 1 ; \"i\"",
+        "0006 SUB_INT"
+      ],
+      "reads": [
+        "i",
+        "minInt"
+      ]
+    },
+    {
+      "name": "int mul overflow",
+      "expr": "maxInt * i",
+      "error": "overflow",
+      "type": "int",
+      "program": "AQACA2ludAIEBm1heEludAQBaQIBaQZtYXhJbnQHBgAABgEAFQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"maxInt\"",
+        "0003 LOAD_ROOT 1 ; \"i\"",
+        "0006 MUL_INT"
+      ],
+      "reads": [
+        "i",
+        "maxInt"
+      ]
+    },
+    {
+      "name": "int mul min by minus one",
+      "expr": "minInt * -1 * one",
+      "error": "overflow",
+      "type": "int",
+      "program": "AQACA2ludAMEBm1pbkludAL//////////wQDb25lAgZtaW5JbnQDb25lCwYAAAQBABUGAgAV",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"minInt\"",
+        "0003 CONST 1 ; -1",
+        "0006 MUL_INT",
+        "0007 LOAD_ROOT 2 ; \"one\"",
+        "0010 MUL_INT"
+      ],
+      "reads": [
+        "minInt",
+        "one"
+      ]
+    },
+    {
+      "name": "int div min by minus one",
+      "expr": "minInt / (-one)",
+      "error": "overflow",
+      "type": "int",
+      "program": "AQACA2ludAIEBm1pbkludAQDb25lAgZtaW5JbnQDb25lCAYAAAYBABgW",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"minInt\"",
+        "0003 LOAD_ROOT 1 ; \"one\"",
+        "0006 NEG_INT",
+        "0007 DIV_INT"
+      ],
+      "reads": [
+        "minInt",
+        "one"
+      ]
+    },
+    {
+      "name": "int div truncates",
+      "expr": "neg / 2",
+      "value": -2,
+      "type": "int",
+      "program": "AQACA2ludAIEA25lZwICAAAAAAAAAAEDbmVnBwYAAAQBABY=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"neg\"",
+        "0003 CONST 1 ; 2",
+        "0006 DIV_INT"
+      ],
+      "reads": [
+        "neg"
+      ]
+    },
+    {
+      "name": "int mod truncates",
+      "expr": "neg % 2",
+      "value": -1,
+      "type": "int",
+      "program": "AQACA2ludAIEA25lZwICAAAAAAAAAAEDbmVnBwYAAAQBABc=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"neg\"",
+        "0003 CONST 1 ; 2",
+        "0006 MOD_INT"
+      ],
+      "reads": [
+        "neg"
+      ]
+    },
+    {
+      "name": "int mod minus one",
+      "expr": "minInt % (-one)",
+      "value": 0,
+      "type": "int",
+      "program": "AQACA2ludAIEBm1pbkludAQDb25lAgZtaW5JbnQDb25lCAYAAAYBABgX",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"minInt\"",
+        "0003 LOAD_ROOT 1 ; \"one\"",
+        "0006 NEG_INT",
+        "0007 MOD_INT"
+      ],
+      "reads": [
+        "minInt",
+        "one"
+      ]
+    },
+    {
+      "name": "int div by zero",
+      "expr": "i / (i - i)",
+      "error": "divisionByZero",
+      "type": "int",
+      "program": "AQADA2ludAEEAWkBAWkLBgAABgAABgAAFBY=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"i\"",
+        "0003 LOAD_ROOT 0 ; \"i\"",
+        "0006 LOAD_ROOT 0 ; \"i\"",
+        "0009 SUB_INT",
+        "0010 DIV_INT"
+      ],
+      "reads": [
+        "i"
+      ]
+    },
+    {
+      "name": "int negate min",
+      "expr": "-minInt",
+      "error": "overflow",
+      "type": "int",
+      "program": "AQABA2ludAEEBm1pbkludAEGbWluSW50BAYAABg=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"minInt\"",
+        "0003 NEG_INT"
+      ],
+      "reads": [
+        "minInt"
+      ]
+    },
+    {
+      "name": "double arithmetic",
+      "expr": "x * 2.0 - x / 4.0 + x % 1.0",
+      "value": 4.875,
+      "type": "double",
+      "program": "AQADBmRvdWJsZQQEAXgDAAAAAAAAAEADAAAAAAAAEEADAAAAAAAA8D8BAXgXBgAABAEAGwYAAAQCABwaBgAABAMAHRk=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"x\"",
+        "0003 CONST 1 ; 2",
+        "0006 MUL_DOUBLE",
+        "0007 LOAD_ROOT 0 ; \"x\"",
+        "0010 CONST 2 ; 4",
+        "0013 DIV_DOUBLE",
+        "0014 SUB_DOUBLE",
+        "0015 LOAD_ROOT 0 ; \"x\"",
+        "0018 CONST 3 ; 1",
+        "0021 MOD_DOUBLE",
+        "0022 ADD_DOUBLE"
+      ],
+      "reads": [
+        "x"
+      ]
+    },
+    {
+      "name": "double mod truncates",
+      "expr": "-x % 2.0",
+      "value": -0.5,
+      "type": "double",
+      "program": "AQACBmRvdWJsZQIEAXgDAAAAAAAAAEABAXgIBgAAHgQBAB0=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"x\"",
+        "0003 NEG_DOUBLE",
+        "0004 CONST 1 ; 2",
+        "0007 MOD_DOUBLE"
+      ],
+      "reads": [
+        "x"
+      ]
+    },
+    {
+      "name": "double division by zero",
+      "expr": "x / (x - x)",
+      "error": "nonFinite",
+      "type": "double",
+      "program": "AQADBmRvdWJsZQEEAXgBAXgLBgAABgAABgAAGhw=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"x\"",
+        "0003 LOAD_ROOT 0 ; \"x\"",
+        "0006 LOAD_ROOT 0 ; \"x\"",
+        "0009 SUB_DOUBLE",
+        "0010 DIV_DOUBLE"
+      ],
+      "reads": [
+        "x"
+      ]
+    },
+    {
+      "name": "decimal int",
+      "expr": "decimal(i)",
+      "value": "7",
+      "type": "decimal",
+      "program": "AQABB2RlY2ltYWwBBAFpAQFpBwYAAEkxAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"i\"",
+        "0003 CALL 49 1 ; decimal"
+      ],
+      "reads": [
+        "i"
+      ]
+    },
+    {
+      "name": "decimal double",
+      "expr": "decimal(x)",
+      "value": "2.5",
+      "type": "decimal",
+      "program": "AQABB2RlY2ltYWwBBAF4AQF4BwYAAEkyAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"x\"",
+        "0003 CALL 50 1 ; decimal"
+      ],
+      "reads": [
+        "x"
+      ]
+    },
+    {
+      "name": "decimal string",
+      "expr": "decimal(\"-0.50\" + e)",
+      "value": "-0.50",
+      "type": "decimal",
+      "program": "AQACB2RlY2ltYWwCBAUtMC41MAQBZQEBZQsEAAAGAQAxSTMAAQ==",
+      "asm": [
+        "0000 CONST 0 ; \"-0.50\"",
+        "0003 LOAD_ROOT 1 ; \"e\"",
+        "0006 CONCAT_STRING",
+        "0007 CALL 51 1 ; decimal"
+      ],
+      "reads": [
+        "e"
+      ]
+    },
+    {
+      "name": "decimal string invalid",
+      "expr": "decimal(\"1e3\" + e)",
+      "error": "invalidArgument",
+      "type": "decimal",
+      "program": "AQACB2RlY2ltYWwCBAMxZTMEAWUBAWULBAAABgEAMUkzAAE=",
+      "asm": [
+        "0000 CONST 0 ; \"1e3\"",
+        "0003 LOAD_ROOT 1 ; \"e\"",
+        "0006 CONCAT_STRING",
+        "0007 CALL 51 1 ; decimal"
+      ],
+      "reads": [
+        "e"
+      ]
+    },
+    {
+      "name": "decimal operators",
+      "expr": "dec + dec * dec - dec",
+      "value": "1.5625",
+      "type": "decimal",
+      "program": "AQADB2RlY2ltYWwBBANkZWMBA2RlYw8GAAAGAAAGAAAhHwYAACA=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 LOAD_ROOT 0 ; \"dec\"",
+        "0006 LOAD_ROOT 0 ; \"dec\"",
+        "0009 MUL_DEC",
+        "0010 ADD_DEC",
+        "0011 LOAD_ROOT 0 ; \"dec\"",
+        "0014 SUB_DEC"
+      ],
+      "reads": [
+        "dec"
+      ]
+    },
+    {
+      "name": "decimal functions",
+      "expr": "sub(mul(add(dec, dec), dec), dec)",
+      "value": "1.8750",
+      "type": "decimal",
+      "program": "AQACB2RlY2ltYWwBBANkZWMBA2RlYxgGAAAGAABJNgACBgAASToAAgYAAEk4AAI=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 LOAD_ROOT 0 ; \"dec\"",
+        "0006 CALL 54 2 ; add",
+        "0010 LOAD_ROOT 0 ; \"dec\"",
+        "0013 CALL 58 2 ; mul",
+        "0017 LOAD_ROOT 0 ; \"dec\"",
+        "0020 CALL 56 2 ; sub"
+      ],
+      "reads": [
+        "dec"
+      ]
+    },
+    {
+      "name": "decimal div",
+      "expr": "div(dec, decimal(3), 4)",
+      "value": "0.4167",
+      "type": "decimal",
+      "program": "AQADB2RlY2ltYWwDBANkZWMFATMCBAAAAAAAAAABA2RlYw0GAAAEAQAEAgBJPAAD",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 CONST 1 ; 3d",
+        "0006 CONST 2 ; 4",
+        "0009 CALL 60 3 ; div"
+      ],
+      "reads": [
+        "dec"
+      ]
+    },
+    {
+      "name": "decimal div with mode",
+      "expr": "div(-dec, decimal(3), 2, mode)",
+      "value": "-0.42",
+      "type": "decimal",
+      "program": "AQAEB2RlY2ltYWwEBANkZWMFATMCAgAAAAAAAAAEBG1vZGUCA2RlYwRtb2RlEQYAACIEAQAEAgAGAwBJPQAE",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 NEG_DEC",
+        "0004 CONST 1 ; 3d",
+        "0007 CONST 2 ; 2",
+        "0010 LOAD_ROOT 3 ; \"mode\"",
+        "0013 CALL 61 4 ; div"
+      ],
+      "reads": [
+        "dec",
+        "mode"
+      ]
+    },
+    {
+      "name": "decimal div by zero",
+      "expr": "div(dec, dec - dec, 2)",
+      "error": "divisionByZero",
+      "type": "decimal",
+      "program": "AQADB2RlY2ltYWwCBANkZWMCAgAAAAAAAAABA2RlYxEGAAAGAAAGAAAgBAEASTwAAw==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 LOAD_ROOT 0 ; \"dec\"",
+        "0006 LOAD_ROOT 0 ; \"dec\"",
+        "0009 SUB_DEC",
+        "0010 CONST 1 ; 2",
+        "0013 CALL 60 3 ; div"
+      ],
+      "reads": [
+        "dec"
+      ]
+    },
+    {
+      "name": "decimal div negative scale",
+      "expr": "div(dec, dec, neg)",
+      "error": "invalidArgument",
+      "type": "decimal",
+      "program": "AQADB2RlY2ltYWwCBANkZWMEA25lZwIDZGVjA25lZw0GAAAGAAAGAQBJPAAD",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 LOAD_ROOT 0 ; \"dec\"",
+        "0006 LOAD_ROOT 1 ; \"neg\"",
+        "0009 CALL 60 3 ; div"
+      ],
+      "reads": [
+        "dec",
+        "neg"
+      ]
+    },
+    {
+      "name": "decimal div scale too large",
+      "expr": "div(dec, dec, 20000)",
+      "error": "sizeLimit",
+      "type": "decimal",
+      "program": "AQADB2RlY2ltYWwCBANkZWMCIE4AAAAAAAABA2RlYw0GAAAGAAAEAQBJPAAD",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 LOAD_ROOT 0 ; \"dec\"",
+        "0006 CONST 1 ; 20000",
+        "0009 CALL 60 3 ; div"
+      ],
+      "reads": [
+        "dec"
+      ]
+    },
+    {
+      "name": "decimal round",
+      "expr": "round(dec)",
+      "value": "1",
+      "type": "decimal",
+      "program": "AQABB2RlY2ltYWwBBANkZWMBA2RlYwcGAABJHwAB",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 CALL 31 1 ; round"
+      ],
+      "reads": [
+        "dec"
+      ]
+    },
+    {
+      "name": "decimal round scale",
+      "expr": "round(dec, 1)",
+      "value": "1.2",
+      "type": "decimal",
+      "program": "AQACB2RlY2ltYWwCBANkZWMCAQAAAAAAAAABA2RlYwoGAAAEAQBJIAAC",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 CONST 1 ; 1",
+        "0006 CALL 32 2 ; round"
+      ],
+      "reads": [
+        "dec"
+      ]
+    },
+    {
+      "name": "decimal round scale and mode",
+      "expr": "round(-dec, 1, mode)",
+      "value": "-1.3",
+      "type": "decimal",
+      "program": "AQADB2RlY2ltYWwDBANkZWMCAQAAAAAAAAAEBG1vZGUCA2RlYwRtb2RlDgYAACIEAQAGAgBJIQAD",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 NEG_DEC",
+        "0004 CONST 1 ; 1",
+        "0007 LOAD_ROOT 2 ; \"mode\"",
+        "0010 CALL 33 3 ; round"
+      ],
+      "reads": [
+        "dec",
+        "mode"
+      ]
+    },
+    {
+      "name": "decimal round all modes",
+      "expr": "[round(-dec, 0, \"up\"), round(-dec, 0, \"down\"), round(-dec, 0, \"ceiling\"), round(-dec, 0, \"floor\"), round(-dec, 0, \"halfUp\"), round(-dec, 0, \"halfEven\")]",
+      "value": [
+        "-2",
+        "-1",
+        "-1",
+        "-2",
+        "-1",
+        "-1"
+      ],
+      "type": "list<decimal>",
+      "program": "AQAIDWxpc3Q8ZGVjaW1hbD4IBANkZWMCAAAAAAAAAAAEAnVwBARkb3duBAdjZWlsaW5nBAVmbG9vcgQGaGFsZlVwBAhoYWxmRXZlbgEDZGVjVwYAACIEAQAEAgBJIQADBgAAIgQBAAQDAEkhAAMGAAAiBAEABAQASSEAAwYAACIEAQAEBQBJIQADBgAAIgQBAAQGAEkhAAMGAAAiBAEABAcASSEAA0YGAA==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 NEG_DEC",
+        "0004 CONST 1 ; 0",
+        "0007 CONST 2 ; \"up\"",
+        "0010 CALL 33 3 ; round",
+        "0014 LOAD_ROOT 0 ; \"dec\"",
+        "0017 NEG_DEC",
+        "0018 CONST 1 ; 0",
+        "0021 CONST 3 ; \"down\"",
+        "0024 CALL 33 3 ; round",
+        "0028 LOAD_ROOT 0 ; \"dec\"",
+        "0031 NEG_DEC",
+        "0032 CONST 1 ; 0",
+        "0035 CONST 4 ; \"ceiling\"",
+        "0038 CALL 33 3 ; round",
+        "0042 LOAD_ROOT 0 ; \"dec\"",
+        "0045 NEG_DEC",
+        "0046 CONST 1 ; 0",
+        "0049 CONST 5 ; \"floor\"",
+        "0052 CALL 33 3 ; round",
+        "0056 LOAD_ROOT 0 ; \"dec\"",
+        "0059 NEG_DEC",
+        "0060 CONST 1 ; 0",
+        "0063 CONST 6 ; \"halfUp\"",
+        "0066 CALL 33 3 ; round",
+        "0070 LOAD_ROOT 0 ; \"dec\"",
+        "0073 NEG_DEC",
+        "0074 CONST 1 ; 0",
+        "0077 CONST 7 ; \"halfEven\"",
+        "0080 CALL 33 3 ; round",
+        "0084 NEW_LIST 6"
+      ],
+      "reads": [
+        "dec"
+      ]
+    },
+    {
+      "name": "decimal floor and ceil",
+      "expr": "[floor(-dec), ceil(-dec)]",
+      "value": [
+        "-2",
+        "-1"
+      ],
+      "type": "list<decimal>",
+      "program": "AQACDWxpc3Q8ZGVjaW1hbD4BBANkZWMBA2RlYxMGAAAiSSUAAQYAACJJJwABRgIA",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 NEG_DEC",
+        "0004 CALL 37 1 ; floor",
+        "0008 LOAD_ROOT 0 ; \"dec\"",
+        "0011 NEG_DEC",
+        "0012 CALL 39 1 ; ceil",
+        "0016 NEW_LIST 2"
+      ],
+      "reads": [
+        "dec"
+      ]
+    },
+    {
+      "name": "decimal widening",
+      "expr": "i + dec",
+      "value": "8.25",
+      "type": "decimal",
+      "program": "AQACB2RlY2ltYWwCBAFpBANkZWMCA2RlYwFpCAYAADQGAQAf",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"i\"",
+        "0003 INT_TO_DEC",
+        "0004 LOAD_ROOT 1 ; \"dec\"",
+        "0007 ADD_DEC"
+      ],
+      "reads": [
+        "dec",
+        "i"
+      ]
+    },
+    {
+      "name": "decimal digits limit",
+      "expr": "dec * dec * dec * dec * dec * dec * dec * dec * dec * dec * dec * dec * dec * dec * dec * dec * dec * dec * dec * dec",
+      "error": "sizeLimit",
+      "type": "decimal",
+      "program": "AQACB2RlY2ltYWwBBANkZWMBA2RlY08GAAAGAAAhBgAAIQYAACEGAAAhBgAAIQYAACEGAAAhBgAAIQYAACEGAAAhBgAAIQYAACEGAAAhBgAAIQYAACEGAAAhBgAAIQYAACEGAAAh",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 LOAD_ROOT 0 ; \"dec\"",
+        "0006 MUL_DEC",
+        "0007 LOAD_ROOT 0 ; \"dec\"",
+        "0010 MUL_DEC",
+        "0011 LOAD_ROOT 0 ; \"dec\"",
+        "0014 MUL_DEC",
+        "0015 LOAD_ROOT 0 ; \"dec\"",
+        "0018 MUL_DEC",
+        "0019 LOAD_ROOT 0 ; \"dec\"",
+        "0022 MUL_DEC",
+        "0023 LOAD_ROOT 0 ; \"dec\"",
+        "0026 MUL_DEC",
+        "0027 LOAD_ROOT 0 ; \"dec\"",
+        "0030 MUL_DEC",
+        "0031 LOAD_ROOT 0 ; \"dec\"",
+        "0034 MUL_DEC",
+        "0035 LOAD_ROOT 0 ; \"dec\"",
+        "0038 MUL_DEC",
+        "0039 LOAD_ROOT 0 ; \"dec\"",
+        "0042 MUL_DEC",
+        "0043 LOAD_ROOT 0 ; \"dec\"",
+        "0046 MUL_DEC",
+        "0047 LOAD_ROOT 0 ; \"dec\"",
+        "0050 MUL_DEC",
+        "0051 LOAD_ROOT 0 ; \"dec\"",
+        "0054 MUL_DEC",
+        "0055 LOAD_ROOT 0 ; \"dec\"",
+        "0058 MUL_DEC",
+        "0059 LOAD_ROOT 0 ; \"dec\"",
+        "0062 MUL_DEC",
+        "0063 LOAD_ROOT 0 ; \"dec\"",
+        "0066 MUL_DEC",
+        "0067 LOAD_ROOT 0 ; \"dec\"",
+        "0070 MUL_DEC",
+        "0071 LOAD_ROOT 0 ; \"dec\"",
+        "0074 MUL_DEC",
+        "0075 LOAD_ROOT 0 ; \"dec\"",
+        "0078 MUL_DEC"
+      ],
+      "reads": [
+        "dec"
+      ]
+    },
+    {
+      "name": "money decimal",
+      "expr": "money(dec, \"JPY\")",
+      "value": {
+        "amount": "1.25",
+        "currency": "JPY"
+      },
+      "type": "money",
+      "program": "AQACBW1vbmV5AgQDZGVjBANKUFkBA2RlYwoGAAAEAQBJNAAC",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 CONST 1 ; \"JPY\"",
+        "0006 CALL 52 2 ; money"
+      ],
+      "reads": [
+        "dec"
+      ]
+    },
+    {
+      "name": "money string",
+      "expr": "money(\"12.345\" + e, \"BHD\")",
+      "value": {
+        "amount": "12.345",
+        "currency": "BHD"
+      },
+      "type": "money",
+      "program": "AQACBW1vbmV5AwQGMTIuMzQ1BAFlBANCSEQBAWUOBAAABgEAMQQCAEk1AAI=",
+      "asm": [
+        "0000 CONST 0 ; \"12.345\"",
+        "0003 LOAD_ROOT 1 ; \"e\"",
+        "0006 CONCAT_STRING",
+        "0007 CONST 2 ; \"BHD\"",
+        "0010 CALL 53 2 ; money"
+      ],
+      "reads": [
+        "e"
+      ]
+    },
+    {
+      "name": "money unknown currency",
+      "expr": "money(dec, \"XYZ\" + e)",
+      "error": "unknownCurrency",
+      "type": "money",
+      "program": "AQADBW1vbmV5AwQDZGVjBANYWVoEAWUCA2RlYwFlDgYAAAQBAAYCADFJNAAC",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 CONST 1 ; \"XYZ\"",
+        "0006 LOAD_ROOT 2 ; \"e\"",
+        "0009 CONCAT_STRING",
+        "0010 CALL 52 2 ; money"
+      ],
+      "reads": [
+        "dec",
+        "e"
+      ]
+    },
+    {
+      "name": "money invalid amount",
+      "expr": "money(\"x\" + e, \"EUR\")",
+      "error": "invalidArgument",
+      "type": "money",
+      "program": "AQACBW1vbmV5AwQBeAQBZQQDRVVSAQFlDgQAAAYBADEEAgBJNQAC",
+      "asm": [
+        "0000 CONST 0 ; \"x\"",
+        "0003 LOAD_ROOT 1 ; \"e\"",
+        "0006 CONCAT_STRING",
+        "0007 CONST 2 ; \"EUR\"",
+        "0010 CALL 53 2 ; money"
+      ],
+      "reads": [
+        "e"
+      ]
+    },
+    {
+      "name": "money add sub",
+      "expr": "add(price, price) - sub(price, -price)",
+      "value": {
+        "amount": "0.00",
+        "currency": "EUR"
+      },
+      "type": "money",
+      "program": "AQADBW1vbmV5AQQFcHJpY2UBBXByaWNlFgYAAAYAAEk3AAIGAAAGAAAnSTkAAiQ=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"price\"",
+        "0003 LOAD_ROOT 0 ; \"price\"",
+        "0006 CALL 55 2 ; add",
+        "0010 LOAD_ROOT 0 ; \"price\"",
+        "0013 LOAD_ROOT 0 ; \"price\"",
+        "0016 NEG_MONEY",
+        "0017 CALL 57 2 ; sub",
+        "0021 SUB_MONEY"
+      ],
+      "reads": [
+        "price"
+      ]
+    },
+    {
+      "name": "money currency mismatch",
+      "expr": "price + usd",
+      "error": "currencyMismatch",
+      "type": "money",
+      "program": "AQACBW1vbmV5AgQFcHJpY2UEA3VzZAIFcHJpY2UDdXNkBwYAAAYBACM=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"price\"",
+        "0003 LOAD_ROOT 1 ; \"usd\"",
+        "0006 ADD_MONEY"
+      ],
+      "reads": [
+        "price",
+        "usd"
+      ]
+    },
+    {
+      "name": "money mul",
+      "expr": "mul(price, dec) + dec * price",
+      "value": {
+        "amount": "25.0000",
+        "currency": "EUR"
+      },
+      "type": "money",
+      "program": "AQADBW1vbmV5AgQFcHJpY2UEA2RlYwIDZGVjBXByaWNlEgYAAAYBAEk7AAIGAQAGAAAmIw==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"price\"",
+        "0003 LOAD_ROOT 1 ; \"dec\"",
+        "0006 CALL 59 2 ; mul",
+        "0010 LOAD_ROOT 1 ; \"dec\"",
+        "0013 LOAD_ROOT 0 ; \"price\"",
+        "0016 MUL_DEC_MONEY",
+        "0017 ADD_MONEY"
+      ],
+      "reads": [
+        "dec",
+        "price"
+      ]
+    },
+    {
+      "name": "money div",
+      "expr": "div(price, decimal(3))",
+      "value": {
+        "amount": "3.33",
+        "currency": "EUR"
+      },
+      "type": "money",
+      "program": "AQACBW1vbmV5AgQFcHJpY2UFATMBBXByaWNlCgYAAAQBAEk+AAI=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"price\"",
+        "0003 CONST 1 ; 3d",
+        "0006 CALL 62 2 ; div"
+      ],
+      "reads": [
+        "price"
+      ]
+    },
+    {
+      "name": "money div with mode",
+      "expr": "div(price, decimal(3), \"up\")",
+      "value": {
+        "amount": "3.34",
+        "currency": "EUR"
+      },
+      "type": "money",
+      "program": "AQADBW1vbmV5AwQFcHJpY2UFATMEAnVwAQVwcmljZQ0GAAAEAQAEAgBJPwAD",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"price\"",
+        "0003 CONST 1 ; 3d",
+        "0006 CONST 2 ; \"up\"",
+        "0009 CALL 63 3 ; div"
+      ],
+      "reads": [
+        "price"
+      ]
+    },
+    {
+      "name": "money div by zero",
+      "expr": "div(price, dec - dec)",
+      "error": "divisionByZero",
+      "type": "money",
+      "program": "AQADBW1vbmV5AgQFcHJpY2UEA2RlYwIDZGVjBXByaWNlDgYAAAYBAAYBACBJPgAC",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"price\"",
+        "0003 LOAD_ROOT 1 ; \"dec\"",
+        "0006 LOAD_ROOT 1 ; \"dec\"",
+        "0009 SUB_DEC",
+        "0010 CALL 62 2 ; div"
+      ],
+      "reads": [
+        "dec",
+        "price"
+      ]
+    },
+    {
+      "name": "money round",
+      "expr": "round(price * dec)",
+      "value": {
+        "amount": "12.50",
+        "currency": "EUR"
+      },
+      "type": "money",
+      "program": "AQACBW1vbmV5AgQFcHJpY2UEA2RlYwIDZGVjBXByaWNlCwYAAAYBACVJIgAB",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"price\"",
+        "0003 LOAD_ROOT 1 ; \"dec\"",
+        "0006 MUL_MONEY_DEC",
+        "0007 CALL 34 1 ; round"
+      ],
+      "reads": [
+        "dec",
+        "price"
+      ]
+    },
+    {
+      "name": "money round with mode",
+      "expr": "round(price * dec, \"floor\")",
+      "value": {
+        "amount": "12.50",
+        "currency": "EUR"
+      },
+      "type": "money",
+      "program": "AQACBW1vbmV5AwQFcHJpY2UEA2RlYwQFZmxvb3ICA2RlYwVwcmljZQ4GAAAGAQAlBAIASSMAAg==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"price\"",
+        "0003 LOAD_ROOT 1 ; \"dec\"",
+        "0006 MUL_MONEY_DEC",
+        "0007 CONST 2 ; \"floor\"",
+        "0010 CALL 35 2 ; round"
+      ],
+      "reads": [
+        "dec",
+        "price"
+      ]
+    },
+    {
+      "name": "money currency and amount",
+      "expr": "currency(price) + \" \" + string(amount(price))",
+      "value": "EUR 10.00",
+      "type": "string",
+      "program": "AQACBnN0cmluZwIEBXByaWNlBAEgAQVwcmljZRcGAABJQAABBAEAMQYAAElBAAFJjQABMQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"price\"",
+        "0003 CALL 64 1 ; currency",
+        "0007 CONST 1 ; \" \"",
+        "0010 CONCAT_STRING",
+        "0011 LOAD_ROOT 0 ; \"price\"",
+        "0014 CALL 65 1 ; amount",
+        "0018 CALL 141 1 ; string",
+        "0022 CONCAT_STRING"
+      ],
+      "reads": [
+        "price"
+      ]
+    },
+    {
+      "name": "money comparison",
+      "expr": "price > -price && compare(price, price) == 0",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBAVwcmljZQIAAAAAAAAAAAEFcHJpY2UcBgAABgAAJzpBDxwAAAAGAAAGAABJSQACBAEANQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"price\"",
+        "0003 LOAD_ROOT 0 ; \"price\"",
+        "0006 NEG_MONEY",
+        "0007 CMP_MONEY",
+        "0008 GT",
+        "0009 AND_JUMP 28",
+        "0014 LOAD_ROOT 0 ; \"price\"",
+        "0017 LOAD_ROOT 0 ; \"price\"",
+        "0020 CALL 73 2 ; compare",
+        "0024 CONST 1 ; 0",
+        "0027 EQ"
+      ],
+      "reads": [
+        "price"
+      ]
+    },
+    {
+      "name": "date string",
+      "expr": "date(\"2024-02-29\" + e)",
+      "value": "2024-02-29",
+      "type": "date",
+      "program": "AQACBGRhdGUCBAoyMDI0LTAyLTI5BAFlAQFlCwQAAAYBADFJTgAB",
+      "asm": [
+        "0000 CONST 0 ; \"2024-02-29\"",
+        "0003 LOAD_ROOT 1 ; \"e\"",
+        "0006 CONCAT_STRING",
+        "0007 CALL 78 1 ; date"
+      ],
+      "reads": [
+        "e"
+      ]
+    },
+    {
+      "name": "date string invalid",
+      "expr": "date(\"2023-02-29\" + e)",
+      "error": "invalidArgument",
+      "type": "date",
+      "program": "AQACBGRhdGUCBAoyMDIzLTAyLTI5BAFlAQFlCwQAAAYBADFJTgAB",
+      "asm": [
+        "0000 CONST 0 ; \"2023-02-29\"",
+        "0003 LOAD_ROOT 1 ; \"e\"",
+        "0006 CONCAT_STRING",
+        "0007 CALL 78 1 ; date"
+      ],
+      "reads": [
+        "e"
+      ]
+    },
+    {
+      "name": "date parts",
+      "expr": "date(i, 1, 31)",
+      "value": "0007-01-31",
+      "type": "date",
+      "program": "AQADBGRhdGUDBAFpAgEAAAAAAAAAAh8AAAAAAAAAAQFpDQYAAAQBAAQCAElPAAM=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"i\"",
+        "0003 CONST 1 ; 1",
+        "0006 CONST 2 ; 31",
+        "0009 CALL 79 3 ; date"
+      ],
+      "reads": [
+        "i"
+      ]
+    },
+    {
+      "name": "date parts invalid",
+      "expr": "date(i, 2, 30)",
+      "error": "invalidArgument",
+      "type": "date",
+      "program": "AQADBGRhdGUDBAFpAgIAAAAAAAAAAh4AAAAAAAAAAQFpDQYAAAQBAAQCAElPAAM=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"i\"",
+        "0003 CONST 1 ; 2",
+        "0006 CONST 2 ; 30",
+        "0009 CALL 79 3 ; date"
+      ],
+      "reads": [
+        "i"
+      ]
+    },
+    {
+      "name": "date of dateTime is local",
+      "expr": "date(when)",
+      "value": "2024-03-01",
+      "type": "date",
+      "program": "AQABBGRhdGUBBAR3aGVuAQR3aGVuBwYAAElQAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"when\"",
+        "0003 CALL 80 1 ; date"
+      ],
+      "reads": [
+        "when"
+      ]
+    },
+    {
+      "name": "dateTime string",
+      "expr": "dateTime(\"2024-01-01T23:30:00.1234-05:30\" + e)",
+      "value": "2024-01-01T23:30:00.123-05:30",
+      "type": "dateTime",
+      "program": "AQACCGRhdGVUaW1lAgQeMjAyNC0wMS0wMVQyMzozMDowMC4xMjM0LTA1OjMwBAFlAQFlCwQAAAYBADFJUQAB",
+      "asm": [
+        "0000 CONST 0 ; \"2024-01-01T23:30:00.1234-05:30\"",
+        "0003 LOAD_ROOT 1 ; \"e\"",
+        "0006 CONCAT_STRING",
+        "0007 CALL 81 1 ; dateTime"
+      ],
+      "reads": [
+        "e"
+      ]
+    },
+    {
+      "name": "dateTime string invalid",
+      "expr": "dateTime(\"2024-01-01T24:00:00Z\" + e)",
+      "error": "invalidArgument",
+      "type": "dateTime",
+      "program": "AQACCGRhdGVUaW1lAgQUMjAyNC0wMS0wMVQyNDowMDowMFoEAWUBAWULBAAABgEAMUlRAAE=",
+      "asm": [
+        "0000 CONST 0 ; \"2024-01-01T24:00:00Z\"",
+        "0003 LOAD_ROOT 1 ; \"e\"",
+        "0006 CONCAT_STRING",
+        "0007 CALL 81 1 ; dateTime"
+      ],
+      "reads": [
+        "e"
+      ]
+    },
+    {
+      "name": "duration int",
+      "expr": "duration(i)",
+      "value": 7,
+      "type": "duration",
+      "program": "AQABCGR1cmF0aW9uAQQBaQEBaQcGAABJUgAB",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"i\"",
+        "0003 CALL 82 1 ; duration"
+      ],
+      "reads": [
+        "i"
+      ]
+    },
+    {
+      "name": "duration string",
+      "expr": "duration(\"-P1DT2H3M4.5S\" + e)",
+      "value": -93784500,
+      "type": "duration",
+      "program": "AQACCGR1cmF0aW9uAgQNLVAxRFQySDNNNC41UwQBZQEBZQsEAAAGAQAxSVMAAQ==",
+      "asm": [
+        "0000 CONST 0 ; \"-P1DT2H3M4.5S\"",
+        "0003 LOAD_ROOT 1 ; \"e\"",
+        "0006 CONCAT_STRING",
+        "0007 CALL 83 1 ; duration"
+      ],
+      "reads": [
+        "e"
+      ]
+    },
+    {
+      "name": "duration string invalid",
+      "expr": "duration(\"PT\" + e)",
+      "error": "invalidArgument",
+      "type": "duration",
+      "program": "AQACCGR1cmF0aW9uAgQCUFQEAWUBAWULBAAABgEAMUlTAAE=",
+      "asm": [
+        "0000 CONST 0 ; \"PT\"",
+        "0003 LOAD_ROOT 1 ; \"e\"",
+        "0006 CONCAT_STRING",
+        "0007 CALL 83 1 ; duration"
+      ],
+      "reads": [
+        "e"
+      ]
+    },
+    {
+      "name": "addDays date",
+      "expr": "addDays(day, i)",
+      "value": "2024-02-07",
+      "type": "date",
+      "program": "AQACBGRhdGUCBANkYXkEAWkCA2RheQFpCgYAAAYBAElUAAI=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"day\"",
+        "0003 LOAD_ROOT 1 ; \"i\"",
+        "0006 CALL 84 2 ; addDays"
+      ],
+      "reads": [
+        "day",
+        "i"
+      ]
+    },
+    {
+      "name": "addDays date out of range",
+      "expr": "addDays(day, 5000000)",
+      "error": "invalidArgument",
+      "type": "date",
+      "program": "AQACBGRhdGUCBANkYXkCQEtMAAAAAAABA2RheQoGAAAEAQBJVAAC",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"day\"",
+        "0003 CONST 1 ; 5000000",
+        "0006 CALL 84 2 ; addDays"
+      ],
+      "reads": [
+        "day"
+      ]
+    },
+    {
+      "name": "addDays dateTime keeps the local time",
+      "expr": "addDays(when, -i)",
+      "value": "2024-02-23T01:30:00+02:00",
+      "type": "dateTime",
+      "program": "AQACCGRhdGVUaW1lAgQEd2hlbgQBaQIBaQR3aGVuCwYAAAYBABhJVQAC",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"when\"",
+        "0003 LOAD_ROOT 1 ; \"i\"",
+        "0006 NEG_INT",
+        "0007 CALL 85 2 ; addDays"
+      ],
+      "reads": [
+        "i",
+        "when"
+      ]
+    },
+    {
+      "name": "addMonths clamps the day",
+      "expr": "addMonths(day, 1)",
+      "value": "2024-02-29",
+      "type": "date",
+      "program": "AQACBGRhdGUCBANkYXkCAQAAAAAAAAABA2RheQoGAAAEAQBJVgAC",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"day\"",
+        "0003 CONST 1 ; 1",
+        "0006 CALL 86 2 ; addMonths"
+      ],
+      "reads": [
+        "day"
+      ]
+    },
+    {
+      "name": "addMonths a year",
+      "expr": "addMonths(day, 12)",
+      "value": "2025-01-31",
+      "type": "date",
+      "program": "AQACBGRhdGUCBANkYXkCDAAAAAAAAAABA2RheQoGAAAEAQBJVgAC",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"day\"",
+        "0003 CONST 1 ; 12",
+        "0006 CALL 86 2 ; addMonths"
+      ],
+      "reads": [
+        "day"
+      ]
+    },
+    {
+      "name": "addMonths backwards",
+      "expr": "addMonths(day, -14)",
+      "value": "2022-11-30",
+      "type": "date",
+      "program": "AQACBGRhdGUCBANkYXkC8v////////8BA2RheQoGAAAEAQBJVgAC",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"day\"",
+        "0003 CONST 1 ; -14",
+        "0006 CALL 86 2 ; addMonths"
+      ],
+      "reads": [
+        "day"
+      ]
+    },
+    {
+      "name": "addMonths dateTime",
+      "expr": "addMonths(when, 1)",
+      "value": "2024-04-01T01:30:00+02:00",
+      "type": "dateTime",
+      "program": "AQACCGRhdGVUaW1lAgQEd2hlbgIBAAAAAAAAAAEEd2hlbgoGAAAEAQBJVwAC",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"when\"",
+        "0003 CONST 1 ; 1",
+        "0006 CALL 87 2 ; addMonths"
+      ],
+      "reads": [
+        "when"
+      ]
+    },
+    {
+      "name": "addMonths out of range",
+      "expr": "addMonths(day, 200000)",
+      "error": "invalidArgument",
+      "type": "date",
+      "program": "AQACBGRhdGUCBANkYXkCQA0DAAAAAAABA2RheQoGAAAEAQBJVgAC",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"day\"",
+        "0003 CONST 1 ; 200000",
+        "0006 CALL 86 2 ; addMonths"
+      ],
+      "reads": [
+        "day"
+      ]
+    },
+    {
+      "name": "addMonths before year 1",
+      "expr": "addMonths(day, -24280)",
+      "error": "invalidArgument",
+      "type": "date",
+      "program": "AQACBGRhdGUCBANkYXkCKKH///////8BA2RheQoGAAAEAQBJVgAC",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"day\"",
+        "0003 CONST 1 ; -24280",
+        "0006 CALL 86 2 ; addMonths"
+      ],
+      "reads": [
+        "day"
+      ]
+    },
+    {
+      "name": "diffDays",
+      "expr": "diffDays(day, addDays(day, i))",
+      "value": 7,
+      "type": "int",
+      "program": "AQADA2ludAIEA2RheQQBaQIDZGF5AWkRBgAABgAABgEASVQAAklYAAI=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"day\"",
+        "0003 LOAD_ROOT 0 ; \"day\"",
+        "0006 LOAD_ROOT 1 ; \"i\"",
+        "0009 CALL 84 2 ; addDays",
+        "0013 CALL 88 2 ; diffDays"
+      ],
+      "reads": [
+        "day",
+        "i"
+      ]
+    },
+    {
+      "name": "startOfDay",
+      "expr": "startOfDay(when)",
+      "value": "2024-03-01T00:00:00+02:00",
+      "type": "dateTime",
+      "program": "AQABCGRhdGVUaW1lAQQEd2hlbgEEd2hlbgcGAABJWQAB",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"when\"",
+        "0003 CALL 89 1 ; startOfDay"
+      ],
+      "reads": [
+        "when"
+      ]
+    },
+    {
+      "name": "weekday date",
+      "expr": "weekday(day)",
+      "value": 3,
+      "type": "int",
+      "program": "AQABA2ludAEEA2RheQEDZGF5BwYAAElcAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"day\"",
+        "0003 CALL 92 1 ; weekday"
+      ],
+      "reads": [
+        "day"
+      ]
+    },
+    {
+      "name": "weekday dateTime",
+      "expr": "weekday(when)",
+      "value": 5,
+      "type": "int",
+      "program": "AQABA2ludAEEBHdoZW4BBHdoZW4HBgAASV0AAQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"when\"",
+        "0003 CALL 93 1 ; weekday"
+      ],
+      "reads": [
+        "when"
+      ]
+    },
+    {
+      "name": "isBefore and isAfter",
+      "expr": "[isBefore(day, addDays(day, 1)), isAfter(day, day), isBefore(when, when), isAfter(when, addDays(when, -1))]",
+      "value": [
+        true,
+        false,
+        false,
+        true
+      ],
+      "type": "list<bool>",
+      "program": "AQAGCmxpc3Q8Ym9vbD4EBANkYXkCAQAAAAAAAAAEBHdoZW4C//////////8CA2RheQR3aGVuOQYAAAYAAAQBAElUAAJJXgACBgAABgAASWAAAgYCAAYCAElfAAIGAgAGAgAEAwBJVQACSWEAAkYEAA==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"day\"",
+        "0003 LOAD_ROOT 0 ; \"day\"",
+        "0006 CONST 1 ; 1",
+        "0009 CALL 84 2 ; addDays",
+        "0013 CALL 94 2 ; isBefore",
+        "0017 LOAD_ROOT 0 ; \"day\"",
+        "0020 LOAD_ROOT 0 ; \"day\"",
+        "0023 CALL 96 2 ; isAfter",
+        "0027 LOAD_ROOT 2 ; \"when\"",
+        "0030 LOAD_ROOT 2 ; \"when\"",
+        "0033 CALL 95 2 ; isBefore",
+        "0037 LOAD_ROOT 2 ; \"when\"",
+        "0040 LOAD_ROOT 2 ; \"when\"",
+        "0043 CONST 3 ; -1",
+        "0046 CALL 85 2 ; addDays",
+        "0050 CALL 97 2 ; isAfter",
+        "0054 NEW_LIST 4"
+      ],
+      "reads": [
+        "day",
+        "when"
+      ]
+    },
+    {
+      "name": "date comparison",
+      "expr": "compare(day, addDays(day, 1))",
+      "value": -1,
+      "type": "int",
+      "program": "AQADA2ludAIEA2RheQIBAAAAAAAAAAEDZGF5EQYAAAYAAAQBAElUAAJJSwAC",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"day\"",
+        "0003 LOAD_ROOT 0 ; \"day\"",
+        "0006 CONST 1 ; 1",
+        "0009 CALL 84 2 ; addDays",
+        "0013 CALL 75 2 ; compare"
+      ],
+      "reads": [
+        "day"
+      ]
+    },
+    {
+      "name": "dateTime comparison by instant",
+      "expr": "compare(when, dateTime(\"2026-09-26T08:00:00Z\" + e))",
+      "value": -1,
+      "type": "int",
+      "program": "AQADA2ludAMEBHdoZW4EFDIwMjYtMDktMjZUMDg6MDA6MDBaBAFlAgFlBHdoZW4SBgAABAEABgIAMUlRAAFJTAAC",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"when\"",
+        "0003 CONST 1 ; \"2026-09-26T08:00:00Z\"",
+        "0006 LOAD_ROOT 2 ; \"e\"",
+        "0009 CONCAT_STRING",
+        "0010 CALL 81 1 ; dateTime",
+        "0014 CALL 76 2 ; compare"
+      ],
+      "reads": [
+        "e",
+        "when"
+      ]
+    },
+    {
+      "name": "duration arithmetic",
+      "expr": "dur + dur - dur * 2 + 3 * dur",
+      "value": 270183003,
+      "type": "duration",
+      "program": "AQADCGR1cmF0aW9uAwQDZHVyAgIAAAAAAAAAAgMAAAAAAAAAAQNkdXIXBgAABgAAKAYAAAQBACspBAIABgAALCg=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dur\"",
+        "0003 LOAD_ROOT 0 ; \"dur\"",
+        "0006 ADD_DUR",
+        "0007 LOAD_ROOT 0 ; \"dur\"",
+        "0010 CONST 1 ; 2",
+        "0013 MUL_DUR_INT",
+        "0014 SUB_DUR",
+        "0015 CONST 2 ; 3",
+        "0018 LOAD_ROOT 0 ; \"dur\"",
+        "0021 MUL_INT_DUR",
+        "0022 ADD_DUR"
+      ],
+      "reads": [
+        "dur"
+      ]
+    },
+    {
+      "name": "duration negate",
+      "expr": "-dur",
+      "value": -90061001,
+      "type": "duration",
+      "program": "AQABCGR1cmF0aW9uAQQDZHVyAQNkdXIEBgAAKg==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dur\"",
+        "0003 NEG_DUR"
+      ],
+      "reads": [
+        "dur"
+      ]
+    },
+    {
+      "name": "duration overflow",
+      "expr": "duration(maxInt) + dur",
+      "error": "overflow",
+      "type": "duration",
+      "program": "AQACCGR1cmF0aW9uAgQGbWF4SW50BANkdXICA2R1cgZtYXhJbnQLBgAASVIAAQYBACg=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"maxInt\"",
+        "0003 CALL 82 1 ; duration",
+        "0007 LOAD_ROOT 1 ; \"dur\"",
+        "0010 ADD_DUR"
+      ],
+      "reads": [
+        "dur",
+        "maxInt"
+      ]
+    },
+    {
+      "name": "duration comparison",
+      "expr": "compare(dur, -dur)",
+      "value": 1,
+      "type": "int",
+      "program": "AQACA2ludAEEA2R1cgEDZHVyCwYAAAYAACpJTQAC",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dur\"",
+        "0003 LOAD_ROOT 0 ; \"dur\"",
+        "0006 NEG_DUR",
+        "0007 CALL 77 2 ; compare"
+      ],
+      "reads": [
+        "dur"
+      ]
+    },
+    {
+      "name": "dateTime plus duration",
+      "expr": "when + dur",
+      "value": "2024-03-02T02:31:01.001+02:00",
+      "type": "dateTime",
+      "program": "AQACCGRhdGVUaW1lAgQEd2hlbgQDZHVyAgNkdXIEd2hlbgcGAAAGAQAt",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"when\"",
+        "0003 LOAD_ROOT 1 ; \"dur\"",
+        "0006 ADD_DT_DUR"
+      ],
+      "reads": [
+        "dur",
+        "when"
+      ]
+    },
+    {
+      "name": "duration plus dateTime",
+      "expr": "dur + when",
+      "value": "2024-03-02T02:31:01.001+02:00",
+      "type": "dateTime",
+      "program": "AQACCGRhdGVUaW1lAgQDZHVyBAR3aGVuAgNkdXIEd2hlbgcGAAAGAQAu",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dur\"",
+        "0003 LOAD_ROOT 1 ; \"when\"",
+        "0006 ADD_DUR_DT"
+      ],
+      "reads": [
+        "dur",
+        "when"
+      ]
+    },
+    {
+      "name": "dateTime minus duration",
+      "expr": "when - dur",
+      "value": "2024-02-29T00:28:58.999+02:00",
+      "type": "dateTime",
+      "program": "AQACCGRhdGVUaW1lAgQEd2hlbgQDZHVyAgNkdXIEd2hlbgcGAAAGAQAv",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"when\"",
+        "0003 LOAD_ROOT 1 ; \"dur\"",
+        "0006 SUB_DT_DUR"
+      ],
+      "reads": [
+        "dur",
+        "when"
+      ]
+    },
+    {
+      "name": "dateTime minus dateTime",
+      "expr": "addDays(when, 1) - when",
+      "value": 86400000,
+      "type": "duration",
+      "program": "AQACCGR1cmF0aW9uAgQEd2hlbgIBAAAAAAAAAAEEd2hlbg4GAAAEAQBJVQACBgAAMA==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"when\"",
+        "0003 CONST 1 ; 1",
+        "0006 CALL 85 2 ; addDays",
+        "0010 LOAD_ROOT 0 ; \"when\"",
+        "0013 SUB_DT_DT"
+      ],
+      "reads": [
+        "when"
+      ]
+    },
+    {
+      "name": "dateTime leaves the range",
+      "expr": "when + duration(maxInt)",
+      "error": "invalidArgument",
+      "type": "dateTime",
+      "program": "AQACCGRhdGVUaW1lAgQEd2hlbgQGbWF4SW50AgZtYXhJbnQEd2hlbgsGAAAGAQBJUgABLQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"when\"",
+        "0003 LOAD_ROOT 1 ; \"maxInt\"",
+        "0006 CALL 82 1 ; duration",
+        "0010 ADD_DT_DUR"
+      ],
+      "reads": [
+        "maxInt",
+        "when"
+      ]
+    },
+    {
+      "name": "size of a list",
+      "expr": "size(nums)",
+      "value": 3,
+      "type": "int",
+      "program": "AQABA2ludAEEBG51bXMBBG51bXMHBgAASWIAAQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"nums\"",
+        "0003 CALL 98 1 ; size"
+      ],
+      "reads": [
+        "nums"
+      ]
+    },
+    {
+      "name": "size of a map",
+      "expr": "size(scores)",
+      "value": 3,
+      "type": "int",
+      "program": "AQABA2ludAEEBnNjb3JlcwEGc2NvcmVzBwYAAEljAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"scores\"",
+        "0003 CALL 99 1 ; size"
+      ],
+      "reads": [
+        "scores"
+      ]
+    },
+    {
+      "name": "isEmpty list and map",
+      "expr": "[isEmpty(nums), isEmpty(scores)]",
+      "value": [
+        false,
+        false
+      ],
+      "type": "list<bool>",
+      "program": "AQACCmxpc3Q8Ym9vbD4CBARudW1zBAZzY29yZXMCBG51bXMGc2NvcmVzEQYAAElkAAEGAQBJZQABRgIA",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"nums\"",
+        "0003 CALL 100 1 ; isEmpty",
+        "0007 LOAD_ROOT 1 ; \"scores\"",
+        "0010 CALL 101 1 ; isEmpty",
+        "0014 NEW_LIST 2"
+      ],
+      "reads": [
+        "nums",
+        "scores"
+      ]
+    },
+    {
+      "name": "first and last",
+      "expr": "[first(nums), last(nums)]",
+      "value": [
+        3,
+        2
+      ],
+      "type": "list<int?>",
+      "program": "AQACCmxpc3Q8aW50Pz4BBARudW1zAQRudW1zEQYAAElnAAEGAABJaAABRgIA",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"nums\"",
+        "0003 CALL 103 1 ; first",
+        "0007 LOAD_ROOT 0 ; \"nums\"",
+        "0010 CALL 104 1 ; last",
+        "0014 NEW_LIST 2"
+      ],
+      "reads": [
+        "nums"
+      ]
+    },
+    {
+      "name": "at",
+      "expr": "[at(nums, 1), at(nums, 10), at(nums, -1)]",
+      "value": [
+        1,
+        null,
+        null
+      ],
+      "type": "list<int?>",
+      "program": "AQAECmxpc3Q8aW50Pz4EBARudW1zAgEAAAAAAAAAAgoAAAAAAAAAAv//////////AQRudW1zIQYAAAQBAElpAAIGAAAEAgBJaQACBgAABAMASWkAAkYDAA==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"nums\"",
+        "0003 CONST 1 ; 1",
+        "0006 CALL 105 2 ; at",
+        "0010 LOAD_ROOT 0 ; \"nums\"",
+        "0013 CONST 2 ; 10",
+        "0016 CALL 105 2 ; at",
+        "0020 LOAD_ROOT 0 ; \"nums\"",
+        "0023 CONST 3 ; -1",
+        "0026 CALL 105 2 ; at",
+        "0030 NEW_LIST 3"
+      ],
+      "reads": [
+        "nums"
+      ]
+    },
+    {
+      "name": "slice",
+      "expr": "slice(nums, 1, 3)",
+      "value": [
+        1,
+        2
+      ],
+      "type": "list<int>",
+      "program": "AQADCWxpc3Q8aW50PgMEBG51bXMCAQAAAAAAAAACAwAAAAAAAAABBG51bXMNBgAABAEABAIASWoAAw==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"nums\"",
+        "0003 CONST 1 ; 1",
+        "0006 CONST 2 ; 3",
+        "0009 CALL 106 3 ; slice"
+      ],
+      "reads": [
+        "nums"
+      ]
+    },
+    {
+      "name": "slice out of range",
+      "expr": "slice(nums, 2, 9)",
+      "error": "indexOutOfRange",
+      "type": "list<int>",
+      "program": "AQADCWxpc3Q8aW50PgMEBG51bXMCAgAAAAAAAAACCQAAAAAAAAABBG51bXMNBgAABAEABAIASWoAAw==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"nums\"",
+        "0003 CONST 1 ; 2",
+        "0006 CONST 2 ; 9",
+        "0009 CALL 106 3 ; slice"
+      ],
+      "reads": [
+        "nums"
+      ]
+    },
+    {
+      "name": "distinct ints",
+      "expr": "distinct(nums + nums)",
+      "value": [
+        3,
+        1,
+        2
+      ],
+      "type": "list<int>",
+      "program": "AQACCWxpc3Q8aW50PgEEBG51bXMBBG51bXMLBgAABgAAMklvAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"nums\"",
+        "0003 LOAD_ROOT 0 ; \"nums\"",
+        "0006 CONCAT_LIST",
+        "0007 CALL 111 1 ; distinct"
+      ],
+      "reads": [
+        "nums"
+      ]
+    },
+    {
+      "name": "distinct decimals by value",
+      "expr": "distinct([dec, dec * decimal(1), -dec])",
+      "value": [
+        "1.25",
+        "-1.25"
+      ],
+      "type": "list<decimal>",
+      "program": "AQADDWxpc3Q8ZGVjaW1hbD4CBANkZWMFATEBA2RlYxUGAAAGAAAEAQAhBgAAIkYDAElvAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 LOAD_ROOT 0 ; \"dec\"",
+        "0006 CONST 1 ; 1d",
+        "0009 MUL_DEC",
+        "0010 LOAD_ROOT 0 ; \"dec\"",
+        "0013 NEG_DEC",
+        "0014 NEW_LIST 3",
+        "0017 CALL 111 1 ; distinct"
+      ],
+      "reads": [
+        "dec"
+      ]
+    },
+    {
+      "name": "distinct doubles",
+      "expr": "distinct([x, -x, x, 0.0, -0.0])",
+      "value": [
+        2.5,
+        -2.5,
+        0
+      ],
+      "type": "list<double>",
+      "program": "AQAFDGxpc3Q8ZG91YmxlPgMEAXgDAAAAAAAAAAADAAAAAAAAAIABAXgXBgAABgAAHgYAAAQBAAQCAEYFAElvAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"x\"",
+        "0003 LOAD_ROOT 0 ; \"x\"",
+        "0006 NEG_DOUBLE",
+        "0007 LOAD_ROOT 0 ; \"x\"",
+        "0010 CONST 1 ; 0",
+        "0013 CONST 2 ; 0",
+        "0016 NEW_LIST 5",
+        "0019 CALL 111 1 ; distinct"
+      ],
+      "reads": [
+        "x"
+      ]
+    },
+    {
+      "name": "distinct strings",
+      "expr": "distinct(tags)",
+      "value": [
+        "b",
+        "a",
+        "é"
+      ],
+      "type": "list<string>",
+      "program": "AQABDGxpc3Q8c3RyaW5nPgEEBHRhZ3MBBHRhZ3MHBgAASW8AAQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"tags\"",
+        "0003 CALL 111 1 ; distinct"
+      ],
+      "reads": [
+        "tags"
+      ]
+    },
+    {
+      "name": "keys in code-point order",
+      "expr": "keys(scores)",
+      "value": [
+        "a",
+        "b",
+        "ä"
+      ],
+      "type": "list<string>",
+      "program": "AQABDGxpc3Q8c3RyaW5nPgEEBnNjb3JlcwEGc2NvcmVzBwYAAElwAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"scores\"",
+        "0003 CALL 112 1 ; keys"
+      ],
+      "reads": [
+        "scores"
+      ]
+    },
+    {
+      "name": "values in key order",
+      "expr": "values(scores)",
+      "value": [
+        1,
+        2,
+        3
+      ],
+      "type": "list<int>",
+      "program": "AQABCWxpc3Q8aW50PgEEBnNjb3JlcwEGc2NvcmVzBwYAAElxAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"scores\"",
+        "0003 CALL 113 1 ; values"
+      ],
+      "reads": [
+        "scores"
+      ]
+    },
+    {
+      "name": "has",
+      "expr": "[has(scores, \"a\"), has(scores, \"zz\")]",
+      "value": [
+        true,
+        false
+      ],
+      "type": "list<bool>",
+      "program": "AQADCmxpc3Q8Ym9vbD4DBAZzY29yZXMEAWEEAnp6AQZzY29yZXMXBgAABAEASXIAAgYAAAQCAElyAAJGAgA=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"scores\"",
+        "0003 CONST 1 ; \"a\"",
+        "0006 CALL 114 2 ; has",
+        "0010 LOAD_ROOT 0 ; \"scores\"",
+        "0013 CONST 2 ; \"zz\"",
+        "0016 CALL 114 2 ; has",
+        "0020 NEW_LIST 2"
+      ],
+      "reads": [
+        "scores"
+      ]
+    },
+    {
+      "name": "sum ints",
+      "expr": "sum(nums)",
+      "value": 6,
+      "type": "int",
+      "program": "AQABA2ludAEEBG51bXMBBG51bXMHBgAASWsAAQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"nums\"",
+        "0003 CALL 107 1 ; sum"
+      ],
+      "reads": [
+        "nums"
+      ]
+    },
+    {
+      "name": "sum ints overflow",
+      "expr": "sum([maxInt, i])",
+      "error": "overflow",
+      "type": "int",
+      "program": "AQACA2ludAIEBm1heEludAQBaQIBaQZtYXhJbnQNBgAABgEARgIASWsAAQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"maxInt\"",
+        "0003 LOAD_ROOT 1 ; \"i\"",
+        "0006 NEW_LIST 2",
+        "0009 CALL 107 1 ; sum"
+      ],
+      "reads": [
+        "i",
+        "maxInt"
+      ]
+    },
+    {
+      "name": "sum doubles",
+      "expr": "sum([x, x, 0.5])",
+      "value": 5.5,
+      "type": "double",
+      "program": "AQADBmRvdWJsZQIEAXgDAAAAAAAA4D8BAXgQBgAABgAABAEARgMASWwAAQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"x\"",
+        "0003 LOAD_ROOT 0 ; \"x\"",
+        "0006 CONST 1 ; 0.5",
+        "0009 NEW_LIST 3",
+        "0012 CALL 108 1 ; sum"
+      ],
+      "reads": [
+        "x"
+      ]
+    },
+    {
+      "name": "sum decimals",
+      "expr": "sum([dec, dec, -dec])",
+      "value": "1.25",
+      "type": "decimal",
+      "program": "AQADB2RlY2ltYWwBBANkZWMBA2RlYxEGAAAGAAAGAAAiRgMASW0AAQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 LOAD_ROOT 0 ; \"dec\"",
+        "0006 LOAD_ROOT 0 ; \"dec\"",
+        "0009 NEG_DEC",
+        "0010 NEW_LIST 3",
+        "0013 CALL 109 1 ; sum"
+      ],
+      "reads": [
+        "dec"
+      ]
+    },
+    {
+      "name": "sum durations",
+      "expr": "sum([dur, dur])",
+      "value": 180122002,
+      "type": "duration",
+      "program": "AQACCGR1cmF0aW9uAQQDZHVyAQNkdXINBgAABgAARgIASW4AAQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dur\"",
+        "0003 LOAD_ROOT 0 ; \"dur\"",
+        "0006 NEW_LIST 2",
+        "0009 CALL 110 1 ; sum"
+      ],
+      "reads": [
+        "dur"
+      ]
+    },
+    {
+      "name": "list concatenation",
+      "expr": "nums + [i]",
+      "value": [
+        3,
+        1,
+        2,
+        7
+      ],
+      "type": "list<int>",
+      "program": "AQACCWxpc3Q8aW50PgIEBG51bXMEAWkCAWkEbnVtcwoGAAAGAQBGAQAy",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"nums\"",
+        "0003 LOAD_ROOT 1 ; \"i\"",
+        "0006 NEW_LIST 1",
+        "0009 CONCAT_LIST"
+      ],
+      "reads": [
+        "i",
+        "nums"
+      ]
+    },
+    {
+      "name": "list equality",
+      "expr": "nums == [3, 1, 2] && [[1], [2]] != [[1], [3]] && [nums] == [nums]",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBARudW1zCwMCAwAAAAAAAAACAQAAAAAAAAACAgAAAAAAAAABBG51bXMfBgAABAEANQ8NAAAAAg8fAAAABgAARgEABgAARgEANQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"nums\"",
+        "0003 CONST 1 ; [3 1 2]",
+        "0006 EQ",
+        "0007 AND_JUMP 13",
+        "0012 PUSH_TRUE",
+        "0013 AND_JUMP 31",
+        "0018 LOAD_ROOT 0 ; \"nums\"",
+        "0021 NEW_LIST 1",
+        "0024 LOAD_ROOT 0 ; \"nums\"",
+        "0027 NEW_LIST 1",
+        "0030 EQ"
+      ],
+      "reads": [
+        "nums"
+      ]
+    },
+    {
+      "name": "map equality",
+      "expr": "scores == scores && {\"a\": i} != {\"a\": 1}",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wEBAZzY29yZXMEAWEEAWkMAQFhAgEAAAAAAAAAAgFpBnNjb3JlcxkGAAAGAAA1DxkAAAAEAQAGAgBHAQAEAwA2",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"scores\"",
+        "0003 LOAD_ROOT 0 ; \"scores\"",
+        "0006 EQ",
+        "0007 AND_JUMP 25",
+        "0012 CONST 1 ; \"a\"",
+        "0015 LOAD_ROOT 2 ; \"i\"",
+        "0018 NEW_MAP 1",
+        "0021 CONST 3 ; map[a:1]",
+        "0024 NE"
+      ],
+      "reads": [
+        "i",
+        "scores"
+      ]
+    },
+    {
+      "name": "map literal",
+      "expr": "{\"k\": s, \"j\": e}",
+      "value": {
+        "j": "",
+        "k": "Grüñ😀"
+      },
+      "type": "map<string,string>",
+      "program": "AQAEEm1hcDxzdHJpbmcsc3RyaW5nPgQEAWsEAXMEAWoEAWUCAWUBcw8EAAAGAQAEAgAGAwBHAgA=",
+      "asm": [
+        "0000 CONST 0 ; \"k\"",
+        "0003 LOAD_ROOT 1 ; \"s\"",
+        "0006 CONST 2 ; \"j\"",
+        "0009 LOAD_ROOT 3 ; \"e\"",
+        "0012 NEW_MAP 2"
+      ],
+      "reads": [
+        "e",
+        "s"
+      ]
+    },
+    {
+      "name": "in list and map",
+      "expr": "[i in nums, 3 in nums, \"a\" in scores, s in tags]",
+      "value": [
+        false,
+        true,
+        true,
+        false
+      ],
+      "type": "list<bool>",
+      "program": "AQAFCmxpc3Q8Ym9vbD4HBAFpBARudW1zAgMAAAAAAAAABAFhBAZzY29yZXMEAXMEBHRhZ3MFAWkEbnVtcwFzBnNjb3JlcwR0YWdzHwYAAAYBAEQEAgAGAQBEBAMABgQARQYFAAYGAERGBAA=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"i\"",
+        "0003 LOAD_ROOT 1 ; \"nums\"",
+        "0006 IN_LIST",
+        "0007 CONST 2 ; 3",
+        "0010 LOAD_ROOT 1 ; \"nums\"",
+        "0013 IN_LIST",
+        "0014 CONST 3 ; \"a\"",
+        "0017 LOAD_ROOT 4 ; \"scores\"",
+        "0020 IN_MAP",
+        "0021 LOAD_ROOT 5 ; \"s\"",
+        "0024 LOAD_ROOT 6 ; \"tags\"",
+        "0027 IN_LIST",
+        "0028 NEW_LIST 4"
+      ],
+      "reads": [
+        "i",
+        "nums",
+        "s",
+        "scores",
+        "tags"
+      ]
+    },
+    {
+      "name": "map index",
+      "expr": "scores[\"b\" + e]",
+      "value": 2,
+      "type": "int",
+      "program": "AQADA2ludAMEBnNjb3JlcwQBYgQBZQIBZQZzY29yZXMLBgAABAEABgIAMQs=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"scores\"",
+        "0003 CONST 1 ; \"b\"",
+        "0006 LOAD_ROOT 2 ; \"e\"",
+        "0009 CONCAT_STRING",
+        "0010 INDEX_MAP"
+      ],
+      "reads": [
+        "e",
+        "scores"
+      ]
+    },
+    {
+      "name": "map index missing",
+      "expr": "scores[\"q\" + e]",
+      "error": "missingKey",
+      "type": "int",
+      "program": "AQADA2ludAMEBnNjb3JlcwQBcQQBZQIBZQZzY29yZXMLBgAABAEABgIAMQs=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"scores\"",
+        "0003 CONST 1 ; \"q\"",
+        "0006 LOAD_ROOT 2 ; \"e\"",
+        "0009 CONCAT_STRING",
+        "0010 INDEX_MAP"
+      ],
+      "reads": [
+        "e",
+        "scores"
+      ]
+    },
+    {
+      "name": "list index",
+      "expr": "nums[one]",
+      "value": 1,
+      "type": "int",
+      "program": "AQACA2ludAIEBG51bXMEA29uZQIEbnVtcwNvbmUHBgAABgEACg==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"nums\"",
+        "0003 LOAD_ROOT 1 ; \"one\"",
+        "0006 INDEX_LIST"
+      ],
+      "reads": [
+        "nums",
+        "one"
+      ]
+    },
+    {
+      "name": "list index out of range",
+      "expr": "nums[i]",
+      "error": "indexOutOfRange",
+      "type": "int",
+      "program": "AQACA2ludAIEBG51bXMEAWkCAWkEbnVtcwcGAAAGAQAK",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"nums\"",
+        "0003 LOAD_ROOT 1 ; \"i\"",
+        "0006 INDEX_LIST"
+      ],
+      "reads": [
+        "i",
+        "nums"
+      ]
+    },
+    {
+      "name": "macros",
+      "expr": "nums.map(n, n * i).filter(n, n > 10)",
+      "value": [
+        21,
+        14
+      ],
+      "type": "list<int>",
+      "program": "AQIDCWxpc3Q8aW50PgMEBG51bXMEAWkCCgAAAAAAAAACAWkEbnVtczsGAABKAEYAAEsAARsAAAAHAQYBABVIDAgAAABKAEYAAEsAATsAAAAHAQQCADdBDTYAAAAHAUgMIAAAAA==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"nums\"",
+        "0003 ITER_INIT 0",
+        "0005 NEW_LIST 0",
+        "0008 ITER_NEXT 0 1 27",
+        "0015 LOAD_LOCAL 1",
+        "0017 LOAD_ROOT 1 ; \"i\"",
+        "0020 MUL_INT",
+        "0021 LIST_APPEND",
+        "0022 JUMP 8",
+        "0027 ITER_INIT 0",
+        "0029 NEW_LIST 0",
+        "0032 ITER_NEXT 0 1 59",
+        "0039 LOAD_LOCAL 1",
+        "0041 CONST 2 ; 10",
+        "0044 CMP_INT",
+        "0045 GT",
+        "0046 JUMP_IF_FALSE 54",
+        "0051 LOAD_LOCAL 1",
+        "0053 LIST_APPEND",
+        "0054 JUMP 32"
+      ],
+      "reads": [
+        "i",
+        "nums"
+      ]
+    },
+    {
+      "name": "sortBy strings",
+      "expr": "tags.sortBy(t, t)",
+      "value": [
+        "a",
+        "b",
+        "b",
+        "é"
+      ],
+      "type": "list<string>",
+      "program": "AQICDGxpc3Q8c3RyaW5nPgEEBHRhZ3MBBHRhZ3MbBgAASgBGAABLAAEXAAAABwFIDAgAAABMAE0F",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"tags\"",
+        "0003 ITER_INIT 0",
+        "0005 NEW_LIST 0",
+        "0008 ITER_NEXT 0 1 23",
+        "0015 LOAD_LOCAL 1",
+        "0017 LIST_APPEND",
+        "0018 JUMP 8",
+        "0023 ITER_LIST 0",
+        "0025 SORT_BY 5"
+      ],
+      "reads": [
+        "tags"
+      ]
+    },
+    {
+      "name": "sortBy decimals stable",
+      "expr": "[dec, -dec, dec * decimal(1)].sortBy(v, v)",
+      "value": [
+        "-1.25",
+        "1.25",
+        "1.25"
+      ],
+      "type": "list<decimal>",
+      "program": "AQIEDWxpc3Q8ZGVjaW1hbD4CBANkZWMFATEBA2RlYykGAAAGAAAiBgAABAEAIUYDAEoARgAASwABJQAAAAcBSAwWAAAATABNAw==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dec\"",
+        "0003 LOAD_ROOT 0 ; \"dec\"",
+        "0006 NEG_DEC",
+        "0007 LOAD_ROOT 0 ; \"dec\"",
+        "0010 CONST 1 ; 1d",
+        "0013 MUL_DEC",
+        "0014 NEW_LIST 3",
+        "0017 ITER_INIT 0",
+        "0019 NEW_LIST 0",
+        "0022 ITER_NEXT 0 1 37",
+        "0029 LOAD_LOCAL 1",
+        "0031 LIST_APPEND",
+        "0032 JUMP 22",
+        "0037 ITER_LIST 0",
+        "0039 SORT_BY 3"
+      ],
+      "reads": [
+        "dec"
+      ]
+    },
+    {
+      "name": "sortBy dates",
+      "expr": "[addDays(day, 2), day, addDays(day, 1)].sortBy(d, d)",
+      "value": [
+        "2024-01-31",
+        "2024-02-01",
+        "2024-02-02"
+      ],
+      "type": "list<date>",
+      "program": "AQIECmxpc3Q8ZGF0ZT4DBANkYXkCAgAAAAAAAAACAQAAAAAAAAABA2RheTIGAAAEAQBJVAACBgAABgAABAIASVQAAkYDAEoARgAASwABLgAAAAcBSAwfAAAATABNBg==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"day\"",
+        "0003 CONST 1 ; 2",
+        "0006 CALL 84 2 ; addDays",
+        "0010 LOAD_ROOT 0 ; \"day\"",
+        "0013 LOAD_ROOT 0 ; \"day\"",
+        "0016 CONST 2 ; 1",
+        "0019 CALL 84 2 ; addDays",
+        "0023 NEW_LIST 3",
+        "0026 ITER_INIT 0",
+        "0028 NEW_LIST 0",
+        "0031 ITER_NEXT 0 1 46",
+        "0038 LOAD_LOCAL 1",
+        "0040 LIST_APPEND",
+        "0041 JUMP 31",
+        "0046 ITER_LIST 0",
+        "0048 SORT_BY 6"
+      ],
+      "reads": [
+        "day"
+      ]
+    },
+    {
+      "name": "sortBy durations descending",
+      "expr": "[dur, -dur, dur * 2].sortBy(d, -d)",
+      "value": [
+        180122002,
+        90061001,
+        -90061001
+      ],
+      "type": "list<duration>",
+      "program": "AQIEDmxpc3Q8ZHVyYXRpb24+AgQDZHVyAgIAAAAAAAAAAQNkdXIqBgAABgAAKgYAAAQBACtGAwBKAEYAAEsAASYAAAAHASpIDBYAAABMAE0I",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"dur\"",
+        "0003 LOAD_ROOT 0 ; \"dur\"",
+        "0006 NEG_DUR",
+        "0007 LOAD_ROOT 0 ; \"dur\"",
+        "0010 CONST 1 ; 2",
+        "0013 MUL_DUR_INT",
+        "0014 NEW_LIST 3",
+        "0017 ITER_INIT 0",
+        "0019 NEW_LIST 0",
+        "0022 ITER_NEXT 0 1 38",
+        "0029 LOAD_LOCAL 1",
+        "0031 NEG_DUR",
+        "0032 LIST_APPEND",
+        "0033 JUMP 22",
+        "0038 ITER_LIST 0",
+        "0040 SORT_BY 8"
+      ],
+      "reads": [
+        "dur"
+      ]
+    },
+    {
+      "name": "sortBy dateTimes",
+      "expr": "[when, addDays(when, -1)].sortBy(t, t)",
+      "value": [
+        "2024-02-29T01:30:00+02:00",
+        "2024-03-01T01:30:00+02:00"
+      ],
+      "type": "list<dateTime>",
+      "program": "AQIDDmxpc3Q8ZGF0ZVRpbWU+AgQEd2hlbgL//////////wEEd2hlbigGAAAGAAAEAQBJVQACRgIASgBGAABLAAEkAAAABwFIDBUAAABMAE0H",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"when\"",
+        "0003 LOAD_ROOT 0 ; \"when\"",
+        "0006 CONST 1 ; -1",
+        "0009 CALL 85 2 ; addDays",
+        "0013 NEW_LIST 2",
+        "0016 ITER_INIT 0",
+        "0018 NEW_LIST 0",
+        "0021 ITER_NEXT 0 1 36",
+        "0028 LOAD_LOCAL 1",
+        "0030 LIST_APPEND",
+        "0031 JUMP 21",
+        "0036 ITER_LIST 0",
+        "0038 SORT_BY 7"
+      ],
+      "reads": [
+        "when"
+      ]
+    },
+    {
+      "name": "sortBy money",
+      "expr": "[price, -price].sortBy(p, p)",
+      "value": [
+        {
+          "amount": "-10.00",
+          "currency": "EUR"
+        },
+        {
+          "amount": "10.00",
+          "currency": "EUR"
+        }
+      ],
+      "type": "list<money>",
+      "program": "AQICC2xpc3Q8bW9uZXk+AQQFcHJpY2UBBXByaWNlIgYAAAYAACdGAgBKAEYAAEsAAR4AAAAHAUgMDwAAAEwATQQ=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"price\"",
+        "0003 LOAD_ROOT 0 ; \"price\"",
+        "0006 NEG_MONEY",
+        "0007 NEW_LIST 2",
+        "0010 ITER_INIT 0",
+        "0012 NEW_LIST 0",
+        "0015 ITER_NEXT 0 1 30",
+        "0022 LOAD_LOCAL 1",
+        "0024 LIST_APPEND",
+        "0025 JUMP 15",
+        "0030 ITER_LIST 0",
+        "0032 SORT_BY 4"
+      ],
+      "reads": [
+        "price"
+      ]
+    },
+    {
+      "name": "sortBy doubles",
+      "expr": "[x, -x, 0.0].sortBy(v, v)",
+      "value": [
+        -2.5,
+        0,
+        2.5
+      ],
+      "type": "list<double>",
+      "program": "AQIDDGxpc3Q8ZG91YmxlPgIEAXgDAAAAAAAAAAABAXglBgAABgAAHgQBAEYDAEoARgAASwABIQAAAAcBSAwSAAAATABNAg==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"x\"",
+        "0003 LOAD_ROOT 0 ; \"x\"",
+        "0006 NEG_DOUBLE",
+        "0007 CONST 1 ; 0",
+        "0010 NEW_LIST 3",
+        "0013 ITER_INIT 0",
+        "0015 NEW_LIST 0",
+        "0018 ITER_NEXT 0 1 33",
+        "0025 LOAD_LOCAL 1",
+        "0027 LIST_APPEND",
+        "0028 JUMP 18",
+        "0033 ITER_LIST 0",
+        "0035 SORT_BY 2"
+      ],
+      "reads": [
+        "x"
+      ]
+    },
+    {
+      "name": "any and all",
+      "expr": "[nums.any(n, n > 2), nums.all(n, n > 2)]",
+      "value": [
+        true,
+        false
+      ],
+      "type": "list<bool>",
+      "program": "AQIDCmxpc3Q8Ym9vbD4CBARudW1zAgIAAAAAAAAAAQRudW1zSwYAAEoASwABHQAAAAcBBAEAN0EOIwAAAAwFAAAAAwwkAAAAAgYAAEoASwABQQAAAAcBBAEAN0ENRwAAAAwpAAAAAgxIAAAAA0YCAA==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"nums\"",
+        "0003 ITER_INIT 0",
+        "0005 ITER_NEXT 0 1 29",
+        "0012 LOAD_LOCAL 1",
+        "0014 CONST 1 ; 2",
+        "0017 CMP_INT",
+        "0018 GT",
+        "0019 JUMP_IF_TRUE 35",
+        "0024 JUMP 5",
+        "0029 PUSH_FALSE",
+        "0030 JUMP 36",
+        "0035 PUSH_TRUE",
+        "0036 LOAD_ROOT 0 ; \"nums\"",
+        "0039 ITER_INIT 0",
+        "0041 ITER_NEXT 0 1 65",
+        "0048 LOAD_LOCAL 1",
+        "0050 CONST 1 ; 2",
+        "0053 CMP_INT",
+        "0054 GT",
+        "0055 JUMP_IF_FALSE 71",
+        "0060 JUMP 41",
+        "0065 PUSH_TRUE",
+        "0066 JUMP 72",
+        "0071 PUSH_FALSE",
+        "0072 NEW_LIST 2"
+      ],
+      "reads": [
+        "nums"
+      ]
+    },
+    {
+      "name": "string of scalars",
+      "expr": "[string(i), string(x), string(true && one == 1), string(dec), string(price), string(day), string(when), string(dur), string(tint), string(mode)]",
+      "value": [
+        "7",
+        "2.5",
+        "true",
+        "1.25",
+        "10.00 EUR",
+        "2024-01-31",
+        "2024-03-01T01:30:00+02:00",
+        "P1DT1H1M1.001S",
+        "#FF8000FF",
+        "halfUp"
+      ],
+      "type": "list<string>",
+      "program": "AQAKDGxpc3Q8c3RyaW5nPgsEAWkEAXgEA29uZQIBAAAAAAAAAAQDZGVjBAVwcmljZQQDZGF5BAR3aGVuBANkdXIEBHRpbnQEBG1vZGUKA2RheQNkZWMDZHVyAWkEbW9kZQNvbmUFcHJpY2UEdGludAR3aGVuAXhPBgAASYsAAQYBAEmMAAECDxsAAAAGAgAEAwA1SZIAAQYEAEmNAAEGBQBJjgABBgYASY8AAQYHAEmQAAEGCABJkQABBgkASZMAAQYKAEYKAA==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"i\"",
+        "0003 CALL 139 1 ; string",
+        "0007 LOAD_ROOT 1 ; \"x\"",
+        "0010 CALL 140 1 ; string",
+        "0014 PUSH_TRUE",
+        "0015 AND_JUMP 27",
+        "0020 LOAD_ROOT 2 ; \"one\"",
+        "0023 CONST 3 ; 1",
+        "0026 EQ",
+        "0027 CALL 146 1 ; string",
+        "0031 LOAD_ROOT 4 ; \"dec\"",
+        "0034 CALL 141 1 ; string",
+        "0038 LOAD_ROOT 5 ; \"price\"",
+        "0041 CALL 142 1 ; string",
+        "0045 LOAD_ROOT 6 ; \"day\"",
+        "0048 CALL 143 1 ; string",
+        "0052 LOAD_ROOT 7 ; \"when\"",
+        "0055 CALL 144 1 ; string",
+        "0059 LOAD_ROOT 8 ; \"dur\"",
+        "0062 CALL 145 1 ; string",
+        "0066 LOAD_ROOT 9 ; \"tint\"",
+        "0069 CALL 147 1 ; string",
+        "0073 LOAD_ROOT 10 ; \"mode\"",
+        "0076 NEW_LIST 10"
+      ],
+      "reads": [
+        "day",
+        "dec",
+        "dur",
+        "i",
+        "mode",
+        "one",
+        "price",
+        "tint",
+        "when",
+        "x"
+      ]
+    },
+    {
+      "name": "string of doubles is ES6",
+      "expr": "[string(x * 1e21), string(x / 1e7), string(-x * 0.0), string(double(maxInt))]",
+      "value": [
+        "2.5e+21",
+        "2.5e-7",
+        "0",
+        "9223372036854776000"
+      ],
+      "type": "list<string>",
+      "program": "AQAEDGxpc3Q8c3RyaW5nPgUEAXgDUO/i1uQaS0QDAAAAANASY0EDAAAAAAAAAAAEBm1heEludAIGbWF4SW50AXgwBgAABAEAG0mMAAEGAAAEAgAcSYwAAQYAAB4EAwAbSYwAAQYEAEkuAAFJjAABRgQA",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"x\"",
+        "0003 CONST 1 ; 1e+21",
+        "0006 MUL_DOUBLE",
+        "0007 CALL 140 1 ; string",
+        "0011 LOAD_ROOT 0 ; \"x\"",
+        "0014 CONST 2 ; 10000000",
+        "0017 DIV_DOUBLE",
+        "0018 CALL 140 1 ; string",
+        "0022 LOAD_ROOT 0 ; \"x\"",
+        "0025 NEG_DOUBLE",
+        "0026 CONST 3 ; 0",
+        "0029 MUL_DOUBLE",
+        "0030 CALL 140 1 ; string",
+        "0034 LOAD_ROOT 4 ; \"maxInt\"",
+        "0037 CALL 46 1 ; double",
+        "0041 CALL 140 1 ; string",
+        "0045 NEW_LIST 4"
+      ],
+      "reads": [
+        "maxInt",
+        "x"
+      ]
+    },
+    {
+      "name": "isEmail",
+      "expr": "[isEmail(\"a.b+c@example.com\" + e), isEmail(\"a..b@example.com\" + e), isEmail(\"ab@example\" + e), isEmail(\"ab@-x.com\" + e), isEmail(\"ä@example.com\" + e), isEmail(\"ab@example.c0m\" + e), isEmail(\".a@b.cd\" + e), isEmail(\"a b@c.de\" + e)]",
+      "value": [
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "type": "list<bool>",
+      "program": "AQAJCmxpc3Q8Ym9vbD4JBBFhLmIrY0BleGFtcGxlLmNvbQQBZQQQYS4uYkBleGFtcGxlLmNvbQQKYWJAZXhhbXBsZQQJYWJALXguY29tBA7DpEBleGFtcGxlLmNvbQQOYWJAZXhhbXBsZS5jMG0EBy5hQGIuY2QECGEgYkBjLmRlAQFlWwQAAAYBADFJlQABBAIABgEAMUmVAAEEAwAGAQAxSZUAAQQEAAYBADFJlQABBAUABgEAMUmVAAEEBgAGAQAxSZUAAQQHAAYBADFJlQABBAgABgEAMUmVAAFGCAA=",
+      "asm": [
+        "0000 CONST 0 ; \"a.b+c@example.com\"",
+        "0003 LOAD_ROOT 1 ; \"e\"",
+        "0006 CONCAT_STRING",
+        "0007 CALL 149 1 ; isEmail",
+        "0011 CONST 2 ; \"a..b@example.com\"",
+        "0014 LOAD_ROOT 1 ; \"e\"",
+        "0017 CONCAT_STRING",
+        "0018 CALL 149 1 ; isEmail",
+        "0022 CONST 3 ; \"ab@example\"",
+        "0025 LOAD_ROOT 1 ; \"e\"",
+        "0028 CONCAT_STRING",
+        "0029 CALL 149 1 ; isEmail",
+        "0033 CONST 4 ; \"ab@-x.com\"",
+        "0036 LOAD_ROOT 1 ; \"e\"",
+        "0039 CONCAT_STRING",
+        "0040 CALL 149 1 ; isEmail",
+        "0044 CONST 5 ; \"ä@example.com\"",
+        "0047 LOAD_ROOT 1 ; \"e\"",
+        "0050 CONCAT_STRING",
+        "0051 CALL 149 1 ; isEmail",
+        "0055 CONST 6 ; \"ab@example.c0m\"",
+        "0058 LOAD_ROOT 1 ; \"e\"",
+        "0061 CONCAT_STRING",
+        "0062 CALL 149 1 ; isEmail",
+        "0066 CONST 7 ; \".a@b.cd\"",
+        "0069 LOAD_ROOT 1 ; \"e\"",
+        "0072 CONCAT_STRING",
+        "0073 CALL 149 1 ; isEmail",
+        "0077 CONST 8 ; \"a b@c.de\"",
+        "0080 LOAD_ROOT 1 ; \"e\"",
+        "0083 CONCAT_STRING",
+        "0084 CALL 149 1 ; isEmail",
+        "0088 NEW_LIST 8"
+      ],
+      "reads": [
+        "e"
+      ]
+    },
+    {
+      "name": "isIban",
+      "expr": "[isIban(\"GB82 WEST 1234 5698 7654 32\" + e), isIban(\"gb82west12345698765432\" + e), isIban(\"GB82 WEST 1234 5698 7654 33\" + e), isIban(\"GB82\" + e), isIban(\"GB82-WEST-1234-5698-7654-32\" + e)]",
+      "value": [
+        true,
+        true,
+        false,
+        false,
+        false
+      ],
+      "type": "list<bool>",
+      "program": "AQAGCmxpc3Q8Ym9vbD4GBBtHQjgyIFdFU1QgMTIzNCA1Njk4IDc2NTQgMzIEAWUEFmdiODJ3ZXN0MTIzNDU2OTg3NjU0MzIEG0dCODIgV0VTVCAxMjM0IDU2OTggNzY1NCAzMwQER0I4MgQbR0I4Mi1XRVNULTEyMzQtNTY5OC03NjU0LTMyAQFlOgQAAAYBADFJlwABBAIABgEAMUmXAAEEAwAGAQAxSZcAAQQEAAYBADFJlwABBAUABgEAMUmXAAFGBQA=",
+      "asm": [
+        "0000 CONST 0 ; \"GB82 WEST 1234 5698 7654 32\"",
+        "0003 LOAD_ROOT 1 ; \"e\"",
+        "0006 CONCAT_STRING",
+        "0007 CALL 151 1 ; isIban",
+        "0011 CONST 2 ; \"gb82west12345698765432\"",
+        "0014 LOAD_ROOT 1 ; \"e\"",
+        "0017 CONCAT_STRING",
+        "0018 CALL 151 1 ; isIban",
+        "0022 CONST 3 ; \"GB82 WEST 1234 5698 7654 33\"",
+        "0025 LOAD_ROOT 1 ; \"e\"",
+        "0028 CONCAT_STRING",
+        "0029 CALL 151 1 ; isIban",
+        "0033 CONST 4 ; \"GB82\"",
+        "0036 LOAD_ROOT 1 ; \"e\"",
+        "0039 CONCAT_STRING",
+        "0040 CALL 151 1 ; isIban",
+        "0044 CONST 5 ; \"GB82-WEST-1234-5698-7654-32\"",
+        "0047 LOAD_ROOT 1 ; \"e\"",
+        "0050 CONCAT_STRING",
+        "0051 CALL 151 1 ; isIban",
+        "0055 NEW_LIST 5"
+      ],
+      "reads": [
+        "e"
+      ]
+    },
+    {
+      "name": "format.iban",
+      "expr": "format.iban(\"gb82west12345698765432\" + e)",
+      "value": "GB82 WEST 1234 5698 7654 32",
+      "type": "string",
+      "program": "AQACBnN0cmluZwIEFmdiODJ3ZXN0MTIzNDU2OTg3NjU0MzIEAWUBAWULBAAABgEAMUmDAAE=",
+      "asm": [
+        "0000 CONST 0 ; \"gb82west12345698765432\"",
+        "0003 LOAD_ROOT 1 ; \"e\"",
+        "0006 CONCAT_STRING",
+        "0007 CALL 131 1 ; format.iban"
+      ],
+      "reads": [
+        "e"
+      ]
+    },
+    {
+      "name": "isNumeric",
+      "expr": "[isNumeric(\"-1.50\" + e), isNumeric(\"1e3\" + e), isNumeric(e)]",
+      "value": [
+        true,
+        false,
+        false
+      ],
+      "type": "list<bool>",
+      "program": "AQADCmxpc3Q8Ym9vbD4DBAUtMS41MAQBZQQDMWUzAQFlIAQAAAYBADFJmAABBAIABgEAMUmYAAEGAQBJmAABRgMA",
+      "asm": [
+        "0000 CONST 0 ; \"-1.50\"",
+        "0003 LOAD_ROOT 1 ; \"e\"",
+        "0006 CONCAT_STRING",
+        "0007 CALL 152 1 ; isNumeric",
+        "0011 CONST 2 ; \"1e3\"",
+        "0014 LOAD_ROOT 1 ; \"e\"",
+        "0017 CONCAT_STRING",
+        "0018 CALL 152 1 ; isNumeric",
+        "0022 LOAD_ROOT 1 ; \"e\"",
+        "0025 CALL 152 1 ; isNumeric",
+        "0029 NEW_LIST 3"
+      ],
+      "reads": [
+        "e"
+      ]
+    },
+    {
+      "name": "luhn",
+      "expr": "[luhn(\"79927398713\" + e), luhn(\"79927398710\" + e), luhn(\"7\" + e), luhn(\"7992a\" + e)]",
+      "value": [
+        true,
+        false,
+        false,
+        false
+      ],
+      "type": "list<bool>",
+      "program": "AQAFCmxpc3Q8Ym9vbD4FBAs3OTkyNzM5ODcxMwQBZQQLNzk5MjczOTg3MTAEATcEBTc5OTJhAQFlLwQAAAYBADFJmQABBAIABgEAMUmZAAEEAwAGAQAxSZkAAQQEAAYBADFJmQABRgQA",
+      "asm": [
+        "0000 CONST 0 ; \"79927398713\"",
+        "0003 LOAD_ROOT 1 ; \"e\"",
+        "0006 CONCAT_STRING",
+        "0007 CALL 153 1 ; luhn",
+        "0011 CONST 2 ; \"79927398710\"",
+        "0014 LOAD_ROOT 1 ; \"e\"",
+        "0017 CONCAT_STRING",
+        "0018 CALL 153 1 ; luhn",
+        "0022 CONST 3 ; \"7\"",
+        "0025 LOAD_ROOT 1 ; \"e\"",
+        "0028 CONCAT_STRING",
+        "0029 CALL 153 1 ; luhn",
+        "0033 CONST 4 ; \"7992a\"",
+        "0036 LOAD_ROOT 1 ; \"e\"",
+        "0039 CONCAT_STRING",
+        "0040 CALL 153 1 ; luhn",
+        "0044 NEW_LIST 4"
+      ],
+      "reads": [
+        "e"
+      ]
+    },
+    {
+      "name": "coalesce of a null root",
+      "expr": "none ?? i",
+      "value": 7,
+      "type": "int",
+      "program": "AQABA2ludAIEBG5vbmUEAWkCAWkEbm9uZQsGAAASCwAAAAYBAA==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"none\"",
+        "0003 COALESCE_JUMP 11",
+        "0008 LOAD_ROOT 1 ; \"i\""
+      ],
+      "reads": [
+        "i",
+        "none"
+      ]
+    },
+    {
+      "name": "optional field",
+      "expr": "page?.status ?? \"none\"",
+      "value": "none",
+      "type": "string",
+      "program": "AQABBnN0cmluZwMEBHBhZ2UEBnN0YXR1cwQEbm9uZQELcGFnZS5zdGF0dXMTBgAAEQsAAAAIAQASEwAAAAQCAA==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"page\"",
+        "0003 NULL_JUMP 11",
+        "0008 GET_FIELD 1 ; \"status\"",
+        "0011 COALESCE_JUMP 19",
+        "0016 CONST 2 ; \"none\""
+      ],
+      "reads": [
+        "page.status"
+      ]
+    },
+    {
+      "name": "enum root",
+      "expr": "tier == \"gold\"",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBAR0aWVyBARnb2xkAQR0aWVyBwYAAAQBADU=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"tier\"",
+        "0003 CONST 1 ; \"gold\"",
+        "0006 EQ"
+      ],
+      "reads": [
+        "tier"
+      ]
+    }
+  ]
+}

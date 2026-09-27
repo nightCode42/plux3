@@ -1,0 +1,130 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "Gradient",
+  "id": 13,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "A linear, radial or sweep gradient.",
+  "flutter": [
+    {
+      "library": "package:flutter/painting.dart",
+      "class": "LinearGradient",
+      "constructors": [
+        ""
+      ]
+    },
+    {
+      "library": "package:flutter/painting.dart",
+      "class": "RadialGradient",
+      "constructors": [
+        ""
+      ]
+    },
+    {
+      "library": "package:flutter/painting.dart",
+      "class": "SweepGradient",
+      "constructors": [
+        ""
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "name": "kind",
+      "id": 1,
+      "type": "GradientKind",
+      "required": true,
+      "description": "The gradient kind."
+    },
+    {
+      "name": "colors",
+      "id": 2,
+      "type": "list<color>",
+      "required": true,
+      "flutter": "colors",
+      "description": "The colours, at least two."
+    },
+    {
+      "name": "stops",
+      "id": 3,
+      "type": "list<double>",
+      "flutter": "stops",
+      "description": "Positions of the colours, from 0 to 1."
+    },
+    {
+      "name": "tileMode",
+      "id": 4,
+      "type": "TileMode",
+      "flutter": "tileMode",
+      "description": "How the gradient repeats."
+    },
+    {
+      "name": "begin",
+      "id": 5,
+      "type": "Alignment",
+      "flutter": "begin",
+      "description": "Start of a linear gradient."
+    },
+    {
+      "name": "end",
+      "id": 6,
+      "type": "Alignment",
+      "flutter": "end",
+      "description": "End of a linear gradient."
+    },
+    {
+      "name": "center",
+      "id": 7,
+      "type": "Alignment",
+      "flutter": "center",
+      "description": "Centre of a radial or sweep gradient."
+    },
+    {
+      "name": "radius",
+      "id": 8,
+      "type": "double",
+      "flutter": "radius",
+      "description": "Radius of a radial gradient."
+    },
+    {
+      "name": "focal",
+      "id": 9,
+      "type": "Alignment",
+      "flutter": "focal",
+      "description": "Focal point of a radial gradient."
+    },
+    {
+      "name": "focalRadius",
+      "id": 10,
+      "type": "double",
+      "flutter": "focalRadius",
+      "description": "Focal radius of a radial gradient."
+    },
+    {
+      "name": "startAngle",
+      "id": 11,
+      "type": "double",
+      "flutter": "startAngle",
+      "description": "Start angle of a sweep gradient, in radians."
+    },
+    {
+      "name": "endAngle",
+      "id": 12,
+      "type": "double",
+      "flutter": "endAngle",
+      "description": "End angle of a sweep gradient, in radians."
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "transform",
+      "reason": "deferred",
+      "note": "Gradient transforms are deferred."
+    }
+  ]
+}

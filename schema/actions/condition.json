@@ -1,0 +1,21 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "condition",
+  "id": 30,
+  "phase": "P5",
+  "category": "control",
+  "description": "Takes the then branch when a PXL condition holds, otherwise the else branch.",
+  "inputs": [
+    {
+      "name": "when",
+      "id": 1,
+      "type": "bool",
+      "required": true,
+      "description": "The condition."
+    }
+  ],
+  "branches": [
+    "then",
+    "else"
+  ]
+}

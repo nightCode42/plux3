@@ -1,0 +1,133 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "CircularProgressIndicator",
+  "id": 64,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "CircularProgressIndicator",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "display",
+  "icon": "progress_activity",
+  "description": "A circular progress indicator, determinate or indeterminate.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 15,
+  "accessibility": {
+    "role": "progress",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "value",
+      "id": 1,
+      "type": "double",
+      "constraints": {
+        "min": 0.0,
+        "max": 1.0
+      },
+      "flutter": "value"
+    },
+    {
+      "name": "backgroundColor",
+      "id": 2,
+      "type": "color",
+      "flutter": "backgroundColor"
+    },
+    {
+      "name": "color",
+      "id": 3,
+      "type": "color",
+      "flutter": "color"
+    },
+    {
+      "name": "strokeWidth",
+      "id": 4,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "strokeWidth"
+    },
+    {
+      "name": "strokeAlign",
+      "id": 5,
+      "type": "double",
+      "flutter": "strokeAlign"
+    },
+    {
+      "name": "semanticsLabel",
+      "id": 6,
+      "type": "string",
+      "flutter": "semanticsLabel"
+    },
+    {
+      "name": "semanticsValue",
+      "id": 7,
+      "type": "string",
+      "flutter": "semanticsValue"
+    },
+    {
+      "name": "strokeCap",
+      "id": 8,
+      "type": "StrokeCap",
+      "flutter": "strokeCap"
+    },
+    {
+      "name": "constraints",
+      "id": 9,
+      "type": "BoxConstraints",
+      "flutter": "constraints"
+    },
+    {
+      "name": "trackGap",
+      "id": 10,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "trackGap"
+    },
+    {
+      "name": "padding",
+      "id": 11,
+      "type": "EdgeInsets",
+      "flutter": "padding"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "valueColor",
+      "reason": "deferred",
+      "note": "Timeline-driven values arrive with animations (P5)."
+    },
+    {
+      "flutter": "year2023",
+      "reason": "deprecated",
+      "note": "Deprecated in Flutter."
+    },
+    {
+      "flutter": "controller",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    }
+  ]
+}

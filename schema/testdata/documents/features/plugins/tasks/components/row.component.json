@@ -1,0 +1,44 @@
+{
+  "id": "01b0c450-6c00-7000-8000-000000000010",
+  "key": "row",
+  "kind": "component",
+  "name": "Row",
+  "props": [
+    {
+      "name": "item",
+      "required": true,
+      "type": "Item"
+    }
+  ],
+  "root": {
+    "id": "01b0c450-6c00-7000-8000-000000000032",
+    "slots": {
+      "title": {
+        "id": "01b0c450-6c00-7000-8000-000000000033",
+        "props": {
+          "data": {
+            "$expr": "props.item.title"
+          }
+        },
+        "type": "Text"
+      },
+      "trailing": {
+        "id": "01b0c450-6c00-7000-8000-000000000034",
+        "props": {
+          "value": {
+            "$expr": "props.item.done"
+          }
+        },
+        "semantics": {
+          "label": {
+            "$expr": "props.item.title"
+          }
+        },
+        "type": "Checkbox"
+      }
+    },
+    "type": "ListTile"
+  },
+  "schemaVersion": "1.0.0",
+  "version": 1
+}

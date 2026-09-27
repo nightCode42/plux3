@@ -1,0 +1,54 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "EmptyState",
+  "id": 100,
+  "layer": 2,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "category": "feedback",
+  "icon": "inbox",
+  "description": "A standard empty state: icon, title, message and an optional action.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 30,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "icon",
+      "id": 1,
+      "type": "IconData?",
+      "description": "The illustration icon."
+    },
+    {
+      "name": "title",
+      "id": 2,
+      "type": "string",
+      "required": true,
+      "description": "The headline."
+    },
+    {
+      "name": "message",
+      "id": 3,
+      "type": "string?",
+      "description": "An explanation below the title."
+    }
+  ],
+  "slots": [
+    {
+      "name": "action",
+      "id": 1,
+      "description": "An optional call to action, typically a button."
+    }
+  ]
+}

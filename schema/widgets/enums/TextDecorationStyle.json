@@ -1,0 +1,39 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "TextDecorationStyle",
+  "id": 55,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum TextDecorationStyle.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "TextDecorationStyle"
+  },
+  "values": [
+    {
+      "name": "solid",
+      "id": 1
+    },
+    {
+      "name": "double",
+      "id": 2
+    },
+    {
+      "name": "dotted",
+      "id": 3
+    },
+    {
+      "name": "dashed",
+      "id": 4
+    },
+    {
+      "name": "wavy",
+      "id": 5
+    }
+  ]
+}

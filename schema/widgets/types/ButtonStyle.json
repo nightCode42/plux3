@@ -1,0 +1,171 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "ButtonStyle",
+  "id": 9,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "The visual properties of a Material button, per interaction state.",
+  "flutter": [
+    {
+      "library": "package:flutter/material.dart",
+      "class": "ButtonStyle",
+      "constructors": [
+        ""
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "name": "textStyle",
+      "id": 1,
+      "type": "WidgetStateTextStyle",
+      "flutter": "textStyle"
+    },
+    {
+      "name": "backgroundColor",
+      "id": 2,
+      "type": "WidgetStateColor",
+      "flutter": "backgroundColor"
+    },
+    {
+      "name": "foregroundColor",
+      "id": 3,
+      "type": "WidgetStateColor",
+      "flutter": "foregroundColor"
+    },
+    {
+      "name": "overlayColor",
+      "id": 4,
+      "type": "WidgetStateColor",
+      "flutter": "overlayColor"
+    },
+    {
+      "name": "shadowColor",
+      "id": 5,
+      "type": "WidgetStateColor",
+      "flutter": "shadowColor"
+    },
+    {
+      "name": "surfaceTintColor",
+      "id": 6,
+      "type": "WidgetStateColor",
+      "flutter": "surfaceTintColor"
+    },
+    {
+      "name": "elevation",
+      "id": 7,
+      "type": "WidgetStateDouble",
+      "flutter": "elevation"
+    },
+    {
+      "name": "padding",
+      "id": 8,
+      "type": "WidgetStateEdgeInsets",
+      "flutter": "padding"
+    },
+    {
+      "name": "minimumSize",
+      "id": 9,
+      "type": "WidgetStateSize",
+      "flutter": "minimumSize"
+    },
+    {
+      "name": "fixedSize",
+      "id": 10,
+      "type": "WidgetStateSize",
+      "flutter": "fixedSize"
+    },
+    {
+      "name": "maximumSize",
+      "id": 11,
+      "type": "WidgetStateSize",
+      "flutter": "maximumSize"
+    },
+    {
+      "name": "iconColor",
+      "id": 12,
+      "type": "WidgetStateColor",
+      "flutter": "iconColor"
+    },
+    {
+      "name": "iconSize",
+      "id": 13,
+      "type": "WidgetStateDouble",
+      "flutter": "iconSize"
+    },
+    {
+      "name": "iconAlignment",
+      "id": 14,
+      "type": "IconAlignment",
+      "flutter": "iconAlignment"
+    },
+    {
+      "name": "side",
+      "id": 15,
+      "type": "WidgetStateBorderSide",
+      "flutter": "side"
+    },
+    {
+      "name": "shape",
+      "id": 16,
+      "type": "WidgetStateShapeBorder",
+      "flutter": "shape"
+    },
+    {
+      "name": "visualDensity",
+      "id": 17,
+      "type": "VisualDensity",
+      "flutter": "visualDensity"
+    },
+    {
+      "name": "tapTargetSize",
+      "id": 18,
+      "type": "MaterialTapTargetSize",
+      "flutter": "tapTargetSize"
+    },
+    {
+      "name": "animationDuration",
+      "id": 19,
+      "type": "duration",
+      "flutter": "animationDuration"
+    },
+    {
+      "name": "enableFeedback",
+      "id": 20,
+      "type": "bool",
+      "flutter": "enableFeedback"
+    },
+    {
+      "name": "alignment",
+      "id": 21,
+      "type": "Alignment",
+      "flutter": "alignment"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "mouseCursor",
+      "reason": "deferred",
+      "note": "Pointer cursors matter only for desktop and web targets."
+    },
+    {
+      "flutter": "splashFactory",
+      "reason": "non-serialisable"
+    },
+    {
+      "flutter": "backgroundBuilder",
+      "reason": "deferred",
+      "note": "Custom builders are deferred."
+    },
+    {
+      "flutter": "foregroundBuilder",
+      "reason": "deferred",
+      "note": "Custom builders are deferred."
+    }
+  ]
+}

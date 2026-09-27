@@ -1,7 +1,7 @@
 # Plux — System Requirements Specification
 
 **Document ID:** `SRS-PLUX-001`
-**Version:** 1.1.1
+**Version:** 1.1.2
 **Status:** Draft — living document, revised as implementation proceeds
 **Date:** 2026-09-26
 **Applies to:** Plux Schema, Plux Compiler, Plux Server, Plux Functions, `plux_flutter` runtime, Plux Dev app, Plux Studio, Plux CLI, Plux AI
@@ -587,48 +587,48 @@ The document model is the contract between every author (Studio, CLI, AI, Git) a
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `SCH-001` | P1 | MUST | The document model **MUST** be defined in JSON Schema 2020-12 under `schema/json/` and **MUST** be the single source of truth for document structure. Types for Go, Dart and TypeScript **MUST** be generated from it and committed. | SPEC |
-| `SCH-002` | P1 | MUST | Every entity (app, plugin, page, node, component, template, action graph, state entry, data source, collection, translation key, function reference) **MUST** have an immutable identifier (UUIDv7) and, where addressable by humans, a `key` (lower-kebab slug, unique within its parent). All cross-references **MUST** use identifiers, so renaming a key never breaks a reference. | SPEC |
-| `SCH-003` | P1 | MUST | Documents **MUST** be canonicalised with the JSON Canonicalization Scheme (RFC 8785) before hashing, diffing and storage, so that equal content has equal hashes. | SPEC |
-| `SCH-004` | P1 | MUST | Authoring validation **MUST** reject unknown properties, except properties prefixed with `x-`, which are preserved but ignored by the compiler. | SPEC |
-| `SCH-005` | P1 | MUST | Documents **MUST** respect size limits: at most 5,000 nodes per page (warning above 1,000), tree depth at most 64, at most 500 pages per plugin, at most 200 plugins per app, string props at most 64 KiB. These defaults are part of the limits framework of §30.4 and are configurable per installation, organisation, app and plugin. | SPEC |
-| `SCH-006` | P1 | MUST | The storage and Git export format **MUST** be one JSON file per page, component and action graph, plus one manifest file per plugin and app, so that diffs are reviewable line by line (`GOV-011`). | SPEC |
+| `SCH-001` | P1 | MUST | The document model **MUST** be defined in JSON Schema 2020-12 under `schema/json/` and **MUST** be the single source of truth for document structure. Types for Go, Dart and TypeScript **MUST** be generated from it and committed. | DONE |
+| `SCH-002` | P1 | MUST | Every entity (app, plugin, page, node, component, template, action graph, state entry, data source, collection, translation key, function reference) **MUST** have an immutable identifier (UUIDv7) and, where addressable by humans, a `key` (lower-kebab slug, unique within its parent). All cross-references **MUST** use identifiers, so renaming a key never breaks a reference. | DONE |
+| `SCH-003` | P1 | MUST | Documents **MUST** be canonicalised with the JSON Canonicalization Scheme (RFC 8785) before hashing, diffing and storage, so that equal content has equal hashes. | DONE |
+| `SCH-004` | P1 | MUST | Authoring validation **MUST** reject unknown properties, except properties prefixed with `x-`, which are preserved but ignored by the compiler. | DONE |
+| `SCH-005` | P1 | MUST | Documents **MUST** respect size limits: at most 5,000 nodes per page (warning above 1,000), tree depth at most 64, at most 500 pages per plugin, at most 200 plugins per app, string props at most 64 KiB. These defaults are part of the limits framework of §30.4 and are configurable per installation, organisation, app and plugin. | DONE |
+| `SCH-006` | P1 | MUST | The storage and Git export format **MUST** be one JSON file per page, component and action graph, plus one manifest file per plugin and app, so that diffs are reviewable line by line (`GOV-011`). | DONE |
 
 ### 7.3 Value types
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `SCH-010` | P1 | MUST | The type system **MUST** include `string`, `int` (64-bit), `double`, `bool`, `decimal` (arbitrary precision, serialised as a string), `money` (`decimal` + ISO 4217 currency), `date`, `dateTime` (ISO 8601 with offset), `duration`, `color`, `enum`, `list<T>`, `map<string,T>`, named object types, `asset`, `route` and nullable variants of each. | SPEC |
-| `SCH-011` | P1 | MUST | A prop value **MUST** be exactly one of: a literal of the prop's type; a PXL binding (`{"$expr": "…"}`); a design token reference (`{"$token": "color.primary"}`); a translation reference (`{"$t": "<key-id>", "args": {…}}`); an asset reference (`{"$asset": "<asset-id>"}`). | SPEC |
-| `SCH-012` | P1 | MUST | Fields and state entries **MAY** be tagged `sensitive: true`. Sensitive values **MUST** be excluded from logs, traces, analytics, crash reports and session replay, and persisted only in encrypted storage (`SEC-092`). | SPEC |
+| `SCH-010` | P1 | MUST | The type system **MUST** include `string`, `int` (64-bit), `double`, `bool`, `decimal` (arbitrary precision, serialised as a string), `money` (`decimal` + ISO 4217 currency), `date`, `dateTime` (ISO 8601 with offset), `duration`, `color`, `enum`, `list<T>`, `map<string,T>`, named object types, `asset`, `route` and nullable variants of each. | DONE |
+| `SCH-011` | P1 | MUST | A prop value **MUST** be exactly one of: a literal of the prop's type; a PXL binding (`{"$expr": "…"}`); a design token reference (`{"$token": "color.primary"}`); a translation reference (`{"$t": "<key-id>", "args": {…}}`); an asset reference (`{"$asset": "<asset-id>"}`). | DONE |
+| `SCH-012` | P1 | MUST | Fields and state entries **MAY** be tagged `sensitive: true`. Sensitive values **MUST** be excluded from logs, traces, analytics, crash reports and session replay, and persisted only in encrypted storage (`SEC-092`). | WIP |
 
 ### 7.4 App, plugin and page documents
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `SCH-020` | P1 | MUST | An **app** document **MUST** declare: key, name, description, icon (uploaded image or generated monogram), default and supported locales, theme reference, entry route, environments with variables, data source definitions, native route catalogue reference, security profile (§15.12), sync policy (§10.4), minimum runtime version and feature flags. | SPEC |
-| `SCH-021` | P1 | MUST | A **plugin** document **MUST** declare: key, name, description, icon, owning team, entry page, pages, plugin-scoped state, local DB collections, requested capabilities (network domains, functions, device APIs, native routes), tags and an optional fallback page shown when the plugin is disabled by kill switch. | SPEC |
-| `SCH-022` | P1 | MUST | A **page** document **MUST** declare: key, route name (`SCH-025`), kind (`screen`, `dialog`, `bottomSheet`, `fullscreenDialog`), title (translatable), typed parameters with required/optional and defaults, page state, data sources, lifecycle events (`onInit`, `onEnter`, `onResume`, `onLeave`, `onDispose`), route options (transition, guards) and security flags (`secure` to block screenshots, `requiresAssurance`). | SPEC |
-| `SCH-023` | P1 | MUST | A **node** **MUST** consist of: `id`, `type` (a registered widget type), `props`, `events` (event name → action graph reference or inline graph), `children` or named `slots` as the widget descriptor allows, optional `visible` (PXL boolean), optional `semantics`, optional `testId`, and optional responsive overrides per breakpoint (`WGT-010`). | SPEC |
-| `SCH-025` | P1 | MUST | Every page **MUST** have a **route name** that is unique across the whole app (default derived from its key, editable, e.g. `loan-calculator`). Native code, deep links and generated APIs address screens by route name only, never by plugin, so a screen can move between plugins without breaking any caller. | SPEC |
-| `SCH-024` | P1 | MUST | Page and plugin documents **MUST** declare a design-time mock for each data source and parameter so that Studio and tests can render pages without a live backend (`DAT-080`). | SPEC |
+| `SCH-020` | P1 | MUST | An **app** document **MUST** declare: key, name, description, icon (uploaded image or generated monogram), default and supported locales, theme reference, entry route, environments with variables, data source definitions, native route catalogue reference, security profile (§15.12), sync policy (§10.4), minimum runtime version and feature flags. | DONE |
+| `SCH-021` | P1 | MUST | A **plugin** document **MUST** declare: key, name, description, icon, owning team, entry page, pages, plugin-scoped state, local DB collections, requested capabilities (network domains, functions, device APIs, native routes), tags and an optional fallback page shown when the plugin is disabled by kill switch. | DONE |
+| `SCH-022` | P1 | MUST | A **page** document **MUST** declare: key, route name (`SCH-025`), kind (`screen`, `dialog`, `bottomSheet`, `fullscreenDialog`), title (translatable), typed parameters with required/optional and defaults, page state, data sources, lifecycle events (`onInit`, `onEnter`, `onResume`, `onLeave`, `onDispose`), route options (transition, guards) and security flags (`secure` to block screenshots, `requiresAssurance`). | DONE |
+| `SCH-023` | P1 | MUST | A **node** **MUST** consist of: `id`, `type` (a registered widget type), `props`, `events` (event name → action graph reference or inline graph), `children` or named `slots` as the widget descriptor allows, optional `visible` (PXL boolean), optional `semantics`, optional `testId`, and optional responsive overrides per breakpoint (`WGT-010`). | DONE |
+| `SCH-025` | P1 | MUST | Every page **MUST** have a **route name** that is unique across the whole app (default derived from its key, editable, e.g. `loan-calculator`). Native code, deep links and generated APIs address screens by route name only, never by plugin, so a screen can move between plugins without breaking any caller. | DONE |
+| `SCH-024` | P1 | MUST | Page and plugin documents **MUST** declare a design-time mock for each data source and parameter so that Studio and tests can render pages without a live backend (`DAT-080`). | DONE |
 
 ### 7.5 Components, templates and the native catalogue
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `SCH-030` | P1 | MUST | A **component** **MUST** declare typed props with defaults, named slots, emitted events, internal state and a version. Instances **MUST** reference a component by ID and version and **MAY** override props and fill slots. Components **MUST** be compiled once per bundle and instantiated by reference (`CMP-021`). | SPEC |
-| `SCH-031` | P1 | MUST | A **template** **MUST** store a snapshot subtree with name, description, category, tags, thumbnail, exposed parameters, visibility (`private`, `organization`, `public`) and a dependency list (tokens, assets, components). Inserting a template **MUST** copy it with fresh IDs. | SPEC |
-| `SCH-032` | P1 | MUST | The **native catalogue** **MUST** declare each host-app native route (key, description, typed parameters and result), each native slot widget and each custom action with its descriptor (`WGT-030`, `ACT-060`). It is produced without changing existing host code — by router discovery and static analysis (`HST-031`) — uploaded by the CLI (`CLI-006`) and versioned per host app build. | SPEC |
+| `SCH-030` | P1 | MUST | A **component** **MUST** declare typed props with defaults, named slots, emitted events, internal state and a version. Instances **MUST** reference a component by ID and version and **MAY** override props and fill slots. Components **MUST** be compiled once per bundle and instantiated by reference (`CMP-021`). | DONE |
+| `SCH-031` | P1 | MUST | A **template** **MUST** store a snapshot subtree with name, description, category, tags, thumbnail, exposed parameters, visibility (`private`, `organization`, `public`) and a dependency list (tokens, assets, components). Inserting a template **MUST** copy it with fresh IDs. | DONE |
+| `SCH-032` | P1 | MUST | The **native catalogue** **MUST** declare each host-app native route (key, description, typed parameters and result), each native slot widget and each custom action with its descriptor (`WGT-030`, `ACT-060`). It is produced without changing existing host code — by router discovery and static analysis (`HST-031`) — uploaded by the CLI (`CLI-006`) and versioned per host app build. | DONE |
 
 ### 7.6 Validation and the reference graph
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `SCH-040` | P1 | MUST | Validation **MUST** run in three tiers — **structural** (JSON Schema), **semantic** (references resolve, types match, PXL type-checks, route parameters are satisfied at every navigate action, keys are unique, no redirect loops on `onEnter`) and **policy** (accessibility, performance budgets, security lints, store-policy lints) — and produce diagnostics with code, severity (`error`, `warning`, `info`), JSON path, message and, where possible, a machine-applicable fix. | SPEC |
-| `SCH-041` | P1 | MUST | The server and compiler **MUST** derive a **reference graph** from documents: page → page, page → other plugin's page, page → native route, and uses of components, state keys, translation keys, data sources, collections and functions. The graph powers Studio arrows (§21.6), "where used" and deletion protection (`STU-070`). | SPEC |
-| `SCH-042` | P1 | MUST | Validation of a single edited page **MUST** complete in ≤ 50 ms p95 (incremental), so Studio can show problems as the user types. | SPEC |
-| `SCH-043` | P1 | MUST | Schema migrations **MUST** be forward-only, deterministic and covered by golden tests from every released `schemaVersion` to the current one. | SPEC |
+| `SCH-040` | P1 | MUST | Validation **MUST** run in three tiers — **structural** (JSON Schema), **semantic** (references resolve, types match, PXL type-checks, route parameters are satisfied at every navigate action, keys are unique, no redirect loops on `onEnter`) and **policy** (accessibility, performance budgets, security lints, store-policy lints) — and produce diagnostics with code, severity (`error`, `warning`, `info`), JSON path, message and, where possible, a machine-applicable fix. | DONE |
+| `SCH-041` | P1 | MUST | The server and compiler **MUST** derive a **reference graph** from documents: page → page, page → other plugin's page, page → native route, and uses of components, state keys, translation keys, data sources, collections and functions. The graph powers Studio arrows (§21.6), "where used" and deletion protection (`STU-070`). | DONE |
+| `SCH-042` | P1 | MUST | Validation of a single edited page **MUST** complete in ≤ 50 ms p95 (incremental), so Studio can show problems as the user types. | DONE |
+| `SCH-043` | P1 | MUST | Schema migrations **MUST** be forward-only, deterministic and covered by golden tests from every released `schemaVersion` to the current one. | DONE |
 
 ---
 
@@ -648,17 +648,17 @@ The full catalogue with phases is in Appendix C.
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `WGT-001` | P1 | MUST | Every widget type **MUST** be defined by a **descriptor** under `schema/widgets/`: type name, layer, Flutter counterpart, props (type, default, constraints, since-version, deprecation), events, slots/children rules, platform support, minimum runtime version, accessibility requirements, performance cost hint and Studio metadata (category, icon, documentation). | SPEC |
-| `WGT-002` | P1 | MUST | Descriptors **MUST** be the single source for compiler validation, runtime prop decoding (generated Dart decoders), Studio property panels and AI grounding. No component may hand-maintain a parallel list. | SPEC |
-| `WGT-003` | P1 | MUST | A generated **coverage table** **MUST** compare each Layer 1 descriptor with the constructor parameters of its Flutter counterpart in the pinned Flutter SDK, and every excluded parameter **MUST** carry a recorded reason (`callback→event`, `controller→state`, `builder→template`, `non-serialisable`, `deprecated`, `deferred`). CI **MUST** fail when a Flutter upgrade adds a parameter that is neither supported nor excluded. | SPEC |
-| `WGT-004` | P1 | MUST | Widget schema changes **MUST** be additive. A new prop declares the minimum runtime version that understands it; the compiler **MUST** reject a publish that uses a prop or widget newer than the app's configured minimum runtime version, or it **MUST** raise the release's `required_features` accordingly with an explicit warning listing the affected install base (`REL-080`). | SPEC |
-| `WGT-005` | P1 | MUST | The pinned Flutter version **MUST** be the latest stable at each phase tag and **SHOULD** be upgraded at least quarterly. | SPEC |
+| `WGT-001` | P1 | MUST | Every widget type **MUST** be defined by a **descriptor** under `schema/widgets/`: type name, layer, Flutter counterpart, props (type, default, constraints, since-version, deprecation), events, slots/children rules, platform support, minimum runtime version, accessibility requirements, performance cost hint and Studio metadata (category, icon, documentation). | DONE |
+| `WGT-002` | P1 | MUST | Descriptors **MUST** be the single source for compiler validation, runtime prop decoding (generated Dart decoders), Studio property panels and AI grounding. No component may hand-maintain a parallel list. | DONE |
+| `WGT-003` | P1 | MUST | A generated **coverage table** **MUST** compare each Layer 1 descriptor with the constructor parameters of its Flutter counterpart in the pinned Flutter SDK, and every excluded parameter **MUST** carry a recorded reason (`callback→event`, `controller→state`, `builder→template`, `non-serialisable`, `deprecated`, `deferred`). CI **MUST** fail when a Flutter upgrade adds a parameter that is neither supported nor excluded. | DONE |
+| `WGT-004` | P1 | MUST | Widget schema changes **MUST** be additive. A new prop declares the minimum runtime version that understands it; the compiler **MUST** reject a publish that uses a prop or widget newer than the app's configured minimum runtime version, or it **MUST** raise the release's `required_features` accordingly with an explicit warning listing the affected install base (`REL-080`). | DONE |
+| `WGT-005` | P1 | MUST | The pinned Flutter version **MUST** be the latest stable at each phase tag and **SHOULD** be upgraded at least quarterly. | WIP |
 
 ### 8.2 Behaviour rules
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `WGT-010` | P1 | MUST | Nodes **MUST** support responsive prop overrides for window size classes `compact` (< 600 dp), `medium` (600–839 dp) and `expanded` (≥ 840 dp), aligned with Material 3. | SPEC |
+| `WGT-010` | P1 | MUST | Nodes **MUST** support responsive prop overrides for window size classes `compact` (< 600 dp), `medium` (600–839 dp) and `expanded` (≥ 840 dp), aligned with Material 3. | DONE |
 | `WGT-011` | P3 | MUST | Widgets with Material and Cupertino counterparts **MUST** support `adaptive: true`, rendering the platform-appropriate variant. | SPEC |
 | `WGT-012` | P3 | MUST | Scrollable collections (`ListView`, `GridView`, sliver lists and grids, `PageView`) **MUST** be driven by an item template bound to a list value or a data source, built lazily, with declared empty, loading and error states and optional pagination. | SPEC |
 | `WGT-013` | P3 | MUST | Every interactive widget **MUST** accept a `testId` and semantics properties; the compiler derives a semantics label from visible text when none is set and emits a diagnostic when neither exists (`A11Y-002`). | SPEC |
@@ -683,21 +683,21 @@ The full catalogue with phases is in Appendix C.
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `CMP-001` | P1 | MUST | The compiler **MUST** be a Go library used unchanged by the server `worker`, the CLI, and tests (layering rule L-5). | SPEC |
-| `CMP-002` | P1 | MUST | Compilation **MUST** be deterministic: the same canonical input and compiler version **MUST** produce byte-identical output on every platform. No timestamps, map-iteration order or environment data may influence output. | SPEC |
-| `CMP-003` | P1 | MUST | The pipeline **MUST** run these stages in order: parse → migrate → structural validation → reference resolution → PXL type-checking → semantic validation → policy validation → optimisation → lowering of action graphs → encoding → asset processing → hashing. Each stage **MUST** be independently testable. | SPEC |
-| `CMP-004` | P1 | MUST | The compiler **MUST** emit diagnostics as structured data (`code`, `severity`, `path`, `range`, `message`, `fix`), human-readable output for the CLI, and **MUST** map PXL errors to the exact character range inside the expression. | SPEC |
-| `CMP-005` | P1 | MUST | The compiler version, schema version and required runtime features **MUST** be recorded in every bundle header. | SPEC |
+| `CMP-001` | P1 | MUST | The compiler **MUST** be a Go library used unchanged by the server `worker`, the CLI, and tests (layering rule L-5). | DONE |
+| `CMP-002` | P1 | MUST | Compilation **MUST** be deterministic: the same canonical input and compiler version **MUST** produce byte-identical output on every platform. No timestamps, map-iteration order or environment data may influence output. | DONE |
+| `CMP-003` | P1 | MUST | The pipeline **MUST** run these stages in order: parse → migrate → structural validation → reference resolution → PXL type-checking → semantic validation → policy validation → optimisation → lowering of action graphs → encoding → asset processing → hashing. Each stage **MUST** be independently testable. | DONE |
+| `CMP-004` | P1 | MUST | The compiler **MUST** emit diagnostics as structured data (`code`, `severity`, `path`, `range`, `message`, `fix`), human-readable output for the CLI, and **MUST** map PXL errors to the exact character range inside the expression. | DONE |
+| `CMP-005` | P1 | MUST | The compiler version, schema version and required runtime features **MUST** be recorded in every bundle header. | DONE |
 
 ### 9.2 Optimisation
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `CMP-020` | P1 | MUST | The compiler **MUST** intern strings into per-section string tables, deduplicate identical style objects, and omit props equal to their descriptor default. | SPEC |
-| `CMP-021` | P1 | MUST | Components **MUST** be compiled once per bundle and instantiated by reference, not inlined per use. | SPEC |
-| `CMP-022` | P1 | MUST | The compiler **MUST** fold constant PXL expressions, eliminate subtrees whose `visible` is constant `false`, and flatten redundant single-child wrappers where semantics are provably unchanged (e.g. nested `Padding` with additive insets). | SPEC |
-| `CMP-023` | P1 | MUST | For each PXL expression the compiler **MUST** record the exact state paths it reads, so that the runtime subscribes only to those paths (`STA-010`). | SPEC |
-| `CMP-024` | P1 | SHOULD | The compiler **SHOULD** insert repaint-boundary hints at page roots, list items and animated subtrees, and precompute static layout hints (fixed sizes, intrinsic-free paths). | SPEC |
+| `CMP-020` | P1 | MUST | The compiler **MUST** intern strings into per-section string tables, deduplicate identical style objects, and omit props equal to their descriptor default. | DONE |
+| `CMP-021` | P1 | MUST | Components **MUST** be compiled once per bundle and instantiated by reference, not inlined per use. | DONE |
+| `CMP-022` | P1 | MUST | The compiler **MUST** fold constant PXL expressions, eliminate subtrees whose `visible` is constant `false`, and flatten redundant single-child wrappers where semantics are provably unchanged (e.g. nested `Padding` with additive insets). | DONE |
+| `CMP-023` | P1 | MUST | For each PXL expression the compiler **MUST** record the exact state paths it reads, so that the runtime subscribes only to those paths (`STA-010`). | DONE |
+| `CMP-024` | P1 | SHOULD | The compiler **SHOULD** insert repaint-boundary hints at page roots, list items and animated subtrees, and precompute static layout hints (fixed sizes, intrinsic-free paths). | DONE |
 
 ### 9.3 Assets and budgets
 
@@ -707,16 +707,16 @@ The full catalogue with phases is in Appendix C.
 | `CMP-031` | P2 | MUST | SVGs **MUST** be compiled to Flutter's `vector_graphics` binary format at publish time; raw SVG parsing on the device is not permitted. | SPEC |
 | `CMP-032` | P2 | SHOULD | Icon fonts **SHOULD** be subset to the glyphs used; text fonts **MAY** be subset by Unicode script ranges declared for the app's locales, never below full coverage of those scripts (Ethiopic, Latin, Arabic…). | SPEC |
 | `CMP-033` | P2 | MUST | Lottie animations **MUST** be packaged as dotLottie; Rive files are stored as-is. | SPEC |
-| `CMP-040` | P1 | MUST | The compiler **MUST** compute per-page budgets — node count, depth, estimated build cost (from descriptor cost hints), image bytes, animation count — and **MUST** fail publication when a configured hard budget is exceeded. Defaults are in §30.3; limits are governed by §30.4. | SPEC |
-| `CMP-041` | P1 | MUST | Development bundles **MUST** include a source map from compiled node and action indices to document JSON paths, used for errors and inspect mode (`DEV-030`). Release bundles **MUST NOT** include source maps; the server retains them for crash symbolication (`ANL-040`). | SPEC |
+| `CMP-040` | P1 | MUST | The compiler **MUST** compute per-page budgets — node count, depth, estimated build cost (from descriptor cost hints), image bytes, animation count — and **MUST** fail publication when a configured hard budget is exceeded. Defaults are in §30.3; limits are governed by §30.4. | DONE |
+| `CMP-041` | P1 | MUST | Development bundles **MUST** include a source map from compiled node and action indices to document JSON paths, used for errors and inspect mode (`DEV-030`). Release bundles **MUST NOT** include source maps; the server retains them for crash symbolication (`ANL-040`). | DONE |
 
 ### 9.4 Speed
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `CMP-050` | P1 | MUST | Compiling a 50-page plugin without asset processing **MUST** complete in ≤ 1 s on the CI reference runner. | SPEC |
+| `CMP-050` | P1 | MUST | Compiling a 50-page plugin without asset processing **MUST** complete in ≤ 1 s on the CI reference runner. | DONE |
 | `CMP-051` | P10 | MUST | Incremental compilation **MUST** recompile only changed pages and their dependants, enabling edit-to-device latency within `DEV-010`. | SPEC |
-| `CMP-052` | P1 | MUST | The compiler **MUST** be fuzzed continuously (`QA-004`) and **MUST NOT** panic on any input. | SPEC |
+| `CMP-052` | P1 | MUST | The compiler **MUST** be fuzzed continuously (`QA-004`) and **MUST NOT** panic on any input. | DONE |
 
 ### 9.5 Bundle format
 
@@ -724,29 +724,29 @@ A **plugin bundle** (`.pxb`) is a small container of independently addressable s
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `BND-001` | P1 | MUST | Bundle schemas **MUST** be defined in FlatBuffers IDL under `schema/fbs/` with a pinned `flatc` version; generated Go and Dart code **MUST** be committed and verified in CI. | SPEC |
-| `BND-002` | P1 | MUST | The distributable units **MUST** be: one **plugin bundle** per plugin version; one **app bundle** per app release (theme, translations, shared components, shared collections, flags, native catalogue reference); and one **manifest** per channel release (`REL-030`). | SPEC |
-| `BND-003` | P1 | MUST | The container **MUST** consist of a fixed header (magic `PLUX`, container version, bundle kind, flags), a section directory (section ID, kind, offset, length, SHA-256) and 8-byte-aligned section payloads, so sections can be memory-mapped and read without copying. | SPEC |
-| `BND-004` | P1 | MUST | Section kinds **MUST** include at least: `meta`, `page` (one per page), `component` (one per component), `actions`, `pxl` (bytecode), `styles`, `strings`, `l10n` (one per locale), `assets-index` and `state-schema`. | SPEC |
-| `BND-005` | P1 | MUST | Hashes **MUST** be SHA-256. The bundle hash is the hash of the header plus the section directory, which in turn commits to every section hash. | SPEC |
+| `BND-001` | P1 | MUST | Bundle schemas **MUST** be defined in FlatBuffers IDL under `schema/fbs/` with a pinned `flatc` version; generated Go and Dart code **MUST** be committed and verified in CI. | DONE |
+| `BND-002` | P1 | MUST | The distributable units **MUST** be: one **plugin bundle** per plugin version; one **app bundle** per app release (theme, translations, shared components, shared collections, flags, native catalogue reference); and one **manifest** per channel release (`REL-030`). | WIP |
+| `BND-003` | P1 | MUST | The container **MUST** consist of a fixed header (magic `PLUX`, container version, bundle kind, flags), a section directory (section ID, kind, offset, length, SHA-256) and 8-byte-aligned section payloads, so sections can be memory-mapped and read without copying. | DONE |
+| `BND-004` | P1 | MUST | Section kinds **MUST** include at least: `meta`, `page` (one per page), `component` (one per component), `actions`, `pxl` (bytecode), `styles`, `strings`, `l10n` (one per locale), `assets-index` and `schemas` (state, data-source and local-collection schemas; Appendix B.2). | DONE |
+| `BND-005` | P1 | MUST | Hashes **MUST** be SHA-256. The bundle hash is the hash of the header plus the section directory, which in turn commits to every section hash. | DONE |
 | `BND-006` | P3 | MUST | The runtime **MUST** run the FlatBuffers verifier on each section before first use, even after signature verification, and **MUST** reject sections that fail. | SPEC |
-| `BND-007` | P1 | MUST | Bundles **MUST** be compressed with zstd for transport only; at rest on the device they are stored uncompressed (or encrypted, `SEC-053`) to allow memory mapping. | SPEC |
-| `BND-008` | P1 | MUST | The header **MUST** list `required_features` (e.g. `pxl.v2`, `widget.SecurePinPad.v3`). A runtime that does not support every listed feature **MUST** refuse the bundle, report `PLX-3010`, and keep its last compatible release. | SPEC |
-| `BND-009` | P1 | MUST | Bundles **MUST NOT** contain native code, Dart code, JavaScript or any format executable outside the Plux PXL VM and action interpreter (`SEC-054`). | SPEC |
-| `BND-010` | P1 | MUST | Bundle sizes **MUST** be governed by the limits framework (§30.4), with defaults of 20 MiB per plugin bundle, 1 MiB per page section and 100 MiB per app release. | SPEC |
+| `BND-007` | P1 | MUST | Bundles **MUST** be compressed with zstd for transport only; at rest on the device they are stored uncompressed (or encrypted, `SEC-053`) to allow memory mapping. | DONE |
+| `BND-008` | P1 | MUST | The header **MUST** list `required_features` (e.g. `pxl.v2`, `widget.SecurePinPad.v3`). A runtime that does not support every listed feature **MUST** refuse the bundle, report `PLX-3010`, and keep its last compatible release. | WIP |
+| `BND-009` | P1 | MUST | Bundles **MUST NOT** contain native code, Dart code, JavaScript or any format executable outside the Plux PXL VM and action interpreter (`SEC-054`). | DONE |
+| `BND-010` | P1 | MUST | Bundle sizes **MUST** be governed by the limits framework (§30.4), with defaults of 20 MiB per plugin bundle, 1 MiB per page section and 100 MiB per app release. | DONE |
 
 ### 9.6 Bundle design principles
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `BND-011` | P1 | MUST | Widget types, props, actions and enum values **MUST** be encoded by **permanent numeric IDs** assigned by the registry; an ID is never reused or reassigned, so registry order can change without breaking installed runtimes. | SPEC |
-| `BND-012` | P1 | MUST | Each section kind **MUST** have its own root type and FlatBuffers file identifier, so each section is independently verifiable and readable. | SPEC |
-| `BND-013` | P1 | MUST | All indices and counts inside sections **MUST** be 32-bit; the format **MUST NOT** impose smaller structural caps than the limits in §30.4. | SPEC |
-| `BND-014` | P1 | MUST | Sections **MUST** reference each other only by stable IDs (never by offsets into another section), so any section can be replaced by a delta independently. | SPEC |
-| `BND-015` | P1 | MUST | Node trees **MUST** be stored as flat arrays with index references and props as typed values keyed by prop ID, matching the value types of `SCH-010`, so the runtime reads them zero-copy. | SPEC |
-| `BND-016` | P1 | MUST | Variants — experiment variants, platform variants, responsive overrides and locale overrides — **MUST** be encoded as override layers over a base node, not as duplicated subtrees. | SPEC |
-| `BND-017` | P1 | MUST | The format **MUST** encode component definitions and instances with overrides and slot fills, animation timelines, action graphs (including parallel and bounded iteration), state and data-source schemas, local collection schemas and device-placed function modules. | SPEC |
-| `BND-018` | P1 | MUST | Runtimes **MUST** ignore unknown props, sections and fields unless they are listed in `required_features` (`BND-008`), so new optional capabilities never break older runtimes. | SPEC |
+| `BND-011` | P1 | MUST | Widget types, props, actions and enum values **MUST** be encoded by **permanent numeric IDs** assigned by the registry; an ID is never reused or reassigned, so registry order can change without breaking installed runtimes. | DONE |
+| `BND-012` | P1 | MUST | Each section kind **MUST** have its own root type and FlatBuffers file identifier, so each section is independently verifiable and readable. | DONE |
+| `BND-013` | P1 | MUST | All indices and counts inside sections **MUST** be 32-bit; the format **MUST NOT** impose smaller structural caps than the limits in §30.4. | DONE |
+| `BND-014` | P1 | MUST | Sections **MUST** reference each other only by stable IDs (never by offsets into another section), so any section can be replaced by a delta independently. | DONE |
+| `BND-015` | P1 | MUST | Node trees **MUST** be stored as flat arrays with index references and props as typed values keyed by prop ID, matching the value types of `SCH-010`, so the runtime reads them zero-copy. | DONE |
+| `BND-016` | P1 | MUST | Variants — experiment variants, platform variants, responsive overrides and locale overrides — **MUST** be encoded as override layers over a base node, not as duplicated subtrees. | DONE |
+| `BND-017` | P1 | MUST | The format **MUST** encode component definitions and instances with overrides and slot fills, animation timelines, action graphs (including parallel and bounded iteration), state and data-source schemas, local collection schemas and device-placed function modules. | DONE |
+| `BND-018` | P1 | MUST | Runtimes **MUST** ignore unknown props, sections and fields unless they are listed in `required_features` (`BND-008`), so new optional capabilities never break older runtimes. | WIP |
 
 ---
 
@@ -1029,13 +1029,13 @@ PXL is a small, typed, side-effect-free expression language with CEL-like syntax
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `PXL-001` | P1 | MUST | PXL **MUST** be pure, deterministic and total: every evaluation terminates within an operation budget (default 10,000 operations) and returns a value or a typed error. | SPEC |
-| `PXL-002` | P1 | MUST | PXL **MUST** be statically typed against the schemas of state, parameters, data sources, step outputs, flags and environment variables available at each use site. | SPEC |
-| `PXL-003` | P1 | MUST | PXL **MUST** be compiled to compact bytecode at publish time; the runtime **MUST NOT** parse PXL source. | SPEC |
+| `PXL-001` | P1 | MUST | PXL **MUST** be pure, deterministic and total: every evaluation terminates within an operation budget (default 10,000 operations) and returns a value or a typed error. | DONE |
+| `PXL-002` | P1 | MUST | PXL **MUST** be statically typed against the schemas of state, parameters, data sources, step outputs, flags and environment variables available at each use site. | DONE |
+| `PXL-003` | P1 | MUST | PXL **MUST** be compiled to compact bytecode at publish time; the runtime **MUST NOT** parse PXL source. | DONE |
 | `PXL-004` | P5 | MUST | The Dart VM **MUST** evaluate a typical binding (≤ 20 operations) in ≤ 2 µs p95 on the mid-tier reference device. | SPEC |
-| `PXL-005` | P1 | MUST | `decimal` and `money` arithmetic **MUST** be exact, with explicit rounding modes (half-even default, half-up, down, up, ceiling, floor) and currency-aware scale. Floating-point is never used for money. | SPEC |
-| `PXL-006` | P1 | MUST | PXL **MUST** support null-safe navigation (`a?.b`), null coalescing (`??`), conditional (`c ? a : b`), list/map literals and the standard library in Appendix E. | SPEC |
-| `PXL-007` | P1 | MUST | A shared conformance suite of expressions, inputs and expected results **MUST** pass identically in the Go evaluator (used for constant folding and server-side validation), the Dart VM and the Studio language service. | SPEC |
+| `PXL-005` | P1 | MUST | `decimal` and `money` arithmetic **MUST** be exact, with explicit rounding modes (half-even default, half-up, down, up, ceiling, floor) and currency-aware scale. Floating-point is never used for money. | DONE |
+| `PXL-006` | P1 | MUST | PXL **MUST** support null-safe navigation (`a?.b`), null coalescing (`??`), conditional (`c ? a : b`), list/map literals and the standard library in Appendix E. | WIP |
+| `PXL-007` | P1 | MUST | A shared conformance suite of expressions, inputs and expected results **MUST** pass identically in the Go evaluator (used for constant folding and server-side validation), the Dart VM and the Studio language service. | WIP |
 | `PXL-008` | P11 | MUST | Studio **MUST** provide PXL autocompletion, hover types, inline errors and signature help through a language service (compiled to WASM from the Go implementation). | SPEC |
 
 ### 14.3 State
@@ -1185,7 +1185,7 @@ The update channel follows the design of **The Update Framework (TUF)**: separat
 | `SEC-051` | P3 | MUST | Host apps **MUST** embed the root public keys at build time (`plux init`, `plux pull`); the runtime **MUST** accept root rotations only when signed by the previous root threshold. | SPEC |
 | `SEC-052` | P3 | MUST | The runtime **MUST** verify, before loading anything: metadata signatures and expiry, the manifest's release against the metadata, every bundle and section hash, and the FlatBuffers verifier (`BND-006`). Nothing unverified is ever parsed beyond the container header. | SPEC |
 | `SEC-053` | P6 | MUST | **Confidential bundles** **MUST** be supported: each release is encrypted with AES-256-GCM using a per-release content key, delivered only to devices meeting the configured assurance level, wrapped to a device-held key-agreement key (ECDH P-256 in secure hardware). On the device, bundles are stored encrypted and decrypted into memory. | SPEC |
-| `SEC-054` | P1 | MUST | Bundles and manifests **MUST NOT** carry native code, Dart code or scripts. The only executable content permitted is PXL bytecode, action graphs and WebAssembly modules of device-placed functions, and each **MUST** run in a sandboxed interpreter with no direct access to platform APIs — only to host capabilities the plugin declared (`FN-012`). The runtime **MUST NOT** compile downloaded code to native instructions (no JIT, no AOT on device). | SPEC |
+| `SEC-054` | P1 | MUST | Bundles and manifests **MUST NOT** carry native code, Dart code or scripts. The only executable content permitted is PXL bytecode, action graphs and WebAssembly modules of device-placed functions, and each **MUST** run in a sandboxed interpreter with no direct access to platform APIs — only to host capabilities the plugin declared (`FN-012`). The runtime **MUST NOT** compile downloaded code to native instructions (no JIT, no AOT on device). | WIP |
 | `SEC-055` | P3 | MUST | The runtime **MUST** refuse any manifest whose release sequence is lower than the highest sequence it has accepted for that channel (anti-rollback); rollbacks are delivered as new sequences (`REL-006`). | SPEC |
 | `SEC-056` | P6 | MUST | Signing keys for development environments **MUST** differ from production keys; a production runtime **MUST** reject bundles signed with development keys. | SPEC |
 
@@ -1747,7 +1747,7 @@ The screen editor is the canvas of §21.6 with a screen selected for editing and
 | `CLI-002` | P2 | MUST | `plux login` **MUST** use the OAuth 2.0 device authorization grant; CI **MUST** authenticate with OIDC workload identity or scoped tokens (`SRV-064`). | SPEC |
 | `CLI-003` | P2 | MUST | Commands **MUST** include: `login`, `logout`, `whoami`, `init`, `doctor`, `validate`, `build` (local compile), `diff`, `publish`, `pull`, `release list/promote/rollback`, `export`, `import`, `keys`. P4 adds `create`, `codegen`, `native scan` and `native sync`; P7 adds `fn new/build/test/deploy/logs`; P8 adds `l10n pull/push`; P10 adds `dev pair/logs`; P12 adds `ai`. | SPEC |
 | `CLI-004` | P2 | MUST | `plux pull` **MUST** download the current release for an environment and channel into the host project as a baseline (`SYN-007`), together with the root public keys. | SPEC |
-| `CLI-005` | P1 | MUST | `validate` and `build` **MUST** work fully offline against a local directory (Git layout, `SCH-006`) so CI can validate changes without a server. | SPEC |
+| `CLI-005` | P1 | MUST | `validate` and `build` **MUST** work fully offline against a local directory (Git layout, `SCH-006`) so CI can validate changes without a server. | DONE |
 | `CLI-006` | P4 | MUST | `plux native scan` **MUST** build the host's native catalogue (native routes from router discovery or startup registration, native slots from `plux.yaml`, custom actions) by static analysis, without changes to host code, and `plux native sync` **MUST** upload it for a host build. | SPEC |
 | `CLI-007` | P2 | MUST | Every command **MUST** support `--json` output, documented exit codes and a non-interactive mode; interactive prompts **MUST** never block in CI. | SPEC |
 | `CLI-008` | P2 | SHOULD | Shell completion for bash, zsh, fish and PowerShell **SHOULD** be generated. | SPEC |
@@ -1768,7 +1768,7 @@ The screen editor is the canvas of §21.6 with a screen selected for editing and
 |---|---|---|---|---|
 | `DX-001` | P4 | MUST | The quick start **MUST** get a new developer from `flutter create` to a published Plux page on a device in ≤ 10 minutes (`HST-034`). | SPEC |
 | `DX-002` | P3 | MUST | A documentation site **MUST** cover concepts, quick start, guides per use case (financial services, delivery, campaigns, super-app, no-code apps), the widget catalogue (generated from descriptors), the action catalogue, PXL reference, API references (dartdoc, Go doc, protobuf docs), the security whitepaper, the compliance pack and runbooks. | SPEC |
-| `DX-003` | P1 | MUST | Every error and diagnostic **MUST** have a stable code (Appendix F), a clear message, the likely cause, a suggested fix and a link to its documentation page. | SPEC |
+| `DX-003` | P1 | MUST | Every error and diagnostic **MUST** have a stable code (Appendix F), a clear message, the likely cause, a suggested fix and a link to its documentation page. | DONE |
 | `DX-004` | P5 | MUST | Reference host apps **MUST** be maintained: **Plux Bank** (accounts, transfers with SCA, loan calculator via Functions, KYC capture, secure PIN, English/German/Arabic/Amharic, `maximum` profile) and **Plux Express** (catalogue, cart, scheduled campaign, A/B banners, live order tracking via WebSocket, courier flow with offline outbox), plus a minimal **Starter** app. | SPEC |
 | `DX-005` | P9 | MAY | A VS Code extension **MAY** provide schema validation, PXL highlighting and completion, and CLI integration for developers authoring Plux JSON in repositories. | SPEC |
 | `DX-006` | P3 | MUST | Every release of every component **MUST** have release notes and, where needed, an upgrade guide. | SPEC |
@@ -1889,9 +1889,9 @@ This section concerns how Plux itself is verified. §22.2 covers the testing too
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `QA-001` | P0 | MUST | Coverage **MUST** be at least 85% for the compiler, PXL, bundle, delta, sync, security, DPoP and approval packages; at least 80% for the rest of the Go and Dart code; at least 70% for Studio. | DONE |
-| `QA-002` | P1 | MUST | Property-based tests **MUST** cover: compiler determinism; delta round-trip (`REL-025`); PXL evaluation laws; JSON canonicalisation; atomic activation under injected crashes. | SPEC |
-| `QA-003` | P1 | MUST | A cross-language **conformance suite** (in `schema/testdata/`) **MUST** hold shared vectors — documents → expected bundles, PXL expressions → results, DPoP proofs → accept/reject — run by Go, Dart and TypeScript implementations alike. | SPEC |
-| `QA-004` | P1 | MUST | Fuzzing **MUST** continuously cover the compiler, the bundle container and FlatBuffers verification (Go and Dart), manifest and metadata parsing, DPoP and attestation parsing, and PXL bytecode loading. | SPEC |
+| `QA-002` | P1 | MUST | Property-based tests **MUST** cover: compiler determinism; delta round-trip (`REL-025`); PXL evaluation laws; JSON canonicalisation; atomic activation under injected crashes. | WIP |
+| `QA-003` | P1 | MUST | A cross-language **conformance suite** (in `schema/testdata/`) **MUST** hold shared vectors — documents → expected bundles, PXL expressions → results, DPoP proofs → accept/reject — run by Go, Dart and TypeScript implementations alike. | WIP |
+| `QA-004` | P1 | MUST | Fuzzing **MUST** continuously cover the compiler, the bundle container and FlatBuffers verification (Go and Dart), manifest and metadata parsing, DPoP and attestation parsing, and PXL bytecode loading. | WIP |
 | `QA-005` | P2 | MUST | Integration tests **MUST** run the server against real PostgreSQL, object storage and Valkey (Testcontainers or Compose). | SPEC |
 | `QA-006` | P3 | MUST | End-to-end tests **MUST** run the example host apps on Android emulators and iOS simulators in CI (Patrol or `integration_test`), and on a real-device farm nightly including at least one low-end Android device. | SPEC |
 | `QA-007` | P3 | MUST | Performance benchmarks **MUST** run in CI and fail on regressions beyond 10%: runtime (init, page build, first frame, frame times, PXL, action overhead) in profile mode on reference devices; sync (bytes and time on simulated 3G); server (k6 load tests for manifest, functions, telemetry); Studio (Lighthouse CI and canvas frame-time tests). | SPEC |
@@ -1958,7 +1958,7 @@ This section concerns how Plux itself is verified. §22.2 covers the testing too
 | `NFR-030` | P10 | MUST | Edit → paired device | ≤ 500 ms p95 (`DEV-010`) | SPEC |
 | `NFR-031` | P11 | MUST | Studio canvas frame rate | 60 fps with 100 screens / 200 plugins (`STU-120`) | SPEC |
 | `NFR-032` | P11 | MUST | Studio property change → canvas | ≤ 50 ms p95 (`STU-121`) | SPEC |
-| `NFR-033` | P1 | MUST | Incremental validation of one page | ≤ 50 ms p95 (`SCH-042`) | SPEC |
+| `NFR-033` | P1 | MUST | Incremental validation of one page | ≤ 50 ms p95 (`SCH-042`) | DONE |
 | `NFR-040` | P9 | MUST | Availability of manifest and control endpoints (HA reference deployment) | 99.95% monthly | SPEC |
 | `NFR-041` | P3 | MUST | Telemetry cost on device | < 1% battery, < 100 KiB/day typical (`ANL-002`) | SPEC |
 
@@ -2053,6 +2053,7 @@ Significant decisions are recorded as ADRs in `docs/adr/` using MADR. These ADRs
 | 0022 | Open-core licensing: Apache-2.0 client side, AGPL-3.0 server and Studio, commercial `ee/` | P0 |
 | 0023 | Mixed native/plugin screens: native slots and `PluxView` with shared exposed state | P4 |
 | 0024 | No-code generated projects and shell-update detection | P4 |
+| 0025 | Document schema toolchain: JSON Schema validation library, RFC 8785 canonicalisation and in-house code generation | P1 |
 
 ---
 
@@ -2202,62 +2203,65 @@ Candidate enterprise-edition features are SSO/SCIM, advanced approval policies, 
 
 ## Appendix A — Plux Document Example
 
-A loan calculator page in the `loans` plugin. IDs are shortened for readability; real IDs are UUIDv7.
+A loan calculator page in the `loans` plugin and one of its action graphs, as two files of the Git layout (`SCH-006`). Identifiers are shortened for readability; real identifiers are UUIDv7. The complete, valid project is `schema/testdata/documents/loan-calculator`, and every property is described in `docs/reference/document-schema.md`.
+
+`plugins/loans/pages/calculator.page.json`:
 
 ```json
 {
   "schemaVersion": "1.0.0",
   "kind": "page",
-  "id": "pg_01J…calc",
+  "id": "01J…calc",
   "key": "calculator",
+  "route": "loan-calculator",
   "pageKind": "screen",
-  "title": { "$t": "tk_loans_calc_title" },
+  "title": { "$t": "01J…tk-title" },
   "security": { "secure": false, "requiresAssurance": "AL1" },
   "params": [
-    { "name": "productId", "type": "string", "required": true }
+    { "id": "01J…p1", "name": "productId", "type": "string", "required": true, "mock": "personal-loan" }
   ],
   "state": [
-    { "name": "amount", "type": "decimal", "default": "50000", "persistence": "memory" },
-    { "name": "months", "type": "int", "default": 12 },
-    { "name": "result", "type": "LoanSchedule?", "default": null }
+    { "id": "01J…s1", "name": "amount", "type": "decimal", "default": "50000", "persistence": "memory" },
+    { "id": "01J…s2", "name": "months", "type": "int", "default": 12 },
+    { "id": "01J…s3", "name": "result", "type": "LoanSchedule?", "default": null }
   ],
   "root": {
-    "id": "n_scaffold", "type": "Scaffold",
+    "id": "01J…n1", "type": "Scaffold",
     "slots": {
       "appBar": {
-        "id": "n_appbar", "type": "AppBar",
-        "slots": { "title": { "id": "n_title", "type": "Text", "props": { "data": { "$t": "tk_loans_calc_title" } } } }
+        "id": "01J…n2", "type": "AppBar",
+        "slots": { "title": { "id": "01J…n3", "type": "Text", "props": { "data": { "$t": "01J…tk-title" } } } }
       },
       "body": {
-        "id": "n_col", "type": "Column",
+        "id": "01J…n4", "type": "Column",
         "props": { "crossAxisAlignment": "stretch", "spacing": { "$token": "space.md" } },
         "children": [
           {
-            "id": "n_amount", "type": "AmountInput", "testId": "amount",
+            "id": "01J…n5", "type": "AmountInput", "testId": "amount",
             "props": {
-              "label": { "$t": "tk_loans_amount" },
+              "label": { "$t": "01J…tk-amount" },
               "currency": "ETB",
               "value": { "$expr": "page.amount" },
               "min": "1000", "max": "5000000"
             },
-            "events": { "onChanged": { "$graph": "ag_set_amount" } }
+            "events": { "onChanged": { "$graph": "01J…g-set-amount" } }
           },
           {
-            "id": "n_months", "type": "Slider", "testId": "months",
+            "id": "01J…n6", "type": "Slider", "testId": "months",
             "props": { "min": 3, "max": 60, "divisions": 19, "value": { "$expr": "double(page.months)" } },
-            "events": { "onChanged": { "$graph": "ag_set_months" } }
+            "events": { "onChanged": { "$graph": "01J…g-set-months" } }
           },
           {
-            "id": "n_calc", "type": "FilledButton", "testId": "calculate",
-            "slots": { "child": { "id": "n_calc_label", "type": "Text", "props": { "data": { "$t": "tk_loans_calculate" } } } },
-            "events": { "onPressed": { "$graph": "ag_calculate", "concurrency": "drop" } }
+            "id": "01J…n7", "type": "FilledButton", "testId": "calculate",
+            "slots": { "child": { "id": "01J…n8", "type": "Text", "props": { "data": { "$t": "01J…tk-calculate" } } } },
+            "events": { "onPressed": { "$graph": "01J…g-calculate", "concurrency": "drop" } }
           },
           {
-            "id": "n_result", "type": "If",
+            "id": "01J…n9", "type": "If",
             "props": { "condition": { "$expr": "page.result != null" } },
             "slots": {
               "then": {
-                "id": "n_payment", "type": "MoneyText",
+                "id": "01J…n10", "type": "MoneyText",
                 "props": { "value": { "$expr": "page.result.monthlyPayment" }, "style": { "$token": "type.headlineMedium" } }
               }
             }
@@ -2265,24 +2269,32 @@ A loan calculator page in the `loans` plugin. IDs are shortened for readability;
         ]
       }
     }
-  },
-  "actionGraphs": {
-    "ag_calculate": {
-      "steps": [
-        {
-          "id": "call", "action": "invokeFunction",
-          "input": {
-            "function": "loan.calculateSchedule@prod",
-            "args": { "principal": { "$expr": "page.amount" }, "annualRate": { "$expr": "flags.loanBaseRate" }, "months": { "$expr": "page.months" } }
-          },
-          "onSuccess": "store", "onError": "showError"
-        },
-        { "id": "store", "action": "setState", "input": { "path": "page.result", "value": { "$expr": "steps.call.output" } }, "next": "track" },
-        { "id": "track", "action": "trackEvent", "input": { "name": "loan_calculated", "props": { "months": { "$expr": "page.months" } } } },
-        { "id": "showError", "action": "showSnackbar", "input": { "message": { "$expr": "steps.call.error.message" } } }
-      ]
-    }
   }
+}
+```
+
+`plugins/loans/actions/calculate.graph.json`:
+
+```json
+{
+  "schemaVersion": "1.0.0",
+  "kind": "actionGraph",
+  "id": "01J…g-calculate",
+  "key": "calculate",
+  "page": "01J…calc",
+  "steps": [
+    {
+      "id": "call", "action": "invokeFunction",
+      "input": {
+        "function": "loan.calculateSchedule@prod",
+        "args": { "principal": { "$expr": "page.amount" }, "annualRate": { "$expr": "flags.loanBaseRate" }, "months": { "$expr": "page.months" } }
+      },
+      "onSuccess": "store", "onError": "showError"
+    },
+    { "id": "store", "action": "setState", "input": { "path": "page.result", "value": { "$expr": "steps.call.output" } }, "next": "track" },
+    { "id": "track", "action": "trackEvent", "input": { "name": "loan_calculated", "props": { "months": { "$expr": "page.months" } } } },
+    { "id": "showError", "action": "showSnackbar", "input": { "message": { "$expr": "steps.call.error.message" } } }
+  ]
 }
 ```
 
@@ -2302,7 +2314,7 @@ The container layout below is normative. The FlatBuffers schemas of the individu
 | 8 | 4 | `flags` | bit 0 = encrypted, bit 1 = has source map |
 | 12 | 4 | `section_count` | uint32 |
 | 16 | 32 | `header_hash` | SHA-256 of bytes 0–15 and the section directory |
-| 48 | 64 × n | section directory | per entry: section ID (16), kind (2), reserved (2), offset (8), length (8), SHA-256 (32), reserved (4) |
+| 48 | 72 × n | section directory | per entry: section ID (16), kind (2), reserved (2), offset (8), length (8), SHA-256 (32), reserved (4) |
 | … | … | section payloads | each 8-byte aligned; each an independent FlatBuffers buffer with its own root type and file identifier |
 
 ### B.2 Section kinds
@@ -2355,7 +2367,7 @@ Phase indicates when the widget must be supported by the runtime. Layer 1 names 
 | Widget | Purpose | Phase |
 |---|---|---|
 | `If` | Conditional rendering with `then` / `else` slots | P3 |
-| `Switch` | Multi-branch rendering by value | P3 |
+| `Match` | Multi-branch rendering by value (named `Match` because Material's toggle keeps the Flutter name `Switch`, ADR-0010) | P3 |
 | `ForEach` | Repeat a template over a list (non-lazy, bounded) | P3 |
 | `Responsive` | Different subtrees per window size class | P3 |
 | `Slot` | Placeholder filled by a component instance | P3 |
@@ -2581,12 +2593,15 @@ literal     = number | decimal | string | "true" | "false" | "null" ;
 decimal     = number "d" ;            (* 12.50d is a decimal literal *)
 ```
 
+The complete grammar — including the receiver-style macros `map`, `filter`, `any`, `all` and `sortBy`, literals and escapes — and the language semantics are defined in ADR-0009 and `docs/reference/pxl.md`.
+
 ### E.2 Roots available in expressions
 
 | Root | Meaning |
 |---|---|
 | `app`, `plugin`, `page`, `component` | State of the respective scope |
 | `params` | Page parameters |
+| `event` | Payload of the widget or lifecycle event that triggered the handler, typed by the event's declared payload (inside event handlers) |
 | `props` | Component props (inside components) |
 | `item`, `index` | Current item and index inside item templates and `forEach` |
 | `steps.<id>.output`, `steps.<id>.error` | Earlier action step results |
@@ -2917,10 +2932,10 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | Field | Value |
 |---|---|
 | Document ID | `SRS-PLUX-001` |
-| Version | 1.1.1 |
+| Version | 1.1.2 |
 | Status | Draft (living document) |
 | Date | 2026-09-26 |
-| Supersedes | 1.1.0 |
+| Supersedes | 1.1.1 |
 | Change process | Amendments are made by pull request against `docs/requirements.md`. A change to a `MUST` requirement requires a corresponding ADR. The version is incremented per Semantic Versioning: a breaking change to an existing requirement is a major increment, a new requirement is a minor increment, and a clarification is a patch increment. |
 
 ### Revision history
@@ -2930,3 +2945,4 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | 1.0.0 | 2026-09-25 | Initial baseline. |
 | 1.1.0 | 2026-09-26 | Functions with explicit `server`/`device` placement and standard Go; no-code app generation; mixed native/plugin screens and route-name addressing without host code changes; Plux Canvas replaces the Flutter Web renderer; limits and quotas framework; bundle design principles replace the IDL sketch; security profiles renamed `standard`/`strict`/`maximum`; multi-tenant operation replaces hosted SaaS; editions and licensing; decisions on delta algorithm, AI provider and analytics store; brand; international positioning. |
 | 1.1.1 | 2026-09-26 | Phase 0 delivered: P0 requirement statuses updated; §33 and the P0 deliverables describe the actual workspace layout, tooling and licensing files; `RT-051` withdrawal worded as a rationale (found by `reqtrace lint`). |
+| 1.1.2 | 2026-09-26 | Phase 1 clarifications: section-directory entries are 72 bytes, matching their fields (App. B.1); `BND-004` names the `schemas` section as App. B.2 does; the structural primitive `Switch` is renamed `Match` (App. C.1); App. E.1 points to the complete PXL grammar; App. A shows action graphs as their own documents, as `SCH-006` requires, with identifiers on state entries and parameters (`SCH-002`); ADR-0025 added to §32; App. E.2 adds the `event` root that event handlers read (ADR-0002, ADR-0010, ADR-0025). |

@@ -1,0 +1,30 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "LocationAccuracy",
+  "id": 72,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "The accuracy a location request asks for; higher accuracy costs more power.",
+  "values": [
+    {
+      "name": "low",
+      "id": 1,
+      "description": "About 10 km."
+    },
+    {
+      "name": "balanced",
+      "id": 2,
+      "description": "About 100 m."
+    },
+    {
+      "name": "high",
+      "id": 3,
+      "description": "The best the device offers."
+    }
+  ]
+}

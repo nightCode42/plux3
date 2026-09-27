@@ -1,0 +1,27 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "Brightness",
+  "id": 10,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum Brightness.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "Brightness"
+  },
+  "values": [
+    {
+      "name": "dark",
+      "id": 1
+    },
+    {
+      "name": "light",
+      "id": 2
+    }
+  ]
+}

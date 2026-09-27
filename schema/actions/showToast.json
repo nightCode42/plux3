@@ -1,0 +1,27 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "showToast",
+  "id": 8,
+  "phase": "P5",
+  "category": "feedback",
+  "description": "Shows a short transient message.",
+  "inputs": [
+    {
+      "name": "message",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "description": "The message."
+    },
+    {
+      "name": "duration",
+      "id": 2,
+      "type": "duration",
+      "default": 2000,
+      "description": "How long the message stays, in milliseconds."
+    }
+  ],
+  "effects": [
+    "ui"
+  ]
+}

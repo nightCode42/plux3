@@ -1,0 +1,39 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "CrossAxisAlignment",
+  "id": 12,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum CrossAxisAlignment.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "CrossAxisAlignment"
+  },
+  "values": [
+    {
+      "name": "start",
+      "id": 1
+    },
+    {
+      "name": "end",
+      "id": 2
+    },
+    {
+      "name": "center",
+      "id": 3
+    },
+    {
+      "name": "stretch",
+      "id": 4
+    },
+    {
+      "name": "baseline",
+      "id": 5
+    }
+  ]
+}

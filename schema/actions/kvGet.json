@@ -1,0 +1,27 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "kvGet",
+  "id": 25,
+  "phase": "P5",
+  "category": "localDb",
+  "description": "Reads a value from the plugin's key-value store.",
+  "typeParameters": [
+    {
+      "name": "T",
+      "description": "The type of the stored value, fixed by the first kvSet for the key within the plugin."
+    }
+  ],
+  "inputs": [
+    {
+      "name": "key",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "description": "The key."
+    }
+  ],
+  "output": "T?",
+  "effects": [
+    "storage"
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "HitTestBehavior",
+  "id": 25,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum HitTestBehavior.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "HitTestBehavior"
+  },
+  "values": [
+    {
+      "name": "deferToChild",
+      "id": 1
+    },
+    {
+      "name": "opaque",
+      "id": 2
+    },
+    {
+      "name": "translucent",
+      "id": 3
+    }
+  ]
+}

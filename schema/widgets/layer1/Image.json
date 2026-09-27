@@ -1,0 +1,214 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Image",
+  "id": 50,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "Image",
+    "constructors": [
+      "asset",
+      "network"
+    ]
+  },
+  "category": "display",
+  "icon": "image",
+  "description": "An image from a bundled asset or a URL, with loading and error states.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 30,
+  "accessibility": {
+    "role": "image",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "source",
+      "id": 1,
+      "type": "ImageSource",
+      "required": true,
+      "flutter": [
+        "name",
+        "src"
+      ],
+      "description": "The asset or URL to show."
+    },
+    {
+      "name": "semanticLabel",
+      "id": 2,
+      "type": "string",
+      "flutter": "semanticLabel"
+    },
+    {
+      "name": "excludeFromSemantics",
+      "id": 3,
+      "type": "bool",
+      "default": false,
+      "flutter": "excludeFromSemantics"
+    },
+    {
+      "name": "scale",
+      "id": 4,
+      "type": "double",
+      "flutter": "scale"
+    },
+    {
+      "name": "width",
+      "id": 5,
+      "type": "double",
+      "flutter": "width"
+    },
+    {
+      "name": "height",
+      "id": 6,
+      "type": "double",
+      "flutter": "height"
+    },
+    {
+      "name": "color",
+      "id": 7,
+      "type": "color",
+      "flutter": "color"
+    },
+    {
+      "name": "colorBlendMode",
+      "id": 8,
+      "type": "BlendMode",
+      "flutter": "colorBlendMode"
+    },
+    {
+      "name": "fit",
+      "id": 9,
+      "type": "BoxFit",
+      "flutter": "fit"
+    },
+    {
+      "name": "alignment",
+      "id": 10,
+      "type": "Alignment",
+      "default": "center",
+      "flutter": "alignment"
+    },
+    {
+      "name": "repeat",
+      "id": 11,
+      "type": "ImageRepeat",
+      "default": "noRepeat",
+      "flutter": "repeat"
+    },
+    {
+      "name": "matchTextDirection",
+      "id": 12,
+      "type": "bool",
+      "default": false,
+      "flutter": "matchTextDirection"
+    },
+    {
+      "name": "gaplessPlayback",
+      "id": 13,
+      "type": "bool",
+      "default": false,
+      "flutter": "gaplessPlayback"
+    },
+    {
+      "name": "isAntiAlias",
+      "id": 14,
+      "type": "bool",
+      "default": false,
+      "flutter": "isAntiAlias"
+    },
+    {
+      "name": "filterQuality",
+      "id": 15,
+      "type": "FilterQuality",
+      "default": "medium",
+      "flutter": "filterQuality"
+    },
+    {
+      "name": "cacheWidth",
+      "id": 16,
+      "type": "int",
+      "constraints": {
+        "min": 1
+      },
+      "flutter": "cacheWidth"
+    },
+    {
+      "name": "cacheHeight",
+      "id": 17,
+      "type": "int",
+      "constraints": {
+        "min": 1
+      },
+      "flutter": "cacheHeight"
+    }
+  ],
+  "slots": [
+    {
+      "name": "loading",
+      "id": 1,
+      "template": true,
+      "flutter": "loadingBuilder",
+      "description": "Shown while a network image loads."
+    },
+    {
+      "name": "error",
+      "id": 2,
+      "template": true,
+      "flutter": "errorBuilder",
+      "description": "Shown when the image fails to load."
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "bundle",
+      "reason": "non-serialisable",
+      "note": "Asset bundles are resolved by the runtime."
+    },
+    {
+      "flutter": "frameBuilder",
+      "reason": "deferred",
+      "note": "Custom builders are deferred."
+    },
+    {
+      "flutter": "opacity",
+      "reason": "deferred",
+      "note": "Timeline-driven values arrive with animations (P5); use the Opacity widget."
+    },
+    {
+      "flutter": "centerSlice",
+      "reason": "deferred",
+      "note": "Nine-slice images are deferred."
+    },
+    {
+      "flutter": "package",
+      "reason": "non-serialisable",
+      "note": "Asset packages are resolved by the runtime."
+    },
+    {
+      "flutter": "headers",
+      "reason": "deferred",
+      "note": "Authenticated image requests go through the host's auth delegate (DAT-003, P5)."
+    },
+    {
+      "flutter": "webHtmlElementStrategy",
+      "reason": "deferred",
+      "note": "The web target is withdrawn (RT-051)."
+    }
+  ]
+}

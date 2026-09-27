@@ -1,0 +1,43 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "WrapAlignment",
+  "id": 66,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum WrapAlignment.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "WrapAlignment"
+  },
+  "values": [
+    {
+      "name": "start",
+      "id": 1
+    },
+    {
+      "name": "end",
+      "id": 2
+    },
+    {
+      "name": "center",
+      "id": 3
+    },
+    {
+      "name": "spaceBetween",
+      "id": 4
+    },
+    {
+      "name": "spaceAround",
+      "id": 5
+    },
+    {
+      "name": "spaceEvenly",
+      "id": 6
+    }
+  ]
+}

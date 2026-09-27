@@ -1,0 +1,31 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "ThemeMode",
+  "id": 70,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum ThemeMode.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "ThemeMode"
+  },
+  "values": [
+    {
+      "name": "system",
+      "id": 1
+    },
+    {
+      "name": "light",
+      "id": 2
+    },
+    {
+      "name": "dark",
+      "id": 3
+    }
+  ]
+}

@@ -1,0 +1,296 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "CheckboxListTile",
+  "id": 69,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "CheckboxListTile",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "input",
+  "icon": "check_box",
+  "description": "A list tile with a checkbox.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 45,
+  "accessibility": {
+    "role": "checkbox",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "value",
+      "id": 1,
+      "type": "bool",
+      "flutter": "value"
+    },
+    {
+      "name": "activeColor",
+      "id": 2,
+      "type": "color",
+      "flutter": "activeColor"
+    },
+    {
+      "name": "fillColor",
+      "id": 3,
+      "type": "WidgetStateColor",
+      "flutter": "fillColor"
+    },
+    {
+      "name": "checkColor",
+      "id": 4,
+      "type": "color",
+      "flutter": "checkColor"
+    },
+    {
+      "name": "hoverColor",
+      "id": 5,
+      "type": "color",
+      "flutter": "hoverColor"
+    },
+    {
+      "name": "overlayColor",
+      "id": 6,
+      "type": "WidgetStateColor",
+      "flutter": "overlayColor"
+    },
+    {
+      "name": "splashRadius",
+      "id": 7,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "splashRadius"
+    },
+    {
+      "name": "materialTapTargetSize",
+      "id": 8,
+      "type": "MaterialTapTargetSize",
+      "flutter": "materialTapTargetSize"
+    },
+    {
+      "name": "visualDensity",
+      "id": 9,
+      "type": "VisualDensity",
+      "flutter": "visualDensity"
+    },
+    {
+      "name": "autofocus",
+      "id": 10,
+      "type": "bool",
+      "default": false,
+      "flutter": "autofocus"
+    },
+    {
+      "name": "shape",
+      "id": 11,
+      "type": "ShapeBorder",
+      "flutter": "shape"
+    },
+    {
+      "name": "side",
+      "id": 12,
+      "type": "BorderSide",
+      "flutter": "side"
+    },
+    {
+      "name": "isError",
+      "id": 13,
+      "type": "bool",
+      "default": false,
+      "flutter": "isError"
+    },
+    {
+      "name": "enabled",
+      "id": 14,
+      "type": "bool",
+      "flutter": "enabled"
+    },
+    {
+      "name": "tileColor",
+      "id": 15,
+      "type": "color",
+      "flutter": "tileColor"
+    },
+    {
+      "name": "isThreeLine",
+      "id": 16,
+      "type": "bool",
+      "flutter": "isThreeLine"
+    },
+    {
+      "name": "dense",
+      "id": 17,
+      "type": "bool",
+      "flutter": "dense"
+    },
+    {
+      "name": "selected",
+      "id": 18,
+      "type": "bool",
+      "default": false,
+      "flutter": "selected"
+    },
+    {
+      "name": "controlAffinity",
+      "id": 19,
+      "type": "ListTileControlAffinity",
+      "flutter": "controlAffinity"
+    },
+    {
+      "name": "contentPadding",
+      "id": 20,
+      "type": "EdgeInsets",
+      "flutter": "contentPadding"
+    },
+    {
+      "name": "tristate",
+      "id": 21,
+      "type": "bool",
+      "default": false,
+      "flutter": "tristate"
+    },
+    {
+      "name": "checkboxShape",
+      "id": 22,
+      "type": "ShapeBorder",
+      "flutter": "checkboxShape"
+    },
+    {
+      "name": "selectedTileColor",
+      "id": 23,
+      "type": "color",
+      "flutter": "selectedTileColor"
+    },
+    {
+      "name": "enableFeedback",
+      "id": 24,
+      "type": "bool",
+      "flutter": "enableFeedback"
+    },
+    {
+      "name": "horizontalTitleGap",
+      "id": 25,
+      "type": "double",
+      "flutter": "horizontalTitleGap"
+    },
+    {
+      "name": "minVerticalPadding",
+      "id": 26,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "minVerticalPadding"
+    },
+    {
+      "name": "minLeadingWidth",
+      "id": 27,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "minLeadingWidth"
+    },
+    {
+      "name": "minTileHeight",
+      "id": 28,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "minTileHeight"
+    },
+    {
+      "name": "checkboxSemanticLabel",
+      "id": 29,
+      "type": "string",
+      "flutter": "checkboxSemanticLabel"
+    },
+    {
+      "name": "checkboxScaleFactor",
+      "id": 30,
+      "type": "double",
+      "default": 1.0,
+      "flutter": "checkboxScaleFactor"
+    },
+    {
+      "name": "titleAlignment",
+      "id": 31,
+      "type": "ListTileTitleAlignment",
+      "flutter": "titleAlignment"
+    }
+  ],
+  "events": [
+    {
+      "name": "onChanged",
+      "id": 1,
+      "payload": "bool?",
+      "flutter": "onChanged"
+    },
+    {
+      "name": "onFocusChange",
+      "id": 2,
+      "payload": "bool",
+      "flutter": "onFocusChange"
+    }
+  ],
+  "slots": [
+    {
+      "name": "title",
+      "id": 1,
+      "flutter": "title"
+    },
+    {
+      "name": "subtitle",
+      "id": 2,
+      "flutter": "subtitle"
+    },
+    {
+      "name": "secondary",
+      "id": 3,
+      "flutter": "secondary"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "mouseCursor",
+      "reason": "deferred",
+      "note": "Pointer cursors matter only for desktop and web targets."
+    },
+    {
+      "flutter": "focusNode",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "statesController",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "internalAddSemanticForOnTap",
+      "reason": "non-serialisable",
+      "note": "A framework-internal flag."
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "dbInsert",
+  "id": 20,
+  "phase": "P5",
+  "category": "localDb",
+  "description": "Inserts a record into a local collection and returns its key.",
+  "typeParameters": [
+    {
+      "name": "T",
+      "description": "The record type of the referenced collection."
+    }
+  ],
+  "inputs": [
+    {
+      "name": "collection",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "collection",
+      "description": "The collection."
+    },
+    {
+      "name": "record",
+      "id": 2,
+      "type": "T",
+      "required": true,
+      "description": "The record."
+    }
+  ],
+  "output": "string",
+  "effects": [
+    "storage"
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "Border",
+  "id": 2,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "A border around a box: the same side everywhere, or one per edge.",
+  "flutter": [
+    {
+      "library": "package:flutter/painting.dart",
+      "class": "Border",
+      "constructors": [
+        "",
+        "all"
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "name": "all",
+      "id": 1,
+      "type": "BorderSide",
+      "flutter": [
+        "color",
+        "width",
+        "style",
+        "strokeAlign"
+      ],
+      "description": "The side used on every edge."
+    },
+    {
+      "name": "top",
+      "id": 2,
+      "type": "BorderSide",
+      "flutter": "top"
+    },
+    {
+      "name": "right",
+      "id": 3,
+      "type": "BorderSide",
+      "flutter": "right"
+    },
+    {
+      "name": "bottom",
+      "id": 4,
+      "type": "BorderSide",
+      "flutter": "bottom"
+    },
+    {
+      "name": "left",
+      "id": 5,
+      "type": "BorderSide",
+      "flutter": "left"
+    }
+  ]
+}

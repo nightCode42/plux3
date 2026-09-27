@@ -1,0 +1,56 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "WidgetStateColor",
+  "id": 28,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "A color per interaction state. The first matching state wins, in the order disabled, error, dragged, pressed, hovered, focused, selected; otherwise `value`.",
+  "fields": [
+    {
+      "name": "value",
+      "id": 1,
+      "type": "color",
+      "description": "Used when no listed state applies."
+    },
+    {
+      "name": "disabled",
+      "id": 2,
+      "type": "color"
+    },
+    {
+      "name": "error",
+      "id": 3,
+      "type": "color"
+    },
+    {
+      "name": "dragged",
+      "id": 4,
+      "type": "color"
+    },
+    {
+      "name": "pressed",
+      "id": 5,
+      "type": "color"
+    },
+    {
+      "name": "hovered",
+      "id": 6,
+      "type": "color"
+    },
+    {
+      "name": "focused",
+      "id": 7,
+      "type": "color"
+    },
+    {
+      "name": "selected",
+      "id": 8,
+      "type": "color"
+    }
+  ]
+}

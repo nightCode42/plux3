@@ -1,0 +1,386 @@
+{
+  "description": "Equality, ordering and membership.",
+  "env": {
+    "types": {
+      "Loan": {
+        "fields": {
+          "amount": "decimal",
+          "fee": "money?",
+          "months": "int",
+          "rate": "double",
+          "status": "string?"
+        }
+      },
+      "Tier": {
+        "enum": [
+          "gold",
+          "silver",
+          "bronze"
+        ]
+      }
+    },
+    "roots": {
+      "day": "date",
+      "items": "list<Loan>",
+      "n": "int",
+      "name": "string?",
+      "none": "int?",
+      "page": "Loan",
+      "scores": "map<string,int>",
+      "tags": "list<string>",
+      "tier": "Tier",
+      "total": "money",
+      "when": "dateTime",
+      "x": "double"
+    }
+  },
+  "inputs": {
+    "day": "2024-02-29",
+    "items": [
+      {
+        "amount": "100.00",
+        "months": 6,
+        "rate": 0.1,
+        "status": "open"
+      },
+      {
+        "amount": "25.5",
+        "months": 3,
+        "rate": 0.2,
+        "status": "closed"
+      },
+      {
+        "amount": "300",
+        "months": 12,
+        "rate": 0.05
+      }
+    ],
+    "n": 7,
+    "name": null,
+    "none": null,
+    "now": "2026-09-26T08:00:00Z",
+    "page": {
+      "amount": "1200.50",
+      "fee": {
+        "amount": "9.99",
+        "currency": "EUR"
+      },
+      "months": 12,
+      "rate": 0.05,
+      "status": null
+    },
+    "scores": {
+      "alice": 3,
+      "bob": 2
+    },
+    "tags": [
+      "b",
+      "a",
+      "c",
+      "a"
+    ],
+    "tier": "gold",
+    "total": {
+      "amount": "12.34",
+      "currency": "EUR"
+    },
+    "when": "2026-09-26T10:30:00+02:00",
+    "x": 2.5
+  },
+  "cases": [
+    {
+      "name": "int order",
+      "expr": "n > 3 && n <= 7",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wDBAFuAgMAAAAAAAAAAgcAAAAAAAAAAQFuFQYAAAQBADdBDxUAAAAGAAAEAgA3QA==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"n\"",
+        "0003 CONST 1 ; 3",
+        "0006 CMP_INT",
+        "0007 GT",
+        "0008 AND_JUMP 21",
+        "0013 LOAD_ROOT 0 ; \"n\"",
+        "0016 CONST 2 ; 7",
+        "0019 CMP_INT",
+        "0020 LE"
+      ],
+      "reads": [
+        "n"
+      ]
+    },
+    {
+      "name": "mixed int and double",
+      "expr": "n < x * 3.0",
+      "value": true,
+      "type": "bool",
+      "program": "AQADBGJvb2wDBAFuBAF4AwAAAAAAAAhAAgFuAXgNBgAAMwYBAAQCABs4Pw==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"n\"",
+        "0003 INT_TO_DOUBLE",
+        "0004 LOAD_ROOT 1 ; \"x\"",
+        "0007 CONST 2 ; 3",
+        "0010 MUL_DOUBLE",
+        "0011 CMP_DOUBLE",
+        "0012 LT"
+      ],
+      "reads": [
+        "n",
+        "x"
+      ]
+    },
+    {
+      "name": "decimal order",
+      "expr": "page.amount >= 1200.5d",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wDBARwYWdlBAZhbW91bnQFBjEyMDAuNQELcGFnZS5hbW91bnQLBgAACAEABAIAOUI=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"page\"",
+        "0003 GET_FIELD 1 ; \"amount\"",
+        "0006 CONST 2 ; 1200.5d",
+        "0009 CMP_DEC",
+        "0010 GE"
+      ],
+      "reads": [
+        "page.amount"
+      ]
+    },
+    {
+      "name": "string order is by code point",
+      "expr": "\"Z\" < \"a\" && \"a\" < \"é\"",
+      "value": true,
+      "type": "bool",
+      "program": "AQABBGJvb2wAAAEC",
+      "asm": [
+        "0000 PUSH_TRUE"
+      ]
+    },
+    {
+      "name": "date order",
+      "expr": "day < date(\"2024-03-01\")",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBANkYXkHjrUCAQNkYXkIBgAABAEAPD8=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"day\"",
+        "0003 CONST 1 ; 2024-03-01",
+        "0006 CMP_DATE",
+        "0007 LT"
+      ],
+      "reads": [
+        "day"
+      ]
+    },
+    {
+      "name": "dateTime by instant",
+      "expr": "when == dateTime(\"2026-09-26T08:30:00Z\")",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBAR3aGVuCICNr82baAABBHdoZW4HBgAABAEANQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"when\"",
+        "0003 CONST 1 ; 2026-09-26T08:30:00Z",
+        "0006 EQ"
+      ],
+      "reads": [
+        "when"
+      ]
+    },
+    {
+      "name": "enum with a literal",
+      "expr": "tier == \"gold\"",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBAR0aWVyBARnb2xkAQR0aWVyBwYAAAQBADU=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"tier\"",
+        "0003 CONST 1 ; \"gold\"",
+        "0006 EQ"
+      ],
+      "reads": [
+        "tier"
+      ]
+    },
+    {
+      "name": "enum inequality",
+      "expr": "tier != \"silver\"",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBAR0aWVyBAZzaWx2ZXIBBHRpZXIHBgAABAEANg==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"tier\"",
+        "0003 CONST 1 ; \"silver\"",
+        "0006 NE"
+      ],
+      "reads": [
+        "tier"
+      ]
+    },
+    {
+      "name": "null equality",
+      "expr": "name == null && none == null",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBARuYW1lBARub25lAgRuYW1lBG5vbmUPBgAAATUPDwAAAAYBAAE1",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"name\"",
+        "0003 PUSH_NULL",
+        "0004 EQ",
+        "0005 AND_JUMP 15",
+        "0010 LOAD_ROOT 1 ; \"none\"",
+        "0013 PUSH_NULL",
+        "0014 EQ"
+      ],
+      "reads": [
+        "name",
+        "none"
+      ]
+    },
+    {
+      "name": "deep list equality",
+      "expr": "[[1], [2, 3]] == [[1], [2, 3]]",
+      "value": true,
+      "type": "bool",
+      "program": "AQABBGJvb2wAAAEC",
+      "asm": [
+        "0000 PUSH_TRUE"
+      ]
+    },
+    {
+      "name": "map equality ignores order",
+      "expr": "{\"a\": 1, \"b\": 2} == {\"b\": 2, \"a\": 1}",
+      "value": true,
+      "type": "bool",
+      "program": "AQABBGJvb2wAAAEC",
+      "asm": [
+        "0000 PUSH_TRUE"
+      ]
+    },
+    {
+      "name": "money equality",
+      "expr": "total == money(\"12.340\", \"EUR\")",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBAV0b3RhbAYGMTIuMzQwRVVSAQV0b3RhbAcGAAAEAQA1",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"total\"",
+        "0003 CONST 1 ; 12.340 EUR",
+        "0006 EQ"
+      ],
+      "reads": [
+        "total"
+      ]
+    },
+    {
+      "name": "different currencies are unequal",
+      "expr": "money(1d, \"EUR\") == money(1d, \"USD\")",
+      "value": false,
+      "type": "bool",
+      "program": "AQABBGJvb2wAAAED",
+      "asm": [
+        "0000 PUSH_FALSE"
+      ]
+    },
+    {
+      "name": "in list",
+      "expr": "\"a\" in tags",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBAFhBAR0YWdzAQR0YWdzBwQAAAYBAEQ=",
+      "asm": [
+        "0000 CONST 0 ; \"a\"",
+        "0003 LOAD_ROOT 1 ; \"tags\"",
+        "0006 IN_LIST"
+      ],
+      "reads": [
+        "tags"
+      ]
+    },
+    {
+      "name": "not in list",
+      "expr": "\"z\" in tags",
+      "value": false,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBAF6BAR0YWdzAQR0YWdzBwQAAAYBAEQ=",
+      "asm": [
+        "0000 CONST 0 ; \"z\"",
+        "0003 LOAD_ROOT 1 ; \"tags\"",
+        "0006 IN_LIST"
+      ],
+      "reads": [
+        "tags"
+      ]
+    },
+    {
+      "name": "in map",
+      "expr": "\"bob\" in scores",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBANib2IEBnNjb3JlcwEGc2NvcmVzBwQAAAYBAEU=",
+      "asm": [
+        "0000 CONST 0 ; \"bob\"",
+        "0003 LOAD_ROOT 1 ; \"scores\"",
+        "0006 IN_MAP"
+      ],
+      "reads": [
+        "scores"
+      ]
+    },
+    {
+      "name": "money order across currencies",
+      "expr": "total < money(1d, \"USD\")",
+      "error": "currencyMismatch",
+      "type": "bool",
+      "program": "AQACBGJvb2wCBAV0b3RhbAYBMVVTRAEFdG90YWwIBgAABAEAOj8=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"total\"",
+        "0003 CONST 1 ; 1 USD",
+        "0006 CMP_MONEY",
+        "0007 LT"
+      ],
+      "reads": [
+        "total"
+      ]
+    },
+    {
+      "name": "unknown enum member",
+      "expr": "tier == \"platinum\"",
+      "diagnostics": [
+        {
+          "code": "PLX-2014",
+          "range": [
+            8,
+            18
+          ]
+        }
+      ]
+    },
+    {
+      "name": "incomparable types",
+      "expr": "n == \"7\"",
+      "diagnostics": [
+        {
+          "code": "PLX-2002",
+          "range": [
+            0,
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "name": "ordering bools",
+      "expr": "true < false",
+      "diagnostics": [
+        {
+          "code": "PLX-2002",
+          "range": [
+            0,
+            12
+          ]
+        }
+      ]
+    }
+  ]
+}

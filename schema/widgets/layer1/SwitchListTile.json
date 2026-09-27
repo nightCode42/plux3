@@ -1,0 +1,309 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "SwitchListTile",
+  "id": 73,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "SwitchListTile",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "input",
+  "icon": "toggle_on",
+  "description": "A list tile with a switch.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 45,
+  "accessibility": {
+    "role": "switch",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "value",
+      "id": 1,
+      "type": "bool",
+      "required": true,
+      "flutter": "value"
+    },
+    {
+      "name": "activeThumbColor",
+      "id": 2,
+      "type": "color",
+      "flutter": "activeThumbColor"
+    },
+    {
+      "name": "activeTrackColor",
+      "id": 3,
+      "type": "color",
+      "flutter": "activeTrackColor"
+    },
+    {
+      "name": "inactiveThumbColor",
+      "id": 4,
+      "type": "color",
+      "flutter": "inactiveThumbColor"
+    },
+    {
+      "name": "inactiveTrackColor",
+      "id": 5,
+      "type": "color",
+      "flutter": "inactiveTrackColor"
+    },
+    {
+      "name": "activeThumbImage",
+      "id": 6,
+      "type": "ImageSource",
+      "flutter": "activeThumbImage"
+    },
+    {
+      "name": "inactiveThumbImage",
+      "id": 7,
+      "type": "ImageSource",
+      "flutter": "inactiveThumbImage"
+    },
+    {
+      "name": "thumbColor",
+      "id": 8,
+      "type": "WidgetStateColor",
+      "flutter": "thumbColor"
+    },
+    {
+      "name": "trackColor",
+      "id": 9,
+      "type": "WidgetStateColor",
+      "flutter": "trackColor"
+    },
+    {
+      "name": "trackOutlineColor",
+      "id": 10,
+      "type": "WidgetStateColor",
+      "flutter": "trackOutlineColor"
+    },
+    {
+      "name": "materialTapTargetSize",
+      "id": 11,
+      "type": "MaterialTapTargetSize",
+      "flutter": "materialTapTargetSize"
+    },
+    {
+      "name": "dragStartBehavior",
+      "id": 12,
+      "type": "DragStartBehavior",
+      "default": "start",
+      "flutter": "dragStartBehavior"
+    },
+    {
+      "name": "overlayColor",
+      "id": 13,
+      "type": "WidgetStateColor",
+      "flutter": "overlayColor"
+    },
+    {
+      "name": "splashRadius",
+      "id": 14,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "splashRadius"
+    },
+    {
+      "name": "autofocus",
+      "id": 15,
+      "type": "bool",
+      "default": false,
+      "flutter": "autofocus"
+    },
+    {
+      "name": "tileColor",
+      "id": 16,
+      "type": "color",
+      "flutter": "tileColor"
+    },
+    {
+      "name": "isThreeLine",
+      "id": 17,
+      "type": "bool",
+      "flutter": "isThreeLine"
+    },
+    {
+      "name": "dense",
+      "id": 18,
+      "type": "bool",
+      "flutter": "dense"
+    },
+    {
+      "name": "contentPadding",
+      "id": 19,
+      "type": "EdgeInsets",
+      "flutter": "contentPadding"
+    },
+    {
+      "name": "selected",
+      "id": 20,
+      "type": "bool",
+      "default": false,
+      "flutter": "selected"
+    },
+    {
+      "name": "controlAffinity",
+      "id": 21,
+      "type": "ListTileControlAffinity",
+      "flutter": "controlAffinity"
+    },
+    {
+      "name": "shape",
+      "id": 22,
+      "type": "ShapeBorder",
+      "flutter": "shape"
+    },
+    {
+      "name": "selectedTileColor",
+      "id": 23,
+      "type": "color",
+      "flutter": "selectedTileColor"
+    },
+    {
+      "name": "visualDensity",
+      "id": 24,
+      "type": "VisualDensity",
+      "flutter": "visualDensity"
+    },
+    {
+      "name": "enableFeedback",
+      "id": 25,
+      "type": "bool",
+      "flutter": "enableFeedback"
+    },
+    {
+      "name": "horizontalTitleGap",
+      "id": 26,
+      "type": "double",
+      "flutter": "horizontalTitleGap"
+    },
+    {
+      "name": "minVerticalPadding",
+      "id": 27,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "minVerticalPadding"
+    },
+    {
+      "name": "minLeadingWidth",
+      "id": 28,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "minLeadingWidth"
+    },
+    {
+      "name": "minTileHeight",
+      "id": 29,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "minTileHeight"
+    },
+    {
+      "name": "hoverColor",
+      "id": 30,
+      "type": "color",
+      "flutter": "hoverColor"
+    }
+  ],
+  "events": [
+    {
+      "name": "onChanged",
+      "id": 1,
+      "payload": "bool",
+      "flutter": "onChanged"
+    },
+    {
+      "name": "onActiveThumbImageError",
+      "id": 2,
+      "flutter": "onActiveThumbImageError"
+    },
+    {
+      "name": "onInactiveThumbImageError",
+      "id": 3,
+      "flutter": "onInactiveThumbImageError"
+    },
+    {
+      "name": "onFocusChange",
+      "id": 4,
+      "payload": "bool",
+      "flutter": "onFocusChange"
+    }
+  ],
+  "slots": [
+    {
+      "name": "title",
+      "id": 1,
+      "flutter": "title"
+    },
+    {
+      "name": "subtitle",
+      "id": 2,
+      "flutter": "subtitle"
+    },
+    {
+      "name": "secondary",
+      "id": 3,
+      "flutter": "secondary"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "activeColor",
+      "reason": "deprecated",
+      "note": "Deprecated in Flutter."
+    },
+    {
+      "flutter": "thumbIcon",
+      "reason": "deferred",
+      "note": "State-dependent icons are deferred."
+    },
+    {
+      "flutter": "mouseCursor",
+      "reason": "deferred",
+      "note": "Pointer cursors matter only for desktop and web targets."
+    },
+    {
+      "flutter": "focusNode",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "statesController",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "internalAddSemanticForOnTap",
+      "reason": "non-serialisable",
+      "note": "A framework-internal flag."
+    }
+  ]
+}

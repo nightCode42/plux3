@@ -1,0 +1,23 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "scanCode",
+  "id": 45,
+  "phase": "P5",
+  "category": "device",
+  "description": "Scans a QR code or barcode with the camera.",
+  "inputs": [
+    {
+      "name": "formats",
+      "id": 1,
+      "type": "list<BarcodeFormat>",
+      "description": "Accepted formats; every format when empty."
+    }
+  ],
+  "output": "ScanResult",
+  "branches": [
+    "cancelled"
+  ],
+  "effects": [
+    "device"
+  ]
+}

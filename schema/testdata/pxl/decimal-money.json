@@ -1,0 +1,346 @@
+{
+  "description": "Exact decimal and money arithmetic with explicit rounding (PXL-005).",
+  "env": {
+    "types": {
+      "Loan": {
+        "fields": {
+          "amount": "decimal",
+          "fee": "money?",
+          "months": "int",
+          "rate": "double",
+          "status": "string?"
+        }
+      },
+      "Tier": {
+        "enum": [
+          "gold",
+          "silver",
+          "bronze"
+        ]
+      }
+    },
+    "roots": {
+      "day": "date",
+      "items": "list<Loan>",
+      "n": "int",
+      "name": "string?",
+      "none": "int?",
+      "page": "Loan",
+      "scores": "map<string,int>",
+      "tags": "list<string>",
+      "tier": "Tier",
+      "total": "money",
+      "when": "dateTime",
+      "x": "double"
+    }
+  },
+  "inputs": {
+    "day": "2024-02-29",
+    "items": [
+      {
+        "amount": "100.00",
+        "months": 6,
+        "rate": 0.1,
+        "status": "open"
+      },
+      {
+        "amount": "25.5",
+        "months": 3,
+        "rate": 0.2,
+        "status": "closed"
+      },
+      {
+        "amount": "300",
+        "months": 12,
+        "rate": 0.05
+      }
+    ],
+    "n": 7,
+    "name": null,
+    "none": null,
+    "now": "2026-09-26T08:00:00Z",
+    "page": {
+      "amount": "1200.50",
+      "fee": {
+        "amount": "9.99",
+        "currency": "EUR"
+      },
+      "months": 12,
+      "rate": 0.05,
+      "status": null
+    },
+    "scores": {
+      "alice": 3,
+      "bob": 2
+    },
+    "tags": [
+      "b",
+      "a",
+      "c",
+      "a"
+    ],
+    "tier": "gold",
+    "total": {
+      "amount": "12.34",
+      "currency": "EUR"
+    },
+    "when": "2026-09-26T10:30:00+02:00",
+    "x": 2.5
+  },
+  "cases": [
+    {
+      "name": "div to a scale",
+      "expr": "div(10d, 3d, 2)",
+      "value": "3.33",
+      "type": "decimal",
+      "program": "AQABB2RlY2ltYWwBBQQzLjMzAAMEAAA=",
+      "asm": [
+        "0000 CONST 0 ; 3.33d"
+      ]
+    },
+    {
+      "name": "div with a mode",
+      "expr": "div(-10d, 3d, 2, \"floor\")",
+      "value": "-3.34",
+      "type": "decimal",
+      "program": "AQABB2RlY2ltYWwBBQUtMy4zNAADBAAA",
+      "asm": [
+        "0000 CONST 0 ; -3.34d"
+      ]
+    },
+    {
+      "name": "round half even",
+      "expr": "[round(0.125d, 2), round(0.135d, 2)]",
+      "value": [
+        "0.12",
+        "0.14"
+      ],
+      "type": "list<decimal>",
+      "program": "AQABDWxpc3Q8ZGVjaW1hbD4BCwIFBDAuMTIFBDAuMTQAAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; [0.12 0.14]"
+      ]
+    },
+    {
+      "name": "round half up",
+      "expr": "round(0.125d, 2, \"halfUp\")",
+      "value": "0.13",
+      "type": "decimal",
+      "program": "AQABB2RlY2ltYWwBBQQwLjEzAAMEAAA=",
+      "asm": [
+        "0000 CONST 0 ; 0.13d"
+      ]
+    },
+    {
+      "name": "round widens scale",
+      "expr": "round(1.5d, 3)",
+      "value": "1.500",
+      "type": "decimal",
+      "program": "AQABB2RlY2ltYWwBBQUxLjUwMAADBAAA",
+      "asm": [
+        "0000 CONST 0 ; 1.500d"
+      ]
+    },
+    {
+      "name": "floor and ceil",
+      "expr": "[floor(-1.5d), ceil(-1.5d)]",
+      "value": [
+        "-2",
+        "-1"
+      ],
+      "type": "list<decimal>",
+      "program": "AQABDWxpc3Q8ZGVjaW1hbD4BCwIFAi0yBQItMQADBAAA",
+      "asm": [
+        "0000 CONST 0 ; [-2 -1]"
+      ]
+    },
+    {
+      "name": "money rounds to minor units",
+      "expr": "[round(money(\"10.005\", \"EUR\")), round(money(\"10.5\", \"JPY\")), round(money(\"1.0005\", \"BHD\"))]",
+      "value": [
+        {
+          "amount": "10.00",
+          "currency": "EUR"
+        },
+        {
+          "amount": "10",
+          "currency": "JPY"
+        },
+        {
+          "amount": "1.000",
+          "currency": "BHD"
+        }
+      ],
+      "type": "list<money>",
+      "program": "AQABC2xpc3Q8bW9uZXk+AQsDBgUxMC4wMEVVUgYCMTBKUFkGBTEuMDAwQkhEAAMEAAA=",
+      "asm": [
+        "0000 CONST 0 ; [10.00 EUR 10 JPY 1.000 BHD]"
+      ]
+    },
+    {
+      "name": "money division",
+      "expr": "div(money(10d, \"EUR\"), 3d)",
+      "value": {
+        "amount": "3.33",
+        "currency": "EUR"
+      },
+      "type": "money",
+      "program": "AQABBW1vbmV5AQYEMy4zM0VVUgADBAAA",
+      "asm": [
+        "0000 CONST 0 ; 3.33 EUR"
+      ]
+    },
+    {
+      "name": "money division with a mode",
+      "expr": "div(money(10d, \"EUR\"), 3d, \"up\")",
+      "value": {
+        "amount": "3.34",
+        "currency": "EUR"
+      },
+      "type": "money",
+      "program": "AQABBW1vbmV5AQYEMy4zNEVVUgADBAAA",
+      "asm": [
+        "0000 CONST 0 ; 3.34 EUR"
+      ]
+    },
+    {
+      "name": "currency and amount",
+      "expr": "[currency(total), string(amount(total))]",
+      "value": [
+        "EUR",
+        "12.34"
+      ],
+      "type": "list<string>",
+      "program": "AQACDGxpc3Q8c3RyaW5nPgEEBXRvdGFsAQV0b3RhbBUGAABJQAABBgAASUEAAUmNAAFGAgA=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"total\"",
+        "0003 CALL 64 1 ; currency",
+        "0007 LOAD_ROOT 0 ; \"total\"",
+        "0010 CALL 65 1 ; amount",
+        "0014 CALL 141 1 ; string",
+        "0018 NEW_LIST 2"
+      ],
+      "reads": [
+        "total"
+      ]
+    },
+    {
+      "name": "isZero",
+      "expr": "isZero(total - total)",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wBBAV0b3RhbAEFdG90YWwLBgAABgAAJElFAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"total\"",
+        "0003 LOAD_ROOT 0 ; \"total\"",
+        "0006 SUB_MONEY",
+        "0007 CALL 69 1 ; isZero"
+      ],
+      "reads": [
+        "total"
+      ]
+    },
+    {
+      "name": "compare",
+      "expr": "[compare(1d, 2d), compare(\"b\", \"a\"), compare(total, total)]",
+      "value": [
+        -1,
+        1,
+        0
+      ],
+      "type": "list<int>",
+      "program": "AQAECWxpc3Q8aW50PgMC//////////8CAQAAAAAAAAAEBXRvdGFsAQV0b3RhbBMEAAAEAQAGAgAGAgBJSQACRgMA",
+      "asm": [
+        "0000 CONST 0 ; -1",
+        "0003 CONST 1 ; 1",
+        "0006 LOAD_ROOT 2 ; \"total\"",
+        "0009 LOAD_ROOT 2 ; \"total\"",
+        "0012 CALL 73 2 ; compare",
+        "0016 NEW_LIST 3"
+      ],
+      "reads": [
+        "total"
+      ]
+    },
+    {
+      "name": "add, sub and mul",
+      "expr": "[add(1d, 2d), sub(1d, 2d), mul(1.5d, 2d)]",
+      "value": [
+        "3",
+        "-1",
+        "3.0"
+      ],
+      "type": "list<decimal>",
+      "program": "AQABDWxpc3Q8ZGVjaW1hbD4BCwMFATMFAi0xBQMzLjAAAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; [3 -1 3.0]"
+      ]
+    },
+    {
+      "name": "decimal division by zero",
+      "expr": "div(page.amount, 0d, 2)",
+      "error": "divisionByZero",
+      "type": "decimal",
+      "program": "AQADB2RlY2ltYWwEBARwYWdlBAZhbW91bnQFATACAgAAAAAAAAABC3BhZ2UuYW1vdW50EAYAAAgBAAQCAAQDAEk8AAM=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"page\"",
+        "0003 GET_FIELD 1 ; \"amount\"",
+        "0006 CONST 2 ; 0d",
+        "0009 CONST 3 ; 2",
+        "0012 CALL 60 3 ; div"
+      ],
+      "reads": [
+        "page.amount"
+      ]
+    },
+    {
+      "name": "unknown currency",
+      "expr": "money(1d, currency(total) + \"X\")",
+      "error": "unknownCurrency",
+      "type": "money",
+      "program": "AQADBW1vbmV5AwUBMQQFdG90YWwEAVgBBXRvdGFsEgQAAAYBAElAAAEEAgAxSTQAAg==",
+      "asm": [
+        "0000 CONST 0 ; 1d",
+        "0003 LOAD_ROOT 1 ; \"total\"",
+        "0006 CALL 64 1 ; currency",
+        "0010 CONST 2 ; \"X\"",
+        "0013 CONCAT_STRING",
+        "0014 CALL 52 2 ; money"
+      ],
+      "reads": [
+        "total"
+      ]
+    },
+    {
+      "name": "negative scale",
+      "expr": "div(1d, 3d, n - 8)",
+      "error": "invalidArgument",
+      "type": "decimal",
+      "program": "AQAEB2RlY2ltYWwEBQExBQEzBAFuAggAAAAAAAAAAQFuEQQAAAQBAAYCAAQDABRJPAAD",
+      "asm": [
+        "0000 CONST 0 ; 1d",
+        "0003 CONST 1 ; 3d",
+        "0006 LOAD_ROOT 2 ; \"n\"",
+        "0009 CONST 3 ; 8",
+        "0012 SUB_INT",
+        "0013 CALL 60 3 ; div"
+      ],
+      "reads": [
+        "n"
+      ]
+    },
+    {
+      "name": "rounding mode must be a member",
+      "expr": "div(1d, 3d, 2, \"nearest\")",
+      "diagnostics": [
+        {
+          "code": "PLX-2002",
+          "range": [
+            0,
+            25
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "dbQuery",
+  "id": 24,
+  "phase": "P5",
+  "category": "localDb",
+  "description": "Returns the records of a collection that match a filter, in order.",
+  "typeParameters": [
+    {
+      "name": "T",
+      "description": "The record type of the referenced collection."
+    }
+  ],
+  "inputs": [
+    {
+      "name": "collection",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "collection",
+      "description": "The collection."
+    },
+    {
+      "name": "where",
+      "id": 2,
+      "type": "bool",
+      "description": "A PXL condition over `record`; every record matches when omitted."
+    },
+    {
+      "name": "orderBy",
+      "id": 3,
+      "type": "string?",
+      "description": "The field to sort by."
+    },
+    {
+      "name": "descending",
+      "id": 4,
+      "type": "bool",
+      "default": false,
+      "description": "Sort in descending order."
+    },
+    {
+      "name": "limit",
+      "id": 5,
+      "type": "int",
+      "default": 100,
+      "description": "The maximum number of records."
+    },
+    {
+      "name": "offset",
+      "id": 6,
+      "type": "int",
+      "default": 0,
+      "description": "The number of matching records to skip."
+    }
+  ],
+  "output": "list<T>",
+  "effects": [
+    "storage"
+  ]
+}

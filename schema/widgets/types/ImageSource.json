@@ -1,0 +1,27 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "ImageSource",
+  "id": 15,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Where an image comes from: exactly one of `asset` and `url`.",
+  "fields": [
+    {
+      "name": "asset",
+      "id": 1,
+      "type": "asset",
+      "description": "A bundled asset."
+    },
+    {
+      "name": "url",
+      "id": 2,
+      "type": "string",
+      "description": "An HTTPS URL on a domain the plugin declares (SEC-080)."
+    }
+  ]
+}

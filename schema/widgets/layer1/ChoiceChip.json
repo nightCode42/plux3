@@ -1,0 +1,236 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "ChoiceChip",
+  "id": 59,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "ChoiceChip",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "display",
+  "icon": "label",
+  "description": "A chip representing a single choice from a set.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 30,
+  "accessibility": {
+    "role": "button",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "labelStyle",
+      "id": 1,
+      "type": "TextStyle",
+      "flutter": "labelStyle"
+    },
+    {
+      "name": "labelPadding",
+      "id": 2,
+      "type": "EdgeInsets",
+      "flutter": "labelPadding"
+    },
+    {
+      "name": "pressElevation",
+      "id": 3,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "pressElevation"
+    },
+    {
+      "name": "selected",
+      "id": 4,
+      "type": "bool",
+      "required": true,
+      "flutter": "selected"
+    },
+    {
+      "name": "selectedColor",
+      "id": 5,
+      "type": "color",
+      "flutter": "selectedColor"
+    },
+    {
+      "name": "disabledColor",
+      "id": 6,
+      "type": "color",
+      "flutter": "disabledColor"
+    },
+    {
+      "name": "tooltip",
+      "id": 7,
+      "type": "string",
+      "flutter": "tooltip"
+    },
+    {
+      "name": "side",
+      "id": 8,
+      "type": "BorderSide",
+      "flutter": "side"
+    },
+    {
+      "name": "shape",
+      "id": 9,
+      "type": "ShapeBorder",
+      "flutter": "shape"
+    },
+    {
+      "name": "clipBehavior",
+      "id": 10,
+      "type": "Clip",
+      "default": "none",
+      "flutter": "clipBehavior"
+    },
+    {
+      "name": "autofocus",
+      "id": 11,
+      "type": "bool",
+      "default": false,
+      "flutter": "autofocus"
+    },
+    {
+      "name": "color",
+      "id": 12,
+      "type": "WidgetStateColor",
+      "flutter": "color"
+    },
+    {
+      "name": "backgroundColor",
+      "id": 13,
+      "type": "color",
+      "flutter": "backgroundColor"
+    },
+    {
+      "name": "padding",
+      "id": 14,
+      "type": "EdgeInsets",
+      "flutter": "padding"
+    },
+    {
+      "name": "visualDensity",
+      "id": 15,
+      "type": "VisualDensity",
+      "flutter": "visualDensity"
+    },
+    {
+      "name": "materialTapTargetSize",
+      "id": 16,
+      "type": "MaterialTapTargetSize",
+      "flutter": "materialTapTargetSize"
+    },
+    {
+      "name": "elevation",
+      "id": 17,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "elevation"
+    },
+    {
+      "name": "shadowColor",
+      "id": 18,
+      "type": "color",
+      "flutter": "shadowColor"
+    },
+    {
+      "name": "surfaceTintColor",
+      "id": 19,
+      "type": "color",
+      "flutter": "surfaceTintColor"
+    },
+    {
+      "name": "selectedShadowColor",
+      "id": 20,
+      "type": "color",
+      "flutter": "selectedShadowColor"
+    },
+    {
+      "name": "showCheckmark",
+      "id": 21,
+      "type": "bool",
+      "flutter": "showCheckmark"
+    },
+    {
+      "name": "checkmarkColor",
+      "id": 22,
+      "type": "color",
+      "flutter": "checkmarkColor"
+    },
+    {
+      "name": "avatarBorder",
+      "id": 23,
+      "type": "ShapeBorder",
+      "flutter": "avatarBorder"
+    },
+    {
+      "name": "avatarBoxConstraints",
+      "id": 24,
+      "type": "BoxConstraints",
+      "flutter": "avatarBoxConstraints"
+    }
+  ],
+  "events": [
+    {
+      "name": "onSelected",
+      "id": 1,
+      "payload": "bool",
+      "flutter": "onSelected"
+    }
+  ],
+  "slots": [
+    {
+      "name": "avatar",
+      "id": 1,
+      "flutter": "avatar"
+    },
+    {
+      "name": "label",
+      "id": 2,
+      "required": true,
+      "flutter": "label"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "focusNode",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "iconTheme",
+      "reason": "deferred",
+      "note": "Icon theming comes from the app theme (THM-001)."
+    },
+    {
+      "flutter": "chipAnimationStyle",
+      "reason": "deferred",
+      "note": "Custom animation styles arrive with animations (P5)."
+    },
+    {
+      "flutter": "mouseCursor",
+      "reason": "deferred",
+      "note": "Pointer cursors matter only for desktop and web targets."
+    }
+  ]
+}

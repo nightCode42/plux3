@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://plux.dev/schema/v1/registry/value-type.schema.json",
+  "title": "Plux value type",
+  "description": "A structured value used by props, such as EdgeInsets or TextStyle (ADR-0010). Files: schema/widgets/types/<Name>.json.",
+  "type": "object",
+  "required": [
+    "name",
+    "id",
+    "revision",
+    "revisions",
+    "description",
+    "fields"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "name": {
+      "$ref": "common.schema.json#/$defs/typeName"
+    },
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "revision": {
+      "$ref": "common.schema.json#/$defs/revision"
+    },
+    "revisions": {
+      "$ref": "common.schema.json#/$defs/revisions"
+    },
+    "description": {
+      "$ref": "common.schema.json#/$defs/description"
+    },
+    "flutter": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/flutterClass"
+      }
+    },
+    "fields": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "description": "A field.",
+        "required": [
+          "name",
+          "id",
+          "type"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "common.schema.json#/$defs/name"
+          },
+          "id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "type": {
+            "$ref": "common.schema.json#/$defs/typeExpr"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "default": {},
+          "revision": {
+            "$ref": "common.schema.json#/$defs/revision"
+          },
+          "deprecated": {
+            "$ref": "common.schema.json#/$defs/deprecation"
+          },
+          "flutter": {
+            "$ref": "common.schema.json#/$defs/flutterNames"
+          },
+          "description": {
+            "$ref": "common.schema.json#/$defs/description"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "constants": {
+      "type": "array",
+      "description": "Named values, such as Alignment.center; a literal of the type may be written as a constant name.",
+      "items": {
+        "type": "object",
+        "description": "A named value.",
+        "required": [
+          "name",
+          "value"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "common.schema.json#/$defs/name"
+          },
+          "value": {
+            "type": "object",
+            "description": "The value as an object literal of the type."
+          },
+          "description": {
+            "$ref": "common.schema.json#/$defs/description"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "excluded": {
+      "$ref": "common.schema.json#/$defs/excluded"
+    }
+  },
+  "additionalProperties": false
+}

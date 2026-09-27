@@ -1,0 +1,117 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "CupertinoListSection",
+  "id": 97,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/cupertino.dart",
+    "class": "CupertinoListSection",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "cupertino",
+  "icon": "view_list",
+  "description": "An iOS-style list section with an optional header and footer.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 30,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "margin",
+      "id": 1,
+      "type": "EdgeInsets",
+      "flutter": "margin"
+    },
+    {
+      "name": "backgroundColor",
+      "id": 2,
+      "type": "color",
+      "flutter": "backgroundColor"
+    },
+    {
+      "name": "decoration",
+      "id": 3,
+      "type": "BoxDecoration",
+      "flutter": "decoration"
+    },
+    {
+      "name": "clipBehavior",
+      "id": 4,
+      "type": "Clip",
+      "default": "none",
+      "flutter": "clipBehavior"
+    },
+    {
+      "name": "dividerMargin",
+      "id": 5,
+      "type": "double",
+      "flutter": "dividerMargin"
+    },
+    {
+      "name": "additionalDividerMargin",
+      "id": 6,
+      "type": "double",
+      "flutter": "additionalDividerMargin"
+    },
+    {
+      "name": "topMargin",
+      "id": 7,
+      "type": "double",
+      "flutter": "topMargin"
+    },
+    {
+      "name": "hasLeading",
+      "id": 8,
+      "type": "bool",
+      "default": true,
+      "flutter": "hasLeading"
+    },
+    {
+      "name": "separatorColor",
+      "id": 9,
+      "type": "color",
+      "flutter": "separatorColor"
+    }
+  ],
+  "slots": [
+    {
+      "name": "header",
+      "id": 1,
+      "flutter": "header"
+    },
+    {
+      "name": "footer",
+      "id": 2,
+      "flutter": "footer"
+    },
+    {
+      "name": "children",
+      "id": 3,
+      "list": true,
+      "flutter": "children",
+      "description": "The rows."
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

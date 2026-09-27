@@ -1,0 +1,27 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "SmartQuotesType",
+  "id": 47,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum SmartQuotesType.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "SmartQuotesType"
+  },
+  "values": [
+    {
+      "name": "disabled",
+      "id": 1
+    },
+    {
+      "name": "enabled",
+      "id": 2
+    }
+  ]
+}

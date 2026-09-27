@@ -1,0 +1,21 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "setThemeMode",
+  "id": 38,
+  "phase": "P8",
+  "category": "app",
+  "description": "Changes the app's theme mode.",
+  "inputs": [
+    {
+      "name": "mode",
+      "id": 1,
+      "type": "ThemeMode",
+      "required": true,
+      "description": "The theme mode."
+    }
+  ],
+  "effects": [
+    "ui",
+    "host"
+  ]
+}

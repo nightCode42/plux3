@@ -1,0 +1,45 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "openBottomSheet",
+  "id": 4,
+  "phase": "P4",
+  "category": "navigation",
+  "description": "Presents a bottom-sheet page and waits for its result.",
+  "typeParameters": [
+    {
+      "name": "P",
+      "description": "The parameter object type of the target route; each field of `params` is checked against the route parameter of the same name (SCH-025)."
+    },
+    {
+      "name": "R",
+      "description": "The result type the presented page returns with pop."
+    }
+  ],
+  "inputs": [
+    {
+      "name": "route",
+      "id": 1,
+      "type": "route",
+      "required": true,
+      "description": "The bottom-sheet page."
+    },
+    {
+      "name": "params",
+      "id": 2,
+      "type": "P",
+      "description": "Parameters of the bottom-sheet page."
+    },
+    {
+      "name": "dismissible",
+      "id": 3,
+      "type": "bool",
+      "default": true,
+      "description": "Whether dragging down or tapping outside closes the sheet."
+    }
+  ],
+  "output": "R?",
+  "effects": [
+    "navigation",
+    "ui"
+  ]
+}

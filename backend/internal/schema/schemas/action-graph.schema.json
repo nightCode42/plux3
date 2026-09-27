@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://plux.dev/schema/v1/action-graph.schema.json",
+  "title": "Plux action graph document",
+  "description": "A named action graph: page-scoped when `page` is set, otherwise a plugin flow callable with typed inputs (§14.1, ACT-061). File: `plugins/<plugin>/actions/<key>.graph.json`.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "key",
+    "steps"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "$ref": "common.schema.json#/$defs/schemaVersion"
+    },
+    "kind": {
+      "const": "actionGraph"
+    },
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "key": {
+      "$ref": "common.schema.json#/$defs/key"
+    },
+    "description": {
+      "$ref": "common.schema.json#/$defs/description"
+    },
+    "page": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "exported": {
+      "type": "boolean",
+      "description": "Callable from other plugins (ACT-061)."
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/param"
+      }
+    },
+    "output": {
+      "$ref": "common.schema.json#/$defs/typeExpr"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/step"
+      },
+      "minItems": 1
+    }
+  },
+  "patternProperties": {
+    "^x-": true
+  },
+  "additionalProperties": false
+}

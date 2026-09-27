@@ -1,0 +1,40 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "AnimationCommand",
+  "id": 73,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "A command controlAnimation sends to a timeline.",
+  "values": [
+    {
+      "name": "play",
+      "id": 1,
+      "description": "Play forward from the current position."
+    },
+    {
+      "name": "pause",
+      "id": 2,
+      "description": "Pause at the current position."
+    },
+    {
+      "name": "reverse",
+      "id": 3,
+      "description": "Play backward from the current position."
+    },
+    {
+      "name": "seek",
+      "id": 4,
+      "description": "Jump to a position."
+    },
+    {
+      "name": "stop",
+      "id": 5,
+      "description": "Stop and return to the start."
+    }
+  ]
+}

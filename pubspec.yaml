@@ -8,3 +8,4 @@ environment:
 
 workspace:
   - packages/plux_flutter
+  - packages/plux_widget_api

@@ -1,0 +1,18 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "parallel",
+  "id": 33,
+  "phase": "P5",
+  "category": "control",
+  "description": "Runs the named branches concurrently and continues when all have finished; the first error cancels the others.",
+  "inputs": [
+    {
+      "name": "lanes",
+      "id": 1,
+      "type": "list<string>",
+      "required": true,
+      "description": "The branches to run."
+    }
+  ],
+  "branchesFrom": "lanes"
+}

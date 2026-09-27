@@ -1,0 +1,186 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "SliverGrid",
+  "id": 40,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "SliverGrid",
+    "constructors": [
+      "builder"
+    ]
+  },
+  "category": "scrolling",
+  "icon": "grid_view",
+  "description": "A lazily built grid of `item` templates inside a CustomScrollView (WGT-012).",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 30,
+  "accessibility": {
+    "role": "list",
+    "interactive": false
+  },
+  "typeParameters": [
+    "T"
+  ],
+  "props": [
+    {
+      "name": "items",
+      "id": 1,
+      "type": "list<T>",
+      "required": true,
+      "flutter": "itemCount",
+      "description": "The list the template repeats over; bind it with `$expr`. The item is available as `item`, its position as `index`."
+    },
+    {
+      "name": "addAutomaticKeepAlives",
+      "id": 2,
+      "type": "bool",
+      "default": true,
+      "flutter": "addAutomaticKeepAlives"
+    },
+    {
+      "name": "addRepaintBoundaries",
+      "id": 3,
+      "type": "bool",
+      "default": true,
+      "flutter": "addRepaintBoundaries"
+    },
+    {
+      "name": "addSemanticIndexes",
+      "id": 4,
+      "type": "bool",
+      "default": true,
+      "flutter": "addSemanticIndexes"
+    },
+    {
+      "name": "semanticIndexOffset",
+      "id": 5,
+      "type": "int",
+      "default": 0,
+      "flutter": "semanticIndexOffset"
+    },
+    {
+      "name": "status",
+      "id": 6,
+      "type": "ListStatus",
+      "default": "ready",
+      "description": "Loading, error or ready; selects the `loading` or `error` slot (WGT-012)."
+    },
+    {
+      "name": "hasMore",
+      "id": 7,
+      "type": "bool",
+      "default": false,
+      "description": "More items can be loaded; `onEndReached` fires near the end (P5 pagination)."
+    },
+    {
+      "name": "crossAxisCount",
+      "id": 8,
+      "type": "int",
+      "constraints": {
+        "min": 1
+      },
+      "flutter": "gridDelegate",
+      "description": "Fixed number of columns; or set maxCrossAxisExtent."
+    },
+    {
+      "name": "maxCrossAxisExtent",
+      "id": 9,
+      "type": "double",
+      "flutter": "gridDelegate",
+      "description": "Maximum column width; used when crossAxisCount is not set."
+    },
+    {
+      "name": "mainAxisSpacing",
+      "id": 10,
+      "type": "double",
+      "default": 0.0,
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "gridDelegate",
+      "description": "Space between rows."
+    },
+    {
+      "name": "crossAxisSpacing",
+      "id": 11,
+      "type": "double",
+      "default": 0.0,
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "gridDelegate",
+      "description": "Space between columns."
+    },
+    {
+      "name": "childAspectRatio",
+      "id": 12,
+      "type": "double",
+      "default": 1.0,
+      "flutter": "gridDelegate",
+      "description": "Width-to-height ratio of each cell."
+    },
+    {
+      "name": "mainAxisExtent",
+      "id": 13,
+      "type": "double",
+      "flutter": "gridDelegate",
+      "description": "Fixed cell extent along the main axis."
+    }
+  ],
+  "events": [
+    {
+      "name": "onEndReached",
+      "id": 1,
+      "description": "Fired when the end of the list comes into view and `hasMore` is true."
+    }
+  ],
+  "slots": [
+    {
+      "name": "item",
+      "id": 1,
+      "required": true,
+      "template": true,
+      "flutter": "itemBuilder",
+      "description": "The template built for each item, lazily."
+    },
+    {
+      "name": "empty",
+      "id": 2,
+      "description": "Shown when `items` is empty."
+    },
+    {
+      "name": "loading",
+      "id": 3,
+      "description": "Shown while `status` is loading."
+    },
+    {
+      "name": "error",
+      "id": 4,
+      "description": "Shown while `status` is error."
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "findChildIndexCallback",
+      "reason": "non-serialisable",
+      "note": "Item identity comes from item keys managed by the runtime."
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "StrokeCap",
+  "id": 49,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum StrokeCap.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "StrokeCap"
+  },
+  "values": [
+    {
+      "name": "butt",
+      "id": 1
+    },
+    {
+      "name": "round",
+      "id": 2
+    },
+    {
+      "name": "square",
+      "id": 3
+    }
+  ]
+}

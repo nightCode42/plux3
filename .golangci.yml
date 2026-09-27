@@ -38,6 +38,14 @@ linters:
       min-complexity: 5
     misspell:
       locale: UK
+      # Identifiers of the document model keep the specification's spelling
+      # (e.g. the `color` type of SCH-010, the `organization` scope), and
+      # registry names keep Flutter's (e.g. `TextAlign.center`); prose stays
+      # British.
+      ignore-rules:
+        - center
+        - color
+        - organization
     wrapcheck:
       # Errors crossing a package boundary are wrapped with context.
       ignore-sig-regexps:
@@ -57,15 +65,23 @@ linters:
       - std-error-handling
     rules:
       # Tests may be long and table-heavy; readability is enforced in review.
+      # Errors in test helpers end the test, so wrapping adds nothing.
       - path: _test\.go
         linters:
           - funlen
           - gocognit
+          - wrapcheck
       # Repository tooling reads files named on its own command line.
       - path: ^tools/
         linters:
           - gosec
         text: "G304"
+      # Tests read and write fixtures in the repository and in temporary
+      # directories.
+      - path: _test\.go
+        linters:
+          - gosec
+        text: "G304|G703|G122"
 
 formatters:
   enable:

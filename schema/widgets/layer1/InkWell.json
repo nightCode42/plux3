@@ -1,0 +1,232 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "InkWell",
+  "id": 90,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "InkWell",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "interaction",
+  "icon": "touch_app",
+  "description": "A rectangular area that responds to touch with a Material ink splash.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 20,
+  "accessibility": {
+    "role": "button",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "focusColor",
+      "id": 1,
+      "type": "color",
+      "flutter": "focusColor"
+    },
+    {
+      "name": "hoverColor",
+      "id": 2,
+      "type": "color",
+      "flutter": "hoverColor"
+    },
+    {
+      "name": "highlightColor",
+      "id": 3,
+      "type": "color",
+      "flutter": "highlightColor"
+    },
+    {
+      "name": "overlayColor",
+      "id": 4,
+      "type": "WidgetStateColor",
+      "flutter": "overlayColor"
+    },
+    {
+      "name": "splashColor",
+      "id": 5,
+      "type": "color",
+      "flutter": "splashColor"
+    },
+    {
+      "name": "radius",
+      "id": 6,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "radius"
+    },
+    {
+      "name": "borderRadius",
+      "id": 7,
+      "type": "BorderRadius",
+      "flutter": "borderRadius"
+    },
+    {
+      "name": "customBorder",
+      "id": 8,
+      "type": "ShapeBorder",
+      "flutter": "customBorder"
+    },
+    {
+      "name": "enableFeedback",
+      "id": 9,
+      "type": "bool",
+      "default": true,
+      "flutter": "enableFeedback"
+    },
+    {
+      "name": "excludeFromSemantics",
+      "id": 10,
+      "type": "bool",
+      "default": false,
+      "flutter": "excludeFromSemantics"
+    },
+    {
+      "name": "canRequestFocus",
+      "id": 11,
+      "type": "bool",
+      "default": true,
+      "flutter": "canRequestFocus"
+    },
+    {
+      "name": "autofocus",
+      "id": 12,
+      "type": "bool",
+      "default": false,
+      "flutter": "autofocus"
+    },
+    {
+      "name": "hoverDuration",
+      "id": 13,
+      "type": "duration",
+      "flutter": "hoverDuration"
+    }
+  ],
+  "events": [
+    {
+      "name": "onTap",
+      "id": 1,
+      "flutter": "onTap"
+    },
+    {
+      "name": "onDoubleTap",
+      "id": 2,
+      "flutter": "onDoubleTap"
+    },
+    {
+      "name": "onLongPress",
+      "id": 3,
+      "flutter": "onLongPress"
+    },
+    {
+      "name": "onLongPressUp",
+      "id": 4,
+      "flutter": "onLongPressUp"
+    },
+    {
+      "name": "onTapDown",
+      "id": 5,
+      "payload": "GestureDetails",
+      "flutter": "onTapDown"
+    },
+    {
+      "name": "onTapUp",
+      "id": 6,
+      "payload": "GestureDetails",
+      "flutter": "onTapUp"
+    },
+    {
+      "name": "onTapCancel",
+      "id": 7,
+      "flutter": "onTapCancel"
+    },
+    {
+      "name": "onSecondaryTap",
+      "id": 8,
+      "flutter": "onSecondaryTap"
+    },
+    {
+      "name": "onSecondaryTapUp",
+      "id": 9,
+      "payload": "GestureDetails",
+      "flutter": "onSecondaryTapUp"
+    },
+    {
+      "name": "onSecondaryTapDown",
+      "id": 10,
+      "payload": "GestureDetails",
+      "flutter": "onSecondaryTapDown"
+    },
+    {
+      "name": "onSecondaryTapCancel",
+      "id": 11,
+      "flutter": "onSecondaryTapCancel"
+    },
+    {
+      "name": "onHighlightChanged",
+      "id": 12,
+      "payload": "bool",
+      "flutter": "onHighlightChanged"
+    },
+    {
+      "name": "onHover",
+      "id": 13,
+      "payload": "bool",
+      "flutter": "onHover"
+    },
+    {
+      "name": "onFocusChange",
+      "id": 14,
+      "payload": "bool",
+      "flutter": "onFocusChange"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "mouseCursor",
+      "reason": "deferred",
+      "note": "Pointer cursors matter only for desktop and web targets."
+    },
+    {
+      "flutter": "splashFactory",
+      "reason": "non-serialisable"
+    },
+    {
+      "flutter": "focusNode",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "statesController",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    }
+  ]
+}

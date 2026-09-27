@@ -1,0 +1,277 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://plux.dev/schema/v1/registry/widget-descriptor.schema.json",
+  "title": "Plux widget descriptor",
+  "description": "Defines one widget type (WGT-001, ADR-0010). Files: schema/widgets/layer1/<Type>.json and layer2/<Type>.json.",
+  "type": "object",
+  "required": [
+    "type",
+    "id",
+    "layer",
+    "phase",
+    "revision",
+    "revisions",
+    "category",
+    "icon",
+    "description",
+    "platforms",
+    "cost",
+    "accessibility"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "type": {
+      "$ref": "common.schema.json#/$defs/typeName"
+    },
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "layer": {
+      "enum": [
+        1,
+        2
+      ]
+    },
+    "phase": {
+      "$ref": "common.schema.json#/$defs/phase"
+    },
+    "revision": {
+      "$ref": "common.schema.json#/$defs/revision"
+    },
+    "revisions": {
+      "$ref": "common.schema.json#/$defs/revisions"
+    },
+    "flutter": {
+      "$ref": "common.schema.json#/$defs/flutterClass"
+    },
+    "category": {
+      "type": "string",
+      "pattern": "^[a-z][a-zA-Z]*$"
+    },
+    "icon": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$",
+      "description": "Material Symbols name for Studio."
+    },
+    "description": {
+      "$ref": "common.schema.json#/$defs/description"
+    },
+    "platforms": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "android",
+          "ios"
+        ]
+      }
+    },
+    "cost": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100000,
+      "description": "Estimated build cost in microseconds on the mid-tier reference device (CMP-040)."
+    },
+    "accessibility": {
+      "type": "object",
+      "description": "Accessibility requirements (A11Y-002).",
+      "required": [
+        "role",
+        "interactive"
+      ],
+      "properties": {
+        "role": {
+          "enum": [
+            "none",
+            "button",
+            "checkbox",
+            "radio",
+            "switch",
+            "slider",
+            "textField",
+            "image",
+            "text",
+            "header",
+            "list",
+            "progress"
+          ]
+        },
+        "interactive": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "typeParameters": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Z]$"
+      }
+    },
+    "props": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "A prop.",
+        "required": [
+          "name",
+          "id",
+          "type"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "common.schema.json#/$defs/name"
+          },
+          "id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "type": {
+            "$ref": "common.schema.json#/$defs/typeExpr"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "default": {
+            "description": "Default literal; props equal to it are omitted from bundles (CMP-020)."
+          },
+          "constraints": {
+            "$ref": "common.schema.json#/$defs/constraints"
+          },
+          "revision": {
+            "$ref": "common.schema.json#/$defs/revision"
+          },
+          "deprecated": {
+            "$ref": "common.schema.json#/$defs/deprecation"
+          },
+          "bindable": {
+            "type": "boolean",
+            "description": "False when the prop only accepts literals."
+          },
+          "flutter": {
+            "$ref": "common.schema.json#/$defs/flutterNames"
+          },
+          "description": {
+            "$ref": "common.schema.json#/$defs/description"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "An event; `payload` is its value, available as `event` in handlers.",
+        "required": [
+          "name",
+          "id"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^on[A-Z][A-Za-z0-9]*$",
+            "maxLength": 64
+          },
+          "id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "payload": {
+            "$ref": "common.schema.json#/$defs/typeExpr"
+          },
+          "revision": {
+            "$ref": "common.schema.json#/$defs/revision"
+          },
+          "deprecated": {
+            "$ref": "common.schema.json#/$defs/deprecation"
+          },
+          "flutter": {
+            "$ref": "common.schema.json#/$defs/flutterNames"
+          },
+          "description": {
+            "$ref": "common.schema.json#/$defs/description"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "children": {
+      "type": "object",
+      "description": "The widget takes a list of children.",
+      "properties": {
+        "flutter": {
+          "$ref": "common.schema.json#/$defs/flutterNames"
+        },
+        "min": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "max": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "slots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "A named slot.",
+        "required": [
+          "name",
+          "id"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "common.schema.json#/$defs/name"
+          },
+          "id": {
+            "$ref": "common.schema.json#/$defs/id"
+          },
+          "list": {
+            "type": "boolean",
+            "description": "Holds a list of nodes."
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "template": {
+            "type": "boolean",
+            "description": "Built per item with `item` and `index` in scope."
+          },
+          "revision": {
+            "$ref": "common.schema.json#/$defs/revision"
+          },
+          "deprecated": {
+            "$ref": "common.schema.json#/$defs/deprecation"
+          },
+          "flutter": {
+            "$ref": "common.schema.json#/$defs/flutterNames"
+          },
+          "description": {
+            "$ref": "common.schema.json#/$defs/description"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "excluded": {
+      "$ref": "common.schema.json#/$defs/excluded"
+    },
+    "deprecated": {
+      "$ref": "common.schema.json#/$defs/deprecation"
+    }
+  },
+  "additionalProperties": false,
+  "not": {
+    "required": [
+      "children",
+      "slots"
+    ]
+  }
+}

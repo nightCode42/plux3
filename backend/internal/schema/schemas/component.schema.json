@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://plux.dev/schema/v1/component.schema.json",
+  "title": "Plux component document",
+  "description": "A reusable component with typed props, slots, events and internal state (SCH-030). File: `components/<key>.component.json` (app-shared) or `plugins/<plugin>/components/<key>.component.json`.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "key",
+    "name",
+    "version",
+    "root"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "$ref": "common.schema.json#/$defs/schemaVersion"
+    },
+    "kind": {
+      "const": "component"
+    },
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "key": {
+      "$ref": "common.schema.json#/$defs/key"
+    },
+    "name": {
+      "$ref": "common.schema.json#/$defs/text"
+    },
+    "description": {
+      "$ref": "common.schema.json#/$defs/description"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "props": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "x-plux-type": "ComponentProp",
+        "description": "A typed prop of the component.",
+        "required": [
+          "name",
+          "type"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "common.schema.json#/$defs/name"
+          },
+          "type": {
+            "$ref": "common.schema.json#/$defs/typeExpr"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "default": {
+            "$ref": "common.schema.json#/$defs/value"
+          },
+          "description": {
+            "$ref": "common.schema.json#/$defs/description"
+          }
+        },
+        "patternProperties": {
+          "^x-": true
+        },
+        "additionalProperties": false
+      }
+    },
+    "slots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "x-plux-type": "ComponentSlot",
+        "description": "A named slot.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "common.schema.json#/$defs/name"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "multiple": {
+            "type": "boolean"
+          },
+          "description": {
+            "$ref": "common.schema.json#/$defs/description"
+          }
+        },
+        "patternProperties": {
+          "^x-": true
+        },
+        "additionalProperties": false
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "x-plux-type": "ComponentEvent",
+        "description": "An event the component emits.",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^on[A-Z][A-Za-z0-9]*$",
+            "maxLength": 64
+          },
+          "payload": {
+            "$ref": "common.schema.json#/$defs/typeExpr"
+          },
+          "description": {
+            "$ref": "common.schema.json#/$defs/description"
+          }
+        },
+        "patternProperties": {
+          "^x-": true
+        },
+        "additionalProperties": false
+      }
+    },
+    "state": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/stateEntry"
+      }
+    },
+    "exported": {
+      "type": "boolean",
+      "description": "Embeddable by the host with `PluxView` (NAV-004)."
+    },
+    "root": {
+      "$ref": "common.schema.json#/$defs/node"
+    }
+  },
+  "patternProperties": {
+    "^x-": true
+  },
+  "additionalProperties": false
+}

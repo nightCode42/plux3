@@ -1,0 +1,129 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Transform",
+  "id": 17,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "Transform",
+    "constructors": [
+      "",
+      "flip",
+      "rotate",
+      "scale",
+      "translate"
+    ]
+  },
+  "category": "layout",
+  "icon": "transform",
+  "description": "Rotates, scales, translates or flips its child before painting.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 8,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "origin",
+      "id": 1,
+      "type": "Offset",
+      "flutter": "origin"
+    },
+    {
+      "name": "alignment",
+      "id": 2,
+      "type": "Alignment",
+      "flutter": "alignment"
+    },
+    {
+      "name": "transformHitTests",
+      "id": 3,
+      "type": "bool",
+      "default": true,
+      "flutter": "transformHitTests"
+    },
+    {
+      "name": "filterQuality",
+      "id": 4,
+      "type": "FilterQuality",
+      "flutter": "filterQuality"
+    },
+    {
+      "name": "flipX",
+      "id": 5,
+      "type": "bool",
+      "default": false,
+      "flutter": "flipX"
+    },
+    {
+      "name": "flipY",
+      "id": 6,
+      "type": "bool",
+      "default": false,
+      "flutter": "flipY"
+    },
+    {
+      "name": "angle",
+      "id": 7,
+      "type": "double",
+      "required": true,
+      "flutter": "angle"
+    },
+    {
+      "name": "scale",
+      "id": 8,
+      "type": "double",
+      "flutter": "scale"
+    },
+    {
+      "name": "scaleX",
+      "id": 9,
+      "type": "double",
+      "flutter": "scaleX"
+    },
+    {
+      "name": "scaleY",
+      "id": 10,
+      "type": "double",
+      "flutter": "scaleY"
+    },
+    {
+      "name": "offset",
+      "id": 11,
+      "type": "Offset",
+      "required": true,
+      "flutter": "offset"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "transform",
+      "reason": "deferred",
+      "note": "Arbitrary matrices are not expressible as data; use the rotate, scale, translate and flip props of Transform."
+    }
+  ]
+}

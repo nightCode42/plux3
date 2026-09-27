@@ -1,0 +1,108 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Card",
+  "id": 54,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "Card",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "display",
+  "icon": "crop_landscape",
+  "description": "A Material card: a panel with slightly rounded corners and an elevation shadow.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 15,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "color",
+      "id": 1,
+      "type": "color",
+      "flutter": "color"
+    },
+    {
+      "name": "shadowColor",
+      "id": 2,
+      "type": "color",
+      "flutter": "shadowColor"
+    },
+    {
+      "name": "surfaceTintColor",
+      "id": 3,
+      "type": "color",
+      "flutter": "surfaceTintColor"
+    },
+    {
+      "name": "elevation",
+      "id": 4,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "elevation"
+    },
+    {
+      "name": "shape",
+      "id": 5,
+      "type": "ShapeBorder",
+      "flutter": "shape"
+    },
+    {
+      "name": "borderOnForeground",
+      "id": 6,
+      "type": "bool",
+      "default": true,
+      "flutter": "borderOnForeground"
+    },
+    {
+      "name": "margin",
+      "id": 7,
+      "type": "EdgeInsets",
+      "flutter": "margin"
+    },
+    {
+      "name": "clipBehavior",
+      "id": 8,
+      "type": "Clip",
+      "flutter": "clipBehavior"
+    },
+    {
+      "name": "semanticContainer",
+      "id": 9,
+      "type": "bool",
+      "default": true,
+      "flutter": "semanticContainer"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

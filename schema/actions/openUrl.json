@@ -1,0 +1,21 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "openUrl",
+  "id": 6,
+  "phase": "P5",
+  "category": "navigation",
+  "description": "Opens an external URL on an allowlisted domain, or a deep link, outside the app.",
+  "inputs": [
+    {
+      "name": "url",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "description": "The HTTPS URL or deep link; its domain must be declared by the plugin (SEC-080)."
+    }
+  ],
+  "effects": [
+    "navigation",
+    "device"
+  ]
+}

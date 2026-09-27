@@ -1,0 +1,41 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "patchState",
+  "id": 12,
+  "phase": "P5",
+  "category": "state",
+  "description": "Merges fields into an object state entry; with optimistic set, the patch is rolled back if a later step of the run fails (ACT-007).",
+  "typeParameters": [
+    {
+      "name": "T",
+      "description": "The declared type of the state entry at `path`."
+    }
+  ],
+  "inputs": [
+    {
+      "name": "path",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "state",
+      "description": "The object state entry."
+    },
+    {
+      "name": "patch",
+      "id": 2,
+      "type": "T",
+      "required": true,
+      "description": "The fields to replace; fields not given keep their values."
+    },
+    {
+      "name": "optimistic",
+      "id": 3,
+      "type": "bool",
+      "default": false,
+      "description": "Roll the patch back when the run fails."
+    }
+  ],
+  "effects": [
+    "state"
+  ]
+}

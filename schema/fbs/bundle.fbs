@@ -1,0 +1,621 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+// The FlatBuffers schema of Plux bundle sections (BND-001, ADR-0002,
+// docs/reference/bundle-format.md). All types live in this one file and
+// namespace, so every language gets one set of accessors; each section
+// kind has its own root type and file identifier, declared in
+// sections/<kind>.fbs (BND-012). Evolution is additive only (BND-000):
+// fields are appended, never removed, renumbered or retyped.
+
+namespace fbs;
+
+// ── Shared types ──────────────────────────────────────────────────────────
+
+// A document UUID: the 16 bytes in order, as two big-endian halves.
+struct Uuid {
+  hi: ulong;
+  lo: ulong;
+}
+
+// The representation a Value uses (BND-015, SCH-010).
+enum ValueKind : ubyte {
+  Null = 0,
+  Bool,        // i: 0 or 1
+  Int,         // i
+  Double,      // d
+  String,      // s: string-table index
+  Decimal,     // unscaled: two's-complement big-endian, scale
+  Money,       // unscaled, scale, s: currency code
+  Date,        // i: days since 1970-01-01
+  DateTime,    // i: microseconds since 1970-01-01T00:00Z, offset: minutes
+  Duration,    // i: microseconds
+  Color,       // i: 0xAARRGGBB
+  Enum,        // i: permanent enum value ID; s: member name for declared enums
+  Asset,       // uuid: asset ID
+  Route,       // s: route name
+  List,        // items
+  Map,         // entries keyed by string-table index
+  Object,      // entries keyed by permanent field ID (value types) or string index (declared types)
+  Style,       // i: content-addressed style ID in the styles section
+  Expr,        // i: content-addressed program ID in the pxl section
+  Token,       // s: design-token path
+  Translation  // uuid: translation key; entries: arguments keyed by string index
+}
+
+// A typed value: one table with one field per representation, so a read is
+// a single indirection and Go and Dart treat it identically (ADR-0002).
+table Value {
+  kind: ValueKind;
+  i: long;
+  offset: short;
+  d: double;
+  s: uint;
+  unscaled: [ubyte];
+  scale: uint;
+  uuid: Uuid;
+  items: [Value];
+  entries: [Entry];
+}
+
+// A map entry or object field.
+table Entry {
+  key: uint;
+  value: Value;
+}
+
+// A prop, action input or override value keyed by its permanent ID.
+table Prop {
+  id: uint;
+  value: Value;
+}
+
+// How an event handler reacts while a previous run is still active.
+enum Concurrency : ubyte {
+  Parallel = 0,
+  Drop,
+  Restart,
+  Queue,
+  Debounce,
+  Throttle
+}
+
+// An event handler: an action graph in the actions section.
+table Handler {
+  event: uint;
+  graph: Uuid;
+  concurrency: Concurrency;
+  interval_ms: uint;
+  detached: bool;
+}
+
+// A declared parameter, input or field. `type` is a string-table index of
+// a type expression (SCH-010).
+table Param {
+  id: Uuid;
+  name: uint;
+  type: uint;
+  required: bool;
+  default: Value;
+  sensitive: bool;
+}
+
+enum Persistence : ubyte {
+  Memory = 0,
+  Session,
+  Persisted,
+  Secure
+}
+
+// A state entry (STA-*): a default or a computed program.
+table StateEntry {
+  id: Uuid;
+  name: uint;
+  type: uint;
+  default: Value;
+  computed: ulong;
+  persistence: Persistence;
+  sensitive: bool;
+  exposed: bool;
+}
+
+enum DataSourceKind : ubyte {
+  Rest = 0,
+  Graphql,
+  Websocket,
+  Sse,
+  Function,
+  Database,
+  Static
+}
+
+// A data source; its configuration as a value.
+table DataSource {
+  id: Uuid;
+  name: uint;
+  kind: DataSourceKind;
+  type: uint;
+  config: Value;
+}
+
+// A declared object type (fields) or enum (members).
+table TypeDecl {
+  name: uint;
+  fields: [Param];
+  members: [uint];
+}
+
+// Where an override layer applies (BND-016).
+enum OverrideKind : ubyte {
+  SizeClass = 0,  // key: "medium" or "expanded"
+  Platform,       // key: "android" or "ios"
+  Experiment,     // key: "<experiment>:<variant>"
+  Locale          // key: BCP 47 tag
+}
+
+// Prop overrides over a base node, applied when the condition holds.
+table Override {
+  kind: OverrideKind;
+  key: uint;
+  props: [Prop];
+}
+
+// Accessibility semantics of a node.
+table Semantics {
+  label: Value;
+  hint: Value;
+  value: Value;
+  header: bool;
+  button: bool;
+  live_region: bool;
+  exclude: bool;
+}
+
+// A slot filled with nodes, as indices into the section's node array.
+table SlotFill {
+  id: uint;
+  nodes: [uint];
+}
+
+// Rendering hints (CMP-024), the bits of Node.hints. The field is a plain
+// ubyte because flatc's Dart generator decodes a bit_flags field as a
+// single enum value and fails on combined flags.
+enum NodeHints : ubyte (bit_flags) {
+  RepaintBoundary,
+  Static
+}
+
+// A node of a flat node array (BND-015). `widget` is the permanent widget
+// ID, or zero for a component instance, which names `component` and
+// `component_version`, or for a host widget of the native catalogue,
+// which `native_slot` names (a string index; Layer 3, from P4). Instance
+// and native-slot prop, event and slot IDs are indices into their
+// declarations.
+table Node {
+  id: Uuid;
+  widget: uint;
+  component: Uuid;
+  component_version: uint;
+  props: [Prop];
+  handlers: [Handler];
+  children: [uint];
+  slots: [SlotFill];
+  visible: Value;
+  semantics: Semantics;
+  test_id: uint;
+  overrides: [Override];
+  hints: ubyte; // NodeHints bits
+  type_arguments: [uint];
+  native_slot: uint;
+}
+
+// ── Section meta ──────────────────────────────────────────────────────────
+
+// The meta section: identity, versions and required features of a bundle
+// (CMP-005, BND-008). Strings here are inline: meta is read before any
+// other section.
+
+
+
+enum BundleKind : ubyte {
+  Unknown = 0,
+  Plugin,
+  App,
+  Development
+}
+
+// A page of a plugin, for navigation across plugins.
+table PageEntry {
+  id: Uuid;
+  key: string;
+  route: string;
+}
+
+// A function the plugin may call (FN-012).
+table FunctionGrant {
+  id: Uuid;
+  function: string;
+  alias: string;
+}
+
+// What the plugin may use (SEC-080, SEC-102).
+table Capabilities {
+  network_domains: [string];
+  functions: [FunctionGrant];
+  device_apis: [string];
+  native_routes: [string];
+}
+
+// A limit value in force for the bundle (LIM-001).
+table Limit {
+  key: string (key);
+  value: long;
+}
+
+// A feature flag of the app.
+table Flag {
+  name: string (key);
+  type: string;
+  default: Value;
+}
+
+table Meta {
+  kind: BundleKind;
+  id: Uuid;
+  key: string;
+  name: string;
+  version: uint;
+  compiler_version: string;
+  schema_version: string;
+  // Sorted; a runtime refuses a bundle naming a feature it lacks (BND-008).
+  required_features: [string];
+  min_runtime: string;
+  capabilities: Capabilities;
+  limits: [Limit];
+  // Plugin bundles.
+  pages: [PageEntry];
+  entry_page: Uuid;
+  fallback_page: Uuid;
+  // App bundles.
+  plugins: [Uuid];
+  default_locale: string;
+  supported_locales: [string];
+  entry_route: string;
+  flags: [Flag];
+  native_catalogue: Uuid;
+  security_profile: string;
+}
+
+// ── Section page ──────────────────────────────────────────────────────────
+
+// A page section: one page with its own string table (CMP-020) and flat
+// node array (BND-015).
+
+
+
+enum PageKind : ubyte {
+  Screen = 0,
+  Dialog,
+  BottomSheet,
+  FullscreenDialog
+}
+
+// Lifecycle handlers; `event` is the lifecycle event.
+enum LifecycleEvent : ubyte {
+  Init = 0,
+  Enter,
+  Resume,
+  Leave,
+  Dispose
+}
+
+table Page {
+  id: Uuid;
+  key: uint;
+  route: uint;
+  kind: PageKind;
+  title: Value;
+  params: [Param];
+  state: [StateEntry];
+  data_sources: [DataSource];
+  // Handler.event is a LifecycleEvent.
+  lifecycle: [Handler];
+  transition: uint;
+  guards: [Uuid];
+  secure: bool;
+  requires_assurance: uint;
+  // nodes[0] is the root.
+  nodes: [Node];
+  strings: [string];
+}
+
+// ── Section component ─────────────────────────────────────────────────────
+
+// A component section: a definition compiled once and instantiated by
+// reference (CMP-021, BND-017).
+
+
+
+// A declared slot; instances fill it by its index.
+table ComponentSlot {
+  name: uint;
+  required: bool;
+  multiple: bool;
+}
+
+// A declared event; `payload` is a type expression.
+table ComponentEvent {
+  name: uint;
+  payload: uint;
+}
+
+table Component {
+  id: Uuid;
+  key: uint;
+  version: uint;
+  // Sorted by name; instances address them by index.
+  props: [Param];
+  slots: [ComponentSlot];
+  events: [ComponentEvent];
+  state: [StateEntry];
+  // nodes[0] is the root.
+  nodes: [Node];
+  strings: [string];
+}
+
+// ── Section actions ───────────────────────────────────────────────────────
+
+// The actions section: action graphs and flows (ACT-*, BND-017). Strings
+// are indices into the strings section. Step references are indices into
+// the graph's steps, -1 for none. Parallel and bounded iteration are
+// actions whose branches name the steps they run.
+
+
+
+enum ErrorKind : ubyte {
+  Network = 0,
+  Http,
+  Timeout,
+  Validation,
+  Function,
+  Permission,
+  Cancelled,
+  Custom
+}
+
+table Retry {
+  count: uint;
+  backoff_ms: uint;
+  max_backoff_ms: uint;
+  jitter: bool;
+  on: [ErrorKind];
+}
+
+// A named successor.
+table Branch {
+  name: uint;
+  step: int = -1;
+}
+
+table Step {
+  id: uint;
+  // The permanent action ID.
+  action: uint;
+  // Inputs keyed by the action's permanent input IDs.
+  input: [Prop];
+  next: int = -1;
+  on_success: int = -1;
+  on_error: int = -1;
+  branches: [Branch];
+  retry: Retry;
+  timeout_ms: uint;
+}
+
+table Graph {
+  id: Uuid;
+  key: uint;
+  page: Uuid;
+  exported: bool;
+  inputs: [Param];
+  output: uint;
+  // steps[0] is the entry.
+  steps: [Step];
+}
+
+table Actions {
+  graphs: [Graph];
+}
+
+// ── Section pxl ───────────────────────────────────────────────────────────
+
+// The pxl section: compiled PXL programs (PXL-003), each addressed by the
+// first eight bytes of the SHA-256 of its encoding (BND-014). A program's
+// encoding carries its result type and read set (CMP-023).
+
+
+
+table Program {
+  id: ulong (key);
+  code: [ubyte];
+}
+
+table Programs {
+  // Sorted by id.
+  programs: [Program];
+}
+
+// ── Section styles ────────────────────────────────────────────────────────
+
+// The styles section: deduplicated value-type objects (CMP-020), addressed
+// by the first eight bytes of the SHA-256 of their encoding, and the design
+// tokens of an app bundle. Strings are indices into the strings section.
+
+
+
+table Style {
+  id: ulong (key);
+  // The permanent value-type ID.
+  type: uint;
+  value: Value;
+}
+
+// A design token with its dark-mode value (THM-001): the W3C token
+// value as JSON-shaped values and its $type.
+table Token {
+  path: string (key);
+  light: Value;
+  dark: Value;
+  type: string;
+}
+
+table Styles {
+  // Sorted by id.
+  styles: [Style];
+  // Sorted by path.
+  tokens: [Token];
+}
+
+// ── Section strings ───────────────────────────────────────────────────────
+
+// The strings section: the string table shared by the plugin-wide
+// sections (CMP-020). Index 0 is the empty string.
+
+
+
+table Strings {
+  strings: [string];
+}
+
+// ── Section l10n ──────────────────────────────────────────────────────────
+
+// An l10n section: the messages of one locale in ICU MessageFormat.
+
+
+
+table Message {
+  key: Uuid;
+  text: string;
+}
+
+table Locale {
+  tag: string;
+  // Sorted by key.
+  messages: [Message];
+}
+
+// ── Section timelines ─────────────────────────────────────────────────────
+
+// The timelines section: animation timelines (BND-017). Keyframes animate
+// a prop of the nodes that play the timeline.
+
+
+
+table Keyframe {
+  at_us: long;
+  value: Value;
+  // The permanent Curves enum value ID.
+  curve: uint;
+}
+
+table Track {
+  // The permanent prop ID.
+  prop: uint;
+  keyframes: [Keyframe];
+}
+
+table Timeline {
+  id: Uuid;
+  duration_us: long;
+  repeat: uint;
+  tracks: [Track];
+}
+
+table Timelines {
+  timelines: [Timeline];
+}
+
+// ── Section schemas ───────────────────────────────────────────────────────
+
+// The schemas section: declared types, state, data sources and local
+// collections of a plugin or app (BND-004, BND-017). Strings are indices
+// into the strings section.
+
+
+
+table Index {
+  fields: [uint];
+}
+
+table Collection {
+  id: Uuid;
+  key: uint;
+  fields: [Param];
+  primary_key: [uint];
+  indexes: [Index];
+}
+
+table Schemas {
+  types: [TypeDecl];
+  state: [StateEntry];
+  data_sources: [DataSource];
+  collections: [Collection];
+  variables: [Param];
+  user_context: [Param];
+}
+
+// ── Section assets-index ──────────────────────────────────────────────────
+
+// The assets-index section: content-addressed asset references.
+
+
+
+table Asset {
+  id: Uuid;
+  key: string;
+  media_type: string;
+  // SHA-256 of the asset file.
+  hash: [ubyte];
+  size: ulong;
+}
+
+table AssetIndex {
+  // Sorted by id.
+  assets: [Asset];
+}
+
+// ── Section wasm ──────────────────────────────────────────────────────────
+
+// The wasm section: a device-placed function module (FN-*, from P7),
+// executed only by the sandboxed interpreter (SEC-054). A bundle with this
+// section requires the feature `section.wasm.v1`.
+
+
+
+table WasmModule {
+  id: Uuid;
+  // SHA-256 of the module.
+  hash: [ubyte];
+  module: [ubyte];
+}
+
+// ── Section sourcemap ─────────────────────────────────────────────────────
+
+// The sourcemap section of development bundles (CMP-041): compiled node
+// and step indices mapped to document JSON paths.
+
+
+
+// A node of a page or component section, by the section's UUID and the
+// node's index, or a step, by its graph's UUID and the step's index.
+table Location {
+  section: Uuid;
+  index: uint;
+  file: uint;
+  pointer: string;
+}
+
+table SourceMap {
+  files: [string];
+  nodes: [Location];
+  steps: [Location];
+}

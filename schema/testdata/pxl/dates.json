@@ -1,0 +1,377 @@
+{
+  "description": "Dates, dateTimes and durations: proleptic Gregorian, fixed offsets, milliseconds.",
+  "env": {
+    "types": {
+      "Loan": {
+        "fields": {
+          "amount": "decimal",
+          "fee": "money?",
+          "months": "int",
+          "rate": "double",
+          "status": "string?"
+        }
+      },
+      "Tier": {
+        "enum": [
+          "gold",
+          "silver",
+          "bronze"
+        ]
+      }
+    },
+    "roots": {
+      "day": "date",
+      "items": "list<Loan>",
+      "n": "int",
+      "name": "string?",
+      "none": "int?",
+      "page": "Loan",
+      "scores": "map<string,int>",
+      "tags": "list<string>",
+      "tier": "Tier",
+      "total": "money",
+      "when": "dateTime",
+      "x": "double"
+    }
+  },
+  "inputs": {
+    "day": "2024-02-29",
+    "items": [
+      {
+        "amount": "100.00",
+        "months": 6,
+        "rate": 0.1,
+        "status": "open"
+      },
+      {
+        "amount": "25.5",
+        "months": 3,
+        "rate": 0.2,
+        "status": "closed"
+      },
+      {
+        "amount": "300",
+        "months": 12,
+        "rate": 0.05
+      }
+    ],
+    "n": 7,
+    "name": null,
+    "none": null,
+    "now": "2026-09-26T08:00:00Z",
+    "page": {
+      "amount": "1200.50",
+      "fee": {
+        "amount": "9.99",
+        "currency": "EUR"
+      },
+      "months": 12,
+      "rate": 0.05,
+      "status": null
+    },
+    "scores": {
+      "alice": 3,
+      "bob": 2
+    },
+    "tags": [
+      "b",
+      "a",
+      "c",
+      "a"
+    ],
+    "tier": "gold",
+    "total": {
+      "amount": "12.34",
+      "currency": "EUR"
+    },
+    "when": "2026-09-26T10:30:00+02:00",
+    "x": 2.5
+  },
+  "cases": [
+    {
+      "name": "date parsing",
+      "expr": "string(date(\"2024-02-29\"))",
+      "value": "2024-02-29",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEECjIwMjQtMDItMjkAAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; \"2024-02-29\""
+      ]
+    },
+    {
+      "name": "date from parts",
+      "expr": "date(2024, 12, 31) == date(\"2024-12-31\")",
+      "value": true,
+      "type": "bool",
+      "program": "AQABBGJvb2wAAAEC",
+      "asm": [
+        "0000 PUSH_TRUE"
+      ]
+    },
+    {
+      "name": "local date of a dateTime",
+      "expr": "string(date(dateTime(\"2026-09-26T23:30:00-05:00\")))",
+      "value": "2026-09-26",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEECjIwMjYtMDktMjYAAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; \"2026-09-26\""
+      ]
+    },
+    {
+      "name": "dateTime keeps its offset",
+      "expr": "string(dateTime(\"2026-09-26T10:30:00.1+02:00\"))",
+      "value": "2026-09-26T10:30:00.100+02:00",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEEHTIwMjYtMDktMjZUMTA6MzA6MDAuMTAwKzAyOjAwAAMEAAA=",
+      "asm": [
+        "0000 CONST 0 ; \"2026-09-26T10:30:00.100+02:00\""
+      ]
+    },
+    {
+      "name": "Z offset",
+      "expr": "string(dateTime(\"2026-09-26t10:30:00z\"))",
+      "value": "2026-09-26T10:30:00Z",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEEFDIwMjYtMDktMjZUMTA6MzA6MDBaAAMEAAA=",
+      "asm": [
+        "0000 CONST 0 ; \"2026-09-26T10:30:00Z\""
+      ]
+    },
+    {
+      "name": "addDays",
+      "expr": "string(addDays(day, 1))",
+      "value": "2024-03-01",
+      "type": "string",
+      "program": "AQACBnN0cmluZwIEA2RheQIBAAAAAAAAAAEDZGF5DgYAAAQBAElUAAJJjwAB",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"day\"",
+        "0003 CONST 1 ; 1",
+        "0006 CALL 84 2 ; addDays",
+        "0010 CALL 143 1 ; string"
+      ],
+      "reads": [
+        "day"
+      ]
+    },
+    {
+      "name": "addMonths clamps",
+      "expr": "string(addMonths(date(\"2024-01-31\"), 1))",
+      "value": "2024-02-29",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEECjIwMjQtMDItMjkAAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; \"2024-02-29\""
+      ]
+    },
+    {
+      "name": "addMonths backwards over a year",
+      "expr": "string(addMonths(date(\"2024-03-31\"), -13))",
+      "value": "2023-02-28",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEECjIwMjMtMDItMjgAAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; \"2023-02-28\""
+      ]
+    },
+    {
+      "name": "addDays on dateTime",
+      "expr": "string(addDays(when, -1))",
+      "value": "2026-09-25T10:30:00+02:00",
+      "type": "string",
+      "program": "AQACBnN0cmluZwIEBHdoZW4C//////////8BBHdoZW4OBgAABAEASVUAAkmQAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"when\"",
+        "0003 CONST 1 ; -1",
+        "0006 CALL 85 2 ; addDays",
+        "0010 CALL 144 1 ; string"
+      ],
+      "reads": [
+        "when"
+      ]
+    },
+    {
+      "name": "diffDays",
+      "expr": "diffDays(date(\"2024-01-01\"), day)",
+      "value": 59,
+      "type": "int",
+      "program": "AQACA2ludAIHlrQCBANkYXkBA2RheQoEAAAGAQBJWAAC",
+      "asm": [
+        "0000 CONST 0 ; 2024-01-01",
+        "0003 LOAD_ROOT 1 ; \"day\"",
+        "0006 CALL 88 2 ; diffDays"
+      ],
+      "reads": [
+        "day"
+      ]
+    },
+    {
+      "name": "startOfDay",
+      "expr": "string(startOfDay(when))",
+      "value": "2026-09-26T00:00:00+02:00",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEEBHdoZW4BBHdoZW4LBgAASVkAAUmQAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"when\"",
+        "0003 CALL 89 1 ; startOfDay",
+        "0007 CALL 144 1 ; string"
+      ],
+      "reads": [
+        "when"
+      ]
+    },
+    {
+      "name": "weekday",
+      "expr": "[weekday(date(\"2026-09-28\")), weekday(date(\"2026-09-27\")), weekday(when)]",
+      "value": [
+        1,
+        7,
+        6
+      ],
+      "type": "list<int>",
+      "program": "AQADCWxpc3Q8aW50PgMCAQAAAAAAAAACBwAAAAAAAAAEBHdoZW4BBHdoZW4QBAAABAEABgIASV0AAUYDAA==",
+      "asm": [
+        "0000 CONST 0 ; 1",
+        "0003 CONST 1 ; 7",
+        "0006 LOAD_ROOT 2 ; \"when\"",
+        "0009 CALL 93 1 ; weekday",
+        "0013 NEW_LIST 3"
+      ],
+      "reads": [
+        "when"
+      ]
+    },
+    {
+      "name": "isBefore and isAfter",
+      "expr": "isBefore(day, date(\"2024-03-01\")) && isAfter(when, now)",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wEBANkYXkHjrUCBAR3aGVuBANub3cDA2RheQNub3cEd2hlbhkGAAAEAQBJXgACDxkAAAAGAgAGAwBJYQAC",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"day\"",
+        "0003 CONST 1 ; 2024-03-01",
+        "0006 CALL 94 2 ; isBefore",
+        "0010 AND_JUMP 25",
+        "0015 LOAD_ROOT 2 ; \"when\"",
+        "0018 LOAD_ROOT 3 ; \"now\"",
+        "0021 CALL 97 2 ; isAfter"
+      ],
+      "reads": [
+        "day",
+        "now",
+        "when"
+      ]
+    },
+    {
+      "name": "duration parsing",
+      "expr": "[duration(\"P1DT2H\"), duration(\"-PT0.5S\"), duration(\"PT1M30S\")]",
+      "value": [
+        93600000,
+        -500,
+        90000
+      ],
+      "type": "list<duration>",
+      "program": "AQABDmxpc3Q8ZHVyYXRpb24+AQsDCYDkoVkJ5wcJoP4KAAMEAAA=",
+      "asm": [
+        "0000 CONST 0 ; [P1DT2H -PT0.5S PT1M30S]"
+      ]
+    },
+    {
+      "name": "duration text",
+      "expr": "[string(duration(0)), string(duration(-1500))]",
+      "value": [
+        "PT0S",
+        "-PT1.5S"
+      ],
+      "type": "list<string>",
+      "program": "AQABDGxpc3Q8c3RyaW5nPgELAgQEUFQwUwQHLVBUMS41UwADBAAA",
+      "asm": [
+        "0000 CONST 0 ; [PT0S -PT1.5S]"
+      ]
+    },
+    {
+      "name": "now is an input",
+      "expr": "string(now)",
+      "value": "2026-09-26T08:00:00Z",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEEA25vdwEDbm93BwYAAEmQAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"now\"",
+        "0003 CALL 144 1 ; string"
+      ],
+      "reads": [
+        "now"
+      ]
+    },
+    {
+      "name": "invalid date",
+      "expr": "date(n + 2016, 2, 29)",
+      "error": "invalidArgument",
+      "type": "date",
+      "program": "AQADBGRhdGUEBAFuAuAHAAAAAAAAAgIAAAAAAAAAAh0AAAAAAAAAAQFuEQYAAAQBABMEAgAEAwBJTwAD",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"n\"",
+        "0003 CONST 1 ; 2016",
+        "0006 ADD_INT",
+        "0007 CONST 2 ; 2",
+        "0010 CONST 3 ; 29",
+        "0013 CALL 79 3 ; date"
+      ],
+      "reads": [
+        "n"
+      ]
+    },
+    {
+      "name": "year 10000",
+      "expr": "addDays(date(\"9999-12-31\"), n)",
+      "error": "invalidArgument",
+      "type": "date",
+      "program": "AQACBGRhdGUCB8CC5gIEAW4BAW4KBAAABgEASVQAAg==",
+      "asm": [
+        "0000 CONST 0 ; 9999-12-31",
+        "0003 LOAD_ROOT 1 ; \"n\"",
+        "0006 CALL 84 2 ; addDays"
+      ],
+      "reads": [
+        "n"
+      ]
+    },
+    {
+      "name": "bad dateTime",
+      "expr": "dateTime(substring(string(when), 0, 19))",
+      "error": "invalidArgument",
+      "type": "dateTime",
+      "program": "AQADCGRhdGVUaW1lAwQEd2hlbgIAAAAAAAAAAAITAAAAAAAAAAEEd2hlbhUGAABJkAABBAEABAIASQwAA0lRAAE=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"when\"",
+        "0003 CALL 144 1 ; string",
+        "0007 CONST 1 ; 0",
+        "0010 CONST 2 ; 19",
+        "0013 CALL 12 3 ; substring",
+        "0017 CALL 81 1 ; dateTime"
+      ],
+      "reads": [
+        "when"
+      ]
+    },
+    {
+      "name": "bad duration",
+      "expr": "duration(\"P\" + string(n) + \"Y\")",
+      "error": "invalidArgument",
+      "type": "duration",
+      "program": "AQACCGR1cmF0aW9uAwQBUAQBbgQBWQEBbhMEAAAGAQBJiwABMQQCADFJUwAB",
+      "asm": [
+        "0000 CONST 0 ; \"P\"",
+        "0003 LOAD_ROOT 1 ; \"n\"",
+        "0006 CALL 139 1 ; string",
+        "0010 CONCAT_STRING",
+        "0011 CONST 2 ; \"Y\"",
+        "0014 CONCAT_STRING",
+        "0015 CALL 83 1 ; duration"
+      ],
+      "reads": [
+        "n"
+      ]
+    }
+  ]
+}

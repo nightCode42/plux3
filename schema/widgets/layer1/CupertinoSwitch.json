@@ -1,0 +1,184 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "CupertinoSwitch",
+  "id": 92,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/cupertino.dart",
+    "class": "CupertinoSwitch",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "cupertino",
+  "icon": "toggle_on",
+  "description": "An iOS-style switch.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 25,
+  "accessibility": {
+    "role": "switch",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "value",
+      "id": 1,
+      "type": "bool",
+      "required": true,
+      "flutter": "value"
+    },
+    {
+      "name": "activeTrackColor",
+      "id": 2,
+      "type": "color",
+      "flutter": "activeTrackColor"
+    },
+    {
+      "name": "inactiveTrackColor",
+      "id": 3,
+      "type": "color",
+      "flutter": "inactiveTrackColor"
+    },
+    {
+      "name": "thumbColor",
+      "id": 4,
+      "type": "color",
+      "flutter": "thumbColor"
+    },
+    {
+      "name": "inactiveThumbColor",
+      "id": 5,
+      "type": "color",
+      "flutter": "inactiveThumbColor"
+    },
+    {
+      "name": "applyTheme",
+      "id": 6,
+      "type": "bool",
+      "flutter": "applyTheme"
+    },
+    {
+      "name": "focusColor",
+      "id": 7,
+      "type": "color",
+      "flutter": "focusColor"
+    },
+    {
+      "name": "onLabelColor",
+      "id": 8,
+      "type": "color",
+      "flutter": "onLabelColor"
+    },
+    {
+      "name": "offLabelColor",
+      "id": 9,
+      "type": "color",
+      "flutter": "offLabelColor"
+    },
+    {
+      "name": "activeThumbImage",
+      "id": 10,
+      "type": "ImageSource",
+      "flutter": "activeThumbImage"
+    },
+    {
+      "name": "inactiveThumbImage",
+      "id": 11,
+      "type": "ImageSource",
+      "flutter": "inactiveThumbImage"
+    },
+    {
+      "name": "trackOutlineColor",
+      "id": 12,
+      "type": "WidgetStateColor",
+      "flutter": "trackOutlineColor"
+    },
+    {
+      "name": "trackOutlineWidth",
+      "id": 13,
+      "type": "WidgetStateDouble",
+      "flutter": "trackOutlineWidth"
+    },
+    {
+      "name": "autofocus",
+      "id": 14,
+      "type": "bool",
+      "default": false,
+      "flutter": "autofocus"
+    },
+    {
+      "name": "dragStartBehavior",
+      "id": 15,
+      "type": "DragStartBehavior",
+      "default": "start",
+      "flutter": "dragStartBehavior"
+    }
+  ],
+  "events": [
+    {
+      "name": "onChanged",
+      "id": 1,
+      "payload": "bool",
+      "flutter": "onChanged"
+    },
+    {
+      "name": "onActiveThumbImageError",
+      "id": 2,
+      "flutter": "onActiveThumbImageError"
+    },
+    {
+      "name": "onInactiveThumbImageError",
+      "id": 3,
+      "flutter": "onInactiveThumbImageError"
+    },
+    {
+      "name": "onFocusChange",
+      "id": 4,
+      "payload": "bool",
+      "flutter": "onFocusChange"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "activeColor",
+      "reason": "deprecated",
+      "note": "Deprecated in Flutter."
+    },
+    {
+      "flutter": "trackColor",
+      "reason": "deprecated",
+      "note": "Deprecated in Flutter."
+    },
+    {
+      "flutter": "thumbIcon",
+      "reason": "deferred",
+      "note": "State-dependent icons are deferred."
+    },
+    {
+      "flutter": "mouseCursor",
+      "reason": "deferred",
+      "note": "Pointer cursors matter only for desktop and web targets."
+    },
+    {
+      "flutter": "focusNode",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    }
+  ]
+}

@@ -70,14 +70,20 @@ Tests with no requirement (helpers, regressions) omit the ID but still describe 
 
 - Property tests state an invariant in one sentence; shrunk failures become regular table tests.
 - Parsers of untrusted input are fuzzed (`QA-004`); every crash becomes a seed and a regular test.
-- Output that must never change silently — compiled bundles, conformance vectors — is checked against committed golden files, updated only with an explicit flag and reviewed as a behaviour change.
+- Output that must never change silently — compiled bundles, conformance vectors — is checked against committed golden files, updated only with an explicit flag (`go test … -update`) and reviewed as a behaviour change. `make go-determinism` runs these checks, and CI runs it on Linux, macOS and Windows, so every platform produces the same bytes (`CMP-002`).
+- Fuzz targets run briefly in every `go test` from their seed corpus, and for `FUZZTIME` each with `make go-fuzz`, which the nightly [fuzz workflow](../../.github/workflows/fuzz.yml) runs for five minutes per target.
 
-## 7. Coverage
+## 7. Timing budgets
+
+Performance budgets of the spec (§30) are asserted by tests that run only when a Make target enables them, because timings depend on the machine: `make go-budgets` measures the compiler's (`CMP-050`, `SCH-042`) on CI's reference runner. Benchmarks (`go test -bench`) exist beside them for profiling; results are recorded per phase in [docs/benchmarks/](../benchmarks/README.md).
+
+## 8. Coverage
 
 - Floors (`QA-001`), defined in [coverage.json](../../coverage.json) and enforced by `covgate`: 85% for the compiler, PXL, bundle, delta, DPoP, approval, sync and security packages; 80% for all other Go and Dart code; 70% for Studio.
 - Coverage is a floor, not a goal: a test that executes code without asserting behaviour is not coverage.
+- Files carrying the generated-code marker (`// Code generated … DO NOT EDIT.`, or flatc's Dart header) are excluded: generated code is verified by regenerating it (`make gen-check`, `CI-003`), and the floors measure hand-written code.
 - Floors are never lowered to pass a change (`AGENTS.md` §5).
 
-## 8. Flaky tests
+## 9. Flaky tests
 
 A flaky test is a bug. It is quarantined immediately with a skip that links an issue, then fixed at its root cause — never made to pass with retries or longer sleeps.

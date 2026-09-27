@@ -1,0 +1,59 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "InputBorder",
+  "id": 16,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "The border of a text input.",
+  "flutter": [
+    {
+      "library": "package:flutter/material.dart",
+      "class": "OutlineInputBorder",
+      "constructors": [
+        ""
+      ]
+    },
+    {
+      "library": "package:flutter/material.dart",
+      "class": "UnderlineInputBorder",
+      "constructors": [
+        ""
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "name": "kind",
+      "id": 1,
+      "type": "InputBorderKind",
+      "required": true,
+      "description": "Outline, underline or none."
+    },
+    {
+      "name": "borderSide",
+      "id": 2,
+      "type": "BorderSide",
+      "flutter": "borderSide",
+      "description": "The stroke."
+    },
+    {
+      "name": "borderRadius",
+      "id": 3,
+      "type": "BorderRadius",
+      "flutter": "borderRadius",
+      "description": "Corner radii."
+    },
+    {
+      "name": "gapPadding",
+      "id": 4,
+      "type": "double",
+      "flutter": "gapPadding",
+      "description": "Gap around the floating label of an outline."
+    }
+  ]
+}

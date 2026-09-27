@@ -1,0 +1,31 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "MaxLengthEnforcement",
+  "id": 37,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum MaxLengthEnforcement.",
+  "flutter": {
+    "library": "package:flutter/services.dart",
+    "enum": "MaxLengthEnforcement"
+  },
+  "values": [
+    {
+      "name": "none",
+      "id": 1
+    },
+    {
+      "name": "enforced",
+      "id": 2
+    },
+    {
+      "name": "truncateAfterCompositionEnds",
+      "id": 3
+    }
+  ]
+}

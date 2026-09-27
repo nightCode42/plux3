@@ -1,0 +1,11 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "sync",
+  "id": 53,
+  "phase": "P5",
+  "category": "plux",
+  "description": "Checks for new plugin releases now instead of waiting for the next scheduled sync.",
+  "effects": [
+    "network"
+  ]
+}

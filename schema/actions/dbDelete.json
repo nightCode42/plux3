@@ -1,0 +1,28 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "dbDelete",
+  "id": 23,
+  "phase": "P5",
+  "category": "localDb",
+  "description": "Deletes the record with a key; deleting a missing record succeeds.",
+  "inputs": [
+    {
+      "name": "collection",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "collection",
+      "description": "The collection."
+    },
+    {
+      "name": "key",
+      "id": 2,
+      "type": "string",
+      "required": true,
+      "description": "The record key."
+    }
+  ],
+  "effects": [
+    "storage"
+  ]
+}

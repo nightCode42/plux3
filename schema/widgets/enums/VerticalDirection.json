@@ -1,0 +1,27 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "VerticalDirection",
+  "id": 64,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "Mirrors the Flutter enum VerticalDirection.",
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "enum": "VerticalDirection"
+  },
+  "values": [
+    {
+      "name": "up",
+      "id": 1
+    },
+    {
+      "name": "down",
+      "id": 2
+    }
+  ]
+}

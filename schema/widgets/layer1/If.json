@@ -1,0 +1,48 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "If",
+  "id": 1,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "category": "structure",
+  "icon": "call_split",
+  "description": "Renders its `then` slot while `condition` is true, otherwise its optional `else` slot.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 2,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "condition",
+      "id": 1,
+      "type": "bool",
+      "required": true,
+      "description": "Which slot to render."
+    }
+  ],
+  "slots": [
+    {
+      "name": "then",
+      "id": 1,
+      "required": true,
+      "description": "Rendered while condition is true."
+    },
+    {
+      "name": "else",
+      "id": 2,
+      "description": "Rendered while condition is false."
+    }
+  ]
+}

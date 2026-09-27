@@ -1,0 +1,31 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "TextDecoration",
+  "id": 54,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "A line drawn with text.",
+  "values": [
+    {
+      "name": "none",
+      "id": 1
+    },
+    {
+      "name": "underline",
+      "id": 2
+    },
+    {
+      "name": "overline",
+      "id": 3
+    },
+    {
+      "name": "lineThrough",
+      "id": 4
+    }
+  ]
+}

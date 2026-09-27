@@ -1,0 +1,55 @@
+{
+  "actions": [
+    {
+      "description": "Opens the host's share sheet.",
+      "inputs": [
+        {
+          "name": "text",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "name": "shareNote",
+      "output": "bool"
+    }
+  ],
+  "host": {
+    "build": 7,
+    "version": "2.0.0"
+  },
+  "id": "01b0c450-6c00-7000-8000-000000000003",
+  "kind": "nativeCatalogue",
+  "routes": [
+    {
+      "description": "Host settings.",
+      "name": "settings",
+      "params": [
+        {
+          "mock": "general",
+          "name": "section",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": "1.0.0",
+  "slots": [
+    {
+      "description": "The host's map.",
+      "events": [
+        {
+          "name": "onPan",
+          "payload": "double"
+        }
+      ],
+      "props": [
+        {
+          "name": "zoom",
+          "required": true,
+          "type": "double"
+        }
+      ],
+      "type": "MapView"
+    }
+  ]
+}

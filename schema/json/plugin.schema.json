@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://plux.dev/schema/v1/plugin.schema.json",
+  "title": "Plux plugin document",
+  "description": "A plugin: its pages, state, collections and requested capabilities (SCH-021). File: `plugins/<key>/plugin.json`.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "key",
+    "name",
+    "icon",
+    "team",
+    "entryPage",
+    "pages"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "$ref": "common.schema.json#/$defs/schemaVersion"
+    },
+    "kind": {
+      "const": "plugin"
+    },
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "key": {
+      "$ref": "common.schema.json#/$defs/key"
+    },
+    "name": {
+      "$ref": "common.schema.json#/$defs/text"
+    },
+    "description": {
+      "$ref": "common.schema.json#/$defs/description"
+    },
+    "icon": {
+      "$ref": "common.schema.json#/$defs/icon"
+    },
+    "team": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "description": "Owning team."
+    },
+    "entryPage": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "pages": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/id"
+      },
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "Identifiers of the plugin's pages; each has a file under `pages/`."
+    },
+    "fallbackPage": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "capabilities": {
+      "type": "object",
+      "x-plux-type": "Capabilities",
+      "description": "Capabilities the plugin requests; everything else is denied (SEC-080).",
+      "properties": {
+        "networkDomains": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(\\*\\.)?[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$",
+            "maxLength": 253
+          },
+          "uniqueItems": true
+        },
+        "functions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "x-plux-type": "FunctionGrant",
+            "description": "A function the plugin may call, with an optional alias (FN-006).",
+            "required": [
+              "id",
+              "function"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "common.schema.json#/$defs/id"
+              },
+              "function": {
+                "type": "string",
+                "pattern": "^[a-z][a-zA-Z0-9]*(\\.[a-z][a-zA-Z0-9]*)+$",
+                "maxLength": 128
+              },
+              "alias": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9-]*$",
+                "maxLength": 32
+              }
+            },
+            "patternProperties": {
+              "^x-": true
+            },
+            "additionalProperties": false
+          }
+        },
+        "deviceApis": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/deviceApi"
+          },
+          "uniqueItems": true
+        },
+        "nativeRoutes": {
+          "type": "array",
+          "items": {
+            "$ref": "common.schema.json#/$defs/routeName"
+          },
+          "uniqueItems": true
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9-]*$",
+        "maxLength": 32
+      },
+      "uniqueItems": true
+    },
+    "types": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/typeDecl"
+      }
+    },
+    "state": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/stateEntry"
+      }
+    },
+    "collections": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/collection"
+      }
+    },
+    "dataSources": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/dataSource"
+      }
+    }
+  },
+  "patternProperties": {
+    "^x-": true
+  },
+  "additionalProperties": false
+}

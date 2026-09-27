@@ -1,0 +1,45 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Responsive",
+  "id": 4,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "category": "structure",
+  "icon": "devices",
+  "description": "Renders a different subtree per window-size class: `compact`, `medium` (600–839 dp) and `expanded` (≥ 840 dp).",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 3,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [],
+  "slots": [
+    {
+      "name": "compact",
+      "id": 1,
+      "required": true,
+      "description": "Below 600 dp."
+    },
+    {
+      "name": "medium",
+      "id": 2,
+      "description": "From 600 to 839 dp; falls back to compact."
+    },
+    {
+      "name": "expanded",
+      "id": 3,
+      "description": "From 840 dp; falls back to medium, then compact."
+    }
+  ]
+}

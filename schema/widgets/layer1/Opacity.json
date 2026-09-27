@@ -1,0 +1,67 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Opacity",
+  "id": 22,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/widgets.dart",
+    "class": "Opacity",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "layout",
+  "icon": "opacity",
+  "description": "Makes its child partially transparent.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 10,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "opacity",
+      "id": 1,
+      "type": "double",
+      "required": true,
+      "constraints": {
+        "min": 0.0,
+        "max": 1.0
+      },
+      "flutter": "opacity"
+    },
+    {
+      "name": "alwaysIncludeSemantics",
+      "id": 2,
+      "type": "bool",
+      "default": false,
+      "flutter": "alwaysIncludeSemantics"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

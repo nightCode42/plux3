@@ -1,0 +1,87 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "VerticalDivider",
+  "id": 53,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "VerticalDivider",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "display",
+  "icon": "more_vert",
+  "description": "A thin vertical line with padding on either side.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 5,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "width",
+      "id": 1,
+      "type": "double",
+      "flutter": "width"
+    },
+    {
+      "name": "thickness",
+      "id": 2,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "thickness"
+    },
+    {
+      "name": "indent",
+      "id": 3,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "indent"
+    },
+    {
+      "name": "endIndent",
+      "id": 4,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "endIndent"
+    },
+    {
+      "name": "color",
+      "id": 5,
+      "type": "color",
+      "flutter": "color"
+    },
+    {
+      "name": "radius",
+      "id": 6,
+      "type": "BorderRadius",
+      "flutter": "radius"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "id": "01a0c450-6c00-7009-8000-000000011667",
+  "kind": "translations",
+  "locale": "en",
+  "messages": {
+    "01a0c450-6c00-7002-8000-000000003dde": "Loan calculator",
+    "01a0c450-6c00-7003-8000-000000005ccd": "Amount",
+    "01a0c450-6c00-7004-8000-000000007bbc": "Term in months",
+    "01a0c450-6c00-7005-8000-000000009aab": "Calculate",
+    "01a0c450-6c00-7006-8000-00000000b99a": "Your schedule",
+    "01a0c450-6c00-7007-8000-00000000d889": "Monthly payment",
+    "01a0c450-6c00-7008-8000-00000000f778": "Plux Demo"
+  },
+  "schemaVersion": "1.0.0"
+}

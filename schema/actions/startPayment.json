@@ -1,0 +1,33 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "startPayment",
+  "id": 55,
+  "phase": "P13",
+  "category": "payments",
+  "description": "Starts a payment the server verifies before it is confirmed (PAY-002).",
+  "inputs": [
+    {
+      "name": "intent",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "description": "The server-created payment intent."
+    },
+    {
+      "name": "amount",
+      "id": 2,
+      "type": "money",
+      "required": true,
+      "description": "The amount shown to the user."
+    }
+  ],
+  "output": "string",
+  "branches": [
+    "cancelled",
+    "failed"
+  ],
+  "effects": [
+    "network",
+    "security"
+  ]
+}

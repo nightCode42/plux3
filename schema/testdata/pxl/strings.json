@@ -1,0 +1,342 @@
+{
+  "description": "String functions count code points (PXL-006).",
+  "env": {
+    "types": {
+      "Loan": {
+        "fields": {
+          "amount": "decimal",
+          "fee": "money?",
+          "months": "int",
+          "rate": "double",
+          "status": "string?"
+        }
+      },
+      "Tier": {
+        "enum": [
+          "gold",
+          "silver",
+          "bronze"
+        ]
+      }
+    },
+    "roots": {
+      "day": "date",
+      "items": "list<Loan>",
+      "n": "int",
+      "name": "string?",
+      "none": "int?",
+      "page": "Loan",
+      "scores": "map<string,int>",
+      "tags": "list<string>",
+      "tier": "Tier",
+      "total": "money",
+      "when": "dateTime",
+      "x": "double"
+    }
+  },
+  "inputs": {
+    "day": "2024-02-29",
+    "items": [
+      {
+        "amount": "100.00",
+        "months": 6,
+        "rate": 0.1,
+        "status": "open"
+      },
+      {
+        "amount": "25.5",
+        "months": 3,
+        "rate": 0.2,
+        "status": "closed"
+      },
+      {
+        "amount": "300",
+        "months": 12,
+        "rate": 0.05
+      }
+    ],
+    "n": 7,
+    "name": null,
+    "none": null,
+    "now": "2026-09-26T08:00:00Z",
+    "page": {
+      "amount": "1200.50",
+      "fee": {
+        "amount": "9.99",
+        "currency": "EUR"
+      },
+      "months": 12,
+      "rate": 0.05,
+      "status": null
+    },
+    "scores": {
+      "alice": 3,
+      "bob": 2
+    },
+    "tags": [
+      "b",
+      "a",
+      "c",
+      "a"
+    ],
+    "tier": "gold",
+    "total": {
+      "amount": "12.34",
+      "currency": "EUR"
+    },
+    "when": "2026-09-26T10:30:00+02:00",
+    "x": 2.5
+  },
+  "cases": [
+    {
+      "name": "len counts code points",
+      "expr": "len(\"añ😀\")",
+      "value": 3,
+      "type": "int",
+      "program": "AQABA2ludAECAwAAAAAAAAAAAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; 3"
+      ]
+    },
+    {
+      "name": "upper uses simple case mapping",
+      "expr": "upper(\"straße\")",
+      "value": "STRAßE",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEEB1NUUkHDn0UAAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; \"STRAßE\""
+      ]
+    },
+    {
+      "name": "lower",
+      "expr": "lower(\"ÀB\")",
+      "value": "àb",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEEA8OgYgADBAAA",
+      "asm": [
+        "0000 CONST 0 ; \"àb\""
+      ]
+    },
+    {
+      "name": "trim removes White_Space",
+      "expr": "trim(\" \\u{A0}x\\u{2003} \")",
+      "value": "x",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEEAXgAAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; \"x\""
+      ]
+    },
+    {
+      "name": "contains",
+      "expr": "contains(\"banana\", \"nan\")",
+      "value": true,
+      "type": "bool",
+      "program": "AQABBGJvb2wAAAEC",
+      "asm": [
+        "0000 PUSH_TRUE"
+      ]
+    },
+    {
+      "name": "startsWith and endsWith",
+      "expr": "startsWith(\"banana\", \"ba\") && endsWith(\"banana\", \"na\")",
+      "value": true,
+      "type": "bool",
+      "program": "AQABBGJvb2wAAAEC",
+      "asm": [
+        "0000 PUSH_TRUE"
+      ]
+    },
+    {
+      "name": "replace all",
+      "expr": "replace(\"a-b-c\", \"-\", \"+\")",
+      "value": "a+b+c",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEEBWErYitjAAMEAAA=",
+      "asm": [
+        "0000 CONST 0 ; \"a+b+c\""
+      ]
+    },
+    {
+      "name": "replace empty pattern",
+      "expr": "replace(\"abc\", \"\", \"x\")",
+      "value": "abc",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEEA2FiYwADBAAA",
+      "asm": [
+        "0000 CONST 0 ; \"abc\""
+      ]
+    },
+    {
+      "name": "split",
+      "expr": "split(\"a,b,,c\", \",\")",
+      "value": [
+        "a",
+        "b",
+        "",
+        "c"
+      ],
+      "type": "list<string>",
+      "program": "AQABDGxpc3Q8c3RyaW5nPgELBAQBYQQBYgQABAFjAAMEAAA=",
+      "asm": [
+        "0000 CONST 0 ; [a b  c]"
+      ]
+    },
+    {
+      "name": "split into code points",
+      "expr": "split(\"a😀\", \"\")",
+      "value": [
+        "a",
+        "😀"
+      ],
+      "type": "list<string>",
+      "program": "AQABDGxpc3Q8c3RyaW5nPgELAgQBYQQE8J+YgAADBAAA",
+      "asm": [
+        "0000 CONST 0 ; [a 😀]"
+      ]
+    },
+    {
+      "name": "join",
+      "expr": "join(tags, \"-\")",
+      "value": "b-a-c-a",
+      "type": "string",
+      "program": "AQACBnN0cmluZwIEBHRhZ3MEAS0BBHRhZ3MKBgAABAEASQoAAg==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"tags\"",
+        "0003 CONST 1 ; \"-\"",
+        "0006 CALL 10 2 ; join"
+      ],
+      "reads": [
+        "tags"
+      ]
+    },
+    {
+      "name": "substring by code points",
+      "expr": "substring(\"😀abc\", 1, 3)",
+      "value": "ab",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEEAmFiAAMEAAA=",
+      "asm": [
+        "0000 CONST 0 ; \"ab\""
+      ]
+    },
+    {
+      "name": "substring to end",
+      "expr": "substring(\"hello\", 2)",
+      "value": "llo",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEEA2xsbwADBAAA",
+      "asm": [
+        "0000 CONST 0 ; \"llo\""
+      ]
+    },
+    {
+      "name": "padLeft",
+      "expr": "padLeft(\"7\", 3, \"0\")",
+      "value": "007",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEEAzAwNwADBAAA",
+      "asm": [
+        "0000 CONST 0 ; \"007\""
+      ]
+    },
+    {
+      "name": "padRight no-op",
+      "expr": "padRight(\"abc\", 2, \" \")",
+      "value": "abc",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEEA2FiYwADBAAA",
+      "asm": [
+        "0000 CONST 0 ; \"abc\""
+      ]
+    },
+    {
+      "name": "string of double is ES6",
+      "expr": "[string(1.0), string(0.1 + 0.2), string(1e21), string(1e-7)]",
+      "value": [
+        "1",
+        "0.30000000000000004",
+        "1e+21",
+        "1e-7"
+      ],
+      "type": "list<string>",
+      "program": "AQABDGxpc3Q8c3RyaW5nPgELBAQBMQQTMC4zMDAwMDAwMDAwMDAwMDAwNAQFMWUrMjEEBDFlLTcAAwQAAA==",
+      "asm": [
+        "0000 CONST 0 ; [1 0.30000000000000004 1e+21 1e-7]"
+      ]
+    },
+    {
+      "name": "string of values",
+      "expr": "[string(12.50d), string(total), string(day), string(tier), string(true), string(duration(90061001))]",
+      "value": [
+        "12.50",
+        "12.34 EUR",
+        "2024-02-29",
+        "gold",
+        "true",
+        "P1DT1H1M1.001S"
+      ],
+      "type": "list<string>",
+      "program": "AQAGDGxpc3Q8c3RyaW5nPgYEBTEyLjUwBAV0b3RhbAQDZGF5BAR0aWVyBAR0cnVlBA5QMURUMUgxTTEuMDAxUwMDZGF5BHRpZXIFdG90YWwdBAAABgEASY4AAQYCAEmPAAEGAwAEBAAEBQBGBgA=",
+      "asm": [
+        "0000 CONST 0 ; \"12.50\"",
+        "0003 LOAD_ROOT 1 ; \"total\"",
+        "0006 CALL 142 1 ; string",
+        "0010 LOAD_ROOT 2 ; \"day\"",
+        "0013 CALL 143 1 ; string",
+        "0017 LOAD_ROOT 3 ; \"tier\"",
+        "0020 CONST 4 ; \"true\"",
+        "0023 CONST 5 ; \"P1DT1H1M1.001S\"",
+        "0026 NEW_LIST 6"
+      ],
+      "reads": [
+        "day",
+        "tier",
+        "total"
+      ]
+    },
+    {
+      "name": "format.iban",
+      "expr": "format.iban(\"de89 3704 0044 0532 0130 00\")",
+      "value": "DE89 3704 0044 0532 0130 00",
+      "type": "string",
+      "program": "AQABBnN0cmluZwEEG0RFODkgMzcwNCAwMDQ0IDA1MzIgMDEzMCAwMAADBAAA",
+      "asm": [
+        "0000 CONST 0 ; \"DE89 3704 0044 0532 0130 00\""
+      ]
+    },
+    {
+      "name": "substring out of range",
+      "expr": "substring(\"abc\", 2, n)",
+      "error": "indexOutOfRange",
+      "type": "string",
+      "program": "AQADBnN0cmluZwMEA2FiYwICAAAAAAAAAAQBbgEBbg0EAAAEAQAGAgBJDAAD",
+      "asm": [
+        "0000 CONST 0 ; \"abc\"",
+        "0003 CONST 1 ; 2",
+        "0006 LOAD_ROOT 2 ; \"n\"",
+        "0009 CALL 12 3 ; substring"
+      ],
+      "reads": [
+        "n"
+      ]
+    },
+    {
+      "name": "pad needs one code point",
+      "expr": "padLeft(\"a\", n, \"ab\")",
+      "error": "invalidArgument",
+      "type": "string",
+      "program": "AQADBnN0cmluZwMEAWEEAW4EAmFiAQFuDQQAAAYBAAQCAEkNAAM=",
+      "asm": [
+        "0000 CONST 0 ; \"a\"",
+        "0003 LOAD_ROOT 1 ; \"n\"",
+        "0006 CONST 2 ; \"ab\"",
+        "0009 CALL 13 3 ; padLeft"
+      ],
+      "reads": [
+        "n"
+      ]
+    }
+  ]
+}

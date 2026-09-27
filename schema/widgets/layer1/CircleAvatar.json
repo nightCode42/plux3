@@ -1,0 +1,112 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "CircleAvatar",
+  "id": 51,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "CircleAvatar",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "display",
+  "icon": "account_circle",
+  "description": "A circle showing an image, initials or an icon, typically for a person.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 15,
+  "accessibility": {
+    "role": "image",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "backgroundColor",
+      "id": 1,
+      "type": "color",
+      "flutter": "backgroundColor"
+    },
+    {
+      "name": "backgroundImage",
+      "id": 2,
+      "type": "ImageSource",
+      "flutter": "backgroundImage"
+    },
+    {
+      "name": "foregroundImage",
+      "id": 3,
+      "type": "ImageSource",
+      "flutter": "foregroundImage"
+    },
+    {
+      "name": "foregroundColor",
+      "id": 4,
+      "type": "color",
+      "flutter": "foregroundColor"
+    },
+    {
+      "name": "radius",
+      "id": 5,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "radius"
+    },
+    {
+      "name": "minRadius",
+      "id": 6,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "minRadius"
+    },
+    {
+      "name": "maxRadius",
+      "id": 7,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "maxRadius"
+    }
+  ],
+  "events": [
+    {
+      "name": "onBackgroundImageError",
+      "id": 1,
+      "flutter": "onBackgroundImageError"
+    },
+    {
+      "name": "onForegroundImageError",
+      "id": 2,
+      "flutter": "onForegroundImageError"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    }
+  ]
+}

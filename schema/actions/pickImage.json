@@ -1,0 +1,30 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "pickImage",
+  "id": 42,
+  "phase": "P5",
+  "category": "device",
+  "description": "Lets the user pick images from the photo library.",
+  "inputs": [
+    {
+      "name": "multiple",
+      "id": 1,
+      "type": "bool",
+      "default": false,
+      "description": "Allow picking more than one image."
+    },
+    {
+      "name": "maxDimension",
+      "id": 2,
+      "type": "int?",
+      "description": "Scale images down so neither side exceeds this many pixels."
+    }
+  ],
+  "output": "list<PickedFile>",
+  "branches": [
+    "cancelled"
+  ],
+  "effects": [
+    "device"
+  ]
+}

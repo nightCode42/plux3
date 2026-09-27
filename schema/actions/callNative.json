@@ -1,0 +1,38 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "callNative",
+  "id": 52,
+  "phase": "P4",
+  "category": "host",
+  "description": "Invokes a custom action the host app registered, with typed input and output (ACT-060).",
+  "typeParameters": [
+    {
+      "name": "I",
+      "description": "The input object type the host registered for the native action (ACT-060)."
+    },
+    {
+      "name": "O",
+      "description": "The output type the host registered for the native action (ACT-060)."
+    }
+  ],
+  "inputs": [
+    {
+      "name": "action",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "nativeAction",
+      "description": "The native action."
+    },
+    {
+      "name": "input",
+      "id": 2,
+      "type": "I",
+      "description": "The action input."
+    }
+  ],
+  "output": "O",
+  "effects": [
+    "host"
+  ]
+}

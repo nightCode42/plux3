@@ -1,0 +1,180 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Tooltip",
+  "id": 63,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "Tooltip",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "display",
+  "icon": "info",
+  "description": "Shows a text label when its child is long-pressed or hovered.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 15,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "message",
+      "id": 1,
+      "type": "string",
+      "flutter": "message"
+    },
+    {
+      "name": "richMessage",
+      "id": 2,
+      "type": "TextSpan",
+      "flutter": "richMessage"
+    },
+    {
+      "name": "constraints",
+      "id": 3,
+      "type": "BoxConstraints",
+      "flutter": "constraints"
+    },
+    {
+      "name": "padding",
+      "id": 4,
+      "type": "EdgeInsets",
+      "flutter": "padding"
+    },
+    {
+      "name": "margin",
+      "id": 5,
+      "type": "EdgeInsets",
+      "flutter": "margin"
+    },
+    {
+      "name": "verticalOffset",
+      "id": 6,
+      "type": "double",
+      "flutter": "verticalOffset"
+    },
+    {
+      "name": "preferBelow",
+      "id": 7,
+      "type": "bool",
+      "flutter": "preferBelow"
+    },
+    {
+      "name": "excludeFromSemantics",
+      "id": 8,
+      "type": "bool",
+      "flutter": "excludeFromSemantics"
+    },
+    {
+      "name": "decoration",
+      "id": 9,
+      "type": "BoxDecoration",
+      "flutter": "decoration"
+    },
+    {
+      "name": "textStyle",
+      "id": 10,
+      "type": "TextStyle",
+      "flutter": "textStyle"
+    },
+    {
+      "name": "textAlign",
+      "id": 11,
+      "type": "TextAlign",
+      "flutter": "textAlign"
+    },
+    {
+      "name": "waitDuration",
+      "id": 12,
+      "type": "duration",
+      "flutter": "waitDuration"
+    },
+    {
+      "name": "showDuration",
+      "id": 13,
+      "type": "duration",
+      "flutter": "showDuration"
+    },
+    {
+      "name": "exitDuration",
+      "id": 14,
+      "type": "duration",
+      "flutter": "exitDuration"
+    },
+    {
+      "name": "enableTapToDismiss",
+      "id": 15,
+      "type": "bool",
+      "default": true,
+      "flutter": "enableTapToDismiss"
+    },
+    {
+      "name": "triggerMode",
+      "id": 16,
+      "type": "TooltipTriggerMode",
+      "flutter": "triggerMode"
+    },
+    {
+      "name": "enableFeedback",
+      "id": 17,
+      "type": "bool",
+      "flutter": "enableFeedback"
+    },
+    {
+      "name": "ignorePointer",
+      "id": 18,
+      "type": "bool",
+      "flutter": "ignorePointer"
+    }
+  ],
+  "events": [
+    {
+      "name": "onTriggered",
+      "id": 1,
+      "flutter": "onTriggered"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "height",
+      "reason": "deprecated",
+      "note": "Deprecated in Flutter."
+    },
+    {
+      "flutter": "mouseCursor",
+      "reason": "deferred",
+      "note": "Pointer cursors matter only for desktop and web targets."
+    },
+    {
+      "flutter": "positionDelegate",
+      "reason": "non-serialisable",
+      "note": "A Dart callback."
+    }
+  ]
+}

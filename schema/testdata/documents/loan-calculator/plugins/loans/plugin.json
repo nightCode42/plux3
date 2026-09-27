@@ -1,0 +1,37 @@
+{
+  "capabilities": {
+    "nativeRoutes": [
+      "account-overview"
+    ],
+    "networkDomains": [
+      "api.example.com"
+    ]
+  },
+  "description": "Loan calculator and schedule.",
+  "entryPage": "01a0c450-6c00-7012-8000-000000022cce",
+  "icon": {
+    "$asset": "01a0c450-6c00-700d-8000-000000019223"
+  },
+  "id": "01a0c450-6c00-7011-8000-000000020ddf",
+  "key": "loans",
+  "kind": "plugin",
+  "name": "Loans",
+  "pages": [
+    "01a0c450-6c00-7012-8000-000000022cce",
+    "01a0c450-6c00-7013-8000-000000024bbd"
+  ],
+  "schemaVersion": "1.0.0",
+  "state": [
+    {
+      "default": null,
+      "id": "01a0c450-6c00-7014-8000-000000026aac",
+      "name": "lastSchedule",
+      "persistence": "session",
+      "type": "LoanSchedule?"
+    }
+  ],
+  "tags": [
+    "lending"
+  ],
+  "team": "lending"
+}

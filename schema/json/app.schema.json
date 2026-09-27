@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://plux.dev/schema/v1/app.schema.json",
+  "title": "Plux app document",
+  "description": "An app: its plugins, theme, locales, environments, shared data and policies (SCH-020). File: `app.json`.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "kind",
+    "id",
+    "key",
+    "name",
+    "icon",
+    "defaultLocale",
+    "supportedLocales",
+    "theme",
+    "entryRoute",
+    "plugins",
+    "environments",
+    "securityProfile",
+    "sync",
+    "minRuntimeVersion"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "$ref": "common.schema.json#/$defs/schemaVersion"
+    },
+    "kind": {
+      "const": "app"
+    },
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "key": {
+      "$ref": "common.schema.json#/$defs/key"
+    },
+    "name": {
+      "$ref": "common.schema.json#/$defs/text"
+    },
+    "description": {
+      "$ref": "common.schema.json#/$defs/description"
+    },
+    "icon": {
+      "$ref": "common.schema.json#/$defs/icon"
+    },
+    "defaultLocale": {
+      "$ref": "common.schema.json#/$defs/locale"
+    },
+    "supportedLocales": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/locale"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "theme": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "entryRoute": {
+      "$ref": "common.schema.json#/$defs/routeName"
+    },
+    "plugins": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/key"
+      },
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "Keys of the app's plugins, in display order; each has a directory `plugins/<key>/`."
+    },
+    "environments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "x-plux-type": "Environment",
+        "description": "An environment with values for the declared variables (DAT-003).",
+        "required": [
+          "key",
+          "name"
+        ],
+        "properties": {
+          "key": {
+            "$ref": "common.schema.json#/$defs/key"
+          },
+          "name": {
+            "$ref": "common.schema.json#/$defs/text"
+          },
+          "values": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "common.schema.json#/$defs/name"
+            },
+            "additionalProperties": {
+              "$ref": "common.schema.json#/$defs/value"
+            }
+          }
+        },
+        "patternProperties": {
+          "^x-": true
+        },
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "variables": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/field"
+      },
+      "description": "Non-secret environment variables available in PXL as `env.<name>` (DAT-003)."
+    },
+    "dataSources": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/dataSource"
+      }
+    },
+    "nativeCatalogue": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "securityProfile": {
+      "$ref": "common.schema.json#/$defs/securityProfile"
+    },
+    "sync": {
+      "type": "object",
+      "x-plux-type": "SyncPolicy",
+      "description": "Sync policy (§10.4).",
+      "required": [
+        "startup",
+        "activation"
+      ],
+      "properties": {
+        "startup": {
+          "type": "object",
+          "x-plux-type": "StartupPolicy",
+          "description": "Start-up behaviour (SYN-003).",
+          "required": [
+            "mode"
+          ],
+          "properties": {
+            "mode": {
+              "$ref": "common.schema.json#/$defs/startupMode"
+            },
+            "timeoutMs": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 60000
+            }
+          },
+          "patternProperties": {
+            "^x-": true
+          },
+          "additionalProperties": false
+        },
+        "activation": {
+          "$ref": "common.schema.json#/$defs/activationPolicy"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false
+    },
+    "minRuntimeVersion": {
+      "$ref": "common.schema.json#/$defs/semver"
+    },
+    "requiredFeatures": {
+      "$ref": "common.schema.json#/$defs/requiredFeaturesPolicy"
+    },
+    "flags": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "x-plux-type": "FlagDecl",
+        "description": "A typed feature flag, available in PXL as `flags.<name>` (ABT-006).",
+        "required": [
+          "name",
+          "type",
+          "default"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "common.schema.json#/$defs/name"
+          },
+          "type": {
+            "$ref": "common.schema.json#/$defs/flagType"
+          },
+          "default": {
+            "$ref": "common.schema.json#/$defs/value"
+          },
+          "description": {
+            "$ref": "common.schema.json#/$defs/description"
+          }
+        },
+        "patternProperties": {
+          "^x-": true
+        },
+        "additionalProperties": false
+      }
+    },
+    "types": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/typeDecl"
+      }
+    },
+    "state": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/stateEntry"
+      }
+    },
+    "collections": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/collection"
+      }
+    },
+    "userContext": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/field"
+      },
+      "description": "Attributes the host provides about the signed-in user, available in PXL as `user.<name>`."
+    }
+  },
+  "patternProperties": {
+    "^x-": true
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,99 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "Scrollbar",
+  "id": 45,
+  "layer": 1,
+  "phase": "P3",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "flutter": {
+    "library": "package:flutter/material.dart",
+    "class": "Scrollbar",
+    "constructors": [
+      ""
+    ]
+  },
+  "category": "scrolling",
+  "icon": "drag_handle",
+  "description": "Shows a Material scrollbar for its scrollable child.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 10,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "thumbVisibility",
+      "id": 1,
+      "type": "bool",
+      "flutter": "thumbVisibility"
+    },
+    {
+      "name": "trackVisibility",
+      "id": 2,
+      "type": "bool",
+      "flutter": "trackVisibility"
+    },
+    {
+      "name": "thickness",
+      "id": 3,
+      "type": "double",
+      "constraints": {
+        "min": 0.0
+      },
+      "flutter": "thickness"
+    },
+    {
+      "name": "radius",
+      "id": 4,
+      "type": "Radius",
+      "flutter": "radius"
+    },
+    {
+      "name": "interactive",
+      "id": 5,
+      "type": "bool",
+      "flutter": "interactive"
+    },
+    {
+      "name": "scrollbarOrientation",
+      "id": 6,
+      "type": "ScrollbarOrientation",
+      "flutter": "scrollbarOrientation"
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "required": true,
+      "flutter": "child"
+    }
+  ],
+  "excluded": [
+    {
+      "flutter": "key",
+      "reason": "non-serialisable",
+      "note": "Keys are derived from node identifiers."
+    },
+    {
+      "flutter": "controller",
+      "reason": "controller→state",
+      "note": "The runtime owns the controller and binds it to state."
+    },
+    {
+      "flutter": "notificationPredicate",
+      "reason": "non-serialisable",
+      "note": "A Dart callback."
+    }
+  ]
+}
