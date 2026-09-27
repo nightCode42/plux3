@@ -51,6 +51,8 @@ Every expression is compiled against the roots of its use site (spec Appendix E.
 | `device` | everywhere | `platform`, `osVersion`, `locale`, `textScale`, `darkMode`, `sizeClass`, `assuranceLevel` |
 | `now` | everywhere | `dateTime`, frozen per evaluation |
 
+Where a null check guards an expression, the checked path reads as not null ([pxl.md](pxl.md), narrowing): the compiler passes the condition of an enclosing `If` to its `then` and `else` slots, and the entry edge of a graph step (`onError`, `onSuccess`) to that step.
+
 `form` is not a root before forms land (P5); an expression that reads it fails with `PLX-2003`.
 
 **Bindings.** A prop, action input or override takes a literal or a binding: `$expr` (a PXL expression whose type must be assignable to the prop's; an `int` expression is widened to `double` or `decimal` by recompiling it with a conversion), `$token` (a design token whose W3C `$type` fits the prop: `color` → `color`, `dimension` and `number` → `double`, `fontFamily` → `string`, `fontWeight` → `FontWeight`, `duration` → `duration`, `typography` → `TextStyle`, `shadow` → `BoxShadow`), `$t` (a translation key, optionally with arguments, for `string` props) and `$asset` (an asset UUID). Literals are checked in the forms of [document-model.md §3](document-model.md#3-types-and-values); integers must be within ±(2⁵³−1) to survive every JSON reader.

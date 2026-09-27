@@ -776,6 +776,7 @@ const Map<String, int> minorUnits = {
   'VND': 0,
   'VUV': 0,
   'WST': 2,
+  'XAD': 2,
   'XAF': 0,
   'XCD': 2,
   'XCG': 2,

@@ -298,6 +298,9 @@ func (t *typer) slotScope(n *node, sf *slotFill, s *scope) *scope {
 	if n.widget == nil {
 		return s
 	}
+	if n.widget.Type == "If" {
+		return s.narrow(t.ifGuards(n, sf.name))
+	}
 	slot, ok := n.widget.Slot(sf.name)
 	if !ok || !slot.Template {
 		return s
@@ -490,7 +493,9 @@ func (t *typer) graph(g *graph, s *scope) {
 	steps["PluxSteps"] = objectType(fields)
 	s = s.with("steps", "PluxSteps").withTypes(steps)
 	from := ownerOrGraphID(g)
+	entries := stepEntries(g)
 	compileStep := func(i int, s *scope) {
+		s = s.narrow(entries[i])
 		for _, name := range sortedKeys(g.steps[i].Input) {
 			t.compileAll(g.steps[i].Input[name], s, from, g.file, g.ptr+plxerr.Pointer("steps", strconv.Itoa(i), "input", name))
 		}
@@ -666,7 +671,7 @@ func (t *typer) compile(src string, s *scope, from, file, ptr string) {
 		t.u.internalError("%v", err)
 		return
 	}
-	prog, typ, diags := pxl.Compile(src, env, t.opts, plxerr.Location{File: file, Path: ptr + "/$expr"})
+	prog, typ, diags := pxl.Compile(src, env, s.options(t.opts), plxerr.Location{File: file, Path: ptr + "/$expr"})
 	t.u.diags = append(t.u.diags, diags...)
 	e.prog, e.typ = prog, typ
 	if prog != nil {
@@ -692,4 +697,67 @@ func (t *typer) recordReads(reads []string, s *scope, from, file, ptr string) {
 		}
 		t.u.graph.add(Edge{From: from, Kind: kind, To: id, File: file, Path: ptr})
 	}
+}
+
+// ifGuards returns the paths an If widget's condition proves not null in
+// one of its slots: in then when it is true, in else when it is false.
+func (t *typer) ifGuards(n *node, slot string) []string {
+	var cond struct {
+		Expr string `json:"$expr"`
+	}
+	if json.Unmarshal(n.doc.Props["condition"], &cond) != nil || cond.Expr == "" {
+		return nil
+	}
+	whenTrue, whenFalse := pxl.Guards(cond.Expr, t.opts)
+	switch slot {
+	case "then":
+		return whenTrue
+	case "else":
+		return whenFalse
+	default:
+		return nil
+	}
+}
+
+// stepEntries returns, per step, the step results it can read as not
+// null: a step entered only from X's onError sees steps.X.error, one
+// entered only from X's onSuccess sees steps.X.output (ADR-0009).
+func stepEntries(g *graph) [][]string {
+	type edge struct {
+		from int
+		kind string
+	}
+	index := map[string]int{}
+	for i, st := range g.steps {
+		index[st.ID] = i
+	}
+	in := make([][]edge, len(g.steps))
+	for i, st := range g.steps {
+		add := func(id, kind string) {
+			if j, ok := index[id]; ok {
+				in[j] = append(in[j], edge{i, kind})
+			}
+		}
+		add(st.Next, "")
+		add(st.OnSuccess, "output")
+		add(st.OnError, "error")
+		for _, id := range branchTargets(st) {
+			add(id, "")
+		}
+	}
+	out := make([][]string, len(g.steps))
+	for i, edges := range in {
+		if i == 0 || len(edges) == 0 {
+			continue // the entry step can also be entered by the handler
+		}
+		first := edges[0]
+		same := first.kind != ""
+		for _, e := range edges[1:] {
+			same = same && e == first
+		}
+		if same {
+			out[i] = []string{"steps." + g.steps[first.from].ID + "." + first.kind}
+		}
+	}
+	return out
 }

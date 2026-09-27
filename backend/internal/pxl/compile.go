@@ -22,6 +22,10 @@ type Options struct {
 	MaxLength int64
 	// MaxDepth is the deepest syntax tree.
 	MaxDepth int64
+	// NonNull lists paths, such as "page.result", that a guard around the
+	// expression has checked are not null — the condition of an If widget
+	// for its then slot. They read as their non-null type.
+	NonNull []string
 }
 
 // OptionsFrom reads the options from a resolved set of the registry.
@@ -65,7 +69,8 @@ func compile(src string, env *Env, opts Options, loc plxerr.Location, folding bo
 		d.add(code, serr.span, "%s", serr.msg)
 		return nil, nil, d.out
 	}
-	c := &checker{env: env, features: map[string]bool{}}
+	c := &checker{env: env, features: map[string]bool{}, nonNull: map[string]bool{}}
+	c.assume(opts.NonNull)
 	root := c.check(tree)
 	for _, x := range c.diags {
 		d.add(x.code, x.span, "%s", x.msg)

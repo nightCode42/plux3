@@ -398,6 +398,126 @@
           ]
         }
       ]
+    },
+    {
+      "name": "a null check narrows the true branch",
+      "expr": "page.fee != null ? currency(page.fee) : \"none\"",
+      "value": "EUR",
+      "type": "string",
+      "program": "AQACBnN0cmluZwMEBHBhZ2UEA2ZlZQQEbm9uZQEIcGFnZS5mZWUfBgAACAEAATYNHAAAAAYAAAgBAElAAAEMHwAAAAQCAA==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"page\"",
+        "0003 GET_FIELD 1 ; \"fee\"",
+        "0006 PUSH_NULL",
+        "0007 NE",
+        "0008 JUMP_IF_FALSE 28",
+        "0013 LOAD_ROOT 0 ; \"page\"",
+        "0016 GET_FIELD 1 ; \"fee\"",
+        "0019 CALL 64 1 ; currency",
+        "0023 JUMP 31",
+        "0028 CONST 2 ; \"none\""
+      ],
+      "reads": [
+        "page.fee"
+      ]
+    },
+    {
+      "name": "a null check narrows the false branch",
+      "expr": "name == null ? \"-\" : upper(name)",
+      "value": "-",
+      "type": "string",
+      "program": "AQACBnN0cmluZwIEBG5hbWUEAS0BBG5hbWUZBgAAATUNEgAAAAQBAAwZAAAABgAASQIAAQ==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"name\"",
+        "0003 PUSH_NULL",
+        "0004 EQ",
+        "0005 JUMP_IF_FALSE 18",
+        "0010 CONST 1 ; \"-\"",
+        "0013 JUMP 25",
+        "0018 LOAD_ROOT 0 ; \"name\"",
+        "0021 CALL 2 1 ; upper"
+      ],
+      "reads": [
+        "name"
+      ]
+    },
+    {
+      "name": "and narrows its right side",
+      "expr": "name != null && len(name) > 0",
+      "value": false,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBARuYW1lAgAAAAAAAAAAAQRuYW1lFgYAAAE2DxYAAAAGAABJAQABBAEAN0E=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"name\"",
+        "0003 PUSH_NULL",
+        "0004 NE",
+        "0005 AND_JUMP 22",
+        "0010 LOAD_ROOT 0 ; \"name\"",
+        "0013 CALL 1 1 ; len",
+        "0017 CONST 1 ; 0",
+        "0020 CMP_INT",
+        "0021 GT"
+      ],
+      "reads": [
+        "name"
+      ]
+    },
+    {
+      "name": "or narrows its right side",
+      "expr": "name == null || len(name) > 0",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBARuYW1lAgAAAAAAAAAAAQRuYW1lFgYAAAE1EBYAAAAGAABJAQABBAEAN0E=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"name\"",
+        "0003 PUSH_NULL",
+        "0004 EQ",
+        "0005 OR_JUMP 22",
+        "0010 LOAD_ROOT 0 ; \"name\"",
+        "0013 CALL 1 1 ; len",
+        "0017 CONST 1 ; 0",
+        "0020 CMP_INT",
+        "0021 GT"
+      ],
+      "reads": [
+        "name"
+      ]
+    },
+    {
+      "name": "not swaps the branches",
+      "expr": "!(page.status == null) ? upper(page.status) : \"none\"",
+      "value": "none",
+      "type": "string",
+      "program": "AQACBnN0cmluZwMEBHBhZ2UEBnN0YXR1cwQEbm9uZQELcGFnZS5zdGF0dXMgBgAACAEAATVDDR0AAAAGAAAIAQBJAgABDCAAAAAEAgA=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"page\"",
+        "0003 GET_FIELD 1 ; \"status\"",
+        "0006 PUSH_NULL",
+        "0007 EQ",
+        "0008 NOT",
+        "0009 JUMP_IF_FALSE 29",
+        "0014 LOAD_ROOT 0 ; \"page\"",
+        "0017 GET_FIELD 1 ; \"status\"",
+        "0020 CALL 2 1 ; upper",
+        "0024 JUMP 32",
+        "0029 CONST 2 ; \"none\""
+      ],
+      "reads": [
+        "page.status"
+      ]
+    },
+    {
+      "name": "narrowing ends with its branch",
+      "expr": "(name != null ? 1 : 0) + len(name)",
+      "diagnostics": [
+        {
+          "code": "PLX-2002",
+          "range": [
+            25,
+            34
+          ]
+        }
+      ]
     }
   ]
 }

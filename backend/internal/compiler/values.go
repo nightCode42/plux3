@@ -188,7 +188,7 @@ func (u *unit) exprValue(c vctx, t *texpr) *value {
 		return &value{kind: fbs.ValueKindExpr, prog: e.prog}
 	}
 	if conv := widening(e.typ, want); conv != "" {
-		prog, typ, diags := pxl.Compile(conv+"("+e.src+")", env, pxl.OptionsFrom(u.opts.Limits), plxerr.Location{File: c.file, Path: c.ptr + "/$expr"})
+		prog, typ, diags := pxl.Compile(conv+"("+e.src+")", env, e.scope.options(pxl.OptionsFrom(u.opts.Limits)), plxerr.Location{File: c.file, Path: c.ptr + "/$expr"})
 		if prog != nil && pxl.Assignable(typ, want) {
 			return &value{kind: fbs.ValueKindExpr, prog: prog}
 		}

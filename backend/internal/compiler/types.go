@@ -170,6 +170,9 @@ type scope struct {
 	ids map[string]map[string]string
 	// sources are the data sources visible as data.<name>.
 	sources []sourceField
+	// nonNull lists the paths an enclosing If checked are not null
+	// (ADR-0009 narrowing).
+	nonNull []string
 	// envKey caches key: a scope is complete before any expression is
 	// compiled in it and never changes afterwards.
 	envKey string
@@ -177,7 +180,7 @@ type scope struct {
 
 // with returns a copy of s with one more root.
 func (s *scope) with(root, typ string) *scope {
-	c := &scope{plugin: s.plugin, roots: map[string]string{}, synth: s.synth, ids: s.ids, sources: s.sources}
+	c := &scope{plugin: s.plugin, roots: map[string]string{}, synth: s.synth, ids: s.ids, sources: s.sources, nonNull: s.nonNull}
 	for k, v := range s.roots {
 		c.roots[k] = v
 	}
@@ -187,7 +190,7 @@ func (s *scope) with(root, typ string) *scope {
 
 // withTypes returns a copy of s with more declared types.
 func (s *scope) withTypes(types map[string]pxl.TypeSpec) *scope {
-	c := &scope{plugin: s.plugin, roots: s.roots, synth: map[string]pxl.TypeSpec{}, ids: s.ids, sources: s.sources}
+	c := &scope{plugin: s.plugin, roots: s.roots, synth: map[string]pxl.TypeSpec{}, ids: s.ids, sources: s.sources, nonNull: s.nonNull}
 	for k, v := range s.synth {
 		c.synth[k] = v
 	}
@@ -195,6 +198,23 @@ func (s *scope) withTypes(types map[string]pxl.TypeSpec) *scope {
 		c.synth[k] = v
 	}
 	return c
+}
+
+// narrow returns a copy of s in which paths are known not to be null.
+// The environment is the same: narrowing is an option of each compile.
+func (s *scope) narrow(paths []string) *scope {
+	if len(paths) == 0 {
+		return s
+	}
+	c := *s
+	c.nonNull = append(slices.Clone(s.nonNull), paths...)
+	return &c
+}
+
+// options returns the PXL options of an expression compiled in s.
+func (s *scope) options(base pxl.Options) pxl.Options {
+	base.NonNull = s.nonNull
+	return base
 }
 
 // key identifies the environment a scope needs.

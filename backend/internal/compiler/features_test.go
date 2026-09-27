@@ -388,3 +388,76 @@ func TestInterningDeduplicationAndDefaults(t *testing.T) {
 		t.Errorf("%d styles, want %d and the one shared EdgeInsets", got, base)
 	}
 }
+
+// Verifies: PXL-002.
+// Inside an If whose condition checks a path is not null, the then slot
+// reads it as not null, and the else slot does when the check is == null;
+// outside the If it stays nullable.
+func TestIfNarrowsItsSlots(t *testing.T) {
+	t.Parallel()
+	const ifNode = column + "/children/6"
+	for _, tc := range []struct {
+		name, cond, slot, expr string
+		code                   plxerr.Code
+	}{
+		{"then", "plugin.lastSchedule != null", "then", "string(plugin.lastSchedule.monthlyPayment)", 0},
+		{"else", "plugin.lastSchedule == null", "else", "string(plugin.lastSchedule.monthlyPayment)", 0},
+		{"wrong slot", "plugin.lastSchedule == null", "then", "string(plugin.lastSchedule.monthlyPayment)", plxerr.PXLNullableAccess},
+		{"other condition", "page.months > 3", "then", "string(plugin.lastSchedule.monthlyPayment)", plxerr.PXLNullableAccess},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			m := fixture(t)
+			edit(t, m, calculatorPage, func(doc map[string]any) {
+				col := at(t, doc, column)
+				col["children"] = append(col["children"].([]any), map[string]any{
+					"id": "01a0c450-6c00-7fff-8000-000000000201", "type": "If",
+					"props": map[string]any{"condition": map[string]any{"$expr": tc.cond}},
+					"slots": map[string]any{
+						"then": map[string]any{"id": "01a0c450-6c00-7fff-8000-000000000203", "type": "Text", "props": map[string]any{"data": "-"}},
+						tc.slot: map[string]any{
+							"id": "01a0c450-6c00-7fff-8000-000000000202", "type": "Text",
+							"props": map[string]any{"data": map[string]any{"$expr": tc.expr}},
+						},
+					},
+				})
+			})
+			res := compileFS(m)
+			if tc.code == 0 {
+				if len(res.Diagnostics) > 0 {
+					t.Fatalf("diagnostics:\n%s", list(res.Diagnostics))
+				}
+				return
+			}
+			wantDiag(t, res, tc.code, calculatorPage, "/"+ifNode+"/slots/"+tc.slot)
+		})
+	}
+}
+
+// Verifies: PXL-002.
+// A step entered only from a step's onError reads its error as not null.
+func TestOnErrorNarrowsTheError(t *testing.T) {
+	t.Parallel()
+	for _, onError := range []bool{true, false} {
+		m := fixture(t)
+		edit(t, m, calculateGraph, func(doc map[string]any) {
+			steps := doc["steps"].([]any)
+			st := at(t, doc, "steps/1")
+			if onError {
+				at(t, doc, "steps/0")["onError"] = "report"
+			} else {
+				st["next"] = "report"
+			}
+			doc["steps"] = append(steps, raw(t, `{"id": "report", "action": "showSnackbar",
+				"input": {"message": {"$expr": "steps.store.error.message"}}}`))
+		})
+		res := compileFS(m)
+		nullable := false
+		for _, d := range res.Diagnostics {
+			nullable = nullable || d.Code == plxerr.PXLNullableAccess
+		}
+		if nullable == onError {
+			t.Errorf("onError %v: diagnostics:\n%s", onError, list(res.Diagnostics))
+		}
+	}
+}

@@ -41,6 +41,7 @@ The grammar of spec Appendix E.1, plus:
 The value types of `SCH-010` — `string`, `int`, `double`, `bool`, `decimal`, `money`, `date`, `dateTime`, `duration`, `color`, enums, `list<T>`, `map<string,T>`, named object types — each optionally nullable (`T?`). There is no dynamic type.
 
 - Member access on a nullable value is a compile error; `?.` propagates `null` and `??` removes it.
+- **Narrowing** (added 2026-09-27, maintainer decision): A path (a root or a chain of field accesses, such as `page.result`) that a null check proves present reads as its non-null type: in the true branch of `p != null ? … : …` and the false branch of `p == null ? … : …`, on the right of `p != null && …` and `p == null || …`, through `!`, and, set by the compiler, in the `then` slot of an `If` widget whose condition checks `p != null` (the `else` slot for `p == null`) and in a graph step entered only from step X's `onError` (`steps.X.error`) or `onSuccess` (`steps.X.output`). Checking `a.b` narrows `a` too. The narrowed path compiles to the same bytecode, so runtimes need no change; a runtime rebuilds an `If`'s slots only after re-evaluating its condition.
 - `int` widens implicitly to `double` and to `decimal`; `decimal` and `double` never convert implicitly (`double(d)`, `decimal(x)`). Collections never convert: a `list<int>` is not a `list<double>`.
 - An enum compares with a string literal naming one of its members; the checker rejects any other string.
 - `now` is frozen for the whole evaluation.

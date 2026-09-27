@@ -75,6 +75,9 @@ type checker struct {
 	next     int // next free local slot
 	locals   int // number of local slots used
 	features map[string]bool
+	// nonNull holds the paths a guard has checked are not null where the
+	// expression being checked runs (narrowing, ADR-0009).
+	nonNull map[string]bool
 }
 
 // maxLocals is the number of local slots an operand byte addresses.
@@ -87,6 +90,19 @@ func (c *checker) errorf(code plxerr.Code, span Span, format string, args ...any
 
 // check types n; it returns nil after recording a diagnostic.
 func (c *checker) check(n *node) *ir {
+	x := c.checkNode(n)
+	if x != nil && x.typ.nullable && (n.kind == nIdent || n.kind == nField || n.kind == nSafe) {
+		if p, ok := syntaxPath(n); ok && c.nonNull[p] {
+			narrowed := *x
+			narrowed.typ = x.typ.nonNull()
+			return &narrowed
+		}
+	}
+	return x
+}
+
+// checkNode types n by its kind.
+func (c *checker) checkNode(n *node) *ir {
 	switch n.kind {
 	case nLiteral:
 		return c.literal(n)
@@ -219,7 +235,16 @@ var arithmetic = map[string]map[[2]Kind]struct {
 
 // binary types the binary operators.
 func (c *checker) binary(n *node) *ir {
-	a, b := c.check(n.a), c.check(n.b)
+	a := c.check(n.a)
+	var b *ir
+	switch whenTrue, whenFalse := facts(n.a); n.op {
+	case "&&":
+		b = c.assuming(whenTrue, n.b)
+	case "||":
+		b = c.assuming(whenFalse, n.b)
+	default:
+		b = c.check(n.b)
+	}
 	if a == nil || b == nil {
 		return nil
 	}
@@ -391,7 +416,8 @@ func (c *checker) in(n *node, a, b *ir) *ir {
 
 // cond types c ? a : b.
 func (c *checker) cond(n *node) *ir {
-	cnd, a, b := c.check(n.a), c.check(n.b), c.check(n.c)
+	whenTrue, whenFalse := facts(n.a)
+	cnd, a, b := c.check(n.a), c.assuming(whenTrue, n.b), c.assuming(whenFalse, n.c)
 	if cnd == nil || a == nil || b == nil {
 		return nil
 	}
@@ -578,4 +604,100 @@ func (c *checker) inScope(name string) bool {
 		}
 	}
 	return false
+}
+
+// syntaxPath returns the path an identifier or a chain of field accesses
+// names, such as "page.result.amount".
+func syntaxPath(n *node) (string, bool) {
+	switch n.kind {
+	case nIdent:
+		return n.op, true
+	case nField, nSafe:
+		p, ok := syntaxPath(n.a)
+		return p + "." + n.op, ok
+	default:
+		return "", false
+	}
+}
+
+// isNull reports whether n is the literal null.
+func isNull(n *node) bool { return n.kind == nLiteral && n.tok.text == "null" }
+
+// facts returns the paths that are not null when the condition n is true,
+// and when it is false: p != null, p == null, and their combinations with
+// !, && and ||.
+func facts(n *node) (whenTrue, whenFalse []string) {
+	switch {
+	case n.kind == nBinary && (n.op == "!=" || n.op == "=="):
+		p, ok := syntaxPath(n.a)
+		if !ok || !isNull(n.b) {
+			p, ok = syntaxPath(n.b)
+			ok = ok && isNull(n.a)
+		}
+		if !ok {
+			return nil, nil
+		}
+		if n.op == "!=" {
+			return []string{p}, nil
+		}
+		return nil, []string{p}
+	case n.kind == nBinary && n.op == "&&":
+		a, _ := facts(n.a)
+		b, _ := facts(n.b)
+		return append(a, b...), nil
+	case n.kind == nBinary && n.op == "||":
+		_, a := facts(n.a)
+		_, b := facts(n.b)
+		return nil, append(a, b...)
+	case n.kind == nUnary && n.op == "!":
+		t, f := facts(n.a)
+		return f, t
+	default:
+		return nil, nil
+	}
+}
+
+// Guards returns the paths that are not null when the expression src is
+// true and when it is false; the compiler narrows the slots of an If
+// widget with them. A malformed expression has none.
+func Guards(src string, opts Options) (whenTrue, whenFalse []string) {
+	if int64(len(src)) > opts.MaxLength*4 {
+		return nil, nil
+	}
+	tree, err := parse(src, int(opts.MaxDepth))
+	if err != nil {
+		return nil, nil
+	}
+	return facts(tree)
+}
+
+// assume records paths as not null, with every prefix: when a.b is not
+// null, neither is a. It returns the paths it added.
+func (c *checker) assume(paths []string) []string {
+	var added []string
+	for _, p := range paths {
+		for {
+			if !c.nonNull[p] {
+				c.nonNull[p] = true
+				added = append(added, p)
+			}
+			i := strings.LastIndexByte(p, '.')
+			if i < 0 {
+				break
+			}
+			p = p[:i]
+		}
+	}
+	return added
+}
+
+// assuming checks n with paths known not to be null.
+func (c *checker) assuming(paths []string, n *node) *ir {
+	added := c.assume(paths)
+	defer func() {
+		for _, p := range added {
+			delete(c.nonNull, p)
+		}
+	}()
+	return c.check(n)
 }

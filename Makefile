@@ -72,7 +72,7 @@ GO_BUILD_FLAGS  := -trimpath -buildvcs=false -ldflags "-s -w -buildid= \
 .PHONY: help setup hooks-install check test build gen gen-check clean \
 	install-go-tools install-golangci-lint install-govulncheck install-gitleaks install-actionlint install-python-tools install-flatc \
 	go-check go-fmt go-fmt-check go-lint go-tidy go-tidy-check go-gen-check registry-lock-check go-test go-test-race go-cover \
-	go-determinism go-budgets go-fuzz go-vuln go-build go-reproducible \
+	go-determinism go-budgets go-fuzz currencies-check go-vuln go-build go-reproducible \
 	dart-check dart-get dart-lock-check dart-fmt dart-fmt-check dart-analyze dart-test dart-cover widgets-api widgets-api-check \
 	studio-check studio-install studio-fmt studio-lint studio-typecheck studio-test studio-cover \
 	release-notes repo-check spec-lint trace secrets workflows-lint reuse-lint hygiene
@@ -213,6 +213,10 @@ go-fuzz: ## Run every Go fuzz target for FUZZTIME each (QA-004, CMP-052)
 			echo "── $$pkg $$target"; \
 			$(GO) test -run '^$$' -fuzz "^$$target$$" -fuzztime $(FUZZTIME) $$pkg; \
 		done; done); done
+
+currencies-check: ## Compare schema/pxl/currencies.json with ISO 4217 list one from SIX: ISO4217_XML=<list-one.xml>
+	@test -n "$(ISO4217_XML)" || { echo "✗ set ISO4217_XML to list-one.xml from https://www.six-group.com/en/products-services/financial-information/data-standards.html" >&2; exit 2; }
+	cd tools && $(GO) run ./cmd/currencycheck "$(abspath $(ISO4217_XML))" ../schema/pxl/currencies.json
 
 go-vuln: ## Scan Go dependencies for known vulnerabilities
 	@for m in $(GO_MODULES); do (cd $$m && "$(GOVULNCHECK)" ./...); done

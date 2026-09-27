@@ -2,6 +2,7 @@
 
 Hand-off notes moved out of [WORKLOG.md](WORKLOG.md), newest first. Notes are moved unchanged, never edited. Current state lives in the work log, not here.
 
+- 2026-09-26 — **P1 M1: decisions.** ADR-0002 (bundle container and sections), ADR-0009 (PXL), ADR-0010 (layered widgets and descriptors), ADR-0018 (error model), ADR-0025 (schema toolchain) accepted; dependency allowlist extended; spec 1.1.2 clarifications. Verified: `make spec-lint`, link and REUSE checks.
 - 2026-09-26 — **Context-loss hardening.** SessionStart hook (`scripts/session-start.sh`) installs pinned toolchains in web sessions; work-log rotation to `worklog-archive.md`; `tools/AGENTS.md`; handbook links the spec glossary; issue templates ask for requirement IDs, phase and acceptance criteria.
 - 2026-09-26 — **P0 foundations built.**
   - Monorepo: Go modules `backend` (`plux`, `plux-server`, `internal/buildinfo`) and `tools` joined by `go.work`; Dart pub workspace with `plux_flutter`; Bun workspace `studio` with `@plux/brand`; placeholder directories with phase READMEs for `apps`, `schema`, `proto`, `deploy`, `test`, `ee`, `docs/*`.
