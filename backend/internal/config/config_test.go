@@ -134,7 +134,7 @@ func TestValidateReportsEveryProblem(t *testing.T) {
 		{"no audit retention", minimal + "retention:\n  auditYears: 0\n", "retention.auditYears"},
 		{"bad duration", withServer("  shutdownGrace: soon\n"), "invalid duration"},
 		{"negative duration", withServer("  shutdownGrace: -1s\n"), "must not be negative"},
-		{"bad size", withServer("  maxRequestSize: \"8 potatoes\"\n"), "invalid size"},
+		{"bad trusted proxy", withServer("  trustedProxies: [\"10.0.0.0/8\", \"proxy\"]\n"), "trustedProxies[1]"},
 	})
 }
 

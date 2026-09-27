@@ -77,6 +77,12 @@ const (
 	// AppServiceDeleteChannelProcedure is the fully-qualified name of the AppService's DeleteChannel
 	// RPC.
 	AppServiceDeleteChannelProcedure = "/plux.v1.AppService/DeleteChannel"
+	// AppServiceGrantAccessProcedure is the fully-qualified name of the AppService's GrantAccess RPC.
+	AppServiceGrantAccessProcedure = "/plux.v1.AppService/GrantAccess"
+	// AppServiceRevokeAccessProcedure is the fully-qualified name of the AppService's RevokeAccess RPC.
+	AppServiceRevokeAccessProcedure = "/plux.v1.AppService/RevokeAccess"
+	// AppServiceListAccessProcedure is the fully-qualified name of the AppService's ListAccess RPC.
+	AppServiceListAccessProcedure = "/plux.v1.AppService/ListAccess"
 	// AppServiceListTrashProcedure is the fully-qualified name of the AppService's ListTrash RPC.
 	AppServiceListTrashProcedure = "/plux.v1.AppService/ListTrash"
 	// AppServiceRestoreFromTrashProcedure is the fully-qualified name of the AppService's
@@ -113,6 +119,11 @@ type AppServiceClient interface {
 	CreateChannel(context.Context, *connect.Request[pluxv1.CreateChannelRequest]) (*connect.Response[pluxv1.CreateChannelResponse], error)
 	ListChannels(context.Context, *connect.Request[pluxv1.ListChannelsRequest]) (*connect.Response[pluxv1.ListChannelsResponse], error)
 	DeleteChannel(context.Context, *connect.Request[pluxv1.DeleteChannelRequest]) (*connect.Response[pluxv1.DeleteChannelResponse], error)
+	// GrantAccess gives a team or a user a role on one app (GOV-001).
+	// Organisation-wide roles apply to every app already.
+	GrantAccess(context.Context, *connect.Request[pluxv1.GrantAccessRequest]) (*connect.Response[pluxv1.GrantAccessResponse], error)
+	RevokeAccess(context.Context, *connect.Request[pluxv1.RevokeAccessRequest]) (*connect.Response[pluxv1.RevokeAccessResponse], error)
+	ListAccess(context.Context, *connect.Request[pluxv1.ListAccessRequest]) (*connect.Response[pluxv1.ListAccessResponse], error)
 	ListTrash(context.Context, *connect.Request[pluxv1.ListTrashRequest]) (*connect.Response[pluxv1.ListTrashResponse], error)
 	RestoreFromTrash(context.Context, *connect.Request[pluxv1.RestoreFromTrashRequest]) (*connect.Response[pluxv1.RestoreFromTrashResponse], error)
 	PurgeFromTrash(context.Context, *connect.Request[pluxv1.PurgeFromTrashRequest]) (*connect.Response[pluxv1.PurgeFromTrashResponse], error)
@@ -233,6 +244,24 @@ func NewAppServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...
 			connect.WithSchema(appServiceMethods.ByName("DeleteChannel")),
 			connect.WithClientOptions(opts...),
 		),
+		grantAccess: connect.NewClient[pluxv1.GrantAccessRequest, pluxv1.GrantAccessResponse](
+			httpClient,
+			baseURL+AppServiceGrantAccessProcedure,
+			connect.WithSchema(appServiceMethods.ByName("GrantAccess")),
+			connect.WithClientOptions(opts...),
+		),
+		revokeAccess: connect.NewClient[pluxv1.RevokeAccessRequest, pluxv1.RevokeAccessResponse](
+			httpClient,
+			baseURL+AppServiceRevokeAccessProcedure,
+			connect.WithSchema(appServiceMethods.ByName("RevokeAccess")),
+			connect.WithClientOptions(opts...),
+		),
+		listAccess: connect.NewClient[pluxv1.ListAccessRequest, pluxv1.ListAccessResponse](
+			httpClient,
+			baseURL+AppServiceListAccessProcedure,
+			connect.WithSchema(appServiceMethods.ByName("ListAccess")),
+			connect.WithClientOptions(opts...),
+		),
 		listTrash: connect.NewClient[pluxv1.ListTrashRequest, pluxv1.ListTrashResponse](
 			httpClient,
 			baseURL+AppServiceListTrashProcedure,
@@ -285,6 +314,9 @@ type appServiceClient struct {
 	createChannel     *connect.Client[pluxv1.CreateChannelRequest, pluxv1.CreateChannelResponse]
 	listChannels      *connect.Client[pluxv1.ListChannelsRequest, pluxv1.ListChannelsResponse]
 	deleteChannel     *connect.Client[pluxv1.DeleteChannelRequest, pluxv1.DeleteChannelResponse]
+	grantAccess       *connect.Client[pluxv1.GrantAccessRequest, pluxv1.GrantAccessResponse]
+	revokeAccess      *connect.Client[pluxv1.RevokeAccessRequest, pluxv1.RevokeAccessResponse]
+	listAccess        *connect.Client[pluxv1.ListAccessRequest, pluxv1.ListAccessResponse]
 	listTrash         *connect.Client[pluxv1.ListTrashRequest, pluxv1.ListTrashResponse]
 	restoreFromTrash  *connect.Client[pluxv1.RestoreFromTrashRequest, pluxv1.RestoreFromTrashResponse]
 	purgeFromTrash    *connect.Client[pluxv1.PurgeFromTrashRequest, pluxv1.PurgeFromTrashResponse]
@@ -377,6 +409,21 @@ func (c *appServiceClient) DeleteChannel(ctx context.Context, req *connect.Reque
 	return c.deleteChannel.CallUnary(ctx, req)
 }
 
+// GrantAccess calls plux.v1.AppService.GrantAccess.
+func (c *appServiceClient) GrantAccess(ctx context.Context, req *connect.Request[pluxv1.GrantAccessRequest]) (*connect.Response[pluxv1.GrantAccessResponse], error) {
+	return c.grantAccess.CallUnary(ctx, req)
+}
+
+// RevokeAccess calls plux.v1.AppService.RevokeAccess.
+func (c *appServiceClient) RevokeAccess(ctx context.Context, req *connect.Request[pluxv1.RevokeAccessRequest]) (*connect.Response[pluxv1.RevokeAccessResponse], error) {
+	return c.revokeAccess.CallUnary(ctx, req)
+}
+
+// ListAccess calls plux.v1.AppService.ListAccess.
+func (c *appServiceClient) ListAccess(ctx context.Context, req *connect.Request[pluxv1.ListAccessRequest]) (*connect.Response[pluxv1.ListAccessResponse], error) {
+	return c.listAccess.CallUnary(ctx, req)
+}
+
 // ListTrash calls plux.v1.AppService.ListTrash.
 func (c *appServiceClient) ListTrash(ctx context.Context, req *connect.Request[pluxv1.ListTrashRequest]) (*connect.Response[pluxv1.ListTrashResponse], error) {
 	return c.listTrash.CallUnary(ctx, req)
@@ -423,6 +470,11 @@ type AppServiceHandler interface {
 	CreateChannel(context.Context, *connect.Request[pluxv1.CreateChannelRequest]) (*connect.Response[pluxv1.CreateChannelResponse], error)
 	ListChannels(context.Context, *connect.Request[pluxv1.ListChannelsRequest]) (*connect.Response[pluxv1.ListChannelsResponse], error)
 	DeleteChannel(context.Context, *connect.Request[pluxv1.DeleteChannelRequest]) (*connect.Response[pluxv1.DeleteChannelResponse], error)
+	// GrantAccess gives a team or a user a role on one app (GOV-001).
+	// Organisation-wide roles apply to every app already.
+	GrantAccess(context.Context, *connect.Request[pluxv1.GrantAccessRequest]) (*connect.Response[pluxv1.GrantAccessResponse], error)
+	RevokeAccess(context.Context, *connect.Request[pluxv1.RevokeAccessRequest]) (*connect.Response[pluxv1.RevokeAccessResponse], error)
+	ListAccess(context.Context, *connect.Request[pluxv1.ListAccessRequest]) (*connect.Response[pluxv1.ListAccessResponse], error)
 	ListTrash(context.Context, *connect.Request[pluxv1.ListTrashRequest]) (*connect.Response[pluxv1.ListTrashResponse], error)
 	RestoreFromTrash(context.Context, *connect.Request[pluxv1.RestoreFromTrashRequest]) (*connect.Response[pluxv1.RestoreFromTrashResponse], error)
 	PurgeFromTrash(context.Context, *connect.Request[pluxv1.PurgeFromTrashRequest]) (*connect.Response[pluxv1.PurgeFromTrashResponse], error)
@@ -539,6 +591,24 @@ func NewAppServiceHandler(svc AppServiceHandler, opts ...connect.HandlerOption) 
 		connect.WithSchema(appServiceMethods.ByName("DeleteChannel")),
 		connect.WithHandlerOptions(opts...),
 	)
+	appServiceGrantAccessHandler := connect.NewUnaryHandler(
+		AppServiceGrantAccessProcedure,
+		svc.GrantAccess,
+		connect.WithSchema(appServiceMethods.ByName("GrantAccess")),
+		connect.WithHandlerOptions(opts...),
+	)
+	appServiceRevokeAccessHandler := connect.NewUnaryHandler(
+		AppServiceRevokeAccessProcedure,
+		svc.RevokeAccess,
+		connect.WithSchema(appServiceMethods.ByName("RevokeAccess")),
+		connect.WithHandlerOptions(opts...),
+	)
+	appServiceListAccessHandler := connect.NewUnaryHandler(
+		AppServiceListAccessProcedure,
+		svc.ListAccess,
+		connect.WithSchema(appServiceMethods.ByName("ListAccess")),
+		connect.WithHandlerOptions(opts...),
+	)
 	appServiceListTrashHandler := connect.NewUnaryHandler(
 		AppServiceListTrashProcedure,
 		svc.ListTrash,
@@ -605,6 +675,12 @@ func NewAppServiceHandler(svc AppServiceHandler, opts ...connect.HandlerOption) 
 			appServiceListChannelsHandler.ServeHTTP(w, r)
 		case AppServiceDeleteChannelProcedure:
 			appServiceDeleteChannelHandler.ServeHTTP(w, r)
+		case AppServiceGrantAccessProcedure:
+			appServiceGrantAccessHandler.ServeHTTP(w, r)
+		case AppServiceRevokeAccessProcedure:
+			appServiceRevokeAccessHandler.ServeHTTP(w, r)
+		case AppServiceListAccessProcedure:
+			appServiceListAccessHandler.ServeHTTP(w, r)
 		case AppServiceListTrashProcedure:
 			appServiceListTrashHandler.ServeHTTP(w, r)
 		case AppServiceRestoreFromTrashProcedure:
@@ -690,6 +766,18 @@ func (UnimplementedAppServiceHandler) ListChannels(context.Context, *connect.Req
 
 func (UnimplementedAppServiceHandler) DeleteChannel(context.Context, *connect.Request[pluxv1.DeleteChannelRequest]) (*connect.Response[pluxv1.DeleteChannelResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.AppService.DeleteChannel is not implemented"))
+}
+
+func (UnimplementedAppServiceHandler) GrantAccess(context.Context, *connect.Request[pluxv1.GrantAccessRequest]) (*connect.Response[pluxv1.GrantAccessResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.AppService.GrantAccess is not implemented"))
+}
+
+func (UnimplementedAppServiceHandler) RevokeAccess(context.Context, *connect.Request[pluxv1.RevokeAccessRequest]) (*connect.Response[pluxv1.RevokeAccessResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.AppService.RevokeAccess is not implemented"))
+}
+
+func (UnimplementedAppServiceHandler) ListAccess(context.Context, *connect.Request[pluxv1.ListAccessRequest]) (*connect.Response[pluxv1.ListAccessResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.AppService.ListAccess is not implemented"))
 }
 
 func (UnimplementedAppServiceHandler) ListTrash(context.Context, *connect.Request[pluxv1.ListTrashRequest]) (*connect.Response[pluxv1.ListTrashResponse], error) {

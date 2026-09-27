@@ -235,8 +235,11 @@ func (x *RegisterDeviceRequest) GetHostBuild() string {
 }
 
 type RegisterDeviceResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Device        *Device                `protobuf:"bytes,1,opt,name=device,proto3" json:"device,omitempty"`
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Device *Device                `protobuf:"bytes,1,opt,name=device,proto3" json:"device,omitempty"`
+	// device_secret is the device's credential for IssueDeviceToken. It is
+	// returned exactly once and stored only as a hash.
+	DeviceSecret  string `protobuf:"bytes,2,opt,name=device_secret,json=deviceSecret,proto3" json:"device_secret,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -276,6 +279,13 @@ func (x *RegisterDeviceResponse) GetDevice() *Device {
 		return x.Device
 	}
 	return nil
+}
+
+func (x *RegisterDeviceResponse) GetDeviceSecret() string {
+	if x != nil {
+		return x.DeviceSecret
+	}
+	return ""
 }
 
 type GetDeviceRequest struct {
@@ -595,9 +605,10 @@ const file_plux_v1_device_proto_rawDesc = "" +
 	"os_version\x18\x04 \x01(\tR\tosVersion\x12'\n" +
 	"\x0fruntime_version\x18\x05 \x01(\tR\x0eruntimeVersion\x12\x1d\n" +
 	"\n" +
-	"host_build\x18\x06 \x01(\tR\thostBuild\"A\n" +
+	"host_build\x18\x06 \x01(\tR\thostBuild\"f\n" +
 	"\x16RegisterDeviceResponse\x12'\n" +
-	"\x06device\x18\x01 \x01(\v2\x0f.plux.v1.DeviceR\x06device\"\"\n" +
+	"\x06device\x18\x01 \x01(\v2\x0f.plux.v1.DeviceR\x06device\x12#\n" +
+	"\rdevice_secret\x18\x02 \x01(\tR\fdeviceSecret\"\"\n" +
 	"\x10GetDeviceRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"<\n" +
 	"\x11GetDeviceResponse\x12'\n" +

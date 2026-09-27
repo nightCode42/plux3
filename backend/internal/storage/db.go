@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -109,7 +110,9 @@ func (db *DB) InTx(ctx context.Context, t Tenant, f func(context.Context, pgx.Tx
 	committed := false
 	defer func() {
 		if !committed {
-			_ = tx.Rollback(ctx)
+			// A cancelled request must still roll back, so the rollback
+			// does not inherit the cancellation.
+			_ = tx.Rollback(context.WithoutCancel(ctx))
 		}
 	}()
 	if _, err := tx.Exec(ctx, `SELECT set_config('plux.organization_id', $1, true)`, t.OrganizationID); err != nil {
@@ -137,7 +140,7 @@ type sanitised struct{ err error }
 // Error returns the message with anything after a "://" removed.
 func (s sanitised) Error() string {
 	msg := s.err.Error()
-	if i := indexOf(msg, "://"); i >= 0 {
+	if i := strings.Index(msg, "://"); i >= 0 {
 		return msg[:i] + "://[redacted]"
 	}
 	return msg
@@ -145,14 +148,3 @@ func (s sanitised) Error() string {
 
 // Unwrap keeps errors.Is and errors.As working.
 func (s sanitised) Unwrap() error { return s.err }
-
-// indexOf is strings.Index, kept local so that this file has no import
-// that could tempt a caller to format the URL back in.
-func indexOf(s, sub string) int {
-	for i := 0; i+len(sub) <= len(s); i++ {
-		if s[i:i+len(sub)] == sub {
-			return i
-		}
-	}
-	return -1
-}

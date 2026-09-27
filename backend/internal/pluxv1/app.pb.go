@@ -2489,6 +2489,372 @@ func (x *SetAppLimitResponse) GetLimit() *LimitUsage {
 	return nil
 }
 
+// AccessGrant is a role on one app held by a team or a user (GOV-001).
+type AccessGrant struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	AppId string                 `protobuf:"bytes,2,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
+	// Exactly one of team_id and user_id is set.
+	TeamId        string                 `protobuf:"bytes,3,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Role          string                 `protobuf:"bytes,5,opt,name=role,proto3" json:"role,omitempty"`
+	GrantedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=granted_at,json=grantedAt,proto3" json:"granted_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AccessGrant) Reset() {
+	*x = AccessGrant{}
+	mi := &file_plux_v1_app_proto_msgTypes[49]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AccessGrant) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AccessGrant) ProtoMessage() {}
+
+func (x *AccessGrant) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_app_proto_msgTypes[49]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AccessGrant.ProtoReflect.Descriptor instead.
+func (*AccessGrant) Descriptor() ([]byte, []int) {
+	return file_plux_v1_app_proto_rawDescGZIP(), []int{49}
+}
+
+func (x *AccessGrant) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *AccessGrant) GetAppId() string {
+	if x != nil {
+		return x.AppId
+	}
+	return ""
+}
+
+func (x *AccessGrant) GetTeamId() string {
+	if x != nil {
+		return x.TeamId
+	}
+	return ""
+}
+
+func (x *AccessGrant) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *AccessGrant) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
+func (x *AccessGrant) GetGrantedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.GrantedAt
+	}
+	return nil
+}
+
+type GrantAccessRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AppId         string                 `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
+	TeamId        string                 `protobuf:"bytes,2,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Role          string                 `protobuf:"bytes,4,opt,name=role,proto3" json:"role,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GrantAccessRequest) Reset() {
+	*x = GrantAccessRequest{}
+	mi := &file_plux_v1_app_proto_msgTypes[50]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GrantAccessRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GrantAccessRequest) ProtoMessage() {}
+
+func (x *GrantAccessRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_app_proto_msgTypes[50]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GrantAccessRequest.ProtoReflect.Descriptor instead.
+func (*GrantAccessRequest) Descriptor() ([]byte, []int) {
+	return file_plux_v1_app_proto_rawDescGZIP(), []int{50}
+}
+
+func (x *GrantAccessRequest) GetAppId() string {
+	if x != nil {
+		return x.AppId
+	}
+	return ""
+}
+
+func (x *GrantAccessRequest) GetTeamId() string {
+	if x != nil {
+		return x.TeamId
+	}
+	return ""
+}
+
+func (x *GrantAccessRequest) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+func (x *GrantAccessRequest) GetRole() string {
+	if x != nil {
+		return x.Role
+	}
+	return ""
+}
+
+type GrantAccessResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Grant         *AccessGrant           `protobuf:"bytes,1,opt,name=grant,proto3" json:"grant,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GrantAccessResponse) Reset() {
+	*x = GrantAccessResponse{}
+	mi := &file_plux_v1_app_proto_msgTypes[51]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GrantAccessResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GrantAccessResponse) ProtoMessage() {}
+
+func (x *GrantAccessResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_app_proto_msgTypes[51]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GrantAccessResponse.ProtoReflect.Descriptor instead.
+func (*GrantAccessResponse) Descriptor() ([]byte, []int) {
+	return file_plux_v1_app_proto_rawDescGZIP(), []int{51}
+}
+
+func (x *GrantAccessResponse) GetGrant() *AccessGrant {
+	if x != nil {
+		return x.Grant
+	}
+	return nil
+}
+
+type RevokeAccessRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeAccessRequest) Reset() {
+	*x = RevokeAccessRequest{}
+	mi := &file_plux_v1_app_proto_msgTypes[52]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeAccessRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeAccessRequest) ProtoMessage() {}
+
+func (x *RevokeAccessRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_app_proto_msgTypes[52]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeAccessRequest.ProtoReflect.Descriptor instead.
+func (*RevokeAccessRequest) Descriptor() ([]byte, []int) {
+	return file_plux_v1_app_proto_rawDescGZIP(), []int{52}
+}
+
+func (x *RevokeAccessRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type RevokeAccessResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeAccessResponse) Reset() {
+	*x = RevokeAccessResponse{}
+	mi := &file_plux_v1_app_proto_msgTypes[53]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeAccessResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeAccessResponse) ProtoMessage() {}
+
+func (x *RevokeAccessResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_app_proto_msgTypes[53]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeAccessResponse.ProtoReflect.Descriptor instead.
+func (*RevokeAccessResponse) Descriptor() ([]byte, []int) {
+	return file_plux_v1_app_proto_rawDescGZIP(), []int{53}
+}
+
+type ListAccessRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AppId         string                 `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAccessRequest) Reset() {
+	*x = ListAccessRequest{}
+	mi := &file_plux_v1_app_proto_msgTypes[54]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAccessRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAccessRequest) ProtoMessage() {}
+
+func (x *ListAccessRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_app_proto_msgTypes[54]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAccessRequest.ProtoReflect.Descriptor instead.
+func (*ListAccessRequest) Descriptor() ([]byte, []int) {
+	return file_plux_v1_app_proto_rawDescGZIP(), []int{54}
+}
+
+func (x *ListAccessRequest) GetAppId() string {
+	if x != nil {
+		return x.AppId
+	}
+	return ""
+}
+
+type ListAccessResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Grants        []*AccessGrant         `protobuf:"bytes,1,rep,name=grants,proto3" json:"grants,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListAccessResponse) Reset() {
+	*x = ListAccessResponse{}
+	mi := &file_plux_v1_app_proto_msgTypes[55]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListAccessResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListAccessResponse) ProtoMessage() {}
+
+func (x *ListAccessResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_app_proto_msgTypes[55]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListAccessResponse.ProtoReflect.Descriptor instead.
+func (*ListAccessResponse) Descriptor() ([]byte, []int) {
+	return file_plux_v1_app_proto_rawDescGZIP(), []int{55}
+}
+
+func (x *ListAccessResponse) GetGrants() []*AccessGrant {
+	if x != nil {
+		return x.Grants
+	}
+	return nil
+}
+
 var File_plux_v1_app_proto protoreflect.FileDescriptor
 
 const file_plux_v1_app_proto_rawDesc = "" +
@@ -2638,7 +3004,29 @@ const file_plux_v1_app_proto_rawDesc = "" +
 	"\x03key\x18\x02 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x03 \x01(\x03R\x05value\"@\n" +
 	"\x13SetAppLimitResponse\x12)\n" +
-	"\x05limit\x18\x01 \x01(\v2\x13.plux.v1.LimitUsageR\x05limit2\xd9\r\n" +
+	"\x05limit\x18\x01 \x01(\v2\x13.plux.v1.LimitUsageR\x05limit\"\xb5\x01\n" +
+	"\vAccessGrant\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x15\n" +
+	"\x06app_id\x18\x02 \x01(\tR\x05appId\x12\x17\n" +
+	"\ateam_id\x18\x03 \x01(\tR\x06teamId\x12\x17\n" +
+	"\auser_id\x18\x04 \x01(\tR\x06userId\x12\x12\n" +
+	"\x04role\x18\x05 \x01(\tR\x04role\x129\n" +
+	"\n" +
+	"granted_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tgrantedAt\"q\n" +
+	"\x12GrantAccessRequest\x12\x15\n" +
+	"\x06app_id\x18\x01 \x01(\tR\x05appId\x12\x17\n" +
+	"\ateam_id\x18\x02 \x01(\tR\x06teamId\x12\x17\n" +
+	"\auser_id\x18\x03 \x01(\tR\x06userId\x12\x12\n" +
+	"\x04role\x18\x04 \x01(\tR\x04role\"A\n" +
+	"\x13GrantAccessResponse\x12*\n" +
+	"\x05grant\x18\x01 \x01(\v2\x14.plux.v1.AccessGrantR\x05grant\"%\n" +
+	"\x13RevokeAccessRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x16\n" +
+	"\x14RevokeAccessResponse\"*\n" +
+	"\x11ListAccessRequest\x12\x15\n" +
+	"\x06app_id\x18\x01 \x01(\tR\x05appId\"B\n" +
+	"\x12ListAccessResponse\x12,\n" +
+	"\x06grants\x18\x01 \x03(\v2\x14.plux.v1.AccessGrantR\x06grants2\xbd\x0f\n" +
 	"\n" +
 	"AppService\x12D\n" +
 	"\tCreateApp\x12\x19.plux.v1.CreateAppRequest\x1a\x1a.plux.v1.CreateAppResponse\"\x00\x12;\n" +
@@ -2657,7 +3045,11 @@ const file_plux_v1_app_proto_rawDesc = "" +
 	"\fDeleteSecret\x12\x1c.plux.v1.DeleteSecretRequest\x1a\x1d.plux.v1.DeleteSecretResponse\"\x00\x12P\n" +
 	"\rCreateChannel\x12\x1d.plux.v1.CreateChannelRequest\x1a\x1e.plux.v1.CreateChannelResponse\"\x00\x12M\n" +
 	"\fListChannels\x12\x1c.plux.v1.ListChannelsRequest\x1a\x1d.plux.v1.ListChannelsResponse\"\x00\x12P\n" +
-	"\rDeleteChannel\x12\x1d.plux.v1.DeleteChannelRequest\x1a\x1e.plux.v1.DeleteChannelResponse\"\x00\x12D\n" +
+	"\rDeleteChannel\x12\x1d.plux.v1.DeleteChannelRequest\x1a\x1e.plux.v1.DeleteChannelResponse\"\x00\x12J\n" +
+	"\vGrantAccess\x12\x1b.plux.v1.GrantAccessRequest\x1a\x1c.plux.v1.GrantAccessResponse\"\x00\x12M\n" +
+	"\fRevokeAccess\x12\x1c.plux.v1.RevokeAccessRequest\x1a\x1d.plux.v1.RevokeAccessResponse\"\x00\x12G\n" +
+	"\n" +
+	"ListAccess\x12\x1a.plux.v1.ListAccessRequest\x1a\x1b.plux.v1.ListAccessResponse\"\x00\x12D\n" +
 	"\tListTrash\x12\x19.plux.v1.ListTrashRequest\x1a\x1a.plux.v1.ListTrashResponse\"\x00\x12Y\n" +
 	"\x10RestoreFromTrash\x12 .plux.v1.RestoreFromTrashRequest\x1a!.plux.v1.RestoreFromTrashResponse\"\x00\x12S\n" +
 	"\x0ePurgeFromTrash\x12\x1e.plux.v1.PurgeFromTrashRequest\x1a\x1f.plux.v1.PurgeFromTrashResponse\"\x00\x12P\n" +
@@ -2676,7 +3068,7 @@ func file_plux_v1_app_proto_rawDescGZIP() []byte {
 	return file_plux_v1_app_proto_rawDescData
 }
 
-var file_plux_v1_app_proto_msgTypes = make([]protoimpl.MessageInfo, 49)
+var file_plux_v1_app_proto_msgTypes = make([]protoimpl.MessageInfo, 56)
 var file_plux_v1_app_proto_goTypes = []any{
 	(*App)(nil),                       // 0: plux.v1.App
 	(*Environment)(nil),               // 1: plux.v1.Environment
@@ -2727,27 +3119,34 @@ var file_plux_v1_app_proto_goTypes = []any{
 	(*ListAppLimitsResponse)(nil),     // 46: plux.v1.ListAppLimitsResponse
 	(*SetAppLimitRequest)(nil),        // 47: plux.v1.SetAppLimitRequest
 	(*SetAppLimitResponse)(nil),       // 48: plux.v1.SetAppLimitResponse
-	(*timestamppb.Timestamp)(nil),     // 49: google.protobuf.Timestamp
-	(*Actor)(nil),                     // 50: plux.v1.Actor
-	(*Page)(nil),                      // 51: plux.v1.Page
-	(*PageResult)(nil),                // 52: plux.v1.PageResult
-	(*TrashItem)(nil),                 // 53: plux.v1.TrashItem
-	(*LimitUsage)(nil),                // 54: plux.v1.LimitUsage
+	(*AccessGrant)(nil),               // 49: plux.v1.AccessGrant
+	(*GrantAccessRequest)(nil),        // 50: plux.v1.GrantAccessRequest
+	(*GrantAccessResponse)(nil),       // 51: plux.v1.GrantAccessResponse
+	(*RevokeAccessRequest)(nil),       // 52: plux.v1.RevokeAccessRequest
+	(*RevokeAccessResponse)(nil),      // 53: plux.v1.RevokeAccessResponse
+	(*ListAccessRequest)(nil),         // 54: plux.v1.ListAccessRequest
+	(*ListAccessResponse)(nil),        // 55: plux.v1.ListAccessResponse
+	(*timestamppb.Timestamp)(nil),     // 56: google.protobuf.Timestamp
+	(*Actor)(nil),                     // 57: plux.v1.Actor
+	(*Page)(nil),                      // 58: plux.v1.Page
+	(*PageResult)(nil),                // 59: plux.v1.PageResult
+	(*TrashItem)(nil),                 // 60: plux.v1.TrashItem
+	(*LimitUsage)(nil),                // 61: plux.v1.LimitUsage
 }
 var file_plux_v1_app_proto_depIdxs = []int32{
-	49, // 0: plux.v1.App.created_at:type_name -> google.protobuf.Timestamp
-	49, // 1: plux.v1.App.updated_at:type_name -> google.protobuf.Timestamp
-	49, // 2: plux.v1.Environment.created_at:type_name -> google.protobuf.Timestamp
-	49, // 3: plux.v1.Channel.updated_at:type_name -> google.protobuf.Timestamp
-	49, // 4: plux.v1.Secret.updated_at:type_name -> google.protobuf.Timestamp
-	50, // 5: plux.v1.Secret.updated_by:type_name -> plux.v1.Actor
+	56, // 0: plux.v1.App.created_at:type_name -> google.protobuf.Timestamp
+	56, // 1: plux.v1.App.updated_at:type_name -> google.protobuf.Timestamp
+	56, // 2: plux.v1.Environment.created_at:type_name -> google.protobuf.Timestamp
+	56, // 3: plux.v1.Channel.updated_at:type_name -> google.protobuf.Timestamp
+	56, // 4: plux.v1.Secret.updated_at:type_name -> google.protobuf.Timestamp
+	57, // 5: plux.v1.Secret.updated_by:type_name -> plux.v1.Actor
 	0,  // 6: plux.v1.CreateAppResponse.app:type_name -> plux.v1.App
 	0,  // 7: plux.v1.GetAppResponse.app:type_name -> plux.v1.App
-	51, // 8: plux.v1.ListAppsRequest.page:type_name -> plux.v1.Page
+	58, // 8: plux.v1.ListAppsRequest.page:type_name -> plux.v1.Page
 	0,  // 9: plux.v1.ListAppsResponse.apps:type_name -> plux.v1.App
-	52, // 10: plux.v1.ListAppsResponse.page:type_name -> plux.v1.PageResult
+	59, // 10: plux.v1.ListAppsResponse.page:type_name -> plux.v1.PageResult
 	0,  // 11: plux.v1.UpdateAppResponse.app:type_name -> plux.v1.App
-	53, // 12: plux.v1.DeleteAppResponse.trash:type_name -> plux.v1.TrashItem
+	60, // 12: plux.v1.DeleteAppResponse.trash:type_name -> plux.v1.TrashItem
 	1,  // 13: plux.v1.CreateEnvironmentResponse.environment:type_name -> plux.v1.Environment
 	1,  // 14: plux.v1.ListEnvironmentsResponse.environments:type_name -> plux.v1.Environment
 	1,  // 15: plux.v1.UpdateEnvironmentResponse.environment:type_name -> plux.v1.Environment
@@ -2757,60 +3156,69 @@ var file_plux_v1_app_proto_depIdxs = []int32{
 	4,  // 19: plux.v1.ListSecretsResponse.secrets:type_name -> plux.v1.Secret
 	2,  // 20: plux.v1.CreateChannelResponse.channel:type_name -> plux.v1.Channel
 	2,  // 21: plux.v1.ListChannelsResponse.channels:type_name -> plux.v1.Channel
-	51, // 22: plux.v1.ListTrashRequest.page:type_name -> plux.v1.Page
-	53, // 23: plux.v1.ListTrashResponse.items:type_name -> plux.v1.TrashItem
-	52, // 24: plux.v1.ListTrashResponse.page:type_name -> plux.v1.PageResult
-	54, // 25: plux.v1.ListAppLimitsResponse.limits:type_name -> plux.v1.LimitUsage
-	54, // 26: plux.v1.SetAppLimitResponse.limit:type_name -> plux.v1.LimitUsage
-	5,  // 27: plux.v1.AppService.CreateApp:input_type -> plux.v1.CreateAppRequest
-	7,  // 28: plux.v1.AppService.GetApp:input_type -> plux.v1.GetAppRequest
-	9,  // 29: plux.v1.AppService.ListApps:input_type -> plux.v1.ListAppsRequest
-	11, // 30: plux.v1.AppService.UpdateApp:input_type -> plux.v1.UpdateAppRequest
-	13, // 31: plux.v1.AppService.DeleteApp:input_type -> plux.v1.DeleteAppRequest
-	15, // 32: plux.v1.AppService.CreateEnvironment:input_type -> plux.v1.CreateEnvironmentRequest
-	17, // 33: plux.v1.AppService.ListEnvironments:input_type -> plux.v1.ListEnvironmentsRequest
-	19, // 34: plux.v1.AppService.UpdateEnvironment:input_type -> plux.v1.UpdateEnvironmentRequest
-	21, // 35: plux.v1.AppService.DeleteEnvironment:input_type -> plux.v1.DeleteEnvironmentRequest
-	23, // 36: plux.v1.AppService.SetVariable:input_type -> plux.v1.SetVariableRequest
-	25, // 37: plux.v1.AppService.ListVariables:input_type -> plux.v1.ListVariablesRequest
-	27, // 38: plux.v1.AppService.SetSecret:input_type -> plux.v1.SetSecretRequest
-	29, // 39: plux.v1.AppService.ListSecrets:input_type -> plux.v1.ListSecretsRequest
-	31, // 40: plux.v1.AppService.DeleteSecret:input_type -> plux.v1.DeleteSecretRequest
-	33, // 41: plux.v1.AppService.CreateChannel:input_type -> plux.v1.CreateChannelRequest
-	35, // 42: plux.v1.AppService.ListChannels:input_type -> plux.v1.ListChannelsRequest
-	37, // 43: plux.v1.AppService.DeleteChannel:input_type -> plux.v1.DeleteChannelRequest
-	39, // 44: plux.v1.AppService.ListTrash:input_type -> plux.v1.ListTrashRequest
-	41, // 45: plux.v1.AppService.RestoreFromTrash:input_type -> plux.v1.RestoreFromTrashRequest
-	43, // 46: plux.v1.AppService.PurgeFromTrash:input_type -> plux.v1.PurgeFromTrashRequest
-	45, // 47: plux.v1.AppService.ListAppLimits:input_type -> plux.v1.ListAppLimitsRequest
-	47, // 48: plux.v1.AppService.SetAppLimit:input_type -> plux.v1.SetAppLimitRequest
-	6,  // 49: plux.v1.AppService.CreateApp:output_type -> plux.v1.CreateAppResponse
-	8,  // 50: plux.v1.AppService.GetApp:output_type -> plux.v1.GetAppResponse
-	10, // 51: plux.v1.AppService.ListApps:output_type -> plux.v1.ListAppsResponse
-	12, // 52: plux.v1.AppService.UpdateApp:output_type -> plux.v1.UpdateAppResponse
-	14, // 53: plux.v1.AppService.DeleteApp:output_type -> plux.v1.DeleteAppResponse
-	16, // 54: plux.v1.AppService.CreateEnvironment:output_type -> plux.v1.CreateEnvironmentResponse
-	18, // 55: plux.v1.AppService.ListEnvironments:output_type -> plux.v1.ListEnvironmentsResponse
-	20, // 56: plux.v1.AppService.UpdateEnvironment:output_type -> plux.v1.UpdateEnvironmentResponse
-	22, // 57: plux.v1.AppService.DeleteEnvironment:output_type -> plux.v1.DeleteEnvironmentResponse
-	24, // 58: plux.v1.AppService.SetVariable:output_type -> plux.v1.SetVariableResponse
-	26, // 59: plux.v1.AppService.ListVariables:output_type -> plux.v1.ListVariablesResponse
-	28, // 60: plux.v1.AppService.SetSecret:output_type -> plux.v1.SetSecretResponse
-	30, // 61: plux.v1.AppService.ListSecrets:output_type -> plux.v1.ListSecretsResponse
-	32, // 62: plux.v1.AppService.DeleteSecret:output_type -> plux.v1.DeleteSecretResponse
-	34, // 63: plux.v1.AppService.CreateChannel:output_type -> plux.v1.CreateChannelResponse
-	36, // 64: plux.v1.AppService.ListChannels:output_type -> plux.v1.ListChannelsResponse
-	38, // 65: plux.v1.AppService.DeleteChannel:output_type -> plux.v1.DeleteChannelResponse
-	40, // 66: plux.v1.AppService.ListTrash:output_type -> plux.v1.ListTrashResponse
-	42, // 67: plux.v1.AppService.RestoreFromTrash:output_type -> plux.v1.RestoreFromTrashResponse
-	44, // 68: plux.v1.AppService.PurgeFromTrash:output_type -> plux.v1.PurgeFromTrashResponse
-	46, // 69: plux.v1.AppService.ListAppLimits:output_type -> plux.v1.ListAppLimitsResponse
-	48, // 70: plux.v1.AppService.SetAppLimit:output_type -> plux.v1.SetAppLimitResponse
-	49, // [49:71] is the sub-list for method output_type
-	27, // [27:49] is the sub-list for method input_type
-	27, // [27:27] is the sub-list for extension type_name
-	27, // [27:27] is the sub-list for extension extendee
-	0,  // [0:27] is the sub-list for field type_name
+	58, // 22: plux.v1.ListTrashRequest.page:type_name -> plux.v1.Page
+	60, // 23: plux.v1.ListTrashResponse.items:type_name -> plux.v1.TrashItem
+	59, // 24: plux.v1.ListTrashResponse.page:type_name -> plux.v1.PageResult
+	61, // 25: plux.v1.ListAppLimitsResponse.limits:type_name -> plux.v1.LimitUsage
+	61, // 26: plux.v1.SetAppLimitResponse.limit:type_name -> plux.v1.LimitUsage
+	56, // 27: plux.v1.AccessGrant.granted_at:type_name -> google.protobuf.Timestamp
+	49, // 28: plux.v1.GrantAccessResponse.grant:type_name -> plux.v1.AccessGrant
+	49, // 29: plux.v1.ListAccessResponse.grants:type_name -> plux.v1.AccessGrant
+	5,  // 30: plux.v1.AppService.CreateApp:input_type -> plux.v1.CreateAppRequest
+	7,  // 31: plux.v1.AppService.GetApp:input_type -> plux.v1.GetAppRequest
+	9,  // 32: plux.v1.AppService.ListApps:input_type -> plux.v1.ListAppsRequest
+	11, // 33: plux.v1.AppService.UpdateApp:input_type -> plux.v1.UpdateAppRequest
+	13, // 34: plux.v1.AppService.DeleteApp:input_type -> plux.v1.DeleteAppRequest
+	15, // 35: plux.v1.AppService.CreateEnvironment:input_type -> plux.v1.CreateEnvironmentRequest
+	17, // 36: plux.v1.AppService.ListEnvironments:input_type -> plux.v1.ListEnvironmentsRequest
+	19, // 37: plux.v1.AppService.UpdateEnvironment:input_type -> plux.v1.UpdateEnvironmentRequest
+	21, // 38: plux.v1.AppService.DeleteEnvironment:input_type -> plux.v1.DeleteEnvironmentRequest
+	23, // 39: plux.v1.AppService.SetVariable:input_type -> plux.v1.SetVariableRequest
+	25, // 40: plux.v1.AppService.ListVariables:input_type -> plux.v1.ListVariablesRequest
+	27, // 41: plux.v1.AppService.SetSecret:input_type -> plux.v1.SetSecretRequest
+	29, // 42: plux.v1.AppService.ListSecrets:input_type -> plux.v1.ListSecretsRequest
+	31, // 43: plux.v1.AppService.DeleteSecret:input_type -> plux.v1.DeleteSecretRequest
+	33, // 44: plux.v1.AppService.CreateChannel:input_type -> plux.v1.CreateChannelRequest
+	35, // 45: plux.v1.AppService.ListChannels:input_type -> plux.v1.ListChannelsRequest
+	37, // 46: plux.v1.AppService.DeleteChannel:input_type -> plux.v1.DeleteChannelRequest
+	50, // 47: plux.v1.AppService.GrantAccess:input_type -> plux.v1.GrantAccessRequest
+	52, // 48: plux.v1.AppService.RevokeAccess:input_type -> plux.v1.RevokeAccessRequest
+	54, // 49: plux.v1.AppService.ListAccess:input_type -> plux.v1.ListAccessRequest
+	39, // 50: plux.v1.AppService.ListTrash:input_type -> plux.v1.ListTrashRequest
+	41, // 51: plux.v1.AppService.RestoreFromTrash:input_type -> plux.v1.RestoreFromTrashRequest
+	43, // 52: plux.v1.AppService.PurgeFromTrash:input_type -> plux.v1.PurgeFromTrashRequest
+	45, // 53: plux.v1.AppService.ListAppLimits:input_type -> plux.v1.ListAppLimitsRequest
+	47, // 54: plux.v1.AppService.SetAppLimit:input_type -> plux.v1.SetAppLimitRequest
+	6,  // 55: plux.v1.AppService.CreateApp:output_type -> plux.v1.CreateAppResponse
+	8,  // 56: plux.v1.AppService.GetApp:output_type -> plux.v1.GetAppResponse
+	10, // 57: plux.v1.AppService.ListApps:output_type -> plux.v1.ListAppsResponse
+	12, // 58: plux.v1.AppService.UpdateApp:output_type -> plux.v1.UpdateAppResponse
+	14, // 59: plux.v1.AppService.DeleteApp:output_type -> plux.v1.DeleteAppResponse
+	16, // 60: plux.v1.AppService.CreateEnvironment:output_type -> plux.v1.CreateEnvironmentResponse
+	18, // 61: plux.v1.AppService.ListEnvironments:output_type -> plux.v1.ListEnvironmentsResponse
+	20, // 62: plux.v1.AppService.UpdateEnvironment:output_type -> plux.v1.UpdateEnvironmentResponse
+	22, // 63: plux.v1.AppService.DeleteEnvironment:output_type -> plux.v1.DeleteEnvironmentResponse
+	24, // 64: plux.v1.AppService.SetVariable:output_type -> plux.v1.SetVariableResponse
+	26, // 65: plux.v1.AppService.ListVariables:output_type -> plux.v1.ListVariablesResponse
+	28, // 66: plux.v1.AppService.SetSecret:output_type -> plux.v1.SetSecretResponse
+	30, // 67: plux.v1.AppService.ListSecrets:output_type -> plux.v1.ListSecretsResponse
+	32, // 68: plux.v1.AppService.DeleteSecret:output_type -> plux.v1.DeleteSecretResponse
+	34, // 69: plux.v1.AppService.CreateChannel:output_type -> plux.v1.CreateChannelResponse
+	36, // 70: plux.v1.AppService.ListChannels:output_type -> plux.v1.ListChannelsResponse
+	38, // 71: plux.v1.AppService.DeleteChannel:output_type -> plux.v1.DeleteChannelResponse
+	51, // 72: plux.v1.AppService.GrantAccess:output_type -> plux.v1.GrantAccessResponse
+	53, // 73: plux.v1.AppService.RevokeAccess:output_type -> plux.v1.RevokeAccessResponse
+	55, // 74: plux.v1.AppService.ListAccess:output_type -> plux.v1.ListAccessResponse
+	40, // 75: plux.v1.AppService.ListTrash:output_type -> plux.v1.ListTrashResponse
+	42, // 76: plux.v1.AppService.RestoreFromTrash:output_type -> plux.v1.RestoreFromTrashResponse
+	44, // 77: plux.v1.AppService.PurgeFromTrash:output_type -> plux.v1.PurgeFromTrashResponse
+	46, // 78: plux.v1.AppService.ListAppLimits:output_type -> plux.v1.ListAppLimitsResponse
+	48, // 79: plux.v1.AppService.SetAppLimit:output_type -> plux.v1.SetAppLimitResponse
+	55, // [55:80] is the sub-list for method output_type
+	30, // [30:55] is the sub-list for method input_type
+	30, // [30:30] is the sub-list for extension type_name
+	30, // [30:30] is the sub-list for extension extendee
+	0,  // [0:30] is the sub-list for field type_name
 }
 
 func init() { file_plux_v1_app_proto_init() }
@@ -2825,7 +3233,7 @@ func file_plux_v1_app_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_plux_v1_app_proto_rawDesc), len(file_plux_v1_app_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   49,
+			NumMessages:   56,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -12,6 +12,7 @@ package pluxv1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	fieldmaskpb "google.golang.org/protobuf/types/known/fieldmaskpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
@@ -92,7 +93,10 @@ type Page struct {
 	// filter selects items with the documented filter syntax of the endpoint.
 	Filter string `protobuf:"bytes,3,opt,name=filter,proto3" json:"filter,omitempty"`
 	// order_by names fields to sort by, each optionally followed by " desc".
-	OrderBy       string `protobuf:"bytes,4,opt,name=order_by,json=orderBy,proto3" json:"order_by,omitempty"`
+	OrderBy string `protobuf:"bytes,4,opt,name=order_by,json=orderBy,proto3" json:"order_by,omitempty"`
+	// read_mask limits each returned item to the named fields; an empty
+	// mask returns whole items.
+	ReadMask      *fieldmaskpb.FieldMask `protobuf:"bytes,5,opt,name=read_mask,json=readMask,proto3" json:"read_mask,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -153,6 +157,13 @@ func (x *Page) GetOrderBy() string {
 		return x.OrderBy
 	}
 	return ""
+}
+
+func (x *Page) GetReadMask() *fieldmaskpb.FieldMask {
+	if x != nil {
+		return x.ReadMask
+	}
+	return nil
 }
 
 // PageResult carries the continuation of a list response.
@@ -970,13 +981,14 @@ var File_plux_v1_common_proto protoreflect.FileDescriptor
 
 const file_plux_v1_common_proto_rawDesc = "" +
 	"\n" +
-	"\x14plux/v1/common.proto\x12\aplux.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"u\n" +
+	"\x14plux/v1/common.proto\x12\aplux.v1\x1a google/protobuf/field_mask.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xae\x01\n" +
 	"\x04Page\x12\x1b\n" +
 	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
 	"\n" +
 	"page_token\x18\x02 \x01(\tR\tpageToken\x12\x16\n" +
 	"\x06filter\x18\x03 \x01(\tR\x06filter\x12\x19\n" +
-	"\border_by\x18\x04 \x01(\tR\aorderBy\"S\n" +
+	"\border_by\x18\x04 \x01(\tR\aorderBy\x127\n" +
+	"\tread_mask\x18\x05 \x01(\v2\x1a.google.protobuf.FieldMaskR\breadMask\"S\n" +
 	"\n" +
 	"PageResult\x12&\n" +
 	"\x0fnext_page_token\x18\x01 \x01(\tR\rnextPageToken\x12\x1d\n" +
@@ -1088,24 +1100,26 @@ var file_plux_v1_common_proto_goTypes = []any{
 	(*Artifact)(nil),              // 9: plux.v1.Artifact
 	(*AuditEntry)(nil),            // 10: plux.v1.AuditEntry
 	(*TrashItem)(nil),             // 11: plux.v1.TrashItem
-	(*timestamppb.Timestamp)(nil), // 12: google.protobuf.Timestamp
+	(*fieldmaskpb.FieldMask)(nil), // 12: google.protobuf.FieldMask
+	(*timestamppb.Timestamp)(nil), // 13: google.protobuf.Timestamp
 }
 var file_plux_v1_common_proto_depIdxs = []int32{
-	3,  // 0: plux.v1.Location.range:type_name -> plux.v1.Range
-	0,  // 1: plux.v1.Diagnostic.severity:type_name -> plux.v1.Severity
-	4,  // 2: plux.v1.Diagnostic.location:type_name -> plux.v1.Location
-	5,  // 3: plux.v1.Diagnostic.patch:type_name -> plux.v1.PatchOp
-	4,  // 4: plux.v1.Diagnostic.related:type_name -> plux.v1.Location
-	12, // 5: plux.v1.AuditEntry.time:type_name -> google.protobuf.Timestamp
-	7,  // 6: plux.v1.AuditEntry.actor:type_name -> plux.v1.Actor
-	7,  // 7: plux.v1.TrashItem.deleted_by:type_name -> plux.v1.Actor
-	12, // 8: plux.v1.TrashItem.deleted_at:type_name -> google.protobuf.Timestamp
-	12, // 9: plux.v1.TrashItem.purge_after:type_name -> google.protobuf.Timestamp
-	10, // [10:10] is the sub-list for method output_type
-	10, // [10:10] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	12, // 0: plux.v1.Page.read_mask:type_name -> google.protobuf.FieldMask
+	3,  // 1: plux.v1.Location.range:type_name -> plux.v1.Range
+	0,  // 2: plux.v1.Diagnostic.severity:type_name -> plux.v1.Severity
+	4,  // 3: plux.v1.Diagnostic.location:type_name -> plux.v1.Location
+	5,  // 4: plux.v1.Diagnostic.patch:type_name -> plux.v1.PatchOp
+	4,  // 5: plux.v1.Diagnostic.related:type_name -> plux.v1.Location
+	13, // 6: plux.v1.AuditEntry.time:type_name -> google.protobuf.Timestamp
+	7,  // 7: plux.v1.AuditEntry.actor:type_name -> plux.v1.Actor
+	7,  // 8: plux.v1.TrashItem.deleted_by:type_name -> plux.v1.Actor
+	13, // 9: plux.v1.TrashItem.deleted_at:type_name -> google.protobuf.Timestamp
+	13, // 10: plux.v1.TrashItem.purge_after:type_name -> google.protobuf.Timestamp
+	11, // [11:11] is the sub-list for method output_type
+	11, // [11:11] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_plux_v1_common_proto_init() }

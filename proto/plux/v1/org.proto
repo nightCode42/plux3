@@ -24,6 +24,10 @@ service OrgService {
   rpc UpdateTeam(UpdateTeamRequest) returns (UpdateTeamResponse) {}
   rpc DeleteTeam(DeleteTeamRequest) returns (DeleteTeamResponse) {}
 
+  // AddMember grants a role in the organisation, or in one of its teams,
+  // to the account with an email address. When no such account exists it
+  // is created without a password, and the response carries a one-time
+  // invitation the administrator passes on (AcceptInvitation).
   rpc AddMember(AddMemberRequest) returns (AddMemberResponse) {}
   rpc RemoveMember(RemoveMemberRequest) returns (RemoveMemberResponse) {}
   rpc ListMembers(ListMembersRequest) returns (ListMembersResponse) {}
@@ -58,9 +62,11 @@ message Member {
   string organization_id = 2;
   // team_id is empty for a direct organization membership.
   string team_id = 3;
-  // role is a registered role name evaluated by RBAC (SEC-102).
+  // role is "owner", "admin", "developer" or "viewer" (SEC-102).
   string role = 4;
   google.protobuf.Timestamp added_at = 5;
+  string display_name = 6;
+  string email = 7;
 }
 
 message CreateOrganizationRequest {
@@ -128,11 +134,14 @@ message DeleteTeamResponse {}
 message AddMemberRequest {
   string organization_id = 1;
   string team_id = 2;
-  string user_id = 3;
+  string email = 3;
   string role = 4;
 }
 message AddMemberResponse {
   Member member = 1;
+  // invitation is set when the account was created; it is returned
+  // exactly once and expires after seven days.
+  string invitation = 2;
 }
 
 message RemoveMemberRequest {

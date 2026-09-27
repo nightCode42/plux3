@@ -189,19 +189,7 @@ func logger(cfg *config.Config, w io.Writer) *slog.Logger {
 	return observability.NewLogger(w, observability.LogOptions{
 		Level:   cfg.Observability.LogLevel,
 		Format:  cfg.Observability.LogFormat,
-		Role:    roleLabel(cfg),
+		Role:    server.RoleLabel(cfg),
 		Version: buildinfo.Get().Version,
 	})
-}
-
-// roleLabel renders the configured roles for the logger.
-func roleLabel(cfg *config.Config) string {
-	out := ""
-	for i, r := range cfg.Server.Roles {
-		if i > 0 {
-			out += "+"
-		}
-		out += string(r)
-	}
-	return out
 }

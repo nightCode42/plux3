@@ -39,26 +39,26 @@ const (
 	// IdentityServiceGetCurrentUserProcedure is the fully-qualified name of the IdentityService's
 	// GetCurrentUser RPC.
 	IdentityServiceGetCurrentUserProcedure = "/plux.v1.IdentityService/GetCurrentUser"
+	// IdentityServiceAcceptInvitationProcedure is the fully-qualified name of the IdentityService's
+	// AcceptInvitation RPC.
+	IdentityServiceAcceptInvitationProcedure = "/plux.v1.IdentityService/AcceptInvitation"
 	// IdentityServiceStartPasswordLoginProcedure is the fully-qualified name of the IdentityService's
 	// StartPasswordLogin RPC.
 	IdentityServiceStartPasswordLoginProcedure = "/plux.v1.IdentityService/StartPasswordLogin"
-	// IdentityServiceStartOidcLoginProcedure is the fully-qualified name of the IdentityService's
-	// StartOidcLogin RPC.
-	IdentityServiceStartOidcLoginProcedure = "/plux.v1.IdentityService/StartOidcLogin"
-	// IdentityServiceCompleteOidcLoginProcedure is the fully-qualified name of the IdentityService's
-	// CompleteOidcLogin RPC.
-	IdentityServiceCompleteOidcLoginProcedure = "/plux.v1.IdentityService/CompleteOidcLogin"
 	// IdentityServiceCompleteMfaProcedure is the fully-qualified name of the IdentityService's
 	// CompleteMfa RPC.
 	IdentityServiceCompleteMfaProcedure = "/plux.v1.IdentityService/CompleteMfa"
+	// IdentityServiceVerifySecondFactorProcedure is the fully-qualified name of the IdentityService's
+	// VerifySecondFactor RPC.
+	IdentityServiceVerifySecondFactorProcedure = "/plux.v1.IdentityService/VerifySecondFactor"
+	// IdentityServiceChangePasswordProcedure is the fully-qualified name of the IdentityService's
+	// ChangePassword RPC.
+	IdentityServiceChangePasswordProcedure = "/plux.v1.IdentityService/ChangePassword"
 	// IdentityServiceLogoutProcedure is the fully-qualified name of the IdentityService's Logout RPC.
 	IdentityServiceLogoutProcedure = "/plux.v1.IdentityService/Logout"
 	// IdentityServiceEnrollTotpProcedure is the fully-qualified name of the IdentityService's
 	// EnrollTotp RPC.
 	IdentityServiceEnrollTotpProcedure = "/plux.v1.IdentityService/EnrollTotp"
-	// IdentityServiceEnrollWebauthnProcedure is the fully-qualified name of the IdentityService's
-	// EnrollWebauthn RPC.
-	IdentityServiceEnrollWebauthnProcedure = "/plux.v1.IdentityService/EnrollWebauthn"
 	// IdentityServiceConfirmFactorProcedure is the fully-qualified name of the IdentityService's
 	// ConfirmFactor RPC.
 	IdentityServiceConfirmFactorProcedure = "/plux.v1.IdentityService/ConfirmFactor"
@@ -77,6 +77,9 @@ const (
 	// IdentityServiceApproveDeviceAuthorizationProcedure is the fully-qualified name of the
 	// IdentityService's ApproveDeviceAuthorization RPC.
 	IdentityServiceApproveDeviceAuthorizationProcedure = "/plux.v1.IdentityService/ApproveDeviceAuthorization"
+	// IdentityServiceDenyDeviceAuthorizationProcedure is the fully-qualified name of the
+	// IdentityService's DenyDeviceAuthorization RPC.
+	IdentityServiceDenyDeviceAuthorizationProcedure = "/plux.v1.IdentityService/DenyDeviceAuthorization"
 	// IdentityServiceCreateAccessTokenProcedure is the fully-qualified name of the IdentityService's
 	// CreateAccessToken RPC.
 	IdentityServiceCreateAccessTokenProcedure = "/plux.v1.IdentityService/CreateAccessToken"
@@ -86,6 +89,15 @@ const (
 	// IdentityServiceRevokeAccessTokenProcedure is the fully-qualified name of the IdentityService's
 	// RevokeAccessToken RPC.
 	IdentityServiceRevokeAccessTokenProcedure = "/plux.v1.IdentityService/RevokeAccessToken"
+	// IdentityServiceCreateWorkloadIdentityProcedure is the fully-qualified name of the
+	// IdentityService's CreateWorkloadIdentity RPC.
+	IdentityServiceCreateWorkloadIdentityProcedure = "/plux.v1.IdentityService/CreateWorkloadIdentity"
+	// IdentityServiceListWorkloadIdentitiesProcedure is the fully-qualified name of the
+	// IdentityService's ListWorkloadIdentities RPC.
+	IdentityServiceListWorkloadIdentitiesProcedure = "/plux.v1.IdentityService/ListWorkloadIdentities"
+	// IdentityServiceDeleteWorkloadIdentityProcedure is the fully-qualified name of the
+	// IdentityService's DeleteWorkloadIdentity RPC.
+	IdentityServiceDeleteWorkloadIdentityProcedure = "/plux.v1.IdentityService/DeleteWorkloadIdentity"
 	// IdentityServiceExchangeWorkloadIdentityProcedure is the fully-qualified name of the
 	// IdentityService's ExchangeWorkloadIdentity RPC.
 	IdentityServiceExchangeWorkloadIdentityProcedure = "/plux.v1.IdentityService/ExchangeWorkloadIdentity"
@@ -97,35 +109,49 @@ const (
 // IdentityServiceClient is a client for the plux.v1.IdentityService service.
 type IdentityServiceClient interface {
 	GetCurrentUser(context.Context, *connect.Request[pluxv1.GetCurrentUserRequest]) (*connect.Response[pluxv1.GetCurrentUserResponse], error)
-	// StartPasswordLogin verifies a built-in account's password. It never
-	// returns a session on its own when the account has a factor enrolled:
-	// the response carries a pending challenge to complete (SEC-100).
+	// AcceptInvitation sets the password of an invited account, using the
+	// one-time invitation an administrator received for it.
+	AcceptInvitation(context.Context, *connect.Request[pluxv1.AcceptInvitationRequest]) (*connect.Response[pluxv1.AcceptInvitationResponse], error)
+	// StartPasswordLogin verifies a password. When the account has a
+	// confirmed second factor it returns a challenge instead of a session
+	// (SEC-100).
 	StartPasswordLogin(context.Context, *connect.Request[pluxv1.StartPasswordLoginRequest]) (*connect.Response[pluxv1.StartPasswordLoginResponse], error)
-	// StartOidcLogin returns the authorization URL and the state to use.
-	StartOidcLogin(context.Context, *connect.Request[pluxv1.StartOidcLoginRequest]) (*connect.Response[pluxv1.StartOidcLoginResponse], error)
-	// CompleteOidcLogin exchanges the authorization code. OAuth tokens stay
-	// on the server; the caller receives only a session (SEC-101).
-	CompleteOidcLogin(context.Context, *connect.Request[pluxv1.CompleteOidcLoginRequest]) (*connect.Response[pluxv1.CompleteOidcLoginResponse], error)
-	// CompleteMfa answers a pending challenge and completes the login.
+	// CompleteMfa answers a challenge with a one-time code.
 	CompleteMfa(context.Context, *connect.Request[pluxv1.CompleteMfaRequest]) (*connect.Response[pluxv1.CompleteMfaResponse], error)
+	// VerifySecondFactor presents a one-time code within an existing
+	// session, which capabilities that require one then accept.
+	VerifySecondFactor(context.Context, *connect.Request[pluxv1.VerifySecondFactorRequest]) (*connect.Response[pluxv1.VerifySecondFactorResponse], error)
+	ChangePassword(context.Context, *connect.Request[pluxv1.ChangePasswordRequest]) (*connect.Response[pluxv1.ChangePasswordResponse], error)
 	Logout(context.Context, *connect.Request[pluxv1.LogoutRequest]) (*connect.Response[pluxv1.LogoutResponse], error)
 	EnrollTotp(context.Context, *connect.Request[pluxv1.EnrollTotpRequest]) (*connect.Response[pluxv1.EnrollTotpResponse], error)
-	EnrollWebauthn(context.Context, *connect.Request[pluxv1.EnrollWebauthnRequest]) (*connect.Response[pluxv1.EnrollWebauthnResponse], error)
 	ConfirmFactor(context.Context, *connect.Request[pluxv1.ConfirmFactorRequest]) (*connect.Response[pluxv1.ConfirmFactorResponse], error)
 	ListFactors(context.Context, *connect.Request[pluxv1.ListFactorsRequest]) (*connect.Response[pluxv1.ListFactorsResponse], error)
 	DeleteFactor(context.Context, *connect.Request[pluxv1.DeleteFactorRequest]) (*connect.Response[pluxv1.DeleteFactorResponse], error)
 	// StartDeviceAuthorization begins the OAuth 2.0 device authorization
-	// grant that `plux login` uses (CLI-002, RFC 8628).
+	// grant that `plux login` uses (CLI-002, RFC 8628). It needs no
+	// credential.
 	StartDeviceAuthorization(context.Context, *connect.Request[pluxv1.StartDeviceAuthorizationRequest]) (*connect.Response[pluxv1.StartDeviceAuthorizationResponse], error)
-	// PollDeviceAuthorization exchanges the device code once approved.
+	// PollDeviceAuthorization returns the token once, after approval.
 	PollDeviceAuthorization(context.Context, *connect.Request[pluxv1.PollDeviceAuthorizationRequest]) (*connect.Response[pluxv1.PollDeviceAuthorizationResponse], error)
-	// ApproveDeviceAuthorization is called by the signed-in browser.
+	// ApproveDeviceAuthorization is called by a signed-in user who read
+	// the user code from the terminal.
 	ApproveDeviceAuthorization(context.Context, *connect.Request[pluxv1.ApproveDeviceAuthorizationRequest]) (*connect.Response[pluxv1.ApproveDeviceAuthorizationResponse], error)
+	DenyDeviceAuthorization(context.Context, *connect.Request[pluxv1.DenyDeviceAuthorizationRequest]) (*connect.Response[pluxv1.DenyDeviceAuthorizationResponse], error)
+	// CreateAccessToken issues a personal access token. It needs a second
+	// factor in the session, because the token outlives the session and
+	// carries its capabilities (SRV-064).
 	CreateAccessToken(context.Context, *connect.Request[pluxv1.CreateAccessTokenRequest]) (*connect.Response[pluxv1.CreateAccessTokenResponse], error)
 	ListAccessTokens(context.Context, *connect.Request[pluxv1.ListAccessTokensRequest]) (*connect.Response[pluxv1.ListAccessTokensResponse], error)
 	RevokeAccessToken(context.Context, *connect.Request[pluxv1.RevokeAccessTokenRequest]) (*connect.Response[pluxv1.RevokeAccessTokenResponse], error)
-	// ExchangeWorkloadIdentity trades a CI OIDC token for a scoped access
-	// token, so pipelines need no long-lived secret (SRV-064, CLI-002).
+	// CreateWorkloadIdentity lets CI workloads matching an issuer,
+	// audience and subject pattern exchange their identity tokens for
+	// tokens of this organisation with fixed scopes (SRV-064).
+	CreateWorkloadIdentity(context.Context, *connect.Request[pluxv1.CreateWorkloadIdentityRequest]) (*connect.Response[pluxv1.CreateWorkloadIdentityResponse], error)
+	ListWorkloadIdentities(context.Context, *connect.Request[pluxv1.ListWorkloadIdentitiesRequest]) (*connect.Response[pluxv1.ListWorkloadIdentitiesResponse], error)
+	DeleteWorkloadIdentity(context.Context, *connect.Request[pluxv1.DeleteWorkloadIdentityRequest]) (*connect.Response[pluxv1.DeleteWorkloadIdentityResponse], error)
+	// ExchangeWorkloadIdentity trades a CI identity token for a
+	// short-lived Plux token, so pipelines hold no long-lived secret. It
+	// needs no other credential: the identity token is the credential.
 	ExchangeWorkloadIdentity(context.Context, *connect.Request[pluxv1.ExchangeWorkloadIdentityRequest]) (*connect.Response[pluxv1.ExchangeWorkloadIdentityResponse], error)
 	ListAuditEntries(context.Context, *connect.Request[pluxv1.ListAuditEntriesRequest]) (*connect.Response[pluxv1.ListAuditEntriesResponse], error)
 }
@@ -147,28 +173,34 @@ func NewIdentityServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(identityServiceMethods.ByName("GetCurrentUser")),
 			connect.WithClientOptions(opts...),
 		),
+		acceptInvitation: connect.NewClient[pluxv1.AcceptInvitationRequest, pluxv1.AcceptInvitationResponse](
+			httpClient,
+			baseURL+IdentityServiceAcceptInvitationProcedure,
+			connect.WithSchema(identityServiceMethods.ByName("AcceptInvitation")),
+			connect.WithClientOptions(opts...),
+		),
 		startPasswordLogin: connect.NewClient[pluxv1.StartPasswordLoginRequest, pluxv1.StartPasswordLoginResponse](
 			httpClient,
 			baseURL+IdentityServiceStartPasswordLoginProcedure,
 			connect.WithSchema(identityServiceMethods.ByName("StartPasswordLogin")),
 			connect.WithClientOptions(opts...),
 		),
-		startOidcLogin: connect.NewClient[pluxv1.StartOidcLoginRequest, pluxv1.StartOidcLoginResponse](
-			httpClient,
-			baseURL+IdentityServiceStartOidcLoginProcedure,
-			connect.WithSchema(identityServiceMethods.ByName("StartOidcLogin")),
-			connect.WithClientOptions(opts...),
-		),
-		completeOidcLogin: connect.NewClient[pluxv1.CompleteOidcLoginRequest, pluxv1.CompleteOidcLoginResponse](
-			httpClient,
-			baseURL+IdentityServiceCompleteOidcLoginProcedure,
-			connect.WithSchema(identityServiceMethods.ByName("CompleteOidcLogin")),
-			connect.WithClientOptions(opts...),
-		),
 		completeMfa: connect.NewClient[pluxv1.CompleteMfaRequest, pluxv1.CompleteMfaResponse](
 			httpClient,
 			baseURL+IdentityServiceCompleteMfaProcedure,
 			connect.WithSchema(identityServiceMethods.ByName("CompleteMfa")),
+			connect.WithClientOptions(opts...),
+		),
+		verifySecondFactor: connect.NewClient[pluxv1.VerifySecondFactorRequest, pluxv1.VerifySecondFactorResponse](
+			httpClient,
+			baseURL+IdentityServiceVerifySecondFactorProcedure,
+			connect.WithSchema(identityServiceMethods.ByName("VerifySecondFactor")),
+			connect.WithClientOptions(opts...),
+		),
+		changePassword: connect.NewClient[pluxv1.ChangePasswordRequest, pluxv1.ChangePasswordResponse](
+			httpClient,
+			baseURL+IdentityServiceChangePasswordProcedure,
+			connect.WithSchema(identityServiceMethods.ByName("ChangePassword")),
 			connect.WithClientOptions(opts...),
 		),
 		logout: connect.NewClient[pluxv1.LogoutRequest, pluxv1.LogoutResponse](
@@ -181,12 +213,6 @@ func NewIdentityServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			httpClient,
 			baseURL+IdentityServiceEnrollTotpProcedure,
 			connect.WithSchema(identityServiceMethods.ByName("EnrollTotp")),
-			connect.WithClientOptions(opts...),
-		),
-		enrollWebauthn: connect.NewClient[pluxv1.EnrollWebauthnRequest, pluxv1.EnrollWebauthnResponse](
-			httpClient,
-			baseURL+IdentityServiceEnrollWebauthnProcedure,
-			connect.WithSchema(identityServiceMethods.ByName("EnrollWebauthn")),
 			connect.WithClientOptions(opts...),
 		),
 		confirmFactor: connect.NewClient[pluxv1.ConfirmFactorRequest, pluxv1.ConfirmFactorResponse](
@@ -225,6 +251,12 @@ func NewIdentityServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(identityServiceMethods.ByName("ApproveDeviceAuthorization")),
 			connect.WithClientOptions(opts...),
 		),
+		denyDeviceAuthorization: connect.NewClient[pluxv1.DenyDeviceAuthorizationRequest, pluxv1.DenyDeviceAuthorizationResponse](
+			httpClient,
+			baseURL+IdentityServiceDenyDeviceAuthorizationProcedure,
+			connect.WithSchema(identityServiceMethods.ByName("DenyDeviceAuthorization")),
+			connect.WithClientOptions(opts...),
+		),
 		createAccessToken: connect.NewClient[pluxv1.CreateAccessTokenRequest, pluxv1.CreateAccessTokenResponse](
 			httpClient,
 			baseURL+IdentityServiceCreateAccessTokenProcedure,
@@ -241,6 +273,24 @@ func NewIdentityServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			httpClient,
 			baseURL+IdentityServiceRevokeAccessTokenProcedure,
 			connect.WithSchema(identityServiceMethods.ByName("RevokeAccessToken")),
+			connect.WithClientOptions(opts...),
+		),
+		createWorkloadIdentity: connect.NewClient[pluxv1.CreateWorkloadIdentityRequest, pluxv1.CreateWorkloadIdentityResponse](
+			httpClient,
+			baseURL+IdentityServiceCreateWorkloadIdentityProcedure,
+			connect.WithSchema(identityServiceMethods.ByName("CreateWorkloadIdentity")),
+			connect.WithClientOptions(opts...),
+		),
+		listWorkloadIdentities: connect.NewClient[pluxv1.ListWorkloadIdentitiesRequest, pluxv1.ListWorkloadIdentitiesResponse](
+			httpClient,
+			baseURL+IdentityServiceListWorkloadIdentitiesProcedure,
+			connect.WithSchema(identityServiceMethods.ByName("ListWorkloadIdentities")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteWorkloadIdentity: connect.NewClient[pluxv1.DeleteWorkloadIdentityRequest, pluxv1.DeleteWorkloadIdentityResponse](
+			httpClient,
+			baseURL+IdentityServiceDeleteWorkloadIdentityProcedure,
+			connect.WithSchema(identityServiceMethods.ByName("DeleteWorkloadIdentity")),
 			connect.WithClientOptions(opts...),
 		),
 		exchangeWorkloadIdentity: connect.NewClient[pluxv1.ExchangeWorkloadIdentityRequest, pluxv1.ExchangeWorkloadIdentityResponse](
@@ -261,22 +311,26 @@ func NewIdentityServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 // identityServiceClient implements IdentityServiceClient.
 type identityServiceClient struct {
 	getCurrentUser             *connect.Client[pluxv1.GetCurrentUserRequest, pluxv1.GetCurrentUserResponse]
+	acceptInvitation           *connect.Client[pluxv1.AcceptInvitationRequest, pluxv1.AcceptInvitationResponse]
 	startPasswordLogin         *connect.Client[pluxv1.StartPasswordLoginRequest, pluxv1.StartPasswordLoginResponse]
-	startOidcLogin             *connect.Client[pluxv1.StartOidcLoginRequest, pluxv1.StartOidcLoginResponse]
-	completeOidcLogin          *connect.Client[pluxv1.CompleteOidcLoginRequest, pluxv1.CompleteOidcLoginResponse]
 	completeMfa                *connect.Client[pluxv1.CompleteMfaRequest, pluxv1.CompleteMfaResponse]
+	verifySecondFactor         *connect.Client[pluxv1.VerifySecondFactorRequest, pluxv1.VerifySecondFactorResponse]
+	changePassword             *connect.Client[pluxv1.ChangePasswordRequest, pluxv1.ChangePasswordResponse]
 	logout                     *connect.Client[pluxv1.LogoutRequest, pluxv1.LogoutResponse]
 	enrollTotp                 *connect.Client[pluxv1.EnrollTotpRequest, pluxv1.EnrollTotpResponse]
-	enrollWebauthn             *connect.Client[pluxv1.EnrollWebauthnRequest, pluxv1.EnrollWebauthnResponse]
 	confirmFactor              *connect.Client[pluxv1.ConfirmFactorRequest, pluxv1.ConfirmFactorResponse]
 	listFactors                *connect.Client[pluxv1.ListFactorsRequest, pluxv1.ListFactorsResponse]
 	deleteFactor               *connect.Client[pluxv1.DeleteFactorRequest, pluxv1.DeleteFactorResponse]
 	startDeviceAuthorization   *connect.Client[pluxv1.StartDeviceAuthorizationRequest, pluxv1.StartDeviceAuthorizationResponse]
 	pollDeviceAuthorization    *connect.Client[pluxv1.PollDeviceAuthorizationRequest, pluxv1.PollDeviceAuthorizationResponse]
 	approveDeviceAuthorization *connect.Client[pluxv1.ApproveDeviceAuthorizationRequest, pluxv1.ApproveDeviceAuthorizationResponse]
+	denyDeviceAuthorization    *connect.Client[pluxv1.DenyDeviceAuthorizationRequest, pluxv1.DenyDeviceAuthorizationResponse]
 	createAccessToken          *connect.Client[pluxv1.CreateAccessTokenRequest, pluxv1.CreateAccessTokenResponse]
 	listAccessTokens           *connect.Client[pluxv1.ListAccessTokensRequest, pluxv1.ListAccessTokensResponse]
 	revokeAccessToken          *connect.Client[pluxv1.RevokeAccessTokenRequest, pluxv1.RevokeAccessTokenResponse]
+	createWorkloadIdentity     *connect.Client[pluxv1.CreateWorkloadIdentityRequest, pluxv1.CreateWorkloadIdentityResponse]
+	listWorkloadIdentities     *connect.Client[pluxv1.ListWorkloadIdentitiesRequest, pluxv1.ListWorkloadIdentitiesResponse]
+	deleteWorkloadIdentity     *connect.Client[pluxv1.DeleteWorkloadIdentityRequest, pluxv1.DeleteWorkloadIdentityResponse]
 	exchangeWorkloadIdentity   *connect.Client[pluxv1.ExchangeWorkloadIdentityRequest, pluxv1.ExchangeWorkloadIdentityResponse]
 	listAuditEntries           *connect.Client[pluxv1.ListAuditEntriesRequest, pluxv1.ListAuditEntriesResponse]
 }
@@ -286,24 +340,29 @@ func (c *identityServiceClient) GetCurrentUser(ctx context.Context, req *connect
 	return c.getCurrentUser.CallUnary(ctx, req)
 }
 
+// AcceptInvitation calls plux.v1.IdentityService.AcceptInvitation.
+func (c *identityServiceClient) AcceptInvitation(ctx context.Context, req *connect.Request[pluxv1.AcceptInvitationRequest]) (*connect.Response[pluxv1.AcceptInvitationResponse], error) {
+	return c.acceptInvitation.CallUnary(ctx, req)
+}
+
 // StartPasswordLogin calls plux.v1.IdentityService.StartPasswordLogin.
 func (c *identityServiceClient) StartPasswordLogin(ctx context.Context, req *connect.Request[pluxv1.StartPasswordLoginRequest]) (*connect.Response[pluxv1.StartPasswordLoginResponse], error) {
 	return c.startPasswordLogin.CallUnary(ctx, req)
 }
 
-// StartOidcLogin calls plux.v1.IdentityService.StartOidcLogin.
-func (c *identityServiceClient) StartOidcLogin(ctx context.Context, req *connect.Request[pluxv1.StartOidcLoginRequest]) (*connect.Response[pluxv1.StartOidcLoginResponse], error) {
-	return c.startOidcLogin.CallUnary(ctx, req)
-}
-
-// CompleteOidcLogin calls plux.v1.IdentityService.CompleteOidcLogin.
-func (c *identityServiceClient) CompleteOidcLogin(ctx context.Context, req *connect.Request[pluxv1.CompleteOidcLoginRequest]) (*connect.Response[pluxv1.CompleteOidcLoginResponse], error) {
-	return c.completeOidcLogin.CallUnary(ctx, req)
-}
-
 // CompleteMfa calls plux.v1.IdentityService.CompleteMfa.
 func (c *identityServiceClient) CompleteMfa(ctx context.Context, req *connect.Request[pluxv1.CompleteMfaRequest]) (*connect.Response[pluxv1.CompleteMfaResponse], error) {
 	return c.completeMfa.CallUnary(ctx, req)
+}
+
+// VerifySecondFactor calls plux.v1.IdentityService.VerifySecondFactor.
+func (c *identityServiceClient) VerifySecondFactor(ctx context.Context, req *connect.Request[pluxv1.VerifySecondFactorRequest]) (*connect.Response[pluxv1.VerifySecondFactorResponse], error) {
+	return c.verifySecondFactor.CallUnary(ctx, req)
+}
+
+// ChangePassword calls plux.v1.IdentityService.ChangePassword.
+func (c *identityServiceClient) ChangePassword(ctx context.Context, req *connect.Request[pluxv1.ChangePasswordRequest]) (*connect.Response[pluxv1.ChangePasswordResponse], error) {
+	return c.changePassword.CallUnary(ctx, req)
 }
 
 // Logout calls plux.v1.IdentityService.Logout.
@@ -314,11 +373,6 @@ func (c *identityServiceClient) Logout(ctx context.Context, req *connect.Request
 // EnrollTotp calls plux.v1.IdentityService.EnrollTotp.
 func (c *identityServiceClient) EnrollTotp(ctx context.Context, req *connect.Request[pluxv1.EnrollTotpRequest]) (*connect.Response[pluxv1.EnrollTotpResponse], error) {
 	return c.enrollTotp.CallUnary(ctx, req)
-}
-
-// EnrollWebauthn calls plux.v1.IdentityService.EnrollWebauthn.
-func (c *identityServiceClient) EnrollWebauthn(ctx context.Context, req *connect.Request[pluxv1.EnrollWebauthnRequest]) (*connect.Response[pluxv1.EnrollWebauthnResponse], error) {
-	return c.enrollWebauthn.CallUnary(ctx, req)
 }
 
 // ConfirmFactor calls plux.v1.IdentityService.ConfirmFactor.
@@ -351,6 +405,11 @@ func (c *identityServiceClient) ApproveDeviceAuthorization(ctx context.Context, 
 	return c.approveDeviceAuthorization.CallUnary(ctx, req)
 }
 
+// DenyDeviceAuthorization calls plux.v1.IdentityService.DenyDeviceAuthorization.
+func (c *identityServiceClient) DenyDeviceAuthorization(ctx context.Context, req *connect.Request[pluxv1.DenyDeviceAuthorizationRequest]) (*connect.Response[pluxv1.DenyDeviceAuthorizationResponse], error) {
+	return c.denyDeviceAuthorization.CallUnary(ctx, req)
+}
+
 // CreateAccessToken calls plux.v1.IdentityService.CreateAccessToken.
 func (c *identityServiceClient) CreateAccessToken(ctx context.Context, req *connect.Request[pluxv1.CreateAccessTokenRequest]) (*connect.Response[pluxv1.CreateAccessTokenResponse], error) {
 	return c.createAccessToken.CallUnary(ctx, req)
@@ -366,6 +425,21 @@ func (c *identityServiceClient) RevokeAccessToken(ctx context.Context, req *conn
 	return c.revokeAccessToken.CallUnary(ctx, req)
 }
 
+// CreateWorkloadIdentity calls plux.v1.IdentityService.CreateWorkloadIdentity.
+func (c *identityServiceClient) CreateWorkloadIdentity(ctx context.Context, req *connect.Request[pluxv1.CreateWorkloadIdentityRequest]) (*connect.Response[pluxv1.CreateWorkloadIdentityResponse], error) {
+	return c.createWorkloadIdentity.CallUnary(ctx, req)
+}
+
+// ListWorkloadIdentities calls plux.v1.IdentityService.ListWorkloadIdentities.
+func (c *identityServiceClient) ListWorkloadIdentities(ctx context.Context, req *connect.Request[pluxv1.ListWorkloadIdentitiesRequest]) (*connect.Response[pluxv1.ListWorkloadIdentitiesResponse], error) {
+	return c.listWorkloadIdentities.CallUnary(ctx, req)
+}
+
+// DeleteWorkloadIdentity calls plux.v1.IdentityService.DeleteWorkloadIdentity.
+func (c *identityServiceClient) DeleteWorkloadIdentity(ctx context.Context, req *connect.Request[pluxv1.DeleteWorkloadIdentityRequest]) (*connect.Response[pluxv1.DeleteWorkloadIdentityResponse], error) {
+	return c.deleteWorkloadIdentity.CallUnary(ctx, req)
+}
+
 // ExchangeWorkloadIdentity calls plux.v1.IdentityService.ExchangeWorkloadIdentity.
 func (c *identityServiceClient) ExchangeWorkloadIdentity(ctx context.Context, req *connect.Request[pluxv1.ExchangeWorkloadIdentityRequest]) (*connect.Response[pluxv1.ExchangeWorkloadIdentityResponse], error) {
 	return c.exchangeWorkloadIdentity.CallUnary(ctx, req)
@@ -379,35 +453,49 @@ func (c *identityServiceClient) ListAuditEntries(ctx context.Context, req *conne
 // IdentityServiceHandler is an implementation of the plux.v1.IdentityService service.
 type IdentityServiceHandler interface {
 	GetCurrentUser(context.Context, *connect.Request[pluxv1.GetCurrentUserRequest]) (*connect.Response[pluxv1.GetCurrentUserResponse], error)
-	// StartPasswordLogin verifies a built-in account's password. It never
-	// returns a session on its own when the account has a factor enrolled:
-	// the response carries a pending challenge to complete (SEC-100).
+	// AcceptInvitation sets the password of an invited account, using the
+	// one-time invitation an administrator received for it.
+	AcceptInvitation(context.Context, *connect.Request[pluxv1.AcceptInvitationRequest]) (*connect.Response[pluxv1.AcceptInvitationResponse], error)
+	// StartPasswordLogin verifies a password. When the account has a
+	// confirmed second factor it returns a challenge instead of a session
+	// (SEC-100).
 	StartPasswordLogin(context.Context, *connect.Request[pluxv1.StartPasswordLoginRequest]) (*connect.Response[pluxv1.StartPasswordLoginResponse], error)
-	// StartOidcLogin returns the authorization URL and the state to use.
-	StartOidcLogin(context.Context, *connect.Request[pluxv1.StartOidcLoginRequest]) (*connect.Response[pluxv1.StartOidcLoginResponse], error)
-	// CompleteOidcLogin exchanges the authorization code. OAuth tokens stay
-	// on the server; the caller receives only a session (SEC-101).
-	CompleteOidcLogin(context.Context, *connect.Request[pluxv1.CompleteOidcLoginRequest]) (*connect.Response[pluxv1.CompleteOidcLoginResponse], error)
-	// CompleteMfa answers a pending challenge and completes the login.
+	// CompleteMfa answers a challenge with a one-time code.
 	CompleteMfa(context.Context, *connect.Request[pluxv1.CompleteMfaRequest]) (*connect.Response[pluxv1.CompleteMfaResponse], error)
+	// VerifySecondFactor presents a one-time code within an existing
+	// session, which capabilities that require one then accept.
+	VerifySecondFactor(context.Context, *connect.Request[pluxv1.VerifySecondFactorRequest]) (*connect.Response[pluxv1.VerifySecondFactorResponse], error)
+	ChangePassword(context.Context, *connect.Request[pluxv1.ChangePasswordRequest]) (*connect.Response[pluxv1.ChangePasswordResponse], error)
 	Logout(context.Context, *connect.Request[pluxv1.LogoutRequest]) (*connect.Response[pluxv1.LogoutResponse], error)
 	EnrollTotp(context.Context, *connect.Request[pluxv1.EnrollTotpRequest]) (*connect.Response[pluxv1.EnrollTotpResponse], error)
-	EnrollWebauthn(context.Context, *connect.Request[pluxv1.EnrollWebauthnRequest]) (*connect.Response[pluxv1.EnrollWebauthnResponse], error)
 	ConfirmFactor(context.Context, *connect.Request[pluxv1.ConfirmFactorRequest]) (*connect.Response[pluxv1.ConfirmFactorResponse], error)
 	ListFactors(context.Context, *connect.Request[pluxv1.ListFactorsRequest]) (*connect.Response[pluxv1.ListFactorsResponse], error)
 	DeleteFactor(context.Context, *connect.Request[pluxv1.DeleteFactorRequest]) (*connect.Response[pluxv1.DeleteFactorResponse], error)
 	// StartDeviceAuthorization begins the OAuth 2.0 device authorization
-	// grant that `plux login` uses (CLI-002, RFC 8628).
+	// grant that `plux login` uses (CLI-002, RFC 8628). It needs no
+	// credential.
 	StartDeviceAuthorization(context.Context, *connect.Request[pluxv1.StartDeviceAuthorizationRequest]) (*connect.Response[pluxv1.StartDeviceAuthorizationResponse], error)
-	// PollDeviceAuthorization exchanges the device code once approved.
+	// PollDeviceAuthorization returns the token once, after approval.
 	PollDeviceAuthorization(context.Context, *connect.Request[pluxv1.PollDeviceAuthorizationRequest]) (*connect.Response[pluxv1.PollDeviceAuthorizationResponse], error)
-	// ApproveDeviceAuthorization is called by the signed-in browser.
+	// ApproveDeviceAuthorization is called by a signed-in user who read
+	// the user code from the terminal.
 	ApproveDeviceAuthorization(context.Context, *connect.Request[pluxv1.ApproveDeviceAuthorizationRequest]) (*connect.Response[pluxv1.ApproveDeviceAuthorizationResponse], error)
+	DenyDeviceAuthorization(context.Context, *connect.Request[pluxv1.DenyDeviceAuthorizationRequest]) (*connect.Response[pluxv1.DenyDeviceAuthorizationResponse], error)
+	// CreateAccessToken issues a personal access token. It needs a second
+	// factor in the session, because the token outlives the session and
+	// carries its capabilities (SRV-064).
 	CreateAccessToken(context.Context, *connect.Request[pluxv1.CreateAccessTokenRequest]) (*connect.Response[pluxv1.CreateAccessTokenResponse], error)
 	ListAccessTokens(context.Context, *connect.Request[pluxv1.ListAccessTokensRequest]) (*connect.Response[pluxv1.ListAccessTokensResponse], error)
 	RevokeAccessToken(context.Context, *connect.Request[pluxv1.RevokeAccessTokenRequest]) (*connect.Response[pluxv1.RevokeAccessTokenResponse], error)
-	// ExchangeWorkloadIdentity trades a CI OIDC token for a scoped access
-	// token, so pipelines need no long-lived secret (SRV-064, CLI-002).
+	// CreateWorkloadIdentity lets CI workloads matching an issuer,
+	// audience and subject pattern exchange their identity tokens for
+	// tokens of this organisation with fixed scopes (SRV-064).
+	CreateWorkloadIdentity(context.Context, *connect.Request[pluxv1.CreateWorkloadIdentityRequest]) (*connect.Response[pluxv1.CreateWorkloadIdentityResponse], error)
+	ListWorkloadIdentities(context.Context, *connect.Request[pluxv1.ListWorkloadIdentitiesRequest]) (*connect.Response[pluxv1.ListWorkloadIdentitiesResponse], error)
+	DeleteWorkloadIdentity(context.Context, *connect.Request[pluxv1.DeleteWorkloadIdentityRequest]) (*connect.Response[pluxv1.DeleteWorkloadIdentityResponse], error)
+	// ExchangeWorkloadIdentity trades a CI identity token for a
+	// short-lived Plux token, so pipelines hold no long-lived secret. It
+	// needs no other credential: the identity token is the credential.
 	ExchangeWorkloadIdentity(context.Context, *connect.Request[pluxv1.ExchangeWorkloadIdentityRequest]) (*connect.Response[pluxv1.ExchangeWorkloadIdentityResponse], error)
 	ListAuditEntries(context.Context, *connect.Request[pluxv1.ListAuditEntriesRequest]) (*connect.Response[pluxv1.ListAuditEntriesResponse], error)
 }
@@ -425,28 +513,34 @@ func NewIdentityServiceHandler(svc IdentityServiceHandler, opts ...connect.Handl
 		connect.WithSchema(identityServiceMethods.ByName("GetCurrentUser")),
 		connect.WithHandlerOptions(opts...),
 	)
+	identityServiceAcceptInvitationHandler := connect.NewUnaryHandler(
+		IdentityServiceAcceptInvitationProcedure,
+		svc.AcceptInvitation,
+		connect.WithSchema(identityServiceMethods.ByName("AcceptInvitation")),
+		connect.WithHandlerOptions(opts...),
+	)
 	identityServiceStartPasswordLoginHandler := connect.NewUnaryHandler(
 		IdentityServiceStartPasswordLoginProcedure,
 		svc.StartPasswordLogin,
 		connect.WithSchema(identityServiceMethods.ByName("StartPasswordLogin")),
 		connect.WithHandlerOptions(opts...),
 	)
-	identityServiceStartOidcLoginHandler := connect.NewUnaryHandler(
-		IdentityServiceStartOidcLoginProcedure,
-		svc.StartOidcLogin,
-		connect.WithSchema(identityServiceMethods.ByName("StartOidcLogin")),
-		connect.WithHandlerOptions(opts...),
-	)
-	identityServiceCompleteOidcLoginHandler := connect.NewUnaryHandler(
-		IdentityServiceCompleteOidcLoginProcedure,
-		svc.CompleteOidcLogin,
-		connect.WithSchema(identityServiceMethods.ByName("CompleteOidcLogin")),
-		connect.WithHandlerOptions(opts...),
-	)
 	identityServiceCompleteMfaHandler := connect.NewUnaryHandler(
 		IdentityServiceCompleteMfaProcedure,
 		svc.CompleteMfa,
 		connect.WithSchema(identityServiceMethods.ByName("CompleteMfa")),
+		connect.WithHandlerOptions(opts...),
+	)
+	identityServiceVerifySecondFactorHandler := connect.NewUnaryHandler(
+		IdentityServiceVerifySecondFactorProcedure,
+		svc.VerifySecondFactor,
+		connect.WithSchema(identityServiceMethods.ByName("VerifySecondFactor")),
+		connect.WithHandlerOptions(opts...),
+	)
+	identityServiceChangePasswordHandler := connect.NewUnaryHandler(
+		IdentityServiceChangePasswordProcedure,
+		svc.ChangePassword,
+		connect.WithSchema(identityServiceMethods.ByName("ChangePassword")),
 		connect.WithHandlerOptions(opts...),
 	)
 	identityServiceLogoutHandler := connect.NewUnaryHandler(
@@ -459,12 +553,6 @@ func NewIdentityServiceHandler(svc IdentityServiceHandler, opts ...connect.Handl
 		IdentityServiceEnrollTotpProcedure,
 		svc.EnrollTotp,
 		connect.WithSchema(identityServiceMethods.ByName("EnrollTotp")),
-		connect.WithHandlerOptions(opts...),
-	)
-	identityServiceEnrollWebauthnHandler := connect.NewUnaryHandler(
-		IdentityServiceEnrollWebauthnProcedure,
-		svc.EnrollWebauthn,
-		connect.WithSchema(identityServiceMethods.ByName("EnrollWebauthn")),
 		connect.WithHandlerOptions(opts...),
 	)
 	identityServiceConfirmFactorHandler := connect.NewUnaryHandler(
@@ -503,6 +591,12 @@ func NewIdentityServiceHandler(svc IdentityServiceHandler, opts ...connect.Handl
 		connect.WithSchema(identityServiceMethods.ByName("ApproveDeviceAuthorization")),
 		connect.WithHandlerOptions(opts...),
 	)
+	identityServiceDenyDeviceAuthorizationHandler := connect.NewUnaryHandler(
+		IdentityServiceDenyDeviceAuthorizationProcedure,
+		svc.DenyDeviceAuthorization,
+		connect.WithSchema(identityServiceMethods.ByName("DenyDeviceAuthorization")),
+		connect.WithHandlerOptions(opts...),
+	)
 	identityServiceCreateAccessTokenHandler := connect.NewUnaryHandler(
 		IdentityServiceCreateAccessTokenProcedure,
 		svc.CreateAccessToken,
@@ -521,6 +615,24 @@ func NewIdentityServiceHandler(svc IdentityServiceHandler, opts ...connect.Handl
 		connect.WithSchema(identityServiceMethods.ByName("RevokeAccessToken")),
 		connect.WithHandlerOptions(opts...),
 	)
+	identityServiceCreateWorkloadIdentityHandler := connect.NewUnaryHandler(
+		IdentityServiceCreateWorkloadIdentityProcedure,
+		svc.CreateWorkloadIdentity,
+		connect.WithSchema(identityServiceMethods.ByName("CreateWorkloadIdentity")),
+		connect.WithHandlerOptions(opts...),
+	)
+	identityServiceListWorkloadIdentitiesHandler := connect.NewUnaryHandler(
+		IdentityServiceListWorkloadIdentitiesProcedure,
+		svc.ListWorkloadIdentities,
+		connect.WithSchema(identityServiceMethods.ByName("ListWorkloadIdentities")),
+		connect.WithHandlerOptions(opts...),
+	)
+	identityServiceDeleteWorkloadIdentityHandler := connect.NewUnaryHandler(
+		IdentityServiceDeleteWorkloadIdentityProcedure,
+		svc.DeleteWorkloadIdentity,
+		connect.WithSchema(identityServiceMethods.ByName("DeleteWorkloadIdentity")),
+		connect.WithHandlerOptions(opts...),
+	)
 	identityServiceExchangeWorkloadIdentityHandler := connect.NewUnaryHandler(
 		IdentityServiceExchangeWorkloadIdentityProcedure,
 		svc.ExchangeWorkloadIdentity,
@@ -537,20 +649,20 @@ func NewIdentityServiceHandler(svc IdentityServiceHandler, opts ...connect.Handl
 		switch r.URL.Path {
 		case IdentityServiceGetCurrentUserProcedure:
 			identityServiceGetCurrentUserHandler.ServeHTTP(w, r)
+		case IdentityServiceAcceptInvitationProcedure:
+			identityServiceAcceptInvitationHandler.ServeHTTP(w, r)
 		case IdentityServiceStartPasswordLoginProcedure:
 			identityServiceStartPasswordLoginHandler.ServeHTTP(w, r)
-		case IdentityServiceStartOidcLoginProcedure:
-			identityServiceStartOidcLoginHandler.ServeHTTP(w, r)
-		case IdentityServiceCompleteOidcLoginProcedure:
-			identityServiceCompleteOidcLoginHandler.ServeHTTP(w, r)
 		case IdentityServiceCompleteMfaProcedure:
 			identityServiceCompleteMfaHandler.ServeHTTP(w, r)
+		case IdentityServiceVerifySecondFactorProcedure:
+			identityServiceVerifySecondFactorHandler.ServeHTTP(w, r)
+		case IdentityServiceChangePasswordProcedure:
+			identityServiceChangePasswordHandler.ServeHTTP(w, r)
 		case IdentityServiceLogoutProcedure:
 			identityServiceLogoutHandler.ServeHTTP(w, r)
 		case IdentityServiceEnrollTotpProcedure:
 			identityServiceEnrollTotpHandler.ServeHTTP(w, r)
-		case IdentityServiceEnrollWebauthnProcedure:
-			identityServiceEnrollWebauthnHandler.ServeHTTP(w, r)
 		case IdentityServiceConfirmFactorProcedure:
 			identityServiceConfirmFactorHandler.ServeHTTP(w, r)
 		case IdentityServiceListFactorsProcedure:
@@ -563,12 +675,20 @@ func NewIdentityServiceHandler(svc IdentityServiceHandler, opts ...connect.Handl
 			identityServicePollDeviceAuthorizationHandler.ServeHTTP(w, r)
 		case IdentityServiceApproveDeviceAuthorizationProcedure:
 			identityServiceApproveDeviceAuthorizationHandler.ServeHTTP(w, r)
+		case IdentityServiceDenyDeviceAuthorizationProcedure:
+			identityServiceDenyDeviceAuthorizationHandler.ServeHTTP(w, r)
 		case IdentityServiceCreateAccessTokenProcedure:
 			identityServiceCreateAccessTokenHandler.ServeHTTP(w, r)
 		case IdentityServiceListAccessTokensProcedure:
 			identityServiceListAccessTokensHandler.ServeHTTP(w, r)
 		case IdentityServiceRevokeAccessTokenProcedure:
 			identityServiceRevokeAccessTokenHandler.ServeHTTP(w, r)
+		case IdentityServiceCreateWorkloadIdentityProcedure:
+			identityServiceCreateWorkloadIdentityHandler.ServeHTTP(w, r)
+		case IdentityServiceListWorkloadIdentitiesProcedure:
+			identityServiceListWorkloadIdentitiesHandler.ServeHTTP(w, r)
+		case IdentityServiceDeleteWorkloadIdentityProcedure:
+			identityServiceDeleteWorkloadIdentityHandler.ServeHTTP(w, r)
 		case IdentityServiceExchangeWorkloadIdentityProcedure:
 			identityServiceExchangeWorkloadIdentityHandler.ServeHTTP(w, r)
 		case IdentityServiceListAuditEntriesProcedure:
@@ -586,20 +706,24 @@ func (UnimplementedIdentityServiceHandler) GetCurrentUser(context.Context, *conn
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.GetCurrentUser is not implemented"))
 }
 
+func (UnimplementedIdentityServiceHandler) AcceptInvitation(context.Context, *connect.Request[pluxv1.AcceptInvitationRequest]) (*connect.Response[pluxv1.AcceptInvitationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.AcceptInvitation is not implemented"))
+}
+
 func (UnimplementedIdentityServiceHandler) StartPasswordLogin(context.Context, *connect.Request[pluxv1.StartPasswordLoginRequest]) (*connect.Response[pluxv1.StartPasswordLoginResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.StartPasswordLogin is not implemented"))
 }
 
-func (UnimplementedIdentityServiceHandler) StartOidcLogin(context.Context, *connect.Request[pluxv1.StartOidcLoginRequest]) (*connect.Response[pluxv1.StartOidcLoginResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.StartOidcLogin is not implemented"))
-}
-
-func (UnimplementedIdentityServiceHandler) CompleteOidcLogin(context.Context, *connect.Request[pluxv1.CompleteOidcLoginRequest]) (*connect.Response[pluxv1.CompleteOidcLoginResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.CompleteOidcLogin is not implemented"))
-}
-
 func (UnimplementedIdentityServiceHandler) CompleteMfa(context.Context, *connect.Request[pluxv1.CompleteMfaRequest]) (*connect.Response[pluxv1.CompleteMfaResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.CompleteMfa is not implemented"))
+}
+
+func (UnimplementedIdentityServiceHandler) VerifySecondFactor(context.Context, *connect.Request[pluxv1.VerifySecondFactorRequest]) (*connect.Response[pluxv1.VerifySecondFactorResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.VerifySecondFactor is not implemented"))
+}
+
+func (UnimplementedIdentityServiceHandler) ChangePassword(context.Context, *connect.Request[pluxv1.ChangePasswordRequest]) (*connect.Response[pluxv1.ChangePasswordResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.ChangePassword is not implemented"))
 }
 
 func (UnimplementedIdentityServiceHandler) Logout(context.Context, *connect.Request[pluxv1.LogoutRequest]) (*connect.Response[pluxv1.LogoutResponse], error) {
@@ -608,10 +732,6 @@ func (UnimplementedIdentityServiceHandler) Logout(context.Context, *connect.Requ
 
 func (UnimplementedIdentityServiceHandler) EnrollTotp(context.Context, *connect.Request[pluxv1.EnrollTotpRequest]) (*connect.Response[pluxv1.EnrollTotpResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.EnrollTotp is not implemented"))
-}
-
-func (UnimplementedIdentityServiceHandler) EnrollWebauthn(context.Context, *connect.Request[pluxv1.EnrollWebauthnRequest]) (*connect.Response[pluxv1.EnrollWebauthnResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.EnrollWebauthn is not implemented"))
 }
 
 func (UnimplementedIdentityServiceHandler) ConfirmFactor(context.Context, *connect.Request[pluxv1.ConfirmFactorRequest]) (*connect.Response[pluxv1.ConfirmFactorResponse], error) {
@@ -638,6 +758,10 @@ func (UnimplementedIdentityServiceHandler) ApproveDeviceAuthorization(context.Co
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.ApproveDeviceAuthorization is not implemented"))
 }
 
+func (UnimplementedIdentityServiceHandler) DenyDeviceAuthorization(context.Context, *connect.Request[pluxv1.DenyDeviceAuthorizationRequest]) (*connect.Response[pluxv1.DenyDeviceAuthorizationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.DenyDeviceAuthorization is not implemented"))
+}
+
 func (UnimplementedIdentityServiceHandler) CreateAccessToken(context.Context, *connect.Request[pluxv1.CreateAccessTokenRequest]) (*connect.Response[pluxv1.CreateAccessTokenResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.CreateAccessToken is not implemented"))
 }
@@ -648,6 +772,18 @@ func (UnimplementedIdentityServiceHandler) ListAccessTokens(context.Context, *co
 
 func (UnimplementedIdentityServiceHandler) RevokeAccessToken(context.Context, *connect.Request[pluxv1.RevokeAccessTokenRequest]) (*connect.Response[pluxv1.RevokeAccessTokenResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.RevokeAccessToken is not implemented"))
+}
+
+func (UnimplementedIdentityServiceHandler) CreateWorkloadIdentity(context.Context, *connect.Request[pluxv1.CreateWorkloadIdentityRequest]) (*connect.Response[pluxv1.CreateWorkloadIdentityResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.CreateWorkloadIdentity is not implemented"))
+}
+
+func (UnimplementedIdentityServiceHandler) ListWorkloadIdentities(context.Context, *connect.Request[pluxv1.ListWorkloadIdentitiesRequest]) (*connect.Response[pluxv1.ListWorkloadIdentitiesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.ListWorkloadIdentities is not implemented"))
+}
+
+func (UnimplementedIdentityServiceHandler) DeleteWorkloadIdentity(context.Context, *connect.Request[pluxv1.DeleteWorkloadIdentityRequest]) (*connect.Response[pluxv1.DeleteWorkloadIdentityResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.DeleteWorkloadIdentity is not implemented"))
 }
 
 func (UnimplementedIdentityServiceHandler) ExchangeWorkloadIdentity(context.Context, *connect.Request[pluxv1.ExchangeWorkloadIdentityRequest]) (*connect.Response[pluxv1.ExchangeWorkloadIdentityResponse], error) {

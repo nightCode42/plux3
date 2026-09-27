@@ -39,15 +39,11 @@ const (
 	// TokenServiceIssueDeviceTokenProcedure is the fully-qualified name of the TokenService's
 	// IssueDeviceToken RPC.
 	TokenServiceIssueDeviceTokenProcedure = "/plux.v1.TokenService/IssueDeviceToken"
-	// TokenServiceRefreshDeviceTokenProcedure is the fully-qualified name of the TokenService's
-	// RefreshDeviceToken RPC.
-	TokenServiceRefreshDeviceTokenProcedure = "/plux.v1.TokenService/RefreshDeviceToken"
 )
 
 // TokenServiceClient is a client for the plux.v1.TokenService service.
 type TokenServiceClient interface {
 	IssueDeviceToken(context.Context, *connect.Request[pluxv1.IssueDeviceTokenRequest]) (*connect.Response[pluxv1.IssueDeviceTokenResponse], error)
-	RefreshDeviceToken(context.Context, *connect.Request[pluxv1.RefreshDeviceTokenRequest]) (*connect.Response[pluxv1.RefreshDeviceTokenResponse], error)
 }
 
 // NewTokenServiceClient constructs a client for the plux.v1.TokenService service. By default, it
@@ -67,19 +63,12 @@ func NewTokenServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(tokenServiceMethods.ByName("IssueDeviceToken")),
 			connect.WithClientOptions(opts...),
 		),
-		refreshDeviceToken: connect.NewClient[pluxv1.RefreshDeviceTokenRequest, pluxv1.RefreshDeviceTokenResponse](
-			httpClient,
-			baseURL+TokenServiceRefreshDeviceTokenProcedure,
-			connect.WithSchema(tokenServiceMethods.ByName("RefreshDeviceToken")),
-			connect.WithClientOptions(opts...),
-		),
 	}
 }
 
 // tokenServiceClient implements TokenServiceClient.
 type tokenServiceClient struct {
-	issueDeviceToken   *connect.Client[pluxv1.IssueDeviceTokenRequest, pluxv1.IssueDeviceTokenResponse]
-	refreshDeviceToken *connect.Client[pluxv1.RefreshDeviceTokenRequest, pluxv1.RefreshDeviceTokenResponse]
+	issueDeviceToken *connect.Client[pluxv1.IssueDeviceTokenRequest, pluxv1.IssueDeviceTokenResponse]
 }
 
 // IssueDeviceToken calls plux.v1.TokenService.IssueDeviceToken.
@@ -87,15 +76,9 @@ func (c *tokenServiceClient) IssueDeviceToken(ctx context.Context, req *connect.
 	return c.issueDeviceToken.CallUnary(ctx, req)
 }
 
-// RefreshDeviceToken calls plux.v1.TokenService.RefreshDeviceToken.
-func (c *tokenServiceClient) RefreshDeviceToken(ctx context.Context, req *connect.Request[pluxv1.RefreshDeviceTokenRequest]) (*connect.Response[pluxv1.RefreshDeviceTokenResponse], error) {
-	return c.refreshDeviceToken.CallUnary(ctx, req)
-}
-
 // TokenServiceHandler is an implementation of the plux.v1.TokenService service.
 type TokenServiceHandler interface {
 	IssueDeviceToken(context.Context, *connect.Request[pluxv1.IssueDeviceTokenRequest]) (*connect.Response[pluxv1.IssueDeviceTokenResponse], error)
-	RefreshDeviceToken(context.Context, *connect.Request[pluxv1.RefreshDeviceTokenRequest]) (*connect.Response[pluxv1.RefreshDeviceTokenResponse], error)
 }
 
 // NewTokenServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -111,18 +94,10 @@ func NewTokenServiceHandler(svc TokenServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(tokenServiceMethods.ByName("IssueDeviceToken")),
 		connect.WithHandlerOptions(opts...),
 	)
-	tokenServiceRefreshDeviceTokenHandler := connect.NewUnaryHandler(
-		TokenServiceRefreshDeviceTokenProcedure,
-		svc.RefreshDeviceToken,
-		connect.WithSchema(tokenServiceMethods.ByName("RefreshDeviceToken")),
-		connect.WithHandlerOptions(opts...),
-	)
 	return "/plux.v1.TokenService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case TokenServiceIssueDeviceTokenProcedure:
 			tokenServiceIssueDeviceTokenHandler.ServeHTTP(w, r)
-		case TokenServiceRefreshDeviceTokenProcedure:
-			tokenServiceRefreshDeviceTokenHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -134,8 +109,4 @@ type UnimplementedTokenServiceHandler struct{}
 
 func (UnimplementedTokenServiceHandler) IssueDeviceToken(context.Context, *connect.Request[pluxv1.IssueDeviceTokenRequest]) (*connect.Response[pluxv1.IssueDeviceTokenResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.TokenService.IssueDeviceToken is not implemented"))
-}
-
-func (UnimplementedTokenServiceHandler) RefreshDeviceToken(context.Context, *connect.Request[pluxv1.RefreshDeviceTokenRequest]) (*connect.Response[pluxv1.RefreshDeviceTokenResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.TokenService.RefreshDeviceToken is not implemented"))
 }

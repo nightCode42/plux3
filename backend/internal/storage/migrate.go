@@ -93,6 +93,7 @@ func LoadMigrations(fsys fs.FS) ([]Migration, error) {
 type Conn interface {
 	Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
 	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+	Begin(ctx context.Context) (pgx.Tx, error)
 }
 
 // Migrate applies every migration that has not been applied yet, in
@@ -163,17 +164,26 @@ func appliedMigrations(ctx context.Context, c Conn) (map[int]string, error) {
 	return applied, nil
 }
 
-// applyMigration runs one migration and records it. PostgreSQL runs a
-// multi-statement Exec in one implicit transaction, so a migration that
-// fails half way leaves nothing behind.
+// applyMigration runs one migration and records it in one transaction,
+// so a crash at any point leaves the migration either applied and
+// recorded, or neither — never applied but unrecorded, which would make
+// the next start run it twice.
 func applyMigration(ctx context.Context, c Conn, m Migration) error {
-	if _, err := c.Exec(ctx, m.SQL); err != nil {
+	tx, err := c.Begin(ctx)
+	if err != nil {
+		return fmt.Errorf("migration %04d_%s: begin: %w", m.Version, m.Name, err)
+	}
+	defer func() { _ = tx.Rollback(context.WithoutCancel(ctx)) }()
+	if _, err := tx.Exec(ctx, m.SQL); err != nil {
 		return fmt.Errorf("migration %04d_%s: %w", m.Version, m.Name, err)
 	}
-	if _, err := c.Exec(ctx,
+	if _, err := tx.Exec(ctx,
 		`INSERT INTO plux_migrations (version, name, checksum) VALUES ($1, $2, $3)`,
 		m.Version, m.Name, m.Checksum); err != nil {
 		return fmt.Errorf("record migration %04d_%s: %w", m.Version, m.Name, err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("migration %04d_%s: commit: %w", m.Version, m.Name, err)
 	}
 	return nil
 }

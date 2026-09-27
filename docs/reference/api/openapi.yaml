@@ -312,6 +312,85 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.GetAppResponse'
+  /plux.v1.AppService/GrantAccess:
+    post:
+      tags:
+        - plux.v1.AppService
+      summary: GrantAccess
+      description: |-
+        GrantAccess gives a team or a user a role on one app (GOV-001).
+         Organisation-wide roles apply to every app already.
+      operationId: plux.v1.AppService.GrantAccess
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.GrantAccessRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.GrantAccessResponse'
+  /plux.v1.AppService/ListAccess:
+    post:
+      tags:
+        - plux.v1.AppService
+      summary: ListAccess
+      operationId: plux.v1.AppService.ListAccess
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.ListAccessRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.ListAccessResponse'
   /plux.v1.AppService/ListAppLimits:
     post:
       tags:
@@ -654,6 +733,44 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.RestoreFromTrashResponse'
+  /plux.v1.AppService/RevokeAccess:
+    post:
+      tags:
+        - plux.v1.AppService
+      summary: RevokeAccess
+      operationId: plux.v1.AppService.RevokeAccess
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.RevokeAccessRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.RevokeAccessResponse'
   /plux.v1.AppService/SetAppLimit:
     post:
       tags:
@@ -1742,12 +1859,55 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.ValidatePageResponse'
+  /plux.v1.IdentityService/AcceptInvitation:
+    post:
+      tags:
+        - plux.v1.IdentityService
+      summary: AcceptInvitation
+      description: |-
+        AcceptInvitation sets the password of an invited account, using the
+         one-time invitation an administrator received for it.
+      operationId: plux.v1.IdentityService.AcceptInvitation
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.AcceptInvitationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.AcceptInvitationResponse'
   /plux.v1.IdentityService/ApproveDeviceAuthorization:
     post:
       tags:
         - plux.v1.IdentityService
       summary: ApproveDeviceAuthorization
-      description: ApproveDeviceAuthorization is called by the signed-in browser.
+      description: |-
+        ApproveDeviceAuthorization is called by a signed-in user who read
+         the user code from the terminal.
       operationId: plux.v1.IdentityService.ApproveDeviceAuthorization
       parameters:
         - name: Connect-Protocol-Version
@@ -1781,12 +1941,50 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.ApproveDeviceAuthorizationResponse'
+  /plux.v1.IdentityService/ChangePassword:
+    post:
+      tags:
+        - plux.v1.IdentityService
+      summary: ChangePassword
+      operationId: plux.v1.IdentityService.ChangePassword
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.ChangePasswordRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.ChangePasswordResponse'
   /plux.v1.IdentityService/CompleteMfa:
     post:
       tags:
         - plux.v1.IdentityService
       summary: CompleteMfa
-      description: CompleteMfa answers a pending challenge and completes the login.
+      description: CompleteMfa answers a challenge with a one-time code.
       operationId: plux.v1.IdentityService.CompleteMfa
       parameters:
         - name: Connect-Protocol-Version
@@ -1820,47 +2018,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.CompleteMfaResponse'
-  /plux.v1.IdentityService/CompleteOidcLogin:
-    post:
-      tags:
-        - plux.v1.IdentityService
-      summary: CompleteOidcLogin
-      description: |-
-        CompleteOidcLogin exchanges the authorization code. OAuth tokens stay
-         on the server; the caller receives only a session (SEC-101).
-      operationId: plux.v1.IdentityService.CompleteOidcLogin
-      parameters:
-        - name: Connect-Protocol-Version
-          in: header
-          description: Define the version of the Connect protocol
-          schema:
-            $ref: '#/components/schemas/connect-protocol-version'
-          example: 1
-        - name: Connect-Timeout-Ms
-          in: header
-          description: Define the timeout, in ms
-          schema:
-            $ref: '#/components/schemas/connect-timeout-header'
-          example: 1000
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/plux.v1.CompleteOidcLoginRequest'
-        required: true
-      responses:
-        default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/connect.error'
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/plux.v1.CompleteOidcLoginResponse'
   /plux.v1.IdentityService/ConfirmFactor:
     post:
       tags:
@@ -1904,6 +2061,10 @@ paths:
       tags:
         - plux.v1.IdentityService
       summary: CreateAccessToken
+      description: |-
+        CreateAccessToken issues a personal access token. It needs a second
+         factor in the session, because the token outlives the session and
+         carries its capabilities (SRV-064).
       operationId: plux.v1.IdentityService.CreateAccessToken
       parameters:
         - name: Connect-Protocol-Version
@@ -1937,6 +2098,48 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.CreateAccessTokenResponse'
+  /plux.v1.IdentityService/CreateWorkloadIdentity:
+    post:
+      tags:
+        - plux.v1.IdentityService
+      summary: CreateWorkloadIdentity
+      description: |-
+        CreateWorkloadIdentity lets CI workloads matching an issuer,
+         audience and subject pattern exchange their identity tokens for
+         tokens of this organisation with fixed scopes (SRV-064).
+      operationId: plux.v1.IdentityService.CreateWorkloadIdentity
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.CreateWorkloadIdentityRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.CreateWorkloadIdentityResponse'
   /plux.v1.IdentityService/DeleteFactor:
     post:
       tags:
@@ -1975,6 +2178,82 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.DeleteFactorResponse'
+  /plux.v1.IdentityService/DeleteWorkloadIdentity:
+    post:
+      tags:
+        - plux.v1.IdentityService
+      summary: DeleteWorkloadIdentity
+      operationId: plux.v1.IdentityService.DeleteWorkloadIdentity
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.DeleteWorkloadIdentityRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.DeleteWorkloadIdentityResponse'
+  /plux.v1.IdentityService/DenyDeviceAuthorization:
+    post:
+      tags:
+        - plux.v1.IdentityService
+      summary: DenyDeviceAuthorization
+      operationId: plux.v1.IdentityService.DenyDeviceAuthorization
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.DenyDeviceAuthorizationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.DenyDeviceAuthorizationResponse'
   /plux.v1.IdentityService/EnrollTotp:
     post:
       tags:
@@ -2013,52 +2292,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.EnrollTotpResponse'
-  /plux.v1.IdentityService/EnrollWebauthn:
-    post:
-      tags:
-        - plux.v1.IdentityService
-      summary: EnrollWebauthn
-      operationId: plux.v1.IdentityService.EnrollWebauthn
-      parameters:
-        - name: Connect-Protocol-Version
-          in: header
-          description: Define the version of the Connect protocol
-          schema:
-            $ref: '#/components/schemas/connect-protocol-version'
-          example: 1
-        - name: Connect-Timeout-Ms
-          in: header
-          description: Define the timeout, in ms
-          schema:
-            $ref: '#/components/schemas/connect-timeout-header'
-          example: 1000
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/plux.v1.EnrollWebauthnRequest'
-        required: true
-      responses:
-        default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/connect.error'
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/plux.v1.EnrollWebauthnResponse'
   /plux.v1.IdentityService/ExchangeWorkloadIdentity:
     post:
       tags:
         - plux.v1.IdentityService
       summary: ExchangeWorkloadIdentity
       description: |-
-        ExchangeWorkloadIdentity trades a CI OIDC token for a scoped access
-         token, so pipelines need no long-lived secret (SRV-064, CLI-002).
+        ExchangeWorkloadIdentity trades a CI identity token for a
+         short-lived Plux token, so pipelines hold no long-lived secret. It
+         needs no other credential: the identity token is the credential.
       operationId: plux.v1.IdentityService.ExchangeWorkloadIdentity
       parameters:
         - name: Connect-Protocol-Version
@@ -2244,6 +2486,44 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.ListFactorsResponse'
+  /plux.v1.IdentityService/ListWorkloadIdentities:
+    post:
+      tags:
+        - plux.v1.IdentityService
+      summary: ListWorkloadIdentities
+      operationId: plux.v1.IdentityService.ListWorkloadIdentities
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.ListWorkloadIdentitiesRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.ListWorkloadIdentitiesResponse'
   /plux.v1.IdentityService/Logout:
     post:
       tags:
@@ -2287,7 +2567,7 @@ paths:
       tags:
         - plux.v1.IdentityService
       summary: PollDeviceAuthorization
-      description: PollDeviceAuthorization exchanges the device code once approved.
+      description: PollDeviceAuthorization returns the token once, after approval.
       operationId: plux.v1.IdentityService.PollDeviceAuthorization
       parameters:
         - name: Connect-Protocol-Version
@@ -2366,7 +2646,8 @@ paths:
       summary: StartDeviceAuthorization
       description: |-
         StartDeviceAuthorization begins the OAuth 2.0 device authorization
-         grant that `plux login` uses (CLI-002, RFC 8628).
+         grant that `plux login` uses (CLI-002, RFC 8628). It needs no
+         credential.
       operationId: plux.v1.IdentityService.StartDeviceAuthorization
       parameters:
         - name: Connect-Protocol-Version
@@ -2400,54 +2681,15 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.StartDeviceAuthorizationResponse'
-  /plux.v1.IdentityService/StartOidcLogin:
-    post:
-      tags:
-        - plux.v1.IdentityService
-      summary: StartOidcLogin
-      description: StartOidcLogin returns the authorization URL and the state to use.
-      operationId: plux.v1.IdentityService.StartOidcLogin
-      parameters:
-        - name: Connect-Protocol-Version
-          in: header
-          description: Define the version of the Connect protocol
-          schema:
-            $ref: '#/components/schemas/connect-protocol-version'
-          example: 1
-        - name: Connect-Timeout-Ms
-          in: header
-          description: Define the timeout, in ms
-          schema:
-            $ref: '#/components/schemas/connect-timeout-header'
-          example: 1000
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/plux.v1.StartOidcLoginRequest'
-        required: true
-      responses:
-        default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/connect.error'
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/plux.v1.StartOidcLoginResponse'
   /plux.v1.IdentityService/StartPasswordLogin:
     post:
       tags:
         - plux.v1.IdentityService
       summary: StartPasswordLogin
       description: |-
-        StartPasswordLogin verifies a built-in account's password. It never
-         returns a session on its own when the account has a factor enrolled:
-         the response carries a pending challenge to complete (SEC-100).
+        StartPasswordLogin verifies a password. When the account has a
+         confirmed second factor it returns a challenge instead of a session
+         (SEC-100).
       operationId: plux.v1.IdentityService.StartPasswordLogin
       parameters:
         - name: Connect-Protocol-Version
@@ -2481,15 +2723,58 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.StartPasswordLoginResponse'
+  /plux.v1.IdentityService/VerifySecondFactor:
+    post:
+      tags:
+        - plux.v1.IdentityService
+      summary: VerifySecondFactor
+      description: |-
+        VerifySecondFactor presents a one-time code within an existing
+         session, which capabilities that require one then accept.
+      operationId: plux.v1.IdentityService.VerifySecondFactor
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.VerifySecondFactorRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.VerifySecondFactorResponse'
   /plux.v1.ManifestService/GetManifest:
     post:
       tags:
         - plux.v1.ManifestService
       summary: GetManifest
       description: |-
-        GetManifest returns the manifest for an app, environment and channel,
-         tailored only by rules evaluated server-side: the same inputs always
-         produce the same manifest (REL-033).
+        GetManifest returns the manifest of an app's channel. The request
+         carries what the device has installed, and the manifest names, per
+         plugin, the exact delta or full bundle to fetch (REL-032). It is
+         tailored only by rules evaluated on the server: the same inputs
+         always give the same manifest (REL-033).
       operationId: plux.v1.ManifestService.GetManifest
       parameters:
         - name: Connect-Protocol-Version
@@ -2562,52 +2847,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.GetRootKeysResponse'
-  /plux.v1.ManifestService/GetSyncPlan:
-    post:
-      tags:
-        - plux.v1.ManifestService
-      summary: GetSyncPlan
-      description: |-
-        GetSyncPlan takes what the device has installed and returns the exact
-         deltas or full bundles to fetch (REL-032).
-      operationId: plux.v1.ManifestService.GetSyncPlan
-      parameters:
-        - name: Connect-Protocol-Version
-          in: header
-          description: Define the version of the Connect protocol
-          schema:
-            $ref: '#/components/schemas/connect-protocol-version'
-          example: 1
-        - name: Connect-Timeout-Ms
-          in: header
-          description: Define the timeout, in ms
-          schema:
-            $ref: '#/components/schemas/connect-timeout-header'
-          example: 1000
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/plux.v1.GetSyncPlanRequest'
-        required: true
-      responses:
-        default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/connect.error'
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/plux.v1.GetSyncPlanResponse'
   /plux.v1.OrgService/AddMember:
     post:
       tags:
         - plux.v1.OrgService
       summary: AddMember
+      description: |-
+        AddMember grants a role in the organisation, or in one of its teams,
+         to the account with an email address. When no such account exists it
+         is created without a password, and the response carries a one-time
+         invitation the administrator passes on (AcceptInvitation).
       operationId: plux.v1.OrgService.AddMember
       parameters:
         - name: Connect-Protocol-Version
@@ -4307,44 +4556,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.IssueDeviceTokenResponse'
-  /plux.v1.TokenService/RefreshDeviceToken:
-    post:
-      tags:
-        - plux.v1.TokenService
-      summary: RefreshDeviceToken
-      operationId: plux.v1.TokenService.RefreshDeviceToken
-      parameters:
-        - name: Connect-Protocol-Version
-          in: header
-          description: Define the version of the Connect protocol
-          schema:
-            $ref: '#/components/schemas/connect-protocol-version'
-          example: 1
-        - name: Connect-Timeout-Ms
-          in: header
-          description: Define the timeout, in ms
-          schema:
-            $ref: '#/components/schemas/connect-timeout-header'
-          example: 1000
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/plux.v1.RefreshDeviceTokenRequest'
-        required: true
-      responses:
-        default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/connect.error'
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/plux.v1.RefreshDeviceTokenResponse'
 components:
   schemas:
     connect-protocol-version:
@@ -4413,6 +4624,9 @@ components:
           description: Deserialized error detail payload. The 'type' field indicates the schema. This field is for easier debugging and should not be relied upon for application logic.
       additionalProperties: true
       description: Contains an arbitrary serialized message along with a @type that describes the type of the serialized message, with an additional debug field for ConnectRPC error details.
+    google.protobuf.FieldMask:
+      type: string
+      description: Comma-separated field paths in lowerCamelCase (for example, `user.displayName,photo`).
     google.protobuf.Timestamp:
       type: string
       examples:
@@ -4420,6 +4634,55 @@ components:
         - "2024-12-25T12:00:00Z"
       format: date-time
       description: A point in time in RFC 3339 format, with up to nanosecond precision. Output uses UTC (`Z`); input may use an offset from UTC.
+    plux.v1.AcceptInvitationRequest:
+      type: object
+      properties:
+        invitation:
+          type: string
+          title: invitation
+        displayName:
+          type: string
+          title: display_name
+        password:
+          type: string
+          title: password
+      title: AcceptInvitationRequest
+      additionalProperties: false
+    plux.v1.AcceptInvitationResponse:
+      type: object
+      properties:
+        user:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.User'
+          title: user
+      title: AcceptInvitationResponse
+      additionalProperties: false
+    plux.v1.AccessGrant:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+        appId:
+          type: string
+          title: app_id
+        teamId:
+          type: string
+          title: team_id
+          description: Exactly one of team_id and user_id is set.
+        userId:
+          type: string
+          title: user_id
+        role:
+          type: string
+          title: role
+        grantedAt:
+          allOf:
+            - $ref: '#/components/schemas/google.protobuf.Timestamp'
+          title: granted_at
+      title: AccessGrant
+      additionalProperties: false
+      description: AccessGrant is a role on one app held by a team or a user (GOV-001).
     plux.v1.AccessToken:
       type: object
       properties:
@@ -4432,6 +4695,7 @@ components:
         userId:
           type: string
           title: user_id
+          description: user_id is empty for a token exchanged from a CI identity.
         organizationId:
           type: string
           title: organization_id
@@ -4443,7 +4707,11 @@ components:
         prefix:
           type: string
           title: prefix
-          description: prefix is the token's visible prefix, for identifying it in a list.
+          description: prefix is the token's visible prefix, for recognising it in a list.
+        source:
+          type: string
+          title: source
+          description: source is "pat", "cli" or "ci".
         createdAt:
           allOf:
             - $ref: '#/components/schemas/google.protobuf.Timestamp'
@@ -4522,9 +4790,9 @@ components:
         teamId:
           type: string
           title: team_id
-        userId:
+        email:
           type: string
-          title: user_id
+          title: email
         role:
           type: string
           title: role
@@ -4537,6 +4805,12 @@ components:
           allOf:
             - $ref: '#/components/schemas/plux.v1.Member'
           title: member
+        invitation:
+          type: string
+          title: invitation
+          description: |-
+            invitation is set when the account was created; it is returned
+             exactly once and expires after seven days.
       title: AddMemberResponse
       additionalProperties: false
     plux.v1.App:
@@ -4745,6 +5019,7 @@ components:
         sha256:
           type: string
           title: sha256
+          description: sha256 is the bundle hash the device must end up with (BND-005).
         size:
           type: string
           title: size
@@ -4757,11 +5032,15 @@ components:
         minRuntime:
           type: string
           title: min_runtime
-        urls:
-          type: array
-          items:
-            type: string
-          title: urls
+        url:
+          type: string
+          title: url
+          description: url is where the full bundle can be fetched.
+        sync:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.SyncStep'
+          title: sync
+          description: sync names how this device gets from what it has to this bundle.
       title: BundleDescriptor
       additionalProperties: false
     plux.v1.CancelPublishJobRequest:
@@ -4780,6 +5059,21 @@ components:
             - $ref: '#/components/schemas/plux.v1.PublishJob'
           title: job
       title: CancelPublishJobResponse
+      additionalProperties: false
+    plux.v1.ChangePasswordRequest:
+      type: object
+      properties:
+        currentPassword:
+          type: string
+          title: current_password
+        newPassword:
+          type: string
+          title: new_password
+      title: ChangePasswordRequest
+      additionalProperties: false
+    plux.v1.ChangePasswordResponse:
+      type: object
+      title: ChangePasswordResponse
       additionalProperties: false
     plux.v1.ChangelogEntry:
       type: object
@@ -4880,12 +5174,6 @@ components:
         code:
           type: string
           title: code
-          description: code answers a TOTP challenge.
-        assertion:
-          type: string
-          title: assertion
-          format: byte
-          description: assertion answers a WebAuthn challenge, as JSON.
       title: CompleteMfaRequest
       additionalProperties: false
     plux.v1.CompleteMfaResponse:
@@ -4896,30 +5184,6 @@ components:
             - $ref: '#/components/schemas/plux.v1.Session'
           title: session
       title: CompleteMfaResponse
-      additionalProperties: false
-    plux.v1.CompleteOidcLoginRequest:
-      type: object
-      properties:
-        code:
-          type: string
-          title: code
-        state:
-          type: string
-          title: state
-      title: CompleteOidcLoginRequest
-      additionalProperties: false
-    plux.v1.CompleteOidcLoginResponse:
-      type: object
-      properties:
-        session:
-          allOf:
-            - $ref: '#/components/schemas/plux.v1.Session'
-          title: session
-        challenge:
-          allOf:
-            - $ref: '#/components/schemas/plux.v1.MfaChallenge'
-          title: challenge
-      title: CompleteOidcLoginResponse
       additionalProperties: false
     plux.v1.Component:
       type: object
@@ -4962,10 +5226,6 @@ components:
         code:
           type: string
           title: code
-        attestation:
-          type: string
-          title: attestation
-          format: byte
       title: ConfirmFactorRequest
       additionalProperties: false
     plux.v1.ConfirmFactorResponse:
@@ -5023,21 +5283,19 @@ components:
             type: string
           title: kill_switch_plugins
           description: kill_switch_plugins lists plugin keys the device must not render.
-        appKillSwitch:
+        mandatory:
           type: boolean
-          title: app_kill_switch
-          description: app_kill_switch disables every plugin page.
-        mandatoryUpdate:
-          type: boolean
-          title: mandatory_update
-          description: mandatory_update requires the device to update before continuing.
+          title: mandatory
+          description: |-
+            mandatory requires the device to activate this release before it
+             shows another Plux page.
         message:
           type: string
           title: message
           description: message is shown to the user when a switch is on.
       title: ControlFlags
       additionalProperties: false
-      description: ControlFlags are the switches a device obeys immediately (REL-030).
+      description: ControlFlags are the switches a device obeys (REL-030).
     plux.v1.CreateAccessTokenRequest:
       type: object
       properties:
@@ -5069,7 +5327,7 @@ components:
         secret:
           type: string
           title: secret
-          description: secret is returned exactly once and never stored in clear.
+          description: secret is returned exactly once and stored only as a hash.
       title: CreateAccessTokenResponse
       additionalProperties: false
     plux.v1.CreateAppRequest:
@@ -5245,6 +5503,37 @@ components:
           title: team
       title: CreateTeamResponse
       additionalProperties: false
+    plux.v1.CreateWorkloadIdentityRequest:
+      type: object
+      properties:
+        organizationId:
+          type: string
+          title: organization_id
+        issuer:
+          type: string
+          title: issuer
+        audience:
+          type: string
+          title: audience
+        subjectPattern:
+          type: string
+          title: subject_pattern
+        scopes:
+          type: array
+          items:
+            type: string
+          title: scopes
+      title: CreateWorkloadIdentityRequest
+      additionalProperties: false
+    plux.v1.CreateWorkloadIdentityResponse:
+      type: object
+      properties:
+        identity:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.WorkloadIdentity'
+          title: identity
+      title: CreateWorkloadIdentityResponse
+      additionalProperties: false
     plux.v1.DeleteAppRequest:
       type: object
       properties:
@@ -5386,6 +5675,30 @@ components:
       type: object
       title: DeleteTeamResponse
       additionalProperties: false
+    plux.v1.DeleteWorkloadIdentityRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+      title: DeleteWorkloadIdentityRequest
+      additionalProperties: false
+    plux.v1.DeleteWorkloadIdentityResponse:
+      type: object
+      title: DeleteWorkloadIdentityResponse
+      additionalProperties: false
+    plux.v1.DenyDeviceAuthorizationRequest:
+      type: object
+      properties:
+        userCode:
+          type: string
+          title: user_code
+      title: DenyDeviceAuthorizationRequest
+      additionalProperties: false
+    plux.v1.DenyDeviceAuthorizationResponse:
+      type: object
+      title: DenyDeviceAuthorizationResponse
+      additionalProperties: false
     plux.v1.Device:
       type: object
       properties:
@@ -5427,32 +5740,6 @@ components:
             - $ref: '#/components/schemas/google.protobuf.Timestamp'
           title: last_seen_at
       title: Device
-      additionalProperties: false
-    plux.v1.DeviceContext:
-      type: object
-      properties:
-        runtimeVersion:
-          type: string
-          title: runtime_version
-          description: runtime_version is the plux_flutter version.
-        hostBuild:
-          type: string
-          title: host_build
-          description: host_build identifies the host app build.
-        platform:
-          type: string
-          title: platform
-        osVersion:
-          type: string
-          title: os_version
-        locale:
-          type: string
-          title: locale
-        deviceId:
-          type: string
-          title: device_id
-          description: device_id is the registered device, when the caller has one.
-      title: DeviceContext
       additionalProperties: false
     plux.v1.Diagnostic:
       type: object
@@ -5581,28 +5868,6 @@ components:
           title: otpauth_url
       title: EnrollTotpResponse
       additionalProperties: false
-    plux.v1.EnrollWebauthnRequest:
-      type: object
-      properties:
-        label:
-          type: string
-          title: label
-      title: EnrollWebauthnRequest
-      additionalProperties: false
-    plux.v1.EnrollWebauthnResponse:
-      type: object
-      properties:
-        factor:
-          allOf:
-            - $ref: '#/components/schemas/plux.v1.Factor'
-          title: factor
-        creationOptions:
-          type: string
-          title: creation_options
-          format: byte
-          description: creation_options is the WebAuthn credential creation request as JSON.
-      title: EnrollWebauthnResponse
-      additionalProperties: false
     plux.v1.Environment:
       type: object
       properties:
@@ -5674,37 +5939,42 @@ components:
     plux.v1.ExchangeWorkloadIdentityRequest:
       type: object
       properties:
-        oidcToken:
+        identityToken:
           type: string
-          title: oidc_token
-          description: oidc_token is the CI provider's identity token.
+          title: identity_token
+          description: identity_token is the CI provider's OpenID Connect token.
         organizationId:
           type: string
           title: organization_id
-        scopes:
-          type: array
-          items:
-            type: string
-          title: scopes
       title: ExchangeWorkloadIdentityRequest
       additionalProperties: false
     plux.v1.ExchangeWorkloadIdentityResponse:
       type: object
       properties:
+        token:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.AccessToken'
+          title: token
         secret:
           type: string
           title: secret
-        expiresAt:
-          allOf:
-            - $ref: '#/components/schemas/google.protobuf.Timestamp'
-          title: expires_at
-        scopes:
-          type: array
-          items:
-            type: string
-          title: scopes
       title: ExchangeWorkloadIdentityResponse
       additionalProperties: false
+    plux.v1.ExperimentAssignment:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        layer:
+          type: string
+          title: layer
+        variant:
+          type: string
+          title: variant
+      title: ExperimentAssignment
+      additionalProperties: false
+      description: ExperimentAssignment is one experiment's variant for this device.
     plux.v1.ExportDraftRequest:
       type: object
       properties:
@@ -5737,7 +6007,7 @@ components:
         kind:
           type: string
           title: kind
-          description: kind is "totp" or "webauthn".
+          description: kind is "totp".
         label:
           type: string
           title: label
@@ -5900,13 +6170,15 @@ components:
           items:
             $ref: '#/components/schemas/plux.v1.Member'
           title: memberships
-          description: organizations the user belongs to, with their effective roles.
+          description: memberships are the user's organisations and roles.
         permissions:
           type: array
           items:
             type: string
           title: permissions
-          description: permissions the caller holds in the current scope (SEC-102).
+          description: |-
+            permissions are those the caller holds in the organisation named by
+             the X-Plux-Organization header, when there is one (SEC-102).
       title: GetCurrentUserResponse
       additionalProperties: false
     plux.v1.GetDeviceRequest:
@@ -5981,10 +6253,17 @@ components:
         channel:
           type: string
           title: channel
-        device:
-          allOf:
-            - $ref: '#/components/schemas/plux.v1.DeviceContext'
-          title: device
+        installedSequence:
+          type: string
+          title: installed_sequence
+          format: int64
+          description: installed_sequence is the release the device runs, zero for none.
+        installed:
+          type: array
+          items:
+            $ref: '#/components/schemas/plux.v1.InstalledBundle'
+          title: installed
+          description: installed lists the bundles the device holds.
         ifNoneMatch:
           type: string
           title: if_none_match
@@ -6111,6 +6390,9 @@ components:
         appId:
           type: string
           title: app_id
+        environment:
+          type: string
+          title: environment
       title: GetRootKeysRequest
       additionalProperties: false
     plux.v1.GetRootKeysResponse:
@@ -6151,47 +6433,6 @@ components:
           title: documents
       title: GetSnapshotResponse
       additionalProperties: false
-    plux.v1.GetSyncPlanRequest:
-      type: object
-      properties:
-        appId:
-          type: string
-          title: app_id
-        environment:
-          type: string
-          title: environment
-        channel:
-          type: string
-          title: channel
-        device:
-          allOf:
-            - $ref: '#/components/schemas/plux.v1.DeviceContext'
-          title: device
-        installed:
-          type: array
-          items:
-            $ref: '#/components/schemas/plux.v1.InstalledBundle'
-          title: installed
-      title: GetSyncPlanRequest
-      additionalProperties: false
-    plux.v1.GetSyncPlanResponse:
-      type: object
-      properties:
-        releaseSequence:
-          type: string
-          title: release_sequence
-          format: int64
-        steps:
-          type: array
-          items:
-            $ref: '#/components/schemas/plux.v1.SyncStep'
-          title: steps
-        totalDownloadSize:
-          type: string
-          title: total_download_size
-          format: int64
-      title: GetSyncPlanResponse
-      additionalProperties: false
     plux.v1.GetTemplateRequest:
       type: object
       properties:
@@ -6212,6 +6453,32 @@ components:
           title: content
           format: byte
       title: GetTemplateResponse
+      additionalProperties: false
+    plux.v1.GrantAccessRequest:
+      type: object
+      properties:
+        appId:
+          type: string
+          title: app_id
+        teamId:
+          type: string
+          title: team_id
+        userId:
+          type: string
+          title: user_id
+        role:
+          type: string
+          title: role
+      title: GrantAccessRequest
+      additionalProperties: false
+    plux.v1.GrantAccessResponse:
+      type: object
+      properties:
+        grant:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.AccessGrant'
+          title: grant
+      title: GrantAccessResponse
       additionalProperties: false
     plux.v1.ImportDraftRequest:
       type: object
@@ -6293,10 +6560,6 @@ components:
           type: string
           title: key
           description: key is the plugin key, or empty for the app bundle.
-        version:
-          type: string
-          title: version
-          format: int64
         sha256:
           type: string
           title: sha256
@@ -6354,12 +6617,10 @@ components:
         deviceId:
           type: string
           title: device_id
-        appId:
+        deviceSecret:
           type: string
-          title: app_id
-        environment:
-          type: string
-          title: environment
+          title: device_secret
+          description: device_secret is the credential RegisterDevice returned.
       title: IssueDeviceTokenRequest
       additionalProperties: false
     plux.v1.IssueDeviceTokenResponse:
@@ -6372,9 +6633,6 @@ components:
           allOf:
             - $ref: '#/components/schemas/google.protobuf.Timestamp'
           title: expires_at
-        refreshToken:
-          type: string
-          title: refresh_token
       title: IssueDeviceTokenResponse
       additionalProperties: false
     plux.v1.LimitUsage:
@@ -6412,6 +6670,24 @@ components:
       title: LimitUsage
       additionalProperties: false
       description: LimitUsage is the current usage of one limit at one scope (LIM-005).
+    plux.v1.ListAccessRequest:
+      type: object
+      properties:
+        appId:
+          type: string
+          title: app_id
+      title: ListAccessRequest
+      additionalProperties: false
+    plux.v1.ListAccessResponse:
+      type: object
+      properties:
+        grants:
+          type: array
+          items:
+            $ref: '#/components/schemas/plux.v1.AccessGrant'
+          title: grants
+      title: ListAccessResponse
+      additionalProperties: false
     plux.v1.ListAccessTokensRequest:
       type: object
       properties:
@@ -7096,6 +7372,24 @@ components:
           title: variables
       title: ListVariablesResponse
       additionalProperties: false
+    plux.v1.ListWorkloadIdentitiesRequest:
+      type: object
+      properties:
+        organizationId:
+          type: string
+          title: organization_id
+      title: ListWorkloadIdentitiesRequest
+      additionalProperties: false
+    plux.v1.ListWorkloadIdentitiesResponse:
+      type: object
+      properties:
+        identities:
+          type: array
+          items:
+            $ref: '#/components/schemas/plux.v1.WorkloadIdentity'
+          title: identities
+      title: ListWorkloadIdentitiesResponse
+      additionalProperties: false
     plux.v1.Location:
       type: object
       properties:
@@ -7195,30 +7489,34 @@ components:
           allOf:
             - $ref: '#/components/schemas/plux.v1.ControlFlags'
           title: control
-        signature:
-          type: string
-          title: signature
-          format: byte
-          description: signature, key_id and algorithm sign the canonical bytes (REL-031).
-        keyId:
-          type: string
-          title: key_id
-        algorithm:
-          type: string
-          title: algorithm
-        canonical:
-          type: string
-          title: canonical
-          format: byte
+        experiments:
+          type: array
+          items:
+            $ref: '#/components/schemas/plux.v1.ExperimentAssignment'
+          title: experiments
           description: |-
-            canonical is the exact signed serialisation, so a client can verify
-             without re-encoding this message.
+            experiments are the variant assignments the device needs; empty
+             until experiments arrive (ABT-001).
+        signed:
+          type: string
+          title: signed
+          format: byte
+          description: signed is the canonical JSON the signatures cover.
+        signatures:
+          type: array
+          items:
+            $ref: '#/components/schemas/plux.v1.Signature'
+          title: signatures
+          description: |-
+            signatures sign `signed`. There may be several, so that keys can be
+             rotated and thresholds applied (ADR-0004).
       title: Manifest
       additionalProperties: false
       description: |-
-        Manifest describes one release as a device sees it (REL-030). The bytes
-         the signature covers are the canonical serialisation in
-         schema/fbs/manifest.fbs, not this message.
+        Manifest describes one release as a device sees it (REL-030,
+         Appendix B.3). The signatures cover `signed`, the RFC 8785 canonical
+         JSON of the document's signed part, not this message: a device
+         verifies the bytes it received rather than a re-encoding.
     plux.v1.Member:
       type: object
       properties:
@@ -7235,11 +7533,17 @@ components:
         role:
           type: string
           title: role
-          description: role is a registered role name evaluated by RBAC (SEC-102).
+          description: role is "owner", "admin", "developer" or "viewer" (SEC-102).
         addedAt:
           allOf:
             - $ref: '#/components/schemas/google.protobuf.Timestamp'
           title: added_at
+        displayName:
+          type: string
+          title: display_name
+        email:
+          type: string
+          title: email
       title: Member
       additionalProperties: false
       description: Member binds a user to an organization or a team with a role.
@@ -7255,18 +7559,13 @@ components:
             type: string
           title: kinds
           description: kinds lists the factor kinds the user may answer with.
-        webauthnOptions:
-          type: string
-          title: webauthn_options
-          format: byte
-          description: webauthn_options is the WebAuthn request as JSON, when offered.
         expiresAt:
           allOf:
             - $ref: '#/components/schemas/google.protobuf.Timestamp'
           title: expires_at
       title: MfaChallenge
       additionalProperties: false
-      description: MfaChallenge is a login waiting for a second factor.
+      description: MfaChallenge is a sign-in waiting for its second factor.
     plux.v1.Organization:
       type: object
       properties:
@@ -7313,6 +7612,13 @@ components:
           type: string
           title: order_by
           description: order_by names fields to sort by, each optionally followed by " desc".
+        readMask:
+          allOf:
+            - $ref: '#/components/schemas/google.protobuf.FieldMask'
+          title: read_mask
+          description: |-
+            read_mask limits each returned item to the named fields; an empty
+             mask returns whole items.
       title: Page
       additionalProperties: false
       description: |-
@@ -7539,7 +7845,9 @@ components:
         secret:
           type: string
           title: secret
-          description: secret is the token's value; returned exactly once, on approval.
+          description: |-
+            secret is the token's value, returned exactly once, on the first
+             poll after approval.
       title: PollDeviceAuthorizationResponse
       additionalProperties: false
     plux.v1.PromoteReleaseRequest:
@@ -7582,15 +7890,11 @@ components:
           type: string
           title: public_key
           format: byte
-          description: public_key is the raw key bytes; Ed25519 keys are 32 bytes.
+          description: public_key is the raw key; an Ed25519 key is 32 bytes.
         role:
           type: string
           title: role
           description: role is the update-metadata role this key holds (ADR-0004).
-        expiresAt:
-          allOf:
-            - $ref: '#/components/schemas/google.protobuf.Timestamp'
-          title: expires_at
       title: PublicKey
       additionalProperties: false
     plux.v1.PublishJob:
@@ -7758,29 +8062,6 @@ components:
       title: Range
       additionalProperties: false
       description: Range is a half-open range of Unicode code points inside an expression.
-    plux.v1.RefreshDeviceTokenRequest:
-      type: object
-      properties:
-        refreshToken:
-          type: string
-          title: refresh_token
-      title: RefreshDeviceTokenRequest
-      additionalProperties: false
-    plux.v1.RefreshDeviceTokenResponse:
-      type: object
-      properties:
-        accessToken:
-          type: string
-          title: access_token
-        expiresAt:
-          allOf:
-            - $ref: '#/components/schemas/google.protobuf.Timestamp'
-          title: expires_at
-        refreshToken:
-          type: string
-          title: refresh_token
-      title: RefreshDeviceTokenResponse
-      additionalProperties: false
     plux.v1.RegisterDeviceRequest:
       type: object
       properties:
@@ -7811,6 +8092,12 @@ components:
           allOf:
             - $ref: '#/components/schemas/plux.v1.Device'
           title: device
+        deviceSecret:
+          type: string
+          title: device_secret
+          description: |-
+            device_secret is the device's credential for IssueDeviceToken. It is
+             returned exactly once and stored only as a hash.
       title: RegisterDeviceResponse
       additionalProperties: false
     plux.v1.Release:
@@ -7996,6 +8283,18 @@ components:
           title: diagnostics
       title: RestoreSnapshotResponse
       additionalProperties: false
+    plux.v1.RevokeAccessRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+      title: RevokeAccessRequest
+      additionalProperties: false
+    plux.v1.RevokeAccessResponse:
+      type: object
+      title: RevokeAccessResponse
+      additionalProperties: false
     plux.v1.RevokeAccessTokenRequest:
       type: object
       properties:
@@ -8076,12 +8375,17 @@ components:
           allOf:
             - $ref: '#/components/schemas/google.protobuf.Timestamp'
           title: expires_at
+        secondFactor:
+          type: boolean
+          title: second_factor
+          description: second_factor is true when a second factor was presented in it.
       title: Session
       additionalProperties: false
       description: |-
         Session is a browser session. Its secret never appears in a response
-         body: it is set as a __Host- prefixed, HttpOnly, Secure, SameSite=Strict
-         cookie, and state-changing calls must echo csrf_token (SEC-101).
+         body: the edge sets it as a __Host- prefixed, HttpOnly, Secure,
+         SameSite=Strict cookie, and state-changing calls must echo csrf_token
+         in the X-CSRF-Token header (SEC-101).
     plux.v1.SetAppLimitRequest:
       type: object
       properties:
@@ -8246,6 +8550,24 @@ components:
         - SEVERITY_WARNING
         - SEVERITY_ERROR
       description: Severity of a diagnostic (ADR-0018).
+    plux.v1.Signature:
+      type: object
+      properties:
+        keyId:
+          type: string
+          title: key_id
+          description: key_id identifies the public key.
+        algorithm:
+          type: string
+          title: algorithm
+          description: algorithm names the scheme, such as "ed25519" (SEC-122).
+        signature:
+          type: string
+          title: signature
+          format: byte
+      title: Signature
+      additionalProperties: false
+      description: Signature is one signature over a signed document (ADR-0004).
     plux.v1.Snapshot:
       type: object
       properties:
@@ -8295,6 +8617,9 @@ components:
           items:
             type: string
           title: scopes
+          description: |-
+            scopes are the permissions the token will carry; empty asks for the
+             approving user's own.
       title: StartDeviceAuthorizationRequest
       additionalProperties: false
     plux.v1.StartDeviceAuthorizationResponse:
@@ -8321,28 +8646,6 @@ components:
             - $ref: '#/components/schemas/google.protobuf.Timestamp'
           title: expires_at
       title: StartDeviceAuthorizationResponse
-      additionalProperties: false
-    plux.v1.StartOidcLoginRequest:
-      type: object
-      properties:
-        redirectPath:
-          type: string
-          title: redirect_path
-          description: |-
-            redirect_path is a path inside Studio to return to; absolute URLs are
-             refused so the flow cannot be redirected off-site.
-      title: StartOidcLoginRequest
-      additionalProperties: false
-    plux.v1.StartOidcLoginResponse:
-      type: object
-      properties:
-        authorizationUrl:
-          type: string
-          title: authorization_url
-        state:
-          type: string
-          title: state
-      title: StartOidcLoginResponse
       additionalProperties: false
     plux.v1.StartPasswordLoginRequest:
       type: object
@@ -8371,33 +8674,26 @@ components:
     plux.v1.SyncStep:
       type: object
       properties:
-        key:
-          type: string
-          title: key
-        version:
-          type: string
-          title: version
-          format: int64
         action:
           type: string
           title: action
           description: action is "keep", "delta" or "full".
-        artifact:
-          allOf:
-            - $ref: '#/components/schemas/plux.v1.Artifact'
-          title: artifact
-          description: artifact is the delta or the full bundle to fetch.
-        resultSha256:
+        from:
           type: string
-          title: result_sha256
-          description: result_sha256 is the bundle hash expected after applying (REL-021).
-        resultSize:
+          title: from
+          description: from is the installed bundle hash the delta applies to.
+        url:
           type: string
-          title: result_size
+          title: url
+          description: url is the delta or full bundle to fetch.
+        size:
+          type: string
+          title: size
           format: int64
+          description: size is what the device downloads.
       title: SyncStep
       additionalProperties: false
-      description: SyncStep tells the device how to obtain one bundle.
+      description: SyncStep tells the device how to obtain one bundle (REL-032).
     plux.v1.Team:
       type: object
       properties:
@@ -8660,17 +8956,15 @@ components:
         id:
           type: string
           title: id
-        subject:
-          type: string
-          title: subject
-          description: subject is the OIDC subject for federated users; empty for built-in ones.
         displayName:
           type: string
           title: display_name
         email:
           type: string
           title: email
-          description: email is returned only to the user themselves and to administrators.
+          description: |-
+            email is returned only to the user themselves and to administrators
+             of an organisation they belong to.
         mfaEnrolled:
           type: boolean
           title: mfa_enrolled
@@ -8746,6 +9040,23 @@ components:
           title: value
       title: Variable
       additionalProperties: false
+    plux.v1.VerifySecondFactorRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          title: code
+      title: VerifySecondFactorRequest
+      additionalProperties: false
+    plux.v1.VerifySecondFactorResponse:
+      type: object
+      properties:
+        session:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Session'
+          title: session
+      title: VerifySecondFactorResponse
+      additionalProperties: false
     plux.v1.WatchPublishRequest:
       type: object
       properties:
@@ -8769,6 +9080,41 @@ components:
           description: new_diagnostics are those reported since the previous message.
       title: WatchPublishResponse
       additionalProperties: false
+    plux.v1.WorkloadIdentity:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+        organizationId:
+          type: string
+          title: organization_id
+        issuer:
+          type: string
+          title: issuer
+          description: issuer must be one the installation trusts.
+        audience:
+          type: string
+          title: audience
+        subjectPattern:
+          type: string
+          title: subject_pattern
+          description: |-
+            subject_pattern is a glob over the token's subject, such as
+             "repo:acme/app:ref:refs/heads/main".
+        scopes:
+          type: array
+          items:
+            type: string
+          title: scopes
+          description: scopes are the permissions an exchanged token carries.
+        createdAt:
+          allOf:
+            - $ref: '#/components/schemas/google.protobuf.Timestamp'
+          title: created_at
+      title: WorkloadIdentity
+      additionalProperties: false
+      description: WorkloadIdentity binds CI workloads to an organisation (SRV-064).
 security: []
 tags:
   - name: plux.v1.AppService
@@ -8813,18 +9159,19 @@ tags:
        or to users per app.
   - name: plux.v1.IdentityService
     description: |-
-      IdentityService authenticates people and machines: built-in accounts with
-       Argon2id, OIDC login, multi-factor enrolment and verification (SEC-100),
-       browser sessions for the Studio backend-for-frontend (SEC-101), personal
-       access tokens and CI workload-identity federation (SRV-064), and the
-       OAuth 2.0 device authorization grant used by `plux login` (CLI-002).
+      IdentityService authenticates people and machines: built-in accounts
+       with Argon2id passwords and mandatory TOTP for sensitive capabilities
+       (SEC-100), browser sessions for the Studio backend-for-frontend
+       (SEC-101), personal access tokens and CI workload-identity federation
+       (SRV-064), and the OAuth 2.0 device authorization grant `plux login`
+       uses (CLI-002). Single sign-on arrives with GOV-004 and WebAuthn with
+       SEC-103, both in P9.
   - name: plux.v1.ManifestService
     description: |-
       ManifestService serves the signed manifest a device syncs against
-       (REL-030–REL-033) and the sync plan that names the exact artifacts to
-       fetch. The manifest itself is also served over plain HTTP with an ETag,
-       so an unchanged manifest costs one conditional request and a 304
-       (REL-031); this service is the typed form of the same data.
+       (REL-030–REL-033). The manifest is also served over plain HTTP with an
+       ETag, so an unchanged manifest costs one conditional request and a 304
+       (REL-031); this service is the typed form of the same document.
   - name: plux.v1.PluginService
     description: |-
       PluginService manages plugins and their editing locks (SRV-040–SRV-042).
@@ -8854,6 +9201,8 @@ tags:
   - name: plux.v1.TokenService
     description: |-
       TokenService issues the short-lived access tokens devices use. In P2 a
-       token is bearer-only and scoped to one app, environment and device; from
-       P6 it is sender-constrained to the device's hardware key with DPoP
-       (SEC-020) and carries the device's assurance level.
+       device proves itself with the credential it received at registration;
+       from P6 that credential is replaced by a hardware-bound key, tokens
+       are sender-constrained with DPoP (SEC-020) and refresh needs fresh
+       attestation (SEC-025). There is deliberately no long-lived refresh
+       token.

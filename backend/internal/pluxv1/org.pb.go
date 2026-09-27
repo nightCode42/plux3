@@ -185,9 +185,11 @@ type Member struct {
 	OrganizationId string                 `protobuf:"bytes,2,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
 	// team_id is empty for a direct organization membership.
 	TeamId string `protobuf:"bytes,3,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
-	// role is a registered role name evaluated by RBAC (SEC-102).
+	// role is "owner", "admin", "developer" or "viewer" (SEC-102).
 	Role          string                 `protobuf:"bytes,4,opt,name=role,proto3" json:"role,omitempty"`
 	AddedAt       *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=added_at,json=addedAt,proto3" json:"added_at,omitempty"`
+	DisplayName   string                 `protobuf:"bytes,6,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	Email         string                 `protobuf:"bytes,7,opt,name=email,proto3" json:"email,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -255,6 +257,20 @@ func (x *Member) GetAddedAt() *timestamppb.Timestamp {
 		return x.AddedAt
 	}
 	return nil
+}
+
+func (x *Member) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
+func (x *Member) GetEmail() string {
+	if x != nil {
+		return x.Email
+	}
+	return ""
 }
 
 type CreateOrganizationRequest struct {
@@ -1021,7 +1037,7 @@ type AddMemberRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	OrganizationId string                 `protobuf:"bytes,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
 	TeamId         string                 `protobuf:"bytes,2,opt,name=team_id,json=teamId,proto3" json:"team_id,omitempty"`
-	UserId         string                 `protobuf:"bytes,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Email          string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
 	Role           string                 `protobuf:"bytes,4,opt,name=role,proto3" json:"role,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
@@ -1071,9 +1087,9 @@ func (x *AddMemberRequest) GetTeamId() string {
 	return ""
 }
 
-func (x *AddMemberRequest) GetUserId() string {
+func (x *AddMemberRequest) GetEmail() string {
 	if x != nil {
-		return x.UserId
+		return x.Email
 	}
 	return ""
 }
@@ -1086,8 +1102,11 @@ func (x *AddMemberRequest) GetRole() string {
 }
 
 type AddMemberResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Member        *Member                `protobuf:"bytes,1,opt,name=member,proto3" json:"member,omitempty"`
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	Member *Member                `protobuf:"bytes,1,opt,name=member,proto3" json:"member,omitempty"`
+	// invitation is set when the account was created; it is returned
+	// exactly once and expires after seven days.
+	Invitation    string `protobuf:"bytes,2,opt,name=invitation,proto3" json:"invitation,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1127,6 +1146,13 @@ func (x *AddMemberResponse) GetMember() *Member {
 		return x.Member
 	}
 	return nil
+}
+
+func (x *AddMemberResponse) GetInvitation() string {
+	if x != nil {
+		return x.Invitation
+	}
+	return ""
 }
 
 type RemoveMemberRequest struct {
@@ -1548,13 +1574,15 @@ const file_plux_v1_org_proto_rawDesc = "" +
 	"\x03key\x18\x03 \x01(\tR\x03key\x12\x12\n" +
 	"\x04name\x18\x04 \x01(\tR\x04name\x129\n" +
 	"\n" +
-	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xae\x01\n" +
+	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xe7\x01\n" +
 	"\x06Member\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12'\n" +
 	"\x0forganization_id\x18\x02 \x01(\tR\x0eorganizationId\x12\x17\n" +
 	"\ateam_id\x18\x03 \x01(\tR\x06teamId\x12\x12\n" +
 	"\x04role\x18\x04 \x01(\tR\x04role\x125\n" +
-	"\badded_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\aaddedAt\"A\n" +
+	"\badded_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\aaddedAt\x12!\n" +
+	"\fdisplay_name\x18\x06 \x01(\tR\vdisplayName\x12\x14\n" +
+	"\x05email\x18\a \x01(\tR\x05email\"A\n" +
 	"\x19CreateOrganizationRequest\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\"W\n" +
@@ -1593,14 +1621,17 @@ const file_plux_v1_org_proto_rawDesc = "" +
 	"\x04team\x18\x01 \x01(\v2\r.plux.v1.TeamR\x04team\"#\n" +
 	"\x11DeleteTeamRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x14\n" +
-	"\x12DeleteTeamResponse\"\x81\x01\n" +
+	"\x12DeleteTeamResponse\"~\n" +
 	"\x10AddMemberRequest\x12'\n" +
 	"\x0forganization_id\x18\x01 \x01(\tR\x0eorganizationId\x12\x17\n" +
-	"\ateam_id\x18\x02 \x01(\tR\x06teamId\x12\x17\n" +
-	"\auser_id\x18\x03 \x01(\tR\x06userId\x12\x12\n" +
-	"\x04role\x18\x04 \x01(\tR\x04role\"<\n" +
+	"\ateam_id\x18\x02 \x01(\tR\x06teamId\x12\x14\n" +
+	"\x05email\x18\x03 \x01(\tR\x05email\x12\x12\n" +
+	"\x04role\x18\x04 \x01(\tR\x04role\"\\\n" +
 	"\x11AddMemberResponse\x12'\n" +
-	"\x06member\x18\x01 \x01(\v2\x0f.plux.v1.MemberR\x06member\"p\n" +
+	"\x06member\x18\x01 \x01(\v2\x0f.plux.v1.MemberR\x06member\x12\x1e\n" +
+	"\n" +
+	"invitation\x18\x02 \x01(\tR\n" +
+	"invitation\"p\n" +
 	"\x13RemoveMemberRequest\x12'\n" +
 	"\x0forganization_id\x18\x01 \x01(\tR\x0eorganizationId\x12\x17\n" +
 	"\ateam_id\x18\x02 \x01(\tR\x06teamId\x12\x17\n" +

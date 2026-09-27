@@ -80,6 +80,10 @@ type OrgServiceClient interface {
 	ListTeams(context.Context, *connect.Request[pluxv1.ListTeamsRequest]) (*connect.Response[pluxv1.ListTeamsResponse], error)
 	UpdateTeam(context.Context, *connect.Request[pluxv1.UpdateTeamRequest]) (*connect.Response[pluxv1.UpdateTeamResponse], error)
 	DeleteTeam(context.Context, *connect.Request[pluxv1.DeleteTeamRequest]) (*connect.Response[pluxv1.DeleteTeamResponse], error)
+	// AddMember grants a role in the organisation, or in one of its teams,
+	// to the account with an email address. When no such account exists it
+	// is created without a password, and the response carries a one-time
+	// invitation the administrator passes on (AcceptInvitation).
 	AddMember(context.Context, *connect.Request[pluxv1.AddMemberRequest]) (*connect.Response[pluxv1.AddMemberResponse], error)
 	RemoveMember(context.Context, *connect.Request[pluxv1.RemoveMemberRequest]) (*connect.Response[pluxv1.RemoveMemberResponse], error)
 	ListMembers(context.Context, *connect.Request[pluxv1.ListMembersRequest]) (*connect.Response[pluxv1.ListMembersResponse], error)
@@ -274,6 +278,10 @@ type OrgServiceHandler interface {
 	ListTeams(context.Context, *connect.Request[pluxv1.ListTeamsRequest]) (*connect.Response[pluxv1.ListTeamsResponse], error)
 	UpdateTeam(context.Context, *connect.Request[pluxv1.UpdateTeamRequest]) (*connect.Response[pluxv1.UpdateTeamResponse], error)
 	DeleteTeam(context.Context, *connect.Request[pluxv1.DeleteTeamRequest]) (*connect.Response[pluxv1.DeleteTeamResponse], error)
+	// AddMember grants a role in the organisation, or in one of its teams,
+	// to the account with an email address. When no such account exists it
+	// is created without a password, and the response carries a one-time
+	// invitation the administrator passes on (AcceptInvitation).
 	AddMember(context.Context, *connect.Request[pluxv1.AddMemberRequest]) (*connect.Response[pluxv1.AddMemberResponse], error)
 	RemoveMember(context.Context, *connect.Request[pluxv1.RemoveMemberRequest]) (*connect.Response[pluxv1.RemoveMemberResponse], error)
 	ListMembers(context.Context, *connect.Request[pluxv1.ListMembersRequest]) (*connect.Response[pluxv1.ListMembersResponse], error)

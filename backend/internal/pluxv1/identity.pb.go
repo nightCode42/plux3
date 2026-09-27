@@ -26,16 +26,15 @@ const (
 )
 
 type User struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// subject is the OIDC subject for federated users; empty for built-in ones.
-	Subject     string `protobuf:"bytes,2,opt,name=subject,proto3" json:"subject,omitempty"`
-	DisplayName string `protobuf:"bytes,3,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
-	// email is returned only to the user themselves and to administrators.
-	Email         string                 `protobuf:"bytes,4,opt,name=email,proto3" json:"email,omitempty"`
-	MfaEnrolled   bool                   `protobuf:"varint,5,opt,name=mfa_enrolled,json=mfaEnrolled,proto3" json:"mfa_enrolled,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	LastLoginAt   *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=last_login_at,json=lastLoginAt,proto3" json:"last_login_at,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	Id          string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	DisplayName string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	// email is returned only to the user themselves and to administrators
+	// of an organisation they belong to.
+	Email         string                 `protobuf:"bytes,3,opt,name=email,proto3" json:"email,omitempty"`
+	MfaEnrolled   bool                   `protobuf:"varint,4,opt,name=mfa_enrolled,json=mfaEnrolled,proto3" json:"mfa_enrolled,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	LastLoginAt   *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=last_login_at,json=lastLoginAt,proto3" json:"last_login_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -73,13 +72,6 @@ func (*User) Descriptor() ([]byte, []int) {
 func (x *User) GetId() string {
 	if x != nil {
 		return x.Id
-	}
-	return ""
-}
-
-func (x *User) GetSubject() string {
-	if x != nil {
-		return x.Subject
 	}
 	return ""
 }
@@ -123,7 +115,7 @@ func (x *User) GetLastLoginAt() *timestamppb.Timestamp {
 type Factor struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// kind is "totp" or "webauthn".
+	// kind is "totp".
 	Kind          string                 `protobuf:"bytes,2,opt,name=kind,proto3" json:"kind,omitempty"`
 	Label         string                 `protobuf:"bytes,3,opt,name=label,proto3" json:"label,omitempty"`
 	Confirmed     bool                   `protobuf:"varint,4,opt,name=confirmed,proto3" json:"confirmed,omitempty"`
@@ -206,14 +198,17 @@ func (x *Factor) GetLastUsedAt() *timestamppb.Timestamp {
 }
 
 // Session is a browser session. Its secret never appears in a response
-// body: it is set as a __Host- prefixed, HttpOnly, Secure, SameSite=Strict
-// cookie, and state-changing calls must echo csrf_token (SEC-101).
+// body: the edge sets it as a __Host- prefixed, HttpOnly, Secure,
+// SameSite=Strict cookie, and state-changing calls must echo csrf_token
+// in the X-CSRF-Token header (SEC-101).
 type Session struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	CsrfToken     string                 `protobuf:"bytes,3,opt,name=csrf_token,json=csrfToken,proto3" json:"csrf_token,omitempty"`
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	Id        string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	UserId    string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	CsrfToken string                 `protobuf:"bytes,3,opt,name=csrf_token,json=csrfToken,proto3" json:"csrf_token,omitempty"`
+	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	// second_factor is true when a second factor was presented in it.
+	SecondFactor  bool `protobuf:"varint,5,opt,name=second_factor,json=secondFactor,proto3" json:"second_factor,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -276,17 +271,22 @@ func (x *Session) GetExpiresAt() *timestamppb.Timestamp {
 	return nil
 }
 
-// MfaChallenge is a login waiting for a second factor.
+func (x *Session) GetSecondFactor() bool {
+	if x != nil {
+		return x.SecondFactor
+	}
+	return false
+}
+
+// MfaChallenge is a sign-in waiting for its second factor.
 type MfaChallenge struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// kinds lists the factor kinds the user may answer with.
-	Kinds []string `protobuf:"bytes,2,rep,name=kinds,proto3" json:"kinds,omitempty"`
-	// webauthn_options is the WebAuthn request as JSON, when offered.
-	WebauthnOptions []byte                 `protobuf:"bytes,3,opt,name=webauthn_options,json=webauthnOptions,proto3" json:"webauthn_options,omitempty"`
-	ExpiresAt       *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	Kinds         []string               `protobuf:"bytes,2,rep,name=kinds,proto3" json:"kinds,omitempty"`
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *MfaChallenge) Reset() {
@@ -329,13 +329,6 @@ func (x *MfaChallenge) GetId() string {
 func (x *MfaChallenge) GetKinds() []string {
 	if x != nil {
 		return x.Kinds
-	}
-	return nil
-}
-
-func (x *MfaChallenge) GetWebauthnOptions() []byte {
-	if x != nil {
-		return x.WebauthnOptions
 	}
 	return nil
 }
@@ -386,9 +379,10 @@ func (*GetCurrentUserRequest) Descriptor() ([]byte, []int) {
 type GetCurrentUserResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	User  *User                  `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
-	// organizations the user belongs to, with their effective roles.
+	// memberships are the user's organisations and roles.
 	Memberships []*Member `protobuf:"bytes,2,rep,name=memberships,proto3" json:"memberships,omitempty"`
-	// permissions the caller holds in the current scope (SEC-102).
+	// permissions are those the caller holds in the organisation named by
+	// the X-Plux-Organization header, when there is one (SEC-102).
 	Permissions   []string `protobuf:"bytes,3,rep,name=permissions,proto3" json:"permissions,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -445,6 +439,110 @@ func (x *GetCurrentUserResponse) GetPermissions() []string {
 	return nil
 }
 
+type AcceptInvitationRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Invitation    string                 `protobuf:"bytes,1,opt,name=invitation,proto3" json:"invitation,omitempty"`
+	DisplayName   string                 `protobuf:"bytes,2,opt,name=display_name,json=displayName,proto3" json:"display_name,omitempty"`
+	Password      string                 `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AcceptInvitationRequest) Reset() {
+	*x = AcceptInvitationRequest{}
+	mi := &file_plux_v1_identity_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AcceptInvitationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AcceptInvitationRequest) ProtoMessage() {}
+
+func (x *AcceptInvitationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_identity_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AcceptInvitationRequest.ProtoReflect.Descriptor instead.
+func (*AcceptInvitationRequest) Descriptor() ([]byte, []int) {
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *AcceptInvitationRequest) GetInvitation() string {
+	if x != nil {
+		return x.Invitation
+	}
+	return ""
+}
+
+func (x *AcceptInvitationRequest) GetDisplayName() string {
+	if x != nil {
+		return x.DisplayName
+	}
+	return ""
+}
+
+func (x *AcceptInvitationRequest) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+type AcceptInvitationResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	User          *User                  `protobuf:"bytes,1,opt,name=user,proto3" json:"user,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AcceptInvitationResponse) Reset() {
+	*x = AcceptInvitationResponse{}
+	mi := &file_plux_v1_identity_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AcceptInvitationResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AcceptInvitationResponse) ProtoMessage() {}
+
+func (x *AcceptInvitationResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_identity_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AcceptInvitationResponse.ProtoReflect.Descriptor instead.
+func (*AcceptInvitationResponse) Descriptor() ([]byte, []int) {
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *AcceptInvitationResponse) GetUser() *User {
+	if x != nil {
+		return x.User
+	}
+	return nil
+}
+
 type StartPasswordLoginRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Email         string                 `protobuf:"bytes,1,opt,name=email,proto3" json:"email,omitempty"`
@@ -455,7 +553,7 @@ type StartPasswordLoginRequest struct {
 
 func (x *StartPasswordLoginRequest) Reset() {
 	*x = StartPasswordLoginRequest{}
-	mi := &file_plux_v1_identity_proto_msgTypes[6]
+	mi := &file_plux_v1_identity_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -467,7 +565,7 @@ func (x *StartPasswordLoginRequest) String() string {
 func (*StartPasswordLoginRequest) ProtoMessage() {}
 
 func (x *StartPasswordLoginRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[6]
+	mi := &file_plux_v1_identity_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -480,7 +578,7 @@ func (x *StartPasswordLoginRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartPasswordLoginRequest.ProtoReflect.Descriptor instead.
 func (*StartPasswordLoginRequest) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{6}
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *StartPasswordLoginRequest) GetEmail() string {
@@ -507,7 +605,7 @@ type StartPasswordLoginResponse struct {
 
 func (x *StartPasswordLoginResponse) Reset() {
 	*x = StartPasswordLoginResponse{}
-	mi := &file_plux_v1_identity_proto_msgTypes[7]
+	mi := &file_plux_v1_identity_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -519,7 +617,7 @@ func (x *StartPasswordLoginResponse) String() string {
 func (*StartPasswordLoginResponse) ProtoMessage() {}
 
 func (x *StartPasswordLoginResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[7]
+	mi := &file_plux_v1_identity_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -532,7 +630,7 @@ func (x *StartPasswordLoginResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartPasswordLoginResponse.ProtoReflect.Descriptor instead.
 func (*StartPasswordLoginResponse) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{7}
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *StartPasswordLoginResponse) GetSession() *Session {
@@ -549,222 +647,17 @@ func (x *StartPasswordLoginResponse) GetChallenge() *MfaChallenge {
 	return nil
 }
 
-type StartOidcLoginRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// redirect_path is a path inside Studio to return to; absolute URLs are
-	// refused so the flow cannot be redirected off-site.
-	RedirectPath  string `protobuf:"bytes,1,opt,name=redirect_path,json=redirectPath,proto3" json:"redirect_path,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *StartOidcLoginRequest) Reset() {
-	*x = StartOidcLoginRequest{}
-	mi := &file_plux_v1_identity_proto_msgTypes[8]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *StartOidcLoginRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*StartOidcLoginRequest) ProtoMessage() {}
-
-func (x *StartOidcLoginRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[8]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use StartOidcLoginRequest.ProtoReflect.Descriptor instead.
-func (*StartOidcLoginRequest) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{8}
-}
-
-func (x *StartOidcLoginRequest) GetRedirectPath() string {
-	if x != nil {
-		return x.RedirectPath
-	}
-	return ""
-}
-
-type StartOidcLoginResponse struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	AuthorizationUrl string                 `protobuf:"bytes,1,opt,name=authorization_url,json=authorizationUrl,proto3" json:"authorization_url,omitempty"`
-	State            string                 `protobuf:"bytes,2,opt,name=state,proto3" json:"state,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
-}
-
-func (x *StartOidcLoginResponse) Reset() {
-	*x = StartOidcLoginResponse{}
-	mi := &file_plux_v1_identity_proto_msgTypes[9]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *StartOidcLoginResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*StartOidcLoginResponse) ProtoMessage() {}
-
-func (x *StartOidcLoginResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[9]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use StartOidcLoginResponse.ProtoReflect.Descriptor instead.
-func (*StartOidcLoginResponse) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *StartOidcLoginResponse) GetAuthorizationUrl() string {
-	if x != nil {
-		return x.AuthorizationUrl
-	}
-	return ""
-}
-
-func (x *StartOidcLoginResponse) GetState() string {
-	if x != nil {
-		return x.State
-	}
-	return ""
-}
-
-type CompleteOidcLoginRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Code          string                 `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
-	State         string                 `protobuf:"bytes,2,opt,name=state,proto3" json:"state,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CompleteOidcLoginRequest) Reset() {
-	*x = CompleteOidcLoginRequest{}
-	mi := &file_plux_v1_identity_proto_msgTypes[10]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CompleteOidcLoginRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CompleteOidcLoginRequest) ProtoMessage() {}
-
-func (x *CompleteOidcLoginRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[10]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CompleteOidcLoginRequest.ProtoReflect.Descriptor instead.
-func (*CompleteOidcLoginRequest) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *CompleteOidcLoginRequest) GetCode() string {
-	if x != nil {
-		return x.Code
-	}
-	return ""
-}
-
-func (x *CompleteOidcLoginRequest) GetState() string {
-	if x != nil {
-		return x.State
-	}
-	return ""
-}
-
-type CompleteOidcLoginResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Session       *Session               `protobuf:"bytes,1,opt,name=session,proto3" json:"session,omitempty"`
-	Challenge     *MfaChallenge          `protobuf:"bytes,2,opt,name=challenge,proto3" json:"challenge,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *CompleteOidcLoginResponse) Reset() {
-	*x = CompleteOidcLoginResponse{}
-	mi := &file_plux_v1_identity_proto_msgTypes[11]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *CompleteOidcLoginResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*CompleteOidcLoginResponse) ProtoMessage() {}
-
-func (x *CompleteOidcLoginResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[11]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use CompleteOidcLoginResponse.ProtoReflect.Descriptor instead.
-func (*CompleteOidcLoginResponse) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{11}
-}
-
-func (x *CompleteOidcLoginResponse) GetSession() *Session {
-	if x != nil {
-		return x.Session
-	}
-	return nil
-}
-
-func (x *CompleteOidcLoginResponse) GetChallenge() *MfaChallenge {
-	if x != nil {
-		return x.Challenge
-	}
-	return nil
-}
-
 type CompleteMfaRequest struct {
-	state       protoimpl.MessageState `protogen:"open.v1"`
-	ChallengeId string                 `protobuf:"bytes,1,opt,name=challenge_id,json=challengeId,proto3" json:"challenge_id,omitempty"`
-	// code answers a TOTP challenge.
-	Code string `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
-	// assertion answers a WebAuthn challenge, as JSON.
-	Assertion     []byte `protobuf:"bytes,3,opt,name=assertion,proto3" json:"assertion,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ChallengeId   string                 `protobuf:"bytes,1,opt,name=challenge_id,json=challengeId,proto3" json:"challenge_id,omitempty"`
+	Code          string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CompleteMfaRequest) Reset() {
 	*x = CompleteMfaRequest{}
-	mi := &file_plux_v1_identity_proto_msgTypes[12]
+	mi := &file_plux_v1_identity_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -776,7 +669,7 @@ func (x *CompleteMfaRequest) String() string {
 func (*CompleteMfaRequest) ProtoMessage() {}
 
 func (x *CompleteMfaRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[12]
+	mi := &file_plux_v1_identity_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -789,7 +682,7 @@ func (x *CompleteMfaRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompleteMfaRequest.ProtoReflect.Descriptor instead.
 func (*CompleteMfaRequest) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{12}
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *CompleteMfaRequest) GetChallengeId() string {
@@ -806,13 +699,6 @@ func (x *CompleteMfaRequest) GetCode() string {
 	return ""
 }
 
-func (x *CompleteMfaRequest) GetAssertion() []byte {
-	if x != nil {
-		return x.Assertion
-	}
-	return nil
-}
-
 type CompleteMfaResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Session       *Session               `protobuf:"bytes,1,opt,name=session,proto3" json:"session,omitempty"`
@@ -822,7 +708,7 @@ type CompleteMfaResponse struct {
 
 func (x *CompleteMfaResponse) Reset() {
 	*x = CompleteMfaResponse{}
-	mi := &file_plux_v1_identity_proto_msgTypes[13]
+	mi := &file_plux_v1_identity_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -834,7 +720,7 @@ func (x *CompleteMfaResponse) String() string {
 func (*CompleteMfaResponse) ProtoMessage() {}
 
 func (x *CompleteMfaResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[13]
+	mi := &file_plux_v1_identity_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -847,7 +733,7 @@ func (x *CompleteMfaResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CompleteMfaResponse.ProtoReflect.Descriptor instead.
 func (*CompleteMfaResponse) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{13}
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *CompleteMfaResponse) GetSession() *Session {
@@ -855,6 +741,182 @@ func (x *CompleteMfaResponse) GetSession() *Session {
 		return x.Session
 	}
 	return nil
+}
+
+type VerifySecondFactorRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Code          string                 `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VerifySecondFactorRequest) Reset() {
+	*x = VerifySecondFactorRequest{}
+	mi := &file_plux_v1_identity_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VerifySecondFactorRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VerifySecondFactorRequest) ProtoMessage() {}
+
+func (x *VerifySecondFactorRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_identity_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VerifySecondFactorRequest.ProtoReflect.Descriptor instead.
+func (*VerifySecondFactorRequest) Descriptor() ([]byte, []int) {
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *VerifySecondFactorRequest) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+type VerifySecondFactorResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Session       *Session               `protobuf:"bytes,1,opt,name=session,proto3" json:"session,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VerifySecondFactorResponse) Reset() {
+	*x = VerifySecondFactorResponse{}
+	mi := &file_plux_v1_identity_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VerifySecondFactorResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VerifySecondFactorResponse) ProtoMessage() {}
+
+func (x *VerifySecondFactorResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_identity_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VerifySecondFactorResponse.ProtoReflect.Descriptor instead.
+func (*VerifySecondFactorResponse) Descriptor() ([]byte, []int) {
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *VerifySecondFactorResponse) GetSession() *Session {
+	if x != nil {
+		return x.Session
+	}
+	return nil
+}
+
+type ChangePasswordRequest struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	CurrentPassword string                 `protobuf:"bytes,1,opt,name=current_password,json=currentPassword,proto3" json:"current_password,omitempty"`
+	NewPassword     string                 `protobuf:"bytes,2,opt,name=new_password,json=newPassword,proto3" json:"new_password,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *ChangePasswordRequest) Reset() {
+	*x = ChangePasswordRequest{}
+	mi := &file_plux_v1_identity_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChangePasswordRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangePasswordRequest) ProtoMessage() {}
+
+func (x *ChangePasswordRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_identity_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangePasswordRequest.ProtoReflect.Descriptor instead.
+func (*ChangePasswordRequest) Descriptor() ([]byte, []int) {
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *ChangePasswordRequest) GetCurrentPassword() string {
+	if x != nil {
+		return x.CurrentPassword
+	}
+	return ""
+}
+
+func (x *ChangePasswordRequest) GetNewPassword() string {
+	if x != nil {
+		return x.NewPassword
+	}
+	return ""
+}
+
+type ChangePasswordResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ChangePasswordResponse) Reset() {
+	*x = ChangePasswordResponse{}
+	mi := &file_plux_v1_identity_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ChangePasswordResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ChangePasswordResponse) ProtoMessage() {}
+
+func (x *ChangePasswordResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_identity_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ChangePasswordResponse.ProtoReflect.Descriptor instead.
+func (*ChangePasswordResponse) Descriptor() ([]byte, []int) {
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{15}
 }
 
 type LogoutRequest struct {
@@ -865,7 +927,7 @@ type LogoutRequest struct {
 
 func (x *LogoutRequest) Reset() {
 	*x = LogoutRequest{}
-	mi := &file_plux_v1_identity_proto_msgTypes[14]
+	mi := &file_plux_v1_identity_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -877,7 +939,7 @@ func (x *LogoutRequest) String() string {
 func (*LogoutRequest) ProtoMessage() {}
 
 func (x *LogoutRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[14]
+	mi := &file_plux_v1_identity_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -890,7 +952,7 @@ func (x *LogoutRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogoutRequest.ProtoReflect.Descriptor instead.
 func (*LogoutRequest) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{14}
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{16}
 }
 
 type LogoutResponse struct {
@@ -901,7 +963,7 @@ type LogoutResponse struct {
 
 func (x *LogoutResponse) Reset() {
 	*x = LogoutResponse{}
-	mi := &file_plux_v1_identity_proto_msgTypes[15]
+	mi := &file_plux_v1_identity_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -913,7 +975,7 @@ func (x *LogoutResponse) String() string {
 func (*LogoutResponse) ProtoMessage() {}
 
 func (x *LogoutResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[15]
+	mi := &file_plux_v1_identity_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -926,7 +988,7 @@ func (x *LogoutResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogoutResponse.ProtoReflect.Descriptor instead.
 func (*LogoutResponse) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{15}
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{17}
 }
 
 type EnrollTotpRequest struct {
@@ -938,7 +1000,7 @@ type EnrollTotpRequest struct {
 
 func (x *EnrollTotpRequest) Reset() {
 	*x = EnrollTotpRequest{}
-	mi := &file_plux_v1_identity_proto_msgTypes[16]
+	mi := &file_plux_v1_identity_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -950,7 +1012,7 @@ func (x *EnrollTotpRequest) String() string {
 func (*EnrollTotpRequest) ProtoMessage() {}
 
 func (x *EnrollTotpRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[16]
+	mi := &file_plux_v1_identity_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -963,7 +1025,7 @@ func (x *EnrollTotpRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnrollTotpRequest.ProtoReflect.Descriptor instead.
 func (*EnrollTotpRequest) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{16}
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *EnrollTotpRequest) GetLabel() string {
@@ -985,7 +1047,7 @@ type EnrollTotpResponse struct {
 
 func (x *EnrollTotpResponse) Reset() {
 	*x = EnrollTotpResponse{}
-	mi := &file_plux_v1_identity_proto_msgTypes[17]
+	mi := &file_plux_v1_identity_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -997,7 +1059,7 @@ func (x *EnrollTotpResponse) String() string {
 func (*EnrollTotpResponse) ProtoMessage() {}
 
 func (x *EnrollTotpResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[17]
+	mi := &file_plux_v1_identity_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1010,7 +1072,7 @@ func (x *EnrollTotpResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnrollTotpResponse.ProtoReflect.Descriptor instead.
 func (*EnrollTotpResponse) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{17}
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *EnrollTotpResponse) GetFactor() *Factor {
@@ -1034,108 +1096,10 @@ func (x *EnrollTotpResponse) GetOtpauthUrl() string {
 	return ""
 }
 
-type EnrollWebauthnRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Label         string                 `protobuf:"bytes,1,opt,name=label,proto3" json:"label,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *EnrollWebauthnRequest) Reset() {
-	*x = EnrollWebauthnRequest{}
-	mi := &file_plux_v1_identity_proto_msgTypes[18]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *EnrollWebauthnRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*EnrollWebauthnRequest) ProtoMessage() {}
-
-func (x *EnrollWebauthnRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[18]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use EnrollWebauthnRequest.ProtoReflect.Descriptor instead.
-func (*EnrollWebauthnRequest) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{18}
-}
-
-func (x *EnrollWebauthnRequest) GetLabel() string {
-	if x != nil {
-		return x.Label
-	}
-	return ""
-}
-
-type EnrollWebauthnResponse struct {
-	state  protoimpl.MessageState `protogen:"open.v1"`
-	Factor *Factor                `protobuf:"bytes,1,opt,name=factor,proto3" json:"factor,omitempty"`
-	// creation_options is the WebAuthn credential creation request as JSON.
-	CreationOptions []byte `protobuf:"bytes,2,opt,name=creation_options,json=creationOptions,proto3" json:"creation_options,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
-}
-
-func (x *EnrollWebauthnResponse) Reset() {
-	*x = EnrollWebauthnResponse{}
-	mi := &file_plux_v1_identity_proto_msgTypes[19]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *EnrollWebauthnResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*EnrollWebauthnResponse) ProtoMessage() {}
-
-func (x *EnrollWebauthnResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[19]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use EnrollWebauthnResponse.ProtoReflect.Descriptor instead.
-func (*EnrollWebauthnResponse) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{19}
-}
-
-func (x *EnrollWebauthnResponse) GetFactor() *Factor {
-	if x != nil {
-		return x.Factor
-	}
-	return nil
-}
-
-func (x *EnrollWebauthnResponse) GetCreationOptions() []byte {
-	if x != nil {
-		return x.CreationOptions
-	}
-	return nil
-}
-
 type ConfirmFactorRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FactorId      string                 `protobuf:"bytes,1,opt,name=factor_id,json=factorId,proto3" json:"factor_id,omitempty"`
 	Code          string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
-	Attestation   []byte                 `protobuf:"bytes,3,opt,name=attestation,proto3" json:"attestation,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1182,13 +1146,6 @@ func (x *ConfirmFactorRequest) GetCode() string {
 		return x.Code
 	}
 	return ""
-}
-
-func (x *ConfirmFactorRequest) GetAttestation() []byte {
-	if x != nil {
-		return x.Attestation
-	}
-	return nil
 }
 
 type ConfirmFactorResponse struct {
@@ -1398,7 +1355,9 @@ func (*DeleteFactorResponse) Descriptor() ([]byte, []int) {
 type StartDeviceAuthorizationRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// client is the calling program, such as "plux-cli".
-	Client        string   `protobuf:"bytes,1,opt,name=client,proto3" json:"client,omitempty"`
+	Client string `protobuf:"bytes,1,opt,name=client,proto3" json:"client,omitempty"`
+	// scopes are the permissions the token will carry; empty asks for the
+	// approving user's own.
 	Scopes        []string `protobuf:"bytes,2,rep,name=scopes,proto3" json:"scopes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1581,7 +1540,8 @@ type PollDeviceAuthorizationResponse struct {
 	// status is "pending", "slow_down", "approved" or "denied".
 	Status string       `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
 	Token  *AccessToken `protobuf:"bytes,2,opt,name=token,proto3" json:"token,omitempty"`
-	// secret is the token's value; returned exactly once, on approval.
+	// secret is the token's value, returned exactly once, on the first
+	// poll after approval.
 	Secret        string `protobuf:"bytes,3,opt,name=secret,proto3" json:"secret,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1726,27 +1686,110 @@ func (*ApproveDeviceAuthorizationResponse) Descriptor() ([]byte, []int) {
 	return file_plux_v1_identity_proto_rawDescGZIP(), []int{31}
 }
 
+type DenyDeviceAuthorizationRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserCode      string                 `protobuf:"bytes,1,opt,name=user_code,json=userCode,proto3" json:"user_code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DenyDeviceAuthorizationRequest) Reset() {
+	*x = DenyDeviceAuthorizationRequest{}
+	mi := &file_plux_v1_identity_proto_msgTypes[32]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DenyDeviceAuthorizationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DenyDeviceAuthorizationRequest) ProtoMessage() {}
+
+func (x *DenyDeviceAuthorizationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_identity_proto_msgTypes[32]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DenyDeviceAuthorizationRequest.ProtoReflect.Descriptor instead.
+func (*DenyDeviceAuthorizationRequest) Descriptor() ([]byte, []int) {
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{32}
+}
+
+func (x *DenyDeviceAuthorizationRequest) GetUserCode() string {
+	if x != nil {
+		return x.UserCode
+	}
+	return ""
+}
+
+type DenyDeviceAuthorizationResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DenyDeviceAuthorizationResponse) Reset() {
+	*x = DenyDeviceAuthorizationResponse{}
+	mi := &file_plux_v1_identity_proto_msgTypes[33]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DenyDeviceAuthorizationResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DenyDeviceAuthorizationResponse) ProtoMessage() {}
+
+func (x *DenyDeviceAuthorizationResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_identity_proto_msgTypes[33]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DenyDeviceAuthorizationResponse.ProtoReflect.Descriptor instead.
+func (*DenyDeviceAuthorizationResponse) Descriptor() ([]byte, []int) {
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{33}
+}
+
 // AccessToken is a scoped, expiring, revocable credential (SRV-064).
 type AccessToken struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name           string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	UserId         string                 `protobuf:"bytes,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	OrganizationId string                 `protobuf:"bytes,4,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
-	Scopes         []string               `protobuf:"bytes,5,rep,name=scopes,proto3" json:"scopes,omitempty"`
-	// prefix is the token's visible prefix, for identifying it in a list.
-	Prefix        string                 `protobuf:"bytes,6,opt,name=prefix,proto3" json:"prefix,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	LastUsedAt    *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=last_used_at,json=lastUsedAt,proto3" json:"last_used_at,omitempty"`
-	RevokedAt     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=revoked_at,json=revokedAt,proto3" json:"revoked_at,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name  string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// user_id is empty for a token exchanged from a CI identity.
+	UserId         string   `protobuf:"bytes,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	OrganizationId string   `protobuf:"bytes,4,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	Scopes         []string `protobuf:"bytes,5,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	// prefix is the token's visible prefix, for recognising it in a list.
+	Prefix string `protobuf:"bytes,6,opt,name=prefix,proto3" json:"prefix,omitempty"`
+	// source is "pat", "cli" or "ci".
+	Source        string                 `protobuf:"bytes,7,opt,name=source,proto3" json:"source,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	LastUsedAt    *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=last_used_at,json=lastUsedAt,proto3" json:"last_used_at,omitempty"`
+	RevokedAt     *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=revoked_at,json=revokedAt,proto3" json:"revoked_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *AccessToken) Reset() {
 	*x = AccessToken{}
-	mi := &file_plux_v1_identity_proto_msgTypes[32]
+	mi := &file_plux_v1_identity_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1758,7 +1801,7 @@ func (x *AccessToken) String() string {
 func (*AccessToken) ProtoMessage() {}
 
 func (x *AccessToken) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[32]
+	mi := &file_plux_v1_identity_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1771,7 +1814,7 @@ func (x *AccessToken) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AccessToken.ProtoReflect.Descriptor instead.
 func (*AccessToken) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{32}
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *AccessToken) GetId() string {
@@ -1812,6 +1855,13 @@ func (x *AccessToken) GetScopes() []string {
 func (x *AccessToken) GetPrefix() string {
 	if x != nil {
 		return x.Prefix
+	}
+	return ""
+}
+
+func (x *AccessToken) GetSource() string {
+	if x != nil {
+		return x.Source
 	}
 	return ""
 }
@@ -1857,7 +1907,7 @@ type CreateAccessTokenRequest struct {
 
 func (x *CreateAccessTokenRequest) Reset() {
 	*x = CreateAccessTokenRequest{}
-	mi := &file_plux_v1_identity_proto_msgTypes[33]
+	mi := &file_plux_v1_identity_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1869,7 +1919,7 @@ func (x *CreateAccessTokenRequest) String() string {
 func (*CreateAccessTokenRequest) ProtoMessage() {}
 
 func (x *CreateAccessTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[33]
+	mi := &file_plux_v1_identity_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1882,7 +1932,7 @@ func (x *CreateAccessTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAccessTokenRequest.ProtoReflect.Descriptor instead.
 func (*CreateAccessTokenRequest) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{33}
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *CreateAccessTokenRequest) GetName() string {
@@ -1916,7 +1966,7 @@ func (x *CreateAccessTokenRequest) GetTtlSeconds() int64 {
 type CreateAccessTokenResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Token *AccessToken           `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
-	// secret is returned exactly once and never stored in clear.
+	// secret is returned exactly once and stored only as a hash.
 	Secret        string `protobuf:"bytes,2,opt,name=secret,proto3" json:"secret,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1924,7 +1974,7 @@ type CreateAccessTokenResponse struct {
 
 func (x *CreateAccessTokenResponse) Reset() {
 	*x = CreateAccessTokenResponse{}
-	mi := &file_plux_v1_identity_proto_msgTypes[34]
+	mi := &file_plux_v1_identity_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1936,7 +1986,7 @@ func (x *CreateAccessTokenResponse) String() string {
 func (*CreateAccessTokenResponse) ProtoMessage() {}
 
 func (x *CreateAccessTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[34]
+	mi := &file_plux_v1_identity_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1949,7 +1999,7 @@ func (x *CreateAccessTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAccessTokenResponse.ProtoReflect.Descriptor instead.
 func (*CreateAccessTokenResponse) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{34}
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *CreateAccessTokenResponse) GetToken() *AccessToken {
@@ -1976,7 +2026,7 @@ type ListAccessTokensRequest struct {
 
 func (x *ListAccessTokensRequest) Reset() {
 	*x = ListAccessTokensRequest{}
-	mi := &file_plux_v1_identity_proto_msgTypes[35]
+	mi := &file_plux_v1_identity_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1988,7 +2038,7 @@ func (x *ListAccessTokensRequest) String() string {
 func (*ListAccessTokensRequest) ProtoMessage() {}
 
 func (x *ListAccessTokensRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[35]
+	mi := &file_plux_v1_identity_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2001,7 +2051,7 @@ func (x *ListAccessTokensRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAccessTokensRequest.ProtoReflect.Descriptor instead.
 func (*ListAccessTokensRequest) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{35}
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *ListAccessTokensRequest) GetOrganizationId() string {
@@ -2028,7 +2078,7 @@ type ListAccessTokensResponse struct {
 
 func (x *ListAccessTokensResponse) Reset() {
 	*x = ListAccessTokensResponse{}
-	mi := &file_plux_v1_identity_proto_msgTypes[36]
+	mi := &file_plux_v1_identity_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2040,7 +2090,7 @@ func (x *ListAccessTokensResponse) String() string {
 func (*ListAccessTokensResponse) ProtoMessage() {}
 
 func (x *ListAccessTokensResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[36]
+	mi := &file_plux_v1_identity_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2053,7 +2103,7 @@ func (x *ListAccessTokensResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAccessTokensResponse.ProtoReflect.Descriptor instead.
 func (*ListAccessTokensResponse) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{36}
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *ListAccessTokensResponse) GetTokens() []*AccessToken {
@@ -2079,7 +2129,7 @@ type RevokeAccessTokenRequest struct {
 
 func (x *RevokeAccessTokenRequest) Reset() {
 	*x = RevokeAccessTokenRequest{}
-	mi := &file_plux_v1_identity_proto_msgTypes[37]
+	mi := &file_plux_v1_identity_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2091,7 +2141,7 @@ func (x *RevokeAccessTokenRequest) String() string {
 func (*RevokeAccessTokenRequest) ProtoMessage() {}
 
 func (x *RevokeAccessTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[37]
+	mi := &file_plux_v1_identity_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2104,7 +2154,7 @@ func (x *RevokeAccessTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevokeAccessTokenRequest.ProtoReflect.Descriptor instead.
 func (*RevokeAccessTokenRequest) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{37}
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *RevokeAccessTokenRequest) GetId() string {
@@ -2122,7 +2172,7 @@ type RevokeAccessTokenResponse struct {
 
 func (x *RevokeAccessTokenResponse) Reset() {
 	*x = RevokeAccessTokenResponse{}
-	mi := &file_plux_v1_identity_proto_msgTypes[38]
+	mi := &file_plux_v1_identity_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2134,7 +2184,7 @@ func (x *RevokeAccessTokenResponse) String() string {
 func (*RevokeAccessTokenResponse) ProtoMessage() {}
 
 func (x *RevokeAccessTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[38]
+	mi := &file_plux_v1_identity_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2147,22 +2197,406 @@ func (x *RevokeAccessTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevokeAccessTokenResponse.ProtoReflect.Descriptor instead.
 func (*RevokeAccessTokenResponse) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{38}
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{40}
+}
+
+// WorkloadIdentity binds CI workloads to an organisation (SRV-064).
+type WorkloadIdentity struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	OrganizationId string                 `protobuf:"bytes,2,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	// issuer must be one the installation trusts.
+	Issuer   string `protobuf:"bytes,3,opt,name=issuer,proto3" json:"issuer,omitempty"`
+	Audience string `protobuf:"bytes,4,opt,name=audience,proto3" json:"audience,omitempty"`
+	// subject_pattern is a glob over the token's subject, such as
+	// "repo:acme/app:ref:refs/heads/main".
+	SubjectPattern string `protobuf:"bytes,5,opt,name=subject_pattern,json=subjectPattern,proto3" json:"subject_pattern,omitempty"`
+	// scopes are the permissions an exchanged token carries.
+	Scopes        []string               `protobuf:"bytes,6,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WorkloadIdentity) Reset() {
+	*x = WorkloadIdentity{}
+	mi := &file_plux_v1_identity_proto_msgTypes[41]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WorkloadIdentity) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WorkloadIdentity) ProtoMessage() {}
+
+func (x *WorkloadIdentity) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_identity_proto_msgTypes[41]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WorkloadIdentity.ProtoReflect.Descriptor instead.
+func (*WorkloadIdentity) Descriptor() ([]byte, []int) {
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{41}
+}
+
+func (x *WorkloadIdentity) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *WorkloadIdentity) GetOrganizationId() string {
+	if x != nil {
+		return x.OrganizationId
+	}
+	return ""
+}
+
+func (x *WorkloadIdentity) GetIssuer() string {
+	if x != nil {
+		return x.Issuer
+	}
+	return ""
+}
+
+func (x *WorkloadIdentity) GetAudience() string {
+	if x != nil {
+		return x.Audience
+	}
+	return ""
+}
+
+func (x *WorkloadIdentity) GetSubjectPattern() string {
+	if x != nil {
+		return x.SubjectPattern
+	}
+	return ""
+}
+
+func (x *WorkloadIdentity) GetScopes() []string {
+	if x != nil {
+		return x.Scopes
+	}
+	return nil
+}
+
+func (x *WorkloadIdentity) GetCreatedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CreatedAt
+	}
+	return nil
+}
+
+type CreateWorkloadIdentityRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	OrganizationId string                 `protobuf:"bytes,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	Issuer         string                 `protobuf:"bytes,2,opt,name=issuer,proto3" json:"issuer,omitempty"`
+	Audience       string                 `protobuf:"bytes,3,opt,name=audience,proto3" json:"audience,omitempty"`
+	SubjectPattern string                 `protobuf:"bytes,4,opt,name=subject_pattern,json=subjectPattern,proto3" json:"subject_pattern,omitempty"`
+	Scopes         []string               `protobuf:"bytes,5,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *CreateWorkloadIdentityRequest) Reset() {
+	*x = CreateWorkloadIdentityRequest{}
+	mi := &file_plux_v1_identity_proto_msgTypes[42]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateWorkloadIdentityRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateWorkloadIdentityRequest) ProtoMessage() {}
+
+func (x *CreateWorkloadIdentityRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_identity_proto_msgTypes[42]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateWorkloadIdentityRequest.ProtoReflect.Descriptor instead.
+func (*CreateWorkloadIdentityRequest) Descriptor() ([]byte, []int) {
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{42}
+}
+
+func (x *CreateWorkloadIdentityRequest) GetOrganizationId() string {
+	if x != nil {
+		return x.OrganizationId
+	}
+	return ""
+}
+
+func (x *CreateWorkloadIdentityRequest) GetIssuer() string {
+	if x != nil {
+		return x.Issuer
+	}
+	return ""
+}
+
+func (x *CreateWorkloadIdentityRequest) GetAudience() string {
+	if x != nil {
+		return x.Audience
+	}
+	return ""
+}
+
+func (x *CreateWorkloadIdentityRequest) GetSubjectPattern() string {
+	if x != nil {
+		return x.SubjectPattern
+	}
+	return ""
+}
+
+func (x *CreateWorkloadIdentityRequest) GetScopes() []string {
+	if x != nil {
+		return x.Scopes
+	}
+	return nil
+}
+
+type CreateWorkloadIdentityResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Identity      *WorkloadIdentity      `protobuf:"bytes,1,opt,name=identity,proto3" json:"identity,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateWorkloadIdentityResponse) Reset() {
+	*x = CreateWorkloadIdentityResponse{}
+	mi := &file_plux_v1_identity_proto_msgTypes[43]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateWorkloadIdentityResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateWorkloadIdentityResponse) ProtoMessage() {}
+
+func (x *CreateWorkloadIdentityResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_identity_proto_msgTypes[43]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateWorkloadIdentityResponse.ProtoReflect.Descriptor instead.
+func (*CreateWorkloadIdentityResponse) Descriptor() ([]byte, []int) {
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{43}
+}
+
+func (x *CreateWorkloadIdentityResponse) GetIdentity() *WorkloadIdentity {
+	if x != nil {
+		return x.Identity
+	}
+	return nil
+}
+
+type ListWorkloadIdentitiesRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	OrganizationId string                 `protobuf:"bytes,1,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *ListWorkloadIdentitiesRequest) Reset() {
+	*x = ListWorkloadIdentitiesRequest{}
+	mi := &file_plux_v1_identity_proto_msgTypes[44]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListWorkloadIdentitiesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListWorkloadIdentitiesRequest) ProtoMessage() {}
+
+func (x *ListWorkloadIdentitiesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_identity_proto_msgTypes[44]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListWorkloadIdentitiesRequest.ProtoReflect.Descriptor instead.
+func (*ListWorkloadIdentitiesRequest) Descriptor() ([]byte, []int) {
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{44}
+}
+
+func (x *ListWorkloadIdentitiesRequest) GetOrganizationId() string {
+	if x != nil {
+		return x.OrganizationId
+	}
+	return ""
+}
+
+type ListWorkloadIdentitiesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Identities    []*WorkloadIdentity    `protobuf:"bytes,1,rep,name=identities,proto3" json:"identities,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListWorkloadIdentitiesResponse) Reset() {
+	*x = ListWorkloadIdentitiesResponse{}
+	mi := &file_plux_v1_identity_proto_msgTypes[45]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListWorkloadIdentitiesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListWorkloadIdentitiesResponse) ProtoMessage() {}
+
+func (x *ListWorkloadIdentitiesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_identity_proto_msgTypes[45]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListWorkloadIdentitiesResponse.ProtoReflect.Descriptor instead.
+func (*ListWorkloadIdentitiesResponse) Descriptor() ([]byte, []int) {
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{45}
+}
+
+func (x *ListWorkloadIdentitiesResponse) GetIdentities() []*WorkloadIdentity {
+	if x != nil {
+		return x.Identities
+	}
+	return nil
+}
+
+type DeleteWorkloadIdentityRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteWorkloadIdentityRequest) Reset() {
+	*x = DeleteWorkloadIdentityRequest{}
+	mi := &file_plux_v1_identity_proto_msgTypes[46]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteWorkloadIdentityRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteWorkloadIdentityRequest) ProtoMessage() {}
+
+func (x *DeleteWorkloadIdentityRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_identity_proto_msgTypes[46]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteWorkloadIdentityRequest.ProtoReflect.Descriptor instead.
+func (*DeleteWorkloadIdentityRequest) Descriptor() ([]byte, []int) {
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{46}
+}
+
+func (x *DeleteWorkloadIdentityRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type DeleteWorkloadIdentityResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteWorkloadIdentityResponse) Reset() {
+	*x = DeleteWorkloadIdentityResponse{}
+	mi := &file_plux_v1_identity_proto_msgTypes[47]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteWorkloadIdentityResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteWorkloadIdentityResponse) ProtoMessage() {}
+
+func (x *DeleteWorkloadIdentityResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_identity_proto_msgTypes[47]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteWorkloadIdentityResponse.ProtoReflect.Descriptor instead.
+func (*DeleteWorkloadIdentityResponse) Descriptor() ([]byte, []int) {
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{47}
 }
 
 type ExchangeWorkloadIdentityRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// oidc_token is the CI provider's identity token.
-	OidcToken      string   `protobuf:"bytes,1,opt,name=oidc_token,json=oidcToken,proto3" json:"oidc_token,omitempty"`
-	OrganizationId string   `protobuf:"bytes,2,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
-	Scopes         []string `protobuf:"bytes,3,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	// identity_token is the CI provider's OpenID Connect token.
+	IdentityToken  string `protobuf:"bytes,1,opt,name=identity_token,json=identityToken,proto3" json:"identity_token,omitempty"`
+	OrganizationId string `protobuf:"bytes,2,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
 
 func (x *ExchangeWorkloadIdentityRequest) Reset() {
 	*x = ExchangeWorkloadIdentityRequest{}
-	mi := &file_plux_v1_identity_proto_msgTypes[39]
+	mi := &file_plux_v1_identity_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2174,7 +2608,7 @@ func (x *ExchangeWorkloadIdentityRequest) String() string {
 func (*ExchangeWorkloadIdentityRequest) ProtoMessage() {}
 
 func (x *ExchangeWorkloadIdentityRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[39]
+	mi := &file_plux_v1_identity_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2187,12 +2621,12 @@ func (x *ExchangeWorkloadIdentityRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExchangeWorkloadIdentityRequest.ProtoReflect.Descriptor instead.
 func (*ExchangeWorkloadIdentityRequest) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{39}
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{48}
 }
 
-func (x *ExchangeWorkloadIdentityRequest) GetOidcToken() string {
+func (x *ExchangeWorkloadIdentityRequest) GetIdentityToken() string {
 	if x != nil {
-		return x.OidcToken
+		return x.IdentityToken
 	}
 	return ""
 }
@@ -2204,25 +2638,17 @@ func (x *ExchangeWorkloadIdentityRequest) GetOrganizationId() string {
 	return ""
 }
 
-func (x *ExchangeWorkloadIdentityRequest) GetScopes() []string {
-	if x != nil {
-		return x.Scopes
-	}
-	return nil
-}
-
 type ExchangeWorkloadIdentityResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Secret        string                 `protobuf:"bytes,1,opt,name=secret,proto3" json:"secret,omitempty"`
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	Scopes        []string               `protobuf:"bytes,3,rep,name=scopes,proto3" json:"scopes,omitempty"`
+	Token         *AccessToken           `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	Secret        string                 `protobuf:"bytes,2,opt,name=secret,proto3" json:"secret,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ExchangeWorkloadIdentityResponse) Reset() {
 	*x = ExchangeWorkloadIdentityResponse{}
-	mi := &file_plux_v1_identity_proto_msgTypes[40]
+	mi := &file_plux_v1_identity_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2234,7 +2660,7 @@ func (x *ExchangeWorkloadIdentityResponse) String() string {
 func (*ExchangeWorkloadIdentityResponse) ProtoMessage() {}
 
 func (x *ExchangeWorkloadIdentityResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[40]
+	mi := &file_plux_v1_identity_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2247,7 +2673,14 @@ func (x *ExchangeWorkloadIdentityResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExchangeWorkloadIdentityResponse.ProtoReflect.Descriptor instead.
 func (*ExchangeWorkloadIdentityResponse) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{40}
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{49}
+}
+
+func (x *ExchangeWorkloadIdentityResponse) GetToken() *AccessToken {
+	if x != nil {
+		return x.Token
+	}
+	return nil
 }
 
 func (x *ExchangeWorkloadIdentityResponse) GetSecret() string {
@@ -2255,20 +2688,6 @@ func (x *ExchangeWorkloadIdentityResponse) GetSecret() string {
 		return x.Secret
 	}
 	return ""
-}
-
-func (x *ExchangeWorkloadIdentityResponse) GetExpiresAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.ExpiresAt
-	}
-	return nil
-}
-
-func (x *ExchangeWorkloadIdentityResponse) GetScopes() []string {
-	if x != nil {
-		return x.Scopes
-	}
-	return nil
 }
 
 type ListAuditEntriesRequest struct {
@@ -2281,7 +2700,7 @@ type ListAuditEntriesRequest struct {
 
 func (x *ListAuditEntriesRequest) Reset() {
 	*x = ListAuditEntriesRequest{}
-	mi := &file_plux_v1_identity_proto_msgTypes[41]
+	mi := &file_plux_v1_identity_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2293,7 +2712,7 @@ func (x *ListAuditEntriesRequest) String() string {
 func (*ListAuditEntriesRequest) ProtoMessage() {}
 
 func (x *ListAuditEntriesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[41]
+	mi := &file_plux_v1_identity_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2306,7 +2725,7 @@ func (x *ListAuditEntriesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAuditEntriesRequest.ProtoReflect.Descriptor instead.
 func (*ListAuditEntriesRequest) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{41}
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *ListAuditEntriesRequest) GetOrganizationId() string {
@@ -2333,7 +2752,7 @@ type ListAuditEntriesResponse struct {
 
 func (x *ListAuditEntriesResponse) Reset() {
 	*x = ListAuditEntriesResponse{}
-	mi := &file_plux_v1_identity_proto_msgTypes[42]
+	mi := &file_plux_v1_identity_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2345,7 +2764,7 @@ func (x *ListAuditEntriesResponse) String() string {
 func (*ListAuditEntriesResponse) ProtoMessage() {}
 
 func (x *ListAuditEntriesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_identity_proto_msgTypes[42]
+	mi := &file_plux_v1_identity_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2358,7 +2777,7 @@ func (x *ListAuditEntriesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAuditEntriesResponse.ProtoReflect.Descriptor instead.
 func (*ListAuditEntriesResponse) Descriptor() ([]byte, []int) {
-	return file_plux_v1_identity_proto_rawDescGZIP(), []int{42}
+	return file_plux_v1_identity_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *ListAuditEntriesResponse) GetEntries() []*AuditEntry {
@@ -2379,16 +2798,15 @@ var File_plux_v1_identity_proto protoreflect.FileDescriptor
 
 const file_plux_v1_identity_proto_rawDesc = "" +
 	"\n" +
-	"\x16plux/v1/identity.proto\x12\aplux.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14plux/v1/common.proto\x1a\x11plux/v1/org.proto\"\x87\x02\n" +
+	"\x16plux/v1/identity.proto\x12\aplux.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14plux/v1/common.proto\x1a\x11plux/v1/org.proto\"\xed\x01\n" +
 	"\x04User\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
-	"\asubject\x18\x02 \x01(\tR\asubject\x12!\n" +
-	"\fdisplay_name\x18\x03 \x01(\tR\vdisplayName\x12\x14\n" +
-	"\x05email\x18\x04 \x01(\tR\x05email\x12!\n" +
-	"\fmfa_enrolled\x18\x05 \x01(\bR\vmfaEnrolled\x129\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12!\n" +
+	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12\x14\n" +
+	"\x05email\x18\x03 \x01(\tR\x05email\x12!\n" +
+	"\fmfa_enrolled\x18\x04 \x01(\bR\vmfaEnrolled\x129\n" +
 	"\n" +
-	"created_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12>\n" +
-	"\rlast_login_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\vlastLoginAt\"\xd9\x01\n" +
+	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12>\n" +
+	"\rlast_login_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\vlastLoginAt\"\xd9\x01\n" +
 	"\x06Factor\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04kind\x18\x02 \x01(\tR\x04kind\x12\x14\n" +
@@ -2397,48 +2815,52 @@ const file_plux_v1_identity_proto_rawDesc = "" +
 	"\n" +
 	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12<\n" +
 	"\flast_used_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"lastUsedAt\"\x8c\x01\n" +
+	"lastUsedAt\"\xb1\x01\n" +
 	"\aSession\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1d\n" +
 	"\n" +
 	"csrf_token\x18\x03 \x01(\tR\tcsrfToken\x129\n" +
 	"\n" +
-	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\x9a\x01\n" +
+	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12#\n" +
+	"\rsecond_factor\x18\x05 \x01(\bR\fsecondFactor\"o\n" +
 	"\fMfaChallenge\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
-	"\x05kinds\x18\x02 \x03(\tR\x05kinds\x12)\n" +
-	"\x10webauthn_options\x18\x03 \x01(\fR\x0fwebauthnOptions\x129\n" +
+	"\x05kinds\x18\x02 \x03(\tR\x05kinds\x129\n" +
 	"\n" +
-	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\x17\n" +
+	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\x17\n" +
 	"\x15GetCurrentUserRequest\"\x90\x01\n" +
 	"\x16GetCurrentUserResponse\x12!\n" +
 	"\x04user\x18\x01 \x01(\v2\r.plux.v1.UserR\x04user\x121\n" +
 	"\vmemberships\x18\x02 \x03(\v2\x0f.plux.v1.MemberR\vmemberships\x12 \n" +
-	"\vpermissions\x18\x03 \x03(\tR\vpermissions\"M\n" +
+	"\vpermissions\x18\x03 \x03(\tR\vpermissions\"x\n" +
+	"\x17AcceptInvitationRequest\x12\x1e\n" +
+	"\n" +
+	"invitation\x18\x01 \x01(\tR\n" +
+	"invitation\x12!\n" +
+	"\fdisplay_name\x18\x02 \x01(\tR\vdisplayName\x12\x1a\n" +
+	"\bpassword\x18\x03 \x01(\tR\bpassword\"=\n" +
+	"\x18AcceptInvitationResponse\x12!\n" +
+	"\x04user\x18\x01 \x01(\v2\r.plux.v1.UserR\x04user\"M\n" +
 	"\x19StartPasswordLoginRequest\x12\x14\n" +
 	"\x05email\x18\x01 \x01(\tR\x05email\x12\x1a\n" +
 	"\bpassword\x18\x02 \x01(\tR\bpassword\"}\n" +
 	"\x1aStartPasswordLoginResponse\x12*\n" +
 	"\asession\x18\x01 \x01(\v2\x10.plux.v1.SessionR\asession\x123\n" +
-	"\tchallenge\x18\x02 \x01(\v2\x15.plux.v1.MfaChallengeR\tchallenge\"<\n" +
-	"\x15StartOidcLoginRequest\x12#\n" +
-	"\rredirect_path\x18\x01 \x01(\tR\fredirectPath\"[\n" +
-	"\x16StartOidcLoginResponse\x12+\n" +
-	"\x11authorization_url\x18\x01 \x01(\tR\x10authorizationUrl\x12\x14\n" +
-	"\x05state\x18\x02 \x01(\tR\x05state\"D\n" +
-	"\x18CompleteOidcLoginRequest\x12\x12\n" +
-	"\x04code\x18\x01 \x01(\tR\x04code\x12\x14\n" +
-	"\x05state\x18\x02 \x01(\tR\x05state\"|\n" +
-	"\x19CompleteOidcLoginResponse\x12*\n" +
-	"\asession\x18\x01 \x01(\v2\x10.plux.v1.SessionR\asession\x123\n" +
-	"\tchallenge\x18\x02 \x01(\v2\x15.plux.v1.MfaChallengeR\tchallenge\"i\n" +
+	"\tchallenge\x18\x02 \x01(\v2\x15.plux.v1.MfaChallengeR\tchallenge\"K\n" +
 	"\x12CompleteMfaRequest\x12!\n" +
 	"\fchallenge_id\x18\x01 \x01(\tR\vchallengeId\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\tR\x04code\x12\x1c\n" +
-	"\tassertion\x18\x03 \x01(\fR\tassertion\"A\n" +
+	"\x04code\x18\x02 \x01(\tR\x04code\"A\n" +
 	"\x13CompleteMfaResponse\x12*\n" +
-	"\asession\x18\x01 \x01(\v2\x10.plux.v1.SessionR\asession\"\x0f\n" +
+	"\asession\x18\x01 \x01(\v2\x10.plux.v1.SessionR\asession\"/\n" +
+	"\x19VerifySecondFactorRequest\x12\x12\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code\"H\n" +
+	"\x1aVerifySecondFactorResponse\x12*\n" +
+	"\asession\x18\x01 \x01(\v2\x10.plux.v1.SessionR\asession\"e\n" +
+	"\x15ChangePasswordRequest\x12)\n" +
+	"\x10current_password\x18\x01 \x01(\tR\x0fcurrentPassword\x12!\n" +
+	"\fnew_password\x18\x02 \x01(\tR\vnewPassword\"\x18\n" +
+	"\x16ChangePasswordResponse\"\x0f\n" +
 	"\rLogoutRequest\"\x10\n" +
 	"\x0eLogoutResponse\")\n" +
 	"\x11EnrollTotpRequest\x12\x14\n" +
@@ -2447,16 +2869,10 @@ const file_plux_v1_identity_proto_rawDesc = "" +
 	"\x06factor\x18\x01 \x01(\v2\x0f.plux.v1.FactorR\x06factor\x12\x16\n" +
 	"\x06secret\x18\x02 \x01(\tR\x06secret\x12\x1f\n" +
 	"\votpauth_url\x18\x03 \x01(\tR\n" +
-	"otpauthUrl\"-\n" +
-	"\x15EnrollWebauthnRequest\x12\x14\n" +
-	"\x05label\x18\x01 \x01(\tR\x05label\"l\n" +
-	"\x16EnrollWebauthnResponse\x12'\n" +
-	"\x06factor\x18\x01 \x01(\v2\x0f.plux.v1.FactorR\x06factor\x12)\n" +
-	"\x10creation_options\x18\x02 \x01(\fR\x0fcreationOptions\"i\n" +
+	"otpauthUrl\"G\n" +
 	"\x14ConfirmFactorRequest\x12\x1b\n" +
 	"\tfactor_id\x18\x01 \x01(\tR\bfactorId\x12\x12\n" +
-	"\x04code\x18\x02 \x01(\tR\x04code\x12 \n" +
-	"\vattestation\x18\x03 \x01(\fR\vattestation\"@\n" +
+	"\x04code\x18\x02 \x01(\tR\x04code\"@\n" +
 	"\x15ConfirmFactorResponse\x12'\n" +
 	"\x06factor\x18\x01 \x01(\v2\x0f.plux.v1.FactorR\x06factor\"\x14\n" +
 	"\x12ListFactorsRequest\"@\n" +
@@ -2487,23 +2903,27 @@ const file_plux_v1_identity_proto_rawDesc = "" +
 	"!ApproveDeviceAuthorizationRequest\x12\x1b\n" +
 	"\tuser_code\x18\x01 \x01(\tR\buserCode\x12'\n" +
 	"\x0forganization_id\x18\x02 \x01(\tR\x0eorganizationId\"$\n" +
-	"\"ApproveDeviceAuthorizationResponse\"\x92\x03\n" +
+	"\"ApproveDeviceAuthorizationResponse\"=\n" +
+	"\x1eDenyDeviceAuthorizationRequest\x12\x1b\n" +
+	"\tuser_code\x18\x01 \x01(\tR\buserCode\"!\n" +
+	"\x1fDenyDeviceAuthorizationResponse\"\xaa\x03\n" +
 	"\vAccessToken\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x17\n" +
 	"\auser_id\x18\x03 \x01(\tR\x06userId\x12'\n" +
 	"\x0forganization_id\x18\x04 \x01(\tR\x0eorganizationId\x12\x16\n" +
 	"\x06scopes\x18\x05 \x03(\tR\x06scopes\x12\x16\n" +
-	"\x06prefix\x18\x06 \x01(\tR\x06prefix\x129\n" +
+	"\x06prefix\x18\x06 \x01(\tR\x06prefix\x12\x16\n" +
+	"\x06source\x18\a \x01(\tR\x06source\x129\n" +
 	"\n" +
-	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"expires_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12<\n" +
-	"\flast_used_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"expires_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12<\n" +
+	"\flast_used_at\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"lastUsedAt\x129\n" +
 	"\n" +
-	"revoked_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\trevokedAt\"\x90\x01\n" +
+	"revoked_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\trevokedAt\"\x90\x01\n" +
 	"\x18CreateAccessTokenRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12'\n" +
 	"\x0forganization_id\x18\x02 \x01(\tR\x0eorganizationId\x12\x16\n" +
@@ -2521,42 +2941,68 @@ const file_plux_v1_identity_proto_rawDesc = "" +
 	"\x04page\x18\x02 \x01(\v2\x13.plux.v1.PageResultR\x04page\"*\n" +
 	"\x18RevokeAccessTokenRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\"\x1b\n" +
-	"\x19RevokeAccessTokenResponse\"\x81\x01\n" +
-	"\x1fExchangeWorkloadIdentityRequest\x12\x1d\n" +
-	"\n" +
-	"oidc_token\x18\x01 \x01(\tR\toidcToken\x12'\n" +
+	"\x19RevokeAccessTokenResponse\"\xfb\x01\n" +
+	"\x10WorkloadIdentity\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12'\n" +
 	"\x0forganization_id\x18\x02 \x01(\tR\x0eorganizationId\x12\x16\n" +
-	"\x06scopes\x18\x03 \x03(\tR\x06scopes\"\x8d\x01\n" +
-	" ExchangeWorkloadIdentityResponse\x12\x16\n" +
-	"\x06secret\x18\x01 \x01(\tR\x06secret\x129\n" +
+	"\x06issuer\x18\x03 \x01(\tR\x06issuer\x12\x1a\n" +
+	"\baudience\x18\x04 \x01(\tR\baudience\x12'\n" +
+	"\x0fsubject_pattern\x18\x05 \x01(\tR\x0esubjectPattern\x12\x16\n" +
+	"\x06scopes\x18\x06 \x03(\tR\x06scopes\x129\n" +
 	"\n" +
-	"expires_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12\x16\n" +
-	"\x06scopes\x18\x03 \x03(\tR\x06scopes\"e\n" +
+	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xbd\x01\n" +
+	"\x1dCreateWorkloadIdentityRequest\x12'\n" +
+	"\x0forganization_id\x18\x01 \x01(\tR\x0eorganizationId\x12\x16\n" +
+	"\x06issuer\x18\x02 \x01(\tR\x06issuer\x12\x1a\n" +
+	"\baudience\x18\x03 \x01(\tR\baudience\x12'\n" +
+	"\x0fsubject_pattern\x18\x04 \x01(\tR\x0esubjectPattern\x12\x16\n" +
+	"\x06scopes\x18\x05 \x03(\tR\x06scopes\"W\n" +
+	"\x1eCreateWorkloadIdentityResponse\x125\n" +
+	"\bidentity\x18\x01 \x01(\v2\x19.plux.v1.WorkloadIdentityR\bidentity\"H\n" +
+	"\x1dListWorkloadIdentitiesRequest\x12'\n" +
+	"\x0forganization_id\x18\x01 \x01(\tR\x0eorganizationId\"[\n" +
+	"\x1eListWorkloadIdentitiesResponse\x129\n" +
+	"\n" +
+	"identities\x18\x01 \x03(\v2\x19.plux.v1.WorkloadIdentityR\n" +
+	"identities\"/\n" +
+	"\x1dDeleteWorkloadIdentityRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\" \n" +
+	"\x1eDeleteWorkloadIdentityResponse\"q\n" +
+	"\x1fExchangeWorkloadIdentityRequest\x12%\n" +
+	"\x0eidentity_token\x18\x01 \x01(\tR\ridentityToken\x12'\n" +
+	"\x0forganization_id\x18\x02 \x01(\tR\x0eorganizationId\"f\n" +
+	" ExchangeWorkloadIdentityResponse\x12*\n" +
+	"\x05token\x18\x01 \x01(\v2\x14.plux.v1.AccessTokenR\x05token\x12\x16\n" +
+	"\x06secret\x18\x02 \x01(\tR\x06secret\"e\n" +
 	"\x17ListAuditEntriesRequest\x12'\n" +
 	"\x0forganization_id\x18\x01 \x01(\tR\x0eorganizationId\x12!\n" +
 	"\x04page\x18\x02 \x01(\v2\r.plux.v1.PageR\x04page\"r\n" +
 	"\x18ListAuditEntriesResponse\x12-\n" +
 	"\aentries\x18\x01 \x03(\v2\x13.plux.v1.AuditEntryR\aentries\x12'\n" +
-	"\x04page\x18\x02 \x01(\v2\x13.plux.v1.PageResultR\x04page2\xcf\r\n" +
+	"\x04page\x18\x02 \x01(\v2\x13.plux.v1.PageResultR\x04page2\x8f\x11\n" +
 	"\x0fIdentityService\x12S\n" +
-	"\x0eGetCurrentUser\x12\x1e.plux.v1.GetCurrentUserRequest\x1a\x1f.plux.v1.GetCurrentUserResponse\"\x00\x12_\n" +
-	"\x12StartPasswordLogin\x12\".plux.v1.StartPasswordLoginRequest\x1a#.plux.v1.StartPasswordLoginResponse\"\x00\x12S\n" +
-	"\x0eStartOidcLogin\x12\x1e.plux.v1.StartOidcLoginRequest\x1a\x1f.plux.v1.StartOidcLoginResponse\"\x00\x12\\\n" +
-	"\x11CompleteOidcLogin\x12!.plux.v1.CompleteOidcLoginRequest\x1a\".plux.v1.CompleteOidcLoginResponse\"\x00\x12J\n" +
-	"\vCompleteMfa\x12\x1b.plux.v1.CompleteMfaRequest\x1a\x1c.plux.v1.CompleteMfaResponse\"\x00\x12;\n" +
+	"\x0eGetCurrentUser\x12\x1e.plux.v1.GetCurrentUserRequest\x1a\x1f.plux.v1.GetCurrentUserResponse\"\x00\x12Y\n" +
+	"\x10AcceptInvitation\x12 .plux.v1.AcceptInvitationRequest\x1a!.plux.v1.AcceptInvitationResponse\"\x00\x12_\n" +
+	"\x12StartPasswordLogin\x12\".plux.v1.StartPasswordLoginRequest\x1a#.plux.v1.StartPasswordLoginResponse\"\x00\x12J\n" +
+	"\vCompleteMfa\x12\x1b.plux.v1.CompleteMfaRequest\x1a\x1c.plux.v1.CompleteMfaResponse\"\x00\x12_\n" +
+	"\x12VerifySecondFactor\x12\".plux.v1.VerifySecondFactorRequest\x1a#.plux.v1.VerifySecondFactorResponse\"\x00\x12S\n" +
+	"\x0eChangePassword\x12\x1e.plux.v1.ChangePasswordRequest\x1a\x1f.plux.v1.ChangePasswordResponse\"\x00\x12;\n" +
 	"\x06Logout\x12\x16.plux.v1.LogoutRequest\x1a\x17.plux.v1.LogoutResponse\"\x00\x12G\n" +
 	"\n" +
-	"EnrollTotp\x12\x1a.plux.v1.EnrollTotpRequest\x1a\x1b.plux.v1.EnrollTotpResponse\"\x00\x12S\n" +
-	"\x0eEnrollWebauthn\x12\x1e.plux.v1.EnrollWebauthnRequest\x1a\x1f.plux.v1.EnrollWebauthnResponse\"\x00\x12P\n" +
+	"EnrollTotp\x12\x1a.plux.v1.EnrollTotpRequest\x1a\x1b.plux.v1.EnrollTotpResponse\"\x00\x12P\n" +
 	"\rConfirmFactor\x12\x1d.plux.v1.ConfirmFactorRequest\x1a\x1e.plux.v1.ConfirmFactorResponse\"\x00\x12J\n" +
 	"\vListFactors\x12\x1b.plux.v1.ListFactorsRequest\x1a\x1c.plux.v1.ListFactorsResponse\"\x00\x12M\n" +
 	"\fDeleteFactor\x12\x1c.plux.v1.DeleteFactorRequest\x1a\x1d.plux.v1.DeleteFactorResponse\"\x00\x12q\n" +
 	"\x18StartDeviceAuthorization\x12(.plux.v1.StartDeviceAuthorizationRequest\x1a).plux.v1.StartDeviceAuthorizationResponse\"\x00\x12n\n" +
 	"\x17PollDeviceAuthorization\x12'.plux.v1.PollDeviceAuthorizationRequest\x1a(.plux.v1.PollDeviceAuthorizationResponse\"\x00\x12w\n" +
-	"\x1aApproveDeviceAuthorization\x12*.plux.v1.ApproveDeviceAuthorizationRequest\x1a+.plux.v1.ApproveDeviceAuthorizationResponse\"\x00\x12\\\n" +
+	"\x1aApproveDeviceAuthorization\x12*.plux.v1.ApproveDeviceAuthorizationRequest\x1a+.plux.v1.ApproveDeviceAuthorizationResponse\"\x00\x12n\n" +
+	"\x17DenyDeviceAuthorization\x12'.plux.v1.DenyDeviceAuthorizationRequest\x1a(.plux.v1.DenyDeviceAuthorizationResponse\"\x00\x12\\\n" +
 	"\x11CreateAccessToken\x12!.plux.v1.CreateAccessTokenRequest\x1a\".plux.v1.CreateAccessTokenResponse\"\x00\x12Y\n" +
 	"\x10ListAccessTokens\x12 .plux.v1.ListAccessTokensRequest\x1a!.plux.v1.ListAccessTokensResponse\"\x00\x12\\\n" +
-	"\x11RevokeAccessToken\x12!.plux.v1.RevokeAccessTokenRequest\x1a\".plux.v1.RevokeAccessTokenResponse\"\x00\x12q\n" +
+	"\x11RevokeAccessToken\x12!.plux.v1.RevokeAccessTokenRequest\x1a\".plux.v1.RevokeAccessTokenResponse\"\x00\x12k\n" +
+	"\x16CreateWorkloadIdentity\x12&.plux.v1.CreateWorkloadIdentityRequest\x1a'.plux.v1.CreateWorkloadIdentityResponse\"\x00\x12k\n" +
+	"\x16ListWorkloadIdentities\x12&.plux.v1.ListWorkloadIdentitiesRequest\x1a'.plux.v1.ListWorkloadIdentitiesResponse\"\x00\x12k\n" +
+	"\x16DeleteWorkloadIdentity\x12&.plux.v1.DeleteWorkloadIdentityRequest\x1a'.plux.v1.DeleteWorkloadIdentityResponse\"\x00\x12q\n" +
 	"\x18ExchangeWorkloadIdentity\x12(.plux.v1.ExchangeWorkloadIdentityRequest\x1a).plux.v1.ExchangeWorkloadIdentityResponse\"\x00\x12Y\n" +
 	"\x10ListAuditEntries\x12 .plux.v1.ListAuditEntriesRequest\x1a!.plux.v1.ListAuditEntriesResponse\"\x00B=Z;github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1b\x06proto3"
 
@@ -2572,7 +3018,7 @@ func file_plux_v1_identity_proto_rawDescGZIP() []byte {
 	return file_plux_v1_identity_proto_rawDescData
 }
 
-var file_plux_v1_identity_proto_msgTypes = make([]protoimpl.MessageInfo, 43)
+var file_plux_v1_identity_proto_msgTypes = make([]protoimpl.MessageInfo, 52)
 var file_plux_v1_identity_proto_goTypes = []any{
 	(*User)(nil),                               // 0: plux.v1.User
 	(*Factor)(nil),                             // 1: plux.v1.Factor
@@ -2580,20 +3026,20 @@ var file_plux_v1_identity_proto_goTypes = []any{
 	(*MfaChallenge)(nil),                       // 3: plux.v1.MfaChallenge
 	(*GetCurrentUserRequest)(nil),              // 4: plux.v1.GetCurrentUserRequest
 	(*GetCurrentUserResponse)(nil),             // 5: plux.v1.GetCurrentUserResponse
-	(*StartPasswordLoginRequest)(nil),          // 6: plux.v1.StartPasswordLoginRequest
-	(*StartPasswordLoginResponse)(nil),         // 7: plux.v1.StartPasswordLoginResponse
-	(*StartOidcLoginRequest)(nil),              // 8: plux.v1.StartOidcLoginRequest
-	(*StartOidcLoginResponse)(nil),             // 9: plux.v1.StartOidcLoginResponse
-	(*CompleteOidcLoginRequest)(nil),           // 10: plux.v1.CompleteOidcLoginRequest
-	(*CompleteOidcLoginResponse)(nil),          // 11: plux.v1.CompleteOidcLoginResponse
-	(*CompleteMfaRequest)(nil),                 // 12: plux.v1.CompleteMfaRequest
-	(*CompleteMfaResponse)(nil),                // 13: plux.v1.CompleteMfaResponse
-	(*LogoutRequest)(nil),                      // 14: plux.v1.LogoutRequest
-	(*LogoutResponse)(nil),                     // 15: plux.v1.LogoutResponse
-	(*EnrollTotpRequest)(nil),                  // 16: plux.v1.EnrollTotpRequest
-	(*EnrollTotpResponse)(nil),                 // 17: plux.v1.EnrollTotpResponse
-	(*EnrollWebauthnRequest)(nil),              // 18: plux.v1.EnrollWebauthnRequest
-	(*EnrollWebauthnResponse)(nil),             // 19: plux.v1.EnrollWebauthnResponse
+	(*AcceptInvitationRequest)(nil),            // 6: plux.v1.AcceptInvitationRequest
+	(*AcceptInvitationResponse)(nil),           // 7: plux.v1.AcceptInvitationResponse
+	(*StartPasswordLoginRequest)(nil),          // 8: plux.v1.StartPasswordLoginRequest
+	(*StartPasswordLoginResponse)(nil),         // 9: plux.v1.StartPasswordLoginResponse
+	(*CompleteMfaRequest)(nil),                 // 10: plux.v1.CompleteMfaRequest
+	(*CompleteMfaResponse)(nil),                // 11: plux.v1.CompleteMfaResponse
+	(*VerifySecondFactorRequest)(nil),          // 12: plux.v1.VerifySecondFactorRequest
+	(*VerifySecondFactorResponse)(nil),         // 13: plux.v1.VerifySecondFactorResponse
+	(*ChangePasswordRequest)(nil),              // 14: plux.v1.ChangePasswordRequest
+	(*ChangePasswordResponse)(nil),             // 15: plux.v1.ChangePasswordResponse
+	(*LogoutRequest)(nil),                      // 16: plux.v1.LogoutRequest
+	(*LogoutResponse)(nil),                     // 17: plux.v1.LogoutResponse
+	(*EnrollTotpRequest)(nil),                  // 18: plux.v1.EnrollTotpRequest
+	(*EnrollTotpResponse)(nil),                 // 19: plux.v1.EnrollTotpResponse
 	(*ConfirmFactorRequest)(nil),               // 20: plux.v1.ConfirmFactorRequest
 	(*ConfirmFactorResponse)(nil),              // 21: plux.v1.ConfirmFactorResponse
 	(*ListFactorsRequest)(nil),                 // 22: plux.v1.ListFactorsRequest
@@ -2606,98 +3052,117 @@ var file_plux_v1_identity_proto_goTypes = []any{
 	(*PollDeviceAuthorizationResponse)(nil),    // 29: plux.v1.PollDeviceAuthorizationResponse
 	(*ApproveDeviceAuthorizationRequest)(nil),  // 30: plux.v1.ApproveDeviceAuthorizationRequest
 	(*ApproveDeviceAuthorizationResponse)(nil), // 31: plux.v1.ApproveDeviceAuthorizationResponse
-	(*AccessToken)(nil),                        // 32: plux.v1.AccessToken
-	(*CreateAccessTokenRequest)(nil),           // 33: plux.v1.CreateAccessTokenRequest
-	(*CreateAccessTokenResponse)(nil),          // 34: plux.v1.CreateAccessTokenResponse
-	(*ListAccessTokensRequest)(nil),            // 35: plux.v1.ListAccessTokensRequest
-	(*ListAccessTokensResponse)(nil),           // 36: plux.v1.ListAccessTokensResponse
-	(*RevokeAccessTokenRequest)(nil),           // 37: plux.v1.RevokeAccessTokenRequest
-	(*RevokeAccessTokenResponse)(nil),          // 38: plux.v1.RevokeAccessTokenResponse
-	(*ExchangeWorkloadIdentityRequest)(nil),    // 39: plux.v1.ExchangeWorkloadIdentityRequest
-	(*ExchangeWorkloadIdentityResponse)(nil),   // 40: plux.v1.ExchangeWorkloadIdentityResponse
-	(*ListAuditEntriesRequest)(nil),            // 41: plux.v1.ListAuditEntriesRequest
-	(*ListAuditEntriesResponse)(nil),           // 42: plux.v1.ListAuditEntriesResponse
-	(*timestamppb.Timestamp)(nil),              // 43: google.protobuf.Timestamp
-	(*Member)(nil),                             // 44: plux.v1.Member
-	(*Page)(nil),                               // 45: plux.v1.Page
-	(*PageResult)(nil),                         // 46: plux.v1.PageResult
-	(*AuditEntry)(nil),                         // 47: plux.v1.AuditEntry
+	(*DenyDeviceAuthorizationRequest)(nil),     // 32: plux.v1.DenyDeviceAuthorizationRequest
+	(*DenyDeviceAuthorizationResponse)(nil),    // 33: plux.v1.DenyDeviceAuthorizationResponse
+	(*AccessToken)(nil),                        // 34: plux.v1.AccessToken
+	(*CreateAccessTokenRequest)(nil),           // 35: plux.v1.CreateAccessTokenRequest
+	(*CreateAccessTokenResponse)(nil),          // 36: plux.v1.CreateAccessTokenResponse
+	(*ListAccessTokensRequest)(nil),            // 37: plux.v1.ListAccessTokensRequest
+	(*ListAccessTokensResponse)(nil),           // 38: plux.v1.ListAccessTokensResponse
+	(*RevokeAccessTokenRequest)(nil),           // 39: plux.v1.RevokeAccessTokenRequest
+	(*RevokeAccessTokenResponse)(nil),          // 40: plux.v1.RevokeAccessTokenResponse
+	(*WorkloadIdentity)(nil),                   // 41: plux.v1.WorkloadIdentity
+	(*CreateWorkloadIdentityRequest)(nil),      // 42: plux.v1.CreateWorkloadIdentityRequest
+	(*CreateWorkloadIdentityResponse)(nil),     // 43: plux.v1.CreateWorkloadIdentityResponse
+	(*ListWorkloadIdentitiesRequest)(nil),      // 44: plux.v1.ListWorkloadIdentitiesRequest
+	(*ListWorkloadIdentitiesResponse)(nil),     // 45: plux.v1.ListWorkloadIdentitiesResponse
+	(*DeleteWorkloadIdentityRequest)(nil),      // 46: plux.v1.DeleteWorkloadIdentityRequest
+	(*DeleteWorkloadIdentityResponse)(nil),     // 47: plux.v1.DeleteWorkloadIdentityResponse
+	(*ExchangeWorkloadIdentityRequest)(nil),    // 48: plux.v1.ExchangeWorkloadIdentityRequest
+	(*ExchangeWorkloadIdentityResponse)(nil),   // 49: plux.v1.ExchangeWorkloadIdentityResponse
+	(*ListAuditEntriesRequest)(nil),            // 50: plux.v1.ListAuditEntriesRequest
+	(*ListAuditEntriesResponse)(nil),           // 51: plux.v1.ListAuditEntriesResponse
+	(*timestamppb.Timestamp)(nil),              // 52: google.protobuf.Timestamp
+	(*Member)(nil),                             // 53: plux.v1.Member
+	(*Page)(nil),                               // 54: plux.v1.Page
+	(*PageResult)(nil),                         // 55: plux.v1.PageResult
+	(*AuditEntry)(nil),                         // 56: plux.v1.AuditEntry
 }
 var file_plux_v1_identity_proto_depIdxs = []int32{
-	43, // 0: plux.v1.User.created_at:type_name -> google.protobuf.Timestamp
-	43, // 1: plux.v1.User.last_login_at:type_name -> google.protobuf.Timestamp
-	43, // 2: plux.v1.Factor.created_at:type_name -> google.protobuf.Timestamp
-	43, // 3: plux.v1.Factor.last_used_at:type_name -> google.protobuf.Timestamp
-	43, // 4: plux.v1.Session.expires_at:type_name -> google.protobuf.Timestamp
-	43, // 5: plux.v1.MfaChallenge.expires_at:type_name -> google.protobuf.Timestamp
+	52, // 0: plux.v1.User.created_at:type_name -> google.protobuf.Timestamp
+	52, // 1: plux.v1.User.last_login_at:type_name -> google.protobuf.Timestamp
+	52, // 2: plux.v1.Factor.created_at:type_name -> google.protobuf.Timestamp
+	52, // 3: plux.v1.Factor.last_used_at:type_name -> google.protobuf.Timestamp
+	52, // 4: plux.v1.Session.expires_at:type_name -> google.protobuf.Timestamp
+	52, // 5: plux.v1.MfaChallenge.expires_at:type_name -> google.protobuf.Timestamp
 	0,  // 6: plux.v1.GetCurrentUserResponse.user:type_name -> plux.v1.User
-	44, // 7: plux.v1.GetCurrentUserResponse.memberships:type_name -> plux.v1.Member
-	2,  // 8: plux.v1.StartPasswordLoginResponse.session:type_name -> plux.v1.Session
-	3,  // 9: plux.v1.StartPasswordLoginResponse.challenge:type_name -> plux.v1.MfaChallenge
-	2,  // 10: plux.v1.CompleteOidcLoginResponse.session:type_name -> plux.v1.Session
-	3,  // 11: plux.v1.CompleteOidcLoginResponse.challenge:type_name -> plux.v1.MfaChallenge
-	2,  // 12: plux.v1.CompleteMfaResponse.session:type_name -> plux.v1.Session
+	53, // 7: plux.v1.GetCurrentUserResponse.memberships:type_name -> plux.v1.Member
+	0,  // 8: plux.v1.AcceptInvitationResponse.user:type_name -> plux.v1.User
+	2,  // 9: plux.v1.StartPasswordLoginResponse.session:type_name -> plux.v1.Session
+	3,  // 10: plux.v1.StartPasswordLoginResponse.challenge:type_name -> plux.v1.MfaChallenge
+	2,  // 11: plux.v1.CompleteMfaResponse.session:type_name -> plux.v1.Session
+	2,  // 12: plux.v1.VerifySecondFactorResponse.session:type_name -> plux.v1.Session
 	1,  // 13: plux.v1.EnrollTotpResponse.factor:type_name -> plux.v1.Factor
-	1,  // 14: plux.v1.EnrollWebauthnResponse.factor:type_name -> plux.v1.Factor
-	1,  // 15: plux.v1.ConfirmFactorResponse.factor:type_name -> plux.v1.Factor
-	1,  // 16: plux.v1.ListFactorsResponse.factors:type_name -> plux.v1.Factor
-	43, // 17: plux.v1.StartDeviceAuthorizationResponse.expires_at:type_name -> google.protobuf.Timestamp
-	32, // 18: plux.v1.PollDeviceAuthorizationResponse.token:type_name -> plux.v1.AccessToken
-	43, // 19: plux.v1.AccessToken.created_at:type_name -> google.protobuf.Timestamp
-	43, // 20: plux.v1.AccessToken.expires_at:type_name -> google.protobuf.Timestamp
-	43, // 21: plux.v1.AccessToken.last_used_at:type_name -> google.protobuf.Timestamp
-	43, // 22: plux.v1.AccessToken.revoked_at:type_name -> google.protobuf.Timestamp
-	32, // 23: plux.v1.CreateAccessTokenResponse.token:type_name -> plux.v1.AccessToken
-	45, // 24: plux.v1.ListAccessTokensRequest.page:type_name -> plux.v1.Page
-	32, // 25: plux.v1.ListAccessTokensResponse.tokens:type_name -> plux.v1.AccessToken
-	46, // 26: plux.v1.ListAccessTokensResponse.page:type_name -> plux.v1.PageResult
-	43, // 27: plux.v1.ExchangeWorkloadIdentityResponse.expires_at:type_name -> google.protobuf.Timestamp
-	45, // 28: plux.v1.ListAuditEntriesRequest.page:type_name -> plux.v1.Page
-	47, // 29: plux.v1.ListAuditEntriesResponse.entries:type_name -> plux.v1.AuditEntry
-	46, // 30: plux.v1.ListAuditEntriesResponse.page:type_name -> plux.v1.PageResult
-	4,  // 31: plux.v1.IdentityService.GetCurrentUser:input_type -> plux.v1.GetCurrentUserRequest
-	6,  // 32: plux.v1.IdentityService.StartPasswordLogin:input_type -> plux.v1.StartPasswordLoginRequest
-	8,  // 33: plux.v1.IdentityService.StartOidcLogin:input_type -> plux.v1.StartOidcLoginRequest
-	10, // 34: plux.v1.IdentityService.CompleteOidcLogin:input_type -> plux.v1.CompleteOidcLoginRequest
-	12, // 35: plux.v1.IdentityService.CompleteMfa:input_type -> plux.v1.CompleteMfaRequest
-	14, // 36: plux.v1.IdentityService.Logout:input_type -> plux.v1.LogoutRequest
-	16, // 37: plux.v1.IdentityService.EnrollTotp:input_type -> plux.v1.EnrollTotpRequest
-	18, // 38: plux.v1.IdentityService.EnrollWebauthn:input_type -> plux.v1.EnrollWebauthnRequest
-	20, // 39: plux.v1.IdentityService.ConfirmFactor:input_type -> plux.v1.ConfirmFactorRequest
-	22, // 40: plux.v1.IdentityService.ListFactors:input_type -> plux.v1.ListFactorsRequest
-	24, // 41: plux.v1.IdentityService.DeleteFactor:input_type -> plux.v1.DeleteFactorRequest
-	26, // 42: plux.v1.IdentityService.StartDeviceAuthorization:input_type -> plux.v1.StartDeviceAuthorizationRequest
-	28, // 43: plux.v1.IdentityService.PollDeviceAuthorization:input_type -> plux.v1.PollDeviceAuthorizationRequest
-	30, // 44: plux.v1.IdentityService.ApproveDeviceAuthorization:input_type -> plux.v1.ApproveDeviceAuthorizationRequest
-	33, // 45: plux.v1.IdentityService.CreateAccessToken:input_type -> plux.v1.CreateAccessTokenRequest
-	35, // 46: plux.v1.IdentityService.ListAccessTokens:input_type -> plux.v1.ListAccessTokensRequest
-	37, // 47: plux.v1.IdentityService.RevokeAccessToken:input_type -> plux.v1.RevokeAccessTokenRequest
-	39, // 48: plux.v1.IdentityService.ExchangeWorkloadIdentity:input_type -> plux.v1.ExchangeWorkloadIdentityRequest
-	41, // 49: plux.v1.IdentityService.ListAuditEntries:input_type -> plux.v1.ListAuditEntriesRequest
-	5,  // 50: plux.v1.IdentityService.GetCurrentUser:output_type -> plux.v1.GetCurrentUserResponse
-	7,  // 51: plux.v1.IdentityService.StartPasswordLogin:output_type -> plux.v1.StartPasswordLoginResponse
-	9,  // 52: plux.v1.IdentityService.StartOidcLogin:output_type -> plux.v1.StartOidcLoginResponse
-	11, // 53: plux.v1.IdentityService.CompleteOidcLogin:output_type -> plux.v1.CompleteOidcLoginResponse
-	13, // 54: plux.v1.IdentityService.CompleteMfa:output_type -> plux.v1.CompleteMfaResponse
-	15, // 55: plux.v1.IdentityService.Logout:output_type -> plux.v1.LogoutResponse
-	17, // 56: plux.v1.IdentityService.EnrollTotp:output_type -> plux.v1.EnrollTotpResponse
-	19, // 57: plux.v1.IdentityService.EnrollWebauthn:output_type -> plux.v1.EnrollWebauthnResponse
-	21, // 58: plux.v1.IdentityService.ConfirmFactor:output_type -> plux.v1.ConfirmFactorResponse
-	23, // 59: plux.v1.IdentityService.ListFactors:output_type -> plux.v1.ListFactorsResponse
-	25, // 60: plux.v1.IdentityService.DeleteFactor:output_type -> plux.v1.DeleteFactorResponse
-	27, // 61: plux.v1.IdentityService.StartDeviceAuthorization:output_type -> plux.v1.StartDeviceAuthorizationResponse
-	29, // 62: plux.v1.IdentityService.PollDeviceAuthorization:output_type -> plux.v1.PollDeviceAuthorizationResponse
-	31, // 63: plux.v1.IdentityService.ApproveDeviceAuthorization:output_type -> plux.v1.ApproveDeviceAuthorizationResponse
-	34, // 64: plux.v1.IdentityService.CreateAccessToken:output_type -> plux.v1.CreateAccessTokenResponse
-	36, // 65: plux.v1.IdentityService.ListAccessTokens:output_type -> plux.v1.ListAccessTokensResponse
-	38, // 66: plux.v1.IdentityService.RevokeAccessToken:output_type -> plux.v1.RevokeAccessTokenResponse
-	40, // 67: plux.v1.IdentityService.ExchangeWorkloadIdentity:output_type -> plux.v1.ExchangeWorkloadIdentityResponse
-	42, // 68: plux.v1.IdentityService.ListAuditEntries:output_type -> plux.v1.ListAuditEntriesResponse
-	50, // [50:69] is the sub-list for method output_type
-	31, // [31:50] is the sub-list for method input_type
-	31, // [31:31] is the sub-list for extension type_name
-	31, // [31:31] is the sub-list for extension extendee
-	0,  // [0:31] is the sub-list for field type_name
+	1,  // 14: plux.v1.ConfirmFactorResponse.factor:type_name -> plux.v1.Factor
+	1,  // 15: plux.v1.ListFactorsResponse.factors:type_name -> plux.v1.Factor
+	52, // 16: plux.v1.StartDeviceAuthorizationResponse.expires_at:type_name -> google.protobuf.Timestamp
+	34, // 17: plux.v1.PollDeviceAuthorizationResponse.token:type_name -> plux.v1.AccessToken
+	52, // 18: plux.v1.AccessToken.created_at:type_name -> google.protobuf.Timestamp
+	52, // 19: plux.v1.AccessToken.expires_at:type_name -> google.protobuf.Timestamp
+	52, // 20: plux.v1.AccessToken.last_used_at:type_name -> google.protobuf.Timestamp
+	52, // 21: plux.v1.AccessToken.revoked_at:type_name -> google.protobuf.Timestamp
+	34, // 22: plux.v1.CreateAccessTokenResponse.token:type_name -> plux.v1.AccessToken
+	54, // 23: plux.v1.ListAccessTokensRequest.page:type_name -> plux.v1.Page
+	34, // 24: plux.v1.ListAccessTokensResponse.tokens:type_name -> plux.v1.AccessToken
+	55, // 25: plux.v1.ListAccessTokensResponse.page:type_name -> plux.v1.PageResult
+	52, // 26: plux.v1.WorkloadIdentity.created_at:type_name -> google.protobuf.Timestamp
+	41, // 27: plux.v1.CreateWorkloadIdentityResponse.identity:type_name -> plux.v1.WorkloadIdentity
+	41, // 28: plux.v1.ListWorkloadIdentitiesResponse.identities:type_name -> plux.v1.WorkloadIdentity
+	34, // 29: plux.v1.ExchangeWorkloadIdentityResponse.token:type_name -> plux.v1.AccessToken
+	54, // 30: plux.v1.ListAuditEntriesRequest.page:type_name -> plux.v1.Page
+	56, // 31: plux.v1.ListAuditEntriesResponse.entries:type_name -> plux.v1.AuditEntry
+	55, // 32: plux.v1.ListAuditEntriesResponse.page:type_name -> plux.v1.PageResult
+	4,  // 33: plux.v1.IdentityService.GetCurrentUser:input_type -> plux.v1.GetCurrentUserRequest
+	6,  // 34: plux.v1.IdentityService.AcceptInvitation:input_type -> plux.v1.AcceptInvitationRequest
+	8,  // 35: plux.v1.IdentityService.StartPasswordLogin:input_type -> plux.v1.StartPasswordLoginRequest
+	10, // 36: plux.v1.IdentityService.CompleteMfa:input_type -> plux.v1.CompleteMfaRequest
+	12, // 37: plux.v1.IdentityService.VerifySecondFactor:input_type -> plux.v1.VerifySecondFactorRequest
+	14, // 38: plux.v1.IdentityService.ChangePassword:input_type -> plux.v1.ChangePasswordRequest
+	16, // 39: plux.v1.IdentityService.Logout:input_type -> plux.v1.LogoutRequest
+	18, // 40: plux.v1.IdentityService.EnrollTotp:input_type -> plux.v1.EnrollTotpRequest
+	20, // 41: plux.v1.IdentityService.ConfirmFactor:input_type -> plux.v1.ConfirmFactorRequest
+	22, // 42: plux.v1.IdentityService.ListFactors:input_type -> plux.v1.ListFactorsRequest
+	24, // 43: plux.v1.IdentityService.DeleteFactor:input_type -> plux.v1.DeleteFactorRequest
+	26, // 44: plux.v1.IdentityService.StartDeviceAuthorization:input_type -> plux.v1.StartDeviceAuthorizationRequest
+	28, // 45: plux.v1.IdentityService.PollDeviceAuthorization:input_type -> plux.v1.PollDeviceAuthorizationRequest
+	30, // 46: plux.v1.IdentityService.ApproveDeviceAuthorization:input_type -> plux.v1.ApproveDeviceAuthorizationRequest
+	32, // 47: plux.v1.IdentityService.DenyDeviceAuthorization:input_type -> plux.v1.DenyDeviceAuthorizationRequest
+	35, // 48: plux.v1.IdentityService.CreateAccessToken:input_type -> plux.v1.CreateAccessTokenRequest
+	37, // 49: plux.v1.IdentityService.ListAccessTokens:input_type -> plux.v1.ListAccessTokensRequest
+	39, // 50: plux.v1.IdentityService.RevokeAccessToken:input_type -> plux.v1.RevokeAccessTokenRequest
+	42, // 51: plux.v1.IdentityService.CreateWorkloadIdentity:input_type -> plux.v1.CreateWorkloadIdentityRequest
+	44, // 52: plux.v1.IdentityService.ListWorkloadIdentities:input_type -> plux.v1.ListWorkloadIdentitiesRequest
+	46, // 53: plux.v1.IdentityService.DeleteWorkloadIdentity:input_type -> plux.v1.DeleteWorkloadIdentityRequest
+	48, // 54: plux.v1.IdentityService.ExchangeWorkloadIdentity:input_type -> plux.v1.ExchangeWorkloadIdentityRequest
+	50, // 55: plux.v1.IdentityService.ListAuditEntries:input_type -> plux.v1.ListAuditEntriesRequest
+	5,  // 56: plux.v1.IdentityService.GetCurrentUser:output_type -> plux.v1.GetCurrentUserResponse
+	7,  // 57: plux.v1.IdentityService.AcceptInvitation:output_type -> plux.v1.AcceptInvitationResponse
+	9,  // 58: plux.v1.IdentityService.StartPasswordLogin:output_type -> plux.v1.StartPasswordLoginResponse
+	11, // 59: plux.v1.IdentityService.CompleteMfa:output_type -> plux.v1.CompleteMfaResponse
+	13, // 60: plux.v1.IdentityService.VerifySecondFactor:output_type -> plux.v1.VerifySecondFactorResponse
+	15, // 61: plux.v1.IdentityService.ChangePassword:output_type -> plux.v1.ChangePasswordResponse
+	17, // 62: plux.v1.IdentityService.Logout:output_type -> plux.v1.LogoutResponse
+	19, // 63: plux.v1.IdentityService.EnrollTotp:output_type -> plux.v1.EnrollTotpResponse
+	21, // 64: plux.v1.IdentityService.ConfirmFactor:output_type -> plux.v1.ConfirmFactorResponse
+	23, // 65: plux.v1.IdentityService.ListFactors:output_type -> plux.v1.ListFactorsResponse
+	25, // 66: plux.v1.IdentityService.DeleteFactor:output_type -> plux.v1.DeleteFactorResponse
+	27, // 67: plux.v1.IdentityService.StartDeviceAuthorization:output_type -> plux.v1.StartDeviceAuthorizationResponse
+	29, // 68: plux.v1.IdentityService.PollDeviceAuthorization:output_type -> plux.v1.PollDeviceAuthorizationResponse
+	31, // 69: plux.v1.IdentityService.ApproveDeviceAuthorization:output_type -> plux.v1.ApproveDeviceAuthorizationResponse
+	33, // 70: plux.v1.IdentityService.DenyDeviceAuthorization:output_type -> plux.v1.DenyDeviceAuthorizationResponse
+	36, // 71: plux.v1.IdentityService.CreateAccessToken:output_type -> plux.v1.CreateAccessTokenResponse
+	38, // 72: plux.v1.IdentityService.ListAccessTokens:output_type -> plux.v1.ListAccessTokensResponse
+	40, // 73: plux.v1.IdentityService.RevokeAccessToken:output_type -> plux.v1.RevokeAccessTokenResponse
+	43, // 74: plux.v1.IdentityService.CreateWorkloadIdentity:output_type -> plux.v1.CreateWorkloadIdentityResponse
+	45, // 75: plux.v1.IdentityService.ListWorkloadIdentities:output_type -> plux.v1.ListWorkloadIdentitiesResponse
+	47, // 76: plux.v1.IdentityService.DeleteWorkloadIdentity:output_type -> plux.v1.DeleteWorkloadIdentityResponse
+	49, // 77: plux.v1.IdentityService.ExchangeWorkloadIdentity:output_type -> plux.v1.ExchangeWorkloadIdentityResponse
+	51, // 78: plux.v1.IdentityService.ListAuditEntries:output_type -> plux.v1.ListAuditEntriesResponse
+	56, // [56:79] is the sub-list for method output_type
+	33, // [33:56] is the sub-list for method input_type
+	33, // [33:33] is the sub-list for extension type_name
+	33, // [33:33] is the sub-list for extension extendee
+	0,  // [0:33] is the sub-list for field type_name
 }
 
 func init() { file_plux_v1_identity_proto_init() }
@@ -2713,7 +3178,7 @@ func file_plux_v1_identity_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_plux_v1_identity_proto_rawDesc), len(file_plux_v1_identity_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   43,
+			NumMessages:   52,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

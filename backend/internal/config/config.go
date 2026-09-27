@@ -46,8 +46,12 @@ type Server struct {
 	// ShutdownGrace is how long shutdown waits for requests and jobs to
 	// finish before giving up (SRV-007).
 	ShutdownGrace Duration `json:"shutdownGrace"`
-	// MaxRequestSize bounds a single request body (SEC-104).
-	MaxRequestSize Bytes `json:"maxRequestSize"`
+	// TrustedProxies are the networks whose X-Forwarded-For header is
+	// believed, in CIDR form. The client address — used for rate limits
+	// (SRV-065) and recorded in the audit log (SEC-140) — is taken from
+	// the header only when the immediate peer is one of them; otherwise
+	// a client could claim any address it liked.
+	TrustedProxies []string `json:"trustedProxies"`
 }
 
 // Database is PostgreSQL, the system of record (SRV-020).
@@ -192,8 +196,6 @@ type Observability struct {
 type Telemetry struct {
 	// Store is "postgres"; "clickhouse" arrives with ANL-010 in P9.
 	Store string `json:"store"`
-	// MaxEventsPerRequest bounds one ingestion batch (SEC-104).
-	MaxEventsPerRequest int `json:"maxEventsPerRequest"`
 }
 
 // Retention is how long history is kept.

@@ -32,8 +32,20 @@ enum PluxLimit {
   actionStepTimeout('action.stepTimeout', PluxLimitUnit.milliseconds, 30000, 0, 600000),
   /// Steps one action run may execute.
   actionStepsPerRun('action.stepsPerRun', PluxLimitUnit.count, 10000, 0, 100000),
+  /// Size of one API request body, refused before a handler reads it.
+  apiRequestSize('api.requestSize', PluxLimitUnit.bytes, 8388608, 0, 268435456),
+  /// API calls one authenticated principal (a user or a token) may make per
+  /// minute.
+  apiRequestsPerMinute('api.requestsPerMinute', PluxLimitUnit.count, 600, 0, 100000),
+  /// API calls one client address may make per minute, whoever is calling.
+  apiRequestsPerMinutePerAddress('api.requestsPerMinutePerAddress', PluxLimitUnit.count, 300, 0, 100000),
+  /// API calls one registered device may make per minute.
+  apiRequestsPerMinutePerDevice('api.requestsPerMinutePerDevice', PluxLimitUnit.count, 120, 0, 10000),
   /// Plugins per app.
   appPlugins('app.plugins', PluxLimitUnit.count, 200, 0, 1000),
+  /// Failed passwords or one-time codes one account may present in fifteen
+  /// minutes before sign-in is refused.
+  authFailedSignIns('auth.failedSignIns', PluxLimitUnit.count, 10, 0, 1000),
   /// Size of the WebAssembly module of the device-placed functions of one
   /// plugin.
   bundleDeviceFunctionModuleSize('bundle.deviceFunctionModuleSize', PluxLimitUnit.bytes, 4194304, 0, 67108864),
@@ -54,6 +66,9 @@ enum PluxLimit {
   documentJsonDepth('document.jsonDepth', PluxLimitUnit.count, 512, 0, 4096),
   /// Size of one string prop value, in UTF-8 bytes.
   documentStringPropSize('document.stringPropSize', PluxLimitUnit.bytes, 65536, 0, 1048576),
+  /// Size of a response the server reads when it fetches a URL, such as an
+  /// identity provider's keys.
+  httpResponseSize('http.responseSize', PluxLimitUnit.bytes, 1048576, 0, 67108864),
   /// Animations that can run at the same time on one page.
   pageAnimations('page.animations', PluxLimitUnit.count, 30, 10, 200),
   /// Estimated build time of a page on the mid-tier reference device, the sum
@@ -82,7 +97,9 @@ enum PluxLimit {
   /// Length of a string produced during one PXL evaluation.
   pxlStringLength('pxl.stringLength', PluxLimitUnit.codepoints, 65536, 0, 1048576),
   /// Total size of one app release: the app bundle and every plugin bundle.
-  releaseAppSize('release.appSize', PluxLimitUnit.bytes, 104857600, 0, 1073741824);
+  releaseAppSize('release.appSize', PluxLimitUnit.bytes, 104857600, 0, 1073741824),
+  /// Runtime events one telemetry request may carry.
+  telemetryEventsPerRequest('telemetry.eventsPerRequest', PluxLimitUnit.count, 500, 0, 5000);
 
   const PluxLimit(this.key, this.unit, this.defaultValue, this.warning, this.max);
 

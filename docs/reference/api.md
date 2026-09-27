@@ -43,8 +43,16 @@ No endpoint returns an unbounded list (`SRV-004`).
 A repeat with the same key within 24 hours returns the original result rather
 than acting twice (`SRV-005`).
 
-**Field masks.** Calls that can return partial resources accept a
-`google.protobuf.FieldMask`; an absent mask returns the full resource.
+**Field masks.** Every list call's `Page` carries a `read_mask`
+(`google.protobuf.FieldMask`) that limits each returned item to the named
+fields; an empty mask returns whole items (`SRV-004`).
+
+**Rate limits.** Every call, unary or streaming, counts against its client
+address, and an authenticated call also against its principal (a user,
+token or device). The allowances are registry limits
+(`api.requestsPerMinutePerAddress`, `api.requestsPerMinute`,
+`api.requestsPerMinutePerDevice`); a refused call returns
+`resource_exhausted` with `Retry-After` (`SRV-065`).
 
 **Documents as bytes.** Document content is carried as canonical JSON bytes
 (`SCH-003`), never as protobuf structures, so a document's hash is a property

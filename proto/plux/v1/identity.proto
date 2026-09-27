@@ -11,46 +11,63 @@ import "plux/v1/org.proto";
 
 option go_package = "github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1";
 
-// IdentityService authenticates people and machines: built-in accounts with
-// Argon2id, OIDC login, multi-factor enrolment and verification (SEC-100),
-// browser sessions for the Studio backend-for-frontend (SEC-101), personal
-// access tokens and CI workload-identity federation (SRV-064), and the
-// OAuth 2.0 device authorization grant used by `plux login` (CLI-002).
+// IdentityService authenticates people and machines: built-in accounts
+// with Argon2id passwords and mandatory TOTP for sensitive capabilities
+// (SEC-100), browser sessions for the Studio backend-for-frontend
+// (SEC-101), personal access tokens and CI workload-identity federation
+// (SRV-064), and the OAuth 2.0 device authorization grant `plux login`
+// uses (CLI-002). Single sign-on arrives with GOV-004 and WebAuthn with
+// SEC-103, both in P9.
 service IdentityService {
   rpc GetCurrentUser(GetCurrentUserRequest) returns (GetCurrentUserResponse) {}
 
-  // StartPasswordLogin verifies a built-in account's password. It never
-  // returns a session on its own when the account has a factor enrolled:
-  // the response carries a pending challenge to complete (SEC-100).
+  // AcceptInvitation sets the password of an invited account, using the
+  // one-time invitation an administrator received for it.
+  rpc AcceptInvitation(AcceptInvitationRequest) returns (AcceptInvitationResponse) {}
+  // StartPasswordLogin verifies a password. When the account has a
+  // confirmed second factor it returns a challenge instead of a session
+  // (SEC-100).
   rpc StartPasswordLogin(StartPasswordLoginRequest) returns (StartPasswordLoginResponse) {}
-  // StartOidcLogin returns the authorization URL and the state to use.
-  rpc StartOidcLogin(StartOidcLoginRequest) returns (StartOidcLoginResponse) {}
-  // CompleteOidcLogin exchanges the authorization code. OAuth tokens stay
-  // on the server; the caller receives only a session (SEC-101).
-  rpc CompleteOidcLogin(CompleteOidcLoginRequest) returns (CompleteOidcLoginResponse) {}
-  // CompleteMfa answers a pending challenge and completes the login.
+  // CompleteMfa answers a challenge with a one-time code.
   rpc CompleteMfa(CompleteMfaRequest) returns (CompleteMfaResponse) {}
+  // VerifySecondFactor presents a one-time code within an existing
+  // session, which capabilities that require one then accept.
+  rpc VerifySecondFactor(VerifySecondFactorRequest) returns (VerifySecondFactorResponse) {}
+  rpc ChangePassword(ChangePasswordRequest) returns (ChangePasswordResponse) {}
   rpc Logout(LogoutRequest) returns (LogoutResponse) {}
 
   rpc EnrollTotp(EnrollTotpRequest) returns (EnrollTotpResponse) {}
-  rpc EnrollWebauthn(EnrollWebauthnRequest) returns (EnrollWebauthnResponse) {}
   rpc ConfirmFactor(ConfirmFactorRequest) returns (ConfirmFactorResponse) {}
   rpc ListFactors(ListFactorsRequest) returns (ListFactorsResponse) {}
   rpc DeleteFactor(DeleteFactorRequest) returns (DeleteFactorResponse) {}
 
   // StartDeviceAuthorization begins the OAuth 2.0 device authorization
-  // grant that `plux login` uses (CLI-002, RFC 8628).
+  // grant that `plux login` uses (CLI-002, RFC 8628). It needs no
+  // credential.
   rpc StartDeviceAuthorization(StartDeviceAuthorizationRequest) returns (StartDeviceAuthorizationResponse) {}
-  // PollDeviceAuthorization exchanges the device code once approved.
+  // PollDeviceAuthorization returns the token once, after approval.
   rpc PollDeviceAuthorization(PollDeviceAuthorizationRequest) returns (PollDeviceAuthorizationResponse) {}
-  // ApproveDeviceAuthorization is called by the signed-in browser.
+  // ApproveDeviceAuthorization is called by a signed-in user who read
+  // the user code from the terminal.
   rpc ApproveDeviceAuthorization(ApproveDeviceAuthorizationRequest) returns (ApproveDeviceAuthorizationResponse) {}
+  rpc DenyDeviceAuthorization(DenyDeviceAuthorizationRequest) returns (DenyDeviceAuthorizationResponse) {}
 
+  // CreateAccessToken issues a personal access token. It needs a second
+  // factor in the session, because the token outlives the session and
+  // carries its capabilities (SRV-064).
   rpc CreateAccessToken(CreateAccessTokenRequest) returns (CreateAccessTokenResponse) {}
   rpc ListAccessTokens(ListAccessTokensRequest) returns (ListAccessTokensResponse) {}
   rpc RevokeAccessToken(RevokeAccessTokenRequest) returns (RevokeAccessTokenResponse) {}
-  // ExchangeWorkloadIdentity trades a CI OIDC token for a scoped access
-  // token, so pipelines need no long-lived secret (SRV-064, CLI-002).
+
+  // CreateWorkloadIdentity lets CI workloads matching an issuer,
+  // audience and subject pattern exchange their identity tokens for
+  // tokens of this organisation with fixed scopes (SRV-064).
+  rpc CreateWorkloadIdentity(CreateWorkloadIdentityRequest) returns (CreateWorkloadIdentityResponse) {}
+  rpc ListWorkloadIdentities(ListWorkloadIdentitiesRequest) returns (ListWorkloadIdentitiesResponse) {}
+  rpc DeleteWorkloadIdentity(DeleteWorkloadIdentityRequest) returns (DeleteWorkloadIdentityResponse) {}
+  // ExchangeWorkloadIdentity trades a CI identity token for a
+  // short-lived Plux token, so pipelines hold no long-lived secret. It
+  // needs no other credential: the identity token is the credential.
   rpc ExchangeWorkloadIdentity(ExchangeWorkloadIdentityRequest) returns (ExchangeWorkloadIdentityResponse) {}
 
   rpc ListAuditEntries(ListAuditEntriesRequest) returns (ListAuditEntriesResponse) {}
@@ -58,20 +75,19 @@ service IdentityService {
 
 message User {
   string id = 1;
-  // subject is the OIDC subject for federated users; empty for built-in ones.
-  string subject = 2;
-  string display_name = 3;
-  // email is returned only to the user themselves and to administrators.
-  string email = 4;
-  bool mfa_enrolled = 5;
-  google.protobuf.Timestamp created_at = 6;
-  google.protobuf.Timestamp last_login_at = 7;
+  string display_name = 2;
+  // email is returned only to the user themselves and to administrators
+  // of an organisation they belong to.
+  string email = 3;
+  bool mfa_enrolled = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp last_login_at = 6;
 }
 
 // Factor is an enrolled second factor (SEC-100).
 message Factor {
   string id = 1;
-  // kind is "totp" or "webauthn".
+  // kind is "totp".
   string kind = 2;
   string label = 3;
   bool confirmed = 4;
@@ -80,32 +96,43 @@ message Factor {
 }
 
 // Session is a browser session. Its secret never appears in a response
-// body: it is set as a __Host- prefixed, HttpOnly, Secure, SameSite=Strict
-// cookie, and state-changing calls must echo csrf_token (SEC-101).
+// body: the edge sets it as a __Host- prefixed, HttpOnly, Secure,
+// SameSite=Strict cookie, and state-changing calls must echo csrf_token
+// in the X-CSRF-Token header (SEC-101).
 message Session {
   string id = 1;
   string user_id = 2;
   string csrf_token = 3;
   google.protobuf.Timestamp expires_at = 4;
+  // second_factor is true when a second factor was presented in it.
+  bool second_factor = 5;
 }
 
-// MfaChallenge is a login waiting for a second factor.
+// MfaChallenge is a sign-in waiting for its second factor.
 message MfaChallenge {
   string id = 1;
   // kinds lists the factor kinds the user may answer with.
   repeated string kinds = 2;
-  // webauthn_options is the WebAuthn request as JSON, when offered.
-  bytes webauthn_options = 3;
-  google.protobuf.Timestamp expires_at = 4;
+  google.protobuf.Timestamp expires_at = 3;
 }
 
 message GetCurrentUserRequest {}
 message GetCurrentUserResponse {
   User user = 1;
-  // organizations the user belongs to, with their effective roles.
+  // memberships are the user's organisations and roles.
   repeated Member memberships = 2;
-  // permissions the caller holds in the current scope (SEC-102).
+  // permissions are those the caller holds in the organisation named by
+  // the X-Plux-Organization header, when there is one (SEC-102).
   repeated string permissions = 3;
+}
+
+message AcceptInvitationRequest {
+  string invitation = 1;
+  string display_name = 2;
+  string password = 3;
+}
+message AcceptInvitationResponse {
+  User user = 1;
 }
 
 message StartPasswordLoginRequest {
@@ -117,35 +144,26 @@ message StartPasswordLoginResponse {
   MfaChallenge challenge = 2;
 }
 
-message StartOidcLoginRequest {
-  // redirect_path is a path inside Studio to return to; absolute URLs are
-  // refused so the flow cannot be redirected off-site.
-  string redirect_path = 1;
-}
-message StartOidcLoginResponse {
-  string authorization_url = 1;
-  string state = 2;
-}
-
-message CompleteOidcLoginRequest {
-  string code = 1;
-  string state = 2;
-}
-message CompleteOidcLoginResponse {
-  Session session = 1;
-  MfaChallenge challenge = 2;
-}
-
 message CompleteMfaRequest {
   string challenge_id = 1;
-  // code answers a TOTP challenge.
   string code = 2;
-  // assertion answers a WebAuthn challenge, as JSON.
-  bytes assertion = 3;
 }
 message CompleteMfaResponse {
   Session session = 1;
 }
+
+message VerifySecondFactorRequest {
+  string code = 1;
+}
+message VerifySecondFactorResponse {
+  Session session = 1;
+}
+
+message ChangePasswordRequest {
+  string current_password = 1;
+  string new_password = 2;
+}
+message ChangePasswordResponse {}
 
 message LogoutRequest {}
 message LogoutResponse {}
@@ -160,19 +178,9 @@ message EnrollTotpResponse {
   string otpauth_url = 3;
 }
 
-message EnrollWebauthnRequest {
-  string label = 1;
-}
-message EnrollWebauthnResponse {
-  Factor factor = 1;
-  // creation_options is the WebAuthn credential creation request as JSON.
-  bytes creation_options = 2;
-}
-
 message ConfirmFactorRequest {
   string factor_id = 1;
   string code = 2;
-  bytes attestation = 3;
 }
 message ConfirmFactorResponse {
   Factor factor = 1;
@@ -191,6 +199,8 @@ message DeleteFactorResponse {}
 message StartDeviceAuthorizationRequest {
   // client is the calling program, such as "plux-cli".
   string client = 1;
+  // scopes are the permissions the token will carry; empty asks for the
+  // approving user's own.
   repeated string scopes = 2;
 }
 message StartDeviceAuthorizationResponse {
@@ -209,7 +219,8 @@ message PollDeviceAuthorizationResponse {
   // status is "pending", "slow_down", "approved" or "denied".
   string status = 1;
   AccessToken token = 2;
-  // secret is the token's value; returned exactly once, on approval.
+  // secret is the token's value, returned exactly once, on the first
+  // poll after approval.
   string secret = 3;
 }
 
@@ -219,19 +230,27 @@ message ApproveDeviceAuthorizationRequest {
 }
 message ApproveDeviceAuthorizationResponse {}
 
+message DenyDeviceAuthorizationRequest {
+  string user_code = 1;
+}
+message DenyDeviceAuthorizationResponse {}
+
 // AccessToken is a scoped, expiring, revocable credential (SRV-064).
 message AccessToken {
   string id = 1;
   string name = 2;
+  // user_id is empty for a token exchanged from a CI identity.
   string user_id = 3;
   string organization_id = 4;
   repeated string scopes = 5;
-  // prefix is the token's visible prefix, for identifying it in a list.
+  // prefix is the token's visible prefix, for recognising it in a list.
   string prefix = 6;
-  google.protobuf.Timestamp created_at = 7;
-  google.protobuf.Timestamp expires_at = 8;
-  google.protobuf.Timestamp last_used_at = 9;
-  google.protobuf.Timestamp revoked_at = 10;
+  // source is "pat", "cli" or "ci".
+  string source = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp expires_at = 9;
+  google.protobuf.Timestamp last_used_at = 10;
+  google.protobuf.Timestamp revoked_at = 11;
 }
 
 message CreateAccessTokenRequest {
@@ -243,7 +262,7 @@ message CreateAccessTokenRequest {
 }
 message CreateAccessTokenResponse {
   AccessToken token = 1;
-  // secret is returned exactly once and never stored in clear.
+  // secret is returned exactly once and stored only as a hash.
   string secret = 2;
 }
 
@@ -261,16 +280,52 @@ message RevokeAccessTokenRequest {
 }
 message RevokeAccessTokenResponse {}
 
-message ExchangeWorkloadIdentityRequest {
-  // oidc_token is the CI provider's identity token.
-  string oidc_token = 1;
+// WorkloadIdentity binds CI workloads to an organisation (SRV-064).
+message WorkloadIdentity {
+  string id = 1;
   string organization_id = 2;
-  repeated string scopes = 3;
+  // issuer must be one the installation trusts.
+  string issuer = 3;
+  string audience = 4;
+  // subject_pattern is a glob over the token's subject, such as
+  // "repo:acme/app:ref:refs/heads/main".
+  string subject_pattern = 5;
+  // scopes are the permissions an exchanged token carries.
+  repeated string scopes = 6;
+  google.protobuf.Timestamp created_at = 7;
+}
+
+message CreateWorkloadIdentityRequest {
+  string organization_id = 1;
+  string issuer = 2;
+  string audience = 3;
+  string subject_pattern = 4;
+  repeated string scopes = 5;
+}
+message CreateWorkloadIdentityResponse {
+  WorkloadIdentity identity = 1;
+}
+
+message ListWorkloadIdentitiesRequest {
+  string organization_id = 1;
+}
+message ListWorkloadIdentitiesResponse {
+  repeated WorkloadIdentity identities = 1;
+}
+
+message DeleteWorkloadIdentityRequest {
+  string id = 1;
+}
+message DeleteWorkloadIdentityResponse {}
+
+message ExchangeWorkloadIdentityRequest {
+  // identity_token is the CI provider's OpenID Connect token.
+  string identity_token = 1;
+  string organization_id = 2;
 }
 message ExchangeWorkloadIdentityResponse {
-  string secret = 1;
-  google.protobuf.Timestamp expires_at = 2;
-  repeated string scopes = 3;
+  AccessToken token = 1;
+  string secret = 2;
 }
 
 message ListAuditEntriesRequest {

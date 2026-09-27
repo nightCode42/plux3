@@ -6,30 +6,28 @@ syntax = "proto3";
 package plux.v1;
 
 import "google/protobuf/timestamp.proto";
-import "plux/v1/common.proto";
 
 option go_package = "github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1";
 
 // ManifestService serves the signed manifest a device syncs against
-// (REL-030–REL-033) and the sync plan that names the exact artifacts to
-// fetch. The manifest itself is also served over plain HTTP with an ETag,
-// so an unchanged manifest costs one conditional request and a 304
-// (REL-031); this service is the typed form of the same data.
+// (REL-030–REL-033). The manifest is also served over plain HTTP with an
+// ETag, so an unchanged manifest costs one conditional request and a 304
+// (REL-031); this service is the typed form of the same document.
 service ManifestService {
-  // GetManifest returns the manifest for an app, environment and channel,
-  // tailored only by rules evaluated server-side: the same inputs always
-  // produce the same manifest (REL-033).
+  // GetManifest returns the manifest of an app's channel. The request
+  // carries what the device has installed, and the manifest names, per
+  // plugin, the exact delta or full bundle to fetch (REL-032). It is
+  // tailored only by rules evaluated on the server: the same inputs
+  // always give the same manifest (REL-033).
   rpc GetManifest(GetManifestRequest) returns (GetManifestResponse) {}
-  // GetSyncPlan takes what the device has installed and returns the exact
-  // deltas or full bundles to fetch (REL-032).
-  rpc GetSyncPlan(GetSyncPlanRequest) returns (GetSyncPlanResponse) {}
   // GetRootKeys returns the public keys host projects embed (SEC-051).
   rpc GetRootKeys(GetRootKeysRequest) returns (GetRootKeysResponse) {}
 }
 
-// Manifest describes one release as a device sees it (REL-030). The bytes
-// the signature covers are the canonical serialisation in
-// schema/fbs/manifest.fbs, not this message.
+// Manifest describes one release as a device sees it (REL-030,
+// Appendix B.3). The signatures cover `signed`, the RFC 8785 canonical
+// JSON of the document's signed part, not this message: a device
+// verifies the bytes it received rather than a re-encoding.
 message Manifest {
   string app_id = 1;
   string environment = 2;
@@ -40,21 +38,35 @@ message Manifest {
   BundleDescriptor app_bundle = 7;
   repeated PluginDescriptor plugins = 8;
   ControlFlags control = 9;
-  // signature, key_id and algorithm sign the canonical bytes (REL-031).
-  bytes signature = 10;
-  string key_id = 11;
-  string algorithm = 12;
-  // canonical is the exact signed serialisation, so a client can verify
-  // without re-encoding this message.
-  bytes canonical = 13;
+  // experiments are the variant assignments the device needs; empty
+  // until experiments arrive (ABT-001).
+  repeated ExperimentAssignment experiments = 10;
+  // signed is the canonical JSON the signatures cover.
+  bytes signed = 11;
+  // signatures sign `signed`. There may be several, so that keys can be
+  // rotated and thresholds applied (ADR-0004).
+  repeated Signature signatures = 12;
+}
+
+// Signature is one signature over a signed document (ADR-0004).
+message Signature {
+  // key_id identifies the public key.
+  string key_id = 1;
+  // algorithm names the scheme, such as "ed25519" (SEC-122).
+  string algorithm = 2;
+  bytes signature = 3;
 }
 
 message BundleDescriptor {
+  // sha256 is the bundle hash the device must end up with (BND-005).
   string sha256 = 1;
   int64 size = 2;
   repeated string required_features = 3;
   string min_runtime = 4;
-  repeated string urls = 5;
+  // url is where the full bundle can be fetched.
+  string url = 5;
+  // sync names how this device gets from what it has to this bundle.
+  SyncStep sync = 6;
 }
 
 message PluginDescriptor {
@@ -63,59 +75,55 @@ message PluginDescriptor {
   BundleDescriptor bundle = 3;
 }
 
-// ControlFlags are the switches a device obeys immediately (REL-030).
+// SyncStep tells the device how to obtain one bundle (REL-032).
+message SyncStep {
+  // action is "keep", "delta" or "full".
+  string action = 1;
+  // from is the installed bundle hash the delta applies to.
+  string from = 2;
+  // url is the delta or full bundle to fetch.
+  string url = 3;
+  // size is what the device downloads.
+  int64 size = 4;
+}
+
+// ControlFlags are the switches a device obeys (REL-030).
 message ControlFlags {
   // kill_switch_plugins lists plugin keys the device must not render.
   repeated string kill_switch_plugins = 1;
-  // app_kill_switch disables every plugin page.
-  bool app_kill_switch = 2;
-  // mandatory_update requires the device to update before continuing.
-  bool mandatory_update = 3;
+  // mandatory requires the device to activate this release before it
+  // shows another Plux page.
+  bool mandatory = 2;
   // message is shown to the user when a switch is on.
-  string message = 4;
+  string message = 3;
+}
+
+// ExperimentAssignment is one experiment's variant for this device.
+message ExperimentAssignment {
+  string key = 1;
+  string layer = 2;
+  string variant = 3;
 }
 
 // InstalledBundle is what a device already has (REL-032).
 message InstalledBundle {
   // key is the plugin key, or empty for the app bundle.
   string key = 1;
-  int64 version = 2;
-  string sha256 = 3;
-}
-
-// SyncStep tells the device how to obtain one bundle.
-message SyncStep {
-  string key = 1;
-  int64 version = 2;
-  // action is "keep", "delta" or "full".
-  string action = 3;
-  // artifact is the delta or the full bundle to fetch.
-  Artifact artifact = 4;
-  // result_sha256 is the bundle hash expected after applying (REL-021).
-  string result_sha256 = 5;
-  int64 result_size = 6;
-}
-
-message DeviceContext {
-  // runtime_version is the plux_flutter version.
-  string runtime_version = 1;
-  // host_build identifies the host app build.
-  string host_build = 2;
-  string platform = 3;
-  string os_version = 4;
-  string locale = 5;
-  // device_id is the registered device, when the caller has one.
-  string device_id = 6;
+  string sha256 = 2;
 }
 
 message GetManifestRequest {
   string app_id = 1;
   string environment = 2;
   string channel = 3;
-  DeviceContext device = 4;
+  // installed_sequence is the release the device runs, zero for none.
+  int64 installed_sequence = 4;
+  // installed lists the bundles the device holds.
+  repeated InstalledBundle installed = 5;
   // if_none_match is the ETag of the manifest the device already has.
-  string if_none_match = 5;
+  string if_none_match = 6;
 }
+
 message GetManifestResponse {
   // not_modified is true when if_none_match matched; manifest is unset.
   bool not_modified = 1;
@@ -123,22 +131,11 @@ message GetManifestResponse {
   string etag = 3;
 }
 
-message GetSyncPlanRequest {
-  string app_id = 1;
-  string environment = 2;
-  string channel = 3;
-  DeviceContext device = 4;
-  repeated InstalledBundle installed = 5;
-}
-message GetSyncPlanResponse {
-  int64 release_sequence = 1;
-  repeated SyncStep steps = 2;
-  int64 total_download_size = 3;
-}
-
 message GetRootKeysRequest {
   string app_id = 1;
+  string environment = 2;
 }
+
 message GetRootKeysResponse {
   repeated PublicKey keys = 1;
 }
@@ -146,9 +143,8 @@ message GetRootKeysResponse {
 message PublicKey {
   string key_id = 1;
   string algorithm = 2;
-  // public_key is the raw key bytes; Ed25519 keys are 32 bytes.
+  // public_key is the raw key; an Ed25519 key is 32 bytes.
   bytes public_key = 3;
   // role is the update-metadata role this key holds (ADR-0004).
   string role = 4;
-  google.protobuf.Timestamp expires_at = 5;
 }

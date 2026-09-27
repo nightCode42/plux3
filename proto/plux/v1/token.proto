@@ -10,30 +10,22 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1";
 
 // TokenService issues the short-lived access tokens devices use. In P2 a
-// token is bearer-only and scoped to one app, environment and device; from
-// P6 it is sender-constrained to the device's hardware key with DPoP
-// (SEC-020) and carries the device's assurance level.
+// device proves itself with the credential it received at registration;
+// from P6 that credential is replaced by a hardware-bound key, tokens
+// are sender-constrained with DPoP (SEC-020) and refresh needs fresh
+// attestation (SEC-025). There is deliberately no long-lived refresh
+// token.
 service TokenService {
   rpc IssueDeviceToken(IssueDeviceTokenRequest) returns (IssueDeviceTokenResponse) {}
-  rpc RefreshDeviceToken(RefreshDeviceTokenRequest) returns (RefreshDeviceTokenResponse) {}
 }
 
 message IssueDeviceTokenRequest {
   string device_id = 1;
-  string app_id = 2;
-  string environment = 3;
+  // device_secret is the credential RegisterDevice returned.
+  string device_secret = 2;
 }
+
 message IssueDeviceTokenResponse {
   string access_token = 1;
   google.protobuf.Timestamp expires_at = 2;
-  string refresh_token = 3;
-}
-
-message RefreshDeviceTokenRequest {
-  string refresh_token = 1;
-}
-message RefreshDeviceTokenResponse {
-  string access_token = 1;
-  google.protobuf.Timestamp expires_at = 2;
-  string refresh_token = 3;
 }

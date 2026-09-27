@@ -25,9 +25,10 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Manifest describes one release as a device sees it (REL-030). The bytes
-// the signature covers are the canonical serialisation in
-// schema/fbs/manifest.fbs, not this message.
+// Manifest describes one release as a device sees it (REL-030,
+// Appendix B.3). The signatures cover `signed`, the RFC 8785 canonical
+// JSON of the document's signed part, not this message: a device
+// verifies the bytes it received rather than a re-encoding.
 type Manifest struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
 	AppId           string                 `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
@@ -39,13 +40,14 @@ type Manifest struct {
 	AppBundle       *BundleDescriptor      `protobuf:"bytes,7,opt,name=app_bundle,json=appBundle,proto3" json:"app_bundle,omitempty"`
 	Plugins         []*PluginDescriptor    `protobuf:"bytes,8,rep,name=plugins,proto3" json:"plugins,omitempty"`
 	Control         *ControlFlags          `protobuf:"bytes,9,opt,name=control,proto3" json:"control,omitempty"`
-	// signature, key_id and algorithm sign the canonical bytes (REL-031).
-	Signature []byte `protobuf:"bytes,10,opt,name=signature,proto3" json:"signature,omitempty"`
-	KeyId     string `protobuf:"bytes,11,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"`
-	Algorithm string `protobuf:"bytes,12,opt,name=algorithm,proto3" json:"algorithm,omitempty"`
-	// canonical is the exact signed serialisation, so a client can verify
-	// without re-encoding this message.
-	Canonical     []byte `protobuf:"bytes,13,opt,name=canonical,proto3" json:"canonical,omitempty"`
+	// experiments are the variant assignments the device needs; empty
+	// until experiments arrive (ABT-001).
+	Experiments []*ExperimentAssignment `protobuf:"bytes,10,rep,name=experiments,proto3" json:"experiments,omitempty"`
+	// signed is the canonical JSON the signatures cover.
+	Signed []byte `protobuf:"bytes,11,opt,name=signed,proto3" json:"signed,omitempty"`
+	// signatures sign `signed`. There may be several, so that keys can be
+	// rotated and thresholds applied (ADR-0004).
+	Signatures    []*Signature `protobuf:"bytes,12,rep,name=signatures,proto3" json:"signatures,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -143,48 +145,108 @@ func (x *Manifest) GetControl() *ControlFlags {
 	return nil
 }
 
-func (x *Manifest) GetSignature() []byte {
+func (x *Manifest) GetExperiments() []*ExperimentAssignment {
 	if x != nil {
-		return x.Signature
+		return x.Experiments
 	}
 	return nil
 }
 
-func (x *Manifest) GetKeyId() string {
+func (x *Manifest) GetSigned() []byte {
+	if x != nil {
+		return x.Signed
+	}
+	return nil
+}
+
+func (x *Manifest) GetSignatures() []*Signature {
+	if x != nil {
+		return x.Signatures
+	}
+	return nil
+}
+
+// Signature is one signature over a signed document (ADR-0004).
+type Signature struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// key_id identifies the public key.
+	KeyId string `protobuf:"bytes,1,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"`
+	// algorithm names the scheme, such as "ed25519" (SEC-122).
+	Algorithm     string `protobuf:"bytes,2,opt,name=algorithm,proto3" json:"algorithm,omitempty"`
+	Signature     []byte `protobuf:"bytes,3,opt,name=signature,proto3" json:"signature,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Signature) Reset() {
+	*x = Signature{}
+	mi := &file_plux_v1_manifest_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Signature) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Signature) ProtoMessage() {}
+
+func (x *Signature) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_manifest_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Signature.ProtoReflect.Descriptor instead.
+func (*Signature) Descriptor() ([]byte, []int) {
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Signature) GetKeyId() string {
 	if x != nil {
 		return x.KeyId
 	}
 	return ""
 }
 
-func (x *Manifest) GetAlgorithm() string {
+func (x *Signature) GetAlgorithm() string {
 	if x != nil {
 		return x.Algorithm
 	}
 	return ""
 }
 
-func (x *Manifest) GetCanonical() []byte {
+func (x *Signature) GetSignature() []byte {
 	if x != nil {
-		return x.Canonical
+		return x.Signature
 	}
 	return nil
 }
 
 type BundleDescriptor struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	Sha256           string                 `protobuf:"bytes,1,opt,name=sha256,proto3" json:"sha256,omitempty"`
-	Size             int64                  `protobuf:"varint,2,opt,name=size,proto3" json:"size,omitempty"`
-	RequiredFeatures []string               `protobuf:"bytes,3,rep,name=required_features,json=requiredFeatures,proto3" json:"required_features,omitempty"`
-	MinRuntime       string                 `protobuf:"bytes,4,opt,name=min_runtime,json=minRuntime,proto3" json:"min_runtime,omitempty"`
-	Urls             []string               `protobuf:"bytes,5,rep,name=urls,proto3" json:"urls,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// sha256 is the bundle hash the device must end up with (BND-005).
+	Sha256           string   `protobuf:"bytes,1,opt,name=sha256,proto3" json:"sha256,omitempty"`
+	Size             int64    `protobuf:"varint,2,opt,name=size,proto3" json:"size,omitempty"`
+	RequiredFeatures []string `protobuf:"bytes,3,rep,name=required_features,json=requiredFeatures,proto3" json:"required_features,omitempty"`
+	MinRuntime       string   `protobuf:"bytes,4,opt,name=min_runtime,json=minRuntime,proto3" json:"min_runtime,omitempty"`
+	// url is where the full bundle can be fetched.
+	Url string `protobuf:"bytes,5,opt,name=url,proto3" json:"url,omitempty"`
+	// sync names how this device gets from what it has to this bundle.
+	Sync          *SyncStep `protobuf:"bytes,6,opt,name=sync,proto3" json:"sync,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *BundleDescriptor) Reset() {
 	*x = BundleDescriptor{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[1]
+	mi := &file_plux_v1_manifest_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -196,7 +258,7 @@ func (x *BundleDescriptor) String() string {
 func (*BundleDescriptor) ProtoMessage() {}
 
 func (x *BundleDescriptor) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[1]
+	mi := &file_plux_v1_manifest_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -209,7 +271,7 @@ func (x *BundleDescriptor) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BundleDescriptor.ProtoReflect.Descriptor instead.
 func (*BundleDescriptor) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{1}
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *BundleDescriptor) GetSha256() string {
@@ -240,9 +302,16 @@ func (x *BundleDescriptor) GetMinRuntime() string {
 	return ""
 }
 
-func (x *BundleDescriptor) GetUrls() []string {
+func (x *BundleDescriptor) GetUrl() string {
 	if x != nil {
-		return x.Urls
+		return x.Url
+	}
+	return ""
+}
+
+func (x *BundleDescriptor) GetSync() *SyncStep {
+	if x != nil {
+		return x.Sync
 	}
 	return nil
 }
@@ -258,7 +327,7 @@ type PluginDescriptor struct {
 
 func (x *PluginDescriptor) Reset() {
 	*x = PluginDescriptor{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[2]
+	mi := &file_plux_v1_manifest_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -270,7 +339,7 @@ func (x *PluginDescriptor) String() string {
 func (*PluginDescriptor) ProtoMessage() {}
 
 func (x *PluginDescriptor) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[2]
+	mi := &file_plux_v1_manifest_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -283,7 +352,7 @@ func (x *PluginDescriptor) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PluginDescriptor.ProtoReflect.Descriptor instead.
 func (*PluginDescriptor) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{2}
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PluginDescriptor) GetKey() string {
@@ -307,160 +376,24 @@ func (x *PluginDescriptor) GetBundle() *BundleDescriptor {
 	return nil
 }
 
-// ControlFlags are the switches a device obeys immediately (REL-030).
-type ControlFlags struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// kill_switch_plugins lists plugin keys the device must not render.
-	KillSwitchPlugins []string `protobuf:"bytes,1,rep,name=kill_switch_plugins,json=killSwitchPlugins,proto3" json:"kill_switch_plugins,omitempty"`
-	// app_kill_switch disables every plugin page.
-	AppKillSwitch bool `protobuf:"varint,2,opt,name=app_kill_switch,json=appKillSwitch,proto3" json:"app_kill_switch,omitempty"`
-	// mandatory_update requires the device to update before continuing.
-	MandatoryUpdate bool `protobuf:"varint,3,opt,name=mandatory_update,json=mandatoryUpdate,proto3" json:"mandatory_update,omitempty"`
-	// message is shown to the user when a switch is on.
-	Message       string `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ControlFlags) Reset() {
-	*x = ControlFlags{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ControlFlags) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ControlFlags) ProtoMessage() {}
-
-func (x *ControlFlags) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ControlFlags.ProtoReflect.Descriptor instead.
-func (*ControlFlags) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *ControlFlags) GetKillSwitchPlugins() []string {
-	if x != nil {
-		return x.KillSwitchPlugins
-	}
-	return nil
-}
-
-func (x *ControlFlags) GetAppKillSwitch() bool {
-	if x != nil {
-		return x.AppKillSwitch
-	}
-	return false
-}
-
-func (x *ControlFlags) GetMandatoryUpdate() bool {
-	if x != nil {
-		return x.MandatoryUpdate
-	}
-	return false
-}
-
-func (x *ControlFlags) GetMessage() string {
-	if x != nil {
-		return x.Message
-	}
-	return ""
-}
-
-// InstalledBundle is what a device already has (REL-032).
-type InstalledBundle struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	// key is the plugin key, or empty for the app bundle.
-	Key           string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	Version       int64  `protobuf:"varint,2,opt,name=version,proto3" json:"version,omitempty"`
-	Sha256        string `protobuf:"bytes,3,opt,name=sha256,proto3" json:"sha256,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *InstalledBundle) Reset() {
-	*x = InstalledBundle{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *InstalledBundle) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*InstalledBundle) ProtoMessage() {}
-
-func (x *InstalledBundle) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use InstalledBundle.ProtoReflect.Descriptor instead.
-func (*InstalledBundle) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *InstalledBundle) GetKey() string {
-	if x != nil {
-		return x.Key
-	}
-	return ""
-}
-
-func (x *InstalledBundle) GetVersion() int64 {
-	if x != nil {
-		return x.Version
-	}
-	return 0
-}
-
-func (x *InstalledBundle) GetSha256() string {
-	if x != nil {
-		return x.Sha256
-	}
-	return ""
-}
-
-// SyncStep tells the device how to obtain one bundle.
+// SyncStep tells the device how to obtain one bundle (REL-032).
 type SyncStep struct {
-	state   protoimpl.MessageState `protogen:"open.v1"`
-	Key     string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	Version int64                  `protobuf:"varint,2,opt,name=version,proto3" json:"version,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
 	// action is "keep", "delta" or "full".
-	Action string `protobuf:"bytes,3,opt,name=action,proto3" json:"action,omitempty"`
-	// artifact is the delta or the full bundle to fetch.
-	Artifact *Artifact `protobuf:"bytes,4,opt,name=artifact,proto3" json:"artifact,omitempty"`
-	// result_sha256 is the bundle hash expected after applying (REL-021).
-	ResultSha256  string `protobuf:"bytes,5,opt,name=result_sha256,json=resultSha256,proto3" json:"result_sha256,omitempty"`
-	ResultSize    int64  `protobuf:"varint,6,opt,name=result_size,json=resultSize,proto3" json:"result_size,omitempty"`
+	Action string `protobuf:"bytes,1,opt,name=action,proto3" json:"action,omitempty"`
+	// from is the installed bundle hash the delta applies to.
+	From string `protobuf:"bytes,2,opt,name=from,proto3" json:"from,omitempty"`
+	// url is the delta or full bundle to fetch.
+	Url string `protobuf:"bytes,3,opt,name=url,proto3" json:"url,omitempty"`
+	// size is what the device downloads.
+	Size          int64 `protobuf:"varint,4,opt,name=size,proto3" json:"size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SyncStep) Reset() {
 	*x = SyncStep{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[5]
+	mi := &file_plux_v1_manifest_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -472,7 +405,7 @@ func (x *SyncStep) String() string {
 func (*SyncStep) ProtoMessage() {}
 
 func (x *SyncStep) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[5]
+	mi := &file_plux_v1_manifest_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -485,21 +418,7 @@ func (x *SyncStep) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncStep.ProtoReflect.Descriptor instead.
 func (*SyncStep) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{5}
-}
-
-func (x *SyncStep) GetKey() string {
-	if x != nil {
-		return x.Key
-	}
-	return ""
-}
-
-func (x *SyncStep) GetVersion() int64 {
-	if x != nil {
-		return x.Version
-	}
-	return 0
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SyncStep) GetAction() string {
@@ -509,56 +428,116 @@ func (x *SyncStep) GetAction() string {
 	return ""
 }
 
-func (x *SyncStep) GetArtifact() *Artifact {
+func (x *SyncStep) GetFrom() string {
 	if x != nil {
-		return x.Artifact
-	}
-	return nil
-}
-
-func (x *SyncStep) GetResultSha256() string {
-	if x != nil {
-		return x.ResultSha256
+		return x.From
 	}
 	return ""
 }
 
-func (x *SyncStep) GetResultSize() int64 {
+func (x *SyncStep) GetUrl() string {
 	if x != nil {
-		return x.ResultSize
+		return x.Url
+	}
+	return ""
+}
+
+func (x *SyncStep) GetSize() int64 {
+	if x != nil {
+		return x.Size
 	}
 	return 0
 }
 
-type DeviceContext struct {
+// ControlFlags are the switches a device obeys (REL-030).
+type ControlFlags struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// runtime_version is the plux_flutter version.
-	RuntimeVersion string `protobuf:"bytes,1,opt,name=runtime_version,json=runtimeVersion,proto3" json:"runtime_version,omitempty"`
-	// host_build identifies the host app build.
-	HostBuild string `protobuf:"bytes,2,opt,name=host_build,json=hostBuild,proto3" json:"host_build,omitempty"`
-	Platform  string `protobuf:"bytes,3,opt,name=platform,proto3" json:"platform,omitempty"`
-	OsVersion string `protobuf:"bytes,4,opt,name=os_version,json=osVersion,proto3" json:"os_version,omitempty"`
-	Locale    string `protobuf:"bytes,5,opt,name=locale,proto3" json:"locale,omitempty"`
-	// device_id is the registered device, when the caller has one.
-	DeviceId      string `protobuf:"bytes,6,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	// kill_switch_plugins lists plugin keys the device must not render.
+	KillSwitchPlugins []string `protobuf:"bytes,1,rep,name=kill_switch_plugins,json=killSwitchPlugins,proto3" json:"kill_switch_plugins,omitempty"`
+	// mandatory requires the device to activate this release before it
+	// shows another Plux page.
+	Mandatory bool `protobuf:"varint,2,opt,name=mandatory,proto3" json:"mandatory,omitempty"`
+	// message is shown to the user when a switch is on.
+	Message       string `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DeviceContext) Reset() {
-	*x = DeviceContext{}
+func (x *ControlFlags) Reset() {
+	*x = ControlFlags{}
+	mi := &file_plux_v1_manifest_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ControlFlags) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ControlFlags) ProtoMessage() {}
+
+func (x *ControlFlags) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_manifest_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ControlFlags.ProtoReflect.Descriptor instead.
+func (*ControlFlags) Descriptor() ([]byte, []int) {
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ControlFlags) GetKillSwitchPlugins() []string {
+	if x != nil {
+		return x.KillSwitchPlugins
+	}
+	return nil
+}
+
+func (x *ControlFlags) GetMandatory() bool {
+	if x != nil {
+		return x.Mandatory
+	}
+	return false
+}
+
+func (x *ControlFlags) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+// ExperimentAssignment is one experiment's variant for this device.
+type ExperimentAssignment struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Key           string                 `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Layer         string                 `protobuf:"bytes,2,opt,name=layer,proto3" json:"layer,omitempty"`
+	Variant       string                 `protobuf:"bytes,3,opt,name=variant,proto3" json:"variant,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExperimentAssignment) Reset() {
+	*x = ExperimentAssignment{}
 	mi := &file_plux_v1_manifest_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DeviceContext) String() string {
+func (x *ExperimentAssignment) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeviceContext) ProtoMessage() {}
+func (*ExperimentAssignment) ProtoMessage() {}
 
-func (x *DeviceContext) ProtoReflect() protoreflect.Message {
+func (x *ExperimentAssignment) ProtoReflect() protoreflect.Message {
 	mi := &file_plux_v1_manifest_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -570,49 +549,82 @@ func (x *DeviceContext) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeviceContext.ProtoReflect.Descriptor instead.
-func (*DeviceContext) Descriptor() ([]byte, []int) {
+// Deprecated: Use ExperimentAssignment.ProtoReflect.Descriptor instead.
+func (*ExperimentAssignment) Descriptor() ([]byte, []int) {
 	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *DeviceContext) GetRuntimeVersion() string {
+func (x *ExperimentAssignment) GetKey() string {
 	if x != nil {
-		return x.RuntimeVersion
+		return x.Key
 	}
 	return ""
 }
 
-func (x *DeviceContext) GetHostBuild() string {
+func (x *ExperimentAssignment) GetLayer() string {
 	if x != nil {
-		return x.HostBuild
+		return x.Layer
 	}
 	return ""
 }
 
-func (x *DeviceContext) GetPlatform() string {
+func (x *ExperimentAssignment) GetVariant() string {
 	if x != nil {
-		return x.Platform
+		return x.Variant
 	}
 	return ""
 }
 
-func (x *DeviceContext) GetOsVersion() string {
+// InstalledBundle is what a device already has (REL-032).
+type InstalledBundle struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// key is the plugin key, or empty for the app bundle.
+	Key           string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Sha256        string `protobuf:"bytes,2,opt,name=sha256,proto3" json:"sha256,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *InstalledBundle) Reset() {
+	*x = InstalledBundle{}
+	mi := &file_plux_v1_manifest_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InstalledBundle) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InstalledBundle) ProtoMessage() {}
+
+func (x *InstalledBundle) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_manifest_proto_msgTypes[7]
 	if x != nil {
-		return x.OsVersion
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InstalledBundle.ProtoReflect.Descriptor instead.
+func (*InstalledBundle) Descriptor() ([]byte, []int) {
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *InstalledBundle) GetKey() string {
+	if x != nil {
+		return x.Key
 	}
 	return ""
 }
 
-func (x *DeviceContext) GetLocale() string {
+func (x *InstalledBundle) GetSha256() string {
 	if x != nil {
-		return x.Locale
-	}
-	return ""
-}
-
-func (x *DeviceContext) GetDeviceId() string {
-	if x != nil {
-		return x.DeviceId
+		return x.Sha256
 	}
 	return ""
 }
@@ -622,16 +634,19 @@ type GetManifestRequest struct {
 	AppId       string                 `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
 	Environment string                 `protobuf:"bytes,2,opt,name=environment,proto3" json:"environment,omitempty"`
 	Channel     string                 `protobuf:"bytes,3,opt,name=channel,proto3" json:"channel,omitempty"`
-	Device      *DeviceContext         `protobuf:"bytes,4,opt,name=device,proto3" json:"device,omitempty"`
+	// installed_sequence is the release the device runs, zero for none.
+	InstalledSequence int64 `protobuf:"varint,4,opt,name=installed_sequence,json=installedSequence,proto3" json:"installed_sequence,omitempty"`
+	// installed lists the bundles the device holds.
+	Installed []*InstalledBundle `protobuf:"bytes,5,rep,name=installed,proto3" json:"installed,omitempty"`
 	// if_none_match is the ETag of the manifest the device already has.
-	IfNoneMatch   string `protobuf:"bytes,5,opt,name=if_none_match,json=ifNoneMatch,proto3" json:"if_none_match,omitempty"`
+	IfNoneMatch   string `protobuf:"bytes,6,opt,name=if_none_match,json=ifNoneMatch,proto3" json:"if_none_match,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetManifestRequest) Reset() {
 	*x = GetManifestRequest{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[7]
+	mi := &file_plux_v1_manifest_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -643,7 +658,7 @@ func (x *GetManifestRequest) String() string {
 func (*GetManifestRequest) ProtoMessage() {}
 
 func (x *GetManifestRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[7]
+	mi := &file_plux_v1_manifest_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -656,7 +671,7 @@ func (x *GetManifestRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetManifestRequest.ProtoReflect.Descriptor instead.
 func (*GetManifestRequest) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{7}
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GetManifestRequest) GetAppId() string {
@@ -680,9 +695,16 @@ func (x *GetManifestRequest) GetChannel() string {
 	return ""
 }
 
-func (x *GetManifestRequest) GetDevice() *DeviceContext {
+func (x *GetManifestRequest) GetInstalledSequence() int64 {
 	if x != nil {
-		return x.Device
+		return x.InstalledSequence
+	}
+	return 0
+}
+
+func (x *GetManifestRequest) GetInstalled() []*InstalledBundle {
+	if x != nil {
+		return x.Installed
 	}
 	return nil
 }
@@ -706,7 +728,7 @@ type GetManifestResponse struct {
 
 func (x *GetManifestResponse) Reset() {
 	*x = GetManifestResponse{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[8]
+	mi := &file_plux_v1_manifest_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -718,7 +740,7 @@ func (x *GetManifestResponse) String() string {
 func (*GetManifestResponse) ProtoMessage() {}
 
 func (x *GetManifestResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[8]
+	mi := &file_plux_v1_manifest_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -731,7 +753,7 @@ func (x *GetManifestResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetManifestResponse.ProtoReflect.Descriptor instead.
 func (*GetManifestResponse) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{8}
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *GetManifestResponse) GetNotModified() bool {
@@ -755,152 +777,17 @@ func (x *GetManifestResponse) GetEtag() string {
 	return ""
 }
 
-type GetSyncPlanRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AppId         string                 `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
-	Environment   string                 `protobuf:"bytes,2,opt,name=environment,proto3" json:"environment,omitempty"`
-	Channel       string                 `protobuf:"bytes,3,opt,name=channel,proto3" json:"channel,omitempty"`
-	Device        *DeviceContext         `protobuf:"bytes,4,opt,name=device,proto3" json:"device,omitempty"`
-	Installed     []*InstalledBundle     `protobuf:"bytes,5,rep,name=installed,proto3" json:"installed,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetSyncPlanRequest) Reset() {
-	*x = GetSyncPlanRequest{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[9]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetSyncPlanRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetSyncPlanRequest) ProtoMessage() {}
-
-func (x *GetSyncPlanRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[9]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetSyncPlanRequest.ProtoReflect.Descriptor instead.
-func (*GetSyncPlanRequest) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{9}
-}
-
-func (x *GetSyncPlanRequest) GetAppId() string {
-	if x != nil {
-		return x.AppId
-	}
-	return ""
-}
-
-func (x *GetSyncPlanRequest) GetEnvironment() string {
-	if x != nil {
-		return x.Environment
-	}
-	return ""
-}
-
-func (x *GetSyncPlanRequest) GetChannel() string {
-	if x != nil {
-		return x.Channel
-	}
-	return ""
-}
-
-func (x *GetSyncPlanRequest) GetDevice() *DeviceContext {
-	if x != nil {
-		return x.Device
-	}
-	return nil
-}
-
-func (x *GetSyncPlanRequest) GetInstalled() []*InstalledBundle {
-	if x != nil {
-		return x.Installed
-	}
-	return nil
-}
-
-type GetSyncPlanResponse struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	ReleaseSequence   int64                  `protobuf:"varint,1,opt,name=release_sequence,json=releaseSequence,proto3" json:"release_sequence,omitempty"`
-	Steps             []*SyncStep            `protobuf:"bytes,2,rep,name=steps,proto3" json:"steps,omitempty"`
-	TotalDownloadSize int64                  `protobuf:"varint,3,opt,name=total_download_size,json=totalDownloadSize,proto3" json:"total_download_size,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
-}
-
-func (x *GetSyncPlanResponse) Reset() {
-	*x = GetSyncPlanResponse{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[10]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetSyncPlanResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetSyncPlanResponse) ProtoMessage() {}
-
-func (x *GetSyncPlanResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[10]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetSyncPlanResponse.ProtoReflect.Descriptor instead.
-func (*GetSyncPlanResponse) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *GetSyncPlanResponse) GetReleaseSequence() int64 {
-	if x != nil {
-		return x.ReleaseSequence
-	}
-	return 0
-}
-
-func (x *GetSyncPlanResponse) GetSteps() []*SyncStep {
-	if x != nil {
-		return x.Steps
-	}
-	return nil
-}
-
-func (x *GetSyncPlanResponse) GetTotalDownloadSize() int64 {
-	if x != nil {
-		return x.TotalDownloadSize
-	}
-	return 0
-}
-
 type GetRootKeysRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AppId         string                 `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
+	Environment   string                 `protobuf:"bytes,2,opt,name=environment,proto3" json:"environment,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetRootKeysRequest) Reset() {
 	*x = GetRootKeysRequest{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[11]
+	mi := &file_plux_v1_manifest_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -912,7 +799,7 @@ func (x *GetRootKeysRequest) String() string {
 func (*GetRootKeysRequest) ProtoMessage() {}
 
 func (x *GetRootKeysRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[11]
+	mi := &file_plux_v1_manifest_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -925,12 +812,19 @@ func (x *GetRootKeysRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRootKeysRequest.ProtoReflect.Descriptor instead.
 func (*GetRootKeysRequest) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{11}
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetRootKeysRequest) GetAppId() string {
 	if x != nil {
 		return x.AppId
+	}
+	return ""
+}
+
+func (x *GetRootKeysRequest) GetEnvironment() string {
+	if x != nil {
+		return x.Environment
 	}
 	return ""
 }
@@ -944,7 +838,7 @@ type GetRootKeysResponse struct {
 
 func (x *GetRootKeysResponse) Reset() {
 	*x = GetRootKeysResponse{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[12]
+	mi := &file_plux_v1_manifest_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -956,7 +850,7 @@ func (x *GetRootKeysResponse) String() string {
 func (*GetRootKeysResponse) ProtoMessage() {}
 
 func (x *GetRootKeysResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[12]
+	mi := &file_plux_v1_manifest_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -969,7 +863,7 @@ func (x *GetRootKeysResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRootKeysResponse.ProtoReflect.Descriptor instead.
 func (*GetRootKeysResponse) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{12}
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GetRootKeysResponse) GetKeys() []*PublicKey {
@@ -983,18 +877,17 @@ type PublicKey struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	KeyId     string                 `protobuf:"bytes,1,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"`
 	Algorithm string                 `protobuf:"bytes,2,opt,name=algorithm,proto3" json:"algorithm,omitempty"`
-	// public_key is the raw key bytes; Ed25519 keys are 32 bytes.
+	// public_key is the raw key; an Ed25519 key is 32 bytes.
 	PublicKey []byte `protobuf:"bytes,3,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
 	// role is the update-metadata role this key holds (ADR-0004).
-	Role          string                 `protobuf:"bytes,4,opt,name=role,proto3" json:"role,omitempty"`
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	Role          string `protobuf:"bytes,4,opt,name=role,proto3" json:"role,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *PublicKey) Reset() {
 	*x = PublicKey{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[13]
+	mi := &file_plux_v1_manifest_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1006,7 +899,7 @@ func (x *PublicKey) String() string {
 func (*PublicKey) ProtoMessage() {}
 
 func (x *PublicKey) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[13]
+	mi := &file_plux_v1_manifest_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1019,7 +912,7 @@ func (x *PublicKey) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PublicKey.ProtoReflect.Descriptor instead.
 func (*PublicKey) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{13}
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *PublicKey) GetKeyId() string {
@@ -1050,18 +943,11 @@ func (x *PublicKey) GetRole() string {
 	return ""
 }
 
-func (x *PublicKey) GetExpiresAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.ExpiresAt
-	}
-	return nil
-}
-
 var File_plux_v1_manifest_proto protoreflect.FileDescriptor
 
 const file_plux_v1_manifest_proto_rawDesc = "" +
 	"\n" +
-	"\x16plux/v1/manifest.proto\x12\aplux.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14plux/v1/common.proto\"\x8d\x04\n" +
+	"\x16plux/v1/manifest.proto\x12\aplux.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa9\x04\n" +
 	"\bManifest\x12\x15\n" +
 	"\x06app_id\x18\x01 \x01(\tR\x05appId\x12 \n" +
 	"\venvironment\x18\x02 \x01(\tR\venvironment\x12\x18\n" +
@@ -1073,84 +959,69 @@ const file_plux_v1_manifest_proto_rawDesc = "" +
 	"\n" +
 	"app_bundle\x18\a \x01(\v2\x19.plux.v1.BundleDescriptorR\tappBundle\x123\n" +
 	"\aplugins\x18\b \x03(\v2\x19.plux.v1.PluginDescriptorR\aplugins\x12/\n" +
-	"\acontrol\x18\t \x01(\v2\x15.plux.v1.ControlFlagsR\acontrol\x12\x1c\n" +
-	"\tsignature\x18\n" +
-	" \x01(\fR\tsignature\x12\x15\n" +
-	"\x06key_id\x18\v \x01(\tR\x05keyId\x12\x1c\n" +
-	"\talgorithm\x18\f \x01(\tR\talgorithm\x12\x1c\n" +
-	"\tcanonical\x18\r \x01(\fR\tcanonical\"\xa0\x01\n" +
+	"\acontrol\x18\t \x01(\v2\x15.plux.v1.ControlFlagsR\acontrol\x12?\n" +
+	"\vexperiments\x18\n" +
+	" \x03(\v2\x1d.plux.v1.ExperimentAssignmentR\vexperiments\x12\x16\n" +
+	"\x06signed\x18\v \x01(\fR\x06signed\x122\n" +
+	"\n" +
+	"signatures\x18\f \x03(\v2\x12.plux.v1.SignatureR\n" +
+	"signatures\"^\n" +
+	"\tSignature\x12\x15\n" +
+	"\x06key_id\x18\x01 \x01(\tR\x05keyId\x12\x1c\n" +
+	"\talgorithm\x18\x02 \x01(\tR\talgorithm\x12\x1c\n" +
+	"\tsignature\x18\x03 \x01(\fR\tsignature\"\xc5\x01\n" +
 	"\x10BundleDescriptor\x12\x16\n" +
 	"\x06sha256\x18\x01 \x01(\tR\x06sha256\x12\x12\n" +
 	"\x04size\x18\x02 \x01(\x03R\x04size\x12+\n" +
 	"\x11required_features\x18\x03 \x03(\tR\x10requiredFeatures\x12\x1f\n" +
 	"\vmin_runtime\x18\x04 \x01(\tR\n" +
-	"minRuntime\x12\x12\n" +
-	"\x04urls\x18\x05 \x03(\tR\x04urls\"q\n" +
+	"minRuntime\x12\x10\n" +
+	"\x03url\x18\x05 \x01(\tR\x03url\x12%\n" +
+	"\x04sync\x18\x06 \x01(\v2\x11.plux.v1.SyncStepR\x04sync\"q\n" +
 	"\x10PluginDescriptor\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\x03R\aversion\x121\n" +
-	"\x06bundle\x18\x03 \x01(\v2\x19.plux.v1.BundleDescriptorR\x06bundle\"\xab\x01\n" +
+	"\x06bundle\x18\x03 \x01(\v2\x19.plux.v1.BundleDescriptorR\x06bundle\"\\\n" +
+	"\bSyncStep\x12\x16\n" +
+	"\x06action\x18\x01 \x01(\tR\x06action\x12\x12\n" +
+	"\x04from\x18\x02 \x01(\tR\x04from\x12\x10\n" +
+	"\x03url\x18\x03 \x01(\tR\x03url\x12\x12\n" +
+	"\x04size\x18\x04 \x01(\x03R\x04size\"v\n" +
 	"\fControlFlags\x12.\n" +
-	"\x13kill_switch_plugins\x18\x01 \x03(\tR\x11killSwitchPlugins\x12&\n" +
-	"\x0fapp_kill_switch\x18\x02 \x01(\bR\rappKillSwitch\x12)\n" +
-	"\x10mandatory_update\x18\x03 \x01(\bR\x0fmandatoryUpdate\x12\x18\n" +
-	"\amessage\x18\x04 \x01(\tR\amessage\"U\n" +
+	"\x13kill_switch_plugins\x18\x01 \x03(\tR\x11killSwitchPlugins\x12\x1c\n" +
+	"\tmandatory\x18\x02 \x01(\bR\tmandatory\x12\x18\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\"X\n" +
+	"\x14ExperimentAssignment\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05layer\x18\x02 \x01(\tR\x05layer\x12\x18\n" +
+	"\avariant\x18\x03 \x01(\tR\avariant\";\n" +
 	"\x0fInstalledBundle\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x18\n" +
-	"\aversion\x18\x02 \x01(\x03R\aversion\x12\x16\n" +
-	"\x06sha256\x18\x03 \x01(\tR\x06sha256\"\xc3\x01\n" +
-	"\bSyncStep\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x18\n" +
-	"\aversion\x18\x02 \x01(\x03R\aversion\x12\x16\n" +
-	"\x06action\x18\x03 \x01(\tR\x06action\x12-\n" +
-	"\bartifact\x18\x04 \x01(\v2\x11.plux.v1.ArtifactR\bartifact\x12#\n" +
-	"\rresult_sha256\x18\x05 \x01(\tR\fresultSha256\x12\x1f\n" +
-	"\vresult_size\x18\x06 \x01(\x03R\n" +
-	"resultSize\"\xc7\x01\n" +
-	"\rDeviceContext\x12'\n" +
-	"\x0fruntime_version\x18\x01 \x01(\tR\x0eruntimeVersion\x12\x1d\n" +
-	"\n" +
-	"host_build\x18\x02 \x01(\tR\thostBuild\x12\x1a\n" +
-	"\bplatform\x18\x03 \x01(\tR\bplatform\x12\x1d\n" +
-	"\n" +
-	"os_version\x18\x04 \x01(\tR\tosVersion\x12\x16\n" +
-	"\x06locale\x18\x05 \x01(\tR\x06locale\x12\x1b\n" +
-	"\tdevice_id\x18\x06 \x01(\tR\bdeviceId\"\xbb\x01\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x16\n" +
+	"\x06sha256\x18\x02 \x01(\tR\x06sha256\"\xf2\x01\n" +
 	"\x12GetManifestRequest\x12\x15\n" +
 	"\x06app_id\x18\x01 \x01(\tR\x05appId\x12 \n" +
 	"\venvironment\x18\x02 \x01(\tR\venvironment\x12\x18\n" +
-	"\achannel\x18\x03 \x01(\tR\achannel\x12.\n" +
-	"\x06device\x18\x04 \x01(\v2\x16.plux.v1.DeviceContextR\x06device\x12\"\n" +
-	"\rif_none_match\x18\x05 \x01(\tR\vifNoneMatch\"{\n" +
+	"\achannel\x18\x03 \x01(\tR\achannel\x12-\n" +
+	"\x12installed_sequence\x18\x04 \x01(\x03R\x11installedSequence\x126\n" +
+	"\tinstalled\x18\x05 \x03(\v2\x18.plux.v1.InstalledBundleR\tinstalled\x12\"\n" +
+	"\rif_none_match\x18\x06 \x01(\tR\vifNoneMatch\"{\n" +
 	"\x13GetManifestResponse\x12!\n" +
 	"\fnot_modified\x18\x01 \x01(\bR\vnotModified\x12-\n" +
 	"\bmanifest\x18\x02 \x01(\v2\x11.plux.v1.ManifestR\bmanifest\x12\x12\n" +
-	"\x04etag\x18\x03 \x01(\tR\x04etag\"\xcf\x01\n" +
-	"\x12GetSyncPlanRequest\x12\x15\n" +
-	"\x06app_id\x18\x01 \x01(\tR\x05appId\x12 \n" +
-	"\venvironment\x18\x02 \x01(\tR\venvironment\x12\x18\n" +
-	"\achannel\x18\x03 \x01(\tR\achannel\x12.\n" +
-	"\x06device\x18\x04 \x01(\v2\x16.plux.v1.DeviceContextR\x06device\x126\n" +
-	"\tinstalled\x18\x05 \x03(\v2\x18.plux.v1.InstalledBundleR\tinstalled\"\x99\x01\n" +
-	"\x13GetSyncPlanResponse\x12)\n" +
-	"\x10release_sequence\x18\x01 \x01(\x03R\x0freleaseSequence\x12'\n" +
-	"\x05steps\x18\x02 \x03(\v2\x11.plux.v1.SyncStepR\x05steps\x12.\n" +
-	"\x13total_download_size\x18\x03 \x01(\x03R\x11totalDownloadSize\"+\n" +
+	"\x04etag\x18\x03 \x01(\tR\x04etag\"M\n" +
 	"\x12GetRootKeysRequest\x12\x15\n" +
-	"\x06app_id\x18\x01 \x01(\tR\x05appId\"=\n" +
+	"\x06app_id\x18\x01 \x01(\tR\x05appId\x12 \n" +
+	"\venvironment\x18\x02 \x01(\tR\venvironment\"=\n" +
 	"\x13GetRootKeysResponse\x12&\n" +
-	"\x04keys\x18\x01 \x03(\v2\x12.plux.v1.PublicKeyR\x04keys\"\xae\x01\n" +
+	"\x04keys\x18\x01 \x03(\v2\x12.plux.v1.PublicKeyR\x04keys\"s\n" +
 	"\tPublicKey\x12\x15\n" +
 	"\x06key_id\x18\x01 \x01(\tR\x05keyId\x12\x1c\n" +
 	"\talgorithm\x18\x02 \x01(\tR\talgorithm\x12\x1d\n" +
 	"\n" +
 	"public_key\x18\x03 \x01(\fR\tpublicKey\x12\x12\n" +
-	"\x04role\x18\x04 \x01(\tR\x04role\x129\n" +
-	"\n" +
-	"expires_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt2\xf5\x01\n" +
+	"\x04role\x18\x04 \x01(\tR\x04role2\xa9\x01\n" +
 	"\x0fManifestService\x12J\n" +
 	"\vGetManifest\x12\x1b.plux.v1.GetManifestRequest\x1a\x1c.plux.v1.GetManifestResponse\"\x00\x12J\n" +
-	"\vGetSyncPlan\x12\x1b.plux.v1.GetSyncPlanRequest\x1a\x1c.plux.v1.GetSyncPlanResponse\"\x00\x12J\n" +
 	"\vGetRootKeys\x12\x1b.plux.v1.GetRootKeysRequest\x1a\x1c.plux.v1.GetRootKeysResponse\"\x00B=Z;github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1b\x06proto3"
 
 var (
@@ -1165,51 +1036,45 @@ func file_plux_v1_manifest_proto_rawDescGZIP() []byte {
 	return file_plux_v1_manifest_proto_rawDescData
 }
 
-var file_plux_v1_manifest_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_plux_v1_manifest_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_plux_v1_manifest_proto_goTypes = []any{
 	(*Manifest)(nil),              // 0: plux.v1.Manifest
-	(*BundleDescriptor)(nil),      // 1: plux.v1.BundleDescriptor
-	(*PluginDescriptor)(nil),      // 2: plux.v1.PluginDescriptor
-	(*ControlFlags)(nil),          // 3: plux.v1.ControlFlags
-	(*InstalledBundle)(nil),       // 4: plux.v1.InstalledBundle
-	(*SyncStep)(nil),              // 5: plux.v1.SyncStep
-	(*DeviceContext)(nil),         // 6: plux.v1.DeviceContext
-	(*GetManifestRequest)(nil),    // 7: plux.v1.GetManifestRequest
-	(*GetManifestResponse)(nil),   // 8: plux.v1.GetManifestResponse
-	(*GetSyncPlanRequest)(nil),    // 9: plux.v1.GetSyncPlanRequest
-	(*GetSyncPlanResponse)(nil),   // 10: plux.v1.GetSyncPlanResponse
-	(*GetRootKeysRequest)(nil),    // 11: plux.v1.GetRootKeysRequest
-	(*GetRootKeysResponse)(nil),   // 12: plux.v1.GetRootKeysResponse
-	(*PublicKey)(nil),             // 13: plux.v1.PublicKey
-	(*timestamppb.Timestamp)(nil), // 14: google.protobuf.Timestamp
-	(*Artifact)(nil),              // 15: plux.v1.Artifact
+	(*Signature)(nil),             // 1: plux.v1.Signature
+	(*BundleDescriptor)(nil),      // 2: plux.v1.BundleDescriptor
+	(*PluginDescriptor)(nil),      // 3: plux.v1.PluginDescriptor
+	(*SyncStep)(nil),              // 4: plux.v1.SyncStep
+	(*ControlFlags)(nil),          // 5: plux.v1.ControlFlags
+	(*ExperimentAssignment)(nil),  // 6: plux.v1.ExperimentAssignment
+	(*InstalledBundle)(nil),       // 7: plux.v1.InstalledBundle
+	(*GetManifestRequest)(nil),    // 8: plux.v1.GetManifestRequest
+	(*GetManifestResponse)(nil),   // 9: plux.v1.GetManifestResponse
+	(*GetRootKeysRequest)(nil),    // 10: plux.v1.GetRootKeysRequest
+	(*GetRootKeysResponse)(nil),   // 11: plux.v1.GetRootKeysResponse
+	(*PublicKey)(nil),             // 12: plux.v1.PublicKey
+	(*timestamppb.Timestamp)(nil), // 13: google.protobuf.Timestamp
 }
 var file_plux_v1_manifest_proto_depIdxs = []int32{
-	14, // 0: plux.v1.Manifest.issued_at:type_name -> google.protobuf.Timestamp
-	14, // 1: plux.v1.Manifest.expires_at:type_name -> google.protobuf.Timestamp
-	1,  // 2: plux.v1.Manifest.app_bundle:type_name -> plux.v1.BundleDescriptor
-	2,  // 3: plux.v1.Manifest.plugins:type_name -> plux.v1.PluginDescriptor
-	3,  // 4: plux.v1.Manifest.control:type_name -> plux.v1.ControlFlags
-	1,  // 5: plux.v1.PluginDescriptor.bundle:type_name -> plux.v1.BundleDescriptor
-	15, // 6: plux.v1.SyncStep.artifact:type_name -> plux.v1.Artifact
-	6,  // 7: plux.v1.GetManifestRequest.device:type_name -> plux.v1.DeviceContext
-	0,  // 8: plux.v1.GetManifestResponse.manifest:type_name -> plux.v1.Manifest
-	6,  // 9: plux.v1.GetSyncPlanRequest.device:type_name -> plux.v1.DeviceContext
-	4,  // 10: plux.v1.GetSyncPlanRequest.installed:type_name -> plux.v1.InstalledBundle
-	5,  // 11: plux.v1.GetSyncPlanResponse.steps:type_name -> plux.v1.SyncStep
-	13, // 12: plux.v1.GetRootKeysResponse.keys:type_name -> plux.v1.PublicKey
-	14, // 13: plux.v1.PublicKey.expires_at:type_name -> google.protobuf.Timestamp
-	7,  // 14: plux.v1.ManifestService.GetManifest:input_type -> plux.v1.GetManifestRequest
-	9,  // 15: plux.v1.ManifestService.GetSyncPlan:input_type -> plux.v1.GetSyncPlanRequest
-	11, // 16: plux.v1.ManifestService.GetRootKeys:input_type -> plux.v1.GetRootKeysRequest
-	8,  // 17: plux.v1.ManifestService.GetManifest:output_type -> plux.v1.GetManifestResponse
-	10, // 18: plux.v1.ManifestService.GetSyncPlan:output_type -> plux.v1.GetSyncPlanResponse
-	12, // 19: plux.v1.ManifestService.GetRootKeys:output_type -> plux.v1.GetRootKeysResponse
-	17, // [17:20] is the sub-list for method output_type
-	14, // [14:17] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	13, // 0: plux.v1.Manifest.issued_at:type_name -> google.protobuf.Timestamp
+	13, // 1: plux.v1.Manifest.expires_at:type_name -> google.protobuf.Timestamp
+	2,  // 2: plux.v1.Manifest.app_bundle:type_name -> plux.v1.BundleDescriptor
+	3,  // 3: plux.v1.Manifest.plugins:type_name -> plux.v1.PluginDescriptor
+	5,  // 4: plux.v1.Manifest.control:type_name -> plux.v1.ControlFlags
+	6,  // 5: plux.v1.Manifest.experiments:type_name -> plux.v1.ExperimentAssignment
+	1,  // 6: plux.v1.Manifest.signatures:type_name -> plux.v1.Signature
+	4,  // 7: plux.v1.BundleDescriptor.sync:type_name -> plux.v1.SyncStep
+	2,  // 8: plux.v1.PluginDescriptor.bundle:type_name -> plux.v1.BundleDescriptor
+	7,  // 9: plux.v1.GetManifestRequest.installed:type_name -> plux.v1.InstalledBundle
+	0,  // 10: plux.v1.GetManifestResponse.manifest:type_name -> plux.v1.Manifest
+	12, // 11: plux.v1.GetRootKeysResponse.keys:type_name -> plux.v1.PublicKey
+	8,  // 12: plux.v1.ManifestService.GetManifest:input_type -> plux.v1.GetManifestRequest
+	10, // 13: plux.v1.ManifestService.GetRootKeys:input_type -> plux.v1.GetRootKeysRequest
+	9,  // 14: plux.v1.ManifestService.GetManifest:output_type -> plux.v1.GetManifestResponse
+	11, // 15: plux.v1.ManifestService.GetRootKeys:output_type -> plux.v1.GetRootKeysResponse
+	14, // [14:16] is the sub-list for method output_type
+	12, // [12:14] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_plux_v1_manifest_proto_init() }
@@ -1217,14 +1082,13 @@ func file_plux_v1_manifest_proto_init() {
 	if File_plux_v1_manifest_proto != nil {
 		return
 	}
-	file_plux_v1_common_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_plux_v1_manifest_proto_rawDesc), len(file_plux_v1_manifest_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

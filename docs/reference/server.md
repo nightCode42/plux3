@@ -46,7 +46,7 @@ server:
   listen: ":8080"
   publicBaseURL: "https://plux.acme.example"
   shutdownGrace: "30s"
-  maxRequestSize: "8MiB"        # SEC-104
+  trustedProxies: ["10.0.0.0/8"] # whose X-Forwarded-For is believed
 database:
   url: "postgres://plux@db:5432/plux?sslmode=verify-full"
   maxConnections: 50
@@ -87,10 +87,11 @@ observability:
   traceSampleRatio: 1.0
 telemetry:
   store: "postgres"             # clickhouse arrives in P9
-  maxEventsPerRequest: 500
 limits:                         # installation-level tightenings (LIM-001, LIM-002)
   "bundle.pluginSize": "8MiB"
   "page.nodes": "2000"
+  "api.requestSize": "4MiB"
+  "api.requestsPerMinutePerAddress": "120"
 retention:
   auditYears: 10
   developmentReleaseDays: 90
@@ -123,8 +124,14 @@ variable is treated as unset:
 | `GET /readyz` | That the process has finished starting **and** every dependency answers: PostgreSQL, the cache, object storage, and from P6 the KMS (`SRV-007`). A failing check is reported as `unavailable` and nothing more, because its message may quote a connection string. |
 | `GET /metrics` | The Prometheus metrics of [Appendix G.1](../requirements.md#appendix-g--metrics-and-telemetry-events) (`OBS-002`). |
 
-Every request body is bounded by `server.maxRequestSize` before a handler
-sees it (`SEC-104`).
+Every request body is bounded by the registry limit `api.requestSize`
+before a handler sees it (`SEC-104`), and every call — unary or
+streaming — is counted against its client's address
+(`api.requestsPerMinutePerAddress`, `SRV-065`). The client address is the
+immediate peer, unless that peer is listed in `server.trustedProxies`, in
+which case `X-Forwarded-For` is read from the right, skipping trusted
+hops; a client therefore cannot choose its own address by sending the
+header. The same address is recorded in the audit log (`SEC-140`).
 
 ## 5. Starting and stopping
 

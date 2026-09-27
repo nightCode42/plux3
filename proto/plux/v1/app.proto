@@ -36,6 +36,12 @@ service AppService {
   rpc ListChannels(ListChannelsRequest) returns (ListChannelsResponse) {}
   rpc DeleteChannel(DeleteChannelRequest) returns (DeleteChannelResponse) {}
 
+  // GrantAccess gives a team or a user a role on one app (GOV-001).
+  // Organisation-wide roles apply to every app already.
+  rpc GrantAccess(GrantAccessRequest) returns (GrantAccessResponse) {}
+  rpc RevokeAccess(RevokeAccessRequest) returns (RevokeAccessResponse) {}
+  rpc ListAccess(ListAccessRequest) returns (ListAccessResponse) {}
+
   rpc ListTrash(ListTrashRequest) returns (ListTrashResponse) {}
   rpc RestoreFromTrash(RestoreFromTrashRequest) returns (RestoreFromTrashResponse) {}
   rpc PurgeFromTrash(PurgeFromTrashRequest) returns (PurgeFromTrashResponse) {}
@@ -260,4 +266,37 @@ message SetAppLimitRequest {
 }
 message SetAppLimitResponse {
   LimitUsage limit = 1;
+}
+
+// AccessGrant is a role on one app held by a team or a user (GOV-001).
+message AccessGrant {
+  string id = 1;
+  string app_id = 2;
+  // Exactly one of team_id and user_id is set.
+  string team_id = 3;
+  string user_id = 4;
+  string role = 5;
+  google.protobuf.Timestamp granted_at = 6;
+}
+
+message GrantAccessRequest {
+  string app_id = 1;
+  string team_id = 2;
+  string user_id = 3;
+  string role = 4;
+}
+message GrantAccessResponse {
+  AccessGrant grant = 1;
+}
+
+message RevokeAccessRequest {
+  string id = 1;
+}
+message RevokeAccessResponse {}
+
+message ListAccessRequest {
+  string app_id = 1;
+}
+message ListAccessResponse {
+  repeated AccessGrant grants = 1;
 }

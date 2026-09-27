@@ -48,6 +48,9 @@ message RegisterDeviceRequest {
 }
 message RegisterDeviceResponse {
   Device device = 1;
+  // device_secret is the device's credential for IssueDeviceToken. It is
+  // returned exactly once and stored only as a hash.
+  string device_secret = 2;
 }
 
 message GetDeviceRequest {

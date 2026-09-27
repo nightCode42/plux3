@@ -6,6 +6,7 @@ package config
 import (
 	"errors"
 	"fmt"
+	"net/netip"
 	"net/url"
 	"slices"
 	"sort"
@@ -88,7 +89,11 @@ func (c *Config) validateServer(p *problems) {
 		}
 	}
 	p.positive("server.shutdownGrace", int64(c.Server.ShutdownGrace))
-	p.positive("server.maxRequestSize", c.Server.MaxRequestSize.Int64())
+	for i, cidr := range c.Server.TrustedProxies {
+		if _, err := netip.ParsePrefix(cidr); err != nil {
+			p.addf("server.trustedProxies["+strconv.Itoa(i)+"]", "%q is not a CIDR prefix such as 10.0.0.0/8", cidr)
+		}
+	}
 }
 
 func (c *Config) validateDatabase(p *problems) {
@@ -218,7 +223,6 @@ func (c *Config) validateTelemetry(p *problems) {
 	if p.oneOf("telemetry.store", c.Telemetry.Store, "postgres", "clickhouse") && c.Telemetry.Store == "clickhouse" {
 		p.addf("telemetry.store", "clickhouse arrives in P9 (ANL-010)")
 	}
-	p.positive("telemetry.maxEventsPerRequest", int64(c.Telemetry.MaxEventsPerRequest))
 }
 
 // validateLimits checks the installation-level tightenings against the

@@ -8,8 +8,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/netip"
 	"strings"
 	"testing"
 	"time"
@@ -241,10 +243,12 @@ func TestRateLimitRefusesAndSaysWhenToRetry(t *testing.T) {
 			calls++
 			return int64(calls), nil
 		},
-		Limit:  2,
 		Window: time.Minute,
 	}
-	c := harness(t, stub{}, api.Deps{RateLimit: limiter.Allow})
+	limit := api.RateLimit(func(ctx context.Context, c api.Call) (time.Duration, error) {
+		return limiter.Allow(ctx, "k", 2)
+	})
+	c := harness(t, stub{}, api.Deps{Before: []api.Around{limit}})
 	for i := range 2 {
 		if _, err := call(context.Background(), c); err != nil {
 			t.Fatalf("call %d: %v", i, err)
@@ -255,8 +259,11 @@ func TestRateLimitRefusesAndSaysWhenToRetry(t *testing.T) {
 		t.Fatalf("code = %s", connect.CodeOf(err))
 	}
 	var connErr *connect.Error
-	if errors.As(err, &connErr) && connErr.Meta().Get("Retry-After") != "60" {
-		t.Errorf("Retry-After = %q", connErr.Meta().Get("Retry-After"))
+	if !errors.As(err, &connErr) || connErr.Meta().Get("Retry-After") != "60" {
+		t.Errorf("Retry-After is missing from %v", err)
+	}
+	if connErr != nil && connErr.Meta().Get("X-Request-Id") == "" {
+		t.Error("a refused call carries no request ID")
 	}
 }
 
@@ -269,12 +276,110 @@ func TestRateLimitFailsOpen(t *testing.T) {
 		Count: func(context.Context, string, time.Duration) (int64, error) {
 			return 0, errors.New("cache is down")
 		},
-		Limit:  1,
 		Window: time.Minute,
 	}
-	wait, err := limiter.Allow(context.Background(), "k")
+	wait, err := limiter.Allow(context.Background(), "k", 1)
 	if err != nil || wait != 0 {
 		t.Errorf("Allow = %v, %v; want the call to proceed", wait, err)
+	}
+}
+
+// watcher is a PublishService whose WatchPublish stream does whatever
+// the test wants, to prove that streams pass through the same chain as
+// unary calls.
+type watcher struct {
+	pluxv1connect.UnimplementedPublishServiceHandler
+	watch func() error
+}
+
+// WatchPublish sends one message and then returns the test's error.
+func (w watcher) WatchPublish(_ context.Context, _ *connect.Request[pluxv1.WatchPublishRequest], stream *connect.ServerStream[pluxv1.WatchPublishResponse]) error {
+	if err := stream.Send(&pluxv1.WatchPublishResponse{Job: &pluxv1.PublishJob{Id: "job"}}); err != nil {
+		return err
+	}
+	return w.watch()
+}
+
+// Verifies: SRV-006, SRV-007, SRV-065.
+// A streaming call gets the same recovery, error translation, request ID
+// and refusals as a unary one.
+func TestStreamsPassThroughTheChain(t *testing.T) {
+	t.Parallel()
+	refuse := api.RateLimit(func(context.Context, api.Call) (time.Duration, error) {
+		return time.Minute, plxerr.New(plxerr.RateLimited, "slow down")
+	})
+	for _, tc := range []struct {
+		name   string
+		watch  func() error
+		before []api.Around
+		want   connect.Code
+	}{
+		{"domain error", func() error { return plxerr.New(plxerr.PermissionDenied, "no") }, nil, connect.CodePermissionDenied},
+		{"panic", func() error { panic("boom") }, nil, connect.CodeInternal},
+		{"unrecognised", func() error { return errors.New("10.0.0.5 refused") }, nil, connect.CodeInternal},
+		{"refused before the handler", func() error { return nil }, []api.Around{refuse}, connect.CodeResourceExhausted},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			path, handler := pluxv1connect.NewPublishServiceHandler(watcher{watch: tc.watch},
+				connect.WithInterceptors(api.Interceptors(api.Deps{Before: tc.before})...))
+			mux := http.NewServeMux()
+			mux.Handle(path, handler)
+			srv := httptest.NewServer(mux)
+			defer srv.Close()
+			client := pluxv1connect.NewPublishServiceClient(srv.Client(), srv.URL)
+			stream, err := client.WatchPublish(context.Background(), connect.NewRequest(&pluxv1.WatchPublishRequest{JobId: "job"}))
+			if err != nil {
+				t.Fatal(err)
+			}
+			for stream.Receive() {
+			}
+			if got := connect.CodeOf(stream.Err()); got != tc.want {
+				t.Errorf("code = %s, want %s (%v)", got, tc.want, stream.Err())
+			}
+			if strings.Contains(fmt.Sprint(stream.Err()), "10.0.0.5") {
+				t.Errorf("an internal detail leaked: %v", stream.Err())
+			}
+			if stream.ResponseHeader().Get("X-Request-Id") == "" {
+				t.Error("the stream carries no request ID")
+			}
+			_ = stream.Close()
+		})
+	}
+}
+
+// Verifies: SRV-065, SEC-140.
+func TestClientAddressTrustsOnlyConfiguredProxies(t *testing.T) {
+	t.Parallel()
+	proxies := []netip.Prefix{netip.MustParsePrefix("10.0.0.0/8")}
+	header := func(v ...string) http.Header {
+		h := http.Header{}
+		for _, s := range v {
+			h.Add("X-Forwarded-For", s)
+		}
+		return h
+	}
+	for _, tc := range []struct {
+		name, peer string
+		header     http.Header
+		want       string
+	}{
+		{"direct client", "203.0.113.7:5000", nil, "203.0.113.7"},
+		{"a client cannot claim an address", "203.0.113.7:5000", header("198.51.100.1"), "203.0.113.7"},
+		{"through a trusted proxy", "10.0.0.2:443", header("198.51.100.1"), "198.51.100.1"},
+		{"a forged hop behind the proxy is ignored", "10.0.0.2:443", header("1.2.3.4, 198.51.100.1"), "198.51.100.1"},
+		{"a chain of trusted proxies", "10.0.0.2:443", header("198.51.100.1, 10.0.0.9"), "198.51.100.1"},
+		{"only proxies", "10.0.0.2:443", header("10.0.0.3"), "10.0.0.3"},
+		{"a malformed hop", "10.0.0.2:443", header("not-an-address"), "10.0.0.2"},
+		{"IPv6", "[2001:db8::1]:443", nil, "2001:db8::1"},
+		{"an unparsable peer", "pipe", nil, "pipe"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			if got := api.ClientAddress(tc.peer, tc.header, proxies); got != tc.want {
+				t.Errorf("ClientAddress = %q, want %q", got, tc.want)
+			}
+		})
 	}
 }
 

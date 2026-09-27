@@ -5,6 +5,7 @@ syntax = "proto3";
 
 package plux.v1;
 
+import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1";
@@ -23,6 +24,9 @@ message Page {
   string filter = 3;
   // order_by names fields to sort by, each optionally followed by " desc".
   string order_by = 4;
+  // read_mask limits each returned item to the named fields; an empty
+  // mask returns whole items.
+  google.protobuf.FieldMask read_mask = 5;
 }
 
 // PageResult carries the continuation of a list response.

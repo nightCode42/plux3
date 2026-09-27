@@ -20,10 +20,9 @@ import (
 func Defaults() Config {
 	return Config{
 		Server: Server{
-			Roles:          []Role{RoleAPI, RoleWorker},
-			Listen:         ":8080",
-			ShutdownGrace:  Duration(30e9),
-			MaxRequestSize: 8 << 20,
+			Roles:         []Role{RoleAPI, RoleWorker},
+			Listen:        ":8080",
+			ShutdownGrace: Duration(30e9),
 		},
 		Database: Database{MaxConnections: 50, MigrateOnStart: true},
 		ObjectStorage: ObjectStorage{
@@ -43,7 +42,7 @@ func Defaults() Config {
 			CI:     CIAuth{TokenTTL: Duration(60 * 60e9)},
 		},
 		Observability: Observability{LogLevel: "info", LogFormat: "json", TraceSampleRatio: 1},
-		Telemetry:     Telemetry{Store: "postgres", MaxEventsPerRequest: 500},
+		Telemetry:     Telemetry{Store: "postgres"},
 		Retention: Retention{
 			AuditYears:             10,
 			DevelopmentReleaseDays: 90,

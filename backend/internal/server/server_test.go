@@ -298,8 +298,8 @@ func TestBuildObjectsAndCacheFollowTheConfiguration(t *testing.T) {
 	if _, err := buildCache(&badCache); err == nil {
 		t.Error("an unknown cache backend was accepted")
 	}
-	if got := roleLabel(fsCfg); got != "api+worker" {
-		t.Errorf("roleLabel = %q", got)
+	if got := RoleLabel(fsCfg); got != "api+worker" {
+		t.Errorf("RoleLabel = %q", got)
 	}
 }
 

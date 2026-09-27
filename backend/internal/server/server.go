@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/netip"
 	"slices"
 	"time"
 
@@ -49,6 +50,8 @@ type Server struct {
 	cache   cache.Cache
 	jobs    *jobs.Client
 	limits  limits.Set
+	// trusted are the proxies whose X-Forwarded-For is believed.
+	trusted []netip.Prefix
 
 	// components run in the order they were added and stop in reverse.
 	components []Component
@@ -86,6 +89,16 @@ func New(d Deps) (*Server, error) {
 		cfg: d.Config, log: d.Log, metrics: d.Metrics, tracer: d.Tracer,
 		db: d.DB, objects: d.Objects, cache: d.Cache, jobs: d.Jobs, limits: d.Limits,
 		health: NewHealth(), mux: http.NewServeMux(),
+	}
+	if s.limits.IsZero() {
+		s.limits = limits.Defaults()
+	}
+	for _, cidr := range d.Config.Server.TrustedProxies {
+		prefix, err := netip.ParsePrefix(cidr)
+		if err != nil {
+			return nil, fmt.Errorf("server: trusted proxy %q: %w", cidr, err)
+		}
+		s.trusted = append(s.trusted, prefix)
 	}
 	s.registerChecks()
 	if s.cfg.Has(config.RoleAPI) {
@@ -130,28 +143,29 @@ func (s *Server) Handler() http.Handler { return s.wrap(s.mux) }
 func (s *Server) HealthEndpoint() *Health { return s.health }
 
 // Interceptors returns the chain every service handler is registered
-// with (ADR-0005).
-func (s *Server) Interceptors() []connect.Interceptor {
+// with (ADR-0005). before are the interceptors a service adds inside the
+// standard chain, such as authentication; they run before the address
+// rate limit's per-principal counterpart.
+func (s *Server) Interceptors(before ...api.Around) []connect.Interceptor {
 	d := api.Deps{Log: s.log, Metrics: s.metrics, Tracer: s.tracer}
 	if s.cache != nil {
-		limiter := api.RateLimiter{
-			Count:  s.cache.Increment,
-			Limit:  requestsPerMinute,
-			Window: time.Minute,
-		}
-		d.RateLimit = func(ctx context.Context, procedure string) (time.Duration, error) {
-			// Until identity lands, every caller shares one allowance
-			// per procedure; N3 keys it by principal, device and address
-			// (SRV-065).
-			return limiter.Allow(ctx, "rate:"+procedure)
-		}
+		d.Before = append(d.Before, s.addressLimit())
 	}
+	d.Before = append(d.Before, before...)
 	return api.Interceptors(d)
 }
 
-// requestsPerMinute is the default allowance of one key. It becomes a
-// registry limit when identity lands (LIM-001).
-const requestsPerMinute = 6000
+// addressLimit counts every call against the client's address, so no
+// single client — authenticated or not — can exhaust the API (SRV-065).
+// The allowance is a registry limit (LIM-001).
+func (s *Server) addressLimit() api.Around {
+	limiter := api.RateLimiter{Count: s.cache.Increment, Window: time.Minute}
+	limit := s.limits.Get(limits.APIRequestsPerMinutePerAddress)
+	return api.RateLimit(func(ctx context.Context, c api.Call) (time.Duration, error) {
+		addr := api.ClientAddress(c.PeerAddress, c.Header, s.trusted)
+		return limiter.Allow(ctx, "rate:address:"+addr, limit)
+	})
+}
 
 // Register adds a Connect service handler to the api role's mux.
 func (s *Server) Register(path string, h http.Handler) { s.mux.Handle(path, h) }
@@ -182,7 +196,7 @@ func (s *Server) buildHTTP() {
 
 // wrap applies the HTTP-level guards every request passes.
 func (s *Server) wrap(h http.Handler) http.Handler {
-	return httpx.MaxBytes(h, s.cfg.Server.MaxRequestSize.Int64())
+	return httpx.MaxBytes(h, s.limits.Get(limits.APIRequestSize))
 }
 
 // Run starts every component, serves until the context is cancelled,

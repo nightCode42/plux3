@@ -46,7 +46,7 @@ func Build(ctx context.Context, cfg *config.Config, log *slog.Logger, version st
 		Endpoint:    cfg.Observability.OTLPEndpoint,
 		SampleRatio: cfg.Observability.TraceSampleRatio,
 		Service:     "plux-server",
-		Role:        roleLabel(cfg),
+		Role:        RoleLabel(cfg),
 		Version:     version,
 	})
 	if err != nil {
@@ -157,8 +157,9 @@ func buildCache(cfg *config.Config) (cache.Cache, error) {
 	}
 }
 
-// roleLabel renders the roles for the logger and the trace resource.
-func roleLabel(cfg *config.Config) string {
+// RoleLabel renders the roles of a process, such as "api+worker", for
+// logs and the trace resource.
+func RoleLabel(cfg *config.Config) string {
 	parts := make([]string, len(cfg.Server.Roles))
 	for i, r := range cfg.Server.Roles {
 		parts[i] = string(r)

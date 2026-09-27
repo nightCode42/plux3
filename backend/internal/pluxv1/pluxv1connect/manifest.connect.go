@@ -39,9 +39,6 @@ const (
 	// ManifestServiceGetManifestProcedure is the fully-qualified name of the ManifestService's
 	// GetManifest RPC.
 	ManifestServiceGetManifestProcedure = "/plux.v1.ManifestService/GetManifest"
-	// ManifestServiceGetSyncPlanProcedure is the fully-qualified name of the ManifestService's
-	// GetSyncPlan RPC.
-	ManifestServiceGetSyncPlanProcedure = "/plux.v1.ManifestService/GetSyncPlan"
 	// ManifestServiceGetRootKeysProcedure is the fully-qualified name of the ManifestService's
 	// GetRootKeys RPC.
 	ManifestServiceGetRootKeysProcedure = "/plux.v1.ManifestService/GetRootKeys"
@@ -49,13 +46,12 @@ const (
 
 // ManifestServiceClient is a client for the plux.v1.ManifestService service.
 type ManifestServiceClient interface {
-	// GetManifest returns the manifest for an app, environment and channel,
-	// tailored only by rules evaluated server-side: the same inputs always
-	// produce the same manifest (REL-033).
+	// GetManifest returns the manifest of an app's channel. The request
+	// carries what the device has installed, and the manifest names, per
+	// plugin, the exact delta or full bundle to fetch (REL-032). It is
+	// tailored only by rules evaluated on the server: the same inputs
+	// always give the same manifest (REL-033).
 	GetManifest(context.Context, *connect.Request[pluxv1.GetManifestRequest]) (*connect.Response[pluxv1.GetManifestResponse], error)
-	// GetSyncPlan takes what the device has installed and returns the exact
-	// deltas or full bundles to fetch (REL-032).
-	GetSyncPlan(context.Context, *connect.Request[pluxv1.GetSyncPlanRequest]) (*connect.Response[pluxv1.GetSyncPlanResponse], error)
 	// GetRootKeys returns the public keys host projects embed (SEC-051).
 	GetRootKeys(context.Context, *connect.Request[pluxv1.GetRootKeysRequest]) (*connect.Response[pluxv1.GetRootKeysResponse], error)
 }
@@ -77,12 +73,6 @@ func NewManifestServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(manifestServiceMethods.ByName("GetManifest")),
 			connect.WithClientOptions(opts...),
 		),
-		getSyncPlan: connect.NewClient[pluxv1.GetSyncPlanRequest, pluxv1.GetSyncPlanResponse](
-			httpClient,
-			baseURL+ManifestServiceGetSyncPlanProcedure,
-			connect.WithSchema(manifestServiceMethods.ByName("GetSyncPlan")),
-			connect.WithClientOptions(opts...),
-		),
 		getRootKeys: connect.NewClient[pluxv1.GetRootKeysRequest, pluxv1.GetRootKeysResponse](
 			httpClient,
 			baseURL+ManifestServiceGetRootKeysProcedure,
@@ -95,18 +85,12 @@ func NewManifestServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 // manifestServiceClient implements ManifestServiceClient.
 type manifestServiceClient struct {
 	getManifest *connect.Client[pluxv1.GetManifestRequest, pluxv1.GetManifestResponse]
-	getSyncPlan *connect.Client[pluxv1.GetSyncPlanRequest, pluxv1.GetSyncPlanResponse]
 	getRootKeys *connect.Client[pluxv1.GetRootKeysRequest, pluxv1.GetRootKeysResponse]
 }
 
 // GetManifest calls plux.v1.ManifestService.GetManifest.
 func (c *manifestServiceClient) GetManifest(ctx context.Context, req *connect.Request[pluxv1.GetManifestRequest]) (*connect.Response[pluxv1.GetManifestResponse], error) {
 	return c.getManifest.CallUnary(ctx, req)
-}
-
-// GetSyncPlan calls plux.v1.ManifestService.GetSyncPlan.
-func (c *manifestServiceClient) GetSyncPlan(ctx context.Context, req *connect.Request[pluxv1.GetSyncPlanRequest]) (*connect.Response[pluxv1.GetSyncPlanResponse], error) {
-	return c.getSyncPlan.CallUnary(ctx, req)
 }
 
 // GetRootKeys calls plux.v1.ManifestService.GetRootKeys.
@@ -116,13 +100,12 @@ func (c *manifestServiceClient) GetRootKeys(ctx context.Context, req *connect.Re
 
 // ManifestServiceHandler is an implementation of the plux.v1.ManifestService service.
 type ManifestServiceHandler interface {
-	// GetManifest returns the manifest for an app, environment and channel,
-	// tailored only by rules evaluated server-side: the same inputs always
-	// produce the same manifest (REL-033).
+	// GetManifest returns the manifest of an app's channel. The request
+	// carries what the device has installed, and the manifest names, per
+	// plugin, the exact delta or full bundle to fetch (REL-032). It is
+	// tailored only by rules evaluated on the server: the same inputs
+	// always give the same manifest (REL-033).
 	GetManifest(context.Context, *connect.Request[pluxv1.GetManifestRequest]) (*connect.Response[pluxv1.GetManifestResponse], error)
-	// GetSyncPlan takes what the device has installed and returns the exact
-	// deltas or full bundles to fetch (REL-032).
-	GetSyncPlan(context.Context, *connect.Request[pluxv1.GetSyncPlanRequest]) (*connect.Response[pluxv1.GetSyncPlanResponse], error)
 	// GetRootKeys returns the public keys host projects embed (SEC-051).
 	GetRootKeys(context.Context, *connect.Request[pluxv1.GetRootKeysRequest]) (*connect.Response[pluxv1.GetRootKeysResponse], error)
 }
@@ -140,12 +123,6 @@ func NewManifestServiceHandler(svc ManifestServiceHandler, opts ...connect.Handl
 		connect.WithSchema(manifestServiceMethods.ByName("GetManifest")),
 		connect.WithHandlerOptions(opts...),
 	)
-	manifestServiceGetSyncPlanHandler := connect.NewUnaryHandler(
-		ManifestServiceGetSyncPlanProcedure,
-		svc.GetSyncPlan,
-		connect.WithSchema(manifestServiceMethods.ByName("GetSyncPlan")),
-		connect.WithHandlerOptions(opts...),
-	)
 	manifestServiceGetRootKeysHandler := connect.NewUnaryHandler(
 		ManifestServiceGetRootKeysProcedure,
 		svc.GetRootKeys,
@@ -156,8 +133,6 @@ func NewManifestServiceHandler(svc ManifestServiceHandler, opts ...connect.Handl
 		switch r.URL.Path {
 		case ManifestServiceGetManifestProcedure:
 			manifestServiceGetManifestHandler.ServeHTTP(w, r)
-		case ManifestServiceGetSyncPlanProcedure:
-			manifestServiceGetSyncPlanHandler.ServeHTTP(w, r)
 		case ManifestServiceGetRootKeysProcedure:
 			manifestServiceGetRootKeysHandler.ServeHTTP(w, r)
 		default:
@@ -171,10 +146,6 @@ type UnimplementedManifestServiceHandler struct{}
 
 func (UnimplementedManifestServiceHandler) GetManifest(context.Context, *connect.Request[pluxv1.GetManifestRequest]) (*connect.Response[pluxv1.GetManifestResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.ManifestService.GetManifest is not implemented"))
-}
-
-func (UnimplementedManifestServiceHandler) GetSyncPlan(context.Context, *connect.Request[pluxv1.GetSyncPlanRequest]) (*connect.Response[pluxv1.GetSyncPlanResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.ManifestService.GetSyncPlan is not implemented"))
 }
 
 func (UnimplementedManifestServiceHandler) GetRootKeys(context.Context, *connect.Request[pluxv1.GetRootKeysRequest]) (*connect.Response[pluxv1.GetRootKeysResponse], error) {

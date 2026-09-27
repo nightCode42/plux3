@@ -1,9 +1,9 @@
 # Plux — System Requirements Specification
 
 **Document ID:** `SRS-PLUX-001`
-**Version:** 1.1.2
+**Version:** 1.1.3
 **Status:** Draft — living document, revised as implementation proceeds
-**Date:** 2026-09-26
+**Date:** 2026-09-27
 **Applies to:** Plux Schema, Plux Compiler, Plux Server, Plux Functions, `plux_flutter` runtime, Plux Dev app, Plux Studio, Plux CLI, Plux AI
 
 > **Plux — Plugin Experience.** Build native Flutter screens visually, compile them into signed binary plugins, and ship them to every device in seconds — with high-assurance security, zero parse cost, and full control over who changes what.
@@ -483,10 +483,15 @@ internal/
   ai/           provider adapters, structured output, repair loop
   payment/      provider interface and adapters (P13)
   signing/      KMS/HSM/Vault abstraction, TUF metadata
+  tenancy/      organisations, teams, memberships, apps, environments, channels, access grants, trash
   storage/      PostgreSQL repositories, object storage
+  cache/        shared expendable cache (rate limits, single-flight, replay) on Valkey or memory
+  httpx/        SSRF-safe outbound client and input size guards
   jobs/         job definitions and scheduling
   config/       configuration loading and validation
   observability/ logging, metrics, tracing
+  server/       role wiring, health endpoints, lifecycle
+  pluxv1/       code generated from proto/plux/v1 (never edited by hand)
   plxerr/       unified error type and registered reasons
 ```
 
@@ -2086,9 +2091,9 @@ plux/
 │   ├── benchmarks/            # committed benchmark results and methodology
 │   └── runbooks/              # operational runbooks per alert and failure mode
 ├── schema/
-│   ├── json/                  # JSON Schemas for documents
+│   ├── json/                  # JSON Schemas for documents and the signed manifest (App. B.3)
 │   ├── widgets/               # widget descriptors (Layer 1, Layer 2)
-│   ├── fbs/                   # FlatBuffers IDL for bundles and manifests
+│   ├── fbs/                   # FlatBuffers IDL for bundles
 │   └── testdata/              # cross-language conformance vectors
 ├── proto/plux/v1/             # API contract
 ├── backend/                   # Go module: plux-server, plux CLI, compiler, Functions SDK
@@ -2932,10 +2937,10 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | Field | Value |
 |---|---|
 | Document ID | `SRS-PLUX-001` |
-| Version | 1.1.2 |
+| Version | 1.1.3 |
 | Status | Draft (living document) |
-| Date | 2026-09-26 |
-| Supersedes | 1.1.1 |
+| Date | 2026-09-27 |
+| Supersedes | 1.1.2 |
 | Change process | Amendments are made by pull request against `docs/requirements.md`. A change to a `MUST` requirement requires a corresponding ADR. The version is incremented per Semantic Versioning: a breaking change to an existing requirement is a major increment, a new requirement is a minor increment, and a clarification is a patch increment. |
 
 ### Revision history
@@ -2946,3 +2951,4 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | 1.1.0 | 2026-09-26 | Functions with explicit `server`/`device` placement and standard Go; no-code app generation; mixed native/plugin screens and route-name addressing without host code changes; Plux Canvas replaces the Flutter Web renderer; limits and quotas framework; bundle design principles replace the IDL sketch; security profiles renamed `standard`/`strict`/`maximum`; multi-tenant operation replaces hosted SaaS; editions and licensing; decisions on delta algorithm, AI provider and analytics store; brand; international positioning. |
 | 1.1.1 | 2026-09-26 | Phase 0 delivered: P0 requirement statuses updated; §33 and the P0 deliverables describe the actual workspace layout, tooling and licensing files; `RT-051` withdrawal worded as a rationale (found by `reqtrace lint`). |
 | 1.1.2 | 2026-09-26 | Phase 1 clarifications: section-directory entries are 72 bytes, matching their fields (App. B.1); `BND-004` names the `schemas` section as App. B.2 does; the structural primitive `Switch` is renamed `Match` (App. C.1); App. E.1 points to the complete PXL grammar; App. A shows action graphs as their own documents, as `SCH-006` requires, with identifiers on state entries and parameters (`SCH-002`); ADR-0025 added to §32; App. E.2 adds the `event` root that event handlers read (ADR-0002, ADR-0010, ADR-0025). |
+| 1.1.3 | 2026-09-27 | Phase 2 clarifications: §6.3 lists the server modules the decomposition needs beyond the original sketch (`tenancy/`, `cache/`, `httpx/`, `server/` and the generated `pluxv1/`); §33 places the manifest's schema with the JSON Schemas, since App. B.3 defines the manifest as signed canonical JSON rather than a FlatBuffers buffer (ADR-0003, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0015, ADR-0020). |

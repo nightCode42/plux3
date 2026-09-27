@@ -26,10 +26,10 @@ const (
 )
 
 type IssueDeviceTokenRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	DeviceId      string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
-	AppId         string                 `protobuf:"bytes,2,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
-	Environment   string                 `protobuf:"bytes,3,opt,name=environment,proto3" json:"environment,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	// device_secret is the credential RegisterDevice returned.
+	DeviceSecret  string `protobuf:"bytes,2,opt,name=device_secret,json=deviceSecret,proto3" json:"device_secret,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -71,16 +71,9 @@ func (x *IssueDeviceTokenRequest) GetDeviceId() string {
 	return ""
 }
 
-func (x *IssueDeviceTokenRequest) GetAppId() string {
+func (x *IssueDeviceTokenRequest) GetDeviceSecret() string {
 	if x != nil {
-		return x.AppId
-	}
-	return ""
-}
-
-func (x *IssueDeviceTokenRequest) GetEnvironment() string {
-	if x != nil {
-		return x.Environment
+		return x.DeviceSecret
 	}
 	return ""
 }
@@ -89,7 +82,6 @@ type IssueDeviceTokenResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AccessToken   string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
 	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	RefreshToken  string                 `protobuf:"bytes,3,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -138,141 +130,20 @@ func (x *IssueDeviceTokenResponse) GetExpiresAt() *timestamppb.Timestamp {
 	return nil
 }
 
-func (x *IssueDeviceTokenResponse) GetRefreshToken() string {
-	if x != nil {
-		return x.RefreshToken
-	}
-	return ""
-}
-
-type RefreshDeviceTokenRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	RefreshToken  string                 `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RefreshDeviceTokenRequest) Reset() {
-	*x = RefreshDeviceTokenRequest{}
-	mi := &file_plux_v1_token_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RefreshDeviceTokenRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RefreshDeviceTokenRequest) ProtoMessage() {}
-
-func (x *RefreshDeviceTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_token_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RefreshDeviceTokenRequest.ProtoReflect.Descriptor instead.
-func (*RefreshDeviceTokenRequest) Descriptor() ([]byte, []int) {
-	return file_plux_v1_token_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *RefreshDeviceTokenRequest) GetRefreshToken() string {
-	if x != nil {
-		return x.RefreshToken
-	}
-	return ""
-}
-
-type RefreshDeviceTokenResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AccessToken   string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
-	RefreshToken  string                 `protobuf:"bytes,3,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RefreshDeviceTokenResponse) Reset() {
-	*x = RefreshDeviceTokenResponse{}
-	mi := &file_plux_v1_token_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RefreshDeviceTokenResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RefreshDeviceTokenResponse) ProtoMessage() {}
-
-func (x *RefreshDeviceTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_token_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RefreshDeviceTokenResponse.ProtoReflect.Descriptor instead.
-func (*RefreshDeviceTokenResponse) Descriptor() ([]byte, []int) {
-	return file_plux_v1_token_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *RefreshDeviceTokenResponse) GetAccessToken() string {
-	if x != nil {
-		return x.AccessToken
-	}
-	return ""
-}
-
-func (x *RefreshDeviceTokenResponse) GetExpiresAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.ExpiresAt
-	}
-	return nil
-}
-
-func (x *RefreshDeviceTokenResponse) GetRefreshToken() string {
-	if x != nil {
-		return x.RefreshToken
-	}
-	return ""
-}
-
 var File_plux_v1_token_proto protoreflect.FileDescriptor
 
 const file_plux_v1_token_proto_rawDesc = "" +
 	"\n" +
-	"\x13plux/v1/token.proto\x12\aplux.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"o\n" +
+	"\x13plux/v1/token.proto\x12\aplux.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"[\n" +
 	"\x17IssueDeviceTokenRequest\x12\x1b\n" +
-	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x15\n" +
-	"\x06app_id\x18\x02 \x01(\tR\x05appId\x12 \n" +
-	"\venvironment\x18\x03 \x01(\tR\venvironment\"\x9d\x01\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12#\n" +
+	"\rdevice_secret\x18\x02 \x01(\tR\fdeviceSecret\"x\n" +
 	"\x18IssueDeviceTokenResponse\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x129\n" +
 	"\n" +
-	"expires_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12#\n" +
-	"\rrefresh_token\x18\x03 \x01(\tR\frefreshToken\"@\n" +
-	"\x19RefreshDeviceTokenRequest\x12#\n" +
-	"\rrefresh_token\x18\x01 \x01(\tR\frefreshToken\"\x9f\x01\n" +
-	"\x1aRefreshDeviceTokenResponse\x12!\n" +
-	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x129\n" +
-	"\n" +
-	"expires_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12#\n" +
-	"\rrefresh_token\x18\x03 \x01(\tR\frefreshToken2\xca\x01\n" +
+	"expires_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt2i\n" +
 	"\fTokenService\x12Y\n" +
-	"\x10IssueDeviceToken\x12 .plux.v1.IssueDeviceTokenRequest\x1a!.plux.v1.IssueDeviceTokenResponse\"\x00\x12_\n" +
-	"\x12RefreshDeviceToken\x12\".plux.v1.RefreshDeviceTokenRequest\x1a#.plux.v1.RefreshDeviceTokenResponse\"\x00B=Z;github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1b\x06proto3"
+	"\x10IssueDeviceToken\x12 .plux.v1.IssueDeviceTokenRequest\x1a!.plux.v1.IssueDeviceTokenResponse\"\x00B=Z;github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1b\x06proto3"
 
 var (
 	file_plux_v1_token_proto_rawDescOnce sync.Once
@@ -286,26 +157,21 @@ func file_plux_v1_token_proto_rawDescGZIP() []byte {
 	return file_plux_v1_token_proto_rawDescData
 }
 
-var file_plux_v1_token_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_plux_v1_token_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_plux_v1_token_proto_goTypes = []any{
-	(*IssueDeviceTokenRequest)(nil),    // 0: plux.v1.IssueDeviceTokenRequest
-	(*IssueDeviceTokenResponse)(nil),   // 1: plux.v1.IssueDeviceTokenResponse
-	(*RefreshDeviceTokenRequest)(nil),  // 2: plux.v1.RefreshDeviceTokenRequest
-	(*RefreshDeviceTokenResponse)(nil), // 3: plux.v1.RefreshDeviceTokenResponse
-	(*timestamppb.Timestamp)(nil),      // 4: google.protobuf.Timestamp
+	(*IssueDeviceTokenRequest)(nil),  // 0: plux.v1.IssueDeviceTokenRequest
+	(*IssueDeviceTokenResponse)(nil), // 1: plux.v1.IssueDeviceTokenResponse
+	(*timestamppb.Timestamp)(nil),    // 2: google.protobuf.Timestamp
 }
 var file_plux_v1_token_proto_depIdxs = []int32{
-	4, // 0: plux.v1.IssueDeviceTokenResponse.expires_at:type_name -> google.protobuf.Timestamp
-	4, // 1: plux.v1.RefreshDeviceTokenResponse.expires_at:type_name -> google.protobuf.Timestamp
-	0, // 2: plux.v1.TokenService.IssueDeviceToken:input_type -> plux.v1.IssueDeviceTokenRequest
-	2, // 3: plux.v1.TokenService.RefreshDeviceToken:input_type -> plux.v1.RefreshDeviceTokenRequest
-	1, // 4: plux.v1.TokenService.IssueDeviceToken:output_type -> plux.v1.IssueDeviceTokenResponse
-	3, // 5: plux.v1.TokenService.RefreshDeviceToken:output_type -> plux.v1.RefreshDeviceTokenResponse
-	4, // [4:6] is the sub-list for method output_type
-	2, // [2:4] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	2, // 0: plux.v1.IssueDeviceTokenResponse.expires_at:type_name -> google.protobuf.Timestamp
+	0, // 1: plux.v1.TokenService.IssueDeviceToken:input_type -> plux.v1.IssueDeviceTokenRequest
+	1, // 2: plux.v1.TokenService.IssueDeviceToken:output_type -> plux.v1.IssueDeviceTokenResponse
+	2, // [2:3] is the sub-list for method output_type
+	1, // [1:2] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_plux_v1_token_proto_init() }
@@ -319,7 +185,7 @@ func file_plux_v1_token_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_plux_v1_token_proto_rawDesc), len(file_plux_v1_token_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

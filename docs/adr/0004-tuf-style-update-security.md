@@ -51,9 +51,14 @@ timestamp metadata knows it is being held back rather than simply up to date.
 ### What P2 implements
 
 - One Ed25519 `targets` key **per environment** (`GOV-010`), reached only through the
-  signing abstraction (`SEC-120`) from the `worker` role (`SRV-052`, L-3). Backends:
-  PKCS#11, AWS KMS, Google Cloud KMS, Azure Key Vault, HashiCorp Vault Transit, and a file
-  backend refused unless the environment is a development one (`SEC-056`).
+  signing abstraction (`SEC-120`) from the `worker` role (`SRV-052`, L-3). P2 ships two
+  backends behind it: HashiCorp Vault Transit, reached over its HTTP API with the standard
+  library, and a file backend refused for production environments (`SEC-056`). The
+  PKCS#11, AWS KMS, Google Cloud KMS and Azure Key Vault backends that `SEC-120` also names
+  are an open decision recorded in the work log: PKCS#11 needs cgo, which the static,
+  reproducible build (`CI-006`) forbids in the server binary, and the cloud services cannot
+  be exercised in CI without accounts. The recommendation is to add them in P6 with the key
+  ceremonies of `SEC-121`, the PKCS#11 one as a separate helper process.
 - The signature covers the **bundle hash** (`BND-005`), which already commits to the
   section directory and therefore to every section, so signing one 32-byte value signs the
   whole bundle.
@@ -81,10 +86,13 @@ manifest signature and every bundle hash, but not yet a role hierarchy.
 ### Algorithm
 
 Ed25519 (RFC 8032) for signatures and SHA-256 for hashes (`BND-005`), both named
-explicitly in the metadata. Every backend of the signing abstraction must offer Ed25519;
-the abstraction exposes `Sign(ctx, keyRef, message)` and `PublicKey(ctx, keyRef)` and
-nothing that can export a private key (L-3). Crypto agility is a field, not a rewrite: a
-verifier rejects an algorithm it does not know rather than guessing.
+explicitly in the metadata. Not every key service can hold an Ed25519 key — Azure Key
+Vault cannot — so ECDSA over P-256 with SHA-256 (`ecdsa-p256-sha256`) is the designated
+second algorithm, added together with the first backend that needs it. A verifier accepts
+exactly the algorithms named here and rejects any other rather than guessing; crypto
+agility is a field, not a rewrite (`SEC-122`). The abstraction exposes
+`Sign(ctx, keyRef, message)` and `PublicKey(ctx, keyRef)` and nothing that can export a
+private key (L-3).
 
 ## Consequences
 
