@@ -88,6 +88,12 @@ const (
 	DraftImported        Action = "draft.imported"
 	AssetUploaded        Action = "asset.uploaded"
 	AssetDeleted         Action = "asset.deleted"
+	VersionPublished     Action = "release.version_published"
+	PublishCancelled     Action = "release.publish_cancelled"
+	ReleaseCreated       Action = "release.created"
+	ReleasePromoted      Action = "release.promoted"
+	ReleaseRolledBack    Action = "release.rolled_back"
+	ReleasesPurged       Action = "release.purged"
 	SnapshotRestored     Action = "snapshot.restored"
 	TemplateInstantiated Action = "template.instantiated"
 	LockAcquired         Action = "plugin.lock.acquired"
@@ -110,6 +116,7 @@ var actions = sorted(
 	VariableSet, SecretSet, SecretDeleted, LimitSet, TrashRestored, TrashPurged,
 	PluginCreated, PluginUpdated, PluginDeleted, PluginRestored, PluginPurged,
 	DocumentWritten, DocumentDeleted, DocumentRestored, DocumentPurged, DraftImported, AssetUploaded, AssetDeleted,
+	VersionPublished, PublishCancelled, ReleaseCreated, ReleasePromoted, ReleaseRolledBack, ReleasesPurged,
 	SnapshotRestored, TemplateInstantiated, LockAcquired, LockTakenOver, LockReleased, LockRequested,
 )
 

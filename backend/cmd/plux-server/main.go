@@ -204,7 +204,7 @@ func bootstrap(ctx context.Context, args []string, stdout, stderr io.Writer) int
 		return fail(err)
 	}
 	// The cache only counts failed sign-ins, which bootstrap never has.
-	services, err := server.BuildServices(ctx, cfg, db, cache.NewMemory(nil), set, backend, server.AssetDeps{})
+	services, err := server.BuildServices(ctx, cfg, db, cache.NewMemory(nil), set, backend, server.WorkDeps{})
 	if err != nil {
 		return fail(err)
 	}

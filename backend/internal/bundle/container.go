@@ -449,3 +449,6 @@ func checkMeta(b *Bundle, supports func(string) bool) error {
 	}
 	return nil
 }
+
+// MediaType is the media type bundles are stored and served with.
+const MediaType = "application/vnd.plux.bundle"

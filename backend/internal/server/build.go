@@ -118,14 +118,16 @@ func buildWork(ctx context.Context, cfg *config.Config, log *slog.Logger, db *st
 		log.WarnContext(ctx, "the file signing backend keeps keys on disk; it is for development only, and production environments refuse it (SEC-056, SEC-120)",
 			slog.String("directory", cfg.Signing.Directory))
 	}
-	enq := &enqueuer{}
-	deps := AssetDeps{Objects: store, Jobs: enq}
+	queue := &JobQueue{}
+	deps := WorkDeps{Objects: store, Queue: queue}
 	if cfg.Has(config.RoleWorker) {
-		// Only the worker transcodes; compiling the codecs costs start-up
-		// time the api role need not pay.
+		// Only the worker transcodes and signs: compiling the codecs costs
+		// start-up time the api role need not pay, and the api role must
+		// never hold a signer (SRV-052, ADR-0006).
 		if deps.Codecs, err = media.NewCodecs(ctx); err != nil {
 			return nil, nil, fmt.Errorf("server: %w", err)
 		}
+		deps.Signer = backend
 	}
 	services, err := BuildServices(ctx, cfg, db, shared, set, backend, deps)
 	if err != nil {
@@ -134,6 +136,9 @@ func buildWork(ctx context.Context, cfg *config.Config, log *slog.Logger, db *st
 	workers := jobs.NewWorkers()
 	if deps.Codecs != nil {
 		jobs.AddWorker(workers, &assetWorker{svc: services})
+	}
+	if deps.Signer != nil && services.Releases != nil {
+		jobs.AddWorker(workers, &publishWorker{svc: services})
 	}
 	jobClient, err := jobs.New(jobs.Options{
 		Pool:     db.Pool(),
@@ -145,7 +150,7 @@ func buildWork(ctx context.Context, cfg *config.Config, log *slog.Logger, db *st
 	if err != nil {
 		return nil, nil, fmt.Errorf("server: %w", err)
 	}
-	enq.client = jobClient
+	queue.client = jobClient
 	return services, jobClient, nil
 }
 

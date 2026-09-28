@@ -17,6 +17,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/auth"
 	"github.com/nightCode42/plux3/backend/internal/document"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
+	"github.com/nightCode42/plux3/backend/internal/release"
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 	"github.com/nightCode42/plux3/backend/internal/storage/idempotency"
 	"github.com/nightCode42/plux3/backend/internal/tenancy"
@@ -30,6 +31,7 @@ type Handlers struct {
 	Auth        *auth.Service
 	Tenancy     *tenancy.Service
 	Documents   *document.Service
+	Releases    *release.Service
 	Idempotency *idempotency.Store
 	Pages       *Pages
 	// Limiter counts calls per principal and organisation when an

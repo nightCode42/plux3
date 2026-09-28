@@ -214,6 +214,12 @@ reach an internal service (`SEC-105`).
 
 ## 9. Background work
 
+The worker role runs publishes on the `publish` queue: each job, enqueued
+with the frozen draft, compiles, checks, signs the bundle hash with the
+environment's key and stores the bundle and its source map; only the
+worker is given a signer (`SRV-052`). The maintenance sweep also deletes
+development releases past `retention.developmentReleaseDays` (`REL-007`).
+
 The worker role transcodes uploaded raster images on the `asset` queue:
 each upload's job, enqueued in the upload's transaction, makes WebP and
 AVIF variants at 1×, 2× and 3× with WebAssembly codecs, stores them by

@@ -728,6 +728,30 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Retry after the interval the response reports.
 
+### PLX-8050
+
+`RELEASE_INCONSISTENT` · error · Versions compiled against different sources
+
+**Cause.** A plugin version in the release was compiled against app-level documents or assets other than the release's, so its bundle would differ if it were compiled with them (REL-003).
+
+**Fix.** Publish the plugin again against the current app version, then create the release.
+
+### PLX-8051
+
+`WARNINGS_NOT_ACKNOWLEDGED` · error · Warnings not acknowledged
+
+**Cause.** The publish found warnings, and the publisher did not acknowledge them (SRV-051).
+
+**Fix.** Fix the warnings, or publish again acknowledging them.
+
+### PLX-8052
+
+`PLUGIN_NOT_PUBLISHED` · error · Plugin has no published version
+
+**Cause.** An app release holds exactly one version of every active plugin and one app bundle, and this one has none (REL-002).
+
+**Fix.** Publish the plugin, or delete it, before creating the release.
+
 ### PLX-8090
 
 `INTERNAL_SERVER_ERROR` · error · Internal error

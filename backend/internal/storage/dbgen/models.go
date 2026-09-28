@@ -280,6 +280,80 @@ type Plugin struct {
 	DeletedAt      pgtype.Timestamptz
 }
 
+type PluginVersion struct {
+	ID               pgtype.UUID
+	OrganizationID   pgtype.UUID
+	AppID            pgtype.UUID
+	PluginID         pgtype.UUID
+	PluginKey        string
+	Version          int64
+	Label            string
+	Notes            string
+	BundleSha256     []byte
+	BundleSize       int64
+	SourceMapSha256  []byte
+	RequiredFeatures []string
+	MinRuntime       string
+	Signature        []byte
+	KeyID            string
+	Algorithm        string
+	EnvironmentID    pgtype.UUID
+	SourceSnapshotID pgtype.UUID
+	Sources          []pgtype.UUID
+	PublishedByKind  string
+	PublishedByID    string
+	PublishedBy      string
+	CreatedAt        pgtype.Timestamptz
+}
+
+type PublishJob struct {
+	ID                  pgtype.UUID
+	OrganizationID      pgtype.UUID
+	AppID               pgtype.UUID
+	PluginID            pgtype.UUID
+	EnvironmentID       pgtype.UUID
+	Revision            int64
+	SnapshotID          pgtype.UUID
+	State               string
+	Stage               string
+	Percent             int32
+	Label               string
+	Notes               string
+	AcknowledgeWarnings bool
+	Version             int64
+	Diagnostics         []byte
+	ActorKind           string
+	ActorID             string
+	ActorDisplay        string
+	CreatedAt           pgtype.Timestamptz
+	FinishedAt          pgtype.Timestamptz
+}
+
+type Release struct {
+	ID               pgtype.UUID
+	OrganizationID   pgtype.UUID
+	AppID            pgtype.UUID
+	EnvironmentID    pgtype.UUID
+	Sequence         int64
+	AppVersionID     pgtype.UUID
+	RollbackOf       int64
+	Notes            string
+	MinRuntime       string
+	RequiredFeatures []string
+	Size             int64
+	Production       bool
+	CreatedByKind    string
+	CreatedByID      string
+	CreatedBy        string
+	CreatedAt        pgtype.Timestamptz
+}
+
+type ReleaseVersion struct {
+	ReleaseID       pgtype.UUID
+	OrganizationID  pgtype.UUID
+	PluginVersionID pgtype.UUID
+}
+
 type Session struct {
 	ID         pgtype.UUID
 	UserID     pgtype.UUID

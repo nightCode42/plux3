@@ -772,13 +772,13 @@ flowchart LR
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `REL-001` | P2 | MUST | Plugin versions **MUST** be immutable and numbered with a monotonically increasing integer per plugin; an optional human label (e.g. `2.3.0`) and release notes **MAY** be attached. | SPEC |
-| `REL-002` | P2 | MUST | An **app release** **MUST** be an immutable set of exactly one version per active plugin plus one app bundle, numbered with a monotonically increasing release sequence per app. | SPEC |
-| `REL-003` | P2 | MUST | Creating an app release **MUST** validate all cross-plugin links, native route references (against targeted host catalogues), shared state and collection schemas, and function references across the whole set. A release with an unresolved reference **MUST NOT** be created. | SPEC |
-| `REL-004` | P2 | MUST | Releases **MUST** be built once and **promoted** unchanged between environments (development → staging → production); promotion never recompiles. | SPEC |
-| `REL-005` | P2 | MUST | Each environment **MUST** support multiple channels (default `production`, plus e.g. `beta`, `internal`); a device follows one channel, selected by host configuration or targeting (`REL-050`). | SPEC |
-| `REL-006` | P2 | MUST | Rolling back **MUST** be implemented as a new release sequence whose content equals an earlier release, so that device anti-rollback protection (`SEC-055`) is never weakened. Rollback **MUST** take effect with the next manifest check (≤ 60 s for online devices with the control channel, `SYN-060`). | SPEC |
-| `REL-007` | P2 | MUST | The server **MUST** retain every plugin version and app release referenced by any release in the retention window (default: forever for production, 90 days for development) so any device can delta-update from anything it may have installed. | SPEC |
+| `REL-001` | P2 | MUST | Plugin versions **MUST** be immutable and numbered with a monotonically increasing integer per plugin; an optional human label (e.g. `2.3.0`) and release notes **MAY** be attached. | DONE |
+| `REL-002` | P2 | MUST | An **app release** **MUST** be an immutable set of exactly one version per active plugin plus one app bundle, numbered with a monotonically increasing release sequence per app. | DONE |
+| `REL-003` | P2 | MUST | Creating an app release **MUST** validate all cross-plugin links, native route references (against targeted host catalogues), shared state and collection schemas, and function references across the whole set. A release with an unresolved reference **MUST NOT** be created. | WIP |
+| `REL-004` | P2 | MUST | Releases **MUST** be built once and **promoted** unchanged between environments (development → staging → production); promotion never recompiles. | DONE |
+| `REL-005` | P2 | MUST | Each environment **MUST** support multiple channels (default `production`, plus e.g. `beta`, `internal`); a device follows one channel, selected by host configuration or targeting (`REL-050`). | DONE |
+| `REL-006` | P2 | MUST | Rolling back **MUST** be implemented as a new release sequence whose content equals an earlier release, so that device anti-rollback protection (`SEC-055`) is never weakened. Rollback **MUST** take effect with the next manifest check (≤ 60 s for online devices with the control channel, `SYN-060`). | DONE |
+| `REL-007` | P2 | MUST | The server **MUST** retain every plugin version and app release referenced by any release in the retention window (default: forever for production, 90 days for development) so any device can delta-update from anything it may have installed. | DONE |
 
 ### 10.2 Deltas
 
@@ -846,8 +846,8 @@ sequenceDiagram
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `REL-080` | P2 | MUST | For each release the server **MUST** compute which installed runtime versions and host app builds (from telemetry and registrations) can use it. Devices that cannot **MUST** receive the newest release compatible with them, and the publisher **MUST** see how many devices are affected before approving. | SPEC |
-| `REL-081` | P2 | MUST | Releases **MUST** carry an auto-generated changelog (pages added, removed and changed; actions and data sources changed; functions changed; translations changed) plus human notes. | SPEC |
+| `REL-080` | P2 | MUST | For each release the server **MUST** compute which installed runtime versions and host app builds (from telemetry and registrations) can use it. Devices that cannot **MUST** receive the newest release compatible with them, and the publisher **MUST** see how many devices are affected before approving. | WIP |
+| `REL-081` | P2 | MUST | Releases **MUST** carry an auto-generated changelog (pages added, removed and changed; actions and data sources changed; functions changed; translations changed) plus human notes. | DONE |
 
 ---
 
@@ -883,7 +883,7 @@ Branching is deliberately **not** part of the model (ADR-0015). Each plugin has 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `SRV-030` | P2 | MUST | Document writes **MUST** use optimistic concurrency with a revision number and **MUST** accept JSON Patch (RFC 6902) for partial updates so that Studio autosave sends only changes. | DONE |
-| `SRV-031` | P2 | MUST | Every accepted write **MUST** create an append-only snapshot of the affected documents (compressed, deduplicated); users **MUST** be able to list, compare and restore snapshots. Snapshots are retained for at least 90 days and every published version's source snapshot is retained forever. | WIP |
+| `SRV-031` | P2 | MUST | Every accepted write **MUST** create an append-only snapshot of the affected documents (compressed, deduplicated); users **MUST** be able to list, compare and restore snapshots. Snapshots are retained for at least 90 days and every published version's source snapshot is retained forever. | DONE |
 | `SRV-040` | P2 | MUST | Editing a plugin **MUST** require holding its **editing lock**. Locks are acquired explicitly, renewed by heartbeat (every 30 s), expire after 2 minutes without heartbeat, and show the holder to everyone else. | DONE |
 | `SRV-041` | P2 | MUST | Another user **MUST** be able to request the lock (notifying the holder) and a user with `plugin.lock.override` **MUST** be able to take it over; takeovers are audited and the previous holder's unsaved changes are preserved as a snapshot. | DONE |
 | `SRV-042` | P2 | MUST | App-level documents (theme, locales, data sources, native catalogue, shared state) **MUST** have their own lock, separate from plugin locks. | DONE |
@@ -892,10 +892,10 @@ Branching is deliberately **not** part of the model (ADR-0015). Each plugin has 
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `SRV-050` | P2 | MUST | Publishing **MUST** be an idempotent, durable job that freezes the draft at a given revision and streams progress (stage, percentage, diagnostics) to the caller. | SPEC |
-| `SRV-051` | P2 | MUST | A publish **MUST** fail without side effects if any diagnostic has severity `error`; warnings **MUST** be acknowledged explicitly by the publisher or by policy. | SPEC |
-| `SRV-052` | P2 | MUST | Signing **MUST** happen only in the `worker` role through the signing abstraction (§15.9); the signature and key ID are stored with the version. | SPEC |
-| `SRV-053` | P2 | MUST | A publish of a 50-page plugin including deltas for the last 10 versions **MUST** complete in ≤ 15 s p95 on the reference deployment (§30). | SPEC |
+| `SRV-050` | P2 | MUST | Publishing **MUST** be an idempotent, durable job that freezes the draft at a given revision and streams progress (stage, percentage, diagnostics) to the caller. | DONE |
+| `SRV-051` | P2 | MUST | A publish **MUST** fail without side effects if any diagnostic has severity `error`; warnings **MUST** be acknowledged explicitly by the publisher or by policy. | DONE |
+| `SRV-052` | P2 | MUST | Signing **MUST** happen only in the `worker` role through the signing abstraction (§15.9); the signature and key ID are stored with the version. | DONE |
+| `SRV-053` | P2 | MUST | A publish of a 50-page plugin including deltas for the last 10 versions **MUST** complete in ≤ 15 s p95 on the reference deployment (§30). | WIP |
 
 ### 11.5 Assets, search, notifications and integrations
 
@@ -1226,7 +1226,7 @@ The update channel follows the design of **The Update Framework (TUF)**: separat
 | `SEC-104` | P2 | MUST | All inputs **MUST** be validated with size limits (request body, JSON depth, string length, array length) to prevent resource-exhaustion attacks. | WIP |
 | `SEC-105` | P2 | MUST | Every server-side fetch of a user-supplied URL (OpenAPI import, AI providers, function HTTP, webhooks) **MUST** go through an SSRF-safe client that blocks private, link-local and metadata address ranges unless explicitly allowlisted, and re-validates after DNS resolution and redirects. | DONE |
 | `SEC-106` | P2 | MUST | Secrets (environment secrets, provider credentials) **MUST** be encrypted with envelope encryption under a KMS key, never returned in full after creation, and accessible only to the components that need them. | DONE |
-| `SEC-107` | P2 | MUST | The compiler **MUST** detect secret-like values (API keys, private keys, tokens, by pattern and entropy) in documents and fail publication. | SPEC |
+| `SEC-107` | P2 | MUST | The compiler **MUST** detect secret-like values (API keys, private keys, tokens, by pattern and entropy) in documents and fail publication. | DONE |
 | `SEC-108` | P2 | MUST | Containers **MUST** run as non-root on distroless images with a read-only root filesystem, dropped capabilities, and seccomp `RuntimeDefault`. | SPEC |
 | `SEC-109` | P2 | MUST | The server and Studio **MUST** meet OWASP ASVS 5.0 level 2 and address the OWASP API Security Top 10 (2023), with a checklist and evidence in `docs/security/`. | SPEC |
 
@@ -1992,9 +1992,9 @@ Every size and resource in Plux is governed by one limits framework. Limits are 
 |---|---|---|---|---|
 | `LIM-001` | P2 | MUST | All limits **MUST** be defined in one registry with a key, unit, default, hard maximum and the scopes at which it can be set; the compiler, server, runtime and Studio **MUST** read limits from this registry rather than hard-coding values. | WIP |
 | `LIM-002` | P2 | MUST | Limits **MUST** be configurable at installation, organisation, app and plugin level, and a lower level **MUST NOT** be able to raise a limit set above it. | WIP |
-| `LIM-003` | P2 | MUST | Publication **MUST** fail with a clear diagnostic when a release would exceed a limit, and **MUST** warn at 80% of any limit. | SPEC |
+| `LIM-003` | P2 | MUST | Publication **MUST** fail with a clear diagnostic when a release would exceed a limit, and **MUST** warn at 80% of any limit. | DONE |
 | `LIM-004` | P3 | MUST | Device-side limits **MUST** be delivered in the signed app bundle and enforced by the runtime, which **MUST** degrade gracefully (evict caches, pause telemetry, refuse new outbox entries with a typed error) rather than fail. | SPEC |
-| `LIM-005` | P2 | MUST | Current usage against every limit **MUST** be readable through the API and shown in Studio per app and plugin (`STU-025`). | SPEC |
+| `LIM-005` | P2 | MUST | Current usage against every limit **MUST** be readable through the API and shown in Studio per app and plugin (`STU-025`). | WIP |
 | `LIM-006` | P9 | MUST | Changing a limit **MUST** be audited, and raising an organisation-level limit **MUST** be subject to the approval engine when a policy requires it. | SPEC |
 
 ---

@@ -107,3 +107,23 @@ Rejected: `REL-003` exists to make that failure unreachable.
 Would let environment-specific values be baked in, and would break the one guarantee that
 matters: production would run bytes that were never tested. It also makes the signature of
 a staging artifact worthless in production. Rejected.
+
+## Implementation notes (P2)
+
+- **Sources.** A version records every draft snapshot it was compiled from. Publishing a plugin
+  compiles its draft, frozen at the requested revision, with the app-level documents and every
+  other plugin at their newest published versions — or their current drafts, for those never
+  published — so a version is always compiled against what a release would hold. Every snapshot a
+  version was compiled from is kept for as long as the version exists (`SRV-031`).
+- **Consistency by recompilation.** Creating a release compiles the chosen versions' sources
+  together (`REL-003`) and requires every bundle to come out byte-identical to the one its version
+  stored (`CMP-002` makes that a sound test). A plugin version compiled against other app-level
+  documents or assets than the release's is refused with `PLX-8050`, asking for it to be published
+  again; so a release never pairs bundles that were not built together.
+- **Keys.** A version is signed with the key of the environment it was published in; manifests
+  (N7) are signed with the key of the environment that serves them, so promotion still copies no
+  bytes. The app bundle is published like a plugin, with an empty plugin key.
+- **Retention.** A release never promoted to a production environment, current on no channel and
+  not its app's newest is deleted after `retention.developmentReleaseDays`; versions no remaining
+  release holds, except each plugin's newest, go with them, and their snapshots return to ordinary
+  history retention (`REL-007`).

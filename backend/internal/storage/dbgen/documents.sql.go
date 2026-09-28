@@ -1410,6 +1410,38 @@ func (q *Queries) SetPluginVersion(ctx context.Context, arg SetPluginVersionPara
 	return err
 }
 
+const snapshotAtRevision = `-- name: SnapshotAtRevision :one
+SELECT id, organization_id, draft_id, sequence, revision, reason, applied, actor_kind, actor_id, actor_display, keep, created_at FROM snapshots
+ WHERE draft_id = $1 AND applied AND revision = $2::bigint
+ ORDER BY sequence DESC
+ LIMIT 1
+`
+
+type SnapshotAtRevisionParams struct {
+	DraftID  pgtype.UUID
+	Revision int64
+}
+
+func (q *Queries) SnapshotAtRevision(ctx context.Context, arg SnapshotAtRevisionParams) (Snapshot, error) {
+	row := q.db.QueryRow(ctx, snapshotAtRevision, arg.DraftID, arg.Revision)
+	var i Snapshot
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizationID,
+		&i.DraftID,
+		&i.Sequence,
+		&i.Revision,
+		&i.Reason,
+		&i.Applied,
+		&i.ActorKind,
+		&i.ActorID,
+		&i.ActorDisplay,
+		&i.Keep,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const snapshotState = `-- name: SnapshotState :many
 SELECT DISTINCT ON (sd.path) sd.path, sd.kind, sd.sha256
   FROM snapshot_documents sd

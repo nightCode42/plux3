@@ -6,6 +6,8 @@ package tenancy
 import (
 	"context"
 	"fmt"
+	"maps"
+	"slices"
 
 	"github.com/jackc/pgx/v5"
 
@@ -86,7 +88,7 @@ func (s *Service) Effective(ctx context.Context, tx pgx.Tx, organizationID, appI
 }
 
 // usages describes every limit settable at a scope.
-func usages(set limits.Set, scope limits.Scope, name string) []LimitUsage {
+func usages(set limits.Set, scope limits.Scope, name string, measured map[limits.Key]int64) []LimitUsage {
 	var out []LimitUsage
 	for _, def := range limits.Definitions() {
 		if def.Scopes&scope == 0 {
@@ -98,10 +100,38 @@ func usages(set limits.Set, scope limits.Scope, name string) []LimitUsage {
 		}
 		out = append(out, LimitUsage{
 			Key: def.Key, Unit: unit, Scope: name,
-			Effective: set.Get(def.Key), HardMax: def.Max,
+			Effective: set.Get(def.Key), HardMax: def.Max, Value: measured[def.Key],
 		})
 	}
 	return out
+}
+
+// UsageFunc measures current usage against limits for an app, or one of
+// its plugins (LIM-005).
+type UsageFunc func(ctx context.Context, tx pgx.Tx, appID, pluginID string) (map[limits.Key]int64, error)
+
+// RegisterUsage adds a source of measured usage; the modules that own
+// what is measured register at start-up.
+func (s *Service) RegisterUsage(f UsageFunc) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.usage = append(s.usage, f)
+}
+
+// measure asks every usage source.
+func (s *Service) measure(ctx context.Context, tx pgx.Tx, appID, pluginID string) (map[limits.Key]int64, error) {
+	s.mu.Lock()
+	sources := slices.Clone(s.usage)
+	s.mu.Unlock()
+	out := map[limits.Key]int64{}
+	for _, f := range sources {
+		m, err := f(ctx, tx, appID, pluginID)
+		if err != nil {
+			return nil, err
+		}
+		maps.Copy(out, m)
+	}
+	return out, nil
 }
 
 // ListOrganizationLimits reports every limit an organisation can set.
@@ -115,7 +145,7 @@ func (s *Service) ListOrganizationLimits(ctx context.Context, p auth.Principal) 
 		if err != nil {
 			return err
 		}
-		out = usages(set, limits.ScopeOrganization, scopeOrganization)
+		out = usages(set, limits.ScopeOrganization, scopeOrganization, nil)
 		return nil
 	})
 	return out, err
@@ -141,7 +171,11 @@ func (s *Service) ListAppLimits(ctx context.Context, p auth.Principal, appID str
 		if err != nil {
 			return err
 		}
-		out = usages(set, limits.ScopeApp, scopeApp)
+		measured, err := s.measure(ctx, tx, appID, "")
+		if err != nil {
+			return err
+		}
+		out = usages(set, limits.ScopeApp, scopeApp, measured)
 		return nil
 	})
 	return out, err
@@ -170,7 +204,11 @@ func (s *Service) ListPluginLimits(ctx context.Context, p auth.Principal, appID,
 		if err != nil {
 			return err
 		}
-		out = usages(set, limits.ScopePlugin, scopePlugin)
+		measured, err := s.measure(ctx, tx, appID, pluginID)
+		if err != nil {
+			return err
+		}
+		out = usages(set, limits.ScopePlugin, scopePlugin, measured)
 		return nil
 	})
 	return out, err

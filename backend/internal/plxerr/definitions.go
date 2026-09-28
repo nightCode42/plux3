@@ -467,6 +467,21 @@ var registry = []Definition{
 		"Retry after the interval the response reports.", false,
 	},
 	{
+		ReleaseInconsistent, "RELEASE_INCONSISTENT", SeverityError, "Versions compiled against different sources",
+		"A plugin version in the release was compiled against app-level documents or assets other than the release's, so its bundle would differ if it were compiled with them (REL-003).",
+		"Publish the plugin again against the current app version, then create the release.", false,
+	},
+	{
+		WarningsNotAcknowledged, "WARNINGS_NOT_ACKNOWLEDGED", SeverityError, "Warnings not acknowledged",
+		"The publish found warnings, and the publisher did not acknowledge them (SRV-051).",
+		"Fix the warnings, or publish again acknowledging them.", false,
+	},
+	{
+		PluginNotPublished, "PLUGIN_NOT_PUBLISHED", SeverityError, "Plugin has no published version",
+		"An app release holds exactly one version of every active plugin and one app bundle, and this one has none (REL-002).",
+		"Publish the plugin, or delete it, before creating the release.", false,
+	},
+	{
 		InternalServerError, "INTERNAL_SERVER_ERROR", SeverityError, "Internal error",
 		"The server failed in a way it does not recognise. The incident identifier in the message appears in the server's logs; nothing else about the failure is returned.",
 		"Retry the call. If it keeps failing, give the incident identifier to the operator of the installation.", false,

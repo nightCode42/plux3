@@ -113,16 +113,19 @@ const (
 
 	// Governance (PLX-8000–8999).
 
-	MultiFactorRequired    Code = 8011
-	AuthenticationRequired Code = 8012
-	EditingLockHeld        Code = 8020
-	PermissionDenied       Code = 8030
-	ResourceNotFound       Code = 8031
-	ResourceExists         Code = 8032
-	PreconditionFailed     Code = 8033
-	RateLimited            Code = 8040
-	InternalServerError    Code = 8090
-	UpstreamUnavailable    Code = 8091
+	MultiFactorRequired     Code = 8011
+	AuthenticationRequired  Code = 8012
+	EditingLockHeld         Code = 8020
+	PermissionDenied        Code = 8030
+	ResourceNotFound        Code = 8031
+	ResourceExists          Code = 8032
+	PreconditionFailed      Code = 8033
+	RateLimited             Code = 8040
+	ReleaseInconsistent     Code = 8050
+	WarningsNotAcknowledged Code = 8051
+	PluginNotPublished      Code = 8052
+	InternalServerError     Code = 8090
+	UpstreamUnavailable     Code = 8091
 
 	// Studio, CLI and AI (PLX-9000–9999).
 

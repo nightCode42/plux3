@@ -67,6 +67,8 @@ type Service struct {
 	// kinds are the trash kinds other services registered.
 	mu    sync.Mutex
 	kinds map[string]TrashKind
+	// usage are the sources of measured usage (LIM-005).
+	usage []UsageFunc
 }
 
 // NewService returns the service.

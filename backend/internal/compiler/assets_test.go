@@ -99,3 +99,34 @@ func TestAssetSizeLimits(t *testing.T) {
 		}
 	}
 }
+
+// Verifies: LIM-003.
+// Passing 80% of a size limit is a warning; the compilation still
+// succeeds.
+func TestApproachingLimitsWarn(t *testing.T) {
+	t.Parallel()
+	res := Compile(fixture(t), DefaultOptions())
+	if res.Diagnostics.HasErrors() {
+		t.Fatal(list(res.Diagnostics))
+	}
+	var size int64
+	for _, b := range res.Plugins {
+		size = max(size, int64(len(b.Data)))
+	}
+	opts := DefaultOptions()
+	set, err := opts.Limits.Tighten(limits.BundlePluginSize, limits.ScopeInstallation, size*100/85)
+	if err != nil {
+		t.Fatal(err)
+	}
+	opts.Limits = set
+	res = Compile(fixture(t), opts)
+	found := false
+	for _, d := range res.Diagnostics {
+		if d.Code == plxerr.LimitApproaching && d.Severity == plxerr.SeverityWarning {
+			found = true
+		}
+	}
+	if !found || res.App == nil {
+		t.Errorf("no warning at 85%% of bundle.pluginSize: %s", list(res.Diagnostics))
+	}
+}

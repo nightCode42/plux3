@@ -760,6 +760,30 @@
       "fix": "Retry after the interval the response reports."
     },
     {
+      "code": "PLX-8050",
+      "reason": "RELEASE_INCONSISTENT",
+      "severity": "error",
+      "title": "Versions compiled against different sources",
+      "cause": "A plugin version in the release was compiled against app-level documents or assets other than the release's, so its bundle would differ if it were compiled with them (REL-003).",
+      "fix": "Publish the plugin again against the current app version, then create the release."
+    },
+    {
+      "code": "PLX-8051",
+      "reason": "WARNINGS_NOT_ACKNOWLEDGED",
+      "severity": "error",
+      "title": "Warnings not acknowledged",
+      "cause": "The publish found warnings, and the publisher did not acknowledge them (SRV-051).",
+      "fix": "Fix the warnings, or publish again acknowledging them."
+    },
+    {
+      "code": "PLX-8052",
+      "reason": "PLUGIN_NOT_PUBLISHED",
+      "severity": "error",
+      "title": "Plugin has no published version",
+      "cause": "An app release holds exactly one version of every active plugin and one app bundle, and this one has none (REL-002).",
+      "fix": "Publish the plugin, or delete it, before creating the release."
+    },
+    {
       "code": "PLX-8090",
       "reason": "INTERNAL_SERVER_ERROR",
       "severity": "error",

@@ -52,7 +52,7 @@ func TestMaintenanceSweep(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	svc, err := BuildServices(ctx, cfg, db, cache.NewMemory(nil), limits.Defaults(), backend, AssetDeps{})
+	svc, err := BuildServices(ctx, cfg, db, cache.NewMemory(nil), limits.Defaults(), backend, WorkDeps{})
 	if err != nil {
 		t.Fatalf("BuildServices: %v", err)
 	}
@@ -71,7 +71,7 @@ func TestMaintenanceSweep(t *testing.T) {
 	if err := w.Work(ctx, nil); err != nil {
 		t.Errorf("Work: %v", err)
 	}
-	if _, err := BuildServices(ctx, cfg, nil, nil, limits.Defaults(), backend, AssetDeps{}); err == nil {
+	if _, err := BuildServices(ctx, cfg, nil, nil, limits.Defaults(), backend, WorkDeps{}); err == nil {
 		t.Error("services without a database were built")
 	}
 	id, err := NewIDs().New()

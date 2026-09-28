@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -24,6 +25,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/document"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1/pluxv1connect"
+	"github.com/nightCode42/plux3/backend/internal/release"
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 	"github.com/nightCode42/plux3/backend/internal/schema/uuid7"
 	"github.com/nightCode42/plux3/backend/internal/signing"
@@ -34,6 +36,19 @@ import (
 )
 
 type uuids struct{ g *uuid7.Generator }
+
+// publishQueue records publish jobs for the test to run.
+type publishQueue struct {
+	mu   sync.Mutex
+	jobs []release.Job
+}
+
+func (q *publishQueue) Enqueue(_ context.Context, _ pgx.Tx, j release.Job) error {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	q.jobs = append(q.jobs, j)
+	return nil
+}
 
 // noJobs accepts asset jobs and runs none; transcoding is tested in the
 // document package.
@@ -50,6 +65,8 @@ func (u uuids) New() (string, error) {
 // the api role serves them.
 type world struct {
 	auth     *auth.Service
+	releases *release.Service
+	queue    *publishQueue
 	identity pluxv1connect.IdentityServiceClient
 	org      pluxv1connect.OrgServiceClient
 	app      pluxv1connect.AppServiceClient
@@ -58,6 +75,8 @@ type world struct {
 	comp     pluxv1connect.ComponentServiceClient
 	template pluxv1connect.TemplateServiceClient
 	asset    pluxv1connect.AssetServiceClient
+	publish  pluxv1connect.PublishServiceClient
+	release  pluxv1connect.ReleaseServiceClient
 }
 
 func newWorld(t *testing.T) *world {
@@ -94,6 +113,13 @@ func newWorld(t *testing.T) *world {
 	for kind, k := range docs.TrashKinds() {
 		tenancyService.RegisterTrashKind(kind, k)
 	}
+	queue := &publishQueue{}
+	releases, err := release.NewService(release.Options{
+		DB: db, Audit: log, Tenancy: tenancyService, Documents: docs, Objects: files, IDs: gen, Jobs: queue, Signer: backend,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	store, err := idempotency.NewStore(db, backend, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -112,7 +138,7 @@ func newWorld(t *testing.T) *world {
 	}
 	set := limits.Defaults()
 	limiter := api.RateLimiter{Window: time.Minute, Count: shared.Increment}
-	h := &api.Handlers{Auth: authService, Tenancy: tenancyService, Documents: docs, Idempotency: store, Pages: pages, Limiter: limiter, Limits: set}
+	h := &api.Handlers{Auth: authService, Tenancy: tenancyService, Documents: docs, Releases: releases, Idempotency: store, Pages: pages, Limiter: limiter, Limits: set}
 	authn := api.Authentication(authService, api.IdentityPublic, nil, limiter, set.Get(limits.APIRequestsPerMinute))
 	opts := connect.WithInterceptors(api.Interceptors(api.Deps{Before: []api.Around{authn}})...)
 	mux := http.NewServeMux()
@@ -125,6 +151,8 @@ func newWorld(t *testing.T) *world {
 		func() (string, http.Handler) { return pluxv1connect.NewComponentServiceHandler(h.Component(), opts) },
 		func() (string, http.Handler) { return pluxv1connect.NewTemplateServiceHandler(h.Template(), opts) },
 		func() (string, http.Handler) { return pluxv1connect.NewAssetServiceHandler(h.Asset(), opts) },
+		func() (string, http.Handler) { return pluxv1connect.NewPublishServiceHandler(h.Publish(), opts) },
+		func() (string, http.Handler) { return pluxv1connect.NewReleaseServiceHandler(h.Release(), opts) },
 	} {
 		path, handler := r()
 		mux.Handle(path, handler)
@@ -141,6 +169,10 @@ func newWorld(t *testing.T) *world {
 		comp:     pluxv1connect.NewComponentServiceClient(srv.Client(), srv.URL),
 		template: pluxv1connect.NewTemplateServiceClient(srv.Client(), srv.URL),
 		asset:    pluxv1connect.NewAssetServiceClient(srv.Client(), srv.URL),
+		publish:  pluxv1connect.NewPublishServiceClient(srv.Client(), srv.URL),
+		release:  pluxv1connect.NewReleaseServiceClient(srv.Client(), srv.URL),
+		releases: releases,
+		queue:    queue,
 	}
 }
 

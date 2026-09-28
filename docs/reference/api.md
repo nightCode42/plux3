@@ -86,6 +86,22 @@ are server-streaming; `DocumentService.ImportDraft` and
 `AssetService.UploadAsset` are client-streaming, with the first message
 carrying the target and no payload.
 
+**Publishing and releases** ([ADR-0020](../adr/0020-build-once-promote-releases.md)).
+`Publish` freezes a draft at a revision and returns a `queued` job; the
+worker compiles, checks, signs and stores it, and `WatchPublish` streams
+its stage, percentage and new diagnostics until it ends `succeeded` with a
+version number, `failed` with diagnostics, or `cancelled`. An error, or a
+warning not acknowledged with `acknowledge_warnings`, fails the job with
+nothing recorded (`PLX-8051`). An empty `plugin_id` publishes the app
+bundle; `CreateRelease` takes it under the key `""`. `CreateRelease`
+answers with diagnostics and no release when a plugin has no version
+(`PLX-8052`), a reference does not resolve, or a version was compiled
+against other sources (`PLX-8050`). Publishing, creating a release,
+promoting and rolling back need a session that presented a second factor.
+Limit listings report measured usage in `LimitUsage.value` where P2
+measures it: plugins per app, the newest release's size, pages per plugin
+and the newest bundle's size (`LIM-005`).
+
 **Assets** ([ADR-0027](../adr/0027-asset-pipeline.md)). `UploadAsset` is
 client-streaming: the first message names the app, the file under
 `assets/` and the editing session, and every message carries a chunk. The

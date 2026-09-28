@@ -699,6 +699,18 @@ func (u *unit) pluginAssetBytes(o *out) {
 	}
 	if limit := u.opts.Limits.Get(limits.PluginAssetBytes); total > limit {
 		u.report(plxerr.LimitExceeded, o.pl.file, "", "plugin %s uses %d bytes of assets, above plugin.assetBytes = %d", o.key, total, limit)
+	} else {
+		u.approaching(limits.PluginAssetBytes, o.pl.file, total, "plugin "+o.key+"'s assets")
+	}
+}
+
+// approaching warns when a value has passed a limit's warning threshold,
+// 80% unless the registry sets another, without exceeding the limit
+// (LIM-003).
+func (u *unit) approaching(key limits.Key, file string, v int64, what string) {
+	limit, warn := u.opts.Limits.Get(key), u.opts.Limits.Warning(key)
+	if v > warn && v <= limit {
+		u.report(plxerr.LimitApproaching, file, "", "%s has %d of the %d bytes %s allows", what, v, limit, key)
 	}
 }
 
@@ -912,6 +924,9 @@ func hash(u *unit) {
 			return
 		}
 		total += int64(len(data))
+		if o.pl != nil {
+			u.approaching(limits.BundlePluginSize, o.pl.file, int64(len(data)), "bundle "+o.key)
+		}
 		out := &Bundle{Kind: o.kind, ID: o.id, Key: o.key, Data: data, Hash: b.Hash, Features: featureList(o.features), SourceMap: o.srcmapData}
 		if o.pl == nil {
 			u.app = out
@@ -921,6 +936,8 @@ func hash(u *unit) {
 	}
 	if max := u.opts.Limits.Get(limits.ReleaseAppSize); total > max {
 		u.report(plxerr.LimitExceeded, "app.json", "", "the release has %d bytes, above release.appSize = %d", total, max)
+	} else {
+		u.approaching(limits.ReleaseAppSize, "app.json", total, "the release")
 	}
 	slices.SortFunc(u.outputs, func(a, b *Bundle) int { return strings.Compare(a.Key, b.Key) })
 }

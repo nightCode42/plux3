@@ -227,3 +227,9 @@ SELECT * FROM snapshots WHERE draft_id = $1 AND keep AND sequence < $2 ORDER BY 
 
 -- name: NewestAppliedSnapshot :one
 SELECT * FROM snapshots WHERE draft_id = $1 AND applied ORDER BY sequence DESC LIMIT 1;
+
+-- name: SnapshotAtRevision :one
+SELECT * FROM snapshots
+ WHERE draft_id = $1 AND applied AND revision = sqlc.arg(revision)::bigint
+ ORDER BY sequence DESC
+ LIMIT 1;

@@ -32,6 +32,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/httpx"
 	"github.com/nightCode42/plux3/backend/internal/jobs"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1/pluxv1connect"
+	"github.com/nightCode42/plux3/backend/internal/release"
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 	"github.com/nightCode42/plux3/backend/internal/schema/uuid7"
 	"github.com/nightCode42/plux3/backend/internal/signing"
@@ -49,17 +50,20 @@ type Services struct {
 	Auth        *auth.Service
 	Tenancy     *tenancy.Service
 	Documents   *document.Service
+	Releases    *release.Service
 	Idempotency *idempotency.Store
 	Pages       *api.Pages
 }
 
-// AssetDeps are what asset handling needs beyond the database: where
-// files are stored, the job queue that transcodes them, and — in the
-// worker role — the codecs. The zero value refuses uploads.
-type AssetDeps struct {
+// WorkDeps are what the services need beyond the database: where files
+// are stored, the job queue, and — in the worker role only — the codecs
+// and the signer (SRV-052, ADR-0006). The zero value refuses uploads and
+// leaves releases out.
+type WorkDeps struct {
 	Objects objects.Store
-	Jobs    document.Enqueuer
+	Queue   *JobQueue
 	Codecs  *media.Codecs
+	Signer  signing.Signer
 }
 
 // scanner returns the configured malware scanner, or nil (SRV-060).
@@ -74,19 +78,44 @@ func scanner(cfg *config.Config) document.Scanner {
 	return document.Clamd{Network: "tcp", Address: u.Host}
 }
 
-// enqueuer adds asset jobs to the job client, which is built after the
-// services it runs jobs for; Build sets the client before serving.
-type enqueuer struct{ client *jobs.Client }
+// JobQueue enqueues the services' jobs on the job client, which is built
+// after the services it runs jobs for; Build sets it before serving.
+type JobQueue struct{ client *jobs.Client }
 
-// Enqueue inserts a transcoding job in the caller's transaction.
-func (e *enqueuer) Enqueue(ctx context.Context, tx pgx.Tx, job document.AssetJob) error {
-	if e.client == nil {
+// insert adds a job on a queue in the caller's transaction.
+func (q *JobQueue) insert(ctx context.Context, tx pgx.Tx, args river.JobArgs, queue string) error {
+	if q == nil || q.client == nil {
 		return errors.New("server: the job client is not ready")
 	}
-	if _, err := e.client.InsertTx(ctx, tx, job, &river.InsertOpts{Queue: jobs.QueueAsset, MaxAttempts: 5}); err != nil {
+	if _, err := q.client.InsertTx(ctx, tx, args, &river.InsertOpts{Queue: queue, MaxAttempts: 5}); err != nil {
 		return fmt.Errorf("server: %w", err)
 	}
 	return nil
+}
+
+// assetQueue enqueues transcoding jobs (CMP-030).
+type assetQueue struct{ q *JobQueue }
+
+func (a assetQueue) Enqueue(ctx context.Context, tx pgx.Tx, job document.AssetJob) error {
+	return a.q.insert(ctx, tx, job, jobs.QueueAsset)
+}
+
+// publishQueue enqueues publish jobs (SRV-050).
+type publishQueue struct{ q *JobQueue }
+
+func (p publishQueue) Enqueue(ctx context.Context, tx pgx.Tx, job release.Job) error {
+	return p.q.insert(ctx, tx, job, jobs.QueuePublish)
+}
+
+// publishWorker runs publishes (SRV-050).
+type publishWorker struct {
+	river.WorkerDefaults[release.Job]
+	svc *Services
+}
+
+// Work runs one publish.
+func (w *publishWorker) Work(ctx context.Context, job *river.Job[release.Job]) error {
+	return w.svc.Releases.RunPublish(ctx, job.Args) //nolint:wrapcheck // a domain error
 }
 
 // assetWorker transcodes uploaded images (CMP-030).
@@ -144,7 +173,7 @@ func BuildSigning(cfg *config.Config) (signing.Backend, error) {
 
 // BuildServices assembles the domain services. They are given only the
 // envelope-encryption half of the signing backend (L-3, ADR-0006).
-func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shared cache.Cache, set limits.Set, backend signing.Crypter, assets AssetDeps) (*Services, error) {
+func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shared cache.Cache, set limits.Set, backend signing.Crypter, work WorkDeps) (*Services, error) {
 	if db == nil || shared == nil {
 		return nil, errors.New("server: the services need a database and a cache")
 	}
@@ -182,7 +211,7 @@ func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shar
 	docs, err := document.NewService(document.Options{
 		DB: db, Audit: log, Tenancy: tenancyService, IDs: gen, Limits: set,
 		SnapshotDays: cfg.Retention.SnapshotDays, CompilerVersion: buildinfo.Get().Version,
-		Objects: assets.Objects, Jobs: assets.Jobs, Scanner: scanner(cfg), Codecs: assets.Codecs,
+		Objects: work.Objects, Jobs: assetQueue{work.Queue}, Scanner: scanner(cfg), Codecs: work.Codecs,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("server: %w", err)
@@ -202,8 +231,19 @@ func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shar
 	if err != nil {
 		return nil, fmt.Errorf("server: %w", err)
 	}
+	var releases *release.Service
+	if work.Objects != nil {
+		if releases, err = release.NewService(release.Options{
+			DB: db, Audit: log, Tenancy: tenancyService, Documents: docs, Objects: work.Objects, IDs: gen,
+			Jobs: publishQueue{work.Queue}, Signer: work.Signer, Limits: set,
+			CompilerVersion: buildinfo.Get().Version, DevelopmentDays: cfg.Retention.DevelopmentReleaseDays,
+		}); err != nil {
+			return nil, fmt.Errorf("server: %w", err)
+		}
+		tenancyService.RegisterUsage(releases.Usage)
+	}
 	return &Services{
-		Audit: log, Auth: authService, Tenancy: tenancyService, Documents: docs,
+		Audit: log, Auth: authService, Tenancy: tenancyService, Documents: docs, Releases: releases,
 		Idempotency: store, Pages: pages,
 	}, nil
 }
@@ -272,12 +312,12 @@ func (s *Server) RegisterAPI(svc *Services) {
 		limiter.Count = s.cache.Increment
 	}
 	h := &api.Handlers{
-		Auth: svc.Auth, Tenancy: svc.Tenancy, Documents: svc.Documents, Idempotency: svc.Idempotency, Pages: svc.Pages,
+		Auth: svc.Auth, Tenancy: svc.Tenancy, Documents: svc.Documents, Releases: svc.Releases, Idempotency: svc.Idempotency, Pages: svc.Pages,
 		Limiter: limiter, Limits: s.limits,
 	}
 	authn := api.Authentication(svc.Auth, api.IdentityPublic, s.trusted, limiter, s.limits.Get(limits.APIRequestsPerMinute))
 	opts := connect.WithInterceptors(s.Interceptors(authn)...)
-	for _, register := range []func() (string, http.Handler){
+	registrations := []func() (string, http.Handler){
 		func() (string, http.Handler) { return pluxv1connect.NewIdentityServiceHandler(h.Identity(), opts) },
 		func() (string, http.Handler) { return pluxv1connect.NewOrgServiceHandler(h.Org(), opts) },
 		func() (string, http.Handler) { return pluxv1connect.NewAppServiceHandler(h.App(), opts) },
@@ -286,7 +326,13 @@ func (s *Server) RegisterAPI(svc *Services) {
 		func() (string, http.Handler) { return pluxv1connect.NewComponentServiceHandler(h.Component(), opts) },
 		func() (string, http.Handler) { return pluxv1connect.NewTemplateServiceHandler(h.Template(), opts) },
 		func() (string, http.Handler) { return pluxv1connect.NewAssetServiceHandler(h.Asset(), opts) },
-	} {
+	}
+	if svc.Releases != nil {
+		registrations = append(registrations,
+			func() (string, http.Handler) { return pluxv1connect.NewPublishServiceHandler(h.Publish(), opts) },
+			func() (string, http.Handler) { return pluxv1connect.NewReleaseServiceHandler(h.Release(), opts) })
+	}
+	for _, register := range registrations {
 		path, handler := register()
 		s.Register(path, handler)
 	}
@@ -321,7 +367,15 @@ func (w *maintenanceWorker) Work(ctx context.Context, _ *river.Job[Maintenance])
 	purged, err := w.svc.Tenancy.PurgeExpired(ctx, 100)
 	errs = append(errs, err)
 	snapshots := 0
+	released := 0
 	err = w.svc.Tenancy.ForEachOrganization(ctx, func(org string) error {
+		if w.svc.Releases != nil {
+			n, err := w.svc.Releases.PurgeReleases(ctx, org)
+			released += n
+			if err != nil {
+				return err //nolint:wrapcheck // a domain error
+			}
+		}
 		n, err := w.svc.Documents.PurgeSnapshots(ctx, org)
 		snapshots += n
 		return err //nolint:wrapcheck // a domain error
@@ -333,7 +387,7 @@ func (w *maintenanceWorker) Work(ctx context.Context, _ *river.Job[Maintenance])
 	errs = append(errs, err)
 	if w.log != nil {
 		w.log.InfoContext(ctx, "maintenance sweep",
-			slog.Int("trashPurged", purged), slog.Int("snapshotsPurged", snapshots), slog.Int64("idempotencyKeysExpired", keys),
+			slog.Int("trashPurged", purged), slog.Int("snapshotsPurged", snapshots), slog.Int("releasesPurged", released), slog.Int64("idempotencyKeysExpired", keys),
 			slog.Int64("credentialsExpired", creds))
 	}
 	return errors.Join(errs...)
