@@ -65,6 +65,13 @@ external int _zstdDecompress(
   int dictLength,
 );
 
+@Native<Int32 Function(Pointer<Uint8>)>(symbol: 'plux_fsync_dir', isLeaf: true)
+external int _fsyncDir(Pointer<Uint8> path);
+
+/// `fsync` of the directory whose NUL-terminated UTF-8 name is [path];
+/// returns 0 or the `errno` value.
+int nativeFsyncDirectory(Uint8List path) => _fsyncDir(path.address);
+
 /// Maps the file whose NUL-terminated UTF-8 name is [path] read-only;
 /// null when out of memory.
 Pointer<NativeMapping> nativeMap(Uint8List path) => _map(path.address);

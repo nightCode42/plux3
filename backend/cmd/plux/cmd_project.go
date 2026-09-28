@@ -6,6 +6,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -590,11 +591,17 @@ type baseline struct {
 	Keys        []baselineKey   `json:"keys"`
 }
 
+// baselineEntry is one bundle of a baseline with the signature publish
+// made over its bundle hash, so the runtime verifies it under the
+// embedded keys before loading it (SEC-052, ADR-0029).
 type baselineEntry struct {
-	Plugin  string `json:"plugin"`
-	Version int64  `json:"version"`
-	SHA256  string `json:"sha256"`
-	File    string `json:"file"`
+	Plugin    string `json:"plugin"`
+	Version   int64  `json:"version"`
+	SHA256    string `json:"sha256"`
+	File      string `json:"file"`
+	KeyID     string `json:"keyId"`
+	Algorithm string `json:"algorithm"`
+	Signature string `json:"signature"`
 }
 
 type baselineKey struct {
@@ -706,7 +713,10 @@ func (cl *clients) writeBundles(ctx context.Context, dir string, versions []*plu
 		if err := writeFile(filepath.Join(dir, "bundles", name), data); err != nil {
 			return nil, err
 		}
-		out = append(out, baselineEntry{Plugin: v.GetPluginKey(), Version: v.GetVersion(), SHA256: v.GetBundleSha256(), File: "bundles/" + name})
+		out = append(out, baselineEntry{
+			Plugin: v.GetPluginKey(), Version: v.GetVersion(), SHA256: v.GetBundleSha256(), File: "bundles/" + name,
+			KeyID: v.GetKeyId(), Algorithm: v.GetAlgorithm(), Signature: base64.StdEncoding.EncodeToString(v.GetSignature()),
+		})
 	}
 	return out, nil
 }

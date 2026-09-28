@@ -1,0 +1,244 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+/// The sync isolate (SYN-010, L-6): network I/O, patching, hashing and
+/// every write to the release store happen here, never on the UI isolate.
+/// The UI isolate sends commands and receives [SyncEvent]s and results.
+library;
+
+import 'dart:async';
+import 'dart:isolate';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
+import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/store/baseline.dart';
+import 'package:plux_flutter/src/store/directory_sync.dart';
+import 'package:plux_flutter/src/store/pointer.dart';
+import 'package:plux_flutter/src/store/release_store.dart';
+import 'package:plux_flutter/src/sync/api_client.dart';
+import 'package:plux_flutter/src/sync/downloader.dart';
+import 'package:plux_flutter/src/sync/sync_engine.dart';
+import 'package:plux_flutter/src/sync/sync_event.dart';
+
+/// Everything the sync isolate needs, sent to it once.
+final class SyncWorkerConfig {
+  /// Creates the configuration.
+  const SyncWorkerConfig({
+    required this.storeRoot,
+    required this.endpoint,
+    required this.sync,
+    required this.httpClient,
+    required this.credentials,
+    this.parallelism = 4,
+    this.baseline,
+    this.rootIsolateToken,
+  });
+
+  /// The release store's directory.
+  final String storeRoot;
+
+  /// The server.
+  final Uri endpoint;
+
+  /// The sync's configuration.
+  final SyncConfig sync;
+
+  /// Creates the HTTP client, inside the isolate (Cronet, `URLSession` or
+  /// `dart:io`).
+  final http.Client Function() httpClient;
+
+  /// Creates the credential store, inside the isolate.
+  final CredentialStore Function() credentials;
+
+  /// Downloads at once (SYN-010).
+  final int parallelism;
+
+  /// Reads the embedded baseline, when the host has one (SYN-007).
+  final BaselineReader? baseline;
+
+  /// Lets the isolate use platform channels (key storage, assets).
+  final RootIsolateToken? rootIsolateToken;
+}
+
+/// A command to the sync isolate.
+sealed class _Command {
+  const _Command(this.reply);
+  final SendPort reply;
+}
+
+final class _Sync extends _Command {
+  const _Sync(super.reply);
+}
+
+final class _Store extends _Command {
+  const _Store(super.reply, this.op);
+  final String op;
+}
+
+final class _Baseline extends _Command {
+  const _Baseline(super.reply);
+}
+
+/// The UI isolate's handle on the sync isolate.
+final class SyncWorker {
+  SyncWorker._(this._isolate, this._commands);
+
+  /// Starts the sync isolate.
+  static Future<SyncWorker> start(SyncWorkerConfig config) async {
+    final ready = ReceivePort();
+    final isolate = await Isolate.spawn(_main, (
+      config,
+      ready.sendPort,
+    ), debugName: 'plux-sync');
+    final commands = await ready.first as SendPort;
+    ready.close();
+    return SyncWorker._(isolate, commands);
+  }
+
+  final Isolate _isolate;
+  final SendPort _commands;
+  Future<SyncResult>? _running;
+
+  /// Syncs once, reporting events to [onEvent]; a sync already running is
+  /// joined rather than started twice (ADR-0021).
+  Future<SyncResult> sync(void Function(SyncEvent) onEvent) {
+    final running = _running;
+    if (running != null) return running;
+    final port = ReceivePort();
+    final done = Completer<SyncResult>();
+    port.listen((m) {
+      if (m is SyncEvent) onEvent(m);
+      if (m is SyncResult) {
+        done.complete(m);
+        port.close();
+      }
+    });
+    _commands.send(_Sync(port.sendPort));
+    return _running = done.future.whenComplete(() => _running = null);
+  }
+
+  /// Imports the embedded baseline; the sequence, or null.
+  Future<int?> importBaseline() => _ask(_Baseline.new).then((r) => r as int?);
+
+  /// Activates the staged release (SYN-004).
+  Future<StorePointer> activate() => _store('activate');
+
+  /// Starts a launch (SYN-006); the pointer afterwards.
+  Future<StorePointer> beginLaunch() => _store('beginLaunch');
+
+  /// Records that the launch reached a healthy point.
+  Future<StorePointer> markHealthy() => _store('markHealthy');
+
+  /// Records a failure attributed to Plux (SYN-006).
+  Future<StorePointer> recordFailure() => _store('recordFailure');
+
+  /// Reverts to the last known good release.
+  Future<StorePointer> revert() => _store('revert');
+
+  /// Collects garbage.
+  Future<StorePointer> collectGarbage() => _store('collectGarbage');
+
+  Future<StorePointer> _store(String op) async =>
+      await _ask((p) => _Store(p, op)) as StorePointer;
+
+  Future<Object?> _ask(_Command Function(SendPort) command) async {
+    final port = ReceivePort();
+    _commands.send(command(port.sendPort));
+    final reply = await port.first;
+    port.close();
+    if (reply is PluxException) throw reply;
+    if (reply is _Failure) throw StateError(reply.message);
+    return reply;
+  }
+
+  /// Stops the isolate.
+  void close() => _isolate.kill(priority: Isolate.immediate);
+}
+
+final class _Failure {
+  const _Failure(this.message);
+  final String message;
+}
+
+Future<void> _main((SyncWorkerConfig, SendPort) args) async {
+  final (config, ready) = args;
+  final token = config.rootIsolateToken;
+  if (token != null) BackgroundIsolateBinaryMessenger.ensureInitialized(token);
+  final store = ReleaseStore.open(
+    config.storeRoot,
+    syncDirectory: syncDirectory,
+  );
+  final client = config.httpClient();
+  final engine = SyncEngine(
+    config: config.sync,
+    store: store,
+    api: PluxApiClient(client, config.endpoint),
+    downloader: Downloader(client, parallelism: config.parallelism),
+    credentials: config.credentials(),
+  );
+  final commands = ReceivePort();
+  ready.send(commands.sendPort);
+  await for (final c in commands) {
+    switch (c) {
+      case _Sync(:final reply):
+        reply.send(await engine.run(reply.send));
+      case _Baseline(:final reply):
+        final read = config.baseline;
+        try {
+          reply.send(
+            read == null
+                ? null
+                : await importBaseline(
+                    read: read,
+                    store: store,
+                    keys: config.sync.keys,
+                    appId: config.sync.appId,
+                    environment: config.sync.environment,
+                    channel: config.sync.channel,
+                    limits: config.sync.verifierLimits,
+                    supportsFeature: config.sync.supportsFeature,
+                  ),
+          );
+        } on PluxException catch (e) {
+          reply.send(e);
+        }
+      case _Store(:final reply, :final op):
+        try {
+          switch (op) {
+            case 'activate':
+              store.activate();
+            case 'beginLaunch':
+              store.beginLaunch();
+            case 'markHealthy':
+              store.markHealthy();
+            case 'recordFailure':
+              store.recordFailure();
+            case 'revert':
+              store.revert();
+            case 'collectGarbage':
+              store.collectGarbage();
+          }
+          reply.send(store.pointer);
+        } on PluxException catch (e) {
+          reply.send(e);
+        } on Object catch (e) {
+          reply.send(_Failure('$e'));
+        }
+    }
+  }
+}
+
+/// Reads the baseline embedded under [directory] of the host's assets;
+/// for [SyncWorkerConfig.baseline]. The reads happen on the sync isolate,
+/// through that isolate's own `rootBundle`, so nothing unsendable crosses
+/// between isolates.
+BaselineReader assetBaseline(String directory) => (path) async {
+  try {
+    final data = await rootBundle.load('$directory/$path');
+    return Uint8List.sublistView(data);
+  } on FlutterError {
+    return null;
+  }
+};

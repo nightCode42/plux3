@@ -1,0 +1,420 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+/// One sync of every plugin of the app (SYN-001, ADR-0021): credential,
+/// manifest, verification, plan, downloads, delta application and
+/// verification with one full-bundle retry (SYN-011), and staging. It runs
+/// on the sync isolate (L-6); activation is the runtime's decision
+/// (SYN-004).
+library;
+
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:plux_flutter/src/delta/delta.dart';
+import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/mmap/mapped_file.dart';
+import 'package:plux_flutter/src/store/release_record.dart';
+import 'package:plux_flutter/src/store/release_store.dart';
+import 'package:plux_flutter/src/sync/api_client.dart';
+import 'package:plux_flutter/src/sync/downloader.dart';
+import 'package:plux_flutter/src/sync/sync_event.dart';
+import 'package:plux_flutter/src/verify/bundle_verifier.dart';
+import 'package:plux_flutter/src/verify/manifest.dart';
+
+/// Keeps the device credential; the platform implementation encrypts it
+/// under a platform-held key (ADR-0029).
+abstract interface class CredentialStore {
+  /// The stored credential, or null.
+  Future<DeviceCredential?> read();
+
+  /// Stores [credential].
+  Future<void> write(DeviceCredential credential);
+
+  /// Forgets the credential.
+  Future<void> clear();
+}
+
+/// A credential store in memory, for tests and development.
+final class MemoryCredentialStore implements CredentialStore {
+  DeviceCredential? _value;
+
+  @override
+  Future<DeviceCredential?> read() async => _value;
+
+  @override
+  Future<void> write(DeviceCredential credential) async => _value = credential;
+
+  @override
+  Future<void> clear() async => _value = null;
+}
+
+/// What a sync needs to know about the app and this runtime.
+final class SyncConfig {
+  /// Creates the configuration.
+  const SyncConfig({
+    required this.appId,
+    required this.environment,
+    required this.channel,
+    required this.keys,
+    required this.device,
+    required this.supportsFeature,
+    required this.verifierLimits,
+    this.diskQuota = 200 * 1024 * 1024,
+    this.maxBundleSize = 20 * 1024 * 1024,
+  });
+
+  /// The app.
+  final String appId;
+
+  /// The environment key.
+  final String environment;
+
+  /// The channel key.
+  final String channel;
+
+  /// The embedded keys (SEC-051).
+  final List<TrustedKey> keys;
+
+  /// This device and runtime.
+  final DeviceInfo device;
+
+  /// Whether this runtime supports a required feature (BND-008).
+  final bool Function(String feature) supportsFeature;
+
+  /// The FlatBuffers verifier's limits.
+  final VerifierLimits verifierLimits;
+
+  /// The bytes the store may use (`device.diskQuota`, SYN-012).
+  final int diskQuota;
+
+  /// The largest bundle accepted (`bundle.pluginSize`).
+  final int maxBundleSize;
+}
+
+/// Runs syncs against one store.
+final class SyncEngine {
+  /// Creates an engine.
+  SyncEngine({
+    required this.config,
+    required this.store,
+    required this.api,
+    required this.downloader,
+    required this.credentials,
+    DateTime Function()? clock,
+  }) : _clock = clock ?? DateTime.now;
+
+  /// The configuration.
+  final SyncConfig config;
+
+  /// The release store.
+  final ReleaseStore store;
+
+  /// The API client.
+  final PluxApiClient api;
+
+  /// The downloader.
+  final Downloader downloader;
+
+  /// Where the device credential is kept.
+  final CredentialStore credentials;
+
+  final DateTime Function() _clock;
+
+  /// Syncs once, reporting [SyncEvent]s to [emit]. Never throws: a failure
+  /// is a [SyncResult] with [SyncOutcome.failed], and the active release
+  /// is untouched.
+  Future<SyncResult> run(void Function(SyncEvent) emit) async {
+    final started = _clock();
+    final bytes = _Counter();
+    try {
+      emit(const SyncChecking());
+      final token = await _token();
+      final pointer = store.pointer;
+      final active = pointer.active == null
+          ? null
+          : store.record(pointer.active!);
+      final res = await api.manifest(
+        token: token,
+        appId: config.appId,
+        environment: config.environment,
+        channel: config.channel,
+        installedSequence: active?.sequence ?? 0,
+        installed: {
+          for (final b in active?.bundles ?? const <RecordBundle>[])
+            b.key: 'sha256:${b.hash}',
+        },
+        ifNoneMatch: active == null ? '' : pointer.etag,
+      );
+      if (res.notModified) {
+        emit(SyncUpToDate(pointer.active));
+        return SyncResult(
+          outcome: SyncOutcome.upToDate,
+          sequence: pointer.active,
+          duration: _clock().difference(started),
+        );
+      }
+      final m = await verifyManifest(
+        res.signed!,
+        [for (final s in res.signatures) DocumentSignature.fromJson(s)],
+        VerificationContext(
+          keys: config.keys,
+          app: config.appId,
+          environment: config.environment,
+          channel: config.channel,
+          now: _clock(),
+          highestAccepted: pointer.highestAccepted,
+          runtimeVersion: config.device.runtimeVersion,
+          supportsFeature: config.supportsFeature,
+        ),
+      );
+      store.accept(m.releaseSequence, res.etag);
+      final control = ControlState(
+        sequence: m.releaseSequence,
+        killSwitches: m.control.killSwitches,
+        appKillSwitch: m.control.appKillSwitch,
+        mandatory: m.control.mandatory,
+        message: m.control.message,
+      );
+      store.writeControl(control);
+      final seq = m.releaseSequence;
+      if (seq == pointer.active ||
+          seq == pointer.staged ||
+          seq == pointer.rejected) {
+        emit(SyncUpToDate(pointer.active));
+        return SyncResult(
+          outcome: SyncOutcome.upToDate,
+          sequence: pointer.active,
+          duration: _clock().difference(started),
+        );
+      }
+      final served = {for (final b in res.bundles) b.key: b};
+      final wanted = <RecordBundle>[
+        RecordBundle(key: '', version: 0, hash: hexEncode(m.appBundle.hash)),
+        for (final p in m.plugins)
+          RecordBundle(
+            key: p.key,
+            version: p.version,
+            hash: hexEncode(p.bundle.hash),
+          ),
+      ];
+      final sizes = {for (final b in m.bundles) hexEncode(b.hash): b.size};
+      final missing = [
+        for (final w in wanted)
+          if (!store.hasObject(ObjectKind.bundles, w.hash)) w,
+      ];
+      final total = missing.fold<int>(0, (n, w) => n + (sizes[w.hash] ?? 0));
+      if (store.keptUsage() + total > config.diskQuota) {
+        throw PluxException(
+          PluxErrorCode.diskQuotaExceeded,
+          'the release needs ${store.keptUsage() + total} bytes, over the quota of ${config.diskQuota}',
+        );
+      }
+      final installed = {
+        for (final b in active?.bundles ?? const <RecordBundle>[])
+          b.key: b.hash,
+      };
+      var received = 0;
+      void progress(int n) {
+        received += n;
+        bytes.n += n;
+        emit(SyncDownloading(received, total));
+      }
+
+      final queue = [...missing];
+      Future<void> worker() async {
+        while (queue.isNotEmpty) {
+          final w = queue.removeAt(0);
+          await _obtain(
+            w,
+            served[w.key],
+            installed[w.key],
+            sizes[w.hash] ?? 0,
+            progress,
+          );
+        }
+      }
+
+      await Future.wait([
+        for (var i = 0; i < downloader.parallelism && i < missing.length; i++)
+          worker(),
+      ]);
+      final record = ReleaseRecord(
+        sequence: seq,
+        source: ReleaseSource.sync,
+        bundles: wanted,
+        signed: m.signed,
+        signatures: res.signatures,
+        killSwitches: control.killSwitches,
+        appKillSwitch: control.appKillSwitch,
+        message: control.message,
+      );
+      store.stage(record);
+      store.collectGarbage();
+      emit(SyncStaged(seq, mandatory: control.mandatory));
+      return SyncResult(
+        outcome: SyncOutcome.staged,
+        sequence: seq,
+        duration: _clock().difference(started),
+        bytes: bytes.n,
+        fullBytes: total,
+        pluginsUpdated: missing.where((w) => w.key.isNotEmpty).length,
+      );
+    } on PluxException catch (e) {
+      return _failed(emit, e, started, bytes.n);
+    } on ApiError catch (e) {
+      return _failed(emit, e.toException('sync'), started, bytes.n);
+    } on DownloadFailed catch (e) {
+      return _failed(
+        emit,
+        PluxException(PluxErrorCode.syncFailed, '$e'),
+        started,
+        bytes.n,
+      );
+    } on FileSystemException catch (e) {
+      return _failed(
+        emit,
+        PluxException(PluxErrorCode.syncFailed, 'storage: ${e.message}'),
+        started,
+        bytes.n,
+      );
+    }
+  }
+
+  SyncResult _failed(
+    void Function(SyncEvent) emit,
+    PluxException e,
+    DateTime started,
+    int bytes,
+  ) {
+    emit(SyncFailed(e));
+    return SyncResult(
+      outcome: SyncOutcome.failed,
+      duration: _clock().difference(started),
+      bytes: bytes,
+      error: e,
+    );
+  }
+
+  /// A token for this sync, registering the device on first use.
+  Future<String> _token() async {
+    var c = await credentials.read();
+    if (c == null) {
+      c = await api.register(
+        appId: config.appId,
+        environment: config.environment,
+        device: config.device,
+      );
+      await credentials.write(c);
+    }
+    try {
+      return await api.token(c);
+    } on ApiError catch (e) {
+      if (e.code != 'unauthenticated' && e.code != 'not_found') rethrow;
+      // The server no longer knows this device: register again, once.
+      await credentials.clear();
+      final fresh = await api.register(
+        appId: config.appId,
+        environment: config.environment,
+        device: config.device,
+      );
+      await credentials.write(fresh);
+      return api.token(fresh);
+    }
+  }
+
+  /// Obtains one bundle: by its delta when the plan offers one against
+  /// the bundle this device holds, else — or when the rebuilt bundle is
+  /// not the signed one — as the full bundle (SYN-011).
+  Future<void> _obtain(
+    RecordBundle w,
+    ServedBundle? step,
+    String? installed,
+    int size,
+    void Function(int) progress,
+  ) async {
+    if (step == null || step.hash != 'sha256:${w.hash}') {
+      throw PluxException(
+        PluxErrorCode.syncFailed,
+        'the server sent no plan for ${w.key.isEmpty ? 'the app bundle' : w.key}',
+      );
+    }
+    final hash = hexDecode(w.hash);
+    final canPatch =
+        step.action == 'delta' &&
+        step.stepUrl != null &&
+        installed != null &&
+        step.from == 'sha256:$installed' &&
+        store.hasObject(ObjectKind.bundles, installed);
+    if (canPatch) {
+      final part = store.partPath('delta-${w.hash}');
+      try {
+        await downloader.fetch(
+          Download(step.stepUrl!, part, expectedSize: step.stepSize),
+          onBytes: progress,
+        );
+        final base = MappedFile.open(
+          store.objectPath(ObjectKind.bundles, installed),
+        );
+        final Uint8List rebuilt;
+        try {
+          rebuilt = applyDelta(
+            base.bytes,
+            File(part).readAsBytesSync(),
+            config.maxBundleSize,
+          );
+        } finally {
+          base.release();
+        }
+        _verify(rebuilt, hash, fromDelta: true);
+        store.writeObject(ObjectKind.bundles, w.hash, rebuilt);
+        return;
+      } on PluxException catch (e) {
+        if (e.code != PluxErrorCode.patchHashMismatch &&
+            e.code != PluxErrorCode.deltaMalformed &&
+            e.code != PluxErrorCode.bundleMalformed &&
+            e.code != PluxErrorCode.sectionHashMismatch &&
+            e.code != PluxErrorCode.sectionVerificationFailed) {
+          rethrow;
+        }
+        // Discard the result and fall back to the full bundle, once.
+      } finally {
+        final f = File(part);
+        if (f.existsSync()) f.deleteSync();
+      }
+    }
+    final part = store.partPath('bundle-${w.hash}');
+    await downloader.fetch(
+      Download(step.url, part, expectedSize: size),
+      onBytes: progress,
+    );
+    try {
+      final file = File(part);
+      if (file.lengthSync() > config.maxBundleSize) {
+        throw PluxException(
+          PluxErrorCode.bundleMalformed,
+          'the bundle exceeds ${config.maxBundleSize} bytes',
+        );
+      }
+      _verify(file.readAsBytesSync(), hash);
+    } on PluxException {
+      final f = File(part);
+      if (f.existsSync()) f.deleteSync();
+      rethrow;
+    }
+    store.commitObject(ObjectKind.bundles, w.hash, part);
+  }
+
+  void _verify(Uint8List data, Uint8List hash, {bool fromDelta = false}) =>
+      verifyBundle(
+        data,
+        hash,
+        limits: config.verifierLimits,
+        supportsFeature: config.supportsFeature,
+        fromDelta: fromDelta,
+      );
+}
+
+final class _Counter {
+  int n = 0;
+}

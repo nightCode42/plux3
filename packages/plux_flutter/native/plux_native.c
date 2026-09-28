@@ -70,6 +70,17 @@ PLUX_EXPORT void plux_release(plux_mapping* m) {
   free(m);
 }
 
+// Makes the entries of the directory at the NUL-terminated path durable
+// (fsync of the directory), which the release store needs after a rename
+// (ADR-0021). Returns 0, or the errno value.
+PLUX_EXPORT int32_t plux_fsync_dir(const char* path) {
+  int fd = open(path, O_RDONLY | O_CLOEXEC | O_DIRECTORY);
+  if (fd < 0) return errno;
+  int r = fsync(fd) == 0 ? 0 : errno;
+  close(fd);
+  return r;
+}
+
 // Error results of the zstd functions; zstd's own error codes are
 // reported negated below these.
 enum {

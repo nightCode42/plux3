@@ -20,6 +20,7 @@ dependencies:
   flutter:
     sdk: flutter
   hooks: 2.2.0
+  http: 1.6.0
   native_toolchain_c: 0.19.3
 
 dev_dependencies:

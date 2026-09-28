@@ -160,7 +160,8 @@ func (*fake) ListReleases(context.Context, *connect.Request[pluxv1.ListReleasesR
 
 func (f *fake) GetRelease(context.Context, *connect.Request[pluxv1.GetReleaseRequest]) (*connect.Response[pluxv1.GetReleaseResponse], error) {
 	return connect.NewResponse(&pluxv1.GetReleaseResponse{Release: &pluxv1.Release{Sequence: 3}, Versions: []*pluxv1.PluginVersion{
-		{PluginKey: "", Version: 1, BundleSha256: f.hash}, {PluginKey: "loans", Version: 2, BundleSha256: f.hash},
+		{PluginKey: "", Version: 1, BundleSha256: f.hash, KeyId: "k1", Algorithm: "ed25519", Signature: []byte{9, 9}},
+		{PluginKey: "loans", Version: 2, BundleSha256: f.hash, KeyId: "k1", Algorithm: "ed25519", Signature: []byte{8, 8}},
 	}}), nil
 }
 
@@ -291,6 +292,12 @@ func TestServerCommands(t *testing.T) { //nolint:paralleltest // the keychain mo
 		if _, err := os.Stat(filepath.Join(host, p)); err != nil {
 			t.Errorf("pull did not write %s", p)
 		}
+	}
+	// Each bundle carries its publish signature, so the runtime can verify
+	// the baseline under the embedded keys (SEC-052, ADR-0029).
+	if data, err := os.ReadFile(filepath.Join(host, "baseline.json")); err != nil ||
+		!strings.Contains(string(data), `"signature": "CQk="`) || !strings.Contains(string(data), `"keyId": "k1"`) {
+		t.Errorf("baseline.json lacks the bundle signatures: %v %s", err, data)
 	}
 	f.bundle = []byte("tampered")
 	if code, _, stderr := cli(t, config, "pull", "-C", project, "-o", host); code != exitFailed || !strings.Contains(stderr, "does not match") {

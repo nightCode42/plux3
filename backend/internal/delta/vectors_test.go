@@ -130,6 +130,15 @@ func conformanceVectors(t *testing.T) []vector {
 	}
 	add("compiled-plugin-page-edited", loans, loansDelta, maxSize)
 	add("compiled-plugin-identity", loans, mustDiff(t, loans, loans), maxSize)
+	// Pairs of valid compiled bundles, which pass the verifier after the
+	// delta is applied: the runtime's sync tests serve them.
+	for _, p := range [][2]string{
+		{"loan-calculator/loans.pxb", "features/tasks.pxb"},
+		{"loan-calculator/demo.pxb", "features/features.pxb"},
+	} {
+		a, b := golden(t, p[0]), golden(t, p[1])
+		add("compiled-"+p[0]+"-to-"+p[1], a, mustDiff(t, a, b), maxSize)
+	}
 
 	// Damage one generated delta in every structural way.
 	oldSecs := randomSections(rng, 8)
@@ -158,6 +167,16 @@ func conformanceVectors(t *testing.T) []vector {
 		}
 	}
 	return vs
+}
+
+// golden reads a compiled bundle of schema/testdata/bundles.
+func golden(t *testing.T, name string) []byte {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join("..", "..", "..", "schema", "testdata", "bundles", filepath.FromSlash(name)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return data
 }
 
 func pair(t *testing.T, a, b []bundle.Section) (old, d []byte) {
