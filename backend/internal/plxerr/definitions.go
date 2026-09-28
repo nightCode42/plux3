@@ -388,6 +388,16 @@ var registry = []Definition{
 		"Devices keep their last compatible release. Update the app to a runtime with the feature, or avoid the feature in the release.", false,
 	},
 	{
+		PatchHashMismatch, "PATCH_HASH_MISMATCH", SeverityError, "Hash mismatch after patch",
+		"A section or bundle rebuilt from a delta does not have the hash the delta and the manifest name: the delta was made against another base, or it is corrupt (ADR-0003, SYN-011).",
+		"Download the full bundle instead of the delta.", false,
+	},
+	{
+		DeltaMalformed, "DELTA_MALFORMED", SeverityError, "Malformed delta",
+		"The delta's header or instructions are invalid: wrong magic or version, a truncated instruction, an unknown operation or a size beyond the limits (ADR-0003).",
+		"Download the full bundle instead of the delta.", false,
+	},
+	{
 		BundleMalformed, "BUNDLE_MALFORMED", SeverityError, "Malformed bundle",
 		"The container header or section directory is invalid: wrong magic or version, unknown flags, overlapping or misaligned sections, a size mismatch or a header hash mismatch (BND-003).",
 		"Rebuild the bundle. A malformed bundle is never loaded.", false,

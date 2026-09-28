@@ -100,6 +100,8 @@ const (
 	// Release and sync (PLX-3000–3999).
 
 	UnsupportedRequiredFeature Code = 3010
+	PatchHashMismatch          Code = 3011
+	DeltaMalformed             Code = 3012
 	BundleMalformed            Code = 3040
 	SectionHashMismatch        Code = 3041
 	SectionVerificationFailed  Code = 3042

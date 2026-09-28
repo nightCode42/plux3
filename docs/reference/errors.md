@@ -604,6 +604,22 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Devices keep their last compatible release. Update the app to a runtime with the feature, or avoid the feature in the release.
 
+### PLX-3011
+
+`PATCH_HASH_MISMATCH` · error · Hash mismatch after patch
+
+**Cause.** A section or bundle rebuilt from a delta does not have the hash the delta and the manifest name: the delta was made against another base, or it is corrupt (ADR-0003, SYN-011).
+
+**Fix.** Download the full bundle instead of the delta.
+
+### PLX-3012
+
+`DELTA_MALFORMED` · error · Malformed delta
+
+**Cause.** The delta's header or instructions are invalid: wrong magic or version, a truncated instruction, an unknown operation or a size beyond the limits (ADR-0003).
+
+**Fix.** Download the full bundle instead of the delta.
+
 ### PLX-3040
 
 `BUNDLE_MALFORMED` · error · Malformed bundle

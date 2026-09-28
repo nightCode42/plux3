@@ -238,7 +238,7 @@ type ReadOptions struct {
 // the bundle is in use. Errors carry the codes PLX-3040–3043, PLX-3010,
 // PLX-1320 or PLX-1503.
 func Read(data []byte, opts ReadOptions) (*Bundle, error) {
-	b, err := readHeader(data, opts.Limits)
+	b, err := readHeader(data, &opts.Limits)
 	if err != nil {
 		return nil, err
 	}
@@ -252,6 +252,26 @@ func Read(data []byte, opts ReadOptions) (*Bundle, error) {
 	}
 	if err := checkMeta(b, opts.Supports); err != nil {
 		return nil, err
+	}
+	return b, nil
+}
+
+// ReadStructure checks a bundle's header, directory and section hashes,
+// but neither its size limit nor its sections' contents. It serves code
+// that handles bundles as opaque sections — the delta encoder and applier
+// — which never interprets a section.
+func ReadStructure(data []byte) (*Bundle, error) {
+	b, err := readHeader(data, nil)
+	if err != nil {
+		return nil, err
+	}
+	if err := readDirectory(data, b); err != nil {
+		return nil, err
+	}
+	for _, s := range b.Sections {
+		if sha256.Sum256(s.Data) != s.Hash {
+			return nil, newErr(plxerr.SectionHashMismatch, "%s section %x", s.Kind, s.ID)
+		}
 	}
 	return b, nil
 }
@@ -271,7 +291,7 @@ func malformed(format string, args ...any) error {
 }
 
 // readHeader checks the fixed header and the header hash.
-func readHeader(data []byte, lim limits.Set) (*Bundle, error) {
+func readHeader(data []byte, lim *limits.Set) (*Bundle, error) {
 	if len(data) < headerSize || string(data[:4]) != magic {
 		return nil, malformed("not a Plux bundle")
 	}
@@ -288,12 +308,14 @@ func readHeader(data []byte, lim limits.Set) (*Bundle, error) {
 	if b.Flags&FlagEncrypted != 0 {
 		return nil, newErr(plxerr.BundleEncryptedUnsupported, "the bundle is encrypted")
 	}
-	key := limits.BundlePluginSize
-	if b.Kind == KindApp {
-		key = limits.ReleaseAppSize
-	}
-	if max := lim.Get(key); int64(len(data)) > max {
-		return nil, newErr(plxerr.LimitExceeded, "the bundle has %d bytes, more than %s = %d", len(data), key, max)
+	if lim != nil {
+		key := limits.BundlePluginSize
+		if b.Kind == KindApp {
+			key = limits.ReleaseAppSize
+		}
+		if max := lim.Get(key); int64(len(data)) > max {
+			return nil, newErr(plxerr.LimitExceeded, "the bundle has %d bytes, more than %s = %d", len(data), key, max)
+		}
 	}
 	count := int64(binary.LittleEndian.Uint32(data[12:]))
 	if count > int64(len(data)-headerSize)/entrySize {
