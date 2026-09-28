@@ -99,6 +99,9 @@ const (
 
 	// Release and sync (PLX-3000–3999).
 
+	ManifestSignatureInvalid   Code = 3001
+	ManifestExpired            Code = 3002
+	RollbackRejected           Code = 3003
 	UnsupportedRequiredFeature Code = 3010
 	PatchHashMismatch          Code = 3011
 	DeltaMalformed             Code = 3012
@@ -107,6 +110,15 @@ const (
 	SectionVerificationFailed  Code = 3042
 	BundleEncryptedUnsupported Code = 3043
 	TransportDecodingFailed    Code = 3044
+	SyncFailed                 Code = 3050
+	RevertedToLastKnownGood    Code = 3020
+	DiskQuotaExceeded          Code = 3030
+
+	// Runtime rendering and navigation (PLX-4000–4999).
+
+	NodeBuildFailed     Code = 4001
+	UnknownWidget       Code = 4003
+	ActionsNotAvailable Code = 4010
 
 	// Security (PLX-6000–6999).
 

@@ -596,6 +596,30 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 ## Release and sync (PLX-3000–3999)
 
+### PLX-3001
+
+`MANIFEST_SIGNATURE_INVALID` · error · Manifest signature invalid
+
+**Cause.** The manifest is not signed by a key the app trusts, is not in canonical form, or names another app, environment or channel (SEC-052, ADR-0029).
+
+**Fix.** The device keeps its current release. Check that the app embeds the environment's keys from `plux pull`, and that the server signs with that environment's key.
+
+### PLX-3002
+
+`MANIFEST_EXPIRED` · error · Manifest expired
+
+**Cause.** The manifest's expiry has passed by the device's clock: the server has stopped re-signing it, a network path is replaying an old one, or the device clock is ahead (SEC-052).
+
+**Fix.** The device keeps its current release. Check that the worker role is running and re-signing manifests; check the device clock.
+
+### PLX-3003
+
+`ROLLBACK_REJECTED` · error · Rollback attempt rejected
+
+**Cause.** The manifest's release sequence is lower than one this device has already accepted for the channel (SEC-055). Rollbacks are published as new, higher sequences (REL-006).
+
+**Fix.** The device keeps its current release. Roll back by promoting the earlier content as a new release.
+
 ### PLX-3010
 
 `UNSUPPORTED_REQUIRED_FEATURE` · error · Unsupported required feature
@@ -619,6 +643,22 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 **Cause.** The delta's header or instructions are invalid: wrong magic or version, a truncated instruction, an unknown operation or a size beyond the limits (ADR-0003).
 
 **Fix.** Download the full bundle instead of the delta.
+
+### PLX-3020
+
+`REVERTED_TO_LAST_KNOWN_GOOD` · error · Reverted to last known good release
+
+**Cause.** A newly activated release caused three or more fatal errors or crashes within its first two launches, so the device went back to the previous release and pinned it until a newer sequence arrives (SYN-006).
+
+**Fix.** Inspect the release's error reports, fix the cause and publish a new release; devices move on automatically.
+
+### PLX-3030
+
+`DISK_QUOTA_EXCEEDED` · error · Disk quota exceeded
+
+**Cause.** Staging the release would exceed the device's disk quota for Plux (`device.diskQuota`), or the device ran out of storage while writing it. The active release is untouched (SYN-012).
+
+**Fix.** Reduce the release's size, raise the quota in the app's limits, or free storage on the device.
 
 ### PLX-3040
 
@@ -659,6 +699,40 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 **Cause.** The zstd transport encoding is corrupt, or it decompresses to more than the declared size or the configured limit (BND-007).
 
 **Fix.** Download the bundle again.
+
+### PLX-3050
+
+`SYNC_FAILED` · error · Sync failed
+
+**Cause.** The runtime could not complete a sync: the server was unreachable or answered with an error, a download failed after its retries, or a bundle failed verification after the full-bundle retry (SYN-010, SYN-011). The cause is in the error's details.
+
+**Fix.** The device keeps its current release and retries at the next start or manual sync. Check the server's health and the device's connectivity.
+
+## Runtime rendering and navigation (PLX-4000–4999)
+
+### PLX-4001
+
+`NODE_BUILD_FAILED` · error · Build error in node
+
+**Cause.** Building, laying out or painting a node failed, or a value it needs could not be decoded or evaluated. The page's error boundary rendered its fallback (RT-020).
+
+**Fix.** Look up the node path in the report and fix the page; the source map of a development bundle names the document location.
+
+### PLX-4003
+
+`UNKNOWN_WIDGET` · error · Unknown widget type
+
+**Cause.** A node names a widget type this runtime does not know. A neutral placeholder is shown instead (WGT-014).
+
+**Fix.** Raise the app's minimum runtime version for the widget, or update the host app to a newer runtime.
+
+### PLX-4010
+
+`ACTIONS_NOT_AVAILABLE` · warning · Actions not available in this runtime
+
+**Cause.** An event handler fired, but this runtime renders pages without running actions; actions arrive with the action executor in phase 5 (ADR-0031).
+
+**Fix.** Nothing to fix in the page; the handler runs once the runtime supports actions.
 
 ## Security (PLX-6000–6999)
 

@@ -383,6 +383,21 @@ var registry = []Definition{
 
 	// Release and sync.
 	{
+		ManifestSignatureInvalid, "MANIFEST_SIGNATURE_INVALID", SeverityError, "Manifest signature invalid",
+		"The manifest is not signed by a key the app trusts, is not in canonical form, or names another app, environment or channel (SEC-052, ADR-0029).",
+		"The device keeps its current release. Check that the app embeds the environment's keys from `plux pull`, and that the server signs with that environment's key.", false,
+	},
+	{
+		ManifestExpired, "MANIFEST_EXPIRED", SeverityError, "Manifest expired",
+		"The manifest's expiry has passed by the device's clock: the server has stopped re-signing it, a network path is replaying an old one, or the device clock is ahead (SEC-052).",
+		"The device keeps its current release. Check that the worker role is running and re-signing manifests; check the device clock.", false,
+	},
+	{
+		RollbackRejected, "ROLLBACK_REJECTED", SeverityError, "Rollback attempt rejected",
+		"The manifest's release sequence is lower than one this device has already accepted for the channel (SEC-055). Rollbacks are published as new, higher sequences (REL-006).",
+		"The device keeps its current release. Roll back by promoting the earlier content as a new release.", false,
+	},
+	{
 		UnsupportedRequiredFeature, "UNSUPPORTED_REQUIRED_FEATURE", SeverityError, "Unsupported required feature",
 		"The bundle requires a feature that this runtime does not support (BND-008).",
 		"Devices keep their last compatible release. Update the app to a runtime with the feature, or avoid the feature in the release.", false,
@@ -396,6 +411,16 @@ var registry = []Definition{
 		DeltaMalformed, "DELTA_MALFORMED", SeverityError, "Malformed delta",
 		"The delta's header or instructions are invalid: wrong magic or version, a truncated instruction, an unknown operation or a size beyond the limits (ADR-0003).",
 		"Download the full bundle instead of the delta.", false,
+	},
+	{
+		RevertedToLastKnownGood, "REVERTED_TO_LAST_KNOWN_GOOD", SeverityError, "Reverted to last known good release",
+		"A newly activated release caused three or more fatal errors or crashes within its first two launches, so the device went back to the previous release and pinned it until a newer sequence arrives (SYN-006).",
+		"Inspect the release's error reports, fix the cause and publish a new release; devices move on automatically.", false,
+	},
+	{
+		DiskQuotaExceeded, "DISK_QUOTA_EXCEEDED", SeverityError, "Disk quota exceeded",
+		"Staging the release would exceed the device's disk quota for Plux (`device.diskQuota`), or the device ran out of storage while writing it. The active release is untouched (SYN-012).",
+		"Reduce the release's size, raise the quota in the app's limits, or free storage on the device.", false,
 	},
 	{
 		BundleMalformed, "BUNDLE_MALFORMED", SeverityError, "Malformed bundle",
@@ -421,6 +446,28 @@ var registry = []Definition{
 		TransportDecodingFailed, "TRANSPORT_DECODING_FAILED", SeverityError, "Transport decoding failed",
 		"The zstd transport encoding is corrupt, or it decompresses to more than the declared size or the configured limit (BND-007).",
 		"Download the bundle again.", false,
+	},
+	{
+		SyncFailed, "SYNC_FAILED", SeverityError, "Sync failed",
+		"The runtime could not complete a sync: the server was unreachable or answered with an error, a download failed after its retries, or a bundle failed verification after the full-bundle retry (SYN-010, SYN-011). The cause is in the error's details.",
+		"The device keeps its current release and retries at the next start or manual sync. Check the server's health and the device's connectivity.", false,
+	},
+
+	// Runtime rendering and navigation.
+	{
+		NodeBuildFailed, "NODE_BUILD_FAILED", SeverityError, "Build error in node",
+		"Building, laying out or painting a node failed, or a value it needs could not be decoded or evaluated. The page's error boundary rendered its fallback (RT-020).",
+		"Look up the node path in the report and fix the page; the source map of a development bundle names the document location.", false,
+	},
+	{
+		UnknownWidget, "UNKNOWN_WIDGET", SeverityError, "Unknown widget type",
+		"A node names a widget type this runtime does not know. A neutral placeholder is shown instead (WGT-014).",
+		"Raise the app's minimum runtime version for the widget, or update the host app to a newer runtime.", false,
+	},
+	{
+		ActionsNotAvailable, "ACTIONS_NOT_AVAILABLE", SeverityWarning, "Actions not available in this runtime",
+		"An event handler fired, but this runtime renders pages without running actions; actions arrive with the action executor in phase 5 (ADR-0031).",
+		"Nothing to fix in the page; the handler runs once the runtime supports actions.", false,
 	},
 
 	// Security.

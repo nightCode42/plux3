@@ -6,24 +6,21 @@
 /// FlatBuffers buffer read with the accessors under `fbs/`.
 ///
 /// This reader checks the container's structure and returns sections as
-/// views of the input, without copying (BND-003). The hash and FlatBuffers
-/// checks the runtime needs before it reads a section arrive with the
-/// runtime in P3 (SEC-052, BND-006); until then it serves tests and tools.
+/// views of the input, without copying (BND-003). It reads nothing but the
+/// header and the directory: the hashes and the FlatBuffers verifier of
+/// `verify/` run before any section is read (SEC-052, BND-006).
+/// [encodeBundle] lays sections out exactly as the Go encoder does, so a
+/// bundle rebuilt from a delta has the bundle hash the server signed.
 library;
 
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
+import 'package:plux_flutter/src/errors/plux_exception.dart';
+
 /// A malformed container (PLX-3040).
-final class MalformedBundle implements Exception {
-  /// Creates the error.
-  const MalformedBundle(this.message);
-
-  /// What is wrong.
-  final String message;
-
-  @override
-  String toString() => 'PLX-3040 BUNDLE_MALFORMED: $message';
-}
+PluxException _malformed(String message) =>
+    PluxException(PluxErrorCode.bundleMalformed, message);
 
 /// Section kinds; the codes are permanent (ADR-0002).
 abstract final class SectionKind {
@@ -90,25 +87,26 @@ final class Section {
 final class BundleContainer {
   BundleContainer._(this.kind, this.flags, this.hash, this.sections);
 
-  /// Checks [data] and returns its container; throws [MalformedBundle].
+  /// Checks [data] and returns its container; throws a [PluxException]
+  /// with `PLX-3040`.
   factory BundleContainer.parse(Uint8List data) {
     const headerSize = 48, entrySize = 72;
     final view = ByteData.sublistView(data);
     if (data.length < headerSize ||
         String.fromCharCodes(data, 0, 4) != 'PLUX') {
-      throw const MalformedBundle('not a Plux bundle');
+      throw _malformed('not a Plux bundle');
     }
     if (view.getUint16(4, Endian.little) != 1) {
-      throw const MalformedBundle('unknown container version');
+      throw _malformed('unknown container version');
     }
     final kind = view.getUint16(6, Endian.little),
         flags = view.getUint32(8, Endian.little);
     if (kind < 1 || kind > 3 || flags & ~3 != 0) {
-      throw const MalformedBundle('unknown bundle kind or flags');
+      throw _malformed('unknown bundle kind or flags');
     }
     final count = view.getUint32(12, Endian.little);
     if (count > (data.length - headerSize) ~/ entrySize) {
-      throw const MalformedBundle('the directory does not fit');
+      throw _malformed('the directory does not fit');
     }
     var end = headerSize + entrySize * count;
     final sections = <Section>[];
@@ -117,21 +115,24 @@ final class BundleContainer {
       final sectionKind = view.getUint16(e + 16, Endian.little);
       final offset = view.getUint64(e + 20, Endian.little),
           length = view.getUint64(e + 28, Endian.little);
+      // getUint64 reads a value above 2^63 as negative.
       if (sectionKind == 0 ||
+          offset < 0 ||
+          length < 0 ||
           offset % 8 != 0 ||
           offset < end ||
           offset > data.length ||
           length > data.length - offset) {
-        throw MalformedBundle('directory entry $i does not fit');
+        throw _malformed('directory entry $i does not fit');
       }
       final id = Uint8List.sublistView(data, e, e + 16);
       if (sections.isNotEmpty &&
           _compare(sections.last, sectionKind, id) >= 0) {
-        throw MalformedBundle('directory entry $i is out of order');
+        throw _malformed('directory entry $i is out of order');
       }
       for (var p = end; p < offset; p++) {
         if (data[p] != 0) {
-          throw MalformedBundle('non-zero bytes before section $i');
+          throw _malformed('non-zero bytes before section $i');
         }
       }
       sections.add(
@@ -145,7 +146,7 @@ final class BundleContainer {
       end = offset + length;
     }
     if (end != data.length) {
-      throw const MalformedBundle('bytes after the last section');
+      throw _malformed('bytes after the last section');
     }
     return BundleContainer._(
       kind,
@@ -177,4 +178,105 @@ final class BundleContainer {
 
   /// The sections of [kind].
   Iterable<Section> ofKind(int kind) => sections.where((s) => s.kind == kind);
+}
+
+/// Bundle kinds (Appendix B.1).
+abstract final class BundleKinds {
+  /// A plugin bundle.
+  static const int plugin = 1;
+
+  /// The app bundle.
+  static const int app = 2;
+
+  /// A development bundle.
+  static const int development = 3;
+}
+
+/// The size of the container header.
+const int bundleHeaderSize = 48;
+
+/// The size of one directory entry.
+const int bundleEntrySize = 72;
+
+/// The bundle hash of a container with [count] sections: SHA-256 of bytes
+/// 0–15 followed by the section directory (BND-005). It reads only the
+/// header and directory, which [BundleContainer.parse] has bounded.
+Uint8List bundleHash(Uint8List data, int count) {
+  final sink = _Collect();
+  final input = sha256.startChunkedConversion(sink)
+    ..add(Uint8List.sublistView(data, 0, 16))
+    ..add(
+      Uint8List.sublistView(
+        data,
+        bundleHeaderSize,
+        bundleHeaderSize + bundleEntrySize * count,
+      ),
+    );
+  input.close();
+  return Uint8List.fromList(sink.digest!.bytes);
+}
+
+/// Lays [sections] out in a container of [kind], ordered by kind and ID,
+/// exactly as the Go encoder does (ADR-0002), and returns its bytes. Each
+/// section's `hash` is ignored and recomputed.
+Uint8List encodeBundle(int kind, List<Section> sections) {
+  if (kind < BundleKinds.plugin || kind > BundleKinds.development) {
+    throw ArgumentError.value(kind, 'kind', 'unknown bundle kind');
+  }
+  final sorted = [...sections]..sort(_order);
+  var flags = 0;
+  for (var i = 0; i < sorted.length; i++) {
+    if (i > 0 && _order(sorted[i - 1], sorted[i]) == 0) {
+      throw ArgumentError('duplicate section of kind ${sorted[i].kind}');
+    }
+    if (sorted[i].kind == SectionKind.sourceMap) flags |= 2;
+  }
+  final dirEnd = bundleHeaderSize + bundleEntrySize * sorted.length;
+  final offsets = <int>[];
+  var end = dirEnd;
+  for (final s in sorted) {
+    offsets.add(_align(end));
+    end = offsets.last + s.data.length;
+  }
+  final out = Uint8List(end);
+  final view = ByteData.sublistView(out);
+  out.setAll(0, 'PLUX'.codeUnits);
+  view
+    ..setUint16(4, 1, Endian.little)
+    ..setUint16(6, kind, Endian.little)
+    ..setUint32(8, flags, Endian.little)
+    ..setUint32(12, sorted.length, Endian.little);
+  for (var i = 0; i < sorted.length; i++) {
+    final s = sorted[i], e = bundleHeaderSize + bundleEntrySize * i;
+    out.setAll(e, s.id);
+    view
+      ..setUint16(e + 16, s.kind, Endian.little)
+      ..setUint64(e + 20, offsets[i], Endian.little)
+      ..setUint64(e + 28, s.data.length, Endian.little);
+    out.setAll(e + 36, sha256.convert(s.data).bytes);
+    out.setAll(offsets[i], s.data);
+  }
+  out.setAll(16, bundleHash(out, sorted.length));
+  return out;
+}
+
+int _align(int n) => (n + 7) & ~7;
+
+int _order(Section a, Section b) {
+  if (a.kind != b.kind) return a.kind.compareTo(b.kind);
+  for (var i = 0; i < 16; i++) {
+    if (a.id[i] != b.id[i]) return a.id[i].compareTo(b.id[i]);
+  }
+  return 0;
+}
+
+/// Collects the digest of a chunked conversion.
+final class _Collect implements Sink<Digest> {
+  Digest? digest;
+
+  @override
+  void add(Digest data) => digest = data;
+
+  @override
+  void close() {}
 }

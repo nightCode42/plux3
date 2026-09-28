@@ -20,12 +20,13 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
-      # flatc's Dart output is checked by regeneration (make gen-check), as is.
+      # flatc's Dart output is checked by regeneration (make gen-check), and
+      # vendored zstd by its import script (ADR-0030), as they are.
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
-        exclude: '_generated\.dart$'
+        exclude: '(_generated\.dart|^packages/plux_flutter/native/zstd/.*)$'
       - id: end-of-file-fixer
-        exclude: '_generated\.dart$'
+        exclude: '(_generated\.dart|^packages/plux_flutter/native/zstd/.*)$'
       - id: mixed-line-ending
         args: [--fix=lf]
       - id: check-yaml

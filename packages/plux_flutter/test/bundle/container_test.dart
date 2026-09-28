@@ -7,6 +7,7 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plux_flutter/src/bundle/container.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart';
+import 'package:plux_flutter/src/errors/plux_exception.dart';
 
 /// The golden bundle written by the Go tests of backend/internal/bundle.
 Uint8List _golden() =>
@@ -61,16 +62,24 @@ void main() {
       ('section kind', edit((d) => d[48 + 16] = 0)),
       ('order', edit((d) => d[48 + 72 + 16] = 0x01)),
       ('misaligned', edit((d) => d[48 + 20]++)),
+      ('length above 2^63', edit((d) => d[48 + 28 + 7] = 0x80)),
+      ('offset above 2^63', edit((d) => d[48 + 20 + 7] = 0x80)),
       ('trailing', Uint8List.fromList([...good, 0])),
     ]) {
       expect(
         () => BundleContainer.parse(data),
-        throwsA(isA<MalformedBundle>()),
+        throwsA(
+          isA<PluxException>().having(
+            (e) => e.code,
+            'code',
+            PluxErrorCode.bundleMalformed,
+          ),
+        ),
         reason: name,
       );
     }
     expect(
-      const MalformedBundle('x').toString(),
+      const PluxException(PluxErrorCode.bundleMalformed, 'x').toString(),
       'PLX-3040 BUNDLE_MALFORMED: x',
     );
   });

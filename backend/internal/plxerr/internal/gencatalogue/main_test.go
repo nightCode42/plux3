@@ -12,13 +12,13 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 )
 
-// TestRunWritesBothCatalogueFiles checks the generator output and its exit
+// TestRunWritesTheCatalogueFiles checks the generator output and its exit
 // codes.
 // Verifies: DX-003.
-func TestRunWritesBothCatalogueFiles(t *testing.T) {
+func TestRunWritesTheCatalogueFiles(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
-	for _, dir := range []string{"docs/reference", "schema"} {
+	for _, dir := range []string{"docs/reference", "schema", "packages/plux_flutter/lib/src/errors"} {
 		if err := os.MkdirAll(filepath.Join(root, dir), 0o750); err != nil {
 			t.Fatal(err)
 		}
@@ -35,6 +35,10 @@ func TestRunWritesBothCatalogueFiles(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(root, plxerr.CatalogueJSONPath)); err != nil {
 		t.Errorf("json not written: %v", err)
+	}
+	dart, err := os.ReadFile(filepath.Join(root, plxerr.CatalogueDartPath))
+	if err != nil || !bytes.Equal(dart, plxerr.RenderDart()) {
+		t.Errorf("dart not written: %v", err)
 	}
 }
 

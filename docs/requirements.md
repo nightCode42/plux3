@@ -734,7 +734,7 @@ A **plugin bundle** (`.pxb`) is a small container of independently addressable s
 | `BND-003` | P1 | MUST | The container **MUST** consist of a fixed header (magic `PLUX`, container version, bundle kind, flags), a section directory (section ID, kind, offset, length, SHA-256) and 8-byte-aligned section payloads, so sections can be memory-mapped and read without copying. | DONE |
 | `BND-004` | P1 | MUST | Section kinds **MUST** include at least: `meta`, `page` (one per page), `component` (one per component), `actions`, `pxl` (bytecode), `styles`, `strings`, `l10n` (one per locale), `assets-index` and `schemas` (state, data-source and local-collection schemas; Appendix B.2). | DONE |
 | `BND-005` | P1 | MUST | Hashes **MUST** be SHA-256. The bundle hash is the hash of the header plus the section directory, which in turn commits to every section hash. | DONE |
-| `BND-006` | P3 | MUST | The runtime **MUST** run the FlatBuffers verifier on each section before first use, even after signature verification, and **MUST** reject sections that fail. | SPEC |
+| `BND-006` | P3 | MUST | The runtime **MUST** run the FlatBuffers verifier on each section before first use, even after signature verification, and **MUST** reject sections that fail. | WIP |
 | `BND-007` | P1 | MUST | Bundles **MUST** be compressed with zstd for transport only; at rest on the device they are stored uncompressed (or encrypted, `SEC-053`) to allow memory mapping. | DONE |
 | `BND-008` | P1 | MUST | The header **MUST** list `required_features` (e.g. `pxl.v2`, `widget.SecurePinPad.v3`). A runtime that does not support every listed feature **MUST** refuse the bundle, report `PLX-3010`, and keep its last compatible release. | WIP |
 | `BND-009` | P1 | MUST | Bundles **MUST NOT** contain native code, Dart code, JavaScript or any format executable outside the Plux PXL VM and action interpreter (`SEC-054`). | DONE |
@@ -835,7 +835,7 @@ sequenceDiagram
 | `SYN-007` | P3 | MUST | Host apps **MUST** be able to embed a **baseline release** at build time (`plux pull`, `CLI-004`), so the first launch works offline and the first sync is a delta from the baseline. | SPEC |
 | `SYN-008` | P3 | MUST | All bundles of the active release **MUST** be available locally so that navigation from any plugin page to any plugin page works fully offline. | SPEC |
 | `SYN-010` | P3 | MUST | Downloads **MUST** run on a background isolate over HTTP/2 with configurable parallelism (default 4), resume with HTTP range requests, retry with exponential backoff and jitter, and honour server `Retry-After`. | SPEC |
-| `SYN-011` | P3 | MUST | After patching, every section and bundle hash **MUST** match the manifest; on mismatch the runtime **MUST** discard the result and download the full bundle once before failing the sync. | SPEC |
+| `SYN-011` | P3 | MUST | After patching, every section and bundle hash **MUST** match the manifest; on mismatch the runtime **MUST** discard the result and download the full bundle once before failing the sync. | WIP |
 | `SYN-012` | P3 | MUST | The runtime **MUST** garbage-collect releases other than active, staged and last known good, enforce the device disk quota of the limits framework (§30.4), and handle low-storage conditions without corrupting the active release. | SPEC |
 | `SYN-013` | P3 | MUST | The runtime **MUST** publish typed sync events (`checking`, `upToDate`, `downloading(progress)`, `staged`, `activated`, `failed(error)`, `rolledBack`) on `Plux.syncEvents`. | SPEC |
 | `SYN-014` | P3 | SHOULD | The runtime **SHOULD** offer opt-in background sync (Android WorkManager, iOS BGTaskScheduler) so updates are staged before the next app start. | SPEC |
@@ -925,7 +925,7 @@ Branching is deliberately **not** part of the model (ADR-0015). Each plugin has 
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `RT-010` | P3 | MUST | Bundles **MUST** be read zero-copy from memory-mapped files via FFI; the runtime **MUST NOT** deserialise a whole bundle or page into intermediate object graphs before building widgets. | SPEC |
+| `RT-010` | P3 | MUST | Bundles **MUST** be read zero-copy from memory-mapped files via FFI; the runtime **MUST NOT** deserialise a whole bundle or page into intermediate object graphs before building widgets. | WIP |
 | `RT-011` | P3 | MUST | Widget construction **MUST** be lazy: a page builds only the nodes reachable in the current frame; item templates are instantiated on demand by lazy list and grid builders. | SPEC |
 | `RT-012` | P3 | MUST | Each node widget **MUST** subscribe only to the state paths its bindings read (`CMP-023`), using Riverpod `select`, so a state change rebuilds only dependent nodes. | SPEC |
 | `RT-013` | P3 | MUST | Decoded page descriptors and component definitions **MUST** be cached in a bounded LRU keyed by section hash and released on memory-pressure signals. | SPEC |
@@ -1188,10 +1188,10 @@ The update channel follows the design of **The Update Framework (TUF)**: separat
 |---|---|---|---|---|
 | `SEC-050` | P6 | MUST | Update metadata **MUST** use four roles: **root** (offline; delegates and rotates the others; threshold of *m* of *n* keys), **targets** (signs bundle hashes and release contents), **snapshot** (signs the set of current metadata versions) and **timestamp** (short expiry; signs the latest snapshot, preventing freeze attacks). | SPEC |
 | `SEC-051` | P3 | MUST | Host apps **MUST** embed the root public keys at build time (`plux init`, `plux pull`); the runtime **MUST** accept root rotations only when signed by the previous root threshold. | SPEC |
-| `SEC-052` | P3 | MUST | The runtime **MUST** verify, before loading anything: metadata signatures and expiry, the manifest's release against the metadata, every bundle and section hash, and the FlatBuffers verifier (`BND-006`). Nothing unverified is ever parsed beyond the container header. | SPEC |
+| `SEC-052` | P3 | MUST | The runtime **MUST** verify, before loading anything: metadata signatures and expiry, the manifest's release against the metadata, every bundle and section hash, and the FlatBuffers verifier (`BND-006`). Nothing unverified is ever parsed beyond the container header. | WIP |
 | `SEC-053` | P6 | MUST | **Confidential bundles** **MUST** be supported: each release is encrypted with AES-256-GCM using a per-release content key, delivered only to devices meeting the configured assurance level, wrapped to a device-held key-agreement key (ECDH P-256 in secure hardware). On the device, bundles are stored encrypted and decrypted into memory. | SPEC |
 | `SEC-054` | P1 | MUST | Bundles and manifests **MUST NOT** carry native code, Dart code or scripts. The only executable content permitted is PXL bytecode, action graphs and WebAssembly modules of device-placed functions, and each **MUST** run in a sandboxed interpreter with no direct access to platform APIs — only to host capabilities the plugin declared (`FN-012`). The runtime **MUST NOT** compile downloaded code to native instructions (no JIT, no AOT on device). | WIP |
-| `SEC-055` | P3 | MUST | The runtime **MUST** refuse any manifest whose release sequence is lower than the highest sequence it has accepted for that channel (anti-rollback); rollbacks are delivered as new sequences (`REL-006`). | SPEC |
+| `SEC-055` | P3 | MUST | The runtime **MUST** refuse any manifest whose release sequence is lower than the highest sequence it has accepted for that channel (anti-rollback); rollbacks are delivered as new sequences (`REL-006`). | WIP |
 | `SEC-056` | P6 | MUST | Signing keys for development environments **MUST** differ from production keys; a production runtime **MUST** reject bundles signed with development keys. | SPEC |
 
 ### 15.6 On-device protection

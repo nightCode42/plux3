@@ -50,3 +50,19 @@ path = "backend/internal/compiler/media/codecs/THIRD_PARTY_NOTICES.txt"
 precedence = "override"
 SPDX-FileCopyrightText = ["2010 Google Inc.", "2016 Alliance for Open Media", "2019 Joe Drago"]
 SPDX-License-Identifier = "BSD-3-Clause AND BSD-2-Clause AND LicenseRef-WebM-Patent-Grant AND LicenseRef-AOM-Patent-License-1.0"
+
+# zstd v1.5.7, decompression sources only, vendored for the runtime's native
+# library (ADR-0030); upstream is dual-licensed and Plux uses it under
+# BSD-3-Clause. native/zstd/import.sh re-imports it from the pinned commit.
+[[annotations]]
+path = [
+    "packages/plux_flutter/native/zstd/common/**",
+    "packages/plux_flutter/native/zstd/decompress/**",
+    "packages/plux_flutter/native/zstd/zstd.h",
+    "packages/plux_flutter/native/zstd/zstd_errors.h",
+    "packages/plux_flutter/native/zstd/LICENSE",
+    "packages/plux_flutter/native/zstd/VERSION",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "Meta Platforms, Inc. and affiliates"
+SPDX-License-Identifier = "BSD-3-Clause"

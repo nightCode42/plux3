@@ -123,7 +123,7 @@ func TestPublishedCatalogueMatchesRegistry_DX_003(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for rel, want := range map[string][]byte{CatalogueMarkdownPath: RenderMarkdown(), CatalogueJSONPath: js} {
+	for rel, want := range map[string][]byte{CatalogueMarkdownPath: RenderMarkdown(), CatalogueJSONPath: js, CatalogueDartPath: RenderDart()} {
 		got, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(rel)))
 		if err != nil {
 			t.Fatalf("read %s: %v (run `make gen`)", rel, err)

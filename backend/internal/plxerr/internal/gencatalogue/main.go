@@ -20,7 +20,8 @@ func main() {
 	os.Exit(run(os.Args[1:], os.Stderr))
 }
 
-// run writes docs/reference/errors.md and schema/errors.json under -root.
+// run writes docs/reference/errors.md, schema/errors.json and the Dart
+// error codes under -root.
 func run(args []string, stderr io.Writer) int {
 	fs := flag.NewFlagSet("gencatalogue", flag.ContinueOnError)
 	fs.SetOutput(stderr)
@@ -35,7 +36,7 @@ func run(args []string, stderr io.Writer) int {
 	return 0
 }
 
-// write renders both catalogue files.
+// write renders the catalogue files.
 func write(root string) error {
 	js, err := plxerr.RenderJSON()
 	if err != nil {
@@ -44,6 +45,7 @@ func write(root string) error {
 	files := map[string][]byte{
 		plxerr.CatalogueMarkdownPath: plxerr.RenderMarkdown(),
 		plxerr.CatalogueJSONPath:     js,
+		plxerr.CatalogueDartPath:     plxerr.RenderDart(),
 	}
 	for rel, data := range files {
 		path := filepath.Join(root, filepath.FromSlash(rel))
