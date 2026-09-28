@@ -573,14 +573,14 @@ jobs:
       - name: Install the pinned toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends clang-18 lld-18 libclang-rt-18-dev-wasm32 \
+          sudo apt-get install -y --no-install-recommends clang-18 lld-18 llvm-18 libclang-rt-18-dev-wasm32 \
             wasi-libc=0.0~git20230113.4362b18-3 cmake ninja-build
           sudo ln -sf /usr/bin/clang-18 /usr/local/bin/clang
           sudo ln -sf /usr/bin/clang++-18 /usr/local/bin/clang++
           sudo ln -sf /usr/bin/wasm-ld-18 /usr/local/bin/wasm-ld
       # Verifies: CMP-030.
       - name: Rebuild the codecs and compare them with codecs.lock
-        run: make wasm-codecs-check WASM_CODECS_OUT="$RUNNER_TEMP/codecs"
+        run: WORK="$RUNNER_TEMP/codecs-work" make wasm-codecs-check WASM_CODECS_OUT="$RUNNER_TEMP/codecs"
       - name: Show how a rebuilt codec differs
         if: failure()
         run: |
@@ -591,6 +591,11 @@ jobs:
             cmp "$committed" "$rebuilt" | head -1 || true
             diff <(strings -n 6 "$committed") <(strings -n 6 "$rebuilt") | head -40 || true
           done
+          # The configuration CMake generated, to compare with a local build.
+          cd "$RUNNER_TEMP/codecs-work"
+          sha256sum aom-build/config/*.h
+          grep -E '^#define (CONFIG|HAVE|ARCH)_' aom-build/config/aom_config.h
+          grep -E '^(CMAKE_C_COMPILER|CMAKE_AR|CMAKE_RANLIB|CMAKE_C_FLAGS)[:=]' aom-build/CMakeCache.txt avif-build/CMakeCache.txt || true
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: failure()
         with:

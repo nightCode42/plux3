@@ -10,7 +10,7 @@
 # runs it; `make wasm-codecs-check` rebuilds and compares.
 #
 # Toolchain (Ubuntu 24.04): clang-18, lld-18, libclang-rt-18-dev-wasm32,
-# wasi-libc 0.0~git20230113.4362b18-3, cmake, ninja-build.
+# llvm-18 (llvm-ar-18), wasi-libc 0.0~git20230113.4362b18-3, cmake, ninja-build.
 set -eu
 
 LIBWEBP_URL=https://chromium.googlesource.com/webm/libwebp
@@ -56,6 +56,10 @@ set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_C_COMPILER_TARGET wasm32-wasi)
 set(CMAKE_CXX_COMPILER_TARGET wasm32-wasi)
+# LLVM's archiver, named exactly: GNU ar would index WebAssembly objects
+# differently and change the link, and CMake finds whichever is on PATH.
+set(CMAKE_AR llvm-ar-18)
+set(CMAKE_RANLIB llvm-ranlib-18)
 set(CMAKE_SYSROOT $sysroot)
 set(CMAKE_C_FLAGS_INIT "-isystem $here/include -ffile-prefix-map=$work=/src")
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
