@@ -1,0 +1,27 @@
+# SPDX-FileCopyrightText: 2026 Plux contributors
+# SPDX-License-Identifier: Apache-2.0
+
+# plux-server.yaml of the load-test overlay: the same as the stack's, but
+# trusting Docker's private ranges as proxies (see compose.load.yaml).
+server:
+  roles: [api, worker]
+  listen: ":8080"
+  publicBaseURL: "http://localhost:8080"
+  shutdownGrace: "30s"
+  trustedProxies: ["172.16.0.0/12", "192.168.0.0/16"]
+database:
+  migrateOnStart: true
+objectStorage:
+  backend: "s3"
+  endpoint: "http://seaweedfs:8333"
+  bucket: "plux"
+  pathStyle: true
+  cdnBaseURL: "http://localhost:8080/v1/objects"
+cache:
+  backend: "valkey"
+  valkeyURL: "redis://valkey:6379"
+signing:
+  backend: "file"
+  directory: "/var/lib/plux/keys"
+observability:
+  logFormat: "json"

@@ -29,6 +29,7 @@ whose policy allows only `encrypt` and `decrypt` on the wrapping key.
 | `plux-server migrate` | Applies pending migrations and exits, for deployments that migrate in a separate step |
 | `plux-server config validate` | Checks a configuration file offline, with no connection to anything (`SRV-008`) |
 | `plux-server bootstrap -email <address>` | Creates the first installation administrator and prints a one-time invitation, valid for seven days, with which they set a password; refused once an administrator exists (`SEC-100`, [ADR-0026](../adr/0026-identity-tenancy-and-access.md)) |
+| `plux-server seed [-out <dir>\|-]` | For a development installation only: creates an administrator (`dev@plux.localhost`), an organisation and an app, and writes the password, a 30-day CLI token and the IDs to user-only files in `-out` (default `.plux-dev`), or prints them once as `PLUX_DEV_*` lines with `-out -`. Runs once per database; refused when the signing backend may sign for production (`DEP-020`). `make dev` and `make compose-seed` run it once ([Compose stack](../../deploy/compose/README.md)) |
 | `plux-server version` | Prints the build version, commit and date |
 
 Every command takes `-config <path>` (default `plux-server.yaml`). Exit

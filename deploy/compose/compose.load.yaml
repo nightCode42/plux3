@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2026 Plux contributors
+# SPDX-License-Identifier: Apache-2.0
+
+# Load-test overlay (NFR-020): the load generator on the host reaches the
+# server through Docker's bridge and names each simulated device's address
+# in X-Forwarded-For, so this overlay trusts the bridge as a proxy. Never
+# use it outside a load test: it lets any container choose its address.
+services:
+  plux-server:
+    environment:
+      PLUX_OBSERVABILITY_LOG_LEVEL: warn
+    volumes:
+      - ./plux-server.load.yaml:/etc/plux/plux.yaml:ro

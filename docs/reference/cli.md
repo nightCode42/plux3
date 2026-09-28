@@ -2,6 +2,26 @@
 
 `plux` is the command-line interface for developers and CI (spec §22.1). It is a single Go binary, `backend/cmd/plux`. This page documents the commands that exist; later phases add the commands `CLI-003` names for them.
 
+## Install
+
+Every `backend/v*` release ships `plux` for Linux, macOS and Windows on amd64 and arm64, built reproducibly, with a `SHA256SUMS` file signed by the release workflow and SLSA provenance (`CLI-001`, `CI-004`).
+
+| Method | Command |
+|---|---|
+| Install script (Linux, macOS) | `curl -fsSL https://raw.githubusercontent.com/nightCode42/plux3/main/scripts/install.sh \| sh` — checks the archive against `SHA256SUMS` and the signature with cosign; `PLUX_VERSION`, `PLUX_INSTALL_DIR` (default `~/.local/bin`) adjust it |
+| Homebrew, Scoop | The release carries `plux.rb` and `plux.json`; the maintainer publishes them to the tap and bucket |
+| Container | `docker run ghcr.io/nightcode42/plux:<version>` — distroless, signed with cosign, SBOM and provenance attached |
+| From source | `go install github.com/nightCode42/plux3/backend/cmd/plux@v<version>` (Go maps `v<version>` to the `backend/v<version>` tag) |
+
+To verify a download by hand:
+
+```bash
+cosign verify-blob --bundle SHA256SUMS.sigstore.json \
+  --certificate-identity "https://github.com/nightCode42/plux3/.github/workflows/release.yml@refs/tags/backend/v<version>" \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com SHA256SUMS
+sha256sum --check --ignore-missing SHA256SUMS
+```
+
 ## Commands
 
 | Command | Does |

@@ -6,7 +6,8 @@ The Go module `github.com/nightCode42/plux3/backend`: the Plux Server (`plux-ser
 
 | Path | Contents | Licence |
 |---|---|---|
-| `cmd/plux-server/` | Server wiring only: configuration, construction, run, shutdown | AGPL-3.0-only |
+| `cmd/plux-server/` | Server wiring only: configuration, construction, run, shutdown, and the development-only `seed` command | AGPL-3.0-only |
+| `Dockerfile` | The `server` and `cli` images: static, reproducible binaries on distroless `nonroot`, base images pinned by digest (`DEP-001`, `SEC-108`) | Apache-2.0 |
 | `cmd/plux/` | CLI wiring only | Apache-2.0 |
 | `internal/buildinfo/` | Link-time version metadata (`CI-006`) | Apache-2.0 |
 | `internal/plxerr/` | Error codes, reasons, diagnostics and the generated catalogue (ADR-0018, `DX-003`) | Apache-2.0 |

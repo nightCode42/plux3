@@ -79,6 +79,23 @@ Planned for P11 (ADR-0014): React, TanStack Router and Query, shadcn/ui on Radix
 | `buf`, `protoc-gen-go`, `protoc-gen-connect-go`, `protoc-gen-connect-openapi` | Makefile (`BUF_VERSION` and the plugin versions), built with the project toolchain | API contract lint, breaking-change detection and code generation ([ADR-0005](../adr/0005-connectrpc-and-protobuf.md)) |
 | `flatc` (FlatBuffers compiler) | Makefile (`FLATC_VERSION`, tag commit), built from source; cached in CI | Bundle code generation ([ADR-0002](../adr/0002-flatbuffers-sectioned-bundles.md)) |
 | GitHub Actions | Full commit SHAs in `.github/workflows/` | CI |
+| cosign (sigstore/cosign-installer), Syft (anchore/sbom-action), Docker Buildx and QEMU | Action SHAs in `release.yml` and `image.yml` | Keyless signatures, CycloneDX SBOMs and multi-arch images (`DEP-001`, `CI-004`) |
+| SLSA GitHub generators (`generator_generic_slsa3`, `generator_container_slsa3`) v2.1.0 | Tag in `release.yml` — the generators must be referenced by tag to be verifiable | SLSA level 3 provenance (`CI-004`) |
+| k6 (grafana/setup-k6-action) | Action SHA in `load.yml` | The manifest load test (`NFR-020`) |
+
+### Container images
+
+Pinned by tag and digest in `backend/Dockerfile` and `deploy/compose/compose.yaml`, and updated by hand in one pull request (tag and digest together).
+
+| Image | Used for |
+|---|---|
+| `golang` (bookworm) | Builder stage of the server and CLI images |
+| `gcr.io/distroless/static-debian12:nonroot` | Runtime base of the server and CLI images (`SEC-108`) |
+| `postgres` 16 | Compose stack database |
+| `chrislusf/seaweedfs` | Compose stack S3 store ([ADR-0007](../adr/0007-postgresql-and-object-storage.md), Revision — MinIO no longer publishes images) |
+| `valkey/valkey` | Compose stack cache |
+| `otel/opentelemetry-collector-contrib`, `prom/prometheus`, `grafana/grafana` | Compose stack telemetry |
+| `keycloak/keycloak`, `ollama/ollama` | Optional Compose profiles |
 
 ## 3. Decisions made in P0
 

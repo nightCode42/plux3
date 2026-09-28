@@ -18,7 +18,9 @@ How the pipeline is built and why. The requirements are spec §29 (`CI-001`–`C
 | [ci.yml](../../.github/workflows/ci.yml) | Pull requests, pushes to `main`, merge queue, daily, manual | Every quality gate |
 | [fuzz.yml](../../.github/workflows/fuzz.yml) | Nightly, manual (time per target as input) | `make go-fuzz`: every Go fuzz target for 5 minutes; failing inputs are kept as an artifact (`QA-004`, `CMP-052`) |
 | [scorecard.yml](../../.github/workflows/scorecard.yml) | Pushes to `main`, weekly, ruleset changes | OpenSSF Scorecard; results in code scanning |
-| [release.yml](../../.github/workflows/release.yml) | Component tags `<component>/v*` | Verify the signed tag and publish the release (`CI-008`) |
+| [load.yml](../../.github/workflows/load.yml) | Nightly, manual (rate as input) | Starts the Compose stack with the load overlay, seeds it and runs `test/load/manifest.js` with k6; results in the job summary (`NFR-020`; the reference numbers are in [p2-backend.md](../benchmarks/p2-backend.md)) |
+| [release.yml](../../.github/workflows/release.yml) | Component tags `<component>/v*` | Verify the signed tag and publish the release (`CI-008`). For `backend/v*` also: `make release-binaries` (reproducible archives of `plux` and `plux-server` for Linux, macOS and Windows on amd64 and arm64, `SHA256SUMS`, a Homebrew formula and a Scoop manifest), a keyless cosign signature of `SHA256SUMS`, SLSA Build Level 3 provenance for the archives, and both images through `image.yml` with their own provenance (`DEP-001`, `CLI-001`, `CI-004`) |
+| [image.yml](../../.github/workflows/image.yml) | Called by `release.yml` | Builds one target of `backend/Dockerfile` for linux/amd64 and linux/arm64, pushes it to GHCR, signs it with cosign and attests a CycloneDX SBOM |
 | CodeQL | GitHub default setup | Static analysis of Go, TypeScript and Actions |
 
 ## 3. CI jobs
@@ -43,6 +45,7 @@ How the pipeline is built and why. The requirements are spec §29 (`CI-001`–`C
 | Go vulnerabilities | Go changes | `go-vuln` | `CI-001` |
 | Dart and Flutter | Dart changes | `dart-lock-check dart-fmt-check dart-analyze dart-cover`, `widgets-api-check` (the Flutter snapshot matches the pinned SDK) | `CI-001`, `CI-003`, `QA-001`, `WGT-003` |
 | Studio | Studio changes | `studio-check` (frozen install, Biome, types, coverage) | `CI-001`, `QA-001` |
+| Compose stack | Go or `deploy/` changes | `compose-up` (builds the server image and starts the whole stack), waits for `/readyz`, then `compose-test`: the Go integration and end-to-end tests against the stack's PostgreSQL, SeaweedFS and Valkey | `DEP-002`, `QA-005` |
 | CI OK | always | — | `CI-009` |
 
 The traceability report and coverage tables are written to each job's summary; the report and the SBOM are uploaded as artifacts.
@@ -62,6 +65,8 @@ One input of `make gen` needs Flutter and is therefore refreshed separately: `sc
 | buf, protoc-gen-go, protoc-gen-connect-go, protoc-gen-connect-openapi | Makefile header; installed by `make install-buf` and built with the project toolchain ([ADR-0005](../adr/0005-connectrpc-and-protobuf.md)) |
 | flatc | Makefile header (`FLATC_VERSION` and the tag's commit `FLATC_COMMIT`, checked before building); must match the Go `github.com/google/flatbuffers` and Dart `flat_buffers` versions ([ADR-0002](../adr/0002-flatbuffers-sectioned-bundles.md)) |
 | git-cliff | `release.yml` |
+| SLSA generators | Tag `v2.1.0` in `release.yml`: the generators verify their own ref and refuse a commit SHA, so this is the one exception to SHA pinning |
+| Container images | Tag and digest in `backend/Dockerfile` and `deploy/compose/compose.yaml` |
 | GitHub Actions | Full commit SHA with the tag in a comment; updated by Dependabot |
 
 Versions in the Makefile and in workflows are changed **together, in one pull request**. Go-based tools are built with the project toolchain (`make install-*`), because a tool built with an older Go cannot analyse code that needs a newer one.

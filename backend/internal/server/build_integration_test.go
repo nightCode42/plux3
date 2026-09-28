@@ -7,14 +7,16 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"path/filepath"
 	"testing"
 	"time"
 
+	"github.com/nightCode42/plux3/backend/internal/pluxv1/pluxv1connect"
 	"github.com/nightCode42/plux3/backend/internal/storage/storagetest"
 )
 
-// Verifies: SRV-001, SRV-007, SRV-020, SRV-021, SRV-023, SRV-024.
+// Verifies: SRV-001, SRV-003, SRV-007, SRV-020, SRV-021, SRV-023, SRV-024.
 // Build opens every dependency the configured roles need, migrates, and
 // the running process reports each one on /readyz.
 func TestBuildAndRunAllRoles(t *testing.T) {
@@ -46,6 +48,7 @@ func TestBuildAndRunAllRoles(t *testing.T) {
 	if got := built.Server.limits.Get("page.nodes"); got != 2000 {
 		t.Errorf("the configured limit was not applied: page.nodes = %d", got)
 	}
+	servesEveryP2Service(t, built.Server)
 
 	done := make(chan error, 1)
 	go func() { done <- built.Server.Run(ctx) }()
@@ -80,6 +83,25 @@ func TestBuildAndRunAllRoles(t *testing.T) {
 		}
 	case <-time.After(30 * time.Second):
 		t.Fatal("the server did not stop")
+	}
+}
+
+// servesEveryP2Service checks that the api role mounts each of the fifteen
+// services SRV-003 requires in P2.
+func servesEveryP2Service(t *testing.T, s *Server) {
+	t.Helper()
+	for _, name := range []string{
+		pluxv1connect.OrgServiceName, pluxv1connect.IdentityServiceName, pluxv1connect.AppServiceName,
+		pluxv1connect.PluginServiceName, pluxv1connect.DocumentServiceName, pluxv1connect.ComponentServiceName,
+		pluxv1connect.TemplateServiceName, pluxv1connect.AssetServiceName, pluxv1connect.PublishServiceName,
+		pluxv1connect.ReleaseServiceName, pluxv1connect.ManifestServiceName, pluxv1connect.DeviceServiceName,
+		pluxv1connect.TokenServiceName, pluxv1connect.TelemetryServiceName, pluxv1connect.ControlServiceName,
+	} {
+		path := "/" + name + "/"
+		req := httptest.NewRequestWithContext(context.Background(), http.MethodPost, path+"Any", http.NoBody)
+		if _, pattern := s.mux.Handler(req); pattern != path {
+			t.Errorf("%s is not served (matched %q)", name, pattern)
+		}
 	}
 }
 
