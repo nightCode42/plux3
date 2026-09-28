@@ -569,6 +569,19 @@ table Schemas {
 
 
 
+// A transcoded form of an image asset (CMP-030): WebP or AVIF at one
+// pixel density, stored as its own content-addressed object.
+table AssetVariant {
+  media_type: string;
+  // Pixel density: 1, 2 or 3.
+  density: uint;
+  width: uint;
+  height: uint;
+  // SHA-256 of the variant file.
+  hash: [ubyte];
+  size: ulong;
+}
+
 table Asset {
   id: Uuid;
   key: string;
@@ -576,6 +589,9 @@ table Asset {
   // SHA-256 of the asset file.
   hash: [ubyte];
   size: ulong;
+  // Transcoded forms, sorted by media type and then density; empty for
+  // assets that are not raster images, or not yet transcoded.
+  variants: [AssetVariant];
 }
 
 table AssetIndex {

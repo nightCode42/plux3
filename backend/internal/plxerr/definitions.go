@@ -419,6 +419,11 @@ var registry = []Definition{
 		"A request to a user-supplied URL would have reached a private, loopback, link-local or metadata address. Those are refused unless the installation allows them explicitly (SEC-105).",
 		"Use a publicly reachable address, or ask an administrator to allow the range this installation should reach.", false,
 	},
+	{
+		AssetRejected, "ASSET_REJECTED", SeverityError, "Asset rejected by the malware scanner",
+		"The installation's malware scanner found something in the uploaded file (SRV-060).",
+		"Check the file on a trusted machine and upload a clean copy.", false,
+	},
 
 	// Governance.
 	{

@@ -86,6 +86,21 @@ are server-streaming; `DocumentService.ImportDraft` and
 `AssetService.UploadAsset` are client-streaming, with the first message
 carrying the target and no payload.
 
+**Assets** ([ADR-0027](../adr/0027-asset-pipeline.md)). `UploadAsset` is
+client-streaming: the first message names the app, the file under
+`assets/` and the editing session, and every message carries a chunk. The
+file is typed from its bytes, packaged (Lottie becomes dotLottie), stripped
+of metadata, scanned when a scanner is configured, and listed in the
+app-level draft's `assets/index.json` under the app's lock; an upload under
+an existing name replaces the file and keeps its asset ID. Assets belong to
+the app, so `plugin_id` must be empty. A raster image comes back with
+`processing` `pending`; the worker then adds its WebP and AVIF variants and
+sets `ready`, or `failed` with diagnostics. Links in `Artifact.urls` are
+signed or CDN URLs valid for fifteen minutes. Refusals: `invalid_argument`
+for an unknown or malformed file (`PLX-1005`) or one the scanner rejects
+(`PLX-6031`), `resource_exhausted` above `asset.fileSize` or
+`asset.imagePixels` (`PLX-1320`).
+
 **Drafts** ([ADR-0015](../adr/0015-single-draft-with-snapshots-and-locks.md)).
 Every plugin has one draft, and the app has one for its own documents
 (`app.json`, theme, translations, native catalogue, components, templates),

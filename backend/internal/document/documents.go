@@ -288,6 +288,15 @@ func (s *Service) newSnapshot(ctx context.Context, q *dbgen.Queries, d draft, p 
 func (s *Service) write(ctx context.Context, p auth.Principal, appID, pluginID, session, reason string,
 	build func(context.Context, *dbgen.Queries, draft, limits.Set) ([]change, plxerr.Diagnostics, error),
 ) (Written, error) {
+	return s.writeThen(ctx, p, appID, pluginID, session, reason, build, nil)
+}
+
+// writeThen is write with a step that runs in the same transaction once
+// the changes are applied, and only then — never for a preserved write.
+func (s *Service) writeThen(ctx context.Context, p auth.Principal, appID, pluginID, session, reason string,
+	build func(context.Context, *dbgen.Queries, draft, limits.Set) ([]change, plxerr.Diagnostics, error),
+	then func(context.Context, pgx.Tx, *dbgen.Queries, draft) error,
+) (Written, error) {
 	if err := checkSession(session); err != nil {
 		return Written{}, err
 	}
@@ -312,19 +321,10 @@ func (s *Service) write(ctx context.Context, p auth.Principal, appID, pluginID, 
 			return err
 		}
 		changes, diags, err := build(ctx, q, d, lim)
-		if err != nil || len(changes) == 0 {
+		if err != nil {
 			return err
 		}
-		if lockErr := s.holds(ctx, q, d, p, session); lockErr != nil {
-			displaced, err := s.displaced(ctx, q, d, p, session)
-			if err != nil || !displaced {
-				return lockErr
-			}
-			out, err = s.preserve(ctx, q, d, p, changes)
-			lockError = lockErr
-			return err
-		}
-		out, err = s.apply(ctx, q, tx, d, p, changes, reason)
+		out, lockError, err = s.commit(ctx, tx, q, d, p, session, reason, changes, then)
 		out.Diagnostics = diags
 		return err
 	})
@@ -335,6 +335,36 @@ func (s *Service) write(ctx context.Context, p auth.Principal, appID, pluginID, 
 		return out, withDetail(lockError, "preservedSnapshot", out.SnapshotID)
 	}
 	return out, nil
+}
+
+// commit applies prepared changes under the draft's lock, or preserves
+// them for a displaced session, and runs the step after. lockError is
+// the refusal a preserved write returns once its transaction commits.
+func (s *Service) commit(ctx context.Context, tx pgx.Tx, q *dbgen.Queries, d draft, p auth.Principal, session, reason string,
+	changes []change, then func(context.Context, pgx.Tx, *dbgen.Queries, draft) error,
+) (out Written, lockError, err error) {
+	if len(changes) == 0 {
+		// Nothing to snapshot; the step after still needs the lock.
+		if then == nil {
+			return Written{}, nil, nil
+		}
+		if err := s.holds(ctx, q, d, p, session); err != nil {
+			return Written{}, nil, err
+		}
+		return Written{}, nil, then(ctx, tx, q, d)
+	}
+	if lockErr := s.holds(ctx, q, d, p, session); lockErr != nil {
+		displaced, err := s.displaced(ctx, q, d, p, session)
+		if err != nil || !displaced {
+			return Written{}, nil, lockErr
+		}
+		out, err = s.preserve(ctx, q, d, p, changes)
+		return out, lockErr, err
+	}
+	if out, err = s.apply(ctx, q, tx, d, p, changes, reason); err != nil || then == nil {
+		return out, nil, err
+	}
+	return out, nil, then(ctx, tx, q, d)
 }
 
 // displaced reports whether a session is the one a takeover displaced.

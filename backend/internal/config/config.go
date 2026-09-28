@@ -32,6 +32,14 @@ type Config struct {
 	Telemetry     Telemetry         `json:"telemetry"`
 	Limits        map[string]string `json:"limits"`
 	Retention     Retention         `json:"retention"`
+	Assets        Assets            `json:"assets"`
+}
+
+// Assets configures the handling of uploaded asset files (SRV-060).
+type Assets struct {
+	// MalwareScanner is ClamAV's daemon, "tcp://host:3310" or
+	// "unix:///path/clamd.sock"; empty scans nothing.
+	MalwareScanner string `json:"malwareScanner"`
 }
 
 // Server is the process itself.

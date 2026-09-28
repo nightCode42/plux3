@@ -53,7 +53,7 @@ type fixture struct {
 	viewer    auth.Principal
 }
 
-func newFixture(t *testing.T) *fixture {
+func newFixture(t *testing.T, configure ...func(*document.Options)) *fixture {
 	t.Helper()
 	ctx := context.Background()
 	db := storagetest.Open(t)
@@ -77,9 +77,11 @@ func newFixture(t *testing.T) *fixture {
 	if err != nil {
 		t.Fatal(err)
 	}
-	f.docs, err = document.NewService(document.Options{
-		DB: db, Audit: log, Tenancy: f.tenancy, IDs: gen, SnapshotDays: 90, Now: clock,
-	})
+	opts := document.Options{DB: db, Audit: log, Tenancy: f.tenancy, IDs: gen, SnapshotDays: 90, Now: clock}
+	for _, c := range configure {
+		c(&opts)
+	}
+	f.docs, err = document.NewService(opts)
 	if err != nil {
 		t.Fatal(err)
 	}

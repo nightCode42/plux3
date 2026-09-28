@@ -46,6 +46,11 @@ enum PluxLimit {
   apiRequestsPerMinutePerDevice('api.requestsPerMinutePerDevice', PluxLimitUnit.count, 120, 0, 10000),
   /// Plugins per app.
   appPlugins('app.plugins', PluxLimitUnit.count, 200, 0, 1000),
+  /// Size of one asset file, checked at upload and again at publish.
+  assetFileSize('asset.fileSize', PluxLimitUnit.bytes, 10485760, 0, 104857600),
+  /// Pixels of one image asset, width times height, checked before it is
+  /// decoded so that a small file cannot expand into a huge image.
+  assetImagePixels('asset.imagePixels', PluxLimitUnit.count, 40000000, 0, 100000000),
   /// Failed passwords or one-time codes one account may present in fifteen
   /// minutes before sign-in is refused.
   authFailedSignIns('auth.failedSignIns', PluxLimitUnit.count, 10, 0, 1000),
@@ -84,6 +89,9 @@ enum PluxLimit {
   /// Nodes in one page document. Above the warning threshold the compiler
   /// reports the page.
   pageNodes('page.nodes', PluxLimitUnit.count, 5000, 1000, 50000),
+  /// Bytes of the asset files one plugin's pages and icon use, checked at
+  /// publish.
+  pluginAssetBytes('plugin.assetBytes', PluxLimitUnit.bytes, 20971520, 0, 268435456),
   /// Pages per plugin.
   pluginPages('plugin.pages', PluxLimitUnit.count, 500, 0, 2000),
   /// Elements of a list or map produced during one PXL evaluation.

@@ -13,6 +13,7 @@ The Go module `github.com/nightCode42/plux3/backend`: the Plux Server (`plux-ser
 | `internal/schema/` | Document model: canonicalisation (`jcs/`), identifiers (`uuid7/`), the limits registry (`limits/`), the widget and action registries (`registry/`), validation and generated types (ADR-0025, ADR-0010) | Apache-2.0 |
 | `internal/pxl/` | PXL: parser, checker, standard library, bytecode, VM, folding; exact decimals in `decimal/` (ADR-0009) | Apache-2.0 |
 | `internal/bundle/` | Bundle container writer and reader, SHA-256 hashes, the FlatBuffers verifier, zstd transport; flatc accessors in `fbs/` (ADR-0002) | Apache-2.0 |
+| `internal/compiler/media/` | Asset files: type sniffing, metadata stripping, dotLottie packaging, and WebP/AVIF transcoding with WebAssembly codecs on wazero ([ADR-0027](../docs/adr/0027-asset-pipeline.md)) | Apache-2.0 |
 | `internal/compiler/` | The compiler: pipeline stages, reference graph, optimiser, section encoder, incremental page validation ([compiler.md](../docs/reference/compiler.md)) | Apache-2.0 |
 | `internal/pluxv1/` | Generated API messages and ConnectRPC handlers and clients (ADR-0005); never edited by hand | Apache-2.0 |
 | `internal/config/` | Server configuration: strict loading, environment overrides, validation (`SRV-008`, Appendix H) | AGPL-3.0-only |

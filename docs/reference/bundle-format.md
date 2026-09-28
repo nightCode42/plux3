@@ -51,7 +51,7 @@ All types are declared in [`schema/fbs/bundle.fbs`](../../schema/fbs/bundle.fbs)
 - **pxl** — compiled programs sorted by ID; each is the program encoding of [pxl.md §8](pxl.md#8-bytecode), which carries its result type and read set (`CMP-023`).
 - **styles** — deduplicated value-type objects sorted by ID (`CMP-020`), and the design tokens of an app with their `$type` and dark-mode values.
 - **strings** — the table shared by the plugin-wide sections; index 0 is the empty string.
-- **l10n**, **timelines**, **schemas**, **assets-index**, **wasm**, **sourcemap** — translations of one locale; animation timelines; declared types, state, data sources, collections, variables and user context; asset references with their SHA-256; a device-placed function module; node and step locations in the documents: a node by its page or component UUID and index, a step by its graph's UUID and index.
+- **l10n**, **timelines**, **schemas**, **assets-index**, **wasm**, **sourcemap** — translations of one locale; animation timelines; declared types, state, data sources, collections, variables and user context; asset references with their SHA-256 and, for raster images, their WebP and AVIF variants at 1×, 2× and 3× (`CMP-030`), each with its media type, density, size in pixels, SHA-256 and bytes; a device-placed function module; node and step locations in the documents: a node by its page or component UUID and index, a step by its graph's UUID and index.
 
 ## 3. Nodes and values
 

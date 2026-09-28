@@ -35,6 +35,10 @@ repos:
       - id: check-case-conflict
       - id: check-added-large-files
         args: [--maxkb=500]
+        # The WebAssembly image codecs are pinned by codecs.lock and rebuilt
+        # by `make wasm-codecs-check` (ADR-0027); maintainer-approved
+        # exception, 2026-09-28.
+        exclude: ^backend/internal/compiler/media/codecs/[a-z]+\.wasm$
       - id: check-executables-have-shebangs
       - id: check-shebang-scripts-are-executable
       - id: detect-private-key

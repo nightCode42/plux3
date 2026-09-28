@@ -45,6 +45,27 @@ type AppAccess struct {
 	GrantedAt      pgtype.Timestamptz
 }
 
+type Asset struct {
+	ID             pgtype.UUID
+	AssetID        pgtype.UUID
+	OrganizationID pgtype.UUID
+	AppID          pgtype.UUID
+	File           string
+	MediaType      string
+	Sha256         []byte
+	Size           int64
+	Width          int32
+	Height         int32
+	Processing     string
+	Variants       []byte
+	Diagnostics    []byte
+	UploadedByKind string
+	UploadedByID   string
+	UploadedBy     string
+	CreatedAt      pgtype.Timestamptz
+	DeletedAt      pgtype.Timestamptz
+}
+
 type AuditLog struct {
 	ID             pgtype.UUID
 	OrganizationID pgtype.UUID

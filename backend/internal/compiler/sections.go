@@ -590,10 +590,12 @@ func collectionTable(e *valueEnc, c schema.Collection) flatbuffers.UOffsetT {
 // assets adds the assets-index sections — every asset to the app bundle,
 // the assets it uses to each plugin bundle — and then the sections every
 // bundle shares: programs, styles, strings, meta and the source map.
-// Transcoding assets arrives in P2 (CMP-030).
+// Asset files are not in the bundles: each is its own content-addressed
+// object, and the index lists it with its transcoded variants (CMP-030).
 func assets(u *unit) {
 	for _, o := range u.outs() {
 		u.assetsSection(o)
+		u.pluginAssetBytes(o)
 		u.metaSection(o)
 		programsSection(o)
 		u.stylesSection(o)
@@ -632,6 +634,7 @@ func (u *unit) assetsSection(o *out) {
 		sum := sha256.Sum256(data)
 		hash := b.CreateByteVector(sum[:])
 		key, media := b.CreateString(a.Key), b.CreateString(string(a.MediaType))
+		variants := u.variantsOf(b, sum)
 		fbs.AssetStart(b)
 		hi, lo := uuidHalves(uuidBytes(a.ID))
 		fbs.AssetAddId(b, fbs.CreateUuid(b, hi, lo))
@@ -639,12 +642,64 @@ func (u *unit) assetsSection(o *out) {
 		fbs.AssetAddMediaType(b, media)
 		fbs.AssetAddHash(b, hash)
 		fbs.AssetAddSize(b, uint64(len(data)))
+		if variants != 0 {
+			fbs.AssetAddVariants(b, variants)
+		}
 		offs[i] = fbs.AssetEnd(b)
 	}
 	av := offsetVector(b, offs)
 	fbs.AssetIndexStart(b)
 	fbs.AssetIndexAddAssets(b, av)
 	o.add(bundle.SectionAssetsIndex, o.id, finish(b, fbs.AssetIndexEnd(b), bundle.SectionAssetsIndex))
+}
+
+// variantsOf encodes an asset file's variants, sorted by media type and
+// density; 0 when it has none.
+func (u *unit) variantsOf(b *flatbuffers.Builder, sum [sha256.Size]byte) flatbuffers.UOffsetT {
+	if u.opts.AssetVariants == nil {
+		return 0
+	}
+	vs := slices.Clone(u.opts.AssetVariants(sum))
+	if len(vs) == 0 {
+		return 0
+	}
+	slices.SortFunc(vs, func(a, c AssetVariant) int {
+		if n := strings.Compare(a.MediaType, c.MediaType); n != 0 {
+			return n
+		}
+		return a.Density - c.Density
+	})
+	offs := make([]flatbuffers.UOffsetT, len(vs))
+	for i, v := range vs {
+		media, hash := b.CreateString(v.MediaType), b.CreateByteVector(v.Hash[:])
+		fbs.AssetVariantStart(b)
+		fbs.AssetVariantAddMediaType(b, media)
+		fbs.AssetVariantAddDensity(b, uint32(v.Density)) //nolint:gosec // 1 to 3
+		fbs.AssetVariantAddWidth(b, uint32(v.Width))     //nolint:gosec // bounded by asset.imagePixels
+		fbs.AssetVariantAddHeight(b, uint32(v.Height))   //nolint:gosec // bounded by asset.imagePixels
+		fbs.AssetVariantAddHash(b, hash)
+		fbs.AssetVariantAddSize(b, uint64(v.Size)) //nolint:gosec // a file size
+		offs[i] = fbs.AssetVariantEnd(b)
+	}
+	return offsetVector(b, offs)
+}
+
+// pluginAssetBytes checks the asset files a plugin uses against
+// plugin.assetBytes at publish (AST-003).
+func (u *unit) pluginAssetBytes(o *out) {
+	idx := u.project.Assets
+	if o.pl == nil || idx == nil || idx.Doc == nil {
+		return
+	}
+	var total int64
+	for _, a := range idx.Doc.Assets {
+		if o.assets[a.ID] {
+			total += int64(len(u.project.AssetFiles[a.File]))
+		}
+	}
+	if limit := u.opts.Limits.Get(limits.PluginAssetBytes); total > limit {
+		u.report(plxerr.LimitExceeded, o.pl.file, "", "plugin %s uses %d bytes of assets, above plugin.assetBytes = %d", o.key, total, limit)
+	}
 }
 
 // programsSection encodes the programs of a bundle, sorted by ID.

@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/jackc/pgx/v5"
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	"github.com/nightCode42/plux3/backend/internal/api"
@@ -27,11 +28,18 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/schema/uuid7"
 	"github.com/nightCode42/plux3/backend/internal/signing"
 	"github.com/nightCode42/plux3/backend/internal/storage/idempotency"
+	"github.com/nightCode42/plux3/backend/internal/storage/objects"
 	"github.com/nightCode42/plux3/backend/internal/storage/storagetest"
 	"github.com/nightCode42/plux3/backend/internal/tenancy"
 )
 
 type uuids struct{ g *uuid7.Generator }
+
+// noJobs accepts asset jobs and runs none; transcoding is tested in the
+// document package.
+type noJobs struct{}
+
+func (noJobs) Enqueue(context.Context, pgx.Tx, document.AssetJob) error { return nil }
 
 func (u uuids) New() (string, error) {
 	id, err := u.g.New()
@@ -49,6 +57,7 @@ type world struct {
 	document pluxv1connect.DocumentServiceClient
 	comp     pluxv1connect.ComponentServiceClient
 	template pluxv1connect.TemplateServiceClient
+	asset    pluxv1connect.AssetServiceClient
 }
 
 func newWorld(t *testing.T) *world {
@@ -74,7 +83,11 @@ func newWorld(t *testing.T) *world {
 	if err != nil {
 		t.Fatal(err)
 	}
-	docs, err := document.NewService(document.Options{DB: db, Audit: log, Tenancy: tenancyService, IDs: gen})
+	files, err := objects.NewFilesystem(t.TempDir(), "https://cdn.example")
+	if err != nil {
+		t.Fatal(err)
+	}
+	docs, err := document.NewService(document.Options{DB: db, Audit: log, Tenancy: tenancyService, IDs: gen, Objects: files, Jobs: noJobs{}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -111,6 +124,7 @@ func newWorld(t *testing.T) *world {
 		func() (string, http.Handler) { return pluxv1connect.NewDocumentServiceHandler(h.Document(), opts) },
 		func() (string, http.Handler) { return pluxv1connect.NewComponentServiceHandler(h.Component(), opts) },
 		func() (string, http.Handler) { return pluxv1connect.NewTemplateServiceHandler(h.Template(), opts) },
+		func() (string, http.Handler) { return pluxv1connect.NewAssetServiceHandler(h.Asset(), opts) },
 	} {
 		path, handler := r()
 		mux.Handle(path, handler)
@@ -126,6 +140,7 @@ func newWorld(t *testing.T) *world {
 		document: pluxv1connect.NewDocumentServiceClient(srv.Client(), srv.URL),
 		comp:     pluxv1connect.NewComponentServiceClient(srv.Client(), srv.URL),
 		template: pluxv1connect.NewTemplateServiceClient(srv.Client(), srv.URL),
+		asset:    pluxv1connect.NewAssetServiceClient(srv.Client(), srv.URL),
 	}
 }
 

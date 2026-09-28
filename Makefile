@@ -82,7 +82,7 @@ GO_BUILD_FLAGS  := -trimpath -buildvcs=false -ldflags "-s -w -buildid= \
 	-X $(BUILDINFO_PKG).commit=$(COMMIT) \
 	-X $(BUILDINFO_PKG).commitDate=$(COMMIT_DATE)"
 
-.PHONY: help setup hooks-install check test build gen gen-check clean \
+.PHONY: help setup hooks-install check test build gen gen-check clean wasm-codecs wasm-codecs-check \
 	install-go-tools install-golangci-lint install-govulncheck install-gitleaks install-actionlint install-buf install-sqlc install-python-tools install-flatc \
 	go-check proto proto-check proto-lint proto-format-check proto-breaking sqlc sqlc-check go-fmt go-fmt-check go-lint go-tidy go-tidy-check go-gen-check registry-lock-check go-test go-test-race go-cover \
 	go-determinism go-budgets go-fuzz currencies-check go-vuln go-build go-reproducible \
@@ -183,6 +183,13 @@ proto: ## Regenerate the API contract's Go code and OpenAPI description (SRV-002
 	@mkdir -p $(PROTO_API_DIR)
 	cd $(PROTO_DIR) && PATH="$(TOOLS_BIN):$$PATH" "$(BUF)" format -w .
 	cd $(PROTO_DIR) && PATH="$(TOOLS_BIN):$$PATH" "$(BUF)" generate
+
+wasm-codecs: ## Rebuild the WebAssembly image codecs from pinned sources (CMP-030, ADR-0027)
+	sh backend/internal/compiler/media/codecs/build.sh
+
+wasm-codecs-check: ## Rebuild the image codecs elsewhere and compare them with codecs.lock
+	@out=$$(mktemp -d) && sh backend/internal/compiler/media/codecs/build.sh "$$out" >/dev/null && \
+		(cd "$$out" && sha256sum -c $(CURDIR)/backend/internal/compiler/media/codecs/codecs.lock)
 
 # The server's queries are type-checked against its own migrations, so a
 # query that does not match the schema fails here rather than at run time

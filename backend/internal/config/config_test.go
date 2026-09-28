@@ -117,6 +117,7 @@ func TestValidateReportsEveryProblem(t *testing.T) {
 		{"no targets key", minimal + "signing:\n  keys:\n    targets: \"\"\n", "signing.keys.targets"},
 		{"nobody can sign in", minimal + "auth:\n  studio:\n    allowPasswordLogin: false\n", "nobody can sign in"},
 		{"an incomplete OIDC provider", minimal + "auth:\n  studio:\n    oidc:\n      issuer: \"https://idp.example\"\n", "PLUX_AUTH_STUDIO_OIDC_CLIENT_SECRET"},
+		{"a malware scanner over http", minimal + "assets:\n  malwareScanner: \"http://clamav:3310\"\n", "assets.malwareScanner"},
 		{"an OIDC issuer without https", minimal + "auth:\n  studio:\n    oidc:\n      issuer: \"http://idp.example\"\n", "auth.studio.oidc.issuer"},
 		{"password login off", minimal + "auth:\n  studio:\n    allowPasswordLogin: false\n", "allowPasswordLogin"},
 		{"a cookie domain", minimal + "auth:\n  studio:\n    cookieDomain: example.com\n", "__Host-"},

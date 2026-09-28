@@ -86,6 +86,8 @@ const (
 	DocumentRestored     Action = "document.restored"
 	DocumentPurged       Action = "document.purged"
 	DraftImported        Action = "draft.imported"
+	AssetUploaded        Action = "asset.uploaded"
+	AssetDeleted         Action = "asset.deleted"
 	SnapshotRestored     Action = "snapshot.restored"
 	TemplateInstantiated Action = "template.instantiated"
 	LockAcquired         Action = "plugin.lock.acquired"
@@ -107,7 +109,7 @@ var actions = sorted(
 	EnvironmentAdded, EnvironmentSet, EnvironmentGone, ChannelCreated, ChannelDeleted,
 	VariableSet, SecretSet, SecretDeleted, LimitSet, TrashRestored, TrashPurged,
 	PluginCreated, PluginUpdated, PluginDeleted, PluginRestored, PluginPurged,
-	DocumentWritten, DocumentDeleted, DocumentRestored, DocumentPurged, DraftImported,
+	DocumentWritten, DocumentDeleted, DocumentRestored, DocumentPurged, DraftImported, AssetUploaded, AssetDeleted,
 	SnapshotRestored, TemplateInstantiated, LockAcquired, LockTakenOver, LockReleased, LockRequested,
 )
 

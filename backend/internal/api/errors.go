@@ -62,6 +62,7 @@ var codes = map[plxerr.Code]connect.Code{
 
 	// The server refused to reach somewhere.
 	plxerr.OutboundRequestBlocked: connect.CodePermissionDenied,
+	plxerr.AssetRejected:          connect.CodeInvalidArgument,
 
 	// The server failed.
 	plxerr.InternalServerError: connect.CodeInternal,

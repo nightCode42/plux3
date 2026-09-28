@@ -16,6 +16,8 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | `api.requestsPerMinutePerAddress` | count | 300 | 80% | 100000 | installation | P2 | SRV-065 | API calls one client address may make per minute, whoever is calling. |
 | `api.requestsPerMinutePerDevice` | count | 120 | 80% | 10000 | installation, organization, app | P2 | SRV-065 | API calls one registered device may make per minute. |
 | `app.plugins` | count | 200 | 80% | 1000 | installation, organization, app | P1 | SCH-005 | Plugins per app. |
+| `asset.fileSize` | bytes | 10485760 | 80% | 104857600 | installation, organization, app | P2 | SRV-060, AST-003 | Size of one asset file, checked at upload and again at publish. |
+| `asset.imagePixels` | count | 40000000 | 80% | 100000000 | installation | P2 | SRV-060, CMP-030 | Pixels of one image asset, width times height, checked before it is decoded so that a small file cannot expand into a huge image. |
 | `auth.failedSignIns` | count | 10 | 80% | 1000 | installation | P2 | SEC-100 | Failed passwords or one-time codes one account may present in fifteen minutes before sign-in is refused. |
 | `bundle.deviceFunctionModuleSize` | bytes | 4194304 | 80% | 67108864 | installation, organization, app, plugin | P7 | FN-050 | Size of the WebAssembly module of the device-placed functions of one plugin. |
 | `bundle.pageSectionSize` | bytes | 1048576 | 80% | 16777216 | installation, organization, app, plugin | P1 | BND-010 | Size of one page section in a bundle. |
@@ -32,6 +34,7 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | `page.depth` | count | 64 | 32 | 128 | installation, organization, app, plugin | P1 | SCH-005, CMP-040 | Depth of a page's node tree. |
 | `page.imageBytes` | bytes | 5242880 | 1048576 | 67108864 | installation, organization, app, plugin | P1 | CMP-040 | Bytes of images bundled for one page. |
 | `page.nodes` | count | 5000 | 1000 | 50000 | installation, organization, app, plugin | P1 | SCH-005, CMP-040 | Nodes in one page document. Above the warning threshold the compiler reports the page. |
+| `plugin.assetBytes` | bytes | 20971520 | 80% | 268435456 | installation, organization, app, plugin | P2 | AST-003 | Bytes of the asset files one plugin's pages and icon use, checked at publish. |
 | `plugin.pages` | count | 500 | 80% | 2000 | installation, organization, app, plugin | P1 | SCH-005 | Pages per plugin. |
 | `pxl.collectionSize` | count | 10000 | 80% | 1000000 | installation, organization, app, plugin | P1 | PXL-001 | Elements of a list or map produced during one PXL evaluation. |
 | `pxl.decimalDigits` | count | 1000 | 80% | 10000 | installation, organization, app, plugin | P1 | PXL-001, PXL-005 | Digits of a decimal produced during one PXL evaluation, in plain notation. |

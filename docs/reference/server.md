@@ -109,6 +109,8 @@ retention:
   developmentReleaseDays: 90
   snapshotDays: 90              # at least 90 (SRV-031)
   trashDays: 30                 # at least 30 (GOV-031)
+assets:
+  malwareScanner: ""            # ClamAV clamd, tcp://host:3310 or unix:///path; empty scans nothing (SRV-060)
 ```
 
 **Limits** name keys of the registry, `schema/limits.json`
@@ -211,6 +213,14 @@ every redirect, so a name that resolves differently the second time cannot
 reach an internal service (`SEC-105`).
 
 ## 9. Background work
+
+The worker role transcodes uploaded raster images on the `asset` queue:
+each upload's job, enqueued in the upload's transaction, makes WebP and
+AVIF variants at 1×, 2× and 3× with WebAssembly codecs, stores them by
+hash and marks the asset ready; content transcoded before is reused, and
+an image the codecs refuse is marked failed with a diagnostic
+([ADR-0027](../adr/0027-asset-pipeline.md)). Only the worker role compiles
+the codecs.
 
 The worker role runs the maintenance sweep hourly and once at start, on
 the `maintenance` queue: it purges trash past `retention.trashDays`

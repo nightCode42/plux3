@@ -14,6 +14,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+
+	"github.com/nightCode42/plux3/backend/internal/compiler/media"
+	"github.com/nightCode42/plux3/backend/internal/storage/objects"
+
 	"connectrpc.com/connect"
 	"github.com/riverqueue/river"
 
@@ -46,6 +51,53 @@ type Services struct {
 	Documents   *document.Service
 	Idempotency *idempotency.Store
 	Pages       *api.Pages
+}
+
+// AssetDeps are what asset handling needs beyond the database: where
+// files are stored, the job queue that transcodes them, and — in the
+// worker role — the codecs. The zero value refuses uploads.
+type AssetDeps struct {
+	Objects objects.Store
+	Jobs    document.Enqueuer
+	Codecs  *media.Codecs
+}
+
+// scanner returns the configured malware scanner, or nil (SRV-060).
+func scanner(cfg *config.Config) document.Scanner {
+	u, err := url.Parse(cfg.Assets.MalwareScanner)
+	if cfg.Assets.MalwareScanner == "" || err != nil {
+		return nil
+	}
+	if u.Scheme == "unix" {
+		return document.Clamd{Network: "unix", Address: u.Path}
+	}
+	return document.Clamd{Network: "tcp", Address: u.Host}
+}
+
+// enqueuer adds asset jobs to the job client, which is built after the
+// services it runs jobs for; Build sets the client before serving.
+type enqueuer struct{ client *jobs.Client }
+
+// Enqueue inserts a transcoding job in the caller's transaction.
+func (e *enqueuer) Enqueue(ctx context.Context, tx pgx.Tx, job document.AssetJob) error {
+	if e.client == nil {
+		return errors.New("server: the job client is not ready")
+	}
+	if _, err := e.client.InsertTx(ctx, tx, job, &river.InsertOpts{Queue: jobs.QueueAsset, MaxAttempts: 5}); err != nil {
+		return fmt.Errorf("server: %w", err)
+	}
+	return nil
+}
+
+// assetWorker transcodes uploaded images (CMP-030).
+type assetWorker struct {
+	river.WorkerDefaults[document.AssetJob]
+	svc *Services
+}
+
+// Work runs one asset job.
+func (w *assetWorker) Work(ctx context.Context, job *river.Job[document.AssetJob]) error {
+	return w.svc.Documents.ProcessAsset(ctx, job.Args) //nolint:wrapcheck // a domain error
 }
 
 // ids adapts the UUIDv7 generator to the string identifiers the domain
@@ -92,7 +144,7 @@ func BuildSigning(cfg *config.Config) (signing.Backend, error) {
 
 // BuildServices assembles the domain services. They are given only the
 // envelope-encryption half of the signing backend (L-3, ADR-0006).
-func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shared cache.Cache, set limits.Set, backend signing.Crypter) (*Services, error) {
+func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shared cache.Cache, set limits.Set, backend signing.Crypter, assets AssetDeps) (*Services, error) {
 	if db == nil || shared == nil {
 		return nil, errors.New("server: the services need a database and a cache")
 	}
@@ -130,6 +182,7 @@ func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shar
 	docs, err := document.NewService(document.Options{
 		DB: db, Audit: log, Tenancy: tenancyService, IDs: gen, Limits: set,
 		SnapshotDays: cfg.Retention.SnapshotDays, CompilerVersion: buildinfo.Get().Version,
+		Objects: assets.Objects, Jobs: assets.Jobs, Scanner: scanner(cfg), Codecs: assets.Codecs,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("server: %w", err)
@@ -232,6 +285,7 @@ func (s *Server) RegisterAPI(svc *Services) {
 		func() (string, http.Handler) { return pluxv1connect.NewDocumentServiceHandler(h.Document(), opts) },
 		func() (string, http.Handler) { return pluxv1connect.NewComponentServiceHandler(h.Component(), opts) },
 		func() (string, http.Handler) { return pluxv1connect.NewTemplateServiceHandler(h.Template(), opts) },
+		func() (string, http.Handler) { return pluxv1connect.NewAssetServiceHandler(h.Asset(), opts) },
 	} {
 		path, handler := register()
 		s.Register(path, handler)

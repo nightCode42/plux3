@@ -57,6 +57,7 @@ func (c *Config) Validate() error {
 	c.validateTelemetry(&p)
 	c.validateLimits(&p)
 	c.validateRetention(&p)
+	c.validateAssets(&p)
 	return errors.Join(p.errs...)
 }
 
@@ -343,5 +344,22 @@ func checkURL(p *problems, path, s string) {
 	u, err := url.Parse(s)
 	if err != nil || u.Scheme == "" || u.Host == "" {
 		p.addf(path, "%q is not an absolute URL", s)
+	}
+}
+
+// validateAssets checks the malware scanner's address.
+func (c *Config) validateAssets(p *problems) {
+	s := c.Assets.MalwareScanner
+	if s == "" {
+		return
+	}
+	u, err := url.Parse(s)
+	switch {
+	case err != nil:
+		p.addf("assets.malwareScanner", "must be tcp://host:port or unix:///path")
+	case u.Scheme == "tcp" && u.Host != "":
+	case u.Scheme == "unix" && u.Path != "":
+	default:
+		p.addf("assets.malwareScanner", "must be tcp://host:port or unix:///path")
 	}
 }

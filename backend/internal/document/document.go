@@ -29,11 +29,13 @@ import (
 
 	"github.com/nightCode42/plux3/backend/internal/audit"
 	"github.com/nightCode42/plux3/backend/internal/auth"
+	"github.com/nightCode42/plux3/backend/internal/compiler/media"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/schema"
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 	"github.com/nightCode42/plux3/backend/internal/storage"
 	"github.com/nightCode42/plux3/backend/internal/storage/dbgen"
+	"github.com/nightCode42/plux3/backend/internal/storage/objects"
 	"github.com/nightCode42/plux3/backend/internal/tenancy"
 )
 
@@ -64,6 +66,14 @@ type Options struct {
 	CompilerVersion string
 	// Now is the clock; nil uses time.Now.
 	Now func() time.Time
+	// Objects stores asset files (SRV-060); nil refuses uploads.
+	Objects objects.Store
+	// Jobs enqueues the transcoding of uploaded images (CMP-030).
+	Jobs Enqueuer
+	// Scanner checks uploads for malware; nil scans nothing.
+	Scanner Scanner
+	// Codecs transcode images in the worker; nil in the api role.
+	Codecs *media.Codecs
 }
 
 // Service is the domain logic of drafts.

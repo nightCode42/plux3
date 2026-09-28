@@ -386,6 +386,9 @@ func (u *unit) lintAssets() {
 	for i, e := range a.Doc.Assets {
 		data := u.project.AssetFiles[e.File]
 		ptr := plxerr.Pointer("assets", strconv.Itoa(i), "file")
+		if limit := u.opts.Limits.Get(limits.AssetFileSize); int64(len(data)) > limit {
+			u.report(plxerr.LimitExceeded, a.Source.File, ptr, "%s has %d bytes, above asset.fileSize = %d (AST-003)", e.File, len(data), limit)
+		}
 		if format := bundle.ExecutableFormat(data); format != "" {
 			u.report(plxerr.ExecutableContent, a.Source.File, ptr, "%s holds %s code", e.File, format)
 			continue

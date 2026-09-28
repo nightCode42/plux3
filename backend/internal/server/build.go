@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nightCode42/plux3/backend/internal/compiler/media"
+
 	"github.com/nightCode42/plux3/backend/internal/cache"
 	"github.com/nightCode42/plux3/backend/internal/config"
 	"github.com/nightCode42/plux3/backend/internal/jobs"
@@ -87,7 +89,7 @@ func Build(ctx context.Context, cfg *config.Config, log *slog.Logger, version st
 		return fail(err)
 	}
 
-	services, jobClient, err := buildWork(ctx, cfg, log, db, shared, limitSet)
+	services, jobClient, err := buildWork(ctx, cfg, log, db, shared, limitSet, store)
 	if err != nil {
 		return fail(err)
 	}
@@ -107,7 +109,7 @@ func Build(ctx context.Context, cfg *config.Config, log *slog.Logger, version st
 
 // buildWork assembles the domain services and the job client that runs
 // their background work (SRV-024).
-func buildWork(ctx context.Context, cfg *config.Config, log *slog.Logger, db *storage.DB, shared cache.Cache, set limits.Set) (*Services, *jobs.Client, error) {
+func buildWork(ctx context.Context, cfg *config.Config, log *slog.Logger, db *storage.DB, shared cache.Cache, set limits.Set, store objects.Store) (*Services, *jobs.Client, error) {
 	backend, err := BuildSigning(cfg)
 	if err != nil {
 		return nil, nil, err
@@ -116,11 +118,23 @@ func buildWork(ctx context.Context, cfg *config.Config, log *slog.Logger, db *st
 		log.WarnContext(ctx, "the file signing backend keeps keys on disk; it is for development only, and production environments refuse it (SEC-056, SEC-120)",
 			slog.String("directory", cfg.Signing.Directory))
 	}
-	services, err := BuildServices(ctx, cfg, db, shared, set, backend)
+	enq := &enqueuer{}
+	deps := AssetDeps{Objects: store, Jobs: enq}
+	if cfg.Has(config.RoleWorker) {
+		// Only the worker transcodes; compiling the codecs costs start-up
+		// time the api role need not pay.
+		if deps.Codecs, err = media.NewCodecs(ctx); err != nil {
+			return nil, nil, fmt.Errorf("server: %w", err)
+		}
+	}
+	services, err := BuildServices(ctx, cfg, db, shared, set, backend, deps)
 	if err != nil {
 		return nil, nil, err
 	}
 	workers := jobs.NewWorkers()
+	if deps.Codecs != nil {
+		jobs.AddWorker(workers, &assetWorker{svc: services})
+	}
 	jobClient, err := jobs.New(jobs.Options{
 		Pool:     db.Pool(),
 		Workers:  workers,
@@ -131,6 +145,7 @@ func buildWork(ctx context.Context, cfg *config.Config, log *slog.Logger, db *st
 	if err != nil {
 		return nil, nil, fmt.Errorf("server: %w", err)
 	}
+	enq.client = jobClient
 	return services, jobClient, nil
 }
 

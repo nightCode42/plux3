@@ -109,6 +109,7 @@ const (
 	// Security (PLX-6000–6999).
 
 	OutboundRequestBlocked Code = 6030
+	AssetRejected          Code = 6031
 
 	// Governance (PLX-8000–8999).
 

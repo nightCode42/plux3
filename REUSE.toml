@@ -29,3 +29,24 @@ path = [
 precedence = "override"
 SPDX-FileCopyrightText = "2026 Plux contributors"
 SPDX-License-Identifier = "AGPL-3.0-only"
+
+# The WebAssembly image codecs (ADR-0027): libwebp, and libavif with
+# libaom, compiled by codecs/build.sh and linked with wasi-libc. Their
+# notices are in codecs/THIRD_PARTY_NOTICES.txt, which travels with them.
+[[annotations]]
+path = "backend/internal/compiler/media/codecs/webp.wasm"
+precedence = "override"
+SPDX-FileCopyrightText = ["2010 Google Inc.", "2026 Plux contributors"]
+SPDX-License-Identifier = "BSD-3-Clause AND LicenseRef-WebM-Patent-Grant AND MIT AND Apache-2.0"
+
+[[annotations]]
+path = "backend/internal/compiler/media/codecs/avif.wasm"
+precedence = "override"
+SPDX-FileCopyrightText = ["2016 Alliance for Open Media", "2019 Joe Drago", "2026 Plux contributors"]
+SPDX-License-Identifier = "BSD-2-Clause AND LicenseRef-AOM-Patent-License-1.0 AND MIT AND Apache-2.0"
+
+[[annotations]]
+path = "backend/internal/compiler/media/codecs/THIRD_PARTY_NOTICES.txt"
+precedence = "override"
+SPDX-FileCopyrightText = ["2010 Google Inc.", "2016 Alliance for Open Media", "2019 Joe Drago"]
+SPDX-License-Identifier = "BSD-3-Clause AND BSD-2-Clause AND LicenseRef-WebM-Patent-Grant AND LicenseRef-AOM-Patent-License-1.0"

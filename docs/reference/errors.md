@@ -654,6 +654,14 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Use a publicly reachable address, or ask an administrator to allow the range this installation should reach.
 
+### PLX-6031
+
+`ASSET_REJECTED` · error · Asset rejected by the malware scanner
+
+**Cause.** The installation's malware scanner found something in the uploaded file (SRV-060).
+
+**Fix.** Check the file on a trusted machine and upload a clean copy.
+
 ## Governance (PLX-8000–8999)
 
 ### PLX-8011
