@@ -309,15 +309,17 @@ jobs:
             BSL-1.0, Unicode-3.0
           # Dependencies whose licence the action cannot validate: pub.dev
           # reports licences in lower case, some packages report none, and
-          # Go's x/text adds the Go patent grant to BSD-3-Clause, which the
+          # Go's x/ modules add the Go patent grant to BSD-3-Clause, which the
           # action reads as a non-SPDX "AND LicenseRef-…" expression. Each
           # was checked by hand against the package's LICENSE file:
           #   Apache-2.0    clock, material_color_utilities
-          #   BSD-3-Clause  the Dart team packages below, golang.org/x/text
+          #   BSD-3-Clause  the Dart team packages below, golang.org/x/net,
+          #                 x/sync, x/sys and x/text
           #                 (plus the Go PATENTS grant, which adds rights)
           #   MIT           node_preamble; yaml is BSD-3-Clause and MIT
           allow-dependencies-licenses: >-
-            pkg:golang/golang.org/x/text,
+            pkg:golang/golang.org/x/net, pkg:golang/golang.org/x/sync,
+            pkg:golang/golang.org/x/sys, pkg:golang/golang.org/x/text,
             pkg:pub/_fe_analyzer_shared, pkg:pub/analyzer, pkg:pub/clock,
             pkg:pub/frontend_server_client, pkg:pub/glob, pkg:pub/io,
             pkg:pub/material_color_utilities, pkg:pub/mime,
