@@ -15,11 +15,13 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/nightCode42/plux3/backend/internal/auth"
+	"github.com/nightCode42/plux3/backend/internal/device"
 	"github.com/nightCode42/plux3/backend/internal/document"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/release"
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 	"github.com/nightCode42/plux3/backend/internal/storage/idempotency"
+	"github.com/nightCode42/plux3/backend/internal/telemetry"
 	"github.com/nightCode42/plux3/backend/internal/tenancy"
 )
 
@@ -32,6 +34,8 @@ type Handlers struct {
 	Tenancy     *tenancy.Service
 	Documents   *document.Service
 	Releases    *release.Service
+	Devices     *device.Service
+	Events      *telemetry.Service
 	Idempotency *idempotency.Store
 	Pages       *Pages
 	// Limiter counts calls per principal and organisation when an

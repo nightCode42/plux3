@@ -138,6 +138,7 @@ variable is treated as unset:
 | `GET /livez` | That the process is running. It checks no dependency, so a database outage never restarts a healthy replica. |
 | `GET /readyz` | That the process has finished starting **and** every dependency answers: PostgreSQL, the cache, object storage, and from P6 the KMS (`SRV-007`). A failing check is reported as `unavailable` and nothing more, because its message may quote a connection string. |
 | `GET /metrics` | The Prometheus metrics of [Appendix G.1](../requirements.md#appendix-g--metrics-and-telemetry-events) (`OBS-002`). |
+| `GET /v1/objects/{bundles,deltas}/…` | Bundles and deltas by content address, when object storage has no CDN in front of it (`storage.objects.cdnBaseURL` unset): `Cache-Control: public, max-age=31536000, immutable`, an `ETag` of the hash and range requests (`REL-024`, `DEP-041`). |
 
 Every request body is bounded by the registry limit `api.requestSize`
 before a handler sees it (`SEC-104`), and every call — unary or
@@ -220,6 +221,19 @@ environment's key and stores the bundle and its source map; only the
 worker is given a signer (`SRV-052`). The maintenance sweep also deletes
 development releases past `retention.developmentReleaseDays` (`REL-007`).
 
+On the same queue the worker signs manifests and precomputes deltas. A
+manifest job is enqueued in the transaction that promotes a release to a
+channel or changes its switches; the worker builds the signed part,
+signs it with the environment's key and stores it, and the api role
+serves the newest one. The file signing backend never signs for an
+environment marked production (`SEC-056`). A delta job is enqueued with
+every published version: it computes the deltas to it from the plugin's
+ten newest versions and from the five bundles most devices hold
+(`REL-022`). Any other pair is computed by the api role on the first
+request that needs it, once per pair however many requests arrive
+together, and stored by the hash of its bytes
+([ADR-0003](../adr/0003-section-level-deltas.md)).
+
 The worker role transcodes uploaded raster images on the `asset` queue:
 each upload's job, enqueued in the upload's transaction, makes WebP and
 AVIF variants at 1×, 2× and 3× with WebAssembly codecs, stores them by
@@ -236,7 +250,11 @@ state lived only in the history being deleted, so every remaining snapshot
 still restores exactly, and never deleting a draft's newest snapshot or a
 kept one — then drops document content no longer referenced, forgets
 idempotency keys older than a day (`SRV-005`) and
-deletes expired sessions, sign-in challenges and device grants. River's
+deletes expired sessions, sign-in challenges and device grants. It also
+signs a fresh manifest for every channel whose newest one expires within
+two days (manifests live seven), deletes expired manifests other than
+each channel's newest, expired device tokens and telemetry events older
+than 30 days. River's
 leader election makes one worker enqueue it however many replicas run.
 
 ## 10. Identity

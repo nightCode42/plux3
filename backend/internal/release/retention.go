@@ -52,7 +52,7 @@ func (s *Service) Compatibility(ctx context.Context, p auth.Principal, appID str
 			}
 		}
 		if s.o.Devices != nil {
-			n, err := s.o.Devices.Incompatible(ctx, tx, appID, row.MinRuntime, row.RequiredFeatures)
+			n, err := s.o.Devices.Incompatible(ctx, tx, appID, row.MinRuntime)
 			if err != nil {
 				return fmt.Errorf("release: %w", err)
 			}

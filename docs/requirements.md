@@ -730,7 +730,7 @@ A **plugin bundle** (`.pxb`) is a small container of independently addressable s
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `BND-001` | P1 | MUST | Bundle schemas **MUST** be defined in FlatBuffers IDL under `schema/fbs/` with a pinned `flatc` version; generated Go and Dart code **MUST** be committed and verified in CI. | DONE |
-| `BND-002` | P1 | MUST | The distributable units **MUST** be: one **plugin bundle** per plugin version; one **app bundle** per app release (theme, translations, shared components, shared collections, flags, native catalogue reference); and one **manifest** per channel release (`REL-030`). | WIP |
+| `BND-002` | P1 | MUST | The distributable units **MUST** be: one **plugin bundle** per plugin version; one **app bundle** per app release (theme, translations, shared components, shared collections, flags, native catalogue reference); and one **manifest** per channel release (`REL-030`). | DONE |
 | `BND-003` | P1 | MUST | The container **MUST** consist of a fixed header (magic `PLUX`, container version, bundle kind, flags), a section directory (section ID, kind, offset, length, SHA-256) and 8-byte-aligned section payloads, so sections can be memory-mapped and read without copying. | DONE |
 | `BND-004` | P1 | MUST | Section kinds **MUST** include at least: `meta`, `page` (one per page), `component` (one per component), `actions`, `pxl` (bytecode), `styles`, `strings`, `l10n` (one per locale), `assets-index` and `schemas` (state, data-source and local-collection schemas; Appendix B.2). | DONE |
 | `BND-005` | P1 | MUST | Hashes **MUST** be SHA-256. The bundle hash is the hash of the header plus the section directory, which in turn commits to every section hash. | DONE |
@@ -784,21 +784,21 @@ flowchart LR
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `REL-020` | P2 | MUST | The server **MUST** be able to serve a delta from **every** older version of a bundle to its newest version. | SPEC |
-| `REL-021` | P2 | MUST | Deltas **MUST** be computed per section: unchanged sections (equal hash) are referenced, new sections are shipped whole, changed sections are shipped as zstd `--patch-from` binary patches against the old section (ADR-0003). | SPEC |
-| `REL-022` | P2 | MUST | Deltas from the last *K* versions (default 10) and from the *N* versions with most active installs (default 5) **MUST** be precomputed at publish time; all others **MUST** be computed on first request, deduplicated across concurrent requests (single-flight), and cached. | SPEC |
-| `REL-023` | P2 | MUST | If a delta is larger than 60% of the full compressed bundle, the server **MUST** instruct the device to download the full bundle instead. | SPEC |
-| `REL-024` | P2 | MUST | Delta artifacts **MUST** be content-addressed, immutable and cacheable indefinitely by CDNs (`Cache-Control: public, max-age=31536000, immutable`), and **MUST** support HTTP range requests. | SPEC |
-| `REL-025` | P2 | MUST | A property-based test **MUST** prove `apply(delta(a, b), a) == b` byte-for-byte for generated bundle pairs (`QA-002`). | SPEC |
+| `REL-020` | P2 | MUST | The server **MUST** be able to serve a delta from **every** older version of a bundle to its newest version. | DONE |
+| `REL-021` | P2 | MUST | Deltas **MUST** be computed per section: unchanged sections (equal hash) are referenced, new sections are shipped whole, changed sections are shipped as zstd `--patch-from` binary patches against the old section (ADR-0003). | DONE |
+| `REL-022` | P2 | MUST | Deltas from the last *K* versions (default 10) and from the *N* versions with most active installs (default 5) **MUST** be precomputed at publish time; all others **MUST** be computed on first request, deduplicated across concurrent requests (single-flight), and cached. | DONE |
+| `REL-023` | P2 | MUST | If a delta is larger than 60% of the full compressed bundle, the server **MUST** instruct the device to download the full bundle instead. | DONE |
+| `REL-024` | P2 | MUST | Delta artifacts **MUST** be content-addressed, immutable and cacheable indefinitely by CDNs (`Cache-Control: public, max-age=31536000, immutable`), and **MUST** support HTTP range requests. | DONE |
+| `REL-025` | P2 | MUST | A property-based test **MUST** prove `apply(delta(a, b), a) == b` byte-for-byte for generated bundle pairs (`QA-002`). | DONE |
 
 ### 10.3 Manifest
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `REL-030` | P2 | MUST | The manifest **MUST** contain: app ID, environment, channel, release sequence, issue time, expiry, app bundle descriptor, and for each plugin its key, version, bundle hash, size, required features, minimum runtime version and download locations; plus control flags (kill switches, mandatory update) and the rollout and experiment metadata the device needs. | SPEC |
-| `REL-031` | P2 | MUST | The manifest **MUST** be signed (§15.5) and **MUST** be served with an ETag so an unchanged manifest costs one conditional request and a `304` (≤ 1 KiB on the wire). | SPEC |
-| `REL-032` | P2 | MUST | The manifest request **MUST** carry the device's installed release sequence and bundle hashes so the server can return a **sync plan** with the exact deltas to fetch. | SPEC |
-| `REL-033` | P2 | MUST | Manifest responses **MUST** be tailored per device only through rollout, targeting and experiment rules evaluated server-side; the same inputs **MUST** always yield the same manifest. | SPEC |
+| `REL-030` | P2 | MUST | The manifest **MUST** contain: app ID, environment, channel, release sequence, issue time, expiry, app bundle descriptor, and for each plugin its key, version, bundle hash, size, required features, minimum runtime version and download locations; plus control flags (kill switches, mandatory update) and the rollout and experiment metadata the device needs. | DONE |
+| `REL-031` | P2 | MUST | The manifest **MUST** be signed (§15.5) and **MUST** be served with an ETag so an unchanged manifest costs one conditional request and a `304` (≤ 1 KiB on the wire). | DONE |
+| `REL-032` | P2 | MUST | The manifest request **MUST** carry the device's installed release sequence and bundle hashes so the server can return a **sync plan** with the exact deltas to fetch. | DONE |
+| `REL-033` | P2 | MUST | Manifest responses **MUST** be tailored per device only through rollout, targeting and experiment rules evaluated server-side; the same inputs **MUST** always yield the same manifest. | DONE |
 
 ### 10.4 Device sync
 
@@ -906,7 +906,7 @@ Branching is deliberately **not** part of the model (ADR-0015). Each plugin has 
 | `SRV-062` | P9 | MUST | The server **MUST** send notifications (approval requested, release published, rollout paused, lock requested, function failing) via in-app inbox, email (SMTP), and webhooks to Slack, Microsoft Teams and Telegram. | SPEC |
 | `SRV-063` | P9 | MUST | Outbound webhooks **MUST** follow the Standard Webhooks specification (signed with HMAC, timestamped, with IDs for deduplication) and retry with backoff. | SPEC |
 | `SRV-064` | P2 | MUST | A public API **MUST** be available to personal access tokens (scoped, expiring, revocable) and to CI via OIDC workload identity federation (e.g. GitHub Actions) without long-lived secrets. | DONE |
-| `SRV-065` | P2 | MUST | Rate limits **MUST** apply per principal, per device and per IP, returning `RESOURCE_EXHAUSTED` with retry information. | WIP |
+| `SRV-065` | P2 | MUST | Rate limits **MUST** apply per principal, per device and per IP, returning `RESOURCE_EXHAUSTED` with retry information. | DONE |
 
 ---
 
@@ -1461,7 +1461,7 @@ Approvals are generic: the same engine governs publishing, function deployment, 
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `GOV-010` | P2 | MUST | Apps **MUST** have environments (default development, staging, production; custom allowed) with their own variables, secrets, data source URLs, signing keys and device registrations. | WIP |
+| `GOV-010` | P2 | MUST | Apps **MUST** have environments (default development, staging, production; custom allowed) with their own variables, secrets, data source URLs, signing keys and device registrations. | DONE |
 | `GOV-011` | P9 | SHOULD | Each app **SHOULD** be exportable to a Git repository in the file layout of `SCH-006` on every publish (for review and audit), and **MAY** be imported from Git through the CLI for teams that prefer docs-as-code. | SPEC |
 | `GOV-030` | P9 | MUST | Self-hosted installations **MUST** validate a signed, offline license file (organisation, limits, features, expiry, grace period) without calling home. | SPEC |
 | `GOV-031` | P2 | MUST | Deleted apps, plugins and pages **MUST** go to a trash with 30-day restore before permanent deletion, except where retention rules require longer. | DONE |
@@ -1948,14 +1948,14 @@ This section concerns how Plux itself is verified. §22.2 covers the testing too
 | `NFR-002` | P3 | MUST | Tap → first frame of a cached Plux page (≤ 300 nodes) | ≤ 100 ms p95 (mid-tier); ≤ 200 ms p95 (low-end) | SPEC |
 | `NFR-003` | P3 | MUST | Page build time for 300 nodes | ≤ 8 ms p95 (mid-tier) | SPEC |
 | `NFR-004` | P5 | MUST | Scrolling a 1,000-item Plux list | ≤ 1% janky frames at 60 Hz (mid-tier); no frame > 32 ms | SPEC |
-| `NFR-005` | P2 | MUST | Delta size for a single text change in one page | ≤ 2 KiB | SPEC |
+| `NFR-005` | P2 | MUST | Delta size for a single text change in one page | ≤ 2 KiB | DONE |
 | `NFR-006` | P3 | MUST | Up-to-date check at app start | 1 request, ≤ 1 KiB on the wire (`304`) | SPEC |
 | `NFR-007` | P3 | MUST | Sync of a typical update (3 plugins changed) on slow network | ≤ 3 s p95 | SPEC |
 | `NFR-008` | P3 | MUST | Runtime memory overhead with 50 plugins installed | ≤ 30 MiB (excluding images) | SPEC |
 | `NFR-009` | P3 | MUST | Core package size | ≤ 3 MiB per platform (`RT-061`) | SPEC |
 | `NFR-010` | P5 | MUST | PXL typical binding evaluation | ≤ 2 µs p95 (`PXL-004`) | SPEC |
 | `NFR-011` | P5 | MUST | Action interpreter overhead | ≤ 20 µs per step p95 (`ACT-008`) | SPEC |
-| `NFR-020` | P2 | MUST | Manifest endpoint throughput | ≥ 5,000 req/s per `api` replica at p99 ≤ 50 ms (cache hit) | SPEC |
+| `NFR-020` | P2 | MUST | Manifest endpoint throughput | ≥ 5,000 req/s per `api` replica at p99 ≤ 50 ms (cache hit) | WIP |
 | `NFR-021` | P2 | MUST | Publish of a 50-page plugin with deltas | ≤ 15 s p95 (`SRV-053`) | SPEC |
 | `NFR-022` | P7 | MUST | Function invocation overhead | warm ≤ 1 ms p99; first after deploy ≤ 50 ms p99 (`FN-023`) | SPEC |
 | `NFR-023` | P9 | MUST | Scale of one HA installation (with CDN) | ≥ 1,000,000 active devices, ≥ 100 apps | SPEC |

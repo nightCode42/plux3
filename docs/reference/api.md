@@ -21,10 +21,10 @@ for integrators who call it as plain HTTP/JSON.
 | `AssetService` | Uploads, sniffing, variants | `SRV-060`, `AST-003` |
 | `PublishService` | Publish jobs with streamed progress | `SRV-050`, `SRV-051` |
 | `ReleaseService` | Plugin versions, app releases, promotion, rollback, changelog, compatibility | `REL-001`–`REL-007`, `REL-080`, `REL-081` |
-| `ManifestService` | Signed manifest, sync plan, public keys | `REL-030`–`REL-033` |
-| `DeviceService` | Device registration and installed releases | `REL-080` |
-| `TokenService` | Short-lived device tokens | `SRV-064` |
-| `TelemetryService` | Runtime event ingestion | Appendix G.2 |
+| `ManifestService` | Signed manifest, sync plan, public keys | `REL-020`–`REL-024`, `REL-030`–`REL-033` |
+| `DeviceService` | Device registration and installed releases | `GOV-010`, `REL-080` |
+| `TokenService` | Short-lived device tokens | `GOV-010`, `SRV-065` |
+| `TelemetryService` | Runtime event ingestion and listing | Appendix G.2, `SCH-012` |
 | `ControlService` | Kill switches and the mandatory-update flag | `REL-030` |
 
 Services listed in `SRV-003` for later phases — rollouts, experiments,
@@ -166,13 +166,42 @@ diagnostics are errors, so every problem is reported at once.
 | Studio | the `__Host-plux_session` cookie (`HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/`) set by `StartPasswordLogin` or `CompleteMfa`, plus the session's CSRF token in `X-CSRF-Token` on **every** call made with it (`SEC-101`) |
 | CLI | `Authorization: Bearer plux_pat_…`: a personal access token, or one obtained by `plux login` through the OAuth 2.0 device authorization grant (`CLI-002`) |
 | CI | a bearer token exchanged by `ExchangeWorkloadIdentity` from the provider's OpenID Connect identity token, with no long-lived secret (`SRV-064`) |
-| Device | a short-lived token from `TokenService`; sender-constrained with DPoP from P6 |
+| Device | `Authorization: Bearer plux_dat_…`: a 15-minute token from `IssueDeviceToken`, exchanged for the `plux_dsec_…` credential `RegisterDevice` returned once; sender-constrained with DPoP and backed by attestation from P6 |
 
 A request carrying both a cookie and a bearer token is refused. The
 procedures that take no credential authenticate by what they carry:
 `AcceptInvitation`, `StartPasswordLogin`, `CompleteMfa`,
-`StartDeviceAuthorization`, `PollDeviceAuthorization` and
-`ExchangeWorkloadIdentity`.
+`StartDeviceAuthorization`, `PollDeviceAuthorization`,
+`ExchangeWorkloadIdentity`, `RegisterDevice` and `IssueDeviceToken`.
+
+A device token opens exactly four procedures — `GetManifest`,
+`GetRootKeys`, `ReportInstalled` and `IngestEvents` — and those need one,
+except `GetRootKeys`, which people and CI may also call for an
+environment of an app they can read (`plux pull`). Every other procedure
+refuses a device token. A device's calls count against its own allowance,
+`api.requestsPerMinutePerDevice` (`SRV-065`).
+
+### Manifest and sync plan
+
+`GetManifest` answers with the newest manifest the worker signed for the
+device's own app, environment and the requested channel (default
+`production`). `signed` holds the RFC 8785 canonical JSON the signatures
+cover: type, spec version, role (`targets`), app, environment, channel,
+release sequence, issue and expiry times, the app bundle and every
+plugin's key, version, bundle hash, size, required features and minimum
+runtime, the control switches, and experiment assignments (empty until
+P9) (`REL-030`). The typed fields repeat it for convenience; a device
+verifies `signed`, never a re-encoding.
+
+The request lists the bundles the device holds; each bundle's `sync` says
+`keep`, `delta` (with the hash it applies to, its URL and size) or `full`
+(`REL-032`). A delta is offered only when it is at most 60 % of the
+compressed bundle (`REL-023`). The plan and the download URLs are **not**
+part of `signed`: they depend on the device and on where objects are
+hosted, and they need no signature, because the device checks what it
+rebuilds or downloads against the signed hashes. The response carries an
+`ETag` over the manifest and the installed bundles; sending it back as
+`if_none_match` returns `not_modified` and nothing else (`REL-031`).
 
 Authorisation is deny-by-default and evaluated for every call against RBAC
 permissions and resource scope, with PostgreSQL row-level security as a
@@ -190,3 +219,5 @@ content-addressed objects served over plain HTTP from object storage, a CDN
 or the server itself, with `Cache-Control: public, max-age=31536000,
 immutable` and range support (`SRV-023`, `REL-024`, `DEP-041`). The API
 returns their hashes, sizes and URLs; the manifest signs the hashes.
+Without a CDN the api role serves bundles and deltas itself at
+`GET /v1/objects/<kind>/<xx>/<sha256>`.

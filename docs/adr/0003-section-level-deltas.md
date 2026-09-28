@@ -124,3 +124,29 @@ The strongest of the whole-file patchers, with a low-memory applier. Its advanta
 on large, heavily rewritten files; Plux bundles are small and mostly untouched between
 versions, which is precisely where per-section reuse dominates. Rejected for the dependency
 it would add on both sides for no measured gain.
+
+## Implementation notes (P2)
+
+- **Wire format** (`backend/internal/delta`, little-endian): an 80-byte header — `PXDL`,
+  format version 1, the new bundle's kind, the section count, flags (zero), the old and the
+  new bundle hash — then one instruction per section of the new bundle in directory order:
+  ID, kind, operation (`reuse` 0, `whole` 1, `patch` 2), a reserved zero byte, the section's
+  size and the payload length, then the payload. A `reuse` payload is the old section's
+  SHA-256; a `patch` payload is the old section's SHA-256 followed by the zstd frame. Each
+  section is decoded into a buffer of its declared size, so a hostile delta cannot make the
+  applier allocate beyond it; the rebuilt bundle must have the hash in the header.
+  `PLX-3012` reports a malformed delta, `PLX-3011` a result that is not the named bundle.
+- **Single flight.** Concurrent requests for the same missing pair are joined inside one api
+  replica; across replicas the pair may be computed twice, and the second insert is a no-op
+  because the delta's bytes, and therefore its address, are the same. This replaces the
+  cache marker named above: it needs no shared state and loses nothing but a little work.
+- **Precomputation.** A publish enqueues a job, in the transaction that records the version,
+  that computes the deltas from the plugin's ten newest versions and from the five bundles
+  most devices report holding (`REL-022`); the constants are `release.RecentDeltas` and
+  `release.PopularDeltas`. A pair is computed only when the old bundle belongs to the same
+  organisation.
+- **Measured.** One translated message changed in the loan calculator: a 635-byte delta
+  against a 2,231-byte compressed app bundle (`TestManifestAndDeltas`), inside `NFR-005`.
+  It is larger than the 39 bytes measured in N1 because the app bundle's `meta` section
+  changes too and is shipped as a patch. The benchmark on the reference deployment is in
+  `docs/benchmarks/p2-backend.md`.

@@ -16,19 +16,34 @@ import (
 
 	"github.com/nightCode42/plux3/backend/internal/auth"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1"
+	"github.com/nightCode42/plux3/backend/internal/release"
 )
 
 // runPublishes runs the publish jobs the API enqueued, as the worker
 // would.
 func (w *world) runPublishes(t *testing.T) {
 	t.Helper()
-	w.queue.mu.Lock()
-	jobs := w.queue.jobs
-	w.queue.jobs = nil
-	w.queue.mu.Unlock()
-	for _, j := range jobs {
-		if err := w.releases.RunPublish(context.Background(), j); err != nil {
-			t.Fatalf("RunPublish: %v", err)
+	for {
+		w.queue.mu.Lock()
+		jobs := w.queue.jobs
+		w.queue.jobs = nil
+		w.queue.mu.Unlock()
+		if len(jobs) == 0 {
+			return
+		}
+		for _, job := range jobs {
+			var err error
+			switch j := job.(type) {
+			case release.Job:
+				err = w.releases.RunPublish(context.Background(), j)
+			case release.ManifestJob:
+				err = w.releases.SignManifest(context.Background(), j)
+			case release.DeltaJob:
+				err = w.releases.PrecomputeDeltas(context.Background(), j)
+			}
+			if err != nil {
+				t.Fatalf("%T: %v", job, err)
+			}
 		}
 	}
 }

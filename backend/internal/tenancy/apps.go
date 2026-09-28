@@ -315,6 +315,25 @@ func (s *Service) ListEnvironments(ctx context.Context, p auth.Principal, appID 
 	return out, err
 }
 
+// GetEnvironmentByKey returns an app's environment by its key.
+func (s *Service) GetEnvironmentByKey(ctx context.Context, p auth.Principal, appID, key string) (Environment, error) {
+	var out Environment
+	err := s.inOrg(ctx, p, func(ctx context.Context, tx pgx.Tx) error {
+		q := dbgen.New(tx)
+		app, err := s.app(ctx, q, p, auth.AppRead, appID)
+		if err != nil {
+			return err
+		}
+		row, err := q.GetEnvironmentByKey(ctx, dbgen.GetEnvironmentByKeyParams{AppID: app.ID, Key: key})
+		if err != nil {
+			return failure(err, "environment")
+		}
+		out = environmentOf(row)
+		return nil
+	})
+	return out, err
+}
+
 // UpdateEnvironment renames an environment.
 func (s *Service) UpdateEnvironment(ctx context.Context, p auth.Principal, envID, name string) (Environment, error) {
 	name = strings.TrimSpace(name)

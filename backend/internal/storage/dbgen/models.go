@@ -104,6 +104,45 @@ type Channel struct {
 	UpdatedAt       pgtype.Timestamptz
 }
 
+type ChannelControl struct {
+	ChannelID         pgtype.UUID
+	OrganizationID    pgtype.UUID
+	KillSwitchPlugins []string
+	AppKillSwitch     bool
+	MandatoryUpdate   bool
+	Message           string
+	UpdatedByKind     string
+	UpdatedByID       string
+	UpdatedBy         string
+	UpdatedAt         pgtype.Timestamptz
+}
+
+type Delta struct {
+	OrganizationID pgtype.UUID
+	FromSha256     []byte
+	ToSha256       []byte
+	DeltaSha256    []byte
+	Size           int64
+	FullSize       int64
+	CreatedAt      pgtype.Timestamptz
+}
+
+type Device struct {
+	ID                pgtype.UUID
+	OrganizationID    pgtype.UUID
+	AppID             pgtype.UUID
+	EnvironmentID     pgtype.UUID
+	Platform          string
+	OsVersion         string
+	RuntimeVersion    string
+	HostBuild         string
+	AssuranceLevel    string
+	SecretHash        []byte
+	InstalledSequence int64
+	RegisteredAt      pgtype.Timestamptz
+	LastSeenAt        pgtype.Timestamptz
+}
+
 type DeviceAuthorization struct {
 	ID                     pgtype.UUID
 	DeviceCode             []byte
@@ -117,6 +156,21 @@ type DeviceAuthorization struct {
 	TokenID                pgtype.UUID
 	CreatedAt              pgtype.Timestamptz
 	ExpiresAt              pgtype.Timestamptz
+}
+
+type DeviceBundle struct {
+	DeviceID       pgtype.UUID
+	OrganizationID pgtype.UUID
+	PluginKey      string
+	BundleSha256   []byte
+}
+
+type DeviceToken struct {
+	ID             pgtype.UUID
+	OrganizationID pgtype.UUID
+	DeviceID       pgtype.UUID
+	SecretHash     []byte
+	ExpiresAt      pgtype.Timestamptz
 }
 
 type Document struct {
@@ -154,6 +208,15 @@ type Environment struct {
 	Name           string
 	Production     bool
 	SigningKeyRef  string
+	CreatedAt      pgtype.Timestamptz
+}
+
+type EnvironmentKey struct {
+	EnvironmentID  pgtype.UUID
+	OrganizationID pgtype.UUID
+	KeyID          string
+	Algorithm      string
+	PublicKey      []byte
 	CreatedAt      pgtype.Timestamptz
 }
 
@@ -216,6 +279,17 @@ type Lock struct {
 	PreviousSession string
 	PreviousHolder  string
 	RequestedBy     []byte
+}
+
+type Manifest struct {
+	ID              pgtype.UUID
+	OrganizationID  pgtype.UUID
+	ChannelID       pgtype.UUID
+	ReleaseSequence int64
+	Signed          []byte
+	Signatures      []byte
+	IssuedAt        pgtype.Timestamptz
+	ExpiresAt       pgtype.Timestamptz
 }
 
 type Membership struct {
@@ -395,6 +469,21 @@ type Team struct {
 	Key            string
 	Name           string
 	CreatedAt      pgtype.Timestamptz
+}
+
+type TelemetryEvent struct {
+	ID              pgtype.UUID
+	OrganizationID  pgtype.UUID
+	AppID           pgtype.UUID
+	EnvironmentID   pgtype.UUID
+	DeviceID        pgtype.UUID
+	Name            string
+	Time            pgtype.Timestamptz
+	ReleaseSequence int64
+	PluginKey       string
+	Route           string
+	Fields          []byte
+	ReceivedAt      pgtype.Timestamptz
 }
 
 type Trash struct {

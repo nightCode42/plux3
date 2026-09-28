@@ -115,6 +115,9 @@ const (
 	// ScopeInstallation reads and writes the audit entries that belong
 	// to no organisation, such as a sign-in.
 	ScopeInstallation Scope = "installation"
+	// ScopeRegistration lets a registering device find its app and
+	// environment before its organisation is known.
+	ScopeRegistration Scope = "registration"
 )
 
 // InTx runs f in a transaction bound to a tenant. The settings are set

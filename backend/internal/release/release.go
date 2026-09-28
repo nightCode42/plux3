@@ -47,15 +47,21 @@ type Job struct {
 // Kind names the job.
 func (Job) Kind() string { return "publish.run" }
 
-// Enqueuer adds a publish job in the caller's transaction.
-type Enqueuer interface {
-	Enqueue(ctx context.Context, tx pgx.Tx, job Job) error
+// Work is a job this package asks the worker to run: a Job, a
+// ManifestJob or a DeltaJob.
+type Work interface {
+	Kind() string
 }
 
-// Devices counts registered devices that cannot use a release, for
-// REL-080; nil counts none until device registrations exist.
+// Enqueuer adds a job in the caller's transaction.
+type Enqueuer interface {
+	Enqueue(ctx context.Context, tx pgx.Tx, job Work) error
+}
+
+// Devices counts the registered devices of an app that cannot use a
+// release, for REL-080; nil counts none.
 type Devices interface {
-	Incompatible(ctx context.Context, tx pgx.Tx, appID, minRuntime string, features []string) (int64, error)
+	Incompatible(ctx context.Context, tx pgx.Tx, appID, minRuntime string) (int64, error)
 }
 
 // Options configures a Service.
@@ -68,9 +74,15 @@ type Options struct {
 	IDs       IDs
 	// Jobs enqueues publishes; the api role sets it.
 	Jobs Enqueuer
-	// Signer signs bundle hashes; only the worker role is given one
-	// (SRV-052). Nil refuses to run a publish.
+	// Signer signs bundle hashes and manifests; only the worker role is
+	// given one (SRV-052). Nil refuses to run a publish.
 	Signer signing.Signer
+	// ProductionSigning reports whether the signer may sign for a
+	// production environment; the file backend may not (SEC-056).
+	ProductionSigning bool
+	// PublicBaseURL is where this server is reached, for object URLs
+	// when the store has no location of its own (DEP-041).
+	PublicBaseURL string
 	// Devices answers REL-080's question; nil counts none.
 	Devices Devices
 	// Limits are the installation's limits.
@@ -86,8 +98,9 @@ type Options struct {
 
 // Service is the domain logic of versions and releases.
 type Service struct {
-	o   Options
-	now func() time.Time
+	o       Options
+	now     func() time.Time
+	flights *flightGroup
 }
 
 // NewService returns the service.
@@ -111,7 +124,7 @@ func NewService(o Options) (*Service, error) {
 	if now == nil {
 		now = time.Now
 	}
-	return &Service{o: o, now: now}, nil
+	return &Service{o: o, now: now, flights: &flightGroup{}}, nil
 }
 
 // inOrg runs f in a transaction bound to the principal's organisation.

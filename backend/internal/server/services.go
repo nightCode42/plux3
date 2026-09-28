@@ -28,6 +28,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/buildinfo"
 	"github.com/nightCode42/plux3/backend/internal/cache"
 	"github.com/nightCode42/plux3/backend/internal/config"
+	"github.com/nightCode42/plux3/backend/internal/device"
 	"github.com/nightCode42/plux3/backend/internal/document"
 	"github.com/nightCode42/plux3/backend/internal/httpx"
 	"github.com/nightCode42/plux3/backend/internal/jobs"
@@ -38,6 +39,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/signing"
 	"github.com/nightCode42/plux3/backend/internal/storage"
 	"github.com/nightCode42/plux3/backend/internal/storage/idempotency"
+	"github.com/nightCode42/plux3/backend/internal/telemetry"
 	"github.com/nightCode42/plux3/backend/internal/tenancy"
 )
 
@@ -51,6 +53,8 @@ type Services struct {
 	Tenancy     *tenancy.Service
 	Documents   *document.Service
 	Releases    *release.Service
+	Devices     *device.Service
+	Events      *telemetry.Service
 	Idempotency *idempotency.Store
 	Pages       *api.Pages
 }
@@ -64,6 +68,9 @@ type WorkDeps struct {
 	Queue   *JobQueue
 	Codecs  *media.Codecs
 	Signer  signing.Signer
+	// ProductionSigning reports whether the signer may sign for
+	// production environments (SEC-056).
+	ProductionSigning bool
 }
 
 // scanner returns the configured malware scanner, or nil (SRV-060).
@@ -103,8 +110,30 @@ func (a assetQueue) Enqueue(ctx context.Context, tx pgx.Tx, job document.AssetJo
 // publishQueue enqueues publish jobs (SRV-050).
 type publishQueue struct{ q *JobQueue }
 
-func (p publishQueue) Enqueue(ctx context.Context, tx pgx.Tx, job release.Job) error {
+func (p publishQueue) Enqueue(ctx context.Context, tx pgx.Tx, job release.Work) error {
 	return p.q.insert(ctx, tx, job, jobs.QueuePublish)
+}
+
+// manifestWorker signs manifests (REL-031).
+type manifestWorker struct {
+	river.WorkerDefaults[release.ManifestJob]
+	svc *Services
+}
+
+// Work signs one channel's manifest.
+func (w *manifestWorker) Work(ctx context.Context, job *river.Job[release.ManifestJob]) error {
+	return w.svc.Releases.SignManifest(ctx, job.Args) //nolint:wrapcheck // a domain error
+}
+
+// deltaWorker precomputes deltas after a publish (REL-022).
+type deltaWorker struct {
+	river.WorkerDefaults[release.DeltaJob]
+	svc *Services
+}
+
+// Work computes one version's deltas.
+func (w *deltaWorker) Work(ctx context.Context, job *river.Job[release.DeltaJob]) error {
+	return w.svc.Releases.PrecomputeDeltas(ctx, job.Args) //nolint:wrapcheck // a domain error
 }
 
 // publishWorker runs publishes (SRV-050).
@@ -231,11 +260,20 @@ func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shar
 	if err != nil {
 		return nil, fmt.Errorf("server: %w", err)
 	}
+	devices, err := device.NewService(device.Options{DB: db, IDs: gen})
+	if err != nil {
+		return nil, fmt.Errorf("server: %w", err)
+	}
+	events, err := telemetry.NewService(telemetry.Options{DB: db, IDs: gen, Limits: set})
+	if err != nil {
+		return nil, fmt.Errorf("server: %w", err)
+	}
 	var releases *release.Service
 	if work.Objects != nil {
 		if releases, err = release.NewService(release.Options{
 			DB: db, Audit: log, Tenancy: tenancyService, Documents: docs, Objects: work.Objects, IDs: gen,
-			Jobs: publishQueue{work.Queue}, Signer: work.Signer, Limits: set,
+			Jobs: publishQueue{work.Queue}, Signer: work.Signer, ProductionSigning: work.ProductionSigning, Limits: set,
+			Devices: devices, PublicBaseURL: cfg.Server.PublicBaseURL,
 			CompilerVersion: buildinfo.Get().Version, DevelopmentDays: cfg.Retention.DevelopmentReleaseDays,
 		}); err != nil {
 			return nil, fmt.Errorf("server: %w", err)
@@ -244,7 +282,7 @@ func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shar
 	}
 	return &Services{
 		Audit: log, Auth: authService, Tenancy: tenancyService, Documents: docs, Releases: releases,
-		Idempotency: store, Pages: pages,
+		Devices: devices, Events: events, Idempotency: store, Pages: pages,
 	}, nil
 }
 
@@ -312,10 +350,12 @@ func (s *Server) RegisterAPI(svc *Services) {
 		limiter.Count = s.cache.Increment
 	}
 	h := &api.Handlers{
-		Auth: svc.Auth, Tenancy: svc.Tenancy, Documents: svc.Documents, Releases: svc.Releases, Idempotency: svc.Idempotency, Pages: svc.Pages,
+		Auth: svc.Auth, Tenancy: svc.Tenancy, Documents: svc.Documents, Releases: svc.Releases, Devices: svc.Devices, Events: svc.Events,
+		Idempotency: svc.Idempotency, Pages: svc.Pages,
 		Limiter: limiter, Limits: s.limits,
 	}
-	authn := api.Authentication(svc.Auth, api.IdentityPublic, s.trusted, limiter, s.limits.Get(limits.APIRequestsPerMinute))
+	people := api.Authentication(svc.Auth, api.IdentityPublic, s.trusted, limiter, s.limits.Get(limits.APIRequestsPerMinute))
+	authn := api.DeviceAuthentication(svc.Devices, limiter, s.limits.Get(limits.APIRequestsPerMinutePerDevice), people)
 	opts := connect.WithInterceptors(s.Interceptors(authn)...)
 	registrations := []func() (string, http.Handler){
 		func() (string, http.Handler) { return pluxv1connect.NewIdentityServiceHandler(h.Identity(), opts) },
@@ -326,15 +366,23 @@ func (s *Server) RegisterAPI(svc *Services) {
 		func() (string, http.Handler) { return pluxv1connect.NewComponentServiceHandler(h.Component(), opts) },
 		func() (string, http.Handler) { return pluxv1connect.NewTemplateServiceHandler(h.Template(), opts) },
 		func() (string, http.Handler) { return pluxv1connect.NewAssetServiceHandler(h.Asset(), opts) },
+		func() (string, http.Handler) { return pluxv1connect.NewDeviceServiceHandler(h.Device(), opts) },
+		func() (string, http.Handler) { return pluxv1connect.NewTokenServiceHandler(h.Token(), opts) },
+		func() (string, http.Handler) { return pluxv1connect.NewTelemetryServiceHandler(h.Telemetry(), opts) },
 	}
 	if svc.Releases != nil {
 		registrations = append(registrations,
 			func() (string, http.Handler) { return pluxv1connect.NewPublishServiceHandler(h.Publish(), opts) },
-			func() (string, http.Handler) { return pluxv1connect.NewReleaseServiceHandler(h.Release(), opts) })
+			func() (string, http.Handler) { return pluxv1connect.NewReleaseServiceHandler(h.Release(), opts) },
+			func() (string, http.Handler) { return pluxv1connect.NewManifestServiceHandler(h.Manifest(), opts) },
+			func() (string, http.Handler) { return pluxv1connect.NewControlServiceHandler(h.Control(), opts) })
 	}
 	for _, register := range registrations {
 		path, handler := register()
 		s.Register(path, handler)
+	}
+	if s.objects != nil {
+		s.Register("GET "+release.ObjectsPath, s.objectHandler())
 	}
 }
 
@@ -368,6 +416,7 @@ func (w *maintenanceWorker) Work(ctx context.Context, _ *river.Job[Maintenance])
 	errs = append(errs, err)
 	snapshots := 0
 	released := 0
+	signed := 0
 	err = w.svc.Tenancy.ForEachOrganization(ctx, func(org string) error {
 		if w.svc.Releases != nil {
 			n, err := w.svc.Releases.PurgeReleases(ctx, org)
@@ -375,6 +424,20 @@ func (w *maintenanceWorker) Work(ctx context.Context, _ *river.Job[Maintenance])
 			if err != nil {
 				return err //nolint:wrapcheck // a domain error
 			}
+			m, err := w.svc.Releases.RefreshManifests(ctx, org)
+			signed += m
+			if err != nil {
+				return err //nolint:wrapcheck // a domain error
+			}
+			if _, err := w.svc.Releases.PurgeManifests(ctx, org); err != nil {
+				return err //nolint:wrapcheck // a domain error
+			}
+		}
+		if _, err := w.svc.Devices.ExpireTokens(ctx, org); err != nil {
+			return err //nolint:wrapcheck // a domain error
+		}
+		if _, err := w.svc.Events.Purge(ctx, org); err != nil {
+			return err //nolint:wrapcheck // a domain error
 		}
 		n, err := w.svc.Documents.PurgeSnapshots(ctx, org)
 		snapshots += n
@@ -387,7 +450,7 @@ func (w *maintenanceWorker) Work(ctx context.Context, _ *river.Job[Maintenance])
 	errs = append(errs, err)
 	if w.log != nil {
 		w.log.InfoContext(ctx, "maintenance sweep",
-			slog.Int("trashPurged", purged), slog.Int("snapshotsPurged", snapshots), slog.Int("releasesPurged", released), slog.Int64("idempotencyKeysExpired", keys),
+			slog.Int("trashPurged", purged), slog.Int("snapshotsPurged", snapshots), slog.Int("releasesPurged", released), slog.Int("manifestsSigned", signed), slog.Int64("idempotencyKeysExpired", keys),
 			slog.Int64("credentialsExpired", creds))
 	}
 	return errors.Join(errs...)

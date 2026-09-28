@@ -128,6 +128,7 @@ func buildWork(ctx context.Context, cfg *config.Config, log *slog.Logger, db *st
 			return nil, nil, fmt.Errorf("server: %w", err)
 		}
 		deps.Signer = backend
+		deps.ProductionSigning = backend.AllowedInProduction()
 	}
 	services, err := BuildServices(ctx, cfg, db, shared, set, backend, deps)
 	if err != nil {
@@ -139,6 +140,8 @@ func buildWork(ctx context.Context, cfg *config.Config, log *slog.Logger, db *st
 	}
 	if deps.Signer != nil && services.Releases != nil {
 		jobs.AddWorker(workers, &publishWorker{svc: services})
+		jobs.AddWorker(workers, &manifestWorker{svc: services})
+		jobs.AddWorker(workers, &deltaWorker{svc: services})
 	}
 	jobClient, err := jobs.New(jobs.Options{
 		Pool:     db.Pool(),

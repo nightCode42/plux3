@@ -281,18 +281,22 @@ func (s *Service) RunPublish(ctx context.Context, job Job) error {
 	}
 	diags := c.result.Diagnostics
 	if diags.HasErrors() {
-		return s.finish(ctx, system, row, StateFailed, diags, 0)
+		return s.fail(ctx, system, row, diags)
 	}
 	if !row.AcknowledgeWarnings && slices.ContainsFunc(diags, func(d plxerr.Diagnostic) bool { return d.Severity == plxerr.SeverityWarning }) {
 		d := plxerr.NewDiagnostic(plxerr.WarningsNotAcknowledged, plxerr.Location{}, "the publish found warnings; acknowledge them to publish")
-		return s.finish(ctx, system, row, StateFailed, append(diags, d), 0)
+		return s.fail(ctx, system, row, append(diags, d))
 	}
 	b := pickBundle(c.result, c.key)
 	if b == nil {
-		return s.finish(ctx, system, row, StateFailed, append(diags, plxerr.NewDiagnostic(plxerr.PluginNotPublished, plxerr.Location{}, "the compilation produced no bundle for this draft")), 0)
+		return s.fail(ctx, system, row, append(diags, plxerr.NewDiagnostic(plxerr.PluginNotPublished, plxerr.Location{}, "the compilation produced no bundle for this draft")))
 	}
 	if err := s.progress(ctx, system, row, "sign"); err != nil {
 		return err
+	}
+	if env.Production && !s.o.ProductionSigning {
+		d := plxerr.NewDiagnostic(plxerr.PermissionDenied, plxerr.Location{}, "the signing backend keeps keys on disk and cannot sign for a production environment (SEC-056)")
+		return s.fail(ctx, system, row, append(diags, d))
 	}
 	sig, keyID, err := s.o.Signer.Sign(ctx, env.SigningKeyRef, b.Hash[:])
 	if err != nil {
@@ -519,6 +523,9 @@ func (s *Service) recordVersion(ctx context.Context, p auth.Principal, row dbgen
 		if err := s.finishTx(ctx, q, row, StateSucceeded, diags, next); err != nil {
 			return err
 		}
+		if err := s.enqueueDeltas(ctx, tx, p.OrganizationID, storage.ID(row.AppID), c.key, b.Hash[:]); err != nil {
+			return err
+		}
 		actor := auth.Principal{Identity: auth.Identity{Kind: row.ActorKind, ID: row.ActorID, Display: row.ActorDisplay}, OrganizationID: p.OrganizationID}
 		return s.record(ctx, tx, actor, audit.Entry{
 			Action: audit.VersionPublished, TargetKind: "version", TargetID: id,
@@ -568,10 +575,10 @@ func keyOrApp(key string, row dbgen.PublishJob) string {
 	return "app bundle"
 }
 
-// finish ends a job without a version.
-func (s *Service) finish(ctx context.Context, p auth.Principal, row dbgen.PublishJob, state string, diags plxerr.Diagnostics, version int64) error {
+// fail ends a job without a version.
+func (s *Service) fail(ctx context.Context, p auth.Principal, row dbgen.PublishJob, diags plxerr.Diagnostics) error {
 	return s.inOrg(ctx, p, func(ctx context.Context, tx pgx.Tx) error {
-		return s.finishTx(ctx, dbgen.New(tx), row, state, diags, version)
+		return s.finishTx(ctx, dbgen.New(tx), row, StateFailed, diags, 0)
 	})
 }
 

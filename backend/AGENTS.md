@@ -27,7 +27,9 @@ The Go module `github.com/nightCode42/plux3/backend`: the Plux Server (`plux-ser
 | `internal/tenancy/` | Organisations, teams, members, apps, environments, channels, variables, secrets, app access, trash, limit overrides | AGPL-3.0-only |
 | `internal/document/` | Drafts, documents with revisions and JSON Patch, snapshots and their retention, editing locks, plugins, import and export in the Git layout, templates, components and usages (ADR-0015) | AGPL-3.0-only |
 | `internal/delta/` | Section-level bundle deltas: diff, apply with hash verification ([ADR-0003](../docs/adr/0003-section-level-deltas.md)) | Apache-2.0 |
-| `internal/release/` | Publish jobs, plugin versions, app releases, promotion, rollback, changelogs, compatibility and release retention ([ADR-0020](../docs/adr/0020-build-once-promote-releases.md)) | AGPL-3.0-only |
+| `internal/release/` | Publish jobs, plugin versions, app releases, promotion, rollback, changelogs, compatibility and release retention ([ADR-0020](../docs/adr/0020-build-once-promote-releases.md)); channel switches, signed manifests, sync plans and the delta cache ([ADR-0003](../docs/adr/0003-section-level-deltas.md), [ADR-0004](../docs/adr/0004-tuf-style-update-security.md)) | AGPL-3.0-only |
+| `internal/device/` | Device registration, device credentials and access tokens, installed releases and bundles | AGPL-3.0-only |
+| `internal/telemetry/` | Runtime event ingestion (Appendix G.2), listing and retention | AGPL-3.0-only |
 | `internal/audit/` | The hash-chained, append-only audit log (`SEC-140`) | AGPL-3.0-only |
 | `internal/signing/` | The only package that touches keys: file and Vault Transit backends, envelope encryption (`SEC-106`, `SEC-120`, L-3) | AGPL-3.0-only |
 | `internal/server/` | Role wiring, health, lifecycle ([server.md](../docs/reference/server.md)) | AGPL-3.0-only |

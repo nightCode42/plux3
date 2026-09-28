@@ -44,10 +44,10 @@ func (i ids) New() (string, error) {
 // queue records the publish jobs and asset jobs a write enqueues.
 type queue struct {
 	mu   sync.Mutex
-	jobs []release.Job
+	jobs []release.Work
 }
 
-func (q *queue) Enqueue(_ context.Context, _ pgx.Tx, j release.Job) error {
+func (q *queue) Enqueue(_ context.Context, _ pgx.Tx, j release.Work) error {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	q.jobs = append(q.jobs, j)
@@ -106,7 +106,8 @@ func newFixture(t *testing.T) *fixture {
 	}
 	if f.rel, err = release.NewService(release.Options{
 		DB: db, Audit: log, Tenancy: f.tenancy, Documents: f.docs, Objects: store, IDs: gen,
-		Jobs: f.q, Signer: backend, Now: clock, DevelopmentDays: 90,
+		Jobs: f.q, Signer: backend, ProductionSigning: true, Now: clock, DevelopmentDays: 90,
+		PublicBaseURL: "https://plux.example.com",
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -200,13 +201,27 @@ func (f *fixture) publish(t *testing.T, pluginID string, ack bool) release.Publi
 // run runs every queued job.
 func (f *fixture) run(t *testing.T) {
 	t.Helper()
-	f.q.mu.Lock()
-	jobs := f.q.jobs
-	f.q.jobs = nil
-	f.q.mu.Unlock()
-	for _, j := range jobs {
-		if err := f.rel.RunPublish(context.Background(), j); err != nil {
-			t.Fatalf("RunPublish: %v", err)
+	for {
+		f.q.mu.Lock()
+		jobs := f.q.jobs
+		f.q.jobs = nil
+		f.q.mu.Unlock()
+		if len(jobs) == 0 {
+			return
+		}
+		for _, w := range jobs {
+			var err error
+			switch j := w.(type) {
+			case release.Job:
+				err = f.rel.RunPublish(context.Background(), j)
+			case release.ManifestJob:
+				err = f.rel.SignManifest(context.Background(), j)
+			case release.DeltaJob:
+				err = f.rel.PrecomputeDeltas(context.Background(), j)
+			}
+			if err != nil {
+				t.Fatalf("%T: %v", w, err)
+			}
 		}
 	}
 }

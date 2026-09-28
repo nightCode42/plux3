@@ -22,6 +22,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/audit"
 	"github.com/nightCode42/plux3/backend/internal/auth"
 	"github.com/nightCode42/plux3/backend/internal/cache"
+	"github.com/nightCode42/plux3/backend/internal/device"
 	"github.com/nightCode42/plux3/backend/internal/document"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1/pluxv1connect"
@@ -32,6 +33,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/storage/idempotency"
 	"github.com/nightCode42/plux3/backend/internal/storage/objects"
 	"github.com/nightCode42/plux3/backend/internal/storage/storagetest"
+	"github.com/nightCode42/plux3/backend/internal/telemetry"
 	"github.com/nightCode42/plux3/backend/internal/tenancy"
 )
 
@@ -40,10 +42,10 @@ type uuids struct{ g *uuid7.Generator }
 // publishQueue records publish jobs for the test to run.
 type publishQueue struct {
 	mu   sync.Mutex
-	jobs []release.Job
+	jobs []release.Work
 }
 
-func (q *publishQueue) Enqueue(_ context.Context, _ pgx.Tx, j release.Job) error {
+func (q *publishQueue) Enqueue(_ context.Context, _ pgx.Tx, j release.Work) error {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 	q.jobs = append(q.jobs, j)
@@ -77,6 +79,12 @@ type world struct {
 	asset    pluxv1connect.AssetServiceClient
 	publish  pluxv1connect.PublishServiceClient
 	release  pluxv1connect.ReleaseServiceClient
+	device   pluxv1connect.DeviceServiceClient
+	token    pluxv1connect.TokenServiceClient
+	manifest pluxv1connect.ManifestServiceClient
+	control  pluxv1connect.ControlServiceClient
+	events   pluxv1connect.TelemetryServiceClient
+	devices  *device.Service
 }
 
 func newWorld(t *testing.T) *world {
@@ -114,8 +122,13 @@ func newWorld(t *testing.T) *world {
 		tenancyService.RegisterTrashKind(kind, k)
 	}
 	queue := &publishQueue{}
+	devices, err := device.NewService(device.Options{DB: db, IDs: gen})
+	if err != nil {
+		t.Fatal(err)
+	}
 	releases, err := release.NewService(release.Options{
 		DB: db, Audit: log, Tenancy: tenancyService, Documents: docs, Objects: files, IDs: gen, Jobs: queue, Signer: backend,
+		ProductionSigning: true, PublicBaseURL: "https://plux.example.com", Devices: devices,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -138,8 +151,16 @@ func newWorld(t *testing.T) *world {
 	}
 	set := limits.Defaults()
 	limiter := api.RateLimiter{Window: time.Minute, Count: shared.Increment}
-	h := &api.Handlers{Auth: authService, Tenancy: tenancyService, Documents: docs, Releases: releases, Idempotency: store, Pages: pages, Limiter: limiter, Limits: set}
-	authn := api.Authentication(authService, api.IdentityPublic, nil, limiter, set.Get(limits.APIRequestsPerMinute))
+	events, err := telemetry.NewService(telemetry.Options{DB: db, IDs: gen})
+	if err != nil {
+		t.Fatal(err)
+	}
+	h := &api.Handlers{
+		Auth: authService, Tenancy: tenancyService, Documents: docs, Releases: releases, Devices: devices, Events: events,
+		Idempotency: store, Pages: pages, Limiter: limiter, Limits: set,
+	}
+	people := api.Authentication(authService, api.IdentityPublic, nil, limiter, set.Get(limits.APIRequestsPerMinute))
+	authn := api.DeviceAuthentication(devices, limiter, set.Get(limits.APIRequestsPerMinutePerDevice), people)
 	opts := connect.WithInterceptors(api.Interceptors(api.Deps{Before: []api.Around{authn}})...)
 	mux := http.NewServeMux()
 	for _, r := range []func() (string, http.Handler){
@@ -153,6 +174,11 @@ func newWorld(t *testing.T) *world {
 		func() (string, http.Handler) { return pluxv1connect.NewAssetServiceHandler(h.Asset(), opts) },
 		func() (string, http.Handler) { return pluxv1connect.NewPublishServiceHandler(h.Publish(), opts) },
 		func() (string, http.Handler) { return pluxv1connect.NewReleaseServiceHandler(h.Release(), opts) },
+		func() (string, http.Handler) { return pluxv1connect.NewDeviceServiceHandler(h.Device(), opts) },
+		func() (string, http.Handler) { return pluxv1connect.NewTokenServiceHandler(h.Token(), opts) },
+		func() (string, http.Handler) { return pluxv1connect.NewManifestServiceHandler(h.Manifest(), opts) },
+		func() (string, http.Handler) { return pluxv1connect.NewControlServiceHandler(h.Control(), opts) },
+		func() (string, http.Handler) { return pluxv1connect.NewTelemetryServiceHandler(h.Telemetry(), opts) },
 	} {
 		path, handler := r()
 		mux.Handle(path, handler)
@@ -171,6 +197,12 @@ func newWorld(t *testing.T) *world {
 		asset:    pluxv1connect.NewAssetServiceClient(srv.Client(), srv.URL),
 		publish:  pluxv1connect.NewPublishServiceClient(srv.Client(), srv.URL),
 		release:  pluxv1connect.NewReleaseServiceClient(srv.Client(), srv.URL),
+		device:   pluxv1connect.NewDeviceServiceClient(srv.Client(), srv.URL),
+		token:    pluxv1connect.NewTokenServiceClient(srv.Client(), srv.URL),
+		manifest: pluxv1connect.NewManifestServiceClient(srv.Client(), srv.URL),
+		control:  pluxv1connect.NewControlServiceClient(srv.Client(), srv.URL),
+		events:   pluxv1connect.NewTelemetryServiceClient(srv.Client(), srv.URL),
+		devices:  devices,
 		releases: releases,
 		queue:    queue,
 	}

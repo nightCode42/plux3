@@ -120,3 +120,25 @@ the update channel, kept for the supply chain.
 
 Designed for OCI registries. Plux artifacts are content-addressed objects in object storage
 behind a CDN, not registry manifests; adopting it would mean shipping a registry.
+
+## Implementation notes (P2)
+
+- **Where signing happens.** Manifests are signed by the worker, like bundle hashes: a job is
+  enqueued in the transaction that promotes a release or changes a channel's switches, and
+  the maintenance sweep re-signs any manifest within two days of its seven-day expiry. The
+  api role serves the newest stored manifest and never signs (`SRV-052`, L-3).
+- **What is signed.** The signed part is the RFC 8785 canonical JSON of the manifest's
+  content: `type`, `specVersion`, `role` (`targets`), app, environment, channel, release
+  sequence, `issuedAt`, `expires`, the app bundle and each plugin's hash, size, required
+  features and minimum runtime, the switches and the experiment assignments. The per-device
+  sync plan and the download URLs are served next to it, **not** inside it — unlike the
+  abridged example of Appendix B.3, which shows `sync` inside `signed`. Signing a plan per
+  device would put a signer in the api role, and a URL may be a short-lived signed URL; the
+  plan needs no signature because the device verifies what it rebuilds or downloads against
+  the signed bundle hashes (`SYN-011`). This reading is recorded for the maintainer's
+  confirmation in the work log.
+- **Keys.** The first time the worker signs with an environment's key it records the public
+  half, which `GetRootKeys` returns to devices and to `plux pull` (`SEC-051`).
+- **Production.** The file backend refuses to sign a bundle or a manifest for an environment
+  marked production (`SEC-056`); the development keys therefore never sign a production
+  release. The runtime-side rejection lands in P6, so `SEC-056` stays `SPEC`.

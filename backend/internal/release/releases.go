@@ -442,6 +442,9 @@ func (s *Service) point(ctx context.Context, tx pgx.Tx, p auth.Principal, env db
 	if _, err := q.PointChannel(ctx, dbgen.PointChannelParams{ID: ch.ID, ReleaseSequence: row.Sequence}); err != nil {
 		return failure(err, "channel")
 	}
+	if err := s.enqueueManifest(ctx, tx, ch); err != nil {
+		return err
+	}
 	if env.Production {
 		if err := q.MarkReleaseProduction(ctx, row.ID); err != nil {
 			return failure(err, "release")

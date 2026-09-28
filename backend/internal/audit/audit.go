@@ -94,6 +94,7 @@ const (
 	ReleasePromoted      Action = "release.promoted"
 	ReleaseRolledBack    Action = "release.rolled_back"
 	ReleasesPurged       Action = "release.purged"
+	ControlChanged       Action = "release.control_changed"
 	SnapshotRestored     Action = "snapshot.restored"
 	TemplateInstantiated Action = "template.instantiated"
 	LockAcquired         Action = "plugin.lock.acquired"
@@ -116,7 +117,7 @@ var actions = sorted(
 	VariableSet, SecretSet, SecretDeleted, LimitSet, TrashRestored, TrashPurged,
 	PluginCreated, PluginUpdated, PluginDeleted, PluginRestored, PluginPurged,
 	DocumentWritten, DocumentDeleted, DocumentRestored, DocumentPurged, DraftImported, AssetUploaded, AssetDeleted,
-	VersionPublished, PublishCancelled, ReleaseCreated, ReleasePromoted, ReleaseRolledBack, ReleasesPurged,
+	VersionPublished, PublishCancelled, ReleaseCreated, ReleasePromoted, ReleaseRolledBack, ReleasesPurged, ControlChanged,
 	SnapshotRestored, TemplateInstantiated, LockAcquired, LockTakenOver, LockReleased, LockRequested,
 )
 
