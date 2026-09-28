@@ -760,6 +760,14 @@
       "fix": "Retry the call. If it keeps failing, give the incident identifier to the operator of the installation."
     },
     {
+      "code": "PLX-8091",
+      "reason": "UPSTREAM_UNAVAILABLE",
+      "severity": "error",
+      "title": "A service the server depends on is unavailable",
+      "cause": "The server could not reach a service outside it that the call needs, such as the single sign-on provider.",
+      "fix": "Retry later. If it persists, the operator checks the service and the server's outbound network."
+    },
+    {
       "code": "PLX-9100",
       "reason": "CLI_CONFIGURATION_INVALID",
       "severity": "error",
