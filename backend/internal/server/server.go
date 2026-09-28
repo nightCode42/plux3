@@ -209,7 +209,10 @@ func (s *Server) wrap(h http.Handler) http.Handler {
 // Run starts every component, serves until the context is cancelled,
 // then drains (SRV-007).
 func (s *Server) Run(ctx context.Context) error {
-	s.log.InfoContext(ctx, "starting", slog.String("configuration", s.cfg.String()))
+	s.log.InfoContext(ctx, "starting",
+		slog.String("listen", s.cfg.Server.Listen),
+		slog.String("role", RoleLabel(s.cfg)),
+	)
 	started, err := s.startComponents(ctx)
 	if err != nil {
 		s.health.SetReady(false)
