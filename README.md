@@ -17,13 +17,13 @@
 
 Plux is a server-driven UI and plugin platform for Flutter. Teams design screens and flows in **Plux Studio**; the **Plux Server** compiles them into signed **FlatBuffers** bundles and computes binary deltas against every older version; the **`plux_flutter`** runtime syncs all plugins at app start, verifies them, and renders them as native widgets — with no app-store release for changes that are "just UI". Logic that declarative actions cannot express runs as **Plux Functions**: Go compiled to WebAssembly, on the server or on the device.
 
-> **Status: Phase 1 — Schema and compiler.** The document model, widget and action registries, PXL (Go compiler and VM, Dart VM), the bundle format and the compiler are in place, with `plux validate` and `plux build` working offline ([compiler](docs/reference/compiler.md), [CLI](docs/reference/cli.md)). Product capabilities arrive phase by phase; see the [roadmap](#roadmap).
+> **Status: Phase 2 — Backend core.** The Plux Server (API, publishing, signed releases, section deltas and signed manifests), the `plux` CLI against it, and a one-command Docker Compose stack are in place on top of the Phase 1 schema, compiler and bundle format ([server](docs/reference/server.md), [CLI](docs/reference/cli.md), [Compose stack](deploy/compose/README.md)). Product capabilities arrive phase by phase; see the [roadmap](#roadmap).
 
 ## Why Plux
 
 | | |
 |---|---|
-| **Fast by construction** | Bundles are read zero-copy from memory-mapped files and expressions are pre-compiled bytecode. Targets such as a delta of at most 2 KiB for a one-word change are specified (spec §30) and will be benchmarked in CI from Phase 3. |
+| **Fast by construction** | Bundles are read zero-copy from memory-mapped files and expressions are pre-compiled bytecode. Targets such as a delta of at most 2 KiB for a one-word change are specified (spec §30) and benchmarked: a one-string change is a 635 B delta ([P2 benchmarks](docs/benchmarks/p2-backend.md)). |
 | **High-assurance security** | Every device request is bound to a hardware key with DPoP (RFC 9449) and backed by Play Integrity or App Attest; updates follow The Update Framework's model with anti-rollback; functions run sandboxed. Suitable for financial applications. |
 | **No-code or incremental** | Generate a complete Flutter project and build everything in Studio — or add the package to an existing app and adopt Plux one screen, or one widget, at a time. |
 | **Governed change** | Immutable versions, four-eyes approvals bound to content hashes, staged rollouts, kill switches, and an audit trail that reconstructs exactly what a user saw. |
