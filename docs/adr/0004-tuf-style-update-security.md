@@ -135,8 +135,8 @@ behind a CDN, not registry manifests; adopting it would mean shipping a registry
   abridged example of Appendix B.3, which shows `sync` inside `signed`. Signing a plan per
   device would put a signer in the api role, and a URL may be a short-lived signed URL; the
   plan needs no signature because the device verifies what it rebuilds or downloads against
-  the signed bundle hashes (`SYN-011`). This reading is recorded for the maintainer's
-  confirmation in the work log.
+  the signed bundle hashes (`SYN-011`). The maintainer confirmed this on 2026-09-28, and
+  Appendix B.3 now shows the plan outside `signed`.
 - **Keys.** The first time the worker signs with an environment's key it records the public
   half, which `GetRootKeys` returns to devices and to `plux pull` (`SEC-051`).
 - **Production.** The file backend refuses to sign a bundle or a manifest for an environment

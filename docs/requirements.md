@@ -2351,15 +2351,17 @@ The container layout below is normative. The FlatBuffers schemas of the individu
     "appBundle": { "hash": "sha256:…", "size": 48213 },
     "plugins": [
       { "key": "loans", "version": 14, "hash": "sha256:…", "size": 182334,
-        "requiredFeatures": ["pxl.v1"], "minRuntime": "1.2.0",
-        "sync": { "from": "sha256:…(installed)", "delta": "https://…/d/sha256:…", "deltaSize": 1873 } }
+        "requiredFeatures": ["pxl.v1"], "minRuntime": "1.2.0" }
     ],
     "control": { "killSwitches": [], "mandatory": false },
     "experiments": [ { "key": "promo-banner", "layer": "home", "variant": "b" } ]
   },
-  "signatures": [ { "keyid": "targets-2026-q3", "alg": "ed25519", "sig": "…" } ]
+  "signatures": [ { "keyid": "targets-2026-q3", "alg": "ed25519", "sig": "…" } ],
+  "sync": { "loans": { "action": "delta", "from": "sha256:…(installed)", "url": "https://…/deltas/…", "size": 1873 } }
 }
 ```
+
+The per-device sync plan (`REL-032`) and download URLs sit outside `signed`: they differ per device and per host, and need no signature, because every bundle the device rebuilds or downloads is verified against the signed hashes (`SYN-011`); signing them would put a signer in the `api` role (ADR-0004).
 
 ---
 
@@ -2937,7 +2939,7 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | Field | Value |
 |---|---|
 | Document ID | `SRS-PLUX-001` |
-| Version | 1.1.3 |
+| Version | 1.1.4 |
 | Status | Draft (living document) |
 | Date | 2026-09-27 |
 | Supersedes | 1.1.2 |
@@ -2952,3 +2954,4 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | 1.1.1 | 2026-09-26 | Phase 0 delivered: P0 requirement statuses updated; §33 and the P0 deliverables describe the actual workspace layout, tooling and licensing files; `RT-051` withdrawal worded as a rationale (found by `reqtrace lint`). |
 | 1.1.2 | 2026-09-26 | Phase 1 clarifications: section-directory entries are 72 bytes, matching their fields (App. B.1); `BND-004` names the `schemas` section as App. B.2 does; the structural primitive `Switch` is renamed `Match` (App. C.1); App. E.1 points to the complete PXL grammar; App. A shows action graphs as their own documents, as `SCH-006` requires, with identifiers on state entries and parameters (`SCH-002`); ADR-0025 added to §32; App. E.2 adds the `event` root that event handlers read (ADR-0002, ADR-0010, ADR-0025). |
 | 1.1.3 | 2026-09-27 | Phase 2 clarifications: §6.3 lists the server modules the decomposition needs beyond the original sketch (`tenancy/`, `cache/`, `httpx/`, `server/` and the generated `pluxv1/`); §33 places the manifest's schema with the JSON Schemas, since App. B.3 defines the manifest as signed canonical JSON rather than a FlatBuffers buffer (ADR-0003, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0015, ADR-0020). |
+| 1.1.4 | 2026-09-28 | App. B.3: the per-device sync plan and download URLs are shown outside the signed part of the manifest, as the maintainer confirmed (ADR-0004, implementation notes). |
