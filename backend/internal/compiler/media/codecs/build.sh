@@ -36,6 +36,11 @@ fetch() { # name url commit
 fetch libwebp "$LIBWEBP_URL" "$LIBWEBP_COMMIT"
 fetch aom "$AOM_URL" "$AOM_COMMIT"
 fetch libavif "$LIBAVIF_URL" "$LIBAVIF_COMMIT"
+# libaom names its version from `git describe`, which depends on how the
+# checkout was made (with or without tags, which Git, which mirror), not on
+# the source. Without .git it reads the pinned CHANGELOG instead, so every
+# build embeds the same version string. The commit was verified above.
+rm -rf "$work/aom/.git"
 
 sysroot="$work/sysroot"
 mkdir -p "$sysroot/lib"

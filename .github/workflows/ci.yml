@@ -358,8 +358,9 @@ jobs:
           path: ~/.cache/plux
           key: flatc-${{ runner.os }}-${{ hashFiles('Makefile') }}
       - run: make install-flatc
-      # `make gen` also regenerates the API contract's Go code (ADR-0005).
-      - run: make install-buf
+      # `make gen` also regenerates the API contract's Go code (ADR-0005)
+      # and the server's query code from its SQL (ADR-0007).
+      - run: make install-buf install-sqlc
       # Verifies: CI-003, BND-001.
       - name: Generated code is committed
         run: make go-gen-check
