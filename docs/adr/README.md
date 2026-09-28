@@ -37,5 +37,6 @@ Files are named `NNNN-short-title.md` with a four-digit, never-reused number. Th
 | [0025](0025-document-schema-toolchain.md) | Document schema toolchain: validation, canonicalisation and code generation | P1 | Accepted |
 | [0026](0026-identity-tenancy-and-access.md) | Built-in accounts with TOTP, org-bound credentials and row-level scopes | P2 | Accepted |
 | [0027](0027-asset-pipeline.md) | Asset pipeline: uploads, WebAssembly image codecs and dotLottie | P2 | Accepted |
+| [0028](0028-cli-credential-storage.md) | The CLI keeps its token in the OS keychain | P2 | Accepted |
 
 The decisions for planned ADRs are summarised in spec §32 and §34.1. Each is written in full before or alongside the first implementation that depends on it, and its status is updated here.

@@ -22,6 +22,9 @@ Every third-party dependency is a long-term commitment: code we ship but did not
 | Standard library | Everything in `tools/`; most of `backend/` | BSD-3-Clause | — | In use |
 | `github.com/google/flatbuffers` | Bundle section builders and accessors | Apache-2.0 | [0002](../adr/0002-flatbuffers-sectioned-bundles.md) | In use (`backend`) |
 | `github.com/klauspost/compress` | zstd transport compression of bundles | BSD-3-Clause, Apache-2.0 | [0002](../adr/0002-flatbuffers-sectioned-bundles.md) | In use (`backend`) |
+| `github.com/zalando/go-keyring` | The CLI's token in the OS credential store | MIT | [0028](../adr/0028-cli-credential-storage.md) | In use (`backend`, CLI only) |
+| `github.com/godbus/dbus/v5` | Linux Secret Service, through go-keyring | BSD-2-Clause | [0028](../adr/0028-cli-credential-storage.md) | In use (`backend`, CLI only) |
+| `github.com/danieljoos/wincred` | Windows Credential Manager, through go-keyring | MIT | [0028](../adr/0028-cli-credential-storage.md) | In use (`backend`, CLI only) |
 | `github.com/santhosh-tekuri/jsonschema/v6` | Structural validation of documents (JSON Schema 2020-12) | Apache-2.0 | [0025](../adr/0025-document-schema-toolchain.md) | In use (`backend`) |
 | `pgregory.net/rapid` | Property-based tests | MPL-2.0 | [0025](../adr/0025-document-schema-toolchain.md) | In use (`backend`, tests only) |
 | `connectrpc.com/connect` | ConnectRPC handlers and clients for the API contract | Apache-2.0 | [0005](../adr/0005-connectrpc-and-protobuf.md) | In use (`backend`) |
