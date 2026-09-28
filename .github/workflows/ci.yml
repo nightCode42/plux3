@@ -406,13 +406,13 @@ jobs:
       postgres:
         image: postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
         env:
-          POSTGRES_USER: plux
-          POSTGRES_PASSWORD: plux
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
           POSTGRES_DB: plux_test
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U plux"
+          --health-cmd "pg_isready -U postgres"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -428,6 +428,14 @@ jobs:
           cache-dependency-path: |
             backend/go.mod
             tools/go.mod
+      # The tests connect as a role row-level security binds, as the
+      # server must (SRV-022); the image's own user is a superuser.
+      - name: Create the application role
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h 127.0.0.1 -U postgres -d plux_test -v ON_ERROR_STOP=1 -c \
+            "CREATE ROLE plux LOGIN NOSUPERUSER NOBYPASSRLS PASSWORD 'plux'; GRANT CONNECT, CREATE, TEMPORARY ON DATABASE plux_test TO plux; ALTER SCHEMA public OWNER TO plux;"
       # Verifies: QA-001.
       - name: Tests with race detector and coverage floors
         run: make go-cover | tee -a "$GITHUB_STEP_SUMMARY"
@@ -571,7 +579,23 @@ jobs:
           sudo ln -sf /usr/bin/wasm-ld-18 /usr/local/bin/wasm-ld
       # Verifies: CMP-030.
       - name: Rebuild the codecs and compare them with codecs.lock
-        run: make wasm-codecs-check
+        run: make wasm-codecs-check WASM_CODECS_OUT="$RUNNER_TEMP/codecs"
+      - name: Show how a rebuilt codec differs
+        if: failure()
+        run: |
+          for m in webp avif; do
+            committed=backend/internal/compiler/media/codecs/$m.wasm rebuilt="$RUNNER_TEMP/codecs/$m.wasm"
+            cmp -s "$committed" "$rebuilt" && continue
+            echo "== $m.wasm: committed $(wc -c <"$committed") bytes, rebuilt $(wc -c <"$rebuilt") bytes; first difference:"
+            cmp "$committed" "$rebuilt" | head -1 || true
+            diff <(strings -n 6 "$committed") <(strings -n 6 "$rebuilt") | head -40 || true
+          done
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: rebuilt-codecs
+          path: ${{ runner.temp }}/codecs/*.wasm
+          retention-days: 7
 
   # ── Dart and Flutter ─────────────────────────────────────────────────────
 

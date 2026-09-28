@@ -59,10 +59,12 @@ jobs:
           IMAGE: ${{ inputs.image }}
           VERSION: ${{ inputs.version }}
         run: |
-          echo "name=ghcr.io/${OWNER,,}/$IMAGE" >> "$GITHUB_OUTPUT"
-          echo "tag=ghcr.io/${OWNER,,}/$IMAGE:$VERSION" >> "$GITHUB_OUTPUT"
-          echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          echo "date=$(TZ=UTC0 git log -1 --date=format-local:%Y-%m-%dT%H:%M:%SZ --format=%cd)" >> "$GITHUB_OUTPUT"
+          {
+            echo "name=ghcr.io/${OWNER,,}/$IMAGE"
+            echo "tag=ghcr.io/${OWNER,,}/$IMAGE:$VERSION"
+            echo "commit=$(git rev-parse HEAD)"
+            echo "date=$(TZ=UTC0 git log -1 --date=format-local:%Y-%m-%dT%H:%M:%SZ --format=%cd)"
+          } >> "$GITHUB_OUTPUT"
       - name: Build and push
         id: build
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0

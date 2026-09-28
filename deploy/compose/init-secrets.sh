@@ -11,8 +11,10 @@ cd "$(dirname "$0")"
 umask 077
 mkdir .secrets
 rand() { head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n'; }
-pg=$(rand) s3key=$(rand | cut -c1-20) s3secret=$(rand) grafana=$(rand) keycloak=$(rand)
-printf 'POSTGRES_USER=plux\nPOSTGRES_DB=plux\nPOSTGRES_PASSWORD=%s\n' "$pg" > .secrets/postgres.env
+admin=$(rand) pg=$(rand) s3key=$(rand | cut -c1-20) s3secret=$(rand) grafana=$(rand) keycloak=$(rand)
+# The image's own user is the administrator; plux-server connects as the
+# role postgres-init.sh creates, which row-level security binds.
+printf 'POSTGRES_USER=postgres\nPOSTGRES_DB=plux\nPOSTGRES_PASSWORD=%s\nPLUX_APP_PASSWORD=%s\n' "$admin" "$pg" > .secrets/postgres.env
 printf 'PLUX_DATABASE_URL=postgres://plux:%s@postgres:5432/plux?sslmode=disable\nPLUX_OBJECT_STORAGE_ACCESS_KEY_ID=%s\nPLUX_OBJECT_STORAGE_SECRET_ACCESS_KEY=%s\n' \
   "$pg" "$s3key" "$s3secret" > .secrets/plux-server.env
 printf '{"identities":[{"name":"plux","credentials":[{"accessKey":"%s","secretKey":"%s"}],"actions":["Admin","Read","Write","List","Tagging"]}]}\n' \

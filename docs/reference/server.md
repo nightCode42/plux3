@@ -171,7 +171,10 @@ PostgreSQL is the system of record (`SRV-020`). Every table holding tenant
 data carries `organization_id` and has row-level security bound to
 `plux_current_organization()`, which the pool sets per transaction from the
 authenticated principal; authorisation happens in the service layer first,
-and row-level security is the second barrier (`SRV-022`, `SEC-102`). Two
+and row-level security is the second barrier (`SRV-022`, `SEC-102`). The
+server refuses to start when its database role is a superuser or has
+`BYPASSRLS`, because row-level security binds neither; connect as an ordinary
+role that owns the schema. Two
 more settings widen a few policies, each for one purpose and never on a
 caller's behalf: the signed-in user may read their own memberships in every
 organisation, and a *scope* lets a token be found by its hash before its

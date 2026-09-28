@@ -28,6 +28,13 @@ with the administrator's password, a CLI token and the IDs of the seeded organis
 app — use them with `PLUX_TOKEN=… plux …`. Delete `.secrets/` together with the volumes to
 start again from nothing.
 
+PostgreSQL's own `postgres` user is the administrator. `postgres-init.sh` creates the role
+`plux-server` connects as when the volume is first created: it owns the schema but is
+neither a superuser nor `BYPASSRLS`, so row-level security binds it, and the server refuses
+to start as a role that it would not bind (`SRV-022`). A stack created before this change
+connects as a superuser and no longer starts: delete `.secrets/` and the volumes
+(`docker compose -f deploy/compose/compose.yaml down -v`) and run `make compose-up` again.
+
 ## Files
 
 | File | Purpose |

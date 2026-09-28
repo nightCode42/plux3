@@ -188,8 +188,11 @@ proto: ## Regenerate the API contract's Go code and OpenAPI description (SRV-002
 wasm-codecs: ## Rebuild the WebAssembly image codecs from pinned sources (CMP-030, ADR-0027)
 	sh backend/internal/compiler/media/codecs/build.sh
 
+# WASM_CODECS_OUT keeps the rebuilt modules, so a mismatch can be examined.
+WASM_CODECS_OUT ?=
 wasm-codecs-check: ## Rebuild the image codecs elsewhere and compare them with codecs.lock
-	@out=$$(mktemp -d) && sh backend/internal/compiler/media/codecs/build.sh "$$out" >/dev/null && \
+	@out=$${WASM_CODECS_OUT:-$$(mktemp -d)} && mkdir -p "$$out" && \
+		sh backend/internal/compiler/media/codecs/build.sh "$$out" >/dev/null && \
 		(cd "$$out" && sha256sum -c $(CURDIR)/backend/internal/compiler/media/codecs/codecs.lock)
 
 # The server's queries are type-checked against its own migrations, so a
@@ -401,7 +404,7 @@ compose-seed: compose-secrets ## Start the stack and, on first run, seed an admi
 compose-test: compose-secrets ## Run the Go integration and end-to-end tests against the stack's PostgreSQL, SeaweedFS and Valkey (QA-005)
 	$(COMPOSE) -f $(COMPOSE_DIR)/compose.test.yaml up -d --wait postgres seaweedfs s3-bucket valkey
 	. ./$(COMPOSE_DIR)/.secrets/postgres.env && . ./$(COMPOSE_DIR)/.secrets/plux-server.env && cd backend && \
-		PLUX_TEST_DATABASE_URL="postgres://plux:$$POSTGRES_PASSWORD@127.0.0.1:55432/plux?sslmode=disable" \
+		PLUX_TEST_DATABASE_URL="postgres://plux:$$PLUX_APP_PASSWORD@127.0.0.1:55432/plux?sslmode=disable" \
 		PLUX_TEST_S3_ENDPOINT=http://127.0.0.1:58333 PLUX_TEST_S3_BUCKET=plux \
 		PLUX_TEST_S3_ACCESS_KEY_ID="$$PLUX_OBJECT_STORAGE_ACCESS_KEY_ID" \
 		PLUX_TEST_S3_SECRET_ACCESS_KEY="$$PLUX_OBJECT_STORAGE_SECRET_ACCESS_KEY" \

@@ -5,6 +5,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"math"
@@ -60,7 +61,30 @@ func Open(ctx context.Context, opts Options) (*DB, error) {
 		pool.Close()
 		return nil, fmt.Errorf("connect to PostgreSQL: %w", redactURL(err))
 	}
+	var super, bypass bool
+	if err := pool.QueryRow(ctx, `SELECT rolsuper, rolbypassrls FROM pg_roles WHERE rolname = current_user`).Scan(&super, &bypass); err != nil {
+		pool.Close()
+		return nil, fmt.Errorf("read the database role: %w", redactURL(err))
+	}
+	if err := checkRole(super, bypass); err != nil {
+		pool.Close()
+		return nil, err
+	}
 	return &DB{pool: pool, log: opts.Log}, nil
+}
+
+// checkRole refuses a database role that row-level security does not
+// bind: a superuser or a role with BYPASSRLS would see and write every
+// organisation's rows, so tenant isolation would rest on the service
+// layer alone (SRV-022, SEC-102).
+func checkRole(super, bypass bool) error {
+	switch {
+	case super:
+		return errors.New("the database role is a superuser, which row-level security does not bind; connect as a role without SUPERUSER (SRV-022)")
+	case bypass:
+		return errors.New("the database role has BYPASSRLS, so row-level security does not bind it; connect as a role without it (SRV-022)")
+	}
+	return nil
 }
 
 // Close releases the pool.

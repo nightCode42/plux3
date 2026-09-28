@@ -104,3 +104,18 @@ func TestEmbeddedMigrationsExpandOnly(t *testing.T) {
 		}
 	}
 }
+
+// Verifies: SRV-022.
+// A role that row-level security does not bind is refused, so the
+// server can never run with tenant isolation switched off.
+func TestCheckRole(t *testing.T) {
+	t.Parallel()
+	if err := checkRole(false, false); err != nil {
+		t.Errorf("an ordinary role was refused: %v", err)
+	}
+	for _, c := range []struct{ super, bypass bool }{{true, false}, {false, true}, {true, true}} {
+		if err := checkRole(c.super, c.bypass); err == nil {
+			t.Errorf("super=%v bypass=%v was accepted", c.super, c.bypass)
+		}
+	}
+}

@@ -47,9 +47,11 @@ services:
   postgres:
     image: postgres:16.13-bookworm@sha256:472efd9a66f2b2f1a5aeb18b28de74332e6ef88c2b93a1a5d812fb6db67a5f60
     env_file: [.secrets/postgres.env]
-    volumes: [postgres:/var/lib/postgresql/data]
+    volumes:
+      - postgres:/var/lib/postgresql/data
+      - ./postgres-init.sh:/docker-entrypoint-initdb.d/10-plux-role.sh:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U plux -d plux"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d plux"]
       interval: 5s
       retries: 20
     restart: unless-stopped
