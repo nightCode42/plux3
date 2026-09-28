@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io/fs"
 	"path"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -116,3 +117,81 @@ func (r *run) checkTranslations(p *Project) {
 		}
 	}
 }
+
+// Place is where a path sits in the Git layout (SCH-006).
+type Place struct {
+	// Kind is the document kind the path holds.
+	Kind DocumentKind
+	// Plugin is the plugin key for a path under plugins/<key>/, and ""
+	// for an app-level document.
+	Plugin string
+	// Key is the key the file name carries, "" for fixed names such as
+	// app.json.
+	Key string
+}
+
+// PlaceOf reports what a path of the Git layout holds. It accepts only
+// the document paths Load reads; asset files and anything else are not
+// documents.
+func PlaceOf(p string) (Place, bool) {
+	if p != path.Clean(p) || strings.HasPrefix(p, "/") || strings.Contains(p, "\\") {
+		return Place{}, false
+	}
+	switch p {
+	case "app.json":
+		return Place{Kind: KindApp}, true
+	case "theme.json":
+		return Place{Kind: KindTheme}, true
+	case "native-catalogue.json":
+		return Place{Kind: KindNativeCatalogue}, true
+	case "translations/keys.json":
+		return Place{Kind: KindTranslationKeys}, true
+	case "assets/index.json":
+		return Place{Kind: KindAssetIndex}, true
+	}
+	parts := strings.Split(p, "/")
+	switch {
+	case len(parts) == 2 && parts[0] == "translations":
+		return keyed(parts[1], ".json", Place{Kind: KindTranslations})
+	case len(parts) == 2 && parts[0] == "components":
+		return keyed(parts[1], ".component.json", Place{Kind: KindComponent})
+	case len(parts) == 2 && parts[0] == "templates":
+		return keyed(parts[1], ".template.json", Place{Kind: KindTemplate})
+	case len(parts) == 3 && parts[0] == "plugins" && parts[2] == "plugin.json":
+		return Place{Kind: KindPlugin, Plugin: parts[1]}, validKey(parts[1])
+	case len(parts) == 4 && parts[0] == "plugins" && validKey(parts[1]):
+		in := Place{Plugin: parts[1]}
+		switch parts[2] {
+		case "pages":
+			in.Kind = KindPage
+			return keyed(parts[3], ".page.json", in)
+		case "components":
+			in.Kind = KindComponent
+			return keyed(parts[3], ".component.json", in)
+		case "actions":
+			in.Kind = KindActionGraph
+			return keyed(parts[3], ".graph.json", in)
+		}
+	}
+	return Place{}, false
+}
+
+// keyed reads the key from a file name with a suffix.
+func keyed(name, suffix string, in Place) (Place, bool) {
+	key, ok := strings.CutSuffix(name, suffix)
+	if !ok || strings.Contains(key, ".") || key == "" {
+		return Place{}, false
+	}
+	in.Key = key
+	return in, in.Kind == KindTranslations || validKey(key)
+}
+
+// keyPattern is the form of a key (SCH-002), as common.schema.json
+// defines it.
+var keyPattern = regexp.MustCompile(`^[a-z][a-z0-9]*(-[a-z0-9]+)*$`)
+
+// ValidKey reports whether a string is a document key (SCH-002).
+func ValidKey(s string) bool { return len(s) <= 64 && keyPattern.MatchString(s) }
+
+// validKey is ValidKey.
+func validKey(s string) bool { return ValidKey(s) }

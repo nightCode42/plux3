@@ -34,23 +34,24 @@ type TrashItem struct {
 // item. Apps are handled here; the document service registers plugins
 // and pages, so the trash never needs to know how they are stored.
 type TrashKind struct {
-	// Restore undeletes the item in the caller's transaction.
-	Restore func(ctx context.Context, tx pgx.Tx, item TrashItem) error
+	// Restore undeletes the item in the caller's transaction, for the
+	// principal who asked.
+	Restore func(ctx context.Context, tx pgx.Tx, p auth.Principal, item TrashItem) error
 	// Purge deletes the item for good in the caller's transaction.
-	Purge func(ctx context.Context, tx pgx.Tx, item TrashItem) error
+	Purge func(ctx context.Context, tx pgx.Tx, p auth.Principal, item TrashItem) error
 }
 
 // trashKinds returns the kinds the trash handles, with apps built in.
 func (s *Service) trashKinds() map[string]TrashKind {
 	kinds := map[string]TrashKind{
 		"app": {
-			Restore: func(ctx context.Context, tx pgx.Tx, item TrashItem) error {
+			Restore: func(ctx context.Context, tx pgx.Tx, _ auth.Principal, item TrashItem) error {
 				if _, err := dbgen.New(tx).RestoreApp(ctx, storage.MustUUID(item.TargetID)); err != nil {
 					return failure(err, "app")
 				}
 				return nil
 			},
-			Purge: func(ctx context.Context, tx pgx.Tx, item TrashItem) error {
+			Purge: func(ctx context.Context, tx pgx.Tx, _ auth.Principal, item TrashItem) error {
 				if _, err := dbgen.New(tx).PurgeApp(ctx, storage.MustUUID(item.TargetID)); err != nil {
 					return failure(err, "app")
 				}
@@ -58,10 +59,21 @@ func (s *Service) trashKinds() map[string]TrashKind {
 			},
 		},
 	}
-	for k, v := range s.o.TrashKinds {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for k, v := range s.kinds {
 		kinds[k] = v
 	}
 	return kinds
+}
+
+// RegisterTrashKind tells the trash how to restore and purge one more
+// kind of item. The document service registers plugins and pages when it
+// is built, so the trash never needs to know how they are stored.
+func (s *Service) RegisterTrashKind(kind string, k TrashKind) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.kinds[kind] = k
 }
 
 // Trash puts an item in the trash in the caller's transaction, to be
@@ -147,7 +159,7 @@ func (s *Service) ListTrash(ctx context.Context, p auth.Principal, appID string,
 // as already existing.
 func (s *Service) RestoreFromTrash(ctx context.Context, p auth.Principal, itemID string) error {
 	return s.withTrashItem(ctx, p, itemID, func(ctx context.Context, tx pgx.Tx, item TrashItem, kind TrashKind) error {
-		if err := kind.Restore(ctx, tx, item); err != nil {
+		if err := kind.Restore(ctx, tx, p, item); err != nil {
 			return err
 		}
 		if _, err := dbgen.New(tx).MarkTrashRestored(ctx, storage.MustUUID(item.ID)); err != nil {
@@ -171,7 +183,7 @@ func (s *Service) PurgeFromTrash(ctx context.Context, p auth.Principal, itemID s
 
 // purge deletes one item and records it.
 func (s *Service) purge(ctx context.Context, tx pgx.Tx, p auth.Principal, item TrashItem, kind TrashKind) error {
-	if err := kind.Purge(ctx, tx, item); err != nil {
+	if err := kind.Purge(ctx, tx, p, item); err != nil {
 		return err
 	}
 	if _, err := dbgen.New(tx).DeleteTrashItem(ctx, storage.MustUUID(item.ID)); err != nil {
@@ -215,11 +227,21 @@ func (s *Service) withTrashItem(ctx context.Context, p auth.Principal, itemID st
 // each organisation in its own transactions (GOV-031). It is the
 // maintenance job's work and returns how many items it purged.
 func (s *Service) PurgeExpired(ctx context.Context, batch int32) (int, error) {
-	var (
-		after  = storage.Cursor{}
-		purged int
-	)
+	purged := 0
 	kinds := s.trashKinds()
+	err := s.ForEachOrganization(ctx, func(org string) error {
+		n, err := s.purgeOrganization(ctx, org, batch, kinds)
+		purged += n
+		return err
+	})
+	return purged, err
+}
+
+// ForEachOrganization calls f with every organisation's identifier, in
+// pages, stopping at the first error. It is how maintenance jobs visit
+// each tenant in transactions of its own.
+func (s *Service) ForEachOrganization(ctx context.Context, f func(org string) error) error {
+	after := storage.Cursor{}
 	for {
 		var orgs []pgtype.UUID
 		if err := s.o.DB.InTx(ctx, storage.Tenant{}, func(ctx context.Context, tx pgx.Tx) error {
@@ -227,16 +249,14 @@ func (s *Service) PurgeExpired(ctx context.Context, batch int32) (int, error) {
 			orgs, err = dbgen.New(tx).ListOrganizationIDs(ctx, dbgen.ListOrganizationIDsParams{AfterID: after.AfterID(), PageSize: 100})
 			return err //nolint:wrapcheck // wrapped below
 		}); err != nil {
-			return purged, fmt.Errorf("tenancy: list organisations: %w", err)
+			return fmt.Errorf("tenancy: list organisations: %w", err)
 		}
 		if len(orgs) == 0 {
-			return purged, nil
+			return nil
 		}
 		for _, org := range orgs {
-			n, err := s.purgeOrganization(ctx, storage.ID(org), batch, kinds)
-			purged += n
-			if err != nil {
-				return purged, err
+			if err := f(storage.ID(org)); err != nil {
+				return err
 			}
 		}
 		after.ID = storage.ID(orgs[len(orgs)-1])

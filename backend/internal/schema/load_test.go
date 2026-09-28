@@ -332,3 +332,38 @@ func TestParseDocumentValidatesOneEditedPage_SCH_042(t *testing.T) {
 	_, diags = l.ParseDocument("calculator.page.json", bytes.Replace(data, []byte(`"screen"`), []byte(`"popup"`), 1), KindPage)
 	wantDiagnostic(t, diags, plxerr.InvalidEnumValue, "calculator.page.json", "/pageKind")
 }
+
+// Verifies: SCH-006.
+// Every document path of the Git layout maps to its kind and plugin, and
+// nothing else is taken for a document.
+func TestPlaceOf(t *testing.T) {
+	t.Parallel()
+	for p, want := range map[string]Place{
+		"app.json":                                    {Kind: KindApp},
+		"theme.json":                                  {Kind: KindTheme},
+		"native-catalogue.json":                       {Kind: KindNativeCatalogue},
+		"translations/keys.json":                      {Kind: KindTranslationKeys},
+		"translations/en-GB.json":                     {Kind: KindTranslations, Key: "en-GB"},
+		"assets/index.json":                           {Kind: KindAssetIndex},
+		"components/card.component.json":              {Kind: KindComponent, Key: "card"},
+		"templates/hero.template.json":                {Kind: KindTemplate, Key: "hero"},
+		"plugins/loans/plugin.json":                   {Kind: KindPlugin, Plugin: "loans"},
+		"plugins/loans/pages/home.page.json":          {Kind: KindPage, Plugin: "loans", Key: "home"},
+		"plugins/loans/components/row.component.json": {Kind: KindComponent, Plugin: "loans", Key: "row"},
+		"plugins/loans/actions/pay.graph.json":        {Kind: KindActionGraph, Plugin: "loans", Key: "pay"},
+	} {
+		got, ok := PlaceOf(p)
+		if !ok || got != want {
+			t.Errorf("PlaceOf(%q) = %+v, %v; want %+v", p, got, ok, want)
+		}
+	}
+	for _, p := range []string{
+		"", "/app.json", "./app.json", "a/../app.json", "assets/logo.png", "plugins/loans/pages/home.json",
+		"plugins/Loans/plugin.json", "plugins/loans/pages/Home.page.json", "components/a.b.component.json",
+		"plugins/loans/other/x.json", "readme.md", "plugins\\loans\\plugin.json",
+	} {
+		if got, ok := PlaceOf(p); ok {
+			t.Errorf("PlaceOf(%q) = %+v; want not a document", p, got)
+		}
+	}
+}

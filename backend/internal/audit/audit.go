@@ -74,6 +74,23 @@ const (
 	LimitSet         Action = "limit.set"
 	TrashRestored    Action = "trash.restored"
 	TrashPurged      Action = "trash.purged"
+
+	PluginCreated        Action = "plugin.created"
+	PluginUpdated        Action = "plugin.updated"
+	PluginDeleted        Action = "plugin.deleted"
+	PluginRestored       Action = "plugin.restored"
+	PluginPurged         Action = "plugin.purged"
+	DocumentWritten      Action = "document.written"
+	DocumentDeleted      Action = "document.deleted"
+	DocumentRestored     Action = "document.restored"
+	DocumentPurged       Action = "document.purged"
+	DraftImported        Action = "draft.imported"
+	SnapshotRestored     Action = "snapshot.restored"
+	TemplateInstantiated Action = "template.instantiated"
+	LockAcquired         Action = "plugin.lock.acquired"
+	LockTakenOver        Action = "plugin.lock.override"
+	LockReleased         Action = "plugin.lock.released"
+	LockRequested        Action = "plugin.lock.requested"
 )
 
 // actions is the registry, sorted, so that Registered can search it and
@@ -88,6 +105,9 @@ var actions = sorted(
 	AppCreated, AppUpdated, AppDeleted, AppRestored, AppPurged, AccessGranted, AccessRevoked,
 	EnvironmentAdded, EnvironmentSet, EnvironmentGone, ChannelCreated, ChannelDeleted,
 	VariableSet, SecretSet, SecretDeleted, LimitSet, TrashRestored, TrashPurged,
+	PluginCreated, PluginUpdated, PluginDeleted, PluginRestored, PluginPurged,
+	DocumentWritten, DocumentDeleted, DocumentRestored, DocumentPurged, DraftImported,
+	SnapshotRestored, TemplateInstantiated, LockAcquired, LockTakenOver, LockReleased, LockRequested,
 )
 
 // sorted returns its arguments in order.
@@ -136,6 +156,9 @@ type Entry struct {
 	// where there is content; empty otherwise.
 	BeforeHash string
 	AfterHash  string
+	// Detail says what the fixed fields cannot, such as whose lock a
+	// takeover displaced; usually empty.
+	Detail string
 	// PreviousHash is the previous entry's EntryHash, or "" for the
 	// first entry of an organisation.
 	PreviousHash string
@@ -169,6 +192,11 @@ func (e Entry) Hash() string {
 	write(e.BeforeHash)
 	write(e.AfterHash)
 	write(e.PreviousHash)
+	// The detail was added after the first entries were written, so it
+	// joins the hash only when present and older hashes still verify.
+	if e.Detail != "" {
+		write(e.Detail)
+	}
 	sum := sha256.Sum256([]byte(b.String()))
 	return hex.EncodeToString(sum[:])
 }

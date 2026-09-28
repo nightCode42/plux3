@@ -63,6 +63,15 @@ type AuditLog struct {
 	AfterHash      string
 	PreviousHash   string
 	EntryHash      string
+	Detail         string
+}
+
+type Blob struct {
+	OrganizationID pgtype.UUID
+	Sha256         []byte
+	Size           int64
+	Content        []byte
+	CreatedAt      pgtype.Timestamptz
 }
 
 type Channel struct {
@@ -87,6 +96,33 @@ type DeviceAuthorization struct {
 	TokenID                pgtype.UUID
 	CreatedAt              pgtype.Timestamptz
 	ExpiresAt              pgtype.Timestamptz
+}
+
+type Document struct {
+	ID             pgtype.UUID
+	OrganizationID pgtype.UUID
+	DraftID        pgtype.UUID
+	Path           string
+	Kind           string
+	EntityID       pgtype.UUID
+	EntityKey      string
+	Sha256         []byte
+	Revision       int64
+	UpdatedByKind  string
+	UpdatedByID    string
+	UpdatedBy      string
+	UpdatedAt      pgtype.Timestamptz
+	DeletedAt      pgtype.Timestamptz
+}
+
+type Draft struct {
+	ID             pgtype.UUID
+	OrganizationID pgtype.UUID
+	AppID          pgtype.UUID
+	PluginID       pgtype.UUID
+	Revision       int64
+	Snapshots      int64
+	UpdatedAt      pgtype.Timestamptz
 }
 
 type Environment struct {
@@ -146,6 +182,21 @@ type LimitOverride struct {
 	UpdatedAt      pgtype.Timestamptz
 }
 
+type Lock struct {
+	DraftID         pgtype.UUID
+	OrganizationID  pgtype.UUID
+	HolderKind      string
+	HolderID        string
+	HolderDisplay   string
+	Session         string
+	AcquiredAt      pgtype.Timestamptz
+	HeartbeatAt     pgtype.Timestamptz
+	ExpiresAt       pgtype.Timestamptz
+	PreviousSession string
+	PreviousHolder  string
+	RequestedBy     []byte
+}
+
 type Membership struct {
 	ID             pgtype.UUID
 	OrganizationID pgtype.UUID
@@ -185,6 +236,18 @@ type Organization struct {
 	UpdatedAt pgtype.Timestamptz
 }
 
+type Plugin struct {
+	ID             pgtype.UUID
+	OrganizationID pgtype.UUID
+	AppID          pgtype.UUID
+	Key            string
+	Name           string
+	LatestVersion  int64
+	CreatedAt      pgtype.Timestamptz
+	UpdatedAt      pgtype.Timestamptz
+	DeletedAt      pgtype.Timestamptz
+}
+
 type Session struct {
 	ID         pgtype.UUID
 	UserID     pgtype.UUID
@@ -194,6 +257,30 @@ type Session struct {
 	CreatedAt  pgtype.Timestamptz
 	ExpiresAt  pgtype.Timestamptz
 	RevokedAt  pgtype.Timestamptz
+}
+
+type Snapshot struct {
+	ID             pgtype.UUID
+	OrganizationID pgtype.UUID
+	DraftID        pgtype.UUID
+	Sequence       int64
+	Revision       int64
+	Reason         string
+	Applied        bool
+	ActorKind      string
+	ActorID        string
+	ActorDisplay   string
+	Keep           bool
+	CreatedAt      pgtype.Timestamptz
+}
+
+type SnapshotDocument struct {
+	SnapshotID     pgtype.UUID
+	OrganizationID pgtype.UUID
+	Path           string
+	Kind           string
+	Sha256         []byte
+	Carried        bool
 }
 
 type Team struct {

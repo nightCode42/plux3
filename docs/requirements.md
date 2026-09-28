@@ -882,11 +882,11 @@ Branching is deliberately **not** part of the model (ADR-0015). Each plugin has 
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `SRV-030` | P2 | MUST | Document writes **MUST** use optimistic concurrency with a revision number and **MUST** accept JSON Patch (RFC 6902) for partial updates so that Studio autosave sends only changes. | SPEC |
-| `SRV-031` | P2 | MUST | Every accepted write **MUST** create an append-only snapshot of the affected documents (compressed, deduplicated); users **MUST** be able to list, compare and restore snapshots. Snapshots are retained for at least 90 days and every published version's source snapshot is retained forever. | SPEC |
-| `SRV-040` | P2 | MUST | Editing a plugin **MUST** require holding its **editing lock**. Locks are acquired explicitly, renewed by heartbeat (every 30 s), expire after 2 minutes without heartbeat, and show the holder to everyone else. | SPEC |
-| `SRV-041` | P2 | MUST | Another user **MUST** be able to request the lock (notifying the holder) and a user with `plugin.lock.override` **MUST** be able to take it over; takeovers are audited and the previous holder's unsaved changes are preserved as a snapshot. | SPEC |
-| `SRV-042` | P2 | MUST | App-level documents (theme, locales, data sources, native catalogue, shared state) **MUST** have their own lock, separate from plugin locks. | SPEC |
+| `SRV-030` | P2 | MUST | Document writes **MUST** use optimistic concurrency with a revision number and **MUST** accept JSON Patch (RFC 6902) for partial updates so that Studio autosave sends only changes. | DONE |
+| `SRV-031` | P2 | MUST | Every accepted write **MUST** create an append-only snapshot of the affected documents (compressed, deduplicated); users **MUST** be able to list, compare and restore snapshots. Snapshots are retained for at least 90 days and every published version's source snapshot is retained forever. | WIP |
+| `SRV-040` | P2 | MUST | Editing a plugin **MUST** require holding its **editing lock**. Locks are acquired explicitly, renewed by heartbeat (every 30 s), expire after 2 minutes without heartbeat, and show the holder to everyone else. | DONE |
+| `SRV-041` | P2 | MUST | Another user **MUST** be able to request the lock (notifying the holder) and a user with `plugin.lock.override` **MUST** be able to take it over; takeovers are audited and the previous holder's unsaved changes are preserved as a snapshot. | DONE |
+| `SRV-042` | P2 | MUST | App-level documents (theme, locales, data sources, native catalogue, shared state) **MUST** have their own lock, separate from plugin locks. | DONE |
 
 ### 11.4 Publish pipeline
 
@@ -1464,7 +1464,7 @@ Approvals are generic: the same engine governs publishing, function deployment, 
 | `GOV-010` | P2 | MUST | Apps **MUST** have environments (default development, staging, production; custom allowed) with their own variables, secrets, data source URLs, signing keys and device registrations. | WIP |
 | `GOV-011` | P9 | SHOULD | Each app **SHOULD** be exportable to a Git repository in the file layout of `SCH-006` on every publish (for review and audit), and **MAY** be imported from Git through the CLI for teams that prefer docs-as-code. | SPEC |
 | `GOV-030` | P9 | MUST | Self-hosted installations **MUST** validate a signed, offline license file (organisation, limits, features, expiry, grace period) without calling home. | SPEC |
-| `GOV-031` | P2 | MUST | Deleted apps, plugins and pages **MUST** go to a trash with 30-day restore before permanent deletion, except where retention rules require longer. | WIP |
+| `GOV-031` | P2 | MUST | Deleted apps, plugins and pages **MUST** go to a trash with 30-day restore before permanent deletion, except where retention rules require longer. | DONE |
 
 ### 18.4 Rollouts and kill switch
 

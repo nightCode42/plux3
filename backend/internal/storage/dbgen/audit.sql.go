@@ -15,9 +15,9 @@ const appendAuditEntry = `-- name: AppendAuditEntry :one
 INSERT INTO audit_log (
     id, organization_id, sequence, occurred_at, actor_kind, actor_id, actor_display,
     action, target_kind, target_id, source_ip, user_agent, request_id,
-    before_hash, after_hash, previous_hash, entry_hash)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
-RETURNING id, organization_id, sequence, occurred_at, actor_kind, actor_id, actor_display, action, target_kind, target_id, source_ip, user_agent, request_id, before_hash, after_hash, previous_hash, entry_hash
+    before_hash, after_hash, previous_hash, entry_hash, detail)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+RETURNING id, organization_id, sequence, occurred_at, actor_kind, actor_id, actor_display, action, target_kind, target_id, source_ip, user_agent, request_id, before_hash, after_hash, previous_hash, entry_hash, detail
 `
 
 type AppendAuditEntryParams struct {
@@ -38,6 +38,7 @@ type AppendAuditEntryParams struct {
 	AfterHash      string
 	PreviousHash   string
 	EntryHash      string
+	Detail         string
 }
 
 func (q *Queries) AppendAuditEntry(ctx context.Context, arg AppendAuditEntryParams) (AuditLog, error) {
@@ -59,6 +60,7 @@ func (q *Queries) AppendAuditEntry(ctx context.Context, arg AppendAuditEntryPara
 		arg.AfterHash,
 		arg.PreviousHash,
 		arg.EntryHash,
+		arg.Detail,
 	)
 	var i AuditLog
 	err := row.Scan(
@@ -79,12 +81,13 @@ func (q *Queries) AppendAuditEntry(ctx context.Context, arg AppendAuditEntryPara
 		&i.AfterHash,
 		&i.PreviousHash,
 		&i.EntryHash,
+		&i.Detail,
 	)
 	return i, err
 }
 
 const getAuditEntry = `-- name: GetAuditEntry :one
-SELECT id, organization_id, sequence, occurred_at, actor_kind, actor_id, actor_display, action, target_kind, target_id, source_ip, user_agent, request_id, before_hash, after_hash, previous_hash, entry_hash FROM audit_log
+SELECT id, organization_id, sequence, occurred_at, actor_kind, actor_id, actor_display, action, target_kind, target_id, source_ip, user_agent, request_id, before_hash, after_hash, previous_hash, entry_hash, detail FROM audit_log
  WHERE organization_id IS NOT DISTINCT FROM $2::uuid
    AND sequence = $1
 `
@@ -115,12 +118,13 @@ func (q *Queries) GetAuditEntry(ctx context.Context, arg GetAuditEntryParams) (A
 		&i.AfterHash,
 		&i.PreviousHash,
 		&i.EntryHash,
+		&i.Detail,
 	)
 	return i, err
 }
 
 const lastAuditEntry = `-- name: LastAuditEntry :one
-SELECT id, organization_id, sequence, occurred_at, actor_kind, actor_id, actor_display, action, target_kind, target_id, source_ip, user_agent, request_id, before_hash, after_hash, previous_hash, entry_hash FROM audit_log
+SELECT id, organization_id, sequence, occurred_at, actor_kind, actor_id, actor_display, action, target_kind, target_id, source_ip, user_agent, request_id, before_hash, after_hash, previous_hash, entry_hash, detail FROM audit_log
  WHERE organization_id IS NOT DISTINCT FROM $1::uuid
  ORDER BY sequence DESC
  LIMIT 1
@@ -147,12 +151,13 @@ func (q *Queries) LastAuditEntry(ctx context.Context, organizationID pgtype.UUID
 		&i.AfterHash,
 		&i.PreviousHash,
 		&i.EntryHash,
+		&i.Detail,
 	)
 	return i, err
 }
 
 const listAuditEntries = `-- name: ListAuditEntries :many
-SELECT id, organization_id, sequence, occurred_at, actor_kind, actor_id, actor_display, action, target_kind, target_id, source_ip, user_agent, request_id, before_hash, after_hash, previous_hash, entry_hash FROM audit_log
+SELECT id, organization_id, sequence, occurred_at, actor_kind, actor_id, actor_display, action, target_kind, target_id, source_ip, user_agent, request_id, before_hash, after_hash, previous_hash, entry_hash, detail FROM audit_log
  WHERE organization_id IS NOT DISTINCT FROM $1::uuid
    AND sequence > $2
  ORDER BY sequence
@@ -192,6 +197,7 @@ func (q *Queries) ListAuditEntries(ctx context.Context, arg ListAuditEntriesPara
 			&i.AfterHash,
 			&i.PreviousHash,
 			&i.EntryHash,
+			&i.Detail,
 		); err != nil {
 			return nil, err
 		}

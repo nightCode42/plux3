@@ -158,6 +158,35 @@ func (s *Service) SetAppLimit(ctx context.Context, p auth.Principal, appID, key 
 	return s.setLimit(ctx, p, limits.ScopeApp, scopeApp, appID, appID, key, value)
 }
 
+// ListPluginLimits reports every limit a plugin can set. The caller has
+// checked that the plugin belongs to the app.
+func (s *Service) ListPluginLimits(ctx context.Context, p auth.Principal, appID, pluginID string) ([]LimitUsage, error) {
+	var out []LimitUsage
+	err := s.inOrg(ctx, p, func(ctx context.Context, tx pgx.Tx) error {
+		if _, err := s.app(ctx, dbgen.New(tx), p, auth.PluginRead, appID); err != nil {
+			return err
+		}
+		set, err := s.Effective(ctx, tx, p.OrganizationID, appID, pluginID)
+		if err != nil {
+			return err
+		}
+		out = usages(set, limits.ScopePlugin, scopePlugin)
+		return nil
+	})
+	return out, err
+}
+
+// SetPluginLimit tightens a limit for one plugin, within its app's.
+func (s *Service) SetPluginLimit(ctx context.Context, p auth.Principal, appID, pluginID, key string, value int64) (LimitUsage, error) {
+	if err := authorize(p, auth.LimitsManage); err != nil {
+		return LimitUsage{}, err
+	}
+	if _, err := parseID(pluginID, "plugin"); err != nil {
+		return LimitUsage{}, err
+	}
+	return s.setLimit(ctx, p, limits.ScopePlugin, scopePlugin, pluginID, appID, key, value)
+}
+
 // setLimit validates a tightening against the scope above and stores it.
 func (s *Service) setLimit(ctx context.Context, p auth.Principal, scope limits.Scope, name, scopeID, appID, key string, value int64) (LimitUsage, error) {
 	k := limits.Key(key)

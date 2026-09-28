@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -54,9 +55,6 @@ type Options struct {
 	// SigningKeyPrefix names each environment's targets key,
 	// "<prefix>-<environment ID>" (ADR-0004).
 	SigningKeyPrefix string
-	// TrashKinds are the kinds of item, beyond apps, that other services
-	// put in the trash, with how to restore and purge each.
-	TrashKinds map[string]TrashKind
 	// Now is the clock; nil uses time.Now.
 	Now func() time.Time
 }
@@ -65,6 +63,10 @@ type Options struct {
 type Service struct {
 	o   Options
 	now func() time.Time
+
+	// kinds are the trash kinds other services registered.
+	mu    sync.Mutex
+	kinds map[string]TrashKind
 }
 
 // NewService returns the service.
@@ -93,7 +95,7 @@ func NewService(o Options) (*Service, error) {
 	if now == nil {
 		now = time.Now
 	}
-	return &Service{o: o, now: now}, nil
+	return &Service{o: o, now: now, kinds: map[string]TrashKind{}}, nil
 }
 
 // keyForm is the form of every key a person chooses: an organisation,

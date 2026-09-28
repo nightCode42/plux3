@@ -105,6 +105,7 @@ func (l *Log) Append(ctx context.Context, tx pgx.Tx, e Entry) (Entry, error) {
 		AfterHash:      e.AfterHash,
 		PreviousHash:   e.PreviousHash,
 		EntryHash:      e.EntryHash,
+		Detail:         e.Detail,
 	})
 	if err != nil {
 		return Entry{}, fmt.Errorf("audit: append: %w", err)
@@ -204,5 +205,6 @@ func fromRow(row dbgen.AuditLog) Entry {
 		AfterHash:      row.AfterHash,
 		PreviousHash:   row.PreviousHash,
 		EntryHash:      row.EntryHash,
+		Detail:         row.Detail,
 	}
 }

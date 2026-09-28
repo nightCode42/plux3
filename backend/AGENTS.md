@@ -24,6 +24,7 @@ The Go module `github.com/nightCode42/plux3/backend`: the Plux Server (`plux-ser
 | `internal/api/` | The ConnectRPC edge: interceptors, authentication, page tokens, idempotent mutation, error translation, and the thin service handlers (`SRV-006`, L-1) | AGPL-3.0-only |
 | `internal/auth/` | Accounts, sessions, TOTP, tokens, the device grant, CI federation, RBAC ([ADR-0026](../docs/adr/0026-identity-tenancy-and-access.md)) | AGPL-3.0-only |
 | `internal/tenancy/` | Organisations, teams, members, apps, environments, channels, variables, secrets, app access, trash, limit overrides | AGPL-3.0-only |
+| `internal/document/` | Drafts, documents with revisions and JSON Patch, snapshots and their retention, editing locks, plugins, import and export in the Git layout, templates, components and usages (ADR-0015) | AGPL-3.0-only |
 | `internal/audit/` | The hash-chained, append-only audit log (`SEC-140`) | AGPL-3.0-only |
 | `internal/signing/` | The only package that touches keys: file and Vault Transit backends, envelope encryption (`SEC-106`, `SEC-120`, L-3) | AGPL-3.0-only |
 | `internal/server/` | Role wiring, health, lifecycle ([server.md](../docs/reference/server.md)) | AGPL-3.0-only |

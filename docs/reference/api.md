@@ -86,6 +86,25 @@ are server-streaming; `DocumentService.ImportDraft` and
 `AssetService.UploadAsset` are client-streaming, with the first message
 carrying the target and no payload.
 
+**Drafts** ([ADR-0015](../adr/0015-single-draft-with-snapshots-and-locks.md)).
+Every plugin has one draft, and the app has one for its own documents
+(`app.json`, theme, translations, native catalogue, components, templates),
+each with its own editing lock (`SRV-042`). A write names the editing
+`session` holding the lock — 1 to 128 printable ASCII characters chosen by
+the client, one per editor tab — and the `if_revision` it read: `0`
+creates, and a stale revision is `aborted` with the current one in the
+error's `revision` detail (`SRV-030`). A document with a structural error
+is refused whole with `invalid_argument` and its file and JSON Pointer as
+details; compiler findings about a structurally valid document come back
+as diagnostics. A write refused because the lock is held elsewhere
+carries `holder` and `expiresAt`; when the writer is the session a
+takeover displaced, its write is kept as an unapplied snapshot named in
+`preservedSnapshot`, which the new holder can compare and restore
+(`SRV-041`). Snapshot pages run newest first. `ImportDraft` for the whole
+app creates the plugins its `plugins/<key>/` directories name, takes each
+draft's lock for the session, and deletes documents the import does not
+contain; assets are not documents and are uploaded with `AssetService`.
+
 ## 3. Errors
 
 A failure returns a Connect code, `google.rpc.ErrorInfo` with the reason and

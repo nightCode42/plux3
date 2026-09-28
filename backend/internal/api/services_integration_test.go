@@ -20,6 +20,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/audit"
 	"github.com/nightCode42/plux3/backend/internal/auth"
 	"github.com/nightCode42/plux3/backend/internal/cache"
+	"github.com/nightCode42/plux3/backend/internal/document"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1/pluxv1connect"
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
@@ -44,6 +45,10 @@ type world struct {
 	identity pluxv1connect.IdentityServiceClient
 	org      pluxv1connect.OrgServiceClient
 	app      pluxv1connect.AppServiceClient
+	plugin   pluxv1connect.PluginServiceClient
+	document pluxv1connect.DocumentServiceClient
+	comp     pluxv1connect.ComponentServiceClient
+	template pluxv1connect.TemplateServiceClient
 }
 
 func newWorld(t *testing.T) *world {
@@ -69,6 +74,13 @@ func newWorld(t *testing.T) *world {
 	if err != nil {
 		t.Fatal(err)
 	}
+	docs, err := document.NewService(document.Options{DB: db, Audit: log, Tenancy: tenancyService, IDs: gen})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for kind, k := range docs.TrashKinds() {
+		tenancyService.RegisterTrashKind(kind, k)
+	}
 	store, err := idempotency.NewStore(db, backend, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -87,7 +99,7 @@ func newWorld(t *testing.T) *world {
 	}
 	set := limits.Defaults()
 	limiter := api.RateLimiter{Window: time.Minute, Count: shared.Increment}
-	h := &api.Handlers{Auth: authService, Tenancy: tenancyService, Idempotency: store, Pages: pages, Limiter: limiter, Limits: set}
+	h := &api.Handlers{Auth: authService, Tenancy: tenancyService, Documents: docs, Idempotency: store, Pages: pages, Limiter: limiter, Limits: set}
 	authn := api.Authentication(authService, api.IdentityPublic, nil, limiter, set.Get(limits.APIRequestsPerMinute))
 	opts := connect.WithInterceptors(api.Interceptors(api.Deps{Before: []api.Around{authn}})...)
 	mux := http.NewServeMux()
@@ -95,6 +107,10 @@ func newWorld(t *testing.T) *world {
 		func() (string, http.Handler) { return pluxv1connect.NewIdentityServiceHandler(h.Identity(), opts) },
 		func() (string, http.Handler) { return pluxv1connect.NewOrgServiceHandler(h.Org(), opts) },
 		func() (string, http.Handler) { return pluxv1connect.NewAppServiceHandler(h.App(), opts) },
+		func() (string, http.Handler) { return pluxv1connect.NewPluginServiceHandler(h.Plugin(), opts) },
+		func() (string, http.Handler) { return pluxv1connect.NewDocumentServiceHandler(h.Document(), opts) },
+		func() (string, http.Handler) { return pluxv1connect.NewComponentServiceHandler(h.Component(), opts) },
+		func() (string, http.Handler) { return pluxv1connect.NewTemplateServiceHandler(h.Template(), opts) },
 	} {
 		path, handler := r()
 		mux.Handle(path, handler)
@@ -106,6 +122,10 @@ func newWorld(t *testing.T) *world {
 		identity: pluxv1connect.NewIdentityServiceClient(srv.Client(), srv.URL),
 		org:      pluxv1connect.NewOrgServiceClient(srv.Client(), srv.URL),
 		app:      pluxv1connect.NewAppServiceClient(srv.Client(), srv.URL),
+		plugin:   pluxv1connect.NewPluginServiceClient(srv.Client(), srv.URL),
+		document: pluxv1connect.NewDocumentServiceClient(srv.Client(), srv.URL),
+		comp:     pluxv1connect.NewComponentServiceClient(srv.Client(), srv.URL),
+		template: pluxv1connect.NewTemplateServiceClient(srv.Client(), srv.URL),
 	}
 }
 
@@ -152,7 +172,8 @@ func codeOf(err error) connect.Code {
 }
 
 // signIn signs a person in through the API and returns the caller.
-func (w *world) signIn(t *testing.T, email, password string) caller {
+func (w *world) signIn(t *testing.T, email string) caller {
+	const password = "correct horse battery"
 	t.Helper()
 	res, err := w.identity.StartPasswordLogin(context.Background(), connect.NewRequest(&pluxv1.StartPasswordLoginRequest{Email: email, Password: password}))
 	if err != nil {
@@ -196,7 +217,7 @@ func TestServicesEndToEnd(t *testing.T) {
 	if _, err := w.identity.StartPasswordLogin(ctx, connect.NewRequest(&pluxv1.StartPasswordLoginRequest{Email: "admin@example.com", Password: "wrong password!"})); codeOf(err) != connect.CodeUnauthenticated {
 		t.Errorf("a wrong password: %v", err)
 	}
-	admin := w.signIn(t, "admin@example.com", password)
+	admin := w.signIn(t, "admin@example.com")
 	if _, err := w.identity.GetCurrentUser(ctx, connect.NewRequest(&pluxv1.GetCurrentUserRequest{})); codeOf(err) != connect.CodeUnauthenticated {
 		t.Errorf("an anonymous call: %v", err)
 	}
@@ -333,7 +354,7 @@ func TestServicesEndToEnd(t *testing.T) {
 	must(w.app.RevokeAccess(ctx, req(admin, &pluxv1.RevokeAccessRequest{Id: grant.GetId()})))(t)
 	must(w.org.DeleteTeam(ctx, req(admin, &pluxv1.DeleteTeamRequest{Id: team.GetId()})))(t)
 
-	bob := w.signIn(t, "bob@example.com", password)
+	bob := w.signIn(t, "bob@example.com")
 	bob.org = org.GetId()
 	if _, err := w.org.AddMember(ctx, req(bob, &pluxv1.AddMemberRequest{Email: "eve@example.com", Role: "owner"})); codeOf(err) != connect.CodePermissionDenied {
 		t.Errorf("a developer added a member: %v", err)
@@ -464,7 +485,7 @@ func TestSignInWithChallengeOverTheAPI(t *testing.T) {
 	const password = "correct horse battery"
 	_, invitation, _ := w.auth.Bootstrap(ctx, "admin@example.com")
 	must(w.identity.AcceptInvitation(ctx, connect.NewRequest(&pluxv1.AcceptInvitationRequest{Invitation: invitation, DisplayName: "A", Password: password})))(t)
-	admin := w.signIn(t, "admin@example.com", password)
+	admin := w.signIn(t, "admin@example.com")
 	enrolled := must(w.identity.EnrollTotp(ctx, req(admin, &pluxv1.EnrollTotpRequest{})))(t)
 	c, _ := auth.TOTPCode(enrolled.GetSecret(), time.Now())
 	must(w.identity.ConfirmFactor(ctx, req(admin, &pluxv1.ConfirmFactorRequest{FactorId: enrolled.GetFactor().GetId(), Code: c})))(t)

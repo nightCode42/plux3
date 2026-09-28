@@ -19,8 +19,10 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/api"
 	"github.com/nightCode42/plux3/backend/internal/audit"
 	"github.com/nightCode42/plux3/backend/internal/auth"
+	"github.com/nightCode42/plux3/backend/internal/buildinfo"
 	"github.com/nightCode42/plux3/backend/internal/cache"
 	"github.com/nightCode42/plux3/backend/internal/config"
+	"github.com/nightCode42/plux3/backend/internal/document"
 	"github.com/nightCode42/plux3/backend/internal/httpx"
 	"github.com/nightCode42/plux3/backend/internal/jobs"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1/pluxv1connect"
@@ -40,6 +42,7 @@ type Services struct {
 	Audit       *audit.Log
 	Auth        *auth.Service
 	Tenancy     *tenancy.Service
+	Documents   *document.Service
 	Idempotency *idempotency.Store
 	Pages       *api.Pages
 }
@@ -117,6 +120,16 @@ func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shar
 	if err != nil {
 		return nil, fmt.Errorf("server: %w", err)
 	}
+	docs, err := document.NewService(document.Options{
+		DB: db, Audit: log, Tenancy: tenancyService, IDs: gen, Limits: set,
+		SnapshotDays: cfg.Retention.SnapshotDays, CompilerVersion: buildinfo.Get().Version,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("server: %w", err)
+	}
+	for kind, k := range docs.TrashKinds() {
+		tenancyService.RegisterTrashKind(kind, k)
+	}
 	store, err := idempotency.NewStore(db, backend, nil)
 	if err != nil {
 		return nil, fmt.Errorf("server: %w", err)
@@ -130,7 +143,7 @@ func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shar
 		return nil, fmt.Errorf("server: %w", err)
 	}
 	return &Services{
-		Audit: log, Auth: authService, Tenancy: tenancyService,
+		Audit: log, Auth: authService, Tenancy: tenancyService, Documents: docs,
 		Idempotency: store, Pages: pages,
 	}, nil
 }
@@ -170,7 +183,7 @@ func (s *Server) RegisterAPI(svc *Services) {
 		limiter.Count = s.cache.Increment
 	}
 	h := &api.Handlers{
-		Auth: svc.Auth, Tenancy: svc.Tenancy, Idempotency: svc.Idempotency, Pages: svc.Pages,
+		Auth: svc.Auth, Tenancy: svc.Tenancy, Documents: svc.Documents, Idempotency: svc.Idempotency, Pages: svc.Pages,
 		Limiter: limiter, Limits: s.limits,
 	}
 	authn := api.Authentication(svc.Auth, api.IdentityPublic, s.trusted, limiter, s.limits.Get(limits.APIRequestsPerMinute))
@@ -179,6 +192,10 @@ func (s *Server) RegisterAPI(svc *Services) {
 		func() (string, http.Handler) { return pluxv1connect.NewIdentityServiceHandler(h.Identity(), opts) },
 		func() (string, http.Handler) { return pluxv1connect.NewOrgServiceHandler(h.Org(), opts) },
 		func() (string, http.Handler) { return pluxv1connect.NewAppServiceHandler(h.App(), opts) },
+		func() (string, http.Handler) { return pluxv1connect.NewPluginServiceHandler(h.Plugin(), opts) },
+		func() (string, http.Handler) { return pluxv1connect.NewDocumentServiceHandler(h.Document(), opts) },
+		func() (string, http.Handler) { return pluxv1connect.NewComponentServiceHandler(h.Component(), opts) },
+		func() (string, http.Handler) { return pluxv1connect.NewTemplateServiceHandler(h.Template(), opts) },
 	} {
 		path, handler := register()
 		s.Register(path, handler)
@@ -186,7 +203,8 @@ func (s *Server) RegisterAPI(svc *Services) {
 }
 
 // Maintenance is the periodic sweep of the worker role: it purges the
-// trash past its retention (GOV-031), forgets idempotency keys older
+// trash past its retention (GOV-031) and draft history past its own
+// (SRV-031), forgets idempotency keys older
 // than a day (SRV-005) and deletes expired credentials.
 type Maintenance struct{}
 
@@ -212,13 +230,20 @@ func (w *maintenanceWorker) Work(ctx context.Context, _ *river.Job[Maintenance])
 	var errs []error
 	purged, err := w.svc.Tenancy.PurgeExpired(ctx, 100)
 	errs = append(errs, err)
+	snapshots := 0
+	err = w.svc.Tenancy.ForEachOrganization(ctx, func(org string) error {
+		n, err := w.svc.Documents.PurgeSnapshots(ctx, org)
+		snapshots += n
+		return err //nolint:wrapcheck // a domain error
+	})
+	errs = append(errs, err)
 	keys, err := w.svc.Idempotency.Expire(ctx)
 	errs = append(errs, err)
 	creds, err := w.svc.Auth.Expire(ctx)
 	errs = append(errs, err)
 	if w.log != nil {
 		w.log.InfoContext(ctx, "maintenance sweep",
-			slog.Int("trashPurged", purged), slog.Int64("idempotencyKeysExpired", keys),
+			slog.Int("trashPurged", purged), slog.Int("snapshotsPurged", snapshots), slog.Int64("idempotencyKeysExpired", keys),
 			slog.Int64("credentialsExpired", creds))
 	}
 	return errors.Join(errs...)

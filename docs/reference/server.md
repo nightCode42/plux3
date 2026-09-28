@@ -208,7 +208,12 @@ reach an internal service (`SEC-105`).
 
 The worker role runs the maintenance sweep hourly and once at start, on
 the `maintenance` queue: it purges trash past `retention.trashDays`
-(`GOV-031`), forgets idempotency keys older than a day (`SRV-005`) and
+(`GOV-031`), deletes draft history older than `retention.snapshotDays`
+(`SRV-031`) — first copying into each surviving snapshot whatever of its
+state lived only in the history being deleted, so every remaining snapshot
+still restores exactly, and never deleting a draft's newest snapshot or a
+kept one — then drops document content no longer referenced, forgets
+idempotency keys older than a day (`SRV-005`) and
 deletes expired sessions, sign-in challenges and device grants. River's
 leader election makes one worker enqueue it however many replicas run.
 
