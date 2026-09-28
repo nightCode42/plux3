@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -30,7 +31,21 @@ func stores(t *testing.T, cdn string) map[string]objects.Store {
 	if err != nil {
 		t.Fatalf("NewS3: %v", err)
 	}
-	return map[string]objects.Store{"filesystem": fs, "s3": s3}
+	out := map[string]objects.Store{"filesystem": fs, "s3": s3}
+	// A real S3-compatible store, when one is configured, runs every
+	// test too (QA-005).
+	if endpoint := os.Getenv("PLUX_TEST_S3_ENDPOINT"); endpoint != "" {
+		real, err := objects.NewS3(context.Background(), objects.S3Options{
+			Endpoint: endpoint, Bucket: os.Getenv("PLUX_TEST_S3_BUCKET"), PathStyle: true,
+			AccessKeyID: os.Getenv("PLUX_TEST_S3_ACCESS_KEY_ID"), SecretAccessKey: os.Getenv("PLUX_TEST_S3_SECRET_ACCESS_KEY"),
+			CDNBaseURL: cdn,
+		})
+		if err != nil {
+			t.Fatalf("NewS3(%s): %v", endpoint, err)
+		}
+		out["s3-server"] = real
+	}
+	return out
 }
 
 // Verifies: SRV-023.

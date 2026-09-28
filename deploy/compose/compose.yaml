@@ -1,0 +1,132 @@
+# SPDX-FileCopyrightText: 2026 Plux contributors
+# SPDX-License-Identifier: Apache-2.0
+
+# A complete single-node Plux installation (DEP-002):
+#
+#   make compose-up        # generates secrets on first run, then starts it
+#
+# plux-server runs every role; PostgreSQL, SeaweedFS (S3), Valkey, the
+# OpenTelemetry Collector, Prometheus and Grafana run beside it. Optional
+# profiles add Keycloak (an OpenID Connect provider) and Ollama. Studio
+# joins the stack in P11. Images are pinned by digest.
+#
+# The signing backend is the file backend, which never signs for an
+# environment marked production (SEC-056): a production installation
+# configures Vault Transit in plux-server.yaml.
+
+name: plux
+
+x-hardened: &hardened
+  read_only: true
+  cap_drop: [ALL]
+  # Docker applies its default seccomp profile (RuntimeDefault) unless a
+  # service opts out; none does.
+  security_opt: ["no-new-privileges:true"]
+
+services:
+  plux-server:
+    <<: *hardened
+    build:
+      context: ../..
+      dockerfile: backend/Dockerfile
+      target: server
+    image: plux-server:local
+    user: "65532:65532"
+    depends_on:
+      postgres: { condition: service_healthy }
+      s3-bucket: { condition: service_completed_successfully }
+      valkey: { condition: service_healthy }
+    env_file: [.secrets/plux-server.env]
+    volumes:
+      - ./plux-server.yaml:/etc/plux/plux.yaml:ro
+      - plux-keys:/var/lib/plux/keys
+    tmpfs: [/tmp]
+    ports: ["127.0.0.1:8080:8080"]
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16.13-bookworm@sha256:472efd9a66f2b2f1a5aeb18b28de74332e6ef88c2b93a1a5d812fb6db67a5f60
+    env_file: [.secrets/postgres.env]
+    volumes: [postgres:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U plux -d plux"]
+      interval: 5s
+      retries: 20
+    restart: unless-stopped
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.47@sha256:ce9e796f1fe6f06968f4c04bdaf8f678dad9c8acdfef3d244133d71bfa6bf882
+    command: ["server", "-dir=/data", "-s3", "-s3.port=8333", "-s3.config=/etc/seaweedfs/s3.json", "-ip.bind=0.0.0.0"]
+    volumes:
+      - seaweedfs:/data
+      - ./.secrets/s3.json:/etc/seaweedfs/s3.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:9333/cluster/status >/dev/null"]
+      interval: 5s
+      retries: 30
+    restart: unless-stopped
+
+  # Creates the bucket once; SeaweedFS keeps it in its data volume.
+  s3-bucket:
+    image: chrislusf/seaweedfs:4.47@sha256:ce9e796f1fe6f06968f4c04bdaf8f678dad9c8acdfef3d244133d71bfa6bf882
+    depends_on:
+      seaweedfs: { condition: service_healthy }
+    entrypoint: ["/bin/sh", "-c", "echo 's3.bucket.create -name plux' | weed shell -master=seaweedfs:9333"]
+    restart: "no"
+
+  valkey:
+    <<: *hardened
+    image: valkey/valkey:8.1.9-trixie@sha256:d5e642b89ee060a784f322cad2daad61c35d55530c32b74ce38b73ae01cd9fb3
+    user: "999:999"   # the image's valkey user, so its entrypoint needs no capabilities
+    command: ["valkey-server", "--save", "", "--appendonly", "no"]
+    tmpfs: [/data]
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+    restart: unless-stopped
+
+  otel-collector:
+    <<: *hardened
+    image: otel/opentelemetry-collector-contrib:0.137.0@sha256:886722fe0f37af9d1fe24d29529253ec59fbf263b3b1df4facaf221373e19d23
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes: [./otel-collector.yaml:/etc/otelcol/config.yaml:ro]
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.6.0@sha256:76947e7ef22f8a698fc638f706685909be425dbe09bd7a2cd7aca849f79b5f64
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus:/prometheus
+    ports: ["127.0.0.1:9090:9090"]
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:12.2.0@sha256:74144189b38447facf737dfd0f3906e42e0776212bf575dc3334c3609183adf7
+    env_file: [.secrets/grafana.env]
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana:/var/lib/grafana
+    ports: ["127.0.0.1:3000:3000"]
+    restart: unless-stopped
+
+  keycloak:
+    profiles: [keycloak]
+    image: keycloak/keycloak:26.4.0@sha256:5f3fb534cde6bf006d79f5912473e5d2c828c707cdfc52e16972803aca9d43dd
+    command: ["start-dev"]
+    env_file: [.secrets/keycloak.env]
+    ports: ["127.0.0.1:8180:8080"]
+    restart: unless-stopped
+
+  ollama:
+    profiles: [ollama]
+    image: ollama/ollama:0.12.3@sha256:c622a7adec67cf5bd7fe1802b7e26aa583a955a54e91d132889301f50c3e0bd0
+    volumes: [ollama:/root/.ollama]
+    restart: unless-stopped
+
+volumes:
+  plux-keys:
+  postgres:
+  seaweedfs:
+  prometheus:
+  grafana:
+  ollama:

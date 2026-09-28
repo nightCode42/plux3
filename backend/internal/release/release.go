@@ -98,9 +98,10 @@ type Options struct {
 
 // Service is the domain logic of versions and releases.
 type Service struct {
-	o       Options
-	now     func() time.Time
-	flights *flightGroup
+	o         Options
+	now       func() time.Time
+	flights   *flightGroup
+	manifests *manifestCache
 }
 
 // NewService returns the service.
@@ -124,7 +125,7 @@ func NewService(o Options) (*Service, error) {
 	if now == nil {
 		now = time.Now
 	}
-	return &Service{o: o, now: now, flights: &flightGroup{}}, nil
+	return &Service{o: o, now: now, flights: &flightGroup{}, manifests: &manifestCache{}}, nil
 }
 
 // inOrg runs f in a transaction bound to the principal's organisation.

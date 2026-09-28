@@ -67,7 +67,10 @@ func NewValkey(rawURL string) (*Valkey, error) {
 		password: password,
 		database: database,
 		timeout:  5 * time.Second,
-		maxIdle:  8,
+		// Every API call makes one or two counter calls (SRV-065), so the
+		// pool must cover the server's concurrency; a small pool turned
+		// each busy moment into a dial and a close per call (NFR-020).
+		maxIdle: 256,
 	}
 	v.dial = func(ctx context.Context) (net.Conn, error) {
 		if secure {

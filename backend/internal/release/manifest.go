@@ -125,7 +125,7 @@ func (s *Service) SignManifest(ctx context.Context, job ManifestJob) error {
 	if err != nil {
 		return fmt.Errorf("release: %w", err)
 	}
-	return s.o.DB.InTx(ctx, storage.Tenant{OrganizationID: job.OrganizationID}, func(ctx context.Context, tx pgx.Tx) error { //nolint:wrapcheck // InTx wraps its own failures
+	err = s.o.DB.InTx(ctx, storage.Tenant{OrganizationID: job.OrganizationID}, func(ctx context.Context, tx pgx.Tx) error {
 		q := dbgen.New(tx)
 		channel, err := q.GetChannelByID(ctx, ch)
 		if err != nil {
@@ -143,6 +143,13 @@ func (s *Service) SignManifest(ctx context.Context, job ManifestJob) error {
 		}
 		return s.signAndStore(ctx, q, channel, env)
 	})
+	if err != nil {
+		return fmt.Errorf("release: sign a manifest: %w", err)
+	}
+	// A process with both roles serves the new manifest at once; other
+	// replicas pick it up within manifestTTL.
+	s.manifests.clear()
+	return nil
 }
 
 // signAndStore builds, signs and stores a channel's manifest, and

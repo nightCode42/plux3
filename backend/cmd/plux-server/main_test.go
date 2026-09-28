@@ -234,3 +234,46 @@ func get(t *testing.T, c *http.Client, url string) (*http.Response, error) {
 	}
 	return c.Do(req) //nolint:wrapcheck // a test helper
 }
+
+// Verifies: DEP-020.
+// seed prepares a development installation once, writes its credentials
+// readable only by the user, and refuses to run a second time.
+func TestSeedCommand(t *testing.T) {
+	url := storagetest.SchemaURL(t)
+	dir := t.TempDir()
+	path := configFile(t, "server:\n  publicBaseURL: \"https://p.example\"\ndatabase:\n  url: \""+url+"\"\n"+
+		"signing:\n  directory: \""+filepath.Join(dir, "keys")+"\"\n")
+	var stdout, stderr bytes.Buffer
+	if code := run(context.Background(), []string{"migrate", "-config", path}, &stdout, &stderr); code != exitOK {
+		t.Fatalf("migrate: %d; %s", code, stderr.String())
+	}
+	out := filepath.Join(dir, "dev")
+	if code := run(context.Background(), []string{"seed", "-config", path, "-out", out}, &stdout, &stderr); code != exitOK {
+		t.Fatalf("seed: %d; %s", code, stderr.String())
+	}
+	for _, f := range []string{"password", "token", "organization", "app"} {
+		st, err := os.Stat(filepath.Join(out, f))
+		if err != nil || st.Mode().Perm() != 0o600 {
+			t.Errorf("%s: %v %v", f, st, err)
+		}
+	}
+	if token, _ := os.ReadFile(filepath.Join(out, "token")); !strings.HasPrefix(string(token), "plux_pat_") {
+		t.Errorf("token = %q", token)
+	}
+	if code := run(context.Background(), []string{"seed", "-config", path, "-out", out}, &stdout, &stderr); code != exitFailed {
+		t.Errorf("a second seed: exit %d", code)
+	}
+	path2 := configFile(t, "server:\n  publicBaseURL: \"https://p.example\"\ndatabase:\n  url: \""+storagetest.SchemaURL(t)+"\"\n"+
+		"signing:\n  directory: \""+filepath.Join(dir, "keys2")+"\"\n")
+	if code := run(context.Background(), []string{"migrate", "-config", path2}, &stdout, &stderr); code != exitOK {
+		t.Fatalf("migrate: %d; %s", code, stderr.String())
+	}
+	stdout.Reset()
+	if code := run(context.Background(), []string{"seed", "-config", path2, "-out", "-"}, &stdout, &stderr); code != exitOK ||
+		!strings.Contains(stdout.String(), "PLUX_DEV_TOKEN=plux_pat_") {
+		t.Errorf("seed -out -: %d %q", code, stdout.String())
+	}
+	if code := run(context.Background(), []string{"seed", "extra"}, &stdout, &stderr); code != exitUsage {
+		t.Errorf("seed with an argument: exit %d", code)
+	}
+}

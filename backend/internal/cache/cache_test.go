@@ -6,6 +6,7 @@ package cache
 import (
 	"context"
 	"errors"
+	"os"
 	"strconv"
 	"testing"
 	"time"
@@ -27,7 +28,43 @@ func backends(t *testing.T) map[string]Cache {
 		t.Fatalf("NewValkey: %v", err)
 	}
 	t.Cleanup(func() { _ = v.Close() })
-	return map[string]Cache{"memory": NewMemory(nil), "valkey": v}
+	out := map[string]Cache{"memory": NewMemory(nil), "valkey": v}
+	// A real Valkey, when one is configured, runs every test too (QA-005).
+	if url := os.Getenv("PLUX_TEST_VALKEY_URL"); url != "" {
+		real, err := NewValkey(url)
+		if err != nil {
+			t.Fatalf("NewValkey(%s): %v", url, err)
+		}
+		t.Cleanup(func() { _ = real.Close() })
+		out["valkey-server"] = prefixed{Cache: real, prefix: t.Name() + ":"}
+	}
+	return out
+}
+
+// prefixed keeps each test's keys apart on a shared server.
+type prefixed struct {
+	Cache
+	prefix string
+}
+
+func (p prefixed) Get(ctx context.Context, key string) ([]byte, bool, error) {
+	return p.Cache.Get(ctx, p.prefix+key)
+}
+
+func (p prefixed) Set(ctx context.Context, key string, value []byte, ttl time.Duration) error {
+	return p.Cache.Set(ctx, p.prefix+key, value, ttl)
+}
+
+func (p prefixed) SetNX(ctx context.Context, key string, value []byte, ttl time.Duration) (bool, error) {
+	return p.Cache.SetNX(ctx, p.prefix+key, value, ttl)
+}
+
+func (p prefixed) Increment(ctx context.Context, key string, ttl time.Duration) (int64, error) {
+	return p.Cache.Increment(ctx, p.prefix+key, ttl)
+}
+
+func (p prefixed) Delete(ctx context.Context, key string) error {
+	return p.Cache.Delete(ctx, p.prefix+key)
 }
 
 func TestCacheRoundTrip(t *testing.T) {

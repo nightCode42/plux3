@@ -88,6 +88,7 @@ GO_BUILD_FLAGS  := -trimpath -buildvcs=false -ldflags "-s -w -buildid= \
 	go-determinism go-budgets go-fuzz currencies-check go-vuln go-build go-reproducible \
 	dart-check dart-get dart-lock-check dart-fmt dart-fmt-check dart-analyze dart-test dart-cover widgets-api widgets-api-check \
 	studio-check studio-install studio-fmt studio-lint studio-typecheck studio-test studio-cover \
+	compose-secrets compose-up compose-down dev compose-test \
 	release-notes repo-check spec-lint trace secrets workflows-lint reuse-lint hygiene
 
 help: ## Show this help
@@ -361,6 +362,45 @@ studio-test: ## Run Studio tests
 
 studio-cover: studio-test ## Enforce Studio coverage floors (QA-001)
 	$(COVGATE) -kind studio studio/coverage/lcov.info
+
+##@ Stack (Docker Compose)
+
+COMPOSE_DIR := deploy/compose
+COMPOSE     := docker compose -f $(COMPOSE_DIR)/compose.yaml
+
+compose-secrets: ## Generate the stack's credentials into deploy/compose/.secrets on first run
+	@$(COMPOSE_DIR)/init-secrets.sh
+
+compose-up: compose-secrets ## Start the single-node stack: server, PostgreSQL, SeaweedFS, Valkey, OTel, Prometheus, Grafana (DEP-002)
+	$(COMPOSE) up -d --build --wait
+	@echo "Plux Server: http://localhost:8080  Grafana: http://localhost:3000  Prometheus: http://localhost:9090"
+
+compose-down: ## Stop the stack (volumes are kept; add -v by hand to delete them)
+	$(COMPOSE) down
+
+# Verifies: DEP-020.
+dev: compose-secrets ## Start the stack with hot reload of the server, seed a sample app on first run (DEP-020)
+	$(COMPOSE) -f $(COMPOSE_DIR)/compose.dev.yaml up -d --build --wait
+	@if [ ! -s $(COMPOSE_DIR)/.secrets/dev.env ]; then \
+		umask 077; \
+		$(COMPOSE) -f $(COMPOSE_DIR)/compose.dev.yaml run --rm --no-deps plux-server seed -config /etc/plux/plux.yaml -out - > $(COMPOSE_DIR)/.secrets/dev.env && \
+		. ./$(COMPOSE_DIR)/.secrets/dev.env && \
+		(cd backend && PLUX_TOKEN="$$PLUX_DEV_TOKEN" $(GO) run ./cmd/plux publish --server http://localhost:8080 --org "$$PLUX_DEV_ORGANIZATION" \
+			--app "$$PLUX_DEV_APP" -C ../schema/testdata/documents/loan-calculator --promote staging); \
+		echo "Seeded dev@plux.localhost; password and token in $(COMPOSE_DIR)/.secrets/dev.env"; \
+	fi
+	$(COMPOSE) -f $(COMPOSE_DIR)/compose.dev.yaml watch
+
+# Verifies: QA-005.
+compose-test: compose-secrets ## Run the Go integration and end-to-end tests against the stack's PostgreSQL, SeaweedFS and Valkey (QA-005)
+	$(COMPOSE) -f $(COMPOSE_DIR)/compose.test.yaml up -d --wait postgres seaweedfs s3-bucket valkey
+	. ./$(COMPOSE_DIR)/.secrets/postgres.env && . ./$(COMPOSE_DIR)/.secrets/plux-server.env && cd backend && \
+		PLUX_TEST_DATABASE_URL="postgres://plux:$$POSTGRES_PASSWORD@127.0.0.1:55432/plux?sslmode=disable" \
+		PLUX_TEST_S3_ENDPOINT=http://127.0.0.1:58333 PLUX_TEST_S3_BUCKET=plux \
+		PLUX_TEST_S3_ACCESS_KEY_ID="$$PLUX_OBJECT_STORAGE_ACCESS_KEY_ID" \
+		PLUX_TEST_S3_SECRET_ACCESS_KEY="$$PLUX_OBJECT_STORAGE_SECRET_ACCESS_KEY" \
+		PLUX_TEST_VALKEY_URL=redis://127.0.0.1:56379 \
+		$(GO) test -race -count=1 ./internal/storage/... ./internal/cache/... ./internal/server/... ./internal/api/... ./internal/release/...
 
 ##@ Releases (CI-008)
 

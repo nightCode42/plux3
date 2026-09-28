@@ -88,7 +88,7 @@ with a small RESP client in `internal/cache/resp`; nothing that matters survives
 Integration tests run against a real PostgreSQL (`QA-005`) — the local server in
 development, a service container in CI — selected by `PLUX_TEST_DATABASE_URL`; each test
 gets its own schema and rolls back. Object storage is tested against an in-process S3 stub
-for the common path and against MinIO in CI.
+for the common path and against a real S3-compatible store in CI (SeaweedFS; see Revision).
 
 ## Consequences
 
@@ -114,3 +114,13 @@ that matters most here: enqueuing a job in the same transaction as the write tha
 Keeps the deployment to one system, but bundles and deltas are exactly the workload object
 storage and CDNs exist for: immutable, content-addressed, range-read, cached at the edge.
 Storing them in the database would put device download traffic on the primary. Rejected.
+
+## Revision (2026-09-28)
+
+MinIO stopped publishing container images, so the Compose stack and CI cannot use it. The
+maintainer chose **SeaweedFS** (Apache-2.0, maintained, signed images) as the S3-compatible
+store of the Compose stack and the CI integration job. Nothing in the server changes: it
+speaks plain S3 through `aws-sdk-go-v2`, path-style, to any compatible service, and
+installations keep using whichever store they run (AWS S3, Google Cloud Storage's S3
+interface, Ceph, MinIO built from source, SeaweedFS). `DEP-002`, §6.2 and Appendix H were
+reworded to match.

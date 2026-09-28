@@ -45,9 +45,20 @@ func TestPublishWithTheCLIAndSyncADevice(t *testing.T) {
 	dir := t.TempDir()
 	const addr = "127.0.0.1:18093"
 	server := "http://" + addr
+	// With a real S3-compatible store and Valkey configured, the test runs
+	// the way the Compose stack does: objects in S3 but served through the
+	// server's own object route, the cache in Valkey (QA-005, DEP-041).
+	stores := "objectStorage:\n  directory: \"" + filepath.Join(dir, "objects") + "\"\n"
+	if endpoint := os.Getenv("PLUX_TEST_S3_ENDPOINT"); endpoint != "" {
+		stores = "objectStorage:\n  backend: s3\n  endpoint: \"" + endpoint + "\"\n  bucket: \"" + os.Getenv("PLUX_TEST_S3_BUCKET") + "\"\n" +
+			"  pathStyle: true\n  accessKeyID: \"" + os.Getenv("PLUX_TEST_S3_ACCESS_KEY_ID") + "\"\n" +
+			"  secretAccessKey: \"" + os.Getenv("PLUX_TEST_S3_SECRET_ACCESS_KEY") + "\"\n  cdnBaseURL: \"" + server + "/v1/objects\"\n"
+	}
+	if valkey := os.Getenv("PLUX_TEST_VALKEY_URL"); valkey != "" {
+		stores += "cache:\n  backend: valkey\n  valkeyURL: \"" + valkey + "\"\n"
+	}
 	cfg := testConfig(t, "server:\n  roles: [api, worker]\n  listen: \""+addr+"\"\n  publicBaseURL: \""+server+"\"\n"+
-		"database:\n  url: \""+url+"\"\n"+
-		"objectStorage:\n  directory: \""+filepath.Join(dir, "objects")+"\"\n"+
+		"database:\n  url: \""+url+"\"\n"+stores+
 		"signing:\n  directory: \""+filepath.Join(dir, "keys")+"\"\n")
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

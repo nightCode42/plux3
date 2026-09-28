@@ -436,7 +436,7 @@ flowchart TB
 | API | ConnectRPC + Protocol Buffers, managed with `buf` | One handler serves gRPC, gRPC-Web and Connect JSON over HTTP/1.1 and HTTP/2. Generated clients for Go, TypeScript (Connect-ES) and Dart. |
 | Primary database | PostgreSQL (16+) | `pgx`, `sqlc`, versioned migrations, row-level security as defence in depth. |
 | Job queue | PostgreSQL-backed (River) | No extra infrastructure for self-hosters. |
-| Object storage | S3 API (MinIO for self-host) | Bundles, deltas, assets, thumbnails, exports. |
+| Object storage | S3 API (any S3-compatible store for self-host; SeaweedFS in the Compose stack) | Bundles, deltas, assets, thumbnails, exports. |
 | Shared cache | Valkey (Redis-compatible) | DPoP `jti` replay cache, nonces, rate limits. In-memory fallback for single-node. |
 | Function runtime | WebAssembly compiled with standard Go (`GOOS=wasip1`); `wazero` on the server; a sandboxed interpreter on the device | One artifact, two placements (ADR-0011). |
 | Mobile runtime | Flutter (latest stable), Dart 3, Riverpod 3 | FFI for `mmap` and `zstd`. Impeller renderer. |
@@ -1873,7 +1873,7 @@ One Plux installation can serve many independent organisations — for example a
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `DEP-001` | P2 | MUST | Every server component and Studio **MUST** ship as a multi-arch (amd64, arm64) distroless container image, signed with cosign, with an attached CycloneDX SBOM and SLSA provenance (`CI-004`). | SPEC |
-| `DEP-002` | P2 | MUST | A Docker Compose stack **MUST** start a complete single-node installation with one command: `plux-server` (all roles), Studio, PostgreSQL, MinIO, Valkey, OpenTelemetry Collector, Prometheus and Grafana, with optional Keycloak and Ollama profiles. | SPEC |
+| `DEP-002` | P2 | MUST | A Docker Compose stack **MUST** start a complete single-node installation with one command: `plux-server` (all roles), Studio, PostgreSQL, an S3-compatible object store (SeaweedFS), Valkey, OpenTelemetry Collector, Prometheus and Grafana, with optional Keycloak and Ollama profiles. | SPEC |
 | `DEP-003` | P9 | MUST | A Helm chart **MUST** deploy an HA installation on Kubernetes with separate `api`, `worker` and `fnrunner` deployments, a values schema, NetworkPolicies isolating `fnrunner`, Pod Security `restricted`, PodDisruptionBudgets, horizontal autoscaling and topology spread. | SPEC |
 | `DEP-004` | P9 | MUST | HA **MUST** be supported with ≥ 2 replicas per role, PostgreSQL HA (e.g. CloudNativePG or Patroni), HA object storage and Valkey with replication; rolling upgrades **MUST** cause no downtime. | SPEC |
 | `DEP-010` | P9 | MUST | Backups **MUST** include point-in-time recovery for PostgreSQL and versioning or replication for object storage, consistent with each other; restore **MUST** be documented and drilled in CI. Enterprise targets: RPO ≤ 5 min, RTO ≤ 1 h. | SPEC |
@@ -2710,7 +2710,7 @@ database:
   url: "postgres://plux@db:5432/plux?sslmode=verify-full"
   maxConnections: 50
 objectStorage:
-  endpoint: "https://minio:9000"
+  endpoint: "https://s3:8333"
   bucket: "plux"
   cdnBaseURL: ""                     # optional
 cache:
@@ -2939,7 +2939,7 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | Field | Value |
 |---|---|
 | Document ID | `SRS-PLUX-001` |
-| Version | 1.1.4 |
+| Version | 1.1.5 |
 | Status | Draft (living document) |
 | Date | 2026-09-27 |
 | Supersedes | 1.1.2 |
@@ -2955,3 +2955,4 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | 1.1.2 | 2026-09-26 | Phase 1 clarifications: section-directory entries are 72 bytes, matching their fields (App. B.1); `BND-004` names the `schemas` section as App. B.2 does; the structural primitive `Switch` is renamed `Match` (App. C.1); App. E.1 points to the complete PXL grammar; App. A shows action graphs as their own documents, as `SCH-006` requires, with identifiers on state entries and parameters (`SCH-002`); ADR-0025 added to §32; App. E.2 adds the `event` root that event handlers read (ADR-0002, ADR-0010, ADR-0025). |
 | 1.1.3 | 2026-09-27 | Phase 2 clarifications: §6.3 lists the server modules the decomposition needs beyond the original sketch (`tenancy/`, `cache/`, `httpx/`, `server/` and the generated `pluxv1/`); §33 places the manifest's schema with the JSON Schemas, since App. B.3 defines the manifest as signed canonical JSON rather than a FlatBuffers buffer (ADR-0003, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0015, ADR-0020). |
 | 1.1.4 | 2026-09-28 | App. B.3: the per-device sync plan and download URLs are shown outside the signed part of the manifest, as the maintainer confirmed (ADR-0004, implementation notes). |
+| 1.1.5 | 2026-09-28 | MinIO no longer publishes container images: §6.2, `DEP-002` and App. H name an S3-compatible store, SeaweedFS in the Compose stack (maintainer decision; ADR-0007, Revision). |

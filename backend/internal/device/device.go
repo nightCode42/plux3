@@ -16,6 +16,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -56,9 +57,50 @@ type Options struct {
 
 // Service is the domain logic of devices.
 type Service struct {
-	db  *storage.DB
-	ids IDs
-	now func() time.Time
+	db     *storage.DB
+	ids    IDs
+	now    func() time.Time
+	tokens *tokenCache
+}
+
+// tokenCacheTTL bounds how long a replica trusts a token it has looked
+// up without asking the database again. Device tokens cannot be revoked
+// before they expire in P2, so the cache never serves a token past its
+// own expiry either; it spares the database one read per device call
+// (NFR-020).
+const tokenCacheTTL = 30 * time.Second
+
+// maxCachedTokens bounds the cache; past it, the cache starts over.
+const maxCachedTokens = 100000
+
+// tokenCache maps a token's hash to its device.
+type tokenCache struct {
+	mu      sync.Mutex
+	entries map[string]cachedToken
+}
+
+type cachedToken struct {
+	id    Identity
+	until time.Time
+}
+
+func (c *tokenCache) get(hash string, now time.Time) (Identity, bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	e, ok := c.entries[hash]
+	if !ok || !now.Before(e.until) {
+		return Identity{}, false
+	}
+	return e.id, true
+}
+
+func (c *tokenCache) put(hash string, id Identity, until time.Time) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.entries == nil || len(c.entries) >= maxCachedTokens {
+		c.entries = map[string]cachedToken{}
+	}
+	c.entries[hash] = cachedToken{id: id, until: until}
 }
 
 // NewService returns the service.
@@ -70,7 +112,7 @@ func NewService(o Options) (*Service, error) {
 	if now == nil {
 		now = time.Now
 	}
-	return &Service{db: o.DB, ids: o.IDs, now: now}, nil
+	return &Service{db: o.DB, ids: o.IDs, now: now, tokens: &tokenCache{}}, nil
 }
 
 // Device is a registered installation.
@@ -207,10 +249,15 @@ func (s *Service) Authenticate(ctx context.Context, token string) (Identity, err
 	if !IsToken(token) {
 		return Identity{}, refused()
 	}
+	hash := auth.HashSecret(token)
+	now := s.now()
+	if id, ok := s.tokens.get(string(hash), now); ok {
+		return id, nil
+	}
 	var row dbgen.FindDeviceTokenRow
 	err := s.db.InTx(ctx, storage.Tenant{Scope: storage.ScopeAuthentication}, func(ctx context.Context, tx pgx.Tx) error {
 		var err error
-		row, err = dbgen.New(tx).FindDeviceToken(ctx, auth.HashSecret(token))
+		row, err = dbgen.New(tx).FindDeviceToken(ctx, hash)
 		return err //nolint:wrapcheck // translated below
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -219,13 +266,20 @@ func (s *Service) Authenticate(ctx context.Context, token string) (Identity, err
 	if err != nil {
 		return Identity{}, fmt.Errorf("device: %w", err)
 	}
-	if !storage.Time(row.ExpiresAt).After(s.now()) {
+	expires := storage.Time(row.ExpiresAt)
+	if !expires.After(now) {
 		return Identity{}, refused()
 	}
-	return Identity{
+	id := Identity{
 		DeviceID: storage.ID(row.DeviceID), OrganizationID: storage.ID(row.OrganizationID),
 		AppID: storage.ID(row.AppID), EnvironmentID: storage.ID(row.EnvironmentID),
-	}, nil
+	}
+	until := now.Add(tokenCacheTTL)
+	if expires.Before(until) {
+		until = expires
+	}
+	s.tokens.put(string(hash), id, until)
+	return id, nil
 }
 
 // Installed is one bundle a device holds; Key is "" for the app bundle.

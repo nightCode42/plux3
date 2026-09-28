@@ -95,36 +95,16 @@ type ServedManifest struct {
 // same manifest and installed bundles always give the same answer; the
 // ETag covers both, so an unchanged device costs one small response.
 func (s *Service) GetManifest(ctx context.Context, r ManifestRequest) (ServedManifest, error) {
-	var (
-		row dbgen.Manifest
-		out ServedManifest
-	)
-	err := s.o.DB.InTx(ctx, storage.Tenant{OrganizationID: r.OrganizationID}, func(ctx context.Context, tx pgx.Tx) error {
-		q := dbgen.New(tx)
-		ch, err := q.GetChannel(ctx, dbgen.GetChannelParams{EnvironmentID: storage.MustUUID(r.EnvironmentID), Key: channelOrDefault(r.Channel)})
-		if err != nil {
-			return failure(err, "channel")
-		}
-		if row, err = q.LatestManifest(ctx, ch.ID); err != nil {
-			return failure(err, "manifest")
-		}
-		return nil
-	})
+	base, err := s.latestManifest(ctx, r.OrganizationID, r.EnvironmentID, channelOrDefault(r.Channel))
 	if err != nil {
-		return ServedManifest{}, fmt.Errorf("release: %w", err)
+		return ServedManifest{}, err
 	}
-	if err := json.Unmarshal(row.Signed, &out.Document); err != nil {
-		return ServedManifest{}, fmt.Errorf("release: a stored manifest: %w", err)
-	}
-	if err := json.Unmarshal(row.Signatures, &out.Signatures); err != nil {
-		return ServedManifest{}, fmt.Errorf("release: a stored manifest: %w", err)
-	}
-	out.Signed = row.Signed
+	out := ServedManifest{Document: base.doc, Signatures: base.signatures, Signed: base.signed}
 	targets := map[string]SignedBundle{"": out.Document.AppBundle}
 	for _, p := range out.Document.Plugins {
 		targets[p.Key] = p.SignedBundle
 	}
-	out.ETag = etag(row.ID.Bytes[:], targets, r.Installed)
+	out.ETag = etag(base.id[:], targets, r.Installed)
 	if r.IfNoneMatch != "" && r.IfNoneMatch == out.ETag {
 		return ServedManifest{NotModified: true, ETag: out.ETag}, nil
 	}
@@ -138,6 +118,79 @@ func (s *Service) GetManifest(ctx context.Context, r ManifestRequest) (ServedMan
 		out.Plan[key], out.URLs[key] = step, full
 	}
 	return out, nil
+}
+
+// manifestTTL is how long a replica reuses a channel's newest manifest
+// before reading it again: far inside the minute a rollback may take to
+// reach online devices (REL-006), and what lets a replica answer
+// thousands of unchanged devices a second (NFR-020).
+const manifestTTL = time.Second
+
+// cachedManifest is a channel's newest manifest, parsed once.
+type cachedManifest struct {
+	id         [16]byte
+	doc        SignedManifest
+	signatures []ManifestSignature
+	signed     []byte
+	until      time.Time
+}
+
+// manifestCache holds each channel's newest manifest for manifestTTL.
+type manifestCache struct {
+	mu      sync.Mutex
+	entries map[string]cachedManifest
+}
+
+// clear forgets every cached manifest.
+func (c *manifestCache) clear() {
+	c.mu.Lock()
+	c.entries = nil
+	c.mu.Unlock()
+}
+
+// maxCachedManifests bounds the cache; past it, the cache starts over.
+const maxCachedManifests = 10000
+
+// latestManifest returns a channel's newest manifest, from the cache when
+// it is fresh.
+func (s *Service) latestManifest(ctx context.Context, org, env, channel string) (cachedManifest, error) {
+	key := org + "/" + env + "/" + channel
+	now := s.now()
+	s.manifests.mu.Lock()
+	c, ok := s.manifests.entries[key]
+	s.manifests.mu.Unlock()
+	if ok && now.Before(c.until) {
+		return c, nil
+	}
+	var row dbgen.Manifest
+	err := s.o.DB.InTx(ctx, storage.Tenant{OrganizationID: org}, func(ctx context.Context, tx pgx.Tx) error {
+		q := dbgen.New(tx)
+		ch, err := q.GetChannel(ctx, dbgen.GetChannelParams{EnvironmentID: storage.MustUUID(env), Key: channel})
+		if err != nil {
+			return failure(err, "channel")
+		}
+		if row, err = q.LatestManifest(ctx, ch.ID); err != nil {
+			return failure(err, "manifest")
+		}
+		return nil
+	})
+	if err != nil {
+		return cachedManifest{}, fmt.Errorf("release: %w", err)
+	}
+	c = cachedManifest{id: row.ID.Bytes, signed: row.Signed, until: now.Add(manifestTTL)}
+	if err := json.Unmarshal(row.Signed, &c.doc); err != nil {
+		return cachedManifest{}, fmt.Errorf("release: a stored manifest: %w", err)
+	}
+	if err := json.Unmarshal(row.Signatures, &c.signatures); err != nil {
+		return cachedManifest{}, fmt.Errorf("release: a stored manifest: %w", err)
+	}
+	s.manifests.mu.Lock()
+	if s.manifests.entries == nil || len(s.manifests.entries) >= maxCachedManifests {
+		s.manifests.entries = map[string]cachedManifest{}
+	}
+	s.manifests.entries[key] = c
+	s.manifests.mu.Unlock()
+	return c, nil
 }
 
 // plan chooses how a device gets from what it holds to the target
