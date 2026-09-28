@@ -1,8 +1,8 @@
 # 0027. Asset pipeline: uploads, WebAssembly image codecs and dotLottie
 
 - **Status:** Accepted
-- **Date:** 2026-09-28
-- **Requirements:** `SRV-060`, `CMP-030`, `CMP-033`, `AST-003`; deferred: `CMP-031` (P3), `CMP-032` (P8)
+- **Date:** 2026-09-28; revised 2026-09-28 for P3 (see [Revision](#revision-2026-09-28-p3-svg-and-assets-on-the-device))
+- **Requirements:** `SRV-060`, `CMP-030`, `CMP-033`, `AST-003`, `CMP-031` (P3 revision), `AST-001`, `AST-002`, `RT-014`; deferred: `CMP-032` (P8)
 
 ## Context and problem
 
@@ -105,3 +105,65 @@ surface, and makes the output depend on whichever versions the image carries.
 ### Option 4 — pure Go
 
 No maintained lossy WebP or AVIF encoder exists in Go; writing one is out of proportion to P2.
+
+## Revision (2026-09-28, P3: SVG and assets on the device)
+
+### SVG to `vector_graphics` (`CMP-031`)
+
+`vector_graphics`' binary format has one encoder, `vector_graphics_compiler`, written in
+Dart; the Go worker cannot call it. The maintainer chose to run it **in the worker as a Dart
+helper process** (option (a) of the P3 plan), over porting the encoder to Go (large, with a
+fidelity risk) and over deferring `CMP-031` with `flutter_svg` on the device (which parses
+raw SVG on the device, contrary to `CMP-031`).
+
+- **`plux-svgc`**, a small Dart program in the workspace, reads one SVG on standard input
+  and writes the `.vec` encoding on standard output, with the masking, clipping and
+  overdraw optimisers on. It is compiled ahead of time (`dart compile exe`) into a native
+  executable that needs no Dart SDK at run time. The worker runs it per SVG with a time and
+  output limit, as it runs the WebAssembly codecs per image, and stores the result as a
+  variant of the asset (`image/vnd.plux.vector-graphics`); a failure marks the asset
+  `failed` with a diagnostic, as for raster images.
+- **Its native dependency.** The optimisers call Skia's path operations through FFI
+  (`libpath_ops`). Flutter's engine ships a prebuilt copy; Plux instead **builds it from
+  source**, like `flatc` and the codecs: the engine's 90-line `path_ops.cc` wrapper and the
+  61 Skia sources it needs (32 in `src/pathops`, 27 in `src/core`, 2 in `src/ports`), from the Skia revision the
+  pinned Flutter uses (`8df24be66531469e576a806749a0202ae26b8d08`, BSD-3-Clause, fetched
+  from its GitHub mirror), compiled with clang at `-O2` with hidden visibility, section
+  garbage collection, identical-code folding and a static C++ runtime, so that it needs
+  only glibc.
+- **Determinism.** The encoder's output is a function of its input; two runs give
+  identical bytes. The AOT executable is reproducible when built from the same path, which
+  the image build fixes.
+
+**Size, measured on 2026-09-28 (linux/amd64):**
+
+| Part | Size | Compressed (gzip -9) |
+|---|---|---|
+| `plux-svgc` (AOT executable; a Dart "hello world" is 6.2 MiB of it) | 7.04 MiB | 2.87 MiB |
+| `libpath_ops.so` built from source (Flutter's prebuilt: 484 KiB) | 374 KiB | 170 KiB |
+| Runtime base `distroless/static-debian12` → `distroless/base-nossl-debian12` (glibc, which the Dart runtime needs) | +12.5 MiB (3.0 → 15.5 MiB) | +4.7 MiB (0.7 → 5.4 MiB) |
+| **Total added to the server image** | **≈ 19.9 MiB** | **≈ 7.7 MiB** |
+
+The Go binary stays static and cgo-free (`CI-006`); only the image base changes, to one
+with glibc and still no shell or package manager (`SEC-108`). Every role runs from the one
+server image (`SRV-001`), so api replicas carry the helper without using it; a separate
+worker image would save the 7.7 MiB there at the cost of a second image to build, sign and
+document — left to the maintainer.
+
+### Assets on the device (`AST-001`, `AST-002`, `RT-014`)
+
+- Asset bytes are **not** inside bundles: the `assets-index` section names each asset and
+  variant by SHA-256, and the api role serves asset objects by that address at
+  `/v1/objects/assets/…` with the same immutable caching and range support as bundles
+  (`REL-024`). A device downloads each referenced asset once per release set, checks it
+  against the hash in the signed bundle, and stores it content-addressed, shared by every
+  plugin (`AST-001`, ADR-0021). `plux pull` writes them into the baseline too.
+- **Which variant.** The runtime chooses per asset: the `vector_graphics` variant for SVG;
+  for raster images the density nearest above the device pixel ratio, as AVIF when the
+  platform decoder supports it (Android 12+, iOS 16+) and WebP otherwise. Support is
+  reported in the device's registration features, which also feed `REL-080`.
+- **Remote images** (`AST-002`, `RT-014`) are fetched by the runtime's image provider,
+  decoded at their laid-out size (`cacheWidth`/`cacheHeight`), cached in memory and on disk
+  within the limits registry's bounds, shown with a ThumbHash or BlurHash placeholder when
+  the document gives one and an error image on failure, and restricted to the plugin's
+  declared network domains when the app pins them.

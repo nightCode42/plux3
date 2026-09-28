@@ -4,7 +4,7 @@ Significant design decisions are recorded here in the [MADR](https://adr.github.
 
 Write an ADR when a decision is hard to reverse, affects more than one component, adds or replaces a dependency ([dependencies.md](../engineering/dependencies.md)), changes a `MUST` requirement, or chooses between reasonable alternatives that a future reader would question.
 
-Files are named `NNNN-short-title.md` with a four-digit, never-reused number. The numbers and phases below match spec §32.
+Files are named `NNNN-short-title.md` with a four-digit, never-reused number. The numbers and phases below match spec §32; ADRs from 0026 on record decisions taken during the phases.
 
 ## Index
 
@@ -17,7 +17,7 @@ Files are named `NNNN-short-title.md` with a four-digit, never-reused number. Th
 | [0005](0005-connectrpc-and-protobuf.md) | ConnectRPC and Protocol Buffers for all APIs | P2 | Accepted |
 | [0006](0006-modular-monolith-with-roles.md) | Modular monolith with deployable roles instead of microservices | P2 | Accepted |
 | [0007](0007-postgresql-and-object-storage.md) | PostgreSQL as system of record and job queue; S3-compatible object storage | P2 | Accepted |
-| 0008 | Riverpod as the runtime state engine | P3 | Planned |
+| [0008](0008-riverpod-runtime-state-engine.md) | Riverpod as the runtime state engine | P3 | Accepted |
 | [0009](0009-pxl-typed-expression-language.md) | PXL: a typed expression language compiled to bytecode | P1 | Accepted |
 | [0010](0010-layered-widget-model.md) | Layered widget model with a descriptor registry | P1 | Accepted |
 | 0011 | Plux Functions: standard Go compiled to WebAssembly; explicit placement | P7 | Planned |
@@ -30,7 +30,7 @@ Files are named `NNNN-short-title.md` with a four-digit, never-reused number. Th
 | [0018](0018-unified-error-model.md) | Unified error model with registered codes and reasons | P1 | Accepted |
 | 0019 | Approvals bound to artifact content hashes | P9 | Planned |
 | [0020](0020-build-once-promote-releases.md) | Build-once-promote app releases as the unit of activation | P2 | Accepted |
-| 0021 | Sync all plugins at app start instead of lazy loading | P3 | Planned |
+| [0021](0021-sync-all-plugins-at-start.md) | Sync all plugins at app start instead of lazy loading | P3 | Accepted |
 | [0022](0022-open-core-licensing.md) | Open-core licensing: Apache-2.0 client side, AGPL-3.0 server and Studio, commercial `ee/` | P0 | Accepted |
 | 0023 | Mixed native/plugin screens: native slots and `PluxView` with shared exposed state | P4 | Planned |
 | 0024 | No-code generated projects and shell-update detection | P4 | Planned |
@@ -38,5 +38,10 @@ Files are named `NNNN-short-title.md` with a four-digit, never-reused number. Th
 | [0026](0026-identity-tenancy-and-access.md) | Built-in accounts with TOTP, org-bound credentials and row-level scopes | P2 | Accepted |
 | [0027](0027-asset-pipeline.md) | Asset pipeline: uploads, WebAssembly image codecs and dotLottie | P2 | Accepted |
 | [0028](0028-cli-credential-storage.md) | The CLI keeps its token in the OS keychain | P2 | Accepted |
+| [0029](0029-on-device-verification.md) | On-device verification of manifests and bundles | P3 | Accepted |
+| [0030](0030-native-code-in-plux-flutter.md) | Native code in `plux_flutter`: memory maps and zstd over FFI | P3 | Accepted |
+| [0031](0031-rendering-model.md) | Rendering model: generated node builders over mapped sections | P3 | Accepted |
+| [0032](0032-design-tokens-to-material-and-cupertino.md) | Design tokens mapped to Material 3 and Cupertino themes | P3 | Accepted (icon fonts proposed) |
+| [0033](0033-documentation-site.md) | Documentation site: Starlight on Bun, published to GitHub Pages | P3 | Accepted |
 
 The decisions for planned ADRs are summarised in spec §32 and §34.1. Each is written in full before or alongside the first implementation that depends on it, and its status is updated here.

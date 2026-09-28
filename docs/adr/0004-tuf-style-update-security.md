@@ -1,7 +1,7 @@
 # 0004. TUF-style update security with offline root keys
 
 - **Status:** Accepted
-- **Date:** 2026-09-27
+- **Date:** 2026-09-27; revised 2026-09-28 (see [Revision](#revision-2026-09-28-p3-device-side))
 - **Requirements:** `SEC-050`, `SEC-051`, `SEC-052`, `SEC-055`, `SEC-056`, `SEC-120`, `SEC-121`, `SEC-122`, `REL-031`, `SRV-052`, `BND-005`
 
 ## Context and problem
@@ -142,3 +142,13 @@ behind a CDN, not registry manifests; adopting it would mean shipping a registry
 - **Production.** The file backend refuses to sign a bundle or a manifest for an environment
   marked production (`SEC-056`); the development keys therefore never sign a production
   release. The runtime-side rejection lands in P6, so `SEC-056` stays `SPEC`.
+
+## Revision (2026-09-28, P3 device side)
+
+The paragraph "What P6 adds" listed the device-side verification order (`SEC-052`) and
+anti-rollback (`SEC-055`) under P6. The specification tags both P3, and the P3 runtime
+implements them: [ADR-0029](0029-on-device-verification.md) records the verification order,
+the anti-rollback counter and the key handling on the device. What remains for P6 is
+unchanged: the root, snapshot and timestamp roles, thresholds, root rotation (the second
+half of `SEC-051`), development-key rejection on the device (`SEC-056`) and confidential
+bundles (`SEC-053`).

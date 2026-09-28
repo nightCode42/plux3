@@ -54,8 +54,31 @@ Valkey is reached with a small RESP client in `backend/internal/cache`, so no Re
 | `test` | Tests of the pure-Dart `plux_widget_api` tool | BSD-3-Clause | In use (dev) |
 | `flat_buffers` | Bundle section accessors in `plux_flutter` ([ADR-0002](../adr/0002-flatbuffers-sectioned-bundles.md)) | Apache-2.0 | In use |
 | `analyzer` | Flutter constructor extraction in the development-only `plux_widget_api` tool ([ADR-0010](../adr/0010-layered-widget-model.md)); never a dependency of a shipped package | BSD-3-Clause | In use (tool) |
+| `flutter_riverpod` 3.4.3 (with `riverpod`) | The runtime's state engine (`RT-003`, [ADR-0008](../adr/0008-riverpod-runtime-state-engine.md)); no code generation | MIT | In use (P3) |
+| `cryptography` 2.9.0 | Ed25519 verification of manifests and baseline bundles, pure-Dart implementation only ([ADR-0029](../adr/0029-on-device-verification.md)) | Apache-2.0 | In use (P3) |
+| `crypto` 3.0.7 | SHA-256 of bundles, sections and assets ([ADR-0029](../adr/0029-on-device-verification.md)) | BSD-3-Clause | In use (P3) |
+| `http` 1.6.0 | HTTP client interface for sync and telemetry ([ADR-0021](../adr/0021-sync-all-plugins-at-start.md)) | BSD-3-Clause | In use (P3) |
+| `cronet_http` 1.9.0 | HTTP/2 client on Android (Cronet), behind `http` (`SYN-010`) | BSD-3-Clause | In use (P3) |
+| `cupertino_http` 3.1.0 | HTTP/2 client on iOS (`URLSession`), behind `http` (`SYN-010`) | BSD-3-Clause | In use (P3) |
+| `vector_graphics` 1.2.3 | Renders SVG assets compiled at publish time (`CMP-031`, [ADR-0027](../adr/0027-asset-pipeline.md) Revision) | BSD-3-Clause | In use (P3) |
+| `hooks` 2.2.0, `code_assets` 1.2.1, `native_toolchain_c` 0.19.3 | The build hook that compiles `plux_native` (mmap and zstd) for every target; build time only, never imported by `lib/` ([ADR-0030](../adr/0030-native-code-in-plux-flutter.md)) | BSD-3-Clause | In use (P3, build) |
+| `vector_graphics_compiler` 1.3.0 | The SVG encoder inside the server-side `plux-svgc` helper; never a dependency of a shipped package ([ADR-0027](../adr/0027-asset-pipeline.md) Revision) | BSD-3-Clause | In use (P3, server tool) |
+| `integration_test` (SDK) | End-to-end tests of the example host app on emulators and simulators (`QA-006`) | BSD-3-Clause | In use (P3, dev) |
 
-Planned for P3: `flutter_riverpod` (ADR-0008).
+Transitive packages these bring, all published by the Dart and Flutter teams or the Riverpod author and all BSD-3-Clause or MIT: `state_notifier`, `listen`, `uuid`, `fixnum` (Riverpod); `http_parser`, `http_profile`, `web`, `web_socket` (HTTP); `jni`, `jni_flutter`, `jni_util`, `package_config`, `plugin_platform_interface` (Cronet); `objective_c`, `ffi` (`URLSession`, `cryptography`); `vector_graphics_codec`; and, at build time only, `logging`, `pub_semver`, `record_use`, `yaml`, `glob`, `file`. `flutter_riverpod` declares `flutter_test` as a dependency; nothing in `plux_flutter/lib` imports it, so release builds do not contain it.
+
+### Native code built from source
+
+| Source | Used for | Licence | Record |
+|---|---|---|---|
+| zstd v1.5.7 (`lib/common`, `lib/decompress`), vendored in `packages/plux_flutter/native/zstd/` | Delta patching and transport decompression on the device | BSD-3-Clause | [ADR-0030](../adr/0030-native-code-in-plux-flutter.md) |
+| Skia path operations at the revision the pinned Flutter uses, with the Flutter engine's `path_ops` wrapper, built for `plux-svgc` | Mask, clip and overdraw optimisation of SVGs at publish time | BSD-3-Clause | [ADR-0027](../adr/0027-asset-pipeline.md) Revision |
+
+### Documentation site (`site/`)
+
+| Package | Used for | Licence | Record |
+|---|---|---|---|
+| `astro` 7.3.5, `@astrojs/starlight` 0.42.4 | The documentation site (`DX-002`) | MIT | [ADR-0033](../adr/0033-documentation-site.md) |
 
 ### TypeScript (`studio/`)
 
