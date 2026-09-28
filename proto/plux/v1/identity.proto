@@ -12,11 +12,13 @@ import "plux/v1/org.proto";
 option go_package = "github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1";
 
 // IdentityService authenticates people and machines: built-in accounts
-// with Argon2id passwords and mandatory TOTP for sensitive capabilities
-// (SEC-100), browser sessions for the Studio backend-for-frontend
-// (SEC-101), personal access tokens and CI workload-identity federation
-// (SRV-064), and the OAuth 2.0 device authorization grant `plux login`
-// uses (CLI-002). Single sign-on arrives with GOV-004 and WebAuthn with
+// with Argon2id passwords or an OpenID Connect provider, and a second
+// factor — TOTP or a WebAuthn security key — mandatory for sensitive
+// capabilities (SEC-100), browser sessions for the Studio
+// backend-for-frontend (SEC-101), personal access tokens and CI
+// workload-identity federation (SRV-064), and the OAuth 2.0 device
+// authorization grant `plux login` uses (CLI-002). SAML, provisioning
+// and group mapping arrive with GOV-004, and WebAuthn step-up with
 // SEC-103, both in P9.
 service IdentityService {
   rpc GetCurrentUser(GetCurrentUserRequest) returns (GetCurrentUserResponse) {}
@@ -30,6 +32,17 @@ service IdentityService {
   rpc StartPasswordLogin(StartPasswordLoginRequest) returns (StartPasswordLoginResponse) {}
   // CompleteMfa answers a challenge with a one-time code.
   rpc CompleteMfa(CompleteMfaRequest) returns (CompleteMfaResponse) {}
+  // StartOidcLogin begins a sign-in with the installation's OpenID
+  // Connect provider and returns where to send the browser.
+  rpc StartOidcLogin(StartOidcLoginRequest) returns (StartOidcLoginResponse) {}
+  // CompleteOidcLogin ends it with the provider's code and the state
+  // StartOidcLogin returned. Like a password, it yields a session or a
+  // second-factor challenge.
+  rpc CompleteOidcLogin(CompleteOidcLoginRequest) returns (CompleteOidcLoginResponse) {}
+  // BeginWebAuthnLogin returns the options to answer a challenge with a
+  // security key; CompleteWebAuthnLogin answers it.
+  rpc BeginWebAuthnLogin(BeginWebAuthnLoginRequest) returns (BeginWebAuthnLoginResponse) {}
+  rpc CompleteWebAuthnLogin(CompleteWebAuthnLoginRequest) returns (CompleteWebAuthnLoginResponse) {}
   // VerifySecondFactor presents a one-time code within an existing
   // session, which capabilities that require one then accept.
   rpc VerifySecondFactor(VerifySecondFactorRequest) returns (VerifySecondFactorResponse) {}
@@ -37,6 +50,10 @@ service IdentityService {
   rpc Logout(LogoutRequest) returns (LogoutResponse) {}
 
   rpc EnrollTotp(EnrollTotpRequest) returns (EnrollTotpResponse) {}
+  // BeginWebAuthnRegistration adds a security key waiting for the
+  // browser's registration, which FinishWebAuthnRegistration verifies.
+  rpc BeginWebAuthnRegistration(BeginWebAuthnRegistrationRequest) returns (BeginWebAuthnRegistrationResponse) {}
+  rpc FinishWebAuthnRegistration(FinishWebAuthnRegistrationRequest) returns (FinishWebAuthnRegistrationResponse) {}
   rpc ConfirmFactor(ConfirmFactorRequest) returns (ConfirmFactorResponse) {}
   rpc ListFactors(ListFactorsRequest) returns (ListFactorsResponse) {}
   rpc DeleteFactor(DeleteFactorRequest) returns (DeleteFactorResponse) {}
@@ -87,7 +104,7 @@ message User {
 // Factor is an enrolled second factor (SEC-100).
 message Factor {
   string id = 1;
-  // kind is "totp".
+  // kind is "totp" or "webauthn".
   string kind = 2;
   string label = 3;
   bool confirmed = 4;
@@ -150,6 +167,64 @@ message CompleteMfaRequest {
 }
 message CompleteMfaResponse {
   Session session = 1;
+}
+
+message StartOidcLoginRequest {}
+message StartOidcLoginResponse {
+  // url is the provider's authorization URL.
+  string url = 1;
+  // state is returned by the provider with the code; Studio keeps it
+  // until the callback.
+  string state = 2;
+  google.protobuf.Timestamp expires_at = 3;
+}
+
+message CompleteOidcLoginRequest {
+  string state = 1;
+  string code = 2;
+}
+message CompleteOidcLoginResponse {
+  Session session = 1;
+  MfaChallenge challenge = 2;
+}
+
+message BeginWebAuthnLoginRequest {
+  string challenge_id = 1;
+}
+message BeginWebAuthnLoginResponse {
+  // options_json is PublicKeyCredentialRequestOptions in WebAuthn's JSON
+  // serialisation, for navigator.credentials.get().
+  bytes options_json = 1;
+}
+
+message CompleteWebAuthnLoginRequest {
+  string challenge_id = 1;
+  bytes credential_id = 2;
+  bytes client_data_json = 3;
+  bytes authenticator_data = 4;
+  bytes signature = 5;
+}
+message CompleteWebAuthnLoginResponse {
+  Session session = 1;
+}
+
+message BeginWebAuthnRegistrationRequest {
+  string label = 1;
+}
+message BeginWebAuthnRegistrationResponse {
+  Factor factor = 1;
+  // options_json is PublicKeyCredentialCreationOptions in WebAuthn's
+  // JSON serialisation, for navigator.credentials.create().
+  bytes options_json = 2;
+}
+
+message FinishWebAuthnRegistrationRequest {
+  string factor_id = 1;
+  bytes client_data_json = 2;
+  bytes attestation_object = 3;
+}
+message FinishWebAuthnRegistrationResponse {
+  Factor factor = 1;
 }
 
 message VerifySecondFactorRequest {

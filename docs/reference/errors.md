@@ -728,6 +728,14 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Retry the call. If it keeps failing, give the incident identifier to the operator of the installation.
 
+### PLX-8091
+
+`UPSTREAM_UNAVAILABLE` · error · A service the server depends on is unavailable
+
+**Cause.** The server could not reach a service outside it that the call needs, such as the single sign-on provider.
+
+**Fix.** Retry later. If it persists, the operator checks the service and the server's outbound network.
+
 ## Studio, CLI and AI (PLX-9000–9999)
 
 ### PLX-9100

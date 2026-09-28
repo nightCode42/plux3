@@ -1941,6 +1941,88 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.ApproveDeviceAuthorizationResponse'
+  /plux.v1.IdentityService/BeginWebAuthnLogin:
+    post:
+      tags:
+        - plux.v1.IdentityService
+      summary: BeginWebAuthnLogin
+      description: |-
+        BeginWebAuthnLogin returns the options to answer a challenge with a
+         security key; CompleteWebAuthnLogin answers it.
+      operationId: plux.v1.IdentityService.BeginWebAuthnLogin
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.BeginWebAuthnLoginRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.BeginWebAuthnLoginResponse'
+  /plux.v1.IdentityService/BeginWebAuthnRegistration:
+    post:
+      tags:
+        - plux.v1.IdentityService
+      summary: BeginWebAuthnRegistration
+      description: |-
+        BeginWebAuthnRegistration adds a security key waiting for the
+         browser's registration, which FinishWebAuthnRegistration verifies.
+      operationId: plux.v1.IdentityService.BeginWebAuthnRegistration
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.BeginWebAuthnRegistrationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.BeginWebAuthnRegistrationResponse'
   /plux.v1.IdentityService/ChangePassword:
     post:
       tags:
@@ -2018,6 +2100,86 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.CompleteMfaResponse'
+  /plux.v1.IdentityService/CompleteOidcLogin:
+    post:
+      tags:
+        - plux.v1.IdentityService
+      summary: CompleteOidcLogin
+      description: |-
+        CompleteOidcLogin ends it with the provider's code and the state
+         StartOidcLogin returned. Like a password, it yields a session or a
+         second-factor challenge.
+      operationId: plux.v1.IdentityService.CompleteOidcLogin
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.CompleteOidcLoginRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.CompleteOidcLoginResponse'
+  /plux.v1.IdentityService/CompleteWebAuthnLogin:
+    post:
+      tags:
+        - plux.v1.IdentityService
+      summary: CompleteWebAuthnLogin
+      operationId: plux.v1.IdentityService.CompleteWebAuthnLogin
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.CompleteWebAuthnLoginRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.CompleteWebAuthnLoginResponse'
   /plux.v1.IdentityService/ConfirmFactor:
     post:
       tags:
@@ -2334,6 +2496,44 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.ExchangeWorkloadIdentityResponse'
+  /plux.v1.IdentityService/FinishWebAuthnRegistration:
+    post:
+      tags:
+        - plux.v1.IdentityService
+      summary: FinishWebAuthnRegistration
+      operationId: plux.v1.IdentityService.FinishWebAuthnRegistration
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.FinishWebAuthnRegistrationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.FinishWebAuthnRegistrationResponse'
   /plux.v1.IdentityService/GetCurrentUser:
     post:
       tags:
@@ -2681,6 +2881,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.StartDeviceAuthorizationResponse'
+  /plux.v1.IdentityService/StartOidcLogin:
+    post:
+      tags:
+        - plux.v1.IdentityService
+      summary: StartOidcLogin
+      description: |-
+        StartOidcLogin begins a sign-in with the installation's OpenID
+         Connect provider and returns where to send the browser.
+      operationId: plux.v1.IdentityService.StartOidcLogin
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.StartOidcLoginRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.StartOidcLoginResponse'
   /plux.v1.IdentityService/StartPasswordLogin:
     post:
       tags:
@@ -5013,6 +5254,50 @@ components:
       title: AuditEntry
       additionalProperties: false
       description: AuditEntry is one record of the append-only audit log (SEC-140).
+    plux.v1.BeginWebAuthnLoginRequest:
+      type: object
+      properties:
+        challengeId:
+          type: string
+          title: challenge_id
+      title: BeginWebAuthnLoginRequest
+      additionalProperties: false
+    plux.v1.BeginWebAuthnLoginResponse:
+      type: object
+      properties:
+        optionsJson:
+          type: string
+          title: options_json
+          format: byte
+          description: |-
+            options_json is PublicKeyCredentialRequestOptions in WebAuthn's JSON
+             serialisation, for navigator.credentials.get().
+      title: BeginWebAuthnLoginResponse
+      additionalProperties: false
+    plux.v1.BeginWebAuthnRegistrationRequest:
+      type: object
+      properties:
+        label:
+          type: string
+          title: label
+      title: BeginWebAuthnRegistrationRequest
+      additionalProperties: false
+    plux.v1.BeginWebAuthnRegistrationResponse:
+      type: object
+      properties:
+        factor:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Factor'
+          title: factor
+        optionsJson:
+          type: string
+          title: options_json
+          format: byte
+          description: |-
+            options_json is PublicKeyCredentialCreationOptions in WebAuthn's
+             JSON serialisation, for navigator.credentials.create().
+      title: BeginWebAuthnRegistrationResponse
+      additionalProperties: false
     plux.v1.BundleDescriptor:
       type: object
       properties:
@@ -5184,6 +5469,63 @@ components:
             - $ref: '#/components/schemas/plux.v1.Session'
           title: session
       title: CompleteMfaResponse
+      additionalProperties: false
+    plux.v1.CompleteOidcLoginRequest:
+      type: object
+      properties:
+        state:
+          type: string
+          title: state
+        code:
+          type: string
+          title: code
+      title: CompleteOidcLoginRequest
+      additionalProperties: false
+    plux.v1.CompleteOidcLoginResponse:
+      type: object
+      properties:
+        session:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Session'
+          title: session
+        challenge:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.MfaChallenge'
+          title: challenge
+      title: CompleteOidcLoginResponse
+      additionalProperties: false
+    plux.v1.CompleteWebAuthnLoginRequest:
+      type: object
+      properties:
+        challengeId:
+          type: string
+          title: challenge_id
+        credentialId:
+          type: string
+          title: credential_id
+          format: byte
+        clientDataJson:
+          type: string
+          title: client_data_json
+          format: byte
+        authenticatorData:
+          type: string
+          title: authenticator_data
+          format: byte
+        signature:
+          type: string
+          title: signature
+          format: byte
+      title: CompleteWebAuthnLoginRequest
+      additionalProperties: false
+    plux.v1.CompleteWebAuthnLoginResponse:
+      type: object
+      properties:
+        session:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Session'
+          title: session
+      title: CompleteWebAuthnLoginResponse
       additionalProperties: false
     plux.v1.Component:
       type: object
@@ -6007,7 +6349,7 @@ components:
         kind:
           type: string
           title: kind
-          description: kind is "totp".
+          description: kind is "totp" or "webauthn".
         label:
           type: string
           title: label
@@ -6025,6 +6367,31 @@ components:
       title: Factor
       additionalProperties: false
       description: Factor is an enrolled second factor (SEC-100).
+    plux.v1.FinishWebAuthnRegistrationRequest:
+      type: object
+      properties:
+        factorId:
+          type: string
+          title: factor_id
+        clientDataJson:
+          type: string
+          title: client_data_json
+          format: byte
+        attestationObject:
+          type: string
+          title: attestation_object
+          format: byte
+      title: FinishWebAuthnRegistrationRequest
+      additionalProperties: false
+    plux.v1.FinishWebAuthnRegistrationResponse:
+      type: object
+      properties:
+        factor:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Factor'
+          title: factor
+      title: FinishWebAuthnRegistrationResponse
+      additionalProperties: false
     plux.v1.GetAppRequest:
       type: object
       properties:
@@ -8707,6 +9074,29 @@ components:
           title: expires_at
       title: StartDeviceAuthorizationResponse
       additionalProperties: false
+    plux.v1.StartOidcLoginRequest:
+      type: object
+      title: StartOidcLoginRequest
+      additionalProperties: false
+    plux.v1.StartOidcLoginResponse:
+      type: object
+      properties:
+        url:
+          type: string
+          title: url
+          description: url is the provider's authorization URL.
+        state:
+          type: string
+          title: state
+          description: |-
+            state is returned by the provider with the code; Studio keeps it
+             until the callback.
+        expiresAt:
+          allOf:
+            - $ref: '#/components/schemas/google.protobuf.Timestamp'
+          title: expires_at
+      title: StartOidcLoginResponse
+      additionalProperties: false
     plux.v1.StartPasswordLoginRequest:
       type: object
       properties:
@@ -9217,11 +9607,13 @@ tags:
   - name: plux.v1.IdentityService
     description: |-
       IdentityService authenticates people and machines: built-in accounts
-       with Argon2id passwords and mandatory TOTP for sensitive capabilities
-       (SEC-100), browser sessions for the Studio backend-for-frontend
-       (SEC-101), personal access tokens and CI workload-identity federation
-       (SRV-064), and the OAuth 2.0 device authorization grant `plux login`
-       uses (CLI-002). Single sign-on arrives with GOV-004 and WebAuthn with
+       with Argon2id passwords or an OpenID Connect provider, and a second
+       factor — TOTP or a WebAuthn security key — mandatory for sensitive
+       capabilities (SEC-100), browser sessions for the Studio
+       backend-for-frontend (SEC-101), personal access tokens and CI
+       workload-identity federation (SRV-064), and the OAuth 2.0 device
+       authorization grant `plux login` uses (CLI-002). SAML, provisioning
+       and group mapping arrive with GOV-004, and WebAuthn step-up with
        SEC-103, both in P9.
   - name: plux.v1.ManifestService
     description: |-

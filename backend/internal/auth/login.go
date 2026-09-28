@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net/mail"
+	"slices"
 	"strings"
 	"time"
 
@@ -261,12 +262,23 @@ func (s *Service) challenge(ctx context.Context, tx pgx.Tx, userID pgtype.UUID) 
 		return Challenge{}, err
 	}
 	expires := s.now().Add(challengeTTL)
+	factors, err := dbgen.New(tx).ListFactors(ctx, userID)
+	if err != nil {
+		return Challenge{}, fmt.Errorf("auth: list the factors: %w", err)
+	}
+	var kinds []string
+	for _, f := range factors {
+		if f.ConfirmedAt.Valid && !slices.Contains(kinds, f.Kind) {
+			kinds = append(kinds, f.Kind)
+		}
+	}
+	slices.Sort(kinds)
 	if _, err := dbgen.New(tx).CreateChallenge(ctx, dbgen.CreateChallengeParams{
 		ID: storage.MustUUID(id), UserID: userID, SecretHash: secret.Hash, ExpiresAt: storage.Timestamp(expires),
 	}); err != nil {
 		return Challenge{}, fmt.Errorf("auth: create a challenge: %w", err)
 	}
-	return Challenge{Secret: secret.Value, Kinds: []string{"totp"}, ExpiresAt: expires}, nil
+	return Challenge{Secret: secret.Value, Kinds: kinds, ExpiresAt: expires}, nil
 }
 
 // CompleteMFA answers a challenge with a one-time code and issues the
@@ -344,6 +356,9 @@ func (s *Service) presentCode(ctx context.Context, tx pgx.Tx, userID pgtype.UUID
 		return false, fmt.Errorf("auth: read the factors: %w", err)
 	}
 	for _, f := range factors {
+		if f.Kind != "totp" {
+			continue
+		}
 		secret, err := s.openFactor(ctx, f)
 		if err != nil {
 			return false, err

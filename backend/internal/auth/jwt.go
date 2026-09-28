@@ -43,6 +43,23 @@ type Claims struct {
 	NotBefore int64  `json:"nbf"`
 	Email     string `json:"email"`
 	Name      string `json:"name"`
+	// Nonce binds an OpenID Connect ID token to the sign-in that asked
+	// for it.
+	Nonce string `json:"nonce"`
+	// EmailVerified is a boolean, or the string "true" some providers
+	// send.
+	EmailVerified any `json:"email_verified"`
+}
+
+// emailVerified reports whether the provider vouches for the address.
+func (c Claims) emailVerified() bool {
+	switch v := c.EmailVerified.(type) {
+	case bool:
+		return v
+	case string:
+		return v == "true"
+	}
+	return false
 }
 
 // audiences returns the token's audiences, which may be one string or a

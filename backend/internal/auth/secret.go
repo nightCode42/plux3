@@ -65,6 +65,8 @@ const (
 	PrefixChallenge = "plux_mfa"
 	// PrefixInvitation lets an invited person set their password.
 	PrefixInvitation = "plux_inv"
+	// PrefixOIDCState ties a provider's callback to the sign-in it ends.
+	PrefixOIDCState = "plux_oidc"
 )
 
 // userCodeAlphabet has no vowels, so that a code never spells a word,

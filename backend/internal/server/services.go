@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -102,6 +103,10 @@ func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shar
 	if err != nil {
 		return nil, err
 	}
+	oidc, err := oidcProvider(cfg)
+	if err != nil {
+		return nil, err
+	}
 	authService, err := auth.NewService(auth.Options{
 		DB: db, Audit: log, Cache: shared, Limits: set, Crypter: backend, IDs: gen,
 		SessionTTL:      cfg.Auth.Studio.SessionTTL.Duration(),
@@ -109,6 +114,8 @@ func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shar
 		Issuer:          "Plux",
 		VerificationURI: verificationURI(cfg),
 		Issuers:         issuers,
+		OIDC:            oidc,
+		WebAuthn:        webAuthn(cfg),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("server: %w", err)
@@ -155,6 +162,35 @@ func verificationURI(cfg *config.Config) string {
 		return ""
 	}
 	return strings.TrimSuffix(cfg.Server.PublicBaseURL, "/") + "/device"
+}
+
+// oidcProvider builds the OpenID Connect provider people sign in with,
+// when one is configured (SEC-100).
+func oidcProvider(cfg *config.Config) (*auth.OIDCProvider, error) {
+	o := cfg.Auth.Studio.OIDC
+	if o.Issuer == "" {
+		return nil, nil //nolint:nilnil // no provider is configured
+	}
+	p, err := auth.NewOIDCProvider(auth.OIDCConfig{
+		Issuer: o.Issuer, ClientID: o.ClientID, ClientSecret: string(o.ClientSecret), RedirectURL: o.RedirectURL,
+		Client: httpx.NewClient(httpx.Options{Timeout: 15 * time.Second}),
+	}, nil)
+	if err != nil {
+		return nil, fmt.Errorf("server: %w", err)
+	}
+	return p, nil
+}
+
+// webAuthn names the relying party security keys are registered for:
+// the host of the public base URL, which serves Studio and its
+// backend-for-frontend. Without a public base URL, security keys are
+// off.
+func webAuthn(cfg *config.Config) auth.WebAuthnConfig {
+	u, err := url.Parse(cfg.Server.PublicBaseURL)
+	if err != nil || u.Scheme != "https" || u.Hostname() == "" {
+		return auth.WebAuthnConfig{}
+	}
+	return auth.WebAuthnConfig{RPID: u.Hostname(), RPName: "Plux", Origins: []string{u.Scheme + "://" + u.Host}}
 }
 
 // trustedIssuers builds a verifier for each configured CI provider

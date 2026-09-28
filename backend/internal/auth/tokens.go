@@ -630,7 +630,7 @@ func (s *Service) Expire(ctx context.Context) (int64, error) {
 	err := s.inTx(ctx, storage.Tenant{}, func(ctx context.Context, tx pgx.Tx) error {
 		q := dbgen.New(tx)
 		for _, del := range []func(context.Context) (int64, error){
-			q.DeleteExpiredSessions, q.DeleteExpiredChallenges, q.DeleteExpiredDeviceAuthorizations,
+			q.DeleteExpiredSessions, q.DeleteExpiredChallenges, q.DeleteExpiredDeviceAuthorizations, q.DeleteExpiredOIDCLogins,
 		} {
 			deleted, err := del(ctx)
 			if err != nil {

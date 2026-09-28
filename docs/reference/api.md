@@ -12,7 +12,7 @@ for integrators who call it as plain HTTP/JSON.
 | Service | Responsibility | Requirements |
 |---|---|---|
 | `OrgService` | Organisations, teams, memberships, organisation limits | `GOV-001`, `LIM-002` |
-| `IdentityService` | Sign-in (built-in and OIDC), MFA, sessions, personal access tokens, CI federation, the device grant, audit | `SEC-100`, `SEC-101`, `SRV-064`, `CLI-002`, `SEC-140` |
+| `IdentityService` | Sign-in (built-in and OIDC), second factors (TOTP, WebAuthn), sessions, personal access tokens, CI federation, the device grant, audit | `SEC-100`, `SEC-101`, `SRV-064`, `CLI-002`, `SEC-140` |
 | `AppService` | Apps, environments, variables, secrets, channels, trash, app limits | `GOV-010`, `GOV-031`, `SEC-106` |
 | `PluginService` | Plugins and editing locks | `SRV-040`–`SRV-042` |
 | `DocumentService` | Draft documents, JSON Patch writes, snapshots, validation, export and import | `SRV-030`, `SRV-031`, `SCH-042` |

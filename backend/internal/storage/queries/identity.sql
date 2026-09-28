@@ -184,3 +184,48 @@ UPDATE device_authorizations SET state = 'consumed', token_id = $2 WHERE id = $1
 
 -- name: DeleteExpiredDeviceAuthorizations :execrows
 DELETE FROM device_authorizations WHERE expires_at < now() - interval '1 day';
+
+-- name: CreateWebAuthnFactor :one
+INSERT INTO mfa_factors (id, user_id, kind, label, secret)
+VALUES ($1, $2, 'webauthn', $3, $4)
+RETURNING *;
+
+-- name: ConfirmWebAuthnFactor :one
+UPDATE mfa_factors
+   SET confirmed_at = now(), last_used_at = now(), secret = '', credential_id = $3, public_key = $4, last_counter = $5
+ WHERE id = $1 AND user_id = $2 AND kind = 'webauthn' AND confirmed_at IS NULL
+RETURNING *;
+
+-- name: GetFactorByCredentialForUpdate :one
+SELECT * FROM mfa_factors
+ WHERE credential_id = $1 AND user_id = $2 AND kind = 'webauthn' AND confirmed_at IS NOT NULL
+   FOR UPDATE;
+
+-- name: UseWebAuthnFactor :exec
+UPDATE mfa_factors SET last_counter = $2, last_used_at = now() WHERE id = $1;
+
+-- name: SetChallengeWebAuthn :exec
+UPDATE mfa_challenges SET webauthn_challenge = $2 WHERE id = $1;
+
+-- name: GetUserIdentity :one
+SELECT * FROM user_identities WHERE issuer = $1 AND subject = $2;
+
+-- name: LinkUserIdentity :one
+INSERT INTO user_identities (id, user_id, issuer, subject)
+VALUES ($1, $2, $3, $4)
+RETURNING *;
+
+-- name: CreateOIDCLogin :exec
+INSERT INTO oidc_logins (state_hash, nonce, verifier, expires_at)
+VALUES ($1, $2, $3, $4);
+
+-- name: TakeOIDCLogin :one
+DELETE FROM oidc_logins WHERE state_hash = $1 RETURNING *;
+
+-- name: DeleteExpiredOIDCLogins :execrows
+DELETE FROM oidc_logins WHERE expires_at < now();
+
+-- name: AcceptInvitationExternally :one
+UPDATE users SET invitation_hash = NULL, invitation_expires_at = NULL
+ WHERE id = $1
+RETURNING *;

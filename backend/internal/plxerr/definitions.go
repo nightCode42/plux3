@@ -466,6 +466,11 @@ var registry = []Definition{
 		"The server failed in a way it does not recognise. The incident identifier in the message appears in the server's logs; nothing else about the failure is returned.",
 		"Retry the call. If it keeps failing, give the incident identifier to the operator of the installation.", false,
 	},
+	{
+		UpstreamUnavailable, "UPSTREAM_UNAVAILABLE", SeverityError, "A service the server depends on is unavailable",
+		"The server could not reach a service outside it that the call needs, such as the single sign-on provider.",
+		"Retry later. If it persists, the operator checks the service and the server's outbound network.", false,
+	},
 
 	// Studio, CLI and AI.
 	{

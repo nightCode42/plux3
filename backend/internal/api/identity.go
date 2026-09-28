@@ -22,6 +22,10 @@ var IdentityPublic = map[string]bool{
 	pluxv1connect.IdentityServiceAcceptInvitationProcedure:         true,
 	pluxv1connect.IdentityServiceStartPasswordLoginProcedure:       true,
 	pluxv1connect.IdentityServiceCompleteMfaProcedure:              true,
+	pluxv1connect.IdentityServiceStartOidcLoginProcedure:           true,
+	pluxv1connect.IdentityServiceCompleteOidcLoginProcedure:        true,
+	pluxv1connect.IdentityServiceBeginWebAuthnLoginProcedure:       true,
+	pluxv1connect.IdentityServiceCompleteWebAuthnLoginProcedure:    true,
 	pluxv1connect.IdentityServiceStartDeviceAuthorizationProcedure: true,
 	pluxv1connect.IdentityServicePollDeviceAuthorizationProcedure:  true,
 	pluxv1connect.IdentityServiceExchangeWorkloadIdentityProcedure: true,
@@ -103,6 +107,90 @@ func (s Identity) CompleteMfa(ctx context.Context, req *connect.Request[pluxv1.C
 	out := connect.NewResponse(&pluxv1.CompleteMfaResponse{Session: sessionProto(session)})
 	out.Header().Add("Set-Cookie", SessionCookieHeader(session.Secret, session.ExpiresAt, s.h.now()))
 	return out, nil
+}
+
+// StartOidcLogin begins a sign-in with the OpenID Connect provider.
+func (s Identity) StartOidcLogin(ctx context.Context, _ *connect.Request[pluxv1.StartOidcLoginRequest]) (*connect.Response[pluxv1.StartOidcLoginResponse], error) {
+	login, err := s.h.Auth.StartOIDCLogin(ctx)
+	if err != nil {
+		return nil, err //nolint:wrapcheck // a domain error
+	}
+	return connect.NewResponse(&pluxv1.StartOidcLoginResponse{Url: login.URL, State: login.State, ExpiresAt: ts(login.ExpiresAt)}), nil
+}
+
+// CompleteOidcLogin ends a provider sign-in: a session cookie, or a
+// second-factor challenge.
+func (s Identity) CompleteOidcLogin(ctx context.Context, req *connect.Request[pluxv1.CompleteOidcLoginRequest]) (*connect.Response[pluxv1.CompleteOidcLoginResponse], error) {
+	session, challenge, err := s.h.Auth.CompleteOIDCLogin(ctx, req.Msg.GetState(), req.Msg.GetCode())
+	if err != nil {
+		return nil, err //nolint:wrapcheck // a domain error
+	}
+	out := connect.NewResponse(&pluxv1.CompleteOidcLoginResponse{})
+	if challenge.Secret != "" {
+		out.Msg.Challenge = &pluxv1.MfaChallenge{Id: challenge.Secret, Kinds: challenge.Kinds, ExpiresAt: ts(challenge.ExpiresAt)}
+		return out, nil
+	}
+	out.Msg.Session = sessionProto(session)
+	out.Header().Add("Set-Cookie", SessionCookieHeader(session.Secret, session.ExpiresAt, s.h.now()))
+	return out, nil
+}
+
+// BeginWebAuthnLogin returns the options to answer a challenge with a
+// security key.
+func (s Identity) BeginWebAuthnLogin(ctx context.Context, req *connect.Request[pluxv1.BeginWebAuthnLoginRequest]) (*connect.Response[pluxv1.BeginWebAuthnLoginResponse], error) {
+	options, err := s.h.Auth.BeginWebAuthnLogin(ctx, req.Msg.GetChallengeId())
+	if err != nil {
+		return nil, err //nolint:wrapcheck // a domain error
+	}
+	return connect.NewResponse(&pluxv1.BeginWebAuthnLoginResponse{OptionsJson: options}), nil
+}
+
+// CompleteWebAuthnLogin answers a challenge with a security key and sets
+// the session cookie.
+func (s Identity) CompleteWebAuthnLogin(ctx context.Context, req *connect.Request[pluxv1.CompleteWebAuthnLoginRequest]) (*connect.Response[pluxv1.CompleteWebAuthnLoginResponse], error) {
+	m := req.Msg
+	session, err := s.h.Auth.CompleteWebAuthnLogin(ctx, m.GetChallengeId(), auth.WebAuthnAssertion{
+		CredentialID: m.GetCredentialId(), ClientDataJSON: m.GetClientDataJson(),
+		AuthenticatorData: m.GetAuthenticatorData(), Signature: m.GetSignature(),
+	})
+	if err != nil {
+		return nil, err //nolint:wrapcheck // a domain error
+	}
+	out := connect.NewResponse(&pluxv1.CompleteWebAuthnLoginResponse{Session: sessionProto(session)})
+	out.Header().Add("Set-Cookie", SessionCookieHeader(session.Secret, session.ExpiresAt, s.h.now()))
+	return out, nil
+}
+
+// BeginWebAuthnRegistration adds a security key waiting for its
+// registration.
+func (s Identity) BeginWebAuthnRegistration(ctx context.Context, req *connect.Request[pluxv1.BeginWebAuthnRegistrationRequest]) (*connect.Response[pluxv1.BeginWebAuthnRegistrationResponse], error) {
+	return mutate(ctx, s.h, req, func(ctx context.Context) (*pluxv1.BeginWebAuthnRegistrationResponse, error) {
+		id, err := identity(ctx)
+		if err != nil {
+			return nil, err
+		}
+		f, options, err := s.h.Auth.BeginWebAuthnRegistration(ctx, id, req.Msg.GetLabel())
+		if err != nil {
+			return nil, err //nolint:wrapcheck // a domain error
+		}
+		return &pluxv1.BeginWebAuthnRegistrationResponse{Factor: factorProto(f), OptionsJson: options}, nil
+	})
+}
+
+// FinishWebAuthnRegistration verifies a security key's registration.
+func (s Identity) FinishWebAuthnRegistration(ctx context.Context, req *connect.Request[pluxv1.FinishWebAuthnRegistrationRequest]) (*connect.Response[pluxv1.FinishWebAuthnRegistrationResponse], error) {
+	return mutate(ctx, s.h, req, func(ctx context.Context) (*pluxv1.FinishWebAuthnRegistrationResponse, error) {
+		id, err := identity(ctx)
+		if err != nil {
+			return nil, err
+		}
+		m := req.Msg
+		f, err := s.h.Auth.FinishWebAuthnRegistration(ctx, id, m.GetFactorId(), m.GetClientDataJson(), m.GetAttestationObject())
+		if err != nil {
+			return nil, err //nolint:wrapcheck // a domain error
+		}
+		return &pluxv1.FinishWebAuthnRegistrationResponse{Factor: factorProto(f)}, nil
+	})
 }
 
 // VerifySecondFactor presents a code within the caller's session.

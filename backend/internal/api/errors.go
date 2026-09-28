@@ -65,6 +65,7 @@ var codes = map[plxerr.Code]connect.Code{
 
 	// The server failed.
 	plxerr.InternalServerError: connect.CodeInternal,
+	plxerr.UpstreamUnavailable: connect.CodeUnavailable,
 }
 
 // ConnectCode returns the Connect code a Plux code is reported with.

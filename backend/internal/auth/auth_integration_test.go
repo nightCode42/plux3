@@ -69,7 +69,7 @@ func newFixture(t *testing.T, issuers map[string]auth.TrustedIssuer) *fixture {
 	return newFixtureWith(t, issuers, failedSignIns)
 }
 
-func newFixtureWith(t *testing.T, issuers map[string]auth.TrustedIssuer, failed int64) *fixture {
+func newFixtureWith(t *testing.T, issuers map[string]auth.TrustedIssuer, failed int64, configure ...func(*auth.Options)) *fixture {
 	t.Helper()
 	db := storagetest.Open(t)
 	backend, err := signing.NewFile(t.TempDir())
@@ -83,10 +83,14 @@ func newFixtureWith(t *testing.T, issuers map[string]auth.TrustedIssuer, failed 
 	c := &clock{t: time.Now().UTC().Truncate(time.Second)}
 	gen := ids{g: uuid7.NewGenerator(time.Now, rand.Reader)}
 	log := audit.NewLog(gen, nil)
-	svc, err := auth.NewService(auth.Options{
+	o := auth.Options{
 		DB: db, Audit: log, Cache: cache.NewMemory(nil), Limits: set, Crypter: backend, IDs: gen,
 		Now: c.now, VerificationURI: "https://plux.example/device", Issuers: issuers,
-	})
+	}
+	for _, f := range configure {
+		f(&o)
+	}
+	svc, err := auth.NewService(o)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -207,24 +207,35 @@ type Membership struct {
 }
 
 type MfaChallenge struct {
-	ID         pgtype.UUID
-	UserID     pgtype.UUID
-	SecretHash []byte
-	Attempts   int32
-	CreatedAt  pgtype.Timestamptz
-	ExpiresAt  pgtype.Timestamptz
+	ID                pgtype.UUID
+	UserID            pgtype.UUID
+	SecretHash        []byte
+	Attempts          int32
+	CreatedAt         pgtype.Timestamptz
+	ExpiresAt         pgtype.Timestamptz
+	WebauthnChallenge []byte
 }
 
 type MfaFactor struct {
-	ID          pgtype.UUID
-	UserID      pgtype.UUID
-	Kind        string
-	Label       string
-	Secret      []byte
-	LastCounter int64
-	ConfirmedAt pgtype.Timestamptz
-	CreatedAt   pgtype.Timestamptz
-	LastUsedAt  pgtype.Timestamptz
+	ID           pgtype.UUID
+	UserID       pgtype.UUID
+	Kind         string
+	Label        string
+	Secret       []byte
+	LastCounter  int64
+	ConfirmedAt  pgtype.Timestamptz
+	CreatedAt    pgtype.Timestamptz
+	LastUsedAt   pgtype.Timestamptz
+	CredentialID []byte
+	PublicKey    []byte
+}
+
+type OidcLogin struct {
+	StateHash []byte
+	Nonce     string
+	Verifier  []byte
+	CreatedAt pgtype.Timestamptz
+	ExpiresAt pgtype.Timestamptz
 }
 
 // The tenant boundary. Not itself tenant data: a row is the tenant (GOV-001).
@@ -315,6 +326,14 @@ type User struct {
 	CreatedAt           pgtype.Timestamptz
 	LastLoginAt         pgtype.Timestamptz
 	DisabledAt          pgtype.Timestamptz
+}
+
+type UserIdentity struct {
+	ID        pgtype.UUID
+	UserID    pgtype.UUID
+	Issuer    string
+	Subject   string
+	CreatedAt pgtype.Timestamptz
 }
 
 type WorkloadIdentity struct {

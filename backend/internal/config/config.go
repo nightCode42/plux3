@@ -148,9 +148,9 @@ type Auth struct {
 
 // StudioAuth is how people sign in (SEC-100, SEC-101).
 type StudioAuth struct {
-	// OIDC is the single sign-on provider. It arrives with GOV-004 in P9;
-	// until then a configured issuer is refused and only built-in
-	// accounts sign in.
+	// OIDC is an OpenID Connect provider people may sign in with, beside
+	// or instead of built-in accounts (SEC-100). SAML, provisioning and
+	// group mapping arrive with GOV-004 in P9.
 	OIDC OIDC `json:"oidc"`
 	// AllowPasswordLogin enables built-in accounts with Argon2id hashing.
 	AllowPasswordLogin bool `json:"allowPasswordLogin"`
@@ -167,8 +167,10 @@ type StudioAuth struct {
 
 // OIDC is an OpenID Connect provider.
 type OIDC struct {
-	Issuer       string `json:"issuer"`
-	ClientID     string `json:"clientID"`
+	Issuer   string `json:"issuer"`
+	ClientID string `json:"clientID"`
+	// ClientSecret authenticates the server to the provider; set it with
+	// PLUX_AUTH_STUDIO_OIDC_CLIENT_SECRET.
 	ClientSecret Secret `json:"clientSecret"`
 	// RedirectURL is the callback Studio is returned to.
 	RedirectURL string `json:"redirectURL"`

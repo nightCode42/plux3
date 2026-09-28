@@ -42,6 +42,30 @@ func (q *Queries) AcceptInvitation(ctx context.Context, arg AcceptInvitationPara
 	return i, err
 }
 
+const acceptInvitationExternally = `-- name: AcceptInvitationExternally :one
+UPDATE users SET invitation_hash = NULL, invitation_expires_at = NULL
+ WHERE id = $1
+RETURNING id, email, display_name, password_hash, installation_admin, invitation_hash, invitation_expires_at, created_at, last_login_at, disabled_at
+`
+
+func (q *Queries) AcceptInvitationExternally(ctx context.Context, id pgtype.UUID) (User, error) {
+	row := q.db.QueryRow(ctx, acceptInvitationExternally, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.DisplayName,
+		&i.PasswordHash,
+		&i.InstallationAdmin,
+		&i.InvitationHash,
+		&i.InvitationExpiresAt,
+		&i.CreatedAt,
+		&i.LastLoginAt,
+		&i.DisabledAt,
+	)
+	return i, err
+}
+
 const approveDeviceAuthorization = `-- name: ApproveDeviceAuthorization :execrows
 UPDATE device_authorizations
    SET state = 'approved', approved_by = $2, approved_organization_id = $3, scopes = $4
@@ -72,7 +96,7 @@ const confirmFactor = `-- name: ConfirmFactor :one
 UPDATE mfa_factors
    SET confirmed_at = now(), last_counter = $3, last_used_at = now()
  WHERE id = $1 AND user_id = $2 AND confirmed_at IS NULL
-RETURNING id, user_id, kind, label, secret, last_counter, confirmed_at, created_at, last_used_at
+RETURNING id, user_id, kind, label, secret, last_counter, confirmed_at, created_at, last_used_at, credential_id, public_key
 `
 
 type ConfirmFactorParams struct {
@@ -94,6 +118,48 @@ func (q *Queries) ConfirmFactor(ctx context.Context, arg ConfirmFactorParams) (M
 		&i.ConfirmedAt,
 		&i.CreatedAt,
 		&i.LastUsedAt,
+		&i.CredentialID,
+		&i.PublicKey,
+	)
+	return i, err
+}
+
+const confirmWebAuthnFactor = `-- name: ConfirmWebAuthnFactor :one
+UPDATE mfa_factors
+   SET confirmed_at = now(), last_used_at = now(), secret = '', credential_id = $3, public_key = $4, last_counter = $5
+ WHERE id = $1 AND user_id = $2 AND kind = 'webauthn' AND confirmed_at IS NULL
+RETURNING id, user_id, kind, label, secret, last_counter, confirmed_at, created_at, last_used_at, credential_id, public_key
+`
+
+type ConfirmWebAuthnFactorParams struct {
+	ID           pgtype.UUID
+	UserID       pgtype.UUID
+	CredentialID []byte
+	PublicKey    []byte
+	LastCounter  int64
+}
+
+func (q *Queries) ConfirmWebAuthnFactor(ctx context.Context, arg ConfirmWebAuthnFactorParams) (MfaFactor, error) {
+	row := q.db.QueryRow(ctx, confirmWebAuthnFactor,
+		arg.ID,
+		arg.UserID,
+		arg.CredentialID,
+		arg.PublicKey,
+		arg.LastCounter,
+	)
+	var i MfaFactor
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Kind,
+		&i.Label,
+		&i.Secret,
+		&i.LastCounter,
+		&i.ConfirmedAt,
+		&i.CreatedAt,
+		&i.LastUsedAt,
+		&i.CredentialID,
+		&i.PublicKey,
 	)
 	return i, err
 }
@@ -202,7 +268,7 @@ func (q *Queries) CreateAccessToken(ctx context.Context, arg CreateAccessTokenPa
 const createChallenge = `-- name: CreateChallenge :one
 INSERT INTO mfa_challenges (id, user_id, secret_hash, expires_at)
 VALUES ($1, $2, $3, $4)
-RETURNING id, user_id, secret_hash, attempts, created_at, expires_at
+RETURNING id, user_id, secret_hash, attempts, created_at, expires_at, webauthn_challenge
 `
 
 type CreateChallengeParams struct {
@@ -227,6 +293,7 @@ func (q *Queries) CreateChallenge(ctx context.Context, arg CreateChallengeParams
 		&i.Attempts,
 		&i.CreatedAt,
 		&i.ExpiresAt,
+		&i.WebauthnChallenge,
 	)
 	return i, err
 }
@@ -276,7 +343,7 @@ func (q *Queries) CreateDeviceAuthorization(ctx context.Context, arg CreateDevic
 const createFactor = `-- name: CreateFactor :one
 INSERT INTO mfa_factors (id, user_id, kind, label, secret)
 VALUES ($1, $2, $3, $4, $5)
-RETURNING id, user_id, kind, label, secret, last_counter, confirmed_at, created_at, last_used_at
+RETURNING id, user_id, kind, label, secret, last_counter, confirmed_at, created_at, last_used_at, credential_id, public_key
 `
 
 type CreateFactorParams struct {
@@ -306,8 +373,32 @@ func (q *Queries) CreateFactor(ctx context.Context, arg CreateFactorParams) (Mfa
 		&i.ConfirmedAt,
 		&i.CreatedAt,
 		&i.LastUsedAt,
+		&i.CredentialID,
+		&i.PublicKey,
 	)
 	return i, err
+}
+
+const createOIDCLogin = `-- name: CreateOIDCLogin :exec
+INSERT INTO oidc_logins (state_hash, nonce, verifier, expires_at)
+VALUES ($1, $2, $3, $4)
+`
+
+type CreateOIDCLoginParams struct {
+	StateHash []byte
+	Nonce     string
+	Verifier  []byte
+	ExpiresAt pgtype.Timestamptz
+}
+
+func (q *Queries) CreateOIDCLogin(ctx context.Context, arg CreateOIDCLoginParams) error {
+	_, err := q.db.Exec(ctx, createOIDCLogin,
+		arg.StateHash,
+		arg.Nonce,
+		arg.Verifier,
+		arg.ExpiresAt,
+	)
+	return err
 }
 
 const createSession = `-- name: CreateSession :one
@@ -390,6 +481,43 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
+const createWebAuthnFactor = `-- name: CreateWebAuthnFactor :one
+INSERT INTO mfa_factors (id, user_id, kind, label, secret)
+VALUES ($1, $2, 'webauthn', $3, $4)
+RETURNING id, user_id, kind, label, secret, last_counter, confirmed_at, created_at, last_used_at, credential_id, public_key
+`
+
+type CreateWebAuthnFactorParams struct {
+	ID     pgtype.UUID
+	UserID pgtype.UUID
+	Label  string
+	Secret []byte
+}
+
+func (q *Queries) CreateWebAuthnFactor(ctx context.Context, arg CreateWebAuthnFactorParams) (MfaFactor, error) {
+	row := q.db.QueryRow(ctx, createWebAuthnFactor,
+		arg.ID,
+		arg.UserID,
+		arg.Label,
+		arg.Secret,
+	)
+	var i MfaFactor
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Kind,
+		&i.Label,
+		&i.Secret,
+		&i.LastCounter,
+		&i.ConfirmedAt,
+		&i.CreatedAt,
+		&i.LastUsedAt,
+		&i.CredentialID,
+		&i.PublicKey,
+	)
+	return i, err
+}
+
 const createWorkloadIdentity = `-- name: CreateWorkloadIdentity :one
 INSERT INTO workload_identities (id, organization_id, issuer, audience, subject_pattern, scopes, created_by)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -457,6 +585,18 @@ DELETE FROM device_authorizations WHERE expires_at < now() - interval '1 day'
 
 func (q *Queries) DeleteExpiredDeviceAuthorizations(ctx context.Context) (int64, error) {
 	result, err := q.db.Exec(ctx, deleteExpiredDeviceAuthorizations)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const deleteExpiredOIDCLogins = `-- name: DeleteExpiredOIDCLogins :execrows
+DELETE FROM oidc_logins WHERE expires_at < now()
+`
+
+func (q *Queries) DeleteExpiredOIDCLogins(ctx context.Context) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteExpiredOIDCLogins)
 	if err != nil {
 		return 0, err
 	}
@@ -589,7 +729,7 @@ func (q *Queries) GetAccessTokenByHash(ctx context.Context, secretHash []byte) (
 }
 
 const getChallengeForUpdate = `-- name: GetChallengeForUpdate :one
-SELECT id, user_id, secret_hash, attempts, created_at, expires_at FROM mfa_challenges WHERE secret_hash = $1 AND expires_at > now() FOR UPDATE
+SELECT id, user_id, secret_hash, attempts, created_at, expires_at, webauthn_challenge FROM mfa_challenges WHERE secret_hash = $1 AND expires_at > now() FOR UPDATE
 `
 
 func (q *Queries) GetChallengeForUpdate(ctx context.Context, secretHash []byte) (MfaChallenge, error) {
@@ -602,6 +742,7 @@ func (q *Queries) GetChallengeForUpdate(ctx context.Context, secretHash []byte) 
 		&i.Attempts,
 		&i.CreatedAt,
 		&i.ExpiresAt,
+		&i.WebauthnChallenge,
 	)
 	return i, err
 }
@@ -657,7 +798,7 @@ func (q *Queries) GetDeviceAuthorizationByUserCodeForUpdate(ctx context.Context,
 }
 
 const getFactor = `-- name: GetFactor :one
-SELECT id, user_id, kind, label, secret, last_counter, confirmed_at, created_at, last_used_at FROM mfa_factors WHERE id = $1 AND user_id = $2
+SELECT id, user_id, kind, label, secret, last_counter, confirmed_at, created_at, last_used_at, credential_id, public_key FROM mfa_factors WHERE id = $1 AND user_id = $2
 `
 
 type GetFactorParams struct {
@@ -678,6 +819,38 @@ func (q *Queries) GetFactor(ctx context.Context, arg GetFactorParams) (MfaFactor
 		&i.ConfirmedAt,
 		&i.CreatedAt,
 		&i.LastUsedAt,
+		&i.CredentialID,
+		&i.PublicKey,
+	)
+	return i, err
+}
+
+const getFactorByCredentialForUpdate = `-- name: GetFactorByCredentialForUpdate :one
+SELECT id, user_id, kind, label, secret, last_counter, confirmed_at, created_at, last_used_at, credential_id, public_key FROM mfa_factors
+ WHERE credential_id = $1 AND user_id = $2 AND kind = 'webauthn' AND confirmed_at IS NOT NULL
+   FOR UPDATE
+`
+
+type GetFactorByCredentialForUpdateParams struct {
+	CredentialID []byte
+	UserID       pgtype.UUID
+}
+
+func (q *Queries) GetFactorByCredentialForUpdate(ctx context.Context, arg GetFactorByCredentialForUpdateParams) (MfaFactor, error) {
+	row := q.db.QueryRow(ctx, getFactorByCredentialForUpdate, arg.CredentialID, arg.UserID)
+	var i MfaFactor
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Kind,
+		&i.Label,
+		&i.Secret,
+		&i.LastCounter,
+		&i.ConfirmedAt,
+		&i.CreatedAt,
+		&i.LastUsedAt,
+		&i.CredentialID,
+		&i.PublicKey,
 	)
 	return i, err
 }
@@ -788,6 +961,59 @@ func (q *Queries) GetUserByInvitation(ctx context.Context, invitationHash []byte
 	return i, err
 }
 
+const getUserIdentity = `-- name: GetUserIdentity :one
+SELECT id, user_id, issuer, subject, created_at FROM user_identities WHERE issuer = $1 AND subject = $2
+`
+
+type GetUserIdentityParams struct {
+	Issuer  string
+	Subject string
+}
+
+func (q *Queries) GetUserIdentity(ctx context.Context, arg GetUserIdentityParams) (UserIdentity, error) {
+	row := q.db.QueryRow(ctx, getUserIdentity, arg.Issuer, arg.Subject)
+	var i UserIdentity
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Issuer,
+		&i.Subject,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const linkUserIdentity = `-- name: LinkUserIdentity :one
+INSERT INTO user_identities (id, user_id, issuer, subject)
+VALUES ($1, $2, $3, $4)
+RETURNING id, user_id, issuer, subject, created_at
+`
+
+type LinkUserIdentityParams struct {
+	ID      pgtype.UUID
+	UserID  pgtype.UUID
+	Issuer  string
+	Subject string
+}
+
+func (q *Queries) LinkUserIdentity(ctx context.Context, arg LinkUserIdentityParams) (UserIdentity, error) {
+	row := q.db.QueryRow(ctx, linkUserIdentity,
+		arg.ID,
+		arg.UserID,
+		arg.Issuer,
+		arg.Subject,
+	)
+	var i UserIdentity
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Issuer,
+		&i.Subject,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const listAccessTokens = `-- name: ListAccessTokens :many
 SELECT id, organization_id, user_id, name, prefix, secret_hash, scopes, source, subject, created_at, expires_at, last_used_at, revoked_at FROM access_tokens
  WHERE organization_id = $1
@@ -846,7 +1072,7 @@ func (q *Queries) ListAccessTokens(ctx context.Context, arg ListAccessTokensPara
 }
 
 const listConfirmedFactorsForUpdate = `-- name: ListConfirmedFactorsForUpdate :many
-SELECT id, user_id, kind, label, secret, last_counter, confirmed_at, created_at, last_used_at FROM mfa_factors
+SELECT id, user_id, kind, label, secret, last_counter, confirmed_at, created_at, last_used_at, credential_id, public_key FROM mfa_factors
  WHERE user_id = $1 AND confirmed_at IS NOT NULL
  ORDER BY created_at, id
    FOR UPDATE
@@ -871,6 +1097,8 @@ func (q *Queries) ListConfirmedFactorsForUpdate(ctx context.Context, userID pgty
 			&i.ConfirmedAt,
 			&i.CreatedAt,
 			&i.LastUsedAt,
+			&i.CredentialID,
+			&i.PublicKey,
 		); err != nil {
 			return nil, err
 		}
@@ -883,7 +1111,7 @@ func (q *Queries) ListConfirmedFactorsForUpdate(ctx context.Context, userID pgty
 }
 
 const listFactors = `-- name: ListFactors :many
-SELECT id, user_id, kind, label, secret, last_counter, confirmed_at, created_at, last_used_at FROM mfa_factors WHERE user_id = $1 ORDER BY created_at, id
+SELECT id, user_id, kind, label, secret, last_counter, confirmed_at, created_at, last_used_at, credential_id, public_key FROM mfa_factors WHERE user_id = $1 ORDER BY created_at, id
 `
 
 func (q *Queries) ListFactors(ctx context.Context, userID pgtype.UUID) ([]MfaFactor, error) {
@@ -905,6 +1133,8 @@ func (q *Queries) ListFactors(ctx context.Context, userID pgtype.UUID) ([]MfaFac
 			&i.ConfirmedAt,
 			&i.CreatedAt,
 			&i.LastUsedAt,
+			&i.CredentialID,
+			&i.PublicKey,
 		); err != nil {
 			return nil, err
 		}
@@ -1070,6 +1300,20 @@ func (q *Queries) RevokeUserSessions(ctx context.Context, arg RevokeUserSessions
 	return result.RowsAffected(), nil
 }
 
+const setChallengeWebAuthn = `-- name: SetChallengeWebAuthn :exec
+UPDATE mfa_challenges SET webauthn_challenge = $2 WHERE id = $1
+`
+
+type SetChallengeWebAuthnParams struct {
+	ID                pgtype.UUID
+	WebauthnChallenge []byte
+}
+
+func (q *Queries) SetChallengeWebAuthn(ctx context.Context, arg SetChallengeWebAuthnParams) error {
+	_, err := q.db.Exec(ctx, setChallengeWebAuthn, arg.ID, arg.WebauthnChallenge)
+	return err
+}
+
 const setUserPassword = `-- name: SetUserPassword :exec
 UPDATE users SET password_hash = $2 WHERE id = $1
 `
@@ -1082,6 +1326,23 @@ type SetUserPasswordParams struct {
 func (q *Queries) SetUserPassword(ctx context.Context, arg SetUserPasswordParams) error {
 	_, err := q.db.Exec(ctx, setUserPassword, arg.ID, arg.PasswordHash)
 	return err
+}
+
+const takeOIDCLogin = `-- name: TakeOIDCLogin :one
+DELETE FROM oidc_logins WHERE state_hash = $1 RETURNING state_hash, nonce, verifier, created_at, expires_at
+`
+
+func (q *Queries) TakeOIDCLogin(ctx context.Context, stateHash []byte) (OidcLogin, error) {
+	row := q.db.QueryRow(ctx, takeOIDCLogin, stateHash)
+	var i OidcLogin
+	err := row.Scan(
+		&i.StateHash,
+		&i.Nonce,
+		&i.Verifier,
+		&i.CreatedAt,
+		&i.ExpiresAt,
+	)
+	return i, err
 }
 
 const touchAccessToken = `-- name: TouchAccessToken :exec
@@ -1111,4 +1372,18 @@ func (q *Queries) UseFactor(ctx context.Context, arg UseFactorParams) (int64, er
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const useWebAuthnFactor = `-- name: UseWebAuthnFactor :exec
+UPDATE mfa_factors SET last_counter = $2, last_used_at = now() WHERE id = $1
+`
+
+type UseWebAuthnFactorParams struct {
+	ID          pgtype.UUID
+	LastCounter int64
+}
+
+func (q *Queries) UseWebAuthnFactor(ctx context.Context, arg UseWebAuthnFactorParams) error {
+	_, err := q.db.Exec(ctx, useWebAuthnFactor, arg.ID, arg.LastCounter)
+	return err
 }

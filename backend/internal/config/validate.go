@@ -187,16 +187,35 @@ func (c *Config) validateSigning(p *problems) {
 	}
 }
 
+// validateOIDC checks an OpenID Connect provider: an https issuer, a
+// client, and a callback on the server's public URL.
+func (c *Config) validateOIDC(p *problems) {
+	o := c.Auth.Studio.OIDC
+	if u, err := url.Parse(o.Issuer); err != nil || u.Scheme != "https" || u.Host == "" {
+		p.addf("auth.studio.oidc.issuer", "must be an https URL")
+	}
+	if o.ClientID == "" {
+		p.addf("auth.studio.oidc.clientID", "must be set")
+	}
+	if o.ClientSecret == "" {
+		p.addf("auth.studio.oidc.clientSecret", "must be set; use PLUX_AUTH_STUDIO_OIDC_CLIENT_SECRET")
+	}
+	if u, err := url.Parse(o.RedirectURL); err != nil || u.Scheme != "https" || u.Host == "" {
+		p.addf("auth.studio.oidc.redirectURL", "must be an https URL registered with the provider")
+	}
+}
+
 // keyPattern is the form of a key reference (SEC-120).
 var keyPattern = regexp.MustCompile(`^[a-z0-9]([a-z0-9-]{0,62}[a-z0-9])?$`)
 
 func (c *Config) validateAuth(p *problems) {
 	s := c.Auth.Studio
-	if s.OIDC != (OIDC{}) {
-		p.addf("auth.studio.oidc", "single sign-on arrives with GOV-004 in P9; P2 signs in with built-in accounts")
+	oidc := s.OIDC != (OIDC{})
+	if oidc {
+		c.validateOIDC(p)
 	}
-	if !s.AllowPasswordLogin {
-		p.addf("auth.studio.allowPasswordLogin", "must be true: built-in accounts are the only sign-in until P9, so otherwise nobody can sign in")
+	if !s.AllowPasswordLogin && !oidc {
+		p.addf("auth.studio.allowPasswordLogin", "must be true when no OIDC provider is configured, or nobody can sign in")
 	}
 	if s.CookieDomain != "" {
 		p.addf("auth.studio.cookieDomain", "must be empty: the __Host- prefix of the session cookie forbids a Domain attribute (SEC-101)")

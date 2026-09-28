@@ -45,6 +45,7 @@ const (
 	PasswordChanged      Action = "user.password_changed"
 	SecondFactorVerified Action = "mfa.verified"
 	FactorEnrolled       Action = "mfa.factor_enrolled"
+	IdentityLinked       Action = "user.identity_linked"
 	FactorConfirmed      Action = "mfa.factor_confirmed"
 	FactorDeleted        Action = "mfa.factor_deleted"
 
@@ -99,7 +100,7 @@ var actions = sorted(
 	OrganizationCreated, OrganizationUpdated, TeamCreated, TeamUpdated, TeamDeleted,
 	MemberAdded, MemberRemoved,
 	UserInvited, InvitationAccepted, UserSignedIn, UserSignInRefused, UserSignedOut,
-	PasswordChanged, SecondFactorVerified, FactorEnrolled, FactorConfirmed, FactorDeleted,
+	PasswordChanged, SecondFactorVerified, IdentityLinked, FactorEnrolled, FactorConfirmed, FactorDeleted,
 	TokenCreated, TokenRevoked, DeviceAuthApproved, DeviceAuthDenied,
 	WorkloadIdentityCreated, WorkloadIdentityDeleted, WorkloadExchanged,
 	AppCreated, AppUpdated, AppDeleted, AppRestored, AppPurged, AccessGranted, AccessRevoked,

@@ -75,7 +75,12 @@ signing:
     targets: "targets"          # prefix of each environment's key, "<prefix>-<environment ID>" (ADR-0004)
 auth:
   studio:
-    allowPasswordLogin: true    # must be true until single sign-on arrives (GOV-004, P9)
+    allowPasswordLogin: true    # may be false only when an OIDC provider is configured
+    oidc:                       # optional OpenID Connect sign-in (SEC-100)
+      issuer: "https://idp.acme.example"
+      clientID: "plux-studio"
+      redirectURL: "https://plux.acme.example/auth/callback"
+      # clientSecret: set with PLUX_AUTH_STUDIO_OIDC_CLIENT_SECRET
     mfaRequiredFor: [publish, approve, keys, members]   # at least these four (SEC-100)
     sessionTTL: "12h"
   device:
@@ -120,7 +125,8 @@ variable is treated as unset:
 `PLUX_DATABASE_URL`, `PLUX_OBJECT_STORAGE_ENDPOINT`,
 `PLUX_OBJECT_STORAGE_BUCKET`, `PLUX_OBJECT_STORAGE_ACCESS_KEY_ID`,
 `PLUX_OBJECT_STORAGE_SECRET_ACCESS_KEY`, `PLUX_CACHE_VALKEY_URL`,
-`PLUX_SIGNING_VAULT_TOKEN`, `PLUX_OBSERVABILITY_LOG_LEVEL`,
+`PLUX_AUTH_STUDIO_OIDC_CLIENT_SECRET`, `PLUX_SIGNING_VAULT_TOKEN`,
+`PLUX_OBSERVABILITY_LOG_LEVEL`,
 `PLUX_OBSERVABILITY_OTLP_ENDPOINT`.
 
 ## 4. Endpoints the api role always serves
@@ -219,8 +225,14 @@ leader election makes one worker enqueue it however many replicas run.
 
 ## 10. Identity
 
-People sign in with built-in accounts and TOTP; single sign-on and
-WebAuthn arrive in P9 ([ADR-0026](../adr/0026-identity-tenancy-and-access.md)).
+People sign in with built-in accounts or the configured OpenID Connect
+provider, and present TOTP codes or WebAuthn security keys as their second
+factor ([ADR-0026](../adr/0026-identity-tenancy-and-access.md)). A provider
+identity is linked, on its first sign-in, to the invited account with the
+address the provider verified. Security keys are registered for the host
+of `server.publicBaseURL` as the WebAuthn relying party, and are off when
+that is not an https URL. SAML, provisioning and group mapping arrive with
+`GOV-004`, and WebAuthn step-up with `SEC-103`, in P9.
 The first administrator is created with `plux-server bootstrap`; everyone
 else is invited by an organisation's owner. The API's credentials, the
 organisation header and the error each refusal returns are in

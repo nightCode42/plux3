@@ -48,6 +48,18 @@ const (
 	// IdentityServiceCompleteMfaProcedure is the fully-qualified name of the IdentityService's
 	// CompleteMfa RPC.
 	IdentityServiceCompleteMfaProcedure = "/plux.v1.IdentityService/CompleteMfa"
+	// IdentityServiceStartOidcLoginProcedure is the fully-qualified name of the IdentityService's
+	// StartOidcLogin RPC.
+	IdentityServiceStartOidcLoginProcedure = "/plux.v1.IdentityService/StartOidcLogin"
+	// IdentityServiceCompleteOidcLoginProcedure is the fully-qualified name of the IdentityService's
+	// CompleteOidcLogin RPC.
+	IdentityServiceCompleteOidcLoginProcedure = "/plux.v1.IdentityService/CompleteOidcLogin"
+	// IdentityServiceBeginWebAuthnLoginProcedure is the fully-qualified name of the IdentityService's
+	// BeginWebAuthnLogin RPC.
+	IdentityServiceBeginWebAuthnLoginProcedure = "/plux.v1.IdentityService/BeginWebAuthnLogin"
+	// IdentityServiceCompleteWebAuthnLoginProcedure is the fully-qualified name of the
+	// IdentityService's CompleteWebAuthnLogin RPC.
+	IdentityServiceCompleteWebAuthnLoginProcedure = "/plux.v1.IdentityService/CompleteWebAuthnLogin"
 	// IdentityServiceVerifySecondFactorProcedure is the fully-qualified name of the IdentityService's
 	// VerifySecondFactor RPC.
 	IdentityServiceVerifySecondFactorProcedure = "/plux.v1.IdentityService/VerifySecondFactor"
@@ -59,6 +71,12 @@ const (
 	// IdentityServiceEnrollTotpProcedure is the fully-qualified name of the IdentityService's
 	// EnrollTotp RPC.
 	IdentityServiceEnrollTotpProcedure = "/plux.v1.IdentityService/EnrollTotp"
+	// IdentityServiceBeginWebAuthnRegistrationProcedure is the fully-qualified name of the
+	// IdentityService's BeginWebAuthnRegistration RPC.
+	IdentityServiceBeginWebAuthnRegistrationProcedure = "/plux.v1.IdentityService/BeginWebAuthnRegistration"
+	// IdentityServiceFinishWebAuthnRegistrationProcedure is the fully-qualified name of the
+	// IdentityService's FinishWebAuthnRegistration RPC.
+	IdentityServiceFinishWebAuthnRegistrationProcedure = "/plux.v1.IdentityService/FinishWebAuthnRegistration"
 	// IdentityServiceConfirmFactorProcedure is the fully-qualified name of the IdentityService's
 	// ConfirmFactor RPC.
 	IdentityServiceConfirmFactorProcedure = "/plux.v1.IdentityService/ConfirmFactor"
@@ -118,12 +136,27 @@ type IdentityServiceClient interface {
 	StartPasswordLogin(context.Context, *connect.Request[pluxv1.StartPasswordLoginRequest]) (*connect.Response[pluxv1.StartPasswordLoginResponse], error)
 	// CompleteMfa answers a challenge with a one-time code.
 	CompleteMfa(context.Context, *connect.Request[pluxv1.CompleteMfaRequest]) (*connect.Response[pluxv1.CompleteMfaResponse], error)
+	// StartOidcLogin begins a sign-in with the installation's OpenID
+	// Connect provider and returns where to send the browser.
+	StartOidcLogin(context.Context, *connect.Request[pluxv1.StartOidcLoginRequest]) (*connect.Response[pluxv1.StartOidcLoginResponse], error)
+	// CompleteOidcLogin ends it with the provider's code and the state
+	// StartOidcLogin returned. Like a password, it yields a session or a
+	// second-factor challenge.
+	CompleteOidcLogin(context.Context, *connect.Request[pluxv1.CompleteOidcLoginRequest]) (*connect.Response[pluxv1.CompleteOidcLoginResponse], error)
+	// BeginWebAuthnLogin returns the options to answer a challenge with a
+	// security key; CompleteWebAuthnLogin answers it.
+	BeginWebAuthnLogin(context.Context, *connect.Request[pluxv1.BeginWebAuthnLoginRequest]) (*connect.Response[pluxv1.BeginWebAuthnLoginResponse], error)
+	CompleteWebAuthnLogin(context.Context, *connect.Request[pluxv1.CompleteWebAuthnLoginRequest]) (*connect.Response[pluxv1.CompleteWebAuthnLoginResponse], error)
 	// VerifySecondFactor presents a one-time code within an existing
 	// session, which capabilities that require one then accept.
 	VerifySecondFactor(context.Context, *connect.Request[pluxv1.VerifySecondFactorRequest]) (*connect.Response[pluxv1.VerifySecondFactorResponse], error)
 	ChangePassword(context.Context, *connect.Request[pluxv1.ChangePasswordRequest]) (*connect.Response[pluxv1.ChangePasswordResponse], error)
 	Logout(context.Context, *connect.Request[pluxv1.LogoutRequest]) (*connect.Response[pluxv1.LogoutResponse], error)
 	EnrollTotp(context.Context, *connect.Request[pluxv1.EnrollTotpRequest]) (*connect.Response[pluxv1.EnrollTotpResponse], error)
+	// BeginWebAuthnRegistration adds a security key waiting for the
+	// browser's registration, which FinishWebAuthnRegistration verifies.
+	BeginWebAuthnRegistration(context.Context, *connect.Request[pluxv1.BeginWebAuthnRegistrationRequest]) (*connect.Response[pluxv1.BeginWebAuthnRegistrationResponse], error)
+	FinishWebAuthnRegistration(context.Context, *connect.Request[pluxv1.FinishWebAuthnRegistrationRequest]) (*connect.Response[pluxv1.FinishWebAuthnRegistrationResponse], error)
 	ConfirmFactor(context.Context, *connect.Request[pluxv1.ConfirmFactorRequest]) (*connect.Response[pluxv1.ConfirmFactorResponse], error)
 	ListFactors(context.Context, *connect.Request[pluxv1.ListFactorsRequest]) (*connect.Response[pluxv1.ListFactorsResponse], error)
 	DeleteFactor(context.Context, *connect.Request[pluxv1.DeleteFactorRequest]) (*connect.Response[pluxv1.DeleteFactorResponse], error)
@@ -191,6 +224,30 @@ func NewIdentityServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(identityServiceMethods.ByName("CompleteMfa")),
 			connect.WithClientOptions(opts...),
 		),
+		startOidcLogin: connect.NewClient[pluxv1.StartOidcLoginRequest, pluxv1.StartOidcLoginResponse](
+			httpClient,
+			baseURL+IdentityServiceStartOidcLoginProcedure,
+			connect.WithSchema(identityServiceMethods.ByName("StartOidcLogin")),
+			connect.WithClientOptions(opts...),
+		),
+		completeOidcLogin: connect.NewClient[pluxv1.CompleteOidcLoginRequest, pluxv1.CompleteOidcLoginResponse](
+			httpClient,
+			baseURL+IdentityServiceCompleteOidcLoginProcedure,
+			connect.WithSchema(identityServiceMethods.ByName("CompleteOidcLogin")),
+			connect.WithClientOptions(opts...),
+		),
+		beginWebAuthnLogin: connect.NewClient[pluxv1.BeginWebAuthnLoginRequest, pluxv1.BeginWebAuthnLoginResponse](
+			httpClient,
+			baseURL+IdentityServiceBeginWebAuthnLoginProcedure,
+			connect.WithSchema(identityServiceMethods.ByName("BeginWebAuthnLogin")),
+			connect.WithClientOptions(opts...),
+		),
+		completeWebAuthnLogin: connect.NewClient[pluxv1.CompleteWebAuthnLoginRequest, pluxv1.CompleteWebAuthnLoginResponse](
+			httpClient,
+			baseURL+IdentityServiceCompleteWebAuthnLoginProcedure,
+			connect.WithSchema(identityServiceMethods.ByName("CompleteWebAuthnLogin")),
+			connect.WithClientOptions(opts...),
+		),
 		verifySecondFactor: connect.NewClient[pluxv1.VerifySecondFactorRequest, pluxv1.VerifySecondFactorResponse](
 			httpClient,
 			baseURL+IdentityServiceVerifySecondFactorProcedure,
@@ -213,6 +270,18 @@ func NewIdentityServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			httpClient,
 			baseURL+IdentityServiceEnrollTotpProcedure,
 			connect.WithSchema(identityServiceMethods.ByName("EnrollTotp")),
+			connect.WithClientOptions(opts...),
+		),
+		beginWebAuthnRegistration: connect.NewClient[pluxv1.BeginWebAuthnRegistrationRequest, pluxv1.BeginWebAuthnRegistrationResponse](
+			httpClient,
+			baseURL+IdentityServiceBeginWebAuthnRegistrationProcedure,
+			connect.WithSchema(identityServiceMethods.ByName("BeginWebAuthnRegistration")),
+			connect.WithClientOptions(opts...),
+		),
+		finishWebAuthnRegistration: connect.NewClient[pluxv1.FinishWebAuthnRegistrationRequest, pluxv1.FinishWebAuthnRegistrationResponse](
+			httpClient,
+			baseURL+IdentityServiceFinishWebAuthnRegistrationProcedure,
+			connect.WithSchema(identityServiceMethods.ByName("FinishWebAuthnRegistration")),
 			connect.WithClientOptions(opts...),
 		),
 		confirmFactor: connect.NewClient[pluxv1.ConfirmFactorRequest, pluxv1.ConfirmFactorResponse](
@@ -314,10 +383,16 @@ type identityServiceClient struct {
 	acceptInvitation           *connect.Client[pluxv1.AcceptInvitationRequest, pluxv1.AcceptInvitationResponse]
 	startPasswordLogin         *connect.Client[pluxv1.StartPasswordLoginRequest, pluxv1.StartPasswordLoginResponse]
 	completeMfa                *connect.Client[pluxv1.CompleteMfaRequest, pluxv1.CompleteMfaResponse]
+	startOidcLogin             *connect.Client[pluxv1.StartOidcLoginRequest, pluxv1.StartOidcLoginResponse]
+	completeOidcLogin          *connect.Client[pluxv1.CompleteOidcLoginRequest, pluxv1.CompleteOidcLoginResponse]
+	beginWebAuthnLogin         *connect.Client[pluxv1.BeginWebAuthnLoginRequest, pluxv1.BeginWebAuthnLoginResponse]
+	completeWebAuthnLogin      *connect.Client[pluxv1.CompleteWebAuthnLoginRequest, pluxv1.CompleteWebAuthnLoginResponse]
 	verifySecondFactor         *connect.Client[pluxv1.VerifySecondFactorRequest, pluxv1.VerifySecondFactorResponse]
 	changePassword             *connect.Client[pluxv1.ChangePasswordRequest, pluxv1.ChangePasswordResponse]
 	logout                     *connect.Client[pluxv1.LogoutRequest, pluxv1.LogoutResponse]
 	enrollTotp                 *connect.Client[pluxv1.EnrollTotpRequest, pluxv1.EnrollTotpResponse]
+	beginWebAuthnRegistration  *connect.Client[pluxv1.BeginWebAuthnRegistrationRequest, pluxv1.BeginWebAuthnRegistrationResponse]
+	finishWebAuthnRegistration *connect.Client[pluxv1.FinishWebAuthnRegistrationRequest, pluxv1.FinishWebAuthnRegistrationResponse]
 	confirmFactor              *connect.Client[pluxv1.ConfirmFactorRequest, pluxv1.ConfirmFactorResponse]
 	listFactors                *connect.Client[pluxv1.ListFactorsRequest, pluxv1.ListFactorsResponse]
 	deleteFactor               *connect.Client[pluxv1.DeleteFactorRequest, pluxv1.DeleteFactorResponse]
@@ -355,6 +430,26 @@ func (c *identityServiceClient) CompleteMfa(ctx context.Context, req *connect.Re
 	return c.completeMfa.CallUnary(ctx, req)
 }
 
+// StartOidcLogin calls plux.v1.IdentityService.StartOidcLogin.
+func (c *identityServiceClient) StartOidcLogin(ctx context.Context, req *connect.Request[pluxv1.StartOidcLoginRequest]) (*connect.Response[pluxv1.StartOidcLoginResponse], error) {
+	return c.startOidcLogin.CallUnary(ctx, req)
+}
+
+// CompleteOidcLogin calls plux.v1.IdentityService.CompleteOidcLogin.
+func (c *identityServiceClient) CompleteOidcLogin(ctx context.Context, req *connect.Request[pluxv1.CompleteOidcLoginRequest]) (*connect.Response[pluxv1.CompleteOidcLoginResponse], error) {
+	return c.completeOidcLogin.CallUnary(ctx, req)
+}
+
+// BeginWebAuthnLogin calls plux.v1.IdentityService.BeginWebAuthnLogin.
+func (c *identityServiceClient) BeginWebAuthnLogin(ctx context.Context, req *connect.Request[pluxv1.BeginWebAuthnLoginRequest]) (*connect.Response[pluxv1.BeginWebAuthnLoginResponse], error) {
+	return c.beginWebAuthnLogin.CallUnary(ctx, req)
+}
+
+// CompleteWebAuthnLogin calls plux.v1.IdentityService.CompleteWebAuthnLogin.
+func (c *identityServiceClient) CompleteWebAuthnLogin(ctx context.Context, req *connect.Request[pluxv1.CompleteWebAuthnLoginRequest]) (*connect.Response[pluxv1.CompleteWebAuthnLoginResponse], error) {
+	return c.completeWebAuthnLogin.CallUnary(ctx, req)
+}
+
 // VerifySecondFactor calls plux.v1.IdentityService.VerifySecondFactor.
 func (c *identityServiceClient) VerifySecondFactor(ctx context.Context, req *connect.Request[pluxv1.VerifySecondFactorRequest]) (*connect.Response[pluxv1.VerifySecondFactorResponse], error) {
 	return c.verifySecondFactor.CallUnary(ctx, req)
@@ -373,6 +468,16 @@ func (c *identityServiceClient) Logout(ctx context.Context, req *connect.Request
 // EnrollTotp calls plux.v1.IdentityService.EnrollTotp.
 func (c *identityServiceClient) EnrollTotp(ctx context.Context, req *connect.Request[pluxv1.EnrollTotpRequest]) (*connect.Response[pluxv1.EnrollTotpResponse], error) {
 	return c.enrollTotp.CallUnary(ctx, req)
+}
+
+// BeginWebAuthnRegistration calls plux.v1.IdentityService.BeginWebAuthnRegistration.
+func (c *identityServiceClient) BeginWebAuthnRegistration(ctx context.Context, req *connect.Request[pluxv1.BeginWebAuthnRegistrationRequest]) (*connect.Response[pluxv1.BeginWebAuthnRegistrationResponse], error) {
+	return c.beginWebAuthnRegistration.CallUnary(ctx, req)
+}
+
+// FinishWebAuthnRegistration calls plux.v1.IdentityService.FinishWebAuthnRegistration.
+func (c *identityServiceClient) FinishWebAuthnRegistration(ctx context.Context, req *connect.Request[pluxv1.FinishWebAuthnRegistrationRequest]) (*connect.Response[pluxv1.FinishWebAuthnRegistrationResponse], error) {
+	return c.finishWebAuthnRegistration.CallUnary(ctx, req)
 }
 
 // ConfirmFactor calls plux.v1.IdentityService.ConfirmFactor.
@@ -462,12 +567,27 @@ type IdentityServiceHandler interface {
 	StartPasswordLogin(context.Context, *connect.Request[pluxv1.StartPasswordLoginRequest]) (*connect.Response[pluxv1.StartPasswordLoginResponse], error)
 	// CompleteMfa answers a challenge with a one-time code.
 	CompleteMfa(context.Context, *connect.Request[pluxv1.CompleteMfaRequest]) (*connect.Response[pluxv1.CompleteMfaResponse], error)
+	// StartOidcLogin begins a sign-in with the installation's OpenID
+	// Connect provider and returns where to send the browser.
+	StartOidcLogin(context.Context, *connect.Request[pluxv1.StartOidcLoginRequest]) (*connect.Response[pluxv1.StartOidcLoginResponse], error)
+	// CompleteOidcLogin ends it with the provider's code and the state
+	// StartOidcLogin returned. Like a password, it yields a session or a
+	// second-factor challenge.
+	CompleteOidcLogin(context.Context, *connect.Request[pluxv1.CompleteOidcLoginRequest]) (*connect.Response[pluxv1.CompleteOidcLoginResponse], error)
+	// BeginWebAuthnLogin returns the options to answer a challenge with a
+	// security key; CompleteWebAuthnLogin answers it.
+	BeginWebAuthnLogin(context.Context, *connect.Request[pluxv1.BeginWebAuthnLoginRequest]) (*connect.Response[pluxv1.BeginWebAuthnLoginResponse], error)
+	CompleteWebAuthnLogin(context.Context, *connect.Request[pluxv1.CompleteWebAuthnLoginRequest]) (*connect.Response[pluxv1.CompleteWebAuthnLoginResponse], error)
 	// VerifySecondFactor presents a one-time code within an existing
 	// session, which capabilities that require one then accept.
 	VerifySecondFactor(context.Context, *connect.Request[pluxv1.VerifySecondFactorRequest]) (*connect.Response[pluxv1.VerifySecondFactorResponse], error)
 	ChangePassword(context.Context, *connect.Request[pluxv1.ChangePasswordRequest]) (*connect.Response[pluxv1.ChangePasswordResponse], error)
 	Logout(context.Context, *connect.Request[pluxv1.LogoutRequest]) (*connect.Response[pluxv1.LogoutResponse], error)
 	EnrollTotp(context.Context, *connect.Request[pluxv1.EnrollTotpRequest]) (*connect.Response[pluxv1.EnrollTotpResponse], error)
+	// BeginWebAuthnRegistration adds a security key waiting for the
+	// browser's registration, which FinishWebAuthnRegistration verifies.
+	BeginWebAuthnRegistration(context.Context, *connect.Request[pluxv1.BeginWebAuthnRegistrationRequest]) (*connect.Response[pluxv1.BeginWebAuthnRegistrationResponse], error)
+	FinishWebAuthnRegistration(context.Context, *connect.Request[pluxv1.FinishWebAuthnRegistrationRequest]) (*connect.Response[pluxv1.FinishWebAuthnRegistrationResponse], error)
 	ConfirmFactor(context.Context, *connect.Request[pluxv1.ConfirmFactorRequest]) (*connect.Response[pluxv1.ConfirmFactorResponse], error)
 	ListFactors(context.Context, *connect.Request[pluxv1.ListFactorsRequest]) (*connect.Response[pluxv1.ListFactorsResponse], error)
 	DeleteFactor(context.Context, *connect.Request[pluxv1.DeleteFactorRequest]) (*connect.Response[pluxv1.DeleteFactorResponse], error)
@@ -531,6 +651,30 @@ func NewIdentityServiceHandler(svc IdentityServiceHandler, opts ...connect.Handl
 		connect.WithSchema(identityServiceMethods.ByName("CompleteMfa")),
 		connect.WithHandlerOptions(opts...),
 	)
+	identityServiceStartOidcLoginHandler := connect.NewUnaryHandler(
+		IdentityServiceStartOidcLoginProcedure,
+		svc.StartOidcLogin,
+		connect.WithSchema(identityServiceMethods.ByName("StartOidcLogin")),
+		connect.WithHandlerOptions(opts...),
+	)
+	identityServiceCompleteOidcLoginHandler := connect.NewUnaryHandler(
+		IdentityServiceCompleteOidcLoginProcedure,
+		svc.CompleteOidcLogin,
+		connect.WithSchema(identityServiceMethods.ByName("CompleteOidcLogin")),
+		connect.WithHandlerOptions(opts...),
+	)
+	identityServiceBeginWebAuthnLoginHandler := connect.NewUnaryHandler(
+		IdentityServiceBeginWebAuthnLoginProcedure,
+		svc.BeginWebAuthnLogin,
+		connect.WithSchema(identityServiceMethods.ByName("BeginWebAuthnLogin")),
+		connect.WithHandlerOptions(opts...),
+	)
+	identityServiceCompleteWebAuthnLoginHandler := connect.NewUnaryHandler(
+		IdentityServiceCompleteWebAuthnLoginProcedure,
+		svc.CompleteWebAuthnLogin,
+		connect.WithSchema(identityServiceMethods.ByName("CompleteWebAuthnLogin")),
+		connect.WithHandlerOptions(opts...),
+	)
 	identityServiceVerifySecondFactorHandler := connect.NewUnaryHandler(
 		IdentityServiceVerifySecondFactorProcedure,
 		svc.VerifySecondFactor,
@@ -553,6 +697,18 @@ func NewIdentityServiceHandler(svc IdentityServiceHandler, opts ...connect.Handl
 		IdentityServiceEnrollTotpProcedure,
 		svc.EnrollTotp,
 		connect.WithSchema(identityServiceMethods.ByName("EnrollTotp")),
+		connect.WithHandlerOptions(opts...),
+	)
+	identityServiceBeginWebAuthnRegistrationHandler := connect.NewUnaryHandler(
+		IdentityServiceBeginWebAuthnRegistrationProcedure,
+		svc.BeginWebAuthnRegistration,
+		connect.WithSchema(identityServiceMethods.ByName("BeginWebAuthnRegistration")),
+		connect.WithHandlerOptions(opts...),
+	)
+	identityServiceFinishWebAuthnRegistrationHandler := connect.NewUnaryHandler(
+		IdentityServiceFinishWebAuthnRegistrationProcedure,
+		svc.FinishWebAuthnRegistration,
+		connect.WithSchema(identityServiceMethods.ByName("FinishWebAuthnRegistration")),
 		connect.WithHandlerOptions(opts...),
 	)
 	identityServiceConfirmFactorHandler := connect.NewUnaryHandler(
@@ -655,6 +811,14 @@ func NewIdentityServiceHandler(svc IdentityServiceHandler, opts ...connect.Handl
 			identityServiceStartPasswordLoginHandler.ServeHTTP(w, r)
 		case IdentityServiceCompleteMfaProcedure:
 			identityServiceCompleteMfaHandler.ServeHTTP(w, r)
+		case IdentityServiceStartOidcLoginProcedure:
+			identityServiceStartOidcLoginHandler.ServeHTTP(w, r)
+		case IdentityServiceCompleteOidcLoginProcedure:
+			identityServiceCompleteOidcLoginHandler.ServeHTTP(w, r)
+		case IdentityServiceBeginWebAuthnLoginProcedure:
+			identityServiceBeginWebAuthnLoginHandler.ServeHTTP(w, r)
+		case IdentityServiceCompleteWebAuthnLoginProcedure:
+			identityServiceCompleteWebAuthnLoginHandler.ServeHTTP(w, r)
 		case IdentityServiceVerifySecondFactorProcedure:
 			identityServiceVerifySecondFactorHandler.ServeHTTP(w, r)
 		case IdentityServiceChangePasswordProcedure:
@@ -663,6 +827,10 @@ func NewIdentityServiceHandler(svc IdentityServiceHandler, opts ...connect.Handl
 			identityServiceLogoutHandler.ServeHTTP(w, r)
 		case IdentityServiceEnrollTotpProcedure:
 			identityServiceEnrollTotpHandler.ServeHTTP(w, r)
+		case IdentityServiceBeginWebAuthnRegistrationProcedure:
+			identityServiceBeginWebAuthnRegistrationHandler.ServeHTTP(w, r)
+		case IdentityServiceFinishWebAuthnRegistrationProcedure:
+			identityServiceFinishWebAuthnRegistrationHandler.ServeHTTP(w, r)
 		case IdentityServiceConfirmFactorProcedure:
 			identityServiceConfirmFactorHandler.ServeHTTP(w, r)
 		case IdentityServiceListFactorsProcedure:
@@ -718,6 +886,22 @@ func (UnimplementedIdentityServiceHandler) CompleteMfa(context.Context, *connect
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.CompleteMfa is not implemented"))
 }
 
+func (UnimplementedIdentityServiceHandler) StartOidcLogin(context.Context, *connect.Request[pluxv1.StartOidcLoginRequest]) (*connect.Response[pluxv1.StartOidcLoginResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.StartOidcLogin is not implemented"))
+}
+
+func (UnimplementedIdentityServiceHandler) CompleteOidcLogin(context.Context, *connect.Request[pluxv1.CompleteOidcLoginRequest]) (*connect.Response[pluxv1.CompleteOidcLoginResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.CompleteOidcLogin is not implemented"))
+}
+
+func (UnimplementedIdentityServiceHandler) BeginWebAuthnLogin(context.Context, *connect.Request[pluxv1.BeginWebAuthnLoginRequest]) (*connect.Response[pluxv1.BeginWebAuthnLoginResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.BeginWebAuthnLogin is not implemented"))
+}
+
+func (UnimplementedIdentityServiceHandler) CompleteWebAuthnLogin(context.Context, *connect.Request[pluxv1.CompleteWebAuthnLoginRequest]) (*connect.Response[pluxv1.CompleteWebAuthnLoginResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.CompleteWebAuthnLogin is not implemented"))
+}
+
 func (UnimplementedIdentityServiceHandler) VerifySecondFactor(context.Context, *connect.Request[pluxv1.VerifySecondFactorRequest]) (*connect.Response[pluxv1.VerifySecondFactorResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.VerifySecondFactor is not implemented"))
 }
@@ -732,6 +916,14 @@ func (UnimplementedIdentityServiceHandler) Logout(context.Context, *connect.Requ
 
 func (UnimplementedIdentityServiceHandler) EnrollTotp(context.Context, *connect.Request[pluxv1.EnrollTotpRequest]) (*connect.Response[pluxv1.EnrollTotpResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.EnrollTotp is not implemented"))
+}
+
+func (UnimplementedIdentityServiceHandler) BeginWebAuthnRegistration(context.Context, *connect.Request[pluxv1.BeginWebAuthnRegistrationRequest]) (*connect.Response[pluxv1.BeginWebAuthnRegistrationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.BeginWebAuthnRegistration is not implemented"))
+}
+
+func (UnimplementedIdentityServiceHandler) FinishWebAuthnRegistration(context.Context, *connect.Request[pluxv1.FinishWebAuthnRegistrationRequest]) (*connect.Response[pluxv1.FinishWebAuthnRegistrationResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.IdentityService.FinishWebAuthnRegistration is not implemented"))
 }
 
 func (UnimplementedIdentityServiceHandler) ConfirmFactor(context.Context, *connect.Request[pluxv1.ConfirmFactorRequest]) (*connect.Response[pluxv1.ConfirmFactorResponse], error) {

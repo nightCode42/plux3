@@ -121,6 +121,7 @@ const (
 	PreconditionFailed     Code = 8033
 	RateLimited            Code = 8040
 	InternalServerError    Code = 8090
+	UpstreamUnavailable    Code = 8091
 
 	// Studio, CLI and AI (PLX-9000–9999).
 

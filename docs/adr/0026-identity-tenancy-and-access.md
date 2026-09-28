@@ -1,7 +1,7 @@
 # 0026. Built-in accounts with TOTP, org-bound credentials and row-level scopes
 
 - **Status:** Accepted
-- **Date:** 2026-09-27
+- **Date:** 2026-09-27; revised 2026-09-28 (see [Revision](#revision-2026-09-28))
 - **Requirements:** `SEC-100`, `SEC-101`, `SEC-102`, `SEC-106`, `SEC-120`, `SEC-140`, `SRV-004`, `SRV-005`, `SRV-022`, `SRV-064`, `SRV-065`, `GOV-001`, `GOV-010`, `GOV-031`, `CLI-002`
 
 ## Context and problem
@@ -31,7 +31,9 @@ how do credentials, organisations and row-level security fit together?
 
 ## Decision
 
-Chosen option: **1**. It satisfies `SEC-100` as written — its alternatives are joined by "or" —
+Chosen option: **2**, by the maintainer's decision of 2026-09-28, which restores the P2 plan that
+named OIDC and WebAuthn (see [Revision](#revision-2026-09-28)). The reasoning first recorded for
+option 1 follows, because it still bounds what option 2 builds: option 1 satisfies `SEC-100` as written — its alternatives are joined by "or" —
 and leaves `GOV-004` (OIDC and SAML with group mapping and SCIM) and `SEC-103` (WebAuthn step-up)
 to P9, where they are specified as a whole. Option 2 would build half of `GOV-004` and a WebAuthn
 enrolment nothing in P2 requires; option 3 would make every installation depend on an external
@@ -47,7 +49,8 @@ identity provider before P9 specifies how one is integrated.
 - The first installation administrator is created by `plux-server bootstrap`, which prints a
   one-time invitation and refuses once an administrator exists. Every other account is created
   by `AddMember` with an invitation; nobody chooses another person's password.
-- TOTP (RFC 6238, SHA-1, six digits, one step of skew) is the P2 second factor. The secret is
+- TOTP (RFC 6238, SHA-1, six digits, one step of skew) is one P2 second factor; WebAuthn security
+  keys and passkeys are the other (see the revision). The secret is
   sealed with envelope encryption bound to its factor's ID; the last accepted time step is stored,
   so a code works once. A sign-in with a confirmed factor gets a challenge (hashed, five wrong
   codes close it) instead of a session.
@@ -123,9 +126,11 @@ row does not open there.
 - **Positive:** every `MUST` of `SEC-100`, `SEC-102`, `SRV-064` and `CLI-002` is met with nothing
   built for P9; no stored value is a usable credential; the database refuses cross-tenant access,
   audit tampering and credential lookups outside their purpose on its own.
-- **Negative:** an installation that wants single sign-on waits for P9; TOTP is phishable, which
-  WebAuthn step-up (`SEC-103`) addresses in P9. Resolving a principal costs two queries per call.
-- **Follow-up:** P9 adds OIDC/SAML (`GOV-004`), WebAuthn step-up within five minutes (`SEC-103`) and
+- **Negative:** TOTP is phishable; a person who registers a security key is not, and WebAuthn
+  step-up (`SEC-103`) makes it mandatory for the most sensitive actions in P9. Resolving a principal
+  costs two queries per call. Two sign-in paths and two factor kinds are more to secure than one.
+- **Follow-up:** P9 adds SAML, provisioning and group mapping (`GOV-004`), WebAuthn step-up within
+  five minutes (`SEC-103`) and
   custom roles (`GOV-002`) behind the same permission catalogue; P11's Studio BFF serves the device
   approval page at `<publicBaseURL>/device` and the browser half of `SEC-101`.
 
@@ -137,13 +142,47 @@ Meets the P2 requirements, keeps P9's identity work in one piece, and has no ext
 beyond `golang.org/x/crypto` for Argon2id. TOTP is weaker against phishing than WebAuthn, which is
 why `SEC-103` makes WebAuthn step-up mandatory for the most sensitive actions in P9.
 
-### Option 2 — everything in P2
+### Option 2 — everything in P2 (chosen)
 
-Would implement OIDC login without the group mapping, SAML and SCIM `GOV-004` requires alongside
-it, and WebAuthn registration without the step-up rules of `SEC-103`: two half-features, a new
-dependency (`go-webauthn/webauthn`), and a second login path to secure a phase early.
+Implements OIDC sign-in without the group mapping, SAML and SCIM that `GOV-004` requires alongside
+it in P9, and WebAuthn registration without the step-up rules of `SEC-103`. Both are complete for
+what `SEC-100` asks of them; P9 extends rather than replaces them. Built in-house on the standard
+library (below), so no dependency is added.
 
 ### Option 3 — OIDC only
 
 Would satisfy `SEC-100` with no password handling, but every installation, including a developer's
 laptop, would need an identity provider before P2's own tests could sign in.
+
+## Revision (2026-09-28)
+
+The maintainer chose option 2: P2 keeps its original plan and ships OpenID Connect sign-in and
+WebAuthn second factors beside built-in accounts and TOTP. What is built, and where the line with
+P9 runs:
+
+- **OIDC sign-in.** The authorization code flow with PKCE (S256), a nonce and a state, as a
+  confidential client (`client_secret_basic`, secret from `PLUX_AUTH_STUDIO_OIDC_CLIENT_SECRET`).
+  The provider's endpoints come from its discovery document and must be on the issuer's host; the
+  ID token is verified with the same RS256 key-set verifier CI federation uses, for the client ID
+  as audience, and its nonce must be the sign-in's. The state is stored hashed and the PKCE
+  verifier sealed, for ten minutes, and are used once. A provider identity is linked to an account
+  that already exists — every account is created by invitation — on its first sign-in, by the
+  address the provider says it verified; the link is by issuer and subject from then on. Signing in
+  through the provider accepts a pending invitation. An account with a confirmed second factor is
+  still challenged for it. Just-in-time provisioning, group-to-role mapping, SAML and SCIM remain
+  `GOV-004`'s, in P9. `auth.studio.allowPasswordLogin` may be false once a provider is configured.
+- **WebAuthn.** Security keys and passkeys register as a second factor kind, `webauthn`, and
+  answer a sign-in challenge. Plux asks for no attestation ("none") and trusts no authenticator
+  make; it verifies the browser's origin, type and challenge, the relying-party ID hash, user
+  presence, the signature (ES256, EdDSA or RS256 of at least 2048 bits) and a signature counter
+  that must advance where the authenticator keeps one. The relying party is the host of
+  `server.publicBaseURL`, which serves Studio's backend-for-frontend; without an https public URL
+  security keys are off. The minimal CBOR and COSE decoding this needs is in `internal/auth`,
+  bounded in depth and size and fuzzed, rather than a new dependency (`dependencies.md` unchanged).
+  Step-up within five minutes for the most sensitive actions remains `SEC-103`'s, in P9.
+- **New error code** `PLX-8091` (upstream unavailable): the sign-in provider cannot be reached.
+
+The same decision settled `SEC-120`'s remaining backends: PKCS#11 (as a separate helper process, so
+the server binary stays free of cgo for `CI-006`), AWS KMS, Google Cloud KMS and Azure Key Vault
+are all supported, arriving in P6 with the key ceremonies of `SEC-121`. P2 ships Vault Transit and
+the development file backend.

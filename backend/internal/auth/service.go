@@ -66,6 +66,12 @@ type Options struct {
 	VerificationURI string
 	// Issuers are the trusted CI providers, by issuer URL.
 	Issuers map[string]TrustedIssuer
+	// OIDC is the OpenID Connect provider people may sign in with; nil
+	// when only built-in accounts sign in (SEC-100).
+	OIDC *OIDCProvider
+	// WebAuthn names the relying party security keys are registered
+	// for; an empty RPID disables WebAuthn factors.
+	WebAuthn WebAuthnConfig
 }
 
 // Durations the requirements or RFCs fix rather than configuration.

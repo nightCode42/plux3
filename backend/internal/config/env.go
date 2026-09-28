@@ -48,6 +48,7 @@ var overrides = []override{
 		return nil
 	}},
 	{"PLUX_CACHE_VALKEY_URL", func(c *Config, v string) error { c.Cache.ValkeyURL = Secret(v); return nil }},
+	{"PLUX_AUTH_STUDIO_OIDC_CLIENT_SECRET", func(c *Config, v string) error { c.Auth.Studio.OIDC.ClientSecret = Secret(v); return nil }},
 	{"PLUX_SIGNING_VAULT_TOKEN", func(c *Config, v string) error { c.Signing.Vault.Token = Secret(v); return nil }},
 	{"PLUX_OBSERVABILITY_LOG_LEVEL", func(c *Config, v string) error { c.Observability.LogLevel = v; return nil }},
 	{"PLUX_OBSERVABILITY_OTLP_ENDPOINT", func(c *Config, v string) error { c.Observability.OTLPEndpoint = v; return nil }},
