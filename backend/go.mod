@@ -5,9 +5,9 @@ go 1.27.0
 toolchain go1.27.1
 
 require (
-	github.com/google/flatbuffers v25.9.23+incompatible
+	github.com/google/flatbuffers v25.12.19+incompatible
 	github.com/klauspost/compress v1.20.1
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
-	golang.org/x/text v0.14.0
+	golang.org/x/text v0.42.0
 	pgregory.net/rapid v1.3.0
 )
