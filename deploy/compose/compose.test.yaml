@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2026 Plux contributors
+# SPDX-License-Identifier: Apache-2.0
+
+# Test overlay (QA-005): publishes PostgreSQL, the S3 store and Valkey on
+# loopback so `make compose-test` can run the Go integration and
+# end-to-end tests against them from the host.
+services:
+  postgres:
+    ports: ["127.0.0.1:55432:5432"]
+  seaweedfs:
+    ports: ["127.0.0.1:58333:8333"]
+  valkey:
+    ports: ["127.0.0.1:56379:6379"]

@@ -85,6 +85,94 @@
       "description": "Steps one action run may execute."
     },
     {
+      "key": "api.pageSize",
+      "unit": "count",
+      "default": 100,
+      "max": 1000,
+      "scopes": [
+        "installation"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P2",
+      "requirements": [
+        "SRV-004"
+      ],
+      "description": "Items one page of a list call returns; a call asking for more gets this many, and one asking for none gets this many too."
+    },
+    {
+      "key": "api.requestSize",
+      "unit": "bytes",
+      "default": 8388608,
+      "max": 268435456,
+      "scopes": [
+        "installation"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P2",
+      "requirements": [
+        "SEC-104"
+      ],
+      "description": "Size of one API request body, refused before a handler reads it."
+    },
+    {
+      "key": "api.requestsPerMinute",
+      "unit": "count",
+      "default": 600,
+      "max": 100000,
+      "scopes": [
+        "installation",
+        "organization"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P2",
+      "requirements": [
+        "SRV-065"
+      ],
+      "description": "API calls one authenticated principal (a user or a token) may make per minute."
+    },
+    {
+      "key": "api.requestsPerMinutePerAddress",
+      "unit": "count",
+      "default": 300,
+      "max": 100000,
+      "scopes": [
+        "installation"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P2",
+      "requirements": [
+        "SRV-065"
+      ],
+      "description": "API calls one client address may make per minute, whoever is calling."
+    },
+    {
+      "key": "api.requestsPerMinutePerDevice",
+      "unit": "count",
+      "default": 120,
+      "max": 10000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P2",
+      "requirements": [
+        "SRV-065"
+      ],
+      "description": "API calls one registered device may make per minute."
+    },
+    {
       "key": "app.plugins",
       "unit": "count",
       "default": 200,
@@ -103,6 +191,62 @@
         "SCH-005"
       ],
       "description": "Plugins per app."
+    },
+    {
+      "key": "asset.fileSize",
+      "unit": "bytes",
+      "default": 10485760,
+      "max": 104857600,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server"
+      ],
+      "phase": "P2",
+      "requirements": [
+        "SRV-060",
+        "AST-003"
+      ],
+      "description": "Size of one asset file, checked at upload and again at publish."
+    },
+    {
+      "key": "asset.imagePixels",
+      "unit": "count",
+      "default": 40000000,
+      "max": 100000000,
+      "scopes": [
+        "installation"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P2",
+      "requirements": [
+        "SRV-060",
+        "CMP-030"
+      ],
+      "description": "Pixels of one image asset, width times height, checked before it is decoded so that a small file cannot expand into a huge image."
+    },
+    {
+      "key": "auth.failedSignIns",
+      "unit": "count",
+      "default": 10,
+      "max": 1000,
+      "scopes": [
+        "installation"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P2",
+      "requirements": [
+        "SEC-100"
+      ],
+      "description": "Failed passwords or one-time codes one account may present in fifteen minutes before sign-in is refused."
     },
     {
       "key": "bundle.deviceFunctionModuleSize",
@@ -285,6 +429,24 @@
       "description": "Size of one string prop value, in UTF-8 bytes."
     },
     {
+      "key": "http.responseSize",
+      "unit": "bytes",
+      "default": 1048576,
+      "max": 67108864,
+      "scopes": [
+        "installation"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P2",
+      "requirements": [
+        "SEC-104",
+        "SEC-105"
+      ],
+      "description": "Size of a response the server reads when it fetches a URL, such as an identity provider's keys."
+    },
+    {
       "key": "page.animations",
       "unit": "count",
       "default": 30,
@@ -395,6 +557,27 @@
         "CMP-040"
       ],
       "description": "Nodes in one page document. Above the warning threshold the compiler reports the page."
+    },
+    {
+      "key": "plugin.assetBytes",
+      "unit": "bytes",
+      "default": 20971520,
+      "max": 268435456,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server"
+      ],
+      "phase": "P2",
+      "requirements": [
+        "AST-003"
+      ],
+      "description": "Bytes of the asset files one plugin's pages and icon use, checked at publish."
     },
     {
       "key": "plugin.pages",
@@ -564,6 +747,25 @@
         "BND-010"
       ],
       "description": "Total size of one app release: the app bundle and every plugin bundle."
+    },
+    {
+      "key": "telemetry.eventsPerRequest",
+      "unit": "count",
+      "default": 500,
+      "max": 5000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P2",
+      "requirements": [
+        "SEC-104"
+      ],
+      "description": "Runtime events one telemetry request may carry."
     }
   ]
 }

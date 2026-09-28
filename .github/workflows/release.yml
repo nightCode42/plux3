@@ -2,6 +2,15 @@
 # tag (CI-008). Tags are `<component>/v<semver>` and must be annotated and
 # signed: `git tag -s backend/v0.1.0 -m "backend v0.1.0"`. The maintainer
 # creates tags; nothing in CI creates or moves them (docs/engineering/workflow.md §8).
+#
+# A backend release also ships (DEP-001, CLI-001, CI-004):
+#   - reproducible archives of plux and plux-server for six platforms, their
+#     SHA256SUMS signed keylessly with cosign, a Homebrew formula and a Scoop
+#     manifest, and SLSA v1.0 Build Level 3 provenance for every archive;
+#   - multi-arch distroless images of plux-server and plux on GHCR, signed
+#     with cosign, with a CycloneDX SBOM attestation and SLSA provenance.
+# The SLSA generators are referenced by tag, not commit: they verify their
+# own ref to produce Build Level 3 provenance and refuse a commit reference.
 
 name: Release
 
@@ -25,9 +34,14 @@ jobs:
   release:
     name: Release ${{ github.ref_name }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     permissions:
-      contents: write # create the GitHub release
+      contents: write # create the GitHub release and upload its assets
+      id-token: write # keyless cosign signature of SHA256SUMS
+    outputs:
+      hashes: ${{ steps.hashes.outputs.hashes }}
+      backend: ${{ steps.component.outputs.backend }}
+      version: ${{ steps.component.outputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -57,13 +71,120 @@ jobs:
             [ "$declared" = "$version" ] \
               || { echo "::error::pubspec.yaml declares $declared, the tag says $version"; exit 1; }
           fi
+      - name: Component
+        id: component
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          echo "version=${TAG#*/v}" >> "$GITHUB_OUTPUT"
+          if [ "${TAG%%/v*}" = backend ]; then echo "backend=true" >> "$GITHUB_OUTPUT"; fi
       - run: pipx install "git-cliff==${GIT_CLIFF_VERSION}"
+      # Verifies: DEP-030.
       - name: Release notes
         env:
           TAG: ${{ github.ref_name }}
-        run: make release-notes COMPONENT="${TAG%%/v*}" TAG="$TAG" > "$RUNNER_TEMP/notes.md"
+        run: |
+          make release-notes COMPONENT="${TAG%%/v*}" TAG="$TAG" > "$RUNNER_TEMP/notes.md"
+          grep -q '^### Upgrading' "$RUNNER_TEMP/notes.md" \
+            || { echo "::error::the release notes have no upgrade steps (DEP-030)"; exit 1; }
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        if: steps.component.outputs.backend == 'true'
+        with:
+          go-version-file: backend/go.mod
+          cache: false # a release is built from a cold cache (CI-006)
+      # Verifies: CLI-001.
+      - name: Build the release archives
+        if: steps.component.outputs.backend == 'true'
+        run: make release-binaries
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        if: steps.component.outputs.backend == 'true'
+      # Verifies: CI-004.
+      - name: Sign SHA256SUMS
+        if: steps.component.outputs.backend == 'true'
+        run: cosign sign-blob --yes --bundle dist/SHA256SUMS.sigstore.json dist/SHA256SUMS
+      - name: Hashes for provenance
+        id: hashes
+        if: steps.component.outputs.backend == 'true'
+        run: echo "hashes=$(base64 -w0 dist/SHA256SUMS)" >> "$GITHUB_OUTPUT"
       - name: Create the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
-        run: gh release create "$TAG" --verify-tag --title "$TAG" --notes-file "$RUNNER_TEMP/notes.md"
+          BACKEND: ${{ steps.component.outputs.backend }}
+        run: |
+          assets=()
+          if [ "$BACKEND" = true ]; then assets=(dist/*); fi
+          gh release create "$TAG" --verify-tag --title "$TAG" --notes-file "$RUNNER_TEMP/notes.md" "${assets[@]}"
+
+  provenance:
+    name: Archive provenance
+    needs: release
+    if: needs.release.outputs.backend == 'true'
+    permissions:
+      actions: read # the generator reads the workflow run
+      id-token: write # sign the provenance
+      contents: write # upload it to the release
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0 # zizmor: ignore[unpinned-uses] — must be a tag, see the header
+    with:
+      base64-subjects: ${{ needs.release.outputs.hashes }}
+      upload-assets: true
+      upload-tag-name: ${{ github.ref_name }}
+      provenance-name: plux.intoto.jsonl
+
+  image-server:
+    name: Image plux-server
+    needs: release
+    if: needs.release.outputs.backend == 'true'
+    permissions:
+      contents: read
+      packages: write # push to GHCR
+      id-token: write # keyless cosign signatures
+    uses: ./.github/workflows/image.yml # zizmor: ignore[self-repository] — actionlint 1.7.12 does not accept the $/ form yet
+    with:
+      image: plux-server
+      target: server
+      version: ${{ needs.release.outputs.version }}
+
+  image-cli:
+    name: Image plux
+    needs: release
+    if: needs.release.outputs.backend == 'true'
+    permissions:
+      contents: read
+      packages: write # push to GHCR
+      id-token: write # keyless cosign signatures
+    uses: ./.github/workflows/image.yml # zizmor: ignore[self-repository] — actionlint 1.7.12 does not accept the $/ form yet
+    with:
+      image: plux
+      target: cli
+      version: ${{ needs.release.outputs.version }}
+
+  provenance-server:
+    name: Image provenance plux-server
+    needs: image-server
+    permissions:
+      actions: read # the generator reads the workflow run
+      id-token: write # sign the provenance
+      packages: write # push it next to the image
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0 # zizmor: ignore[unpinned-uses] — must be a tag, see the header
+    with:
+      image: ${{ needs.image-server.outputs.name }}
+      digest: ${{ needs.image-server.outputs.digest }}
+      registry-username: ${{ github.actor }}
+    secrets:
+      registry-password: ${{ secrets.GITHUB_TOKEN }}
+
+  provenance-cli:
+    name: Image provenance plux
+    needs: image-cli
+    permissions:
+      actions: read # the generator reads the workflow run
+      id-token: write # sign the provenance
+      packages: write # push it next to the image
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_container_slsa3.yml@v2.1.0 # zizmor: ignore[unpinned-uses] — must be a tag, see the header
+    with:
+      image: ${{ needs.image-cli.outputs.name }}
+      digest: ${{ needs.image-cli.outputs.digest }}
+      registry-username: ${{ github.actor }}
+    secrets:
+      registry-password: ${{ secrets.GITHUB_TOKEN }}

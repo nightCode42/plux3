@@ -1,0 +1,90 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package plux.v1;
+
+import "google/protobuf/timestamp.proto";
+import "plux/v1/common.proto";
+
+option go_package = "github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1";
+
+// AssetService stores the images, animations, fonts and other files a draft
+// uses. Uploads are size-limited, sniffed rather than trusted by extension,
+// stripped of metadata and deduplicated by hash (SRV-060, AST-003).
+service AssetService {
+  // UploadAsset streams one file. The first message carries the metadata
+  // and no bytes.
+  rpc UploadAsset(stream UploadAssetRequest) returns (UploadAssetResponse) {}
+  rpc GetAsset(GetAssetRequest) returns (GetAssetResponse) {}
+  rpc ListAssets(ListAssetsRequest) returns (ListAssetsResponse) {}
+  rpc DeleteAsset(DeleteAssetRequest) returns (DeleteAssetResponse) {}
+}
+
+message Asset {
+  string id = 1;
+  string app_id = 2;
+  // plugin_id is empty for an app-level asset.
+  string plugin_id = 3;
+  string name = 4;
+  // media_type is what sniffing determined, not what the caller claimed.
+  string media_type = 5;
+  int64 size = 6;
+  string sha256 = 7;
+  // width and height are set for raster and vector images.
+  int32 width = 8;
+  int32 height = 9;
+  // variants are the processed forms, such as WebP at 1x, 2x and 3x.
+  repeated AssetVariant variants = 10;
+  // processing is "pending", "ready" or "failed".
+  string processing = 11;
+  repeated Diagnostic diagnostics = 12;
+  Actor uploaded_by = 13;
+  google.protobuf.Timestamp created_at = 14;
+}
+
+// AssetVariant is one processed form of an asset (CMP-030, CMP-033).
+message AssetVariant {
+  // kind is "webp", "avif", "png", "dotlottie", "original" or "vector".
+  string kind = 1;
+  // density is 1, 2 or 3 for raster variants; zero otherwise.
+  int32 density = 2;
+  Artifact artifact = 3;
+  int32 width = 4;
+  int32 height = 5;
+}
+
+message UploadAssetRequest {
+  string app_id = 1;
+  string plugin_id = 2;
+  string name = 3;
+  string session = 4;
+  bytes chunk = 5;
+}
+message UploadAssetResponse {
+  Asset asset = 1;
+}
+
+message GetAssetRequest {
+  string id = 1;
+}
+message GetAssetResponse {
+  Asset asset = 1;
+}
+
+message ListAssetsRequest {
+  string app_id = 1;
+  string plugin_id = 2;
+  Page page = 3;
+}
+message ListAssetsResponse {
+  repeated Asset assets = 1;
+  PageResult page = 2;
+}
+
+message DeleteAssetRequest {
+  string id = 1;
+  string session = 2;
+}
+message DeleteAssetResponse {}

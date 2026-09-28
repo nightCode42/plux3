@@ -15,8 +15,33 @@ const (
 	ActionStepTimeout Key = "action.stepTimeout"
 	// ActionStepsPerRun: Steps one action run may execute. (ACT-005)
 	ActionStepsPerRun Key = "action.stepsPerRun"
+	// APIPageSize: Items one page of a list call returns; a call asking for more
+	// gets this many, and one asking for none gets this many too. (SRV-004)
+	APIPageSize Key = "api.pageSize"
+	// APIRequestSize: Size of one API request body, refused before a handler
+	// reads it. (SEC-104)
+	APIRequestSize Key = "api.requestSize"
+	// APIRequestsPerMinute: API calls one authenticated principal (a user or a
+	// token) may make per minute. (SRV-065)
+	APIRequestsPerMinute Key = "api.requestsPerMinute"
+	// APIRequestsPerMinutePerAddress: API calls one client address may make per
+	// minute, whoever is calling. (SRV-065)
+	APIRequestsPerMinutePerAddress Key = "api.requestsPerMinutePerAddress"
+	// APIRequestsPerMinutePerDevice: API calls one registered device may make
+	// per minute. (SRV-065)
+	APIRequestsPerMinutePerDevice Key = "api.requestsPerMinutePerDevice"
 	// AppPlugins: Plugins per app. (SCH-005)
 	AppPlugins Key = "app.plugins"
+	// AssetFileSize: Size of one asset file, checked at upload and again at
+	// publish. (SRV-060, AST-003)
+	AssetFileSize Key = "asset.fileSize"
+	// AssetImagePixels: Pixels of one image asset, width times height, checked
+	// before it is decoded so that a small file cannot expand into a huge image.
+	// (SRV-060, CMP-030)
+	AssetImagePixels Key = "asset.imagePixels"
+	// AuthFailedSignIns: Failed passwords or one-time codes one account may
+	// present in fifteen minutes before sign-in is refused. (SEC-100)
+	AuthFailedSignIns Key = "auth.failedSignIns"
 	// BundleDeviceFunctionModuleSize: Size of the WebAssembly module of the
 	// device-placed functions of one plugin. (FN-050)
 	BundleDeviceFunctionModuleSize Key = "bundle.deviceFunctionModuleSize"
@@ -42,6 +67,9 @@ const (
 	// DocumentStringPropSize: Size of one string prop value, in UTF-8 bytes.
 	// (SCH-005)
 	DocumentStringPropSize Key = "document.stringPropSize"
+	// HTTPResponseSize: Size of a response the server reads when it fetches a
+	// URL, such as an identity provider's keys. (SEC-104, SEC-105)
+	HTTPResponseSize Key = "http.responseSize"
 	// PageAnimations: Animations that can run at the same time on one page.
 	// (CMP-040)
 	PageAnimations Key = "page.animations"
@@ -55,6 +83,9 @@ const (
 	// PageNodes: Nodes in one page document. Above the warning threshold the
 	// compiler reports the page. (SCH-005, CMP-040)
 	PageNodes Key = "page.nodes"
+	// PluginAssetBytes: Bytes of the asset files one plugin's pages and icon
+	// use, checked at publish. (AST-003)
+	PluginAssetBytes Key = "plugin.assetBytes"
 	// PluginPages: Pages per plugin. (SCH-005)
 	PluginPages Key = "plugin.pages"
 	// PXLCollectionSize: Elements of a list or map produced during one PXL
@@ -77,6 +108,9 @@ const (
 	// ReleaseAppSize: Total size of one app release: the app bundle and every
 	// plugin bundle. (BND-010)
 	ReleaseAppSize Key = "release.appSize"
+	// TelemetryEventsPerRequest: Runtime events one telemetry request may carry.
+	// (SEC-104)
+	TelemetryEventsPerRequest Key = "telemetry.eventsPerRequest"
 )
 
 // registry holds every definition in key order. It is read-only.
@@ -85,7 +119,15 @@ var registry = [...]Definition{
 	{Key: ActionRunTimeout, Unit: UnitMilliseconds, Default: 120000, Warning: 0, Max: 3600000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Time one action run may take."},
 	{Key: ActionStepTimeout, Unit: UnitMilliseconds, Default: 30000, Warning: 0, Max: 600000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Time one action step may take."},
 	{Key: ActionStepsPerRun, Unit: UnitCount, Default: 10000, Warning: 0, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerRuntime, Phase: "P5", Description: "Steps one action run may execute."},
+	{Key: APIPageSize, Unit: UnitCount, Default: 100, Warning: 0, Max: 1000, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P2", Description: "Items one page of a list call returns; a call asking for more gets this many, and one asking for none gets this many too."},
+	{Key: APIRequestSize, Unit: UnitBytes, Default: 8388608, Warning: 0, Max: 268435456, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P2", Description: "Size of one API request body, refused before a handler reads it."},
+	{Key: APIRequestsPerMinute, Unit: UnitCount, Default: 600, Warning: 0, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization, EnforcedBy: EnforcerServer, Phase: "P2", Description: "API calls one authenticated principal (a user or a token) may make per minute."},
+	{Key: APIRequestsPerMinutePerAddress, Unit: UnitCount, Default: 300, Warning: 0, Max: 100000, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P2", Description: "API calls one client address may make per minute, whoever is calling."},
+	{Key: APIRequestsPerMinutePerDevice, Unit: UnitCount, Default: 120, Warning: 0, Max: 10000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerServer, Phase: "P2", Description: "API calls one registered device may make per minute."},
 	{Key: AppPlugins, Unit: UnitCount, Default: 200, Warning: 0, Max: 1000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Plugins per app."},
+	{Key: AssetFileSize, Unit: UnitBytes, Default: 10485760, Warning: 0, Max: 104857600, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P2", Description: "Size of one asset file, checked at upload and again at publish."},
+	{Key: AssetImagePixels, Unit: UnitCount, Default: 40000000, Warning: 0, Max: 100000000, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P2", Description: "Pixels of one image asset, width times height, checked before it is decoded so that a small file cannot expand into a huge image."},
+	{Key: AuthFailedSignIns, Unit: UnitCount, Default: 10, Warning: 0, Max: 1000, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P2", Description: "Failed passwords or one-time codes one account may present in fifteen minutes before sign-in is refused."},
 	{Key: BundleDeviceFunctionModuleSize, Unit: UnitBytes, Default: 4194304, Warning: 0, Max: 67108864, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P7", Description: "Size of the WebAssembly module of the device-placed functions of one plugin."},
 	{Key: BundlePageSectionSize, Unit: UnitBytes, Default: 1048576, Warning: 0, Max: 16777216, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Size of one page section in a bundle."},
 	{Key: BundlePluginSize, Unit: UnitBytes, Default: 20971520, Warning: 0, Max: 268435456, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Size of one plugin bundle."},
@@ -95,11 +137,13 @@ var registry = [...]Definition{
 	{Key: DocumentFileSize, Unit: UnitBytes, Default: 8388608, Warning: 0, Max: 67108864, Scopes: ScopeInstallation | ScopeOrganization, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Size of one document file in the project layout, checked before parsing."},
 	{Key: DocumentJSONDepth, Unit: UnitCount, Default: 512, Warning: 0, Max: 4096, Scopes: ScopeInstallation, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Nesting of arrays and objects in one document, checked while parsing."},
 	{Key: DocumentStringPropSize, Unit: UnitBytes, Default: 65536, Warning: 0, Max: 1048576, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Size of one string prop value, in UTF-8 bytes."},
+	{Key: HTTPResponseSize, Unit: UnitBytes, Default: 1048576, Warning: 0, Max: 67108864, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P2", Description: "Size of a response the server reads when it fetches a URL, such as an identity provider's keys."},
 	{Key: PageAnimations, Unit: UnitCount, Default: 30, Warning: 10, Max: 200, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Animations that can run at the same time on one page."},
 	{Key: PageBuildCost, Unit: UnitMicroseconds, Default: 16000, Warning: 8000, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Estimated build time of a page on the mid-tier reference device, the sum of its widgets' cost hints."},
 	{Key: PageDepth, Unit: UnitCount, Default: 64, Warning: 32, Max: 128, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Depth of a page's node tree."},
 	{Key: PageImageBytes, Unit: UnitBytes, Default: 5242880, Warning: 1048576, Max: 67108864, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Bytes of images bundled for one page."},
 	{Key: PageNodes, Unit: UnitCount, Default: 5000, Warning: 1000, Max: 50000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Nodes in one page document. Above the warning threshold the compiler reports the page."},
+	{Key: PluginAssetBytes, Unit: UnitBytes, Default: 20971520, Warning: 0, Max: 268435456, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P2", Description: "Bytes of the asset files one plugin's pages and icon use, checked at publish."},
 	{Key: PluginPages, Unit: UnitCount, Default: 500, Warning: 0, Max: 2000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Pages per plugin."},
 	{Key: PXLCollectionSize, Unit: UnitCount, Default: 10000, Warning: 0, Max: 1000000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P1", Description: "Elements of a list or map produced during one PXL evaluation."},
 	{Key: PXLDecimalDigits, Unit: UnitCount, Default: 1000, Warning: 0, Max: 10000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P1", Description: "Digits of a decimal produced during one PXL evaluation, in plain notation."},
@@ -108,4 +152,5 @@ var registry = [...]Definition{
 	{Key: PXLOperationBudget, Unit: UnitOperations, Default: 10000, Warning: 0, Max: 1000000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P1", Description: "Operations one PXL evaluation may perform before it stops with a typed error."},
 	{Key: PXLStringLength, Unit: UnitCodepoints, Default: 65536, Warning: 0, Max: 1048576, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P1", Description: "Length of a string produced during one PXL evaluation."},
 	{Key: ReleaseAppSize, Unit: UnitBytes, Default: 104857600, Warning: 0, Max: 1073741824, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Total size of one app release: the app bundle and every plugin bundle."},
+	{Key: TelemetryEventsPerRequest, Unit: UnitCount, Default: 500, Warning: 0, Max: 5000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerServer, Phase: "P2", Description: "Runtime events one telemetry request may carry."},
 }

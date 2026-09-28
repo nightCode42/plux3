@@ -118,7 +118,7 @@ These are not guidelines. A change that breaks one is not mergeable.
 
 ### Security
 
-- Never log, trace, label, return or persist unencrypted: keys, tokens, DPoP proofs, secrets, or fields tagged `sensitive` (`SCH-012`, `SEC-092`).
+- Never log, trace, label, return or persist unencrypted: keys, tokens, DPoP proofs, secrets, or fields tagged `sensitive` (`SCH-012`, `SEC-092`). The one exception is the CLI's own token on a machine with no OS credential store, kept in a user-only file ([ADR-0028](docs/adr/0028-cli-credential-storage.md)).
 - Secure defaults only. An unsafe setting is never a default and always produces a distinct warning.
 - Security capabilities are never gated by edition (`GOV-032`).
 - Full rules: [security-practices.md](docs/engineering/security-practices.md).

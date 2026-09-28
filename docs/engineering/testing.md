@@ -19,9 +19,12 @@ How Plux is tested. The strategy and thresholds are specified in spec §28; this
 | Unit and widget (Dart) | `packages/<pkg>/test/*_test.dart` | every change: `make dart-cover` |
 | Unit (TypeScript) | next to the code, `*.test.ts` | every change: `make studio-cover` |
 | Repository policy | `tools/internal/policy` | every change |
-| Integration (server with real PostgreSQL, storage, Valkey) | `test/integration/` | from P2, every pull request (`QA-005`) |
+| Integration, one package against real infrastructure | next to the code, `*_integration_test.go` | from P2, every pull request (`QA-005`) |
+| Integration, several components together | `test/integration/` | from P2, every pull request (`QA-005`) |
 | End-to-end (emulators, simulators, device farm) | `test/e2e/` | from P3 (`QA-006`) |
 | Compatibility, security, load, layout conformance | `test/compat/`, `test/security/`, `test/load/`, `test/layout-conformance/` | from the phase that introduces them |
+
+**Integration tests** run against real PostgreSQL, object storage and Valkey rather than fakes (`QA-005`). A test that exercises one package — migrations, row-level security, the job queue, the server's start-up — lives beside that package as `*_integration_test.go` and reaches its database through `internal/storage/storagetest`; a test that exercises several components together lives in `test/integration/`. Both read `PLUX_TEST_DATABASE_URL` and **skip** when it is unset, so `go test ./...` stays useful on a machine with no database, and CI always sets it. Each test gets its own PostgreSQL schema, migrated from scratch and dropped afterwards, so they are independent and run in parallel. Object storage is exercised through an in-process S3 stub for the common path and against MinIO in CI.
 
 ## 3. Naming and traceability
 

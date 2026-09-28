@@ -22,10 +22,27 @@ Every third-party dependency is a long-term commitment: code we ship but did not
 | Standard library | Everything in `tools/`; most of `backend/` | BSD-3-Clause | — | In use |
 | `github.com/google/flatbuffers` | Bundle section builders and accessors | Apache-2.0 | [0002](../adr/0002-flatbuffers-sectioned-bundles.md) | In use (`backend`) |
 | `github.com/klauspost/compress` | zstd transport compression of bundles | BSD-3-Clause, Apache-2.0 | [0002](../adr/0002-flatbuffers-sectioned-bundles.md) | In use (`backend`) |
+| `github.com/zalando/go-keyring` | The CLI's token in the OS credential store | MIT | [0028](../adr/0028-cli-credential-storage.md) | In use (`backend`, CLI only) |
+| `github.com/godbus/dbus/v5` | Linux Secret Service, through go-keyring | BSD-2-Clause | [0028](../adr/0028-cli-credential-storage.md) | In use (`backend`, CLI only) |
+| `github.com/danieljoos/wincred` | Windows Credential Manager, through go-keyring | MIT | [0028](../adr/0028-cli-credential-storage.md) | In use (`backend`, CLI only) |
 | `github.com/santhosh-tekuri/jsonschema/v6` | Structural validation of documents (JSON Schema 2020-12) | Apache-2.0 | [0025](../adr/0025-document-schema-toolchain.md) | In use (`backend`) |
 | `pgregory.net/rapid` | Property-based tests | MPL-2.0 | [0025](../adr/0025-document-schema-toolchain.md) | In use (`backend`, tests only) |
+| `connectrpc.com/connect` | ConnectRPC handlers and clients for the API contract | Apache-2.0 | [0005](../adr/0005-connectrpc-and-protobuf.md) | In use (`backend`) |
+| `google.golang.org/protobuf` | Generated API messages | BSD-3-Clause | [0005](../adr/0005-connectrpc-and-protobuf.md) | In use (`backend`) |
+| `google.golang.org/genproto/googleapis/rpc` | `google.rpc.ErrorInfo` on API errors (`SRV-006`) | Apache-2.0 | [0005](../adr/0005-connectrpc-and-protobuf.md) | In use (`backend`) |
+| `github.com/jackc/pgx/v5` | PostgreSQL driver and pool | MIT | [0007](../adr/0007-postgresql-and-object-storage.md) | In use (`backend`) |
+| `github.com/riverqueue/river` | Durable jobs in PostgreSQL | MPL-2.0 | [0007](../adr/0007-postgresql-and-object-storage.md) | In use (`backend`) |
+| `github.com/aws/aws-sdk-go-v2` (config, credentials, s3) | S3-compatible object storage | Apache-2.0 | [0007](../adr/0007-postgresql-and-object-storage.md) | In use (`backend`) |
+| `go.opentelemetry.io/otel` (+ sdk, otlptracehttp) | Traces (`OBS-001`) | Apache-2.0 | [0006](../adr/0006-modular-monolith-with-roles.md) | In use (`backend`) |
+| `github.com/prometheus/client_golang` | Metrics (`OBS-002`) | Apache-2.0 | [0006](../adr/0006-modular-monolith-with-roles.md) | In use (`backend`) |
+| `sigs.k8s.io/yaml` | The server configuration file, decoded strictly as JSON (`SRV-008`) | Apache-2.0, BSD-3-Clause | [0007](../adr/0007-postgresql-and-object-storage.md) | In use (`backend`) |
+| `golang.org/x/crypto` (argon2) | Argon2id password hashing (`SEC-100`) | BSD-3-Clause | [0026](../adr/0026-identity-tenancy-and-access.md) | In use (`backend`) |
+| `github.com/tetratelabs/wazero` | Runs the WebAssembly image codecs, with no cgo (`CMP-030`) | Apache-2.0 | [0027](../adr/0027-asset-pipeline.md) | In use (`backend`) |
+| libwebp v1.5.0, libavif v1.3.0, libaom v3.12.1 (C, built to WebAssembly) | WebP and AVIF encoding; the modules are committed and rebuilt by `make wasm-codecs` | BSD-3-Clause; BSD-2-Clause with the AOM Patent License 1.0 | [0027](../adr/0027-asset-pipeline.md) | In use (`backend`, embedded) |
 
-`tools/` stays standard-library only (§3). Planned for P2, each with its ADR: ConnectRPC and Protocol Buffers (ADR-0005), `pgx` and `sqlc` (ADR-0007), River job queue (ADR-0007).
+`tools/` stays standard-library only (§3). Build tools pinned in the Makefile: `sqlc` v1.31.1 generates the query code from the migrations ([0007](../adr/0007-postgresql-and-object-storage.md)). The image codecs are C libraries compiled to WebAssembly by `backend/internal/compiler/media/codecs/build.sh` from pinned commits with clang 18 and wasi-libc; `codecs.lock` pins the modules' hashes, and their notices travel with them in `THIRD_PARTY_NOTICES.txt` ([0027](../adr/0027-asset-pipeline.md)). WebAuthn verification and the CBOR and COSE decoding it needs are written in-house on the standard library, so `go-webauthn/webauthn` is not a dependency ([0026](../adr/0026-identity-tenancy-and-access.md), Revision). HashiCorp Vault Transit is reached over its HTTP API with the standard library, so no Vault client is a dependency ([0004](../adr/0004-tuf-style-update-security.md)).
+
+Valkey is reached with a small RESP client in `backend/internal/cache`, so no Redis client is a dependency; section deltas use the zstd raw-dictionary support of `klauspost/compress`, so no patching library is one either ([ADR-0003](../adr/0003-section-level-deltas.md)).
 
 ### Dart (`packages/`, `apps/`)
 
@@ -59,8 +76,26 @@ Planned for P11 (ADR-0014): React, TanStack Router and Query, shadcn/ui on Radix
 | Bun | `studio/package.json`, Makefile, CI | Studio runtime and tests |
 | golangci-lint, govulncheck, gitleaks, actionlint | Makefile (built with the project toolchain), CI | Lint, vulnerabilities, secrets, workflows |
 | pre-commit, zizmor, reuse, git-cliff | Makefile, CI | Hooks, workflow security, licensing, release notes |
+| `buf`, `protoc-gen-go`, `protoc-gen-connect-go`, `protoc-gen-connect-openapi` | Makefile (`BUF_VERSION` and the plugin versions), built with the project toolchain | API contract lint, breaking-change detection and code generation ([ADR-0005](../adr/0005-connectrpc-and-protobuf.md)) |
 | `flatc` (FlatBuffers compiler) | Makefile (`FLATC_VERSION`, tag commit), built from source; cached in CI | Bundle code generation ([ADR-0002](../adr/0002-flatbuffers-sectioned-bundles.md)) |
 | GitHub Actions | Full commit SHAs in `.github/workflows/` | CI |
+| cosign (sigstore/cosign-installer), Syft (anchore/sbom-action), Docker Buildx and QEMU | Action SHAs in `release.yml` and `image.yml` | Keyless signatures, CycloneDX SBOMs and multi-arch images (`DEP-001`, `CI-004`) |
+| SLSA GitHub generators (`generator_generic_slsa3`, `generator_container_slsa3`) v2.1.0 | Tag in `release.yml` — the generators must be referenced by tag to be verifiable | SLSA level 3 provenance (`CI-004`) |
+| k6 (grafana/setup-k6-action) | Action SHA in `load.yml` | The manifest load test (`NFR-020`) |
+
+### Container images
+
+Pinned by tag and digest in `backend/Dockerfile` and `deploy/compose/compose.yaml`; Dependabot (`docker`, `docker-compose`) proposes new tags and digests weekly, and the policy check fails if a Dockerfile or Compose file has no entry (`CI-007`).
+
+| Image | Used for |
+|---|---|
+| `golang` (bookworm) | Builder stage of the server and CLI images |
+| `gcr.io/distroless/static-debian12:nonroot` | Runtime base of the server and CLI images (`SEC-108`) |
+| `postgres` 16 | Compose stack database |
+| `chrislusf/seaweedfs` | Compose stack S3 store ([ADR-0007](../adr/0007-postgresql-and-object-storage.md), Revision — MinIO no longer publishes images) |
+| `valkey/valkey` | Compose stack cache |
+| `otel/opentelemetry-collector-contrib`, `prom/prometheus`, `grafana/grafana` | Compose stack telemetry |
+| `keycloak/keycloak`, `ollama/ollama` | Optional Compose profiles |
 
 ## 3. Decisions made in P0
 

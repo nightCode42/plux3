@@ -1,0 +1,74 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package plux.v1;
+
+import "google/protobuf/timestamp.proto";
+import "plux/v1/common.proto";
+
+option go_package = "github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1";
+
+// ComponentService lists the components of an app and of its plugins and
+// reports where each is used, so that changing one shows its blast radius.
+// Component documents themselves are written through DocumentService.
+service ComponentService {
+  rpc ListComponents(ListComponentsRequest) returns (ListComponentsResponse) {}
+  rpc GetComponent(GetComponentRequest) returns (GetComponentResponse) {}
+  // ListUsages reports every node that instantiates a component, from the
+  // reference graph the compiler builds (SCH-041).
+  rpc ListUsages(ListUsagesRequest) returns (ListUsagesResponse) {}
+}
+
+message Component {
+  string id = 1;
+  string app_id = 2;
+  // plugin_id is empty for a shared, app-level component.
+  string plugin_id = 3;
+  string key = 4;
+  string name = 5;
+  string path = 6;
+  int64 revision = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+// Usage is one reference to an entity, from the reference graph (SCH-041).
+message Usage {
+  // plugin_key is empty when the use site is an app-level document.
+  string plugin_key = 1;
+  Location location = 2;
+  // kind names what the use site is, such as "node" or "slot".
+  string kind = 3;
+}
+
+message ListComponentsRequest {
+  string app_id = 1;
+  string plugin_id = 2;
+  Page page = 3;
+}
+message ListComponentsResponse {
+  repeated Component components = 1;
+  PageResult page = 2;
+}
+
+message GetComponentRequest {
+  string id = 1;
+}
+message GetComponentResponse {
+  Component component = 1;
+  bytes content = 2;
+}
+
+message ListUsagesRequest {
+  string app_id = 1;
+  // entity_kind is "component", "template", "asset", "translationKey",
+  // "token", "state", "actionGraph" or "page".
+  string entity_kind = 2;
+  string entity_id = 3;
+  Page page = 4;
+}
+message ListUsagesResponse {
+  repeated Usage usages = 1;
+  PageResult page = 2;
+}

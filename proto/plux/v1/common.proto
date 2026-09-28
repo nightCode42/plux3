@@ -1,0 +1,155 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package plux.v1;
+
+import "google/protobuf/field_mask.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1";
+
+// Page asks for one page of a list endpoint (SRV-004). No list endpoint
+// returns an unbounded result: an unset page_size uses the server default
+// and any value above the maximum is clamped to it.
+message Page {
+  // page_size is the maximum number of items to return.
+  int32 page_size = 1;
+  // page_token continues an earlier call. Tokens are opaque and
+  // integrity-protected; they are bound to the filter and ordering they
+  // were issued for and are rejected by any other query.
+  string page_token = 2;
+  // filter selects items with the documented filter syntax of the endpoint.
+  string filter = 3;
+  // order_by names fields to sort by, each optionally followed by " desc".
+  string order_by = 4;
+  // read_mask limits each returned item to the named fields; an empty
+  // mask returns whole items.
+  google.protobuf.FieldMask read_mask = 5;
+}
+
+// PageResult carries the continuation of a list response.
+message PageResult {
+  // next_page_token is empty on the last page.
+  string next_page_token = 1;
+  // total_size is the number of items matching the filter, when the
+  // endpoint can count them cheaply; zero otherwise.
+  int32 total_size = 2;
+}
+
+// Severity of a diagnostic (ADR-0018).
+enum Severity {
+  SEVERITY_UNSPECIFIED = 0;
+  SEVERITY_INFO = 1;
+  SEVERITY_WARNING = 2;
+  SEVERITY_ERROR = 3;
+}
+
+// Range is a half-open range of Unicode code points inside an expression.
+message Range {
+  int32 start = 1;
+  int32 end = 2;
+}
+
+// Location identifies a value inside a project.
+message Location {
+  // file is the document's path in the project layout, with forward slashes.
+  string file = 1;
+  // path is a JSON Pointer (RFC 6901) into the document.
+  string path = 2;
+  // range narrows the location to characters inside a PXL expression.
+  Range range = 3;
+}
+
+// PatchOp is one JSON Patch (RFC 6902) operation.
+message PatchOp {
+  // op is "add", "remove", "replace", "move", "copy" or "test".
+  string op = 1;
+  string path = 2;
+  string from = 3;
+  // value is the JSON value of "add", "replace" and "test", as bytes, so
+  // that it keeps the canonical form the document model defines.
+  bytes value = 4;
+}
+
+// Diagnostic is a finding about a document (ADR-0018, Appendix F).
+message Diagnostic {
+  // code is the stable "PLX-NNNN" code.
+  string code = 1;
+  // reason is the code's stable name.
+  string reason = 2;
+  Severity severity = 3;
+  Location location = 4;
+  string message = 5;
+  string cause = 6;
+  string fix = 7;
+  repeated PatchOp patch = 8;
+  string doc_url = 9;
+  repeated Location related = 10;
+}
+
+// Actor is who performed an action.
+message Actor {
+  // kind is "user", "token", "device", "system" or "ci".
+  string kind = 1;
+  string id = 2;
+  // display is a human-readable name; never an email address.
+  string display = 3;
+}
+
+// LimitUsage is the current usage of one limit at one scope (LIM-005).
+message LimitUsage {
+  // key is the limit's registry key, such as "bundle.pluginSize".
+  string key = 1;
+  string unit = 2;
+  // scope is "installation", "organization", "app" or "plugin".
+  string scope = 3;
+  int64 value = 4;
+  // effective is the limit in force here after the hierarchy is resolved.
+  int64 effective = 5;
+  // hard_max is the value no scope may exceed.
+  int64 hard_max = 6;
+  // warning is true once usage reaches 80% of effective (LIM-003).
+  bool warning = 7;
+}
+
+// Artifact is a stored, content-addressed object (SRV-023, REL-024).
+message Artifact {
+  // sha256 is the hash of the artifact's bytes, lower-case hex.
+  string sha256 = 1;
+  int64 size = 2;
+  // urls are the locations to fetch it from, most preferred first.
+  repeated string urls = 3;
+  // media_type is the artifact's media type.
+  string media_type = 4;
+}
+
+// AuditEntry is one record of the append-only audit log (SEC-140).
+message AuditEntry {
+  string id = 1;
+  google.protobuf.Timestamp time = 2;
+  Actor actor = 3;
+  // action is the registered action name, such as "plugin.lock.override".
+  string action = 4;
+  // target_kind and target_id identify what the action was performed on.
+  string target_kind = 5;
+  string target_id = 6;
+  string source_ip = 7;
+  string user_agent = 8;
+  string request_id = 9;
+  // before_hash and after_hash are SHA-256 of the affected content.
+  string before_hash = 10;
+  string after_hash = 11;
+}
+
+// TrashItem is a deleted app, plugin or page awaiting restore (GOV-031).
+message TrashItem {
+  string id = 1;
+  // kind is "app", "plugin" or "page".
+  string kind = 2;
+  string name = 3;
+  Actor deleted_by = 4;
+  google.protobuf.Timestamp deleted_at = 5;
+  google.protobuf.Timestamp purge_after = 6;
+}

@@ -1,0 +1,31 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package plux.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1";
+
+// TokenService issues the short-lived access tokens devices use. In P2 a
+// device proves itself with the credential it received at registration;
+// from P6 that credential is replaced by a hardware-bound key, tokens
+// are sender-constrained with DPoP (SEC-020) and refresh needs fresh
+// attestation (SEC-025). There is deliberately no long-lived refresh
+// token.
+service TokenService {
+  rpc IssueDeviceToken(IssueDeviceTokenRequest) returns (IssueDeviceTokenResponse) {}
+}
+
+message IssueDeviceTokenRequest {
+  string device_id = 1;
+  // device_secret is the credential RegisterDevice returned.
+  string device_secret = 2;
+}
+
+message IssueDeviceTokenResponse {
+  string access_token = 1;
+  google.protobuf.Timestamp expires_at = 2;
+}

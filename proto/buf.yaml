@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2026 Plux contributors
+# SPDX-License-Identifier: Apache-2.0
+
+version: v2
+modules:
+  - path: .
+    name: buf.build/plux/plux
+lint:
+  use:
+    - STANDARD
+breaking:
+  use:
+    - FILE

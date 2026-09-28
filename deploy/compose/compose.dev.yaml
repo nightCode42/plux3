@@ -1,0 +1,15 @@
+# SPDX-FileCopyrightText: 2026 Plux contributors
+# SPDX-License-Identifier: Apache-2.0
+
+# Development overlay for `make dev` (DEP-020): Compose Watch rebuilds and
+# restarts plux-server whenever Go code under backend/ changes. Studio and
+# the Flutter apps join with their own watchers when they arrive (P11, P3).
+services:
+  plux-server:
+    environment:
+      PLUX_OBSERVABILITY_LOG_LEVEL: debug
+    develop:
+      watch:
+        - action: rebuild
+          path: ../../backend
+          ignore: ["**/*_test.go", "**/coverage.out"]

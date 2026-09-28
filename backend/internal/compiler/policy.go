@@ -6,9 +6,11 @@ package compiler
 import (
 	"bytes"
 	"encoding/json"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/nightCode42/plux3/backend/internal/bundle"
 	"github.com/nightCode42/plux3/backend/internal/bundle/fbs"
@@ -268,6 +270,42 @@ var secretPatterns = []*regexp.Regexp{
 	regexp.MustCompile(`(?i)\b(api[_-]?key|secret|password|passwd|access[_-]?token)\s*[:=]\s*\S{8,}`),
 }
 
+// Thresholds of the entropy check (SEC-107): a token at least this long,
+// of key-like characters with letters and digits mixed, carrying at
+// least this many bits of Shannon entropy per character. Random base64
+// or alphanumeric keys of 24 or more characters are well above it;
+// words, sentences, hex digests and UUIDs (whose alphabet is 16
+// characters, at most 4 bits) are below it or not tokens.
+const (
+	entropyMinLength = 24
+	entropyMinBits   = 4.3
+)
+
+// tokenChars matches a single token of the characters keys are made of.
+var tokenChars = regexp.MustCompile(`^[A-Za-z0-9+/=_\-.~]+$`)
+
+// highEntropy reports a string that looks like a random secret.
+func highEntropy(s string) bool {
+	if len(s) < entropyMinLength || !tokenChars.MatchString(s) || strings.Contains(s, "://") {
+		return false
+	}
+	letters, digits := strings.IndexFunc(s, unicode.IsLetter) >= 0, strings.IndexFunc(s, unicode.IsDigit) >= 0
+	if !letters || !digits {
+		return false
+	}
+	counts := map[rune]int{}
+	for _, r := range s {
+		counts[r]++
+	}
+	var bits float64
+	n := float64(len(s))
+	for _, c := range counts {
+		p := float64(c) / n
+		bits -= p * math.Log2(p)
+	}
+	return bits >= entropyMinBits
+}
+
 // lintValue checks the string literals of a value.
 func (u *unit) lintValue(file, ptr string, v *value) {
 	if v == nil {
@@ -296,6 +334,10 @@ func (u *unit) lintString(file, ptr, s string) {
 			u.report(plxerr.SecretLikeValue, file, ptr, "the value looks like a credential; bundles are readable on devices")
 			return
 		}
+	}
+	if highEntropy(s) {
+		u.report(plxerr.SecretLikeValue, file, ptr, "the value is a long random-looking token, like a key or a password; bundles are readable on devices")
+		return
 	}
 	if len(s) >= 7 && strings.EqualFold(s[:7], "http://") {
 		// The URL is not quoted: it may carry credentials.
@@ -386,6 +428,11 @@ func (u *unit) lintAssets() {
 	for i, e := range a.Doc.Assets {
 		data := u.project.AssetFiles[e.File]
 		ptr := plxerr.Pointer("assets", strconv.Itoa(i), "file")
+		if limit := u.opts.Limits.Get(limits.AssetFileSize); int64(len(data)) > limit {
+			u.report(plxerr.LimitExceeded, a.Source.File, ptr, "%s has %d bytes, above asset.fileSize = %d (AST-003)", e.File, len(data), limit)
+		} else if int64(len(data)) > u.opts.Limits.Warning(limits.AssetFileSize) {
+			u.report(plxerr.LimitApproaching, a.Source.File, ptr, "%s has %d of the %d bytes asset.fileSize allows", e.File, len(data), limit)
+		}
 		if format := bundle.ExecutableFormat(data); format != "" {
 			u.report(plxerr.ExecutableContent, a.Source.File, ptr, "%s holds %s code", e.File, format)
 			continue

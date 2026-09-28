@@ -22,6 +22,11 @@ ACTIONLINT_VERSION    := v1.7.12
 PRE_COMMIT_VERSION    := 4.6.2
 ZIZMOR_VERSION        := 1.30.1
 REUSE_VERSION         := 6.2.0
+BUF_VERSION           := v1.73.0
+PROTOC_GEN_GO_VERSION := v1.36.12
+PROTOC_GEN_CONNECT_GO_VERSION := v1.21.0
+PROTOC_GEN_CONNECT_OPENAPI_VERSION := v0.27.3
+SQLC_VERSION          := v1.31.1
 # flatc is built from source at the commit of its release tag (ADR-0002).
 FLATC_VERSION         := 25.9.23
 FLATC_COMMIT          := 187240970746d00bbd26b0f5873ed54d2477f9f3
@@ -44,6 +49,14 @@ GOLANGCI_LINT ?= $(TOOLS_BIN)/golangci-lint
 GOVULNCHECK   ?= $(TOOLS_BIN)/govulncheck
 GITLEAKS      ?= $(TOOLS_BIN)/gitleaks
 ACTIONLINT    ?= $(TOOLS_BIN)/actionlint
+BUF           ?= $(TOOLS_BIN)/buf
+SQLC          ?= $(TOOLS_BIN)/sqlc
+PROTO_DIR     := proto
+PROTO_GO_DIR  := backend/internal/pluxv1
+PROTO_API_DIR := docs/reference/api
+# The base of `buf breaking`: the last tagged release of the contract
+# (SRV-000). Override to compare with another ref.
+PROTO_BASE    ?= $(shell git describe --tags --match 'backend/v*' --abbrev=0 2>/dev/null)
 REQTRACE      := $(GO) run ./tools/cmd/reqtrace
 COVGATE       := $(GO) run ./tools/cmd/covgate
 BIN_DIR       := bin
@@ -69,13 +82,14 @@ GO_BUILD_FLAGS  := -trimpath -buildvcs=false -ldflags "-s -w -buildid= \
 	-X $(BUILDINFO_PKG).commit=$(COMMIT) \
 	-X $(BUILDINFO_PKG).commitDate=$(COMMIT_DATE)"
 
-.PHONY: help setup hooks-install check test build gen gen-check clean \
-	install-go-tools install-golangci-lint install-govulncheck install-gitleaks install-actionlint install-python-tools install-flatc \
-	go-check go-fmt go-fmt-check go-lint go-tidy go-tidy-check go-gen-check registry-lock-check go-test go-test-race go-cover \
+.PHONY: help setup hooks-install check test build gen gen-check clean wasm-codecs wasm-codecs-check \
+	install-go-tools install-golangci-lint install-govulncheck install-gitleaks install-actionlint install-buf install-sqlc install-python-tools install-flatc \
+	go-check proto proto-check proto-lint proto-format-check proto-breaking sqlc sqlc-check go-fmt go-fmt-check go-lint go-tidy go-tidy-check go-gen-check registry-lock-check go-test go-test-race go-cover \
 	go-determinism go-budgets go-fuzz currencies-check go-vuln go-build go-reproducible \
 	dart-check dart-get dart-lock-check dart-fmt dart-fmt-check dart-analyze dart-test dart-cover widgets-api widgets-api-check \
 	studio-check studio-install studio-fmt studio-lint studio-typecheck studio-test studio-cover \
-	release-notes repo-check spec-lint trace secrets workflows-lint reuse-lint hygiene
+	compose-secrets compose-up compose-down compose-seed dev compose-test \
+	release-binaries release-notes repo-check spec-lint trace secrets workflows-lint reuse-lint hygiene
 
 help: ## Show this help
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage: make \033[36m<target>\033[0m\n"} \
@@ -89,7 +103,7 @@ setup: install-go-tools install-python-tools install-flatc ## Install pinned too
 	@command -v bun >/dev/null || echo "! Install Bun $(BUN_VERSION): https://bun.sh/docs/installation"
 	$(MAKE) hooks-install
 
-install-go-tools: install-golangci-lint install-govulncheck install-gitleaks install-actionlint ## Install the pinned Go-based tools
+install-go-tools: install-golangci-lint install-govulncheck install-gitleaks install-actionlint install-buf install-sqlc ## Install the pinned Go-based tools
 
 install-golangci-lint: ## Install the pinned golangci-lint
 	$(GO_INSTALL) github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
@@ -102,6 +116,15 @@ install-gitleaks: ## Install the pinned gitleaks
 
 install-actionlint: ## Install the pinned actionlint
 	$(GO_INSTALL) github.com/rhysd/actionlint/cmd/actionlint@$(ACTIONLINT_VERSION)
+
+install-buf: ## Install buf and the protoc plugins the API contract needs (ADR-0005)
+	$(GO_INSTALL) github.com/bufbuild/buf/cmd/buf@$(BUF_VERSION)
+	$(GO_INSTALL) google.golang.org/protobuf/cmd/protoc-gen-go@$(PROTOC_GEN_GO_VERSION)
+	$(GO_INSTALL) connectrpc.com/connect/cmd/protoc-gen-connect-go@$(PROTOC_GEN_CONNECT_GO_VERSION)
+	$(GO_INSTALL) github.com/sudorandom/protoc-gen-connect-openapi@$(PROTOC_GEN_CONNECT_OPENAPI_VERSION)
+
+install-sqlc: ## Install the pinned sqlc, which type-checks the server's SQL (ADR-0007)
+	$(GO_INSTALL) github.com/sqlc-dev/sqlc/cmd/sqlc@$(SQLC_VERSION)
 
 PYTHON_TOOLS := pre-commit==$(PRE_COMMIT_VERSION) zizmor==$(ZIZMOR_VERSION) reuse==$(REUSE_VERSION)
 
@@ -148,7 +171,39 @@ gen: ## Regenerate all generated code and reference documents (CI-003)
 	"$(FLATC)" --dart -o $(FBS_DART_DIR) $(FBS_SCHEMA); \
 	"$(FLATC)" --binary --schema -o "$$bfbs" $(FBS_SECTIONS); \
 	$(GO) run ./tools/cmd/schemagen -root . -bfbs "$$bfbs"
+	@$(MAKE) proto
+	@$(MAKE) sqlc
 	@for m in $(GO_MODULES); do (cd $$m && $(GO) generate ./...); done
+
+# The API contract generates the Go messages and handlers and the OpenAPI
+# description; buf runs with locally built plugins, never remote ones
+# (SRV-002, CI-003).
+proto: ## Regenerate the API contract's Go code and OpenAPI description (SRV-002)
+	@command -v "$(BUF)" >/dev/null || { echo "✗ buf not found at $(BUF); run 'make install-buf'" >&2; exit 1; }
+	rm -rf $(PROTO_GO_DIR) $(PROTO_API_DIR)
+	@mkdir -p $(PROTO_API_DIR)
+	cd $(PROTO_DIR) && PATH="$(TOOLS_BIN):$$PATH" "$(BUF)" format -w .
+	cd $(PROTO_DIR) && PATH="$(TOOLS_BIN):$$PATH" "$(BUF)" generate
+
+wasm-codecs: ## Rebuild the WebAssembly image codecs from pinned sources (CMP-030, ADR-0027)
+	sh backend/internal/compiler/media/codecs/build.sh
+
+# WASM_CODECS_OUT keeps the rebuilt modules, so a mismatch can be examined.
+WASM_CODECS_OUT ?=
+wasm-codecs-check: ## Rebuild the image codecs elsewhere and compare them with codecs.lock
+	@out=$${WASM_CODECS_OUT:-$$(mktemp -d)} && mkdir -p "$$out" && \
+		sh backend/internal/compiler/media/codecs/build.sh "$$out" >/dev/null && \
+		(cd "$$out" && sha256sum -c $(CURDIR)/backend/internal/compiler/media/codecs/codecs.lock)
+
+# The server's queries are type-checked against its own migrations, so a
+# query that does not match the schema fails here rather than at run time
+# (SRV-020).
+sqlc: ## Regenerate the server's database access code from its SQL (SRV-020)
+	@command -v "$(SQLC)" >/dev/null || { echo "✗ sqlc not found at $(SQLC); run 'make install-sqlc'" >&2; exit 1; }
+	cd backend && "$(SQLC)" generate
+
+sqlc-check: ## Fail if a query does not type-check against the migrations
+	cd backend && "$(SQLC)" vet 2>/dev/null || cd backend && "$(SQLC)" compile
 
 gen-check: go-gen-check dart-lock-check studio-install ## Fail if generated code or lockfiles are not committed; run on a clean tree (CI-003)
 
@@ -157,7 +212,24 @@ clean: ## Remove build and coverage output
 
 ##@ Go (backend, tools)
 
-go-check: go-fmt-check go-lint go-tidy-check go-gen-check registry-lock-check go-cover go-vuln go-build go-reproducible ## All Go gates
+go-check: go-fmt-check go-lint go-tidy-check go-gen-check registry-lock-check proto-check go-cover go-vuln go-build go-reproducible ## All Go gates
+
+proto-check: proto-lint proto-format-check proto-breaking ## All API contract gates (SRV-000, SRV-002)
+
+proto-lint: ## Lint the API contract with buf (SRV-002)
+	"$(BUF)" lint $(PROTO_DIR)
+
+proto-format-check: ## Fail if the API contract is not formatted
+	"$(BUF)" format --diff --exit-code $(PROTO_DIR)
+
+# With no tagged release of the contract yet there is no baseline to
+# compare against, and the check reports that instead of failing (SRV-000).
+proto-breaking: ## Fail on a breaking API change against the last release (SRV-000)
+	@if [ -z "$(PROTO_BASE)" ]; then \
+		echo "· no backend release tag yet; buf breaking has no baseline"; \
+	else \
+		"$(BUF)" breaking $(PROTO_DIR) --against ".git#tag=$(PROTO_BASE),subdir=$(PROTO_DIR)"; \
+	fi
 
 go-fmt: ## Format Go code (gofumpt, goimports)
 	@for m in $(GO_MODULES); do (cd $$m && "$(GOLANGCI_LINT)" fmt); done
@@ -294,11 +366,76 @@ studio-test: ## Run Studio tests
 studio-cover: studio-test ## Enforce Studio coverage floors (QA-001)
 	$(COVGATE) -kind studio studio/coverage/lcov.info
 
+##@ Stack (Docker Compose)
+
+COMPOSE_DIR := deploy/compose
+COMPOSE     := docker compose -f $(COMPOSE_DIR)/compose.yaml
+
+compose-secrets: ## Generate the stack's credentials into deploy/compose/.secrets on first run
+	@$(COMPOSE_DIR)/init-secrets.sh
+
+compose-up: compose-secrets ## Start the single-node stack: server, PostgreSQL, SeaweedFS, Valkey, OTel, Prometheus, Grafana (DEP-002)
+	$(COMPOSE) up -d --build --wait
+	@echo "Plux Server: http://localhost:8080  Grafana: http://localhost:3000  Prometheus: http://localhost:9090"
+
+compose-down: ## Stop the stack (volumes are kept; add -v by hand to delete them)
+	$(COMPOSE) down
+
+# Verifies: DEP-020.
+dev: ## Start the stack with hot reload of the server, seed a sample app on first run (DEP-020)
+	$(MAKE) compose-seed COMPOSE_OVERLAY=$(COMPOSE_DIR)/compose.dev.yaml
+	$(COMPOSE) -f $(COMPOSE_DIR)/compose.dev.yaml watch
+
+# COMPOSE_OVERLAY adds a Compose file for compose-seed (dev or load).
+COMPOSE_OVERLAY ?=
+
+compose-seed: compose-secrets ## Start the stack and, on first run, seed an administrator and the loan calculator promoted to staging
+	$(COMPOSE) $(if $(COMPOSE_OVERLAY),-f $(COMPOSE_OVERLAY)) up -d --build --wait
+	@if [ ! -s $(COMPOSE_DIR)/.secrets/dev.env ]; then \
+		umask 077; \
+		$(COMPOSE) $(if $(COMPOSE_OVERLAY),-f $(COMPOSE_OVERLAY)) run --rm --no-deps plux-server seed -config /etc/plux/plux.yaml -out - > $(COMPOSE_DIR)/.secrets/dev.env && \
+		. ./$(COMPOSE_DIR)/.secrets/dev.env && \
+		(cd backend && PLUX_TOKEN="$$PLUX_DEV_TOKEN" $(GO) run ./cmd/plux publish --server http://localhost:8080 --org "$$PLUX_DEV_ORGANIZATION" \
+			--app "$$PLUX_DEV_APP" -C ../schema/testdata/documents/loan-calculator --promote staging); \
+		echo "Seeded dev@plux.localhost; password and token in $(COMPOSE_DIR)/.secrets/dev.env"; \
+	fi
+
+# Verifies: QA-005.
+compose-test: compose-secrets ## Run the Go integration and end-to-end tests against the stack's PostgreSQL, SeaweedFS and Valkey (QA-005)
+	$(COMPOSE) -f $(COMPOSE_DIR)/compose.test.yaml up -d --wait postgres seaweedfs s3-bucket valkey
+	. ./$(COMPOSE_DIR)/.secrets/postgres.env && . ./$(COMPOSE_DIR)/.secrets/plux-server.env && cd backend && \
+		PLUX_TEST_DATABASE_URL="postgres://plux:$$PLUX_APP_PASSWORD@127.0.0.1:55432/plux?sslmode=disable" \
+		PLUX_TEST_S3_ENDPOINT=http://127.0.0.1:58333 PLUX_TEST_S3_BUCKET=plux \
+		PLUX_TEST_S3_ACCESS_KEY_ID="$$PLUX_OBJECT_STORAGE_ACCESS_KEY_ID" \
+		PLUX_TEST_S3_SECRET_ACCESS_KEY="$$PLUX_OBJECT_STORAGE_SECRET_ACCESS_KEY" \
+		PLUX_TEST_VALKEY_URL=redis://127.0.0.1:56379 \
+		$(GO) test -race -count=1 ./internal/storage/... ./internal/cache/... ./internal/server/... ./internal/api/... ./internal/release/...
+
 ##@ Releases (CI-008)
 
 # Releasable components and their directories. Tags are <component>/v<semver>.
 COMPONENT ?=
 component_path = $(if $(filter backend,$(1)),backend,$(if $(filter plux_flutter,$(1)),packages/plux_flutter,$(if $(filter studio,$(1)),studio,)))
+
+# Platforms the CLI and server are released for (CLI-001).
+RELEASE_PLATFORMS := linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64
+DIST_DIR          := dist
+
+# Verifies: CLI-001, CI-006.
+release-binaries: ## Build reproducible release archives of plux and plux-server for every platform into dist/
+	@rm -rf $(DIST_DIR) && mkdir -p $(DIST_DIR)
+	@set -e; for p in $(RELEASE_PLATFORMS); do \
+		os=$${p%/*}; arch=$${p#*/}; ext=; [ "$$os" = windows ] && ext=.exe; \
+		dir=$(DIST_DIR)/plux_$(BACKEND_VERSION)_$${os}_$${arch}; mkdir -p $$dir; \
+		(cd backend && CGO_ENABLED=0 GOOS=$$os GOARCH=$$arch $(GO) build $(GO_BUILD_FLAGS) -o ../$$dir/ ./cmd/plux ./cmd/plux-server); \
+		cp -r LICENSES $$dir/; \
+		find $$dir -exec touch -h -d @0 {} +; \
+		if [ "$$os" = windows ]; then (cd $(DIST_DIR) && zip -qrX $${dir#$(DIST_DIR)/}.zip $${dir#$(DIST_DIR)/}); \
+		else tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -C $(DIST_DIR) -cf - $${dir#$(DIST_DIR)/} | gzip -n > $$dir.tar.gz; fi; \
+		rm -rf $$dir; \
+	done
+	@cd $(DIST_DIR) && sha256sum plux_* > SHA256SUMS && cat SHA256SUMS
+	@scripts/release/package-manifests.sh $(BACKEND_VERSION) $(DIST_DIR)
 
 release-notes: ## Print release notes for COMPONENT (backend, plux_flutter, studio) since its last tag
 	@test -n "$(call component_path,$(COMPONENT))" || { echo "✗ COMPONENT must be backend, plux_flutter or studio" >&2; exit 2; }

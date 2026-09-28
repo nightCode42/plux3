@@ -1,0 +1,22 @@
+# SPDX-FileCopyrightText: 2026 Plux contributors
+# SPDX-License-Identifier: Apache-2.0
+
+# Receives the server's traces over OTLP/HTTP. The single-node stack keeps
+# them in the collector's debug output; point an exporter at Tempo,
+# Jaeger or a vendor to keep them.
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+processors:
+  batch: {}
+exporters:
+  debug:
+    verbosity: basic
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug]

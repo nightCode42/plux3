@@ -1,0 +1,50 @@
+# Load — the manifest endpoint's throughput target (NFR-020), measured
+# nightly and on demand rather than on every pull request. The Compose
+# stack is started with the load overlay, seeded with the loan calculator
+# promoted to staging, and k6 runs test/load/manifest.js against it.
+# A GitHub-hosted runner is smaller than the reference deployment (§30.1),
+# so the run records the numbers in the job summary; the committed
+# benchmark in docs/benchmarks/p2-backend.md is the reference measurement.
+
+name: Load
+
+on:
+  schedule:
+    - cron: "41 3 * * *"
+  workflow_dispatch:
+    inputs:
+      rate:
+        description: Requests per second
+        default: "5000"
+
+permissions: {}
+
+jobs:
+  manifest:
+    name: Manifest endpoint
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.mod
+      - uses: grafana/setup-k6-action@43b9fc21641a76002687994433dd586f56e791b1 # v1.2.2
+      - name: Start and seed the stack
+        run: make compose-seed COMPOSE_OVERLAY=deploy/compose/compose.load.yaml
+      # Verifies: NFR-020.
+      - name: k6
+        env:
+          RATE: ${{ inputs.rate || '5000' }}
+        run: |
+          . deploy/compose/.secrets/dev.env
+          k6 run --summary-export k6-summary.json -e BASE_URL=http://127.0.0.1:8080 -e APP_ID="$PLUX_DEV_APP" \
+            -e ENVIRONMENT=staging -e RATE="$RATE" -e DURATION=60s test/load/manifest.js | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Stop the stack
+        if: always()
+        run: docker compose -f deploy/compose/compose.yaml down -v

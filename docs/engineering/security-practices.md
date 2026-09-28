@@ -8,6 +8,7 @@ Secure-coding rules that apply to every component. The security requirements the
 
 - Never commit secrets, keys, certificates, keystores, `google-services.json`, `.env` files or credentials. gitleaks runs in pre-commit and on the full history in CI.
 - Never log, trace, label or return keys, tokens, DPoP proofs, signatures, secrets or fields tagged `sensitive` — not even in debug builds (`ACT-031`, `SEC-092`).
+- The CLI keeps its token in the OS credential store; `PLUX_TOKEN` overrides it for CI, and only where no store exists does it fall back to a user-only (0600) file ([ADR-0028](../adr/0028-cli-credential-storage.md)).
 - Secrets are read from files or a secret manager, never from command-line arguments.
 
 ## 2. Keys and cryptography

@@ -35,6 +35,20 @@ type Options struct {
 	Mode Mode
 	// Version is the compiler version recorded in every bundle (CMP-005).
 	Version string
+	// AssetVariants returns the transcoded forms of an asset file by the
+	// file's SHA-256 (CMP-030); nil, or no variants, lists none. The
+	// server supplies the variants its asset pipeline made.
+	AssetVariants func(sum [sha256.Size]byte) []AssetVariant
+}
+
+// AssetVariant is a transcoded form of an asset file.
+type AssetVariant struct {
+	MediaType string
+	Density   int
+	Width     int
+	Height    int
+	Hash      [sha256.Size]byte
+	Size      int64
 }
 
 // DefaultOptions compiles release bundles with the registry defaults.

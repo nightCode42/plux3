@@ -151,3 +151,32 @@ func TestIsBindingRaw(t *testing.T) {
 		}
 	}
 }
+
+// Verifies: SEC-107.
+// Random-looking tokens are caught by entropy even when no known key
+// pattern matches; words, digests, identifiers and URLs are not.
+func TestHighEntropy(t *testing.T) {
+	t.Parallel()
+	for _, s := range []string{
+		"Zx9Qm2LpV7tR4kW8nB3cY6hJ1sD5fG0a", // random alphanumeric
+		"q3V+8kL/2mZ9xR7wT1nB4cY6hJ0sD5fG", // random base64
+		"Qm9ZtR4k-W8nB3cY6hJ1sD5fG0aXx7Lp", // with a hyphen
+	} {
+		if !highEntropy(s) {
+			t.Errorf("%q was not caught", s)
+		}
+	}
+	for _, s := range []string{
+		"Monthly payment calculator",
+		"loan_calculator_opened",
+		"01a0c450-6c00-7012-8000-000000022cce",
+		"9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
+		"https://api.example.com/v1/loans/products/personal",
+		"aaaaaaaaaaaaaaaaaaaaaaaa1111111111",
+		"short1A",
+	} {
+		if highEntropy(s) {
+			t.Errorf("%q was flagged", s)
+		}
+	}
+}

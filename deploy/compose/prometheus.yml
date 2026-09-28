@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Plux contributors
+# SPDX-License-Identifier: Apache-2.0
+
+global:
+  scrape_interval: 15s
+scrape_configs:
+  - job_name: plux-server
+    static_configs:
+      - targets: ["plux-server:8080"]

@@ -40,17 +40,25 @@ linters:
       locale: UK
       # Identifiers of the document model keep the specification's spelling
       # (e.g. the `color` type of SCH-010, the `organization` scope), and
-      # registry names keep Flutter's (e.g. `TextAlign.center`); prose stays
-      # British.
+      # registry names keep Flutter's (e.g. `TextAlign.center`); the
+      # specification's own vocabulary is kept where it names a thing
+      # (`artifact`, REL-024). Prose stays British.
       ignore-rules:
+        - artifact
+        - artifacts
         - center
         - color
         - organization
+        - organizations
     wrapcheck:
       # Errors crossing a package boundary are wrapped with context.
+      # A registered Plux error is a new error with its own context, not
+      # one crossing a boundary, so its constructors need no wrapping.
       ignore-sig-regexps:
         - fmt\.Errorf\(
         - errors\.Join\(
+        - plxerr\.New\(
+        - plxerr\.Wrap\(
     revive:
       rules:
         - name: exported

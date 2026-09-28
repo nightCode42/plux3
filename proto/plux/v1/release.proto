@@ -1,0 +1,183 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package plux.v1;
+
+import "google/protobuf/timestamp.proto";
+import "plux/v1/common.proto";
+
+option go_package = "github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1";
+
+// ReleaseService manages immutable plugin versions and app releases, their
+// promotion between environments and their rollback (ADR-0020).
+service ReleaseService {
+  rpc GetPluginVersion(GetPluginVersionRequest) returns (GetPluginVersionResponse) {}
+  rpc ListPluginVersions(ListPluginVersionsRequest) returns (ListPluginVersionsResponse) {}
+
+  // CreateRelease validates a candidate set across every plugin and
+  // creates an app release; an unresolved reference stops it (REL-003).
+  rpc CreateRelease(CreateReleaseRequest) returns (CreateReleaseResponse) {}
+  rpc GetRelease(GetReleaseRequest) returns (GetReleaseResponse) {}
+  rpc ListReleases(ListReleasesRequest) returns (ListReleasesResponse) {}
+  // PromoteRelease points a channel at an existing release. It copies no
+  // bytes and recompiles nothing (REL-004).
+  rpc PromoteRelease(PromoteReleaseRequest) returns (PromoteReleaseResponse) {}
+  // RollbackRelease creates a new release whose content equals an earlier
+  // one, so device anti-rollback is never weakened (REL-006).
+  rpc RollbackRelease(RollbackReleaseRequest) returns (RollbackReleaseResponse) {}
+  // GetChangelog returns the generated changelog of a release (REL-081).
+  rpc GetChangelog(GetChangelogRequest) returns (GetChangelogResponse) {}
+  // GetCompatibility reports which runtime versions and host builds can
+  // use a release, and how many devices are affected (REL-080).
+  rpc GetCompatibility(GetCompatibilityRequest) returns (GetCompatibilityResponse) {}
+}
+
+// PluginVersion is an immutable published plugin (REL-001).
+message PluginVersion {
+  string id = 1;
+  string plugin_id = 2;
+  string plugin_key = 3;
+  int64 version = 4;
+  string label = 5;
+  string notes = 6;
+  // bundle_sha256 is the bundle hash the signature covers (BND-005).
+  string bundle_sha256 = 7;
+  int64 bundle_size = 8;
+  repeated string required_features = 9;
+  string min_runtime = 10;
+  // signature and key_id record how the version was signed (SRV-052).
+  bytes signature = 11;
+  string key_id = 12;
+  string algorithm = 13;
+  // source_snapshot_id is the draft snapshot this was compiled from.
+  string source_snapshot_id = 14;
+  Actor published_by = 15;
+  google.protobuf.Timestamp created_at = 16;
+}
+
+// Release is an immutable set of plugin versions plus one app bundle
+// (REL-002).
+message Release {
+  string id = 1;
+  string app_id = 2;
+  int64 sequence = 3;
+  // plugin_version_ids are the versions in this release.
+  repeated string plugin_version_ids = 4;
+  string app_bundle_sha256 = 5;
+  int64 app_bundle_size = 6;
+  // rollback_of is the sequence this release reproduces, when it is one.
+  int64 rollback_of = 7;
+  string notes = 8;
+  Actor created_by = 9;
+  google.protobuf.Timestamp created_at = 10;
+}
+
+message ChangelogEntry {
+  // kind is "page", "action", "dataSource", "function" or "translation".
+  string kind = 1;
+  // change is "added", "removed" or "changed".
+  string change = 2;
+  string plugin_key = 3;
+  string name = 4;
+}
+
+message Compatibility {
+  string min_runtime = 1;
+  repeated string required_features = 2;
+  // incompatible_devices is how many registered devices cannot use it.
+  int64 incompatible_devices = 3;
+  // fallback_sequence is what those devices receive instead (REL-080).
+  int64 fallback_sequence = 4;
+}
+
+message GetPluginVersionRequest {
+  string plugin_id = 1;
+  int64 version = 2;
+}
+message GetPluginVersionResponse {
+  PluginVersion version = 1;
+}
+
+message ListPluginVersionsRequest {
+  string plugin_id = 1;
+  Page page = 2;
+}
+message ListPluginVersionsResponse {
+  repeated PluginVersion versions = 1;
+  PageResult page = 2;
+}
+
+message CreateReleaseRequest {
+  string app_id = 1;
+  string environment_id = 2;
+  // plugin_versions maps each plugin key to the version to include; a
+  // plugin left out keeps the version of the environment's last release.
+  map<string, int64> plugin_versions = 3;
+  string notes = 4;
+}
+message CreateReleaseResponse {
+  Release release = 1;
+  repeated Diagnostic diagnostics = 2;
+}
+
+message GetReleaseRequest {
+  string app_id = 1;
+  int64 sequence = 2;
+}
+message GetReleaseResponse {
+  Release release = 1;
+  repeated PluginVersion versions = 2;
+}
+
+message ListReleasesRequest {
+  string app_id = 1;
+  string environment_id = 2;
+  Page page = 3;
+}
+message ListReleasesResponse {
+  repeated Release releases = 1;
+  PageResult page = 2;
+}
+
+message PromoteReleaseRequest {
+  string app_id = 1;
+  int64 sequence = 2;
+  string environment_id = 3;
+  string channel_key = 4;
+}
+message PromoteReleaseResponse {
+  Release release = 1;
+}
+
+message RollbackReleaseRequest {
+  string app_id = 1;
+  string environment_id = 2;
+  string channel_key = 3;
+  // to_sequence is the earlier release whose content to reproduce.
+  int64 to_sequence = 4;
+  string notes = 5;
+}
+message RollbackReleaseResponse {
+  Release release = 1;
+}
+
+message GetChangelogRequest {
+  string app_id = 1;
+  int64 sequence = 2;
+  // from_sequence compares against a release other than the previous one.
+  int64 from_sequence = 3;
+}
+message GetChangelogResponse {
+  repeated ChangelogEntry entries = 1;
+  string notes = 2;
+}
+
+message GetCompatibilityRequest {
+  string app_id = 1;
+  int64 sequence = 2;
+}
+message GetCompatibilityResponse {
+  Compatibility compatibility = 1;
+}

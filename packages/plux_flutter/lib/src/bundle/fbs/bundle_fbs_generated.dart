@@ -5091,6 +5091,126 @@ class SchemasObjectBuilder extends fb.ObjectBuilder {
     return fbBuilder.buffer;
   }
 }
+class AssetVariant {
+  AssetVariant._(this._bc, this._bcOffset);
+  factory AssetVariant(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<AssetVariant> reader = _AssetVariantReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  String? get mediaType => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 4);
+  int get density => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 6, 0);
+  int get width => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 8, 0);
+  int get height => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 10, 0);
+  List<int>? get hash => const fb.Uint8ListReader().vTableGetNullable(_bc, _bcOffset, 12);
+  int get size => const fb.Uint64Reader().vTableGet(_bc, _bcOffset, 14, 0);
+
+  @override
+  String toString() {
+    return 'AssetVariant{mediaType: ${mediaType}, density: ${density}, width: ${width}, height: ${height}, hash: ${hash}, size: ${size}}';
+  }
+}
+
+class _AssetVariantReader extends fb.TableReader<AssetVariant> {
+  const _AssetVariantReader();
+
+  @override
+  AssetVariant createObject(fb.BufferContext bc, int offset) => 
+    AssetVariant._(bc, offset);
+}
+
+class AssetVariantBuilder {
+  AssetVariantBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(6);
+  }
+
+  int addMediaTypeOffset(int? offset) {
+    fbBuilder.addOffset(0, offset);
+    return fbBuilder.offset;
+  }
+  int addDensity(int? density) {
+    fbBuilder.addUint32(1, density);
+    return fbBuilder.offset;
+  }
+  int addWidth(int? width) {
+    fbBuilder.addUint32(2, width);
+    return fbBuilder.offset;
+  }
+  int addHeight(int? height) {
+    fbBuilder.addUint32(3, height);
+    return fbBuilder.offset;
+  }
+  int addHashOffset(int? offset) {
+    fbBuilder.addOffset(4, offset);
+    return fbBuilder.offset;
+  }
+  int addSize(int? size) {
+    fbBuilder.addUint64(5, size);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class AssetVariantObjectBuilder extends fb.ObjectBuilder {
+  final String? _mediaType;
+  final int? _density;
+  final int? _width;
+  final int? _height;
+  final List<int>? _hash;
+  final int? _size;
+
+  AssetVariantObjectBuilder({
+    String? mediaType,
+    int? density,
+    int? width,
+    int? height,
+    List<int>? hash,
+    int? size,
+  })
+      : _mediaType = mediaType,
+        _density = density,
+        _width = width,
+        _height = height,
+        _hash = hash,
+        _size = size;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? mediaTypeOffset = _mediaType == null ? null
+        : fbBuilder.writeString(_mediaType!);
+    final int? hashOffset = _hash == null ? null
+        : fbBuilder.writeListUint8(_hash!);
+    fbBuilder.startTable(6);
+    fbBuilder.addOffset(0, mediaTypeOffset);
+    fbBuilder.addUint32(1, _density);
+    fbBuilder.addUint32(2, _width);
+    fbBuilder.addUint32(3, _height);
+    fbBuilder.addOffset(4, hashOffset);
+    fbBuilder.addUint64(5, _size);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
 class Asset {
   Asset._(this._bc, this._bcOffset);
   factory Asset(List<int> bytes) {
@@ -5108,10 +5228,11 @@ class Asset {
   String? get mediaType => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 8);
   List<int>? get hash => const fb.Uint8ListReader().vTableGetNullable(_bc, _bcOffset, 10);
   int get size => const fb.Uint64Reader().vTableGet(_bc, _bcOffset, 12, 0);
+  List<AssetVariant>? get variants => const fb.ListReader<AssetVariant>(AssetVariant.reader).vTableGetNullable(_bc, _bcOffset, 14);
 
   @override
   String toString() {
-    return 'Asset{id: ${id}, key: ${key}, mediaType: ${mediaType}, hash: ${hash}, size: ${size}}';
+    return 'Asset{id: ${id}, key: ${key}, mediaType: ${mediaType}, hash: ${hash}, size: ${size}, variants: ${variants}}';
   }
 }
 
@@ -5129,7 +5250,7 @@ class AssetBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable(5);
+    fbBuilder.startTable(6);
   }
 
   int addId(int offset) {
@@ -5152,6 +5273,10 @@ class AssetBuilder {
     fbBuilder.addUint64(4, size);
     return fbBuilder.offset;
   }
+  int addVariantsOffset(int? offset) {
+    fbBuilder.addOffset(5, offset);
+    return fbBuilder.offset;
+  }
 
   int finish() {
     return fbBuilder.endTable();
@@ -5164,6 +5289,7 @@ class AssetObjectBuilder extends fb.ObjectBuilder {
   final String? _mediaType;
   final List<int>? _hash;
   final int? _size;
+  final List<AssetVariantObjectBuilder>? _variants;
 
   AssetObjectBuilder({
     UuidObjectBuilder? id,
@@ -5171,12 +5297,14 @@ class AssetObjectBuilder extends fb.ObjectBuilder {
     String? mediaType,
     List<int>? hash,
     int? size,
+    List<AssetVariantObjectBuilder>? variants,
   })
       : _id = id,
         _key = key,
         _mediaType = mediaType,
         _hash = hash,
-        _size = size;
+        _size = size,
+        _variants = variants;
 
   /// Finish building, and store into the [fbBuilder].
   @override
@@ -5187,7 +5315,9 @@ class AssetObjectBuilder extends fb.ObjectBuilder {
         : fbBuilder.writeString(_mediaType!);
     final int? hashOffset = _hash == null ? null
         : fbBuilder.writeListUint8(_hash!);
-    fbBuilder.startTable(5);
+    final int? variantsOffset = _variants == null ? null
+        : fbBuilder.writeList(_variants!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    fbBuilder.startTable(6);
     if (_id != null) {
       fbBuilder.addStruct(0, _id!.finish(fbBuilder));
     }
@@ -5195,6 +5325,7 @@ class AssetObjectBuilder extends fb.ObjectBuilder {
     fbBuilder.addOffset(2, mediaTypeOffset);
     fbBuilder.addOffset(3, hashOffset);
     fbBuilder.addUint64(4, _size);
+    fbBuilder.addOffset(5, variantsOffset);
     return fbBuilder.endTable();
   }
 

@@ -106,6 +106,10 @@ func Defaults() Set {
 	return Set{values: values}
 }
 
+// IsZero reports whether the set is the unusable zero value rather than
+// one built from Defaults.
+func (s Set) IsZero() bool { return s.values == nil }
+
 // Get returns the effective value of a limit. Asking for an unregistered key
 // is a programming error and panics, so it cannot go unnoticed in tests.
 func (s Set) Get(k Key) int64 {

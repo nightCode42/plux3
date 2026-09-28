@@ -1,0 +1,78 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package plux.v1;
+
+import "google/protobuf/timestamp.proto";
+import "plux/v1/common.proto";
+
+option go_package = "github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1";
+
+// TemplateService lists page and flow templates and instantiates them into
+// a draft with fresh identifiers (SCH-031).
+service TemplateService {
+  rpc ListTemplates(ListTemplatesRequest) returns (ListTemplatesResponse) {}
+  rpc GetTemplate(GetTemplateRequest) returns (GetTemplateResponse) {}
+  // Instantiate copies a template into a plugin's draft, generating new
+  // UUIDs for every entity it creates (SCH-031). It requires the lock.
+  rpc Instantiate(InstantiateRequest) returns (InstantiateResponse) {}
+}
+
+message Template {
+  string id = 1;
+  // app_id is empty for a template built into the installation.
+  string app_id = 2;
+  string key = 3;
+  string name = 4;
+  string description = 5;
+  // kind is "page" or "flow".
+  string kind = 6;
+  // parameters the template asks for when instantiated.
+  repeated TemplateParameter parameters = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+message TemplateParameter {
+  string name = 1;
+  // type is a document-model type string, such as "string" or "int".
+  string type = 2;
+  bool required = 3;
+  string description = 4;
+}
+
+message ListTemplatesRequest {
+  string app_id = 1;
+  string kind = 2;
+  Page page = 3;
+}
+message ListTemplatesResponse {
+  repeated Template templates = 1;
+  PageResult page = 2;
+}
+
+message GetTemplateRequest {
+  string id = 1;
+}
+message GetTemplateResponse {
+  Template template = 1;
+  bytes content = 2;
+}
+
+message InstantiateRequest {
+  string template_id = 1;
+  string app_id = 2;
+  string plugin_id = 3;
+  string session = 4;
+  // arguments are the template's parameters as canonical JSON.
+  bytes arguments = 5;
+  // key is the key of the page or flow to create.
+  string key = 6;
+}
+message InstantiateResponse {
+  // created lists the paths of the documents written.
+  repeated string created = 1;
+  string snapshot_id = 2;
+  repeated Diagnostic diagnostics = 3;
+}

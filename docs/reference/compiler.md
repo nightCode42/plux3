@@ -10,7 +10,7 @@ The Plux compiler turns a project in the [Git layout](document-model.md#1-projec
 | `NewValidator(fsys, opts)` | A `Validator` holding the loaded project, and the project's structural diagnostics. |
 | `(*Validator).ValidatePage(file, data)` | The diagnostics of an edited or new page (§5). |
 
-`Options` holds the limits registry (`LIM-001`; `DefaultOptions` uses its defaults), the mode (`Release` or `Development`) and the compiler version written into every meta section. Each `Bundle` carries its kind, UUID, key, encoded bytes, bundle hash (`BND-005`), sorted required features (`BND-008`) and, in release mode, its source map as separate bytes (`CMP-041`).
+`Options` holds the limits registry (`LIM-001`; `DefaultOptions` uses its defaults), the mode (`Release` or `Development`), the compiler version written into every meta section, and `AssetVariants`, which returns an asset file's transcoded WebP and AVIF variants by its SHA-256 for the asset index (`CMP-030`, [ADR-0027](../adr/0027-asset-pipeline.md)); without it the index lists none. Every asset file is checked against `asset.fileSize` and the assets each plugin uses against `plugin.assetBytes` (`AST-003`). Each `Bundle` carries its kind, UUID, key, encoded bytes, bundle hash (`BND-005`), sorted required features (`BND-008`) and, in release mode, its source map as separate bytes (`CMP-041`).
 
 Neither `Compile` nor `ValidatePage` panics: an unexpected failure is recovered and reported as `PLX-2201` (`CMP-052`), and both are fuzzed (`FuzzCompile`, `FuzzValidatePage`).
 

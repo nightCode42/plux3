@@ -67,6 +67,26 @@ var registry = []Definition{
 		"A file is not where the project layout expects a document of its kind, its name does not match its key, or a required file is missing (SCH-006).",
 		"Move or rename the file as described in the document-model reference.", false,
 	},
+	{
+		RequestTooLarge, "REQUEST_TOO_LARGE", SeverityError, "Request too large",
+		"The request body, or a value inside it, is larger than the limit the installation allows. Limits bound every input so that one caller cannot exhaust the server (SEC-104).",
+		"Send less in one call, or ask an administrator to raise the limit for this installation.", false,
+	},
+	{
+		RevisionConflict, "REVISION_CONFLICT", SeverityError, "The document changed",
+		"The document has been written since the revision this call is based on, so applying the change would overwrite that work (SRV-030).",
+		"Read the document again, reapply the change to the current revision, and send it.", false,
+	},
+	{
+		IdempotencyConflict, "IDEMPOTENCY_CONFLICT", SeverityError, "Idempotency key reused",
+		"The idempotency key was used before with a different request. A key identifies one request, so that a retry returns the original result rather than acting twice (SRV-005).",
+		"Use a new idempotency key for a different request, or repeat the original request unchanged.", false,
+	},
+	{
+		InvalidPageToken, "INVALID_PAGE_TOKEN", SeverityError, "Invalid page token",
+		"The page token is not one this server issued, or it belongs to a different filter or ordering. Tokens are integrity-protected and bound to the query they continue (SRV-004).",
+		"Start the list again without a page token.", false,
+	},
 
 	// Schema and validation: references and semantics.
 	{
@@ -368,6 +388,16 @@ var registry = []Definition{
 		"Devices keep their last compatible release. Update the app to a runtime with the feature, or avoid the feature in the release.", false,
 	},
 	{
+		PatchHashMismatch, "PATCH_HASH_MISMATCH", SeverityError, "Hash mismatch after patch",
+		"A section or bundle rebuilt from a delta does not have the hash the delta and the manifest name: the delta was made against another base, or it is corrupt (ADR-0003, SYN-011).",
+		"Download the full bundle instead of the delta.", false,
+	},
+	{
+		DeltaMalformed, "DELTA_MALFORMED", SeverityError, "Malformed delta",
+		"The delta's header or instructions are invalid: wrong magic or version, a truncated instruction, an unknown operation or a size beyond the limits (ADR-0003).",
+		"Download the full bundle instead of the delta.", false,
+	},
+	{
 		BundleMalformed, "BUNDLE_MALFORMED", SeverityError, "Malformed bundle",
 		"The container header or section directory is invalid: wrong magic or version, unknown flags, overlapping or misaligned sections, a size mismatch or a header hash mismatch (BND-003).",
 		"Rebuild the bundle. A malformed bundle is never loaded.", false,
@@ -391,6 +421,85 @@ var registry = []Definition{
 		TransportDecodingFailed, "TRANSPORT_DECODING_FAILED", SeverityError, "Transport decoding failed",
 		"The zstd transport encoding is corrupt, or it decompresses to more than the declared size or the configured limit (BND-007).",
 		"Download the bundle again.", false,
+	},
+
+	// Security.
+	{
+		OutboundRequestBlocked, "OUTBOUND_REQUEST_BLOCKED", SeverityError, "Outbound request blocked",
+		"A request to a user-supplied URL would have reached a private, loopback, link-local or metadata address. Those are refused unless the installation allows them explicitly (SEC-105).",
+		"Use a publicly reachable address, or ask an administrator to allow the range this installation should reach.", false,
+	},
+	{
+		AssetRejected, "ASSET_REJECTED", SeverityError, "Asset rejected by the malware scanner",
+		"The installation's malware scanner found something in the uploaded file (SRV-060).",
+		"Check the file on a trusted machine and upload a clean copy.", false,
+	},
+
+	// Governance.
+	{
+		MultiFactorRequired, "MULTI_FACTOR_REQUIRED", SeverityError, "Second factor required",
+		"The capability this call needs — publishing, approving, managing keys or managing members — requires a second factor, and the session has not completed one (SEC-100).",
+		"Complete the second factor and repeat the call.", false,
+	},
+	{
+		AuthenticationRequired, "AUTHENTICATION_REQUIRED", SeverityError, "Authentication required",
+		"The call carried no credential, or one that has expired or been revoked.",
+		"Sign in again, or use a valid access token.", false,
+	},
+	{
+		EditingLockHeld, "EDITING_LOCK_HELD", SeverityError, "Editing lock held by another user",
+		"Editing a plugin requires holding its lock, and someone else holds it. The lock expires two minutes after the holder's last heartbeat (SRV-040).",
+		"Ask the holder for the lock, wait for it to expire, or take it over if you may (SRV-041).", false,
+	},
+	{
+		PermissionDenied, "PERMISSION_DENIED", SeverityError, "Permission denied",
+		"The caller does not hold the permission this call needs on this resource. Authorisation is deny-by-default (SEC-102).",
+		"Ask an administrator of the organisation for the permission the message names.", false,
+	},
+	{
+		ResourceNotFound, "RESOURCE_NOT_FOUND", SeverityError, "Not found",
+		"The resource does not exist, or the caller may not see it. The two are reported the same way, so that the API does not disclose what exists in another organisation.",
+		"Check the identifier, and that you have access to the organisation that owns it.", false,
+	},
+	{
+		ResourceExists, "RESOURCE_EXISTS", SeverityError, "Already exists",
+		"Something with this key already exists where keys must be unique, such as an organisation, team, app, environment or channel key.",
+		"Choose another key, or use the existing resource.", false,
+	},
+	{
+		PreconditionFailed, "PRECONDITION_FAILED", SeverityError, "Precondition failed",
+		"The call is valid but the resource is not in a state that allows it, such as removing an organisation's last owner or accepting an invitation that has expired.",
+		"Read the message for the state that blocks the call, change it, and repeat the call.", false,
+	},
+	{
+		RateLimited, "RATE_LIMITED", SeverityError, "Rate limit exceeded",
+		"The caller has made more requests than the limit for this principal, device or address allows (SRV-065).",
+		"Retry after the interval the response reports.", false,
+	},
+	{
+		ReleaseInconsistent, "RELEASE_INCONSISTENT", SeverityError, "Versions compiled against different sources",
+		"A plugin version in the release was compiled against app-level documents or assets other than the release's, so its bundle would differ if it were compiled with them (REL-003).",
+		"Publish the plugin again against the current app version, then create the release.", false,
+	},
+	{
+		WarningsNotAcknowledged, "WARNINGS_NOT_ACKNOWLEDGED", SeverityError, "Warnings not acknowledged",
+		"The publish found warnings, and the publisher did not acknowledge them (SRV-051).",
+		"Fix the warnings, or publish again acknowledging them.", false,
+	},
+	{
+		PluginNotPublished, "PLUGIN_NOT_PUBLISHED", SeverityError, "Plugin has no published version",
+		"An app release holds exactly one version of every active plugin and one app bundle, and this one has none (REL-002).",
+		"Publish the plugin, or delete it, before creating the release.", false,
+	},
+	{
+		InternalServerError, "INTERNAL_SERVER_ERROR", SeverityError, "Internal error",
+		"The server failed in a way it does not recognise. The incident identifier in the message appears in the server's logs; nothing else about the failure is returned.",
+		"Retry the call. If it keeps failing, give the incident identifier to the operator of the installation.", false,
+	},
+	{
+		UpstreamUnavailable, "UPSTREAM_UNAVAILABLE", SeverityError, "A service the server depends on is unavailable",
+		"The server could not reach a service outside it that the call needs, such as the single sign-on provider.",
+		"Retry later. If it persists, the operator checks the service and the server's outbound network.", false,
 	},
 
 	// Studio, CLI and AI.

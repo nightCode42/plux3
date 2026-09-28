@@ -1,0 +1,26 @@
+# SPDX-FileCopyrightText: 2026 Plux contributors
+# SPDX-License-Identifier: Apache-2.0
+
+# Generation is driven by `make proto`, which removes the generated
+# directories and then runs buf with locally built plugins, so no network
+# access and no remote plugin is needed (CI-003). `clean` stays off because
+# the output directories sit beside hand-written code.
+version: v2
+clean: false
+managed:
+  enabled: false
+plugins:
+  - local: protoc-gen-go
+    out: ../backend/internal
+    opt:
+      - module=github.com/nightCode42/plux3/backend/internal
+  - local: protoc-gen-connect-go
+    out: ../backend/internal
+    opt:
+      - module=github.com/nightCode42/plux3/backend/internal
+  - local: protoc-gen-connect-openapi
+    out: ../docs/reference/api
+    opt:
+      - format=yaml
+      - path=openapi.yaml
+      - base=openapi.base.yaml

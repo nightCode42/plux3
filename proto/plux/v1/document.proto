@@ -1,0 +1,231 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package plux.v1;
+
+import "google/protobuf/timestamp.proto";
+import "plux/v1/common.proto";
+
+option go_package = "github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1";
+
+// DocumentService reads and writes the documents of a draft: pages, action
+// graphs, themes, translations and the rest of the document model. Writes
+// use optimistic concurrency and accept JSON Patch (SRV-030); every accepted
+// write appends a snapshot (SRV-031); writing requires the editing lock
+// (SRV-040). Content travels as canonical JSON bytes, never as protobuf
+// structures, so a document's hash is a property of the bytes (SCH-003).
+service DocumentService {
+  rpc GetDocument(GetDocumentRequest) returns (GetDocumentResponse) {}
+  rpc ListDocuments(ListDocumentsRequest) returns (ListDocumentsResponse) {}
+  // PutDocument replaces a document. if_revision must match the stored
+  // revision, or the call fails with a conflict.
+  rpc PutDocument(PutDocumentRequest) returns (PutDocumentResponse) {}
+  // PatchDocument applies an RFC 6902 patch, which is what Studio autosave
+  // sends (SRV-030).
+  rpc PatchDocument(PatchDocumentRequest) returns (PatchDocumentResponse) {}
+  rpc DeleteDocument(DeleteDocumentRequest) returns (DeleteDocumentResponse) {}
+
+  // ValidateDraft runs the compiler's checking stages over the whole draft.
+  rpc ValidateDraft(ValidateDraftRequest) returns (ValidateDraftResponse) {}
+  // ValidatePage checks one edited page as the user types (SCH-042); it
+  // does not write anything.
+  rpc ValidatePage(ValidatePageRequest) returns (ValidatePageResponse) {}
+
+  rpc ListSnapshots(ListSnapshotsRequest) returns (ListSnapshotsResponse) {}
+  rpc GetSnapshot(GetSnapshotRequest) returns (GetSnapshotResponse) {}
+  // CompareSnapshots returns the JSON Patch that turns one into the other.
+  rpc CompareSnapshots(CompareSnapshotsRequest) returns (CompareSnapshotsResponse) {}
+  // RestoreSnapshot writes an earlier snapshot forward as a new one; it
+  // never rewrites history (SRV-031).
+  rpc RestoreSnapshot(RestoreSnapshotRequest) returns (RestoreSnapshotResponse) {}
+
+  // ExportDraft streams the draft in the Git layout (SCH-006).
+  rpc ExportDraft(ExportDraftRequest) returns (stream ExportDraftResponse) {}
+  // ImportDraft replaces the draft from the Git layout, reporting the
+  // diagnostics of what it read.
+  rpc ImportDraft(stream ImportDraftRequest) returns (ImportDraftResponse) {}
+}
+
+// Document is one file of a draft.
+message Document {
+  string app_id = 1;
+  // plugin_id is empty for app-level documents.
+  string plugin_id = 2;
+  // path is the document's path in the Git layout (SCH-006).
+  string path = 3;
+  // kind is the document's "kind" field, such as "page" or "theme".
+  string kind = 4;
+  // content is the canonical JSON of the document (SCH-003).
+  bytes content = 5;
+  // sha256 is the hash of content, lower-case hex.
+  string sha256 = 6;
+  int64 revision = 7;
+  Actor updated_by = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+// Snapshot is one entry of the append-only history (SRV-031).
+message Snapshot {
+  string id = 1;
+  string app_id = 2;
+  string plugin_id = 3;
+  int64 revision = 4;
+  // reason is "write", "lock_takeover", "publish" or "restore".
+  string reason = 5;
+  // paths lists the documents this snapshot recorded.
+  repeated string paths = 6;
+  Actor actor = 7;
+  google.protobuf.Timestamp created_at = 8;
+}
+
+message GetDocumentRequest {
+  string app_id = 1;
+  string plugin_id = 2;
+  string path = 3;
+}
+message GetDocumentResponse {
+  Document document = 1;
+}
+
+message ListDocumentsRequest {
+  string app_id = 1;
+  string plugin_id = 2;
+  Page page = 3;
+  // content_included returns the bytes as well as the metadata.
+  bool content_included = 4;
+}
+message ListDocumentsResponse {
+  repeated Document documents = 1;
+  PageResult page = 2;
+}
+
+message PutDocumentRequest {
+  string app_id = 1;
+  string plugin_id = 2;
+  string path = 3;
+  bytes content = 4;
+  // if_revision is the revision the writer last read; zero creates.
+  int64 if_revision = 5;
+  string session = 6;
+}
+message PutDocumentResponse {
+  Document document = 1;
+  string snapshot_id = 2;
+  repeated Diagnostic diagnostics = 3;
+}
+
+message PatchDocumentRequest {
+  string app_id = 1;
+  string plugin_id = 2;
+  string path = 3;
+  repeated PatchOp patch = 4;
+  int64 if_revision = 5;
+  string session = 6;
+}
+message PatchDocumentResponse {
+  Document document = 1;
+  string snapshot_id = 2;
+  repeated Diagnostic diagnostics = 3;
+}
+
+message DeleteDocumentRequest {
+  string app_id = 1;
+  string plugin_id = 2;
+  string path = 3;
+  int64 if_revision = 4;
+  string session = 5;
+}
+message DeleteDocumentResponse {
+  string snapshot_id = 1;
+}
+
+message ValidateDraftRequest {
+  string app_id = 1;
+  // plugin_id limits validation to one plugin; empty checks the whole app.
+  string plugin_id = 2;
+}
+message ValidateDraftResponse {
+  repeated Diagnostic diagnostics = 1;
+}
+
+message ValidatePageRequest {
+  string app_id = 1;
+  string plugin_id = 2;
+  string path = 3;
+  // content is the unsaved page as the editor currently has it.
+  bytes content = 4;
+}
+message ValidatePageResponse {
+  repeated Diagnostic diagnostics = 1;
+}
+
+message ListSnapshotsRequest {
+  string app_id = 1;
+  string plugin_id = 2;
+  Page page = 3;
+}
+message ListSnapshotsResponse {
+  repeated Snapshot snapshots = 1;
+  PageResult page = 2;
+}
+
+message GetSnapshotRequest {
+  string id = 1;
+  // paths limits the response to these documents; empty returns all.
+  repeated string paths = 2;
+}
+message GetSnapshotResponse {
+  Snapshot snapshot = 1;
+  repeated Document documents = 2;
+}
+
+message CompareSnapshotsRequest {
+  string from_id = 1;
+  string to_id = 2;
+}
+message CompareSnapshotsResponse {
+  // changes maps each changed path to the patch that turns from into to.
+  repeated DocumentChange changes = 1;
+}
+
+message DocumentChange {
+  string path = 1;
+  // change is "added", "removed" or "changed".
+  string change = 2;
+  repeated PatchOp patch = 3;
+}
+
+message RestoreSnapshotRequest {
+  string id = 1;
+  repeated string paths = 2;
+  string session = 3;
+}
+message RestoreSnapshotResponse {
+  string snapshot_id = 1;
+  repeated Diagnostic diagnostics = 2;
+}
+
+message ExportDraftRequest {
+  string app_id = 1;
+  string plugin_id = 2;
+}
+message ExportDraftResponse {
+  string path = 1;
+  bytes content = 2;
+}
+
+message ImportDraftRequest {
+  // The first message carries the target and no file.
+  string app_id = 1;
+  string plugin_id = 2;
+  string session = 3;
+  string path = 4;
+  bytes content = 5;
+}
+message ImportDraftResponse {
+  int64 revision = 1;
+  string snapshot_id = 2;
+  repeated Diagnostic diagnostics = 3;
+}
