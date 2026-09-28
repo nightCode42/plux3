@@ -55,6 +55,8 @@ type Server struct {
 
 	// components run in the order they were added and stop in reverse.
 	components []Component
+	// kms checks the key management service for /readyz; nil for none.
+	kms func(context.Context) error
 	// mux serves the api role's HTTP surface.
 	mux *http.ServeMux
 	// http is the listener of the api role; nil without it.
@@ -74,6 +76,8 @@ type Deps struct {
 	Cache   cache.Cache
 	Jobs    *jobs.Client
 	Limits  limits.Set
+	// KMS checks the key management service; nil when none is used.
+	KMS func(context.Context) error
 }
 
 // New assembles a process from its dependencies. It opens no
@@ -88,7 +92,7 @@ func New(d Deps) (*Server, error) {
 	s := &Server{
 		cfg: d.Config, log: d.Log, metrics: d.Metrics, tracer: d.Tracer,
 		db: d.DB, objects: d.Objects, cache: d.Cache, jobs: d.Jobs, limits: d.Limits,
-		health: NewHealth(), mux: http.NewServeMux(),
+		health: NewHealth(), mux: http.NewServeMux(), kms: d.KMS,
 	}
 	if s.limits.IsZero() {
 		s.limits = limits.Defaults()
@@ -128,6 +132,9 @@ func (s *Server) registerChecks() {
 			}
 			return fmt.Errorf("object storage: %w", err)
 		})
+	}
+	if s.kms != nil {
+		s.health.Register("kms", s.kms)
 	}
 }
 

@@ -79,10 +79,14 @@ jobs:
           echo "version=${TAG#*/v}" >> "$GITHUB_OUTPUT"
           if [ "${TAG%%/v*}" = backend ]; then echo "backend=true" >> "$GITHUB_OUTPUT"; fi
       - run: pipx install "git-cliff==${GIT_CLIFF_VERSION}"
+      # Verifies: DEP-030.
       - name: Release notes
         env:
           TAG: ${{ github.ref_name }}
-        run: make release-notes COMPONENT="${TAG%%/v*}" TAG="$TAG" > "$RUNNER_TEMP/notes.md"
+        run: |
+          make release-notes COMPONENT="${TAG%%/v*}" TAG="$TAG" > "$RUNNER_TEMP/notes.md"
+          grep -q '^### Upgrading' "$RUNNER_TEMP/notes.md" \
+            || { echo "::error::the release notes have no upgrade steps (DEP-030)"; exit 1; }
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         if: steps.component.outputs.backend == 'true'
         with:

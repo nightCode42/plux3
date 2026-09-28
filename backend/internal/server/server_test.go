@@ -39,6 +39,26 @@ func discard() *slog.Logger {
 }
 
 // Verifies: SRV-007.
+// A configured key management service is one of the checks /readyz
+// reports.
+func TestReadyzChecksTheKMS(t *testing.T) {
+	t.Parallel()
+	s, err := New(Deps{
+		Config: testConfig(t, base), Log: discard(), Metrics: observability.NewMetrics(),
+		KMS: func(context.Context) error { return errors.New("vault sealed") },
+	})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	s.HealthEndpoint().SetReady(true)
+	body, status := ready(t, s.HealthEndpoint())
+	checks, _ := body["checks"].(map[string]any)
+	if status != http.StatusServiceUnavailable || checks["kms"] != "unavailable" {
+		t.Errorf("status %d, checks %v", status, checks)
+	}
+}
+
+// Verifies: SRV-007.
 func TestReadyzReportsEveryDependency(t *testing.T) {
 	t.Parallel()
 	h := NewHealth()

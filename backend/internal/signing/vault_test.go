@@ -240,6 +240,43 @@ func TestVaultRefusesWhatItCannotTrust(t *testing.T) {
 }
 
 // Verifies: SEC-106.
+// Verifies: SRV-007.
+// Ping answers for readiness: Vault reachable with a valid token is
+// healthy, before or after the wrapping key exists; a refused token or an
+// unreachable Vault is not.
+func TestVaultPing(t *testing.T) {
+	t.Parallel()
+	fake, srv := newFakeTransit(t)
+	ctx := context.Background()
+	v, err := signing.NewVault(signing.VaultOptions{Address: srv.URL, Token: fake.token})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := v.Ping(ctx); err != nil {
+		t.Errorf("Ping before the wrapping key exists: %v", err)
+	}
+	if _, err := signing.Seal(ctx, v, []byte("x"), bindA); err != nil {
+		t.Fatal(err)
+	}
+	if err := v.Ping(ctx); err != nil {
+		t.Errorf("Ping: %v", err)
+	}
+	wrong, err := signing.NewVault(signing.VaultOptions{Address: srv.URL, Token: "s.wrong"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := wrong.Ping(ctx); err == nil {
+		t.Error("Ping with a refused token reported healthy")
+	}
+	down, err := signing.NewVault(signing.VaultOptions{Address: "http://127.0.0.1:1", Token: fake.token})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := down.Ping(ctx); err == nil {
+		t.Error("Ping of an unreachable Vault reported healthy")
+	}
+}
+
 func TestVaultWrapsDataKeys(t *testing.T) {
 	t.Parallel()
 	fake, srv := newFakeTransit(t)

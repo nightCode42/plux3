@@ -6,6 +6,7 @@ package document_test
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"errors"
 	"io/fs"
 	"os"
@@ -16,6 +17,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/klauspost/compress/zstd"
 
 	"github.com/nightCode42/plux3/backend/internal/audit"
 	"github.com/nightCode42/plux3/backend/internal/auth"
@@ -258,6 +260,66 @@ func TestRevisionsAndPatches(t *testing.T) {
 	if _, err := f.docs.GetDocument(ctx, f.viewer, f.app, plugin, "plugins/loans/pages/none.page.json"); code(err) != plxerr.ResourceNotFound {
 		t.Errorf("a missing document: %v", err)
 	}
+}
+
+// Verifies: SRV-020.
+// A document is stored as its canonical JSON bytes, zstd-compressed and
+// addressed by their SHA-256, and a stored blob that no longer matches
+// its hash is never returned.
+func TestDocumentsAreStoredByHash(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	plugin := f.plugin(t)
+	if _, _, err := f.docs.AcquireLock(ctx, f.developer, f.app, plugin, "tab", false); err != nil {
+		t.Fatal(err)
+	}
+	path := "plugins/loans/pages/home.page.json"
+	if _, err := f.docs.PutDocument(ctx, f.developer, f.app, plugin, "tab", path, pageJSON("home", "Stored"), 0); err != nil {
+		t.Fatal(err)
+	}
+	doc, err := f.docs.GetDocument(ctx, f.viewer, f.app, plugin, path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	canonical, err := jcs.Canonicalize(doc.Content, 64)
+	if err != nil || string(canonical) != string(doc.Content) {
+		t.Fatalf("the document is not returned in canonical form: %s", doc.Content)
+	}
+	sum := sha256.Sum256(doc.Content)
+	decoder, err := zstd.NewReader(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer decoder.Close()
+	if err := f.db.InTx(ctx, storage.Tenant{OrganizationID: f.org}, func(ctx context.Context, tx pgx.Tx) error {
+		var stored []byte
+		if err := tx.QueryRow(ctx, `SELECT content FROM blobs WHERE sha256 = $1`, sum[:]).Scan(&stored); err != nil {
+			return err
+		}
+		plain, err := decoder.DecodeAll(stored, nil)
+		if err != nil || string(plain) != string(doc.Content) {
+			t.Errorf("the blob is not the zstd-compressed canonical bytes: %v", err)
+		}
+		_, err = tx.Exec(ctx, `UPDATE blobs SET content = $2 WHERE sha256 = $1`, sum[:], compress(t, []byte(`{"kind":"page"}`)))
+		return err
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.docs.GetDocument(ctx, f.viewer, f.app, plugin, path); err == nil {
+		t.Error("a blob that does not match its hash was returned")
+	}
+}
+
+// compress compresses content as the store does, for a tampered blob.
+func compress(t *testing.T, content []byte) []byte {
+	t.Helper()
+	enc, err := zstd.NewWriter(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer enc.Close()
+	return enc.EncodeAll(content, nil)
 }
 
 // Verifies: SRV-040, SRV-042.

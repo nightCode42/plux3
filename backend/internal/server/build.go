@@ -97,6 +97,7 @@ func Build(ctx context.Context, cfg *config.Config, log *slog.Logger, version st
 	srv, err := New(Deps{
 		Config: cfg, Log: log, Metrics: metrics, Tracer: tracer,
 		DB: db, Objects: store, Cache: shared, Jobs: jobClient, Limits: limitSet,
+		KMS: services.KMS,
 	})
 	if err != nil {
 		return fail(err)
@@ -131,6 +132,9 @@ func buildWork(ctx context.Context, cfg *config.Config, log *slog.Logger, db *st
 		deps.ProductionSigning = backend.AllowedInProduction()
 	}
 	services, err := BuildServices(ctx, cfg, db, shared, set, backend, deps)
+	if pinger, ok := backend.(interface{ Ping(context.Context) error }); ok && err == nil {
+		services.KMS = pinger.Ping
+	}
 	if err != nil {
 		return nil, nil, err
 	}

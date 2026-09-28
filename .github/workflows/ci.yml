@@ -53,6 +53,7 @@ jobs:
       dart: ${{ steps.decide.outputs.dart }}
       studio: ${{ steps.decide.outputs.studio }}
       proto: ${{ steps.decide.outputs.proto }}
+      codecs: ${{ steps.decide.outputs.codecs }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -93,6 +94,8 @@ jobs:
             studio:
               - *shared
               - studio/**
+            codecs:
+              - backend/internal/compiler/media/codecs/**
       - name: Decide which toolchains to check
         id: decide
         env:
@@ -101,15 +104,20 @@ jobs:
           DART_CHANGED: ${{ steps.filter.outputs.dart }}
           STUDIO_CHANGED: ${{ steps.filter.outputs.studio }}
           PROTO_CHANGED: ${{ steps.filter.outputs.proto }}
+          CODECS_CHANGED: ${{ steps.filter.outputs.codecs }}
         run: |
           if [ "$EVENT" != "pull_request" ]; then
             GO_CHANGED=true DART_CHANGED=true STUDIO_CHANGED=true PROTO_CHANGED=true
           fi
+          # The codec rebuild takes minutes: it runs when the codecs change,
+          # and on the daily and manual runs, but not on every push to main.
+          if [ "$EVENT" = "schedule" ] || [ "$EVENT" = "workflow_dispatch" ]; then CODECS_CHANGED=true; fi
           {
             echo "go=${GO_CHANGED:-false}"
             echo "dart=${DART_CHANGED:-false}"
             echo "studio=${STUDIO_CHANGED:-false}"
             echo "proto=${PROTO_CHANGED:-false}"
+            echo "codecs=${CODECS_CHANGED:-false}"
           } >> "$GITHUB_OUTPUT"
 
   # ── Repository ───────────────────────────────────────────────────────────
@@ -541,6 +549,30 @@ jobs:
       - name: govulncheck
         run: make go-vuln
 
+  wasm-codecs:
+    name: Image codecs reproduce
+    needs: changes
+    if: needs.changes.outputs.codecs == 'true'
+    runs-on: ubuntu-24.04 # build.sh pins the toolchain of Ubuntu 24.04
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install the pinned toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang-18 lld-18 libclang-rt-18-dev-wasm32 \
+            wasi-libc=0.0~git20230113.4362b18-3 cmake ninja-build
+          sudo ln -sf /usr/bin/clang-18 /usr/local/bin/clang
+          sudo ln -sf /usr/bin/clang++-18 /usr/local/bin/clang++
+          sudo ln -sf /usr/bin/wasm-ld-18 /usr/local/bin/wasm-ld
+      # Verifies: CMP-030.
+      - name: Rebuild the codecs and compare them with codecs.lock
+        run: make wasm-codecs-check
+
   # ── Dart and Flutter ─────────────────────────────────────────────────────
 
   dart:
@@ -617,6 +649,7 @@ jobs:
       - api-contract
       - go-test
       - compose
+      - wasm-codecs
       - go-determinism
       - go-build
       - go-vuln

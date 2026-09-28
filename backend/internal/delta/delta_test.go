@@ -5,9 +5,11 @@ package delta
 
 import (
 	"bytes"
+	"encoding/binary"
 	"math/rand/v2"
 	"testing"
 
+	"github.com/klauspost/compress/zstd"
 	"pgregory.net/rapid"
 
 	"github.com/nightCode42/plux3/backend/internal/bundle"
@@ -213,4 +215,98 @@ func FuzzApply(f *testing.F) {
 func codeOf(err error) plxerr.Code {
 	c, _ := plxerr.CodeOf(err)
 	return c
+}
+
+// Verifies: SEC-052.
+// Each malformed part of a delta is refused with its own reason, before
+// anything is decoded beyond it: the header, each instruction, and each
+// payload.
+func TestMalformedDeltas(t *testing.T) {
+	t.Parallel()
+	var id bundle.ID
+	data := []byte("one section")
+	a := encode(t, []bundle.Section{{Kind: bundle.SectionPage, ID: id, Data: data}})
+	base, err := bundle.ReadStructure(a)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sectionHash := base.Sections[0].Hash
+	header := func(n uint32, mutate func([]byte)) []byte {
+		h := make([]byte, headerSize)
+		copy(h, magic)
+		binary.LittleEndian.PutUint16(h[4:], version)
+		binary.LittleEndian.PutUint16(h[6:], uint16(bundle.KindPlugin))
+		binary.LittleEndian.PutUint32(h[8:], n)
+		copy(h[16:48], base.Hash[:])
+		if mutate != nil {
+			mutate(h)
+		}
+		return h
+	}
+	instr := func(op byte, size uint64, payload []byte, mutate func([]byte)) []byte {
+		in := make([]byte, instrSize)
+		binary.LittleEndian.PutUint16(in[16:], uint16(bundle.SectionPage))
+		in[18] = op
+		binary.LittleEndian.PutUint64(in[20:], size)
+		binary.LittleEndian.PutUint32(in[28:], uint32(len(payload))) //nolint:gosec // G115: test payloads are small.
+		if mutate != nil {
+			mutate(in)
+		}
+		return append(in, payload...)
+	}
+	cat := func(parts ...[]byte) []byte { return bytes.Join(parts, nil) }
+	size := uint64(len(data))
+	for name, c := range map[string]struct {
+		delta []byte
+		want  plxerr.Code
+	}{
+		"another version":    {header(1, func(h []byte) { h[4] = 9 }), plxerr.DeltaMalformed},
+		"unknown flags":      {header(1, func(h []byte) { h[12] = 1 }), plxerr.DeltaMalformed},
+		"too many sections":  {header(maxSections+1, nil), plxerr.DeltaMalformed},
+		"truncated":          {cat(header(1, nil), make([]byte, 10)), plxerr.DeltaMalformed},
+		"reserved byte":      {cat(header(1, nil), instr(opReuse, size, sectionHash[:], func(in []byte) { in[19] = 1 })), plxerr.DeltaMalformed},
+		"truncated payload":  {cat(header(1, nil), instr(opReuse, size, sectionHash[:], nil)[:instrSize+4]), plxerr.DeltaMalformed},
+		"unknown operation":  {cat(header(1, nil), instr(7, size, sectionHash[:], nil)), plxerr.DeltaMalformed},
+		"short reuse":        {cat(header(1, nil), instr(opReuse, size, sectionHash[:4], nil)), plxerr.DeltaMalformed},
+		"unknown reuse":      {cat(header(1, nil), instr(opReuse, size, make([]byte, hashSize), nil)), plxerr.PatchHashMismatch},
+		"wrong size":         {cat(header(1, nil), instr(opReuse, size+1, sectionHash[:], nil)), plxerr.PatchHashMismatch},
+		"short patch":        {cat(header(1, nil), instr(opPatch, size, []byte{1}, nil)), plxerr.DeltaMalformed},
+		"unknown patch base": {cat(header(1, nil), instr(opPatch, size, make([]byte, hashSize+4), nil)), plxerr.PatchHashMismatch},
+		"not a zstd frame":   {cat(header(1, nil), instr(opWhole, size, []byte("not zstd"), nil)), plxerr.DeltaMalformed},
+		"frame size differs": {cat(header(1, nil), instr(opWhole, 40*size+5, zstdFrame(t, bytes.Repeat(data, 40)), nil)), plxerr.DeltaMalformed},
+		"corrupt frame":      {cat(header(1, nil), instr(opWhole, size, corrupt(zstdFrame(t, bytes.Repeat(data, 40))), nil)), plxerr.DeltaMalformed},
+	} {
+		if _, err := Apply(a, c.delta, maxSize); codeOf(err) != c.want {
+			t.Errorf("%s: got %v, want PLX-%d", name, err, c.want)
+		}
+	}
+	if _, err := Apply([]byte("not a bundle"), header(0, nil), maxSize); err == nil {
+		t.Error("a base that is not a bundle was accepted")
+	}
+	if _, err := Diff([]byte("not a bundle"), a); err == nil {
+		t.Error("Diff accepted an old side that is not a bundle")
+	}
+	if _, err := Diff(a, []byte("not a bundle")); err == nil {
+		t.Error("Diff accepted a new side that is not a bundle")
+	}
+}
+
+// zstdFrame compresses data into one frame that declares its size.
+func zstdFrame(t *testing.T, data []byte) []byte {
+	t.Helper()
+	enc, err := zstd.NewWriter(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer enc.Close()
+	return enc.EncodeAll(data, nil)
+}
+
+// corrupt flips bytes in a frame's body, keeping its header valid.
+func corrupt(frame []byte) []byte {
+	out := bytes.Clone(frame)
+	for i := len(out) / 2; i < len(out); i++ {
+		out[i] ^= 0x5a
+	}
+	return out
 }

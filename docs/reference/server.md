@@ -137,7 +137,7 @@ variable is treated as unset:
 | Path | Answers |
 |---|---|
 | `GET /livez` | That the process is running. It checks no dependency, so a database outage never restarts a healthy replica. |
-| `GET /readyz` | That the process has finished starting **and** every dependency answers: PostgreSQL, the cache, object storage, and from P6 the KMS (`SRV-007`). A failing check is reported as `unavailable` and nothing more, because its message may quote a connection string. |
+| `GET /readyz` | That the process has finished starting **and** every dependency answers: PostgreSQL, the cache, object storage, and the key management service when one is configured (Vault Transit now, the cloud KMS backends from P6) (`SRV-007`). A failing check is reported as `unavailable` and nothing more, because its message may quote a connection string. |
 | `GET /metrics` | The Prometheus metrics of [Appendix G.1](../requirements.md#appendix-g--metrics-and-telemetry-events) (`OBS-002`). |
 | `GET /v1/objects/{bundles,deltas}/…` | Bundles and deltas by content address, when object storage has no CDN in front of it (`storage.objects.cdnBaseURL` unset): `Cache-Control: public, max-age=31536000, immutable`, an `ETag` of the hash and range requests (`REL-024`, `DEP-041`). |
 

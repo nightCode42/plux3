@@ -1,6 +1,9 @@
 # git-cliff configuration: release notes per component from Conventional
 # Commits (CI-008). Used by `make release-notes` and .github/workflows/release.yml.
 # Components are tagged `<component>/v<semver>`, e.g. `backend/v0.1.0`.
+# Every release note ends with an "Upgrading" section (DEP-030): the standard
+# steps, then each step a commit declares in an `Upgrade:` footer and each
+# breaking change.
 
 [changelog]
 header = ""
@@ -17,6 +20,15 @@ body = """
 {% if commit.breaking %} — **breaking**{% endif %} ({{ commit.id | truncate(length=7, end="") }})\
 {% endfor %}
 {% endfor %}
+### Upgrading
+
+Upgrade from the previous minor version (N-1) by replacing the binaries or \
+images one replica at a time; migrations run automatically and are \
+expand-only, so the old version keeps working during the roll (DEP-030).
+{% for commit in commits %}{% for footer in commit.footers %}\
+{% if footer.token == "Upgrade" or footer.breaking %}
+- {{ footer.value | upper_first }} ({{ commit.id | truncate(length=7, end="") }})\
+{% endif %}{% endfor %}{% endfor %}
 """
 trim = true
 footer = ""

@@ -74,6 +74,9 @@ func TestFindManifestsSkipsWorkspaceMembers(t *testing.T) {
 	write(t, root, "studio/packages/b/package.json", `{"name": "b"}`)
 	write(t, root, "studio/node_modules/x/package.json", `{"workspaces": []}`)
 	write(t, root, ".github/workflows/ci.yml", "on: push\n")
+	write(t, root, "backend/Dockerfile", "FROM scratch\n")
+	write(t, root, "deploy/compose/compose.yaml", "services: {}\n")
+	write(t, root, "deploy/compose/compose.dev.yaml", "services: {}\n")
 
 	got, err := FindManifests(root)
 	if err != nil {
@@ -83,7 +86,9 @@ func TestFindManifestsSkipsWorkspaceMembers(t *testing.T) {
 	want := []Manifest{
 		{Ecosystem: "github-actions", Directory: "/"},
 		{Ecosystem: "pub", Directory: "/"},
+		{Ecosystem: "docker", Directory: "/backend"},
 		{Ecosystem: "gomod", Directory: "/backend"},
+		{Ecosystem: "docker-compose", Directory: "/deploy/compose"},
 		{Ecosystem: "bun", Directory: "/studio"},
 	}
 	if !reflect.DeepEqual(got, want) {

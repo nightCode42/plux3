@@ -151,6 +151,10 @@ func manifestEcosystem(p, name string) (string, error) {
 	switch name {
 	case "go.mod":
 		return "gomod", nil
+	case "Dockerfile":
+		return "docker", nil
+	case "compose.yaml", "compose.yml", "docker-compose.yaml", "docker-compose.yml":
+		return "docker-compose", nil
 	case "pubspec.yaml", "package.json":
 		data, err := os.ReadFile(p)
 		if err != nil {

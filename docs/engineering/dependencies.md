@@ -85,7 +85,7 @@ Planned for P11 (ADR-0014): React, TanStack Router and Query, shadcn/ui on Radix
 
 ### Container images
 
-Pinned by tag and digest in `backend/Dockerfile` and `deploy/compose/compose.yaml`, and updated by hand in one pull request (tag and digest together).
+Pinned by tag and digest in `backend/Dockerfile` and `deploy/compose/compose.yaml`; Dependabot (`docker`, `docker-compose`) proposes new tags and digests weekly, and the policy check fails if a Dockerfile or Compose file has no entry (`CI-007`).
 
 | Image | Used for |
 |---|---|

@@ -57,6 +57,9 @@ type Services struct {
 	Events      *telemetry.Service
 	Idempotency *idempotency.Store
 	Pages       *api.Pages
+	// KMS checks the key management service, when the signing backend
+	// is one; nil for the development file backend (SRV-007).
+	KMS func(context.Context) error
 }
 
 // WorkDeps are what the services need beyond the database: where files

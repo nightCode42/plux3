@@ -36,9 +36,9 @@ Chosen option: **1**, as the specification requires (`SRV-020`, `SRV-023`, §6.2
 
 `pgx/v5` is the driver and pool. Every statement is written as SQL in
 `backend/internal/storage/queries/` and compiled by `sqlc` into typed Go, committed and
-checked by `make gen-check`. Documents are stored as `JSONB` holding the canonical bytes
-produced by `schema/jcs` (`SRV-020`, `SCH-003`), so a document's hash is a property of the
-row and not of how Go re-serialised it; relational columns hold the metadata queries filter
+checked by `make gen-check`. Documents are stored as the canonical bytes produced by
+`schema/jcs` (`SRV-020`, `SCH-003`), zstd-compressed and addressed by their SHA-256 (see
+Revision), so a document's hash is a property of the row and not of how Go re-serialised it; relational columns hold the metadata queries filter
 and order by. Nothing in a domain package writes SQL (L-2).
 
 ### Migrations
@@ -100,7 +100,7 @@ for the common path and against a real S3-compatible store in CI (SeaweedFS; see
 
 ### Option 2 — an ORM
 
-Faster to write at first, but it hides the SQL that RLS, `JSONB` containment queries and
+Faster to write at first, but it hides the SQL that RLS and
 keyset pagination depend on, and it makes query cost invisible in review. `sqlc` gives the
 same type safety with the SQL in plain sight.
 
@@ -124,3 +124,14 @@ speaks plain S3 through `aws-sdk-go-v2`, path-style, to any compatible service, 
 installations keep using whichever store they run (AWS S3, Google Cloud Storage's S3
 interface, Ceph, MinIO built from source, SeaweedFS). `DEP-002`, §6.2 and Appendix H were
 reworded to match.
+
+## Revision (2026-09-28, document storage)
+
+`SRV-020` and this ADR first said documents are stored as `JSONB`. The document store of
+[ADR-0015](0015-single-draft-with-snapshots-and-locks.md) keeps each document's canonical
+JSON bytes instead, zstd-compressed in a `bytea` column and addressed by SHA-256 per
+organisation, checked against that hash on every read. `JSONB` would not keep those bytes:
+PostgreSQL normalises it (key order, duplicate keys, number text), so the stored value could
+no longer be hashed or signed as written, and snapshots share identical content only when
+it is addressed by hash. Nothing queries inside documents; the metadata queries need lives
+in relational columns. The maintainer chose to reword `SRV-020` to match (spec 1.1.6).

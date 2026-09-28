@@ -1,7 +1,7 @@
 # Plux — System Requirements Specification
 
 **Document ID:** `SRS-PLUX-001`
-**Version:** 1.1.3
+**Version:** 1.1.6
 **Status:** Draft — living document, revised as implementation proceeds
 **Date:** 2026-09-27
 **Applies to:** Plux Schema, Plux Compiler, Plux Server, Plux Functions, `plux_flutter` runtime, Plux Dev app, Plux Studio, Plux CLI, Plux AI
@@ -863,14 +863,14 @@ sequenceDiagram
 | `SRV-004` | P2 | MUST | List endpoints **MUST** use opaque, integrity-protected page tokens, filtering, ordering and field masks; no endpoint may return an unbounded list. | DONE |
 | `SRV-005` | P2 | MUST | Mutating endpoints **MUST** accept an idempotency key; retries with the same key within 24 h **MUST** return the original result. | DONE |
 | `SRV-006` | P2 | MUST | Errors **MUST** follow one unified model: a typed domain error with a registered reason, translated only at the edge into a Connect code plus `google.rpc.ErrorInfo` (reason, domain `plux.dev`, metadata) and a Plux error code from Appendix F (ADR-0018). | DONE |
-| `SRV-007` | P2 | MUST | The server **MUST** implement `/livez`, `/readyz` (checking PostgreSQL, object storage and, where configured, Valkey and KMS) and graceful shutdown that drains in-flight requests and jobs. | WIP |
+| `SRV-007` | P2 | MUST | The server **MUST** implement `/livez`, `/readyz` (checking PostgreSQL, object storage and, where configured, Valkey and KMS) and graceful shutdown that drains in-flight requests and jobs. | DONE |
 | `SRV-008` | P2 | MUST | Configuration **MUST** be loaded from a file plus environment variables, reject unknown keys, validate every section at startup, and be checkable offline with `plux-server config validate` (Appendix H). | DONE |
 
 ### 11.2 Storage
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `SRV-020` | P2 | MUST | PostgreSQL **MUST** be the system of record. Documents are stored as canonical JSON (`JSONB`) with relational metadata; queries are written in SQL and type-checked with `sqlc`. | WIP |
+| `SRV-020` | P2 | MUST | PostgreSQL **MUST** be the system of record. Documents are stored as their canonical JSON bytes (RFC 8785), zstd-compressed and addressed by SHA-256, with relational metadata; queries are written in SQL and type-checked with `sqlc`. | DONE |
 | `SRV-021` | P2 | MUST | Schema migrations **MUST** be versioned, applied automatically on start behind an advisory lock, and follow expand/contract so that rolling upgrades never require downtime (`DEP-030`). | DONE |
 | `SRV-022` | P2 | MUST | Every table holding tenant data **MUST** carry the organisation ID, and PostgreSQL row-level security **MUST** enforce tenant isolation as defence in depth beneath application-level authorisation. | DONE |
 | `SRV-023` | P2 | MUST | Bundles, deltas, assets and exports **MUST** be stored in S3-compatible object storage under content-addressed keys; the server **MUST** issue short-lived signed URLs or serve them itself when no CDN is configured. | DONE |
@@ -1878,7 +1878,7 @@ One Plux installation can serve many independent organisations — for example a
 | `DEP-004` | P9 | MUST | HA **MUST** be supported with ≥ 2 replicas per role, PostgreSQL HA (e.g. CloudNativePG or Patroni), HA object storage and Valkey with replication; rolling upgrades **MUST** cause no downtime. | SPEC |
 | `DEP-010` | P9 | MUST | Backups **MUST** include point-in-time recovery for PostgreSQL and versioning or replication for object storage, consistent with each other; restore **MUST** be documented and drilled in CI. Enterprise targets: RPO ≤ 5 min, RTO ≤ 1 h. | SPEC |
 | `DEP-020` | P2 | MUST | `make dev` **MUST** start the full stack locally with hot reload for Go, Bun and Flutter, and seed sample apps. | WIP |
-| `DEP-030` | P2 | MUST | Upgrades **MUST** be supported from any N-1 minor version with automatic migrations; release notes **MUST** state upgrade steps and any required actions. | WIP |
+| `DEP-030` | P2 | MUST | Upgrades **MUST** be supported from any N-1 minor version with automatic migrations; release notes **MUST** state upgrade steps and any required actions. | DONE |
 | `DEP-040` | P9 | MUST | **Air-gapped** installation **MUST** be supported: an offline bundle (images, charts, docs), no required outbound connections except those the customer enables, a documented egress list (attestation revocation lists and roots, optional Play Integrity verification endpoint, push services) with instructions for mirroring, and local AI via Ollama. | SPEC |
 | `DEP-041` | P2 | MUST | The server **MUST** serve bundles and deltas itself when no CDN is configured, and **MUST** support any CDN in front of object storage because artifacts are immutable and content-addressed. | DONE |
 | `DEP-050` | P9 | SHOULD | Reference infrastructure-as-code modules (OpenTofu/Terraform) **SHOULD** be provided for AWS, Google Cloud and Azure, and an on-premises reference architecture for regulated industries. | SPEC |
@@ -1991,7 +1991,7 @@ Every size and resource in Plux is governed by one limits framework. Limits are 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `LIM-001` | P2 | MUST | All limits **MUST** be defined in one registry with a key, unit, default, hard maximum and the scopes at which it can be set; the compiler, server, runtime and Studio **MUST** read limits from this registry rather than hard-coding values. | WIP |
-| `LIM-002` | P2 | MUST | Limits **MUST** be configurable at installation, organisation, app and plugin level, and a lower level **MUST NOT** be able to raise a limit set above it. | WIP |
+| `LIM-002` | P2 | MUST | Limits **MUST** be configurable at installation, organisation, app and plugin level, and a lower level **MUST NOT** be able to raise a limit set above it. | DONE |
 | `LIM-003` | P2 | MUST | Publication **MUST** fail with a clear diagnostic when a release would exceed a limit, and **MUST** warn at 80% of any limit. | DONE |
 | `LIM-004` | P3 | MUST | Device-side limits **MUST** be delivered in the signed app bundle and enforced by the runtime, which **MUST** degrade gracefully (evict caches, pause telemetry, refuse new outbox entries with a typed error) rather than fail. | SPEC |
 | `LIM-005` | P2 | MUST | Current usage against every limit **MUST** be readable through the API and shown in Studio per app and plugin (`STU-025`). | WIP |
@@ -2939,7 +2939,7 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | Field | Value |
 |---|---|
 | Document ID | `SRS-PLUX-001` |
-| Version | 1.1.5 |
+| Version | 1.1.6 |
 | Status | Draft (living document) |
 | Date | 2026-09-27 |
 | Supersedes | 1.1.2 |
@@ -2956,3 +2956,4 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | 1.1.3 | 2026-09-27 | Phase 2 clarifications: §6.3 lists the server modules the decomposition needs beyond the original sketch (`tenancy/`, `cache/`, `httpx/`, `server/` and the generated `pluxv1/`); §33 places the manifest's schema with the JSON Schemas, since App. B.3 defines the manifest as signed canonical JSON rather than a FlatBuffers buffer (ADR-0003, ADR-0004, ADR-0005, ADR-0006, ADR-0007, ADR-0015, ADR-0020). |
 | 1.1.4 | 2026-09-28 | App. B.3: the per-device sync plan and download URLs are shown outside the signed part of the manifest, as the maintainer confirmed (ADR-0004, implementation notes). |
 | 1.1.5 | 2026-09-28 | MinIO no longer publishes container images: §6.2, `DEP-002` and App. H name an S3-compatible store, SeaweedFS in the Compose stack (maintainer decision; ADR-0007, Revision). |
+| 1.1.6 | 2026-09-28 | `SRV-020`: documents are stored as their canonical JSON bytes, zstd-compressed and addressed by SHA-256, rather than as `JSONB` (maintainer decision; ADR-0007, Revision). |

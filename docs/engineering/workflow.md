@@ -38,7 +38,8 @@ How a change moves from an idea to `main`, and how releases are cut. The rules a
 
 - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert`. Scopes are component or area names: `backend`, `compiler`, `runtime`, `sync`, `studio`, `schema`, `tools`, `ci`, `deps`.
 - The header is at most 72 characters, imperative ("add", not "added"), with no trailing period.
-- A breaking change to a public interface uses `!` and explains the migration in the body.
+- A breaking change to a public interface uses `!` and explains the migration in the body and in a `BREAKING CHANGE:` footer.
+- A change that needs an operator to do something when upgrading (a manual step, a configuration change, an order of operations) says so in an `Upgrade:` footer, one step per footer. Release notes end with an **Upgrading** section: the standard N-1 rolling-upgrade steps, then every `Upgrade:` and `BREAKING CHANGE:` footer since the last tag; the release job fails without it (`DEP-030`).
 - Commits are signed and use the author's GitHub no-reply address.
 
 ## 5. Pull requests

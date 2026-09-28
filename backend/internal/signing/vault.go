@@ -107,6 +107,20 @@ func (*Vault) Name() string { return "vault" }
 // AllowedInProduction is true: the keys live in Vault, not on disk.
 func (*Vault) AllowedInProduction() bool { return true }
 
+// Ping reports whether Vault answers and accepts the token, for
+// readiness (SRV-007). It reads the wrapping key's description, which
+// Wrap already needs and which holds no key material; a key not created
+// yet is a healthy answer, since the first Wrap creates it.
+func (v *Vault) Ping(ctx context.Context) error {
+	var info vaultKey
+	err := v.call(ctx, http.MethodGet, "keys/"+v.wrapKey, nil, &info)
+	var status statusError
+	if err == nil || (errors.As(err, &status) && status.code == http.StatusNotFound) {
+		return nil
+	}
+	return fmt.Errorf("signing: Vault: %w", err)
+}
+
 // Sign signs a message with the named Ed25519 key.
 func (v *Vault) Sign(ctx context.Context, ref string, message []byte) ([]byte, string, error) {
 	if err := v.ensure(ctx, ref, "ed25519"); err != nil {

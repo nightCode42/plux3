@@ -46,6 +46,7 @@ How the pipeline is built and why. The requirements are spec §29 (`CI-001`–`C
 | Dart and Flutter | Dart changes | `dart-lock-check dart-fmt-check dart-analyze dart-cover`, `widgets-api-check` (the Flutter snapshot matches the pinned SDK) | `CI-001`, `CI-003`, `QA-001`, `WGT-003` |
 | Studio | Studio changes | `studio-check` (frozen install, Biome, types, coverage) | `CI-001`, `QA-001` |
 | Compose stack | Go or `deploy/` changes | `compose-up` (builds the server image and starts the whole stack), waits for `/readyz`, then `compose-test`: the Go integration and end-to-end tests against the stack's PostgreSQL, SeaweedFS and Valkey | `DEP-002`, `QA-005` |
+| Image codecs reproduce | codec changes (`backend/internal/compiler/media/codecs/**`), daily and manual runs | `wasm-codecs-check`: rebuilds `webp.wasm` and `avif.wasm` from their pinned sources with the pinned Ubuntu 24.04 toolchain and compares them with `codecs.lock`, so a committed binary cannot differ from its source; it takes minutes, so it does not run on every push | `CMP-030` |
 | CI OK | always | — | `CI-009` |
 
 The traceability report and coverage tables are written to each job's summary; the report and the SBOM are uploaded as artifacts.
