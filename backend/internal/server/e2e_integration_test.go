@@ -155,16 +155,14 @@ func TestPublishWithTheCLIAndSyncADevice(t *testing.T) {
 	}
 	run(0, "diff", "-C", project)
 	run(0, "doctor", "-C", project)
-	var keys struct{ Keys []struct{ PublicKey string } }
-	decode(t, run(0, "keys", "-C", project, "--env", "staging", "--json"), &keys)
 	var base struct {
 		ReleaseSequence int64
 		Bundles         []struct{ Plugin, SHA256, File string }
 		Assets          []struct{ SHA256, File string }
 	}
 	decode(t, run(0, "pull", "-C", project, "--env", "staging", "-o", filepath.Join(dir, "host", "assets", "plux"), "--json"), &base)
-	if base.ReleaseSequence != 1 || len(base.Bundles) != 2 || len(keys.Keys) != 1 {
-		t.Fatalf("pull: %+v keys %+v", base, keys)
+	if base.ReleaseSequence != 1 || len(base.Bundles) != 2 {
+		t.Fatalf("pull: %+v", base)
 	}
 	var appBundle []byte
 	for _, b := range base.Bundles {
@@ -211,6 +209,12 @@ func TestPublishWithTheCLIAndSyncADevice(t *testing.T) {
 	}
 	manifests := pluxv1connect.NewManifestServiceClient(hc, server, connect.WithInterceptors(bearer(tok.Msg.GetAccessToken())))
 	m1 := waitManifest(t, manifests, 1, nil)
+	// The environment's key is known once its first manifest is signed.
+	var keys struct{ Keys []struct{ PublicKey string } }
+	decode(t, run(0, "keys", "-C", project, "--env", "staging", "--json"), &keys)
+	if len(keys.Keys) != 1 {
+		t.Fatalf("keys %+v", keys)
+	}
 	pub0, _ := hex.DecodeString(keys.Keys[0].PublicKey)
 	if !ed25519.Verify(pub0, m1.GetSigned(), m1.GetSignatures()[0].GetSignature()) {
 		t.Fatal("the manifest does not verify with the pulled key")

@@ -831,6 +831,11 @@ func (e env) keys(args []string) int {
 	if err != nil {
 		return e.fail("keys", err)
 	}
+	if len(res.Msg.GetKeys()) == 0 {
+		// An environment's key is recorded when its first manifest is
+		// signed, just after its first promotion.
+		return e.fail("keys", fmt.Errorf("environment %s has signed nothing yet: promote a release to it, then try again", *envKey))
+	}
 	keys := []baselineKey{}
 	var text strings.Builder
 	for _, k := range res.Msg.GetKeys() {

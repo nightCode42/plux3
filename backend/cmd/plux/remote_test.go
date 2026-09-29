@@ -165,7 +165,10 @@ func (f *fake) GetRelease(context.Context, *connect.Request[pluxv1.GetReleaseReq
 	}}), nil
 }
 
-func (*fake) GetRootKeys(context.Context, *connect.Request[pluxv1.GetRootKeysRequest]) (*connect.Response[pluxv1.GetRootKeysResponse], error) {
+func (*fake) GetRootKeys(_ context.Context, req *connect.Request[pluxv1.GetRootKeysRequest]) (*connect.Response[pluxv1.GetRootKeysResponse], error) {
+	if req.Msg.GetEnvironment() == "fresh" { // an environment nothing was promoted to
+		return connect.NewResponse(&pluxv1.GetRootKeysResponse{}), nil
+	}
 	return connect.NewResponse(&pluxv1.GetRootKeysResponse{Keys: []*pluxv1.PublicKey{{KeyId: "k1", Algorithm: "ed25519", Role: "targets", PublicKey: []byte{1, 2}}}}), nil
 }
 
@@ -305,6 +308,9 @@ func TestServerCommands(t *testing.T) { //nolint:paralleltest // the keychain mo
 	}
 	if code, out, _ := cli(t, config, "keys", "-C", project); code != exitOK || !strings.Contains(out, "k1  ed25519  targets  0102") {
 		t.Errorf("keys: %d %s", code, out)
+	}
+	if code, _, stderr := cli(t, config, "keys", "-C", project, "--env", "fresh"); code != exitFailed || !strings.Contains(stderr, "signed nothing yet") {
+		t.Errorf("keys of an environment with none: %d %s", code, stderr)
 	}
 	if code, out, _ := cli(t, config, "release", "list", "-C", project); code != exitOK || !strings.Contains(out, "Ada") {
 		t.Errorf("release list: %d %s", code, out)
