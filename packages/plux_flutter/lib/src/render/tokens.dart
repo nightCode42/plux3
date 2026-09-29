@@ -7,6 +7,7 @@
 /// value of the prop type it binds (compiler.md §3).
 library;
 
+import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/pxl/values.dart';
 import 'package:plux_flutter/src/render/sections.dart';
 import 'package:plux_flutter/src/render/values.dart';
@@ -35,15 +36,24 @@ final class TokenReader {
 
   /// The token at [path] as a PXL value, or null when no token has it.
   Object? read(String path, ValueResolver resolver) {
-    final token =
-        (brand == null ? null : app.token('brands.$brand.$path')) ??
-        (highContrast ? app.token('contrast.high.$path') : null) ??
-        app.token(path);
+    final token = _token(path);
     if (token == null) return null;
-    final value = (dark ? token.dark : null) ?? token.light;
-    final raw = resolver.resolve(value, app.string);
-    return convertToken(token.type ?? '', raw);
+    return convertToken(token.type ?? '', _raw(token, resolver));
   }
+
+  /// The W3C value of the token at [path], before conversion, or null.
+  Object? raw(String path, ValueResolver resolver) {
+    final token = _token(path);
+    return token == null ? null : _raw(token, resolver);
+  }
+
+  fbs.Token? _token(String path) =>
+      (brand == null ? null : app.token('brands.$brand.$path')) ??
+      (highContrast ? app.token('contrast.high.$path') : null) ??
+      app.token(path);
+
+  Object? _raw(fbs.Token token, ValueResolver resolver) =>
+      resolver.resolve((dark ? token.dark : null) ?? token.light, app.string);
 
   /// Whether the app has a token at [path].
   bool has(String path) => app.token(path) != null;

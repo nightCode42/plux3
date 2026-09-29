@@ -24,6 +24,7 @@ void main() {
     Size size = const Size(800, 1400),
     Map<String, Object?> params = const {},
     ThemeData? theme,
+    PluxThemeSource themeSource = PluxThemeSource.host,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -31,7 +32,7 @@ void main() {
     await tester.runAsync(
       () => h.startFrom(g.bundles['widgets/widgets.pxb']!, {
         'gallery': g.bundles['widgets/gallery.pxb']!,
-      }),
+      }, themeSource: themeSource),
     );
     await tester.pumpWidget(
       MaterialApp(
@@ -127,13 +128,15 @@ void main() {
   testWidgets('a page in dark mode uses dark token values [THM-002]', (
     tester,
   ) async {
-    await open(tester, 'text', theme: ThemeData.dark());
+    await open(tester, 'text', themeSource: PluxThemeSource.plux);
     Color colour() =>
         tester.widget<Text>(find.text('token colour')).style!.color!;
     expect(colour(), const Color(0xFF6750A4));
     Plux.setThemeMode(ThemeMode.dark);
     await settle(tester);
     expect(colour(), const Color(0xFFD0BCFF));
+    // Material animates text colours to the new theme.
+    await tester.pump(const Duration(milliseconds: 300));
     await expectLater(
       find.byType(MaterialApp),
       matchesGoldenFile('goldens/text_dark.png'),
@@ -143,7 +146,7 @@ void main() {
   testWidgets('a brand overlay replaces the tokens it defines [THM-003]', (
     tester,
   ) async {
-    await open(tester, 'text');
+    await open(tester, 'text', themeSource: PluxThemeSource.plux);
     Plux.setBrand('acme');
     await settle(tester);
     expect(
@@ -164,6 +167,93 @@ void main() {
       const EdgeInsets.all(12),
       reason: 'a token the brand does not define keeps its value',
     );
+  });
+
+  group('theme sources [HST-012] [THM-001] [THM-003]', () {
+    final host = ThemeData(
+      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF00897B)),
+    );
+    Color colour(WidgetTester tester) =>
+        tester.widget<Text>(find.text('token colour')).style!.color!;
+    ThemeData pageTheme(WidgetTester tester) =>
+        Theme.of(tester.element(find.text('token colour')));
+
+    testWidgets('by default a role token follows the host theme', (
+      tester,
+    ) async {
+      await open(tester, 'text', theme: host);
+      expect(colour(tester), host.colorScheme.primary);
+      expect(pageTheme(tester).colorScheme, host.colorScheme);
+      expect(
+        tester
+            .widget<Padding>(
+              find
+                  .ancestor(
+                    of: find.text('token padding'),
+                    matching: find.byType(Padding),
+                  )
+                  .first,
+            )
+            .padding,
+        const EdgeInsets.all(12),
+        reason: 'a token with no theme role keeps its Plux value',
+      );
+    });
+
+    testWidgets('pluxOverHost replaces only the roles the Plux theme sets', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        'text',
+        theme: host,
+        themeSource: PluxThemeSource.pluxOverHost,
+      );
+      expect(colour(tester), const Color(0xFF6750A4));
+      final scheme = pageTheme(tester).colorScheme;
+      expect(scheme.primary, const Color(0xFF6750A4));
+      expect(scheme.secondary, host.colorScheme.secondary);
+      expect(
+        pageTheme(tester).textTheme.headlineSmall?.fontFamily,
+        host.textTheme.headlineSmall?.fontFamily,
+      );
+    });
+
+    testWidgets('plux builds Material and Cupertino themes from the tokens', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        'text',
+        theme: host,
+        themeSource: PluxThemeSource.plux,
+      );
+      final theme = pageTheme(tester);
+      expect(theme.colorScheme.primary, const Color(0xFF6750A4));
+      expect(theme.colorScheme.secondary, isNot(host.colorScheme.secondary));
+      final cupertino = CupertinoTheme.of(
+        tester.element(find.text('token colour')),
+      );
+      expect(cupertino.primaryColor, const Color(0xFF6750A4));
+      expect(cupertino.brightness, Brightness.light);
+    });
+
+    testWidgets('script fonts are fallbacks of every text style [THM-004]', (
+      tester,
+    ) async {
+      await open(tester, 'text', theme: host);
+      final theme = pageTheme(tester);
+      for (final style in [
+        theme.textTheme.bodyMedium,
+        theme.textTheme.titleLarge,
+        theme.textTheme.labelSmall,
+      ]) {
+        expect(
+          style?.fontFamilyFallback,
+          containsAllInOrder(['Noto Sans Arabic', 'Noto Sans Ethiopic']),
+        );
+      }
+    });
   });
 
   testWidgets('translations, parameters and plural forms [HST-001]', (

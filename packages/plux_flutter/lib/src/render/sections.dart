@@ -111,6 +111,26 @@ final class BundleView {
     return i < 0 ? null : list[i];
   }
 
+  /// The paths of the design tokens that start with [prefix], in order.
+  Iterable<String> tokenPaths(String prefix) sync* {
+    final list = _stylesTable?.tokens;
+    if (list == null) return;
+    var lo = 0, hi = list.length;
+    while (lo < hi) {
+      final mid = (lo + hi) >> 1;
+      if ((list[mid].path ?? '').compareTo(prefix) < 0) {
+        lo = mid + 1;
+      } else {
+        hi = mid;
+      }
+    }
+    for (var i = lo; i < list.length; i++) {
+      final path = list[i].path ?? '';
+      if (!path.startsWith(prefix)) return;
+      yield path;
+    }
+  }
+
   /// The PXL program with content-addressed [id], decoded once.
   Program program(int id) {
     final have = _decoded[id];

@@ -7,6 +7,7 @@
 /// roots.
 library;
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,6 +24,7 @@ import 'package:plux_flutter/src/render/page_renderer.dart';
 import 'package:plux_flutter/src/render/plux_node.dart';
 import 'package:plux_flutter/src/render/scope.dart';
 import 'package:plux_flutter/src/render/sections.dart';
+import 'package:plux_flutter/src/render/theme.dart';
 import 'package:plux_flutter/src/render/tokens.dart';
 import 'package:plux_flutter/src/render/values.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
@@ -251,10 +253,17 @@ final class _PluxPageState extends ConsumerState<PluxPage> {
         env.locale ??
         Localizations.maybeLocaleOf(context) ??
         const Locale('en');
+    final source = widget.renderer.config.themeSource;
+    final host = Theme.of(context);
+    // The mode the host sets with Plux.setThemeMode; otherwise the host
+    // theme's under a host-based source, the platform's under the Plux
+    // theme (THM-002, ADR-0032).
     final dark = switch (env.themeMode) {
       ThemeMode.light => false,
       ThemeMode.dark => true,
-      ThemeMode.system => media?.platformBrightness == Brightness.dark,
+      ThemeMode.system when source == PluxThemeSource.plux =>
+        media?.platformBrightness == Brightness.dark,
+      ThemeMode.system => host.brightness == Brightness.dark,
     };
     final width = media?.size.width ?? 0;
     final device = {
@@ -298,6 +307,17 @@ final class _PluxPageState extends ConsumerState<PluxPage> {
       translation: (_) => null,
       limits: _limits,
     );
+    final theme = _themeFor(
+      (
+        host: host,
+        source: source,
+        dark: dark,
+        brand: env.brand,
+        highContrast: tokens.highContrast,
+      ),
+      tokens,
+      appResolver,
+    );
     final tags = [
       locale.toLanguageTag(),
       locale.languageCode,
@@ -322,7 +342,7 @@ final class _PluxPageState extends ConsumerState<PluxPage> {
       resolver: ValueResolver(
         plugin: _plugin,
         roots: roots,
-        token: (path) => tokens.read(path, appResolver),
+        token: (path) => theme.role(path) ?? tokens.read(path, appResolver),
         translation: translation,
         limits: _limits,
       ),
@@ -334,10 +354,61 @@ final class _PluxPageState extends ConsumerState<PluxPage> {
       path: _path,
       state: _instance,
     );
-    return PluxBoundary(
+    Widget page = PluxBoundary(
       path: _path,
       fallback: widget.renderer.fallback,
       child: RenderScopeWidget(scope: scope, child: const PluxNode(0)),
+    );
+    if (theme.cupertino case final cupertino?) {
+      page = CupertinoTheme(data: cupertino, child: page);
+    }
+    return Theme(data: theme.material, child: page);
+  }
+
+  ({
+    ThemeData host,
+    PluxThemeSource source,
+    bool dark,
+    String? brand,
+    bool highContrast,
+  })?
+  _themeKey;
+  PluxTheme? _theme;
+
+  /// The page's themes, rebuilt only when what they depend on changes.
+  PluxTheme _themeFor(
+    ({
+      ThemeData host,
+      PluxThemeSource source,
+      bool dark,
+      String? brand,
+      bool highContrast,
+    })
+    key,
+    TokenReader tokens,
+    ValueResolver resolver,
+  ) {
+    final have = _theme;
+    final old = _themeKey;
+    if (have != null &&
+        old != null &&
+        identical(old.host, key.host) &&
+        old.source == key.source &&
+        old.dark == key.dark &&
+        old.brand == key.brand &&
+        old.highContrast == key.highContrast) {
+      return have;
+    }
+    _themeKey = key;
+    return _theme = PluxTheme.resolve(
+      host: key.host,
+      source: key.source,
+      dark: key.dark,
+      tokens: (
+        token: (path) => tokens.read(path, resolver),
+        raw: (path) => tokens.raw(path, resolver),
+        paths: _app.tokenPaths,
+      ),
     );
   }
 }

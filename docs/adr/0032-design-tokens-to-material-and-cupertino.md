@@ -51,7 +51,7 @@ nodes that read tokens (ADR-0008).
 
 ### Token vocabulary
 
-Token paths map to theme roles by a fixed, documented table: `color.<role>` to the
+Token paths map to theme roles by a fixed, documented table ([theming.md](../reference/theming.md)): `color.<role>` to the
 Material 3 `ColorScheme` roles (`color.primary`, `color.onPrimary`, `color.surface`, …),
 `typography.<style>` to the `TextTheme` styles (`typography.bodyLarge`, …), and
 `spacing.*`, `radius.*`, `elevation.*`, `motion.duration.*`, `motion.easing.*` and

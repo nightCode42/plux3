@@ -989,7 +989,7 @@ A Plux screen is addressed by its **app-wide unique route name** with typed para
 | `HST-001` | P3 | MUST | The host API **MUST** provide: `initialize`, `open`, `PluxView`, `sync`, `syncEvents`, `nativeRoutes`, `nativeSlots` and `nativeActions` registration, `setAuthDelegate`, `setUserContext`, `events` (typed events emitted by plugins), exposed state read/write, `setLocale`, `setThemeMode`, `setConsent` and `dispose` (Appendix I). | WIP |
 | `HST-010` | P4 | MUST | Host apps **MUST** supply an **auth delegate** that provides the end-user access token for data sources and functions, refreshes it on `401`, and receives logout signals. Plux **MUST NOT** implement end-user login itself. | SPEC |
 | `HST-011` | P4 | MUST | `setUserContext` **MUST** accept a pseudonymous user ID and targeting attributes (tier, segment, region…) used for rollouts and experiments; attributes are never sent to analytics unless declared non-sensitive. | SPEC |
-| `HST-012` | P3 | MUST | Plux pages **MUST** inherit the host's `ThemeData` by default and **MAY** override it with the app's Plux theme or a white-label overlay (`THM-003`). | SPEC |
+| `HST-012` | P3 | MUST | Plux pages **MUST** inherit the host's `ThemeData` by default and **MAY** override it with the app's Plux theme or a white-label overlay (`THM-003`). | DONE |
 | `HST-013` | P5 | MUST | Plugins **MUST** be able to emit typed events to the host (e.g. `loanApplicationSubmitted`) and the host **MUST** be able to send typed events into Plux; event types are declared in the app document and generated as Dart classes (`HST-030`). | SPEC |
 
 ### 13.3 Registration, code generation and setup
@@ -1103,10 +1103,10 @@ PXL is a small, typed, side-effect-free expression language with CEL-like syntax
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `THM-001` | P3 | MUST | Themes **MUST** be defined as design tokens (color, typography, spacing, radius, elevation, motion, breakpoints) in the W3C Design Tokens Community Group format and mapped to Material 3 and Cupertino themes. | SPEC |
-| `THM-002` | P3 | MUST | Themes **MUST** provide light and dark modes and follow the system setting by default; high-contrast variants **SHOULD** be supported. | SPEC |
-| `THM-003` | P3 | MUST | Plux **MUST** inherit the host theme by default, and **MUST** support white-label **brand overlays** selectable at runtime by the host (one app, many brands). | SPEC |
-| `THM-004` | P3 | MUST | Typography **MUST** define per-script font families with fallbacks (e.g. Latin, Cyrillic, Arabic, Devanagari, Ethiopic) so no text renders as missing glyphs. | SPEC |
+| `THM-001` | P3 | MUST | Themes **MUST** be defined as design tokens (color, typography, spacing, radius, elevation, motion, breakpoints) in the W3C Design Tokens Community Group format and mapped to Material 3 and Cupertino themes. | DONE |
+| `THM-002` | P3 | MUST | Themes **MUST** provide light and dark modes and follow the system setting by default; high-contrast variants **SHOULD** be supported. | DONE |
+| `THM-003` | P3 | MUST | Plux **MUST** inherit the host theme by default, and **MUST** support white-label **brand overlays** selectable at runtime by the host (one app, many brands). | DONE |
+| `THM-004` | P3 | MUST | Typography **MUST** define per-script font families with fallbacks (e.g. Latin, Cyrillic, Arabic, Devanagari, Ethiopic) so no text renders as missing glyphs. | WIP |
 | `THM-005` | P3 | MUST | Icons **MUST** include Material Symbols and Cupertino icons (subset at compile time) and custom SVG icon sets. | SPEC |
 
 ### 14.8 Assets

@@ -47,8 +47,9 @@ final class Harness {
   /// release 5, offline.
   Future<PluxStartup> startFrom(
     Uint8List app,
-    Map<String, Uint8List> plugins,
-  ) async {
+    Map<String, Uint8List> plugins, {
+    PluxThemeSource themeSource = PluxThemeSource.host,
+  }) async {
     server.release = null;
     final baseline = await server.baseline(5, app, plugins);
     return Plux.initializeWith(
@@ -65,6 +66,7 @@ final class Harness {
         ],
         storageDirectory: dir,
         httpClient: _client,
+        themeSource: themeSource,
         onError: (e, _) => errors.add(e),
         fallbackBuilder: (_, e) =>
             Text('fallback ${e.code.id}', textDirection: TextDirection.ltr),

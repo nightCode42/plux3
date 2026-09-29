@@ -24,6 +24,21 @@
         "$value": "#6750A4"
       }
     },
+    "font": {
+      "$type": "fontFamily",
+      "script": {
+        "Arab": {
+          "$value": [
+            "Noto Sans Arabic"
+          ]
+        },
+        "Ethi": {
+          "$value": [
+            "Noto Sans Ethiopic"
+          ]
+        }
+      }
+    },
     "space": {
       "$type": "dimension",
       "md": {
