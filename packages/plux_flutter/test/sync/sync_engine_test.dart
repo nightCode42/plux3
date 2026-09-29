@@ -4,6 +4,7 @@
 import 'dart:io';
 import 'dart:math';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:plux_flutter/src/errors/plux_exception.dart';
@@ -29,6 +30,11 @@ void main() {
   final loansDelta = goldens
       .deltas['compiled-loan-calculator/loans.pxb-to-features/tasks.pxb']!;
 
+  final logo = File(
+    '../../schema/testdata/documents/loan-calculator/assets/images/logo.png',
+  ).readAsBytesSync();
+  final logoHash = sha256.convert(logo).toString();
+  final logoPath = '/v1/objects/assets/${logoHash.substring(0, 2)}/$logoHash';
   late FakePluxServer server;
   late String root;
   late http.Client client;
@@ -103,7 +109,7 @@ void main() {
     expect(r.outcome, SyncOutcome.staged, reason: '${r.error}');
     expect(r.sequence, 10);
     expect(r.pluginsUpdated, 1);
-    expect(r.bytes, demo.length + loans.length);
+    expect(r.bytes, demo.length + loans.length + logo.length);
     expect(r.deltaRatio, 1);
     expect(events.first, isA<SyncChecking>());
     expect(events.whereType<SyncDownloading>(), isNotEmpty);
@@ -112,11 +118,54 @@ void main() {
     expect(store.pointer.staged, 10);
     expect(store.pointer.highestAccepted, 10);
     expect(store.record(10)!.bundles.map((b) => b.key), ['', 'loans']);
+    expect(store.record(10)!.assets, [logoHash]);
+    expect(store.hasObject(ObjectKind.assets, logoHash), isTrue);
     store.activate();
     expect(checkComplete(root), 10);
     expect(server.registrations, 1);
     expect(await credentials.read(), isNotNull);
   });
+
+  test('an asset file that does not match its signed hash fails the sync, '
+      'then the next sync fetches it again [AST-001]', () async {
+    server.release = FakeRelease(10, demo, {'loans': loans});
+    server.faults[logoPath] = [const CorruptFault()];
+    final (r, _) = await sync();
+    expect(r.outcome, SyncOutcome.failed);
+    expect(r.error?.code, PluxErrorCode.assetHashMismatch);
+    final store = ReleaseStore.open(root);
+    expect(store.pointer.staged, isNull);
+    expect(store.hasObject(ObjectKind.assets, logoHash), isFalse);
+    final (again, _) = await sync();
+    expect(again.outcome, SyncOutcome.staged, reason: '${again.error}');
+  });
+
+  test(
+    'asset files the store holds are not downloaded again, and each is '
+    'fetched once whatever the number of bundles using it [AST-001]',
+    () async {
+      await firstRelease();
+      server.release = FakeRelease(11, demo, {'loans': loans, 'tasks': tasks});
+      final before = server.requests.length;
+      final (r, _) = await sync();
+      expect(r.outcome, SyncOutcome.staged, reason: '${r.error}');
+      expect(
+        server.requests.sublist(before).where((p) => p.contains('/assets/')),
+        isEmpty,
+      );
+      expect(ReleaseStore.open(root).record(11)!.assets, contains(logoHash));
+    },
+  );
+
+  test(
+    'a release whose assets exceed the quota is refused [SYN-012]',
+    () async {
+      server.release = FakeRelease(10, demo, {'loans': loans});
+      final (r, _) = await sync(quota: demo.length + loans.length + 1);
+      expect(r.error?.code, PluxErrorCode.diskQuotaExceeded);
+      expect(r.error?.message, contains('assets'));
+    },
+  );
 
   test(
     'an unchanged release costs one small request [NFR-006] [SYN-013]',

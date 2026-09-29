@@ -767,6 +767,46 @@
       "description": "Total size of one app release: the app bundle and every plugin bundle."
     },
     {
+      "key": "runtime.imageDiskCacheBytes",
+      "unit": "bytes",
+      "default": 67108864,
+      "max": 1073741824,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P3",
+      "requirements": [
+        "RT-014",
+        "AST-002"
+      ],
+      "description": "Disk space the runtime's cache of remote images may use on one device."
+    },
+    {
+      "key": "runtime.imageSize",
+      "unit": "bytes",
+      "default": 10485760,
+      "max": 104857600,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P3",
+      "requirements": [
+        "AST-002",
+        "SEC-104"
+      ],
+      "description": "Size of one remote image the runtime downloads; a larger one is refused."
+    },
+    {
       "key": "runtime.sectionCacheBytes",
       "unit": "bytes",
       "default": 8388608,

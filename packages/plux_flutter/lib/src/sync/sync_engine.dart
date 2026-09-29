@@ -11,6 +11,9 @@ library;
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
+import 'package:plux_flutter/src/assets/assets.dart';
+import 'package:plux_flutter/src/bundle/container.dart';
 import 'package:plux_flutter/src/delta/delta.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/mmap/mapped_file.dart';
@@ -62,6 +65,7 @@ final class SyncConfig {
     required this.verifierLimits,
     this.diskQuota = 200 * 1024 * 1024,
     this.maxBundleSize = 20 * 1024 * 1024,
+    this.assets = AssetDevice.plain,
   });
 
   /// The app.
@@ -90,6 +94,9 @@ final class SyncConfig {
 
   /// The largest bundle accepted (`bundle.pluginSize`).
   final int maxBundleSize;
+
+  /// What decides which file of each asset this device downloads.
+  final AssetDevice assets;
 }
 
 /// Runs syncs against one store.
@@ -203,7 +210,7 @@ final class SyncEngine {
         for (final w in wanted)
           if (!store.hasObject(ObjectKind.bundles, w.hash)) w,
       ];
-      final total = missing.fold<int>(0, (n, w) => n + (sizes[w.hash] ?? 0));
+      var total = missing.fold<int>(0, (n, w) => n + (sizes[w.hash] ?? 0));
       if (store.keptUsage() + total > config.diskQuota) {
         throw PluxException(
           PluxErrorCode.diskQuotaExceeded,
@@ -239,10 +246,17 @@ final class SyncEngine {
         for (var i = 0; i < downloader.parallelism && i < missing.length; i++)
           worker(),
       ]);
+      final assets = await _obtainAssets(
+        wanted,
+        total,
+        (n) => total += n,
+        progress,
+      );
       final record = ReleaseRecord(
         sequence: seq,
         source: ReleaseSource.sync,
         bundles: wanted,
+        assets: assets,
         signed: m.signed,
         signatures: res.signatures,
         killSwitches: control.killSwitches,
@@ -294,6 +308,76 @@ final class SyncEngine {
       bytes: bytes,
       error: e,
     );
+  }
+
+  /// Downloads the asset files the release's bundles index that the
+  /// store lacks, one file per asset as this device prefers it (AST-001),
+  /// each checked against the SHA-256 its signed bundle lists; returns the
+  /// files the release uses. [bundleBytes] were already counted against
+  /// the quota; [planned] learns the bytes the assets add to the download.
+  Future<List<String>> _obtainAssets(
+    List<RecordBundle> bundles,
+    int bundleBytes,
+    void Function(int) planned,
+    void Function(int) progress,
+  ) async {
+    final sizes = <String, int>{};
+    for (final b in bundles) {
+      final file = MappedFile.open(
+        store.objectPath(ObjectKind.bundles, b.hash),
+      );
+      try {
+        for (final a in assetsOf(BundleContainer.parse(file.bytes))) {
+          final files = preferredFiles(a, config.assets);
+          if (files.isEmpty) continue;
+          sizes[files.first] = fileSize(a, files.first);
+        }
+      } finally {
+        file.release();
+      }
+    }
+    final missing = [
+      for (final h in sizes.keys)
+        if (!store.hasObject(ObjectKind.assets, h)) h,
+    ]..sort();
+    final needed = missing.fold<int>(0, (n, h) => n + sizes[h]!);
+    if (store.keptUsage() + bundleBytes + needed > config.diskQuota) {
+      throw PluxException(
+        PluxErrorCode.diskQuotaExceeded,
+        'the release and its assets need ${store.keptUsage() + bundleBytes + needed} bytes, over the quota of ${config.diskQuota}',
+      );
+    }
+    planned(needed);
+    final queue = [...missing];
+    Future<void> worker() async {
+      while (queue.isNotEmpty) {
+        final h = queue.removeAt(0);
+        final part = store.partPath('asset-$h');
+        await downloader.fetch(
+          Download(
+            api.endpoint.resolve('v1/objects/assets/${h.substring(0, 2)}/$h'),
+            part,
+            expectedSize: sizes[h],
+          ),
+          onBytes: progress,
+        );
+        final got = sha256.convert(File(part).readAsBytesSync()).toString();
+        if (got != h) {
+          File(part).deleteSync();
+          throw PluxException(
+            PluxErrorCode.assetHashMismatch,
+            'asset file $h arrived as $got',
+          );
+        }
+        store.commitObject(ObjectKind.assets, h, part);
+      }
+    }
+
+    await Future.wait([
+      for (var i = 0; i < downloader.parallelism && i < missing.length; i++)
+        worker(),
+    ]);
+    return sizes.keys.toList()..sort();
   }
 
   /// A token for this sync, registering the device on first use.

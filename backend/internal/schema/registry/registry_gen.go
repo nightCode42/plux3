@@ -2594,6 +2594,7 @@ var valueTypes = [...]ValueType{
 		Fields: []Field{
 			{Name: "asset", ID: 1, Type: "asset", Required: false, Default: "", Revision: 1, Deprecated: nil, Description: "A bundled asset."},
 			{Name: "url", ID: 2, Type: "string", Required: false, Default: "", Revision: 1, Deprecated: nil, Description: "An HTTPS URL on a domain the plugin declares (SEC-080)."},
+			{Name: "thumbHash", ID: 3, Type: "string", Required: false, Default: "", Revision: 1, Deprecated: nil, Description: "A ThumbHash of the image, base64-encoded, shown blurred until the image loads (RT-014)."},
 		},
 	},
 	{

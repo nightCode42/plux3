@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/ed25519"
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"io"
@@ -159,6 +160,7 @@ func TestPublishWithTheCLIAndSyncADevice(t *testing.T) {
 	var base struct {
 		ReleaseSequence int64
 		Bundles         []struct{ Plugin, SHA256, File string }
+		Assets          []struct{ SHA256, File string }
 	}
 	decode(t, run(0, "pull", "-C", project, "--env", "staging", "-o", filepath.Join(dir, "host", "assets", "plux"), "--json"), &base)
 	if base.ReleaseSequence != 1 || len(base.Bundles) != 2 || len(keys.Keys) != 1 {
@@ -175,6 +177,18 @@ func TestPublishWithTheCLIAndSyncADevice(t *testing.T) {
 		}
 		if b.Plugin == "" {
 			appBundle = data
+		}
+	}
+	// The logo's WebP variants — a 1×1 image has only its 3× one — each
+	// its own file named by its hash (AST-001).
+	if len(base.Assets) == 0 {
+		t.Errorf("baseline assets: %+v", base.Assets)
+	}
+	for _, a := range base.Assets {
+		data, err := os.ReadFile(filepath.Join(dir, "host", "assets", "plux", a.File))
+		sum := sha256.Sum256(data)
+		if err != nil || hex.EncodeToString(sum[:]) != a.SHA256 || !bytes.HasPrefix(data, []byte("RIFF")) {
+			t.Errorf("the baseline asset %s: %v", a.File, err)
 		}
 	}
 	var list struct{ Releases []struct{ Sequence int64 } }

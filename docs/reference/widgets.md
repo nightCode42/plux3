@@ -3067,6 +3067,7 @@ ID 15 · revision 1
 |---|---|---|---|---|
 | `asset` | 1 | `asset` | — | A bundled asset. |
 | `url` | 2 | `string` | — | An HTTPS URL on a domain the plugin declares (SEC-080). |
+| `thumbHash` | 3 | `string` | — | A ThumbHash of the image, base64-encoded, shown blurred until the image loads (RT-014). |
 
 ### InputBorder
 

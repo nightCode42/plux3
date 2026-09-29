@@ -112,6 +112,10 @@ enum PluxLimit {
   pxlStringLength('pxl.stringLength', PluxLimitUnit.codepoints, 65536, 0, 1048576),
   /// Total size of one app release: the app bundle and every plugin bundle.
   releaseAppSize('release.appSize', PluxLimitUnit.bytes, 104857600, 0, 1073741824),
+  /// Disk space the runtime's cache of remote images may use on one device.
+  runtimeImageDiskCacheBytes('runtime.imageDiskCacheBytes', PluxLimitUnit.bytes, 67108864, 0, 1073741824),
+  /// Size of one remote image the runtime downloads; a larger one is refused.
+  runtimeImageSize('runtime.imageSize', PluxLimitUnit.bytes, 10485760, 0, 104857600),
   /// Memory the runtime's cache of decoded page and component sections may
   /// hold.
   runtimeSectionCacheBytes('runtime.sectionCacheBytes', PluxLimitUnit.bytes, 8388608, 0, 268435456),

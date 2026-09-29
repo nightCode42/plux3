@@ -448,6 +448,11 @@ var registry = []Definition{
 		"Download the bundle again.", false,
 	},
 	{
+		AssetHashMismatch, "ASSET_HASH_MISMATCH", SeverityError, "Asset file hash mismatch",
+		"An asset file's SHA-256 differs from the hash its signed bundle lists: the download is corrupt or has been tampered with (AST-001).",
+		"Nothing to change in the app: the runtime discards the file and keeps the active release; sync again, and check the CDN or proxy if it persists.", false,
+	},
+	{
 		SyncFailed, "SYNC_FAILED", SeverityError, "Sync failed",
 		"The runtime could not complete a sync: the server was unreachable or answered with an error, a download failed after its retries, or a bundle failed verification after the full-bundle retry (SYN-010, SYN-011). The cause is in the error's details.",
 		"The device keeps its current release and retries at the next start or manual sync. Check the server's health and the device's connectivity.", false,

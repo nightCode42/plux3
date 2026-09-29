@@ -187,6 +187,21 @@
                   }
                 },
                 "type": "Image"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-000000000209",
+                "props": {
+                  "height": 20.0,
+                  "semanticLabel": "dot",
+                  "source": {
+                    "asset": {
+                      "$asset": "01c0c450-6c00-7000-8000-000000000207"
+                    }
+                  },
+                  "width": 20.0
+                },
+                "testId": "asset-image",
+                "type": "Image"
               }
             ],
             "id": "01c0c450-6c00-7000-8000-0000000001f7",

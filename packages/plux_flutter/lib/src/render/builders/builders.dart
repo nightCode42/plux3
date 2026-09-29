@@ -468,20 +468,42 @@ Widget _transform(NodeContext c) {
   return out ?? const SizedBox.shrink();
 }
 
-/// `Image` from an asset of the release or a URL, decoded at the size the
-/// document gives (`cacheWidth`, `cacheHeight`), with its `loading` and
-/// `error` slots.
+/// `Image` from an asset of the release or a URL (AST-001, AST-002),
+/// decoded at the size the document gives (`cacheWidth`, `cacheHeight`),
+/// else at its laid-out size (RT-014); with its `loading` and `error`
+/// slots, and the source's ThumbHash shown until the first frame when the
+/// document gives one and no `loading` slot.
 Widget _image(NodeContext c) {
-  var provider =
-      c.decode(ImageProps.source, decodeImageSource) ?? c.missing('source');
-  final cacheWidth = c.decode(ImageProps.cacheWidth, asInt);
-  final cacheHeight = c.decode(ImageProps.cacheHeight, asInt);
-  provider = ResizeImage.resizeIfNeeded(cacheWidth, cacheHeight, provider);
-  final loading = c.hasSlot(ImageSlots.loading);
   final width = c.decode(ImageProps.width, asDouble);
   final height = c.decode(ImageProps.height, asDouble);
-  return Image(
-    image: provider,
+  final provider = c.decode(ImageProps.source, decodeImageSource);
+  if (provider == null) {
+    // An asset the release lacks or a URL the plugin may not reach was
+    // reported where it was resolved; like a failed load, it is contained.
+    return c.slot(ImageSlots.error) ?? SizedBox(width: width, height: height);
+  }
+  final placeholder = c.decode(ImageProps.source, decodeImagePlaceholder);
+  final cacheWidth = c.decode(ImageProps.cacheWidth, asInt);
+  final cacheHeight = c.decode(ImageProps.cacheHeight, asInt);
+  final loading = c.hasSlot(ImageSlots.loading);
+  final fit = c.decode(ImageProps.fit, decodeBoxFit);
+  final alignment =
+      c.decode(ImageProps.alignment, decodeAlignment) ?? Alignment.center;
+
+  Widget image(ImageProvider<Object> p) => Image(
+    image: p,
+    frameBuilder: placeholder == null || loading
+        ? null
+        : (context, child, frame, sync) => frame != null || sync
+              ? child
+              : Image(
+                  image: placeholder,
+                  width: width,
+                  height: height,
+                  fit: fit ?? BoxFit.cover,
+                  alignment: alignment,
+                  excludeFromSemantics: true,
+                ),
     loadingBuilder: loading
         ? (context, child, progress) =>
               progress == null ? child : c.slot(ImageSlots.loading) ?? child
@@ -499,9 +521,8 @@ Widget _image(NodeContext c) {
     height: height,
     color: c.decode(ImageProps.color, asColor),
     colorBlendMode: c.decode(ImageProps.colorBlendMode, decodeBlendMode),
-    fit: c.decode(ImageProps.fit, decodeBoxFit),
-    alignment:
-        c.decode(ImageProps.alignment, decodeAlignment) ?? Alignment.center,
+    fit: fit,
+    alignment: alignment,
     repeat:
         c.decode(ImageProps.repeat, decodeImageRepeat) ?? ImageRepeat.noRepeat,
     matchTextDirection:
@@ -511,6 +532,43 @@ Widget _image(NodeContext c) {
     filterQuality:
         c.decode(ImageProps.filterQuality, decodeFilterQuality) ??
         FilterQuality.medium,
+  );
+
+  if (cacheWidth != null || cacheHeight != null) {
+    return image(ResizeImage.resizeIfNeeded(cacheWidth, cacheHeight, provider));
+  }
+  // Decode at the size the image is laid out at, in physical pixels, never
+  // larger than the file (RT-014).
+  ImageProvider<Object> sized(double? w, double? h, double ratio) {
+    int? px(double? logical) =>
+        logical != null && logical.isFinite && logical > 0
+        ? (logical * ratio).ceil()
+        : null;
+    final pw = px(w), ph = px(h);
+    return pw == null && ph == null
+        ? provider
+        : ResizeImage(
+            provider,
+            width: pw,
+            height: ph,
+            policy: ResizeImagePolicy.fit,
+          );
+  }
+
+  if (width != null || height != null) {
+    return Builder(
+      builder: (context) =>
+          image(sized(width, height, MediaQuery.devicePixelRatioOf(context))),
+    );
+  }
+  return LayoutBuilder(
+    builder: (context, constraints) => image(
+      sized(
+        constraints.maxWidth,
+        constraints.maxHeight,
+        MediaQuery.devicePixelRatioOf(context),
+      ),
+    ),
   );
 }
 

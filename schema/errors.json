@@ -736,6 +736,14 @@
       "fix": "Download the bundle again."
     },
     {
+      "code": "PLX-3045",
+      "reason": "ASSET_HASH_MISMATCH",
+      "severity": "error",
+      "title": "Asset file hash mismatch",
+      "cause": "An asset file's SHA-256 differs from the hash its signed bundle lists: the download is corrupt or has been tampered with (AST-001).",
+      "fix": "Nothing to change in the app: the runtime discards the file and keeps the active release; sync again, and check the CDN or proxy if it persists."
+    },
+    {
       "code": "PLX-3050",
       "reason": "SYNC_FAILED",
       "severity": "error",

@@ -270,7 +270,7 @@ final class NodeContextImpl implements NodeContext {
 
   @override
   ImageProvider<Object>? image({String? asset, String? url}) =>
-      scope.services.image(asset: asset, url: url);
+      scope.services.image(scope, asset: asset, url: url);
 
   bool _visible(fbs.Node n) {
     final v = n.visible;

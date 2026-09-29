@@ -666,6 +666,7 @@
     "type/IconData/field/set": 2,
     "type/ImageSource": 15,
     "type/ImageSource/field/asset": 1,
+    "type/ImageSource/field/thumbHash": 3,
     "type/ImageSource/field/url": 2,
     "type/InputBorder": 16,
     "type/InputBorder/field/borderRadius": 3,

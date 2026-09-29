@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:plux_flutter/plux_flutter.dart';
 import 'package:plux_flutter/src/bundle/container.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
+import 'package:plux_flutter/src/render/generated/render.g.dart';
 import 'package:plux_flutter/src/render/scope.dart';
 import 'package:plux_flutter/src/schema/registry.g.dart';
 
@@ -237,6 +238,64 @@ void main() {
     expect(built, greaterThan(5));
     expect(built, lessThan(100), reason: 'of 1000 items, only those in view');
   });
+
+  testWidgets(
+    'an image URL off the plugin\'s domains, or not HTTPS, is blocked and '
+    'contained [SEC-080] [AST-002]',
+    (tester) async {
+      final image = _widget('Image');
+      fbs.NodeObjectBuilder img(int url) => fbs.NodeObjectBuilder(
+        widget: image.id,
+        props: [
+          fbs.PropObjectBuilder(
+            id: image.props['source'],
+            value: fbs.ValueObjectBuilder(
+              kind: fbs.ValueKind.Object,
+              entries: [
+                fbs.EntryObjectBuilder(
+                  key: ImageSourceFields.url,
+                  value: _str(url),
+                ),
+              ],
+            ),
+          ),
+          fbs.PropObjectBuilder(
+            id: image.props['width'],
+            value: fbs.ValueObjectBuilder(kind: fbs.ValueKind.Double, d: 20),
+          ),
+        ],
+      );
+      await show(
+        tester,
+        _galleryWith(
+          [
+            fbs.NodeObjectBuilder(widget: column.id, children: [1, 2, 3]),
+            img(2),
+            img(3),
+            fbs.NodeObjectBuilder(
+              widget: text.id,
+              props: [
+                fbs.PropObjectBuilder(id: text.props['data'], value: _str(4)),
+              ],
+            ),
+          ],
+          [
+            '',
+            'layout',
+            'https://evil.example.net/a.png',
+            'http://example.com/a.png',
+            'still here',
+          ],
+        ),
+      );
+      expect(find.text('still here'), findsOneWidget);
+      expect(find.byType(Image), findsNothing);
+      expect(
+        h.errors.where((e) => e.code == PluxErrorCode.outboundRequestBlocked),
+        hasLength(2),
+      );
+    },
+  );
 
   testWidgets('a node outside a page is a programming error', (tester) async {
     await tester.pumpWidget(const SizedBox());

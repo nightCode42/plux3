@@ -4392,6 +4392,8 @@ abstract final class ImageSourceFields {
   static const int asset = 1;
   /// url.
   static const int url = 2;
+  /// thumbHash.
+  static const int thumbHash = 3;
 }
 
 /// Permanent IDs of the fields of InputBorder.

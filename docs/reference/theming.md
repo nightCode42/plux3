@@ -39,4 +39,4 @@ Under `pluxOverHost` and `plux`, the Cupertino theme is derived: `primary` → `
 
 ## 5. Fonts per script
 
-`font.script.<ISO 15924 code>` (`font.script.Ethi`, `font.script.Arab`, …) is a `fontFamily` token listing the families for one script. Under every source, the families of all of them, in path order, are appended to the fallback list of every Material text style and of the Cupertino text styles, so a string in any listed script finds a glyph (`THM-004`). Families the host bundles are used by name.
+`font.script.<ISO 15924 code>` (`font.script.Ethi`, `font.script.Arab`, …) is a `fontFamily` token listing the families for one script. Under every source, the families of all of them, in path order, are appended to the fallback list of every Material text style and of the Cupertino text styles, so a string in any listed script finds a glyph (`THM-004`). Families the host bundles are used by name; a font file the app uploads as an asset (TTF or OTF) is downloaded with the release, checked against its hash and registered under the family its `name` table gives, so tokens name it as its designers do ("Noto Sans Ethiopic").

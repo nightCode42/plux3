@@ -1023,7 +1023,7 @@ const List<ValueTypeDescriptor> valueTypeDescriptors = [
     'ImageSource',
     15,
     revision: 1,
-    fields: {'asset': 1, 'url': 2},
+    fields: {'asset': 1, 'url': 2, 'thumbHash': 3},
   ),
   ValueTypeDescriptor(
     'InputBorder',

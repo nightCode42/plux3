@@ -10,9 +10,14 @@ library;
 import 'dart:async';
 import 'dart:developer' as developer;
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:plux_flutter/src/assets/assets.dart';
+import 'package:plux_flutter/src/assets/avif_probe.dart';
+import 'package:plux_flutter/src/assets/fonts.dart';
+import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/core/config.dart';
 import 'package:plux_flutter/src/core/features.dart';
@@ -31,6 +36,7 @@ import 'package:plux_flutter/src/sync/sync_engine.dart';
 import 'package:plux_flutter/src/sync/sync_event.dart';
 import 'package:plux_flutter/src/sync/sync_worker.dart';
 import 'package:plux_flutter/src/verify/bundle_verifier.dart';
+import 'package:plux_flutter/src/verify/manifest.dart';
 
 /// What `Plux.initialize` found (SYN-003).
 final class PluxStartup {
@@ -80,7 +86,11 @@ final class PluxRuntime with WidgetsBindingObserver {
     this._store,
     this._worker,
     this._limits,
-  );
+    this._root,
+    this.assets,
+  ) {
+    active.addListener(() => unawaited(_loadFonts(active.value)));
+  }
 
   /// Starts the runtime: opens the store, starts the sync isolate, imports
   /// the baseline when there is no release, counts the launch, and syncs
@@ -105,6 +115,17 @@ final class PluxRuntime with WidgetsBindingObserver {
         maxVisits: PluxLimit.bundleVerifierTables.defaultValue,
       );
       final credentials = overrides.credentials ?? _platformCredentials(config);
+      final assets = AssetDevice(
+        pixelRatio:
+            ui
+                .PlatformDispatcher
+                .instance
+                .views
+                .firstOrNull
+                ?.devicePixelRatio ??
+            3,
+        avif: await decodesAvif(),
+      );
       final worker = await SyncWorker.start(
         SyncWorkerConfig(
           storeRoot: root,
@@ -133,6 +154,7 @@ final class PluxRuntime with WidgetsBindingObserver {
             verifierLimits: limits,
             diskQuota:
                 config.diskQuota ?? PluxLimit.deviceDiskQuota.defaultValue,
+            assets: assets,
           ),
         ),
       );
@@ -143,6 +165,8 @@ final class PluxRuntime with WidgetsBindingObserver {
         store,
         worker,
         limits,
+        root,
+        assets,
       );
       final startup = await rt._startup();
       WidgetsBinding.instance.addObserver(rt);
@@ -164,6 +188,13 @@ final class PluxRuntime with WidgetsBindingObserver {
   final ReleaseStore _store;
   final SyncWorker _worker;
   final VerifierLimits _limits;
+  final String _root;
+
+  /// Which file of each asset this device uses (ADR-0027 Revision).
+  final AssetDevice assets;
+
+  final VerifiedAssets _verified = VerifiedAssets();
+  final Set<String> _fonts = {};
   final StreamController<SyncEvent> _events = StreamController.broadcast();
 
   /// The release pages render from; replaced only by activation or revert.
@@ -177,7 +208,32 @@ final class PluxRuntime with WidgetsBindingObserver {
     config: config,
     report: _report,
     failure: (e) => unawaited(failure(e)),
+    imageCacheDirectory: '$_root/images',
+    assets: assets,
+    verified: _verified,
   );
+
+  /// Loads the app's font assets under the families their files name, so
+  /// `fontFamily` tokens and script fallbacks find them (THM-004). A font
+  /// that cannot be loaded is reported; text falls back to other families.
+  Future<void> _loadFonts(ActiveRelease? release) async {
+    if (release == null) return;
+    try {
+      await loadFonts(
+        {
+          for (final a in assetsOf(release.bundle('').container))
+            if (a.mediaType == 'font/ttf' || a.mediaType == 'font/otf')
+              hexEncode(a.hash ?? const []): ?release.assetPath(
+                hexEncode(a.hash ?? const []),
+              ),
+        },
+        _fonts,
+        _verified,
+      );
+    } on PluxException catch (e) {
+      _report(e);
+    }
+  }
 
   /// What debugging tools see (`plux_devtools`).
   late final RuntimeDiagnostics diagnostics = RuntimeDiagnostics(

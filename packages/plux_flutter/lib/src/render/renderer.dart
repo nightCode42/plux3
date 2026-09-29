@@ -11,10 +11,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
+import 'package:plux_flutter/src/assets/assets.dart';
+import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/core/config.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/platform/platform_services.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
 import 'package:plux_flutter/src/pxl/vm.dart';
 import 'package:plux_flutter/src/render/builders/builders.dart';
@@ -45,9 +49,13 @@ final class PluxRenderer implements PageRenderer, RenderServices {
     required this.config,
     required this.report,
     required this.failure,
+    required this.imageCacheDirectory,
+    this.assets = AssetDevice.plain,
+    VerifiedAssets? verified,
     int? cacheEntries,
     int? cacheBytes,
-  }) : cache = SectionCache(
+  }) : _verified = verified ?? VerifiedAssets(),
+       cache = SectionCache(
          maxEntries:
              cacheEntries ?? PluxLimit.runtimeSectionCacheEntries.defaultValue,
          maxBytes:
@@ -65,6 +73,16 @@ final class PluxRenderer implements PageRenderer, RenderServices {
 
   /// Decoded page and component sections (RT-013).
   final SectionCache cache;
+
+  /// Which file of an asset this device shows.
+  final AssetDevice assets;
+
+  /// Where remote images are cached on disk.
+  final String imageCacheDirectory;
+
+  final VerifiedAssets _verified;
+  ImageDiskCache? _imageCache;
+  http.Client? _client;
 
   final Expando<Map<String, BundleView>> _views = Expando();
 
@@ -96,10 +114,73 @@ final class PluxRenderer implements PageRenderer, RenderServices {
   @override
   IconData? icon(String name, String set) => null;
 
-  /// Images by URL; assets of the release arrive with the asset store.
   @override
-  ImageProvider<Object>? image({String? asset, String? url}) =>
-      url == null ? null : NetworkImage(url);
+  ImageProvider<Object>? image(
+    RenderScope scope, {
+    String? asset,
+    String? url,
+  }) => asset != null
+      ? _asset(scope, asset)
+      : url != null
+      ? _remote(scope, url)
+      : null;
+
+  /// The stored file of an asset, the best this device can show that the
+  /// release holds (AST-001).
+  ImageProvider<Object>? _asset(RenderScope scope, String id) {
+    final a = scope.plugin.asset(id) ?? scope.app.asset(id);
+    if (a != null) {
+      for (final hash in preferredFiles(a, assets)) {
+        final path = scope.release.assetPath(hash);
+        if (path != null) return PluxAssetImage(path, hash, _verified);
+      }
+    }
+    scope.report(
+      PluxException(
+        PluxErrorCode.propValueInvalid,
+        a == null
+            ? 'asset $id is not in the release'
+            : 'asset $id has no file this device can show',
+      ),
+      path: scope.path,
+    );
+    return null;
+  }
+
+  /// A remote image: HTTPS, on a domain the plugin declares (SEC-080,
+  /// AST-002), else blocked and reported (PLX-6030).
+  ImageProvider<Object>? _remote(RenderScope scope, String url) {
+    final uri = Uri.tryParse(url);
+    final domains =
+        scope.release.meta(scope.pluginKey).capabilities?.networkDomains ??
+        const <String>[];
+    if (uri == null ||
+        uri.scheme != 'https' ||
+        !domainAllowed(uri.host, domains)) {
+      scope.report(
+        PluxException(
+          PluxErrorCode.outboundRequestBlocked,
+          'the image $url is not on an HTTPS domain the plugin declares',
+        ),
+        path: scope.path,
+      );
+      return null;
+    }
+    final limits = scope.release.limits;
+    return PluxNetworkImage(
+      uri,
+      cache: _imageCache ??= ImageDiskCache(
+        imageCacheDirectory,
+        maxBytes:
+            limits[PluxLimit.runtimeImageDiskCacheBytes.key] ??
+            PluxLimit.runtimeImageDiskCacheBytes.defaultValue,
+      ),
+      client: _client ??= (config.httpClient ?? platformHttpClient)(),
+      maxBytes:
+          limits[PluxLimit.runtimeImageSize.key] ??
+          PluxLimit.runtimeImageSize.defaultValue,
+    );
+  }
 
   @override
   Widget fallback(BuildContext context, PluxException error) =>

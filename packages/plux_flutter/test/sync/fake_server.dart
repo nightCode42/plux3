@@ -15,6 +15,8 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:cryptography/cryptography.dart' show SimpleKeyPair;
 import 'package:cryptography/dart.dart';
+import 'package:plux_flutter/src/assets/assets.dart';
+import 'package:plux_flutter/src/bundle/container.dart';
 import 'package:plux_flutter/src/verify/jcs.dart';
 import 'package:plux_flutter/src/verify/manifest.dart';
 
@@ -148,8 +150,23 @@ final class FakePluxServer {
       sha256.convert(pub).toString().substring(0, 32),
     );
     s._server.listen(s._handle);
+    for (final f in fixtureAssets()) {
+      s.serveObject('assets', f);
+    }
     return s;
   }
+
+  /// The asset files of the conformance projects, which their golden
+  /// bundles index.
+  static List<Uint8List> fixtureAssets() => [
+    for (final e in Directory(
+      '../../schema/testdata/documents',
+    ).listSync(recursive: true))
+      if (e is File &&
+          e.path.contains('/assets/') &&
+          !e.path.endsWith('index.json'))
+        e.readAsBytesSync(),
+  ];
 
   final HttpServer _server;
   final SimpleKeyPair _key;
@@ -234,6 +251,20 @@ final class FakePluxServer {
         'signature': await signHash(value.sublist(16, 48)),
       });
     }
+    // The asset files the bundles index, as pull writes them.
+    final assets = <Map<String, Object?>>[];
+    final wanted = {
+      for (final b in [app, ...plugins.values])
+        for (final a in assetsOf(BundleContainer.parse(b)))
+          ...preferredFiles(a, AssetDevice.plain).take(1),
+    };
+    for (final path in _objects.keys) {
+      final h = path.split('/').last;
+      if (path.startsWith('/v1/objects/assets/') && wanted.contains(h)) {
+        files['assets/$h'] = _objects[path]!;
+        assets.add({'sha256': h, 'file': 'assets/$h'});
+      }
+    }
     files['baseline.json'] = Uint8List.fromList(
       utf8.encode(
         jsonEncode({
@@ -242,6 +273,7 @@ final class FakePluxServer {
           'channel': channel,
           'releaseSequence': sequence,
           'bundles': entries,
+          'assets': assets,
         }),
       ),
     );

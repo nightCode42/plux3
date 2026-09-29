@@ -588,6 +588,7 @@ type baseline struct {
 	Channel     string          `json:"channel"`
 	Sequence    int64           `json:"releaseSequence"`
 	Bundles     []baselineEntry `json:"bundles"`
+	Assets      []baselineAsset `json:"assets"`
 	Keys        []baselineKey   `json:"keys"`
 }
 
@@ -624,7 +625,7 @@ func (e env) pull(args []string) int {
 	if _, code, ok := parse(set, args, e.stderr, "Usage: plux pull [-C dir] [--env key] [--channel key] [-o dir] [--json]\n\n"+
 		"Writes the channel's current release and the root public keys into the host app's\n"+
 		"assets (run it from the host app, or pass -o):\n"+
-		"<out>/bundles/<key>.pxb, <out>/keys.json and <out>/baseline.json.", 0); !ok {
+		"<out>/bundles/<key>.pxb, <out>/assets/<sha256>, <out>/keys.json and <out>/baseline.json.", 0); !ok {
 		return code
 	}
 	if err := c.resolve(); err != nil {
@@ -641,7 +642,7 @@ func (e env) pull(args []string) int {
 	if err != nil {
 		return e.fail("pull", err)
 	}
-	return e.emit(c.json, b, fmt.Sprintf("Pulled release %d (%d bundles, %d keys) into %s.", b.Sequence, len(b.Bundles), len(b.Keys), *out))
+	return e.emit(c.json, b, fmt.Sprintf("Pulled release %d (%d bundles, %d asset files, %d keys) into %s.", b.Sequence, len(b.Bundles), len(b.Assets), len(b.Keys), *out))
 }
 
 func pullBaseline(ctx context.Context, cl *clients, c common, envKey, channel, dir string) (baseline, error) {
@@ -664,7 +665,15 @@ func pullBaseline(ctx context.Context, cl *clients, c common, envKey, channel, d
 	if err := os.MkdirAll(filepath.Join(dir, "bundles"), 0o755); err != nil { //nolint:gosec // G301: project files.
 		return baseline{}, fmt.Errorf("create %s: %w", dir, err)
 	}
-	if out.Bundles, err = cl.writeBundles(ctx, dir, rel.Msg.GetVersions()); err != nil {
+	var bundles [][]byte
+	if out.Bundles, bundles, err = cl.writeBundles(ctx, dir, rel.Msg.GetVersions()); err != nil {
+		return baseline{}, err
+	}
+	files, err := baselineAssetFiles(bundles)
+	if err != nil {
+		return baseline{}, err
+	}
+	if out.Assets, err = cl.writeAssets(ctx, dir, files); err != nil {
 		return baseline{}, err
 	}
 	keys, err := cl.manifest.GetRootKeys(ctx, connect.NewRequest(&pluxv1.GetRootKeysRequest{AppId: c.app, Environment: envKey}))
@@ -702,23 +711,25 @@ func channelSequence(ctx context.Context, cl *clients, envID, channel string) (i
 
 // writeBundles downloads and writes a release's bundles; the app bundle
 // is bundles/_app.pxb, since no plugin key starts with an underscore.
-func (cl *clients) writeBundles(ctx context.Context, dir string, versions []*pluxv1.PluginVersion) ([]baselineEntry, error) {
+func (cl *clients) writeBundles(ctx context.Context, dir string, versions []*pluxv1.PluginVersion) ([]baselineEntry, [][]byte, error) {
 	out := []baselineEntry{}
+	var all [][]byte
 	for _, v := range versions {
 		data, err := cl.download(ctx, v.GetBundleSha256())
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		name := firstOf(v.GetPluginKey(), "_app") + ".pxb"
 		if err := writeFile(filepath.Join(dir, "bundles", name), data); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
+		all = append(all, data)
 		out = append(out, baselineEntry{
 			Plugin: v.GetPluginKey(), Version: v.GetVersion(), SHA256: v.GetBundleSha256(), File: "bundles/" + name,
 			KeyID: v.GetKeyId(), Algorithm: v.GetAlgorithm(), Signature: base64.StdEncoding.EncodeToString(v.GetSignature()),
 		})
 	}
-	return out, nil
+	return out, all, nil
 }
 
 // download fetches a bundle by its hash and checks it.

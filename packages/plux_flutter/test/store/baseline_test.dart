@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
 import 'package:cryptography/dart.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
@@ -47,11 +48,18 @@ void main() {
     };
   }
 
+  final logo = File(
+    '../../schema/testdata/documents/loan-calculator/assets/images/logo.png',
+  ).readAsBytesSync();
+  final logoHash = sha256.convert(logo).toString();
+
   Future<void> write({
     int sequence = 5,
     bool badSignature = false,
     String app = 'app',
+    List<Map<String, Object?>>? assets,
   }) async {
+    files['assets/$logoHash'] = logo;
     files['baseline.json'] = Uint8List.fromList(
       utf8.encode(
         jsonEncode({
@@ -72,6 +80,11 @@ void main() {
               badSignature: badSignature,
             ),
           ],
+          'assets':
+              assets ??
+              [
+                {'sha256': logoHash, 'file': 'assets/$logoHash'},
+              ],
         }),
       ),
     );
@@ -110,8 +123,35 @@ void main() {
     expect(store.pointer.highestAccepted, 5);
     expect(store.pointer.trial, isNull);
     expect(checkComplete(root), 5);
+    expect(store.record(5)!.assets, [logoHash]);
+    expect(store.hasObject(ObjectKind.assets, logoHash), isTrue);
     expect(await run(), isNull, reason: 'already imported');
   });
+
+  test(
+    'refuses a baseline asset that does not match its hash [AST-001]',
+    () async {
+      await write();
+      files['assets/$logoHash'] = Uint8List.fromList(logo)..[10] ^= 1;
+      await expectLater(
+        run(),
+        throwsA(
+          isA<PluxException>().having(
+            (e) => e.code,
+            'code',
+            PluxErrorCode.assetHashMismatch,
+          ),
+        ),
+      );
+      await write(
+        assets: [
+          {'sha256': 'not a hash', 'file': 'assets/x'},
+        ],
+      );
+      await expectLater(run(), throwsA(isA<PluxException>()));
+      expect(ReleaseStore.open(root).pointer.active, isNull);
+    },
+  );
 
   test('replaces an older release with a newer embedded baseline', () async {
     await write(sequence: 5);

@@ -929,7 +929,7 @@ Branching is deliberately **not** part of the model (ADR-0015). Each plugin has 
 | `RT-011` | P3 | MUST | Widget construction **MUST** be lazy: a page builds only the nodes reachable in the current frame; item templates are instantiated on demand by lazy list and grid builders. | DONE |
 | `RT-012` | P3 | MUST | Each node widget **MUST** subscribe only to the state paths its bindings read (`CMP-023`), using Riverpod `select`, so a state change rebuilds only dependent nodes. | DONE |
 | `RT-013` | P3 | MUST | Decoded page descriptors and component definitions **MUST** be cached in a bounded LRU keyed by section hash and released on memory-pressure signals. | DONE |
-| `RT-014` | P3 | MUST | Network images **MUST** be decoded at their laid-out size (`cacheWidth`/`cacheHeight`) and cached on disk and in memory with bounded sizes; placeholders **SHOULD** use ThumbHash or BlurHash when the document provides one. | SPEC |
+| `RT-014` | P3 | MUST | Network images **MUST** be decoded at their laid-out size (`cacheWidth`/`cacheHeight`) and cached on disk and in memory with bounded sizes; placeholders **SHOULD** use ThumbHash or BlurHash when the document provides one. | DONE |
 | `RT-015` | P3 | MUST | The runtime **MUST** emit timeline events for page build, first frame and action execution, visible in Flutter DevTools and aggregated into telemetry (`ANL-001`). | WIP |
 | `RT-016` | P3 | MUST | The device is the **source of truth** for rendering. The Studio canvas reproduces layout through a Flutter-compatible engine kept faithful by the layout conformance suite (`STU-005`); interactive behaviour is verified only on devices (§20). | SPEC |
 
@@ -1106,15 +1106,15 @@ PXL is a small, typed, side-effect-free expression language with CEL-like syntax
 | `THM-001` | P3 | MUST | Themes **MUST** be defined as design tokens (color, typography, spacing, radius, elevation, motion, breakpoints) in the W3C Design Tokens Community Group format and mapped to Material 3 and Cupertino themes. | DONE |
 | `THM-002` | P3 | MUST | Themes **MUST** provide light and dark modes and follow the system setting by default; high-contrast variants **SHOULD** be supported. | DONE |
 | `THM-003` | P3 | MUST | Plux **MUST** inherit the host theme by default, and **MUST** support white-label **brand overlays** selectable at runtime by the host (one app, many brands). | DONE |
-| `THM-004` | P3 | MUST | Typography **MUST** define per-script font families with fallbacks (e.g. Latin, Cyrillic, Arabic, Devanagari, Ethiopic) so no text renders as missing glyphs. | WIP |
+| `THM-004` | P3 | MUST | Typography **MUST** define per-script font families with fallbacks (e.g. Latin, Cyrillic, Arabic, Devanagari, Ethiopic) so no text renders as missing glyphs. | DONE |
 | `THM-005` | P3 | MUST | Icons **MUST** include Material Symbols and Cupertino icons (subset at compile time) and custom SVG icon sets. | SPEC |
 
 ### 14.8 Assets
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `AST-001` | P3 | MUST | Bundled assets **MUST** be content-addressed and deduplicated across all plugins of an app release. | SPEC |
-| `AST-002` | P3 | MUST | Remote images **MUST** be supported with placeholders, error images, caching and optional pinning of their domains. | SPEC |
+| `AST-001` | P3 | MUST | Bundled assets **MUST** be content-addressed and deduplicated across all plugins of an app release. | DONE |
+| `AST-002` | P3 | MUST | Remote images **MUST** be supported with placeholders, error images, caching and optional pinning of their domains. | DONE |
 | `AST-003` | P2 | MUST | Per-asset and per-plugin size limits **MUST** be enforced at publish with clear diagnostics. | DONE |
 
 ---

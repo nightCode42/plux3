@@ -3943,7 +3943,8 @@ export const valueTypes: readonly ValueTypeDescriptor[] = [
     "description": "Where an image comes from: exactly one of `asset` and `url`.",
     "fields": [
       {"name": "asset", "id": 1, "type": "asset", "required": false, "revision": 1, "description": "A bundled asset."},
-      {"name": "url", "id": 2, "type": "string", "required": false, "revision": 1, "description": "An HTTPS URL on a domain the plugin declares (SEC-080)."}
+      {"name": "url", "id": 2, "type": "string", "required": false, "revision": 1, "description": "An HTTPS URL on a domain the plugin declares (SEC-080)."},
+      {"name": "thumbHash", "id": 3, "type": "string", "required": false, "revision": 1, "description": "A ThumbHash of the image, base64-encoded, shown blurred until the image loads (RT-014)."}
     ],
     "constants": []
   },

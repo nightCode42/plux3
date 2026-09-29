@@ -12,6 +12,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/render/decoding.dart';
 import 'package:plux_flutter/src/render/generated/render.g.dart';
 
@@ -260,6 +261,15 @@ ImageProvider<Object>? decodeImageSource(Decoding d, Object? v) {
   return d.image(
     asset: asString(d, f.get(ImageSourceFields.asset, 'asset')),
     url: asString(d, f.get(ImageSourceFields.url, 'url')),
+  );
+}
+
+/// The ThumbHash placeholder of an `ImageSource`, or null (RT-014).
+ImageProvider<Object>? decodeImagePlaceholder(Decoding d, Object? v) {
+  final f = Fields.of(d, v);
+  if (f == null) return null;
+  return ThumbHashImage.tryParse(
+    asString(d, f.get(ImageSourceFields.thumbHash, 'thumbHash')),
   );
 }
 

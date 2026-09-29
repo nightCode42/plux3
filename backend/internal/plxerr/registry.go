@@ -110,6 +110,7 @@ const (
 	SectionVerificationFailed  Code = 3042
 	BundleEncryptedUnsupported Code = 3043
 	TransportDecodingFailed    Code = 3044
+	AssetHashMismatch          Code = 3045
 	SyncFailed                 Code = 3050
 	RevertedToLastKnownGood    Code = 3020
 	DiskQuotaExceeded          Code = 3030

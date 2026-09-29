@@ -268,6 +268,9 @@ enum PluxErrorCode {
   /// Transport decoding failed.
   transportDecodingFailed(3044, 'TRANSPORT_DECODING_FAILED', 'Transport decoding failed'),
 
+  /// Asset file hash mismatch.
+  assetHashMismatch(3045, 'ASSET_HASH_MISMATCH', 'Asset file hash mismatch'),
+
   /// Sync failed.
   syncFailed(3050, 'SYNC_FAILED', 'Sync failed'),
 

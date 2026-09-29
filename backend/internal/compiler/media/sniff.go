@@ -30,6 +30,10 @@ const (
 	Rive      = "application/riv"
 	// AVIF is produced as a variant, never accepted as an upload.
 	AVIF = "image/avif"
+	// VectorGraphics is an SVG compiled to Flutter's vector_graphics
+	// binary format, the only form of an SVG a device reads (CMP-031); a
+	// variant, never an upload.
+	VectorGraphics = "image/vnd.plux.vector-graphics"
 	// lottieJSON is a Lottie animation as uploaded; it is packaged as
 	// dotLottie before it is stored (CMP-033).
 	lottieJSON = "application/json+lottie"

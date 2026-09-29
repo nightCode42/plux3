@@ -15,6 +15,7 @@ import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/pxl/program.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
+import 'package:plux_flutter/src/render/values.dart';
 import 'package:plux_flutter/src/verify/bundle_verifier.dart';
 
 /// Compares two 64-bit integers as unsigned, the order of `ulong` keys.
@@ -110,6 +111,23 @@ final class BundleView {
     final i = _search(list.length, (i) => (list[i].path ?? '').compareTo(path));
     return i < 0 ? null : list[i];
   }
+
+  Map<String, fbs.Asset>? _assets;
+
+  /// The bundle's assets-index by asset ID, read once.
+  Map<String, fbs.Asset> _assetIndex() => _assets ??= () {
+    final s = _single(SectionKind.assetsIndex);
+    return {
+      for (final a
+          in s == null
+              ? const <fbs.Asset>[]
+              : fbs.AssetIndex(s.data).assets ?? const <fbs.Asset>[])
+        if (a.id case final i?) uuidString(uuidOf(i)): a,
+    };
+  }();
+
+  /// The asset with ID [id] (a UUID string), or null.
+  fbs.Asset? asset(String id) => _assetIndex()[id];
 
   /// The paths of the design tokens that start with [prefix], in order.
   Iterable<String> tokenPaths(String prefix) sync* {

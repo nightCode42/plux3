@@ -55,8 +55,10 @@ abstract interface class RenderServices {
   /// The icon [name] of [set], or null when unknown.
   IconData? icon(String name, String set);
 
-  /// An image: an asset of the release by ID, or a URL.
-  ImageProvider<Object>? image({String? asset, String? url});
+  /// An image for a node of [scope]: an asset of the release by ID, or a
+  /// URL on a domain the plugin declares; null, reported, when there is
+  /// none it may show.
+  ImageProvider<Object>? image(RenderScope scope, {String? asset, String? url});
 
   /// Builds the fallback shown instead of a failed page or component.
   Widget fallback(BuildContext context, PluxException error);

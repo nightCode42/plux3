@@ -1,11 +1,14 @@
 // SPDX-FileCopyrightText: 2026 Plux contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plux_flutter/plux_flutter.dart';
+import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/render/scope.dart';
 
 import '../support/harness.dart';
@@ -391,6 +394,35 @@ void main() {
       TargetPlatform.iOS,
     }),
   );
+
+  testWidgets('an asset image shows its stored file, checked against its '
+      'hash [AST-001] [RT-014]', (tester) async {
+    await open(tester, 'structure');
+    final image = tester.widget<Image>(
+      find.byWidgetPredicate((w) => w is Image && w.semanticLabel == 'dot'),
+    );
+    final provider = (image.image as ResizeImage).imageProvider;
+    expect(provider, isA<PluxAssetImage>());
+    expect(
+      (image.image as ResizeImage).width,
+      20 * tester.view.devicePixelRatio,
+    );
+    // The stored file decodes; the widget's own load runs in fake time.
+    final decoded = await tester.runAsync(() {
+      final done = Completer<ImageInfo>();
+      provider
+          .resolve(ImageConfiguration.empty)
+          .addListener(
+            ImageStreamListener(
+              (info, _) => done.complete(info),
+              onError: (e, _) => done.completeError(e),
+            ),
+          );
+      return done.future;
+    });
+    expect(decoded!.image.width, greaterThan(0));
+    expect(problems().where((e) => e.message.contains('asset')), isEmpty);
+  });
 
   testWidgets('cupertino inputs keep their value locally', (tester) async {
     await open(tester, 'cupertino');

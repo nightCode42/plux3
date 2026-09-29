@@ -11,6 +11,8 @@ library;
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
+
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/store/release_record.dart';
 import 'package:plux_flutter/src/store/release_store.dart';
@@ -18,7 +20,8 @@ import 'package:plux_flutter/src/verify/bundle_verifier.dart';
 import 'package:plux_flutter/src/verify/manifest.dart';
 
 /// Reads the files `plux pull` wrote, by path relative to its output
-/// directory (`baseline.json`, `bundles/<key>.pxb`); null when absent.
+/// directory (`baseline.json`, `bundles/<key>.pxb`, `assets/<sha256>`);
+/// null when absent.
 typedef BaselineReader = Future<Uint8List?> Function(String path);
 
 /// Imports the baseline when the store has no release, or only an older
@@ -108,13 +111,49 @@ Future<int?> importBaseline({
       'the baseline has no app bundle',
     );
   }
+  final assets = await _importAssets(b['assets'], read, store);
   store.installBaseline(
     ReleaseRecord(
       sequence: sequence,
       source: ReleaseSource.baseline,
       bundles: bundles,
+      assets: assets,
     ),
   );
   store.collectGarbage();
   return sequence;
+}
+
+/// Stores the baseline's asset files, each checked against the SHA-256
+/// that names it (AST-001), and returns their hashes.
+Future<List<String>> _importAssets(
+  Object? list,
+  BaselineReader read,
+  ReleaseStore store,
+) async {
+  final out = <String>[];
+  for (final e
+      in (list as List<Object?>? ?? const [])
+          .whereType<Map<String, Object?>>()) {
+    final hash = e['sha256'] as String? ?? '';
+    final file = e['file'] as String? ?? '';
+    if (!RegExp(r'^[0-9a-f]{64}$').hasMatch(hash)) {
+      throw PluxException(
+        PluxErrorCode.bundleMalformed,
+        'baseline asset hash $hash',
+      );
+    }
+    if (!store.hasObject(ObjectKind.assets, hash)) {
+      final data = await read(file);
+      if (data == null || sha256.convert(data).toString() != hash) {
+        throw PluxException(
+          PluxErrorCode.assetHashMismatch,
+          'baseline asset $file does not match its hash',
+        );
+      }
+      store.writeObject(ObjectKind.assets, hash, data);
+    }
+    out.add(hash);
+  }
+  return out..sort();
 }

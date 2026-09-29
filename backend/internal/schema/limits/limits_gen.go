@@ -112,6 +112,12 @@ const (
 	// ReleaseAppSize: Total size of one app release: the app bundle and every
 	// plugin bundle. (BND-010)
 	ReleaseAppSize Key = "release.appSize"
+	// RuntimeImageDiskCacheBytes: Disk space the runtime's cache of remote
+	// images may use on one device. (RT-014, AST-002)
+	RuntimeImageDiskCacheBytes Key = "runtime.imageDiskCacheBytes"
+	// RuntimeImageSize: Size of one remote image the runtime downloads; a larger
+	// one is refused. (AST-002, SEC-104)
+	RuntimeImageSize Key = "runtime.imageSize"
 	// RuntimeSectionCacheBytes: Memory the runtime's cache of decoded page and
 	// component sections may hold. (RT-013)
 	RuntimeSectionCacheBytes Key = "runtime.sectionCacheBytes"
@@ -163,6 +169,8 @@ var registry = [...]Definition{
 	{Key: PXLOperationBudget, Unit: UnitOperations, Default: 10000, Warning: 0, Max: 1000000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P1", Description: "Operations one PXL evaluation may perform before it stops with a typed error."},
 	{Key: PXLStringLength, Unit: UnitCodepoints, Default: 65536, Warning: 0, Max: 1048576, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P1", Description: "Length of a string produced during one PXL evaluation."},
 	{Key: ReleaseAppSize, Unit: UnitBytes, Default: 104857600, Warning: 0, Max: 1073741824, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Total size of one app release: the app bundle and every plugin bundle."},
+	{Key: RuntimeImageDiskCacheBytes, Unit: UnitBytes, Default: 67108864, Warning: 0, Max: 1073741824, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "Disk space the runtime's cache of remote images may use on one device."},
+	{Key: RuntimeImageSize, Unit: UnitBytes, Default: 10485760, Warning: 0, Max: 104857600, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "Size of one remote image the runtime downloads; a larger one is refused."},
 	{Key: RuntimeSectionCacheBytes, Unit: UnitBytes, Default: 8388608, Warning: 0, Max: 268435456, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "Memory the runtime's cache of decoded page and component sections may hold."},
 	{Key: RuntimeSectionCacheEntries, Unit: UnitCount, Default: 64, Warning: 0, Max: 4096, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "Page and component sections the runtime keeps decoded."},
 	{Key: TelemetryEventsPerRequest, Unit: UnitCount, Default: 500, Warning: 0, Max: 5000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerServer, Phase: "P2", Description: "Runtime events one telemetry request may carry."},

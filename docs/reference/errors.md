@@ -700,6 +700,14 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Download the bundle again.
 
+### PLX-3045
+
+`ASSET_HASH_MISMATCH` · error · Asset file hash mismatch
+
+**Cause.** An asset file's SHA-256 differs from the hash its signed bundle lists: the download is corrupt or has been tampered with (AST-001).
+
+**Fix.** Nothing to change in the app: the runtime discards the file and keeps the active release; sync again, and check the CDN or proxy if it persists.
+
 ### PLX-3050
 
 `SYNC_FAILED` · error · Sync failed

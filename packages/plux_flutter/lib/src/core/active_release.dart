@@ -194,6 +194,14 @@ final class ActiveRelease {
     return b._meta = fbs.Meta(s.data);
   }
 
+  /// The stored file of the release's asset file [hash], or null when the
+  /// release does not list it or the store lacks it (AST-001).
+  String? assetPath(String hash) {
+    if (!record.assets.contains(hash)) return null;
+    final path = _store.objectPath(ObjectKind.assets, hash);
+    return File(path).existsSync() ? path : null;
+  }
+
   /// The limits the app bundle carries (LIM-004).
   Map<String, int> get limits => {
     for (final l in meta('').limits ?? const <fbs.Limit>[]) ?l.key: l.value,

@@ -1,4 +1,9 @@
 {
+  "capabilities": {
+    "networkDomains": [
+      "example.com"
+    ]
+  },
   "entryPage": "01c0c450-6c00-7000-8000-000000000149",
   "icon": {
     "monogram": {
