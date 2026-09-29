@@ -11,6 +11,7 @@ import (
 
 	"github.com/nightCode42/plux3/backend/internal/bundle"
 	"github.com/nightCode42/plux3/backend/internal/bundle/fbs"
+	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/schema/registry"
 )
 
@@ -60,5 +61,44 @@ func TestWidgetsGoldenBundles(t *testing.T) {
 	}
 	if !slices.ContainsFunc(res.Plugins, func(b *Bundle) bool { return b.Key == "gallery" }) {
 		t.Error("no gallery plugin")
+	}
+}
+
+// Verifies: PXL-002.
+// A handler reads its event through the payload type the registry
+// declares, even a registry value type: a RangeSlider's RangeValues has
+// start and end (the gallery stores event.start), and nothing else.
+func TestRegistryTypedEventPayload(t *testing.T) {
+	t.Parallel()
+	m := project(t, widgetsDir)
+	const page = "plugins/gallery/pages/inputs.page.json"
+	edit(t, m, page, func(doc map[string]any) {
+		var find func(any) map[string]any
+		find = func(v any) map[string]any {
+			switch v := v.(type) {
+			case map[string]any:
+				if v["type"] == "RangeSlider" {
+					return v
+				}
+				for _, c := range v {
+					if n := find(c); n != nil {
+						return n
+					}
+				}
+			case []any:
+				for _, c := range v {
+					if n := find(c); n != nil {
+						return n
+					}
+				}
+			}
+			return nil
+		}
+		step := at(t, find(doc), "events/onChanged/steps/0/input/value")
+		step["$expr"] = "event.middle"
+	})
+	res := Compile(m, DefaultOptions())
+	if len(res.Diagnostics) != 1 || res.Diagnostics[0].Code != plxerr.PXLUnknownField || res.Diagnostics[0].File != page {
+		t.Fatalf("event.middle:\n%s", list(res.Diagnostics))
 	}
 }

@@ -1522,8 +1522,8 @@ ID 50 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `Image.asset`, `
 
 | Slot | ID | Holds | Description |
 |---|---|---|---|
-| `loading` | 1 | an item template | Shown while a network image loads. |
-| `error` | 2 | an item template | Shown when the image fails to load. |
+| `loading` | 1 | one node | Shown while a network image loads. |
+| `error` | 2 | one node | Shown when the image fails to load. |
 
 ### IndexedStack
 

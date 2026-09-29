@@ -1994,8 +1994,8 @@ export const widgets: readonly WidgetDescriptor[] = [
     ],
     "events": [],
     "slots": [
-      {"name": "loading", "id": 1, "list": false, "required": false, "template": true, "revision": 1, "description": "Shown while a network image loads."},
-      {"name": "error", "id": 2, "list": false, "required": false, "template": true, "revision": 1, "description": "Shown when the image fails to load."}
+      {"name": "loading", "id": 1, "list": false, "required": false, "template": false, "revision": 1, "description": "Shown while a network image loads."},
+      {"name": "error", "id": 2, "list": false, "required": false, "template": false, "revision": 1, "description": "Shown when the image fails to load."}
     ]
   },
   {

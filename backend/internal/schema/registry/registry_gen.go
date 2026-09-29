@@ -1242,8 +1242,8 @@ var widgets = [...]Widget{
 			{Name: "cacheHeight", ID: 17, Type: "int", Required: false, Default: "", Constraints: Constraints{Min: Bound{Value: 1, Set: true}}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
 		},
 		Slots: []Slot{
-			{Name: "loading", ID: 1, List: false, Required: false, Template: true, Revision: 1, Deprecated: nil, Description: "Shown while a network image loads."},
-			{Name: "error", ID: 2, List: false, Required: false, Template: true, Revision: 1, Deprecated: nil, Description: "Shown when the image fails to load."},
+			{Name: "loading", ID: 1, List: false, Required: false, Template: false, Revision: 1, Deprecated: nil, Description: "Shown while a network image loads."},
+			{Name: "error", ID: 2, List: false, Required: false, Template: false, Revision: 1, Deprecated: nil, Description: "Shown when the image fails to load."},
 		},
 	},
 	{

@@ -157,14 +157,12 @@
     {
       "name": "loading",
       "id": 1,
-      "template": true,
       "flutter": "loadingBuilder",
       "description": "Shown while a network image loads."
     },
     {
       "name": "error",
       "id": 2,
-      "template": true,
       "flutter": "errorBuilder",
       "description": "Shown when the image fails to load."
     }

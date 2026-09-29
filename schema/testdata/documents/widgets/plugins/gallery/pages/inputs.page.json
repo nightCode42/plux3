@@ -239,6 +239,22 @@
                 "type": "Slider"
               },
               {
+                "events": {
+                  "onChanged": {
+                    "steps": [
+                      {
+                        "action": "setState",
+                        "id": "low",
+                        "input": {
+                          "path": "page.low",
+                          "value": {
+                            "$expr": "event.start"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
                 "id": "01c0c450-6c00-7000-8000-000000000191",
                 "props": {
                   "max": 100.0,
@@ -348,6 +364,12 @@
       "id": "01c0c450-6c00-7000-8000-000000000197",
       "name": "on",
       "type": "bool"
+    },
+    {
+      "default": 20.0,
+      "id": "01c0c450-6c00-7000-8000-000000000204",
+      "name": "low",
+      "type": "double"
     }
   ],
   "title": "inputs"

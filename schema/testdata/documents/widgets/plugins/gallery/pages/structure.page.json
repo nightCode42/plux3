@@ -173,6 +173,19 @@
                   },
                   "width": 20.0
                 },
+                "slots": {
+                  "error": {
+                    "id": "01c0c450-6c00-7000-8000-000000000206",
+                    "props": {
+                      "data": "image failed"
+                    },
+                    "type": "Text"
+                  },
+                  "loading": {
+                    "id": "01c0c450-6c00-7000-8000-000000000205",
+                    "type": "CircularProgressIndicator"
+                  }
+                },
                 "type": "Image"
               }
             ],

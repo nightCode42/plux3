@@ -273,15 +273,17 @@ void main() {
     },
   );
 
-  testWidgets('a failed image is contained and reported [RT-020]', (
-    tester,
-  ) async {
-    await open(tester, 'structure');
-    expect(
-      problems().map((e) => e.message),
-      contains(contains('an image failed to load')),
-    );
-  });
+  testWidgets(
+    'a failed image is contained, reported and shows its error slot [RT-020]',
+    (tester) async {
+      await open(tester, 'structure');
+      expect(
+        problems().map((e) => e.message),
+        contains(contains('an image failed to load')),
+      );
+      expect(find.text('image failed'), findsOneWidget);
+    },
+  );
 
   testWidgets('cupertino inputs keep their value locally', (tester) async {
     await open(tester, 'cupertino');
