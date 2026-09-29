@@ -36,34 +36,79 @@ const maxMemoryPages = 16384
 // Codecs runs the WebAssembly image codecs. It is safe for concurrent
 // use; Close releases it.
 type Codecs struct {
-	rt   wazero.Runtime
-	webp wazero.CompiledModule
-	avif wazero.CompiledModule
+	rt wazero.Runtime
+	// ready is closed when compiling has ended; webp, avif and err are
+	// set before, and never written after.
+	ready chan struct{}
+	webp  wazero.CompiledModule
+	avif  wazero.CompiledModule
+	err   error
 }
 
-// NewCodecs compiles the codec modules.
+// codec names a codec module.
+type codec int
+
+const (
+	webpCodec codec = iota
+	avifCodec
+)
+
+// NewCodecs compiles the codec modules and returns when they are ready.
 func NewCodecs(ctx context.Context) (*Codecs, error) {
-	rt := wazero.NewRuntimeWithConfig(ctx, wazero.NewRuntimeConfig().
-		WithMemoryLimitPages(maxMemoryPages).WithCloseOnContextDone(true))
-	if _, err := wasi_snapshot_preview1.Instantiate(ctx, rt); err != nil {
-		_ = rt.Close(ctx)
-		return nil, fmt.Errorf("media: %w", err)
+	c := StartCodecs(ctx)
+	if err := c.Ready(ctx); err != nil {
+		_ = c.Close(ctx)
+		return nil, err
 	}
-	webp, err := rt.CompileModule(ctx, webpModule)
-	if err != nil {
-		_ = rt.Close(ctx)
-		return nil, fmt.Errorf("media: compile the WebP codec: %w", err)
-	}
-	avif, err := rt.CompileModule(ctx, avifModule)
-	if err != nil {
-		_ = rt.Close(ctx)
-		return nil, fmt.Errorf("media: compile the AVIF codec: %w", err)
-	}
-	return &Codecs{rt: rt, webp: webp, avif: avif}, nil
+	return c, nil
 }
 
-// Close releases the runtime.
+// StartCodecs begins compiling the codec modules in the background and
+// returns at once. Compiling costs seconds of CPU, which a server should
+// not spend before it serves; a call that needs a codec waits for it,
+// and a failure to compile is that call's error.
+func StartCodecs(ctx context.Context) *Codecs {
+	c := &Codecs{
+		rt: wazero.NewRuntimeWithConfig(ctx, wazero.NewRuntimeConfig().
+			WithMemoryLimitPages(maxMemoryPages).WithCloseOnContextDone(true)),
+		ready: make(chan struct{}),
+	}
+	go func() {
+		defer close(c.ready)
+		c.err = c.compile(ctx)
+	}()
+	return c
+}
+
+// compile instantiates WASI and compiles both modules.
+func (c *Codecs) compile(ctx context.Context) error {
+	if _, err := wasi_snapshot_preview1.Instantiate(ctx, c.rt); err != nil {
+		return fmt.Errorf("media: %w", err)
+	}
+	var err error
+	if c.webp, err = c.rt.CompileModule(ctx, webpModule); err != nil {
+		return fmt.Errorf("media: compile the WebP codec: %w", err)
+	}
+	if c.avif, err = c.rt.CompileModule(ctx, avifModule); err != nil {
+		return fmt.Errorf("media: compile the AVIF codec: %w", err)
+	}
+	return nil
+}
+
+// Ready returns when compiling has ended, with its error, or when ctx
+// ends first.
+func (c *Codecs) Ready(ctx context.Context) error {
+	select {
+	case <-c.ready:
+		return c.err
+	case <-ctx.Done():
+		return fmt.Errorf("media: waiting for the codecs: %w", ctx.Err())
+	}
+}
+
+// Close releases the runtime once compiling has ended.
 func (c *Codecs) Close(ctx context.Context) error {
+	<-c.ready
 	if err := c.rt.Close(ctx); err != nil {
 		return fmt.Errorf("media: %w", err)
 	}
@@ -80,7 +125,14 @@ type instance struct {
 }
 
 // instantiate starts a fresh instance of a codec module.
-func (c *Codecs) instantiate(ctx context.Context, m wazero.CompiledModule) (*instance, error) {
+func (c *Codecs) instantiate(ctx context.Context, which codec) (*instance, error) {
+	if err := c.Ready(ctx); err != nil {
+		return nil, err
+	}
+	m := c.webp
+	if which == avifCodec {
+		m = c.avif
+	}
 	mod, err := c.rt.InstantiateModule(ctx, m, wazero.NewModuleConfig().WithName("").WithStartFunctions("_initialize")) //nolint:misspell // the WASI reactor's entry point
 	if err != nil {
 		return nil, fmt.Errorf("media: start a codec: %w", err)
@@ -139,7 +191,7 @@ func (i *instance) u32(ptr uint32) (uint32, error) {
 
 // encodeWebP encodes RGBA pixels as WebP; a negative quality is lossless.
 func (c *Codecs) encodeWebP(ctx context.Context, px *RGBA, quality float32) ([]byte, error) {
-	in, err := c.instantiate(ctx, c.webp)
+	in, err := c.instantiate(ctx, webpCodec)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +220,7 @@ func (c *Codecs) encodeWebP(ctx context.Context, px *RGBA, quality float32) ([]b
 
 // decodeWebP decodes a WebP file to RGBA pixels.
 func (c *Codecs) decodeWebP(ctx context.Context, data []byte) (*RGBA, error) {
-	in, err := c.instantiate(ctx, c.webp)
+	in, err := c.instantiate(ctx, webpCodec)
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +257,7 @@ func (c *Codecs) decodeWebP(ctx context.Context, data []byte) (*RGBA, error) {
 
 // encodeAVIF encodes RGBA pixels as AVIF at a quality of 0 to 100.
 func (c *Codecs) encodeAVIF(ctx context.Context, px *RGBA, quality, speed int) ([]byte, error) {
-	in, err := c.instantiate(ctx, c.avif)
+	in, err := c.instantiate(ctx, avifCodec)
 	if err != nil {
 		return nil, err
 	}

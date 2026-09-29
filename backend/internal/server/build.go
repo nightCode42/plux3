@@ -123,11 +123,16 @@ func buildWork(ctx context.Context, cfg *config.Config, log *slog.Logger, db *st
 	deps := WorkDeps{Objects: store, Queue: queue}
 	if cfg.Has(config.RoleWorker) {
 		// Only the worker transcodes and signs: compiling the codecs costs
-		// start-up time the api role need not pay, and the api role must
-		// never hold a signer (SRV-052, ADR-0006).
-		if deps.Codecs, err = media.NewCodecs(ctx); err != nil {
-			return nil, nil, fmt.Errorf("server: %w", err)
-		}
+		// seconds of CPU the api role need not pay, and the api role must
+		// never hold a signer (SRV-052, ADR-0006). They compile while the
+		// server starts and serves; asset jobs wait for them.
+		codecs := media.StartCodecs(ctx)
+		deps.Codecs = codecs
+		go func() {
+			if err := codecs.Ready(ctx); err != nil && ctx.Err() == nil {
+				log.ErrorContext(ctx, "the image codecs failed to compile; asset jobs will fail", slog.Any("error", err))
+			}
+		}()
 		deps.Signer = backend
 		deps.ProductionSigning = backend.AllowedInProduction()
 	}

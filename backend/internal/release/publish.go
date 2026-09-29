@@ -22,6 +22,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/bundle"
 	"github.com/nightCode42/plux3/backend/internal/compiler"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
+	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 	"github.com/nightCode42/plux3/backend/internal/signing"
 	"github.com/nightCode42/plux3/backend/internal/storage"
 	"github.com/nightCode42/plux3/backend/internal/storage/dbgen"
@@ -42,7 +43,7 @@ var stages = []struct {
 	name    string
 	percent int32
 }{
-	{"sources", 5}, {"compile", 20}, {"check", 60}, {"sign", 70}, {"store", 80}, {"record", 95},
+	{"sources", 5}, {"assets", 10}, {"compile", 20}, {"check", 60}, {"sign", 70}, {"store", 80}, {"record", 95},
 }
 
 // PublishJob is a publish and its progress (SRV-050).
@@ -258,18 +259,19 @@ type compiled struct {
 	key string
 }
 
-// RunPublish runs a publish job in the worker (SRV-050): it gathers the
-// sources, compiles, checks the diagnostics, signs and stores the
-// bundle, and records the version. A diagnostic of severity error, or an
+// RunPublish runs a publish job in the worker (SRV-050): it waits for
+// the app's assets to be processed, gathers the sources, compiles, checks
+// the diagnostics, signs and stores the bundle, and records the version. A diagnostic of severity error, or an
 // unacknowledged warning, fails the job with nothing recorded (SRV-051).
-// An error returned is one worth retrying; the job stays running.
+// An error returned is one worth retrying; the job stays running. An
+// *AssetsPendingError asks the worker to run the job again later.
 func (s *Service) RunPublish(ctx context.Context, job Job) error {
 	if s.o.Signer == nil {
 		return errors.New("release: publishing needs the worker's signer")
 	}
 	system := auth.System(job.OrganizationID)
-	row, env, err := s.startJob(ctx, system, job.JobID)
-	if err != nil || !row.ID.Valid {
+	row, env, ok, err := s.claim(ctx, system, job.JobID)
+	if !ok {
 		return err
 	}
 	c, err := s.compileJob(ctx, system, row)
@@ -329,6 +331,18 @@ type versionSignature struct {
 	mapSum []byte
 }
 
+// claim starts a job once the app's assets are processed; ok is false
+// when there is nothing more to do now: the job has finished, waits for
+// assets, or failed waiting.
+func (s *Service) claim(ctx context.Context, p auth.Principal, jobID string) (dbgen.PublishJob, dbgen.Environment, bool, error) {
+	row, env, err := s.startJob(ctx, p, jobID)
+	if err != nil || !row.ID.Valid {
+		return row, env, false, err
+	}
+	done, err := s.awaitAssets(ctx, p, row)
+	return row, env, err == nil && !done, err
+}
+
 // startJob marks a job running and returns it with its environment; a
 // job that has finished, or was cancelled, returns an invalid row.
 func (s *Service) startJob(ctx context.Context, p auth.Principal, jobID string) (dbgen.PublishJob, dbgen.Environment, error) {
@@ -373,6 +387,51 @@ func (s *Service) progress(ctx context.Context, p auth.Principal, row dbgen.Publ
 		}
 		return err //nolint:wrapcheck // examined by the caller
 	})
+}
+
+// assetPoll is how long a publish waiting for assets sleeps between
+// checks: short against transcoding, which takes seconds per image.
+const assetPoll = 2 * time.Second
+
+// AssetsPendingError reports that a publish is waiting for the app's
+// assets; the worker runs the job again after RetryAfter.
+type AssetsPendingError struct {
+	// Pending is the number of assets not processed yet.
+	Pending int64
+	// RetryAfter is when to check again.
+	RetryAfter time.Duration
+}
+
+func (e *AssetsPendingError) Error() string {
+	return fmt.Sprintf("release: %d assets are still being processed; retry in %s", e.Pending, e.RetryAfter)
+}
+
+// awaitAssets holds a publish until every image asset of the app has its
+// variants (CMP-030). The compiler lists the variants that exist when it
+// runs, so a bundle compiled before an asset job finished would differ
+// from the one a release's recompilation produces (REL-003). The wait is
+// bounded by publish.assetWait from when the job was queued, after which
+// the job fails with PLX-8053; done reports that it did.
+func (s *Service) awaitAssets(ctx context.Context, p auth.Principal, row dbgen.PublishJob) (done bool, err error) {
+	var pending int64
+	if err := s.inOrg(ctx, p, func(ctx context.Context, tx pgx.Tx) error {
+		var err error
+		pending, err = s.o.Documents.PendingAssets(ctx, tx, storage.ID(row.AppID))
+		return err //nolint:wrapcheck // a domain error
+	}); err != nil || pending == 0 {
+		return false, err
+	}
+	wait := time.Duration(s.o.Limits.Get(limits.PublishAssetWait)) * time.Millisecond
+	left := wait - s.now().Sub(storage.Time(row.CreatedAt))
+	if left <= 0 {
+		d := plxerr.NewDiagnostic(plxerr.AssetsNotReady, plxerr.Location{File: "assets/index.json"},
+			"%d assets of the app were still being processed after %s", pending, wait)
+		return true, s.fail(ctx, p, row, plxerr.Diagnostics{d})
+	}
+	if err := s.progress(ctx, p, row, "assets"); err != nil {
+		return false, err
+	}
+	return false, &AssetsPendingError{Pending: pending, RetryAfter: min(assetPoll, left)}
 }
 
 // errCancelled stops a job that was cancelled while it ran.

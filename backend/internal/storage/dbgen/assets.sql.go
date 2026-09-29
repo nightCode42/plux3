@@ -60,6 +60,18 @@ func (q *Queries) CompleteAsset(ctx context.Context, arg CompleteAssetParams) (A
 	return i, err
 }
 
+const countPendingAssets = `-- name: CountPendingAssets :one
+SELECT count(*) FROM assets WHERE app_id = $1 AND deleted_at IS NULL AND processing = 'pending'
+`
+
+// The app's assets whose variants are not made yet (CMP-030).
+func (q *Queries) CountPendingAssets(ctx context.Context, appID pgtype.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countPendingAssets, appID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const findProcessedAsset = `-- name: FindProcessedAsset :one
 SELECT id, asset_id, organization_id, app_id, file, media_type, sha256, size, width, height, processing, variants, diagnostics, uploaded_by_kind, uploaded_by_id, uploaded_by, created_at, deleted_at FROM assets
  WHERE organization_id = $1 AND sha256 = $2 AND processing = 'ready' AND id <> $3

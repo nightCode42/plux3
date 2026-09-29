@@ -140,6 +140,7 @@ const (
 	ReleaseInconsistent     Code = 8050
 	WarningsNotAcknowledged Code = 8051
 	PluginNotPublished      Code = 8052
+	AssetsNotReady          Code = 8053
 	InternalServerError     Code = 8090
 	UpstreamUnavailable     Code = 8091
 

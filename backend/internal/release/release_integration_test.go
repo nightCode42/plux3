@@ -23,6 +23,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/audit"
 	"github.com/nightCode42/plux3/backend/internal/auth"
 	"github.com/nightCode42/plux3/backend/internal/cache"
+	"github.com/nightCode42/plux3/backend/internal/compiler/media"
 	"github.com/nightCode42/plux3/backend/internal/document"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/release"
@@ -56,9 +57,30 @@ func (q *queue) Enqueue(_ context.Context, _ pgx.Tx, j release.Work) error {
 
 func (*queue) EnqueueAsset(context.Context, pgx.Tx, document.AssetJob) error { return nil }
 
-type assetJobs struct{}
+// assetQueue records the asset jobs an upload or import enqueues.
+type assetQueue struct {
+	mu   sync.Mutex
+	jobs []document.AssetJob
+}
 
-func (assetJobs) Enqueue(context.Context, pgx.Tx, document.AssetJob) error { return nil }
+func (q *assetQueue) Enqueue(_ context.Context, _ pgx.Tx, j document.AssetJob) error {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	q.jobs = append(q.jobs, j)
+	return nil
+}
+
+func (q *assetQueue) take() []document.AssetJob {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	out := q.jobs
+	q.jobs = nil
+	return out
+}
+
+// sharedCodecs are the image codecs the worker transcodes assets with,
+// compiled once for the package's tests: compiling costs seconds.
+var sharedCodecs = sync.OnceValues(func() (*media.Codecs, error) { return media.NewCodecs(context.Background()) })
 
 // fixture is the release service with everything it stands on.
 type fixture struct {
@@ -69,13 +91,17 @@ type fixture struct {
 	signer  *signing.File
 	store   *objects.Filesystem
 	q       *queue
-	now     time.Time
-	org     string
-	app     string
-	envs    map[string]tenancy.Environment
-	owner   auth.Principal
-	viewer  auth.Principal
-	loans   string
+	assets  *assetQueue
+	// holdAssets keeps asset jobs queued, as a worker that has not run
+	// them yet would.
+	holdAssets bool
+	now        time.Time
+	org        string
+	app        string
+	envs       map[string]tenancy.Environment
+	owner      auth.Principal
+	viewer     auth.Principal
+	loans      string
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -92,7 +118,11 @@ func newFixture(t *testing.T) *fixture {
 	}
 	gen := ids{g: uuid7.NewGenerator(time.Now, rand.Reader)}
 	log := audit.NewLog(gen, nil)
-	f := &fixture{db: db, signer: backend, store: store, q: &queue{}, now: time.Now(), envs: map[string]tenancy.Environment{}}
+	codecs, err := sharedCodecs()
+	if err != nil {
+		t.Fatal(err)
+	}
+	f := &fixture{db: db, signer: backend, store: store, q: &queue{}, assets: &assetQueue{}, now: time.Now(), envs: map[string]tenancy.Environment{}}
 	clock := func() time.Time { return f.now }
 	authService, err := auth.NewService(auth.Options{DB: db, Audit: log, Cache: cache.NewMemory(nil), Crypter: backend, IDs: gen, VerificationURI: "https://p.example/device"})
 	if err != nil {
@@ -101,7 +131,7 @@ func newFixture(t *testing.T) *fixture {
 	if f.tenancy, err = tenancy.NewService(tenancy.Options{DB: db, Audit: log, Auth: authService, Crypter: backend, IDs: gen, SigningKeyPrefix: "targets", Now: clock}); err != nil {
 		t.Fatal(err)
 	}
-	if f.docs, err = document.NewService(document.Options{DB: db, Audit: log, Tenancy: f.tenancy, IDs: gen, Objects: store, Jobs: assetJobs{}, Now: clock}); err != nil {
+	if f.docs, err = document.NewService(document.Options{DB: db, Audit: log, Tenancy: f.tenancy, IDs: gen, Objects: store, Jobs: f.assets, Codecs: codecs, Now: clock}); err != nil {
 		t.Fatal(err)
 	}
 	if f.rel, err = release.NewService(release.Options{
@@ -198,10 +228,19 @@ func (f *fixture) publish(t *testing.T, pluginID string, ack bool) release.Publi
 	return got
 }
 
-// run runs every queued job.
+// run runs every queued job the way the worker would: asset jobs first,
+// unless they are held, and a publish waiting for assets stays queued.
 func (f *fixture) run(t *testing.T) {
 	t.Helper()
+	ctx := context.Background()
 	for {
+		if !f.holdAssets {
+			for _, j := range f.assets.take() {
+				if err := f.docs.ProcessAsset(ctx, j); err != nil {
+					t.Fatalf("ProcessAsset: %v", err)
+				}
+			}
+		}
 		f.q.mu.Lock()
 		jobs := f.q.jobs
 		f.q.jobs = nil
@@ -209,19 +248,30 @@ func (f *fixture) run(t *testing.T) {
 		if len(jobs) == 0 {
 			return
 		}
+		var snoozed []release.Work
 		for _, w := range jobs {
 			var err error
 			switch j := w.(type) {
 			case release.Job:
-				err = f.rel.RunPublish(context.Background(), j)
+				err = f.rel.RunPublish(ctx, j)
 			case release.ManifestJob:
-				err = f.rel.SignManifest(context.Background(), j)
+				err = f.rel.SignManifest(ctx, j)
 			case release.DeltaJob:
-				err = f.rel.PrecomputeDeltas(context.Background(), j)
+				err = f.rel.PrecomputeDeltas(ctx, j)
+			}
+			if _, ok := errors.AsType[*release.AssetsPendingError](err); ok && f.holdAssets {
+				snoozed = append(snoozed, w)
+				continue
 			}
 			if err != nil {
 				t.Fatalf("%T: %v", w, err)
 			}
+		}
+		if len(snoozed) > 0 {
+			f.q.mu.Lock()
+			f.q.jobs = append(f.q.jobs, snoozed...)
+			f.q.mu.Unlock()
+			return
 		}
 	}
 }
@@ -330,6 +380,50 @@ func TestPublish(t *testing.T) {
 	}
 	if _, err := f.rel.Publish(ctx, f.owner, release.PublishRequest{AppID: f.app, EnvironmentID: f.envs["development"].ID, Revision: 1 << 40}); code(err) != plxerr.OutOfRange {
 		t.Errorf("a revision from the future: %v", err)
+	}
+}
+
+// Verifies: CMP-030, REL-003, SRV-050.
+// A publish waits for the app's image assets to have their variants
+// instead of compiling without them, so the release built from it
+// recompiles to the same bundles; it fails with PLX-8053 once
+// publish.assetWait has passed since it was queued.
+func TestPublishWaitsForAssets(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	f := newFixture(t)
+	f.holdAssets = true
+	job := f.publish(t, "", false)
+	if job.State != release.StateRunning || job.Stage != "assets" {
+		t.Fatalf("a publish with an asset pending: %+v", job)
+	}
+	err := f.rel.RunPublish(ctx, release.Job{OrganizationID: f.org, JobID: job.ID})
+	pending, ok := errors.AsType[*release.AssetsPendingError](err)
+	if !ok || pending.Pending != 1 || pending.RetryAfter <= 0 || pending.RetryAfter > 2*time.Second || pending.Error() == "" {
+		t.Fatalf("waiting: %v", err)
+	}
+	// The asset job runs; the publish goes on, and the release made from
+	// it recompiles to the same bundles.
+	f.holdAssets = false
+	f.run(t)
+	if job, err = f.rel.GetPublishJob(ctx, f.viewer, job.ID); err != nil || job.State != release.StateSucceeded {
+		t.Fatalf("after the asset job: %+v %v", job, err)
+	}
+	f.publish(t, f.loans, false)
+	if _, diags, err := f.rel.CreateRelease(ctx, f.owner, f.app, f.envs["development"].ID, nil, ""); err != nil || len(diags) != 0 {
+		t.Fatalf("the release: %v %v", diags, err)
+	}
+	// An asset that stays pending fails the publish after the wait.
+	g := newFixture(t)
+	g.holdAssets = true
+	stuck := g.publish(t, "", false)
+	if stuck.State != release.StateRunning {
+		t.Fatalf("waiting: %+v", stuck)
+	}
+	g.now = g.now.Add(11 * time.Minute)
+	g.run(t)
+	if stuck, err = g.rel.GetPublishJob(ctx, g.viewer, stuck.ID); err != nil || stuck.State != release.StateFailed || !hasCode(stuck.Diagnostics, plxerr.AssetsNotReady) {
+		t.Fatalf("after the wait: %+v %v", stuck, err)
 	}
 }
 

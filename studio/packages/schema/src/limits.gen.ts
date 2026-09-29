@@ -324,6 +324,16 @@ export const limits = [
     description: "Pages per plugin.",
   },
   {
+    key: "publish.assetWait",
+    unit: "milliseconds",
+    default: 600000,
+    warning: 0,
+    max: 3600000,
+    scopes: ["installation"],
+    phase: "P3",
+    description: "Time a publish waits, from when it was queued, for the app's image assets to finish processing before it fails.",
+  },
+  {
     key: "pxl.collectionSize",
     unit: "count",
     default: 10000,

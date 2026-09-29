@@ -22,6 +22,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/audit"
 	"github.com/nightCode42/plux3/backend/internal/auth"
 	"github.com/nightCode42/plux3/backend/internal/cache"
+	"github.com/nightCode42/plux3/backend/internal/compiler/media"
 	"github.com/nightCode42/plux3/backend/internal/device"
 	"github.com/nightCode42/plux3/backend/internal/document"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1"
@@ -52,11 +53,22 @@ func (q *publishQueue) Enqueue(_ context.Context, _ pgx.Tx, j release.Work) erro
 	return nil
 }
 
-// noJobs accepts asset jobs and runs none; transcoding is tested in the
-// document package.
-type noJobs struct{}
+// assetQueue records asset jobs for the test to run.
+type assetQueue struct {
+	mu   sync.Mutex
+	jobs []document.AssetJob
+}
 
-func (noJobs) Enqueue(context.Context, pgx.Tx, document.AssetJob) error { return nil }
+func (q *assetQueue) Enqueue(_ context.Context, _ pgx.Tx, j document.AssetJob) error {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	q.jobs = append(q.jobs, j)
+	return nil
+}
+
+// sharedCodecs are the image codecs the worker transcodes assets with,
+// compiled once for the package's tests: compiling costs seconds.
+var sharedCodecs = sync.OnceValues(func() (*media.Codecs, error) { return media.NewCodecs(context.Background()) })
 
 func (u uuids) New() (string, error) {
 	id, err := u.g.New()
@@ -69,6 +81,8 @@ type world struct {
 	auth     *auth.Service
 	releases *release.Service
 	queue    *publishQueue
+	assets   *assetQueue
+	docs     *document.Service
 	identity pluxv1connect.IdentityServiceClient
 	org      pluxv1connect.OrgServiceClient
 	app      pluxv1connect.AppServiceClient
@@ -114,7 +128,12 @@ func newWorld(t *testing.T) *world {
 	if err != nil {
 		t.Fatal(err)
 	}
-	docs, err := document.NewService(document.Options{DB: db, Audit: log, Tenancy: tenancyService, IDs: gen, Objects: files, Jobs: noJobs{}})
+	codecs, err := sharedCodecs()
+	if err != nil {
+		t.Fatal(err)
+	}
+	assets := &assetQueue{}
+	docs, err := document.NewService(document.Options{DB: db, Audit: log, Tenancy: tenancyService, IDs: gen, Objects: files, Jobs: assets, Codecs: codecs})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -187,6 +206,8 @@ func newWorld(t *testing.T) *world {
 	t.Cleanup(srv.Close)
 	return &world{
 		auth:     authService,
+		assets:   assets,
+		docs:     docs,
 		identity: pluxv1connect.NewIdentityServiceClient(srv.Client(), srv.URL),
 		org:      pluxv1connect.NewOrgServiceClient(srv.Client(), srv.URL),
 		app:      pluxv1connect.NewAppServiceClient(srv.Client(), srv.URL),

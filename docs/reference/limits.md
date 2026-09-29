@@ -36,6 +36,7 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | `page.nodes` | count | 5000 | 1000 | 50000 | installation, organization, app, plugin | P1 | SCH-005, CMP-040 | Nodes in one page document. Above the warning threshold the compiler reports the page. |
 | `plugin.assetBytes` | bytes | 20971520 | 80% | 268435456 | installation, organization, app, plugin | P2 | AST-003 | Bytes of the asset files one plugin's pages and icon use, checked at publish. |
 | `plugin.pages` | count | 500 | 80% | 2000 | installation, organization, app, plugin | P1 | SCH-005 | Pages per plugin. |
+| `publish.assetWait` | milliseconds | 600000 | 80% | 3600000 | installation | P3 | CMP-030, REL-003 | Time a publish waits, from when it was queued, for the app's image assets to finish processing before it fails. |
 | `pxl.collectionSize` | count | 10000 | 80% | 1000000 | installation, organization, app, plugin | P1 | PXL-001 | Elements of a list or map produced during one PXL evaluation. |
 | `pxl.decimalDigits` | count | 1000 | 80% | 10000 | installation, organization, app, plugin | P1 | PXL-001, PXL-005 | Digits of a decimal produced during one PXL evaluation, in plain notation. |
 | `pxl.expressionLength` | codepoints | 4096 | 80% | 65536 | installation, organization, app, plugin | P1 | PXL-001 | Length of one PXL expression. |

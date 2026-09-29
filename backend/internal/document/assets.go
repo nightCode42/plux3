@@ -389,6 +389,22 @@ func (s *Service) ProcessAsset(ctx context.Context, job AssetJob) error {
 	})
 }
 
+// PendingAssets counts the app's assets whose variants the asset job
+// has not made yet. A publish waits until there are none, so that the
+// variants its bundle lists are the ones a release's recompilation finds
+// (CMP-030, REL-003).
+func (*Service) PendingAssets(ctx context.Context, tx pgx.Tx, appID string) (int64, error) {
+	app, err := parseID(appID, "app")
+	if err != nil {
+		return 0, err
+	}
+	n, err := dbgen.New(tx).CountPendingAssets(ctx, app)
+	if err != nil {
+		return 0, failure(err, "asset")
+	}
+	return n, nil
+}
+
 // transcode makes and stores an asset's variants. It returns the
 // variants as stored, or diagnostics when the image cannot be
 // transcoded; an error only for a failure worth retrying.

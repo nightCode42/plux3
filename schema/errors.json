@@ -888,6 +888,14 @@
       "fix": "Publish the plugin, or delete it, before creating the release."
     },
     {
+      "code": "PLX-8053",
+      "reason": "ASSETS_NOT_READY",
+      "severity": "error",
+      "title": "Assets still being processed",
+      "cause": "A publish waits until every image asset of the app has its variants (CMP-030), since a bundle compiled without them would differ from the release's (REL-003). Some were still being processed when the wait, publish.assetWait, ran out: the worker's asset jobs are slow, failing or not running.",
+      "fix": "Check the assets' processing state, and the worker's asset jobs if an asset stays pending; publish again once every asset is ready."
+    },
+    {
       "code": "PLX-8090",
       "reason": "INTERNAL_SERVER_ERROR",
       "severity": "error",

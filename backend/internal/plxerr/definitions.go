@@ -549,6 +549,11 @@ var registry = []Definition{
 		"Publish the plugin, or delete it, before creating the release.", false,
 	},
 	{
+		AssetsNotReady, "ASSETS_NOT_READY", SeverityError, "Assets still being processed",
+		"A publish waits until every image asset of the app has its variants (CMP-030), since a bundle compiled without them would differ from the release's (REL-003). Some were still being processed when the wait, publish.assetWait, ran out: the worker's asset jobs are slow, failing or not running.",
+		"Check the assets' processing state, and the worker's asset jobs if an asset stays pending; publish again once every asset is ready.", false,
+	},
+	{
 		InternalServerError, "INTERNAL_SERVER_ERROR", SeverityError, "Internal error",
 		"The server failed in a way it does not recognise. The incident identifier in the message appears in the server's logs; nothing else about the failure is returned.",
 		"Retry the call. If it keeps failing, give the incident identifier to the operator of the installation.", false,

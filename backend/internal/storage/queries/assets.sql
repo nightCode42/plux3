@@ -28,6 +28,10 @@ SELECT * FROM assets
 -- name: ListAllAssets :many
 SELECT * FROM assets WHERE app_id = $1 AND deleted_at IS NULL ORDER BY file;
 
+-- name: CountPendingAssets :one
+-- The app's assets whose variants are not made yet (CMP-030).
+SELECT count(*) FROM assets WHERE app_id = $1 AND deleted_at IS NULL AND processing = 'pending';
+
 -- name: FindProcessedAsset :one
 -- Another asset with the same content whose variants are made, so an
 -- upload of the same file is not transcoded twice.

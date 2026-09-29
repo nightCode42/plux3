@@ -145,9 +145,18 @@ type publishWorker struct {
 	svc *Services
 }
 
-// Work runs one publish.
+// Work runs one publish. A publish waiting for assets is snoozed, which
+// River does not count as an attempt; RunPublish bounds the wait itself.
 func (w *publishWorker) Work(ctx context.Context, job *river.Job[release.Job]) error {
-	return w.svc.Releases.RunPublish(ctx, job.Args) //nolint:wrapcheck // a domain error
+	return snoozePending(w.svc.Releases.RunPublish(ctx, job.Args))
+}
+
+// snoozePending turns a publish's wait for assets into a snooze.
+func snoozePending(err error) error {
+	if pending, ok := errors.AsType[*release.AssetsPendingError](err); ok {
+		return river.JobSnooze(pending.RetryAfter) //nolint:wrapcheck // River recognises a snooze by its type
+	}
+	return err //nolint:wrapcheck // a domain error
 }
 
 // assetWorker transcodes uploaded images (CMP-030).

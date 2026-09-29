@@ -858,6 +858,14 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Publish the plugin, or delete it, before creating the release.
 
+### PLX-8053
+
+`ASSETS_NOT_READY` · error · Assets still being processed
+
+**Cause.** A publish waits until every image asset of the app has its variants (CMP-030), since a bundle compiled without them would differ from the release's (REL-003). Some were still being processed when the wait, publish.assetWait, ran out: the worker's asset jobs are slow, failing or not running.
+
+**Fix.** Check the assets' processing state, and the worker's asset jobs if an asset stays pending; publish again once every asset is ready.
+
 ### PLX-8090
 
 `INTERNAL_SERVER_ERROR` · error · Internal error

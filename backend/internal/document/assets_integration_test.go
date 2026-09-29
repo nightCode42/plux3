@@ -22,6 +22,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/compiler/media"
 	"github.com/nightCode42/plux3/backend/internal/document"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
+	"github.com/nightCode42/plux3/backend/internal/storage"
 	"github.com/nightCode42/plux3/backend/internal/storage/objects"
 )
 
@@ -191,7 +192,30 @@ func TestAssets(t *testing.T) {
 	if err != nil || again.ID != a.ID || again.SHA256 == a.SHA256 {
 		t.Errorf("a re-upload: %+v %v", again, err)
 	}
-	queue.take()
+	// The re-upload waits for its job; a publish counts it as pending.
+	pendingOf := func(app string) (int64, error) {
+		var n int64
+		err := f.db.InTx(ctx, storage.Tenant{OrganizationID: f.org}, func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			n, err = f.docs.PendingAssets(ctx, tx, app)
+			return err
+		})
+		return n, err
+	}
+	if n, err := pendingOf(f.app); err != nil || n != 1 {
+		t.Errorf("pending before the job: %d %v", n, err)
+	}
+	for _, j := range queue.take() {
+		if err := f.docs.ProcessAsset(ctx, j); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if n, err := pendingOf(f.app); err != nil || n != 0 {
+		t.Errorf("pending after the job: %d %v", n, err)
+	}
+	if _, err := pendingOf("not-an-id"); code(err) != plxerr.InvalidFormat {
+		t.Errorf("a bad app: %v", err)
+	}
 	// Lottie becomes dotLottie; an SVG keeps its drawing but not its
 	// metadata.
 	anim, err := f.docs.UploadAsset(ctx, f.owner, f.app, "", s, "anim/spinner.lottie", []byte(`{"v":"5.7.0","fr":30,"ip":0,"op":10,"w":10,"h":10,"layers":[]}`))

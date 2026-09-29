@@ -601,6 +601,24 @@
       "description": "Pages per plugin."
     },
     {
+      "key": "publish.assetWait",
+      "unit": "milliseconds",
+      "default": 600000,
+      "max": 3600000,
+      "scopes": [
+        "installation"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P3",
+      "requirements": [
+        "CMP-030",
+        "REL-003"
+      ],
+      "description": "Time a publish waits, from when it was queued, for the app's image assets to finish processing before it fails."
+    },
+    {
       "key": "pxl.collectionSize",
       "unit": "count",
       "default": 10000,

@@ -94,6 +94,9 @@ enum PluxLimit {
   pluginAssetBytes('plugin.assetBytes', PluxLimitUnit.bytes, 20971520, 0, 268435456),
   /// Pages per plugin.
   pluginPages('plugin.pages', PluxLimitUnit.count, 500, 0, 2000),
+  /// Time a publish waits, from when it was queued, for the app's image assets
+  /// to finish processing before it fails.
+  publishAssetWait('publish.assetWait', PluxLimitUnit.milliseconds, 600000, 0, 3600000),
   /// Elements of a list or map produced during one PXL evaluation.
   pxlCollectionSize('pxl.collectionSize', PluxLimitUnit.count, 10000, 0, 1000000),
   /// Digits of a decimal produced during one PXL evaluation, in plain notation.

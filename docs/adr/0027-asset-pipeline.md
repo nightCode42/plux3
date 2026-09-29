@@ -63,9 +63,16 @@ Chosen option: **1**, as the maintainer decided for P2.
   for PNG, GIF and lossless WebP, quality 85 otherwise) and as AVIF (quality 60, speed 6). Variants
   are stored by hash and listed on the asset; the same content uploaded again reuses them. Animated
   images are kept as uploaded. A file the codecs refuse is marked `failed` with a diagnostic.
+  Compiling the two modules costs seconds of CPU, so the worker compiles them in the background
+  while it starts and serves, and an asset job waits for them.
 - **Publish.** The compiler lists each asset's variants in the `assets-index` section — a new,
   additive `variants` field of `Asset` in the bundle IDL — from what the pipeline recorded, and
-  checks `asset.fileSize` per file and `plugin.assetBytes` per plugin (`AST-003`).
+  checks `asset.fileSize` per file and `plugin.assetBytes` per plugin (`AST-003`). A publish job
+  first waits until none of the app's assets is `pending`: compiled earlier, its bundle would list
+  fewer variants than the release's recompilation finds, and the release would be refused
+  (`PLX-8050`, `REL-003`). The job is snoozed in the queue, which counts no attempt, and checked
+  again every two seconds; after `publish.assetWait` (default ten minutes) from when it was queued
+  it fails with `PLX-8053`. Transcoding stays with the asset job alone (maintainer, 2026-09-29).
 - **Where the code lives.** Sniffing, stripping, packaging and transcoding are
   `internal/compiler/media`, a library the CLI can use offline; uploads, the job and the index are
   `internal/document`, since assets are part of the app's draft. Spec §6.3 gains no module.

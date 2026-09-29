@@ -325,6 +325,9 @@ enum PluxErrorCode {
   /// Plugin has no published version.
   pluginNotPublished(8052, 'PLUGIN_NOT_PUBLISHED', 'Plugin has no published version'),
 
+  /// Assets still being processed.
+  assetsNotReady(8053, 'ASSETS_NOT_READY', 'Assets still being processed'),
+
   /// Internal error.
   internalServerError(8090, 'INTERNAL_SERVER_ERROR', 'Internal error'),
 

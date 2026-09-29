@@ -88,6 +88,10 @@ const (
 	PluginAssetBytes Key = "plugin.assetBytes"
 	// PluginPages: Pages per plugin. (SCH-005)
 	PluginPages Key = "plugin.pages"
+	// PublishAssetWait: Time a publish waits, from when it was queued, for the
+	// app's image assets to finish processing before it fails. (CMP-030,
+	// REL-003)
+	PublishAssetWait Key = "publish.assetWait"
 	// PXLCollectionSize: Elements of a list or map produced during one PXL
 	// evaluation. (PXL-001)
 	PXLCollectionSize Key = "pxl.collectionSize"
@@ -151,6 +155,7 @@ var registry = [...]Definition{
 	{Key: PageNodes, Unit: UnitCount, Default: 5000, Warning: 1000, Max: 50000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Nodes in one page document. Above the warning threshold the compiler reports the page."},
 	{Key: PluginAssetBytes, Unit: UnitBytes, Default: 20971520, Warning: 0, Max: 268435456, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P2", Description: "Bytes of the asset files one plugin's pages and icon use, checked at publish."},
 	{Key: PluginPages, Unit: UnitCount, Default: 500, Warning: 0, Max: 2000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Pages per plugin."},
+	{Key: PublishAssetWait, Unit: UnitMilliseconds, Default: 600000, Warning: 0, Max: 3600000, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P3", Description: "Time a publish waits, from when it was queued, for the app's image assets to finish processing before it fails."},
 	{Key: PXLCollectionSize, Unit: UnitCount, Default: 10000, Warning: 0, Max: 1000000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P1", Description: "Elements of a list or map produced during one PXL evaluation."},
 	{Key: PXLDecimalDigits, Unit: UnitCount, Default: 1000, Warning: 0, Max: 10000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P1", Description: "Digits of a decimal produced during one PXL evaluation, in plain notation."},
 	{Key: PXLExpressionLength, Unit: UnitCodepoints, Default: 4096, Warning: 0, Max: 65536, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Length of one PXL expression."},
