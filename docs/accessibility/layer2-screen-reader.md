@@ -8,6 +8,7 @@ The automated half runs in every CI run: `gallery_test.dart` › *Layer 2 compon
 
 1. Install the example host app with the gallery release; open the `layer2` page.
 2. Turn on TalkBack or VoiceOver. Set the system text size to the largest setting for step 6.
+3. Turn on airplane mode and pull to refresh (or restart the app), so the next sync reaches no server: the offline banner shows only then, and the page's second banner, with `visible` false, never does.
 
 ## Steps and expected announcements
 

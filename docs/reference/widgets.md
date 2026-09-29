@@ -1782,7 +1782,7 @@ ID 102 · Layer 2 · P3 · revision 1 (runtime 0.1.0) · android, ios · cost 15
 | Prop | ID | Type | Default | Description |
 |---|---|---|---|---|
 | `message` | 1 | `string`, required | — | The text shown while offline. |
-| `visible` | 2 | `bool` | `true` | Show only while offline when true. |
+| `visible` | 2 | `bool` | `true` | Whether the banner can show: while true it shows whenever the device is offline; false hides it. |
 
 ### Opacity
 

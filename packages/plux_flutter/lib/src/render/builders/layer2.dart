@@ -127,17 +127,18 @@ final class _StatePanel extends StatelessWidget {
 }
 
 /// `OfflineBanner`: while the device is offline — the last sync reached
-/// no server — a banner with the message, announced when it appears;
-/// with `visible` false, always.
+/// no server — a banner with the message, announced when it appears.
+/// `visible` false hides it whatever the connection.
 Widget buildOfflineBanner(NodeContext c) {
   final message =
       c.decode(OfflineBannerProps.message, asString) ??
       c.missing('OfflineBanner.message');
-  final onlyOffline = c.decode(OfflineBannerProps.visible, asBool) ?? true;
+  if (!(c.decode(OfflineBannerProps.visible, asBool) ?? true)) {
+    return const SizedBox.shrink();
+  }
   return Consumer(
     builder: (context, ref, _) {
-      final offline = ref.watch(pluxOfflineProvider);
-      final shown = offline || !onlyOffline;
+      final shown = ref.watch(pluxOfflineProvider);
       final scheme = Theme.of(context).colorScheme;
       return AnimatedSize(
         duration: MediaQuery.disableAnimationsOf(context)

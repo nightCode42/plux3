@@ -52,6 +52,24 @@ void main() {
     await settle(tester);
   }
 
+  /// Reports a sync that reached no server, or one that got an answer,
+  /// as the sync engine does.
+  Future<void> connection(WidgetTester tester, {required bool online}) async {
+    h.runtime.lastEvent.value = online
+        ? const SyncUpToDate(5)
+        : SyncFailed(
+            PluxException(
+              PluxErrorCode.syncFailed,
+              'no connection',
+              details: const {'status': '0', 'code': 'unavailable'},
+            ),
+          );
+    await settle(tester);
+    // The banner's 200 ms size animation; the skeleton shimmers for ever,
+    // so the tester cannot wait for every animation to end.
+    await tester.pump(const Duration(milliseconds: 300));
+  }
+
   /// Problems other than the sync that finds no server release.
   List<PluxException> problems() => [
     for (final e in h.errors)
@@ -149,6 +167,7 @@ void main() {
             ),
           ),
         );
+        await connection(tester, online: false);
         if (dark) {
           Plux.setThemeMode(ThemeMode.dark);
           await settle(tester);
@@ -175,10 +194,23 @@ void main() {
     }
   });
 
+  testWidgets('OfflineBanner shows only while the device is offline, and '
+      'never with visible false [WGT-020]', (tester) async {
+    await open(tester, 'layer2');
+    expect(find.text('You are offline'), findsNothing, reason: 'online');
+    await connection(tester, online: false);
+    expect(find.text('You are offline'), findsOneWidget);
+    expect(find.text('Never shown'), findsNothing);
+    await connection(tester, online: true);
+    expect(find.text('You are offline'), findsNothing, reason: 'back online');
+    expect(problems(), isEmpty);
+  });
+
   testWidgets('Layer 2 components read as their screen-reader script says '
       '[WGT-020]', (tester) async {
     final semantics = tester.ensureSemantics();
     await open(tester, 'layer2');
+    await connection(tester, online: false);
     for (final title in ['Nothing here', 'Could not load']) {
       expect(
         tester.getSemantics(find.text(title)),

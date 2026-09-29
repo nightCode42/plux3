@@ -36,7 +36,7 @@
       "id": 2,
       "type": "bool",
       "default": true,
-      "description": "Show only while offline when true."
+      "description": "Whether the banner can show: while true it shows whenever the device is offline; false hides it."
     }
   ]
 }

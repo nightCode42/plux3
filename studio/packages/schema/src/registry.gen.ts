@@ -2321,7 +2321,7 @@ export const widgets: readonly WidgetDescriptor[] = [
     "typeParameters": [],
     "props": [
       {"name": "message", "id": 1, "type": "string", "required": true, "revision": 1, "bindable": true, "description": "The text shown while offline."},
-      {"name": "visible", "id": 2, "type": "bool", "required": false, "default": true, "revision": 1, "bindable": true, "description": "Show only while offline when true."}
+      {"name": "visible", "id": 2, "type": "bool", "required": false, "default": true, "revision": 1, "bindable": true, "description": "Whether the banner can show: while true it shows whenever the device is offline; false hides it."}
     ],
     "events": [],
     "slots": []

@@ -67,7 +67,7 @@ Valkey is reached with a small RESP client in `backend/internal/cache`, so no Re
 
 Transitive packages these bring, all published by the Dart and Flutter teams or the Riverpod author and all BSD-3-Clause or MIT: `state_notifier`, `listen`, `uuid`, `fixnum` (Riverpod); `http_parser`, `http_profile`, `web`, `web_socket` (HTTP); `jni`, `jni_flutter`, `jni_util`, `package_config`, `plugin_platform_interface` (Cronet); `objective_c`, `ffi` (`URLSession`, `cryptography`); `vector_graphics_codec`; and, at build time only, `logging`, `pub_semver`, `record_use`, `yaml`, `glob`, `file`. `flutter_riverpod` declares `flutter_test` as a dependency; nothing in `plux_flutter/lib` imports it, so release builds do not contain it.
 
-`vector_graphics_compiler` brings, into `plux-svgc` only: `args` and `path_parsing` (Dart and Flutter teams, BSD-3-Clause), and `xml` with `petitparser` (Lukas Renggli, MIT), which it pins to audited versions. `plux_svgc` is outside the pub workspace with its own `pubspec.lock`, because the server image builds it with the Dart SDK alone.
+`vector_graphics_compiler` brings, into `plux-svgc` only: `args` and `path_parsing` (Dart and Flutter teams, BSD-3-Clause), and `xml` with `petitparser` (Lukas Renggli, MIT), which it pins to audited versions; the maintainer approved these transitive dependencies on 2026-09-29. `plux_svgc` is outside the pub workspace with its own `pubspec.lock`, because the server image builds it with the Dart SDK alone.
 
 ### Native code built from source
 

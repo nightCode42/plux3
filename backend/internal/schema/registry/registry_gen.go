@@ -1474,7 +1474,7 @@ var widgets = [...]Widget{
 		Platforms: PlatformAndroid | PlatformIOS, Cost: 15, Role: RoleNone, Interactive: false,
 		Props: []Prop{
 			{Name: "message", ID: 1, Type: "string", Required: true, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: "The text shown while offline."},
-			{Name: "visible", ID: 2, Type: "bool", Required: false, Default: "true", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: "Show only while offline when true."},
+			{Name: "visible", ID: 2, Type: "bool", Required: false, Default: "true", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: "Whether the banner can show: while true it shows whenever the device is offline; false hides it."},
 		},
 	},
 	{

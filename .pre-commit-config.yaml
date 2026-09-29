@@ -41,7 +41,8 @@ repos:
         # by `make wasm-codecs-check` (ADR-0027); maintainer-approved
         # exception, 2026-09-28.
         # The Material Symbols variable font the server subsets is pinned by
-        # icons.lock (ADR-0032 § Icons, option (a), 2026-09-29).
+        # icons.lock (ADR-0032 § Icons, option (a)); server-only, devices get
+        # per-bundle subsets; maintainer-approved exception, 2026-09-29.
         exclude: ^(backend/internal/compiler/media/codecs/[a-z]+\.wasm|backend/internal/icons/fonts/MaterialSymbolsOutlined\.ttf)$
       - id: check-executables-have-shebangs
       - id: check-shebang-scripts-are-executable
