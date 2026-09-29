@@ -43,6 +43,9 @@ WORKDIR /src/packages/plux_svgc
 COPY packages/plux_svgc/pubspec.yaml packages/plux_svgc/pubspec.lock ./
 RUN dart pub get --enforce-lockfile
 COPY packages/plux_svgc/ ./
+# The golden SVG and its encoding, which the tests compare.
+COPY schema/testdata/documents/widgets/assets/icons/check.svg /src/schema/testdata/documents/widgets/assets/icons/
+COPY schema/testdata/bundles/widgets/variants/check.vec /src/schema/testdata/bundles/widgets/variants/
 COPY --from=pathops /out/libpath_ops.so /out/libpath_ops.so
 # The tests run the compiled library before the image ships it.
 RUN PLUX_PATH_OPS=/out/libpath_ops.so dart test && \

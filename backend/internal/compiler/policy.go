@@ -197,10 +197,11 @@ func (u *unit) imageBytes(pg *page) int64 {
 }
 
 // textNames are the props and value-type fields from which an accessible
-// name is derived, such as Text.data or InputDecoration.labelText.
+// name is derived, such as Text.data or InputDecoration.labelText, and
+// the text props of Layer 2 components (ErrorState.title, retryLabel).
 var textNames = map[string]bool{
 	"data": true, "label": true, "tooltip": true, "semanticsLabel": true, "semanticLabel": true, "text": true,
-	"labelText": true, "hintText": true, "helperText": true,
+	"labelText": true, "hintText": true, "helperText": true, "title": true, "retryLabel": true,
 }
 
 // accessibleName warns when an interactive node has no semantics label

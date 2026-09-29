@@ -1,0 +1,128 @@
+{
+  "id": "01c0c450-6c00-7000-8000-00000000020e",
+  "key": "layer2",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01c0c450-6c00-7000-8000-000000000215",
+    "slots": {
+      "appBar": {
+        "id": "01c0c450-6c00-7000-8000-000000000216",
+        "slots": {
+          "title": {
+            "id": "01c0c450-6c00-7000-8000-000000000217",
+            "props": {
+              "data": "layer 2"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "id": "01c0c450-6c00-7000-8000-000000000218",
+        "slots": {
+          "child": {
+            "children": [
+              {
+                "id": "01c0c450-6c00-7000-8000-00000000020f",
+                "props": {
+                  "message": "You are offline",
+                  "visible": false
+                },
+                "testId": "offline-banner",
+                "type": "OfflineBanner"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-000000000210",
+                "props": {
+                  "avatar": true,
+                  "lines": 3,
+                  "shimmer": false
+                },
+                "testId": "skeleton",
+                "type": "SkeletonLoader"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-000000000211",
+                "props": {
+                  "icon": {
+                    "name": "inbox"
+                  },
+                  "message": "Items you add appear here.",
+                  "title": "Nothing here"
+                },
+                "slots": {
+                  "action": {
+                    "events": {
+                      "onPressed": {
+                        "steps": [
+                          {
+                            "action": "haptic",
+                            "id": "h",
+                            "input": {
+                              "pattern": "light"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "id": "01c0c450-6c00-7000-8000-000000000212",
+                    "slots": {
+                      "child": {
+                        "id": "01c0c450-6c00-7000-8000-000000000213",
+                        "props": {
+                          "data": "add item"
+                        },
+                        "type": "Text"
+                      }
+                    },
+                    "type": "FilledButton"
+                  }
+                },
+                "testId": "empty-state",
+                "type": "EmptyState"
+              },
+              {
+                "events": {
+                  "onRetry": {
+                    "steps": [
+                      {
+                        "action": "haptic",
+                        "id": "h",
+                        "input": {
+                          "pattern": "light"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01c0c450-6c00-7000-8000-000000000214",
+                "props": {
+                  "icon": {
+                    "name": "error"
+                  },
+                  "message": "Check your connection and try again.",
+                  "retryLabel": "Retry",
+                  "title": "Could not load"
+                },
+                "testId": "error-state",
+                "type": "ErrorState"
+              }
+            ],
+            "id": "01c0c450-6c00-7000-8000-000000000219",
+            "props": {
+              "crossAxisAlignment": "stretch"
+            },
+            "type": "Column"
+          }
+        },
+        "type": "SingleChildScrollView"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "layer2",
+  "schemaVersion": "1.0.0",
+  "title": "layer 2"
+}

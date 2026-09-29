@@ -30,6 +30,7 @@ void main() {
     Map<String, Object?> params = const {},
     ThemeData? theme,
     PluxThemeSource themeSource = PluxThemeSource.host,
+    TransitionBuilder? builder,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -44,6 +45,7 @@ void main() {
       MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: theme,
+        builder: builder,
         home: PluxScope(child: PluxView(route, params: params)),
       ),
     );
@@ -123,6 +125,103 @@ void main() {
         );
       });
     }
+  });
+
+  group('Layer 2 components in light, dark, right-to-left and 200% text '
+      '[WGT-020]', () {
+    for (final (name, dark, rtl, scale) in [
+      ('light', false, false, 1.0),
+      ('dark', true, false, 1.0),
+      ('rtl', false, true, 1.0),
+      ('text200', false, false, 2.0),
+    ]) {
+      testWidgets(name, (tester) async {
+        await open(
+          tester,
+          'layer2',
+          themeSource: PluxThemeSource.plux,
+          builder: (context, child) => Directionality(
+            textDirection: rtl ? TextDirection.rtl : TextDirection.ltr,
+            child: MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: TextScaler.linear(scale)),
+              child: child!,
+            ),
+          ),
+        );
+        if (dark) {
+          Plux.setThemeMode(ThemeMode.dark);
+          await settle(tester);
+          // Material animates to the new theme.
+          await tester.pump(const Duration(milliseconds: 300));
+        }
+        for (final t in [
+          'You are offline',
+          'Nothing here',
+          'Items you add appear here.',
+          'add item',
+          'Could not load',
+          'Check your connection and try again.',
+          'Retry',
+        ]) {
+          expect(find.text(t), findsOneWidget, reason: t);
+        }
+        expect(problems(), isEmpty);
+        await expectLater(
+          find.byType(MaterialApp),
+          matchesGoldenFile('goldens/layer2_$name.png'),
+        );
+      });
+    }
+  });
+
+  testWidgets('Layer 2 components read as their screen-reader script says '
+      '[WGT-020]', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await open(tester, 'layer2');
+    for (final title in ['Nothing here', 'Could not load']) {
+      expect(
+        tester.getSemantics(find.text(title)),
+        isSemantics(label: title, isHeader: true),
+      );
+    }
+    expect(
+      tester.getSemantics(find.text('Retry')),
+      isSemantics(
+        label: 'Retry',
+        isButton: true,
+        isEnabled: true,
+        hasTapAction: true,
+      ),
+    );
+    bool live(String text) => find
+        .ancestor(
+          of: find.text(text),
+          matching: find.byWidgetPredicate(
+            (w) => w is Semantics && (w.properties.liveRegion ?? false),
+          ),
+        )
+        .evaluate()
+        .isNotEmpty;
+    expect(live('Could not load'), isTrue, reason: 'an error is announced');
+    expect(live('You are offline'), isTrue, reason: 'going offline too');
+    expect(live('Nothing here'), isFalse);
+    expect(
+      find.descendant(
+        of: find.byType(ExcludeSemantics),
+        matching: find.byType(Container),
+      ),
+      findsWidgets,
+      reason: 'skeleton placeholders are hidden from screen readers',
+    );
+    // Retry fires onRetry, whose actions arrive in P5 (PLX-4010).
+    await tester.tap(find.text('Retry'));
+    await tester.pump();
+    expect(
+      problems().map((e) => e.code),
+      contains(PluxErrorCode.actionsNotAvailable),
+    );
+    semantics.dispose();
   });
 
   testWidgets('a page in dark mode uses dark token values [THM-002]', (

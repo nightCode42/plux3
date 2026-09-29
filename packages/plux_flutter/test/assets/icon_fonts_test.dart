@@ -35,6 +35,8 @@ void main() {
     });
     expect(iconFontNames(fonts['material']!.$2), {
       'arrow_back': (0xe5c4, true),
+      'error': (0xf8b6, false),
+      'inbox': (0xe156, false),
       'star': (0xf09a, false),
     });
     expect(iconFontNames(Uint8List(16)), isNull);

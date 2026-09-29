@@ -673,7 +673,7 @@ The full catalogue with phases is in Appendix C.
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `WGT-020` | P3 | MUST | Layer 2 components **MUST** be implemented in Dart inside the Plux packages using only Layer 1 widgets, the theme, and runtime services, and **MUST** each have a descriptor, widget tests, golden tests in light/dark/RTL/200% text, and a screen-reader test script. | SPEC |
+| `WGT-020` | P3 | MUST | Layer 2 components **MUST** be implemented in Dart inside the Plux packages using only Layer 1 widgets, the theme, and runtime services, and **MUST** each have a descriptor, widget tests, golden tests in light/dark/RTL/200% text, and a screen-reader test script. | DONE |
 | `WGT-021` | P3 | SHOULD | Heavy Layer 2 components with third-party dependencies (charts, maps, Lottie, Rive, video, camera, QR scanning) **SHOULD** live in optional packages so that apps pay only for what they use (`RT-060`). | SPEC |
 | `WGT-030` | P4 | MUST | Host apps **MUST** be able to expose existing widgets as **native slots** (Layer 3) without modifying them: the widget class names are listed in `plux.yaml`, `plux native scan` derives their prop descriptors from constructor parameters using the Dart analyzer, and the builders are registered in one place at startup. Studio **MUST** show native slots in its catalogue with their props. | SPEC |
 | `WGT-031` | P11 | MUST | On the Studio canvas a native slot **MUST** render as a labelled placeholder at its declared or constrained size, and **SHOULD** show a screenshot of the real widget captured from a paired device (`DEV-033`). | SPEC |

@@ -14,6 +14,7 @@ import 'package:flutter/gestures.dart' show DragStartBehavior;
 import 'package:flutter/material.dart';
 import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
+import 'package:plux_flutter/src/render/builders/layer2.dart';
 import 'package:plux_flutter/src/render/decoders.dart';
 import 'package:plux_flutter/src/render/decoding.dart';
 import 'package:plux_flutter/src/render/generated/render.g.dart';
@@ -40,6 +41,10 @@ const Map<int, NodeBuilder> manualBuilders = {
   WidgetIds.image: _image,
   WidgetIds.floatingActionButton: _floatingActionButton,
   WidgetIds.cupertinoSlidingSegmentedControl: _slidingSegmentedControl,
+  WidgetIds.emptyState: buildEmptyState,
+  WidgetIds.errorState: buildErrorState,
+  WidgetIds.offlineBanner: buildOfflineBanner,
+  WidgetIds.skeletonLoader: buildSkeletonLoader,
 };
 
 // ── Structural primitives ──────────────────────────────────────────────────

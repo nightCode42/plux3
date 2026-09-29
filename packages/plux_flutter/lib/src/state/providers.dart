@@ -71,6 +71,40 @@ final syncStatusProvider = NotifierProvider<SyncStatusNotifier, SyncEvent?>(
   dependencies: [pluxRuntimeProvider],
 );
 
+/// Whether the device is offline after [event], given it was [before]: a
+/// sync that reached no server says so, one that got an answer says not,
+/// and any other event leaves it as it was.
+bool offlineAfter(SyncEvent? event, {required bool before}) => switch (event) {
+  SyncFailed(:final error) =>
+    error.details['status'] == '0' && error.details['code'] == 'unavailable'
+        ? true
+        : before,
+  SyncUpToDate() ||
+  SyncDownloading() ||
+  SyncStaged() ||
+  SyncActivated() => false,
+  _ => before,
+};
+
+/// Follows the sync events into whether the device is offline.
+final class OfflineNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    ref.listen(
+      syncStatusProvider,
+      (_, event) => state = offlineAfter(event, before: state),
+    );
+    return offlineAfter(ref.read(syncStatusProvider), before: false);
+  }
+}
+
+/// Whether the device is offline, as the last sync saw it (the
+/// `OfflineBanner` component).
+final pluxOfflineProvider = NotifierProvider<OfflineNotifier, bool>(
+  OfflineNotifier.new,
+  dependencies: [syncStatusProvider],
+);
+
 /// What Plux pages render with besides their own data: locale, theme mode,
 /// brand, consent and user context (HST-001).
 @immutable
