@@ -88,7 +88,7 @@ GO_BUILD_FLAGS  := -trimpath -buildvcs=false -ldflags "-s -w -buildid= \
 	go-determinism go-budgets go-fuzz currencies-check go-vuln go-build go-reproducible \
 	dart-check dart-get dart-lock-check dart-fmt dart-fmt-check dart-analyze dart-test dart-cover widgets-api widgets-api-check \
 	studio-check studio-install studio-fmt studio-lint studio-typecheck studio-test studio-cover \
-	compose-secrets compose-up compose-down compose-seed dev compose-test \
+	compose-secrets compose-up compose-down compose-seed dev compose-test image-check \
 	release-binaries release-notes repo-check spec-lint trace secrets workflows-lint reuse-lint hygiene
 
 help: ## Show this help
@@ -414,6 +414,24 @@ compose-test: compose-secrets ## Run the Go integration and end-to-end tests aga
 		PLUX_TEST_VALKEY_URL=redis://127.0.0.1:56379 \
 		$(GO) test -race -count=1 ./internal/storage/... ./internal/cache/... ./internal/server/... ./internal/api/... ./internal/release/...
 
+# The image as shipped, for this machine's platform: its plux-svgc and
+# Skia library must reproduce the golden output (CI runs it on amd64 and
+# arm64, CMP-002), and every component must carry its notices.
+IMAGE_CHECK_TAG ?= plux-server:check
+# Verifies: CMP-031, CMP-002.
+image-check: ## Build the server image and check its SVG compiler's output and its third-party notices
+	docker build -f backend/Dockerfile --target server -t $(IMAGE_CHECK_TAG) .
+	@out=$$(mktemp); trap 'rm -f "$$out"' EXIT; \
+	docker run --rm -i --network none --entrypoint /usr/local/bin/plux-svgc $(IMAGE_CHECK_TAG) \
+		--libpathops /usr/local/lib/plux/libpath_ops.so < packages/plux_svgc/test/icon.svg > "$$out"; \
+	cmp "$$out" packages/plux_svgc/test/icon.pathops.vec && echo "✓ plux-svgc in the image reproduces the golden"
+	@id=$$(docker create $(IMAGE_CHECK_TAG)); trap 'docker rm -f "$$id" >/dev/null' EXIT; \
+	docs=$$(docker cp "$$id:/usr/share/doc" - | tar -t); \
+	for f in plux-server/go.LICENSE plux-server/THIRD_PARTY_NOTICES.txt plux-server/LICENSE-material-design-icons \
+		plux-server/LICENSE-cupertino-icons plux-svgc/dart-sdk.LICENSE plux-svgc/skia.LICENSE plux-svgc/flutter-path_ops.LICENSE; do \
+		printf '%s\n' "$$docs" | grep -qx "doc/$$f" || { echo "✗ the image lacks /usr/share/doc/$$f" >&2; exit 1; }; \
+	done; echo "✓ the image carries its third-party notices"
+
 ##@ Releases (CI-008)
 
 # Releasable components and their directories. Tags are <component>/v<semver>.
@@ -432,6 +450,7 @@ release-binaries: ## Build reproducible release archives of plux and plux-server
 		dir=$(DIST_DIR)/plux_$(BACKEND_VERSION)_$${os}_$${arch}; mkdir -p $$dir; \
 		(cd backend && CGO_ENABLED=0 GOOS=$$os GOARCH=$$arch $(GO) build $(GO_BUILD_FLAGS) -o ../$$dir/ ./cmd/plux ./cmd/plux-server); \
 		cp -r LICENSES $$dir/; \
+		GO="$(GO)" CGO_ENABLED=0 GOOS=$$os GOARCH=$$arch sh scripts/release/go-notices.sh $$dir/NOTICES ./cmd/plux ./cmd/plux-server; \
 		find $$dir -exec touch -h -d @0 {} +; \
 		if [ "$$os" = windows ]; then (cd $(DIST_DIR) && zip -qrX $${dir#$(DIST_DIR)/}.zip $${dir#$(DIST_DIR)/}); \
 		else tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -C $(DIST_DIR) -cf - $${dir#$(DIST_DIR)/} | gzip -n > $$dir.tar.gz; fi; \

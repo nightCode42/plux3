@@ -6,7 +6,8 @@
 # images; the build uses the same flags as `make go-build`, so an image
 # holds the same bytes as the released binary (CI-006). The server image
 # also carries plux-svgc and its library, so it is based on distroless
-# "base-nossl" (glibc) rather than "static".
+# "base-nossl" (glibc) rather than "static". Each image carries the
+# third-party notices of what it ships under /usr/share/doc.
 #
 #   docker buildx build -f backend/Dockerfile --target server .
 #   docker buildx build -f backend/Dockerfile --target cli .
@@ -29,6 +30,11 @@ RUN cd backend && CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trim
         -X github.com/nightCode42/plux3/backend/internal/buildinfo.commit=$COMMIT \
         -X github.com/nightCode42/plux3/backend/internal/buildinfo.commitDate=$COMMIT_DATE" \
       -o /out/ ./cmd/plux-server ./cmd/plux && mkdir -p /out/keys
+# The third-party notices of each binary, for the target platform.
+COPY scripts/release/go-notices.sh /src/scripts/release/
+RUN cd backend && export CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH && \
+    sh ../scripts/release/go-notices.sh /out/notices/plux-server ./cmd/plux-server && \
+    sh ../scripts/release/go-notices.sh /out/notices/plux ./cmd/plux
 
 # plux-svgc, the worker's SVG compiler (CMP-031, ADR-0027 Revision), and
 # the Skia path operations it loads. Both are built for the target
@@ -47,9 +53,12 @@ COPY packages/plux_svgc/ ./
 COPY schema/testdata/documents/widgets/assets/icons/check.svg /src/schema/testdata/documents/widgets/assets/icons/
 COPY schema/testdata/bundles/widgets/variants/check.vec /src/schema/testdata/bundles/widgets/variants/
 COPY --from=pathops /out/libpath_ops.so /out/libpath_ops.so
-# The tests run the compiled library before the image ships it.
+COPY --from=pathops /out/*.LICENSE /out/notices/
+# The tests run the compiled library before the image ships it, and
+# compare its output with the golden every architecture must reproduce.
 RUN PLUX_PATH_OPS=/out/libpath_ops.so dart test && \
-    dart compile exe bin/plux_svgc.dart -o /out/plux-svgc
+    dart compile exe bin/plux_svgc.dart -o /out/plux-svgc && \
+    sh native/notices.sh /out/notices
 
 # Distroless "base-nossl": glibc for the Dart runtime and the library;
 # still no shell and no package manager (SEC-108).
@@ -57,6 +66,8 @@ FROM gcr.io/distroless/base-nossl-debian12:nonroot@sha256:be40c00dfabd86576d9266
 COPY --from=build /out/plux-server /usr/local/bin/plux-server
 COPY --from=svgc /out/plux-svgc /usr/local/bin/plux-svgc
 COPY --from=svgc /out/libpath_ops.so /usr/local/lib/plux/libpath_ops.so
+COPY --from=build /out/notices/plux-server /usr/share/doc/plux-server/
+COPY --from=svgc /out/notices /usr/share/doc/plux-svgc/
 # The file signing backend's directory, owned by nonroot so a volume
 # mounted there is writable with a read-only root filesystem.
 COPY --from=build --chown=65532:65532 /out/keys /var/lib/plux/keys
@@ -67,5 +78,6 @@ CMD ["serve", "--config", "/etc/plux/plux.yaml"]
 
 FROM gcr.io/distroless/static-debian12:nonroot@sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab AS cli
 COPY --from=build /out/plux /usr/local/bin/plux
+COPY --from=build /out/notices/plux /usr/share/doc/plux/
 USER nonroot:nonroot
 ENTRYPOINT ["/usr/local/bin/plux"]

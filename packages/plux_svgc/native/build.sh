@@ -9,7 +9,14 @@
 # the C++ runtime statically and needs only glibc; built on Debian 12, it
 # runs on the server image's distroless Debian 12 base. The server image
 # build runs it (backend/Dockerfile); `sh build.sh <out-dir>` runs it
-# anywhere with git, curl and a C++20 compiler.
+# anywhere with git, curl and a C++20 compiler. It also writes the
+# licences of Skia and of the wrapper next to the library.
+#
+# The worker's output must not depend on the server's architecture
+# (CMP-002), so floating-point contraction is off: by default GCC fuses
+# a*b+c into one rounding on arm64 but not on x86-64, which changes the
+# optimised paths. test/icon.pathops.vec pins the output; the image build
+# checks it on both architectures.
 set -eu
 
 SKIA_URL=https://github.com/google/skia
@@ -21,9 +28,11 @@ work=${WORK:-$(mktemp -d)}
 CXX=${CXX:-g++}
 mkdir -p "$out" "$work"
 
-if [ ! -d "$work/skia/.git" ]; then
-	git init -q "$work/skia"
-	git -C "$work/skia" sparse-checkout set --no-cone /include /src/core /src/pathops /src/ports /src/base /src/utils
+# A reused WORK keeps its checkout; setting the sparse paths again brings
+# it up to date with this script's.
+[ -d "$work/skia/.git" ] || git init -q "$work/skia"
+git -C "$work/skia" sparse-checkout set --no-cone /LICENSE /include /src/core /src/pathops /src/ports /src/base /src/utils
+if [ "$(git -C "$work/skia" rev-parse -q --verify HEAD || true)" != "$SKIA_COMMIT" ]; then
 	git -C "$work/skia" fetch -q --depth 1 --filter=blob:none "$SKIA_URL" "$SKIA_COMMIT"
 	git -C "$work/skia" checkout -q FETCH_HEAD
 fi
@@ -32,6 +41,8 @@ test "$(git -C "$work/skia" rev-parse HEAD)" = "$SKIA_COMMIT" || { echo "skia is
 wrapper=https://raw.githubusercontent.com/flutter/flutter/$FLUTTER_VERSION/engine/src/flutter/tools/path_ops
 curl -sSfL -o "$work/path_ops.cc" "$wrapper/path_ops.cc"
 curl -sSfL -o "$work/path_ops.h" "$wrapper/path_ops.h"
+curl -sSfL -o "$out/flutter-path_ops.LICENSE" "https://raw.githubusercontent.com/flutter/flutter/$FLUTTER_VERSION/LICENSE"
+cp "$work/skia/LICENSE" "$out/skia.LICENSE"
 # The wrapper includes Skia as third_party/skia.
 mkdir -p "$work/inc/third_party"
 ln -sfn "$work/skia" "$work/inc/third_party/skia"
@@ -45,7 +56,7 @@ core/SkPathRawShapes core/SkBezierCurves core/SkCubics core/SkLineClipper
 core/SkSafeMath core/SkSemaphore core/SkQuads core/SkFloatingPoint
 ports/SkMemory_malloc ports/SkLog_stdio"
 
-flags="-O2 -fPIC -std=c++20 -DNDEBUG -DSK_RELEASE -fvisibility=hidden
+flags="-O2 -ffp-contract=off -fPIC -std=c++20 -DNDEBUG -DSK_RELEASE -fvisibility=hidden
 -fvisibility-inlines-hidden -ffunction-sections -fdata-sections -fno-exceptions
 -fno-rtti -ffile-prefix-map=$work=. -I$work/skia -I$work/inc"
 mkdir -p "$work/obj"

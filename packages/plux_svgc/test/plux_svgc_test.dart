@@ -9,19 +9,9 @@ import 'package:plux_svgc/plux_svgc.dart';
 import 'package:test/test.dart';
 import 'package:vector_graphics_codec/vector_graphics_codec.dart';
 
-/// An icon with a clip path and a mask, which the optimisers resolve.
-const icon = '''
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-  <defs>
-    <clipPath id="c"><circle cx="12" cy="12" r="10"/></clipPath>
-    <mask id="m"><rect width="24" height="24" fill="white"/><circle cx="12" cy="12" r="4" fill="black"/></mask>
-  </defs>
-  <g clip-path="url(#c)" mask="url(#m)">
-    <rect width="24" height="24" fill="#6750A4"/>
-    <rect x="4" y="4" width="16" height="16" fill="#FF5722"/>
-  </g>
-</svg>
-''';
+/// An icon with a clip path and a mask, which the optimisers resolve;
+/// `make image-check` compiles it with the server image's plux-svgc too.
+final icon = File('test/icon.svg').readAsStringSync();
 
 /// Runs the tool on [input] and returns its exit code, output and errors.
 Future<(int, Uint8List, String)> svgc(
@@ -71,11 +61,13 @@ void main() {
     );
   });
 
-  // The server image builds libpath_ops and runs this check; locally, point
-  // PLUX_PATH_OPS at a build of it.
+  // The server image builds libpath_ops and runs this check on amd64 and
+  // arm64; locally, point PLUX_PATH_OPS at a build of it (native/build.sh).
+  // The golden pins the output on every architecture, which the worker's
+  // determinism needs (CMP-002); PLUX_UPDATE_GOLDENS=1 rewrites it.
   final pathOps = Platform.environment['PLUX_PATH_OPS'];
-  test('with Skia path operations the optimisers resolve clips and masks '
-      '[CMP-031]', () async {
+  test('with Skia path operations the optimisers resolve clips and masks, '
+      'to the same bytes on every architecture [CMP-031, CMP-002]', () async {
     final (code, out, err) = await svgc([
       '--libpathops',
       pathOps!,
@@ -84,6 +76,11 @@ void main() {
     expect(decodes(out), isTrue);
     final (_, plain, _) = await svgc(['--no-path-ops'], utf8.encode(icon));
     expect(out, isNot(plain));
+    final golden = File('test/icon.pathops.vec');
+    if (Platform.environment['PLUX_UPDATE_GOLDENS'] == '1') {
+      golden.writeAsBytesSync(out);
+    }
+    expect(out, golden.readAsBytesSync());
   }, skip: pathOps == null ? 'PLUX_PATH_OPS is not set' : false);
 
   test(

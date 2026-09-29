@@ -153,6 +153,19 @@ raw SVG on the device, contrary to `CMP-031`).
   time limit and a 16 MiB output limit; a malformed, slow or oversized SVG fails its asset
   with a diagnostic, and a server without the helper (`assets.svgCompiler`) fails SVG
   assets the same way instead of retrying.
+- **Hardening (2026-09-29, after R6).** The optimised output must not depend on the
+  server's architecture (`CMP-002`), and GCC contracts `a*b+c` into one fused
+  multiply-add on arm64 but not on x86-64, so the library is built with
+  `-ffp-contract=off`. `packages/plux_svgc/test/icon.pathops.vec`, made on amd64, pins the
+  optimised output of a clipped and masked icon; the image build's tests and
+  `make image-check` (the image's own helper and library) must reproduce it, and CI runs
+  that check on amd64 and natively on arm64 (`ubuntu-24.04-arm`). SVGs uploaded before the
+  worker compiled them are ready without a variant: the worker's maintenance sweep marks
+  them pending and compiles them, and a later upload of the same file no longer reuses
+  their empty variant list. The server image carries the notices of the helper (the Dart
+  SDK and the packages it links), of Skia and Flutter's wrapper, and of every Go module and
+  embedded third-party file under `/usr/share/doc`; the release archives carry the Go ones
+  in `NOTICES/` (`scripts/release/go-notices.sh`).
 
 **Size, measured on 2026-09-28 (linux/amd64):**
 

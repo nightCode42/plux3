@@ -35,6 +35,23 @@ func TestRunGeneratesAndIsIdempotent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// The licence texts the packages' LICENSE files are made of.
+	for _, rel := range []string{
+		"LICENSES/Apache-2.0.txt", "packages/plux_flutter/native/zstd/LICENSE",
+		"backend/internal/icons/fonts/LICENSE-material-design-icons", "backend/internal/icons/fonts/LICENSE-cupertino-icons",
+	} {
+		data, err := os.ReadFile(filepath.Join("..", "..", "..", filepath.FromSlash(rel)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		dst := filepath.Join(root, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(dst), 0o750); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(dst, data, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
 	var out, errOut bytes.Buffer
 
 	if code := run([]string{"-root", root}, &out, &errOut); code != exitOK {
@@ -43,6 +60,7 @@ func TestRunGeneratesAndIsIdempotent(t *testing.T) {
 	for _, want := range []string{
 		"limits_gen.go", "model_gen.go", "document.g.dart", "document.gen.ts", "document-schema.md",
 		"registry_gen.go", "registry.g.dart", "registry.gen.ts", "widgets.md", "actions.md", "COVERAGE.md",
+		"plux_flutter/LICENSE",
 	} {
 		if !strings.Contains(out.String(), want) {
 			t.Errorf("first run did not write %s:\n%s", want, out.String())
