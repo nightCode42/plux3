@@ -15,9 +15,11 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
 	"github.com/zalando/go-keyring"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/nightCode42/plux3/backend/internal/bundle"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1"
@@ -42,6 +44,28 @@ type fake struct {
 	hash    string
 	fail    bool
 	promote []string
+	// channels by environment ID and key; after a promotion the
+	// worker "signs" its manifest once ListChannels has been asked lag
+	// more times, and never while unsigned.
+	channels map[string]*pluxv1.Channel
+	lag      int
+	unsigned bool
+}
+
+// point moves a channel to a release, not yet signed.
+func (f *fake) point(env, key string, seq int64) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if key == "" {
+		key = "production"
+	}
+	ch := f.channels[env+"/"+key]
+	if ch == nil {
+		ch = &pluxv1.Channel{EnvironmentId: env, Key: key}
+		f.channels[env+"/"+key] = ch
+	}
+	ch.ReleaseSequence = seq
+	f.lag = 2
 }
 
 func (f *fake) authorised(h http.Header) error {
@@ -90,8 +114,21 @@ func (*fake) ListEnvironments(context.Context, *connect.Request[pluxv1.ListEnvir
 	return connect.NewResponse(&pluxv1.ListEnvironmentsResponse{Environments: []*pluxv1.Environment{{Id: "e-dev", Key: "development"}, {Id: "e-prod", Key: "production"}}}), nil
 }
 
-func (*fake) ListChannels(_ context.Context, _ *connect.Request[pluxv1.ListChannelsRequest]) (*connect.Response[pluxv1.ListChannelsResponse], error) {
-	return connect.NewResponse(&pluxv1.ListChannelsResponse{Channels: []*pluxv1.Channel{{Key: "production", ReleaseSequence: 3}}}), nil
+func (f *fake) ListChannels(_ context.Context, r *connect.Request[pluxv1.ListChannelsRequest]) (*connect.Response[pluxv1.ListChannelsResponse], error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.lag--
+	out := &pluxv1.ListChannelsResponse{}
+	for _, ch := range f.channels {
+		if ch.GetEnvironmentId() != r.Msg.GetEnvironmentId() {
+			continue
+		}
+		if f.lag < 0 && !f.unsigned {
+			ch.SignedReleaseSequence = ch.GetReleaseSequence()
+		}
+		out.Channels = append(out.Channels, proto.CloneOf(ch))
+	}
+	return connect.NewResponse(out), nil
 }
 
 func (*fake) ListPlugins(context.Context, *connect.Request[pluxv1.ListPluginsRequest]) (*connect.Response[pluxv1.ListPluginsResponse], error) {
@@ -147,10 +184,12 @@ func (f *fake) PromoteRelease(_ context.Context, r *connect.Request[pluxv1.Promo
 	f.mu.Lock()
 	f.promote = append(f.promote, r.Msg.GetEnvironmentId()+"/"+r.Msg.GetChannelKey())
 	f.mu.Unlock()
+	f.point(r.Msg.GetEnvironmentId(), r.Msg.GetChannelKey(), r.Msg.GetSequence())
 	return connect.NewResponse(&pluxv1.PromoteReleaseResponse{}), nil
 }
 
-func (*fake) RollbackRelease(context.Context, *connect.Request[pluxv1.RollbackReleaseRequest]) (*connect.Response[pluxv1.RollbackReleaseResponse], error) {
+func (f *fake) RollbackRelease(_ context.Context, r *connect.Request[pluxv1.RollbackReleaseRequest]) (*connect.Response[pluxv1.RollbackReleaseResponse], error) {
+	f.point(r.Msg.GetEnvironmentId(), r.Msg.GetChannelKey(), 5)
 	return connect.NewResponse(&pluxv1.RollbackReleaseResponse{Release: &pluxv1.Release{Sequence: 5}}), nil
 }
 
@@ -180,7 +219,10 @@ func newFake(t *testing.T) (*fake, string) {
 		t.Fatal(err)
 	}
 	read, _ := bundle.ReadStructure(b)
-	f := &fake{token: "plux_pat_test", bundle: b, hash: hex.EncodeToString(read.Hash[:]), drafts: map[string][]byte{}} //nolint:gosec // G101: a test token.
+	f := &fake{token: "plux_pat_test", bundle: b, hash: hex.EncodeToString(read.Hash[:]), drafts: map[string][]byte{}, //nolint:gosec // G101: a test token.
+		channels: map[string]*pluxv1.Channel{
+			"e-prod/production": {EnvironmentId: "e-prod", Key: "production", ReleaseSequence: 3, SignedReleaseSequence: 3},
+		}}
 	mux := http.NewServeMux()
 	for _, r := range []func() (string, http.Handler){
 		func() (string, http.Handler) { return pluxv1connect.NewIdentityServiceHandler(f) },
@@ -320,6 +362,26 @@ func TestServerCommands(t *testing.T) { //nolint:paralleltest // the keychain mo
 	}
 	if code, out, _ := cli(t, config, "release", "rollback", "-C", project, "--env", "production", "--json", "2"); code != exitOK || !strings.Contains(out, `"sequence": 5`) {
 		t.Errorf("release rollback: %d %s", code, out)
+	}
+	// A promotion returns once its manifest is signed; while the worker
+	// has not signed it, --wait bounds the wait, and --wait 0 skips it.
+	f.mu.Lock()
+	f.unsigned = true
+	f.mu.Unlock()
+	start := time.Now()
+	if code, _, stderr := cli(t, config, "release", "promote", "-C", project, "--env", "production", "--wait", "300ms", "3"); code != exitFailed || !strings.Contains(stderr, "was not signed within 300ms") {
+		t.Errorf("an unsigned promotion: %d %s", code, stderr)
+	}
+	if waited := time.Since(start); waited < 300*time.Millisecond {
+		t.Errorf("the promotion waited only %s", waited)
+	}
+	f.mu.Lock()
+	if ch := f.channels["e-prod/production"]; ch.GetReleaseSequence() != 3 || ch.GetSignedReleaseSequence() != 5 {
+		t.Errorf("the channel: %v", ch)
+	}
+	f.mu.Unlock()
+	if code, _, _ := cli(t, config, "release", "promote", "-C", project, "--env", "production", "--wait", "0", "3"); code != exitOK {
+		t.Errorf("release promote --wait 0: %d", code)
 	}
 	for _, args := range [][]string{
 		{"release"},

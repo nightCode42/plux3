@@ -5403,6 +5403,15 @@ components:
           allOf:
             - $ref: '#/components/schemas/google.protobuf.Timestamp'
           title: updated_at
+        signedReleaseSequence:
+          type: string
+          title: signed_release_sequence
+          format: int64
+          description: |-
+            signed_release_sequence is the release the channel's newest signed
+             manifest names, which is what devices are served; zero before the
+             first. The worker signs a manifest after each promotion, so it
+             equals release_sequence once that promotion reaches devices.
       title: Channel
       additionalProperties: false
     plux.v1.CompareSnapshotsRequest:

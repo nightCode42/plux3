@@ -10,15 +10,19 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 
 	"github.com/nightCode42/plux3/backend/internal/audit"
 	"github.com/nightCode42/plux3/backend/internal/delta"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/release"
 	"github.com/nightCode42/plux3/backend/internal/schema/uuid7"
+	"github.com/nightCode42/plux3/backend/internal/storage"
 	"github.com/nightCode42/plux3/backend/internal/storage/objects"
 	"github.com/nightCode42/plux3/backend/internal/tenancy"
 )
@@ -41,7 +45,23 @@ func TestManifestAndDeltas(t *testing.T) {
 	if _, err := f.rel.PromoteRelease(ctx, f.owner, f.app, first.Sequence, prod.ID, ""); err != nil {
 		t.Fatal(err)
 	}
+	// The channel says when devices get the promotion: once the worker
+	// has signed its manifest (what `plux publish --promote` waits for).
+	signed := func() int64 {
+		t.Helper()
+		chs, err := f.tenancy.ListChannels(ctx, f.owner, prod.ID, tenancy.Page{Size: 10})
+		if err != nil || len(chs) != 1 || chs[0].ReleaseSequence != first.Sequence {
+			t.Fatalf("ListChannels: %+v %v", chs, err)
+		}
+		return chs[0].SignedReleaseSequence
+	}
+	if n := signed(); n != 0 {
+		t.Errorf("signed before the worker ran: %d", n)
+	}
 	f.run(t)
+	if n := signed(); n != first.Sequence {
+		t.Errorf("signed after the worker ran: %d, want %d", n, first.Sequence)
+	}
 	req := release.ManifestRequest{OrganizationID: f.org, AppID: f.app, EnvironmentID: prod.ID}
 	m1, err := f.rel.GetManifest(ctx, req)
 	if err != nil {
@@ -209,4 +229,78 @@ func get(t *testing.T, f *fixture, kind objects.Kind, sum []byte) []byte {
 		t.Fatal(err)
 	}
 	return data
+}
+
+// Verifies: REL-031.
+// The signing job locks the channel, so a job that starts while a
+// promotion is in flight waits for it and signs the release it commits.
+// Reading the channel without the lock, it would sign the release
+// before, and store that manifest after the newer one's.
+func TestSigningWaitsForAPromotionInFlight(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	prod := f.envs["production"]
+	f.publish(t, "", false)
+	f.publish(t, f.loans, false)
+	dev := f.envs["development"].ID
+	first, _, err := f.rel.CreateRelease(ctx, f.owner, f.app, dev, nil, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, _, err := f.rel.CreateRelease(ctx, f.owner, f.app, dev, nil, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.rel.PromoteRelease(ctx, f.owner, f.app, first.Sequence, prod.ID, ""); err != nil {
+		t.Fatal(err)
+	}
+	f.q.mu.Lock()
+	var job release.ManifestJob
+	for _, w := range f.q.jobs {
+		if j, ok := w.(release.ManifestJob); ok {
+			job = j
+		}
+	}
+	f.q.jobs = nil
+	f.q.mu.Unlock()
+	if job.ChannelID == "" {
+		t.Fatal("the promotion queued no signing")
+	}
+	done := make(chan error, 1)
+	// A promotion of the second release, holding the channel's lock
+	// while the job starts.
+	err = f.db.InTx(ctx, storage.Tenant{OrganizationID: f.org}, func(ctx context.Context, tx pgx.Tx) error {
+		if _, err := tx.Exec(ctx, "SELECT 1 FROM channels WHERE id = $1 FOR UPDATE", job.ChannelID); err != nil {
+			return err
+		}
+		go func() { done <- f.rel.SignManifest(ctx, job) }()
+		for deadline := time.Now().Add(10 * time.Second); ; time.Sleep(10 * time.Millisecond) {
+			var waiting int
+			err := f.db.InTx(ctx, storage.Tenant{OrganizationID: f.org}, func(ctx context.Context, q pgx.Tx) error {
+				return q.QueryRow(ctx, "SELECT count(*) FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND datname = current_database() AND query LIKE '%GetChannelByIDForUpdate%'").Scan(&waiting)
+			})
+			if err != nil {
+				return err
+			}
+			if waiting > 0 {
+				break
+			}
+			if time.Now().After(deadline) {
+				return errors.New("the signing job did not wait for the channel's lock")
+			}
+		}
+		_, err := tx.Exec(ctx, "UPDATE channels SET release_sequence = $2 WHERE id = $1", job.ChannelID, second.Sequence)
+		return err
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := <-done; err != nil {
+		t.Fatalf("SignManifest: %v", err)
+	}
+	m, err := f.rel.GetManifest(ctx, release.ManifestRequest{OrganizationID: f.org, AppID: f.app, EnvironmentID: prod.ID})
+	if err != nil || m.Document.ReleaseSequence != second.Sequence {
+		t.Fatalf("the manifest names release %d, want %d (%v)", m.Document.ReleaseSequence, second.Sequence, err)
+	}
 }

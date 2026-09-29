@@ -153,6 +153,13 @@ func TestPublishWithTheCLIAndSyncADevice(t *testing.T) {
 	if !pub.OK || pub.Release != 1 {
 		t.Fatalf("publish: %+v", pub)
 	}
+	// A promotion returns once its manifest is signed, which also records
+	// the environment's key: keys and pull work at once.
+	var keys struct{ Keys []struct{ PublicKey string } }
+	decode(t, run(0, "keys", "-C", project, "--env", "staging", "--json"), &keys)
+	if len(keys.Keys) != 1 {
+		t.Fatalf("keys %+v", keys)
+	}
 	run(0, "diff", "-C", project)
 	run(0, "doctor", "-C", project)
 	var base struct {
@@ -208,13 +215,7 @@ func TestPublishWithTheCLIAndSyncADevice(t *testing.T) {
 		t.Fatal(err)
 	}
 	manifests := pluxv1connect.NewManifestServiceClient(hc, server, connect.WithInterceptors(bearer(tok.Msg.GetAccessToken())))
-	m1 := waitManifest(t, manifests, 1, nil)
-	// The environment's key is known once its first manifest is signed.
-	var keys struct{ Keys []struct{ PublicKey string } }
-	decode(t, run(0, "keys", "-C", project, "--env", "staging", "--json"), &keys)
-	if len(keys.Keys) != 1 {
-		t.Fatalf("keys %+v", keys)
-	}
+	m1 := manifest(t, manifests, 1, nil)
 	pub0, _ := hex.DecodeString(keys.Keys[0].PublicKey)
 	if !ed25519.Verify(pub0, m1.GetSigned(), m1.GetSignatures()[0].GetSignature()) {
 		t.Fatal("the manifest does not verify with the pulled key")
@@ -238,7 +239,7 @@ func TestPublishWithTheCLIAndSyncADevice(t *testing.T) {
 	for _, p := range m1.GetPlugins() {
 		installed = append(installed, &pluxv1.InstalledBundle{Key: p.GetKey(), Sha256: p.GetBundle().GetSha256()})
 	}
-	m2 := waitManifest(t, manifests, 2, installed)
+	m2 := manifest(t, manifests, 2, installed)
 	step := m2.GetAppBundle().GetSync()
 	if step.GetAction() != "delta" || step.GetSize() > 2048 {
 		t.Fatalf("the app bundle's sync step: %+v", step)
@@ -270,18 +271,19 @@ func waitReady(t *testing.T, server string) {
 	t.Fatal("the server did not become ready")
 }
 
-// waitManifest polls until the worker has signed the manifest of a
-// release.
-func waitManifest(t *testing.T, c pluxv1connect.ManifestServiceClient, seq int64, installed []*pluxv1.InstalledBundle) *pluxv1.Manifest {
+// manifest fetches the device's manifest, which must already name
+// release seq: the promotion that made it returned only once it was
+// signed.
+func manifest(t *testing.T, c pluxv1connect.ManifestServiceClient, seq int64, installed []*pluxv1.InstalledBundle) *pluxv1.Manifest {
 	t.Helper()
-	for deadline := time.Now().Add(30 * time.Second); time.Now().Before(deadline); time.Sleep(200 * time.Millisecond) {
-		res, err := c.GetManifest(context.Background(), connect.NewRequest(&pluxv1.GetManifestRequest{Installed: installed}))
-		if err == nil && res.Msg.GetManifest().GetReleaseSequence() == seq {
-			return res.Msg.GetManifest()
-		}
+	res, err := c.GetManifest(context.Background(), connect.NewRequest(&pluxv1.GetManifestRequest{Installed: installed}))
+	if err != nil {
+		t.Fatalf("GetManifest: %v", err)
 	}
-	t.Fatalf("no manifest for release %d", seq)
-	return nil
+	if got := res.Msg.GetManifest().GetReleaseSequence(); got != seq {
+		t.Fatalf("the manifest names release %d, want %d", got, seq)
+	}
+	return res.Msg.GetManifest()
 }
 
 func fetch(t *testing.T, c *http.Client, url string) []byte {

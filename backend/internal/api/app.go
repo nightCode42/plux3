@@ -558,6 +558,7 @@ func environmentProto(e tenancy.Environment) *pluxv1.Environment {
 func channelProto(c tenancy.Channel) *pluxv1.Channel {
 	return &pluxv1.Channel{
 		Id: c.ID, EnvironmentId: c.EnvironmentID, Key: c.Key, ReleaseSequence: c.ReleaseSequence, UpdatedAt: ts(c.UpdatedAt),
+		SignedReleaseSequence: c.SignedReleaseSequence,
 	}
 }
 

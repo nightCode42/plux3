@@ -20,6 +20,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"connectrpc.com/connect"
 
@@ -436,8 +437,10 @@ func (e env) publish(args []string) int {
 	release := set.Bool("release", false, "create a release of the new versions")
 	promote := set.String("promote", "", "promote the release to `env[/channel]`")
 	notes := set.String("notes", "", "release notes")
-	if _, code, ok := parse(set, args, e.stderr, "Usage: plux publish [-C dir] [--env key] [--release] [--promote env[/channel]] [--json]\n\n"+
-		"Uploads the local project, publishes the app bundle and every plugin, and waits for each.", 0); !ok {
+	wait := set.Duration("wait", defaultSignWait, "how long a promotion waits for its signed manifest; 0 does not wait")
+	if _, code, ok := parse(set, args, e.stderr, "Usage: plux publish [-C dir] [--env key] [--release] [--promote env[/channel]] [--wait duration] [--json]\n\n"+
+		"Uploads the local project, publishes the app bundle and every plugin, and waits for each.\n"+
+		"With --promote it also waits until the promoted release's manifest is signed, so devices get it.", 0); !ok {
 		return code
 	}
 	if err := c.resolve(); err != nil {
@@ -472,7 +475,7 @@ func (e env) publish(args []string) int {
 	var text strings.Builder
 	text.WriteString(publishText(results))
 	if ok && (*release || *promote != "") {
-		seq, err := releaseAndPromote(ctx, cl, c.app, envID, *notes, *promote, results)
+		seq, err := releaseAndPromote(ctx, cl, c.app, envID, *notes, *promote, *wait, results)
 		if err != nil {
 			return e.fail("publish", err)
 		}
@@ -523,7 +526,7 @@ func publishAll(ctx context.Context, cl *clients, app, envID string, ack bool) (
 
 // releaseAndPromote releases what was published and, when asked,
 // promotes it to env[/channel].
-func releaseAndPromote(ctx context.Context, cl *clients, app, envID, notes, promote string, results []published) (int64, error) {
+func releaseAndPromote(ctx context.Context, cl *clients, app, envID, notes, promote string, wait time.Duration, results []published) (int64, error) {
 	rel, err := cl.release.CreateRelease(ctx, connect.NewRequest(&pluxv1.CreateReleaseRequest{AppId: app, EnvironmentId: envID, Notes: notes, PluginVersions: latestVersions(results)}))
 	if err != nil {
 		return 0, err //nolint:wrapcheck // reported as is
@@ -540,7 +543,7 @@ func releaseAndPromote(ctx context.Context, cl *clients, app, envID, notes, prom
 	if _, err := cl.release.PromoteRelease(ctx, connect.NewRequest(&pluxv1.PromoteReleaseRequest{AppId: app, Sequence: seq, EnvironmentId: target, ChannelKey: channel})); err != nil {
 		return 0, err //nolint:wrapcheck // reported as is
 	}
-	return seq, nil
+	return seq, waitSigned(ctx, cl, target, channel, seq, wait)
 }
 
 // latestVersions pins the release to what was just published.
@@ -697,16 +700,55 @@ func pullBaseline(ctx context.Context, cl *clients, c common, envKey, channel, d
 
 // channelSequence is the release a channel points at, 0 for none.
 func channelSequence(ctx context.Context, cl *clients, envID, channel string) (int64, error) {
+	ch, err := findChannel(ctx, cl, envID, channel)
+	return ch.GetReleaseSequence(), err
+}
+
+// findChannel is an environment's channel, nil if it has none by that key.
+func findChannel(ctx context.Context, cl *clients, envID, channel string) (*pluxv1.Channel, error) {
 	chs, err := cl.app.ListChannels(ctx, connect.NewRequest(&pluxv1.ListChannelsRequest{EnvironmentId: envID, Page: &pluxv1.Page{PageSize: 1000}}))
 	if err != nil {
-		return 0, err //nolint:wrapcheck // reported as is
+		return nil, err //nolint:wrapcheck // reported as is
 	}
 	for _, ch := range chs.Msg.GetChannels() {
 		if ch.GetKey() == channel {
-			return ch.GetReleaseSequence(), nil
+			return ch, nil
 		}
 	}
-	return 0, nil
+	return nil, nil
+}
+
+// defaultSignWait is how long a promotion waits for its manifest.
+const defaultSignWait = 2 * time.Minute
+
+// waitSigned waits until the newest signed manifest of a channel names
+// release seq. The worker signs it after the promotion commits; until
+// then devices are still served the previous release and the
+// environment of a first promotion has no key, so `plux pull` and
+// `plux keys` would fail. It stops early when the channel has moved on
+// to another release, and does not wait when limit is zero.
+func waitSigned(ctx context.Context, cl *clients, envID, channel string, seq int64, limit time.Duration) error {
+	if limit <= 0 {
+		return nil
+	}
+	channel = firstOf(channel, "production")
+	ctx, cancel := context.WithTimeout(ctx, limit)
+	defer cancel()
+	for pause := 50 * time.Millisecond; ; pause = min(2*pause, time.Second) {
+		ch, err := findChannel(ctx, cl, envID, channel)
+		switch {
+		case ctx.Err() != nil:
+			return fmt.Errorf("release %d is on %s, but its manifest was not signed within %s; a server with the worker role signs it, so check that one is running and its log", seq, channel, limit)
+		case err != nil:
+			return err
+		case ch == nil || ch.GetReleaseSequence() != seq || ch.GetSignedReleaseSequence() == seq:
+			return nil
+		}
+		select {
+		case <-ctx.Done():
+		case <-time.After(pause):
+		}
+	}
 }
 
 // writeBundles downloads and writes a release's bundles; the app bundle
@@ -763,7 +805,7 @@ func (cl *clients) download(ctx context.Context, sha string) ([]byte, error) {
 }
 
 // releaseMove promotes a release, or rolls a channel back to one.
-func (e env) releaseMove(ctx context.Context, cl *clients, c common, sub, arg, envID, envKey, channel, notes string) int {
+func (e env) releaseMove(ctx context.Context, cl *clients, c common, sub, arg, envID, envKey, channel, notes string, wait time.Duration) int {
 	if envID == "" {
 		return e.fail("release", usageError("--env is required"))
 	}
@@ -775,6 +817,9 @@ func (e env) releaseMove(ctx context.Context, cl *clients, c common, sub, arg, e
 		if _, err := cl.release.PromoteRelease(ctx, connect.NewRequest(&pluxv1.PromoteReleaseRequest{AppId: c.app, Sequence: seq, EnvironmentId: envID, ChannelKey: channel})); err != nil {
 			return e.fail("release", err)
 		}
+		if err := waitSigned(ctx, cl, envID, channel, seq, wait); err != nil {
+			return e.fail("release", err)
+		}
 		return e.emit(c.json, map[string]any{"sequence": seq, "environment": envKey, "channel": firstOf(channel, "production")},
 			fmt.Sprintf("Release %d is now on %s/%s.", seq, envKey, firstOf(channel, "production")))
 	}
@@ -783,6 +828,9 @@ func (e env) releaseMove(ctx context.Context, cl *clients, c common, sub, arg, e
 		return e.fail("release", err)
 	}
 	n := res.Msg.GetRelease().GetSequence()
+	if err := waitSigned(ctx, cl, envID, channel, n, wait); err != nil {
+		return e.fail("release", err)
+	}
 	return e.emit(c.json, map[string]any{"sequence": n, "rollbackOf": seq}, fmt.Sprintf("Release %d, with the content of %d, is now on %s/%s.", n, seq, envKey, firstOf(channel, "production")))
 }
 
@@ -858,15 +906,16 @@ func (e env) release(args []string) int {
 	envKey := set.String("env", "", "the environment `key`")
 	channel := set.String("channel", "", "the channel `key` (default production)")
 	notes := set.String("notes", "", "notes for a rollback")
+	wait := set.Duration("wait", defaultSignWait, "how long to wait for the signed manifest; 0 does not wait")
 	var usage string
 	positional := 0
 	switch args[0] {
 	case "list":
 		usage = "Usage: plux release list [-C dir] [--env key] [--json]"
 	case "promote":
-		usage, positional = "Usage: plux release promote --env key [--channel key] [-C dir] [--json] <sequence>", 1
+		usage, positional = "Usage: plux release promote --env key [--channel key] [--wait duration] [-C dir] [--json] <sequence>", 1
 	case "rollback":
-		usage, positional = "Usage: plux release rollback --env key [--channel key] [--notes text] [-C dir] [--json] <to-sequence>", 1
+		usage, positional = "Usage: plux release rollback --env key [--channel key] [--notes text] [--wait duration] [-C dir] [--json] <to-sequence>", 1
 	default:
 		_, _ = fmt.Fprintf(e.stderr, "%s release: unknown subcommand %q\n", name, args[0])
 		return exitUsage
@@ -895,5 +944,5 @@ func (e env) release(args []string) int {
 	if args[0] == "list" {
 		return e.releaseList(ctx, cl, c, envID)
 	}
-	return e.releaseMove(ctx, cl, c, args[0], rest[0], envID, *envKey, *channel, *notes)
+	return e.releaseMove(ctx, cl, c, args[0], rest[0], envID, *envKey, *channel, *notes, *wait)
 }

@@ -127,7 +127,11 @@ func (s *Service) SignManifest(ctx context.Context, job ManifestJob) error {
 	}
 	err = s.o.DB.InTx(ctx, storage.Tenant{OrganizationID: job.OrganizationID}, func(ctx context.Context, tx pgx.Tx) error {
 		q := dbgen.New(tx)
-		channel, err := q.GetChannelByID(ctx, ch)
+		// The lock orders signing after any promotion in flight, and one
+		// signing after another, so the newest manifest always names the
+		// channel's newest release: without it a job that read the
+		// channel before a promotion could store its older manifest last.
+		channel, err := q.GetChannelByIDForUpdate(ctx, ch)
 		if err != nil {
 			return failure(err, "channel")
 		}
