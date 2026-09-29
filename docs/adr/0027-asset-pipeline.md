@@ -141,6 +141,18 @@ raw SVG on the device, contrary to `CMP-031`).
 - **Determinism.** The encoder's output is a function of its input; two runs give
   identical bytes. The AOT executable is reproducible when built from the same path, which
   the image build fixes.
+- **As built (R6d, 2026-09-29).** The library is built in the image build, for each target
+  platform, on Debian 12 — the base of the server image — with that release's GCC 12
+  (`packages/plux_svgc/native/build.sh`, same flags, no identical-code folding, which GNU ld
+  lacks; 437 KiB): built on a newer distribution it needs glibc 2.38, which Debian 12
+  (2.36) does not have. A GCC build's output matched the clang build's byte for byte on the
+  test SVG.
+  `plux_svgc` is outside the pub workspace, since the Dart SDK alone cannot resolve the
+  workspace's Flutter packages; the image build runs its tests against the freshly built
+  library before shipping both. The worker runs the helper with no environment, a 30 s
+  time limit and a 16 MiB output limit; a malformed, slow or oversized SVG fails its asset
+  with a diagnostic, and a server without the helper (`assets.svgCompiler`) fails SVG
+  assets the same way instead of retrying.
 
 **Size, measured on 2026-09-28 (linux/amd64):**
 

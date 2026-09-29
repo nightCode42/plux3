@@ -202,6 +202,21 @@
                 },
                 "testId": "asset-image",
                 "type": "Image"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-00000000020d",
+                "props": {
+                  "height": 24.0,
+                  "semanticLabel": "check",
+                  "source": {
+                    "asset": {
+                      "$asset": "01c0c450-6c00-7000-8000-00000000020c"
+                    }
+                  },
+                  "width": 24.0
+                },
+                "testId": "svg-image",
+                "type": "Image"
               }
             ],
             "id": "01c0c450-6c00-7000-8000-0000000001f7",

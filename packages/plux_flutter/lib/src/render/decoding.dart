@@ -14,6 +14,7 @@ library;
 
 import 'package:flutter/widgets.dart';
 import 'package:plux_flutter/src/assets/icon_fonts.dart';
+import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/pxl/decimal.dart';
 import 'package:plux_flutter/src/pxl/values.dart';
 
@@ -28,6 +29,10 @@ abstract interface class Decoding {
 
   /// Resolves an image: an asset of the release by ID, or a URL.
   ImageProvider<Object>? image({String? asset, String? url});
+
+  /// Resolves the asset [asset] when it is an SVG (CMP-031); null for any
+  /// other asset.
+  PluxVectorSource? vector(String asset);
 }
 
 /// A [Decoding] with no runtime behind it: left-to-right, and no icons or
@@ -44,6 +49,9 @@ final class PlainDecoding implements Decoding {
 
   @override
   ImageProvider<Object>? image({String? asset, String? url}) => null;
+
+  @override
+  PluxVectorSource? vector(String asset) => null;
 }
 
 /// The [PlainDecoding].

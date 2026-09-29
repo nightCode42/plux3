@@ -33,6 +33,10 @@ final class _Rtl implements Decoding {
   @override
   ImageProvider<Object>? image({String? asset, String? url}) =>
       url == null ? null : NetworkImage(url);
+
+  @override
+  PluxVectorSource? vector(String asset) =>
+      asset == 'svg' ? const PluxVectorSource(null) : null;
 }
 
 /// An object literal as a bundle would give it: fields by permanent ID.
@@ -330,6 +334,11 @@ void main() {
       isA<NetworkImage>(),
     );
     expect(decodeImageSource(rtl, 1), isNull);
+    expect(decodeVectorSource(rtl, {'asset': 'svg'}), isNotNull);
+    expect(decodeVectorSource(rtl, {'asset': 'png'}), isNull);
+    expect(decodeVectorSource(rtl, {'url': 'https://x/a.svg'}), isNull);
+    expect(decodeVectorSource(rtl, 1), isNull);
+    expect(plainDecoding.vector('svg'), isNull);
   });
 
   test('values per widget state, in precedence order', () {

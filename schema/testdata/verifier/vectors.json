@@ -9419,7 +9419,7 @@
    "kind": 2,
    "edits": [
     [
-     920,
+     972,
      91
     ]
    ],
@@ -9431,11 +9431,11 @@
    "kind": 2,
    "edits": [
     [
-     1491,
+     1575,
      189
     ]
    ],
-   "valid": false
+   "valid": true
   },
   {
    "bundle": "widgets/gallery.pxb",
@@ -9443,19 +9443,19 @@
    "kind": 2,
    "edits": [
     [
-     3591,
+     3795,
      167
     ],
     [
-     2995,
+     3165,
      128
     ],
     [
-     1450,
+     1532,
      91
     ]
    ],
-   "valid": false
+   "valid": true
   },
   {
    "bundle": "widgets/gallery.pxb",
@@ -9463,11 +9463,11 @@
    "kind": 2,
    "edits": [
     [
-     2135,
+     2256,
      225
     ],
     [
-     351,
+     371,
      164
     ]
    ],
@@ -9479,11 +9479,11 @@
    "kind": 2,
    "edits": [
     [
-     2031,
+     2146,
      130
     ],
     [
-     1903,
+     2011,
      34
     ]
    ],
@@ -9495,11 +9495,11 @@
    "kind": 2,
    "edits": [
     [
-     1280,
+     1352,
      98
     ],
     [
-     305,
+     322,
      43
     ]
    ],
@@ -9511,7 +9511,7 @@
    "kind": 2,
    "edits": [
     [
-     1161,
+     1226,
      18
     ]
    ],
@@ -9523,7 +9523,7 @@
    "kind": 2,
    "edits": [
     [
-     3718,
+     3929,
      214
     ]
    ],
@@ -9535,15 +9535,15 @@
    "kind": 2,
    "edits": [
     [
-     3826,
+     4042,
      53
     ],
     [
-     1276,
+     1348,
      144
     ],
     [
-     345,
+     365,
      198
     ]
    ],
@@ -9555,11 +9555,11 @@
    "kind": 2,
    "edits": [
     [
-     4044,
+     4273,
      244
     ]
    ],
-   "valid": true
+   "valid": false
   },
   {
    "bundle": "widgets/gallery.pxb",
@@ -9567,11 +9567,11 @@
    "kind": 2,
    "edits": [
     [
-     2871,
+     3033,
      42
     ]
    ],
-   "valid": true
+   "valid": false
   },
   {
    "bundle": "widgets/gallery.pxb",
@@ -9579,19 +9579,19 @@
    "kind": 2,
    "edits": [
     [
-     669,
+     707,
      85
     ],
     [
-     4150,
+     4385,
      0
     ],
     [
-     2786,
+     2943,
      198
     ]
    ],
-   "valid": false
+   "valid": true
   },
   {
    "bundle": "widgets/gallery.pxb",
@@ -10032,11 +10032,11 @@
    "kind": 6,
    "edits": [
     [
-     349,
+     359,
      114
     ],
     [
-     2370,
+     2436,
      248
     ]
    ],
@@ -10048,15 +10048,15 @@
    "kind": 6,
    "edits": [
     [
-     2703,
+     2779,
      28
     ],
     [
-     1921,
+     1975,
      233
     ],
     [
-     2437,
+     2505,
      0
     ]
    ],
@@ -10068,15 +10068,15 @@
    "kind": 6,
    "edits": [
     [
-     2454,
+     2523,
      139
     ],
     [
-     645,
+     663,
      130
     ],
     [
-     2232,
+     2294,
      55
     ]
    ],
@@ -10088,15 +10088,15 @@
    "kind": 6,
    "edits": [
     [
-     926,
+     952,
      135
     ],
     [
-     1995,
+     2051,
      43
     ],
     [
-     2374,
+     2440,
      46
     ]
    ],
@@ -10108,15 +10108,15 @@
    "kind": 6,
    "edits": [
     [
-     2578,
+     2650,
      46
     ],
     [
-     145,
+     149,
      206
     ],
     [
-     2460,
+     2529,
      241
     ]
    ],
@@ -10128,7 +10128,7 @@
    "kind": 6,
    "edits": [
     [
-     1283,
+     1319,
      17
     ]
    ],
@@ -10140,11 +10140,11 @@
    "kind": 6,
    "edits": [
     [
-     1840,
+     1891,
      220
     ],
     [
-     1208,
+     1242,
      21
     ]
    ],
@@ -10156,15 +10156,15 @@
    "kind": 6,
    "edits": [
     [
-     2789,
+     2867,
      193
     ],
     [
-     1256,
+     1291,
      8
     ],
     [
-     1788,
+     1837,
      252
     ]
    ],
@@ -10176,28 +10176,8 @@
    "kind": 6,
    "edits": [
     [
-     1884,
+     1937,
      160
-    ]
-   ],
-   "valid": false
-  },
-  {
-   "bundle": "widgets/gallery.pxb",
-   "section": 10,
-   "kind": 6,
-   "edits": [
-    [
-     2251,
-     61
-    ],
-    [
-     424,
-     0
-    ],
-    [
-     1373,
-     83
     ]
    ],
    "valid": true
@@ -10208,15 +10188,35 @@
    "kind": 6,
    "edits": [
     [
-     1262,
+     2314,
+     61
+    ],
+    [
+     435,
+     0
+    ],
+    [
+     1412,
+     83
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 10,
+   "kind": 6,
+   "edits": [
+    [
+     1297,
      164
     ],
     [
-     373,
+     384,
      28
     ],
     [
-     1655,
+     1701,
      24
     ]
    ],
@@ -10228,15 +10228,15 @@
    "kind": 6,
    "edits": [
     [
-     2545,
+     2616,
      109
     ],
     [
-     2287,
+     2351,
      170
     ],
     [
-     1132,
+     1164,
      241
     ]
    ],
@@ -12301,15 +12301,15 @@
    "kind": 11,
    "edits": [
     [
-     9,
+     11,
      102
     ],
     [
-     135,
+     351,
      159
     ],
     [
-     141,
+     368,
      78
     ]
    ],
@@ -12321,24 +12321,12 @@
    "kind": 11,
    "edits": [
     [
-     11,
+     15,
      153
     ],
     [
-     97,
+     252,
      135
-    ]
-   ],
-   "valid": true
-  },
-  {
-   "bundle": "widgets/widgets.pxb",
-   "section": 7,
-   "kind": 11,
-   "edits": [
-    [
-     7,
-     172
     ]
    ],
    "valid": false
@@ -12349,58 +12337,146 @@
    "kind": 11,
    "edits": [
     [
-     8,
-     23
+     18,
+     96
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     267,
+     104
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     138,
+     62
+    ],
+    [
+     98,
+     107
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     42,
+     110
+    ],
+    [
+     318,
+     111
+    ],
+    [
+     327,
+     85
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     271,
+     156
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     267,
+     56
+    ],
+    [
+     65,
+     66
+    ],
+    [
+     25,
+     179
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     272,
+     20
+    ],
+    [
+     187,
+     87
+    ],
+    [
+     284,
+     98
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     237,
+     27
+    ],
+    [
+     188,
+     186
+    ],
+    [
+     184,
+     65
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     154,
+     239
     ],
     [
      9,
      116
     ]
    ],
-   "valid": true
-  },
-  {
-   "bundle": "widgets/widgets.pxb",
-   "section": 7,
-   "kind": 11,
-   "edits": [
-    [
-     129,
-     134
-    ]
-   ],
-   "valid": true
-  },
-  {
-   "bundle": "widgets/widgets.pxb",
-   "section": 7,
-   "kind": 11,
-   "edits": [
-    [
-     122,
-     111
-    ]
-   ],
-   "valid": true
-  },
-  {
-   "bundle": "widgets/widgets.pxb",
-   "section": 7,
-   "kind": 11,
-   "edits": [
-    [
-     74,
-     233
-    ],
-    [
-     104,
-     156
-    ],
-    [
-     146,
-     249
-    ]
-   ],
    "valid": false
   },
   {
@@ -12409,68 +12485,16 @@
    "kind": 11,
    "edits": [
     [
-     25,
-     66
-    ]
-   ],
-   "valid": false
-  },
-  {
-   "bundle": "widgets/widgets.pxb",
-   "section": 7,
-   "kind": 11,
-   "edits": [
-    [
-     16,
-     205
-    ]
-   ],
-   "valid": false
-  },
-  {
-   "bundle": "widgets/widgets.pxb",
-   "section": 7,
-   "kind": 11,
-   "edits": [
-    [
-     130,
-     12
+     101,
+     223
     ],
     [
-     130,
-     68
-    ]
-   ],
-   "valid": true
-  },
-  {
-   "bundle": "widgets/widgets.pxb",
-   "section": 7,
-   "kind": 11,
-   "edits": [
-    [
-     127,
-     50
+     241,
+     252
     ],
     [
-     153,
-     40
-    ]
-   ],
-   "valid": false
-  },
-  {
-   "bundle": "widgets/widgets.pxb",
-   "section": 7,
-   "kind": 11,
-   "edits": [
-    [
-     71,
-     65
-    ],
-    [
-     53,
-     213
+     33,
+     131
     ]
    ],
    "valid": false

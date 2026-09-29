@@ -112,6 +112,8 @@ retention:
   trashDays: 30                 # at least 30 (GOV-031)
 assets:
   malwareScanner: ""            # ClamAV clamd, tcp://host:3310 or unix:///path; empty scans nothing (SRV-060)
+  svgCompiler: /usr/local/bin/plux-svgc          # compiles SVGs to vector_graphics (CMP-031); empty, or not installed, fails SVG assets
+  pathOps: /usr/local/lib/plux/libpath_ops.so    # the Skia path operations plux-svgc loads
 ```
 
 **Limits** name keys of the registry, `schema/limits.json`

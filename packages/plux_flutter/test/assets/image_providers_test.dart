@@ -169,6 +169,28 @@ void main() {
     expect(info.image.width, greaterThan(0));
   });
 
+  test('a vector_graphics file loads once it matches its hash [CMP-031] '
+      '[AST-001]', () async {
+    final vec = File('../../schema/testdata/bundles/widgets/variants/check.vec')
+        .readAsBytesSync();
+    final hash = sha256.convert(vec).toString();
+    final path = '${dir.path}/$hash';
+    File(path).writeAsBytesSync(vec);
+    final verified = VerifiedAssets();
+    final bytes = await PluxVectorLoader(path, hash, verified).loadBytes(null);
+    expect(bytes.lengthInBytes, vec.length);
+    expect(
+      PluxVectorLoader(path, hash, verified),
+      PluxVectorLoader(path, 'x', verified),
+    );
+    final wrong = '${dir.path}/wrong';
+    File(wrong).writeAsBytesSync(vec);
+    await expectLater(
+      PluxVectorLoader(wrong, logoHash, verified).loadBytes(null),
+      throwsA(isA<PluxException>()),
+    );
+  });
+
   test('the AVIF probe answers without throwing', () async {
     expect(await decodesAvif(), isA<bool>());
   });

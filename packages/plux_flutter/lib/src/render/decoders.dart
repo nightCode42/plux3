@@ -266,6 +266,15 @@ ImageProvider<Object>? decodeImageSource(Decoding d, Object? v) {
   );
 }
 
+/// An `ImageSource` naming an SVG asset, drawn from its `vector_graphics`
+/// form (CMP-031); null for any other source.
+PluxVectorSource? decodeVectorSource(Decoding d, Object? v) {
+  final f = Fields.of(d, v);
+  if (f == null) return null;
+  final asset = asString(d, f.get(ImageSourceFields.asset, 'asset'));
+  return asset == null ? null : d.vector(asset);
+}
+
 /// The ThumbHash placeholder of an `ImageSource`, or null (RT-014).
 ImageProvider<Object>? decodeImagePlaceholder(Decoding d, Object? v) {
   final f = Fields.of(d, v);

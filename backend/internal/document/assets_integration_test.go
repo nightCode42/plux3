@@ -13,9 +13,12 @@ import (
 	"image/png"
 	"io"
 	"net"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 
@@ -95,6 +98,18 @@ func clamd(t *testing.T) string {
 	return ln.Addr().String()
 }
 
+// fakeSVGCompiler stands in for plux-svgc: it rejects an SVG containing
+// "broken" and otherwise writes "vec:" and the SVG.
+func fakeSVGCompiler(t *testing.T) *media.SVGCompiler {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "plux-svgc")
+	script := "#!/bin/sh\ninput=$(/bin/cat)\ncase \"$input\" in *broken*) echo 'plux-svgc: the SVG cannot be compiled: broken path' >&2; exit 1;; esac\nprintf 'vec:%s' \"$input\"\n"
+	if err := os.WriteFile(path, []byte(script), 0o700); err != nil { //nolint:gosec // an executable of the test
+		t.Fatal(err)
+	}
+	return &media.SVGCompiler{Path: path, PathOps: "/unused", Timeout: 10 * time.Second, MaxOutput: 1 << 20}
+}
+
 func pngWithText(t *testing.T, w, h int) []byte {
 	t.Helper()
 	img := image.NewNRGBA(image.Rect(0, 0, w, h))
@@ -129,8 +144,9 @@ func TestAssets(t *testing.T) {
 	t.Cleanup(func() { _ = codecs.Close(context.Background()) })
 	queue := &jobs{}
 	addr := clamd(t)
+	svgc := fakeSVGCompiler(t)
 	f := newFixture(t, func(o *document.Options) {
-		o.Objects, o.Jobs, o.Codecs = store, queue, codecs
+		o.Objects, o.Jobs, o.Codecs, o.SVG = store, queue, codecs, svgc
 		o.Scanner = document.Clamd{Network: "tcp", Address: addr}
 	})
 	ctx := context.Background()
@@ -229,6 +245,31 @@ func TestAssets(t *testing.T) {
 	stored, _, err := store.Get(ctx, objectKey(t, svg.SHA256))
 	if err != nil || bytes.Contains(stored, []byte("Ada")) {
 		t.Errorf("the SVG's metadata was kept: %s %v", stored, err)
+	}
+	// An SVG is compiled to vector_graphics by the worker (CMP-031); one
+	// the compiler rejects fails with a diagnostic.
+	broken, err := f.docs.UploadAsset(ctx, f.owner, f.app, "", s, "icons/broken.svg", []byte(`<svg xmlns="http://www.w3.org/2000/svg"><path d="broken"/></svg>`))
+	if err != nil || svg.Processing != "pending" {
+		t.Fatalf("SVG uploads: %+v %+v %v", svg, broken, err)
+	}
+	for _, j := range queue.take() {
+		if err := f.docs.ProcessAsset(ctx, j); err != nil {
+			t.Fatal(err)
+		}
+	}
+	svg, _ = f.docs.GetAsset(ctx, f.viewer, svg.ID)
+	if svg.Processing != "ready" || len(svg.Variants) != 1 || svg.Variants[0].MediaType != media.VectorGraphics {
+		t.Fatalf("the compiled SVG: %+v", svg)
+	}
+	if vec, _, err := store.Get(ctx, objectKey(t, svg.Variants[0].SHA256)); err != nil || !bytes.Equal(vec, append([]byte("vec:"), stored...)) {
+		t.Errorf("the vector_graphics variant: %q %v", vec, err)
+	}
+	broken, _ = f.docs.GetAsset(ctx, f.viewer, broken.ID)
+	if broken.Processing != "failed" || len(broken.Diagnostics) != 1 || !strings.Contains(broken.Diagnostics[0].Message, "broken") {
+		t.Errorf("a rejected SVG: %+v", broken)
+	}
+	if err := f.docs.DeleteAsset(ctx, f.owner, broken.ID, s); err != nil {
+		t.Fatal(err)
 	}
 	for name, c := range map[string]struct {
 		file string

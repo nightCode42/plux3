@@ -39,7 +39,7 @@ FUZZTIME      ?= 30s
 GO_TOOLCHAIN  := $(shell sed -n 's/^toolchain //p' backend/go.mod)
 GO_INSTALL    := GOTOOLCHAIN=$(GO_TOOLCHAIN) $(GO) install
 GO_MODULES    := backend tools
-DART_PACKAGES := packages/plux_devtools packages/plux_flutter packages/plux_widget_api
+DART_PACKAGES := packages/plux_devtools packages/plux_flutter packages/plux_svgc packages/plux_widget_api
 # Generated Dart code is verified by regeneration (CI-003), not by the formatter.
 DART_SOURCES  := find packages -name '*.dart' ! -name '*.g.dart' ! -name '*_generated.dart' ! -path '*/build/*' -print0
 # Everything `make gen` writes; `go-gen-check` fails if any of it changes.
@@ -312,11 +312,14 @@ go-reproducible: ## Build twice with cold caches and fail unless the binaries ar
 
 dart-check: dart-lock-check dart-fmt-check dart-analyze widgets-api-check dart-cover ## All Dart gates
 
-dart-get: ## Resolve the pub workspace (updates pubspec.lock)
+# plux_svgc is outside the workspace: the server image builds it with the
+# Dart SDK alone, which cannot resolve the workspace's Flutter packages.
+dart-get: ## Resolve the pub workspace and plux_svgc (updates the pubspec.lock files)
 	flutter pub get
+	cd packages/plux_svgc && dart pub get
 
-dart-lock-check: dart-get ## Fail if pubspec.lock is not in sync with the pubspecs (CI-003)
-	@changed=$$(git status --porcelain -- pubspec.lock); if [ -n "$$changed" ]; then \
+dart-lock-check: dart-get ## Fail if a pubspec.lock is not in sync with its pubspecs (CI-003)
+	@changed=$$(git status --porcelain -- pubspec.lock packages/plux_svgc/pubspec.lock); if [ -n "$$changed" ]; then \
 		echo "$$changed"; echo "✗ pubspec.lock is out of date or uncommitted. Run 'make dart-get' and commit."; exit 1; fi
 
 dart-fmt: ## Format hand-written Dart code

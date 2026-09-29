@@ -18,10 +18,11 @@ import 'dart:ui' as ui;
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/painting.dart';
+import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:plux_flutter/src/assets/thumbhash.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:vector_graphics/vector_graphics.dart';
 
 /// Files larger than this are hashed on a background isolate (L-6), as
 /// sections are (ADR-0029).
@@ -86,6 +87,49 @@ final class PluxAssetImage extends ImageProvider<PluxAssetImage> {
   @override
   bool operator ==(Object other) =>
       other is PluxAssetImage && other.path == path;
+
+  @override
+  int get hashCode => path.hashCode;
+}
+
+/// An SVG asset of the release as a node shows it (CMP-031): its
+/// `vector_graphics` file, or none when the store holds none this device
+/// can show (already reported).
+@immutable
+final class PluxVectorSource {
+  /// Creates the source.
+  const PluxVectorSource(this.loader);
+
+  /// Loads the file; null when there is none.
+  final PluxVectorLoader? loader;
+}
+
+/// Loads a stored `vector_graphics` file of the release, checked against
+/// the hash its signed bundle lists the first time this process shows it.
+@immutable
+final class PluxVectorLoader extends BytesLoader {
+  /// Creates the loader of the stored file [path] named by [hash].
+  const PluxVectorLoader(this.path, this.hash, this.verified);
+
+  /// Where the store keeps the file.
+  final String path;
+
+  /// Its SHA-256, lower-case hex.
+  final String hash;
+
+  /// The files already checked.
+  final VerifiedAssets verified;
+
+  @override
+  Future<ByteData> loadBytes(BuildContext? context) async {
+    final bytes = await File(path).readAsBytes();
+    await verified.check(path, hash, bytes);
+    return ByteData.sublistView(bytes);
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is PluxVectorLoader && other.path == path;
 
   @override
   int get hashCode => path.hashCode;

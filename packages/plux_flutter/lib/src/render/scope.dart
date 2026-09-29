@@ -9,6 +9,7 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plux_flutter/src/assets/icon_fonts.dart';
+import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
@@ -61,6 +62,10 @@ abstract interface class RenderServices {
   /// URL on a domain the plugin declares; null, reported, when there is
   /// none it may show.
   ImageProvider<Object>? image(RenderScope scope, {String? asset, String? url});
+
+  /// The SVG asset [asset] for a node of [scope] (CMP-031); null when the
+  /// asset is not an SVG.
+  PluxVectorSource? vector(RenderScope scope, String asset);
 
   /// Builds the fallback shown instead of a failed page or component.
   Widget fallback(BuildContext context, PluxException error);

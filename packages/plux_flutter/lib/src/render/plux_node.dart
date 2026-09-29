@@ -15,6 +15,7 @@ import 'package:flutter/material.dart' show kToolbarHeight;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plux_flutter/src/assets/icon_fonts.dart';
+import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/bundle/container.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/bundle/safe_read.dart';
@@ -273,6 +274,9 @@ final class NodeContextImpl implements NodeContext {
   @override
   ImageProvider<Object>? image({String? asset, String? url}) =>
       scope.services.image(scope, asset: asset, url: url);
+
+  @override
+  PluxVectorSource? vector(String asset) => scope.services.vector(scope, asset);
 
   bool _visible(fbs.Node n) {
     final v = n.visible;

@@ -4,10 +4,13 @@
 package compiler
 
 import (
+	"crypto/sha256"
 	"os"
 	"path/filepath"
 	"slices"
 	"testing"
+
+	"github.com/nightCode42/plux3/backend/internal/compiler/media"
 
 	"github.com/nightCode42/plux3/backend/internal/icons/fonts"
 
@@ -28,6 +31,7 @@ func TestWidgetsGoldenBundles(t *testing.T) {
 	t.Parallel()
 	opts := DefaultOptions()
 	opts.IconFont = fonts.Build
+	opts.AssetVariants = galleryVariants(t)
 	res := Compile(os.DirFS(widgetsDir), opts)
 	if len(res.Diagnostics) > 0 {
 		t.Fatalf("diagnostics:\n%s", list(res.Diagnostics))
@@ -66,6 +70,26 @@ func TestWidgetsGoldenBundles(t *testing.T) {
 	checkGoldenFiles(t, filepath.Join(goldenRoot, "widgets", "icons"), res.Files)
 	if !slices.ContainsFunc(res.Plugins, func(b *Bundle) bool { return b.Key == "gallery" }) {
 		t.Error("no gallery plugin")
+	}
+}
+
+// galleryVariants gives the gallery's SVG the vector_graphics variant the
+// plux_svgc tests pin (CMP-031), as the server's asset job would.
+func galleryVariants(t *testing.T) func([sha256.Size]byte) []AssetVariant {
+	t.Helper()
+	svg, err := os.ReadFile(filepath.Join(widgetsDir, "assets", "icons", "check.svg"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	vec, err := os.ReadFile(filepath.Join(goldenRoot, "widgets", "variants", "check.vec"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return func(sum [sha256.Size]byte) []AssetVariant {
+		if sum != sha256.Sum256(svg) {
+			return nil
+		}
+		return []AssetVariant{{MediaType: media.VectorGraphics, Hash: sha256.Sum256(vec), Size: int64(len(vec))}}
 	}
 }
 

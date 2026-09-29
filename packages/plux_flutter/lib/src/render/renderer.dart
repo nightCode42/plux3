@@ -148,10 +148,41 @@ final class PluxRenderer implements PageRenderer, RenderServices {
       ? _remote(scope, url)
       : null;
 
+  @override
+  PluxVectorSource? vector(RenderScope scope, String asset) {
+    final a = scope.plugin.asset(asset) ?? scope.app.asset(asset);
+    if (a?.mediaType != svgType) return null;
+    for (final hash in preferredFiles(a!, assets)) {
+      final path = scope.release.assetPath(hash);
+      if (path != null) {
+        return PluxVectorSource(PluxVectorLoader(path, hash, _verified));
+      }
+    }
+    scope.report(
+      PluxException(
+        PluxErrorCode.propValueInvalid,
+        'the SVG asset $asset has no vector_graphics file in the release',
+      ),
+      path: scope.path,
+    );
+    return const PluxVectorSource(null);
+  }
+
   /// The stored file of an asset, the best this device can show that the
-  /// release holds (AST-001).
+  /// release holds (AST-001). An SVG is no image: only `Image` shows one,
+  /// from its `vector_graphics` form (CMP-031).
   ImageProvider<Object>? _asset(RenderScope scope, String id) {
     final a = scope.plugin.asset(id) ?? scope.app.asset(id);
+    if (a?.mediaType == svgType) {
+      scope.report(
+        PluxException(
+          PluxErrorCode.propValueInvalid,
+          'the SVG asset $id can be shown by Image only',
+        ),
+        path: scope.path,
+      );
+      return null;
+    }
     if (a != null) {
       for (final hash in preferredFiles(a, assets)) {
         final path = scope.release.assetPath(hash);

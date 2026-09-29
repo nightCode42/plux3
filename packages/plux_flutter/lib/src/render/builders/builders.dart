@@ -12,6 +12,7 @@ library;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart' show DragStartBehavior;
 import 'package:flutter/material.dart';
+import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/render/decoders.dart';
 import 'package:plux_flutter/src/render/decoding.dart';
@@ -20,6 +21,7 @@ import 'package:plux_flutter/src/render/node_context.dart';
 import 'package:plux_flutter/src/render/plux_icon.dart';
 import 'package:plux_flutter/src/render/plux_node.dart';
 import 'package:plux_flutter/src/render/scope.dart';
+import 'package:vector_graphics/vector_graphics.dart';
 
 /// The hand-written builders, by permanent widget ID.
 const Map<int, NodeBuilder> manualBuilders = {
@@ -488,6 +490,50 @@ Widget _icon(NodeContext c) => PluxIcon(
   fontWeight: c.decode(IconProps.fontWeight, decodeFontWeight),
 );
 
+/// `Image` of an SVG asset, drawn from its `vector_graphics` form, which
+/// the server compiled (CMP-031): the props that apply to a picture, with
+/// `color` tinting it as `colorBlendMode` says (`srcIn`, as `Image`, by
+/// default), and the `loading` and `error` slots.
+Widget _vectorImage(
+  NodeContext c,
+  PluxVectorSource source,
+  double? width,
+  double? height,
+) {
+  final loader = source.loader;
+  if (loader == null) {
+    return c.slot(ImageSlots.error) ?? SizedBox(width: width, height: height);
+  }
+  final color = c.decode(ImageProps.color, asColor);
+  return VectorGraphic(
+    loader: loader,
+    width: width,
+    height: height,
+    fit: c.decode(ImageProps.fit, decodeBoxFit) ?? BoxFit.contain,
+    alignment:
+        c.decode(ImageProps.alignment, decodeAlignment) ?? Alignment.center,
+    semanticsLabel: c.decode(ImageProps.semanticLabel, asString),
+    excludeFromSemantics:
+        c.decode(ImageProps.excludeFromSemantics, asBool) ?? false,
+    matchTextDirection:
+        c.decode(ImageProps.matchTextDirection, asBool) ?? false,
+    colorFilter: color == null
+        ? null
+        : ColorFilter.mode(
+            color,
+            c.decode(ImageProps.colorBlendMode, decodeBlendMode) ??
+                BlendMode.srcIn,
+          ),
+    placeholderBuilder: c.hasSlot(ImageSlots.loading)
+        ? (context) => c.slot(ImageSlots.loading)!
+        : null,
+    errorBuilder: (context, e, stack) {
+      c.imageFailed(e);
+      return c.slot(ImageSlots.error) ?? SizedBox(width: width, height: height);
+    },
+  );
+}
+
 /// `Image` from an asset of the release or a URL (AST-001, AST-002),
 /// decoded at the size the document gives (`cacheWidth`, `cacheHeight`),
 /// else at its laid-out size (RT-014); with its `loading` and `error`
@@ -496,6 +542,9 @@ Widget _icon(NodeContext c) => PluxIcon(
 Widget _image(NodeContext c) {
   final width = c.decode(ImageProps.width, asDouble);
   final height = c.decode(ImageProps.height, asDouble);
+  if (c.decode(ImageProps.source, decodeVectorSource) case final vector?) {
+    return _vectorImage(c, vector, width, height);
+  }
   final provider = c.decode(ImageProps.source, decodeImageSource);
   if (provider == null) {
     // An asset the release lacks or a URL the plugin may not reach was

@@ -133,6 +133,7 @@ func buildWork(ctx context.Context, cfg *config.Config, log *slog.Logger, db *st
 				log.ErrorContext(ctx, "the image codecs failed to compile; asset jobs will fail", slog.Any("error", err))
 			}
 		}()
+		deps.SVG = svgCompiler(ctx, cfg, log)
 		deps.Signer = backend
 		deps.ProductionSigning = backend.AllowedInProduction()
 	}

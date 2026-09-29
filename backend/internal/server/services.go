@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -70,7 +71,9 @@ type WorkDeps struct {
 	Objects objects.Store
 	Queue   *JobQueue
 	Codecs  *media.Codecs
-	Signer  signing.Signer
+	// SVG compiles SVGs; nil where the server has no SVG compiler.
+	SVG    *media.SVGCompiler
+	Signer signing.Signer
 	// ProductionSigning reports whether the signer may sign for
 	// production environments (SEC-056).
 	ProductionSigning bool
@@ -87,6 +90,30 @@ func scanner(cfg *config.Config) document.Scanner {
 	}
 	return document.Clamd{Network: "tcp", Address: u.Host}
 }
+
+// svgCompiler returns the configured SVG compiler, or nil — logged — when
+// it is not configured or not installed, which fails SVG assets (CMP-031).
+func svgCompiler(ctx context.Context, cfg *config.Config, log *slog.Logger) *media.SVGCompiler {
+	a := cfg.Assets
+	if a.SVGCompiler == "" {
+		log.WarnContext(ctx, "no SVG compiler is configured (assets.svgCompiler); SVG assets will fail")
+		return nil
+	}
+	for _, path := range []string{a.SVGCompiler, a.PathOps} {
+		if _, err := os.Stat(path); err != nil {
+			log.WarnContext(ctx, "the SVG compiler is not installed; SVG assets will fail", slog.String("path", path), slog.Any("error", err))
+			return nil
+		}
+	}
+	return &media.SVGCompiler{Path: a.SVGCompiler, PathOps: a.PathOps, Timeout: svgTimeout, MaxOutput: svgMaxOutput}
+}
+
+// The bounds of one SVG compilation: far above what an icon or an
+// illustration needs, far below what would hold up the asset queue.
+const (
+	svgTimeout   = 30 * time.Second
+	svgMaxOutput = 16 << 20
+)
 
 // JobQueue enqueues the services' jobs on the job client, which is built
 // after the services it runs jobs for; Build sets it before serving.
@@ -252,7 +279,7 @@ func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shar
 	docs, err := document.NewService(document.Options{
 		DB: db, Audit: log, Tenancy: tenancyService, IDs: gen, Limits: set,
 		SnapshotDays: cfg.Retention.SnapshotDays, CompilerVersion: buildinfo.Get().Version,
-		Objects: work.Objects, Jobs: assetQueue{work.Queue}, Scanner: scanner(cfg), Codecs: work.Codecs,
+		Objects: work.Objects, Jobs: assetQueue{work.Queue}, Scanner: scanner(cfg), Codecs: work.Codecs, SVG: work.SVG,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("server: %w", err)

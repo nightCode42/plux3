@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -10,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:plux_flutter/plux_flutter.dart';
 import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/render/scope.dart';
+import 'package:vector_graphics/vector_graphics.dart';
 
 import '../support/harness.dart';
 
@@ -417,6 +419,30 @@ void main() {
     });
     expect(decoded!.image.width, greaterThan(0));
     expect(problems().where((e) => e.message.contains('asset')), isEmpty);
+  });
+
+  testWidgets('an SVG asset is drawn from its vector_graphics file, never '
+      'parsed as SVG on the device [CMP-031] [AST-001]', (tester) async {
+    await open(tester, 'structure');
+    final svg = tester.widget<VectorGraphic>(find.byType(VectorGraphic));
+    expect(svg.semanticsLabel, 'check');
+    final loader = svg.loader as PluxVectorLoader;
+    final bytes = await tester.runAsync(() => loader.loadBytes(null));
+    expect(
+      bytes!.lengthInBytes,
+      File('../../schema/testdata/bundles/widgets/variants/check.vec')
+          .lengthSync(),
+    );
+    final picture = await tester.runAsync(() => vg.loadPicture(loader, null));
+    expect(picture!.size, const Size(24, 24));
+    picture.picture.dispose();
+    // The page's other images fail on purpose; the SVG reports nothing.
+    expect(
+      problems().where(
+        (e) => e.message.contains('SVG') || e.message.contains('vector'),
+      ),
+      isEmpty,
+    );
   });
 
   testWidgets('cupertino inputs keep their value locally', (tester) async {
