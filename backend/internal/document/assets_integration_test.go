@@ -381,3 +381,72 @@ func dropEntry(t *testing.T, index []byte, file string) []byte {
 	}
 	return []byte(s[:start] + s[end:])
 }
+
+// Verifies: CMP-031.
+// An SVG uploaded before the server compiled SVGs is ready without a
+// vector_graphics variant. It is not a copy a later upload of the same
+// file reuses, and the maintenance sweep asks for its variant.
+func TestLegacySVGsAreCompiled(t *testing.T) {
+	t.Parallel()
+	store, err := objects.NewFilesystem(t.TempDir(), "https://cdn.example")
+	if err != nil {
+		t.Fatal(err)
+	}
+	codecs, err := media.NewCodecs(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = codecs.Close(context.Background()) })
+	queue := &jobs{}
+	f := newFixture(t, func(o *document.Options) {
+		o.Objects, o.Jobs, o.Codecs, o.SVG = store, queue, codecs, fakeSVGCompiler(t)
+	})
+	ctx := context.Background()
+	const s = "tab-1"
+	if _, _, err := f.docs.AcquireLock(ctx, f.owner, f.app, "", s, false); err != nil {
+		t.Fatal(err)
+	}
+	process := func() {
+		t.Helper()
+		for _, j := range queue.take() {
+			if err := f.docs.ProcessAsset(ctx, j); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	icon := []byte(`<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0h1v1z"/></svg>`)
+	legacy, err := f.docs.UploadAsset(ctx, f.owner, f.app, "", s, "icons/old.svg", icon)
+	if err != nil {
+		t.Fatal(err)
+	}
+	process()
+	// As an upload before CMP-031 left it.
+	if err := f.db.InTx(ctx, storage.Tenant{OrganizationID: f.org}, func(ctx context.Context, tx pgx.Tx) error {
+		_, err := tx.Exec(ctx, "UPDATE assets SET variants = '[]' WHERE asset_id = $1", legacy.ID)
+		return err
+	}); err != nil {
+		t.Fatal(err)
+	}
+	copyOf, err := f.docs.UploadAsset(ctx, f.owner, f.app, "", s, "icons/copy.svg", icon)
+	if err != nil {
+		t.Fatal(err)
+	}
+	process()
+	if copyOf, _ = f.docs.GetAsset(ctx, f.viewer, copyOf.ID); copyOf.Processing != "ready" || len(copyOf.Variants) != 1 {
+		t.Errorf("a copy of the legacy SVG: %+v", copyOf)
+	}
+	if n, err := f.docs.RequeueSVGs(ctx, f.org); err != nil || n != 1 {
+		t.Fatalf("RequeueSVGs: %d %v", n, err)
+	}
+	if legacy, _ = f.docs.GetAsset(ctx, f.viewer, legacy.ID); legacy.Processing != "pending" {
+		t.Errorf("the requeued SVG: %+v", legacy)
+	}
+	process()
+	legacy, _ = f.docs.GetAsset(ctx, f.viewer, legacy.ID)
+	if legacy.Processing != "ready" || len(legacy.Variants) != 1 || legacy.Variants[0].MediaType != media.VectorGraphics {
+		t.Errorf("the compiled legacy SVG: %+v", legacy)
+	}
+	if n, err := f.docs.RequeueSVGs(ctx, f.org); err != nil || n != 0 {
+		t.Errorf("a second sweep: %d %v", n, err)
+	}
+}

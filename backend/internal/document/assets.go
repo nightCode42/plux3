@@ -337,9 +337,10 @@ func (s *Service) AssetURL(ctx context.Context, sum string, ttl time.Duration) (
 	return url, nil
 }
 
-// ProcessAsset transcodes a raster image into its variants (CMP-030):
-// the worker's asset job. The same content transcoded before is reused;
-// an image the codecs cannot handle is marked failed with a diagnostic.
+// ProcessAsset makes an asset's variants, a raster image's WebP and AVIF
+// (CMP-030) or an SVG's vector_graphics (CMP-031): the worker's asset
+// job. The same content processed before is reused; a file that cannot
+// be transcoded is marked failed with a diagnostic.
 // Transcoding runs outside any transaction, so a slow image holds no
 // lock.
 func (s *Service) ProcessAsset(ctx context.Context, job AssetJob) error {
@@ -388,6 +389,33 @@ func (s *Service) ProcessAsset(ctx context.Context, job AssetJob) error {
 		}
 		return nil
 	})
+}
+
+// RequeueSVGs asks for the vector_graphics variant of every current SVG
+// asset of an organisation that is ready without one: those uploaded
+// before the server compiled SVGs (CMP-031), which devices could not
+// draw. Until the variant is made the asset is pending, so a publish of
+// its app waits for it. The worker's maintenance sweep runs it; a
+// server with no SVG compiler leaves them.
+func (s *Service) RequeueSVGs(ctx context.Context, organizationID string) (int, error) {
+	if s.o.SVG == nil || s.o.Jobs == nil {
+		return 0, nil
+	}
+	n := 0
+	err := s.inOrg(ctx, auth.System(organizationID), func(ctx context.Context, tx pgx.Tx) error {
+		ids, err := dbgen.New(tx).RequeueUncompiledSVGs(ctx)
+		if err != nil {
+			return failure(err, "asset")
+		}
+		for _, id := range ids {
+			if err := s.o.Jobs.Enqueue(ctx, tx, AssetJob{OrganizationID: organizationID, RowID: storage.ID(id)}); err != nil {
+				return fmt.Errorf("document: %w", err)
+			}
+		}
+		n = len(ids)
+		return nil
+	})
+	return n, err
 }
 
 // PendingAssets counts the app's assets whose variants the asset job

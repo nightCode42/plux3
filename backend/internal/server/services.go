@@ -478,6 +478,9 @@ func (w *maintenanceWorker) Work(ctx context.Context, _ *river.Job[Maintenance])
 		if _, err := w.svc.Events.Purge(ctx, org); err != nil {
 			return err //nolint:wrapcheck // a domain error
 		}
+		if _, err := w.svc.Documents.RequeueSVGs(ctx, org); err != nil {
+			return err //nolint:wrapcheck // a domain error
+		}
 		n, err := w.svc.Documents.PurgeSnapshots(ctx, org)
 		snapshots += n
 		return err //nolint:wrapcheck // a domain error
