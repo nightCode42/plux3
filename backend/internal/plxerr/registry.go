@@ -119,6 +119,7 @@ const (
 	NodeBuildFailed     Code = 4001
 	UnknownWidget       Code = 4003
 	ActionsNotAvailable Code = 4010
+	PluginDisabled      Code = 4020
 
 	// Security (PLX-6000–6999).
 

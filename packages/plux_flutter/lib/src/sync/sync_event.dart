@@ -5,6 +5,8 @@
 /// one sync (SYN-002, SYN-015).
 library;
 
+import 'dart:async';
+
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 
 /// Something that happened during a sync.
@@ -170,4 +172,43 @@ final class SyncResult {
     if (error != null) 'reason': error!.code.reason,
     if (error != null) 'code': error!.code.id,
   };
+}
+
+/// A sync in progress (SYN-002): a future of its [SyncResult] that also
+/// carries the events of this run on [progress]. `await Plux.sync()` gives
+/// the result.
+final class SyncRun implements Future<SyncResult> {
+  /// Wraps [result], with the run's events on [progress].
+  SyncRun(this._result, this.progress);
+
+  final Future<SyncResult> _result;
+
+  /// The events of this run, from its start until the result; the stream
+  /// closes when the run ends.
+  final Stream<SyncEvent> progress;
+
+  @override
+  Stream<SyncResult> asStream() => _result.asStream();
+
+  @override
+  Future<SyncResult> catchError(
+    Function onError, {
+    bool Function(Object error)? test,
+  }) => _result.catchError(onError, test: test);
+
+  @override
+  Future<R> then<R>(
+    FutureOr<R> Function(SyncResult value) onValue, {
+    Function? onError,
+  }) => _result.then(onValue, onError: onError);
+
+  @override
+  Future<SyncResult> timeout(
+    Duration timeLimit, {
+    FutureOr<SyncResult> Function()? onTimeout,
+  }) => _result.timeout(timeLimit, onTimeout: onTimeout);
+
+  @override
+  Future<SyncResult> whenComplete(FutureOr<void> Function() action) =>
+      _result.whenComplete(action);
 }

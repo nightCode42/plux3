@@ -768,6 +768,14 @@
       "fix": "Nothing to fix in the page; the handler runs once the runtime supports actions."
     },
     {
+      "code": "PLX-4020",
+      "reason": "PLUGIN_DISABLED",
+      "severity": "warning",
+      "title": "Plugin switched off",
+      "cause": "The release's control switches turn the plugin off (kill switch), so every route into it shows its fallback page (RT-022).",
+      "fix": "Turn the switch off in the release's channel controls once the problem is fixed."
+    },
+    {
       "code": "PLX-6030",
       "reason": "OUTBOUND_REQUEST_BLOCKED",
       "severity": "error",

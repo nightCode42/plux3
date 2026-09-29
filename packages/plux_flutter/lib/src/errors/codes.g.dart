@@ -280,6 +280,9 @@ enum PluxErrorCode {
   /// Actions not available in this runtime.
   actionsNotAvailable(4010, 'ACTIONS_NOT_AVAILABLE', 'Actions not available in this runtime'),
 
+  /// Plugin switched off.
+  pluginDisabled(4020, 'PLUGIN_DISABLED', 'Plugin switched off'),
+
   /// Outbound request blocked.
   outboundRequestBlocked(6030, 'OUTBOUND_REQUEST_BLOCKED', 'Outbound request blocked'),
 

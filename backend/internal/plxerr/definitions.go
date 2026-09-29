@@ -469,6 +469,11 @@ var registry = []Definition{
 		"An event handler fired, but this runtime renders pages without running actions; actions arrive with the action executor in phase 5 (ADR-0031).",
 		"Nothing to fix in the page; the handler runs once the runtime supports actions.", false,
 	},
+	{
+		PluginDisabled, "PLUGIN_DISABLED", SeverityWarning, "Plugin switched off",
+		"The release's control switches turn the plugin off (kill switch), so every route into it shows its fallback page (RT-022).",
+		"Turn the switch off in the release's channel controls once the problem is fixed.", false,
+	},
 
 	// Security.
 	{

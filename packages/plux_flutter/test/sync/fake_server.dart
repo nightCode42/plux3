@@ -67,6 +67,8 @@ final class FakeRelease {
     this.app,
     this.plugins, {
     this.killSwitches = const [],
+    this.appKillSwitch = false,
+    this.message = '',
     this.mandatory = false,
     this.requiredFeatures = const ['pxl.v1'],
   });
@@ -82,6 +84,12 @@ final class FakeRelease {
 
   /// Kill switches.
   final List<String> killSwitches;
+
+  /// Whether all Plux content is switched off.
+  final bool appKillSwitch;
+
+  /// The message shown while a switch is on.
+  final String message;
 
   /// Whether it is mandatory.
   final bool mandatory;
@@ -195,6 +203,50 @@ final class FakePluxServer {
 
   /// Stops the server.
   Future<void> close() => _server.close(force: true);
+
+  /// Signs a bundle hash as publish does, for baselines (ADR-0004).
+  Future<String> signHash(Uint8List hash) async => base64.encode(
+    (await DartEd25519(
+      sha512: const DartSha512(),
+    ).sign(hash, keyPair: _key)).bytes,
+  );
+
+  /// A baseline as `plux pull` writes it, signed with this server's key.
+  Future<Map<String, Uint8List>> baseline(
+    int sequence,
+    Uint8List app,
+    Map<String, Uint8List> plugins,
+  ) async {
+    final files = <String, Uint8List>{};
+    final entries = <Map<String, Object?>>[];
+    for (final MapEntry(:key, :value) in {'': app, ...plugins}.entries) {
+      final file = 'bundles/${key.isEmpty ? '_app' : key}.pxb';
+      files[file] = value;
+      entries.add({
+        'plugin': key,
+        'version': sequence,
+        'sha256': Goldens.hashOf(value),
+        'file': file,
+        'keyId': keyId,
+        'algorithm': 'ed25519',
+        'signature': await signHash(value.sublist(16, 48)),
+      });
+    }
+    files['baseline.json'] = Uint8List.fromList(
+      utf8.encode(
+        jsonEncode({
+          'app': app_,
+          'environment': environment,
+          'channel': channel,
+          'releaseSequence': sequence,
+          'bundles': entries,
+        }),
+      ),
+    );
+    return files;
+  }
+
+  static const app_ = app;
 
   final Map<String, Uint8List> _objects = {};
 
@@ -320,6 +372,9 @@ final class FakePluxServer {
         if (auth == null || !auth.startsWith('Bearer plux_dat_')) {
           return (401, {'code': 'unauthenticated', 'message': 'no token'});
         }
+        if (release == null) {
+          return (404, {'code': 'not_found', 'message': 'no release'});
+        }
         return (200, await _manifest(body));
     }
     return (404, {'code': 'unimplemented', 'message': path});
@@ -336,7 +391,7 @@ final class FakePluxServer {
         ),
     };
     final etag =
-        '"${sha256.convert(utf8.encode('${r.sequence}|${r.killSwitches}|${installed.entries.map((e) => '${e.key}=${e.value}').join(',')}')).toString().substring(0, 16)}"';
+        '"${sha256.convert(utf8.encode('${r.sequence}|${r.killSwitches}|${r.appKillSwitch}|${installed.entries.map((e) => '${e.key}=${e.value}').join(',')}')).toString().substring(0, 16)}"';
     if (req['ifNoneMatch'] == etag) return {'notModified': true, 'etag': etag};
     Map<String, Object?> bundleJson(Uint8List b) => {
       'hash': 'sha256:${Goldens.hashOf(b)}',
@@ -363,9 +418,9 @@ final class FakePluxServer {
       ],
       'control': {
         'killSwitches': r.killSwitches,
-        'appKillSwitch': false,
+        'appKillSwitch': r.appKillSwitch,
         'mandatory': r.mandatory,
-        'message': '',
+        'message': r.message,
       },
       'experiments': <Object?>[],
     };

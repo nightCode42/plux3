@@ -734,6 +734,14 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Nothing to fix in the page; the handler runs once the runtime supports actions.
 
+### PLX-4020
+
+`PLUGIN_DISABLED` · warning · Plugin switched off
+
+**Cause.** The release's control switches turn the plugin off (kill switch), so every route into it shows its fallback page (RT-022).
+
+**Fix.** Turn the switch off in the release's channel controls once the problem is fixed.
+
 ## Security (PLX-6000–6999)
 
 ### PLX-6030

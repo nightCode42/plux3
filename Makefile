@@ -39,7 +39,7 @@ FUZZTIME      ?= 30s
 GO_TOOLCHAIN  := $(shell sed -n 's/^toolchain //p' backend/go.mod)
 GO_INSTALL    := GOTOOLCHAIN=$(GO_TOOLCHAIN) $(GO) install
 GO_MODULES    := backend tools
-DART_PACKAGES := packages/plux_flutter packages/plux_widget_api
+DART_PACKAGES := packages/plux_devtools packages/plux_flutter packages/plux_widget_api
 # Generated Dart code is verified by regeneration (CI-003), not by the formatter.
 DART_SOURCES  := find packages -name '*.dart' ! -name '*.g.dart' ! -name '*_generated.dart' ! -path '*/build/*' -print0
 # Everything `make gen` writes; `go-gen-check` fails if any of it changes.

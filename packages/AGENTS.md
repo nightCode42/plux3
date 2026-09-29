@@ -1,6 +1,6 @@
 # packages — Agent Notes
 
-Dart and Flutter packages, managed as one pub workspace from the repository root (`pubspec.yaml`, one `pubspec.lock`). `plux_flutter` is the runtime (spec §12); optional capabilities ship as separate packages (`RT-060`), each created in the phase that brings its first feature. `plux_widget_api` is a development-only tool that snapshots the pinned Flutter SDK for the widget coverage table (`WGT-003`, ADR-0010); no shipped package may depend on it. Read [dart-standards.md](../docs/engineering/dart-standards.md) and the root [AGENTS.md](../AGENTS.md) before editing.
+Dart and Flutter packages, managed as one pub workspace from the repository root (`pubspec.yaml`, one `pubspec.lock`). `plux_flutter` is the runtime (spec §12); optional capabilities ship as separate packages (`RT-060`), each created in the phase that brings its first feature. `plux_devtools` is the debug overlay (`RT-060`); it uses only `plux_flutter`'s public API (`Plux.diagnostics`) and renders nothing in release builds. `plux_widget_api` is a development-only tool that snapshots the pinned Flutter SDK for the widget coverage table (`WGT-003`, ADR-0010); no shipped package may depend on it. Read [dart-standards.md](../docs/engineering/dart-standards.md) and the root [AGENTS.md](../AGENTS.md) before editing.
 
 The runtime's design is recorded in ADR-0008 (Riverpod), ADR-0021 (sync and the release store), ADR-0029 (verification), ADR-0030 (native code), ADR-0031 (rendering) and ADR-0032 (theming). Read the one for the area you change.
 

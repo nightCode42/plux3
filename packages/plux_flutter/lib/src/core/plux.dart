@@ -1,0 +1,282 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+/// The host API (HST-001, spec Appendix I): one entry point for a host app
+/// to start the runtime, sync, open pages and set what Plux renders with.
+library;
+
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plux_flutter/src/core/config.dart';
+import 'package:plux_flutter/src/core/plux_view.dart';
+import 'package:plux_flutter/src/core/runtime.dart';
+import 'package:plux_flutter/src/devtools_api/diagnostics.dart';
+import 'package:plux_flutter/src/state/providers.dart';
+import 'package:plux_flutter/src/sync/sync_event.dart';
+
+/// The Plux runtime's host API.
+///
+/// ```dart
+/// await Plux.initialize(PluxConfig(appId: 'acme-mobile', endpoint: Uri.parse('https://plux.acme.example')));
+/// runApp(const MyApp());
+/// // anywhere: PluxView('loan-calculator'), or
+/// await Plux.open(context, 'loan-calculator', params: {'productId': 'personal-12m'});
+/// ```
+///
+/// The runtime is one per app process, as the host API's static shape
+/// implies (Appendix I): it is set only by [initialize] and cleared only
+/// by [dispose].
+abstract final class Plux {
+  static PluxRuntime? _runtime;
+  static ProviderContainer? _container;
+  static bool _ownsContainer = false;
+
+  /// Starts the runtime (RT-004, SYN-003). With a cached or embedded
+  /// release it returns without waiting for the network unless the startup
+  /// policy says to; with neither, it waits for the first sync, and the
+  /// result says whether pages can render.
+  static Future<PluxStartup> initialize(PluxConfig config) =>
+      initializeWith(config, const RuntimeOverrides());
+
+  /// [initialize] with test overrides; not part of the public API.
+  static Future<PluxStartup> initializeWith(
+    PluxConfig config,
+    RuntimeOverrides overrides,
+  ) async {
+    if (_runtime != null) {
+      throw StateError(
+        'Plux is already initialized; call Plux.dispose() first',
+      );
+    }
+    final container =
+        config.container ??
+        ProviderContainer(
+          parent: config.parentContainer,
+          overrides: config.parentContainer == null
+              ? const []
+              : pluxScopedProviders,
+        );
+    final (rt, startup) = await PluxRuntime.start(config, overrides: overrides);
+    _runtime = rt;
+    _container = container;
+    _ownsContainer = config.container == null;
+    container.read(pluxRuntimeProvider.notifier).set(rt);
+    container
+        .read(environmentProvider.notifier)
+        .replace(
+          PluxEnvironment(
+            locale: config.locale,
+            themeMode: config.themeMode,
+            brand: config.brand,
+            consent: config.consent,
+            authDelegate: config.authDelegate,
+          ),
+        );
+    return startup;
+  }
+
+  /// Whether the runtime is running.
+  static bool get isInitialized => _runtime != null;
+
+  static PluxRuntime get _rt =>
+      _runtime ?? (throw StateError('call Plux.initialize() first'));
+
+  /// The Riverpod container Plux uses (RT-003).
+  static ProviderContainer get container =>
+      _container ?? (throw StateError('call Plux.initialize() first'));
+
+  /// Syncs every plugin now (SYN-002); a sync in progress is joined.
+  /// Awaiting it gives the result, which says whether a new release was
+  /// staged; [SyncRun.progress] carries this run's events, and
+  /// [syncEvents] those of every run.
+  static SyncRun sync() => _rt.sync();
+
+  /// The typed sync events (SYN-013).
+  static Stream<SyncEvent> get syncEvents => _rt.events;
+
+  /// What debugging tools such as `plux_devtools` show: reported problems,
+  /// the active release and the sync status. Empty in release builds.
+  static PluxDiagnostics get diagnostics => _rt.diagnostics;
+
+  /// Pushes the page [route] on the navigator of [context], with [params];
+  /// completes when the page is popped. Plux's own navigation stack and
+  /// typed results arrive in P4 (NAV-003).
+  static Future<T?> open<T extends Object?>(
+    BuildContext context,
+    String route, {
+    Map<String, Object?> params = const {},
+  }) => Navigator.of(context).push<T>(
+    MaterialPageRoute<T>(
+      settings: RouteSettings(name: route, arguments: params),
+      builder: (_) => PluxScope(child: PluxView(route, params: params)),
+    ),
+  );
+
+  static void _environment(PluxEnvironment Function(PluxEnvironment) f) {
+    final n = container.read(environmentProvider.notifier);
+    n.replace(f(container.read(environmentProvider)));
+  }
+
+  /// Sets the locale of Plux pages; null follows the host (I18N-005).
+  static void setLocale(Locale? locale) => _environment(
+    (e) => PluxEnvironment(
+      locale: locale,
+      themeMode: e.themeMode,
+      brand: e.brand,
+      consent: e.consent,
+      user: e.user,
+      authDelegate: e.authDelegate,
+    ),
+  );
+
+  /// Sets light, dark or the system setting (THM-002).
+  static void setThemeMode(ThemeMode mode) => _environment(
+    (e) => PluxEnvironment(
+      locale: e.locale,
+      themeMode: mode,
+      brand: e.brand,
+      consent: e.consent,
+      user: e.user,
+      authDelegate: e.authDelegate,
+    ),
+  );
+
+  /// Selects a white-label brand overlay, or none (THM-003).
+  static void setBrand(String? brand) => _environment(
+    (e) => PluxEnvironment(
+      locale: e.locale,
+      themeMode: e.themeMode,
+      brand: brand,
+      consent: e.consent,
+      user: e.user,
+      authDelegate: e.authDelegate,
+    ),
+  );
+
+  /// Records the user's consent (SEC-161).
+  static void setConsent(PluxConsent consent) => _environment(
+    (e) => PluxEnvironment(
+      locale: e.locale,
+      themeMode: e.themeMode,
+      brand: e.brand,
+      consent: consent,
+      user: e.user,
+      authDelegate: e.authDelegate,
+    ),
+  );
+
+  /// Sets the pseudonymous user and targeting attributes (HST-011).
+  static void setUserContext(PluxUser? user) => _environment(
+    (e) => PluxEnvironment(
+      locale: e.locale,
+      themeMode: e.themeMode,
+      brand: e.brand,
+      consent: e.consent,
+      user: user,
+      authDelegate: e.authDelegate,
+    ),
+  );
+
+  /// Sets the delegate that supplies the end user's token (HST-010).
+  static void setAuthDelegate(PluxAuthDelegate? delegate) => _environment(
+    (e) => PluxEnvironment(
+      locale: e.locale,
+      themeMode: e.themeMode,
+      brand: e.brand,
+      consent: e.consent,
+      user: e.user,
+      authDelegate: delegate,
+    ),
+  );
+
+  /// Stops the runtime: the sync isolate ends, mappings are released, and
+  /// the container is disposed if Plux created it. A host that shares its
+  /// container with Plux calls this before disposing it.
+  static Future<void> dispose() async {
+    final rt = _runtime;
+    _runtime = null;
+    final c = _container;
+    _container = null;
+    // A container Plux created is disposed (a no-op when the host disposed
+    // its parent first); a shared one is left without the runtime.
+    if (c != null) {
+      if (_ownsContainer) {
+        c.dispose();
+      } else {
+        c.read(pluxRuntimeProvider.notifier).set(null);
+      }
+    }
+    await rt?.dispose();
+  }
+}
+
+/// Makes Plux's container available below it, unless an enclosing scope
+/// already provides it (ADR-0008). `Plux.open` wraps its pages in one;
+/// host apps that do not use Riverpod wrap their app, or each `PluxView`.
+final class PluxScope extends StatelessWidget {
+  /// Creates a scope.
+  const PluxScope({super.key, required this.child});
+
+  /// The subtree.
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final container = Plux.container;
+    ProviderContainer? enclosing;
+    try {
+      enclosing = ProviderScope.containerOf(context, listen: false);
+    } on StateError {
+      enclosing = null;
+    }
+    if (identical(enclosing, container)) return child;
+    return UncontrolledProviderScope(container: container, child: child);
+  }
+}
+
+/// A ready-made settings tile for manual sync (SYN-002): the active
+/// release, the last sync's outcome, and a button that syncs now.
+final class PluxSyncTile extends ConsumerWidget {
+  /// Creates the tile.
+  const PluxSyncTile({super.key, this.title = 'Content updates'});
+
+  /// The tile's title.
+  final String title;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final release = ref.watch(activeReleaseProvider);
+    final event = ref.watch(syncStatusProvider);
+    final busy = event is SyncChecking || event is SyncDownloading;
+    final subtitle = switch (event) {
+      SyncChecking() => 'Checking…',
+      SyncDownloading(:final progress) =>
+        'Downloading ${(progress * 100).round()}%',
+      SyncStaged(:final sequence) => 'Release $sequence ready',
+      SyncActivated(:final sequence) ||
+      SyncUpToDate(
+        sequence: final int sequence,
+      ) => 'Up to date (release $sequence)',
+      SyncFailed(:final error) => 'Update failed (${error.code.id})',
+      SyncRolledBack(:final to) => 'Restored release $to',
+      _ => release == null ? 'No content yet' : 'Release ${release.sequence}',
+    };
+    return ListTile(
+      title: Text(title),
+      subtitle: Text(subtitle),
+      trailing: busy
+          ? const SizedBox.square(
+              dimension: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : IconButton(
+              tooltip: 'Check for updates',
+              icon: const Icon(Icons.refresh),
+              onPressed: () => unawaited(Plux.sync()),
+            ),
+      onTap: busy ? null : () => unawaited(Plux.sync()),
+    );
+  }
+}
