@@ -79,6 +79,7 @@
                 },
                 "id": "01c0c450-6c00-7000-8000-000000000187",
                 "props": {
+                  "adaptive": true,
                   "value": true
                 },
                 "semantics": {
@@ -186,6 +187,7 @@
                 },
                 "id": "01c0c450-6c00-7000-8000-00000000018d",
                 "props": {
+                  "adaptive": true,
                   "value": {
                     "$expr": "page.on"
                   }

@@ -2066,12 +2066,391 @@
             "required": false,
             "named": true
           }
+        ],
+        "adaptive": [
+          {
+            "name": "key",
+            "type": "Key?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "value",
+            "type": "bool?",
+            "required": true,
+            "named": true
+          },
+          {
+            "name": "tristate",
+            "type": "bool",
+            "required": false,
+            "named": true,
+            "default": "false"
+          },
+          {
+            "name": "onChanged",
+            "type": "void Function(bool?)?",
+            "required": true,
+            "named": true
+          },
+          {
+            "name": "mouseCursor",
+            "type": "MouseCursor?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "activeColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "fillColor",
+            "type": "WidgetStateProperty<Color?>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "checkColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "focusColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "hoverColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "overlayColor",
+            "type": "WidgetStateProperty<Color?>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "splashRadius",
+            "type": "double?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "materialTapTargetSize",
+            "type": "MaterialTapTargetSize?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "visualDensity",
+            "type": "VisualDensity?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "focusNode",
+            "type": "FocusNode?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "autofocus",
+            "type": "bool",
+            "required": false,
+            "named": true,
+            "default": "false"
+          },
+          {
+            "name": "shape",
+            "type": "OutlinedBorder?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "side",
+            "type": "BorderSide?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "isError",
+            "type": "bool",
+            "required": false,
+            "named": true,
+            "default": "false"
+          },
+          {
+            "name": "semanticLabel",
+            "type": "String?",
+            "required": false,
+            "named": true
+          }
         ]
       }
     },
     "package:flutter/material.dart#CheckboxListTile": {
       "constructors": {
         "": [
+          {
+            "name": "key",
+            "type": "Key?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "value",
+            "type": "bool?",
+            "required": true,
+            "named": true
+          },
+          {
+            "name": "onChanged",
+            "type": "void Function(bool?)?",
+            "required": true,
+            "named": true
+          },
+          {
+            "name": "mouseCursor",
+            "type": "MouseCursor?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "activeColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "fillColor",
+            "type": "WidgetStateProperty<Color?>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "checkColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "hoverColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "overlayColor",
+            "type": "WidgetStateProperty<Color?>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "splashRadius",
+            "type": "double?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "materialTapTargetSize",
+            "type": "MaterialTapTargetSize?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "visualDensity",
+            "type": "VisualDensity?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "focusNode",
+            "type": "FocusNode?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "statesController",
+            "type": "WidgetStatesController?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "autofocus",
+            "type": "bool",
+            "required": false,
+            "named": true,
+            "default": "false"
+          },
+          {
+            "name": "shape",
+            "type": "ShapeBorder?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "side",
+            "type": "BorderSide?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "isError",
+            "type": "bool",
+            "required": false,
+            "named": true,
+            "default": "false"
+          },
+          {
+            "name": "enabled",
+            "type": "bool?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "tileColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "title",
+            "type": "Widget?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "subtitle",
+            "type": "Widget?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "isThreeLine",
+            "type": "bool?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "dense",
+            "type": "bool?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "secondary",
+            "type": "Widget?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "selected",
+            "type": "bool",
+            "required": false,
+            "named": true,
+            "default": "false"
+          },
+          {
+            "name": "controlAffinity",
+            "type": "ListTileControlAffinity?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "contentPadding",
+            "type": "EdgeInsetsGeometry?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "tristate",
+            "type": "bool",
+            "required": false,
+            "named": true,
+            "default": "false"
+          },
+          {
+            "name": "checkboxShape",
+            "type": "OutlinedBorder?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "selectedTileColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "onFocusChange",
+            "type": "void Function(bool)?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "enableFeedback",
+            "type": "bool?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "horizontalTitleGap",
+            "type": "double?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "minVerticalPadding",
+            "type": "double?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "minLeadingWidth",
+            "type": "double?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "minTileHeight",
+            "type": "double?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "checkboxSemanticLabel",
+            "type": "String?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "checkboxScaleFactor",
+            "type": "double",
+            "required": false,
+            "named": true,
+            "default": "1.0"
+          },
+          {
+            "name": "titleAlignment",
+            "type": "ListTileTitleAlignment?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "internalAddSemanticForOnTap",
+            "type": "bool",
+            "required": false,
+            "named": true,
+            "default": "false"
+          }
+        ],
+        "adaptive": [
           {
             "name": "key",
             "type": "Key?",
@@ -2830,6 +3209,93 @@
           {
             "name": "strokeCap",
             "type": "StrokeCap?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "constraints",
+            "type": "BoxConstraints?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "trackGap",
+            "type": "double?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "year2023",
+            "type": "bool?",
+            "required": false,
+            "named": true,
+            "deprecated": true
+          },
+          {
+            "name": "padding",
+            "type": "EdgeInsetsGeometry?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "controller",
+            "type": "AnimationController?",
+            "required": false,
+            "named": true
+          }
+        ],
+        "adaptive": [
+          {
+            "name": "key",
+            "type": "Key?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "value",
+            "type": "double?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "backgroundColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "valueColor",
+            "type": "Animation<Color?>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "strokeWidth",
+            "type": "double?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "semanticsLabel",
+            "type": "String?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "semanticsValue",
+            "type": "String?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "strokeCap",
+            "type": "StrokeCap?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "strokeAlign",
+            "type": "double?",
             "required": false,
             "named": true
           },
@@ -5775,6 +6241,145 @@
             "required": false,
             "named": true
           }
+        ],
+        "adaptive": [
+          {
+            "name": "key",
+            "type": "Key?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "value",
+            "type": "T",
+            "required": true,
+            "named": true
+          },
+          {
+            "name": "groupValue",
+            "type": "T?",
+            "required": false,
+            "named": true,
+            "deprecated": true
+          },
+          {
+            "name": "onChanged",
+            "type": "void Function(T?)?",
+            "required": false,
+            "named": true,
+            "deprecated": true
+          },
+          {
+            "name": "mouseCursor",
+            "type": "MouseCursor?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "toggleable",
+            "type": "bool",
+            "required": false,
+            "named": true,
+            "default": "false"
+          },
+          {
+            "name": "activeColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "fillColor",
+            "type": "WidgetStateProperty<Color?>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "focusColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "hoverColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "overlayColor",
+            "type": "WidgetStateProperty<Color?>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "splashRadius",
+            "type": "double?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "materialTapTargetSize",
+            "type": "MaterialTapTargetSize?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "visualDensity",
+            "type": "VisualDensity?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "focusNode",
+            "type": "FocusNode?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "autofocus",
+            "type": "bool",
+            "required": false,
+            "named": true,
+            "default": "false"
+          },
+          {
+            "name": "useCupertinoCheckmarkStyle",
+            "type": "bool",
+            "required": false,
+            "named": true,
+            "default": "false"
+          },
+          {
+            "name": "enabled",
+            "type": "bool?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "groupRegistry",
+            "type": "RadioGroupRegistry<T>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "backgroundColor",
+            "type": "WidgetStateProperty<Color?>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "side",
+            "type": "BorderSide?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "innerRadius",
+            "type": "WidgetStateProperty<double?>?",
+            "required": false,
+            "named": true
+          }
         ]
       }
     },
@@ -6000,6 +6605,262 @@
           {
             "name": "enabled",
             "type": "bool?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "internalAddSemanticForOnTap",
+            "type": "bool",
+            "required": false,
+            "named": true,
+            "default": "false"
+          },
+          {
+            "name": "radioBackgroundColor",
+            "type": "WidgetStateProperty<Color?>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "radioSide",
+            "type": "BorderSide?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "radioInnerRadius",
+            "type": "WidgetStateProperty<double?>?",
+            "required": false,
+            "named": true
+          }
+        ],
+        "adaptive": [
+          {
+            "name": "key",
+            "type": "Key?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "value",
+            "type": "T",
+            "required": true,
+            "named": true
+          },
+          {
+            "name": "groupValue",
+            "type": "T?",
+            "required": false,
+            "named": true,
+            "deprecated": true
+          },
+          {
+            "name": "onChanged",
+            "type": "void Function(T?)?",
+            "required": false,
+            "named": true,
+            "deprecated": true
+          },
+          {
+            "name": "mouseCursor",
+            "type": "MouseCursor?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "toggleable",
+            "type": "bool",
+            "required": false,
+            "named": true,
+            "default": "false"
+          },
+          {
+            "name": "activeColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "fillColor",
+            "type": "WidgetStateProperty<Color?>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "hoverColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "overlayColor",
+            "type": "WidgetStateProperty<Color?>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "splashRadius",
+            "type": "double?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "materialTapTargetSize",
+            "type": "MaterialTapTargetSize?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "title",
+            "type": "Widget?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "subtitle",
+            "type": "Widget?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "isThreeLine",
+            "type": "bool?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "dense",
+            "type": "bool?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "secondary",
+            "type": "Widget?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "selected",
+            "type": "bool",
+            "required": false,
+            "named": true,
+            "default": "false"
+          },
+          {
+            "name": "controlAffinity",
+            "type": "ListTileControlAffinity?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "autofocus",
+            "type": "bool",
+            "required": false,
+            "named": true,
+            "default": "false"
+          },
+          {
+            "name": "contentPadding",
+            "type": "EdgeInsetsGeometry?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "shape",
+            "type": "ShapeBorder?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "tileColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "selectedTileColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "visualDensity",
+            "type": "VisualDensity?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "focusNode",
+            "type": "FocusNode?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "statesController",
+            "type": "WidgetStatesController?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "onFocusChange",
+            "type": "void Function(bool)?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "enableFeedback",
+            "type": "bool?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "horizontalTitleGap",
+            "type": "double?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "minVerticalPadding",
+            "type": "double?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "minLeadingWidth",
+            "type": "double?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "minTileHeight",
+            "type": "double?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "radioScaleFactor",
+            "type": "double",
+            "required": false,
+            "named": true,
+            "default": "1.0"
+          },
+          {
+            "name": "enabled",
+            "type": "bool?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "useCupertinoCheckmarkStyle",
+            "type": "bool",
+            "required": false,
+            "named": true,
+            "default": "false"
+          },
+          {
+            "name": "titleAlignment",
+            "type": "ListTileTitleAlignment?",
             "required": false,
             "named": true
           },
@@ -6854,6 +7715,144 @@
             "named": true,
             "deprecated": true
           }
+        ],
+        "adaptive": [
+          {
+            "name": "key",
+            "type": "Key?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "value",
+            "type": "double",
+            "required": true,
+            "named": true
+          },
+          {
+            "name": "secondaryTrackValue",
+            "type": "double?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "onChanged",
+            "type": "void Function(double)?",
+            "required": true,
+            "named": true
+          },
+          {
+            "name": "onChangeStart",
+            "type": "void Function(double)?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "onChangeEnd",
+            "type": "void Function(double)?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "min",
+            "type": "double",
+            "required": false,
+            "named": true,
+            "default": "0.0"
+          },
+          {
+            "name": "max",
+            "type": "double",
+            "required": false,
+            "named": true,
+            "default": "1.0"
+          },
+          {
+            "name": "divisions",
+            "type": "int?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "label",
+            "type": "String?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "mouseCursor",
+            "type": "MouseCursor?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "activeColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "inactiveColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "secondaryActiveColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "thumbColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "overlayColor",
+            "type": "WidgetStateProperty<Color?>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "semanticFormatterCallback",
+            "type": "String Function(double)?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "focusNode",
+            "type": "FocusNode?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "autofocus",
+            "type": "bool",
+            "required": false,
+            "named": true,
+            "default": "false"
+          },
+          {
+            "name": "allowedInteraction",
+            "type": "SliderInteraction?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "showValueIndicator",
+            "type": "ShowValueIndicator?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "year2023",
+            "type": "bool?",
+            "required": false,
+            "named": true,
+            "deprecated": true
+          }
         ]
       }
     },
@@ -7284,6 +8283,185 @@
             "required": false,
             "named": true
           }
+        ],
+        "adaptive": [
+          {
+            "name": "key",
+            "type": "Key?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "value",
+            "type": "bool",
+            "required": true,
+            "named": true
+          },
+          {
+            "name": "onChanged",
+            "type": "void Function(bool)?",
+            "required": true,
+            "named": true
+          },
+          {
+            "name": "activeColor",
+            "type": "Color?",
+            "required": false,
+            "named": true,
+            "deprecated": true
+          },
+          {
+            "name": "activeThumbColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "activeTrackColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "inactiveThumbColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "inactiveTrackColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "activeThumbImage",
+            "type": "ImageProvider<Object>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "onActiveThumbImageError",
+            "type": "void Function(Object, StackTrace?)?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "inactiveThumbImage",
+            "type": "ImageProvider<Object>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "onInactiveThumbImageError",
+            "type": "void Function(Object, StackTrace?)?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "materialTapTargetSize",
+            "type": "MaterialTapTargetSize?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "thumbColor",
+            "type": "WidgetStateProperty<Color?>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "trackColor",
+            "type": "WidgetStateProperty<Color?>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "trackOutlineColor",
+            "type": "WidgetStateProperty<Color?>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "trackOutlineWidth",
+            "type": "WidgetStateProperty<double?>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "thumbIcon",
+            "type": "WidgetStateProperty<Icon?>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "dragStartBehavior",
+            "type": "DragStartBehavior",
+            "required": false,
+            "named": true,
+            "default": "DragStartBehavior.start"
+          },
+          {
+            "name": "mouseCursor",
+            "type": "MouseCursor?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "focusColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "hoverColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "overlayColor",
+            "type": "WidgetStateProperty<Color?>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "splashRadius",
+            "type": "double?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "focusNode",
+            "type": "FocusNode?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "onFocusChange",
+            "type": "void Function(bool)?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "autofocus",
+            "type": "bool",
+            "required": false,
+            "named": true,
+            "default": "false"
+          },
+          {
+            "name": "padding",
+            "type": "EdgeInsetsGeometry?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "applyCupertinoTheme",
+            "type": "bool?",
+            "required": false,
+            "named": true
+          }
         ]
       }
     },
@@ -7442,6 +8620,283 @@
             "required": false,
             "named": true,
             "default": "false"
+          },
+          {
+            "name": "tileColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "title",
+            "type": "Widget?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "subtitle",
+            "type": "Widget?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "isThreeLine",
+            "type": "bool?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "dense",
+            "type": "bool?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "contentPadding",
+            "type": "EdgeInsetsGeometry?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "secondary",
+            "type": "Widget?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "selected",
+            "type": "bool",
+            "required": false,
+            "named": true,
+            "default": "false"
+          },
+          {
+            "name": "controlAffinity",
+            "type": "ListTileControlAffinity?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "shape",
+            "type": "ShapeBorder?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "selectedTileColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "visualDensity",
+            "type": "VisualDensity?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "enableFeedback",
+            "type": "bool?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "horizontalTitleGap",
+            "type": "double?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "minVerticalPadding",
+            "type": "double?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "minLeadingWidth",
+            "type": "double?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "minTileHeight",
+            "type": "double?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "hoverColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "internalAddSemanticForOnTap",
+            "type": "bool",
+            "required": false,
+            "named": true,
+            "default": "false"
+          }
+        ],
+        "adaptive": [
+          {
+            "name": "key",
+            "type": "Key?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "value",
+            "type": "bool",
+            "required": true,
+            "named": true
+          },
+          {
+            "name": "onChanged",
+            "type": "void Function(bool)?",
+            "required": true,
+            "named": true
+          },
+          {
+            "name": "activeColor",
+            "type": "Color?",
+            "required": false,
+            "named": true,
+            "deprecated": true
+          },
+          {
+            "name": "activeThumbColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "activeTrackColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "inactiveThumbColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "inactiveTrackColor",
+            "type": "Color?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "activeThumbImage",
+            "type": "ImageProvider<Object>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "onActiveThumbImageError",
+            "type": "void Function(Object, StackTrace?)?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "inactiveThumbImage",
+            "type": "ImageProvider<Object>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "onInactiveThumbImageError",
+            "type": "void Function(Object, StackTrace?)?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "thumbColor",
+            "type": "WidgetStateProperty<Color?>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "trackColor",
+            "type": "WidgetStateProperty<Color?>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "trackOutlineColor",
+            "type": "WidgetStateProperty<Color?>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "thumbIcon",
+            "type": "WidgetStateProperty<Icon?>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "materialTapTargetSize",
+            "type": "MaterialTapTargetSize?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "dragStartBehavior",
+            "type": "DragStartBehavior",
+            "required": false,
+            "named": true,
+            "default": "DragStartBehavior.start"
+          },
+          {
+            "name": "mouseCursor",
+            "type": "MouseCursor?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "overlayColor",
+            "type": "WidgetStateProperty<Color?>?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "splashRadius",
+            "type": "double?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "focusNode",
+            "type": "FocusNode?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "statesController",
+            "type": "WidgetStatesController?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "onFocusChange",
+            "type": "void Function(bool)?",
+            "required": false,
+            "named": true
+          },
+          {
+            "name": "autofocus",
+            "type": "bool",
+            "required": false,
+            "named": true,
+            "default": "false"
+          },
+          {
+            "name": "applyCupertinoTheme",
+            "type": "bool?",
+            "required": false,
+            "named": true
           },
           {
             "name": "tileColor",

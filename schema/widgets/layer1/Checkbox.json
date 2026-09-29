@@ -15,7 +15,8 @@
     "library": "package:flutter/material.dart",
     "class": "Checkbox",
     "constructors": [
-      ""
+      "",
+      "adaptive"
     ]
   },
   "category": "input",
@@ -132,6 +133,15 @@
       "id": 16,
       "type": "string",
       "flutter": "semanticLabel"
+    },
+    {
+      "name": "adaptive",
+      "id": 17,
+      "type": "bool",
+      "default": false,
+      "bindable": false,
+      "constructor": "adaptive",
+      "description": "Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere."
     }
   ],
   "events": [

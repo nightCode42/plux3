@@ -1,7 +1,7 @@
 # 0031. Rendering model: generated node builders over mapped sections
 
 - **Status:** Accepted
-- **Date:** 2026-09-28
+- **Date:** 2026-09-28; revised 2026-09-29 (see [Revision](#revision-2026-09-29-layout-errors-and-adaptive-widgets))
 - **Requirements:** `RT-010`–`RT-016`, `RT-020`–`RT-022`, `WGT-002`, `WGT-011`–`WGT-014`, `WGT-020`, `BND-015`–`BND-017`, `CMP-023`, `CMP-024`, `NFR-002`, `NFR-003`
 
 ## Context and problem
@@ -92,9 +92,13 @@ and `error` slots by the list's status, and report `onEndReached` for pagination
 
 ### Adaptive widgets (`WGT-011`)
 
-A node with `adaptive: true` renders the platform variant — Cupertino on iOS, Material
-elsewhere — through the Flutter `.adaptive` constructor where one exists, else the matching
-Cupertino widget with the props mapped by the descriptor.
+The widgets Flutter pairs with a Cupertino variant through an `.adaptive` constructor —
+`Switch`, `SwitchListTile`, `Slider`, `Checkbox`, `CheckboxListTile`, `Radio`,
+`RadioListTile` and `CircularProgressIndicator` — have an `adaptive` prop (a literal
+`bool`, default `false`). Its descriptor names the constructor it selects
+(`"constructor": "adaptive"`), and the generated builder calls that constructor while the
+prop is true, each call with the arguments its constructor declares; Flutter then renders
+the Cupertino look on iOS and Material elsewhere.
 
 ### Components (`BND-017`)
 
@@ -108,11 +112,15 @@ A `PluxErrorBoundary` wraps every page and every component instance. It contains
 
 - **build errors** — a node's builder runs inside `try`; an exception renders the
   boundary's fallback;
-- **layout and paint errors** — a boundary render object lays out and paints its child
-  inside `try`, and on an exception drops the child and paints the fallback;
 - **decode and PXL errors** — a bad value or a failed evaluation makes that prop take its
   declared default and reports the error; a node whose required value cannot be produced
   fails as a build error.
+
+**Layout and paint errors** are contained by Flutter itself: it catches an exception in a
+render object's `performLayout` or `paint`, confines the damage to that render object, and
+reports it to `FlutterError.onError`, which belongs to the host app. No ancestor can observe
+it, so Plux neither catches nor claims such errors; they reach the host's handler (Crashlytics,
+Sentry or Flutter's default), and the P10 devtools attribute them to Plux nodes.
 
 Every failure is logged with its node path (from the source map in development bundles,
 from node indices otherwise), reported as a telemetry `error` event (`ANL-001`) with a
@@ -150,6 +158,28 @@ telemetry event.
 
 What the runtime renders is authoritative; the Studio canvas (P11) is kept faithful to it by
 the layout conformance suite, whose device side is generated from these same builders.
+
+## Revision (2026-09-29: layout errors and adaptive widgets)
+
+The maintainer decided two points the P3 implementation raised.
+
+- **Layout and paint errors (`RT-020`).** The first version had a boundary render object
+  catch them. That cannot work: Flutter catches an exception inside a descendant's
+  `performLayout` or `paint` in `RenderObject.layout` and `PaintingContext` and reports it
+  to `FlutterError.onError`; nothing propagates to an ancestor. The alternative — chaining
+  a Plux handler onto `FlutterError.onError` while Plux runs — makes Plux own a global slot
+  that crash reporters also set (whichever is set last wins), is global mutable state, and
+  can attribute an error to a Plux node only with creator information that exists in debug
+  builds. Plux therefore contains build, decode and PXL errors in its boundaries, and
+  leaves layout and paint errors to Flutter's own containment and the host's handler.
+  `RT-020` is reworded accordingly.
+- **`adaptive` (`WGT-011`).** Nothing in a document could carry `adaptive: true`. It is an
+  additive `adaptive` prop on the eight widgets Flutter pairs through `.adaptive`
+  constructors, marked in their descriptors by the new `constructor` field; the
+  constructors are mirrored in the Flutter snapshot, so their own parameters
+  (`applyCupertinoTheme`, `useCupertinoCheckmarkStyle`) are covered like any other.
+  Widgets with a Cupertino counterpart but no `.adaptive` constructor keep separate
+  Material and Cupertino widgets. `WGT-011` is reworded to name this scope.
 
 ## Consequences
 

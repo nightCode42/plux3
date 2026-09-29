@@ -1,7 +1,7 @@
 # 0032. Design tokens mapped to Material 3 and Cupertino themes
 
-- **Status:** Accepted, except the icon fonts (§ Icons), which are Proposed pending the maintainer's decision
-- **Date:** 2026-09-28
+- **Status:** Accepted
+- **Date:** 2026-09-28; icon fonts decided 2026-09-29 (§ Icons)
 - **Requirements:** `THM-001`–`THM-005`, `HST-012`, `WGT-011`, `CMP-032`, `A11Y-*` (from P8)
 
 ## Context and problem
@@ -77,7 +77,7 @@ finds a glyph. Font files that the app supplies as assets are loaded at run time
 `FontLoader` from the verified asset store, not bundled in the host; families the host
 bundles are used by name. Subsetting text fonts by script is `CMP-032` (P8).
 
-### Icons (`THM-005`) — Proposed
+### Icons (`THM-005`)
 
 The `Icon` widget names an icon (`IconData`: a name and a set, `material` or `cupertino`).
 Flutter's `IconData` is a `final class` whose code point must be a compile-time constant,
@@ -89,9 +89,9 @@ assets of the app bundle and drawn by the runtime as glyphs, exactly as Flutter'
 draws them (size, colour, fill, weight, grade and optical size as font variations).
 
 This is the icon half of `CMP-032`, which the maintainer deferred to P8, and it needs two
-new third-party inputs. The options put to the maintainer:
+new third-party inputs. The maintainer chose **(a)** on 2026-09-29, of these options:
 
-- **(a) Recommended:** an in-house Go font subsetter that keeps glyph IDs (unused glyphs
+- **(a) Chosen:** an in-house Go font subsetter that keeps glyph IDs (unused glyphs
   emptied, the `glyf`/`loca`, `gvar`, `cmap` and `hmtx` tables rewritten), run by the
   publish worker; the Material Symbols Outlined variable font and the Cupertino icons font
   (both Apache-2.0 / MIT) embedded in the server at pinned versions; compile-time
@@ -114,8 +114,9 @@ on both platforms from one set of tokens.
 - **Positive:** hosts keep their look with no configuration; white-label brands are data;
   one token vocabulary serves every source; no schema or bundle change.
 - **Negative:** the fixed path-to-role table is a contract of its own, documented and
-  extended additively; icons wait for the maintainer's decision above.
-- **Follow-up:** the icon subsetter per the decision; text-font subsetting (`CMP-032`) and
+  extended additively; an in-house font subsetter to maintain, and the two icon fonts
+  added to the server binary.
+- **Follow-up:** the icon subsetter (R6); text-font subsetting (`CMP-032`) and
   per-locale typography with localisation in P8; the Studio design-system screen in P11.
 
 ## Options in detail

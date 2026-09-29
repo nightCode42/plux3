@@ -15,7 +15,8 @@
     "library": "package:flutter/material.dart",
     "class": "Switch",
     "constructors": [
-      ""
+      "",
+      "adaptive"
     ]
   },
   "category": "input",
@@ -150,6 +151,22 @@
       "id": 19,
       "type": "EdgeInsets",
       "flutter": "padding"
+    },
+    {
+      "name": "adaptive",
+      "id": 20,
+      "type": "bool",
+      "default": false,
+      "bindable": false,
+      "constructor": "adaptive",
+      "description": "Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere."
+    },
+    {
+      "name": "applyCupertinoTheme",
+      "id": 21,
+      "type": "bool",
+      "flutter": "applyCupertinoTheme",
+      "description": "With `adaptive` on iOS, whether the switch takes its colours from the Cupertino theme."
     }
   ],
   "events": [

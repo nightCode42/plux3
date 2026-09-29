@@ -34,13 +34,20 @@ type widgetBuild struct {
 	value   *registry.Prop  // a controlled input's value, kept locally
 	changed *registry.Event // and the event that changes it
 	text    *registry.Prop  // a text field's text, kept in a controller
+	// choice selects the named constructor alt, with parameters altPs,
+	// when true (WGT-011).
+	choice *registry.Prop
+	alt    string
+	altPs  []registry.Parameter
 }
 
 // builder writes the builder of a widget, or returns why it must be
 // written by hand. A widget whose Flutter class is generic in T but whose
 // descriptor declares no type parameter holds strings, and is built as
 // the class of String; one with several constructors is built with the
-// first when every member maps onto it.
+// first when every member maps onto it, or, when a bool prop selects a
+// named constructor (WGT-011), with that one while the prop is true,
+// each call taking the arguments its constructor declares.
 func (g *renderGen) builder(w *registry.Widget) (string, string) {
 	b, reason := g.newWidgetBuild(w)
 	if reason != "" {
@@ -70,18 +77,18 @@ func (g *renderGen) newWidgetBuild(w *registry.Widget) (*widgetBuild, string) {
 		return nil, "not in the Flutter snapshot"
 	}
 	b := &widgetBuild{g: g, w: w, ctor: w.Flutter.Class, byName: map[string]registry.Parameter{}, args: map[string]argument{}}
+	class := w.Flutter.Class
 	b.ps = slices.Clone(c.Constructors[w.Flutter.Constructors[0]])
 	if slices.ContainsFunc(b.ps, func(p registry.Parameter) bool { return typeParamT.MatchString(p.Type) }) {
-		for i := range b.ps {
-			b.ps[i].Type = substituteT(b.ps[i].Type)
-		}
-		b.ctor += "<String>"
+		class += "<String>"
 	}
-	if n := w.Flutter.Constructors[0]; n != "" {
-		b.ctor += "." + n
-	}
+	b.ctor = constructorName(class, w.Flutter.Constructors[0])
+	b.ps = ofString(b.ps)
 	for _, p := range b.ps {
 		b.byName[p.Name] = p
+	}
+	if reason := b.choose(c, class); reason != "" {
+		return nil, reason
 	}
 	g.class = w.Flutter.Class
 	for _, pair := range controlledPairs {
@@ -103,6 +110,48 @@ func (g *renderGen) newWidgetBuild(w *registry.Widget) (*widgetBuild, string) {
 	return b, ""
 }
 
+// choose finds the prop that selects a second constructor, if any, and
+// adds that constructor's own parameters to those members can map.
+func (b *widgetBuild) choose(c registry.FlutterClassAPI, class string) string {
+	for i, p := range b.w.Props {
+		if p.Constructor == "" {
+			continue
+		}
+		ps, ok := c.Constructors[p.Constructor]
+		switch {
+		case b.choice != nil:
+			return "props select two constructors"
+		case !ok || p.Constructor == b.w.Flutter.Constructors[0]:
+			return "prop " + p.Name + " selects constructor " + p.Constructor + ", which is not a second mirrored one"
+		}
+		b.choice, b.alt, b.altPs = &b.w.Props[i], constructorName(class, p.Constructor), ofString(ps)
+		for _, ap := range b.altPs {
+			if _, ok := b.byName[ap.Name]; !ok {
+				b.byName[ap.Name] = ap
+			}
+		}
+	}
+	return ""
+}
+
+// constructorName is a constructor of class as called in Dart.
+func constructorName(class, ctor string) string {
+	if ctor == "" {
+		return class
+	}
+	return class + "." + ctor
+}
+
+// ofString returns parameters with the type parameter T replaced by
+// String.
+func ofString(ps []registry.Parameter) []registry.Parameter {
+	out := slices.Clone(ps)
+	for i := range out {
+		out[i].Type = substituteT(out[i].Type)
+	}
+	return out
+}
+
 func (b *widgetBuild) set(p registry.Parameter, expr string) {
 	b.args[p.Name] = argument{param: p, expr: expr}
 }
@@ -110,13 +159,16 @@ func (b *widgetBuild) set(p registry.Parameter, expr string) {
 // props passes each prop to its parameter.
 func (b *widgetBuild) props() string {
 	for _, p := range b.w.Props {
+		if b.choice != nil && p.Name == b.choice.Name {
+			continue
+		}
 		if len(p.Flutter) != 1 {
 			return fmt.Sprintf("prop %s maps onto %d parameters", p.Name, len(p.Flutter))
 		}
 		fp, ok := b.byName[p.Flutter[0]]
 		switch {
 		case !ok:
-			return "prop " + p.Name + ": no parameter " + p.Flutter[0] + " in the first constructor"
+			return "prop " + p.Name + ": no parameter " + p.Flutter[0] + " in the mirrored constructors"
 		case b.value != nil && p.Name == b.value.Name:
 			b.set(fp, "value")
 			continue
@@ -217,14 +269,33 @@ func slotArg(s registry.Slot, fp registry.Parameter) (string, string) {
 	return arg + " ?? const SizedBox.shrink()", ""
 }
 
-// required checks that every required parameter has an argument.
+// required checks that every required parameter of each constructor
+// called has an argument.
 func (b *widgetBuild) required() string {
-	for _, p := range b.ps {
+	for _, p := range slices.Concat(b.ps, b.altPs) {
 		if _, ok := b.args[p.Name]; !ok && p.Required {
 			return "required parameter " + p.Name + " is not covered"
 		}
 	}
 	return ""
+}
+
+// call renders the constructor call, choosing between the two
+// constructors when a prop selects one.
+func (b *widgetBuild) call(indent string) ([]string, string, string) {
+	locals, call, reason := renderCall(b.ctor, b.ps, b.args, indent)
+	if reason != "" || b.choice == nil {
+		return locals, call, reason
+	}
+	altLocals, alt, reason := renderCall(b.alt, b.altPs, b.args, indent+"    ")
+	switch {
+	case reason != "":
+		return nil, "", reason
+	case len(locals) > 0 || len(altLocals) > 0:
+		return nil, "", "a constructor choice with private defaults"
+	}
+	call = strings.ReplaceAll(call, "\n", "\n    ")
+	return nil, fmt.Sprintf("c.decode(%d, asBool) == true\n%s    ? %s\n%s    : %s", b.choice.ID, indent, alt, indent, call), ""
 }
 
 // render writes the builder function.
@@ -233,7 +304,7 @@ func (b *widgetBuild) render() (string, string) {
 	if b.value != nil || b.text != nil {
 		indent = "    "
 	}
-	locals, call, reason := renderCall(b.ctor, b.ps, b.args, indent)
+	locals, call, reason := b.call(indent)
 	if reason != "" {
 		return "", reason
 	}

@@ -15,7 +15,8 @@
     "library": "package:flutter/material.dart",
     "class": "Slider",
     "constructors": [
-      ""
+      "",
+      "adaptive"
     ]
   },
   "category": "input",
@@ -127,6 +128,15 @@
       "id": 15,
       "type": "ShowValueIndicator",
       "flutter": "showValueIndicator"
+    },
+    {
+      "name": "adaptive",
+      "id": 16,
+      "type": "bool",
+      "default": false,
+      "bindable": false,
+      "constructor": "adaptive",
+      "description": "Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere. `padding` does not apply to it."
     }
   ],
   "events": [

@@ -199,3 +199,40 @@ func TestDecoderChoice(t *testing.T) {
 		t.Errorf("list decoder: %q", g.lists["Shadow"])
 	}
 }
+
+// TestConstructorChoice checks the builders of widgets whose adaptive
+// prop selects Flutter's adaptive constructor: each call takes only the
+// arguments its constructor declares.
+//
+// Verifies: WGT-011.
+func TestConstructorChoice(t *testing.T) {
+	t.Parallel()
+	src, err := renderDart(loadRegistry(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	out := string(src)
+	builder := func(name string) string {
+		i := strings.Index(out, "Widget _build"+name+"(")
+		if i < 0 {
+			t.Fatalf("no builder for %s", name)
+		}
+		return out[i : i+strings.Index(out[i:], "\n}\n")]
+	}
+	for _, name := range []string{"Switch", "SwitchListTile", "Slider", "Checkbox", "CheckboxListTile", "Radio", "RadioListTile", "CircularProgressIndicator"} {
+		b := builder(name)
+		adaptive := regexp.MustCompile(`\? ` + name + `(<String>)?\.adaptive\(`)
+		unnamed := regexp.MustCompile(`: ` + name + `(<String>)?\(`)
+		if !strings.Contains(b, "asBool) == true") || !adaptive.MatchString(b) || len(unnamed.FindAllString(b, -1)) != 1 {
+			t.Errorf("%s does not choose its adaptive constructor:\n%s", name, b)
+		}
+	}
+	sw := builder("Switch")
+	if strings.Count(sw, "applyCupertinoTheme:") != 1 || strings.Index(sw, "applyCupertinoTheme:") > strings.Index(sw, ": Switch(") {
+		t.Error("applyCupertinoTheme belongs to Switch.adaptive only")
+	}
+	sl := builder("Slider")
+	if strings.Count(sl, "padding:") != 1 || strings.Index(sl, "padding:") < strings.Index(sl, ": Slider(") {
+		t.Error("padding belongs to the unnamed Slider constructor only")
+	}
+}

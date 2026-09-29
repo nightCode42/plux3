@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plux_flutter/plux_flutter.dart';
@@ -283,6 +284,22 @@ void main() {
       );
       expect(find.text('image failed'), findsOneWidget);
     },
+  );
+
+  testWidgets(
+    'an adaptive widget takes the look of the platform [WGT-011]',
+    (tester) async {
+      await open(tester, 'inputs');
+      final ios = defaultTargetPlatform == TargetPlatform.iOS;
+      expect(
+        find.byType(CupertinoCheckbox),
+        ios ? findsOneWidget : findsNothing,
+      );
+    },
+    variant: const TargetPlatformVariant({
+      TargetPlatform.android,
+      TargetPlatform.iOS,
+    }),
   );
 
   testWidgets('cupertino inputs keep their value locally', (tester) async {

@@ -41,7 +41,7 @@ Files are named `NNNN-short-title.md` with a four-digit, never-reused number. Th
 | [0029](0029-on-device-verification.md) | On-device verification of manifests and bundles | P3 | Accepted |
 | [0030](0030-native-code-in-plux-flutter.md) | Native code in `plux_flutter`: memory maps and zstd over FFI | P3 | Accepted |
 | [0031](0031-rendering-model.md) | Rendering model: generated node builders over mapped sections | P3 | Accepted |
-| [0032](0032-design-tokens-to-material-and-cupertino.md) | Design tokens mapped to Material 3 and Cupertino themes | P3 | Accepted (icon fonts proposed) |
+| [0032](0032-design-tokens-to-material-and-cupertino.md) | Design tokens mapped to Material 3 and Cupertino themes | P3 | Accepted |
 | [0033](0033-documentation-site.md) | Documentation site: Starlight on Bun, published to GitHub Pages | P3 | Accepted |
 
 The decisions for planned ADRs are summarised in spec §32 and §34.1. Each is written in full before or alongside the first implementation that depends on it, and its status is updated here.

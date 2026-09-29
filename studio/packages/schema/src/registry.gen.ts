@@ -506,7 +506,8 @@ export const widgets: readonly WidgetDescriptor[] = [
       {"name": "shape", "id": 13, "type": "ShapeBorder", "required": false, "revision": 1, "bindable": true},
       {"name": "side", "id": 14, "type": "BorderSide", "required": false, "revision": 1, "bindable": true},
       {"name": "isError", "id": 15, "type": "bool", "required": false, "default": false, "revision": 1, "bindable": true},
-      {"name": "semanticLabel", "id": 16, "type": "string", "required": false, "revision": 1, "bindable": true}
+      {"name": "semanticLabel", "id": 16, "type": "string", "required": false, "revision": 1, "bindable": true},
+      {"name": "adaptive", "id": 17, "type": "bool", "required": false, "default": false, "revision": 1, "bindable": false, "description": "Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere."}
     ],
     "events": [
       {"name": "onChanged", "id": 1, "payload": "bool?", "revision": 1}
@@ -558,7 +559,8 @@ export const widgets: readonly WidgetDescriptor[] = [
       {"name": "minTileHeight", "id": 28, "type": "double", "required": false, "constraints": {"min": 0}, "revision": 1, "bindable": true},
       {"name": "checkboxSemanticLabel", "id": 29, "type": "string", "required": false, "revision": 1, "bindable": true},
       {"name": "checkboxScaleFactor", "id": 30, "type": "double", "required": false, "default": 1.0, "revision": 1, "bindable": true},
-      {"name": "titleAlignment", "id": 31, "type": "ListTileTitleAlignment", "required": false, "revision": 1, "bindable": true}
+      {"name": "titleAlignment", "id": 31, "type": "ListTileTitleAlignment", "required": false, "revision": 1, "bindable": true},
+      {"name": "adaptive", "id": 32, "type": "bool", "required": false, "default": false, "revision": 1, "bindable": false, "description": "Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere."}
     ],
     "events": [
       {"name": "onChanged", "id": 1, "payload": "bool?", "revision": 1},
@@ -717,7 +719,8 @@ export const widgets: readonly WidgetDescriptor[] = [
       {"name": "strokeCap", "id": 8, "type": "StrokeCap", "required": false, "revision": 1, "bindable": true},
       {"name": "constraints", "id": 9, "type": "BoxConstraints", "required": false, "revision": 1, "bindable": true},
       {"name": "trackGap", "id": 10, "type": "double", "required": false, "constraints": {"min": 0}, "revision": 1, "bindable": true},
-      {"name": "padding", "id": 11, "type": "EdgeInsets", "required": false, "revision": 1, "bindable": true}
+      {"name": "padding", "id": 11, "type": "EdgeInsets", "required": false, "revision": 1, "bindable": true},
+      {"name": "adaptive", "id": 12, "type": "bool", "required": false, "default": false, "revision": 1, "bindable": false, "description": "Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere. `color` does not apply to it."}
     ],
     "events": [],
     "slots": []
@@ -2493,7 +2496,9 @@ export const widgets: readonly WidgetDescriptor[] = [
       {"name": "enabled", "id": 13, "type": "bool", "required": false, "revision": 1, "bindable": true},
       {"name": "backgroundColor", "id": 14, "type": "WidgetStateColor", "required": false, "revision": 1, "bindable": true},
       {"name": "side", "id": 15, "type": "BorderSide", "required": false, "revision": 1, "bindable": true},
-      {"name": "innerRadius", "id": 16, "type": "WidgetStateDouble", "required": false, "revision": 1, "bindable": true}
+      {"name": "innerRadius", "id": 16, "type": "WidgetStateDouble", "required": false, "revision": 1, "bindable": true},
+      {"name": "adaptive", "id": 17, "type": "bool", "required": false, "default": false, "revision": 1, "bindable": false, "description": "Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere."},
+      {"name": "useCupertinoCheckmarkStyle", "id": 18, "type": "bool", "required": false, "default": false, "revision": 1, "bindable": true, "description": "With `adaptive` on iOS, marks the selected option with a checkmark instead of a dot."}
     ],
     "events": [
       {"name": "onChanged", "id": 1, "payload": "string?", "revision": 1, "description": "Fired with the value when the user selects this radio."}
@@ -2544,7 +2549,9 @@ export const widgets: readonly WidgetDescriptor[] = [
       {"name": "enabled", "id": 27, "type": "bool", "required": false, "revision": 1, "bindable": true},
       {"name": "radioBackgroundColor", "id": 28, "type": "WidgetStateColor", "required": false, "revision": 1, "bindable": true},
       {"name": "radioSide", "id": 29, "type": "BorderSide", "required": false, "revision": 1, "bindable": true},
-      {"name": "radioInnerRadius", "id": 30, "type": "WidgetStateDouble", "required": false, "revision": 1, "bindable": true}
+      {"name": "radioInnerRadius", "id": 30, "type": "WidgetStateDouble", "required": false, "revision": 1, "bindable": true},
+      {"name": "adaptive", "id": 31, "type": "bool", "required": false, "default": false, "revision": 1, "bindable": false, "description": "Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere."},
+      {"name": "useCupertinoCheckmarkStyle", "id": 32, "type": "bool", "required": false, "default": false, "revision": 1, "bindable": true, "description": "With `adaptive` on iOS, marks the selected option with a checkmark instead of a dot."}
     ],
     "events": [
       {"name": "onChanged", "id": 1, "payload": "string?", "revision": 1, "description": "Fired with the value when the user selects this radio."},
@@ -2943,7 +2950,8 @@ export const widgets: readonly WidgetDescriptor[] = [
       {"name": "autofocus", "id": 12, "type": "bool", "required": false, "default": false, "revision": 1, "bindable": true},
       {"name": "allowedInteraction", "id": 13, "type": "SliderInteraction", "required": false, "revision": 1, "bindable": true},
       {"name": "padding", "id": 14, "type": "EdgeInsets", "required": false, "revision": 1, "bindable": true},
-      {"name": "showValueIndicator", "id": 15, "type": "ShowValueIndicator", "required": false, "revision": 1, "bindable": true}
+      {"name": "showValueIndicator", "id": 15, "type": "ShowValueIndicator", "required": false, "revision": 1, "bindable": true},
+      {"name": "adaptive", "id": 16, "type": "bool", "required": false, "default": false, "revision": 1, "bindable": false, "description": "Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere. `padding` does not apply to it."}
     ],
     "events": [
       {"name": "onChanged", "id": 1, "payload": "double", "revision": 1},
@@ -3244,7 +3252,9 @@ export const widgets: readonly WidgetDescriptor[] = [
       {"name": "overlayColor", "id": 16, "type": "WidgetStateColor", "required": false, "revision": 1, "bindable": true},
       {"name": "splashRadius", "id": 17, "type": "double", "required": false, "constraints": {"min": 0}, "revision": 1, "bindable": true},
       {"name": "autofocus", "id": 18, "type": "bool", "required": false, "default": false, "revision": 1, "bindable": true},
-      {"name": "padding", "id": 19, "type": "EdgeInsets", "required": false, "revision": 1, "bindable": true}
+      {"name": "padding", "id": 19, "type": "EdgeInsets", "required": false, "revision": 1, "bindable": true},
+      {"name": "adaptive", "id": 20, "type": "bool", "required": false, "default": false, "revision": 1, "bindable": false, "description": "Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere."},
+      {"name": "applyCupertinoTheme", "id": 21, "type": "bool", "required": false, "revision": 1, "bindable": true, "description": "With `adaptive` on iOS, whether the switch takes its colours from the Cupertino theme."}
     ],
     "events": [
       {"name": "onChanged", "id": 1, "payload": "bool", "revision": 1},
@@ -3298,7 +3308,9 @@ export const widgets: readonly WidgetDescriptor[] = [
       {"name": "minVerticalPadding", "id": 27, "type": "double", "required": false, "constraints": {"min": 0}, "revision": 1, "bindable": true},
       {"name": "minLeadingWidth", "id": 28, "type": "double", "required": false, "constraints": {"min": 0}, "revision": 1, "bindable": true},
       {"name": "minTileHeight", "id": 29, "type": "double", "required": false, "constraints": {"min": 0}, "revision": 1, "bindable": true},
-      {"name": "hoverColor", "id": 30, "type": "color", "required": false, "revision": 1, "bindable": true}
+      {"name": "hoverColor", "id": 30, "type": "color", "required": false, "revision": 1, "bindable": true},
+      {"name": "adaptive", "id": 31, "type": "bool", "required": false, "default": false, "revision": 1, "bindable": false, "description": "Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere."},
+      {"name": "applyCupertinoTheme", "id": 32, "type": "bool", "required": false, "revision": 1, "bindable": true, "description": "With `adaptive` on iOS, whether the switch takes its colours from the Cupertino theme."}
     ],
     "events": [
       {"name": "onChanged", "id": 1, "payload": "bool", "revision": 1},

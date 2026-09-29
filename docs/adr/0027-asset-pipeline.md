@@ -153,9 +153,9 @@ raw SVG on the device, contrary to `CMP-031`).
 
 The Go binary stays static and cgo-free (`CI-006`); only the image base changes, to one
 with glibc and still no shell or package manager (`SEC-108`). Every role runs from the one
-server image (`SRV-001`), so api replicas carry the helper without using it; a separate
+server image (`SRV-001`), so api replicas carry the helper without using it. A separate
 worker image would save the 7.7 MiB there at the cost of a second image to build, sign and
-document — left to the maintainer.
+document; the maintainer kept one image for all roles (2026-09-29).
 
 ### Assets on the device (`AST-001`, `AST-002`, `RT-014`)
 

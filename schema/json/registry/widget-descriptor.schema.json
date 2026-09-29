@@ -155,6 +155,11 @@
           "flutter": {
             "$ref": "common.schema.json#/$defs/flutterNames"
           },
+          "constructor": {
+            "type": "string",
+            "pattern": "^[a-z][A-Za-z0-9]*$",
+            "description": "For a bool prop without `flutter`: the named Flutter constructor that builds the widget when the prop is true, such as `adaptive` (WGT-011); the unnamed constructor builds it otherwise."
+          },
           "description": {
             "$ref": "common.schema.json#/$defs/description"
           }

@@ -9,8 +9,8 @@ How the widget descriptors and value types cover the constructor parameters of t
 | | Count |
 |---|---|
 | Flutter classes | 125 |
-| Constructor parameters | 1894 |
-| Supported as props | 1055 |
+| Constructor parameters | 1898 |
+| Supported as props | 1059 |
 | Supported as events | 167 |
 | Supported as slots | 117 |
 | Supported as the children list | 6 |
@@ -193,7 +193,7 @@ Callbacks are supported as events and builders as slots or item templates. A par
 | `heightFactor` | `double?` | prop `heightFactor` |  |
 | `child` | `Widget?` | slot `child` |  |
 
-### Checkbox · `Checkbox`
+### Checkbox · `Checkbox`, `Checkbox.adaptive`
 
 | Parameter | Flutter type | Plux | Note |
 |---|---|---|---|
@@ -218,7 +218,7 @@ Callbacks are supported as events and builders as slots or item templates. A par
 | `isError` | `bool` | prop `isError` |  |
 | `semanticLabel` | `String?` | prop `semanticLabel` |  |
 
-### CheckboxListTile · `CheckboxListTile`
+### CheckboxListTile · `CheckboxListTile`, `CheckboxListTile.adaptive`
 
 | Parameter | Flutter type | Plux | Note |
 |---|---|---|---|
@@ -349,14 +349,14 @@ Callbacks are supported as events and builders as slots or item templates. A par
 | `minRadius` | `double?` | prop `minRadius` |  |
 | `maxRadius` | `double?` | prop `maxRadius` |  |
 
-### CircularProgressIndicator · `CircularProgressIndicator`
+### CircularProgressIndicator · `CircularProgressIndicator`, `CircularProgressIndicator.adaptive`
 
 | Parameter | Flutter type | Plux | Note |
 |---|---|---|---|
 | `key` | `Key?` | excluded: non-serialisable | Keys are derived from node identifiers. |
 | `value` | `double?` | prop `value` |  |
 | `backgroundColor` | `Color?` | prop `backgroundColor` |  |
-| `color` | `Color?` | prop `color` |  |
+| `color` — CircularProgressIndicator | `Color?` | prop `color` |  |
 | `valueColor` | `Animation<Color?>?` | excluded: deferred | Timeline-driven values arrive with animations (P5). |
 | `strokeWidth` | `double?` | prop `strokeWidth` |  |
 | `strokeAlign` | `double?` | prop `strokeAlign` |  |
@@ -1391,7 +1391,7 @@ Callbacks are supported as events and builders as slots or item templates. A par
 | `height` | `double?` | prop `height` |  |
 | `child` | `Widget` | slot `child` |  |
 
-### Radio · `Radio`
+### Radio · `Radio`, `Radio.adaptive`
 
 | Parameter | Flutter type | Plux | Note |
 |---|---|---|---|
@@ -1416,8 +1416,9 @@ Callbacks are supported as events and builders as slots or item templates. A par
 | `backgroundColor` | `WidgetStateProperty<Color?>?` | prop `backgroundColor` |  |
 | `side` | `BorderSide?` | prop `side` |  |
 | `innerRadius` | `WidgetStateProperty<double?>?` | prop `innerRadius` |  |
+| `useCupertinoCheckmarkStyle` — Radio.adaptive | `bool` | prop `useCupertinoCheckmarkStyle` |  |
 
-### RadioListTile · `RadioListTile`
+### RadioListTile · `RadioListTile`, `RadioListTile.adaptive`
 
 | Parameter | Flutter type | Plux | Note |
 |---|---|---|---|
@@ -1461,6 +1462,7 @@ Callbacks are supported as events and builders as slots or item templates. A par
 | `radioBackgroundColor` | `WidgetStateProperty<Color?>?` | prop `radioBackgroundColor` |  |
 | `radioSide` | `BorderSide?` | prop `radioSide` |  |
 | `radioInnerRadius` | `WidgetStateProperty<double?>?` | prop `radioInnerRadius` |  |
+| `useCupertinoCheckmarkStyle` — RadioListTile.adaptive | `bool` | prop `useCupertinoCheckmarkStyle` |  |
 
 ### RangeSlider · `RangeSlider`
 
@@ -1661,7 +1663,7 @@ Callbacks are supported as events and builders as slots or item templates. A par
 | `height` | `double?` | prop `height` |  |
 | `child` | `Widget?` | slot `child` |  |
 
-### Slider · `Slider`
+### Slider · `Slider`, `Slider.adaptive`
 
 | Parameter | Flutter type | Plux | Note |
 |---|---|---|---|
@@ -1685,7 +1687,7 @@ Callbacks are supported as events and builders as slots or item templates. A par
 | `focusNode` | `FocusNode?` | excluded: controller→state | The runtime owns the controller and binds it to state. |
 | `autofocus` | `bool` | prop `autofocus` |  |
 | `allowedInteraction` | `SliderInteraction?` | prop `allowedInteraction` |  |
-| `padding` | `EdgeInsetsGeometry?` | prop `padding` |  |
+| `padding` — Slider | `EdgeInsetsGeometry?` | prop `padding` |  |
 | `showValueIndicator` | `ShowValueIndicator?` | prop `showValueIndicator` |  |
 | `year2023` (deprecated) | `bool?` | excluded: deprecated | Deprecated in Flutter. |
 
@@ -1802,7 +1804,7 @@ Callbacks are supported as events and builders as slots or item templates. A par
 | `clipBehavior` | `Clip` | prop `clipBehavior` |  |
 | `children` | `List<Widget>` | `children` |  |
 
-### Switch · `Switch`
+### Switch · `Switch`, `Switch.adaptive`
 
 | Parameter | Flutter type | Plux | Note |
 |---|---|---|---|
@@ -1834,8 +1836,9 @@ Callbacks are supported as events and builders as slots or item templates. A par
 | `onFocusChange` | `void Function(bool)?` | event `onFocusChange` |  |
 | `autofocus` | `bool` | prop `autofocus` |  |
 | `padding` | `EdgeInsetsGeometry?` | prop `padding` |  |
+| `applyCupertinoTheme` — Switch.adaptive | `bool?` | prop `applyCupertinoTheme` |  |
 
-### SwitchListTile · `SwitchListTile`
+### SwitchListTile · `SwitchListTile`, `SwitchListTile.adaptive`
 
 | Parameter | Flutter type | Plux | Note |
 |---|---|---|---|
@@ -1883,6 +1886,7 @@ Callbacks are supported as events and builders as slots or item templates. A par
 | `minTileHeight` | `double?` | prop `minTileHeight` |  |
 | `hoverColor` | `Color?` | prop `hoverColor` |  |
 | `internalAddSemanticForOnTap` | `bool` | excluded: non-serialisable | A framework-internal flag. |
+| `applyCupertinoTheme` — SwitchListTile.adaptive | `bool?` | prop `applyCupertinoTheme` |  |
 
 ### Text · `Text`
 

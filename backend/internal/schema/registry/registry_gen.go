@@ -215,6 +215,7 @@ var widgets = [...]Widget{
 			{Name: "side", ID: 14, Type: "BorderSide", Required: false, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
 			{Name: "isError", ID: 15, Type: "bool", Required: false, Default: "false", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
 			{Name: "semanticLabel", ID: 16, Type: "string", Required: false, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
+			{Name: "adaptive", ID: 17, Type: "bool", Required: false, Default: "false", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: false, Description: "Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere."},
 		},
 		Events: []Event{
 			{Name: "onChanged", ID: 1, Payload: "bool?", Revision: 1, Deprecated: nil, Description: ""},
@@ -256,6 +257,7 @@ var widgets = [...]Widget{
 			{Name: "checkboxSemanticLabel", ID: 29, Type: "string", Required: false, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
 			{Name: "checkboxScaleFactor", ID: 30, Type: "double", Required: false, Default: "1.0", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
 			{Name: "titleAlignment", ID: 31, Type: "ListTileTitleAlignment", Required: false, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
+			{Name: "adaptive", ID: 32, Type: "bool", Required: false, Default: "false", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: false, Description: "Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere."},
 		},
 		Events: []Event{
 			{Name: "onChanged", ID: 1, Payload: "bool?", Revision: 1, Deprecated: nil, Description: ""},
@@ -375,6 +377,7 @@ var widgets = [...]Widget{
 			{Name: "constraints", ID: 9, Type: "BoxConstraints", Required: false, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
 			{Name: "trackGap", ID: 10, Type: "double", Required: false, Default: "", Constraints: Constraints{Min: Bound{Value: 0, Set: true}}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
 			{Name: "padding", ID: 11, Type: "EdgeInsets", Required: false, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
+			{Name: "adaptive", ID: 12, Type: "bool", Required: false, Default: "false", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: false, Description: "Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere. `color` does not apply to it."},
 		},
 	},
 	{
@@ -1583,6 +1586,8 @@ var widgets = [...]Widget{
 			{Name: "backgroundColor", ID: 14, Type: "WidgetStateColor", Required: false, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
 			{Name: "side", ID: 15, Type: "BorderSide", Required: false, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
 			{Name: "innerRadius", ID: 16, Type: "WidgetStateDouble", Required: false, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
+			{Name: "adaptive", ID: 17, Type: "bool", Required: false, Default: "false", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: false, Description: "Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere."},
+			{Name: "useCupertinoCheckmarkStyle", ID: 18, Type: "bool", Required: false, Default: "false", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: "With `adaptive` on iOS, marks the selected option with a checkmark instead of a dot."},
 		},
 		Events: []Event{
 			{Name: "onChanged", ID: 1, Payload: "string?", Revision: 1, Deprecated: nil, Description: "Fired with the value when the user selects this radio."},
@@ -1623,6 +1628,8 @@ var widgets = [...]Widget{
 			{Name: "radioBackgroundColor", ID: 28, Type: "WidgetStateColor", Required: false, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
 			{Name: "radioSide", ID: 29, Type: "BorderSide", Required: false, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
 			{Name: "radioInnerRadius", ID: 30, Type: "WidgetStateDouble", Required: false, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
+			{Name: "adaptive", ID: 31, Type: "bool", Required: false, Default: "false", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: false, Description: "Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere."},
+			{Name: "useCupertinoCheckmarkStyle", ID: 32, Type: "bool", Required: false, Default: "false", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: "With `adaptive` on iOS, marks the selected option with a checkmark instead of a dot."},
 		},
 		Events: []Event{
 			{Name: "onChanged", ID: 1, Payload: "string?", Revision: 1, Deprecated: nil, Description: "Fired with the value when the user selects this radio."},
@@ -1878,6 +1885,7 @@ var widgets = [...]Widget{
 			{Name: "allowedInteraction", ID: 13, Type: "SliderInteraction", Required: false, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
 			{Name: "padding", ID: 14, Type: "EdgeInsets", Required: false, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
 			{Name: "showValueIndicator", ID: 15, Type: "ShowValueIndicator", Required: false, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
+			{Name: "adaptive", ID: 16, Type: "bool", Required: false, Default: "false", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: false, Description: "Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere. `padding` does not apply to it."},
 		},
 		Events: []Event{
 			{Name: "onChanged", ID: 1, Payload: "double", Revision: 1, Deprecated: nil, Description: ""},
@@ -2071,6 +2079,8 @@ var widgets = [...]Widget{
 			{Name: "splashRadius", ID: 17, Type: "double", Required: false, Default: "", Constraints: Constraints{Min: Bound{Value: 0, Set: true}}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
 			{Name: "autofocus", ID: 18, Type: "bool", Required: false, Default: "false", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
 			{Name: "padding", ID: 19, Type: "EdgeInsets", Required: false, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
+			{Name: "adaptive", ID: 20, Type: "bool", Required: false, Default: "false", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: false, Description: "Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere."},
+			{Name: "applyCupertinoTheme", ID: 21, Type: "bool", Required: false, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: "With `adaptive` on iOS, whether the switch takes its colours from the Cupertino theme."},
 		},
 		Events: []Event{
 			{Name: "onChanged", ID: 1, Payload: "bool", Revision: 1, Deprecated: nil, Description: ""},
@@ -2114,6 +2124,8 @@ var widgets = [...]Widget{
 			{Name: "minLeadingWidth", ID: 28, Type: "double", Required: false, Default: "", Constraints: Constraints{Min: Bound{Value: 0, Set: true}}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
 			{Name: "minTileHeight", ID: 29, Type: "double", Required: false, Default: "", Constraints: Constraints{Min: Bound{Value: 0, Set: true}}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
 			{Name: "hoverColor", ID: 30, Type: "color", Required: false, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: ""},
+			{Name: "adaptive", ID: 31, Type: "bool", Required: false, Default: "false", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: false, Description: "Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere."},
+			{Name: "applyCupertinoTheme", ID: 32, Type: "bool", Required: false, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: "With `adaptive` on iOS, whether the switch takes its colours from the Cupertino theme."},
 		},
 		Events: []Event{
 			{Name: "onChanged", ID: 1, Payload: "bool", Revision: 1, Deprecated: nil, Description: ""},

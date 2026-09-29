@@ -664,7 +664,7 @@ The full catalogue with phases is in Appendix C.
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `WGT-010` | P1 | MUST | Nodes **MUST** support responsive prop overrides for window size classes `compact` (< 600 dp), `medium` (600–839 dp) and `expanded` (≥ 840 dp), aligned with Material 3. | DONE |
-| `WGT-011` | P3 | MUST | Widgets with Material and Cupertino counterparts **MUST** support `adaptive: true`, rendering the platform-appropriate variant. | SPEC |
+| `WGT-011` | P3 | MUST | Widgets that Flutter pairs with a Cupertino counterpart through an `.adaptive` constructor **MUST** support an `adaptive` prop that, when `true`, renders the platform-appropriate variant (ADR-0031). | DONE |
 | `WGT-012` | P3 | MUST | Scrollable collections (`ListView`, `GridView`, sliver lists and grids, `PageView`) **MUST** be driven by an item template bound to a list value or a data source, built lazily, with declared empty, loading and error states and optional pagination. | WIP |
 | `WGT-013` | P3 | MUST | Every interactive widget **MUST** accept a `testId` and semantics properties; the compiler derives a semantics label from visible text when none is set and emits a diagnostic when neither exists (`A11Y-002`). | DONE |
 | `WGT-014` | P3 | MUST | An unknown or unregistered widget type at runtime **MUST** render a neutral placeholder inside an error boundary, report `PLX-4003` and never throw into the host app. | DONE |
@@ -937,7 +937,7 @@ Branching is deliberately **not** part of the model (ADR-0015). Each plugin has 
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `RT-020` | P3 | MUST | Every page and every component instance **MUST** be wrapped in an error boundary. A build, layout, decode or PXL error **MUST** render a themed fallback (configurable per app and plugin), log the error with its node path, report it (`ANL-040`), and **MUST NOT** crash the host app or affect other pages. | WIP |
+| `RT-020` | P3 | MUST | Every page and every component instance **MUST** be wrapped in an error boundary. A build, decode or PXL error **MUST** render a themed fallback (configurable per app and plugin), log the error with its node path, report it (`ANL-040`), and **MUST NOT** crash the host app or affect other pages. Layout and paint errors are contained by Flutter to the render object that raised them and reach the host's `FlutterError.onError` (ADR-0031). | WIP |
 | `RT-021` | P3 | MUST | Uncaught errors in action execution **MUST** be contained to the action run, routed to the nearest `onError` handler (`ACT-020`), and reported. | SPEC |
 | `RT-022` | P3 | MUST | A plugin disabled by kill switch or failing verification **MUST** render its declared fallback page, or the app-level fallback, for every route into it. | DONE |
 
