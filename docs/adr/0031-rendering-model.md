@@ -140,7 +140,11 @@ P3 renders; it does not act or navigate:
 - **Interactive widgets** keep their input locally (a text field keeps its text, a switch
   its position) so that pages are usable, but write nothing to state.
 - **Bindings** read page parameters, the page's declared initial state, translations and
-  the theme; data sources, exposed state and computed state arrive in P4 and P5.
+  the theme; data sources, exposed state and computed state arrive in P4 and P5. Every
+  state feature lands in P5 together (maintainer, 2026-09-29), so until then a computed
+  entry is null and a binding reading it reports `PLX-4002`. The loan calculator's
+  `calculator` page (`schema/testdata/documents/loan-calculator`) therefore shows its
+  fallback in P3: its `monthlyPayment` is computed and feeds a required prop.
 - **Navigation** is `Plux.open` of one page on the host navigator and `PluxView`;
   routes, guards and transitions are P4.
 

@@ -391,9 +391,9 @@ func TestCodecsMatchTheLock(t *testing.T) {
 // Verifies: CMP-030.
 // Codecs started in the background compile while the caller goes on: a
 // wait that gives up reports its context's error, and a transcoding
-// waits for the compilation instead. Not parallel: wazero 1.12.0 reads
-// its version string unsynchronised when two runtimes start at once.
-func TestStartCodecs(t *testing.T) { //nolint:paralleltest // see above
+// waits for the compilation instead.
+func TestStartCodecs(t *testing.T) {
+	t.Parallel()
 	ctx := context.Background()
 	c := StartCodecs(ctx)
 	t.Cleanup(func() { _ = c.Close(ctx) })

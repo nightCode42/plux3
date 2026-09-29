@@ -12,6 +12,8 @@ import (
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
 	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
+
+	"github.com/nightCode42/plux3/backend/internal/wasmrt"
 )
 
 // The codecs are libwebp and libavif with libaom compiled to WebAssembly
@@ -69,7 +71,7 @@ func NewCodecs(ctx context.Context) (*Codecs, error) {
 // and a failure to compile is that call's error.
 func StartCodecs(ctx context.Context) *Codecs {
 	c := &Codecs{
-		rt: wazero.NewRuntimeWithConfig(ctx, wazero.NewRuntimeConfig().
+		rt: wasmrt.NewRuntime(ctx, wazero.NewRuntimeConfig().
 			WithMemoryLimitPages(maxMemoryPages).WithCloseOnContextDone(true)),
 		ready: make(chan struct{}),
 	}
