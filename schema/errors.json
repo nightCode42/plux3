@@ -352,6 +352,14 @@
       "fix": "Replace it as the deprecation note describes."
     },
     {
+      "code": "PLX-1123",
+      "reason": "UNKNOWN_ICON",
+      "severity": "error",
+      "title": "Unknown icon",
+      "cause": "An icon names a glyph its set does not have, or computes its name, so the server cannot deliver its glyph in the release's icon font (THM-005).",
+      "fix": "Use a name from the set's catalogue (docs/reference/icons.md), written literally."
+    },
+    {
       "code": "PLX-1201",
       "reason": "UNKNOWN_ROUTE",
       "severity": "error",

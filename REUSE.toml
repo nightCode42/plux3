@@ -51,6 +51,38 @@ precedence = "override"
 SPDX-FileCopyrightText = ["2010 Google Inc.", "2016 Alliance for Open Media", "2019 Joe Drago"]
 SPDX-License-Identifier = "BSD-3-Clause AND BSD-2-Clause AND LicenseRef-WebM-Patent-Grant AND LicenseRef-AOM-Patent-License-1.0"
 
+# The icon fonts the server subsets (ADR-0032 § Icons), imported verbatim
+# at the versions icons.lock pins by backend/internal/icons/fonts/import.sh.
+[[annotations]]
+path = [
+    "backend/internal/icons/fonts/MaterialSymbolsOutlined.ttf",
+    "backend/internal/icons/fonts/material.codepoints",
+    "backend/internal/icons/fonts/LICENSE-material-design-icons",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "Google LLC"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+    "backend/internal/icons/fonts/CupertinoIcons.ttf",
+    "backend/internal/icons/fonts/LICENSE-cupertino-icons",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2016 Vladimir Kharlampidi"
+SPDX-License-Identifier = "MIT"
+
+# Icon names and mirroring flags extracted by import.sh from Flutter's
+# CupertinoIcons and Icons classes.
+[[annotations]]
+path = [
+    "backend/internal/icons/fonts/cupertino.codepoints",
+    "backend/internal/icons/fonts/mirrored.txt",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2014 The Flutter Authors"
+SPDX-License-Identifier = "BSD-3-Clause"
+
 # zstd v1.5.7, decompression sources only, vendored for the runtime's native
 # library (ADR-0030); upstream is dual-licensed and Plux uses it under
 # BSD-3-Clause. native/zstd/import.sh re-imports it from the pinned commit.

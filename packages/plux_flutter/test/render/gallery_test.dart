@@ -32,11 +32,12 @@ void main() {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    await tester.runAsync(
-      () => h.startFrom(g.bundles['widgets/widgets.pxb']!, {
+    await tester.runAsync(() async {
+      await h.startFrom(g.bundles['widgets/widgets.pxb']!, {
         'gallery': g.bundles['widgets/gallery.pxb']!,
-      }, themeSource: themeSource),
-    );
+      }, themeSource: themeSource);
+      await h.loadIconFonts();
+    });
     await tester.pumpWidget(
       MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -51,12 +52,6 @@ void main() {
   List<PluxException> problems() => [
     for (final e in h.errors)
       if (e.code != PluxErrorCode.syncFailed) e,
-  ];
-
-  /// The icon nodes report their icons until icon fonts arrive (THM-005).
-  List<PluxException> nonIconProblems() => [
-    for (final e in problems())
-      if (!e.message.contains('prop 1 is not a valid value')) e,
   ];
 
   group('renders every page of the gallery [WGT-002] [RT-010]', () {
@@ -119,7 +114,7 @@ void main() {
           expect(find.text(t), findsWidgets, reason: t);
         }
         expect(find.textContaining('fallback'), findsNothing);
-        if (route != 'structure') expect(nonIconProblems(), isEmpty);
+        if (route != 'structure') expect(problems(), isEmpty);
         await expectLater(
           find.byType(MaterialApp),
           matchesGoldenFile('goldens/$route.png'),

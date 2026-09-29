@@ -21,12 +21,13 @@ repos:
     rev: v6.0.0
     hooks:
       # flatc's Dart output is checked by regeneration (make gen-check), and
-      # vendored zstd by its import script (ADR-0030), as they are.
+      # vendored zstd and icon font licences by their import scripts
+      # (ADR-0030, ADR-0032), as they are.
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
-        exclude: '(_generated\.dart|^packages/plux_flutter/native/zstd/.*)$'
+        exclude: '(_generated\.dart|^packages/plux_flutter/native/zstd/.*|^backend/internal/icons/fonts/LICENSE-.*)$'
       - id: end-of-file-fixer
-        exclude: '(_generated\.dart|^packages/plux_flutter/native/zstd/.*)$'
+        exclude: '(_generated\.dart|^packages/plux_flutter/native/zstd/.*|^backend/internal/icons/fonts/LICENSE-.*)$'
       - id: mixed-line-ending
         args: [--fix=lf]
       - id: check-yaml
@@ -39,7 +40,9 @@ repos:
         # The WebAssembly image codecs are pinned by codecs.lock and rebuilt
         # by `make wasm-codecs-check` (ADR-0027); maintainer-approved
         # exception, 2026-09-28.
-        exclude: ^backend/internal/compiler/media/codecs/[a-z]+\.wasm$
+        # The Material Symbols variable font the server subsets is pinned by
+        # icons.lock (ADR-0032 § Icons, option (a), 2026-09-29).
+        exclude: ^(backend/internal/compiler/media/codecs/[a-z]+\.wasm|backend/internal/icons/fonts/MaterialSymbolsOutlined\.ttf)$
       - id: check-executables-have-shebangs
       - id: check-shebang-scripts-are-executable
       - id: detect-private-key

@@ -190,6 +190,33 @@
                   "label": "field"
                 },
                 "type": "CupertinoTextField"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-00000000020a",
+                "props": {
+                  "icon": {
+                    "name": "left_chevron",
+                    "set": "cupertino"
+                  },
+                  "semanticLabel": "chevron",
+                  "size": 24.0
+                },
+                "testId": "cupertino-icon",
+                "type": "Icon"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-00000000020b",
+                "props": {
+                  "fill": 1.0,
+                  "icon": {
+                    "name": "arrow_back"
+                  },
+                  "semanticLabel": "arrow",
+                  "size": 24.0,
+                  "weight": 700.0
+                },
+                "testId": "material-icon",
+                "type": "Icon"
               }
             ],
             "id": "01c0c450-6c00-7000-8000-0000000001aa",

@@ -14,6 +14,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show kToolbarHeight;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plux_flutter/src/assets/icon_fonts.dart';
 import 'package:plux_flutter/src/bundle/container.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/bundle/safe_read.dart';
@@ -266,7 +267,8 @@ final class NodeContextImpl implements NodeContext {
       Directionality.maybeOf(context) ?? TextDirection.ltr;
 
   @override
-  IconData? icon(String name, String set) => scope.services.icon(name, set);
+  PluxIconSource? icon(String name, String set) =>
+      scope.services.icon(scope, name, set);
 
   @override
   ImageProvider<Object>? image({String? asset, String? url}) =>

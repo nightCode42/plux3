@@ -51,6 +51,7 @@ const (
 	RequiredFeaturesRaised    Code = 1120
 	ConstraintViolation       Code = 1121
 	DeprecatedMember          Code = 1122
+	UnknownIcon               Code = 1123
 	UnknownRoute              Code = 1201
 	RouteParameterMissing     Code = 1203
 	RouteParameterTypeInvalid Code = 1204

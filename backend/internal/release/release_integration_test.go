@@ -4,9 +4,11 @@
 package release_test
 
 import (
+	"bytes"
 	"context"
 	"crypto/ed25519"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -17,6 +19,9 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/nightCode42/plux3/backend/internal/icons"
+	"github.com/nightCode42/plux3/backend/internal/icons/fonts"
 
 	"github.com/jackc/pgx/v5"
 
@@ -380,6 +385,56 @@ func TestPublish(t *testing.T) {
 	}
 	if _, err := f.rel.Publish(ctx, f.owner, release.PublishRequest{AppID: f.app, EnvironmentID: f.envs["development"].ID, Revision: 1 << 40}); code(err) != plxerr.OutOfRange {
 		t.Errorf("a revision from the future: %v", err)
+	}
+}
+
+// Verifies: THM-005, CMP-032.
+// A publish subsets the icon fonts of the icons a bundle uses and stores
+// them as assets, where devices and baselines fetch the files the bundle
+// lists.
+func TestPublishStoresIconFonts(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	if _, _, err := f.docs.AcquireLock(ctx, f.owner, f.app, f.loans, "edit", false); err != nil {
+		t.Fatal(err)
+	}
+	page, err := f.docs.GetDocument(ctx, f.owner, f.app, f.loans, "plugins/loans/pages/result.page.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var doc map[string]any
+	if err := json.Unmarshal(page.Content, &doc); err != nil {
+		t.Fatal(err)
+	}
+	root := doc["root"].(map[string]any)
+	slots, _ := root["slots"].(map[string]any)
+	slots["floatingActionButton"] = map[string]any{
+		"id": "01a0c450-6c00-7fff-8000-0000000000f1", "type": "Icon",
+		"props": map[string]any{"icon": map[string]any{"name": "home"}},
+	}
+	edited, err := json.Marshal(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.docs.PutDocument(ctx, f.owner, f.app, f.loans, "edit", page.Path, edited, page.Revision); err != nil {
+		t.Fatal(err)
+	}
+	if job := f.publish(t, f.loans, true); job.State != release.StateSucceeded {
+		t.Fatalf("the publish: %+v", job)
+	}
+	font, err := fonts.Build(icons.Material, []string{"home"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sum := sha256.Sum256(font)
+	hash := hex.EncodeToString(sum[:])
+	stored, _, err := f.store.Get(ctx, "assets/"+hash[:2]+"/"+hash)
+	if err != nil {
+		t.Fatalf("the icon font is not stored: %v", err)
+	}
+	if !bytes.Equal(stored, font) {
+		t.Error("the stored icon font differs")
 	}
 }
 

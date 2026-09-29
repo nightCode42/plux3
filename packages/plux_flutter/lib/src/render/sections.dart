@@ -129,6 +129,14 @@ final class BundleView {
   /// The asset with ID [id] (a UUID string), or null.
   fbs.Asset? asset(String id) => _assetIndex()[id];
 
+  /// The asset with key [key], or null.
+  fbs.Asset? assetByKey(String key) {
+    for (final a in _assetIndex().values) {
+      if (a.key == key) return a;
+    }
+    return null;
+  }
+
   /// The paths of the design tokens that start with [prefix], in order.
   Iterable<String> tokenPaths(String prefix) sync* {
     final list = _stylesTable?.tokens;

@@ -60,7 +60,7 @@ func TestRenderDartCoversEveryWidget(t *testing.T) {
 	}
 	want := []string{
 		"CupertinoSlidingSegmentedControl", "EmptyState", "ErrorState", "FloatingActionButton",
-		"ForEach", "GridView", "If", "Image", "ListView", "Match", "OfflineBanner", "PageView",
+		"ForEach", "GridView", "Icon", "If", "Image", "ListView", "Match", "OfflineBanner", "PageView",
 		"Responsive", "SkeletonLoader", "SliverGrid", "SliverList", "Slot", "Transform",
 	}
 	if !slices.Equal(handNames, want) {

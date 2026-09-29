@@ -13,6 +13,7 @@
 library;
 
 import 'package:flutter/widgets.dart';
+import 'package:plux_flutter/src/assets/icon_fonts.dart';
 import 'package:plux_flutter/src/pxl/decimal.dart';
 import 'package:plux_flutter/src/pxl/values.dart';
 
@@ -21,8 +22,9 @@ abstract interface class Decoding {
   /// The reading direction, for directional insets, radii and alignments.
   TextDirection get textDirection;
 
-  /// Resolves an icon (THM-005); null when the icon is unknown.
-  IconData? icon(String name, String set);
+  /// Resolves an icon of the release's icon fonts (THM-005); null, and
+  /// reported, when the release has no font for [set].
+  PluxIconSource? icon(String name, String set);
 
   /// Resolves an image: an asset of the release by ID, or a URL.
   ImageProvider<Object>? image({String? asset, String? url});
@@ -38,7 +40,7 @@ final class PlainDecoding implements Decoding {
   TextDirection get textDirection => TextDirection.ltr;
 
   @override
-  IconData? icon(String name, String set) => null;
+  PluxIconSource? icon(String name, String set) => null;
 
   @override
   ImageProvider<Object>? image({String? asset, String? url}) => null;

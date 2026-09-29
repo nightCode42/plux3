@@ -200,6 +200,11 @@ var registry = []Definition{
 		"Replace it as the deprecation note describes.", false,
 	},
 	{
+		UnknownIcon, "UNKNOWN_ICON", SeverityError, "Unknown icon",
+		"An icon names a glyph its set does not have, or computes its name, so the server cannot deliver its glyph in the release's icon font (THM-005).",
+		"Use a name from the set's catalogue (docs/reference/icons.md), written literally.", false,
+	},
+	{
 		UnknownRoute, "UNKNOWN_ROUTE", SeverityError, "Unknown route",
 		"A navigate action targets a route name that no page and no native route declares.",
 		"Correct the route name, or add the page.", false,

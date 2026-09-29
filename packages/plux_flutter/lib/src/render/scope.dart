@@ -8,6 +8,7 @@ library;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plux_flutter/src/assets/icon_fonts.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
@@ -52,8 +53,9 @@ final pageStateProvider = NotifierProvider.autoDispose
 /// the release and URLs (RT-014), and the fallback of failed pages and
 /// components (RT-020).
 abstract interface class RenderServices {
-  /// The icon [name] of [set], or null when unknown.
-  IconData? icon(String name, String set);
+  /// Icon [name] of [set] for a node of [scope], from the icon font of
+  /// its bundle or the app's; null, reported, when there is none.
+  PluxIconSource? icon(RenderScope scope, String name, String set);
 
   /// An image for a node of [scope]: an asset of the release by ID, or a
   /// URL on a domain the plugin declares; null, reported, when there is

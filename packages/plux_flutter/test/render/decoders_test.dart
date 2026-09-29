@@ -1,16 +1,22 @@
 // SPDX-FileCopyrightText: 2026 Plux contributors
 // SPDX-License-Identifier: Apache-2.0
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:plux_flutter/src/assets/icon_fonts.dart';
+import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/pxl/decimal.dart';
 import 'package:plux_flutter/src/pxl/values.dart';
 import 'package:plux_flutter/src/render/decoders.dart';
 import 'package:plux_flutter/src/render/decoding.dart';
 import 'package:plux_flutter/src/render/generated/render.g.dart';
+import 'package:plux_flutter/src/render/plux_icon.dart';
 
-/// A decoding that reads right to left and knows one icon and any image.
+/// The icon fonts [_Rtl] resolves against; none is ever loaded.
+final _fonts = IconFonts(VerifiedAssets(), report: (_) {});
+
+/// A decoding that reads right to left and knows an icon of each set and
+/// any image.
 final class _Rtl implements Decoding {
   const _Rtl();
 
@@ -18,8 +24,10 @@ final class _Rtl implements Decoding {
   TextDirection get textDirection => TextDirection.rtl;
 
   @override
-  IconData? icon(String name, String set) => name == 'star'
-      ? (set == 'material' ? Icons.star : CupertinoIcons.star)
+  PluxIconSource? icon(String name, String set) =>
+      (set, name) == ('material', 'star') ||
+          (set, name) == ('cupertino', 'left_chevron')
+      ? PluxIconSource(_fonts, set, '/nowhere', name)
       : null;
 
   @override
@@ -302,15 +310,16 @@ void main() {
   });
 
   test('icons and images come from the runtime [THM-005] [RT-014]', () {
-    expect(decodeIconData(rtl, {'name': 'star'}), Icons.star);
+    expect(decodeIconData(rtl, {'name': 'star'})?.name, 'star');
     expect(
-      decodeIconData(rtl, {'name': 'star', 'set': 'cupertino'}),
-      CupertinoIcons.star,
+      decodeIconData(rtl, {'name': 'left_chevron', 'set': 'cupertino'})?.name,
+      'left_chevron',
     );
+    expect(decodeIconData(rtl, {'name': 'star', 'set': 'cupertino'}), isNull);
     expect(decodeIconData(rtl, {'name': 'nope'}), isNull);
     expect(decodeIconData(rtl, {'set': 'material'}), isNull);
     expect(decodeIconData(rtl, 1), isNull);
-    expect(decodeIconWidget(rtl, {'name': 'star'}), isA<Icon>());
+    expect(decodeIconWidget(rtl, {'name': 'star'}), isA<PluxIcon>());
     expect(
       decodeIconWidget(d, {'name': 'star'}),
       isNull,

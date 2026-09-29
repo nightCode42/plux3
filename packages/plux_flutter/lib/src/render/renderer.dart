@@ -13,6 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:plux_flutter/src/assets/assets.dart';
+import 'package:plux_flutter/src/assets/icon_fonts.dart';
 import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/core/active_release.dart';
@@ -33,6 +34,7 @@ import 'package:plux_flutter/src/render/tokens.dart';
 import 'package:plux_flutter/src/render/values.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
 import 'package:plux_flutter/src/state/providers.dart';
+import 'package:plux_flutter/src/verify/manifest.dart';
 
 /// The builders by permanent widget ID: generated ones and hand-written
 /// ones (ADR-0031).
@@ -109,10 +111,31 @@ final class PluxRenderer implements PageRenderer, RenderServices {
 
   // ── Services ──────────────────────────────────────────────────────────────
 
-  /// Icons are resolved from fonts delivered with the release (THM-005),
-  /// which arrive with the theming milestone; until then none resolves.
+  /// The icon fonts loaded, shared by every page (THM-005).
+  late final IconFonts iconFonts = IconFonts(_verified, report: report);
+
+  /// Icons come from the font the bundle of the node indexes for the set,
+  /// else the app bundle's (THM-005).
   @override
-  IconData? icon(String name, String set) => null;
+  PluxIconSource? icon(RenderScope scope, String name, String set) {
+    final key = iconFontKey(set);
+    final a = scope.plugin.assetByKey(key) ?? scope.app.assetByKey(key);
+    final hash = a == null ? null : hexEncode(a.hash ?? const []);
+    final path = hash == null ? null : scope.release.assetPath(hash);
+    if (hash == null || path == null) {
+      scope.report(
+        PluxException(
+          PluxErrorCode.propValueInvalid,
+          a == null
+              ? 'the release has no $set icon font'
+              : 'the $set icon font is not stored',
+        ),
+        path: scope.path,
+      );
+      return null;
+    }
+    return PluxIconSource(iconFonts, hash, path, name);
+  }
 
   @override
   ImageProvider<Object>? image(

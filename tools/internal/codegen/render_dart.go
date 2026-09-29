@@ -33,7 +33,7 @@ var handDecoders = map[string]string{
 	"BorderRadius":                 "BorderRadiusGeometry",
 	"EdgeInsets":                   "EdgeInsetsGeometry",
 	"Gradient":                     "Gradient",
-	"IconData":                     "IconData",
+	"IconData":                     "PluxIconSource",
 	"ImageSource":                  "ImageProvider<Object>",
 	"InputBorder":                  "InputBorder",
 	"Radius":                       "Radius",
@@ -514,6 +514,9 @@ func decodeCall(env, fn, value string) string {
 // assignable to Dart type want.
 func (g *renderGen) decoderFor(typ, want string) (string, string) {
 	typ = strings.TrimSuffix(typ, "?")
+	if typ == "IconData" && want == "IconData" {
+		return "", "an icon is a glyph of the release's icon font, which a constant IconData cannot name (THM-005)"
+	}
 	if a, ok := adapters[[2]string{typ, want}]; ok {
 		return a, ""
 	}

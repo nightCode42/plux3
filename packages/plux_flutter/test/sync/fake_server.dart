@@ -157,7 +157,8 @@ final class FakePluxServer {
   }
 
   /// The asset files of the conformance projects, which their golden
-  /// bundles index.
+  /// bundles index: the uploaded ones, and the icon fonts the compiler
+  /// made.
   static List<Uint8List> fixtureAssets() => [
     for (final e in Directory(
       '../../schema/testdata/documents',
@@ -166,6 +167,10 @@ final class FakePluxServer {
           e.path.contains('/assets/') &&
           !e.path.endsWith('index.json'))
         e.readAsBytesSync(),
+    for (final e in Directory(
+      '../../schema/testdata/bundles',
+    ).listSync(recursive: true))
+      if (e is File && e.path.contains('/icons/')) e.readAsBytesSync(),
   ];
 
   final HttpServer _server;

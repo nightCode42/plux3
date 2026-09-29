@@ -12,9 +12,11 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:plux_flutter/src/assets/icon_fonts.dart';
 import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/render/decoding.dart';
 import 'package:plux_flutter/src/render/generated/render.g.dart';
+import 'package:plux_flutter/src/render/plux_icon.dart';
 
 // ── Geometry ───────────────────────────────────────────────────────────────
 
@@ -236,8 +238,8 @@ Gradient? decodeGradient(Decoding d, Object? v) {
 
 // ── Runtime resources ──────────────────────────────────────────────────────
 
-/// An icon, resolved by the runtime (THM-005).
-IconData? decodeIconData(Decoding d, Object? v) {
+/// An icon, resolved against the release's icon fonts (THM-005).
+PluxIconSource? decodeIconData(Decoding d, Object? v) {
   final f = Fields.of(d, v);
   if (f == null) return null;
   final name = asString(d, f.get(IconDataFields.name, 'name'));
@@ -251,7 +253,7 @@ IconData? decodeIconData(Decoding d, Object? v) {
 /// An icon as a widget, where Flutter takes one.
 Widget? decodeIconWidget(Decoding d, Object? v) {
   final icon = decodeIconData(d, v);
-  return icon == null ? null : Icon(icon);
+  return icon == null ? null : PluxIcon(icon);
 }
 
 /// An image: an asset of the release or a URL.

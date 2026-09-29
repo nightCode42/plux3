@@ -312,6 +312,14 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Replace it as the deprecation note describes.
 
+### PLX-1123
+
+`UNKNOWN_ICON` · error · Unknown icon
+
+**Cause.** An icon names a glyph its set does not have, or computes its name, so the server cannot deliver its glyph in the release's icon font (THM-005).
+
+**Fix.** Use a name from the set's catalogue (docs/reference/icons.md), written literally.
+
 ### PLX-1201
 
 `UNKNOWN_ROUTE` · error · Unknown route

@@ -14,6 +14,8 @@ import (
 	"testing/fstest"
 	"time"
 
+	"github.com/nightCode42/plux3/backend/internal/icons/fonts"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
@@ -21,6 +23,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/auth"
 	"github.com/nightCode42/plux3/backend/internal/bundle"
 	"github.com/nightCode42/plux3/backend/internal/compiler"
+	"github.com/nightCode42/plux3/backend/internal/compiler/media"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 	"github.com/nightCode42/plux3/backend/internal/signing"
@@ -307,21 +310,37 @@ func (s *Service) RunPublish(ctx context.Context, job Job) error {
 	if err := s.progress(ctx, system, row, "store"); err != nil {
 		return err
 	}
-	var mapSum []byte
-	if err := s.store(ctx, objects.KindBundle, b.Hash[:], b.Data, bundle.MediaType); err != nil {
+	mapSum, err := s.storeOutputs(ctx, c.result, b)
+	if err != nil {
 		return err
-	}
-	if b.SourceMap != nil {
-		sum := sha256.Sum256(b.SourceMap)
-		mapSum = sum[:]
-		if err := s.store(ctx, objects.KindBundle, sum[:], b.SourceMap, "application/octet-stream"); err != nil {
-			return err
-		}
 	}
 	if err := s.progress(ctx, system, row, "record"); err != nil {
 		return err
 	}
 	return s.recordVersion(ctx, system, row, b, c, versionSignature{sig: sig, keyID: keyID, mapSum: mapSum}, diags)
+}
+
+// storeOutputs stores what a publish produced and returns the source
+// map's hash, if there is one: the files the compilation made (icon fonts)
+// first, since the bundle lists them and a device that has the bundle may
+// ask for them; then the bundle and its source map.
+func (s *Service) storeOutputs(ctx context.Context, res *compiler.Result, b *compiler.Bundle) ([]byte, error) {
+	for sum, data := range res.Files {
+		if err := s.store(ctx, objects.KindAsset, sum[:], data, media.TTF); err != nil {
+			return nil, err
+		}
+	}
+	if err := s.store(ctx, objects.KindBundle, b.Hash[:], b.Data, bundle.MediaType); err != nil {
+		return nil, err
+	}
+	if b.SourceMap == nil {
+		return nil, nil
+	}
+	sum := sha256.Sum256(b.SourceMap)
+	if err := s.store(ctx, objects.KindBundle, sum[:], b.SourceMap, "application/octet-stream"); err != nil {
+		return nil, err
+	}
+	return sum[:], nil
 }
 
 // versionSignature is how a version was signed.
@@ -530,7 +549,7 @@ func (s *Service) compileOptions(ctx context.Context, tx pgx.Tx, orgID, appID, p
 		return compiler.Options{}, err //nolint:wrapcheck // a domain error
 	}
 	opts := compiler.DefaultOptions()
-	opts.Limits, opts.Version, opts.AssetVariants = lim, s.o.CompilerVersion, variants
+	opts.Limits, opts.Version, opts.AssetVariants, opts.IconFont = lim, s.o.CompilerVersion, variants, fonts.Build
 	return opts, nil
 }
 

@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:plux_flutter/plux_flutter.dart';
 import 'package:plux_flutter/src/core/runtime.dart';
+import 'package:plux_flutter/src/render/renderer.dart';
 import 'package:plux_flutter/src/state/providers.dart';
 import 'package:plux_flutter/src/sync/sync_engine.dart';
 
@@ -81,6 +82,22 @@ final class Harness {
 
   /// The running runtime.
   PluxRuntime get runtime => Plux.container.read(pluxRuntimeProvider)!;
+
+  /// Loads the golden icon fonts the active release holds, as a page would
+  /// on first use; a widget test calls it inside `runAsync`, since the
+  /// fonts are read from the store.
+  Future<void> loadIconFonts() async {
+    final release = runtime.active.value!;
+    final fonts = (runtime.renderer! as PluxRenderer).iconFonts;
+    for (final f in Directory(
+      '../../schema/testdata/bundles',
+    ).listSync(recursive: true)) {
+      if (f is! File || !f.path.contains('/icons/')) continue;
+      final hash = f.uri.pathSegments.last.split('.').first;
+      final path = release.assetPath(hash);
+      if (path != null) await fonts.load(hash, path);
+    }
+  }
 
   /// Stops Plux and the server and removes the store.
   Future<void> close() async {

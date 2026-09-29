@@ -17,6 +17,7 @@ import 'package:plux_flutter/src/render/decoders.dart';
 import 'package:plux_flutter/src/render/decoding.dart';
 import 'package:plux_flutter/src/render/generated/render.g.dart';
 import 'package:plux_flutter/src/render/node_context.dart';
+import 'package:plux_flutter/src/render/plux_icon.dart';
 import 'package:plux_flutter/src/render/plux_node.dart';
 import 'package:plux_flutter/src/render/scope.dart';
 
@@ -33,6 +34,7 @@ const Map<int, NodeBuilder> manualBuilders = {
   WidgetIds.sliverList: _sliverList,
   WidgetIds.sliverGrid: _sliverGrid,
   WidgetIds.transform: _transform,
+  WidgetIds.icon: _icon,
   WidgetIds.image: _image,
   WidgetIds.floatingActionButton: _floatingActionButton,
   WidgetIds.cupertinoSlidingSegmentedControl: _slidingSegmentedControl,
@@ -467,6 +469,24 @@ Widget _transform(NodeContext c) {
   }
   return out ?? const SizedBox.shrink();
 }
+
+/// `Icon`, a glyph of the release's icon font (THM-005), drawn as
+/// Flutter's `Icon` draws one.
+Widget _icon(NodeContext c) => PluxIcon(
+  c.decode(IconProps.icon, decodeIconData),
+  size: c.decode(IconProps.size, asDouble),
+  fill: c.decode(IconProps.fill, asDouble),
+  weight: c.decode(IconProps.weight, asDouble),
+  grade: c.decode(IconProps.grade, asDouble),
+  opticalSize: c.decode(IconProps.opticalSize, asDouble),
+  color: c.decode(IconProps.color, asColor),
+  shadows: c.decode(IconProps.shadows, listOfShadow),
+  semanticLabel: c.decode(IconProps.semanticLabel, asString),
+  textDirection: c.decode(IconProps.textDirection, decodeTextDirection),
+  applyTextScaling: c.decode(IconProps.applyTextScaling, asBool),
+  blendMode: c.decode(IconProps.blendMode, decodeBlendMode),
+  fontWeight: c.decode(IconProps.fontWeight, decodeFontWeight),
+);
 
 /// `Image` from an asset of the release or a URL (AST-001, AST-002),
 /// decoded at the size the document gives (`cacheWidth`, `cacheHeight`),

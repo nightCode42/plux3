@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"unicode/utf8"
 
+	"github.com/nightCode42/plux3/backend/internal/icons"
+
 	"github.com/nightCode42/plux3/backend/internal/bundle/fbs"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/pxl"
@@ -71,6 +73,10 @@ func (u *unit) checkRaw(c vctx, raw json.RawMessage, t *texpr) *value {
 // nil after reporting a problem.
 func (u *unit) check(c vctx, v any, t *texpr) *value {
 	if obj, ok := v.(map[string]any); ok {
+		if t.name == iconType && isBinding(obj) {
+			u.report(plxerr.UnknownIcon, c.file, c.ptr, "an icon is written literally, so that its glyph is delivered")
+			return nil
+		}
 		if b := u.binding(c, obj, t); b != nil || isBinding(obj) {
 			return b
 		}
@@ -511,7 +517,57 @@ func (u *unit) checkValueType(c vctx, v any, vt *registry.ValueType) *value {
 		u.report(c.code, c.file, c.ptr+plxerr.Pointer(name), "%s has no field %q", vt.Name, name)
 		return nil
 	}
+	if vt.Name == iconType && !u.useIcon(c, out, vt) {
+		return nil
+	}
 	return out
+}
+
+// enumName is the name of registry enum typ's value id.
+func enumName(typ string, id int64) string {
+	e, _ := registry.LookupEnum(typ)
+	for _, v := range e.Values {
+		if int64(v.ID) == id {
+			return v.Name
+		}
+	}
+	return ""
+}
+
+// iconType is the value type of an icon (THM-005).
+const iconType = "IconData"
+
+// useIcon checks that an icon names one of its set's glyphs literally,
+// and records it for the icon font of the bundle that uses it (THM-005).
+func (u *unit) useIcon(c vctx, v *value, vt *registry.ValueType) bool {
+	nameField, _ := vt.Field("name")
+	setField, _ := vt.Field("set")
+	name, set := "", icons.Material
+	for _, e := range v.entries {
+		switch {
+		case e.id == nameField.ID && e.value.kind == fbs.ValueKindString:
+			name = e.value.s
+		case e.id == setField.ID && e.value.kind == fbs.ValueKindEnum:
+			set = icons.Set(enumName(setField.Type, e.value.i))
+		default:
+			u.report(plxerr.UnknownIcon, c.file, c.ptr, "an icon is written literally, so that its glyph is delivered")
+			return false
+		}
+	}
+	if _, ok := icons.Lookup(set, name); !ok {
+		u.report(plxerr.UnknownIcon, c.file, c.ptr+plxerr.Pointer("name"), "the %s icon set has no icon %q", set, name)
+		return false
+	}
+	used := u.icons[c.pl]
+	if used == nil {
+		used = map[icons.Set]map[string]bool{}
+		u.icons[c.pl] = used
+	}
+	if used[set] == nil {
+		used[set] = map[string]bool{}
+	}
+	used[set][name] = true
+	return true
 }
 
 // constantOrObject resolves a value type's constant by name, or returns

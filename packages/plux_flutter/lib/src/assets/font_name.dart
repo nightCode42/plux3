@@ -13,16 +13,31 @@ import 'dart:typed_data';
 /// [font], preferring Windows Unicode entries in US English; null when
 /// the file has no readable `name` table.
 String? fontFamilyName(Uint8List font) {
+  final table = fontTable(font, 'name');
+  if (table == null) return null;
+  try {
+    return _family(ByteData.sublistView(table), 0);
+  } on RangeError {
+    return null;
+  }
+}
+
+/// Table [tag] of the TrueType or OpenType [font], or null when it has
+/// none or its table directory is damaged.
+Uint8List? fontTable(Uint8List font, String tag) {
   try {
     final d = ByteData.sublistView(font);
     final tables = d.getUint16(4);
     for (var i = 0; i < tables; i++) {
       final rec = 12 + i * 16;
-      if (String.fromCharCodes(font, rec, rec + 4) != 'name') continue;
-      return _family(d, d.getUint32(rec + 8));
+      if (String.fromCharCodes(font, rec, rec + 4) != tag) continue;
+      final offset = d.getUint32(rec + 8), length = d.getUint32(rec + 12);
+      return Uint8List.sublistView(font, offset, offset + length);
     }
     return null;
   } on RangeError {
+    return null;
+  } on ArgumentError {
     return null;
   }
 }

@@ -9,6 +9,8 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/nightCode42/plux3/backend/internal/icons/fonts"
+
 	"github.com/nightCode42/plux3/backend/internal/bundle"
 	"github.com/nightCode42/plux3/backend/internal/bundle/fbs"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
@@ -24,7 +26,9 @@ var widgetsDir = filepath.Join("..", "..", "..", "schema", "testdata", "document
 // widget, and its bundles are pinned byte for byte.
 func TestWidgetsGoldenBundles(t *testing.T) {
 	t.Parallel()
-	res := Compile(os.DirFS(widgetsDir), DefaultOptions())
+	opts := DefaultOptions()
+	opts.IconFont = fonts.Build
+	res := Compile(os.DirFS(widgetsDir), opts)
 	if len(res.Diagnostics) > 0 {
 		t.Fatalf("diagnostics:\n%s", list(res.Diagnostics))
 	}
@@ -59,6 +63,7 @@ func TestWidgetsGoldenBundles(t *testing.T) {
 	for _, b := range append([]*Bundle{res.App}, res.Plugins...) {
 		checkGolden(t, filepath.Join(goldenRoot, "widgets", b.Key+".pxb"), b.Data)
 	}
+	checkGoldenFiles(t, filepath.Join(goldenRoot, "widgets", "icons"), res.Files)
 	if !slices.ContainsFunc(res.Plugins, func(b *Bundle) bool { return b.Key == "gallery" }) {
 		t.Error("no gallery plugin")
 	}

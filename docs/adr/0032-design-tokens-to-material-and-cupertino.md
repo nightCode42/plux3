@@ -104,6 +104,28 @@ new third-party inputs. The maintainer chose **(a)** on 2026-09-29, of these opt
 
 Custom SVG icon sets are compiled to `vector_graphics` (`CMP-031`) in every option.
 
+**How (a) is built (R6c, 2026-09-29).** The details the choice left open, fixed by the
+implementation ([icons.md](../reference/icons.md)):
+
+- **One font per set per bundle.** Plugins publish independently, so each bundle — the app
+  bundle for app-level components, each plugin bundle for its pages — indexes its own
+  subset of each set it uses, as an asset with the reserved key `@icons/<set>`; the runtime
+  looks in the node's bundle, then the app's. The fonts are files of the compilation
+  (`compiler.Result.Files`), stored with the uploaded assets.
+- **Names travel in the font.** The subset carries a `Plux` table listing its icons' names,
+  code points and whether they mirror in right-to-left text (Flutter's `matchTextDirection`
+  flags), so the runtime needs no name tables of its own. Names are checked at compile time
+  against tables generated from the fonts' name lists (`internal/icons`); an unknown or
+  computed name is `PLX-1123`.
+- **What the subsetter rewrites.** `glyf`/`loca` and `gvar` keep only the chosen glyphs (and
+  their components) at their glyph IDs; `cmap` maps only their code points; `post` drops
+  glyph names; layout tables (`GSUB` and the rest) are dropped. `hmtx`, `HVAR` and the
+  variation tables stay as they are, which glyph-ID preservation allows, so `hmtx` is not
+  rewritten.
+- **Drawn without `IconData`.** Flutter's icon tree shaker fails a host app's release build
+  on any non-constant `IconData`, so the runtime draws the glyph with `PluxIcon`, which
+  reproduces `Icon.build`.
+
 ### Adaptive and Cupertino widgets (`WGT-011`)
 
 Cupertino widgets read `CupertinoTheme`, derived as above, so an adaptive page looks right
@@ -116,7 +138,7 @@ on both platforms from one set of tokens.
 - **Negative:** the fixed path-to-role table is a contract of its own, documented and
   extended additively; an in-house font subsetter to maintain, and the two icon fonts
   added to the server binary.
-- **Follow-up:** the icon subsetter (R6); text-font subsetting (`CMP-032`) and
+- **Follow-up:** text-font subsetting (`CMP-032`) and
   per-locale typography with localisation in P8; the Studio design-system screen in P11.
 
 ## Options in detail

@@ -2509,25 +2509,6 @@ Widget _buildGestureDetector(NodeContext c) {
   );
 }
 
-/// Builds a Icon node.
-Widget _buildIcon(NodeContext c) {
-  return Icon(
-    c.decode(1, decodeIconData),
-    size: c.decode(2, asDouble),
-    fill: c.decode(3, asDouble),
-    weight: c.decode(4, asDouble),
-    grade: c.decode(5, asDouble),
-    opticalSize: c.decode(6, asDouble),
-    color: c.decode(7, asColor),
-    shadows: c.decode(8, listOfShadow),
-    semanticLabel: c.decode(9, asString),
-    textDirection: c.decode(10, decodeTextDirection),
-    applyTextScaling: c.decode(11, asBool),
-    blendMode: c.decode(12, decodeBlendMode),
-    fontWeight: c.decode(13, decodeFontWeight),
-  );
-}
-
 /// Builds a IconButton node.
 Widget _buildIconButton(NodeContext c) {
   return IconButton(
@@ -3599,7 +3580,6 @@ const Map<int, NodeBuilder> generatedBuilders = {
   32: _buildFlexible, // Flexible
   13: _buildFractionallySizedBox, // FractionallySizedBox
   89: _buildGestureDetector, // GestureDetector
-  49: _buildIcon, // Icon
   82: _buildIconButton, // IconButton
   29: _buildIndexedStack, // IndexedStack
   90: _buildInkWell, // InkWell
@@ -3650,6 +3630,7 @@ const Map<int, String> handWrittenBuilders = {
   83: 'FloatingActionButton: prop extendedIconLabelSpacing: no parameter extendedIconLabelSpacing in the mirrored constructors', // FloatingActionButton
   3: 'ForEach: a structural primitive with no Flutter counterpart', // ForEach
   37: 'GridView: type parameters T', // GridView
+  49: 'Icon: prop icon: an icon is a glyph of the release\'s icon font, which a constant IconData cannot name (THM-005)', // Icon
   1: 'If: a structural primitive with no Flutter counterpart', // If
   50: 'Image: prop source maps onto 2 parameters', // Image
   36: 'ListView: type parameters T', // ListView
@@ -3680,6 +3661,8 @@ abstract final class WidgetIds {
   static const int forEach = 3;
   /// GridView.
   static const int gridView = 37;
+  /// Icon.
+  static const int icon = 49;
   /// If.
   static const int if_ = 1;
   /// Image.
@@ -3918,6 +3901,36 @@ abstract final class GridViewSlots {
   static const int loading = 3;
   /// error.
   static const int error = 4;
+}
+
+/// Permanent IDs of the props of Icon.
+abstract final class IconProps {
+  /// icon.
+  static const int icon = 1;
+  /// size.
+  static const int size = 2;
+  /// fill.
+  static const int fill = 3;
+  /// weight.
+  static const int weight = 4;
+  /// grade.
+  static const int grade = 5;
+  /// opticalSize.
+  static const int opticalSize = 6;
+  /// color.
+  static const int color = 7;
+  /// shadows.
+  static const int shadows = 8;
+  /// semanticLabel.
+  static const int semanticLabel = 9;
+  /// textDirection.
+  static const int textDirection = 10;
+  /// applyTextScaling.
+  static const int applyTextScaling = 11;
+  /// blendMode.
+  static const int blendMode = 12;
+  /// fontWeight.
+  static const int fontWeight = 13;
 }
 
 /// Permanent IDs of the props of If.

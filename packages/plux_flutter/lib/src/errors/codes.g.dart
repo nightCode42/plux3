@@ -124,6 +124,9 @@ enum PluxErrorCode {
   /// Deprecated widget or prop.
   deprecatedMember(1122, 'DEPRECATED_MEMBER', 'Deprecated widget or prop'),
 
+  /// Unknown icon.
+  unknownIcon(1123, 'UNKNOWN_ICON', 'Unknown icon'),
+
   /// Unknown route.
   unknownRoute(1201, 'UNKNOWN_ROUTE', 'Unknown route'),
 

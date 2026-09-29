@@ -8,8 +8,11 @@ import (
 	"cmp"
 	"crypto/sha256"
 	"encoding/json"
+	"maps"
 	"slices"
 	"strings"
+
+	"github.com/nightCode42/plux3/backend/internal/icons"
 
 	flatbuffers "github.com/google/flatbuffers/go"
 
@@ -607,41 +610,49 @@ func assets(u *unit) {
 // outs lists every bundle being encoded: the app's, then the plugins'.
 func (u *unit) outs() []*out { return append([]*out{u.appOut}, u.pluginOuts...) }
 
-// assetsSection encodes the assets a bundle uses.
+// indexedAsset is an asset a bundle indexes: an uploaded one, or an icon
+// font the compilation made.
+type indexedAsset struct {
+	id         [16]byte
+	key, media string
+	data       []byte
+}
+
+// iconFontKey is the key of an icon set's font in an assets index; asset
+// keys of documents are slugs, so it can never be one of theirs.
+func iconFontKey(set icons.Set) string { return "@icons/" + string(set) }
+
+// assetsSection encodes the assets a bundle uses, with its icon fonts.
 func (u *unit) assetsSection(o *out) {
-	idx := u.project.Assets
-	if idx == nil || idx.Doc == nil {
-		return
-	}
-	var entries []*schema.AssetEntry
-	for i := range idx.Doc.Assets {
-		a := &idx.Doc.Assets[i]
-		if o.pl == nil || o.assets[a.ID] {
-			entries = append(entries, a)
+	var entries []indexedAsset
+	if idx := u.project.Assets; idx != nil && idx.Doc != nil {
+		for i := range idx.Doc.Assets {
+			a := &idx.Doc.Assets[i]
+			if o.pl == nil || o.assets[a.ID] {
+				entries = append(entries, indexedAsset{uuidBytes(a.ID), a.Key, string(a.MediaType), u.project.AssetFiles[a.File]})
+			}
 		}
 	}
+	o.iconFonts = u.iconFonts(o)
+	entries = append(entries, o.iconFonts...)
 	if len(entries) == 0 {
 		return
 	}
-	slices.SortFunc(entries, func(a, c *schema.AssetEntry) int {
-		x, y := uuidBytes(a.ID), uuidBytes(c.ID)
-		return bytes.Compare(x[:], y[:])
-	})
+	slices.SortFunc(entries, func(a, c indexedAsset) int { return bytes.Compare(a.id[:], c.id[:]) })
 	b := flatbuffers.NewBuilder(1024)
 	offs := make([]flatbuffers.UOffsetT, len(entries))
 	for i, a := range entries {
-		data := u.project.AssetFiles[a.File]
-		sum := sha256.Sum256(data)
+		sum := sha256.Sum256(a.data)
 		hash := b.CreateByteVector(sum[:])
-		key, media := b.CreateString(a.Key), b.CreateString(string(a.MediaType))
+		key, media := b.CreateString(a.key), b.CreateString(a.media)
 		variants := u.variantsOf(b, sum)
 		fbs.AssetStart(b)
-		hi, lo := uuidHalves(uuidBytes(a.ID))
+		hi, lo := uuidHalves(a.id)
 		fbs.AssetAddId(b, fbs.CreateUuid(b, hi, lo))
 		fbs.AssetAddKey(b, key)
 		fbs.AssetAddMediaType(b, media)
 		fbs.AssetAddHash(b, hash)
-		fbs.AssetAddSize(b, uint64(len(data)))
+		fbs.AssetAddSize(b, uint64(len(a.data)))
 		if variants != 0 {
 			fbs.AssetAddVariants(b, variants)
 		}
@@ -651,6 +662,29 @@ func (u *unit) assetsSection(o *out) {
 	fbs.AssetIndexStart(b)
 	fbs.AssetIndexAddAssets(b, av)
 	o.add(bundle.SectionAssetsIndex, o.id, finish(b, fbs.AssetIndexEnd(b), bundle.SectionAssetsIndex))
+}
+
+// iconFonts builds the icon fonts of a bundle: one per set its documents
+// use, subset to their icons (THM-005), kept as files of the compilation.
+func (u *unit) iconFonts(o *out) []indexedAsset {
+	used := u.icons[o.pl]
+	if u.opts.IconFont == nil || len(used) == 0 {
+		return nil
+	}
+	var out []indexedAsset
+	for _, set := range icons.Sets() {
+		if len(used[set]) == 0 {
+			continue
+		}
+		data, err := u.opts.IconFont(set, slices.Sorted(maps.Keys(used[set])))
+		if err != nil {
+			u.internalError("the %s icon font of %s: %v", set, o.key, err)
+			return nil
+		}
+		u.files[sha256.Sum256(data)] = data
+		out = append(out, indexedAsset{derivedID("icons", o.key, string(set)), iconFontKey(set), "font/ttf", data})
+	}
+	return out
 }
 
 // variantsOf encodes an asset file's variants, sorted by media type and
@@ -687,15 +721,21 @@ func (u *unit) variantsOf(b *flatbuffers.Builder, sum [sha256.Size]byte) flatbuf
 // pluginAssetBytes checks the asset files a plugin uses against
 // plugin.assetBytes at publish (AST-003).
 func (u *unit) pluginAssetBytes(o *out) {
-	idx := u.project.Assets
-	if o.pl == nil || idx == nil || idx.Doc == nil {
+	if o.pl == nil {
 		return
 	}
 	var total int64
+	idx := u.project.Assets
+	if idx == nil || idx.Doc == nil {
+		idx = &schema.Loaded[schema.AssetIndexDocument]{Doc: &schema.AssetIndexDocument{}}
+	}
 	for _, a := range idx.Doc.Assets {
 		if o.assets[a.ID] {
 			total += int64(len(u.project.AssetFiles[a.File]))
 		}
+	}
+	for _, f := range o.iconFonts {
+		total += int64(len(f.data))
 	}
 	if limit := u.opts.Limits.Get(limits.PluginAssetBytes); total > limit {
 		u.report(plxerr.LimitExceeded, o.pl.file, "", "plugin %s uses %d bytes of assets, above plugin.assetBytes = %d", o.key, total, limit)

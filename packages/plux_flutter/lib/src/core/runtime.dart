@@ -17,6 +17,7 @@ import 'package:flutter/widgets.dart';
 import 'package:plux_flutter/src/assets/assets.dart';
 import 'package:plux_flutter/src/assets/avif_probe.dart';
 import 'package:plux_flutter/src/assets/fonts.dart';
+import 'package:plux_flutter/src/assets/icon_fonts.dart';
 import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/core/config.dart';
@@ -222,7 +223,8 @@ final class PluxRuntime with WidgetsBindingObserver {
       await loadFonts(
         {
           for (final a in assetsOf(release.bundle('').container))
-            if (a.mediaType == 'font/ttf' || a.mediaType == 'font/otf')
+            if ((a.mediaType == 'font/ttf' || a.mediaType == 'font/otf') &&
+                !isIconFontKey(a.key ?? ''))
               hexEncode(a.hash ?? const []): ?release.assetPath(
                 hexEncode(a.hash ?? const []),
               ),
