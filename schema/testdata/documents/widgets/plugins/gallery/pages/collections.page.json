@@ -1,0 +1,317 @@
+{
+  "id": "01c0c450-6c00-7000-8000-0000000001e2",
+  "key": "collections",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01c0c450-6c00-7000-8000-0000000001e5",
+    "slots": {
+      "appBar": {
+        "id": "01c0c450-6c00-7000-8000-0000000001e4",
+        "slots": {
+          "title": {
+            "id": "01c0c450-6c00-7000-8000-0000000001e3",
+            "props": {
+              "data": "collections"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "children": [
+          {
+            "id": "01c0c450-6c00-7000-8000-0000000001c5",
+            "props": {
+              "height": 80.0
+            },
+            "slots": {
+              "child": {
+                "id": "01c0c450-6c00-7000-8000-0000000001c4",
+                "props": {
+                  "items": {
+                    "$expr": "page.items"
+                  },
+                  "scrollDirection": "horizontal"
+                },
+                "slots": {
+                  "empty": {
+                    "id": "01c0c450-6c00-7000-8000-0000000001c3",
+                    "props": {
+                      "data": "no items"
+                    },
+                    "type": "Text"
+                  },
+                  "item": {
+                    "id": "01c0c450-6c00-7000-8000-0000000001c2",
+                    "props": {
+                      "padding": {
+                        "all": 4.0
+                      }
+                    },
+                    "slots": {
+                      "child": {
+                        "id": "01c0c450-6c00-7000-8000-0000000001c1",
+                        "props": {
+                          "data": {
+                            "$expr": "item + \" \" + string(index)"
+                          }
+                        },
+                        "type": "Text"
+                      }
+                    },
+                    "type": "Padding"
+                  }
+                },
+                "type": "ListView"
+              }
+            },
+            "type": "SizedBox"
+          },
+          {
+            "id": "01c0c450-6c00-7000-8000-0000000001c8",
+            "props": {
+              "height": 80.0
+            },
+            "slots": {
+              "child": {
+                "id": "01c0c450-6c00-7000-8000-0000000001c7",
+                "props": {
+                  "childAspectRatio": 3.0,
+                  "crossAxisCount": 3,
+                  "items": {
+                    "$expr": "page.items"
+                  }
+                },
+                "slots": {
+                  "item": {
+                    "id": "01c0c450-6c00-7000-8000-0000000001c6",
+                    "props": {
+                      "data": {
+                        "$expr": "\"grid \" + item"
+                      }
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "GridView"
+              }
+            },
+            "type": "SizedBox"
+          },
+          {
+            "id": "01c0c450-6c00-7000-8000-0000000001cc",
+            "props": {
+              "height": 40.0
+            },
+            "slots": {
+              "child": {
+                "id": "01c0c450-6c00-7000-8000-0000000001cb",
+                "props": {
+                  "items": {
+                    "$expr": "page.items"
+                  }
+                },
+                "slots": {
+                  "item": {
+                    "id": "01c0c450-6c00-7000-8000-0000000001ca",
+                    "slots": {
+                      "child": {
+                        "id": "01c0c450-6c00-7000-8000-0000000001c9",
+                        "props": {
+                          "data": {
+                            "$expr": "\"page \" + item"
+                          }
+                        },
+                        "type": "Text"
+                      }
+                    },
+                    "type": "Center"
+                  }
+                },
+                "type": "PageView"
+              }
+            },
+            "type": "SizedBox"
+          },
+          {
+            "id": "01c0c450-6c00-7000-8000-0000000001d0",
+            "props": {
+              "height": 40.0
+            },
+            "slots": {
+              "child": {
+                "id": "01c0c450-6c00-7000-8000-0000000001cf",
+                "props": {
+                  "items": {
+                    "$expr": "page.none"
+                  }
+                },
+                "slots": {
+                  "empty": {
+                    "id": "01c0c450-6c00-7000-8000-0000000001ce",
+                    "props": {
+                      "data": "empty list"
+                    },
+                    "type": "Text"
+                  },
+                  "item": {
+                    "id": "01c0c450-6c00-7000-8000-0000000001cd",
+                    "props": {
+                      "data": "never"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "ListView"
+              }
+            },
+            "type": "SizedBox"
+          },
+          {
+            "id": "01c0c450-6c00-7000-8000-0000000001de",
+            "slots": {
+              "child": {
+                "id": "01c0c450-6c00-7000-8000-0000000001dd",
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-0000000001dc",
+                    "slots": {
+                      "slivers": [
+                        {
+                          "id": "01c0c450-6c00-7000-8000-0000000001d2",
+                          "props": {
+                            "pinned": true
+                          },
+                          "slots": {
+                            "title": {
+                              "id": "01c0c450-6c00-7000-8000-0000000001d1",
+                              "props": {
+                                "data": "sliver bar"
+                              },
+                              "type": "Text"
+                            }
+                          },
+                          "type": "SliverAppBar"
+                        },
+                        {
+                          "id": "01c0c450-6c00-7000-8000-0000000001d4",
+                          "slots": {
+                            "child": {
+                              "id": "01c0c450-6c00-7000-8000-0000000001d3",
+                              "props": {
+                                "data": "box adapter"
+                              },
+                              "type": "Text"
+                            }
+                          },
+                          "type": "SliverToBoxAdapter"
+                        },
+                        {
+                          "id": "01c0c450-6c00-7000-8000-0000000001d7",
+                          "props": {
+                            "padding": {
+                              "all": 4.0
+                            }
+                          },
+                          "slots": {
+                            "sliver": {
+                              "id": "01c0c450-6c00-7000-8000-0000000001d6",
+                              "props": {
+                                "items": {
+                                  "$expr": "page.items"
+                                }
+                              },
+                              "slots": {
+                                "item": {
+                                  "id": "01c0c450-6c00-7000-8000-0000000001d5",
+                                  "props": {
+                                    "data": {
+                                      "$expr": "\"sliver \" + item"
+                                    }
+                                  },
+                                  "type": "Text"
+                                }
+                              },
+                              "type": "SliverList"
+                            }
+                          },
+                          "type": "SliverPadding"
+                        },
+                        {
+                          "id": "01c0c450-6c00-7000-8000-0000000001d9",
+                          "props": {
+                            "items": {
+                              "$expr": "page.items"
+                            },
+                            "maxCrossAxisExtent": 120.0
+                          },
+                          "slots": {
+                            "item": {
+                              "id": "01c0c450-6c00-7000-8000-0000000001d8",
+                              "props": {
+                                "data": {
+                                  "$expr": "\"cell \" + item"
+                                }
+                              },
+                              "type": "Text"
+                            }
+                          },
+                          "type": "SliverGrid"
+                        },
+                        {
+                          "id": "01c0c450-6c00-7000-8000-0000000001db",
+                          "props": {
+                            "hasScrollBody": false
+                          },
+                          "slots": {
+                            "child": {
+                              "id": "01c0c450-6c00-7000-8000-0000000001da",
+                              "props": {
+                                "data": "remaining"
+                              },
+                              "type": "Text"
+                            }
+                          },
+                          "type": "SliverFillRemaining"
+                        }
+                      ]
+                    },
+                    "type": "CustomScrollView"
+                  }
+                },
+                "type": "Scrollbar"
+              }
+            },
+            "type": "Expanded"
+          }
+        ],
+        "id": "01c0c450-6c00-7000-8000-0000000001df",
+        "type": "Column"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "collections",
+  "schemaVersion": "1.0.0",
+  "state": [
+    {
+      "default": [
+        "a",
+        "b",
+        "c"
+      ],
+      "id": "01c0c450-6c00-7000-8000-0000000001e0",
+      "name": "items",
+      "type": "list<string>"
+    },
+    {
+      "default": [],
+      "id": "01c0c450-6c00-7000-8000-0000000001e1",
+      "name": "none",
+      "type": "list<string>"
+    }
+  ],
+  "title": "collections"
+}

@@ -1,0 +1,25 @@
+{
+  "id": "01c0c450-6c00-7000-8000-000000000003",
+  "keys": [
+    {
+      "id": "01c0c450-6c00-7000-8000-000000000050",
+      "key": "gallery.title"
+    },
+    {
+      "args": [
+        {
+          "name": "count",
+          "type": "int"
+        }
+      ],
+      "id": "01c0c450-6c00-7000-8000-000000000051",
+      "key": "gallery.count"
+    },
+    {
+      "id": "01c0c450-6c00-7000-8000-000000000052",
+      "key": "gallery.ok"
+    }
+  ],
+  "kind": "translationKeys",
+  "schemaVersion": "1.0.0"
+}

@@ -5,6 +5,7 @@
 /// of single sections before their first use (SEC-052, BND-006, ADR-0029).
 library;
 
+import 'dart:isolate';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
@@ -125,6 +126,43 @@ final class SectionGate {
 
   /// Whether [s] has passed.
   bool passed(Section s) => _passed.contains(String.fromCharCodes(s.hash));
+
+  /// The largest section checked on the UI isolate (layering rule L-6);
+  /// larger ones are checked by [prepare].
+  static const int uiIsolateLimit = 64 * 1024;
+
+  /// Checks, on a background isolate, every section of [sections] larger
+  /// than [uiIsolateLimit] that has not passed (ADR-0029); null when there
+  /// is none. Completes with an error, a [PluxException], when one fails.
+  Future<void>? prepare(Iterable<Section> sections) {
+    final pending = [
+      for (final s in sections)
+        if (s.data.length > uiIsolateLimit && !passed(s)) s,
+    ];
+    if (pending.isEmpty) return null;
+    final limits = this.limits;
+    final work = [
+      for (final s in pending)
+        (s.kind, s.id, s.hash, Uint8List.fromList(s.data)),
+    ];
+    return Isolate.run(() {
+      for (final (kind, id, hash, data) in work) {
+        checkSectionHash(Section(kind, id, hash, data));
+        if (sectionIdentifiers.containsKey(kind)) {
+          verifySection(
+            kind,
+            data,
+            maxDepth: limits.maxDepth,
+            maxVisits: limits.maxVisits,
+          );
+        }
+      }
+    }).then((_) {
+      for (final s in pending) {
+        _passed.add(String.fromCharCodes(s.hash));
+      }
+    });
+  }
 }
 
 bool _equal(Uint8List a, Uint8List b) {

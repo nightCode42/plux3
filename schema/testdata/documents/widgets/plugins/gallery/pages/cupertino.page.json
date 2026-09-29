@@ -1,0 +1,210 @@
+{
+  "id": "01c0c450-6c00-7000-8000-0000000001ac",
+  "key": "cupertino",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01c0c450-6c00-7000-8000-0000000001af",
+    "slots": {
+      "appBar": {
+        "id": "01c0c450-6c00-7000-8000-0000000001ae",
+        "slots": {
+          "title": {
+            "id": "01c0c450-6c00-7000-8000-0000000001ad",
+            "props": {
+              "data": "cupertino"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "id": "01c0c450-6c00-7000-8000-0000000001ab",
+        "slots": {
+          "child": {
+            "children": [
+              {
+                "id": "01c0c450-6c00-7000-8000-00000000019c",
+                "props": {
+                  "radius": 12.0
+                },
+                "type": "CupertinoActivityIndicator"
+              },
+              {
+                "events": {
+                  "onPressed": {
+                    "steps": [
+                      {
+                        "action": "haptic",
+                        "id": "h",
+                        "input": {
+                          "pattern": "light"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01c0c450-6c00-7000-8000-00000000019e",
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-00000000019d",
+                    "props": {
+                      "data": "cupertino"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "CupertinoButton"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-0000000001a3",
+                "slots": {
+                  "children": [
+                    {
+                      "id": "01c0c450-6c00-7000-8000-0000000001a2",
+                      "slots": {
+                        "additionalInfo": {
+                          "id": "01c0c450-6c00-7000-8000-0000000001a1",
+                          "props": {
+                            "data": "info"
+                          },
+                          "type": "Text"
+                        },
+                        "title": {
+                          "id": "01c0c450-6c00-7000-8000-0000000001a0",
+                          "props": {
+                            "data": "tile"
+                          },
+                          "type": "Text"
+                        }
+                      },
+                      "type": "CupertinoListTile"
+                    }
+                  ],
+                  "header": {
+                    "id": "01c0c450-6c00-7000-8000-00000000019f",
+                    "props": {
+                      "data": "section"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "CupertinoListSection"
+              },
+              {
+                "events": {
+                  "onChanged": {
+                    "steps": [
+                      {
+                        "action": "haptic",
+                        "id": "h",
+                        "input": {
+                          "pattern": "light"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01c0c450-6c00-7000-8000-0000000001a4",
+                "props": {
+                  "value": 0.3
+                },
+                "semantics": {
+                  "label": "slider"
+                },
+                "type": "CupertinoSlider"
+              },
+              {
+                "events": {
+                  "onValueChanged": {
+                    "steps": [
+                      {
+                        "action": "haptic",
+                        "id": "h",
+                        "input": {
+                          "pattern": "light"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01c0c450-6c00-7000-8000-0000000001a7",
+                "props": {
+                  "groupValue": "l",
+                  "values": [
+                    "l",
+                    "r"
+                  ]
+                },
+                "slots": {
+                  "segments": [
+                    {
+                      "id": "01c0c450-6c00-7000-8000-0000000001a5",
+                      "props": {
+                        "data": "Left"
+                      },
+                      "type": "Text"
+                    },
+                    {
+                      "id": "01c0c450-6c00-7000-8000-0000000001a6",
+                      "props": {
+                        "data": "Right"
+                      },
+                      "type": "Text"
+                    }
+                  ]
+                },
+                "type": "CupertinoSlidingSegmentedControl"
+              },
+              {
+                "events": {
+                  "onChanged": {
+                    "steps": [
+                      {
+                        "action": "haptic",
+                        "id": "h",
+                        "input": {
+                          "pattern": "light"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01c0c450-6c00-7000-8000-0000000001a8",
+                "props": {
+                  "value": true
+                },
+                "semantics": {
+                  "label": "switch"
+                },
+                "type": "CupertinoSwitch"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-0000000001a9",
+                "props": {
+                  "placeholder": "placeholder",
+                  "value": "cupertino text"
+                },
+                "semantics": {
+                  "label": "field"
+                },
+                "type": "CupertinoTextField"
+              }
+            ],
+            "id": "01c0c450-6c00-7000-8000-0000000001aa",
+            "props": {
+              "crossAxisAlignment": "stretch"
+            },
+            "type": "Column"
+          }
+        },
+        "type": "SingleChildScrollView"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "cupertino",
+  "schemaVersion": "1.0.0",
+  "title": "cupertino"
+}

@@ -1,0 +1,50 @@
+{
+  "id": "01c0c450-6c00-7000-8000-000000000002",
+  "key": "gallery",
+  "kind": "theme",
+  "name": "Gallery",
+  "schemaVersion": "1.0.0",
+  "tokens": {
+    "brands": {
+      "acme": {
+        "color": {
+          "$type": "color",
+          "primary": {
+            "$value": "#FF5722"
+          }
+        }
+      }
+    },
+    "color": {
+      "$type": "color",
+      "primary": {
+        "$extensions": {
+          "dev.plux.dark": "#D0BCFF"
+        },
+        "$value": "#6750A4"
+      }
+    },
+    "space": {
+      "$type": "dimension",
+      "md": {
+        "$value": {
+          "unit": "px",
+          "value": 12
+        }
+      }
+    },
+    "type": {
+      "$type": "typography",
+      "headline": {
+        "$value": {
+          "fontFamily": "Roboto",
+          "fontSize": {
+            "unit": "px",
+            "value": 24
+          },
+          "fontWeight": 600
+        }
+      }
+    }
+  }
+}

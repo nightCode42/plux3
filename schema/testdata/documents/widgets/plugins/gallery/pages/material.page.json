@@ -1,0 +1,539 @@
+{
+  "id": "01c0c450-6c00-7000-8000-000000000181",
+  "key": "material",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01c0c450-6c00-7000-8000-000000000184",
+    "slots": {
+      "appBar": {
+        "id": "01c0c450-6c00-7000-8000-000000000183",
+        "slots": {
+          "title": {
+            "id": "01c0c450-6c00-7000-8000-000000000182",
+            "props": {
+              "data": "material"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "id": "01c0c450-6c00-7000-8000-000000000180",
+        "slots": {
+          "child": {
+            "children": [
+              {
+                "id": "01c0c450-6c00-7000-8000-000000000152",
+                "props": {
+                  "elevation": 2.0,
+                  "margin": {
+                    "all": 4.0
+                  }
+                },
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-000000000151",
+                    "slots": {
+                      "leading": {
+                        "id": "01c0c450-6c00-7000-8000-00000000014d",
+                        "props": {
+                          "icon": {
+                            "name": "star",
+                            "set": "material"
+                          }
+                        },
+                        "type": "Icon"
+                      },
+                      "subtitle": {
+                        "id": "01c0c450-6c00-7000-8000-00000000014f",
+                        "props": {
+                          "data": "subtitle"
+                        },
+                        "type": "Text"
+                      },
+                      "title": {
+                        "id": "01c0c450-6c00-7000-8000-00000000014e",
+                        "props": {
+                          "data": "list tile"
+                        },
+                        "type": "Text"
+                      },
+                      "trailing": {
+                        "id": "01c0c450-6c00-7000-8000-000000000150",
+                        "props": {
+                          "data": "trail"
+                        },
+                        "type": "Text"
+                      }
+                    },
+                    "type": "ListTile"
+                  }
+                },
+                "type": "Card"
+              },
+              {
+                "children": [
+                  {
+                    "id": "01c0c450-6c00-7000-8000-000000000154",
+                    "slots": {
+                      "label": {
+                        "id": "01c0c450-6c00-7000-8000-000000000153",
+                        "props": {
+                          "data": "chip"
+                        },
+                        "type": "Text"
+                      }
+                    },
+                    "type": "Chip"
+                  },
+                  {
+                    "events": {
+                      "onPressed": {
+                        "steps": [
+                          {
+                            "action": "haptic",
+                            "id": "h",
+                            "input": {
+                              "pattern": "light"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "id": "01c0c450-6c00-7000-8000-000000000156",
+                    "slots": {
+                      "label": {
+                        "id": "01c0c450-6c00-7000-8000-000000000155",
+                        "props": {
+                          "data": "action"
+                        },
+                        "type": "Text"
+                      }
+                    },
+                    "type": "ActionChip"
+                  },
+                  {
+                    "events": {
+                      "onSelected": {
+                        "steps": [
+                          {
+                            "action": "haptic",
+                            "id": "h",
+                            "input": {
+                              "pattern": "light"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "id": "01c0c450-6c00-7000-8000-000000000158",
+                    "props": {
+                      "selected": true
+                    },
+                    "slots": {
+                      "label": {
+                        "id": "01c0c450-6c00-7000-8000-000000000157",
+                        "props": {
+                          "data": "choice"
+                        },
+                        "type": "Text"
+                      }
+                    },
+                    "type": "ChoiceChip"
+                  },
+                  {
+                    "events": {
+                      "onSelected": {
+                        "steps": [
+                          {
+                            "action": "haptic",
+                            "id": "h",
+                            "input": {
+                              "pattern": "light"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "id": "01c0c450-6c00-7000-8000-00000000015a",
+                    "props": {
+                      "selected": false
+                    },
+                    "slots": {
+                      "label": {
+                        "id": "01c0c450-6c00-7000-8000-000000000159",
+                        "props": {
+                          "data": "filter"
+                        },
+                        "type": "Text"
+                      }
+                    },
+                    "type": "FilterChip"
+                  },
+                  {
+                    "id": "01c0c450-6c00-7000-8000-00000000015c",
+                    "slots": {
+                      "label": {
+                        "id": "01c0c450-6c00-7000-8000-00000000015b",
+                        "props": {
+                          "data": "input"
+                        },
+                        "type": "Text"
+                      }
+                    },
+                    "type": "InputChip"
+                  },
+                  {
+                    "id": "01c0c450-6c00-7000-8000-00000000015f",
+                    "slots": {
+                      "child": {
+                        "id": "01c0c450-6c00-7000-8000-00000000015e",
+                        "props": {
+                          "data": "badged"
+                        },
+                        "type": "Text"
+                      },
+                      "label": {
+                        "id": "01c0c450-6c00-7000-8000-00000000015d",
+                        "props": {
+                          "data": "3"
+                        },
+                        "type": "Text"
+                      }
+                    },
+                    "type": "Badge"
+                  },
+                  {
+                    "id": "01c0c450-6c00-7000-8000-000000000161",
+                    "props": {
+                      "radius": 16.0
+                    },
+                    "slots": {
+                      "child": {
+                        "id": "01c0c450-6c00-7000-8000-000000000160",
+                        "props": {
+                          "data": "AB"
+                        },
+                        "type": "Text"
+                      }
+                    },
+                    "type": "CircleAvatar"
+                  }
+                ],
+                "id": "01c0c450-6c00-7000-8000-000000000162",
+                "props": {
+                  "spacing": 4.0
+                },
+                "type": "Wrap"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-000000000163",
+                "props": {
+                  "value": 0.4
+                },
+                "type": "CircularProgressIndicator"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-000000000164",
+                "props": {
+                  "value": 0.7
+                },
+                "type": "LinearProgressIndicator"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-000000000167",
+                "props": {
+                  "initiallyExpanded": true
+                },
+                "slots": {
+                  "children": [
+                    {
+                      "id": "01c0c450-6c00-7000-8000-000000000166",
+                      "props": {
+                        "data": "expanded child"
+                      },
+                      "type": "Text"
+                    }
+                  ],
+                  "title": {
+                    "id": "01c0c450-6c00-7000-8000-000000000165",
+                    "props": {
+                      "data": "expansion"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "ExpansionTile"
+              },
+              {
+                "children": [
+                  {
+                    "events": {
+                      "onPressed": {
+                        "steps": [
+                          {
+                            "action": "haptic",
+                            "id": "h",
+                            "input": {
+                              "pattern": "light"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "id": "01c0c450-6c00-7000-8000-000000000169",
+                    "semantics": {
+                      "label": "star"
+                    },
+                    "slots": {
+                      "icon": {
+                        "id": "01c0c450-6c00-7000-8000-000000000168",
+                        "props": {
+                          "icon": {
+                            "name": "star",
+                            "set": "material"
+                          }
+                        },
+                        "type": "Icon"
+                      }
+                    },
+                    "type": "IconButton"
+                  },
+                  {
+                    "id": "01c0c450-6c00-7000-8000-00000000016a",
+                    "semantics": {
+                      "label": "back"
+                    },
+                    "type": "BackButton"
+                  },
+                  {
+                    "id": "01c0c450-6c00-7000-8000-00000000016b",
+                    "semantics": {
+                      "label": "close"
+                    },
+                    "type": "CloseButton"
+                  }
+                ],
+                "id": "01c0c450-6c00-7000-8000-00000000016c",
+                "type": "Row"
+              },
+              {
+                "events": {
+                  "onPressed": {
+                    "steps": [
+                      {
+                        "action": "haptic",
+                        "id": "h",
+                        "input": {
+                          "pattern": "light"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01c0c450-6c00-7000-8000-00000000016e",
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-00000000016d",
+                    "props": {
+                      "data": "elevated"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "ElevatedButton"
+              },
+              {
+                "events": {
+                  "onPressed": {
+                    "steps": [
+                      {
+                        "action": "haptic",
+                        "id": "h",
+                        "input": {
+                          "pattern": "light"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01c0c450-6c00-7000-8000-000000000170",
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-00000000016f",
+                    "props": {
+                      "data": "filled"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "FilledButton"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-000000000172",
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-000000000171",
+                    "props": {
+                      "data": "outlined"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "OutlinedButton"
+              },
+              {
+                "events": {
+                  "onPressed": {
+                    "steps": [
+                      {
+                        "action": "haptic",
+                        "id": "h",
+                        "input": {
+                          "pattern": "light"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01c0c450-6c00-7000-8000-000000000174",
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-000000000173",
+                    "props": {
+                      "data": "text button"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "TextButton"
+              },
+              {
+                "events": {
+                  "onPressed": {
+                    "steps": [
+                      {
+                        "action": "haptic",
+                        "id": "h",
+                        "input": {
+                          "pattern": "light"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01c0c450-6c00-7000-8000-000000000176",
+                "slots": {
+                  "label": {
+                    "id": "01c0c450-6c00-7000-8000-000000000175",
+                    "props": {
+                      "data": "extended fab"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "FloatingActionButton"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-000000000178",
+                "props": {
+                  "message": "tip"
+                },
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-000000000177",
+                    "props": {
+                      "data": "tooltip"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "Tooltip"
+              },
+              {
+                "events": {
+                  "onTap": {
+                    "steps": [
+                      {
+                        "action": "haptic",
+                        "id": "h",
+                        "input": {
+                          "pattern": "light"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01c0c450-6c00-7000-8000-00000000017a",
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-000000000179",
+                    "props": {
+                      "data": "ink well"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "InkWell"
+              },
+              {
+                "events": {
+                  "onTap": {
+                    "steps": [
+                      {
+                        "action": "haptic",
+                        "id": "h",
+                        "input": {
+                          "pattern": "light"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01c0c450-6c00-7000-8000-00000000017c",
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-00000000017b",
+                    "props": {
+                      "data": "gesture"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "GestureDetector"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-00000000017e",
+                "props": {
+                  "height": 56.0
+                },
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-00000000017d",
+                    "props": {
+                      "data": "bottom bar"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "BottomAppBar"
+              }
+            ],
+            "id": "01c0c450-6c00-7000-8000-00000000017f",
+            "props": {
+              "crossAxisAlignment": "stretch"
+            },
+            "type": "Column"
+          }
+        },
+        "type": "SingleChildScrollView"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "material",
+  "schemaVersion": "1.0.0",
+  "title": "material"
+}

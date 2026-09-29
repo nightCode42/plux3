@@ -1,0 +1,193 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+/// What the nodes of a page, a component instance or a template item
+/// render with (ADR-0031), and the page state they subscribe to
+/// (ADR-0008, RT-012).
+library;
+
+import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
+import 'package:plux_flutter/src/core/active_release.dart';
+import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/render/node_context.dart';
+import 'package:plux_flutter/src/render/sections.dart';
+import 'package:plux_flutter/src/render/values.dart';
+
+/// One page shown on screen: the key of its state.
+final class PageInstance {
+  /// Creates an instance with the page's initial [state].
+  PageInstance(this.initial);
+
+  /// The declared initial state, by entry name.
+  final Map<String, Object?> initial;
+}
+
+/// The state of a page instance (STA-*): its declared initial values in
+/// P3; actions write it from P5. Nodes subscribe with `select` on the
+/// paths their bindings read (RT-012).
+final class PageStateNotifier extends Notifier<Map<String, Object?>> {
+  /// Creates the state of [instance].
+  PageStateNotifier(this.instance);
+
+  /// The page instance.
+  final PageInstance instance;
+
+  @override
+  Map<String, Object?> build() => instance.initial;
+
+  /// Replaces entry [name].
+  void set(String name, Object? value) => state = {...state, name: value};
+}
+
+/// The state of each page instance.
+final pageStateProvider = NotifierProvider.autoDispose
+    .family<PageStateNotifier, Map<String, Object?>, PageInstance>(
+      PageStateNotifier.new,
+      dependencies: const [],
+    );
+
+/// What the renderer provides to every node: icons (THM-005), images of
+/// the release and URLs (RT-014), and the fallback of failed pages and
+/// components (RT-020).
+abstract interface class RenderServices {
+  /// The icon [name] of [set], or null when unknown.
+  IconData? icon(String name, String set);
+
+  /// An image: an asset of the release by ID, or a URL.
+  ImageProvider<Object>? image({String? asset, String? url});
+
+  /// Builds the fallback shown instead of a failed page or component.
+  Widget fallback(BuildContext context, PluxException error);
+}
+
+/// Reports a problem with a node's path (RT-020).
+typedef NodeReporter = void Function(
+  PluxException error, {
+  required String path,
+});
+
+/// Everything the nodes of one page, component instance or template item
+/// render with.
+final class RenderScope {
+  /// Creates a scope.
+  RenderScope({
+    required this.release,
+    required this.plugin,
+    required this.app,
+    required this.pluginKey,
+    required this.section,
+    required this.resolver,
+    required this.roots,
+    required this.builders,
+    required this.cache,
+    required this.report,
+    required this.services,
+    required this.path,
+    this.state,
+    this.fills,
+    this.parent,
+  });
+
+  /// The release rendered.
+  final ActiveRelease release;
+
+  /// The bundle whose shared sections [section] reads: the plugin's, or
+  /// the app's for an app-level component.
+  final BundleView plugin;
+
+  /// The app bundle.
+  final BundleView app;
+
+  /// The plugin key.
+  final String pluginKey;
+
+  /// The page or component section whose nodes this scope renders.
+  final NodeSection section;
+
+  /// Resolves the values of [section].
+  final ValueResolver resolver;
+
+  /// The PXL roots in scope, read when a binding is evaluated.
+  final Map<String, Object?> Function() roots;
+
+  /// Builders by permanent widget ID.
+  final Map<int, NodeBuilder> builders;
+
+  /// The section cache (RT-013).
+  final SectionCache cache;
+
+  /// Reports a problem.
+  final NodeReporter report;
+
+  /// Icons, images and fallbacks.
+  final RenderServices services;
+
+  /// The node path of the scope's root, for reports.
+  final String path;
+
+  /// The page's state, which bindings under `page` read.
+  final PageInstance? state;
+
+  /// For a component instance: the instance node's slot fills, rendered in
+  /// [parent].
+  final ({RenderScope scope, fbs.Node node})? fills;
+
+  /// The enclosing scope.
+  final RenderScope? parent;
+
+  /// A scope with [extra] roots, for a template item.
+  RenderScope withRoots(Map<String, Object?> extra, String at) {
+    Map<String, Object?> all() => {...roots(), ...extra};
+    return RenderScope(
+      release: release,
+      plugin: plugin,
+      app: app,
+      pluginKey: pluginKey,
+      section: section,
+      resolver: ValueResolver(
+        plugin: plugin,
+        roots: all,
+        token: resolver.token,
+        translation: resolver.translation,
+        limits: resolver.limits,
+      ),
+      roots: all,
+      builders: builders,
+      cache: cache,
+      report: report,
+      services: services,
+      path: at,
+      state: state,
+      fills: fills,
+      parent: parent,
+    );
+  }
+
+  /// The scope of the nearest [RenderScopeWidget].
+  static RenderScope of(BuildContext context) {
+    final w = context.dependOnInheritedWidgetOfExactType<RenderScopeWidget>();
+    if (w == null) {
+      throw StateError('a Plux node outside a Plux page');
+    }
+    return w.scope;
+  }
+}
+
+/// Provides a [RenderScope] to the nodes below it.
+final class RenderScopeWidget extends InheritedWidget {
+  /// Provides [scope].
+  const RenderScopeWidget({
+    super.key,
+    required this.scope,
+    required super.child,
+  });
+
+  /// The scope.
+  final RenderScope scope;
+
+  @override
+  bool updateShouldNotify(RenderScopeWidget old) =>
+      !identical(old.scope, scope);
+}

@@ -1,0 +1,171 @@
+{
+  "id": "01c0c450-6c00-7000-8000-0000000001bd",
+  "key": "text",
+  "kind": "page",
+  "pageKind": "screen",
+  "params": [
+    {
+      "default": "world",
+      "id": "01c0c450-6c00-7000-8000-0000000001bc",
+      "mock": "world",
+      "name": "who",
+      "required": false,
+      "type": "string"
+    }
+  ],
+  "root": {
+    "id": "01c0c450-6c00-7000-8000-0000000001c0",
+    "slots": {
+      "appBar": {
+        "id": "01c0c450-6c00-7000-8000-0000000001bf",
+        "slots": {
+          "title": {
+            "id": "01c0c450-6c00-7000-8000-0000000001be",
+            "props": {
+              "data": "text"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "id": "01c0c450-6c00-7000-8000-0000000001ba",
+        "slots": {
+          "child": {
+            "children": [
+              {
+                "id": "01c0c450-6c00-7000-8000-0000000001b0",
+                "props": {
+                  "data": {
+                    "$t": "01c0c450-6c00-7000-8000-000000000050"
+                  },
+                  "style": {
+                    "$token": "type.headline"
+                  }
+                },
+                "type": "Text"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-0000000001b1",
+                "props": {
+                  "data": {
+                    "$t": "01c0c450-6c00-7000-8000-000000000051",
+                    "args": {
+                      "count": {
+                        "$expr": "page.count"
+                      }
+                    }
+                  }
+                },
+                "type": "Text"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-0000000001b2",
+                "props": {
+                  "data": "token colour",
+                  "style": {
+                    "color": {
+                      "$token": "color.primary"
+                    },
+                    "fontWeight": "w700"
+                  }
+                },
+                "type": "Text"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-0000000001b3",
+                "props": {
+                  "data": "wide only",
+                  "textAlign": "start"
+                },
+                "responsive": {
+                  "expanded": {
+                    "textAlign": "end"
+                  }
+                },
+                "type": "Text"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-0000000001b4",
+                "props": {
+                  "data": {
+                    "$expr": "params.who + \"!\""
+                  }
+                },
+                "semantics": {
+                  "header": true,
+                  "label": "greeting"
+                },
+                "testId": "greeting",
+                "type": "Text"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-0000000001b5",
+                "props": {
+                  "textSpan": {
+                    "children": [
+                      {
+                        "style": {
+                          "fontWeight": "w700"
+                        },
+                        "text": "bold"
+                      }
+                    ],
+                    "text": "rich "
+                  }
+                },
+                "type": "RichText"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-0000000001b6",
+                "props": {
+                  "data": "selectable"
+                },
+                "type": "SelectableText"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-0000000001b8",
+                "props": {
+                  "padding": {
+                    "all": {
+                      "$token": "space.md"
+                    }
+                  }
+                },
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-0000000001b7",
+                    "props": {
+                      "data": "token padding"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "Padding"
+              }
+            ],
+            "id": "01c0c450-6c00-7000-8000-0000000001b9",
+            "props": {
+              "crossAxisAlignment": "start"
+            },
+            "type": "Column"
+          }
+        },
+        "type": "SingleChildScrollView"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "text",
+  "schemaVersion": "1.0.0",
+  "state": [
+    {
+      "default": 3,
+      "id": "01c0c450-6c00-7000-8000-0000000001bb",
+      "name": "count",
+      "type": "int"
+    }
+  ],
+  "title": "text"
+}

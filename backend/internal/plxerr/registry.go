@@ -117,6 +117,7 @@ const (
 	// Runtime rendering and navigation (PLX-4000–4999).
 
 	NodeBuildFailed     Code = 4001
+	PropValueInvalid    Code = 4002
 	UnknownWidget       Code = 4003
 	ActionsNotAvailable Code = 4010
 	PluginDisabled      Code = 4020

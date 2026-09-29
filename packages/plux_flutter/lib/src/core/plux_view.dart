@@ -7,6 +7,7 @@
 /// and failing plugins (RT-022), and its timeline events (RT-015).
 library;
 
+import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:flutter/widgets.dart';
@@ -131,12 +132,44 @@ final class _PluxPageHostState extends State<PluxPageHost> {
   final Stopwatch _sinceMount = Stopwatch()..start();
   bool _reportedFrame = false;
 
+  /// True while large sections are checked off the UI isolate.
+  bool _preparing = false;
+
   @override
   void initState() {
     super.initState();
-    _release = widget.runtime.mount();
+    final release = _release = widget.runtime.mount();
+    if (release == null) return;
     try {
-      _release?.gate.check(widget.page.section);
+      // Sections above 64 KiB are checked on a background isolate before
+      // the page builds, smaller ones on first use (ADR-0029, L-6).
+      final pending = release.gate.prepare([
+        ...release.bundle(widget.page.plugin).container.sections,
+        ...release.bundle('').container.sections,
+      ]);
+      if (pending != null) {
+        _preparing = true;
+        unawaited(
+          pending.then(
+            (_) {
+              if (mounted) setState(() => _preparing = false);
+            },
+            onError: (Object e) {
+              if (!mounted) return;
+              setState(() {
+                _preparing = false;
+                _fail(
+                  e is PluxException
+                      ? e
+                      : PluxException(PluxErrorCode.bundleMalformed, '$e'),
+                );
+              });
+            },
+          ),
+        );
+        return;
+      }
+      release.gate.check(widget.page.section);
     } on PluxException catch (e) {
       _fail(e);
     }
@@ -159,6 +192,7 @@ final class _PluxPageHostState extends State<PluxPageHost> {
     final release = _release;
     final renderer = widget.runtime.renderer;
     if (_failure != null) return widget.fallback(_failure!);
+    if (_preparing) return const SizedBox.shrink();
     if (release == null || renderer == null) {
       return widget.fallback(
         const PluxException(PluxErrorCode.syncFailed, 'no release to render'),

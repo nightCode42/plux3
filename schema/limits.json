@@ -749,6 +749,44 @@
       "description": "Total size of one app release: the app bundle and every plugin bundle."
     },
     {
+      "key": "runtime.sectionCacheBytes",
+      "unit": "bytes",
+      "default": 8388608,
+      "max": 268435456,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P3",
+      "requirements": [
+        "RT-013"
+      ],
+      "description": "Memory the runtime's cache of decoded page and component sections may hold."
+    },
+    {
+      "key": "runtime.sectionCacheEntries",
+      "unit": "count",
+      "default": 64,
+      "max": 4096,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P3",
+      "requirements": [
+        "RT-013"
+      ],
+      "description": "Page and component sections the runtime keeps decoded."
+    },
+    {
       "key": "telemetry.eventsPerRequest",
       "unit": "count",
       "default": 500,

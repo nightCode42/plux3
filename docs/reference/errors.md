@@ -718,6 +718,14 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Look up the node path in the report and fix the page; the source map of a development bundle names the document location.
 
+### PLX-4002
+
+`PROP_VALUE_INVALID` · warning · Prop value not usable
+
+**Cause.** A prop's value could not be decoded as its type, or its binding failed to evaluate. The prop took its declared default and the node rendered (ADR-0031).
+
+**Fix.** Look up the node path in the report and fix the value or the expression; the source map of a development bundle names the document location.
+
 ### PLX-4003
 
 `UNKNOWN_WIDGET` · error · Unknown widget type

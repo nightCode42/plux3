@@ -1,0 +1,36 @@
+{
+  "defaultLocale": "en",
+  "entryRoute": "layout",
+  "environments": [
+    {
+      "key": "production",
+      "name": "Production"
+    }
+  ],
+  "icon": {
+    "monogram": {
+      "background": "#0B6E4F",
+      "text": "WG"
+    }
+  },
+  "id": "01c0c450-6c00-7000-8000-000000000001",
+  "key": "widgets",
+  "kind": "app",
+  "minRuntimeVersion": "0.1.0",
+  "name": "Widget gallery",
+  "plugins": [
+    "gallery"
+  ],
+  "schemaVersion": "1.0.0",
+  "securityProfile": "standard",
+  "supportedLocales": [
+    "en"
+  ],
+  "sync": {
+    "activation": "atSafePoint",
+    "startup": {
+      "mode": "useCacheThenSync"
+    }
+  },
+  "theme": "01c0c450-6c00-7000-8000-000000000002"
+}

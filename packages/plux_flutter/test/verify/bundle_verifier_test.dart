@@ -5,6 +5,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plux_flutter/src/bundle/container.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
@@ -130,6 +131,40 @@ void main() {
     expect(
       () => SectionGate(_limits).check(bad),
       _code(PluxErrorCode.sectionHashMismatch),
+    );
+  });
+
+  test('sections above 64 KiB are checked on a background isolate [BND-006] [SEC-052]', () async {
+    final b = BundleContainer.parse(_loans());
+    final small = b.sections.first;
+    final gate = SectionGate(_limits);
+    expect(
+      gate.prepare([small]),
+      isNull,
+      reason: 'small ones are checked on use',
+    );
+    final data = Uint8List(SectionGate.uiIsolateLimit + 1);
+    final hash = Uint8List.fromList(sha256.convert(data).bytes);
+    // An unknown kind: hashed but not interpreted.
+    final large = Section(99, Uint8List(16), hash, data);
+    await gate.prepare([large, small]);
+    expect(gate.passed(large), isTrue);
+    expect(gate.prepare([large]), isNull, reason: 'checked once');
+    final wrong = Section(99, Uint8List(16), Uint8List(32), data);
+    await expectLater(
+      SectionGate(_limits).prepare([wrong]),
+      throwsA(
+        isA<PluxException>().having(
+          (e) => e.code,
+          'code',
+          PluxErrorCode.sectionHashMismatch,
+        ),
+      ),
+    );
+    final notAPage = Section(SectionKind.page, Uint8List(16), hash, data);
+    await expectLater(
+      SectionGate(_limits).prepare([notAPage]),
+      throwsA(isA<PluxException>()),
     );
   });
 

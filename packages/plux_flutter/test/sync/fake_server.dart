@@ -32,6 +32,8 @@ final class Goldens {
         'loan-calculator/loans.pxb',
         'features/features.pxb',
         'features/tasks.pxb',
+        'widgets/widgets.pxb',
+        'widgets/gallery.pxb',
       ])
         n: read(n),
     };

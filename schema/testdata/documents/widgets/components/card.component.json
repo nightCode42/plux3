@@ -1,0 +1,55 @@
+{
+  "id": "01c0c450-6c00-7000-8000-000000000020",
+  "key": "card",
+  "kind": "component",
+  "name": "Card",
+  "props": [
+    {
+      "name": "title",
+      "required": true,
+      "type": "string"
+    }
+  ],
+  "root": {
+    "children": [
+      {
+        "id": "01c0c450-6c00-7000-8000-000000000200",
+        "props": {
+          "data": {
+            "$expr": "props.title"
+          }
+        },
+        "type": "Text"
+      },
+      {
+        "id": "01c0c450-6c00-7000-8000-000000000202",
+        "props": {
+          "name": "body"
+        },
+        "slots": {
+          "fallback": {
+            "id": "01c0c450-6c00-7000-8000-000000000201",
+            "props": {
+              "data": "no body"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "Slot"
+      }
+    ],
+    "id": "01c0c450-6c00-7000-8000-000000000203",
+    "props": {
+      "crossAxisAlignment": "start"
+    },
+    "type": "Column"
+  },
+  "schemaVersion": "1.0.0",
+  "slots": [
+    {
+      "name": "body",
+      "required": false
+    }
+  ],
+  "version": 1
+}

@@ -274,6 +274,9 @@ enum PluxErrorCode {
   /// Build error in node.
   nodeBuildFailed(4001, 'NODE_BUILD_FAILED', 'Build error in node'),
 
+  /// Prop value not usable.
+  propValueInvalid(4002, 'PROP_VALUE_INVALID', 'Prop value not usable'),
+
   /// Unknown widget type.
   unknownWidget(4003, 'UNKNOWN_WIDGET', 'Unknown widget type'),
 

@@ -752,6 +752,14 @@
       "fix": "Look up the node path in the report and fix the page; the source map of a development bundle names the document location."
     },
     {
+      "code": "PLX-4002",
+      "reason": "PROP_VALUE_INVALID",
+      "severity": "warning",
+      "title": "Prop value not usable",
+      "cause": "A prop's value could not be decoded as its type, or its binding failed to evaluate. The prop took its declared default and the node rendered (ADR-0031).",
+      "fix": "Look up the node path in the report and fix the value or the expression; the source map of a development bundle names the document location."
+    },
+    {
       "code": "PLX-4003",
       "reason": "UNKNOWN_WIDGET",
       "severity": "error",

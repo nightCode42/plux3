@@ -20,6 +20,7 @@ import 'package:plux_flutter/src/devtools_api/diagnostics.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/platform/platform_services.dart';
 import 'package:plux_flutter/src/render/page_renderer.dart';
+import 'package:plux_flutter/src/render/renderer.dart';
 import 'package:plux_flutter/src/runtime_info.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
 import 'package:plux_flutter/src/store/baseline.dart';
@@ -172,7 +173,11 @@ final class PluxRuntime with WidgetsBindingObserver {
   final ValueNotifier<SyncEvent?> lastEvent = ValueNotifier(null);
 
   /// Turns page sections into widgets (ADR-0031).
-  PageRenderer? renderer;
+  late PageRenderer? renderer = PluxRenderer(
+    config: config,
+    report: _report,
+    failure: (e) => unawaited(failure(e)),
+  );
 
   /// What debugging tools see (`plux_devtools`).
   late final RuntimeDiagnostics diagnostics = RuntimeDiagnostics(
@@ -384,6 +389,12 @@ final class PluxRuntime with WidgetsBindingObserver {
       _pendingRevert = true;
       await _atSafePoint();
     }
+  }
+
+  @override
+  void didHaveMemoryPressure() {
+    final r = renderer;
+    if (r is PluxRenderer) r.memoryPressure();
   }
 
   @override

@@ -460,6 +460,11 @@ var registry = []Definition{
 		"Look up the node path in the report and fix the page; the source map of a development bundle names the document location.", false,
 	},
 	{
+		PropValueInvalid, "PROP_VALUE_INVALID", SeverityWarning, "Prop value not usable",
+		"A prop's value could not be decoded as its type, or its binding failed to evaluate. The prop took its declared default and the node rendered (ADR-0031).",
+		"Look up the node path in the report and fix the value or the expression; the source map of a development bundle names the document location.", false,
+	},
+	{
 		UnknownWidget, "UNKNOWN_WIDGET", SeverityError, "Unknown widget type",
 		"A node names a widget type this runtime does not know. A neutral placeholder is shown instead (WGT-014).",
 		"Raise the app's minimum runtime version for the widget, or update the host app to a newer runtime.", false,

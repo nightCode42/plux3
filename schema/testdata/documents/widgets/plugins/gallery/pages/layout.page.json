@@ -1,0 +1,638 @@
+{
+  "id": "01c0c450-6c00-7000-8000-000000000149",
+  "key": "layout",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01c0c450-6c00-7000-8000-00000000014c",
+    "slots": {
+      "appBar": {
+        "id": "01c0c450-6c00-7000-8000-00000000014b",
+        "slots": {
+          "title": {
+            "id": "01c0c450-6c00-7000-8000-00000000014a",
+            "props": {
+              "data": "layout"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "id": "01c0c450-6c00-7000-8000-000000000148",
+        "slots": {
+          "child": {
+            "children": [
+              {
+                "id": "01c0c450-6c00-7000-8000-000000000103",
+                "props": {
+                  "alignment": "centerRight"
+                },
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-000000000102",
+                    "props": {
+                      "height": 24,
+                      "width": 40
+                    },
+                    "slots": {
+                      "child": {
+                        "id": "01c0c450-6c00-7000-8000-000000000101",
+                        "props": {
+                          "color": "#FF2196F3"
+                        },
+                        "type": "ColoredBox"
+                      }
+                    },
+                    "type": "SizedBox"
+                  }
+                },
+                "type": "Align"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-000000000106",
+                "props": {
+                  "aspectRatio": 4.0
+                },
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-000000000105",
+                    "props": {
+                      "height": 24,
+                      "width": 40
+                    },
+                    "slots": {
+                      "child": {
+                        "id": "01c0c450-6c00-7000-8000-000000000104",
+                        "props": {
+                          "color": "#FF2196F3"
+                        },
+                        "type": "ColoredBox"
+                      }
+                    },
+                    "type": "SizedBox"
+                  }
+                },
+                "type": "AspectRatio"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-000000000108",
+                "props": {
+                  "baseline": 20.0,
+                  "baselineType": "alphabetic"
+                },
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-000000000107",
+                    "props": {
+                      "data": "baseline"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "Baseline"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-00000000010a",
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-000000000109",
+                    "props": {
+                      "data": "center"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "Center"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-00000000010c",
+                "props": {
+                  "constraints": {
+                    "maxWidth": 200.0,
+                    "minHeight": 30.0
+                  }
+                },
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-00000000010b",
+                    "props": {
+                      "data": "constrained"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "ConstrainedBox"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-00000000010e",
+                "props": {
+                  "alignment": "center",
+                  "color": "#FFFFEB3B",
+                  "height": 40.0,
+                  "padding": {
+                    "all": 4.0
+                  }
+                },
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-00000000010d",
+                    "props": {
+                      "data": "container"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "Container"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-000000000111",
+                "props": {
+                  "decoration": {
+                    "border": {
+                      "all": {
+                        "color": "#FF000000",
+                        "width": 2.0
+                      }
+                    },
+                    "borderRadius": {
+                      "all": 8.0
+                    },
+                    "boxShadow": [
+                      {
+                        "blurRadius": 4.0,
+                        "color": "#80000000",
+                        "offset": {
+                          "dx": 1.0,
+                          "dy": 2.0
+                        }
+                      }
+                    ],
+                    "color": "#FFE0E0E0"
+                  }
+                },
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-000000000110",
+                    "props": {
+                      "padding": {
+                        "horizontal": 8.0,
+                        "vertical": 4.0
+                      }
+                    },
+                    "slots": {
+                      "child": {
+                        "id": "01c0c450-6c00-7000-8000-00000000010f",
+                        "props": {
+                          "data": "decorated"
+                        },
+                        "type": "Text"
+                      }
+                    },
+                    "type": "Padding"
+                  }
+                },
+                "type": "DecoratedBox"
+              },
+              {
+                "children": [
+                  {
+                    "id": "01c0c450-6c00-7000-8000-000000000114",
+                    "props": {
+                      "flex": 2
+                    },
+                    "slots": {
+                      "child": {
+                        "id": "01c0c450-6c00-7000-8000-000000000113",
+                        "props": {
+                          "height": 24,
+                          "width": 40
+                        },
+                        "slots": {
+                          "child": {
+                            "id": "01c0c450-6c00-7000-8000-000000000112",
+                            "props": {
+                              "color": "#FFF44336"
+                            },
+                            "type": "ColoredBox"
+                          }
+                        },
+                        "type": "SizedBox"
+                      }
+                    },
+                    "type": "Expanded"
+                  },
+                  {
+                    "id": "01c0c450-6c00-7000-8000-000000000117",
+                    "props": {
+                      "fit": "loose"
+                    },
+                    "slots": {
+                      "child": {
+                        "id": "01c0c450-6c00-7000-8000-000000000116",
+                        "props": {
+                          "height": 24,
+                          "width": 40
+                        },
+                        "slots": {
+                          "child": {
+                            "id": "01c0c450-6c00-7000-8000-000000000115",
+                            "props": {
+                              "color": "#FF4CAF50"
+                            },
+                            "type": "ColoredBox"
+                          }
+                        },
+                        "type": "SizedBox"
+                      }
+                    },
+                    "type": "Flexible"
+                  },
+                  {
+                    "id": "01c0c450-6c00-7000-8000-000000000118",
+                    "type": "Spacer"
+                  },
+                  {
+                    "id": "01c0c450-6c00-7000-8000-00000000011a",
+                    "props": {
+                      "height": 24,
+                      "width": 40
+                    },
+                    "slots": {
+                      "child": {
+                        "id": "01c0c450-6c00-7000-8000-000000000119",
+                        "props": {
+                          "color": "#FF9C27B0"
+                        },
+                        "type": "ColoredBox"
+                      }
+                    },
+                    "type": "SizedBox"
+                  }
+                ],
+                "id": "01c0c450-6c00-7000-8000-00000000011b",
+                "props": {
+                  "mainAxisAlignment": "spaceBetween",
+                  "spacing": 4.0
+                },
+                "type": "Row"
+              },
+              {
+                "children": [
+                  {
+                    "id": "01c0c450-6c00-7000-8000-00000000011c",
+                    "props": {
+                      "data": "flex a"
+                    },
+                    "type": "Text"
+                  },
+                  {
+                    "id": "01c0c450-6c00-7000-8000-00000000011d",
+                    "props": {
+                      "data": "flex b"
+                    },
+                    "type": "Text"
+                  }
+                ],
+                "id": "01c0c450-6c00-7000-8000-00000000011e",
+                "props": {
+                  "direction": "horizontal"
+                },
+                "type": "Flex"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-000000000120",
+                "props": {
+                  "fit": "contain"
+                },
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-00000000011f",
+                    "props": {
+                      "data": "fitted"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "FittedBox"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-000000000123",
+                "props": {
+                  "height": 30.0
+                },
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-000000000122",
+                    "props": {
+                      "widthFactor": 0.5
+                    },
+                    "slots": {
+                      "child": {
+                        "id": "01c0c450-6c00-7000-8000-000000000121",
+                        "props": {
+                          "color": "#FF3F51B5"
+                        },
+                        "type": "ColoredBox"
+                      }
+                    },
+                    "type": "FractionallySizedBox"
+                  }
+                },
+                "type": "SizedBox"
+              },
+              {
+                "children": [
+                  {
+                    "id": "01c0c450-6c00-7000-8000-000000000124",
+                    "props": {
+                      "data": "hidden"
+                    },
+                    "type": "Text"
+                  },
+                  {
+                    "id": "01c0c450-6c00-7000-8000-000000000125",
+                    "props": {
+                      "data": "indexed"
+                    },
+                    "type": "Text"
+                  }
+                ],
+                "id": "01c0c450-6c00-7000-8000-000000000126",
+                "props": {
+                  "index": 1
+                },
+                "type": "IndexedStack"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-000000000128",
+                "props": {
+                  "maxHeight": 20.0
+                },
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-000000000127",
+                    "props": {
+                      "data": "limited"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "LimitedBox"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-00000000012a",
+                "props": {
+                  "opacity": 0.5
+                },
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-000000000129",
+                    "props": {
+                      "data": "half"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "Opacity"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-00000000012f",
+                "props": {
+                  "height": 50.0
+                },
+                "slots": {
+                  "child": {
+                    "children": [
+                      {
+                        "id": "01c0c450-6c00-7000-8000-00000000012b",
+                        "props": {
+                          "color": "#FFBBDEFB"
+                        },
+                        "type": "ColoredBox"
+                      },
+                      {
+                        "id": "01c0c450-6c00-7000-8000-00000000012d",
+                        "props": {
+                          "bottom": 4.0,
+                          "right": 4.0
+                        },
+                        "slots": {
+                          "child": {
+                            "id": "01c0c450-6c00-7000-8000-00000000012c",
+                            "props": {
+                              "data": "positioned"
+                            },
+                            "type": "Text"
+                          }
+                        },
+                        "type": "Positioned"
+                      }
+                    ],
+                    "id": "01c0c450-6c00-7000-8000-00000000012e",
+                    "props": {
+                      "fit": "expand"
+                    },
+                    "type": "Stack"
+                  }
+                },
+                "type": "SizedBox"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-000000000131",
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-000000000130",
+                    "props": {
+                      "data": "safe"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "SafeArea"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-000000000133",
+                "props": {
+                  "angle": 0.1,
+                  "flipX": false,
+                  "offset": {
+                    "dx": 4.0,
+                    "dy": 0.0
+                  },
+                  "scale": 1.1
+                },
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-000000000132",
+                    "props": {
+                      "data": "transformed"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "Transform"
+              },
+              {
+                "children": [
+                  {
+                    "id": "01c0c450-6c00-7000-8000-000000000134",
+                    "props": {
+                      "data": "wrap 0"
+                    },
+                    "type": "Text"
+                  },
+                  {
+                    "id": "01c0c450-6c00-7000-8000-000000000135",
+                    "props": {
+                      "data": "wrap 1"
+                    },
+                    "type": "Text"
+                  },
+                  {
+                    "id": "01c0c450-6c00-7000-8000-000000000136",
+                    "props": {
+                      "data": "wrap 2"
+                    },
+                    "type": "Text"
+                  },
+                  {
+                    "id": "01c0c450-6c00-7000-8000-000000000137",
+                    "props": {
+                      "data": "wrap 3"
+                    },
+                    "type": "Text"
+                  }
+                ],
+                "id": "01c0c450-6c00-7000-8000-000000000138",
+                "props": {
+                  "runSpacing": 2.0,
+                  "spacing": 4.0
+                },
+                "type": "Wrap"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-00000000013a",
+                "props": {
+                  "color": "#FFFFCDD2"
+                },
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-000000000139",
+                    "props": {
+                      "data": "colored"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "ColoredBox"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-00000000013d",
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-00000000013c",
+                    "props": {
+                      "height": 30,
+                      "width": 30
+                    },
+                    "slots": {
+                      "child": {
+                        "id": "01c0c450-6c00-7000-8000-00000000013b",
+                        "props": {
+                          "color": "#FF2196F3"
+                        },
+                        "type": "ColoredBox"
+                      }
+                    },
+                    "type": "SizedBox"
+                  }
+                },
+                "type": "ClipOval"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-000000000140",
+                "props": {
+                  "borderRadius": {
+                    "all": 6.0
+                  }
+                },
+                "slots": {
+                  "child": {
+                    "id": "01c0c450-6c00-7000-8000-00000000013f",
+                    "props": {
+                      "height": 30,
+                      "width": 30
+                    },
+                    "slots": {
+                      "child": {
+                        "id": "01c0c450-6c00-7000-8000-00000000013e",
+                        "props": {
+                          "color": "#FF2196F3"
+                        },
+                        "type": "ColoredBox"
+                      }
+                    },
+                    "type": "SizedBox"
+                  }
+                },
+                "type": "ClipRRect"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-000000000141",
+                "props": {
+                  "thickness": 2.0
+                },
+                "type": "Divider"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-000000000146",
+                "props": {
+                  "height": 20.0
+                },
+                "slots": {
+                  "child": {
+                    "children": [
+                      {
+                        "id": "01c0c450-6c00-7000-8000-000000000142",
+                        "props": {
+                          "data": "a"
+                        },
+                        "type": "Text"
+                      },
+                      {
+                        "id": "01c0c450-6c00-7000-8000-000000000143",
+                        "type": "VerticalDivider"
+                      },
+                      {
+                        "id": "01c0c450-6c00-7000-8000-000000000144",
+                        "props": {
+                          "data": "b"
+                        },
+                        "type": "Text"
+                      }
+                    ],
+                    "id": "01c0c450-6c00-7000-8000-000000000145",
+                    "type": "Row"
+                  }
+                },
+                "type": "SizedBox"
+              }
+            ],
+            "id": "01c0c450-6c00-7000-8000-000000000147",
+            "props": {
+              "crossAxisAlignment": "stretch"
+            },
+            "type": "Column"
+          }
+        },
+        "type": "SingleChildScrollView"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "layout",
+  "schemaVersion": "1.0.0",
+  "title": "layout"
+}
