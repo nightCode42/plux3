@@ -59,6 +59,23 @@ updates:
       dart:
         update-types: [minor, patch]
 
+  # plux-svgc, the worker's SVG compiler, resolves outside the workspace
+  # (ADR-0027 Revision), so it has its own lockfile.
+  - package-ecosystem: pub
+    directory: "/packages/plux_svgc"
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      svgc:
+        update-types: [minor, patch]
+
   - package-ecosystem: bun
     directory: "/studio"
     schedule:

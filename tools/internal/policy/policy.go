@@ -220,3 +220,40 @@ func findUpdate(updates []Update, m Manifest) (Update, bool) {
 	}
 	return Update{}, false
 }
+
+// workflowShell is the top-level default every workflow sets: GitHub runs
+// `shell: bash` with -eo pipefail, but its implicit default without it,
+// so `make check | tee summary` would pass whatever make returned.
+const workflowShell = "\ndefaults:\n  run:\n    shell: bash\n"
+
+// CheckWorkflowShells verifies that every workflow runs its steps in bash
+// with pipefail and that no job or step overrides it, so no failing gate
+// can be hidden by a pipe.
+func CheckWorkflowShells(root string) error {
+	files, err := filepath.Glob(filepath.Join(root, ".github", "workflows", "*.y*ml"))
+	if err != nil {
+		return fmt.Errorf("policy.CheckWorkflowShells: %w", err)
+	}
+	if len(files) == 0 {
+		return errors.New("policy.CheckWorkflowShells: no workflows")
+	}
+	var problems []string
+	for _, f := range files {
+		data, err := os.ReadFile(f)
+		if err != nil {
+			return fmt.Errorf("policy.CheckWorkflowShells: %w", err)
+		}
+		text := strings.ReplaceAll(string(data), "\r\n", "\n")
+		name := filepath.Base(f)
+		if !strings.Contains(text, workflowShell) {
+			problems = append(problems, name+" has no top-level `defaults: run: shell: bash`")
+		}
+		if strings.Count(text, "shell:") != 1 {
+			problems = append(problems, name+" sets a shell other than the top-level default")
+		}
+	}
+	if len(problems) > 0 {
+		return fmt.Errorf("policy.CheckWorkflowShells: %s", strings.Join(problems, "; "))
+	}
+	return nil
+}

@@ -30,6 +30,13 @@ concurrency:
 env:
   GIT_CLIFF_VERSION: 2.14.2
 
+# Every run step is bash with -eo pipefail, so a failing command fails its
+# step even when piped (into tee, say); the runner's default shell has no
+# pipefail.
+defaults:
+  run:
+    shell: bash
+
 jobs:
   release:
     name: Release ${{ github.ref_name }}

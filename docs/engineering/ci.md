@@ -9,6 +9,7 @@ How the pipeline is built and why. The requirements are spec §29 (`CI-001`–`C
 - **One definition of every check.** CI jobs, git hooks and developers all run the same Makefile targets. A green `make check` locally means a green pipeline.
 - **Fast feedback, complete coverage.** Toolchain jobs run only when their files change on a pull request, and always on `main`, on schedule and on manual runs. Repository-wide checks always run.
 - **One required check.** The job **CI OK** depends on every other job and fails if any of them failed or was cancelled; skipped jobs count as passed. The `main` ruleset requires only CI OK, so path filtering never blocks a merge and adding a job never requires a settings change.
+- **A failing command fails its step.** Every workflow sets `defaults: run: shell: bash`, which GitHub runs with `-eo pipefail`; without it a gate piped into the job summary (`make go-cover | tee …`) passes whatever `make` returned. A policy test (`tools/internal/policy`, `CI-001`) fails if a workflow lacks the default or overrides it.
 - **Least privilege.** Workflows start with `permissions: {}`; each job requests only what it needs. Checkouts never persist credentials. Actions are pinned to full commit SHAs. `actionlint` and `zizmor` check every workflow.
 
 ## 2. Workflows
@@ -45,7 +46,8 @@ How the pipeline is built and why. The requirements are spec §29 (`CI-001`–`C
 | Go vulnerabilities | Go changes | `go-vuln` | `CI-001` |
 | Dart and Flutter | Dart changes | `dart-lock-check dart-fmt-check dart-analyze dart-cover`, `widgets-api-check` (the Flutter snapshot matches the pinned SDK) | `CI-001`, `CI-003`, `QA-001`, `WGT-003` |
 | Studio | Studio changes | `studio-check` (frozen install, Biome, types, coverage) | `CI-001`, `QA-001` |
-| Compose stack | Go or `deploy/` changes | `compose-up` (builds the server image and starts the whole stack), waits for `/readyz`, then `compose-test`: the Go integration and end-to-end tests against the stack's PostgreSQL, SeaweedFS and Valkey | `DEP-002`, `QA-005` |
+| Compose stack | Go or `deploy/` changes | `compose-up` (builds the server image and starts the whole stack), waits for `/readyz`, then `compose-test`: the Go integration and end-to-end tests against the stack's PostgreSQL, SeaweedFS and Valkey; then `image-check` on amd64 (as the arm64 job) | `DEP-002`, `QA-005` |
+| Server image (arm64) | Go changes, on `ubuntu-24.04-arm` | `image-check`: builds the server image natively, so the arm64 half of the release image (Skia path operations and `plux-svgc`, built per platform) is built and tested before a release; the image's own `plux-svgc` must reproduce `packages/plux_svgc/test/icon.pathops.vec`, the golden made on amd64, byte for byte, and the image must carry its third-party notices under `/usr/share/doc` | `CMP-031`, `CMP-002` |
 | Image codecs reproduce | codec changes (`backend/internal/compiler/media/codecs/**`), daily and manual runs | `wasm-codecs-check`: rebuilds `webp.wasm` and `avif.wasm` from their pinned sources with the pinned Ubuntu 24.04 toolchain and compares them with `codecs.lock`, so a committed binary cannot differ from its source; it takes minutes, so it does not run on every push | `CMP-030` |
 | CI OK | always | — | `CI-009` |
 

@@ -124,3 +124,33 @@ func TestCheckDependabotCoverageReportsGaps(t *testing.T) {
 		}
 	}
 }
+
+// Every CI gate fails when its command fails, even when its output is
+// piped into the step summary.
+// Verifies: CI-001.
+func TestProjectWorkflowsRunBashWithPipefail(t *testing.T) {
+	t.Parallel()
+
+	if err := CheckWorkflowShells(repoRoot); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// TestCheckWorkflowShellsReportsGaps checks the failures.
+func TestCheckWorkflowShellsReportsGaps(t *testing.T) {
+	t.Parallel()
+	if err := CheckWorkflowShells(t.TempDir()); err == nil {
+		t.Error("no workflows passed")
+	}
+	root := t.TempDir()
+	write(t, root, ".github/workflows/ok.yml", "on: push\ndefaults:\n  run:\n    shell: bash\njobs: {}\n")
+	if err := CheckWorkflowShells(root); err != nil {
+		t.Errorf("a good workflow: %v", err)
+	}
+	write(t, root, ".github/workflows/bare.yml", "on: push\njobs:\n  a:\n    steps:\n      - run: make check | tee out\n")
+	write(t, root, ".github/workflows/sh.yaml", "on: push\ndefaults:\n  run:\n    shell: bash\njobs:\n  a:\n    steps:\n      - run: x\n        shell: sh\n")
+	err := CheckWorkflowShells(root)
+	if err == nil || !strings.Contains(err.Error(), "bare.yml has no top-level") || !strings.Contains(err.Error(), "sh.yaml sets a shell") {
+		t.Errorf("CheckWorkflowShells = %v", err)
+	}
+}
