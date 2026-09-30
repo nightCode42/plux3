@@ -39,9 +39,9 @@ FUZZTIME      ?= 30s
 GO_TOOLCHAIN  := $(shell sed -n 's/^toolchain //p' backend/go.mod)
 GO_INSTALL    := GOTOOLCHAIN=$(GO_TOOLCHAIN) $(GO) install
 GO_MODULES    := backend tools
-DART_PACKAGES := packages/plux_devtools packages/plux_flutter packages/plux_svgc packages/plux_widget_api apps/starter
+DART_PACKAGES := packages/plux_devtools packages/plux_flutter packages/plux_svgc packages/plux_widget_api apps/starter test/bench/runtime
 # Generated Dart code is verified by regeneration (CI-003), not by the formatter.
-DART_SOURCES  := find packages apps -name '*.dart' ! -name '*.g.dart' ! -name '*_generated.dart' ! -path '*/build/*' -print0
+DART_SOURCES  := find packages apps test/bench test/size -name '*.dart' ! -name '*.g.dart' ! -name '*_generated.dart' ! -path '*/build/*' ! -path '*/.dart_tool/*' -print0
 # Everything `make gen` writes; `go-gen-check` fails if any of it changes.
 GEN_PATHS     := backend tools docs/reference packages studio/packages schema
 TOOLS_BIN     := $(subst \,/,$(shell $(GO) env GOPATH | tr -d '\r'))/bin
@@ -89,6 +89,7 @@ GO_BUILD_FLAGS  := -trimpath -buildvcs=false -ldflags "-s -w -buildid= \
 	dart-check dart-get dart-lock-check dart-fmt dart-fmt-check dart-analyze dart-test dart-cover widgets-api widgets-api-check \
 	studio-check studio-install studio-fmt studio-lint studio-typecheck studio-test studio-cover \
 	compose-secrets compose-up compose-down compose-seed dev dev-starter dev-app e2e-starter compat compose-test image-check \
+	bench-runtime bench-runtime-ab bench-sync size-android size-ios \
 	release-binaries release-notes repo-check spec-lint trace secrets workflows-lint reuse-lint hygiene
 
 help: ## Show this help
@@ -346,6 +347,34 @@ widgets-api: ## Snapshot the pinned Flutter SDK's constructors and enums for the
 # Verifies: WGT-003.
 widgets-api-check: ## Fail if schema/widgets/flutter-api.json does not match the pinned Flutter SDK (WGT-003)
 	$(WIDGETS_API) --check
+
+##@ Benchmarks and size (QA-007)
+
+# Measured runs of the runtime benchmark, and runs per side of the A/B
+# comparison.
+RUNS ?=
+# The commit the A/B comparison measures against.
+BASE ?= origin/main
+
+bench-runtime: ## Build the runtime benchmark in profile mode and run it under xvfb (Linux; RUNS=5)
+	test/bench/runtime/bench.sh measure $(RUNS)
+
+# Verifies: QA-007.
+bench-runtime-ab: ## Compare the runtime benchmark with BASE's runtime; fail on regressions beyond 10% (QA-007; RUNS=10)
+	test/bench/runtime/bench.sh compare $(BASE) $(RUNS)
+
+# Verifies: QA-007, NFR-007.
+bench-sync: ## Sync the benchmark app on the simulated slow network against a server built from source (needs PLUX_TEST_DATABASE_URL)
+	@test -n "$$PLUX_TEST_DATABASE_URL" || { echo "✗ set PLUX_TEST_DATABASE_URL to a PostgreSQL database (see docs/engineering/testing.md)"; exit 1; }
+	cd backend && PLUX_E2E_FLUTTER="$$(command -v flutter)" $(GO) test -count=1 -timeout 30m -run TestSyncOnSlowNetwork -v ./internal/server
+
+# Verifies: RT-061, NFR-009.
+size-android: ## Check what plux_flutter adds to a release APK for arm64 (RT-061; needs the Android SDK)
+	test/size/size.sh android
+
+# Verifies: RT-061, NFR-009.
+size-ios: ## Check what plux_flutter adds to a release iOS app for arm64 (RT-061; needs Xcode)
+	test/size/size.sh ios
 
 ##@ Studio (Bun, TypeScript)
 
