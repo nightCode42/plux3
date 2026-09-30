@@ -3,11 +3,15 @@
 
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
+import 'package:plux_flutter/src/bundle/container.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/schema/limits.g.dart';
 import 'package:plux_flutter/src/store/directory_sync.dart';
 import 'package:plux_flutter/src/store/release_store.dart';
 import 'package:plux_flutter/src/sync/api_client.dart';
@@ -363,6 +367,26 @@ void main() {
     expect(Directory('$root/objects/bundles').listSync(), isEmpty);
   });
 
+  test('the quota is the one the release\'s signed app bundle declares [SYN-012] [LIM-004]', () async {
+    server.release = FakeRelease(10, withDiskQuota(demo, 1000), {
+      'loans': loans,
+    });
+    final (r, _) = await sync();
+    expect(r.error?.code, PluxErrorCode.diskQuotaExceeded, reason: '$r');
+    expect(r.error!.message, contains('over the quota of 1000'));
+    expect(
+      Directory('$root/objects/bundles').listSync(),
+      isEmpty,
+      reason: 'the app bundle read for its limits is not kept',
+    );
+
+    server.release = FakeRelease(11, withDiskQuota(demo, 100 << 20), {
+      'loans': loans,
+    });
+    final (ok, _) = await sync();
+    expect(ok.outcome, SyncOutcome.staged, reason: '$ok');
+  });
+
   test('ignores the sequence it reverted from and records control switches [SYN-006] [RT-022]', () async {
     await firstRelease();
     final store = ReleaseStore.open(root);
@@ -397,4 +421,31 @@ void main() {
       expect(events.last.toString(), contains('mandatory'));
     },
   );
+}
+
+/// [app] with the `device.diskQuota` its meta section carries set to
+/// [quota], the bundle re-encoded (its hash changes; the fake server signs
+/// what it serves).
+Uint8List withDiskQuota(Uint8List app, int quota) {
+  Uint8List le(int v) =>
+      (ByteData(8)..setInt64(0, v, Endian.little)).buffer.asUint8List();
+  final b = BundleContainer.parse(app);
+  final sections = [
+    for (final s in b.sections)
+      if (s.kind != SectionKind.meta)
+        s
+      else
+        () {
+          final data = Uint8List.fromList(s.data);
+          final from = le(PluxLimit.deviceDiskQuota.defaultValue);
+          final at = [
+            for (var i = 0; i + 8 <= data.length; i++)
+              if (listEquals(data.sublist(i, i + 8), from)) i,
+          ];
+          expect(at, hasLength(1), reason: 'one device.diskQuota value');
+          data.setRange(at.single, at.single + 8, le(quota));
+          return Section(s.kind, s.id, s.hash, data);
+        }(),
+  ];
+  return encodeBundle(b.kind, sections);
 }

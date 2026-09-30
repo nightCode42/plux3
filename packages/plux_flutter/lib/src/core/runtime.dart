@@ -165,8 +165,7 @@ final class PluxRuntime with WidgetsBindingObserver {
             ),
             supportsFeature: features.supports,
             verifierLimits: limits,
-            diskQuota:
-                config.diskQuota ?? PluxLimit.deviceDiskQuota.defaultValue,
+            diskQuota: config.diskQuota ?? PluxLimit.deviceDiskQuota.max,
             assets: assets,
           ),
         ),

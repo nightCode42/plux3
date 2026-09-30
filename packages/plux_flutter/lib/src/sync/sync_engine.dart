@@ -9,14 +9,17 @@
 library;
 
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:plux_flutter/src/assets/assets.dart';
 import 'package:plux_flutter/src/bundle/container.dart';
+import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/delta/delta.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/mmap/mapped_file.dart';
+import 'package:plux_flutter/src/schema/limits.g.dart';
 import 'package:plux_flutter/src/store/release_record.dart';
 import 'package:plux_flutter/src/store/release_store.dart';
 import 'package:plux_flutter/src/sync/api_client.dart';
@@ -89,7 +92,10 @@ final class SyncConfig {
   /// The FlatBuffers verifier's limits.
   final VerifierLimits verifierLimits;
 
-  /// The bytes the store may use (`device.diskQuota`, SYN-012).
+  /// The most bytes the store may use whatever the app allows: the host's
+  /// `PluxConfig.diskQuota`. The quota in effect is the `device.diskQuota`
+  /// of the release's signed app bundle within this cap (SYN-012,
+  /// LIM-004).
   final int diskQuota;
 
   /// The largest bundle accepted (`bundle.pluginSize`).
@@ -211,12 +217,6 @@ final class SyncEngine {
           if (!store.hasObject(ObjectKind.bundles, w.hash)) w,
       ];
       var total = missing.fold<int>(0, (n, w) => n + (sizes[w.hash] ?? 0));
-      if (store.keptUsage() + total > config.diskQuota) {
-        throw PluxException(
-          PluxErrorCode.diskQuotaExceeded,
-          'the release needs ${store.keptUsage() + total} bytes, over the quota of ${config.diskQuota}',
-        );
-      }
       final installed = {
         for (final b in active?.bundles ?? const <RecordBundle>[])
           b.key: b.hash,
@@ -228,7 +228,26 @@ final class SyncEngine {
         emit(SyncDownloading(received, total));
       }
 
+      // The app bundle first: its limits set the quota the rest must fit.
+      final app = wanted.first;
       final queue = [...missing];
+      if (queue.remove(app)) {
+        await _obtain(
+          app,
+          served[app.key],
+          installed[app.key],
+          sizes[app.hash] ?? 0,
+          progress,
+        );
+      }
+      final quota = _quota(app.hash);
+      if (store.keptUsage() + total > quota) {
+        store.collectGarbage();
+        throw PluxException(
+          PluxErrorCode.diskQuotaExceeded,
+          'the release needs ${store.keptUsage() + total} bytes, over the quota of $quota',
+        );
+      }
       Future<void> worker() async {
         while (queue.isNotEmpty) {
           final w = queue.removeAt(0);
@@ -243,11 +262,12 @@ final class SyncEngine {
       }
 
       await Future.wait([
-        for (var i = 0; i < downloader.parallelism && i < missing.length; i++)
+        for (var i = 0; i < downloader.parallelism && i < queue.length; i++)
           worker(),
       ]);
       final assets = await _obtainAssets(
         wanted,
+        quota,
         total,
         (n) => total += n,
         progress,
@@ -314,9 +334,10 @@ final class SyncEngine {
   /// store lacks, one file per asset as this device prefers it (AST-001),
   /// each checked against the SHA-256 its signed bundle lists; returns the
   /// files the release uses. [bundleBytes] were already counted against
-  /// the quota; [planned] learns the bytes the assets add to the download.
+  /// [quota]; [planned] learns the bytes the assets add to the download.
   Future<List<String>> _obtainAssets(
     List<RecordBundle> bundles,
+    int quota,
     int bundleBytes,
     void Function(int) planned,
     void Function(int) progress,
@@ -341,10 +362,10 @@ final class SyncEngine {
         if (!store.hasObject(ObjectKind.assets, h)) h,
     ]..sort();
     final needed = missing.fold<int>(0, (n, h) => n + sizes[h]!);
-    if (store.keptUsage() + bundleBytes + needed > config.diskQuota) {
+    if (store.keptUsage() + bundleBytes + needed > quota) {
       throw PluxException(
         PluxErrorCode.diskQuotaExceeded,
-        'the release and its assets need ${store.keptUsage() + bundleBytes + needed} bytes, over the quota of ${config.diskQuota}',
+        'the release and its assets need ${store.keptUsage() + bundleBytes + needed} bytes, over the quota of $quota',
       );
     }
     planned(needed);
@@ -519,14 +540,41 @@ final class SyncEngine {
     store.commitObject(ObjectKind.bundles, w.hash, part);
   }
 
-  void _verify(Uint8List data, Uint8List hash, {bool fromDelta = false}) =>
-      verifyBundle(
-        data,
-        hash,
-        limits: config.verifierLimits,
-        supportsFeature: config.supportsFeature,
-        fromDelta: fromDelta,
-      );
+  /// The disk quota of the release whose app bundle is [appHash] (SYN-012,
+  /// LIM-004): the `device.diskQuota` its signed app bundle carries, or the
+  /// registry's default, within the host's cap. The stored bundle is
+  /// verified again before its limits are read; one that fails is deleted,
+  /// so the next sync downloads it again.
+  int _quota(String appHash) {
+    var quota = PluxLimit.deviceDiskQuota.defaultValue;
+    final path = store.objectPath(ObjectKind.bundles, appHash);
+    final file = MappedFile.open(path);
+    try {
+      final bundle = _verify(file.bytes, hexDecode(appHash));
+      final meta = fbs.Meta(bundle.ofKind(SectionKind.meta).single.data);
+      for (final l in meta.limits ?? const <fbs.Limit>[]) {
+        if (l.key == PluxLimit.deviceDiskQuota.key) quota = l.value;
+      }
+    } on PluxException {
+      file.release();
+      File(path).deleteSync();
+      rethrow;
+    }
+    file.release();
+    return math.min(quota, config.diskQuota);
+  }
+
+  BundleContainer _verify(
+    Uint8List data,
+    Uint8List hash, {
+    bool fromDelta = false,
+  }) => verifyBundle(
+    data,
+    hash,
+    limits: config.verifierLimits,
+    supportsFeature: config.supportsFeature,
+    fromDelta: fromDelta,
+  );
 }
 
 final class _Counter {
