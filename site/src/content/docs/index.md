@@ -11,6 +11,10 @@ and renders it as native widgets.
 
 ## Start here
 
+- [Concepts](../../../../docs/guides/concepts.md): apps, plugins, pages, releases and what the
+  runtime does with them.
+- [Publish a page and see it on a device](../../../../docs/guides/first-release.md): the
+  Phase 3 loop on your machine, from `make dev` to an offline relaunch.
 - [Host app guide](../../../../docs/guides/host-app.md): add the runtime to a Flutter app, start
   it, show published pages and control sync, theme and consent.
 - The [starter app](https://github.com/nightCode42/plux3/tree/main/apps/starter) is a complete
@@ -24,5 +28,7 @@ and renders it as native widgets.
   [CLI](../../../../docs/reference/cli.md) and the [API](../../../../docs/reference/api.md).
 - [Specification](../../../../docs/requirements.md) and
   [architecture decisions](../../../../docs/adr/README.md).
-- [Security](../../../../docs/security/README.md), [runbooks](../../../../docs/runbooks/README.md)
+- [Security](../../../../docs/security/README.md) and the
+  [threat model](../../../../docs/security/threat-model.md),
+  [runbooks](../../../../docs/runbooks/README.md)
   and [benchmarks](../../../../docs/benchmarks/README.md).

@@ -18,7 +18,15 @@ export default defineConfig({
         "Server-driven UI and plugins for Flutter: design in Studio, publish signed bundles, render native widgets.",
       social: [{ icon: "github", label: "GitHub", href: repository }],
       sidebar: [
-        { label: "Start here", items: [{ slug: "index" }, { slug: "guides/host-app" }] },
+        {
+          label: "Start here",
+          items: [
+            { slug: "index" },
+            { slug: "guides/concepts" },
+            { slug: "guides/first-release" },
+            { slug: "guides/host-app" },
+          ],
+        },
         { label: "Reference", collapsed: true, items: [{ autogenerate: { directory: "reference" } }] },
         { label: "Runbooks", collapsed: true, items: [{ autogenerate: { directory: "runbooks" } }] },
         { label: "Security", collapsed: true, items: [{ autogenerate: { directory: "security" } }] },
