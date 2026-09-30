@@ -1,0 +1,20 @@
+name: plux_size_plux
+description: >-
+  The blank app of the size job (RT-061) with the Plux runtime: it
+  initializes Plux and shows a page, so the whole runtime is built in.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plux_flutter: ^0.1.0
+
+flutter:
+  uses-material-design: true

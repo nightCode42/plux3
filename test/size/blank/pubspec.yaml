@@ -1,0 +1,19 @@
+name: plux_size_blank
+description: >-
+  The blank Flutter app the size job (RT-061) measures the runtime
+  against: the plux app's host without Plux.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
