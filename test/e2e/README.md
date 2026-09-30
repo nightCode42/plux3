@@ -11,7 +11,7 @@ the Go driver (`TestStarterAppAgainstTheServer`) starts, publishes the
 | Where | Command | Runs |
 |---|---|---|
 | This machine, under `flutter test` | `make e2e-starter` | every change, in the *Starter app end-to-end* job |
-| Android emulator, API 24 and 35 | `make e2e-android ANDROID_API=<level>` | CI job *Device end-to-end (Android)* |
+| Android emulator, API 26 and 35 | `make e2e-android ANDROID_API=<level>` | CI job *Device end-to-end (Android)* |
 | iOS simulator, the newest runtime of the runner's Xcode | `make e2e-ios` | CI job *Device end-to-end (iOS)* |
 
 On a device the driver sets `PLUX_E2E_DEVICE`, and the flows run in the app
@@ -25,7 +25,8 @@ events reached the server.
   system image with the SDK's own `sdkmanager`, boots it headless, and
   forwards the device's port 18094 to the server on the runner
   (`adb reverse`). API 24 is the oldest Android the runtime supports
-  (`RT-002`); 35 is current. The runner needs KVM, which the job enables.
+  (`RT-002`), but current emulators no longer boot its system image, so CI
+  runs 26 and 35. The runner needs KVM, which the job enables.
 - [`ios.sh`](ios.sh) creates and boots an iPhone simulator on the newest iOS
   runtime installed; the simulator shares the runner's network.
 

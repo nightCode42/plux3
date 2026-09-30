@@ -73,6 +73,9 @@ func TestStarterAppAgainstTheServer(t *testing.T) {
 		ctx, cancel = context.WithTimeout(ctx, 30*time.Minute)
 		defer cancel()
 		live = os.Stdout
+		if os.Getenv("PLUX_E2E_VERBOSE") != "" {
+			args = append(args, "--verbose")
+		}
 	}
 	cmd := exec.CommandContext(ctx, flutter, append(args, //nolint:gosec // G204: the flutter and device the developer named.
 		"--dart-define=PLUX_ENDPOINT="+st.server,

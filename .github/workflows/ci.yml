@@ -756,8 +756,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 24: the oldest Android the runtime supports (RT-002); 35: current.
-        api: [24, 35]
+        # 26: the oldest level current emulators boot (API 24, the runtime's
+        # minimum, never finished booting: CI runs 36719678834, 36729487188);
+        # 35: current.
+        api: [26, 35]
     services:
       postgres:
         image: postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea

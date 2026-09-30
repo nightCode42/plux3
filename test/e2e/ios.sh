@@ -22,7 +22,8 @@ runtimes=$(xcrun simctl list runtimes --json)
 runtime=$(jq -r '[.runtimes[] | select(.isAvailable and .platform == "iOS")] | last | .identifier' <<<"$runtimes")
 [ -n "$runtime" ] && [ "$runtime" != null ] || { echo "✗ Xcode has no iOS simulator runtime"; exit 1; }
 type=$(jq -r --arg r "$runtime" '[.runtimes[] | select(.identifier == $r) | .supportedDeviceTypes[]
-	| select(.name | startswith("iPhone"))] | last | .identifier' <<<"$runtimes")
+	| select(.name | test("^iPhone [0-9]+$"))] | sort_by(.name | ltrimstr("iPhone ") | tonumber)
+	| last | .identifier' <<<"$runtimes")
 [ -n "$type" ] && [ "$type" != null ] || { echo "✗ $runtime supports no iPhone"; exit 1; }
 echo "Simulator: $type on $runtime"
 udid=$(xcrun simctl create plux-e2e "$type" "$runtime")
@@ -30,4 +31,4 @@ trap 'xcrun simctl shutdown "$udid" >/dev/null 2>&1 || true; xcrun simctl delete
 xcrun simctl boot "$udid"
 xcrun simctl bootstatus "$udid" -b >/dev/null
 
-PLUX_E2E_DEVICE=$udid make -C "$root" --no-print-directory e2e-starter 2>&1 | tee "$out/ios.log"
+PLUX_E2E_VERBOSE=1 PLUX_E2E_DEVICE=$udid make -C "$root" --no-print-directory e2e-starter 2>&1 | tee "$out/ios.log"

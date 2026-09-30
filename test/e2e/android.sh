@@ -5,7 +5,8 @@
 # The starter app's end-to-end flows on an Android emulator (QA-006), run
 # by `make e2e-android` in CI. See test/e2e/README.md.
 #
-#   android.sh [api]   API level of the system image (default 35)
+#   android.sh [api]   API level of the system image (default 35; 26 or later:
+#                      current emulators no longer boot API 24 and 25 images)
 #
 # Installs the emulator and a Google APIs x86_64 system image with the SDK's
 # own tools, boots a headless emulator (hardware acceleration needs KVM),
@@ -22,11 +23,7 @@ out=${E2E_OUT:-$root/build/e2e}
 sdk=${ANDROID_HOME:-${ANDROID_SDK_ROOT:?set ANDROID_HOME to the Android SDK}}
 tools=$sdk/cmdline-tools/latest/bin
 image="system-images;android-$api;google_apis;x86_64"
-# The oldest system images do not finish booting with the host-side
-# renderer of current emulators (gfxstream; API 24 in CI run 36719678834):
-# they render in the guest instead.
 gpu=swiftshader_indirect
-[ "$api" -lt 26 ] && gpu=guest
 avd=plux_e2e_$api
 # The test server's address (backend/internal/server/starter_e2e_integration_test.go).
 port=18094
