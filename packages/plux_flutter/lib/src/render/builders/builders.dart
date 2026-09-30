@@ -547,16 +547,17 @@ Widget _vectorImage(
 Widget _image(NodeContext c) {
   final width = c.decode(ImageProps.width, asDouble);
   final height = c.decode(ImageProps.height, asDouble);
-  if (c.decode(ImageProps.source, decodeVectorSource) case final vector?) {
+  final source = c.decode(ImageProps.source, decodeImageForm);
+  if (source?.vector case final vector?) {
     return _vectorImage(c, vector, width, height);
   }
-  final provider = c.decode(ImageProps.source, decodeImageSource);
+  final provider = source?.image;
   if (provider == null) {
     // An asset the release lacks or a URL the plugin may not reach was
     // reported where it was resolved; like a failed load, it is contained.
     return c.slot(ImageSlots.error) ?? SizedBox(width: width, height: height);
   }
-  final placeholder = c.decode(ImageProps.source, decodeImagePlaceholder);
+  final placeholder = source?.placeholder;
   final cacheWidth = c.decode(ImageProps.cacheWidth, asInt);
   final cacheHeight = c.decode(ImageProps.cacheHeight, asInt);
   final loading = c.hasSlot(ImageSlots.loading);

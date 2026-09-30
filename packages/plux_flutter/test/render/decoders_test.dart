@@ -334,10 +334,20 @@ void main() {
       isA<NetworkImage>(),
     );
     expect(decodeImageSource(rtl, 1), isNull);
-    expect(decodeVectorSource(rtl, {'asset': 'svg'}), isNotNull);
-    expect(decodeVectorSource(rtl, {'asset': 'png'}), isNull);
-    expect(decodeVectorSource(rtl, {'url': 'https://x/a.svg'}), isNull);
-    expect(decodeVectorSource(rtl, 1), isNull);
+    final svg = decodeImageForm(rtl, {'asset': 'svg'});
+    expect(svg?.vector, isNotNull);
+    expect(svg?.image, isNull, reason: 'an SVG is drawn as vectors only');
+    // A raster asset, a URL, an image the release lacks and a source
+    // without a ThumbHash are no failure: the record is still there.
+    final png = decodeImageForm(rtl, {'asset': 'png'});
+    expect(png, isNotNull);
+    expect(png!.vector, isNull);
+    expect(png.placeholder, isNull);
+    final url = decodeImageForm(rtl, {'url': 'https://x/a.svg'});
+    expect(url?.vector, isNull);
+    expect(url?.image, isA<NetworkImage>());
+    expect(decodeImageForm(d, {'asset': 'png'}), isNotNull);
+    expect(decodeImageForm(rtl, 1), isNull);
     expect(plainDecoding.vector('svg'), isNull);
   });
 

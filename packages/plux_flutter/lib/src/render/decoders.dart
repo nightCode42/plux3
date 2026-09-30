@@ -266,21 +266,35 @@ ImageProvider<Object>? decodeImageSource(Decoding d, Object? v) {
   );
 }
 
-/// An `ImageSource` naming an SVG asset, drawn from its `vector_graphics`
-/// form (CMP-031); null for any other source.
-PluxVectorSource? decodeVectorSource(Decoding d, Object? v) {
+/// What the `Image` widget draws from an `ImageSource`: the
+/// `vector_graphics` form of an SVG asset (CMP-031), else the image and its
+/// ThumbHash placeholder (RT-014). A record, so that a source without a
+/// vector form, an image the release cannot supply (reported where it was
+/// resolved) or a placeholder is not a failure. Null only for a malformed
+/// source.
+({
+  PluxVectorSource? vector,
+  ImageProvider<Object>? image,
+  ImageProvider<Object>? placeholder,
+})?
+decodeImageForm(Decoding d, Object? v) {
   final f = Fields.of(d, v);
   if (f == null) return null;
   final asset = asString(d, f.get(ImageSourceFields.asset, 'asset'));
-  return asset == null ? null : d.vector(asset);
-}
-
-/// The ThumbHash placeholder of an `ImageSource`, or null (RT-014).
-ImageProvider<Object>? decodeImagePlaceholder(Decoding d, Object? v) {
-  final f = Fields.of(d, v);
-  if (f == null) return null;
-  return ThumbHashImage.tryParse(
-    asString(d, f.get(ImageSourceFields.thumbHash, 'thumbHash')),
+  if (asset != null) {
+    if (d.vector(asset) case final vector?) {
+      return (vector: vector, image: null, placeholder: null);
+    }
+  }
+  return (
+    vector: null,
+    image: d.image(
+      asset: asset,
+      url: asString(d, f.get(ImageSourceFields.url, 'url')),
+    ),
+    placeholder: ThumbHashImage.tryParse(
+      asString(d, f.get(ImageSourceFields.thumbHash, 'thumbHash')),
+    ),
   );
 }
 
