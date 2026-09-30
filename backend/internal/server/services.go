@@ -395,7 +395,14 @@ func (s *Server) RegisterAPI(svc *Services) {
 	}
 	people := api.Authentication(svc.Auth, api.IdentityPublic, s.trusted, limiter, s.limits.Get(limits.APIRequestsPerMinute))
 	authn := api.DeviceAuthentication(svc.Devices, limiter, s.limits.Get(limits.APIRequestsPerMinutePerDevice), people)
-	opts := connect.WithInterceptors(s.Interceptors(authn)...)
+	// api.requestSize bounds a body as sent, before a handler reads it
+	// (httpx.MaxBytes), and also each message after decompression: Connect
+	// accepts gzip bodies, and a small one could otherwise expand without
+	// bound in memory.
+	opts := connect.WithHandlerOptions(
+		connect.WithInterceptors(s.Interceptors(authn)...),
+		connect.WithReadMaxBytes(int(s.limits.Get(limits.APIRequestSize))),
+	)
 	registrations := []func() (string, http.Handler){
 		func() (string, http.Handler) { return pluxv1connect.NewIdentityServiceHandler(h.Identity(), opts) },
 		func() (string, http.Handler) { return pluxv1connect.NewOrgServiceHandler(h.Org(), opts) },

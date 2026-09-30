@@ -5,9 +5,11 @@ package server
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/ed25519"
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"io"
@@ -216,6 +218,7 @@ func TestPublishWithTheCLIAndSyncADevice(t *testing.T) {
 	}
 	manifests := pluxv1connect.NewManifestServiceClient(hc, server, connect.WithInterceptors(bearer(tok.Msg.GetAccessToken())))
 	m1 := manifest(t, manifests, 1, nil)
+	ingestGzip(t, hc, server, tok.Msg.GetAccessToken())
 	pub0, _ := hex.DecodeString(keys.Keys[0].PublicKey)
 	if !ed25519.Verify(pub0, m1.GetSigned(), m1.GetSignatures()[0].GetSignature()) {
 		t.Fatal("the manifest does not verify with the pulled key")
@@ -254,6 +257,45 @@ func TestPublishWithTheCLIAndSyncADevice(t *testing.T) {
 	}
 	if !ed25519.Verify(pub0, m2.GetSigned(), m2.GetSignatures()[0].GetSignature()) {
 		t.Fatal("the second manifest does not verify")
+	}
+}
+
+// Verifies: ANL-002.
+// A device sends its events as a gzip-compressed Connect request (ADR-0034);
+// the decompressed message is bounded by api.requestSize, so a small body
+// that expands without bound is refused.
+func ingestGzip(t *testing.T, hc *http.Client, server, token string) {
+	t.Helper()
+	post := func(body []byte) (int, string) {
+		t.Helper()
+		var gz bytes.Buffer
+		w := gzip.NewWriter(&gz)
+		_, _ = w.Write(body)
+		_ = w.Close()
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, server+pluxv1connect.TelemetryServiceIngestEventsProcedure, &gz)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Content-Encoding", "gzip")
+		req.Header.Set("Connect-Protocol-Version", "1")
+		req.Header.Set("Authorization", "Bearer "+token)
+		res, err := hc.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer func() { _ = res.Body.Close() }()
+		out, _ := io.ReadAll(res.Body)
+		return res.StatusCode, string(out)
+	}
+	fields := base64.StdEncoding.EncodeToString([]byte(`{"runtime_version":"1.0.0","host_build":"7","os_version":"18.1"}`))
+	batch := `{"events":[{"name":"session_start","time":"` + time.Now().UTC().Format(time.RFC3339) + `","fields":"` + fields + `"}]}`
+	if status, body := post([]byte(batch)); status != http.StatusOK || !strings.Contains(body, `"accepted":1`) {
+		t.Fatalf("a gzip batch: %d %s", status, body)
+	}
+	bomb := append(append([]byte(`{"events":[{"name":"custom","route":"`), bytes.Repeat([]byte("0"), 20<<20)...), []byte(`"}]}`)...)
+	if status, body := post(bomb); status == http.StatusOK || !strings.Contains(body, "resource_exhausted") {
+		t.Fatalf("a gzip bomb: %d %.200s", status, body)
 	}
 }
 
