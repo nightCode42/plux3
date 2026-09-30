@@ -30,7 +30,7 @@ tools=$sdk/cmdline-tools/latest/bin
 image="system-images;android-$api;google_apis;x86_64"
 variant=${E2E_VARIANT:-}
 emulator_bin=$sdk/emulator/emulator
-flags=(-memory 4096)
+flags=(-memory 4096 -no-metrics)
 boot_seconds=600
 avd=plux_e2e_$api
 # The test server's address (backend/internal/server/starter_e2e_integration_test.go).
@@ -38,7 +38,10 @@ port=18094
 mkdir -p "$out"
 
 yes | "$tools/sdkmanager" --licenses >/dev/null || true
-"$tools/sdkmanager" --install emulator platform-tools "$image" >"$out/sdkmanager.log"
+# A download that arrives broken ("Error on ZipFile unknown archive", CI
+# run 36743012409) is fetched once more before the job gives up.
+"$tools/sdkmanager" --install emulator platform-tools "$image" >"$out/sdkmanager.log" ||
+	"$tools/sdkmanager" --install emulator platform-tools "$image" >>"$out/sdkmanager.log"
 # One AVD home for avdmanager and the emulator, whatever the runner sets.
 export ANDROID_AVD_HOME=${ANDROID_AVD_HOME:-$HOME/.android/avd}
 mkdir -p "$ANDROID_AVD_HOME"
@@ -58,6 +61,7 @@ emulator)
 	rm -rf "$out/emulator" && unzip -q "$out/emulator.zip" -d "$out"
 	echo "Emulator build $build: $(grep -h '^Pkg.Revision' "$out/emulator/source.properties" 2>/dev/null), SHA-256 $sum"
 	emulator_bin=$out/emulator/emulator
+	flags=(-memory 4096) # 34.x has no -no-metrics
 	# It finds the SDK's system images through the environment.
 	export ANDROID_SDK_ROOT=$sdk ANDROID_HOME=$sdk
 	;;
@@ -69,7 +73,7 @@ echo no | "$tools/avdmanager" create avd --force --name "$avd" --package "$image
 adb=$sdk/platform-tools/adb
 log=$out/emulator-$api${variant:+-$variant}.log
 "$emulator_bin" -avd "$avd" -no-window -no-audio -no-boot-anim -no-snapshot \
-	-gpu swiftshader_indirect -port 5554 -no-metrics "${flags[@]}" >"$log" 2>&1 &
+	-gpu swiftshader_indirect -port 5554 "${flags[@]}" >"$log" 2>&1 &
 emulator=$!
 serial=emulator-5554
 trap '"$adb" -s "$serial" emu kill >/dev/null 2>&1 || kill "$emulator" 2>/dev/null || true' EXIT
