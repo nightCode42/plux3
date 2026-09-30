@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -47,6 +48,9 @@ type syncBench struct {
 	st      *stack
 	proxy   *netsim.Proxy
 	project string
+	// released is the newest release publish made; only publish, which
+	// the device calls one at a time, reads and writes it.
+	released int64
 
 	mu      sync.Mutex
 	phase   string                       // guarded by mu
@@ -135,11 +139,54 @@ func (b *syncBench) write(revision int) error {
 // returns once the release's manifest is signed. A publish of all fifty
 // plugins costs about 110 API calls, so publishing a revision every few
 // seconds reaches the per-address limit (api.requestsPerMinutePerAddress,
-// which an installation may lower, never raise); a refused publish waits
-// and runs again.
+// which an installation may lower, never raise); a refused call waits and
+// runs again. A publish refused after it created the release — while
+// promoting it or waiting for its manifest — is not run again, which would
+// create a second release: the release it made is promoted instead.
 func (b *syncBench) publish() (int64, error) {
+	made := false
+	rel, err := b.retry(func() (int64, error) {
+		if newest, err := b.newestRelease(); err != nil || newest > b.released {
+			made = err == nil
+			return newest, err
+		}
+		var pub struct {
+			OK      bool
+			Release int64
+		}
+		out, err := b.cli("publish", "-C", b.project, "--env", "staging", "--promote", "staging", "--json")
+		if err == nil {
+			if err = json.Unmarshal(out, &pub); err == nil && !pub.OK {
+				err = errors.New("not published")
+			}
+		}
+		if err != nil {
+			return 0, fmt.Errorf("plux publish: %w\n%s", err, out)
+		}
+		return pub.Release, nil
+	})
+	if err != nil {
+		return 0, err
+	}
+	if made {
+		if _, err := b.retry(func() (int64, error) {
+			out, err := b.cli("release", "promote", "-C", b.project, "--env", "staging", "--json", strconv.FormatInt(rel, 10))
+			if err != nil {
+				return 0, fmt.Errorf("plux release promote: %w\n%s", err, out)
+			}
+			return rel, nil
+		}); err != nil {
+			return 0, err
+		}
+	}
+	b.released = rel
+	return rel, nil
+}
+
+// retry runs f again while the server refuses it with PLX-8040.
+func (*syncBench) retry(f func() (int64, error)) (int64, error) {
 	for attempt := 1; ; attempt++ {
-		rel, err := b.publishOnce()
+		rel, err := f()
 		if err == nil || attempt == 12 || !strings.Contains(err.Error(), "PLX-8040") {
 			return rel, err
 		}
@@ -147,22 +194,34 @@ func (b *syncBench) publish() (int64, error) {
 	}
 }
 
-func (b *syncBench) publishOnce() (int64, error) {
-	cmd := exec.CommandContext(b.st.ctx, b.st.cli, "publish", "-C", b.project, "--env", "staging", "--promote", "staging", "--json") //nolint:gosec // G204: the binary the test built.
+// newestRelease is the newest release of staging, 0 when there is none.
+func (b *syncBench) newestRelease() (int64, error) {
+	out, err := b.cli("release", "list", "-C", b.project, "--env", "staging", "--json")
+	if err != nil {
+		return 0, fmt.Errorf("plux release list: %w\n%s", err, out)
+	}
+	var list struct{ Releases []struct{ Sequence int64 } }
+	if err := json.Unmarshal(out, &list); err != nil {
+		return 0, fmt.Errorf("plux release list: %w", err)
+	}
+	var newest int64
+	for _, r := range list.Releases {
+		newest = max(newest, r.Sequence)
+	}
+	return newest, nil
+}
+
+// cli runs the CLI against the stack and returns its standard output,
+// with its standard error appended when it fails.
+func (b *syncBench) cli(args ...string) ([]byte, error) {
+	cmd := exec.CommandContext(b.st.ctx, b.st.cli, args...) //nolint:gosec // G204: the binary the test built.
 	cmd.Env = append(os.Environ(), "PLUX_TOKEN="+b.st.token, "PLUX_SERVER=", "PLUX_ORGANIZATION=", "HOME="+b.st.dir, "XDG_CONFIG_HOME="+filepath.Join(b.st.dir, "config"))
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	if err := cmd.Run(); err != nil {
-		return 0, fmt.Errorf("plux publish: %w\n%s%s", err, stdout.String(), stderr.String())
+		return append(stdout.Bytes(), stderr.Bytes()...), err
 	}
-	var pub struct {
-		OK      bool
-		Release int64
-	}
-	if err := json.Unmarshal(stdout.Bytes(), &pub); err != nil || !pub.OK {
-		return 0, fmt.Errorf("plux publish: %s (%w)", stdout.String(), err)
-	}
-	return pub.Release, nil
+	return stdout.Bytes(), nil
 }
 
 // serve starts the control endpoint the device asks: phase (the
