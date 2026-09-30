@@ -76,6 +76,7 @@ jobs:
               - tools/**
               - go.work
               - schema/**
+              - test/compat/**
               - .github/workflows/ci.yml
             proto:
               - proto/**
@@ -666,6 +667,58 @@ jobs:
       - name: Flutter snapshot matches the pinned SDK
         run: make widgets-api-check
 
+  # The starter app's flows against a server built from source, under
+  # flutter test on the runner (emulator and simulator runs arrive with the
+  # device jobs), and the compatibility matrix against released runtimes
+  # and servers, which needs the tags.
+  starter-e2e:
+    name: Starter app end-to-end
+    needs: changes
+    if: needs.changes.outputs.go == 'true' || needs.changes.outputs.dart == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: plux_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PLUX_TEST_DATABASE_URL: postgres://plux:plux@127.0.0.1:5432/plux_test?sslmode=disable
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.mod
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - name: Create the application role
+        env:
+          PGPASSWORD: postgres
+        run: |
+          psql -h 127.0.0.1 -U postgres -d plux_test -v ON_ERROR_STOP=1 -c \
+            "CREATE ROLE plux LOGIN NOSUPERUSER NOBYPASSRLS PASSWORD 'plux'; GRANT CONNECT, CREATE, TEMPORARY ON DATABASE plux_test TO plux; ALTER SCHEMA public OWNER TO plux;"
+      # Verifies: QA-006, QA-010.
+      - name: Starter flows and the compatibility matrix
+        run: make compat | tee -a "$GITHUB_STEP_SUMMARY"
+
   # ── Studio ───────────────────────────────────────────────────────────────
 
   studio:
@@ -716,6 +769,7 @@ jobs:
       - go-build
       - go-vuln
       - dart
+      - starter-e2e
       - studio
     runs-on: ubuntu-latest
     timeout-minutes: 5

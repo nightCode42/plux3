@@ -23,9 +23,10 @@ import (
 )
 
 // seed prepares an empty development installation for `make dev`
-// (DEP-020): an administrator with a random password, an organisation, an
-// app and a personal access token, written to files only the user can
-// read. It runs against a migrated database (the server migrates on
+// (DEP-020): an administrator with a random password, an organisation,
+// two apps — one for the loan calculator, one for the starter host app
+// (apps/starter) — and a personal access token, written to files only
+// the user can read. It runs against a migrated database (the server migrates on
 // start) and refuses any installation whose signing backend may sign for
 // production, so it cannot touch a real one.
 func seed(ctx context.Context, args []string, stdout, stderr io.Writer) int {
@@ -35,9 +36,10 @@ func seed(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	email := fs.String("email", "dev@plux.localhost", "the administrator's email address")
 	org := fs.String("org", "acme", "the organisation key")
 	app := fs.String("app", "demo", "the app key")
+	starter := fs.String("starter", "starter", "the key of the starter host app's app")
 	out := fs.String("out", ".plux-dev", "the `directory` the password and token are written to; - prints them once as KEY=value lines")
 	if err := fs.Parse(args); err != nil || fs.NArg() > 0 {
-		_, _ = fmt.Fprintf(stderr, "%s: usage: seed [-config path] [-email address] [-org key] [-app key] [-out dir]\n", name)
+		_, _ = fmt.Fprintf(stderr, "%s: usage: seed [-config path] [-email address] [-org key] [-app key] [-starter key] [-out dir]\n", name)
 		return exitUsage
 	}
 	cfg, err := config.Load(*path, os.LookupEnv)
@@ -69,14 +71,14 @@ func seed(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	if err != nil {
 		return fail(err)
 	}
-	values, err := seedInstallation(ctx, svc, *email, *org, *app)
+	values, err := seedInstallation(ctx, svc, *email, *org, *app, *starter)
 	if err != nil {
 		return fail(err)
 	}
 	if *out == "-" {
 		// For a caller that runs seed inside a container and keeps the
 		// values itself; they are shown this once, like any new token.
-		for _, k := range []string{"organization", "app", "password", "token"} {
+		for _, k := range []string{"organization", "app", "starter", "password", "token"} {
 			_, _ = fmt.Fprintf(stdout, "PLUX_DEV_%s=%s\n", strings.ToUpper(k), values[k])
 		}
 		return exitOK
@@ -84,7 +86,7 @@ func seed(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	if err := writeSeed(*out, values); err != nil {
 		return fail(err)
 	}
-	_, _ = fmt.Fprintf(stdout, "✓ seeded %s: organisation %s, app %s; password and token in %s\n", *email, *org, *app, *out)
+	_, _ = fmt.Fprintf(stdout, "✓ seeded %s: organisation %s, apps %s and %s; password and token in %s\n", *email, *org, *app, *starter, *out)
 	return exitOK
 }
 
@@ -101,9 +103,9 @@ func writeSeed(dir string, values map[string]string) error {
 	return nil
 }
 
-// seedInstallation creates the administrator, organisation, app and
+// seedInstallation creates the administrator, organisation, apps and
 // token, and returns what the developer needs to use them.
-func seedInstallation(ctx context.Context, svc *server.Services, email, org, app string) (map[string]string, error) {
+func seedInstallation(ctx context.Context, svc *server.Services, email, org, app, starter string) (map[string]string, error) {
 	password := make([]byte, 18)
 	if _, err := rand.Read(password); err != nil {
 		return nil, fmt.Errorf("seed: %w", err)
@@ -128,9 +130,13 @@ func seedInstallation(ctx context.Context, svc *server.Services, email, org, app
 	if err != nil {
 		return nil, fmt.Errorf("seed: %w", err)
 	}
+	s, err := svc.Tenancy.CreateApp(ctx, owner, starter, starter)
+	if err != nil {
+		return nil, fmt.Errorf("seed: %w", err)
+	}
 	token, err := svc.Auth.CreateAccessToken(ctx, owner, "make dev", nil, 30*24*time.Hour)
 	if err != nil {
 		return nil, fmt.Errorf("seed: %w", err)
 	}
-	return map[string]string{"password": hex.EncodeToString(password), "token": token.Secret, "organization": o.ID, "app": a.ID}, nil
+	return map[string]string{"password": hex.EncodeToString(password), "token": token.Secret, "organization": o.ID, "app": a.ID, "starter": s.ID}, nil
 }

@@ -39,9 +39,9 @@ FUZZTIME      ?= 30s
 GO_TOOLCHAIN  := $(shell sed -n 's/^toolchain //p' backend/go.mod)
 GO_INSTALL    := GOTOOLCHAIN=$(GO_TOOLCHAIN) $(GO) install
 GO_MODULES    := backend tools
-DART_PACKAGES := packages/plux_devtools packages/plux_flutter packages/plux_svgc packages/plux_widget_api
+DART_PACKAGES := packages/plux_devtools packages/plux_flutter packages/plux_svgc packages/plux_widget_api apps/starter
 # Generated Dart code is verified by regeneration (CI-003), not by the formatter.
-DART_SOURCES  := find packages -name '*.dart' ! -name '*.g.dart' ! -name '*_generated.dart' ! -path '*/build/*' -print0
+DART_SOURCES  := find packages apps -name '*.dart' ! -name '*.g.dart' ! -name '*_generated.dart' ! -path '*/build/*' -print0
 # Everything `make gen` writes; `go-gen-check` fails if any of it changes.
 GEN_PATHS     := backend tools docs/reference packages studio/packages schema
 TOOLS_BIN     := $(subst \,/,$(shell $(GO) env GOPATH | tr -d '\r'))/bin
@@ -88,7 +88,7 @@ GO_BUILD_FLAGS  := -trimpath -buildvcs=false -ldflags "-s -w -buildid= \
 	go-determinism go-budgets go-fuzz currencies-check go-vuln go-build go-reproducible \
 	dart-check dart-get dart-lock-check dart-fmt dart-fmt-check dart-analyze dart-test dart-cover widgets-api widgets-api-check \
 	studio-check studio-install studio-fmt studio-lint studio-typecheck studio-test studio-cover \
-	compose-secrets compose-up compose-down compose-seed dev compose-test image-check \
+	compose-secrets compose-up compose-down compose-seed dev dev-starter dev-app e2e-starter compat compose-test image-check \
 	release-binaries release-notes repo-check spec-lint trace secrets workflows-lint reuse-lint hygiene
 
 help: ## Show this help
@@ -384,22 +384,66 @@ compose-up: compose-secrets ## Start the single-node stack: server, PostgreSQL, 
 compose-down: ## Stop the stack (volumes are kept; add -v by hand to delete them)
 	$(COMPOSE) down
 
+# The starter app under `make dev`: where the device reaches the stack
+# (after `adb reverse`, localhost works on Android too) and the defines
+# file dev-starter writes from the seeded installation.
+DEV_ENDPOINT    ?= http://localhost:8080
+STARTER_DEFINES := apps/starter/.dart_defines.json
+# A connected Android or iOS device, emulator or simulator for the starter.
+STARTER_DEVICE  := flutter devices --machine 2>/dev/null | grep -Eq '"targetPlatform": *"(android|ios)'
+
 # Verifies: DEP-020.
-dev: ## Start the stack with hot reload of the server, seed a sample app on first run (DEP-020)
+dev: ## Start the stack with hot reload of the server and, with a device or emulator attached, of the starter app; seed sample apps on first run (DEP-020)
 	$(MAKE) compose-seed COMPOSE_OVERLAY=$(COMPOSE_DIR)/compose.dev.yaml
-	$(COMPOSE) -f $(COMPOSE_DIR)/compose.dev.yaml watch
+	$(MAKE) dev-starter
+	@if $(STARTER_DEVICE); then \
+		echo "Server: rebuilt on every change under backend/ (log: $(COMPOSE_DIR)/.dev-watch.log)."; \
+		$(COMPOSE) -f $(COMPOSE_DIR)/compose.dev.yaml watch --no-up --quiet > $(COMPOSE_DIR)/.dev-watch.log 2>&1 & watch=$$!; \
+		trap 'kill $$watch 2>/dev/null' EXIT INT TERM; \
+		$(MAKE) --no-print-directory dev-app; \
+	else \
+		echo "No Android or iOS device, emulator or simulator attached: watching the server only."; \
+		echo "Start one and run 'make dev-app' in a second terminal for the starter app with hot reload."; \
+		$(COMPOSE) -f $(COMPOSE_DIR)/compose.dev.yaml watch --no-up; \
+	fi
+
+dev-starter: ## Point the starter app at the seeded dev stack: write its defines and pull its baseline (DEP-020)
+	@test -s $(COMPOSE_DIR)/.secrets/dev.env || { echo "✗ no seeded stack: run 'make dev' first"; exit 1; }
+	@. ./$(COMPOSE_DIR)/.secrets/dev.env && \
+		{ test -n "$$PLUX_DEV_STARTER" || { echo "✗ this stack was seeded before the starter app: delete its volumes (docker compose down -v) and run 'make dev'"; exit 1; }; } && \
+		printf '{"PLUX_ENDPOINT":"%s","PLUX_APP_ID":"%s","PLUX_ENVIRONMENT":"staging"}\n' "$(DEV_ENDPOINT)" "$$PLUX_DEV_STARTER" > $(STARTER_DEFINES) && \
+		cd backend && PLUX_TOKEN="$$PLUX_DEV_TOKEN" $(GO) run ./cmd/plux pull --server http://localhost:8080 --org "$$PLUX_DEV_ORGANIZATION" \
+			--app "$$PLUX_DEV_STARTER" --env staging -o ../apps/starter/assets/plux
+	@echo "Starter: $(STARTER_DEFINES) and its baseline in apps/starter/assets/plux"
+
+dev-app: ## Run the starter app against the dev stack with Flutter hot reload: r reloads, R restarts, q quits (DEP-020)
+	@test -s $(STARTER_DEFINES) || $(MAKE) --no-print-directory dev-starter
+	@if command -v adb >/dev/null 2>&1; then adb reverse tcp:8080 tcp:8080 >/dev/null 2>&1 || true; fi
+	cd apps/starter && flutter run --dart-define-from-file=.dart_defines.json
+
+# Verifies: QA-006.
+e2e-starter: ## Run the starter app's end-to-end flows on this machine against a server built from source (needs PLUX_TEST_DATABASE_URL)
+	@test -n "$$PLUX_TEST_DATABASE_URL" || { echo "✗ set PLUX_TEST_DATABASE_URL to a PostgreSQL database (see docs/engineering/testing.md)"; exit 1; }
+	cd backend && PLUX_E2E_FLUTTER="$$(command -v flutter)" $(GO) test -count=1 -run TestStarterAppAgainstTheServer -v ./internal/server
+
+# Verifies: QA-010.
+compat: ## Run the compatibility matrix: released runtimes against today's server, today's runtime against released servers (QA-010)
+	@test -n "$$PLUX_TEST_DATABASE_URL" || { echo "✗ set PLUX_TEST_DATABASE_URL to a PostgreSQL database (see docs/engineering/testing.md)"; exit 1; }
+	test/compat/run.sh
 
 # COMPOSE_OVERLAY adds a Compose file for compose-seed (dev or load).
 COMPOSE_OVERLAY ?=
 
-compose-seed: compose-secrets ## Start the stack and, on first run, seed an administrator and the loan calculator promoted to staging
+compose-seed: compose-secrets ## Start the stack and, on first run, seed an administrator, the loan calculator and the starter app promoted to staging
 	$(COMPOSE) $(if $(COMPOSE_OVERLAY),-f $(COMPOSE_OVERLAY)) up -d --build --wait
 	@if [ ! -s $(COMPOSE_DIR)/.secrets/dev.env ]; then \
 		umask 077; \
 		$(COMPOSE) $(if $(COMPOSE_OVERLAY),-f $(COMPOSE_OVERLAY)) run --rm --no-deps plux-server seed -config /etc/plux/plux.yaml -out - > $(COMPOSE_DIR)/.secrets/dev.env && \
 		. ./$(COMPOSE_DIR)/.secrets/dev.env && \
 		(cd backend && PLUX_TOKEN="$$PLUX_DEV_TOKEN" $(GO) run ./cmd/plux publish --server http://localhost:8080 --org "$$PLUX_DEV_ORGANIZATION" \
-			--app "$$PLUX_DEV_APP" -C ../schema/testdata/documents/loan-calculator --promote staging); \
+			--app "$$PLUX_DEV_APP" -C ../schema/testdata/documents/loan-calculator --promote staging && \
+		 PLUX_TOKEN="$$PLUX_DEV_TOKEN" $(GO) run ./cmd/plux publish --server http://localhost:8080 --org "$$PLUX_DEV_ORGANIZATION" \
+			--app "$$PLUX_DEV_STARTER" -C ../schema/testdata/documents/starter --env staging --promote staging); \
 		echo "Seeded dev@plux.localhost; password and token in $(COMPOSE_DIR)/.secrets/dev.env"; \
 	fi
 
