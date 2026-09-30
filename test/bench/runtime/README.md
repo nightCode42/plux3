@@ -44,7 +44,9 @@ twice — once against this checkout's `packages/` and once against those of `BA
 temporary worktree — and `tools/cmd/benchcmp` runs the two alternately. It fails when a
 metric's median over runs is more than 10% above the base's and a one-sided Mann–Whitney
 test puts that at better than 99% confidence. Timings on shared CI runners vary between
-machines by more than 10%, so the gate never compares with committed numbers.
+machines by more than 10%, so the gate never compares with committed numbers. A base
+that predates the benchmark has no runtime that can run it; then the change is measured
+alone and the report says there was no comparison.
 
 On a reference device, create the platform folder and run the app in profile mode:
 

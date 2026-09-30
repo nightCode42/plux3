@@ -172,7 +172,11 @@ final class BenchRelease {
   final List<String> routes;
 }
 
-/// The host app the benchmark drives: an empty screen and a navigator.
+/// The host app the benchmark drives: a native home screen with an app
+/// bar and text, as every host shows before the user opens a Plux page —
+/// so Flutter's first text layout, which costs the first page drawn in a
+/// process tens of milliseconds whoever builds it, is not charged to
+/// Plux — and a navigator.
 final class BenchHost extends StatelessWidget {
   /// Creates the host.
   const BenchHost({super.key, required this.navigator});
@@ -184,7 +188,10 @@ final class BenchHost extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp(
     navigatorKey: navigator,
     debugShowCheckedModeBanner: false,
-    home: const Scaffold(body: SizedBox.expand()),
+    home: Scaffold(
+      appBar: AppBar(title: const Text('Plux benchmark')),
+      body: const Center(child: Text('The benchmark opens Plux pages here.')),
+    ),
   );
 }
 

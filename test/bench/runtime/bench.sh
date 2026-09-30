@@ -13,7 +13,8 @@
 # embedded release — a second time against the runtime of <base-ref>,
 # checked out into a temporary worktree, so the only difference between
 # the two is the runtime; then tools/cmd/benchcmp runs them alternately
-# and fails when this checkout is more than 10% slower. Results, logs and
+# and fails when this checkout is more than 10% slower. A base that
+# predates the benchmark is not compared with. Results, logs and
 # the stores are written to $BENCH_OUT (default build/bench-runtime).
 set -euo pipefail
 
@@ -60,13 +61,24 @@ compare)
 	base_ref=${2:?usage: bench.sh compare <base-ref> [runs]}
 	git -C "$root" worktree add --detach "$work/base" "$base_ref" >/dev/null
 	base_app=$work/base/test/bench/runtime
+	# A base that predates the benchmark has no runtime it can run — the
+	# runtime arrived with it — so there is nothing to compare with:
+	# measure this checkout alone and say so.
+	if [ ! -d "$base_app" ]; then
+		head=$(build "$app")
+		rm -rf "$out"
+		benchcmp measure -app "$head" -runs "${3:-10}" -out "$out"
+		note="No comparison: the base $(git -C "$root" rev-parse --short "$base_ref") predates the benchmark. This commit's runtime alone:"
+		printf '%s\n\n%s' "$note" "$(cat "$out/report.md")" >"$out/report.md"
+		echo "$note"
+		exit 0
+	fi
 	rm -rf "$base_app"
 	mkdir -p "$base_app"
 	tar -C "$app" --exclude=./build --exclude=./linux --exclude=./.dart_tool -cf - . | tar -C "$base_app" -xf -
-	# A base older than the benchmark does not list it in its workspace.
-	if ! grep -q '^  - test/bench/runtime$' "$work/base/pubspec.yaml"; then
-		printf '  - test/bench/runtime\n' >>"$work/base/pubspec.yaml"
-	fi
+	# The base's runtime may carry another version than this checkout's
+	# app asks for; the workspace resolves it to the base's package.
+	sed -i 's/^  plux_flutter: .*/  plux_flutter: any/' "$base_app/pubspec.yaml"
 	(cd "$work/base" && flutter pub get >/dev/null)
 	base=$(build "$base_app")
 	head=$(build "$app")

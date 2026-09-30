@@ -184,11 +184,14 @@ void main() {
     });
   });
 
-  testWidgets('the host is an empty screen with a navigator', (tester) async {
+  testWidgets('the host is a native home screen with a navigator', (
+    tester,
+  ) async {
     final key = GlobalKey<NavigatorState>();
     await tester.pumpWidget(BenchHost(navigator: key));
     expect(key.currentState, isNotNull);
     expect(find.byType(Scaffold), findsOneWidget);
+    expect(find.text('Plux benchmark'), findsOneWidget);
   });
 
   test('failures say what went wrong', () {
