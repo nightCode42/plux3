@@ -21,6 +21,7 @@ How the pipeline is built and why. The requirements are spec §29 (`CI-001`–`C
 | [scorecard.yml](../../.github/workflows/scorecard.yml) | Pushes to `main`, weekly, ruleset changes | OpenSSF Scorecard; results in code scanning |
 | [load.yml](../../.github/workflows/load.yml) | Nightly, manual (rate as input) | Starts the Compose stack with the load overlay, seeds it and runs `test/load/manifest.js` with k6; results in the job summary (`NFR-020`; the reference numbers are in [p2-backend.md](../benchmarks/p2-backend.md)) |
 | [release.yml](../../.github/workflows/release.yml) | Component tags `<component>/v*` | Verify the signed tag and publish the release (`CI-008`). For `backend/v*` also: `make release-binaries` (reproducible archives of `plux` and `plux-server` for Linux, macOS and Windows on amd64 and arm64, `SHA256SUMS`, a Homebrew formula and a Scoop manifest), a keyless cosign signature of `SHA256SUMS`, SLSA Build Level 3 provenance for the archives, and both images through `image.yml` with their own provenance (`DEP-001`, `CLI-001`, `CI-004`) |
+| [pages.yml](../../.github/workflows/pages.yml) | Pushes to `main`, release tags, manual | Builds the documentation site (`make docs-site`) and deploys it to GitHub Pages ([ADR-0033](../adr/0033-documentation-site.md), `DX-002`); the deploy job alone has `pages: write` and `id-token: write`, and it restores no cache |
 | [image.yml](../../.github/workflows/image.yml) | Called by `release.yml` | Builds one target of `backend/Dockerfile` for linux/amd64 and linux/arm64, pushes it to GHCR, signs it with cosign and attests a CycloneDX SBOM |
 | CodeQL | GitHub default setup | Static analysis of Go, TypeScript and Actions |
 
@@ -35,6 +36,7 @@ How the pipeline is built and why. The requirements are spec §29 (`CI-001`–`C
 | Workflow lint | always | `workflows-lint` | — |
 | Licensing (REUSE) | always | `reuse-lint` | — |
 | Documentation links | always | lychee, offline | — |
+| Documentation site | always | `docs-site`: Starlight renders `docs/` in place; a broken internal link fails the build | `DX-002` |
 | SBOM | always | CycloneDX via Syft | `CI-001` |
 | Commit messages | pull requests | `scripts/check-commit-msg.sh` on title and commits | `CI-009` |
 | Dependency review | pull requests | vulnerabilities and licences of new dependencies | `CI-007` |
@@ -68,7 +70,7 @@ One input of `make gen` needs Flutter and is therefore refreshed separately: `sc
 | Tool | Where it is pinned |
 |---|---|
 | Go | `toolchain` line in `backend/go.mod` and `tools/go.mod`; `go.work` |
-| Flutter, Bun, golangci-lint, govulncheck, gitleaks, actionlint, pre-commit, zizmor, reuse | Makefile header; `env:` of `ci.yml` (Flutter, Bun, pre-commit, zizmor, reuse) |
+| Flutter, Bun, golangci-lint, govulncheck, gitleaks, actionlint, pre-commit, zizmor, reuse | Makefile header; `env:` of `ci.yml` (Flutter, Bun, pre-commit, zizmor, reuse), `pages.yml` (Bun) and `release.yml` (Flutter) |
 | buf, protoc-gen-go, protoc-gen-connect-go, protoc-gen-connect-openapi | Makefile header; installed by `make install-buf` and built with the project toolchain ([ADR-0005](../adr/0005-connectrpc-and-protobuf.md)) |
 | flatc | Makefile header (`FLATC_VERSION` and the tag's commit `FLATC_COMMIT`, checked before building); must match the Go `github.com/google/flatbuffers` and Dart `flat_buffers` versions ([ADR-0002](../adr/0002-flatbuffers-sectioned-bundles.md)) |
 | git-cliff | `release.yml` |

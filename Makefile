@@ -89,7 +89,7 @@ GO_BUILD_FLAGS  := -trimpath -buildvcs=false -ldflags "-s -w -buildid= \
 	dart-check dart-get dart-lock-check dart-fmt dart-fmt-check dart-analyze dart-test dart-cover widgets-api widgets-api-check \
 	studio-check studio-install studio-fmt studio-lint studio-typecheck studio-test studio-cover \
 	compose-secrets compose-up compose-down compose-seed dev dev-starter dev-app e2e-starter compat compose-test image-check \
-	bench-runtime bench-runtime-ab bench-sync size-android size-ios \
+	bench-runtime bench-runtime-ab bench-sync size-android size-ios docs-site \
 	release-binaries release-notes repo-check spec-lint trace secrets workflows-lint reuse-lint hygiene
 
 help: ## Show this help
@@ -375,6 +375,12 @@ size-android: ## Check what plux_flutter adds to a release APK for arm64 (RT-061
 # Verifies: RT-061, NFR-009.
 size-ios: ## Check what plux_flutter adds to a release iOS app for arm64 (RT-061; needs Xcode)
 	test/size/size.sh ios
+
+##@ Documentation site (ADR-0033)
+
+# Verifies: DX-002.
+docs-site: ## Build the documentation site from docs/ into site/dist; fails on a broken internal link
+	cd site && bun install --frozen-lockfile && bun run build
 
 ##@ Studio (Bun, TypeScript)
 

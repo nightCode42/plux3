@@ -91,6 +91,23 @@ updates:
       studio:
         update-types: [minor, patch]
 
+  # The documentation site (ADR-0033): Astro and Starlight majors are
+  # upgrade decisions (Starlight is pre-1.0), so they wait longer.
+  - package-ecosystem: bun
+    directory: "/site"
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      site:
+        update-types: [minor, patch]
+
   # Container images are pinned by tag and digest; Dependabot proposes the
   # new tag and digest together (SEC-108, DEP-002).
   - package-ecosystem: docker
