@@ -58,10 +58,11 @@ final class SyncWorkerConfig {
   /// Downloads at once (SYN-010).
   final int parallelism;
 
-  /// Reads the embedded baseline, when the host has one (SYN-007).
+  /// Reads a baseline on the sync isolate; a test's stand-in for the
+  /// host's assets, which [SyncWorker.start] serves instead (SYN-007).
   final BaselineReader? baseline;
 
-  /// Lets the isolate use platform channels (key storage, assets).
+  /// Lets the isolate use platform channels (key storage).
   final RootIsolateToken? rootIsolateToken;
 }
 
@@ -80,8 +81,10 @@ final class _Store extends _Command {
   final String op;
 }
 
+/// Imports the baseline; [assets] serves the host's asset files when set.
 final class _Baseline extends _Command {
-  const _Baseline(super.reply);
+  const _Baseline(super.reply, this.assets);
+  final SendPort? assets;
 }
 
 final class _Settle extends _Command {
@@ -108,10 +111,14 @@ final class _Purge {
 
 /// The UI isolate's handle on the sync isolate.
 final class SyncWorker {
-  SyncWorker._(this._isolate, this._commands);
+  SyncWorker._(this._isolate, this._commands, this._baselineAssets);
 
-  /// Starts the sync isolate.
-  static Future<SyncWorker> start(SyncWorkerConfig config) async {
+  /// Starts the sync isolate. [baselineAssets] is the directory of the
+  /// host's assets holding the baseline `plux pull` wrote, if any.
+  static Future<SyncWorker> start(
+    SyncWorkerConfig config, {
+    String? baselineAssets,
+  }) async {
     final ready = ReceivePort();
     final isolate = await Isolate.spawn(_main, (
       config,
@@ -119,11 +126,12 @@ final class SyncWorker {
     ), debugName: 'plux-sync');
     final commands = await ready.first as SendPort;
     ready.close();
-    return SyncWorker._(isolate, commands);
+    return SyncWorker._(isolate, commands, baselineAssets);
   }
 
   final Isolate _isolate;
   final SendPort _commands;
+  final String? _baselineAssets;
   Future<SyncResult>? _running;
 
   /// Syncs once, reporting events to [onEvent]; a sync already running is
@@ -145,7 +153,28 @@ final class SyncWorker {
   }
 
   /// Imports the embedded baseline; the sequence, or null.
-  Future<int?> importBaseline() => _ask(_Baseline.new).then((r) => r as int?);
+  ///
+  /// The host's assets are readable only on this isolate: `rootBundle`
+  /// needs the services binding, which a background isolate does not
+  /// have. So this isolate serves each file the sync isolate asks for,
+  /// moving its bytes across rather than copying them into a message; the
+  /// sync isolate verifies and stores them (L-6).
+  Future<int?> importBaseline() async {
+    final dir = _baselineAssets;
+    if (dir == null) {
+      return await _ask((p) => _Baseline(p, null)) as int?;
+    }
+    final assets = ReceivePort();
+    assets.listen((m) async {
+      final (path, reply) = m as (String, SendPort);
+      reply.send(await _loadAsset('$dir/$path'));
+    });
+    try {
+      return await _ask((p) => _Baseline(p, assets.sendPort)) as int?;
+    } finally {
+      assets.close();
+    }
+  }
 
   /// Activates the staged release (SYN-004).
   Future<StorePointer> activate() => _store('activate');
@@ -256,8 +285,8 @@ Future<void> _main((SyncWorkerConfig, SendPort) args) async {
         }
       case _Sync(:final reply):
         reply.send(await engine.run(reply.send));
-      case _Baseline(:final reply):
-        final read = config.baseline;
+      case _Baseline(:final reply, :final assets):
+        final read = assets == null ? config.baseline : _servedBy(assets);
         try {
           reply.send(
             read == null
@@ -302,15 +331,32 @@ Future<void> _main((SyncWorkerConfig, SendPort) args) async {
   }
 }
 
-/// Reads the baseline embedded under [directory] of the host's assets;
-/// for [SyncWorkerConfig.baseline]. The reads happen on the sync isolate,
-/// through that isolate's own `rootBundle`, so nothing unsendable crosses
-/// between isolates.
-BaselineReader assetBaseline(String directory) => (path) async {
+/// The asset [key] of the host app, ready to send to another isolate;
+/// null when the app has no such asset, and a [_Failure] when it cannot
+/// be read, so the sync isolate never waits for an answer that will not
+/// come.
+Future<Object?> _loadAsset(String key) async {
   try {
-    final data = await rootBundle.load('$directory/$path');
-    return Uint8List.sublistView(data);
+    final data = await rootBundle.load(key);
+    return TransferableTypedData.fromList([data]);
   } on FlutterError {
     return null;
+  } on Object catch (e) {
+    return _Failure('$e');
   }
+}
+
+/// Reads baseline files through [assets], which the UI isolate serves.
+BaselineReader _servedBy(SendPort assets) => (path) async {
+  final reply = ReceivePort();
+  assets.send((path, reply.sendPort));
+  final answer = await reply.first;
+  reply.close();
+  if (answer is _Failure) {
+    throw PluxException(
+      PluxErrorCode.bundleMalformed,
+      'baseline file $path cannot be read: ${answer.message}',
+    );
+  }
+  return (answer as TransferableTypedData?)?.materialize().asUint8List();
 };

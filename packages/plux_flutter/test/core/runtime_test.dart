@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -150,6 +151,66 @@ void main() {
         const PluxScope(child: PluxView('loan-calculator', params: {'x': 'p'})),
       );
       expect(find.text('page loan-calculator of 5 p'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'reads the baseline from the host app\'s assets, which only the UI '
+    'isolate can load, verifies it on the sync isolate, and the first sync '
+    'is a delta from it [SYN-007] [SYN-011]',
+    (tester) async {
+      final files = await tester.runAsync(
+        () => server.baseline(5, demo, {'loans': loans}),
+      );
+      final asked = <String>[];
+      tester.binding.defaultBinaryMessenger.setMockMessageHandler(
+        'flutter/assets',
+        (message) async {
+          final key = utf8.decode(Uint8List.sublistView(message!));
+          asked.add(key);
+          final f = files![key.replaceFirst('assets/plux/', '')];
+          return f == null ? null : ByteData.sublistView(f);
+        },
+      );
+      addTearDown(
+        () => tester.binding.defaultBinaryMessenger.setMockMessageHandler(
+          'flutter/assets',
+          null,
+        ),
+      );
+      server.release = null; // the server has nothing: offline in effect
+      final startup = await tester.runAsync(
+        () => Plux.initializeWith(
+          config(),
+          const RuntimeOverrides(credentials: MemoryCredentialStore.new),
+        ),
+      );
+      expect(startup!.sequence, 5, reason: '${startup.error} $errors');
+      expect(asked, contains('assets/plux/baseline.json'));
+      expect(asked, contains('assets/plux/bundles/loans.pxb'));
+
+      // The first sync is a delta from the baseline: no full bundle moves.
+      server
+        ..addDelta(
+          demo,
+          features,
+          goldens.deltas['compiled-loan-calculator/demo.pxb-to-features/'
+              'features.pxb']!,
+        )
+        ..addDelta(
+          loans,
+          tasks,
+          goldens.deltas['compiled-loan-calculator/loans.pxb-to-features/'
+              'tasks.pxb']!,
+        )
+        ..release = FakeRelease(6, features, {'loans': tasks});
+      final r = await tester.runAsync(() async => Plux.sync());
+      expect(r!.outcome, SyncOutcome.staged, reason: '${r.error}');
+      expect(r.deltaRatio, lessThan(1));
+      expect(
+        server.requests.where((p) => p.startsWith('/v1/objects/bundles')),
+        isEmpty,
+      );
     },
   );
 

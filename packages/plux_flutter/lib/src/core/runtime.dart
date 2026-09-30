@@ -151,11 +151,7 @@ final class PluxRuntime with WidgetsBindingObserver {
           httpClient: config.httpClient ?? platformHttpClient,
           credentials: credentials,
           parallelism: config.downloadParallelism,
-          baseline:
-              overrides.baseline ??
-              (config.baseline == null
-                  ? null
-                  : assetBaseline(config.baseline!)),
+          baseline: overrides.baseline,
           rootIsolateToken: RootIsolateToken.instance,
           sync: SyncConfig(
             appId: config.appId,
@@ -175,6 +171,7 @@ final class PluxRuntime with WidgetsBindingObserver {
             assets: assets,
           ),
         ),
+        baselineAssets: overrides.baseline == null ? config.baseline : null,
       );
       final rt = PluxRuntime._(
         config,

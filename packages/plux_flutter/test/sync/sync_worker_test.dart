@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -83,11 +82,5 @@ void main() {
       await server.close();
       Directory(root).deleteSync(recursive: true);
     }
-  });
-
-  test('the asset baseline reader returns null for a missing asset', () async {
-    TestWidgetsFlutterBinding.ensureInitialized();
-    expect(await assetBaseline('assets/plux')('baseline.json'), isNull);
-    expect(Uint8List(0), isEmpty);
   });
 }
