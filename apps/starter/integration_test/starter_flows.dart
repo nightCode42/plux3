@@ -47,7 +47,9 @@ Future<void> pumpUntil(
 /// for each launch, null for the platform's, as a device does.
 /// [initialize] starts the runtime: `Plux.initialize` on a device, with
 /// the platform's key store; the host run replaces the key store, which
-/// has no platform side there.
+/// has no platform side there. The flows start without the app's embedded
+/// baseline: their first launch syncs from the server, and a baseline
+/// `make dev` pulled into the app belongs to another installation.
 void starterFlows({
   required StarterConfig? Function() config,
   Future<String?> Function()? storage,
@@ -62,6 +64,7 @@ void starterFlows({
         c.toPluxConfig(
           storageDirectory: dir,
           onError: (e, _) => problems.add(e),
+          baseline: null,
         ),
       ),
     );

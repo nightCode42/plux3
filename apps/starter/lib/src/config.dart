@@ -114,11 +114,13 @@ final class StarterConfig {
   final List<PluxPublicKey> rootKeys;
 
   /// The runtime's configuration: this app, its environment and channel,
-  /// the baseline `plux pull` writes to `assets/plux`, and the host's
-  /// theme under Plux pages (HST-012).
+  /// the host's theme under Plux pages (HST-012), and the [baseline]
+  /// directory of the app's assets, where `plux pull` writes it; null
+  /// starts without one.
   PluxConfig toPluxConfig({
     String? storageDirectory,
     PluxErrorHandler? onError,
+    String? baseline = 'assets/plux',
   }) => PluxConfig(
     appId: appId,
     endpoint: endpoint,
@@ -127,5 +129,6 @@ final class StarterConfig {
     hostBuild: hostBuild,
     storageDirectory: storageDirectory,
     onError: onError,
+    baseline: baseline,
   );
 }

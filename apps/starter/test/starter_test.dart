@@ -60,6 +60,8 @@ void main() {
       expect(p.hostBuild, '7');
       expect(p.storageDirectory, '/s');
       expect(p.rootKeys, c.rootKeys);
+      expect(p.baseline, 'assets/plux');
+      expect(c.toPluxConfig(baseline: null).baseline, isNull);
     });
 
     for (final (name, defines) in [
