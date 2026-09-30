@@ -12,7 +12,8 @@
 # tools/cmd/sizegate fails when the runtime adds more than 3 MiB, or more
 # than 10% over the overhead committed in test/size/baseline.json;
 # -update rewrites that overhead instead. The Markdown report is written
-# to $SIZE_OUT/<platform>.md (default build/size).
+# to $SIZE_OUT/<platform>.md (default build/size); for Android, Flutter's
+# code-size analysis of the plux app to android-code-size.txt beside it.
 set -euo pipefail
 
 root=$(git rev-parse --show-toplevel)
@@ -42,8 +43,15 @@ platform() {
 target=${1:-}
 case "$target" in
 android)
+	mkdir -p "$out"
 	for app in blank plux; do
 		platform "$app" android
+	done
+	# Where the plux app's Dart code goes, by package: an analysis build,
+	# made first because it writes the same APK the gate measures.
+	(cd "$here/plux" && flutter build apk --release --target-platform android-arm64 \
+		--analyze-size --code-size-directory "$out/code-size") | tee "$out/android-code-size.txt"
+	for app in blank plux; do
 		(cd "$here/$app" && flutter build apk --release --target-platform android-arm64 --split-per-abi)
 	done
 	build=build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
