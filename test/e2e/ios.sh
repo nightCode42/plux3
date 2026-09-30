@@ -16,11 +16,14 @@ root=$(git rev-parse --show-toplevel)
 out=${E2E_OUT:-$root/build/e2e}
 mkdir -p "$out"
 
-runtime=$(xcrun simctl list runtimes --json |
-	jq -r '[.runtimes[] | select(.isAvailable and .platform == "iOS")] | last | .identifier')
-type=$(xcrun simctl list devicetypes --json |
-	jq -r '[.devicetypes[] | select(.productFamily == "iPhone")] | last | .identifier')
+# The newest available iOS runtime, and the newest iPhone it supports (the
+# iPhone family also lists iPod touch models, which newer runtimes refuse).
+runtimes=$(xcrun simctl list runtimes --json)
+runtime=$(jq -r '[.runtimes[] | select(.isAvailable and .platform == "iOS")] | last | .identifier' <<<"$runtimes")
 [ -n "$runtime" ] && [ "$runtime" != null ] || { echo "✗ Xcode has no iOS simulator runtime"; exit 1; }
+type=$(jq -r --arg r "$runtime" '[.runtimes[] | select(.identifier == $r) | .supportedDeviceTypes[]
+	| select(.name | startswith("iPhone"))] | last | .identifier' <<<"$runtimes")
+[ -n "$type" ] && [ "$type" != null ] || { echo "✗ $runtime supports no iPhone"; exit 1; }
 echo "Simulator: $type on $runtime"
 udid=$(xcrun simctl create plux-e2e "$type" "$runtime")
 trap 'xcrun simctl shutdown "$udid" >/dev/null 2>&1 || true; xcrun simctl delete "$udid" >/dev/null 2>&1 || true' EXIT
