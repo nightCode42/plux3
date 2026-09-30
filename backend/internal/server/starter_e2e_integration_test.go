@@ -25,7 +25,11 @@ import (
 // It runs only when PLUX_E2E_FLUTTER names the flutter executable
 // (make e2e-starter). PLUX_E2E_STARTER_DIR selects the app, so the
 // compatibility harness can run an older runtime's app against today's
-// server and compiler (make compat).
+// server and compiler (make compat). PLUX_E2E_DEVICE names an emulator or
+// simulator (flutter devices): the flows then run there, in the app built
+// for it, with the platform's own key store and HTTP client
+// (test/e2e/android.sh, test/e2e/ios.sh); the device reaches the server on
+// its loopback address (adb reverse on Android).
 func TestStarterAppAgainstTheServer(t *testing.T) {
 	flutter := os.Getenv("PLUX_E2E_FLUTTER")
 	if flutter == "" {
@@ -56,12 +60,16 @@ func TestStarterAppAgainstTheServer(t *testing.T) {
 
 	// The expanded reporter everywhere: on GitHub Actions flutter test
 	// picks another, whose summary line differs.
-	cmd := exec.CommandContext(st.ctx, flutter, "test", "--reporter=expanded", "test/e2e_test.dart", //nolint:gosec // G204: the flutter the developer named.
+	args := []string{"test", "--reporter=expanded", "test/e2e_test.dart"}
+	if device := os.Getenv("PLUX_E2E_DEVICE"); device != "" {
+		args = []string{"test", "--reporter=expanded", "integration_test/app_test.dart", "-d", device}
+	}
+	cmd := exec.CommandContext(st.ctx, flutter, append(args, //nolint:gosec // G204: the flutter and device the developer named.
 		"--dart-define=PLUX_ENDPOINT="+st.server,
 		"--dart-define=PLUX_APP_ID="+st.app.ID,
 		"--dart-define=PLUX_ENVIRONMENT=staging",
 		"--dart-define=PLUX_HOST_BUILD=e2e",
-		"--dart-define=PLUX_ROOT_KEYS="+strings.Join(roots, ","))
+		"--dart-define=PLUX_ROOT_KEYS="+strings.Join(roots, ","))...)
 	cmd.Dir = starter
 	var out bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &out, &out

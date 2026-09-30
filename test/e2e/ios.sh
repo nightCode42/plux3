@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 Plux contributors
+# SPDX-License-Identifier: Apache-2.0
+#
+# The starter app's end-to-end flows on an iOS simulator (QA-006), run by
+# `make e2e-ios` in CI. See test/e2e/README.md.
+#
+# Creates and boots an iPhone simulator on the newest iOS runtime Xcode
+# has, and runs the Go driver with PLUX_E2E_DEVICE, which builds the app
+# for the simulator and runs integration_test/app_test.dart there. The
+# simulator shares this machine's network, so the test server is on its
+# loopback address. Needs Xcode and jq.
+set -euo pipefail
+
+root=$(git rev-parse --show-toplevel)
+out=${E2E_OUT:-$root/build/e2e}
+mkdir -p "$out"
+
+runtime=$(xcrun simctl list runtimes --json |
+	jq -r '[.runtimes[] | select(.isAvailable and .platform == "iOS")] | last | .identifier')
+type=$(xcrun simctl list devicetypes --json |
+	jq -r '[.devicetypes[] | select(.productFamily == "iPhone")] | last | .identifier')
+[ -n "$runtime" ] && [ "$runtime" != null ] || { echo "✗ Xcode has no iOS simulator runtime"; exit 1; }
+echo "Simulator: $type on $runtime"
+udid=$(xcrun simctl create plux-e2e "$type" "$runtime")
+trap 'xcrun simctl shutdown "$udid" >/dev/null 2>&1 || true; xcrun simctl delete "$udid" >/dev/null 2>&1 || true' EXIT
+xcrun simctl boot "$udid"
+xcrun simctl bootstatus "$udid" -b >/dev/null
+
+PLUX_E2E_DEVICE=$udid make -C "$root" --no-print-directory e2e-starter 2>&1 | tee "$out/ios.log"

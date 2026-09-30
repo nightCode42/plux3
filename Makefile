@@ -88,7 +88,7 @@ GO_BUILD_FLAGS  := -trimpath -buildvcs=false -ldflags "-s -w -buildid= \
 	go-determinism go-budgets go-fuzz currencies-check go-vuln go-build go-reproducible \
 	dart-check dart-get dart-lock-check dart-fmt dart-fmt-check dart-analyze dart-test dart-cover widgets-api widgets-api-check \
 	studio-check studio-install studio-fmt studio-lint studio-typecheck studio-test studio-cover \
-	compose-secrets compose-up compose-down compose-seed dev dev-starter dev-app e2e-starter compat compose-test image-check \
+	compose-secrets compose-up compose-down compose-seed dev dev-starter dev-app e2e-starter e2e-android e2e-ios compat compose-test image-check \
 	bench-runtime bench-runtime-ab bench-sync size-android size-ios docs-site \
 	release-binaries release-notes repo-check spec-lint trace secrets workflows-lint reuse-lint hygiene
 
@@ -462,7 +462,18 @@ dev-app: ## Run the starter app against the dev stack with Flutter hot reload: r
 # Verifies: QA-006.
 e2e-starter: ## Run the starter app's end-to-end flows on this machine against a server built from source (needs PLUX_TEST_DATABASE_URL)
 	@test -n "$$PLUX_TEST_DATABASE_URL" || { echo "✗ set PLUX_TEST_DATABASE_URL to a PostgreSQL database (see docs/engineering/testing.md)"; exit 1; }
-	cd backend && PLUX_E2E_FLUTTER="$$(command -v flutter)" $(GO) test -count=1 -run TestStarterAppAgainstTheServer -v ./internal/server
+	cd backend && PLUX_E2E_FLUTTER="$$(command -v flutter)" $(GO) test -count=1 -timeout 45m -run TestStarterAppAgainstTheServer -v ./internal/server
+
+# ANDROID_API picks the emulator's system image for e2e-android.
+ANDROID_API ?= 35
+
+# Verifies: QA-006, RT-002.
+e2e-android: ## Run the starter's flows on a headless Android emulator (CI only; needs the Android SDK, KVM, PLUX_TEST_DATABASE_URL; ANDROID_API=35)
+	test/e2e/android.sh $(ANDROID_API)
+
+# Verifies: QA-006, RT-002.
+e2e-ios: ## Run the starter's flows on an iOS simulator (CI only; needs Xcode, jq, PLUX_TEST_DATABASE_URL)
+	test/e2e/ios.sh
 
 # Verifies: QA-010.
 compat: ## Run the compatibility matrix: released runtimes against today's server, today's runtime against released servers (QA-010)
