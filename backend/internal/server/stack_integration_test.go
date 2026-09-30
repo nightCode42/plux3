@@ -36,15 +36,34 @@ type stack struct {
 	cli    string
 }
 
-// startStack starts the stack listening on addr. With PLUX_TEST_S3_ENDPOINT
-// and PLUX_TEST_VALKEY_URL set it runs as the Compose stack does: objects
-// in S3 served through the server's own route, the cache in Valkey
-// (QA-005, DEP-041).
+// stackOptions change how startStackWith configures the server.
+type stackOptions struct {
+	// publicBaseURL is where devices reach the server, when not at addr.
+	publicBaseURL string
+	// serverYAML is added to the configuration's server section, as
+	// indented lines.
+	serverYAML string
+}
+
+// startStack starts the stack listening on addr. With
+// PLUX_TEST_S3_ENDPOINT and PLUX_TEST_VALKEY_URL set it runs as the
+// Compose stack does: objects in S3 served through the server's own
+// route, the cache in Valkey (QA-005, DEP-041).
 func startStack(t *testing.T, addr string) *stack {
+	t.Helper()
+	return startStackWith(t, addr, stackOptions{})
+}
+
+// startStackWith is startStack with options.
+func startStackWith(t *testing.T, addr string, o stackOptions) *stack {
 	t.Helper()
 	url := storagetest.SchemaURL(t)
 	dir := t.TempDir()
 	server := "http://" + addr
+	public := server
+	if o.publicBaseURL != "" {
+		public = o.publicBaseURL
+	}
 	stores := "objectStorage:\n  directory: \"" + filepath.Join(dir, "objects") + "\"\n"
 	if endpoint := os.Getenv("PLUX_TEST_S3_ENDPOINT"); endpoint != "" {
 		stores = "objectStorage:\n  backend: s3\n  endpoint: \"" + endpoint + "\"\n  bucket: \"" + os.Getenv("PLUX_TEST_S3_BUCKET") + "\"\n" +
@@ -54,7 +73,7 @@ func startStack(t *testing.T, addr string) *stack {
 	if valkey := os.Getenv("PLUX_TEST_VALKEY_URL"); valkey != "" {
 		stores += "cache:\n  backend: valkey\n  valkeyURL: \"" + valkey + "\"\n"
 	}
-	cfg := testConfig(t, "server:\n  roles: [api, worker]\n  listen: \""+addr+"\"\n  publicBaseURL: \""+server+"\"\n"+
+	cfg := testConfig(t, "server:\n  roles: [api, worker]\n  listen: \""+addr+"\"\n  publicBaseURL: \""+public+"\"\n"+o.serverYAML+
 		"database:\n  url: \""+url+"\"\n"+stores+
 		"signing:\n  directory: \""+filepath.Join(dir, "keys")+"\"\n")
 	ctx, cancel := context.WithCancel(context.Background())
