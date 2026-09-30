@@ -34,10 +34,11 @@ xcrun simctl bootstatus "$udid" -b >/dev/null
 status=0
 PLUX_E2E_VERBOSE=1 PLUX_E2E_DEVICE=$udid make -C "$root" --no-print-directory e2e-starter 2>&1 | tee "$out/ios.log" || status=$?
 if [ "$status" -ne 0 ]; then
-	# The app's own log: whether the Dart VM service started (flutter test
+	# The app's own log since before its launch: whether the Dart VM
+	# service started (flutter test
 	# waits for its address in this log), and any crash.
-	echo "--- the app's simulator log (last 10 minutes)"
-	xcrun simctl spawn "$udid" log show --last 10m --style compact \
+	echo "--- the app's simulator log (last 45 minutes)"
+	xcrun simctl spawn "$udid" log show --last 45m --style compact \
 		--predicate 'process == "Runner"' 2>&1 | tail -n 150 | tee "$out/ios-app.log"
 fi
 exit "$status"
