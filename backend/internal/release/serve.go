@@ -92,8 +92,12 @@ type ServedManifest struct {
 
 // GetManifest returns the newest signed manifest of a channel with the
 // sync plan for the device's installed bundles (REL-030–REL-033). The
-// same manifest and installed bundles always give the same answer; the
-// ETag covers both, so an unchanged device costs one small response.
+// same manifest and installed bundles always give the same answer. The
+// ETag names the manifest; a device that sends it back and holds exactly
+// the manifest's bundles gets "not modified" — one small response
+// (REL-031). A device that sends it without holding them (a download
+// failed after the manifest was accepted) gets the manifest and its plan
+// again.
 func (s *Service) GetManifest(ctx context.Context, r ManifestRequest) (ServedManifest, error) {
 	base, err := s.latestManifest(ctx, r.OrganizationID, r.EnvironmentID, channelOrDefault(r.Channel))
 	if err != nil {
@@ -104,8 +108,8 @@ func (s *Service) GetManifest(ctx context.Context, r ManifestRequest) (ServedMan
 	for _, p := range out.Document.Plugins {
 		targets[p.Key] = p.SignedBundle
 	}
-	out.ETag = etag(base.id[:], targets, r.Installed)
-	if r.IfNoneMatch != "" && r.IfNoneMatch == out.ETag {
+	out.ETag = etag(base.id[:])
+	if r.IfNoneMatch != "" && r.IfNoneMatch == out.ETag && holds(targets, r.Installed) {
 		return ServedManifest{NotModified: true, ETag: out.ETag}, nil
 	}
 	out.Plan = make(map[string]SyncStep, len(targets))
@@ -222,17 +226,27 @@ func (s *Service) plan(ctx context.Context, org string, target SignedBundle, ins
 	return SyncStep{Action: SyncDelta, From: hashRef(installed), URL: u, Size: d.Size}, full, nil
 }
 
-// etag identifies a manifest together with the plan it implies.
-func etag(manifestID []byte, targets map[string]SignedBundle, installed map[string][]byte) string {
-	h := sha256.New()
-	h.Write(manifestID)
-	for _, k := range slices.Sorted(mapsKeys(targets)) {
-		h.Write([]byte(k))
-		h.Write([]byte{0})
-		h.Write(installed[k])
-		h.Write([]byte{0})
+// etag identifies a manifest. It does not depend on what the device
+// holds: the response a device syncs from was computed for the bundles it
+// held before, and its ETag must still match once the device holds the
+// new ones.
+func etag(manifestID []byte) string {
+	h := sha256.Sum256(manifestID)
+	return `"` + hex.EncodeToString(h[:16]) + `"`
+}
+
+// holds reports whether installed is exactly the bundles of targets.
+func holds(targets map[string]SignedBundle, installed map[string][]byte) bool {
+	if len(installed) != len(targets) {
+		return false
 	}
-	return `"` + hex.EncodeToString(h.Sum(nil)[:16]) + `"`
+	for k, t := range targets {
+		want, ok := parseHashRef(t.Hash)
+		if !ok || !bytes.Equal(installed[k], want) {
+			return false
+		}
+	}
+	return true
 }
 
 func mapsKeys[V any](m map[string]V) func(func(string) bool) {

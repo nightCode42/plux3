@@ -150,10 +150,23 @@ func TestManifestAndDeltas(t *testing.T) {
 	if err != nil || again.ETag != m2.ETag || !bytes.Equal(again.Signed, m2.Signed) {
 		t.Errorf("the manifest is not deterministic: %v", err)
 	}
+	// The ETag names the manifest: a device that still holds the old
+	// bundles (its download failed) gets the plan again; once it holds
+	// the new ones, the ETag of the response it synced from is "not
+	// modified" (REL-031).
 	req.IfNoneMatch = m2.ETag
+	stale, err := f.rel.GetManifest(ctx, req)
+	if err != nil || stale.NotModified || stale.Plan[""].Action != release.SyncDelta {
+		t.Errorf("a device without the new bundles: %+v %v", stale.Plan, err)
+	}
+	req.Installed = map[string][]byte{"": newApp, "loans": oldPlugin}
 	nm, err := f.rel.GetManifest(ctx, req)
-	if err != nil || !nm.NotModified || nm.Signed != nil {
+	if err != nil || !nm.NotModified || nm.Signed != nil || nm.ETag != m2.ETag {
 		t.Errorf("not modified: %+v %v", nm, err)
+	}
+	req.Installed = map[string][]byte{"": newApp}
+	if partial, err := f.rel.GetManifest(ctx, req); err != nil || partial.NotModified {
+		t.Errorf("a device without a plugin: %+v %v", partial.NotModified, err)
 	}
 	// A bundle the organisation never published gets the full bundle.
 	req.IfNoneMatch = ""
