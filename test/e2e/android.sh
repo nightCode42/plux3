@@ -70,6 +70,9 @@ emulator)
 	;;
 *) echo "✗ unknown E2E_VARIANT $variant"; exit 2 ;;
 esac
+# API levels current emulators do not boot write the guest kernel's
+# messages into the emulator's log, so a stall shows where it stops.
+[ "$api" -lt 26 ] && flags+=(-show-kernel)
 echo no | "$tools/avdmanager" create avd --force --name "$avd" --package "$image" --device pixel_6 >/dev/null
 [ -r /dev/kvm ] && [ -w /dev/kvm ] || echo "⚠ /dev/kvm is not usable: the emulator runs without acceleration"
 
@@ -83,7 +86,9 @@ trap '"$adb" -s "$serial" emu kill >/dev/null 2>&1 || kill "$emulator" 2>/dev/nu
 
 # fail <message>: the emulator's log, then the message.
 fail() {
-	echo "--- $log (last 80 lines)"; tail -n 80 "$log" || true
+	echo "--- $log: kernel panics, errors and the last 200 lines"
+	grep -iE 'kernel panic|panic|oops|segfault|fatal|error' "$log" | head -n 40 || true
+	tail -n 200 "$log" || true
 	echo "✗ $1"; exit 1
 }
 
