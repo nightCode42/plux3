@@ -1,0 +1,485 @@
+{
+  "app": "01f0c450-6c00-7000-8000-000000000001",
+  "environment": "production",
+  "channel": "production",
+  "releaseSequence": 1,
+  "bundles": [
+    {
+      "plugin": "",
+      "version": 1,
+      "sha256": "ff37eccb746aab23b85b98073090c1c104933a81875e281adaab0f47883ecab1",
+      "file": "bundles/_app.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "NgRftzDlxRCC8DQxpDOkNdR80ml5KB96AWkUbFRm7OapRyDFkdX1XLual5M2S0QwqlRG1HZHpGy/HA+w+t30Cg=="
+    },
+    {
+      "plugin": "catalog",
+      "version": 1,
+      "sha256": "631efb04f84b5c2164d7aba4d704c214f4f356a74bbcf55c6ee5887b83fcd6ff",
+      "file": "bundles/catalog.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "UlTrK9XfGtz1nfQIcYbciQCT/O62MwEPrXFfsFzJOyZADVw0z0t4fhqj59QX22BYAiT5v3CB7uJhxl2iDIBLBQ=="
+    },
+    {
+      "plugin": "extra01",
+      "version": 1,
+      "sha256": "5bd1fe397cb8c9ca33ddb96effc15814fc915dbe5362efc9405cb2f152aa6b33",
+      "file": "bundles/extra01.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "Kx+6SRq4LqcN8xRaJMHW7pgr+qDv3d4Y19cXVNp3D7yJBBc5c4rDEy7lyhdt0Zr7ZmsPbdF46aPiZ1zPBd3LAg=="
+    },
+    {
+      "plugin": "extra02",
+      "version": 1,
+      "sha256": "df3ba07a4e649fdc927267b32f73d93e4ba8f8feabc8f89e7abf38fcf126cc54",
+      "file": "bundles/extra02.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "Bq4BVGj7eSZZFdkjC36XokADVl3xfQPjtry+uaHHa0RDU2oOZEeElZwMY8362mmULeoVNxBumWyPDLk5J5r9DQ=="
+    },
+    {
+      "plugin": "extra03",
+      "version": 1,
+      "sha256": "89ca23e51c1eef107e8509608f82f5197acd2f7ff6bb9340eb27a9b788e4eea5",
+      "file": "bundles/extra03.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "PgrxvsT5MgSoB4NRHaPLIwvTcW/shu8QQlx5jB6FD4qVyY6LZnMLRn4xsIgMc9AMJgSTyw/59isUMrLtELe9CA=="
+    },
+    {
+      "plugin": "extra04",
+      "version": 1,
+      "sha256": "3b99c9def50cfce0357f9f54a89171da3b47b94864a2a96d4b2328abe1844db6",
+      "file": "bundles/extra04.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "IRY1yPU100u/N982lyGFN8gJ3hxEnlMxWZuK3AQoNITHuP3GlxwlU+mumuKwSm8FZryGcPGQUTAKsHcPo/BPCA=="
+    },
+    {
+      "plugin": "extra05",
+      "version": 1,
+      "sha256": "3acad9c02eba24e253b1bb8679d1ef21c5a990c6a1d8d8ff812420724824e6e6",
+      "file": "bundles/extra05.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "YQ1P9Dxwu7i8xn/g5opNA155RDl0J3l/EnRCEmWpyArKF9Xj2ol+wHOdCnurVypkXqaqMuSM7kkv18JrwgxyBA=="
+    },
+    {
+      "plugin": "extra06",
+      "version": 1,
+      "sha256": "52530e5ec9be79f601f7b99356919f18c174f1591074130cbeb819d532226b05",
+      "file": "bundles/extra06.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "rppspwSCwtxY1eqiiRBzbthzJSnq2wnmDxKfbHR8OOizEI9LMmsB6LD8ERz8GJvcsRJj1bEqYvK3iIBEQyBDDg=="
+    },
+    {
+      "plugin": "extra07",
+      "version": 1,
+      "sha256": "39f7f0fbfeb041f6f6de5b1746d42b49be0756a6cb2575fcacecfa0b3f94fd42",
+      "file": "bundles/extra07.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "WmNBxDNRrO/DcItpbMkt09McM5/fUWzpArJ8KyVHZZP41CRdb/DJchetv+XKNCM0SSPMxaI0luEGbPpyv0BKBA=="
+    },
+    {
+      "plugin": "extra08",
+      "version": 1,
+      "sha256": "f796dbab866d36ba6d6cde71236ab7dad6473f9e5dfa513c02587953232142d9",
+      "file": "bundles/extra08.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "rIIypbXVxldevcFLMeRtPJm5km27WWwujdD0Eidtd3/gCEvjEd2LyY4UHIgsBorHcnDuMrikwO1PADSC5NhbCw=="
+    },
+    {
+      "plugin": "extra09",
+      "version": 1,
+      "sha256": "d6dd4d0d1fdab048ad1ffd0a4b62ac76a5cc25c115d0308307ccad25b7d8a836",
+      "file": "bundles/extra09.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "VAeOzOSiyxWZ1U5rFVn+Xq0tb1aSyCfgjnH+t8Ywr893t7LluW07VR4DPNOr8vQBQM/38W7QAiN4Oy0RPve0Aw=="
+    },
+    {
+      "plugin": "extra10",
+      "version": 1,
+      "sha256": "f1236cff95c6a621d989c991fd550b4d3c0f30711b129b413050854a470b6a4b",
+      "file": "bundles/extra10.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "NKX/kBsSXGALGwYSaFCz0f+lk2ORtNmLoAL6VIp2oqK7KlRGHg87gNKEhCosR5Hmud3QIRTKEsHLua95pqDGCA=="
+    },
+    {
+      "plugin": "extra11",
+      "version": 1,
+      "sha256": "18b555b8999acde94ad4a0e48f2eb8c9d88b8cc69b39fb632ceda6e287b16b4d",
+      "file": "bundles/extra11.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "xrQfkolYROUwOdWaJfGMISEjPwv2Q4W/qxRRs0WWZYaTlGK6EhLcJQH2lrCFXwgFjHZoHDA0ZiiENwyaj4lCCg=="
+    },
+    {
+      "plugin": "extra12",
+      "version": 1,
+      "sha256": "615e12d3dc10f1414766ed9a235d764ad4f0e60e3c3125f45e83aa223da4baf2",
+      "file": "bundles/extra12.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "3fxy3rk5ZxQnPG3eoj/JpWddhvNQZOcD/oZfyRzvOiWrzOC9dkmDmpiLMdrhoIMjegbtH98o69F0rcGZ1t6gAA=="
+    },
+    {
+      "plugin": "extra13",
+      "version": 1,
+      "sha256": "07dad556f851e9447c95eff11e3ff3dc0d9dda546ebd2dc3379122fa1c82a5a0",
+      "file": "bundles/extra13.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "KktolneTMAPC++3zMgPzulHeEw/qXF0+tv2f0nM2txD+ArA0DXsy0am3MEQG5VXQWuztaquE2Gp6aqCNub6jDA=="
+    },
+    {
+      "plugin": "extra14",
+      "version": 1,
+      "sha256": "e3e733a725b66c386cf5e95d17201462f60de8687e3013acac02c113baf5b666",
+      "file": "bundles/extra14.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "cJzQP+kichXZlDLRh4/6KjVKJMY2AcCkN04SGpbSr0dppMY0BapA3/3OGCFIOC3bka3VU1vXwQ9RpsVBYM+UBg=="
+    },
+    {
+      "plugin": "extra15",
+      "version": 1,
+      "sha256": "338ba89b8d10f605ef0db7355061d89a581ef6e5e44f814c0c8a86fb1f4b7d0e",
+      "file": "bundles/extra15.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "Z91J1x92kiEySX0bjd74k9HSv1j1n698gf1dA863lFqi8ucI8+MXu//VxKE96RjkMFfHXiMbMyLo4j85jlRIBQ=="
+    },
+    {
+      "plugin": "extra16",
+      "version": 1,
+      "sha256": "159eb257e5d6f4c0255e86b8b298779b4db8f8b276a523dc570cd35eba8c17a5",
+      "file": "bundles/extra16.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "SGs5hrLlZIvj6lX75VVdL0Rr+dVKER71bPLRf5B/lUXnev5ZUnyq2FAvPl4forQY2sRbcJEkDK/aym1997fmBA=="
+    },
+    {
+      "plugin": "extra17",
+      "version": 1,
+      "sha256": "950c45389f1538efa7e2e602cbe7d2b7be89b3e4ccfab6b08815ca8d63f6da84",
+      "file": "bundles/extra17.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "d5LVJTsAnqKfSb0r2Gn4NRbS5Wg17ZLO1ULxOWRj+yMVfbvZB5ueCptSmQJJszUvJyxuwXPSKWu740k9AgaODw=="
+    },
+    {
+      "plugin": "extra18",
+      "version": 1,
+      "sha256": "4069a36330d0bcf4d0acb171ac042abf71b312e26c80a27ee5e9f037567b14fa",
+      "file": "bundles/extra18.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "X3naQCIdQPohnnWXm/E42Q+TGoXPiWcK5dogwnUzL4RNGSI1FE4aiz2xFFOgjRZDM1Z665yVbzu1J/9241olCg=="
+    },
+    {
+      "plugin": "extra19",
+      "version": 1,
+      "sha256": "a122fb96015275173fd788aafab003e650cf9271cb931731fbf46abe230efb96",
+      "file": "bundles/extra19.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "P5pS6NonKLE/TC+r+QMJ7aNiH4ur1PXFG/V9gCJzLBEay8skAGE5Lg8QTTosyZdyHCdztWHSPWPpdjztQh2gAA=="
+    },
+    {
+      "plugin": "extra20",
+      "version": 1,
+      "sha256": "342f5d93f554c74d4fe40bd2bf5ce7b179438b75784fb928e9338ea4f8cf68b8",
+      "file": "bundles/extra20.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "tXSL85iuy2ksBuweOI9FRndgCK/cT8Wt2zXxYLAmWQmCsenv8eNGfOaWrlz7mUWiI3RkLFN7HvQZFohSCEmBAg=="
+    },
+    {
+      "plugin": "extra21",
+      "version": 1,
+      "sha256": "6bd136545186ee6a254b31fb746efc9af050074ae3b9f1e334947e825085c649",
+      "file": "bundles/extra21.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "JrAJupuxCNmGKMkqTbgKv8ONeUvcccJmi68vMT12swNAYmLw01xRyn3VvOam0I+G14YHrZH/+WTOLp0jDPl5Aw=="
+    },
+    {
+      "plugin": "extra22",
+      "version": 1,
+      "sha256": "4d3f3af10c535458c39e89ece5d6bdeb01b9af5e5927937a87fd8519ce0a4fe4",
+      "file": "bundles/extra22.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "uprEZWaVr3sXpAzUAC8sYlU6TgZ4oucJi/1Rh5S9tGrFr0VzJJf5Yiu9T5DSMKlpz2i4i/k/OHjUsLgWK4wQDg=="
+    },
+    {
+      "plugin": "extra23",
+      "version": 1,
+      "sha256": "caf2537e2ab8c33130c55fb847ae1c4d8098276f53ff2e5bd592901cc0b1655e",
+      "file": "bundles/extra23.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "EjwqHkOLiStsG9ORnsiTcT6WxxiZNiUipQViIgQPl9+cEnkGUV53FQZAkEfCNosdOFoDC2MMgMmupThPq3mFDg=="
+    },
+    {
+      "plugin": "extra24",
+      "version": 1,
+      "sha256": "b3b4c58e33c2b948cf3dffe7ce0e1f4d9942a68557809daff91506b997fe184e",
+      "file": "bundles/extra24.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "ehnKnbDwV1Oo/K8vpLNBORqeUjqeG07d+3F/0mIKZnDxQnGC38fEW5wXnFrAMp0mygHSVfaFMrZqjdYX+D+SAw=="
+    },
+    {
+      "plugin": "extra25",
+      "version": 1,
+      "sha256": "1024407e3059cdcfe8c2e8c271e5affac1850651deda84ef5f71940be07042fc",
+      "file": "bundles/extra25.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "n0pK/Hxo6PKrihIOoOkDL8VdvqP0Salsqk65+qmStgrCLf1EkW4OvZe/q+2dQ2wx38ek4QDaPDXwMOEjH6LUDQ=="
+    },
+    {
+      "plugin": "extra26",
+      "version": 1,
+      "sha256": "c8f33c26780d2bb08f810a47c4a8ef3486b4ca0a6499deea86917f05a7e67bbf",
+      "file": "bundles/extra26.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "EXmde+bme49W4PQWVTN6VSAsWh/8BDdW5uLV8FUJEk4dN/euHCmu2Oa4wvt6vkWmQmdaZpMW2+vn7Kjs2DWxDw=="
+    },
+    {
+      "plugin": "extra27",
+      "version": 1,
+      "sha256": "442c75ec399dccce00eaa94196f93cf1f6265f539d02830f17eef5f9e3885ba0",
+      "file": "bundles/extra27.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "qrcHOThIKSzZd8P/ekNepwLtLFcOvbjYS13Nn5Nt77BhX6j6Ue7eyzKj8DcLUhzhnDnzUpO7z0NaJeiGQClHBQ=="
+    },
+    {
+      "plugin": "extra28",
+      "version": 1,
+      "sha256": "dbb175c9b3e9e2cea5949307b88b7ee77e853d191f2d6d52f90d26cc4b5829f2",
+      "file": "bundles/extra28.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "IRF0gcCy99ZyYHGyzmh+OE/Bawh0LLocQvOCvXrCdfzQGD688RjHYuEr29H3Rt5raQVrZ1mJ9DWwOCT1Wua7AQ=="
+    },
+    {
+      "plugin": "extra29",
+      "version": 1,
+      "sha256": "f51c211c0b33b59f31b9d7463c4df7aa7bce3ae2e2fbfcb765aa30d7e0d1dc28",
+      "file": "bundles/extra29.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "vTD8g6u5+YFwxNpooudxyL/QEYOWk97WFG7sRgi1G7vNTLfgmnNXGiRHvhYJL2ctmB1THGxXStFPJMOsnNWqDQ=="
+    },
+    {
+      "plugin": "extra30",
+      "version": 1,
+      "sha256": "be8a909b2d0889f880b0d7894b2b43bc75f42b6978e962aa41b761c90db841b3",
+      "file": "bundles/extra30.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "ZYEuH8TKPTpb5ANuvyvneq49YAWcvn8VxbmDrpKR+3q3LtT5rjw3mk3UJ01rHiXPxvDgydhEwvUfH1p3OhnuAQ=="
+    },
+    {
+      "plugin": "extra31",
+      "version": 1,
+      "sha256": "e48cdfc8e40105b0fcd913990b248624bf9af6cefddd046e7a26e9f2fe48b84a",
+      "file": "bundles/extra31.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "9HzLNQwrJ8lFiZR4DDMmaIARRGDq4/4d3Vi8RC4pTi5fqj/lmCB01ZXsOeNjZHhFV/Tl7C9AK6L5+mX5AVsaAg=="
+    },
+    {
+      "plugin": "extra32",
+      "version": 1,
+      "sha256": "eb09116c4da4389c19e76b3632ad6f9485674baaabf3b98976feaa2e3b0b1f96",
+      "file": "bundles/extra32.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "E67HZWguWjM+lHLoZVCceG/JkbpSllsuHFPTGow6uUCeujoNGyUsevyvg45rHSzGAlJYSQnpiuNPRKvXCJ6xDw=="
+    },
+    {
+      "plugin": "extra33",
+      "version": 1,
+      "sha256": "f017bb94dd5124e77face7e4ddc6f62946c265db6082c9ed306c89cd4a4396b4",
+      "file": "bundles/extra33.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "a5XxS54HZxFfDqiFsv4XvzADNQ4qSOpf/vdX6U+G/jZZfgfRrSc9aJyqD83X7oYBbKffxnOr5Z4tfct4dwDFAw=="
+    },
+    {
+      "plugin": "extra34",
+      "version": 1,
+      "sha256": "2bb6b97eb3d22394faeac41f212c47341b55a0f2c9488369aa27715c9dbafab7",
+      "file": "bundles/extra34.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "C2mlLJBnY8Bf8sy2cHxsD+mYGLj8PG31o5DupDlKFfZBf/0UCg8WONdW94BEEDH70nAGKxNw44zxMY2KkF/ODQ=="
+    },
+    {
+      "plugin": "extra35",
+      "version": 1,
+      "sha256": "134635315dfdc7e40268af761e169e413574e514df11aab4507f78aecf3d9d1d",
+      "file": "bundles/extra35.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "IfwLEM6AqxJbbiK1Q2Fq3yc6KeqITv9SJ2v0aelvlHsjdx7UpIuU5wWKBH2klgwTfmnDoJ2rBE8TNTWqfGg4CA=="
+    },
+    {
+      "plugin": "extra36",
+      "version": 1,
+      "sha256": "4f3b1ce91104e49874ff691f0c899864120f52f92cfa82986adfe17294714a7e",
+      "file": "bundles/extra36.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "CUr/UBkgY2R+82mdTVfuaBzIDpDxv+arnYs1An3J5mI0HmsZ89m4l5b1YXL5h/rClQnPEl4is+NwXczrt6i0CA=="
+    },
+    {
+      "plugin": "extra37",
+      "version": 1,
+      "sha256": "e03c4c173ad2c8b739a6aaabf010177f61cc35aaad28542d7e9353126036f14c",
+      "file": "bundles/extra37.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "ZA8Dp1hsHjzoZqqddG7L9uKeTHuKvZOi/5EUeP03sIkNSDLMF2sND62UAPUn862wni0yedltdnm+b0l4JJikCw=="
+    },
+    {
+      "plugin": "extra38",
+      "version": 1,
+      "sha256": "c17f375636abf084fdaa8fd9f8f09fc3bf08bc4c5ff1381d08da2422a63ec80a",
+      "file": "bundles/extra38.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "KRlt2W0Ew6Yh8Q44pPgEcpn3m+qdBY4cGSKtDDTYV7WMwZSXVH7nZg6BMH84Po1gpZyZdJYRkCuzhtgzsLtQDw=="
+    },
+    {
+      "plugin": "extra39",
+      "version": 1,
+      "sha256": "9cc5dd45376c07a9669e82fb5f054aef0d59bc5cc30a0cd918235cb9635eb3a9",
+      "file": "bundles/extra39.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "NgiTwSkgU00ayk0F45TGKeJ7dYeSnjAT/QCwOXp0QmvKrFKVolqlQ28+X0n8yNwEC5ZaVdFy8F4kEtnXfl0ADQ=="
+    },
+    {
+      "plugin": "extra40",
+      "version": 1,
+      "sha256": "3a325087b0e42ef11a9291b52645e08cca2270b148d7fb3d38d0818109b45302",
+      "file": "bundles/extra40.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "zfHMrIKA5D80BEWcPGJZ4w4tNR40O4RxYbZxpHzzPfzrKVnzp6wyeOgd1nSl5jlWkJjk5CoHXdKwDLgltEhZAw=="
+    },
+    {
+      "plugin": "extra41",
+      "version": 1,
+      "sha256": "46b05e2f8f814948c40ea14b15f50a89da0c3775981fd42a8416f88407a01719",
+      "file": "bundles/extra41.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "bcMFf7CjmYLRUu4XGKwwyTcNodAL4+QEOJxPPgXRlsJ0LzD5k145TrrRvdObH2gxqYOdj9yAYixJO6hMYx4+CA=="
+    },
+    {
+      "plugin": "extra42",
+      "version": 1,
+      "sha256": "43764e88b6acf3abef7bf3a6d9a12679e38b8be7006b822e110ff2da65e1d1c4",
+      "file": "bundles/extra42.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "9krFF1N8EeYq+Op77CM8c3lQo0EfUDrEFu0rELufXukRveXvjrZmsx5n05Eyg993UkzZjxgnF+aSiPQh8vdACg=="
+    },
+    {
+      "plugin": "extra43",
+      "version": 1,
+      "sha256": "88fe04028f38e255dab0783b792d175e2ddc8cf58c76568e1d6d2e4b88294cc7",
+      "file": "bundles/extra43.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "OinOdduFsE/0eSMYibyZWqEWY5Q6JwEW9v96kXvlNnKbU0ZPdRyz/k8uzE2LA34uGQY4ppWjFTmCKqzbGFo0Dg=="
+    },
+    {
+      "plugin": "extra44",
+      "version": 1,
+      "sha256": "1b4b2ad79f59a951057f28e4fefaa28c2c89bb7517a7ac4bd932fe8ceb2b7775",
+      "file": "bundles/extra44.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "4BdBZl34yKTbIAoxo/Dn4kA9nurx42y4phZpunXe5KgpD93I+LUuSQn9BOVXrlf/zhuU9l5+Xgne9f2KDlAoAw=="
+    },
+    {
+      "plugin": "extra45",
+      "version": 1,
+      "sha256": "4c58c860b9b901517b6237834dd579924c3040c1814e343d870238baaecb6989",
+      "file": "bundles/extra45.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "tOvY/2bbdkl6cjLVdgev5oT22aGvvBWyv7TzIqP3J/UtN0HqDefn972Ykp3gnQjojWnWYm4pfcZWmwdMYj4zCw=="
+    },
+    {
+      "plugin": "extra46",
+      "version": 1,
+      "sha256": "b92e4bb86a834003f4c35daed251bab38c5063397d7c98ec17024bbc45e9e9d5",
+      "file": "bundles/extra46.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "vOae7cEo73WRJ6mzWreU2I16YwNjXiw764YRlWRACWEF2z4G69ATnviB3wFd/xB3E+spf3ZZmWzDzeMR9UHKBw=="
+    },
+    {
+      "plugin": "extra47",
+      "version": 1,
+      "sha256": "b54769859fe8cddaa7bccf28e7127271a465d387e08bf8fed3eded6d12dbbabf",
+      "file": "bundles/extra47.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "jM+IEkei2vq6Z74ADPJE/W8wFmN6h5Hu3MoRk7WKuZx8Mt+lJ9xXD1coWWQMUgXs0+7fL1HqraROTGkxhqlqAw=="
+    },
+    {
+      "plugin": "extra48",
+      "version": 1,
+      "sha256": "1eb4d7caf4e764b3165aaad7505ab101d7407f1e10dc2fca5e6d3544c7cbc9ab",
+      "file": "bundles/extra48.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "X+5JSJbJYIyAtTxHd7ygBKLMpmt4GMvJuTOfFqxICLq2tlPVLik+sh8lIy2HxuW+Dl/CjBnxTa30MeIqu9WBCQ=="
+    },
+    {
+      "plugin": "feed",
+      "version": 1,
+      "sha256": "db1c58b60c72d78c1b7c43ab19fb433e1f679089c60fca2c7ec827eeef230db7",
+      "file": "bundles/feed.pxb",
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "signature": "RIlxb9smVpgZcjAPbrpfI35ATqjMBDS842SPkY/dNVucfqhSVHb7U4o3jkcYqnzgozNn4XDTZ388GwAGrsP2DA=="
+    }
+  ],
+  "assets": [
+    {
+      "sha256": "a55b9f1e122005b3316268d11ff32c208895d30e5bd0ee740a8eab76c05596c2",
+      "file": "assets/a55b9f1e122005b3316268d11ff32c208895d30e5bd0ee740a8eab76c05596c2"
+    },
+    {
+      "sha256": "f34867a0f2b1456c386c74bdb618e2dafc48602146159830b8cb7a21b6ce892d",
+      "file": "assets/f34867a0f2b1456c386c74bdb618e2dafc48602146159830b8cb7a21b6ce892d"
+    }
+  ],
+  "keys": [
+    {
+      "keyId": "08eab417e7060eb9846a89c885a94988",
+      "algorithm": "ed25519",
+      "role": "targets",
+      "publicKey": "438881202335e739ec69156ae8fdf23688c42316cad9969be7f94cfb83174c92"
+    }
+  ]
+}
