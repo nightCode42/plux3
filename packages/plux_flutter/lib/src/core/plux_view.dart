@@ -9,9 +9,12 @@ library;
 
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'dart:ui' as ui;
 
+import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/core/runtime.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
@@ -135,9 +138,29 @@ final class _PluxPageHostState extends State<PluxPageHost> {
   /// True while large sections are checked off the UI isolate.
   bool _preparing = false;
 
+  // What render_perf and screen_view report (ADR-0034).
+  int? _buildMs;
+  int? _firstFrameMs;
+  int _frames = 0;
+  int _janky = 0;
+  Duration _budget = const Duration(microseconds: 16667);
+  String _source = '';
+
+  /// Counts the frames drawn while the page is shown, and those whose
+  /// build or raster phase missed the display's frame budget.
+  void _onTimings(List<ui.FrameTiming> timings) {
+    for (final t in timings) {
+      _frames++;
+      if (t.buildDuration > _budget || t.rasterDuration > _budget) _janky++;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    _source = widget.runtime.lastRoute;
+    widget.runtime.lastRoute = widget.page.route;
+    SchedulerBinding.instance.addTimingsCallback(_onTimings);
     final release = _release = widget.runtime.mount();
     if (release == null) return;
     try {
@@ -176,10 +199,58 @@ final class _PluxPageHostState extends State<PluxPageHost> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final hz = View.maybeOf(context)?.display.refreshRate ?? 60;
+    _budget = Duration(microseconds: (1e6 / (hz > 0 ? hz : 60)).round());
+  }
+
+  @override
   void dispose() {
+    SchedulerBinding.instance.removeTimingsCallback(_onTimings);
+    _recordView();
     final r = _release;
     if (r != null) widget.runtime.unmount(r);
     super.dispose();
+  }
+
+  /// Records how long the page was shown and, once it drew a frame, how
+  /// it performed (ANL-001, RT-015). Only routes and numbers: never the
+  /// page's parameters or state.
+  void _recordView() {
+    final t = widget.runtime.telemetry;
+    final route = widget.page.route;
+    t.record(
+      'screen_view',
+      route: route,
+      pluginKey: widget.page.plugin,
+      fields: {
+        'source_route': _source,
+        'duration_ms': _sinceMount.elapsedMilliseconds,
+      },
+    );
+    final first = _firstFrameMs;
+    if (first == null || _failure != null) return;
+    int? nodes;
+    try {
+      nodes = fbs.Page(widget.page.section.data).nodes?.length;
+    } on Object {
+      nodes = null;
+    }
+    t.record(
+      'render_perf',
+      route: route,
+      pluginKey: widget.page.plugin,
+      fields: {
+        'build_ms': ?_buildMs,
+        'first_frame_ms': first,
+        'frames': _frames,
+        'janky_frame_pct': _frames == 0
+            ? 0.0
+            : double.parse((100 * _janky / _frames).toStringAsFixed(1)),
+        'node_count': ?nodes,
+      },
+    );
   }
 
   void _fail(PluxException e) {
@@ -200,6 +271,7 @@ final class _PluxPageHostState extends State<PluxPageHost> {
     }
     final task = developer.TimelineTask()
       ..start('plux.page.build', arguments: {'route': widget.page.route});
+    final built = Stopwatch()..start();
     Widget child;
     try {
       child = renderer.build(context, release, widget.page, widget.params);
@@ -216,10 +288,12 @@ final class _PluxPageHostState extends State<PluxPageHost> {
       child = widget.fallback(error);
     } finally {
       task.finish();
+      _buildMs ??= built.elapsedMilliseconds;
     }
     if (!_reportedFrame) {
       _reportedFrame = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        _firstFrameMs = _sinceMount.elapsedMilliseconds;
         developer.Timeline.instantSync(
           'plux.page.firstFrame',
           arguments: {

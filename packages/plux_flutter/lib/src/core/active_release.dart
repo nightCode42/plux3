@@ -202,6 +202,13 @@ final class ActiveRelease {
     return File(path).existsSync() ? path : null;
   }
 
+  /// The telemetry sampling rates the app bundle carries, from 0 to 1 by
+  /// event name (ANL-003, ADR-0034).
+  Map<String, double> get telemetrySampling => {
+    for (final e in meta('').telemetrySampling ?? const <fbs.Sampling>[])
+      ?e.event: e.rate / 1000,
+  };
+
   /// The limits the app bundle carries (LIM-004).
   Map<String, int> get limits => {
     for (final l in meta('').limits ?? const <fbs.Limit>[]) ?l.key: l.value,

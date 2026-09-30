@@ -10,6 +10,7 @@ library;
 import 'dart:async';
 import 'dart:developer' as developer;
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
@@ -36,6 +37,8 @@ import 'package:plux_flutter/src/sync/api_client.dart';
 import 'package:plux_flutter/src/sync/sync_engine.dart';
 import 'package:plux_flutter/src/sync/sync_event.dart';
 import 'package:plux_flutter/src/sync/sync_worker.dart';
+import 'package:plux_flutter/src/telemetry/events.dart';
+import 'package:plux_flutter/src/telemetry/recorder.dart';
 import 'package:plux_flutter/src/verify/bundle_verifier.dart';
 import 'package:plux_flutter/src/verify/manifest.dart';
 
@@ -65,6 +68,8 @@ final class RuntimeOverrides {
     this.credentials,
     this.baseline,
     this.healthyAfter = const Duration(seconds: 10),
+    this.clock,
+    this.random,
   });
 
   /// Creates the credential store on the sync isolate.
@@ -76,6 +81,12 @@ final class RuntimeOverrides {
   /// How long a page must render without failure before a launch counts as
   /// healthy (SYN-006).
   final Duration healthyAfter;
+
+  /// The clock telemetry reads; the wall clock when null.
+  final DateTime Function()? clock;
+
+  /// Where telemetry sampling draws from; a new generator when null.
+  final math.Random? random;
 }
 
 /// The runtime.
@@ -91,6 +102,12 @@ final class PluxRuntime with WidgetsBindingObserver {
     this.assets,
   ) {
     active.addListener(() => unawaited(_loadFonts(active.value)));
+    active.addListener(() {
+      final r = active.value;
+      telemetry
+        ..releaseSequence = r?.sequence ?? 0
+        ..appSampling = r?.telemetrySampling ?? const {};
+    });
   }
 
   /// Starts the runtime: opens the store, starts the sync isolate, imports
@@ -171,6 +188,10 @@ final class PluxRuntime with WidgetsBindingObserver {
       );
       final startup = await rt._startup();
       WidgetsBinding.instance.addObserver(rt);
+      rt._flushEvery = Zone.root.createPeriodicTimer(
+        flushInterval,
+        (_) => unawaited(rt._inForeground ? rt.flushTelemetry() : null),
+      );
       return (rt, startup);
     } finally {
       task.finish();
@@ -197,6 +218,84 @@ final class PluxRuntime with WidgetsBindingObserver {
   final VerifiedAssets _verified = VerifiedAssets();
   final Set<String> _fonts = {};
   final StreamController<SyncEvent> _events = StreamController.broadcast();
+
+  /// Records telemetry (ANL-001, ADR-0034); the sync isolate buffers and
+  /// sends what it keeps.
+  late final TelemetryRecorder telemetry = TelemetryRecorder(
+    post: (lines) =>
+        _worker.recordTelemetry(lines, limit(PluxLimit.telemetryBufferBytes)),
+    withdraw: _worker.purgeTelemetry,
+    consent: config.consent,
+    hostSampling: config.telemetrySampling,
+    random: overrides.random,
+    clock: _clock,
+  );
+
+  /// How often buffered telemetry is sent while the app is in the
+  /// foreground (ADR-0034).
+  static const flushInterval = Duration(minutes: 15);
+
+  /// How long the app may stay in the background before returning starts
+  /// a new session.
+  static const sessionTimeout = Duration(minutes: 30);
+
+  DateTime Function() get _clock => overrides.clock ?? DateTime.now;
+  Timer? _flushEvery;
+  DateTime? _foregroundSince;
+  DateTime? _backgroundSince;
+  bool get _inForeground => _backgroundSince == null;
+
+  /// The route of the page shown last, the source of the next
+  /// `screen_view`.
+  String lastRoute = '';
+
+  /// A limit's value in the active app bundle (LIM-004), or its default.
+  int limit(PluxLimit l) => active.value?.limits[l.key] ?? l.defaultValue;
+
+  /// Sends the buffered telemetry now. A failure keeps the events for the
+  /// next attempt and is not reported: telemetry never adds to the
+  /// problems it measures.
+  Future<void> flushTelemetry() async {
+    if (_disposed) return;
+    try {
+      await _worker.flushTelemetry(limit(PluxLimit.telemetryEventsPerRequest));
+    } on Object catch (e) {
+      developer.log('telemetry flush: $e', name: 'plux');
+    }
+  }
+
+  void _startSession() {
+    final now = _clock();
+    _foregroundSince = now;
+    _backgroundSince = null;
+    final view = ui.PlatformDispatcher.instance.views.firstOrNull;
+    final size = view == null
+        ? null
+        : view.physicalSize / view.devicePixelRatio;
+    telemetry.record(
+      'session_start',
+      fields: {
+        'runtime_version': PluxRuntimeInfo.version,
+        'host_build': config.hostBuild,
+        'platform': Platform.operatingSystem,
+        'os_version': clipText(Platform.operatingSystemVersion),
+        if (size != null)
+          'device_class': size.shortestSide >= 600 ? 'tablet' : 'phone',
+        if (telemetry.consent.analytics)
+          'locale': ui.PlatformDispatcher.instance.locale.toLanguageTag(),
+      },
+    );
+  }
+
+  void _endStretch() {
+    final since = _foregroundSince;
+    if (since == null) return;
+    _foregroundSince = null;
+    telemetry.record(
+      'session_end',
+      fields: {'duration_ms': _clock().difference(since).inMilliseconds},
+    );
+  }
 
   /// The release pages render from; replaced only by activation or revert.
   final ValueNotifier<ActiveRelease?> active = ValueNotifier(null);
@@ -283,6 +382,9 @@ final class PluxRuntime with WidgetsBindingObserver {
       );
     }
     _load();
+    // Before the first sync, so the flush after it carries the session's
+    // start with the release the device runs.
+    _startSession();
     final timeout = config.startup.timeout;
     if (active.value == null) {
       final r = await sync();
@@ -318,6 +420,10 @@ final class PluxRuntime with WidgetsBindingObserver {
       try {
         final r = await _worker.sync(_emit);
         if (r.outcome == SyncOutcome.staged) _onStaged();
+        // The radio is awake: record the result and send what is buffered
+        // (SYN-015, ADR-0034).
+        telemetry.record('sync_result', fields: r.toTelemetry());
+        unawaited(flushTelemetry());
         return r;
       } finally {
         await forward.cancel();
@@ -457,22 +563,45 @@ final class PluxRuntime with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Reaching the background normally ends the launch healthily.
-    if (state == AppLifecycleState.paused && _healthyScheduled) {
-      unawaited(_worker.markHealthy());
+    if (state == AppLifecycleState.paused) {
+      // Reaching the background normally ends the launch healthily.
+      if (_healthyScheduled) unawaited(_worker.markHealthy());
+      if (_inForeground) {
+        _endStretch();
+        _backgroundSince = _clock();
+        unawaited(flushTelemetry());
+      }
+    } else if (state == AppLifecycleState.resumed && !_inForeground) {
+      final away = _clock().difference(_backgroundSince!);
+      if (away >= sessionTimeout) {
+        _startSession();
+      } else {
+        _foregroundSince = _clock();
+        _backgroundSince = null;
+      }
     }
   }
 
   void _report(PluxException e) {
     developer.log(e.toString(), name: 'plux');
     diagnostics.record(e);
+    telemetry.error(e);
     config.onError?.call(e, null);
   }
 
   /// Stops the sync isolate and releases every mapping.
   Future<void> dispose() async {
-    _disposed = true;
     WidgetsBinding.instance.removeObserver(this);
+    _flushEvery?.cancel();
+    if (_inForeground) _endStretch();
+    // The sync isolate handles messages in order: once this answers, every
+    // event recorded before it is in the buffer, for the next launch. A
+    // sync in progress would hold the answer, so the wait is bounded.
+    await _worker.settle().timeout(
+      const Duration(seconds: 1),
+      onTimeout: () {},
+    );
+    _disposed = true;
     _healthy?.cancel();
     diagnostics.dispose();
     _worker.close();

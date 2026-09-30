@@ -3,10 +3,11 @@
 
 /// The device side of the Plux API (ADR-0005, ADR-0021): ConnectRPC with
 /// its JSON encoding over the `http` client, so the runtime needs no
-/// protobuf library. Only the four calls a device makes are here.
+/// protobuf library. Only the calls a device makes are here.
 library;
 
 import 'dart:convert';
+import 'dart:io' show gzip;
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
@@ -265,21 +266,41 @@ final class PluxApiClient {
         'releaseSequence': '$sequence',
       }, token: token);
 
+  /// Sends a batch of telemetry events (ANL-002, ADR-0034), compressed
+  /// with gzip; the server's counts of accepted and refused events.
+  Future<({int accepted, int rejected})> ingestEvents(
+    String token, {
+    required String appId,
+    required String environment,
+    required List<Map<String, Object?>> events,
+  }) async {
+    final r = await _call(
+      'plux.v1.TelemetryService/IngestEvents',
+      {'appId': appId, 'environment': environment, 'events': events},
+      token: token,
+      compress: true,
+    );
+    return (accepted: _int(r['accepted']), rejected: _int(r['rejected']));
+  }
+
   Future<Map<String, Object?>> _call(
     String procedure,
     Map<String, Object?> body, {
     String? token,
+    bool compress = false,
   }) async {
     final http.Response res;
     try {
+      final json = utf8.encode(jsonEncode(body));
       res = await _http.post(
         endpoint.resolve(procedure),
         headers: {
           'Content-Type': 'application/json',
           'Connect-Protocol-Version': '1',
+          if (compress) 'Content-Encoding': 'gzip',
           if (token != null) 'Authorization': 'Bearer $token',
         },
-        body: jsonEncode(body),
+        body: compress ? gzip.encode(json) : json,
       );
     } on Exception catch (e) {
       throw ApiError(0, 'unavailable', '$e');

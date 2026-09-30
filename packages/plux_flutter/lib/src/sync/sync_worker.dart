@@ -7,6 +7,7 @@
 library;
 
 import 'dart:async';
+import 'dart:io' show FileSystemException;
 import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
@@ -21,6 +22,8 @@ import 'package:plux_flutter/src/sync/api_client.dart';
 import 'package:plux_flutter/src/sync/downloader.dart';
 import 'package:plux_flutter/src/sync/sync_engine.dart';
 import 'package:plux_flutter/src/sync/sync_event.dart';
+import 'package:plux_flutter/src/telemetry/events.dart';
+import 'package:plux_flutter/src/telemetry/outbox.dart';
 
 /// Everything the sync isolate needs, sent to it once.
 final class SyncWorkerConfig {
@@ -79,6 +82,28 @@ final class _Store extends _Command {
 
 final class _Baseline extends _Command {
   const _Baseline(super.reply);
+}
+
+final class _Settle extends _Command {
+  const _Settle(super.reply);
+}
+
+final class _Flush extends _Command {
+  const _Flush(super.reply, this.perRequest);
+  final int perRequest;
+}
+
+/// Events to buffer; no reply (ADR-0034).
+final class _Record {
+  const _Record(this.lines, this.maxBytes);
+  final List<String> lines;
+  final int maxBytes;
+}
+
+/// Categories whose buffered events are deleted; no reply.
+final class _Purge {
+  const _Purge(this.categories);
+  final Set<TelemetryCategory> categories;
 }
 
 /// The UI isolate's handle on the sync isolate.
@@ -153,6 +178,23 @@ final class SyncWorker {
     return reply;
   }
 
+  /// Buffers telemetry events, as [TelemetryLine]s, within [maxBytes]
+  /// (ADR-0034). Messages to the isolate keep their order, so events
+  /// recorded before a [flushTelemetry] are in it.
+  void recordTelemetry(List<String> lines, int maxBytes) =>
+      _commands.send(_Record(lines, maxBytes));
+
+  /// Deletes the buffered events of [categories] (SEC-161).
+  void purgeTelemetry(Set<TelemetryCategory> categories) =>
+      _commands.send(_Purge(categories));
+
+  /// Sends the buffered events in batches of at most [perRequest].
+  Future<TelemetryFlush> flushTelemetry(int perRequest) async =>
+      await _ask((p) => _Flush(p, perRequest)) as TelemetryFlush;
+
+  /// Completes once the isolate has handled every message sent before.
+  Future<void> settle() => _ask(_Settle.new);
+
   /// Stops the isolate.
   void close() => _isolate.kill(priority: Isolate.immediate);
 }
@@ -171,17 +213,47 @@ Future<void> _main((SyncWorkerConfig, SendPort) args) async {
     syncDirectory: syncDirectory,
   );
   final client = config.httpClient();
+  final api = PluxApiClient(client, config.endpoint);
   final engine = SyncEngine(
     config: config.sync,
     store: store,
-    api: PluxApiClient(client, config.endpoint),
+    api: api,
     downloader: Downloader(client, parallelism: config.parallelism),
     credentials: config.credentials(),
   );
+  final outbox = TelemetryOutbox(config.storeRoot);
   final commands = ReceivePort();
   ready.send(commands.sendPort);
   await for (final c in commands) {
     switch (c) {
+      case _Settle(:final reply):
+        reply.send(null);
+      case _Record(:final lines, :final maxBytes):
+        try {
+          outbox.append(lines, maxBytes);
+        } on FileSystemException {
+          // A full or unwritable disk loses events, never the sync.
+        }
+      case _Purge(:final categories):
+        try {
+          outbox.purge(categories);
+        } on FileSystemException {
+          // Retried at the next change of consent.
+        }
+      case _Flush(:final reply, :final perRequest):
+        try {
+          final r = await outbox.flush(
+            api: api,
+            token: engine.recentToken,
+            appId: config.sync.appId,
+            environment: config.sync.environment,
+            perRequest: perRequest,
+          );
+          if (r.error?.code == 'unauthenticated') engine.forgetToken();
+          reply.send(r);
+        } on Object catch (e) {
+          reply.send(_Failure('$e'));
+        }
       case _Sync(:final reply):
         reply.send(await engine.run(reply.send));
       case _Baseline(:final reply):

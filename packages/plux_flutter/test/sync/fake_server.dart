@@ -110,10 +110,13 @@ sealed class Fault {
 /// Answer with [status] and an optional `Retry-After`.
 final class StatusFault extends Fault {
   /// Creates the fault.
-  const StatusFault(this.status, {this.retryAfter});
+  const StatusFault(this.status, {this.retryAfter, this.code = 'unavailable'});
 
   /// The status.
   final int status;
+
+  /// The Connect error code of the answer.
+  final String code;
 
   /// The header value.
   final String? retryAfter;
@@ -224,6 +227,12 @@ final class FakePluxServer {
   /// Devices registered.
   int registrations = 0;
 
+  /// Telemetry events received, in the order they arrived.
+  final List<Map<String, Object?>> events = [];
+
+  /// Paths of requests whose body came compressed with gzip.
+  final List<String> compressedRequests = [];
+
   /// Whether tokens are refused as for an unknown device.
   bool forgetDevices = false;
 
@@ -315,13 +324,17 @@ final class FakePluxServer {
         res.headers.set('Retry-After', fault.retryAfter!);
       }
       res.headers.contentType = ContentType.json;
-      res.write(jsonEncode({'code': 'unavailable', 'message': 'injected'}));
+      res.write(jsonEncode({'code': fault.code, 'message': 'injected'}));
       await res.close();
       return;
     }
     if (req.method == 'POST') {
-      final body =
-          jsonDecode(await utf8.decodeStream(req)) as Map<String, Object?>;
+      final raw = await req.fold<List<int>>([], (a, b) => a..addAll(b));
+      final gzipped = req.headers.value('content-encoding') == 'gzip';
+      if (gzipped) compressedRequests.add(req.uri.path);
+      final body = jsonDecode(
+        utf8.decode(gzipped ? gzip.decode(raw) : raw),
+      ) as Map<String, Object?>;
       final out = await _rpc(
         req.uri.path,
         body,
@@ -409,6 +422,14 @@ final class FakePluxServer {
         return (200, {'accessToken': 'plux_dat_${body['deviceId']}'});
       case '/plux.v1.DeviceService/ReportInstalled':
         return (200, <String, Object?>{});
+      case '/plux.v1.TelemetryService/IngestEvents':
+        if (auth == null || !auth.startsWith('Bearer plux_dat_')) {
+          return (401, {'code': 'unauthenticated', 'message': 'no token'});
+        }
+        final batch = (body['events']! as List<Object?>)
+            .cast<Map<String, Object?>>();
+        events.addAll(batch);
+        return (200, {'accepted': batch.length});
       case '/plux.v1.ManifestService/GetManifest':
         if (auth == null || !auth.startsWith('Bearer plux_dat_')) {
           return (401, {'code': 'unauthenticated', 'message': 'no token'});

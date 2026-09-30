@@ -156,16 +156,21 @@ abstract final class Plux {
   );
 
   /// Records the user's consent (SEC-161).
-  static void setConsent(PluxConsent consent) => _environment(
-    (e) => PluxEnvironment(
-      locale: e.locale,
-      themeMode: e.themeMode,
-      brand: e.brand,
-      consent: consent,
-      user: e.user,
-      authDelegate: e.authDelegate,
-    ),
-  );
+  static void setConsent(PluxConsent consent) {
+    // Telemetry follows at once; withdrawing a category deletes its
+    // buffered events (ADR-0034).
+    _rt.telemetry.consent = consent;
+    _environment(
+      (e) => PluxEnvironment(
+        locale: e.locale,
+        themeMode: e.themeMode,
+        brand: e.brand,
+        consent: consent,
+        user: e.user,
+        authDelegate: e.authDelegate,
+      ),
+    );
+  }
 
   /// Sets the pseudonymous user and targeting attributes (HST-011).
   static void setUserContext(PluxUser? user) => _environment(

@@ -188,6 +188,7 @@ final class PluxConfig {
     this.brand,
     this.locale,
     this.consent = PluxConsent.necessaryOnly,
+    this.telemetrySampling = const {},
     this.authDelegate,
     this.container,
     this.parentContainer,
@@ -248,6 +249,12 @@ final class PluxConfig {
 
   /// What the user consented to (SEC-161).
   final PluxConsent consent;
+
+  /// The share of each consent-gated telemetry event kept, by event name
+  /// (such as `screen_view`), from 0 to 1 (ANL-003). It can only lower
+  /// the rate the app sets in its document; operational events
+  /// (`session_start`, `sync_result`, `error`) are never sampled.
+  final Map<String, double> telemetrySampling;
 
   /// Supplies the end user's token (HST-010), from P4.
   final PluxAuthDelegate? authDelegate;

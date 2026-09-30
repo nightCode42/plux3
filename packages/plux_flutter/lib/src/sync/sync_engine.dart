@@ -380,8 +380,38 @@ final class SyncEngine {
     return sizes.keys.toList()..sort();
   }
 
+  String? _recent;
+  DateTime? _recentAt;
+
+  /// A device token for other calls between syncs, such as telemetry: the
+  /// last one this engine obtained while it is less than ten minutes old
+  /// (they live fifteen), otherwise a new one.
+  Future<String> recentToken() async {
+    final at = _recentAt;
+    final t = _recent;
+    if (t != null &&
+        at != null &&
+        _clock().difference(at) < const Duration(minutes: 10)) {
+      return t;
+    }
+    return _token();
+  }
+
+  /// Forgets the recent token, after the server refused it.
+  void forgetToken() {
+    _recent = null;
+    _recentAt = null;
+  }
+
   /// A token for this sync, registering the device on first use.
   Future<String> _token() async {
+    final t = await _freshToken();
+    _recent = t;
+    _recentAt = _clock();
+    return t;
+  }
+
+  Future<String> _freshToken() async {
     var c = await credentials.read();
     if (c == null) {
       c = await api.register(
