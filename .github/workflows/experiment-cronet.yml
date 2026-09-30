@@ -4,7 +4,9 @@
 name: Experiment (Cronet namespace)
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [claude/tender-ptolemy-qju8al]
+    paths: [.github/workflows/experiment-cronet.yml]
 
 permissions: {}
 
