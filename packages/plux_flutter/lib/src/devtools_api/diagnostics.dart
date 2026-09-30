@@ -6,6 +6,7 @@
 library;
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/sync/sync_event.dart';
@@ -104,13 +105,31 @@ final class RuntimeDiagnostics implements PluxDiagnostics {
   @override
   final ValueListenable<SyncEvent?> syncStatus;
 
-  /// Records a problem the runtime reported.
+  final List<PluxDiagnostic> _pending = [];
+  bool _publishing = false;
+
+  /// Records a problem the runtime reported. A problem reported while a
+  /// frame is built — a node that fails, say — is published after the
+  /// frame: listeners such as `plux_devtools` rebuild, and a widget must
+  /// not be marked dirty in the middle of the build.
   void record(PluxException error) {
     if (kReleaseMode) return;
-    final next = [
-      ..._log.value,
-      PluxDiagnostic(at: DateTime.now(), error: error),
-    ];
+    _pending.add(PluxDiagnostic(at: DateTime.now(), error: error));
+    final scheduler = SchedulerBinding.instance;
+    if (scheduler.schedulerPhase == SchedulerPhase.idle ||
+        scheduler.schedulerPhase == SchedulerPhase.postFrameCallbacks) {
+      _publish();
+    } else if (!_publishing) {
+      _publishing = true;
+      scheduler.addPostFrameCallback((_) => _publish());
+    }
+  }
+
+  void _publish() {
+    _publishing = false;
+    if (_pending.isEmpty) return;
+    final next = [..._log.value, ..._pending];
+    _pending.clear();
     _log.value = List.unmodifiable(
       next.length > capacity ? next.sublist(next.length - capacity) : next,
     );
