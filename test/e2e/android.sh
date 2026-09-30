@@ -29,27 +29,37 @@ mkdir -p "$out"
 
 yes | "$tools/sdkmanager" --licenses >/dev/null || true
 "$tools/sdkmanager" --install emulator platform-tools "$image" >"$out/sdkmanager.log"
+# One AVD home for avdmanager and the emulator, whatever the runner sets.
+export ANDROID_AVD_HOME=${ANDROID_AVD_HOME:-$HOME/.android/avd}
+mkdir -p "$ANDROID_AVD_HOME"
 echo no | "$tools/avdmanager" create avd --force --name "$avd" --package "$image" --device pixel_6 >/dev/null
+[ -r /dev/kvm ] && [ -w /dev/kvm ] || echo "⚠ /dev/kvm is not usable: the emulator runs without acceleration"
 
 adb=$sdk/platform-tools/adb
+log=$out/emulator-$api.log
 "$sdk/emulator/emulator" -avd "$avd" -no-window -no-audio -no-boot-anim -no-snapshot \
-	-gpu swiftshader_indirect -memory 4096 -port 5554 >"$out/emulator-$api.log" 2>&1 &
+	-gpu swiftshader_indirect -memory 4096 -port 5554 >"$log" 2>&1 &
 emulator=$!
 serial=emulator-5554
 trap '"$adb" -s "$serial" emu kill >/dev/null 2>&1 || kill "$emulator" 2>/dev/null || true' EXIT
 
-# Booted when the package manager answers and the boot animation stopped.
-"$adb" -s "$serial" wait-for-device
-for _ in $(seq 180); do
-	if [ "$("$adb" -s "$serial" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; then
-		break
+# fail <message>: the emulator's log, then the message.
+fail() {
+	echo "--- $log (last 80 lines)"; tail -n 80 "$log" || true
+	echo "✗ $1"; exit 1
+}
+
+# Booted when sys.boot_completed is 1; never waits on a dead emulator or
+# for more than ten minutes (adb wait-for-device would wait forever).
+booted=false
+for _ in $(seq 300); do
+	kill -0 "$emulator" 2>/dev/null || fail "the emulator exited while booting"
+	if [ "$(timeout 10 "$adb" -s "$serial" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; then
+		booted=true; break
 	fi
-	kill -0 "$emulator" 2>/dev/null || { cat "$out/emulator-$api.log"; exit 1; }
 	sleep 2
 done
-[ "$("$adb" -s "$serial" shell getprop sys.boot_completed | tr -d '\r')" = 1 ] || {
-	echo "✗ the emulator did not boot in 6 minutes"; exit 1
-}
+$booted || fail "the emulator did not boot in ten minutes"
 for s in window_animation_scale transition_animation_scale animator_duration_scale; do
 	"$adb" -s "$serial" shell settings put global "$s" 0
 done
