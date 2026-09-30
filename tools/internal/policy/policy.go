@@ -257,3 +257,98 @@ func CheckWorkflowShells(root string) error {
 	}
 	return nil
 }
+
+// publishJob is the release workflow's job that publishes Dart packages.
+const publishJob = "\n  pub:\n"
+
+// CheckDartPublishing verifies how the Dart packages reach pub.dev and
+// what each release carries: every package without `publish_to: none`
+// under packages/ has a README, an example and a CHANGELOG entry for its
+// version, and a tag pattern in the release workflow (DX-006); that
+// workflow writes release notes with upgrade steps for every tag and
+// publishes with the job's OIDC token, never a stored credential (CI-005).
+func CheckDartPublishing(root string) error {
+	data, err := os.ReadFile(filepath.Join(root, ".github", "workflows", "release.yml"))
+	if err != nil {
+		return fmt.Errorf("policy.CheckDartPublishing: %w", err)
+	}
+	release := strings.ReplaceAll(string(data), "\r\n", "\n")
+	problems := releaseWorkflowProblems(root, release)
+	pubspecs, err := filepath.Glob(filepath.Join(root, "packages", "*", "pubspec.yaml"))
+	if err != nil {
+		return fmt.Errorf("policy.CheckDartPublishing: %w", err)
+	}
+	for _, p := range pubspecs {
+		found, err := dartPackageProblems(p, release)
+		if err != nil {
+			return fmt.Errorf("policy.CheckDartPublishing: %w", err)
+		}
+		problems = append(problems, found...)
+	}
+	if len(problems) > 0 {
+		return fmt.Errorf("policy.CheckDartPublishing: %s", strings.Join(problems, "; "))
+	}
+	return nil
+}
+
+// releaseWorkflowProblems checks the release notes and the pub job.
+func releaseWorkflowProblems(root, release string) []string {
+	var problems []string
+	if !strings.Contains(release, "make release-notes") || !strings.Contains(release, "'^### Upgrading'") {
+		problems = append(problems, "release.yml does not write release notes with upgrade steps for every tag")
+	}
+	if cliff, err := os.ReadFile(filepath.Join(root, "cliff.toml")); err != nil || !strings.Contains(string(cliff), "### Upgrading") {
+		problems = append(problems, "cliff.toml has no Upgrading section")
+	}
+	job := ""
+	if i := strings.Index(release, publishJob); i >= 0 {
+		job = release[i+len(publishJob):]
+		if end := regexp.MustCompile(`\n  [a-z][a-z0-9-]*:\n`).FindStringIndex(job); end != nil {
+			job = job[:end[0]]
+		}
+	}
+	switch {
+	case job == "":
+		problems = append(problems, "release.yml has no pub job")
+	case !strings.Contains(job, "id-token: write") || !strings.Contains(job, "dart pub publish --force"):
+		problems = append(problems, "the pub job does not publish with the job's OIDC token")
+	case strings.Contains(job, "secrets.") || strings.Contains(job, "credentials.json"):
+		problems = append(problems, "the pub job uses a stored credential")
+	}
+	return problems
+}
+
+// pubspecVersion is a pubspec's version line.
+var pubspecVersion = regexp.MustCompile(`(?m)^version: *(\S+)$`)
+
+// dartPackageProblems checks one package: nothing when it is not
+// published, else its README, example, changelog entry and tag pattern.
+func dartPackageProblems(pubspec, release string) ([]string, error) {
+	data, err := os.ReadFile(pubspec) //nolint:gosec // G304: a pubspec of the repository.
+	if err != nil {
+		return nil, fmt.Errorf("read %s: %w", pubspec, err)
+	}
+	if strings.Contains(string(data), "\npublish_to: none") {
+		return nil, nil
+	}
+	dir := filepath.Dir(pubspec)
+	name := filepath.Base(dir)
+	m := pubspecVersion.FindSubmatch(data)
+	if m == nil {
+		return []string{name + " declares no version"}, nil
+	}
+	var problems []string
+	changelog, err := os.ReadFile(filepath.Join(dir, "CHANGELOG.md")) //nolint:gosec // G304: beside the pubspec.
+	if err != nil || !strings.Contains(string(changelog), "\n## "+string(m[1])+"\n") {
+		problems = append(problems, name+" has no CHANGELOG.md entry for "+string(m[1]))
+	}
+	for _, f := range []string{"README.md", "example"} {
+		if _, err := os.Stat(filepath.Join(dir, f)); err != nil {
+			problems = append(problems, name+" has no "+f)
+		}
+	}
+	if !strings.Contains(release, "- \""+name+"/v*\"") {
+		problems = append(problems, "release.yml has no tag pattern for "+name)
+	}
+	return problems, nil
+}
