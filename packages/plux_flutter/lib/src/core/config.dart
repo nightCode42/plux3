@@ -162,8 +162,9 @@ typedef PluxErrorHandler = void Function(
   StackTrace? stack,
 );
 
-/// Builds what Plux shows in place of a page it cannot render: a plugin
-/// switched off or failing verification (RT-022), or no release yet.
+/// Builds what Plux shows in place of content it cannot render: a page or
+/// component instance that failed to build (RT-020), a plugin switched off
+/// or failing verification (RT-022), or no release yet.
 typedef PluxFallbackBuilder = Widget Function(
   BuildContext context,
   PluxException error,
@@ -197,6 +198,7 @@ final class PluxConfig {
     this.httpClient,
     this.onError,
     this.fallbackBuilder,
+    this.pluginFallbackBuilders = const {},
   }) : assert(downloadParallelism > 0, 'at least one download at a time'),
        assert(
          hostBuild.length <= 64,
@@ -285,6 +287,13 @@ final class PluxConfig {
   /// Called with every error the runtime reports.
   final PluxErrorHandler? onError;
 
-  /// The app-level fallback page (RT-022).
+  /// The app-level fallback (RT-020, RT-022); Plux's themed
+  /// `PluxDefaultFallback` when null.
   final PluxFallbackBuilder? fallbackBuilder;
+
+  /// Fallbacks for single plugins by plugin key, used instead of
+  /// [fallbackBuilder] for that plugin's pages and component instances
+  /// (RT-020). A plugin that is switched off shows the fallback page it
+  /// declares first (RT-022).
+  final Map<String, PluxFallbackBuilder> pluginFallbackBuilders;
 }

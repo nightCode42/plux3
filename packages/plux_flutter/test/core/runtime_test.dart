@@ -77,6 +77,8 @@ void main() {
     ActivationPolicy activation = ActivationPolicy.atSafePoint,
     ProviderContainer? container,
     ProviderContainer? parent,
+    bool appFallback = true,
+    Map<String, PluxFallbackBuilder> pluginFallbacks = const {},
   }) => PluxConfig(
     appId: FakePluxServer.app,
     endpoint: server.endpoint,
@@ -95,8 +97,11 @@ void main() {
     container: container,
     parentContainer: parent,
     onError: (e, _) => errors.add(e),
-    fallbackBuilder: (_, e) =>
-        Text('fallback ${e.code.id}', textDirection: TextDirection.ltr),
+    fallbackBuilder: appFallback
+        ? (_, e) =>
+              Text('fallback ${e.code.id}', textDirection: TextDirection.ltr)
+        : null,
+    pluginFallbackBuilders: pluginFallbacks,
   );
 
   Future<PluxStartup> start(
@@ -249,6 +254,90 @@ void main() {
       expect(startup!.sequence, 10, reason: '${startup.error} $errors');
       expect(Plux.container.read(activeReleaseProvider)!.sequence, 10);
       expect(Plux.container.read(syncStatusProvider), isA<SyncActivated>());
+    },
+  );
+
+  testWidgets(
+    'every page of every plugin of the active release opens offline after a restart [SYN-008]',
+    (tester) async {
+      await tester.runAsync(() async {
+        server.release = FakeRelease(10, demo, {'loans': loans});
+        final c = config();
+        final s = await start(c);
+        expect(s.sequence, 10, reason: '${s.error} $errors');
+        await Plux.dispose();
+        await server.close();
+        final again = await start(c);
+        expect(again.sequence, 10, reason: 'started from the store offline');
+      });
+      for (final route in ['loan-calculator', 'result']) {
+        expect(rt().active.value!.page(route), isNotNull, reason: route);
+        await tester.pumpWidget(PluxScope(child: PluxView(route)));
+        expect(find.text('page $route of 10 '), findsOneWidget);
+        await tester.pumpWidget(const SizedBox());
+      }
+    },
+  );
+
+  testWidgets(
+    'a failing page shows its plugin\'s fallback, else the app\'s [RT-020]',
+    (tester) async {
+      await tester.runAsync(() async {
+        server.release = FakeRelease(10, demo, {'loans': loans});
+        await start(
+          config(
+            pluginFallbacks: {
+              'loans': (_, e) => Text(
+                'loans fallback ${e.code.id}',
+                textDirection: TextDirection.ltr,
+              ),
+            },
+          ),
+        );
+      });
+      renderer.fail = true;
+      await tester.pumpWidget(
+        const PluxScope(child: PluxView('loan-calculator')),
+      );
+      expect(find.text('loans fallback PLX-4001'), findsOneWidget);
+      expect(
+        errors.map((e) => e.code),
+        contains(PluxErrorCode.nodeBuildFailed),
+      );
+      await tester.pumpWidget(const PluxScope(child: PluxView('nowhere')));
+      expect(
+        find.text('fallback PLX-8031'),
+        findsOneWidget,
+        reason: 'no plugin',
+      );
+    },
+  );
+
+  testWidgets(
+    'without a host fallback a failing page shows the themed default [RT-020]',
+    (tester) async {
+      await tester.runAsync(() async {
+        server.release = FakeRelease(10, demo, {'loans': loans});
+        await start(config(appFallback: false));
+      });
+      renderer.fail = true;
+      final semantics = tester.ensureSemantics();
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(colorSchemeSeed: Colors.teal),
+          home: const PluxScope(child: PluxView('loan-calculator')),
+        ),
+      );
+      final fallback = find.byType(PluxDefaultFallback);
+      expect(fallback, findsOneWidget);
+      expect(find.text('PLX-4001'), findsOneWidget, reason: 'debug builds');
+      expect(find.bySemanticsLabel('Content unavailable'), findsOneWidget);
+      final box = tester.widget<ColoredBox>(
+        find.descendant(of: fallback, matching: find.byType(ColoredBox)),
+      );
+      final context = tester.element(fallback);
+      expect(box.color, Theme.of(context).colorScheme.surfaceContainerHighest);
+      semantics.dispose();
     },
   );
 

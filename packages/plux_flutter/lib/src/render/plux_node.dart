@@ -548,9 +548,11 @@ final class NodeContextImpl implements NodeContext {
       fills: (scope: scope, node: node),
       parent: scope,
     );
+    final services = scope.services;
+    final plugin = scope.pluginKey;
     return PluxBoundary(
       path: path,
-      fallback: scope.services.fallback,
+      fallback: (c, e) => services.fallback(c, e, plugin),
       child: RenderScopeWidget(scope: inner, child: const PluxNode(0)),
     );
   }

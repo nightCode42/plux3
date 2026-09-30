@@ -16,6 +16,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/core/active_release.dart';
+import 'package:plux_flutter/src/core/fallback.dart';
 import 'package:plux_flutter/src/core/runtime.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/state/providers.dart';
@@ -40,8 +41,8 @@ final class PluxView extends ConsumerWidget {
   /// Shown while no release is available yet; empty when null.
   final WidgetBuilder? loadingBuilder;
 
-  /// Shown instead of a page that cannot render; the app-level fallback of
-  /// `PluxConfig.fallbackBuilder` when null (RT-022).
+  /// Shown instead of a page that cannot render; when null, the plugin's
+  /// or the app's fallback of `PluxConfig` (RT-020, RT-022).
   final Widget Function(BuildContext context, PluxException error)?
   fallbackBuilder;
 
@@ -52,9 +53,9 @@ final class PluxView extends ConsumerWidget {
     if (rt == null || release == null) {
       return loadingBuilder?.call(context) ?? const SizedBox.shrink();
     }
-    Widget fallback(PluxException e) =>
-        (fallbackBuilder ?? rt.config.fallbackBuilder)?.call(context, e) ??
-        const SizedBox.shrink();
+    Widget fallback(PluxException e, [String? plugin]) =>
+        fallbackBuilder?.call(context, e) ??
+        buildFallback(context, rt.config, e, plugin: plugin);
     final PageRef? page;
     try {
       page = release.page(route);
@@ -85,9 +86,9 @@ final class PluxView extends ConsumerWidget {
             ? null
             : release.fallbackPage(page.plugin);
       } on PluxException catch (e) {
-        return fallback(e);
+        return fallback(e, page.plugin);
       }
-      if (declared == null) return fallback(off);
+      if (declared == null) return fallback(off, page.plugin);
       shown = declared;
     }
     return PluxPageHost(
@@ -95,7 +96,7 @@ final class PluxView extends ConsumerWidget {
       runtime: rt,
       page: shown,
       params: params,
-      fallback: fallback,
+      fallback: (e) => fallback(e, shown.plugin),
     );
   }
 }

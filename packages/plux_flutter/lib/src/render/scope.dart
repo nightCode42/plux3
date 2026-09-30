@@ -67,8 +67,9 @@ abstract interface class RenderServices {
   /// asset is not an SVG.
   PluxVectorSource? vector(RenderScope scope, String asset);
 
-  /// Builds the fallback shown instead of a failed page or component.
-  Widget fallback(BuildContext context, PluxException error);
+  /// Builds the fallback shown instead of a failed page or component of
+  /// [plugin] (RT-020).
+  Widget fallback(BuildContext context, PluxException error, String plugin);
 }
 
 /// Reports a problem with a node's path (RT-020).

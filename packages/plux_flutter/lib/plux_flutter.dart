@@ -21,6 +21,7 @@ export 'src/core/config.dart'
         PluxThemeSource,
         PluxUser,
         StartupPolicy;
+export 'src/core/fallback.dart' show PluxDefaultFallback;
 export 'src/core/plux.dart' show Plux, PluxScope, PluxSyncTile;
 export 'src/core/plux_view.dart' show PluxView;
 export 'src/core/runtime.dart' show PluxStartup;

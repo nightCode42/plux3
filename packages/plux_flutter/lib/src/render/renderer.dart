@@ -18,6 +18,7 @@ import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/core/config.dart';
+import 'package:plux_flutter/src/core/fallback.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/platform/platform_services.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
@@ -237,8 +238,8 @@ final class PluxRenderer implements PageRenderer, RenderServices {
   }
 
   @override
-  Widget fallback(BuildContext context, PluxException error) =>
-      config.fallbackBuilder?.call(context, error) ?? const SizedBox.shrink();
+  Widget fallback(BuildContext context, PluxException error, String plugin) =>
+      buildFallback(context, config, error, plugin: plugin);
 }
 
 /// One page on screen.
@@ -489,9 +490,10 @@ final class _PluxPageState extends ConsumerState<PluxPage> {
       path: _path,
       state: _instance,
     );
+    final plugin = widget.page.plugin;
     Widget page = PluxBoundary(
       path: _path,
-      fallback: widget.renderer.fallback,
+      fallback: (c, e) => widget.renderer.fallback(c, e, plugin),
       child: RenderScopeWidget(scope: scope, child: const PluxNode(0)),
     );
     if (theme.cupertino case final cupertino?) {

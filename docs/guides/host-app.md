@@ -96,7 +96,8 @@ and returns; the sync of every plugin runs on a background isolate (`SYN-001`). 
 | `consent` | `PluxConsent.necessaryOnly` | which telemetry may be sent; see [Telemetry](../reference/telemetry.md) |
 | `hostBuild` | empty | your app's build, as devices report it (at most 64 characters) |
 | `onError` | none | called with every problem the runtime reports |
-| `fallbackBuilder` | nothing (an empty box) | what a page that cannot render shows instead (`RT-022`); a `PluxView` can set its own |
+| `fallbackBuilder` | `PluxDefaultFallback`: a neutral panel in the theme's colours, the error code in debug builds | what a page or component that cannot render shows instead (`RT-020`, `RT-022`); a `PluxView` can set its own |
+| `pluginFallbackBuilders` | none | a fallback per plugin key, used instead of `fallbackBuilder` for that plugin's pages and components |
 | `container`, `parentContainer` | Plux's own | share or nest a Riverpod container ([ADR-0008](../adr/0008-riverpod-runtime-state-engine.md)) |
 
 ## 3. Show pages

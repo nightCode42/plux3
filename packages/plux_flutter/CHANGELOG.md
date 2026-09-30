@@ -17,5 +17,6 @@ The first release: the runtime of Plux Phase 3, rendering.
 - Verification before loading: signed manifests, bundle hashes, anti-rollback, a
   generated FlatBuffers verifier and first-use section checks.
 - Rendering of the Phase 3 widget set from generated builders, with bindings, overrides,
-  semantics, placeholders and error boundaries; theming, assets, icons and SVG.
+  semantics, placeholders and error boundaries with themed fallbacks, set per app or per
+  plugin; theming, assets, icons and SVG.
 - Telemetry by consent, batched and buffered offline.
