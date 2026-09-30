@@ -21,10 +21,17 @@ body = """
 {% endfor %}
 {% endfor %}
 ### Upgrading
-
+{% set component = get_env(name="COMPONENT", default="backend") %}
+{% if component == "plux_flutter" or component == "plux_devtools" %}\
+Raise the `{{ component }}` constraint in the host app's `pubspec.yaml` and run \
+`flutter pub upgrade {{ component }}`. Within a major version the public API \
+changes only additively (RT-001), and the runtime reads every bundle an \
+earlier compiler wrote (BND-000).
+{% else %}\
 Upgrade from the previous minor version (N-1) by replacing the binaries or \
 images one replica at a time; migrations run automatically and are \
 expand-only, so the old version keeps working during the roll (DEP-030).
+{% endif %}\
 {% for commit in commits %}{% for footer in commit.footers %}\
 {% if footer.token == "Upgrade" or footer.breaking %}
 - {{ footer.value | upper_first }} ({{ commit.id | truncate(length=7, end="") }})\

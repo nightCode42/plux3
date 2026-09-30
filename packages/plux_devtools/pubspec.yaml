@@ -4,8 +4,7 @@ description: >-
   the active release and the problems the runtime reported. It renders
   nothing in release builds.
 version: 0.1.0
-repository: https://github.com/nightCode42/plux3
-publish_to: none
+repository: https://github.com/nightCode42/plux3/tree/main/packages/plux_devtools
 
 environment:
   sdk: ^3.13.0

@@ -3,8 +3,9 @@ description: >-
   The Plux runtime for Flutter. Syncs signed plugin bundles with delta
   updates and renders them as native widgets.
 version: 0.1.0
-repository: https://github.com/nightCode42/plux3
-publish_to: none # Published from Phase 3 (CI-005).
+repository: https://github.com/nightCode42/plux3/tree/main/packages/plux_flutter
+documentation: https://nightcode42.github.io/plux3/guides/host-app/
+topics: [server-driven-ui, plugins, ui, sdui]
 
 environment:
   sdk: ^3.13.0

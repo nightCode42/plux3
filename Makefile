@@ -518,7 +518,7 @@ image-check: ## Build the server image and check its SVG compiler's output and i
 
 # Releasable components and their directories. Tags are <component>/v<semver>.
 COMPONENT ?=
-component_path = $(if $(filter backend,$(1)),backend,$(if $(filter plux_flutter,$(1)),packages/plux_flutter,$(if $(filter studio,$(1)),studio,)))
+component_path = $(if $(filter backend,$(1)),backend,$(if $(filter plux_flutter,$(1)),packages/plux_flutter,$(if $(filter plux_devtools,$(1)),packages/plux_devtools,$(if $(filter studio,$(1)),studio,))))
 
 # Platforms the CLI and server are released for (CLI-001).
 RELEASE_PLATFORMS := linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64
@@ -541,9 +541,9 @@ release-binaries: ## Build reproducible release archives of plux and plux-server
 	@cd $(DIST_DIR) && sha256sum plux_* > SHA256SUMS && cat SHA256SUMS
 	@scripts/release/package-manifests.sh $(BACKEND_VERSION) $(DIST_DIR)
 
-release-notes: ## Print release notes for COMPONENT (backend, plux_flutter, studio) since its last tag
-	@test -n "$(call component_path,$(COMPONENT))" || { echo "✗ COMPONENT must be backend, plux_flutter or studio" >&2; exit 2; }
-	@git cliff --config cliff.toml --include-path "$(call component_path,$(COMPONENT))/**" \
+release-notes: ## Print release notes for COMPONENT (backend, plux_flutter, plux_devtools, studio) since its last tag
+	@test -n "$(call component_path,$(COMPONENT))" || { echo "✗ COMPONENT must be backend, plux_flutter, plux_devtools or studio" >&2; exit 2; }
+	@COMPONENT=$(COMPONENT) git cliff --config cliff.toml --include-path "$(call component_path,$(COMPONENT))/**" \
 		--tag-pattern "^$(COMPONENT)/v" $(if $(TAG),--tag "$(TAG)" --unreleased,--unreleased)
 
 ##@ Repository

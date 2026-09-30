@@ -19,6 +19,7 @@ on:
     tags:
       - "backend/v*"
       - "plux_flutter/v*"
+      - "plux_devtools/v*"
       - "studio/v*"
 
 permissions: {}
@@ -29,6 +30,8 @@ concurrency:
 
 env:
   GIT_CLIFF_VERSION: 2.14.2
+  # Keep in sync with the pinned versions in the Makefile.
+  FLUTTER_VERSION: 3.47.5
 
 # Every run step is bash with -eo pipefail, so a failing command fails its
 # step even when piped (into tee, say); the runner's default shell has no
@@ -49,6 +52,7 @@ jobs:
       hashes: ${{ steps.hashes.outputs.hashes }}
       backend: ${{ steps.component.outputs.backend }}
       version: ${{ steps.component.outputs.version }}
+      package: ${{ steps.component.outputs.package }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -60,7 +64,7 @@ jobs:
           TAG: ${{ github.ref_name }}
           REPO: ${{ github.repository }}
         run: |
-          [[ "$TAG" =~ ^(backend|plux_flutter|studio)/v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]] \
+          [[ "$TAG" =~ ^(backend|plux_flutter|plux_devtools|studio)/v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]] \
             || { echo "::error::$TAG is not <component>/v<semver>"; exit 1; }
           ref=$(gh api "repos/$REPO/git/ref/tags/$TAG")
           [ "$(jq -r .object.type <<<"$ref")" = "tag" ] \
@@ -73,8 +77,8 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           component="${TAG%%/v*}" version="${TAG#*/v}"
-          if [ "$component" = "plux_flutter" ]; then
-            declared=$(sed -n 's/^version: *//p' packages/plux_flutter/pubspec.yaml)
+          if [ "$component" = "plux_flutter" ] || [ "$component" = "plux_devtools" ]; then
+            declared=$(sed -n 's/^version: *//p' "packages/$component/pubspec.yaml")
             [ "$declared" = "$version" ] \
               || { echo "::error::pubspec.yaml declares $declared, the tag says $version"; exit 1; }
           fi
@@ -85,6 +89,7 @@ jobs:
         run: |
           echo "version=${TAG#*/v}" >> "$GITHUB_OUTPUT"
           if [ "${TAG%%/v*}" = backend ]; then echo "backend=true" >> "$GITHUB_OUTPUT"; fi
+          case "${TAG%%/v*}" in plux_flutter | plux_devtools) echo "package=${TAG%%/v*}" >> "$GITHUB_OUTPUT" ;; esac
       - run: pipx install "git-cliff==${GIT_CLIFF_VERSION}"
       # Verifies: DEP-030.
       - name: Release notes
@@ -122,6 +127,40 @@ jobs:
           assets=()
           if [ "$BACKEND" = true ]; then assets=(dist/*); fi
           gh release create "$TAG" --verify-tag --title "$TAG" --notes-file "$RUNNER_TEMP/notes.md" "${assets[@]}"
+
+  # A Dart package goes to pub.dev by automated publishing: pub.dev accepts
+  # the workflow's OIDC token for a tag matching the package's pattern, so no
+  # personal credential exists anywhere (CI-005). setup-dart provisions the
+  # token; the pub.dev environment lets the maintainer require an approval.
+  pub:
+    name: Publish ${{ needs.release.outputs.package }} to pub.dev
+    needs: release
+    if: needs.release.outputs.package != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: pub.dev
+    permissions:
+      contents: read
+      id-token: write # the OIDC token pub.dev accepts
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: false # a publishing job restores no cache
+      # Verifies: CI-005.
+      - name: Publish
+        env:
+          PACKAGE: ${{ needs.release.outputs.package }}
+        run: |
+          flutter pub get
+          cd "packages/$PACKAGE"
+          dart pub publish --dry-run
+          dart pub publish --force
 
   provenance:
     name: Archive provenance
