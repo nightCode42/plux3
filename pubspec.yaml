@@ -11,3 +11,6 @@ workspace:
   - packages/plux_devtools
   - packages/plux_flutter
   - packages/plux_widget_api
+  - test/bench/runtime
+  - test/size/blank
+  - test/size/plux

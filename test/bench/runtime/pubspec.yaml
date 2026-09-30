@@ -1,0 +1,32 @@
+name: plux_bench_runtime
+description: >-
+  The runtime benchmark (QA-007, docs/benchmarks/p3-runtime.md): starts
+  Plux from a signed fifty-plugin baseline and measures initialization,
+  opening a 300-node page, scrolling a bound list and memory, in profile
+  mode, printing the samples as JSON.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plux_flutter: ^0.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  # The baseline backend/internal/benchproject writes (TestRuntimeBaseline);
+  # asset directories are not recursive, so each directory is listed.
+  assets:
+    - assets/plux/
+    - assets/plux/bundles/
+    - assets/plux/assets/
