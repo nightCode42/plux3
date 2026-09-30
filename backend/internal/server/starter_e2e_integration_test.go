@@ -68,9 +68,18 @@ func TestStarterAppAgainstTheServer(t *testing.T) {
 	if device := os.Getenv("PLUX_E2E_DEVICE"); device != "" {
 		args = []string{"test", "--reporter=expanded", "integration_test/app_test.dart", "-d", device}
 		// A device build and run can hang in the platform's tools: bound
-		// it, and show its output as it comes so a hang can be diagnosed.
+		// it (PLUX_E2E_DEVICE_TIMEOUT, default 30m), and show its output as
+		// it comes so a hang can be diagnosed.
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, 30*time.Minute)
+		bound := 30 * time.Minute
+		if s := os.Getenv("PLUX_E2E_DEVICE_TIMEOUT"); s != "" {
+			d, err := time.ParseDuration(s)
+			if err != nil {
+				t.Fatalf("PLUX_E2E_DEVICE_TIMEOUT: %v", err)
+			}
+			bound = d
+		}
+		ctx, cancel = context.WithTimeout(ctx, bound)
 		defer cancel()
 		live = os.Stdout
 		if os.Getenv("PLUX_E2E_VERBOSE") != "" {

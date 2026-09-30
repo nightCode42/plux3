@@ -27,7 +27,10 @@ root=$(git rev-parse --show-toplevel)
 out=${E2E_OUT:-$root/build/e2e}
 sdk=${ANDROID_HOME:-${ANDROID_SDK_ROOT:?set ANDROID_HOME to the Android SDK}}
 tools=$sdk/cmdline-tools/latest/bin
-image="system-images;android-$api;google_apis;x86_64"
+# E2E_IMAGE picks the system image's tag: google_apis (the default, with
+# Play Services, so Cronet) or default (plain Android; no Play Services, so
+# the runtime syncs over dart:io).
+image="system-images;android-$api;${E2E_IMAGE:-google_apis};x86_64"
 variant=${E2E_VARIANT:-}
 emulator_bin=$sdk/emulator/emulator
 flags=(-memory 4096 -no-metrics)

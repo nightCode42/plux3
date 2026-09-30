@@ -38,7 +38,10 @@ xcrun simctl boot "$udid"
 xcrun simctl bootstatus "$udid" -b >/dev/null
 
 status=0
-PLUX_E2E_VERBOSE=1 PLUX_E2E_DEVICE=$udid make -C "$root" --no-print-directory e2e-starter 2>&1 | tee "$out/ios.log" || status=$?
+# A healthy run, Xcode build included, takes about ten minutes; a hang
+# waiting for the Dart VM service (runs 36719678834, 36729487188,
+# 36735134286, 36743012409) is stopped after 15.
+PLUX_E2E_DEVICE_TIMEOUT=15m PLUX_E2E_VERBOSE=1 PLUX_E2E_DEVICE=$udid make -C "$root" --no-print-directory e2e-starter 2>&1 | tee "$out/ios.log" || status=$?
 if [ "$status" -ne 0 ]; then
 	# The app's own log since before its launch: whether the Dart VM
 	# service started (flutter test
