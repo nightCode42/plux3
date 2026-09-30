@@ -833,10 +833,10 @@ sequenceDiagram
 | `SYN-005` | P3 | MUST | Staging and activation **MUST** be atomic and crash-safe (write to a staging directory, fsync, atomic rename of a pointer file). A crash or power loss at any point **MUST** leave either the old or the new release fully active, never a mixture. | DONE |
 | `SYN-006` | P3 | MUST | The runtime **MUST** keep the previous release as **last known good**. If a newly activated release causes ≥ 3 fatal runtime errors or crashes attributable to Plux within its first 2 launches, the runtime **MUST** revert to last known good, pin it until the release sequence changes, and report `PLX-3020`. | DONE |
 | `SYN-007` | P3 | MUST | Host apps **MUST** be able to embed a **baseline release** at build time (`plux pull`, `CLI-004`), so the first launch works offline and the first sync is a delta from the baseline. | DONE |
-| `SYN-008` | P3 | MUST | All bundles of the active release **MUST** be available locally so that navigation from any plugin page to any plugin page works fully offline. | SPEC |
+| `SYN-008` | P3 | MUST | All bundles of the active release **MUST** be available locally so that navigation from any plugin page to any plugin page works fully offline. | DONE |
 | `SYN-010` | P3 | MUST | Downloads **MUST** run on a background isolate over HTTP/2 with configurable parallelism (default 4), resume with HTTP range requests, retry with exponential backoff and jitter, and honour server `Retry-After`. | WIP |
 | `SYN-011` | P3 | MUST | After patching, every section and bundle hash **MUST** match the manifest; on mismatch the runtime **MUST** discard the result and download the full bundle once before failing the sync. | DONE |
-| `SYN-012` | P3 | MUST | The runtime **MUST** garbage-collect releases other than active, staged and last known good, enforce the device disk quota of the limits framework (§30.4), and handle low-storage conditions without corrupting the active release. | WIP |
+| `SYN-012` | P3 | MUST | The runtime **MUST** garbage-collect releases other than active, staged and last known good, enforce the device disk quota of the limits framework (§30.4), and handle low-storage conditions without corrupting the active release. | DONE |
 | `SYN-013` | P3 | MUST | The runtime **MUST** publish typed sync events (`checking`, `upToDate`, `downloading(progress)`, `staged`, `activated`, `failed(error)`, `rolledBack`) on `Plux.syncEvents`. | DONE |
 | `SYN-014` | P3 | SHOULD | The runtime **SHOULD** offer opt-in background sync (Android WorkManager, iOS BGTaskScheduler) so updates are staged before the next app start. | SPEC |
 | `SYN-015` | P3 | MUST | Sync **MUST** emit telemetry: duration, bytes transferred, delta ratio, number of plugins updated, failures by reason (`ANL-001`). | DONE |
@@ -916,8 +916,8 @@ Branching is deliberately **not** part of the model (ADR-0015). Each plugin has 
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `RT-001` | P3 | MUST | The runtime **MUST** be published as `plux_flutter` (pub.dev and private registries) with a stable, semantically versioned public API, 100% dartdoc coverage of public members and maximum pub points. | SPEC |
-| `RT-002` | P3 | MUST | Supported host platforms **MUST** be Android 7.0 (API 24) and later and iOS 15 and later, on the latest stable Flutter and the previous stable. | SPEC |
+| `RT-001` | P3 | MUST | The runtime **MUST** be published as `plux_flutter` (pub.dev and private registries) with a stable, semantically versioned public API, 100% dartdoc coverage of public members and maximum pub points. | WIP |
+| `RT-002` | P3 | MUST | Supported host platforms **MUST** be Android 7.0 (API 24) and later and iOS 15 and later, on the latest stable Flutter and the previous stable. | WIP |
 | `RT-003` | P3 | MUST | The runtime **MUST** use Riverpod as its state engine and **MUST** work both in host apps that use Riverpod (sharing or nesting the `ProviderContainer`) and in apps that do not (self-contained container). | DONE |
 | `RT-004` | P3 | MUST | `Plux.initialize()` **MUST** return in ≤ 50 ms p95 on the mid-tier reference device (§30) when a cached or baseline release exists; all network, decompression, patching and hashing happen on background isolates (layering rule L-6). | WIP |
 
@@ -937,7 +937,7 @@ Branching is deliberately **not** part of the model (ADR-0015). Each plugin has 
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `RT-020` | P3 | MUST | Every page and every component instance **MUST** be wrapped in an error boundary. A build, decode or PXL error **MUST** render a themed fallback (configurable per app and plugin), log the error with its node path, report it (`ANL-040`), and **MUST NOT** crash the host app or affect other pages. Layout and paint errors are contained by Flutter to the render object that raised them and reach the host's `FlutterError.onError` (ADR-0031). | WIP |
+| `RT-020` | P3 | MUST | Every page and every component instance **MUST** be wrapped in an error boundary. A build, decode or PXL error **MUST** render a themed fallback (configurable per app and plugin), log the error with its node path, report it (`ANL-040`), and **MUST NOT** crash the host app or affect other pages. Layout and paint errors are contained by Flutter to the render object that raised them and reach the host's `FlutterError.onError` (ADR-0031). | DONE |
 | `RT-021` | P3 | MUST | Uncaught errors in action execution **MUST** be contained to the action run, routed to the nearest `onError` handler (`ACT-020`), and reported. | SPEC |
 | `RT-022` | P3 | MUST | A plugin disabled by kill switch or failing verification **MUST** render its declared fallback page, or the app-level fallback, for every route into it. | DONE |
 
@@ -1187,7 +1187,7 @@ The update channel follows the design of **The Update Framework (TUF)**: separat
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `SEC-050` | P6 | MUST | Update metadata **MUST** use four roles: **root** (offline; delegates and rotates the others; threshold of *m* of *n* keys), **targets** (signs bundle hashes and release contents), **snapshot** (signs the set of current metadata versions) and **timestamp** (short expiry; signs the latest snapshot, preventing freeze attacks). | SPEC |
-| `SEC-051` | P3 | MUST | Host apps **MUST** embed the root public keys at build time (`plux init`, `plux pull`); the runtime **MUST** accept root rotations only when signed by the previous root threshold. | SPEC |
+| `SEC-051` | P3 | MUST | Host apps **MUST** embed the root public keys at build time (`plux init`, `plux pull`); the runtime **MUST** accept root rotations only when signed by the previous root threshold. | WIP |
 | `SEC-052` | P3 | MUST | The runtime **MUST** verify, before loading anything: metadata signatures and expiry, the manifest's release against the metadata, every bundle and section hash, and the FlatBuffers verifier (`BND-006`). Nothing unverified is ever parsed beyond the container header. | DONE |
 | `SEC-053` | P6 | MUST | **Confidential bundles** **MUST** be supported: each release is encrypted with AES-256-GCM using a per-release content key, delivered only to devices meeting the configured assurance level, wrapped to a device-held key-agreement key (ECDH P-256 in secure hardware). On the device, bundles are stored encrypted and decrypted into memory. | SPEC |
 | `SEC-054` | P1 | MUST | Bundles and manifests **MUST NOT** carry native code, Dart code or scripts. The only executable content permitted is PXL bytecode, action graphs and WebAssembly modules of device-placed functions, and each **MUST** run in a sandboxed interpreter with no direct access to platform APIs — only to host capabilities the plugin declared (`FN-012`). The runtime **MUST NOT** compile downloaded code to native instructions (no JIT, no AOT on device). | WIP |
@@ -1507,8 +1507,8 @@ Approvals are generic: the same engine governs publishing, function deployment, 
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `ANL-001` | P3 | MUST | The runtime **MUST** emit events for screen views, action runs and errors, data-source calls (timing and status only, never payloads), render performance (build time, first frame, janky frames), sync results, function calls, experiment exposures, RASP detections and custom `trackEvent` calls (Appendix G). | SPEC |
-| `ANL-002` | P3 | MUST | Events **MUST** be batched, compressed, buffered offline with a bounded size, sent with DPoP, and **MUST** cost less than 1% of battery and less than 100 KiB per day of data for a typical user (measured on reference devices). | SPEC |
+| `ANL-001` | P3 | MUST | The runtime **MUST** emit events for screen views, action runs and errors, data-source calls (timing and status only, never payloads), render performance (build time, first frame, janky frames), sync results, function calls, experiment exposures, RASP detections and custom `trackEvent` calls (Appendix G). | WIP |
+| `ANL-002` | P3 | MUST | Events **MUST** be batched, compressed, buffered offline with a bounded size, sent with DPoP, and **MUST** cost less than 1% of battery and less than 100 KiB per day of data for a typical user (measured on reference devices). | WIP |
 | `ANL-003` | P3 | MUST | Telemetry **MUST** respect consent (`SEC-161`), support sampling per event type, and strip sensitive fields. | DONE |
 | `ANL-010` | P9 | MUST | Analytics storage **MUST** be pluggable: PostgreSQL by default (time-partitioned event tables with pre-computed rollups) and ClickHouse as the supported alternative, with documented guidance to switch at around 10 million events per day or 1 million active devices. | SPEC |
 | `ANL-011` | P9 | MUST | Events **MUST** be exportable via OTLP, signed webhooks and periodic Parquet files to object storage, so customers can use their own analytics stack. | SPEC |
@@ -1772,11 +1772,11 @@ The screen editor is the canvas of §21.6 with a screen selected for editing and
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `DX-001` | P4 | MUST | The quick start **MUST** get a new developer from `flutter create` to a published Plux page on a device in ≤ 10 minutes (`HST-034`). | SPEC |
-| `DX-002` | P3 | MUST | A documentation site **MUST** cover concepts, quick start, guides per use case (financial services, delivery, campaigns, super-app, no-code apps), the widget catalogue (generated from descriptors), the action catalogue, PXL reference, API references (dartdoc, Go doc, protobuf docs), the security whitepaper, the compliance pack and runbooks. | SPEC |
+| `DX-002` | P3 | MUST | A documentation site **MUST** cover concepts, quick start, guides per use case (financial services, delivery, campaigns, super-app, no-code apps), the widget catalogue (generated from descriptors), the action catalogue, PXL reference, API references (dartdoc, Go doc, protobuf docs), the security whitepaper, the compliance pack and runbooks. | WIP |
 | `DX-003` | P1 | MUST | Every error and diagnostic **MUST** have a stable code (Appendix F), a clear message, the likely cause, a suggested fix and a link to its documentation page. | DONE |
 | `DX-004` | P5 | MUST | Reference host apps **MUST** be maintained: **Plux Bank** (accounts, transfers with SCA, loan calculator via Functions, KYC capture, secure PIN, English/German/Arabic/Amharic, `maximum` profile) and **Plux Express** (catalogue, cart, scheduled campaign, A/B banners, live order tracking via WebSocket, courier flow with offline outbox), plus a minimal **Starter** app. | SPEC |
 | `DX-005` | P9 | MAY | A VS Code extension **MAY** provide schema validation, PXL highlighting and completion, and CLI integration for developers authoring Plux JSON in repositories. | SPEC |
-| `DX-006` | P3 | MUST | Every release of every component **MUST** have release notes and, where needed, an upgrade guide. | SPEC |
+| `DX-006` | P3 | MUST | Every release of every component **MUST** have release notes and, where needed, an upgrade guide. | DONE |
 
 ### 22.4 No-code app generation
 
@@ -1919,7 +1919,7 @@ This section concerns how Plux itself is verified. §22.2 covers the testing too
 | `CI-002` | P0 | MUST | The monorepo **MUST** have a top-level `Makefile` (`make check`, `make test`, `make dev`, `make gen`) delegating to per-component tooling, with path-filtered CI jobs and dependency caching. | WIP |
 | `CI-003` | P0 | MUST | Generated code (protobuf, FlatBuffers, JSON Schema types, widget decoders) **MUST** be committed and CI **MUST** fail if regeneration produces a diff. | DONE |
 | `CI-004` | P2 | MUST | Release artifacts **MUST** carry SLSA v1.0 Build Level 3 provenance and be signed keylessly with Sigstore cosign via CI OIDC. | DONE |
-| `CI-005` | P3 | MUST | Dart packages **MUST** be published to pub.dev by automated publishing with CI OIDC, never with personal credentials. | SPEC |
+| `CI-005` | P3 | MUST | Dart packages **MUST** be published to pub.dev by automated publishing with CI OIDC, never with personal credentials. | DONE |
 | `CI-006` | P0 | MUST | Go binaries **MUST** be built reproducibly (pinned toolchain, `-trimpath`, fixed build IDs) and CI **MUST** verify reproducibility for release builds. | DONE |
 | `CI-007` | P0 | MUST | Dependency updates **MUST** be automated (Renovate or Dependabot) with grouping and required review; new dependencies require justification per the dependency policy in the handbook. | DONE |
 | `CI-008` | P0 | MUST | Releases **MUST** be versioned per component with SemVer, generated changelogs and signed tags. | WIP |
@@ -1965,7 +1965,7 @@ This section concerns how Plux itself is verified. §22.2 covers the testing too
 | `NFR-032` | P11 | MUST | Studio property change → canvas | ≤ 50 ms p95 (`STU-121`) | SPEC |
 | `NFR-033` | P1 | MUST | Incremental validation of one page | ≤ 50 ms p95 (`SCH-042`) | DONE |
 | `NFR-040` | P9 | MUST | Availability of manifest and control endpoints (HA reference deployment) | 99.95% monthly | SPEC |
-| `NFR-041` | P3 | MUST | Telemetry cost on device | < 1% battery, < 100 KiB/day typical (`ANL-002`) | SPEC |
+| `NFR-041` | P3 | MUST | Telemetry cost on device | < 1% battery, < 100 KiB/day typical (`ANL-002`) | WIP |
 
 ### 30.3 Default compile-time budgets per page
 
