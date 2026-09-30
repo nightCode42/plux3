@@ -138,7 +138,7 @@ func TestListsWhereTheBytesGo(t *testing.T) {
 	blank := apk("blank.apk", map[string]int{"lib/libapp.so": 100, "gone.txt": 7, "same": 5})
 	plux := apk("plux.apk", map[string]int{"lib/libapp.so": 400, "lib/libplux_native.so": 50, "same": 5})
 	var b bytes.Buffer
-	if err := writeContributions(&b, blank, plux); err != nil {
+	if err := writeContributions(&b, blank, plux, ""); err != nil {
 		t.Fatal(err)
 	}
 	want := "| `lib/libapp.so` | 300 |\n| `lib/libplux_native.so` | 50 |\n| `gone.txt` | -7 |\n"
@@ -150,7 +150,7 @@ func TestListsWhereTheBytesGo(t *testing.T) {
 	for i := range contributionRows + 3 {
 		many[fmt.Sprintf("f%02d", i)] = 10 + i
 	}
-	if err := writeContributions(&b, blank, apk("many.apk", many)); err != nil || !strings.Contains(b.String(), "other files") {
+	if err := writeContributions(&b, blank, apk("many.apk", many), ""); err != nil || !strings.Contains(b.String(), "other files") {
 		t.Errorf("rest: %v\n%s", err, b.String())
 	}
 	// App directories are compared file by file.
@@ -158,22 +158,22 @@ func TestListsWhereTheBytesGo(t *testing.T) {
 	write(t, filepath.Join(a, "Runner"), 10)
 	write(t, filepath.Join(c, "Runner"), 30)
 	b.Reset()
-	if err := writeContributions(&b, a, c); err != nil || !strings.Contains(b.String(), "| `Runner` | 20 |") {
+	if err := writeContributions(&b, a, c, ""); err != nil || !strings.Contains(b.String(), "| `Runner` | 20 |") {
 		t.Errorf("directories: %v\n%s", err, b.String())
 	}
-	if err := writeContributions(&b, filepath.Join(dir, "missing"), c); err == nil {
+	if err := writeContributions(&b, filepath.Join(dir, "missing"), c, ""); err == nil {
 		t.Error("read a missing build")
 	}
-	if err := writeContributions(&b, a, filepath.Join(dir, "missing.apk")); err == nil {
+	if err := writeContributions(&b, a, filepath.Join(dir, "missing.apk"), ""); err == nil {
 		t.Error("read a missing archive")
 	}
-	if _, err := entries(blank + "x"); err == nil {
+	if _, err := entries(blank+"x", ""); err == nil {
 		t.Error("listed a missing file")
 	}
 	if err := os.WriteFile(filepath.Join(dir, "bad.apk"), []byte("not a zip"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := entries(filepath.Join(dir, "bad.apk")); err == nil {
+	if _, err := entries(filepath.Join(dir, "bad.apk"), ""); err == nil {
 		t.Error("listed a file that is not an archive")
 	}
 }
@@ -187,11 +187,11 @@ func TestMeasuresAppDirectoriesAsIPAs(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(app, "Info.plist"), bytes.Repeat([]byte("<key>a</key>"), 1000), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	a, err := measure(app)
+	a, err := measure(app, "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	b, err := measure(app)
+	b, err := measure(app, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -223,5 +223,87 @@ func TestUsageAndIOErrors(t *testing.T) {
 		if code := run(args, &stdout, &stderr); code != exitError {
 			t.Errorf("%q: exit %d", args, code)
 		}
+	}
+}
+
+// TestMeasuresWhatAnAppBundleDelivers checks that an App Bundle is
+// measured as the base module with one ABI's native libraries,
+// compressed, and that the per-file table lists the same files.
+// Verifies: RT-061.
+func TestMeasuresWhatAnAppBundleDelivers_RT_061(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	bundle := func(name string, libapp int) string {
+		raw := filepath.Join(dir, name+".raw")
+		write(t, raw, libapp)
+		lib, err := os.ReadFile(raw)
+		if err != nil {
+			t.Fatal(err)
+		}
+		path := filepath.Join(dir, name+".aab")
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		z := zip.NewWriter(f)
+		for _, e := range []struct {
+			name string
+			data []byte
+		}{
+			{"BundleConfig.pb", make([]byte, 5000)},
+			{"base/lib/", nil},
+			{"base/lib/arm64-v8a/libapp.so", lib},
+			{"base/lib/x86_64/libapp.so", lib},
+			{"base/dex/classes.dex", bytes.Repeat([]byte("dex"), 10000)},
+		} {
+			w, err := z.CreateHeader(&zip.FileHeader{Name: e.name, Method: zip.Store})
+			if err == nil {
+				_, err = w.Write(e.data)
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+		if err := errors.Join(z.Close(), f.Close()); err != nil {
+			t.Fatal(err)
+		}
+		return path
+	}
+	blank, plux := bundle("blank", 1000), bundle("plux", 1000+2<<20)
+	a, err := measure(blank, "arm64-v8a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := measure(plux, "arm64-v8a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// One incompressible libapp.so counts, not the other ABI's; the
+	// repeated dex compresses; the bundle's own files do not count.
+	if d := b - a; d < 2<<20 || d > 2<<20+2<<10 || a > 3000 {
+		t.Errorf("blank %d, plux %d", a, b)
+	}
+	got, err := entries(plux, "arm64-v8a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 2 || got["base/lib/arm64-v8a/libapp.so"] < 2<<20 || got["base/dex/classes.dex"] > 1000 {
+		t.Errorf("entries %v", got)
+	}
+	// Over the budget, -report reports and passes.
+	baseline := filepath.Join(dir, "baseline.json")
+	huge := bundle("huge", 4<<20)
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"-target", "android-arm64-v8a-aab", "-blank", blank, "-plux", huge, "-baseline", baseline, "-report"}, &stdout, &stderr); code != exitOK || !strings.Contains(stdout.String(), "| `base/lib/arm64-v8a/libapp.so` |") {
+		t.Errorf("report: exit %d\n%s%s", code, stdout.String(), stderr.String())
+	}
+	if code := run([]string{"-target", "android-arm64-v8a-aab", "-blank", blank, "-plux", huge, "-baseline", baseline}, &stdout, &stderr); code != exitFailed {
+		t.Errorf("gate: exit %d", code)
+	}
+	if _, err := measure(filepath.Join(dir, "blank.raw"), "arm64-v8a"); err == nil {
+		t.Error("measured a file that is not a bundle")
+	}
+	if _, err := entries(filepath.Join(dir, "blank.raw"), "arm64-v8a"); err == nil {
+		t.Error("listed a file that is not a bundle")
 	}
 }

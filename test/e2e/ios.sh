@@ -49,7 +49,7 @@ if [ "$status" -ne 0 ]; then
 	xcrun simctl spawn "$udid" log show --last 45m --style compact \
 		--predicate 'process == "Runner"' >"$out/ios-app.log" 2>&1 || true
 	echo "--- the app's lines about the Dart VM service (none: it never reported one)"
-	grep -i 'vm service\|observatory\|dartvm' "$out/ios-app.log" || echo "(none)"
+	grep -i 'vm service\|observatory\|dartvm\|plux-e2e' "$out/ios-app.log" || echo "(none)"
 	echo "--- the app's simulator log (last 150 lines of 45 minutes)"
 	tail -n 150 "$out/ios-app.log"
 fi

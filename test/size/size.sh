@@ -5,7 +5,8 @@
 # The size job (RT-061, NFR-009), run by `make size-android` and
 # `make size-ios`. See test/size/README.md.
 #
-#   size.sh android [-update]   release APK for arm64 (needs the Android SDK)
+#   size.sh android [-update]   release APK for arm64, and the App Bundle
+#                               per ABI (needs the Android SDK)
 #   size.sh ios [-update]       release app for arm64, unsigned (needs Xcode)
 #
 # Builds the blank app and the same app with plux_flutter, then
@@ -13,7 +14,9 @@
 # than 10% over the overhead committed in test/size/baseline.json;
 # -update rewrites that overhead instead. The Markdown report is written
 # to $SIZE_OUT/<platform>.md (default build/size); for Android, Flutter's
-# code-size analysis of the plux app to android-code-size.txt beside it.
+# code-size analysis of the plux app to android-code-size.txt beside it,
+# and what the release App Bundle delivers to a device of each ABI,
+# compressed as Play downloads it, to android-aab.md (reported, not gated).
 set -euo pipefail
 
 root=$(git rev-parse --show-toplevel)
@@ -53,6 +56,17 @@ android)
 		--analyze-size --code-size-directory "$out/code-size") | tee "$out/android-code-size.txt"
 	for app in blank plux; do
 		(cd "$here/$app" && flutter build apk --release --target-platform android-arm64 --split-per-abi)
+	done
+	for app in blank plux; do
+		(cd "$here/$app" && flutter build appbundle --release)
+	done
+	aab=build/app/outputs/bundle/release/app-release.aab
+	: >"$out/android-aab.md"
+	for abi in arm64-v8a armeabi-v7a x86_64; do
+		(cd "$root/tools" && go run ./cmd/sizegate -target "android-$abi-aab" -report \
+			-blank "$here/blank/$aab" -plux "$here/plux/$aab" \
+			-baseline "$here/baseline.json") >>"$out/android-aab.md"
+		printf '\n' >>"$out/android-aab.md"
 	done
 	build=build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
 	gate=android-arm64-apk

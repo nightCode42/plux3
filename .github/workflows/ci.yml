@@ -1016,17 +1016,18 @@ jobs:
           channel: stable
           cache: true
       # Verifies: RT-061, NFR-009.
-      - name: Release APK for arm64, blank and with plux_flutter
+      - name: Release APK for arm64 and App Bundle, blank and with plux_flutter
         run: make size-android
       - name: Report
         if: always()
-        run: cat build/size/android.md >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
+        run: cat build/size/android-aab.md build/size/android.md >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:
           name: size-android
           path: |
             build/size/android.md
+            build/size/android-aab.md
             build/size/android-code-size.txt
             build/size/code-size/
           retention-days: 14

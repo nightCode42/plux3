@@ -3,17 +3,21 @@
 
 // Command sizegate checks what the runtime adds to a host app's download
 // (RT-061, NFR-009): the same blank app built without and with
-// plux_flutter (test/size), release mode, arm64.
+// plux_flutter (test/size), release mode.
 //
 //	sizegate -target android-arm64-apk -blank app-blank.apk -plux app-plux.apk
+//	sizegate -target android-arm64-v8a-aab -blank blank.aab -plux plux.aab -report
 //	sizegate -target ios-arm64-ipa -blank Blank.app -plux Plux.app
 //
-// A file is measured as it is (an APK is already compressed); a
-// directory — an iOS .app — is measured as the ZIP archive an IPA is,
-// with the app under Payload/, compressed at the highest level. The
-// run fails (exit 1) when the runtime adds more than 3 MiB, or more than
-// 10% over the target's committed overhead in -baseline; -update writes
-// the measured overhead there instead. Exit 2 is a usage or I/O error.
+// An APK is measured as it is. An App Bundle is measured as what Play
+// delivers to a device of one ABI, compressed: the base module's files
+// with only that ABI's native libraries, each compressed at the highest
+// level into one ZIP archive. A directory — an iOS .app — is measured as
+// the ZIP archive an IPA is, with the app under Payload/, compressed at
+// the highest level. The run fails (exit 1) when the runtime adds more
+// than 3 MiB, or more than 10% over the target's committed overhead in
+// -baseline, unless -report only reports; -update writes the measured
+// overhead there instead. Exit 2 is a usage or I/O error.
 package main
 
 import (
@@ -47,7 +51,19 @@ const budget = 3 << 20
 const growth = 0.10
 
 // targets are the builds the gate knows.
-func targets() []string { return []string{"android-arm64-apk", "ios-arm64-ipa"} }
+func targets() []string {
+	return []string{"android-arm64-apk", "android-arm64-v8a-aab", "android-armeabi-v7a-aab", "android-x86_64-aab", "ios-arm64-ipa"}
+}
+
+// abi is the Android ABI an App Bundle target delivers, or "" for a
+// target that is not an App Bundle.
+func abi(target string) string {
+	s, ok := strings.CutSuffix(target, "-aab")
+	if !ok {
+		return ""
+	}
+	return strings.TrimPrefix(s, "android-")
+}
 
 // main delegates to run so that the command logic is testable.
 func main() {
@@ -62,16 +78,18 @@ func run(args []string, stdout, stderr io.Writer) int {
 	plux := fl.String("plux", "", "the same app's build with plux_flutter")
 	baselinePath := fl.String("baseline", "test/size/baseline.json", "the committed overheads, in bytes")
 	update := fl.Bool("update", false, "write the measured overhead to -baseline")
+	reportOnly := fl.Bool("report", false, "report without failing on the budget or the baseline")
 	if err := fl.Parse(args); err != nil || !slices.Contains(targets(), *target) || *blank == "" || *plux == "" || fl.NArg() > 0 {
 		_, _ = fmt.Fprintln(stderr, "usage: sizegate -target <target> -blank <build> -plux <build> [-baseline file] [-update]")
 		return exitError
 	}
-	blankSize, err := measure(*blank)
+	forABI := abi(*target)
+	blankSize, err := measure(*blank, forABI)
 	if err != nil {
 		_, _ = fmt.Fprintln(stderr, err)
 		return exitError
 	}
-	pluxSize, err := measure(*plux)
+	pluxSize, err := measure(*plux, forABI)
 	if err != nil {
 		_, _ = fmt.Fprintln(stderr, err)
 		return exitError
@@ -90,9 +108,12 @@ func run(args []string, stdout, stderr io.Writer) int {
 		}
 	}
 	code := report(stdout, stderr, *target, blankSize, pluxSize, baseline[*target])
-	if err := writeContributions(stdout, *blank, *plux); err != nil {
+	if err := writeContributions(stdout, *blank, *plux, forABI); err != nil {
 		_, _ = fmt.Fprintln(stderr, err)
 		return exitError
+	}
+	if *reportOnly {
+		return exitOK
 	}
 	return code
 }
@@ -101,9 +122,10 @@ func run(args []string, stdout, stderr io.Writer) int {
 const contributionRows = 15
 
 // entries lists the files of a build with the bytes each takes in it: an
-// archive's entries (an APK) at their stored size, a directory's files (an
-// iOS app) at their size.
-func entries(path string) (map[string]int64, error) {
+// archive's entries (an APK) at their stored size, the files an App
+// Bundle delivers for abi at their size compressed, a directory's files
+// (an iOS app) at their size.
+func entries(path, abi string) (map[string]int64, error) {
 	out := map[string]int64{}
 	info, err := os.Stat(path)
 	if err != nil {
@@ -127,6 +149,22 @@ func entries(path string) (map[string]int64, error) {
 		}
 		return out, nil
 	}
+	if abi != "" {
+		err := delivered(path, abi, func(name string, r io.Reader) error {
+			var n counter
+			w, err := flate.NewWriter(&n, flate.BestCompression)
+			if err != nil {
+				return fmt.Errorf("sizegate: %w", err)
+			}
+			_, err = io.Copy(w, r)
+			if err := errors.Join(err, w.Close()); err != nil {
+				return fmt.Errorf("sizegate: %s: %w", name, err)
+			}
+			out[name] = int64(n)
+			return nil
+		})
+		return out, err
+	}
 	z, err := zip.OpenReader(path)
 	if err != nil {
 		return nil, fmt.Errorf("sizegate: %s: %w", path, err)
@@ -138,14 +176,41 @@ func entries(path string) (map[string]int64, error) {
 	return out, nil
 }
 
+// delivered calls fn, in the bundle's order, with each file of the App
+// Bundle at path that Play delivers to a device of abi: the base
+// module's, without the native libraries of other ABIs. Language and
+// screen density splits are not applied, so every resource counts.
+func delivered(path, abi string, fn func(name string, r io.Reader) error) error {
+	z, err := zip.OpenReader(path)
+	if err != nil {
+		return fmt.Errorf("sizegate: %s: %w", path, err)
+	}
+	defer func() { _ = z.Close() }()
+	for _, f := range z.File {
+		lib, isLib := strings.CutPrefix(f.Name, "base/lib/")
+		if !strings.HasPrefix(f.Name, "base/") || strings.HasSuffix(f.Name, "/") || isLib && !strings.HasPrefix(lib, abi+"/") {
+			continue
+		}
+		r, err := f.Open()
+		if err != nil {
+			return fmt.Errorf("sizegate: %s: %w", f.Name, err)
+		}
+		err = fn(f.Name, r)
+		if err := errors.Join(err, r.Close()); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // writeContributions lists the files whose size differs most between
 // the two builds: where the runtime's bytes go.
-func writeContributions(w io.Writer, blank, plux string) error {
-	a, err := entries(blank)
+func writeContributions(w io.Writer, blank, plux, abi string) error {
+	a, err := entries(blank, abi)
 	if err != nil {
 		return err
 	}
-	b, err := entries(plux)
+	b, err := entries(plux, abi)
 	if err != nil {
 		return err
 	}
@@ -227,20 +292,48 @@ func report(stdout, stderr io.Writer, target string, blank, plux, committed int6
 	return code
 }
 
-// measure is the size of a file, or of a directory archived as an IPA.
-func measure(path string) (int64, error) {
+// measure is the size of a file, of what an App Bundle delivers to a
+// device of abi (when abi is set), or of a directory archived as an IPA.
+func measure(path, abi string) (int64, error) {
 	info, err := os.Stat(path)
 	if err != nil {
 		return 0, fmt.Errorf("sizegate: %w", err)
 	}
-	if !info.IsDir() {
+	var n counter
+	switch {
+	case abi != "":
+		err = deliveredArchive(&n, path, abi)
+	case info.IsDir():
+		err = archive(&n, path)
+	default:
 		return info.Size(), nil
 	}
-	var n counter
-	if err := archive(&n, path); err != nil {
+	if err != nil {
 		return 0, err
 	}
 	return int64(n), nil
+}
+
+// deliveredArchive writes what the App Bundle at path delivers to a
+// device of abi as one ZIP archive, compressed at the highest level.
+func deliveredArchive(w io.Writer, path, abi string) error {
+	z := newArchive(w)
+	err := delivered(path, abi, func(name string, r io.Reader) error {
+		return addReader(z, name, r)
+	})
+	if err := errors.Join(err, z.Close()); err != nil {
+		return fmt.Errorf("sizegate: %w", err)
+	}
+	return nil
+}
+
+// newArchive is a ZIP writer that compresses at the highest level.
+func newArchive(w io.Writer) *zip.Writer {
+	z := zip.NewWriter(w)
+	z.RegisterCompressor(zip.Deflate, func(out io.Writer) (io.WriteCloser, error) {
+		return flate.NewWriter(out, flate.BestCompression)
+	})
+	return z
 }
 
 // counter counts the bytes written to it.
@@ -254,10 +347,7 @@ func (c *counter) Write(p []byte) (int, error) {
 // archive writes dir as a ZIP archive with dir under Payload/, its files
 // in lexical order, compressed at the highest level.
 func archive(w io.Writer, dir string) error {
-	z := zip.NewWriter(w)
-	z.RegisterCompressor(zip.Deflate, func(out io.Writer) (io.WriteCloser, error) {
-		return flate.NewWriter(out, flate.BestCompression)
-	})
+	z := newArchive(w)
 	prefix := "Payload/" + filepath.Base(dir)
 	err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 		// iOS app bundles hold regular files only; anything else (a
@@ -279,17 +369,25 @@ func archive(w io.Writer, dir string) error {
 
 // add writes the file at path into z as name.
 func add(z *zip.Writer, name, path string) error {
-	f, err := z.CreateHeader(&zip.FileHeader{Name: name, Method: zip.Deflate})
-	if err != nil {
-		return fmt.Errorf("sizegate: %w", err)
-	}
 	src, err := os.Open(path) //nolint:gosec // A file of the app the caller named.
 	if err != nil {
 		return fmt.Errorf("sizegate: %w", err)
 	}
-	_, err = io.Copy(f, src)
+	err = addReader(z, name, src)
 	if err := errors.Join(err, src.Close()); err != nil {
 		return fmt.Errorf("sizegate: %s: %w", path, err)
+	}
+	return nil
+}
+
+// addReader writes r into z as name.
+func addReader(z *zip.Writer, name string, r io.Reader) error {
+	f, err := z.CreateHeader(&zip.FileHeader{Name: name, Method: zip.Deflate})
+	if err != nil {
+		return fmt.Errorf("sizegate: %w", err)
+	}
+	if _, err := io.Copy(f, r); err != nil {
+		return fmt.Errorf("sizegate: %s: %w", name, err)
 	}
 	return nil
 }

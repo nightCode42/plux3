@@ -31,6 +31,8 @@ void _announceVmService() {
   for (final s in const [2, 5, 10, 20, 40]) {
     Timer(Duration(seconds: s), () async {
       final uri = (await developer.Service.getInfo()).serverUri;
+      // ignore: avoid_print
+      print('plux-e2e: VM service at ${s}s: $uri');
       if (uri == null) return;
       // The line flutter's log reader matches, as the engine writes it.
       // ignore: avoid_print

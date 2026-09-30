@@ -12,7 +12,8 @@ Both are pub workspace members, so they resolve with the repository's lockfile. 
 platform folders are made by `flutter create` when the job runs and are not committed.
 
 ```bash
-make size-android   # release APK, --target-platform android-arm64 --split-per-abi (Android SDK)
+make size-android   # release APK, --target-platform android-arm64 --split-per-abi,
+                    # and the release App Bundle per ABI (Android SDK)
 make size-ios       # release app for arm64, --no-codesign, archived as an IPA (Xcode)
 ```
 
@@ -22,3 +23,11 @@ what App Store thinning delivers to one device). It fails when the runtime adds 
 3 MiB, or more than 10% over the overhead committed in [baseline.json](baseline.json)
 (`QA-007`). After an intended change, `test/size/size.sh android -update` (or `ios`)
 rewrites the committed overhead; the report is written to `build/size/<platform>.md`.
+
+The Android job also reports, without gating, what the release App Bundle delivers to a
+device of each ABI (`arm64-v8a`, `armeabi-v7a`, `x86_64`), compressed as Play downloads
+it: the base module's files with only that ABI's native libraries, each compressed at the
+highest level into one ZIP archive (`build/size/android-aab.md`). Language and density
+splits are not applied, so the figure is an upper bound of Play's download size. It is
+comparable with the iOS figure, which is compressed too; RT-061 names the APK, so the
+APK stays the gate until the maintainer decides otherwise (work log, open decisions).
