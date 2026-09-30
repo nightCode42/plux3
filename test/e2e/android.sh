@@ -7,9 +7,9 @@
 #
 #   android.sh [api]   API level of the system image (default 35)
 #
-# E2E_VARIANT tries a way to boot an image current emulators do not (API 24
-# never finished booting in CI runs 36719678834 and 36729487188):
-#   slow      more time (20 minutes), cores and memory; no camera or Vulkan
+# E2E_VARIANT=emulator boots an image current emulators do not (API 24
+# never finished booting, even given 20 minutes, more cores and memory: CI
+# runs 36719678834, 36729487188, 36740007227):
 #   emulator  an older emulator build by ID (E2E_EMULATOR_BUILD, default
 #             34.1.19), checked against E2E_EMULATOR_SHA256 when set
 #
@@ -44,10 +44,6 @@ export ANDROID_AVD_HOME=${ANDROID_AVD_HOME:-$HOME/.android/avd}
 mkdir -p "$ANDROID_AVD_HOME"
 case "$variant" in
 "") ;;
-slow)
-	flags=(-memory 6144 -cores 4 -camera-back none -camera-front none -feature -Vulkan)
-	boot_seconds=1200
-	;;
 emulator)
 	# Google's repository lists only current emulator builds (35 and
 	# later), but older ones stay downloadable by build ID. The default is

@@ -757,13 +757,12 @@ jobs:
       fail-fast: false
       matrix:
         # 26: the oldest level current emulators boot; 35: current. API 24,
-        # the runtime's minimum (RT-002), never finished booting on current
-        # emulators (CI runs 36719678834, 36729487188): two ways to boot it
-        # are tried side by side (test/e2e/android.sh, E2E_VARIANT).
+        # the runtime's minimum (RT-002), never finishes booting on current
+        # emulators, even given 20 minutes (CI runs 36719678834, 36729487188,
+        # 36740007227): it runs on an older emulator build
+        # (test/e2e/android.sh, E2E_VARIANT=emulator).
         api: [26, 35]
         include:
-          - api: 24
-            variant: slow
           - api: 24
             variant: emulator
     services:
