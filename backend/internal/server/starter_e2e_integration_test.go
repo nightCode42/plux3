@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -81,7 +82,9 @@ func TestStarterAppAgainstTheServer(t *testing.T) {
 		}
 		ctx, cancel = context.WithTimeout(ctx, bound)
 		defer cancel()
-		live = os.Stdout
+		stuck := &vmServiceWatch{limit: 3 * time.Minute, stop: cancel}
+		defer stuck.done()
+		live = io.MultiWriter(os.Stdout, stuck)
 		if os.Getenv("PLUX_E2E_VERBOSE") != "" {
 			args = append(args, "--verbose")
 		}
@@ -135,4 +138,62 @@ func TestStarterAppAgainstTheServer(t *testing.T) {
 			t.Errorf("no %s event reached the server: %v", want, seen)
 		}
 	}
+}
+
+// vmServiceWatch stops a device run whose app never reports its Dart VM
+// service to flutter test: a healthy app does so within seconds of
+// launch, while a lost report (CI runs 36743012409, 36747737859) leaves
+// flutter test waiting until the run's bound. It calls stop when nothing
+// follows flutter's "Waiting for VM Service port" line within limit.
+type vmServiceWatch struct {
+	limit time.Duration
+	stop  func()
+
+	mu    sync.Mutex
+	timer *time.Timer // guarded by mu
+}
+
+// Write watches flutter's output; it never fails.
+func (w *vmServiceWatch) Write(p []byte) (int, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if w.timer != nil {
+		w.timer.Stop()
+		w.timer = nil
+	}
+	if bytes.Contains(p, []byte("Waiting for VM Service port")) {
+		w.timer = time.AfterFunc(w.limit, w.stop)
+	}
+	return len(p), nil
+}
+
+// done stops a pending timer.
+func (w *vmServiceWatch) done() {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if w.timer != nil {
+		w.timer.Stop()
+	}
+}
+
+// TestVMServiceWatch checks that the watch stops a run only when nothing
+// follows flutter's wait for the VM service.
+func TestVMServiceWatch(t *testing.T) {
+	t.Parallel()
+	stopped := make(chan struct{}, 1)
+	w := &vmServiceWatch{limit: 20 * time.Millisecond, stop: func() { stopped <- struct{}{} }}
+	_, _ = w.Write([]byte("Waiting for VM Service port to be available...\n"))
+	_, _ = w.Write([]byte("Connecting to VM Service at ws://...\n"))
+	select {
+	case <-stopped:
+		t.Fatal("stopped although the app connected")
+	case <-time.After(60 * time.Millisecond):
+	}
+	_, _ = w.Write([]byte("Waiting for VM Service port to be available...\n"))
+	select {
+	case <-stopped:
+	case <-time.After(time.Second):
+		t.Fatal("not stopped although nothing followed the wait")
+	}
+	w.done()
 }

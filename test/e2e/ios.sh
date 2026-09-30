@@ -46,8 +46,11 @@ if [ "$status" -ne 0 ]; then
 	# The app's own log since before its launch: whether the Dart VM
 	# service started (flutter test
 	# waits for its address in this log), and any crash.
-	echo "--- the app's simulator log (last 45 minutes)"
 	xcrun simctl spawn "$udid" log show --last 45m --style compact \
-		--predicate 'process == "Runner"' 2>&1 | tail -n 150 | tee "$out/ios-app.log"
+		--predicate 'process == "Runner"' >"$out/ios-app.log" 2>&1 || true
+	echo "--- the app's lines about the Dart VM service (none: it never reported one)"
+	grep -i 'vm service\|observatory\|dartvm' "$out/ios-app.log" || echo "(none)"
+	echo "--- the app's simulator log (last 150 lines of 45 minutes)"
+	tail -n 150 "$out/ios-app.log"
 fi
 exit "$status"
