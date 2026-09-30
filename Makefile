@@ -164,12 +164,15 @@ build: go-build ## Build every binary into bin/
 # flatc writes the section accessors for Go and Dart from the one schema
 # file, and the binary schema of each section kind, from which schemagen
 # derives the verifier's layout tables (BND-001, BND-012).
+# flatc's Dart output applies `!` to values that cannot be null, which the
+# analysis pub.dev scores (RT-001) reports; it is told to ignore that.
 gen: ## Regenerate all generated code and reference documents (CI-003)
 	@"$(FLATC)" --version 2>/dev/null | grep -qx "flatc version $(FLATC_VERSION)" || { echo "✗ flatc $(FLATC_VERSION) not found at $(FLATC); run 'make install-flatc'" >&2; exit 1; }
 	@bfbs=$$(mktemp -d); trap 'rm -rf "$$bfbs"' EXIT; \
 	rm -rf $(FBS_GO_DIR) $(FBS_DART_DIR); \
 	"$(FLATC)" --go -o $(dir $(FBS_GO_DIR)) $(FBS_SCHEMA); \
 	"$(FLATC)" --dart -o $(FBS_DART_DIR) $(FBS_SCHEMA); \
+	sed -i.bak 's|^// ignore_for_file: unused_import,|// ignore_for_file: unnecessary_non_null_assertion, unused_import,|' $(FBS_DART_DIR)/*_generated.dart && rm -f $(FBS_DART_DIR)/*.bak; \
 	"$(FLATC)" --binary --schema -o "$$bfbs" $(FBS_SECTIONS); \
 	$(GO) run ./tools/cmd/schemagen -root . -bfbs "$$bfbs"
 	@$(MAKE) proto

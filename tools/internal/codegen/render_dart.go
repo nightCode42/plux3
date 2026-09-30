@@ -119,6 +119,9 @@ func renderDart(r *registry.Registry) ([]byte, error) {
 	widgetCode, generated, hand := g.widgets()
 	b := &g.b
 	b.WriteString(header(LangDart, RegistrySource))
+	// The descriptors mirror Flutter's constructors, deprecated parameters
+	// included, for as long as Flutter keeps them (WGT-003).
+	b.WriteString("// ignore_for_file: deprecated_member_use\n\n")
 	b.WriteString("/// Decoders and widget builders generated from the widget descriptors\n/// (WGT-002, ADR-0031).\nlibrary;\n\n")
 	b.WriteString(g.imports())
 	b.WriteString("// ── Enums ─────────────────────────────────────────────────────────────────\n\n")
@@ -279,6 +282,9 @@ func (g *renderGen) imports() string {
 		slices.Sort(ui)
 		b.WriteString("import 'dart:ui' show " + strings.Join(slices.Compact(ui), ", ") + ";\n\n")
 	}
+	// material.dart and cupertino.dart re-export these.
+	delete(libs, "package:flutter/widgets.dart")
+	delete(libs, "package:flutter/painting.dart")
 	names := slices.Sorted(maps.Keys(libs))
 	names = append(names, "package:plux_flutter/src/render/decoders.dart", "package:plux_flutter/src/render/decoding.dart", "package:plux_flutter/src/render/node_context.dart")
 	for _, l := range names {
