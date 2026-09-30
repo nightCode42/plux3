@@ -54,7 +54,9 @@ func TestStarterAppAgainstTheServer(t *testing.T) {
 		roots = append(roots, k.KeyID+":"+k.PublicKey)
 	}
 
-	cmd := exec.CommandContext(st.ctx, flutter, "test", "test/e2e_test.dart", //nolint:gosec // G204: the flutter the developer named.
+	// The expanded reporter everywhere: on GitHub Actions flutter test
+	// picks another, whose summary line differs.
+	cmd := exec.CommandContext(st.ctx, flutter, "test", "--reporter=expanded", "test/e2e_test.dart", //nolint:gosec // G204: the flutter the developer named.
 		"--dart-define=PLUX_ENDPOINT="+st.server,
 		"--dart-define=PLUX_APP_ID="+st.app.ID,
 		"--dart-define=PLUX_ENVIRONMENT=staging",
