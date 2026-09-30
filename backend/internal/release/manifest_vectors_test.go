@@ -15,10 +15,13 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/schema/jcs"
 	"github.com/nightCode42/plux3/backend/internal/signing"
+	"github.com/nightCode42/plux3/backend/internal/storage"
+	"github.com/nightCode42/plux3/backend/internal/storage/dbgen"
 )
 
 // updateManifestVectors rewrites the device verification vectors.
@@ -113,22 +116,24 @@ func TestDeviceVerificationVectors(t *testing.T) {
 		return out
 	}
 	hash := sha256.Sum256([]byte("app bundle"))
-	base := SignedManifest{
-		Type: "manifest", SpecVersion: 1, Role: "targets",
-		App: "app_01J8Z", Environment: "production", Channel: "production", ReleaseSequence: 231,
-		IssuedAt: "2026-09-25T10:00:00Z", Expires: "2026-10-02T10:00:00Z",
-		AppBundle: SignedBundle{Hash: hashRef(hash[:]), Size: 48213, RequiredFeatures: []string{"pxl.v1"}, MinRuntime: "0.1.0"},
-		Plugins: []SignedPlugin{{Key: "loans", Version: 14, SignedBundle: SignedBundle{
-			Hash: hashRef(bytes.Repeat([]byte{7}, 32)), Size: 182334, RequiredFeatures: []string{"pxl.v1", "widget.Text.v1"}, MinRuntime: "0.1.0",
-		}}},
-		Control:     SignedControl{KillSwitches: []string{}},
-		Experiments: []SignedVariant{},
-	}
+	// Built as the worker builds it, from stored rows: a channel without
+	// controls, whose lists must be empty rather than null for the device
+	// to read them.
+	appID := storage.MustUUID("01a0c450-6c00-7010-8000-00000001eef0")
+	appVersion := dbgen.PluginVersion{BundleSha256: hash[:], BundleSize: 48213, RequiredFeatures: []string{"pxl.v1"}, MinRuntime: "0.1.0"}
+	base := newManifest(
+		dbgen.Environment{AppID: appID, Key: "production"}, dbgen.Channel{Key: "production"}, 231, appVersion,
+		[]dbgen.PluginVersion{appVersion, {
+			PluginKey: "loans", Version: 14, BundleSha256: bytes.Repeat([]byte{7}, 32), BundleSize: 182334,
+			RequiredFeatures: []string{"widget.Text.v1", "pxl.v1"}, MinRuntime: "0.1.0",
+		}},
+		dbgen.ChannelControl{}, time.Date(2026, 9, 25, 10, 0, 0, 0, time.UTC),
+	)
 	ok := func(name string, m SignedManifest, mutate func(*manifestCase)) manifestCase {
 		signed := canonical(m)
 		c := manifestCase{
 			Name: name, Signed: base64.StdEncoding.EncodeToString(signed), Signatures: []ManifestSignature{sign("targets", signed)},
-			App: "app_01J8Z", Environment: "production", Channel: "production",
+			App: storage.ID(appID), Environment: "production", Channel: "production",
 			Now: "2026-09-28T12:00:00Z", HighestAccepted: 230, Runtime: "0.1.0",
 		}
 		if mutate != nil {
