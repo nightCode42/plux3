@@ -5,13 +5,9 @@
 # The starter app's end-to-end flows on an Android emulator (QA-006), run
 # by `make e2e-android` in CI. See test/e2e/README.md.
 #
-#   android.sh [api]   API level of the system image (default 35)
-#
-# E2E_VARIANT=emulator boots an image current emulators do not (API 24
-# never finished booting, even given 20 minutes, more cores and memory: CI
-# runs 36719678834, 36729487188, 36740007227):
-#   emulator  an older emulator build by ID (E2E_EMULATOR_BUILD, default
-#             34.1.19), checked against E2E_EMULATOR_SHA256 when set
+#   android.sh [api]   API level of the system image (default 35; 26 or
+#                      later: the API 24 kernel panics on the emulator,
+#                      ADR-0035)
 #
 # Installs the emulator and a Google APIs x86_64 system image with the SDK's
 # own tools, boots a headless emulator (hardware acceleration needs KVM),
@@ -27,14 +23,7 @@ root=$(git rev-parse --show-toplevel)
 out=${E2E_OUT:-$root/build/e2e}
 sdk=${ANDROID_HOME:-${ANDROID_SDK_ROOT:?set ANDROID_HOME to the Android SDK}}
 tools=$sdk/cmdline-tools/latest/bin
-# E2E_IMAGE picks the system image's tag: google_apis (the default, with
-# Play Services, so Cronet) or default (plain Android; no Play Services, so
-# the runtime syncs over dart:io).
-image="system-images;android-$api;${E2E_IMAGE:-google_apis};x86_64"
-variant=${E2E_VARIANT:-}
-emulator_bin=$sdk/emulator/emulator
-flags=(-memory 4096 -no-metrics)
-boot_seconds=600
+image="system-images;android-$api;google_apis;x86_64"
 avd=plux_e2e_$api
 # The test server's address (backend/internal/server/starter_e2e_integration_test.go).
 port=18094
@@ -48,55 +37,28 @@ yes | "$tools/sdkmanager" --licenses >/dev/null || true
 # One AVD home for avdmanager and the emulator, whatever the runner sets.
 export ANDROID_AVD_HOME=${ANDROID_AVD_HOME:-$HOME/.android/avd}
 mkdir -p "$ANDROID_AVD_HOME"
-case "$variant" in
-"") ;;
-emulator)
-	# Google's repository lists only current emulator builds (35 and
-	# later), but older ones stay downloadable by build ID. The default is
-	# 34.1.19; its SHA-256 is printed so it can be pinned in
-	# E2E_EMULATOR_SHA256 once it has booted API 24, and checked when set.
-	build=${E2E_EMULATOR_BUILD:-11525734}
-	curl -fsS "https://dl.google.com/android/repository/emulator-linux_x64-$build.zip" -o "$out/emulator.zip"
-	sum=$(sha256sum "$out/emulator.zip" | cut -d' ' -f1)
-	if [ -n "${E2E_EMULATOR_SHA256:-}" ] && [ "$sum" != "$E2E_EMULATOR_SHA256" ]; then
-		echo "✗ emulator build $build: SHA-256 $sum, expected $E2E_EMULATOR_SHA256"; exit 1
-	fi
-	rm -rf "$out/emulator" && unzip -q "$out/emulator.zip" -d "$out"
-	echo "Emulator build $build: $(grep -h '^Pkg.Revision' "$out/emulator/source.properties" 2>/dev/null), SHA-256 $sum"
-	emulator_bin=$out/emulator/emulator
-	flags=(-memory 4096) # 34.x has no -no-metrics
-	# It finds the SDK's system images through the environment.
-	export ANDROID_SDK_ROOT=$sdk ANDROID_HOME=$sdk
-	;;
-*) echo "✗ unknown E2E_VARIANT $variant"; exit 2 ;;
-esac
-# API levels current emulators do not boot write the guest kernel's
-# messages into the emulator's log, so a stall shows where it stops.
-[ "$api" -lt 26 ] && flags+=(-show-kernel)
 echo no | "$tools/avdmanager" create avd --force --name "$avd" --package "$image" --device pixel_6 >/dev/null
 [ -r /dev/kvm ] && [ -w /dev/kvm ] || echo "⚠ /dev/kvm is not usable: the emulator runs without acceleration"
 
 adb=$sdk/platform-tools/adb
-log=$out/emulator-$api${variant:+-$variant}.log
-"$emulator_bin" -avd "$avd" -no-window -no-audio -no-boot-anim -no-snapshot \
-	-gpu swiftshader_indirect -port 5554 "${flags[@]}" >"$log" 2>&1 &
+log=$out/emulator-$api.log
+"$sdk/emulator/emulator" -avd "$avd" -no-window -no-audio -no-boot-anim -no-snapshot \
+	-gpu swiftshader_indirect -port 5554 -memory 4096 -no-metrics >"$log" 2>&1 &
 emulator=$!
 serial=emulator-5554
 trap '"$adb" -s "$serial" emu kill >/dev/null 2>&1 || kill "$emulator" 2>/dev/null || true' EXIT
 
 # fail <message>: the emulator's log, then the message.
 fail() {
-	echo "--- $log: kernel panics, errors and the last 200 lines"
-	grep -iE 'kernel panic|panic|oops|segfault|fatal|error' "$log" | head -n 40 || true
-	tail -n 200 "$log" || true
+	echo "--- $log (last 80 lines)"; tail -n 80 "$log" || true
 	echo "✗ $1"; exit 1
 }
 
 # Booted when sys.boot_completed is 1; never waits on a dead emulator or
-# longer than boot_seconds of wall time (adb wait-for-device would wait
+# longer than ten minutes of wall time (adb wait-for-device would wait
 # forever).
 booted=false
-deadline=$((SECONDS + boot_seconds))
+deadline=$((SECONDS + 600))
 while [ "$SECONDS" -lt "$deadline" ]; do
 	kill -0 "$emulator" 2>/dev/null || fail "the emulator exited while booting"
 	if [ "$(timeout 10 "$adb" -s "$serial" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; then
@@ -104,10 +66,10 @@ while [ "$SECONDS" -lt "$deadline" ]; do
 	fi
 	sleep 2
 done
-$booted || fail "the emulator did not boot in $((boot_seconds / 60)) minutes"
+$booted || fail "the emulator did not boot in 10 minutes"
 for s in window_animation_scale transition_animation_scale animator_duration_scale; do
 	"$adb" -s "$serial" shell settings put global "$s" 0
 done
 "$adb" -s "$serial" reverse "tcp:$port" "tcp:$port"
 
-PLUX_E2E_DEVICE=$serial make -C "$root" --no-print-directory e2e-starter 2>&1 | tee "$out/android-$api${variant:+-$variant}.log"
+PLUX_E2E_DEVICE=$serial make -C "$root" --no-print-directory e2e-starter 2>&1 | tee "$out/android-$api.log"
