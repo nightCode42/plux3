@@ -955,7 +955,7 @@ The Studio canvas no longer uses a Flutter Web build of the runtime (ADR-0013); 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `RT-060` | P3 | MUST | Optional capabilities **MUST** ship as separate packages so apps pay only for what they use: `plux_flutter` (core), `plux_db_drift`, `plux_lottie`, `plux_rive`, `plux_maps`, `plux_charts`, `plux_media`, `plux_scanner`, `plux_security` (RASP), `plux_payments`, `plux_devtools` (debug only). The on-device function interpreter **MUST** be part of an optional package (`plux_functions`) so apps that do not place functions on the device do not ship it. | WIP |
-| `RT-061` | P3 | MUST | The core package **MUST** add ≤ 3 MiB to a release APK (arm64) and ≤ 3 MiB to an iOS IPA (thinned), measured in CI against a blank Flutter app. | SPEC |
+| `RT-061` | P3 | MUST | The core package **MUST** add ≤ 3 MiB to a release APK (arm64) and ≤ 3 MiB to an iOS IPA (thinned), measured in CI against a blank Flutter app. | WIP |
 
 ---
 
@@ -1899,7 +1899,7 @@ This section concerns how Plux itself is verified. §22.2 covers the testing too
 | `QA-004` | P1 | MUST | Fuzzing **MUST** continuously cover the compiler, the bundle container and FlatBuffers verification (Go and Dart), manifest and metadata parsing, DPoP and attestation parsing, and PXL bytecode loading. | WIP |
 | `QA-005` | P2 | MUST | Integration tests **MUST** run the server against real PostgreSQL, object storage and Valkey (Testcontainers or Compose). | DONE |
 | `QA-006` | P3 | MUST | End-to-end tests **MUST** run the example host apps on Android emulators and iOS simulators in CI (Patrol or `integration_test`), and on a real-device farm nightly including at least one low-end Android device. | WIP |
-| `QA-007` | P3 | MUST | Performance benchmarks **MUST** run in CI and fail on regressions beyond 10%: runtime (init, page build, first frame, frame times, PXL, action overhead) in profile mode on reference devices; sync (bytes and time on simulated 3G); server (k6 load tests for manifest, functions, telemetry); Studio (Lighthouse CI and canvas frame-time tests). | SPEC |
+| `QA-007` | P3 | MUST | Performance benchmarks **MUST** run in CI and fail on regressions beyond 10%: runtime (init, page build, first frame, frame times, PXL, action overhead) in profile mode on reference devices; sync (bytes and time on simulated 3G); server (k6 load tests for manifest, functions, telemetry); Studio (Lighthouse CI and canvas frame-time tests). | WIP |
 | `QA-008` | P6 | MUST | Security tests **MUST** include the DPoP and attestation negative suite (`SEC-029`), bundle tampering and rollback attacks, MASTG checks (`SEC-190`), OWASP ZAP baseline scans of Studio and the API, and authorisation matrix tests for every role and permission. | SPEC |
 | `QA-009` | P3 | MUST | Failure-injection tests **MUST** cover network loss mid-download, corrupted and truncated deltas, disk full, process kill during activation, server errors and clock skew, and **MUST** prove the runtime always keeps a working release. | DONE |
 | `QA-010` | P3 | MUST | Compatibility tests **MUST** run the last three released runtime versions against the current server and new bundles, and the current runtime against bundles from the last three compiler versions. | WIP |
@@ -1944,15 +1944,15 @@ This section concerns how Plux itself is verified. §22.2 covers the testing too
 
 | ID | Phase | Priority | Metric | Target | Status |
 |---|---|---|---|---|---|
-| `NFR-001` | P3 | MUST | `Plux.initialize()` with cached release | ≤ 50 ms p95 (mid-tier); ≤ 120 ms p95 (low-end) | SPEC |
-| `NFR-002` | P3 | MUST | Tap → first frame of a cached Plux page (≤ 300 nodes) | ≤ 100 ms p95 (mid-tier); ≤ 200 ms p95 (low-end) | SPEC |
-| `NFR-003` | P3 | MUST | Page build time for 300 nodes | ≤ 8 ms p95 (mid-tier) | SPEC |
+| `NFR-001` | P3 | MUST | `Plux.initialize()` with cached release | ≤ 50 ms p95 (mid-tier); ≤ 120 ms p95 (low-end) | WIP |
+| `NFR-002` | P3 | MUST | Tap → first frame of a cached Plux page (≤ 300 nodes) | ≤ 100 ms p95 (mid-tier); ≤ 200 ms p95 (low-end) | WIP |
+| `NFR-003` | P3 | MUST | Page build time for 300 nodes | ≤ 8 ms p95 (mid-tier) | WIP |
 | `NFR-004` | P5 | MUST | Scrolling a 1,000-item Plux list | ≤ 1% janky frames at 60 Hz (mid-tier); no frame > 32 ms | SPEC |
 | `NFR-005` | P2 | MUST | Delta size for a single text change in one page | ≤ 2 KiB | DONE |
-| `NFR-006` | P3 | MUST | Up-to-date check at app start | 1 request, ≤ 1 KiB on the wire (`304`) | SPEC |
-| `NFR-007` | P3 | MUST | Sync of a typical update (3 plugins changed) on slow network | ≤ 3 s p95 | SPEC |
-| `NFR-008` | P3 | MUST | Runtime memory overhead with 50 plugins installed | ≤ 30 MiB (excluding images) | SPEC |
-| `NFR-009` | P3 | MUST | Core package size | ≤ 3 MiB per platform (`RT-061`) | SPEC |
+| `NFR-006` | P3 | MUST | Up-to-date check at app start | 1 request, ≤ 1 KiB on the wire (`304`) | WIP |
+| `NFR-007` | P3 | MUST | Sync of a typical update (3 plugins changed) on slow network | ≤ 3 s p95 | DONE |
+| `NFR-008` | P3 | MUST | Runtime memory overhead with 50 plugins installed | ≤ 30 MiB (excluding images) | WIP |
+| `NFR-009` | P3 | MUST | Core package size | ≤ 3 MiB per platform (`RT-061`) | WIP |
 | `NFR-010` | P5 | MUST | PXL typical binding evaluation | ≤ 2 µs p95 (`PXL-004`) | SPEC |
 | `NFR-011` | P5 | MUST | Action interpreter overhead | ≤ 20 µs per step p95 (`ACT-008`) | SPEC |
 | `NFR-020` | P2 | MUST | Manifest endpoint throughput | ≥ 5,000 req/s per `api` replica at p99 ≤ 50 ms (cache hit) | DONE |

@@ -59,6 +59,12 @@ Five runs on 2026-09-30 (`build/bench-runtime/report.md`):
 | `scroll_raster_ms` | 639 | 8.55 | 26.34 | 148.82 |
 | `scroll_janky_pct` | 5 | 13.85 | 46.13 | 53.57 |
 
+The same benchmark on CI's `ubuntu-24.04` runner (run 36703654548, ten runs): `page_frame_ui_ms`
+p50 5.58 ms against 4.20 ms native, `open_first_frame_ms` p50 21.8 ms, cold 36.3 ms,
+`page_frame_ui_cold_ms` 28.3 ms, `scroll_build_ms` p95 0.98 ms, no janky frame. Runners
+differ this much from one another, which is why the gate compares alternating runs on one
+machine and never these numbers.
+
 **What it shows.**
 
 - `Plux.initialize` with fifty cached plugins takes about 11–13 ms at the median on this
