@@ -100,8 +100,15 @@ void starterFlows({
       await pumpUntil(tester, find.bySemanticsLabel('Plux logo'));
 
       // The host opens the same page full screen (HST-001, Plux.open).
+      // Once the route's transition ends the home screen below it is
+      // offstage, and a device may draw the new page only after that, so
+      // offstage copies count too.
       await tester.tap(find.byKey(const ValueKey('open-page')));
-      await pumpUntil(tester, find.text(welcomeBody), count: 2);
+      await pumpUntil(
+        tester,
+        find.text(welcomeBody, skipOffstage: false),
+        count: 2,
+      );
       await tester.pageBack();
       await tester.pumpAndSettle();
 
