@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        variant: [plain, no-play, exclude-shared, unique-off]
+        variant: [plain, no-play, exclude-shared, unique-off, agp8]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -48,8 +48,13 @@ jobs:
               printf '\nconfigurations.all { exclude(group = "org.chromium.net", module = "cronet-shared") }\n' >> app/build.gradle.kts ;;
             unique-off)
               printf '\nandroid.uniquePackageNames=false\n' >> gradle.properties ;;
+            agp8)
+              sed -i 's/id("com.android.application") version "[^"]*"/id("com.android.application") version "8.11.1"/' settings.gradle.kts
+              sed -i 's/gradle-9[^-]*-all/gradle-8.14.3-all/' gradle/wrapper/gradle-wrapper.properties ;;
           esac
-          tail -5 app/build.gradle.kts gradle.properties
+          tail -n 5 app/build.gradle.kts
+          tail -n 5 gradle.properties
+          grep -n android.application settings.gradle.kts
       - name: Build the release APK
         env:
           VARIANT: ${{ matrix.variant }}
