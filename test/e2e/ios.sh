@@ -16,11 +16,17 @@ root=$(git rev-parse --show-toplevel)
 out=${E2E_OUT:-$root/build/e2e}
 mkdir -p "$out"
 
-# The newest available iOS runtime, and the newest iPhone it supports (the
-# iPhone family also lists iPod touch models, which newer runtimes refuse).
+# The newest available iOS runtime (of major version E2E_IOS_MAJOR when
+# set, e.g. 18), and the newest iPhone it supports (the iPhone family also
+# lists iPod touch models, which newer runtimes refuse).
 runtimes=$(xcrun simctl list runtimes --json)
-runtime=$(jq -r '[.runtimes[] | select(.isAvailable and .platform == "iOS")] | last | .identifier' <<<"$runtimes")
-[ -n "$runtime" ] && [ "$runtime" != null ] || { echo "✗ Xcode has no iOS simulator runtime"; exit 1; }
+runtime=$(jq -r --arg m "${E2E_IOS_MAJOR:-}" '[.runtimes[] | select(.isAvailable and .platform == "iOS")
+	| select($m == "" or (.version | startswith($m + ".")))] | last | .identifier' <<<"$runtimes")
+[ -n "$runtime" ] && [ "$runtime" != null ] || {
+	echo "✗ no available iOS ${E2E_IOS_MAJOR:-} simulator runtime; installed:"
+	jq -r '.runtimes[] | select(.platform == "iOS") | "  \(.version) \(.isAvailable)"' <<<"$runtimes"
+	exit 1
+}
 type=$(jq -r --arg r "$runtime" '[.runtimes[] | select(.identifier == $r) | .supportedDeviceTypes[]
 	| select(.name | test("^iPhone [0-9]+$"))] | sort_by(.name | ltrimstr("iPhone ") | tonumber)
 	| last | .identifier' <<<"$runtimes")
