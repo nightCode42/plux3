@@ -10,9 +10,8 @@
 # E2E_VARIANT tries a way to boot an image current emulators do not (API 24
 # never finished booting in CI runs 36719678834 and 36729487188):
 #   slow      more time (20 minutes), cores and memory; no camera or Vulkan
-#   emulator  the newest emulator build before 35 from Google's repository,
-#             checked against the SHA-1 it lists; the build is printed so it
-#             can be pinned
+#   emulator  an older emulator build by ID (E2E_EMULATOR_BUILD, default
+#             34.1.19), checked against E2E_EMULATOR_SHA256 when set
 #
 # Installs the emulator and a Google APIs x86_64 system image with the SDK's
 # own tools, boots a headless emulator (hardware acceleration needs KVM),
@@ -50,37 +49,18 @@ slow)
 	boot_seconds=1200
 	;;
 emulator)
-	# Google's repository lists the emulator packages with their archives
-	# and SHA-1s (older builds only in the older list); take the newest
-	# whose major version is below 35.
-	for n in 1 3; do
-		curl -fsS "https://dl.google.com/android/repository/repository2-$n.xml" -o "$out/repository2-$n.xml" || true
-	done
-	read -r version url sha1 < <(python3 - "$out"/repository2-*.xml <<'PY'
-import re, sys
-xml = "".join(open(f).read() for f in sys.argv[1:])
-best = None
-for pkg in re.findall(r'<remotePackage path="emulator">(.*?)</remotePackage>', xml, re.S):
-    rev = re.search(r"<major>(\d+)</major>\s*<minor>(\d+)</minor>\s*<micro>(\d+)</micro>", pkg)
-    if not rev or int(rev.group(1)) >= 35:
-        continue
-    for arc in re.findall(r"<archive>(.*?)</archive>", pkg, re.S):
-        if "<host-os>linux</host-os>" not in arc:
-            continue
-        url = re.search(r"<url>(.*?)</url>", arc).group(1)
-        sha1 = re.search(r'<checksum(?: type="sha1")?>(.*?)</checksum>', arc).group(1)
-        version = tuple(int(x) for x in rev.groups())
-        if best is None or version > best[0]:
-            best = (version, url, sha1)
-if best is None:
-    sys.exit("no emulator build before 35 is listed")
-print(".".join(map(str, best[0])), best[1], best[2])
-PY
-)
-	echo "Emulator build: $version ($url, sha1 $sha1)"
-	curl -fsS "https://dl.google.com/android/repository/$url" -o "$out/emulator.zip"
-	echo "$sha1  $out/emulator.zip" | sha1sum -c -
+	# Google's repository lists only current emulator builds (35 and
+	# later), but older ones stay downloadable by build ID. The default is
+	# 34.1.19; its SHA-256 is printed so it can be pinned in
+	# E2E_EMULATOR_SHA256 once it has booted API 24, and checked when set.
+	build=${E2E_EMULATOR_BUILD:-11525734}
+	curl -fsS "https://dl.google.com/android/repository/emulator-linux_x64-$build.zip" -o "$out/emulator.zip"
+	sum=$(sha256sum "$out/emulator.zip" | cut -d' ' -f1)
+	if [ -n "${E2E_EMULATOR_SHA256:-}" ] && [ "$sum" != "$E2E_EMULATOR_SHA256" ]; then
+		echo "✗ emulator build $build: SHA-256 $sum, expected $E2E_EMULATOR_SHA256"; exit 1
+	fi
 	rm -rf "$out/emulator" && unzip -q "$out/emulator.zip" -d "$out"
+	echo "Emulator build $build: $(grep -h '^Pkg.Revision' "$out/emulator/source.properties" 2>/dev/null), SHA-256 $sum"
 	emulator_bin=$out/emulator/emulator
 	# It finds the SDK's system images through the environment.
 	export ANDROID_SDK_ROOT=$sdk ANDROID_HOME=$sdk
