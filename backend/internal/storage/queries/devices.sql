@@ -150,3 +150,7 @@ SELECT bundle_sha256 FROM plugin_versions
 
 -- name: CountVersionsWithBundle :one
 SELECT count(*) FROM plugin_versions WHERE bundle_sha256 = $1;
+
+-- name: UpdateDeviceVersions :exec
+-- What a device's latest session_start reports it runs (REL-080).
+UPDATE devices SET runtime_version = $2, host_build = $3, os_version = $4 WHERE id = $1;

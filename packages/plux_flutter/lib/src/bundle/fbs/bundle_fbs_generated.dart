@@ -2289,6 +2289,88 @@ class LimitObjectBuilder extends fb.ObjectBuilder {
     return fbBuilder.buffer;
   }
 }
+class Sampling {
+  Sampling._(this._bc, this._bcOffset);
+  factory Sampling(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<Sampling> reader = _SamplingReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  String? get event => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 4);
+  int get rate => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 6, 0);
+
+  @override
+  String toString() {
+    return 'Sampling{event: ${event}, rate: ${rate}}';
+  }
+}
+
+class _SamplingReader extends fb.TableReader<Sampling> {
+  const _SamplingReader();
+
+  @override
+  Sampling createObject(fb.BufferContext bc, int offset) => 
+    Sampling._(bc, offset);
+}
+
+class SamplingBuilder {
+  SamplingBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(2);
+  }
+
+  int addEventOffset(int? offset) {
+    fbBuilder.addOffset(0, offset);
+    return fbBuilder.offset;
+  }
+  int addRate(int? rate) {
+    fbBuilder.addUint32(1, rate);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class SamplingObjectBuilder extends fb.ObjectBuilder {
+  final String? _event;
+  final int? _rate;
+
+  SamplingObjectBuilder({
+    String? event,
+    int? rate,
+  })
+      : _event = event,
+        _rate = rate;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? eventOffset = _event == null ? null
+        : fbBuilder.writeString(_event!);
+    fbBuilder.startTable(2);
+    fbBuilder.addOffset(0, eventOffset);
+    fbBuilder.addUint32(1, _rate);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
 class Flag {
   Flag._(this._bc, this._bcOffset);
   factory Flag(List<int> bytes) {
@@ -2416,10 +2498,11 @@ class Meta {
   List<Flag>? get flags => const fb.ListReader<Flag>(Flag.reader).vTableGetNullable(_bc, _bcOffset, 40);
   Uuid? get nativeCatalogue => Uuid.reader.vTableGetNullable(_bc, _bcOffset, 42);
   String? get securityProfile => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 44);
+  List<Sampling>? get telemetrySampling => const fb.ListReader<Sampling>(Sampling.reader).vTableGetNullable(_bc, _bcOffset, 46);
 
   @override
   String toString() {
-    return 'Meta{kind: ${kind}, id: ${id}, key: ${key}, name: ${name}, version: ${version}, compilerVersion: ${compilerVersion}, schemaVersion: ${schemaVersion}, requiredFeatures: ${requiredFeatures}, minRuntime: ${minRuntime}, capabilities: ${capabilities}, limits: ${limits}, pages: ${pages}, entryPage: ${entryPage}, fallbackPage: ${fallbackPage}, plugins: ${plugins}, defaultLocale: ${defaultLocale}, supportedLocales: ${supportedLocales}, entryRoute: ${entryRoute}, flags: ${flags}, nativeCatalogue: ${nativeCatalogue}, securityProfile: ${securityProfile}}';
+    return 'Meta{kind: ${kind}, id: ${id}, key: ${key}, name: ${name}, version: ${version}, compilerVersion: ${compilerVersion}, schemaVersion: ${schemaVersion}, requiredFeatures: ${requiredFeatures}, minRuntime: ${minRuntime}, capabilities: ${capabilities}, limits: ${limits}, pages: ${pages}, entryPage: ${entryPage}, fallbackPage: ${fallbackPage}, plugins: ${plugins}, defaultLocale: ${defaultLocale}, supportedLocales: ${supportedLocales}, entryRoute: ${entryRoute}, flags: ${flags}, nativeCatalogue: ${nativeCatalogue}, securityProfile: ${securityProfile}, telemetrySampling: ${telemetrySampling}}';
   }
 }
 
@@ -2437,7 +2520,7 @@ class MetaBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable(21);
+    fbBuilder.startTable(22);
   }
 
   int addKind(BundleKind? kind) {
@@ -2524,6 +2607,10 @@ class MetaBuilder {
     fbBuilder.addOffset(20, offset);
     return fbBuilder.offset;
   }
+  int addTelemetrySamplingOffset(int? offset) {
+    fbBuilder.addOffset(21, offset);
+    return fbBuilder.offset;
+  }
 
   int finish() {
     return fbBuilder.endTable();
@@ -2552,6 +2639,7 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
   final List<FlagObjectBuilder>? _flags;
   final UuidObjectBuilder? _nativeCatalogue;
   final String? _securityProfile;
+  final List<SamplingObjectBuilder>? _telemetrySampling;
 
   MetaObjectBuilder({
     BundleKind? kind,
@@ -2575,6 +2663,7 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
     List<FlagObjectBuilder>? flags,
     UuidObjectBuilder? nativeCatalogue,
     String? securityProfile,
+    List<SamplingObjectBuilder>? telemetrySampling,
   })
       : _kind = kind,
         _id = id,
@@ -2596,7 +2685,8 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
         _entryRoute = entryRoute,
         _flags = flags,
         _nativeCatalogue = nativeCatalogue,
-        _securityProfile = securityProfile;
+        _securityProfile = securityProfile,
+        _telemetrySampling = telemetrySampling;
 
   /// Finish building, and store into the [fbBuilder].
   @override
@@ -2630,7 +2720,9 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
         : fbBuilder.writeList(_flags!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
     final int? securityProfileOffset = _securityProfile == null ? null
         : fbBuilder.writeString(_securityProfile!);
-    fbBuilder.startTable(21);
+    final int? telemetrySamplingOffset = _telemetrySampling == null ? null
+        : fbBuilder.writeList(_telemetrySampling!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    fbBuilder.startTable(22);
     fbBuilder.addUint8(0, _kind?.value);
     if (_id != null) {
       fbBuilder.addStruct(1, _id!.finish(fbBuilder));
@@ -2660,6 +2752,7 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
       fbBuilder.addStruct(19, _nativeCatalogue!.finish(fbBuilder));
     }
     fbBuilder.addOffset(20, securityProfileOffset);
+    fbBuilder.addOffset(21, telemetrySamplingOffset);
     return fbBuilder.endTable();
   }
 

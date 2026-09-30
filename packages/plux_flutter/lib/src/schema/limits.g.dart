@@ -35,7 +35,8 @@ enum PluxLimit {
   /// Items one page of a list call returns; a call asking for more gets this
   /// many, and one asking for none gets this many too.
   apiPageSize('api.pageSize', PluxLimitUnit.count, 100, 0, 1000),
-  /// Size of one API request body, refused before a handler reads it.
+  /// Size of one API request body, refused before a handler reads it, and of
+  /// one request message once decompressed.
   apiRequestSize('api.requestSize', PluxLimitUnit.bytes, 8388608, 0, 268435456),
   /// API calls one authenticated principal (a user or a token) may make per
   /// minute.
@@ -121,6 +122,9 @@ enum PluxLimit {
   runtimeSectionCacheBytes('runtime.sectionCacheBytes', PluxLimitUnit.bytes, 8388608, 0, 268435456),
   /// Page and component sections the runtime keeps decoded.
   runtimeSectionCacheEntries('runtime.sectionCacheEntries', PluxLimitUnit.count, 64, 0, 4096),
+  /// The size of the runtime's buffer of unsent telemetry events; the oldest
+  /// are dropped first.
+  telemetryBufferBytes('telemetry.bufferBytes', PluxLimitUnit.bytes, 262144, 0, 4194304),
   /// Runtime events one telemetry request may carry.
   telemetryEventsPerRequest('telemetry.eventsPerRequest', PluxLimitUnit.count, 500, 0, 5000);
 

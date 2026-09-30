@@ -81,7 +81,7 @@ export const limits = [
     max: 268435456,
     scopes: ["installation"],
     phase: "P2",
-    description: "Size of one API request body, refused before a handler reads it.",
+    description: "Size of one API request body, refused before a handler reads it, and of one request message once decompressed.",
   },
   {
     key: "api.requestsPerMinute",
@@ -442,6 +442,16 @@ export const limits = [
     scopes: ["installation", "organization", "app"],
     phase: "P3",
     description: "Page and component sections the runtime keeps decoded.",
+  },
+  {
+    key: "telemetry.bufferBytes",
+    unit: "bytes",
+    default: 262144,
+    warning: 0,
+    max: 4194304,
+    scopes: ["installation", "organization", "app"],
+    phase: "P3",
+    description: "The size of the runtime's buffer of unsent telemetry events; the oldest are dropped first.",
   },
   {
     key: "telemetry.eventsPerRequest",

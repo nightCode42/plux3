@@ -9,6 +9,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"maps"
+	"math"
 	"slices"
 	"strings"
 
@@ -1002,7 +1003,7 @@ func (u *unit) metaSection(o *out) {
 	e := &valueEnc{u: u, o: o, b: b, strs: o.shared}
 	features := stringVector(b, featureList(o.features))
 	lv := u.runtimeLimits(b)
-	var pages, capabilities, plugins, locales, flags flatbuffers.UOffsetT
+	var pages, capabilities, plugins, locales, flags, sampling flatbuffers.UOffsetT
 	name, key := app.Name, app.Key
 	if o.pl != nil {
 		name, key = o.pl.doc.Name, o.pl.key
@@ -1020,6 +1021,7 @@ func (u *unit) metaSection(o *out) {
 		plugins = uuidVector(b, ids)
 		locales = stringVector(b, app.SupportedLocales)
 		flags = u.flagTables(e, app.Flags)
+		sampling = samplingTables(b, app.Telemetry)
 	}
 	nameOff, keyOff := b.CreateString(name), b.CreateString(key)
 	compiler, schemaVersion, minRuntime := b.CreateString(u.opts.Version), b.CreateString(schema.CurrentVersion), b.CreateString(app.MinRuntimeVersion)
@@ -1058,8 +1060,29 @@ func (u *unit) metaSection(o *out) {
 			fbs.MetaAddNativeCatalogue(b, fbs.CreateUuid(b, nhi, nlo))
 		}
 		fbs.MetaAddSecurityProfile(b, profile)
+		if sampling != 0 {
+			fbs.MetaAddTelemetrySampling(b, sampling)
+		}
 	}
 	o.add(bundle.SectionMeta, o.id, finish(b, fbs.MetaEnd(b), bundle.SectionMeta))
+}
+
+// samplingTables writes the app's telemetry sampling rates in
+// thousandths, sorted by event (ANL-003, ADR-0034); 0 when it sets none.
+func samplingTables(b *flatbuffers.Builder, t *schema.TelemetryPolicy) flatbuffers.UOffsetT {
+	if t == nil || len(t.Sampling) == 0 {
+		return 0
+	}
+	events := slices.Sorted(maps.Keys(t.Sampling))
+	offs := make([]flatbuffers.UOffsetT, len(events))
+	for i, ev := range events {
+		name := b.CreateString(ev)
+		fbs.SamplingStart(b)
+		fbs.SamplingAddEvent(b, name)
+		fbs.SamplingAddRate(b, uint32(math.Round(min(max(t.Sampling[ev], 0), 1)*1000)))
+		offs[i] = fbs.SamplingEnd(b)
+	}
+	return offsetVector(b, offs)
 }
 
 // runtimeLimits writes the limits the runtime enforces, sorted by key.
