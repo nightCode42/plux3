@@ -4,7 +4,10 @@
 package main
 
 import (
+	"archive/zip"
 	"bytes"
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -30,6 +33,29 @@ func write(t *testing.T, path string, n int) {
 	}
 }
 
+// writeAPK writes an archive holding n incompressible bytes, stored.
+func writeAPK(t *testing.T, path string, n int) {
+	t.Helper()
+	raw := filepath.Join(t.TempDir(), "raw")
+	write(t, raw, n)
+	data, err := os.ReadFile(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	z := zip.NewWriter(f)
+	w, err := z.CreateHeader(&zip.FileHeader{Name: "lib/libapp.so", Method: zip.Store})
+	if err == nil {
+		_, err = w.Write(data)
+	}
+	if err := errors.Join(err, z.Close(), f.Close()); err != nil {
+		t.Fatal(err)
+	}
+}
+
 // TestGateBudgetAndBaseline checks the 3 MiB budget and the 10% growth
 // over the committed overhead, and -update.
 // Verifies: RT-061, QA-007.
@@ -37,7 +63,7 @@ func TestGateBudgetAndBaseline_RT_061(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
 	blank := filepath.Join(dir, "blank.apk")
-	write(t, blank, 1000)
+	writeAPK(t, blank, 1000)
 	baseline := filepath.Join(dir, "baseline.json")
 	for _, c := range []struct {
 		name      string
@@ -52,7 +78,7 @@ func TestGateBudgetAndBaseline_RT_061(t *testing.T) {
 		{"no baseline", 1000 + 2<<20, `{}`, exitFailed},
 	} {
 		plux := filepath.Join(dir, c.name+".apk")
-		write(t, plux, c.plux)
+		writeAPK(t, plux, c.plux)
 		if err := os.WriteFile(baseline, []byte(c.committed), 0o600); err != nil {
 			t.Fatal(err)
 		}
@@ -61,7 +87,7 @@ func TestGateBudgetAndBaseline_RT_061(t *testing.T) {
 		if code != c.want {
 			t.Errorf("%s: exit %d, stderr: %s", c.name, code, stderr.String())
 		}
-		if !strings.Contains(stdout.String(), "| added by plux_flutter |") {
+		if !strings.Contains(stdout.String(), "| added by plux_flutter |") || !strings.Contains(stdout.String(), "| File | Added bytes |") {
 			t.Errorf("%s: report:\n%s", c.name, stdout.String())
 		}
 	}
@@ -71,7 +97,7 @@ func TestGateBudgetAndBaseline_RT_061(t *testing.T) {
 		t.Fatal(err)
 	}
 	plux := filepath.Join(dir, "update.apk")
-	write(t, plux, 1000+2<<20)
+	writeAPK(t, plux, 1000+2<<20)
 	var stdout, stderr bytes.Buffer
 	if code := run([]string{"-target", "android-arm64-apk", "-blank", blank, "-plux", plux, "-baseline", baseline, "-update"}, &stdout, &stderr); code != exitOK {
 		t.Fatalf("update: exit %d: %s", code, stderr.String())
@@ -82,6 +108,73 @@ func TestGateBudgetAndBaseline_RT_061(t *testing.T) {
 	}
 	if want := "{\n  \"android-arm64-apk\": 2097152,\n  \"ios-arm64-ipa\": 5\n}\n"; string(got) != want {
 		t.Errorf("baseline:\n%s", got)
+	}
+}
+
+// TestListsWhereTheBytesGo checks the per-file differences of two APKs
+// and of two app directories.
+func TestListsWhereTheBytesGo(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	apk := func(name string, files map[string]int) string {
+		path := filepath.Join(dir, name)
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		z := zip.NewWriter(f)
+		for n, size := range files {
+			w, err := z.CreateHeader(&zip.FileHeader{Name: n, Method: zip.Store})
+			if err != nil {
+				t.Fatal(err)
+			}
+			_, _ = w.Write(make([]byte, size))
+		}
+		if err := errors.Join(z.Close(), f.Close()); err != nil {
+			t.Fatal(err)
+		}
+		return path
+	}
+	blank := apk("blank.apk", map[string]int{"lib/libapp.so": 100, "gone.txt": 7, "same": 5})
+	plux := apk("plux.apk", map[string]int{"lib/libapp.so": 400, "lib/libplux_native.so": 50, "same": 5})
+	var b bytes.Buffer
+	if err := writeContributions(&b, blank, plux); err != nil {
+		t.Fatal(err)
+	}
+	want := "| `lib/libapp.so` | 300 |\n| `lib/libplux_native.so` | 50 |\n| `gone.txt` | -7 |\n"
+	if !strings.HasSuffix(b.String(), want) {
+		t.Errorf("table:\n%s", b.String())
+	}
+	// More files than rows: the rest are summed.
+	many := map[string]int{}
+	for i := range contributionRows + 3 {
+		many[fmt.Sprintf("f%02d", i)] = 10 + i
+	}
+	if err := writeContributions(&b, blank, apk("many.apk", many)); err != nil || !strings.Contains(b.String(), "other files") {
+		t.Errorf("rest: %v\n%s", err, b.String())
+	}
+	// App directories are compared file by file.
+	a, c := filepath.Join(dir, "A.app"), filepath.Join(dir, "B.app")
+	write(t, filepath.Join(a, "Runner"), 10)
+	write(t, filepath.Join(c, "Runner"), 30)
+	b.Reset()
+	if err := writeContributions(&b, a, c); err != nil || !strings.Contains(b.String(), "| `Runner` | 20 |") {
+		t.Errorf("directories: %v\n%s", err, b.String())
+	}
+	if err := writeContributions(&b, filepath.Join(dir, "missing"), c); err == nil {
+		t.Error("read a missing build")
+	}
+	if err := writeContributions(&b, a, filepath.Join(dir, "missing.apk")); err == nil {
+		t.Error("read a missing archive")
+	}
+	if _, err := entries(blank + "x"); err == nil {
+		t.Error("listed a missing file")
+	}
+	if err := os.WriteFile(filepath.Join(dir, "bad.apk"), []byte("not a zip"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := entries(filepath.Join(dir, "bad.apk")); err == nil {
+		t.Error("listed a file that is not an archive")
 	}
 }
 

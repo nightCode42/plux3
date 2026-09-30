@@ -29,6 +29,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 )
 
 const (
@@ -88,7 +89,116 @@ func run(args []string, stdout, stderr io.Writer) int {
 			return exitError
 		}
 	}
-	return report(stdout, stderr, *target, blankSize, pluxSize, baseline[*target])
+	code := report(stdout, stderr, *target, blankSize, pluxSize, baseline[*target])
+	if err := writeContributions(stdout, *blank, *plux); err != nil {
+		_, _ = fmt.Fprintln(stderr, err)
+		return exitError
+	}
+	return code
+}
+
+// contributionRows is how many of the largest differences are listed.
+const contributionRows = 15
+
+// entries lists the files of a build with the bytes each takes in it: an
+// archive's entries (an APK) at their stored size, a directory's files (an
+// iOS app) at their size.
+func entries(path string) (map[string]int64, error) {
+	out := map[string]int64{}
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, fmt.Errorf("sizegate: %w", err)
+	}
+	if info.IsDir() {
+		err := filepath.WalkDir(path, func(p string, d fs.DirEntry, err error) error {
+			if err != nil || !d.Type().IsRegular() {
+				return err
+			}
+			fi, err := d.Info()
+			if err != nil {
+				return fmt.Errorf("sizegate: %w", err)
+			}
+			rel, _ := filepath.Rel(path, p)
+			out[filepath.ToSlash(rel)] = fi.Size()
+			return nil
+		})
+		if err != nil {
+			return nil, fmt.Errorf("sizegate: %w", err)
+		}
+		return out, nil
+	}
+	z, err := zip.OpenReader(path)
+	if err != nil {
+		return nil, fmt.Errorf("sizegate: %s: %w", path, err)
+	}
+	defer func() { _ = z.Close() }()
+	for _, f := range z.File {
+		out[f.Name] = int64(f.CompressedSize64) //nolint:gosec // An archive entry's size fits int64.
+	}
+	return out, nil
+}
+
+// writeContributions lists the files whose size differs most between
+// the two builds: where the runtime's bytes go.
+func writeContributions(w io.Writer, blank, plux string) error {
+	a, err := entries(blank)
+	if err != nil {
+		return err
+	}
+	b, err := entries(plux)
+	if err != nil {
+		return err
+	}
+	type row struct {
+		name string
+		diff int64
+	}
+	var rows []row
+	for name, n := range b {
+		if d := n - a[name]; d != 0 {
+			rows = append(rows, row{name, d})
+		}
+	}
+	for name, n := range a {
+		if _, ok := b[name]; !ok {
+			rows = append(rows, row{name, -n})
+		}
+	}
+	slices.SortFunc(rows, func(x, y row) int {
+		if c := cmpAbs(y.diff, x.diff); c != 0 {
+			return c
+		}
+		return strings.Compare(x.name, y.name)
+	})
+	_, _ = fmt.Fprintf(w, "\n| File | Added bytes |\n|---|---:|\n")
+	for _, r := range rows[:min(len(rows), contributionRows)] {
+		_, _ = fmt.Fprintf(w, "| `%s` | %d |\n", r.name, r.diff)
+	}
+	if len(rows) > contributionRows {
+		var rest int64
+		for _, r := range rows[contributionRows:] {
+			rest += r.diff
+		}
+		_, _ = fmt.Fprintf(w, "| %d other files | %d |\n", len(rows)-contributionRows, rest)
+	}
+	return nil
+}
+
+// cmpAbs compares |x| with |y|.
+func cmpAbs(x, y int64) int {
+	if x < 0 {
+		x = -x
+	}
+	if y < 0 {
+		y = -y
+	}
+	switch {
+	case x < y:
+		return -1
+	case x > y:
+		return 1
+	}
+	return 0
 }
 
 // report writes the Markdown summary and decides.

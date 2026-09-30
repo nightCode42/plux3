@@ -28,6 +28,15 @@ platform() {
 	(cd "$work" && flutter create --platforms="$2" --project-name "plux_size_$1" \
 		--org dev.plux --no-pub "$1" >/dev/null)
 	cp -r "$work/$1/$2" "$here/$1/$2"
+	if [ "$2" = android ]; then
+		# The Android Gradle plugin 9 refuses two libraries that declare
+		# one namespace, and Play Services Cronet (cronet_http, SYN-010)
+		# brings cronet-api and cronet-shared, both org.chromium.net. A
+		# host app sets this until they differ; the blank app too, so both
+		# builds are made the same way.
+		printf '\n# Play Services Cronet: cronet-api and cronet-shared share a namespace.\nandroid.uniquePackageNames=false\n' \
+			>>"$here/$1/android/gradle.properties"
+	fi
 }
 
 target=${1:-}
