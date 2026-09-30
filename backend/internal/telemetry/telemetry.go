@@ -195,7 +195,8 @@ func sessionVersions(e Event, fields []byte) (deviceVersions, bool) {
 		Host    string `json:"host_build"`
 		OS      string `json:"os_version"`
 	}
-	if json.Unmarshal(fields, &f) != nil || !version.MatchString(f.Runtime) {
+	// The same bound as at registration (device.Register).
+	if json.Unmarshal(fields, &f) != nil || !version.MatchString(f.Runtime) || len(f.Host) > 64 || len(f.OS) > 64 {
 		return deviceVersions{}, false
 	}
 	return deviceVersions{runtime: f.Runtime, host: f.Host, os: f.OS}, true

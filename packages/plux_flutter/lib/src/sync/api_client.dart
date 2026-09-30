@@ -89,6 +89,23 @@ final class DeviceInfo {
   final String hostBuild;
 }
 
+/// The longest version or build string the server records for a device.
+const maxDeviceField = 64;
+
+/// The operating system version a device reports, from the platform's own
+/// string: without the build details Linux kernels, and so Android, append
+/// after ` #` (`Linux 5.10.157-android13-4 #1 SMP PREEMPT <date>`), in
+/// ASCII and at most [maxDeviceField] bytes; the server refuses a
+/// registration with a longer one.
+String deviceOsVersion(String platformVersion) {
+  final build = platformVersion.indexOf(' #');
+  final s = (build < 0 ? platformVersion : platformVersion.substring(0, build))
+      .trim();
+  return String.fromCharCodes(
+    s.runes.where((r) => r < 0x80).take(maxDeviceField),
+  );
+}
+
 /// One bundle of a served manifest with this device's step for it.
 final class ServedBundle {
   const ServedBundle._({

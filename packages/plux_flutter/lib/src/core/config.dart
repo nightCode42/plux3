@@ -199,6 +199,10 @@ final class PluxConfig {
     this.fallbackBuilder,
   }) : assert(downloadParallelism > 0, 'at least one download at a time'),
        assert(
+         hostBuild.length <= 64,
+         'the server records a host build of at most 64 characters',
+       ),
+       assert(
          container == null || parentContainer == null,
          'share or nest, not both',
        );
@@ -265,7 +269,8 @@ final class PluxConfig {
   /// The host's Riverpod container, to nest Plux's container under.
   final ProviderContainer? parentContainer;
 
-  /// The host app's build, reported at registration.
+  /// The host app's build, reported at registration; at most 64 ASCII
+  /// characters, the server's limit.
   final String hostBuild;
 
   /// Where the release store lives; the platform's non-backed-up app

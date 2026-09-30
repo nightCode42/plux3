@@ -128,6 +128,12 @@ func TestIngestListPurge(t *testing.T) {
 	}); err != nil || n != 3 {
 		t.Fatalf("Ingest(session_start): %d %v", n, err)
 	}
+	// Longer than registration accepts: stored, but not the device's.
+	if n, _, err := svc.Ingest(ctx, src, []telemetry.Event{
+		{Name: "session_start", Time: now.Add(2 * time.Minute), Fields: []byte(`{"runtime_version":"1.3.0","host_build":"43","os_version":"` + strings.Repeat("x", 65) + `"}`)},
+	}); err != nil || n != 1 {
+		t.Fatalf("Ingest(long session_start): %d %v", n, err)
+	}
 	var runtime, host, osVersion string
 	if err := db.InTx(ctx, storage.Tenant{OrganizationID: o.ID}, func(ctx context.Context, tx pgx.Tx) error {
 		return tx.QueryRow(ctx, "SELECT runtime_version, host_build, os_version FROM devices WHERE id = $1", d.ID).Scan(&runtime, &host, &osVersion)
@@ -135,7 +141,7 @@ func TestIngestListPurge(t *testing.T) {
 		t.Errorf("the device runs %q %q %q (%v)", runtime, host, osVersion, err)
 	}
 	now = now.Add(telemetry.Retention + time.Hour)
-	if n, err := svc.Purge(ctx, o.ID); err != nil || n != 4 {
+	if n, err := svc.Purge(ctx, o.ID); err != nil || n != 5 {
 		t.Errorf("Purge: %d %v", n, err)
 	}
 }

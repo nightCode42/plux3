@@ -37,7 +37,6 @@ import 'package:plux_flutter/src/sync/api_client.dart';
 import 'package:plux_flutter/src/sync/sync_engine.dart';
 import 'package:plux_flutter/src/sync/sync_event.dart';
 import 'package:plux_flutter/src/sync/sync_worker.dart';
-import 'package:plux_flutter/src/telemetry/events.dart';
 import 'package:plux_flutter/src/telemetry/recorder.dart';
 import 'package:plux_flutter/src/verify/bundle_verifier.dart';
 import 'package:plux_flutter/src/verify/manifest.dart';
@@ -160,7 +159,7 @@ final class PluxRuntime with WidgetsBindingObserver {
             keys: [for (final k in keys) k.toTrustedKey()],
             device: DeviceInfo(
               platform: Platform.operatingSystem,
-              osVersion: Platform.operatingSystemVersion,
+              osVersion: deviceOsVersion(Platform.operatingSystemVersion),
               runtimeVersion: PluxRuntimeInfo.version,
               hostBuild: config.hostBuild,
             ),
@@ -275,7 +274,7 @@ final class PluxRuntime with WidgetsBindingObserver {
         'runtime_version': PluxRuntimeInfo.version,
         'host_build': config.hostBuild,
         'platform': Platform.operatingSystem,
-        'os_version': clipText(Platform.operatingSystemVersion),
+        'os_version': deviceOsVersion(Platform.operatingSystemVersion),
         if (size != null)
           'device_class': size.shortestSide >= 600 ? 'tablet' : 'phone',
         if (telemetry.consent.analytics)

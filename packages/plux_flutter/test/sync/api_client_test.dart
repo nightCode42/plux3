@@ -14,6 +14,30 @@ import 'package:plux_flutter/src/sync/downloader.dart';
 import 'package:plux_flutter/src/sync/sync_event.dart';
 
 void main() {
+  test('reports the OS version within what registration accepts, without '
+      'kernel build details [SYN-001] [REL-080]', () {
+    // Android's kernel string, as Platform.operatingSystemVersion gives it.
+    expect(
+      deviceOsVersion(
+        'Linux 5.10.157-android13-4-00001-g5c7ff5dc7aac-ab10381520 '
+        '#1 SMP PREEMPT Fri Jun 23 18:49:14 UTC 2023',
+      ),
+      'Linux 5.10.157-android13-4-00001-g5c7ff5dc7aac-ab10381520',
+    );
+    expect(
+      deviceOsVersion('Version 18.1 (Build 22B83)'),
+      'Version 18.1 (Build 22B83)',
+    );
+    final long = deviceOsVersion('Linux ${'9' * 100}');
+    expect(long.length, maxDeviceField);
+    expect(
+      deviceOsVersion('Versión 18 ✓'),
+      'Versin 18 ',
+      reason: 'ASCII only, so the length is also the byte count',
+    );
+    expect(deviceOsVersion(''), '');
+  });
+
   test('reads Retry-After as seconds or an HTTP date, capped [SYN-010]', () {
     final now = DateTime.utc(2026, 9, 28, 12);
     expect(parseRetryAfter('5', now), const Duration(seconds: 5));
