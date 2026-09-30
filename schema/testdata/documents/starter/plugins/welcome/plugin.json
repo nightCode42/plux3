@@ -1,0 +1,19 @@
+{
+  "description": "The page the starter app shows.",
+  "entryPage": "01e0c450-6c00-7000-8000-000000000010",
+  "icon": {
+    "monogram": {
+      "background": "#5B3DF5",
+      "text": "W"
+    }
+  },
+  "id": "01e0c450-6c00-7000-8000-000000000007",
+  "key": "welcome",
+  "kind": "plugin",
+  "name": "Welcome",
+  "pages": [
+    "01e0c450-6c00-7000-8000-000000000010"
+  ],
+  "schemaVersion": "1.0.0",
+  "team": "starter"
+}

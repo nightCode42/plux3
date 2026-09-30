@@ -98,3 +98,12 @@ path = [
 precedence = "override"
 SPDX-FileCopyrightText = "Meta Platforms, Inc. and affiliates"
 SPDX-License-Identifier = "BSD-3-Clause"
+
+# The starter app's Android and iOS projects, as `flutter create` wrote
+# them from the Flutter SDK's templates (launcher icons and launch images
+# included); files Plux changes carry their own headers.
+[[annotations]]
+path = ["apps/starter/android/**", "apps/starter/ios/**", "apps/starter/.metadata"]
+precedence = "closest"
+SPDX-FileCopyrightText = ["2014 The Flutter Authors", "2026 Plux contributors"]
+SPDX-License-Identifier = "BSD-3-Clause"

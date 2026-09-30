@@ -16,7 +16,6 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -24,15 +23,10 @@ import (
 
 	"connectrpc.com/connect"
 
-	"github.com/nightCode42/plux3/backend/internal/auth"
 	"github.com/nightCode42/plux3/backend/internal/bundle"
-	"github.com/nightCode42/plux3/backend/internal/cache"
 	"github.com/nightCode42/plux3/backend/internal/delta"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1/pluxv1connect"
-	"github.com/nightCode42/plux3/backend/internal/schema/limits"
-	"github.com/nightCode42/plux3/backend/internal/storage"
-	"github.com/nightCode42/plux3/backend/internal/storage/storagetest"
 )
 
 // Verifies: CLI-002, CLI-003, CLI-004, CLI-007, REL-020, REL-030, REL-031, REL-032.
@@ -44,103 +38,13 @@ func TestPublishWithTheCLIAndSyncADevice(t *testing.T) {
 	if testing.Short() {
 		t.Skip("builds the CLI")
 	}
-	url := storagetest.SchemaURL(t)
-	dir := t.TempDir()
-	const addr = "127.0.0.1:18093"
-	server := "http://" + addr
-	// With a real S3-compatible store and Valkey configured, the test runs
-	// the way the Compose stack does: objects in S3 but served through the
-	// server's own object route, the cache in Valkey (QA-005, DEP-041).
-	stores := "objectStorage:\n  directory: \"" + filepath.Join(dir, "objects") + "\"\n"
-	if endpoint := os.Getenv("PLUX_TEST_S3_ENDPOINT"); endpoint != "" {
-		stores = "objectStorage:\n  backend: s3\n  endpoint: \"" + endpoint + "\"\n  bucket: \"" + os.Getenv("PLUX_TEST_S3_BUCKET") + "\"\n" +
-			"  pathStyle: true\n  accessKeyID: \"" + os.Getenv("PLUX_TEST_S3_ACCESS_KEY_ID") + "\"\n" +
-			"  secretAccessKey: \"" + os.Getenv("PLUX_TEST_S3_SECRET_ACCESS_KEY") + "\"\n  cdnBaseURL: \"" + server + "/v1/objects\"\n"
-	}
-	if valkey := os.Getenv("PLUX_TEST_VALKEY_URL"); valkey != "" {
-		stores += "cache:\n  backend: valkey\n  valkeyURL: \"" + valkey + "\"\n"
-	}
-	cfg := testConfig(t, "server:\n  roles: [api, worker]\n  listen: \""+addr+"\"\n  publicBaseURL: \""+server+"\"\n"+
-		"database:\n  url: \""+url+"\"\n"+stores+
-		"signing:\n  directory: \""+filepath.Join(dir, "keys")+"\"\n")
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	built, err := Build(ctx, cfg, discard(), "test")
-	if err != nil {
-		t.Fatalf("Build: %v", err)
-	}
-	defer built.Close()
-	done := make(chan error, 1)
-	go func() { done <- built.Server.Run(ctx) }()
-	defer func() { cancel(); <-done }()
-	waitReady(t, server)
-
-	// An administrator with a token, an organisation and an app, made
-	// with the services directly.
-	db, err := storage.Open(ctx, storage.Options{URL: url})
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer db.Close()
-	backend, err := BuildSigning(cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
-	svc, err := BuildServices(ctx, cfg, db, cache.NewMemory(nil), limits.Defaults(), backend, WorkDeps{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	user, invitation, err := svc.Auth.Bootstrap(ctx, "admin@example.com")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := svc.Auth.AcceptInvitation(ctx, invitation, "Admin", "correct horse battery"); err != nil {
-		t.Fatal(err)
-	}
-	id := auth.Identity{Kind: auth.KindUser, ID: user.ID, UserID: user.ID, Display: "Admin", SecondFactor: true, InstallationAdmin: true}
-	org, err := svc.Tenancy.CreateOrganization(ctx, id, "acme", "Acme")
-	if err != nil {
-		t.Fatal(err)
-	}
-	owner, err := svc.Auth.Resolve(ctx, id, org.ID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	app, err := svc.Tenancy.CreateApp(ctx, owner, "demo", "Demo")
-	if err != nil {
-		t.Fatal(err)
-	}
-	minted, err := svc.Auth.CreateAccessToken(ctx, owner, "e2e", nil, time.Hour)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// The CLI, built from source, run as a user would with PLUX_TOKEN.
-	plux := filepath.Join(dir, "plux")
-	if out, err := exec.CommandContext(ctx, "go", "build", "-o", plux, "../../cmd/plux").CombinedOutput(); err != nil { //nolint:gosec // G204: a path the test chose.
-		t.Fatalf("go build: %v\n%s", err, out)
-	}
-	project := filepath.Join(dir, "project")
-	copyTree(t, filepath.Join("..", "..", "..", "schema", "testdata", "documents", "loan-calculator"), project)
+	st := startStack(t, "127.0.0.1:18093")
+	ctx, server, dir, app := st.ctx, st.server, st.dir, st.app
 	run := func(want int, args ...string) []byte {
 		t.Helper()
-		cmd := exec.CommandContext(ctx, plux, args...) //nolint:gosec // G204: the binary the test built.
-		cmd.Env = append(os.Environ(), "PLUX_TOKEN="+minted.Secret, "PLUX_SERVER=", "PLUX_ORGANIZATION=", "HOME="+dir, "XDG_CONFIG_HOME="+filepath.Join(dir, "config"))
-		var stdout, stderr bytes.Buffer
-		cmd.Stdout, cmd.Stderr = &stdout, &stderr
-		err := cmd.Run()
-		code := 0
-		if ee, ok := err.(*exec.ExitError); ok { //nolint:errorlint // exec returns it unwrapped
-			code = ee.ExitCode()
-		} else if err != nil {
-			t.Fatal(err)
-		}
-		if code != want {
-			t.Fatalf("plux %s: exit %d, want %d\n%s%s", strings.Join(args, " "), code, want, stdout.String(), stderr.String())
-		}
-		return stdout.Bytes()
+		return st.run(t, want, args...)
 	}
-	run(0, "init", "--server", server, "--org", org.ID, "--app", "demo", "-C", project, "--json")
+	project := st.project(t, "loan-calculator")
 	var who struct{ Email string }
 	decode(t, run(0, "whoami", "--server", server, "--json"), &who)
 	if who.Email != "admin@example.com" {

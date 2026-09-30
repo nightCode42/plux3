@@ -1,0 +1,10 @@
+{
+  "id": "01e0c450-6c00-7000-8000-000000000004",
+  "kind": "translations",
+  "locale": "en",
+  "messages": {
+    "01e0c450-6c00-7000-8000-000000000050": "Welcome to Plux",
+    "01e0c450-6c00-7000-8000-000000000051": "This page was published from the server and rendered natively."
+  },
+  "schemaVersion": "1.0.0"
+}

@@ -7,6 +7,7 @@ environment:
   sdk: ^3.13.0
 
 workspace:
+  - apps/starter
   - packages/plux_devtools
   - packages/plux_flutter
   - packages/plux_widget_api

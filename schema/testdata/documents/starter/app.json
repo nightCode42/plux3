@@ -1,0 +1,40 @@
+{
+  "defaultLocale": "en",
+  "entryRoute": "welcome",
+  "environments": [
+    {
+      "key": "production",
+      "name": "Production"
+    },
+    {
+      "key": "staging",
+      "name": "Staging"
+    }
+  ],
+  "icon": {
+    "monogram": {
+      "background": "#5B3DF5",
+      "text": "PS"
+    }
+  },
+  "id": "01e0c450-6c00-7000-8000-000000000001",
+  "key": "starter",
+  "kind": "app",
+  "minRuntimeVersion": "0.1.0",
+  "name": "Plux starter",
+  "plugins": [
+    "welcome"
+  ],
+  "schemaVersion": "1.0.0",
+  "securityProfile": "standard",
+  "supportedLocales": [
+    "en"
+  ],
+  "sync": {
+    "activation": "atSafePoint",
+    "startup": {
+      "mode": "useCacheThenSync"
+    }
+  },
+  "theme": "01e0c450-6c00-7000-8000-000000000002"
+}
