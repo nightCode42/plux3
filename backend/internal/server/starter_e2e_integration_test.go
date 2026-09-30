@@ -5,7 +5,9 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -61,10 +63,18 @@ func TestStarterAppAgainstTheServer(t *testing.T) {
 	// The expanded reporter everywhere: on GitHub Actions flutter test
 	// picks another, whose summary line differs.
 	args := []string{"test", "--reporter=expanded", "test/e2e_test.dart"}
+	ctx := st.ctx
+	live := io.Discard
 	if device := os.Getenv("PLUX_E2E_DEVICE"); device != "" {
 		args = []string{"test", "--reporter=expanded", "integration_test/app_test.dart", "-d", device}
+		// A device build and run can hang in the platform's tools: bound
+		// it, and show its output as it comes so a hang can be diagnosed.
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, 30*time.Minute)
+		defer cancel()
+		live = os.Stdout
 	}
-	cmd := exec.CommandContext(st.ctx, flutter, append(args, //nolint:gosec // G204: the flutter and device the developer named.
+	cmd := exec.CommandContext(ctx, flutter, append(args, //nolint:gosec // G204: the flutter and device the developer named.
 		"--dart-define=PLUX_ENDPOINT="+st.server,
 		"--dart-define=PLUX_APP_ID="+st.app.ID,
 		"--dart-define=PLUX_ENVIRONMENT=staging",
@@ -72,7 +82,8 @@ func TestStarterAppAgainstTheServer(t *testing.T) {
 		"--dart-define=PLUX_ROOT_KEYS="+strings.Join(roots, ","))...)
 	cmd.Dir = starter
 	var out bytes.Buffer
-	cmd.Stdout, cmd.Stderr = &out, &out
+	cmd.Stdout = io.MultiWriter(&out, live)
+	cmd.Stderr = cmd.Stdout
 	err := cmd.Run()
 	t.Logf("flutter test (%s):\n%s", starter, out.String())
 	if err != nil || !strings.Contains(out.String(), "All tests passed!") {

@@ -109,6 +109,8 @@ void starterFlows({
         find.text(welcomeBody, skipOffstage: false),
         count: 2,
       );
+      // The pushed route is on screen once its app bar's back button is.
+      await pumpUntil(tester, find.byType(BackButton));
       await tester.pageBack();
       await tester.pumpAndSettle();
 

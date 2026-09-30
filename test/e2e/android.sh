@@ -22,6 +22,11 @@ out=${E2E_OUT:-$root/build/e2e}
 sdk=${ANDROID_HOME:-${ANDROID_SDK_ROOT:?set ANDROID_HOME to the Android SDK}}
 tools=$sdk/cmdline-tools/latest/bin
 image="system-images;android-$api;google_apis;x86_64"
+# The oldest system images do not finish booting with the host-side
+# renderer of current emulators (gfxstream; API 24 in CI run 36719678834):
+# they render in the guest instead.
+gpu=swiftshader_indirect
+[ "$api" -lt 26 ] && gpu=guest
 avd=plux_e2e_$api
 # The test server's address (backend/internal/server/starter_e2e_integration_test.go).
 port=18094
@@ -38,7 +43,7 @@ echo no | "$tools/avdmanager" create avd --force --name "$avd" --package "$image
 adb=$sdk/platform-tools/adb
 log=$out/emulator-$api.log
 "$sdk/emulator/emulator" -avd "$avd" -no-window -no-audio -no-boot-anim -no-snapshot \
-	-gpu swiftshader_indirect -memory 4096 -port 5554 >"$log" 2>&1 &
+	-gpu "$gpu" -memory 4096 -port 5554 -no-metrics >"$log" 2>&1 &
 emulator=$!
 serial=emulator-5554
 trap '"$adb" -s "$serial" emu kill >/dev/null 2>&1 || kill "$emulator" 2>/dev/null || true' EXIT
@@ -50,9 +55,11 @@ fail() {
 }
 
 # Booted when sys.boot_completed is 1; never waits on a dead emulator or
-# for more than ten minutes (adb wait-for-device would wait forever).
+# for more than ten minutes of wall time (adb wait-for-device would wait
+# forever).
 booted=false
-for _ in $(seq 300); do
+deadline=$((SECONDS + 600))
+while [ "$SECONDS" -lt "$deadline" ]; do
 	kill -0 "$emulator" 2>/dev/null || fail "the emulator exited while booting"
 	if [ "$(timeout 10 "$adb" -s "$serial" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; then
 		booted=true; break
