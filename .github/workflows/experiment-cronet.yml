@@ -1,0 +1,67 @@
+# Temporary: find how a host app on the Android Gradle plugin 9 builds with
+# cronet_http (the release manifest merge fails on org.chromium.net). Removed
+# once the finding is recorded.
+name: Experiment (Cronet namespace)
+
+on:
+  workflow_dispatch:
+
+permissions: {}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: Variant ${{ matrix.variant }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [plain, no-play, exclude-shared, unique-off]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: 3.47.5
+          channel: stable
+          cache: true
+      - name: Create the Android project
+        run: |
+          cd "$RUNNER_TEMP" && flutter create --platforms=android --project-name plux_size_plux --org dev.plux --no-pub plux
+          cp -r "$RUNNER_TEMP/plux/android" "$GITHUB_WORKSPACE/test/size/plux/android"
+      - name: Apply the variant
+        env:
+          VARIANT: ${{ matrix.variant }}
+        run: |
+          cd test/size/plux/android
+          case "$VARIANT" in
+            exclude-shared)
+              printf '\nconfigurations.all { exclude(group = "org.chromium.net", module = "cronet-shared") }\n' >> app/build.gradle.kts ;;
+            unique-off)
+              printf '\nandroid.uniquePackageNames=false\n' >> gradle.properties ;;
+          esac
+          tail -5 app/build.gradle.kts gradle.properties
+      - name: Build the release APK
+        env:
+          VARIANT: ${{ matrix.variant }}
+        run: |
+          cd test/size/plux
+          defines=()
+          [ "$VARIANT" = no-play ] && defines=(--dart-define=cronetHttpNoPlay=true)
+          flutter build apk --release --target-platform android-arm64 --split-per-abi "${defines[@]}" 2>&1 | tail -40
+          ls -l build/app/outputs/flutter-apk/ || true
+      - name: Dependencies and manifests of Cronet
+        if: always()
+        run: |
+          cd test/size/plux/android
+          ./gradlew -q app:dependencies --configuration releaseRuntimeClasspath 2>/dev/null | grep -i -B2 -A2 "chromium\|cronet" | head -60 || true
+          for aar in $(find ~/.gradle/caches -name 'cronet-*.aar' -o -name 'play-services-cronet*.aar' | sort -u); do
+            echo "== $aar"; unzip -p "$aar" AndroidManifest.xml | head -8
+          done
