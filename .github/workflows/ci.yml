@@ -345,7 +345,9 @@ jobs:
           # Go's x/ modules add the Go patent grant to BSD-3-Clause, which the
           # action reads as a non-SPDX "AND LicenseRef-…" expression. Each
           # was checked by hand against the package's LICENSE file:
-          #   Apache-2.0    clock, material_color_utilities
+          #   Apache-2.0    clock, cryptography, material_color_utilities;
+          #                 plux_flutter and plux_devtools are this
+          #                 repository's (REUSE.toml), not yet on pub.dev
           #   BSD-3-Clause  the Dart team packages below, golang.org/x/net,
           #                 x/sync, x/sys and x/text
           #                 (plus the Go PATENTS grant, which adds rights)
@@ -354,9 +356,11 @@ jobs:
             pkg:golang/golang.org/x/net, pkg:golang/golang.org/x/sync,
             pkg:golang/golang.org/x/sys, pkg:golang/golang.org/x/text,
             pkg:pub/_fe_analyzer_shared, pkg:pub/analyzer, pkg:pub/clock,
-            pkg:pub/frontend_server_client, pkg:pub/glob, pkg:pub/io,
-            pkg:pub/material_color_utilities, pkg:pub/mime,
-            pkg:pub/node_preamble, pkg:pub/path, pkg:pub/pool,
+            pkg:pub/cronet_http, pkg:pub/crypto, pkg:pub/cryptography,
+            pkg:pub/frontend_server_client, pkg:pub/glob, pkg:pub/http,
+            pkg:pub/io, pkg:pub/matcher, pkg:pub/material_color_utilities,
+            pkg:pub/mime, pkg:pub/node_preamble, pkg:pub/path,
+            pkg:pub/plux_devtools, pkg:pub/plux_flutter, pkg:pub/pool,
             pkg:pub/pub_semver, pkg:pub/source_maps, pkg:pub/stack_trace,
             pkg:pub/test, pkg:pub/test_api, pkg:pub/test_core,
             pkg:pub/vector_math, pkg:pub/yaml
