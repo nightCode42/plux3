@@ -10,15 +10,15 @@ Per-requirement implementation status is **not** tracked here; it lives only in 
 
 | Item | Value |
 |---|---|
-| Phase | P4 — Routing, host integration and no-code generation (planning; P3 merged) |
-| Active branch | None. The plan merges through `docs/p4-plan`; the next session confirms the plan's approval, then branches from `main` for R0 |
-| Active work | P4 plan proposed in [plans/p4.md](plans/p4.md), awaiting the maintainer's approval; nothing implemented |
-| Requirement IDs | All P4 requirements (spec §5.1) as scoped by the plan's §3 |
+| Phase | P4 — Routing, host integration and no-code generation (plan approved 2026-10-01) |
+| Active branch | `claude/kind-ptolemy-tqyty7` (the session branch the environment pins; maintainer-approved for R0, plan §2.1 A2) |
+| Active work | R0 — fast CI ([ADR-0043](adr/0043-affected-only-ci.md)): at its milestone exit gate, awaiting the maintainer's review |
+| Requirement IDs | R0: `CI-002` (path-filtered jobs, dependency caching), `QA-007` (benchmark sharding), `QA-006` (device jobs); then all P4 requirements as scoped by [plans/p4.md](plans/p4.md) §3 |
 
 ## Next up
 
-P3 is delivered as ten milestones R1–R10 on the session branch, each a commit set with
-`make check` green, pushed, and with one full CI run (workflow dispatch) per milestone.
+P4 is delivered as milestones R0–R11 ([plans/p4.md](plans/p4.md) §6), each on its own
+pull request, each ending at the milestone exit gate below.
 
 **Milestone exit gate** (maintainer, 2026-09-29): a milestone ends only when (1) every
 `make` gate passes locally with its exit code checked, not its output; (2) the end-to-end
@@ -27,19 +27,22 @@ failure is root-caused, never retried away; (3) a dispatched CI run is green in 
 including the image checks on amd64 and arm64; (4) the milestone's open items are fixed or
 put to the maintainer as decisions; (5) the hand-off note and the report list what was
 verified and how.
-Design decisions: ADR-0008, ADR-0021, ADR-0029, ADR-0030, ADR-0031, ADR-0032, ADR-0033,
-ADR-0034, ADR-0035 and the P3 revisions of ADR-0004 and ADR-0027.
 
-1. **R1 — Decisions and contracts** ✓: the ADRs above, `dependencies.md`, `packages/AGENTS.md`, the ADR index.
-2. **R2 — Native foundations and verification** ✓: `mmap` over FFI; vendored zstd decoder with a build hook; Dart `applyDelta` against Go-generated vectors in `schema/testdata/delta`; the Dart FlatBuffers verifier from generated tables; JCS and Ed25519 manifest verification, expiry, anti-rollback.
-3. **R3 — Release store and sync engine** ✓: store, pointer protocol, last known good, GC and quota (`LIM-004`), baseline import; the sync isolate; `Plux.sync()`, `PluxSyncTile`; failure injection (`QA-009`).
-4. **R4 — Runtime core and host API** ✓: `initialize`, `PluxConfig`, Riverpod wiring, activation policies, kill switch and fallbacks, `PluxView`, `Plux.open`, setters, timeline events, `plux_devtools`.
-5. **R5 — Rendering engine** ✓: section LRU, generated dispatch and builders, laziness, overrides, bindings with `select`, semantics, placeholders, error boundaries, all P3 Layer 1 widgets with goldens.
-6. **R6 — Theming, assets, Layer 2** ✓: tokens to themes, brands, fonts, icons (in-house subsetter, ADR-0032 § Icons), assets and remote images, `CMP-031`, Layer 2 components.
-7. **R7 — Telemetry** ✓: Appendix G events, batching, consent, sampling, redaction, device features (`REL-080`), `NFR-041` method.
-8. **R8 — Example host app and end-to-end** ✓: `apps/starter` (the spec §33 name), `integration_test` flows against a real server, the `QA-010` harness, Flutter hot reload in `make dev` (`DEP-020`).
-9. **R9 — Performance and size** ✓: benchmarks in profile mode, the size job (`RT-061`), 10% regression gates, `docs/benchmarks/p3-runtime.md`.
-10. **R10 — CI, publishing, docs, statuses** ✓: device CI jobs, `CI-005` publishing, the docs site on GitHub Pages, release notes, threat model, runbook, spec statuses, DoD review.
+1. **R0 — Fast CI** (at the exit gate): affected-only selection, Makefile fragments, the
+   runtime benchmark in three parts, device builds during boot, caches (ADR-0043).
+2. **R1 — Decisions and contracts**: spec 1.2.0, ADR-0023, 0024, 0039–0042, the §4.3
+   contract additions (approved), `dependencies.md` (`analyzer` widening approved).
+3. **R2 — Action engine core**, then R3 routing core, R4 guards and deep links, R5 router
+   adapters, R6 native catalogue, R7 mixed screens, R8 codegen and init, R9 `plux create`,
+   R10 add-to-app, R11 close the phase.
+
+### P4 approvals (maintainer, 2026-10-01)
+
+The plan is approved, with the approvals recorded in its §2.1: R0's gate changes; no new
+CI action (caches use `actions/cache`); Android 26 narrowed to `main`, the daily and manual
+runs and Android-specific changes; `analyzer` widened to `plux_native_scan`; the §4.3
+contract additions; coverage floors of new packages at the repository defaults. The
+maintainer aims to handle as much as possible in this phase.
 
 ### P3 scope decisions (maintainer, 2026-09-28, approving the P3 plan)
 
