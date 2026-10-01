@@ -955,7 +955,7 @@ The Studio canvas no longer uses a Flutter Web build of the runtime (ADR-0013); 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `RT-060` | P3 | MUST | Optional capabilities **MUST** ship as separate packages so apps pay only for what they use: `plux_flutter` (core), `plux_db_drift`, `plux_lottie`, `plux_rive`, `plux_maps`, `plux_charts`, `plux_media`, `plux_scanner`, `plux_security` (RASP), `plux_payments`, `plux_devtools` (debug only). The on-device function interpreter **MUST** be part of an optional package (`plux_functions`) so apps that do not place functions on the device do not ship it. | WIP |
-| `RT-061` | P3 | MUST | The core package **MUST** add, per ABI (arm64-v8a, armeabi-v7a, x86_64), ≤ 3 MiB to what Google Play downloads from a release App Bundle and ≤ 6.5 MiB to a release APK, and ≤ 3 MiB to an iOS IPA (thinned, arm64), measured in CI against a blank Flutter app (ADR-0036). | WIP |
+| `RT-061` | P3 | MUST | The core package **MUST** add, per ABI (arm64-v8a, armeabi-v7a, x86_64), ≤ 3 MiB to what Google Play downloads from a release App Bundle and ≤ 6.5 MiB to a release APK, and ≤ 3 MiB to an iOS IPA (thinned, arm64), measured in CI against a blank Flutter app (ADR-0036). | DONE |
 
 ---
 
@@ -1952,7 +1952,7 @@ This section concerns how Plux itself is verified. §22.2 covers the testing too
 | `NFR-006` | P3 | MUST | Up-to-date check at app start | 1 request, ≤ 1 KiB on the wire (`304`) | WIP |
 | `NFR-007` | P3 | MUST | Sync of a typical update (3 plugins changed) on slow network | ≤ 3 s p95 | DONE |
 | `NFR-008` | P3 | MUST | Runtime memory overhead with 50 plugins installed | ≤ 30 MiB (excluding images) | WIP |
-| `NFR-009` | P3 | MUST | Core package size | ≤ 3 MiB downloaded on Android (App Bundle) and iOS; ≤ 6.5 MiB in an Android APK (`RT-061`) | WIP |
+| `NFR-009` | P3 | MUST | Core package size | ≤ 3 MiB downloaded on Android (App Bundle) and iOS; ≤ 6.5 MiB in an Android APK (`RT-061`) | DONE |
 | `NFR-010` | P5 | MUST | PXL typical binding evaluation | ≤ 2 µs p95 (`PXL-004`) | SPEC |
 | `NFR-011` | P5 | MUST | Action interpreter overhead | ≤ 20 µs per step p95 (`ACT-008`) | SPEC |
 | `NFR-020` | P2 | MUST | Manifest endpoint throughput | ≥ 5,000 req/s per `api` replica at p99 ≤ 50 ms (cache hit) | DONE |

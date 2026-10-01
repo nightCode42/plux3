@@ -67,7 +67,12 @@ put to the maintainer with `QA-006`'s device farm.
   (`xcodebuild test`), where `ios/RunnerTests` waits for integration_test's results through
   `FLTIntegrationTestRunner` — Flutter's documented route for running integration tests on iOS
   without a host connection. Nothing reads the simulator's log, so the race cannot occur; a
-  failed run prints the app's log.
+  failed run prints the test results and the app's log. Two consequences of running the
+  flows from launch are handled: XCTest tests on the booted simulator, not on clones of it
+  (`-parallel-testing-enabled NO`), and the test entry holds off the platform's semantics
+  switch while the flows run — XCTest turns the app's accessibility on when it attaches,
+  seconds into the first flow, and the semantics handle the framework then takes would fail
+  flutter_test's end-of-test check (run 36823086351).
 
 ## Consequences
 
