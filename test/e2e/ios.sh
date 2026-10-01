@@ -41,13 +41,20 @@ xcrun simctl boot "$udid"
 xcrun simctl bootstatus "$udid" -b >/dev/null
 
 status=0
-PLUX_E2E_DEVICE_TIMEOUT=30m PLUX_E2E_XCTEST=1 PLUX_E2E_DEVICE=$udid \
+xcresult=$out/ios.xcresult
+rm -rf "$xcresult"
+PLUX_E2E_DEVICE_TIMEOUT=30m PLUX_E2E_XCTEST=1 PLUX_E2E_XCRESULT=$xcresult PLUX_E2E_DEVICE=$udid \
 	make -C "$root" --no-print-directory e2e-starter 2>&1 | tee "$out/ios.log" || status=$?
 if [ "$status" -ne 0 ]; then
-	# The app's own log, for a failure the XCTest report does not explain.
+	# Why the flows failed, from the test results, and the app's own log.
+	echo "--- test results"
+	xcrun xcresulttool get test-results tests --path "$xcresult" 2>&1 \
+		| jq -r '.. | objects | select(.result? == "Failed") | "\(.name): \(.details // "" | tostring)"' 2>/dev/null \
+		|| echo "(no result bundle)"
+	xcrun xcresulttool get test-results tests --path "$xcresult" 2>&1 | grep -i -A3 'failure\|message' | head -n 60 || true
+	echo "--- the app's simulator log (last 100 lines of 45 minutes)"
 	xcrun simctl spawn "$udid" log show --last 45m --style compact \
 		--predicate 'process == "Runner"' >"$out/ios-app.log" 2>&1 || true
-	echo "--- the app's simulator log (last 100 lines of 45 minutes)"
-	tail -n 100 "$out/ios-app.log"
+	grep -v 'Metal\|RunningBoard' "$out/ios-app.log" | tail -n 100
 fi
 exit "$status"

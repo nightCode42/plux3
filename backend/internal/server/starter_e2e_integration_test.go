@@ -153,13 +153,21 @@ func deviceSteps(flutter, device string, defines []string) (steps [][]string, su
 	// stream attaches after the line, and app and tool wait for each other
 	// until stopped (ADR-0035). Built with the flows as its entry point, the
 	// app runs them itself and ios/RunnerTests reports their results.
+	// On the simulator named, not on clones of it (the scheme marks the
+	// tests parallelizable); PLUX_E2E_XCRESULT keeps the result bundle,
+	// whose failure messages a failed run prints.
+	xcodebuild := []string{
+		"xcodebuild", "test", "-workspace", "ios/Runner.xcworkspace", "-scheme", "Runner",
+		"-configuration", "Debug", "-destination", "platform=iOS Simulator,id=" + device,
+		"-parallel-testing-enabled", "NO",
+		"-test-timeouts-enabled", "YES", "-maximum-test-execution-time-allowance", "1200",
+	}
+	if bundle := os.Getenv("PLUX_E2E_XCRESULT"); bundle != "" {
+		xcodebuild = append(xcodebuild, "-resultBundlePath", bundle)
+	}
 	return [][]string{
 		append([]string{flutter, "build", "ios", "--simulator", "--debug", "--target=integration_test/app_test.dart"}, defines...),
-		{
-			"xcodebuild", "test", "-workspace", "ios/Runner.xcworkspace", "-scheme", "Runner",
-			"-configuration", "Debug", "-destination", "platform=iOS Simulator,id=" + device,
-			"-test-timeouts-enabled", "YES", "-maximum-test-execution-time-allowance", "1200",
-		},
+		xcodebuild,
 	}, "** TEST SUCCEEDED **"
 }
 
