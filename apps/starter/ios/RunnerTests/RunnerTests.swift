@@ -1,12 +1,32 @@
-import Flutter
-import UIKit
 import XCTest
 
+/// Runs the Dart integration tests the app was built with
+/// (`flutter build ios --target=integration_test/app_test.dart`) and
+/// reports their results to XCTest: `xcodebuild test` runs the starter's
+/// flows without a Dart VM service connection (test/e2e/ios.sh, ADR-0035).
+///
+/// integration_test's FLTIntegrationTestRunner waits for the app's results
+/// and calls back once per Dart test. The plugin is linked into the app,
+/// which hosts this bundle, through the app's Swift package, so the class
+/// is looked up at run time rather than imported.
 class RunnerTests: XCTestCase {
 
-  func testExample() {
-    // If you add code to the Runner application, consider adding tests here.
-    // See https://developer.apple.com/documentation/xctest for more information about using XCTest.
+  func testIntegrationTests() throws {
+    let runnerClass: AnyClass = try XCTUnwrap(
+      NSClassFromString("FLTIntegrationTestRunner"),
+      "integration_test is not linked: build the app in debug mode with it as a dev dependency")
+    // +new returns an object the caller owns.
+    let runner = try XCTUnwrap(
+      (runnerClass as AnyObject).perform(NSSelectorFromString("new"))?.takeRetainedValue() as? NSObject)
+    var reported = 0
+    let results: @convention(block) (Selector, Bool, NSString?) -> Void = { test, success, message in
+      reported += 1
+      XCTAssertTrue(success, "\(NSStringFromSelector(test)): \(message ?? "failed")")
+    }
+    // A block passes through -performSelector:withObject: as an object.
+    _ = runner.perform(
+      NSSelectorFromString("testIntegrationTestWithResults:"), with: unsafeBitCast(results, to: AnyObject.self))
+    XCTAssertGreaterThan(reported, 0, "the app reported no integration test")
   }
 
 }

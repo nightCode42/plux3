@@ -12,7 +12,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -62,17 +61,23 @@ func TestStarterAppAgainstTheServer(t *testing.T) {
 		roots = append(roots, k.KeyID+":"+k.PublicKey)
 	}
 
+	defines := []string{
+		"--dart-define=PLUX_ENDPOINT=" + st.server,
+		"--dart-define=PLUX_APP_ID=" + st.app.ID,
+		"--dart-define=PLUX_ENVIRONMENT=staging",
+		"--dart-define=PLUX_HOST_BUILD=e2e",
+		"--dart-define=PLUX_ROOT_KEYS=" + strings.Join(roots, ","),
+	}
 	// The expanded reporter everywhere: on GitHub Actions flutter test
 	// picks another, whose summary line differs.
-	args := []string{"test", "--reporter=expanded", "test/e2e_test.dart"}
+	steps := [][]string{append([]string{flutter, "test", "--reporter=expanded", "test/e2e_test.dart"}, defines...)}
+	succeeded := "All tests passed!"
 	ctx := st.ctx
 	live := io.Discard
 	if device := os.Getenv("PLUX_E2E_DEVICE"); device != "" {
-		args = []string{"test", "--reporter=expanded", "integration_test/app_test.dart", "-d", device}
 		// A device build and run can hang in the platform's tools: bound
 		// it (PLUX_E2E_DEVICE_TIMEOUT, default 30m), and show its output as
 		// it comes so a hang can be diagnosed.
-		var cancel context.CancelFunc
 		bound := 30 * time.Minute
 		if s := os.Getenv("PLUX_E2E_DEVICE_TIMEOUT"); s != "" {
 			d, err := time.ParseDuration(s)
@@ -81,32 +86,26 @@ func TestStarterAppAgainstTheServer(t *testing.T) {
 			}
 			bound = d
 		}
+		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, bound)
 		defer cancel()
-		stuck := &vmServiceWatch{limit: 3 * time.Minute, stop: cancel}
-		defer stuck.done()
-		live = io.MultiWriter(os.Stdout, stuck)
-		if os.Getenv("PLUX_E2E_VERBOSE") != "" {
-			args = append(args, "--verbose")
+		live = os.Stdout
+		steps, succeeded = deviceSteps(flutter, device, defines)
+	}
+	var out bytes.Buffer
+	var err error
+	for _, step := range steps {
+		cmd := exec.CommandContext(ctx, step[0], step[1:]...) //nolint:gosec // G204: the flutter, Xcode and device the developer named.
+		cmd.Dir = starter
+		cmd.Stdout = io.MultiWriter(&out, live)
+		cmd.Stderr = cmd.Stdout
+		if err = cmd.Run(); err != nil {
+			break
 		}
 	}
-	cmd := exec.CommandContext(ctx, flutter, append(args, //nolint:gosec // G204: the flutter and device the developer named.
-		"--dart-define=PLUX_ENDPOINT="+st.server,
-		"--dart-define=PLUX_APP_ID="+st.app.ID,
-		"--dart-define=PLUX_ENVIRONMENT=staging",
-		"--dart-define=PLUX_HOST_BUILD=e2e",
-		"--dart-define=PLUX_ROOT_KEYS="+strings.Join(roots, ","))...)
-	cmd.Dir = starter
-	var out bytes.Buffer
-	cmd.Stdout = io.MultiWriter(&out, live)
-	cmd.Stderr = cmd.Stdout
-	err := cmd.Run()
-	t.Logf("flutter test (%s):\n%s", starter, out.String())
-	if err != nil || !strings.Contains(out.String(), "All tests passed!") {
-		// Whether the app ran its flows although flutter test never saw
-		// it: a hung device run (iOS 18, CI runs 36758325004, 36809265180)
-		// leaves the app silent, and the server tells a crash or a freeze
-		// at startup from a lost report.
+	t.Logf("the flows (%s):\n%s", starter, out.String())
+	if err != nil || !strings.Contains(out.String(), succeeded) {
+		// Whether the device ran any of the flows before they failed.
 		if events, lerr := deviceEvents(st); lerr == nil {
 			t.Logf("events the device reported before the failure: %d", len(events))
 		}
@@ -138,6 +137,32 @@ func TestStarterAppAgainstTheServer(t *testing.T) {
 	}
 }
 
+// deviceSteps are the commands that run the flows on device, and the line
+// their output holds when every flow passed.
+func deviceSteps(flutter, device string, defines []string) (steps [][]string, succeeded string) {
+	if os.Getenv("PLUX_E2E_XCTEST") == "" {
+		args := []string{flutter, "test", "--reporter=expanded", "integration_test/app_test.dart", "-d", device}
+		if os.Getenv("PLUX_E2E_VERBOSE") != "" {
+			args = append(args, "--verbose")
+		}
+		return [][]string{append(args, defines...)}, "All tests passed!"
+	}
+	// An iOS simulator runs the flows under XCTest. flutter test finds the
+	// app's Dart VM service only in one line of the simulator's log, read by
+	// a `log stream` it starts as it launches the app; on a busy machine the
+	// stream attaches after the line, and app and tool wait for each other
+	// until stopped (ADR-0035). Built with the flows as its entry point, the
+	// app runs them itself and ios/RunnerTests reports their results.
+	return [][]string{
+		append([]string{flutter, "build", "ios", "--simulator", "--debug", "--target=integration_test/app_test.dart"}, defines...),
+		{
+			"xcodebuild", "test", "-workspace", "ios/Runner.xcworkspace", "-scheme", "Runner",
+			"-configuration", "Debug", "-destination", "platform=iOS Simulator,id=" + device,
+			"-test-timeouts-enabled", "YES", "-maximum-test-execution-time-allowance", "1200",
+		},
+	}, "** TEST SUCCEEDED **"
+}
+
 // deviceEvents lists the events the starter app reported to the staging
 // environment.
 func deviceEvents(st *stack) ([]telemetry.Event, error) {
@@ -152,62 +177,4 @@ func deviceEvents(st *stack) ([]telemetry.Event, error) {
 		}
 	}
 	return st.svc.Events.List(st.ctx, st.owner, st.app.ID, staging, "", time.Time{}, storage.Cursor{}, 500) //nolint:wrapcheck // A test helper; the caller reports it.
-}
-
-// vmServiceWatch stops a device run whose app never reports its Dart VM
-// service to flutter test: a healthy app does so within seconds of
-// launch, while a lost report (CI runs 36743012409, 36747737859) leaves
-// flutter test waiting until the run's bound. It calls stop when nothing
-// follows flutter's "Waiting for VM Service port" line within limit.
-type vmServiceWatch struct {
-	limit time.Duration
-	stop  func()
-
-	mu    sync.Mutex
-	timer *time.Timer // guarded by mu
-}
-
-// Write watches flutter's output; it never fails.
-func (w *vmServiceWatch) Write(p []byte) (int, error) {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	if w.timer != nil {
-		w.timer.Stop()
-		w.timer = nil
-	}
-	if bytes.Contains(p, []byte("Waiting for VM Service port")) {
-		w.timer = time.AfterFunc(w.limit, w.stop)
-	}
-	return len(p), nil
-}
-
-// done stops a pending timer.
-func (w *vmServiceWatch) done() {
-	w.mu.Lock()
-	defer w.mu.Unlock()
-	if w.timer != nil {
-		w.timer.Stop()
-	}
-}
-
-// TestVMServiceWatch checks that the watch stops a run only when nothing
-// follows flutter's wait for the VM service.
-func TestVMServiceWatch(t *testing.T) {
-	t.Parallel()
-	stopped := make(chan struct{}, 1)
-	w := &vmServiceWatch{limit: 20 * time.Millisecond, stop: func() { stopped <- struct{}{} }}
-	_, _ = w.Write([]byte("Waiting for VM Service port to be available...\n"))
-	_, _ = w.Write([]byte("Connecting to VM Service at ws://...\n"))
-	select {
-	case <-stopped:
-		t.Fatal("stopped although the app connected")
-	case <-time.After(60 * time.Millisecond):
-	}
-	_, _ = w.Write([]byte("Waiting for VM Service port to be available...\n"))
-	select {
-	case <-stopped:
-	case <-time.After(time.Second):
-		t.Fatal("not stopped although nothing followed the wait")
-	}
-	w.done()
 }

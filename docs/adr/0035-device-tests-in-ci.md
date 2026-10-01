@@ -23,12 +23,15 @@ jobs can cover.
   kernel (3.10) reports `kernel BUG at drivers/platform/goldfish/goldfish_pipe_v2.c:854` in
   `goldfish_dma_mmap` when the first app maps graphics memory, then `Kernel panic - not
   syncing: Fatal exception` (run 36756301098). API 26 and 35 boot and pass.
-- **flutter test sometimes loses the app on iOS simulators.** The app starts, draws its first
-  frame and logs "The Dart VM service is listening on …", but flutter test, which learns the
-  address only from that one log line and starts reading the simulator's log as it launches the
-  app, sometimes attaches after the line was delivered and waits until stopped (iOS 26.5 and
-  18; the app's log shows the line in run 36756301098). It is a race in Flutter's tooling, not
-  in the app.
+- **flutter test loses the app on iOS simulators, often.** The app starts, draws its first
+  frame and logs "The Dart VM service is listening on …" once. flutter test learns the address
+  only from that line, through a `log stream` it starts alongside `simctl launch`
+  (`flutter_tools` `IOSSimulator.startApp`); a live stream has no history, and on a busy runner
+  it attaches after the line, so the tool waits for it until stopped. The app cannot help:
+  under flutter test its test code is driven by the tool and starts only once the tool
+  connects. Runs 36756301098 to 36816150804 show it on iOS 26.5 and 18 alike, in more than
+  half the runs: the app process alive, no crash report, no Dart code run, no request to the
+  server. It is a race in Flutter's tooling, not in the app.
 
 ## Decision drivers
 
@@ -58,28 +61,29 @@ put to the maintainer with `QA-006`'s device farm.
 - **API 24** is covered by the runtime's `minSdk 24` and the Android builds of every change,
   and on devices by the maintainer's manual runs until a device service is chosen; `RT-002`
   records it.
-- **iOS:** the newest iPhone on the newest runtime (`macos-latest`) and an iOS 18 simulator
-  (`macos-15`). For the lost VM service line, the test entry point
-  (`apps/starter/integration_test/app_test.dart`) repeats the line on iOS during its first 40
-  seconds, so a late log reader finds the same address; the driver stops a run in which nothing
-  follows flutter's "Waiting for VM Service port" within three minutes, and a failed iOS run
-  prints the app's own lines about the service.
+- **iOS:** one job, the newest iPhone on the newest runtime (`macos-latest`). It does not use
+  flutter test: the driver builds the app with the flows as its entry point (`flutter build ios
+  --simulator --debug --target=integration_test/app_test.dart`) and runs it under XCTest
+  (`xcodebuild test`), where `ios/RunnerTests` waits for integration_test's results through
+  `FLTIntegrationTestRunner` — Flutter's documented route for running integration tests on iOS
+  without a host connection. Nothing reads the simulator's log, so the race cannot occur; a
+  failed run prints the app's log.
 
 ## Consequences
 
-- **Positive:** every change runs the flows on two Android levels and two iOS versions with the
-  platform key stores and HTTP clients; hangs end in minutes with the evidence in the log.
-- **Negative:** API 24 and 25 are not exercised in CI; the iOS workaround depends on the text
-  of the engine's line, which a Flutter upgrade could change (the job would then show the old
-  hang, and the line is updated with the upgrade).
-- **Follow-up:** report the log race to Flutter with run 36756301098's evidence and remove the
-  workaround once fixed; decide on a device service for API 24 and real devices (`QA-006`).
+- **Positive:** every change runs the flows on two Android levels and one iOS version with the
+  platform key stores and HTTP clients; the iOS run has no timing dependency on the tool.
+- **Negative:** API 24 and 25 and iOS versions older than the runner's newest are not exercised
+  in CI; the iOS run reports one XCTest result for all the flows, with the Dart failure's
+  message, rather than flutter test's per-test output.
+- **Follow-up:** report the log race to Flutter with the evidence of runs 36809265180 and
+  36816150804; decide on a device service for API 24, older iOS and real devices (`QA-006`).
 
 ## Options in detail
 
 ### Option 1
 
-As decided. Runner minutes: about 15 per Android job and 10 per iOS job.
+As decided. Runner minutes: about 15 per Android job and 10 for the iOS job.
 
 ### Option 2
 

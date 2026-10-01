@@ -6,10 +6,13 @@
 # `make e2e-ios` in CI. See test/e2e/README.md.
 #
 # Creates and boots an iPhone simulator on the newest iOS runtime Xcode
-# has, and runs the Go driver with PLUX_E2E_DEVICE, which builds the app
-# for the simulator and runs integration_test/app_test.dart there. The
-# simulator shares this machine's network, so the test server is on its
-# loopback address. Needs Xcode and jq.
+# has, and runs the Go driver with PLUX_E2E_DEVICE and PLUX_E2E_XCTEST:
+# it builds the app for the simulator with integration_test/app_test.dart
+# as its entry point and runs it under XCTest (`xcodebuild test`,
+# ios/RunnerTests), which reports the flows' results without the Dart VM
+# service connection flutter test needs (ADR-0035). The simulator shares
+# this machine's network, so the test server is on its loopback address.
+# Needs Xcode and jq.
 set -euo pipefail
 
 root=$(git rev-parse --show-toplevel)
@@ -38,38 +41,13 @@ xcrun simctl boot "$udid"
 xcrun simctl bootstatus "$udid" -b >/dev/null
 
 status=0
-# A healthy run, Xcode build included, takes about ten minutes; a hang
-# waiting for the Dart VM service (runs 36719678834, 36729487188,
-# 36735134286, 36743012409) is stopped after 15.
-PLUX_E2E_DEVICE_TIMEOUT=15m PLUX_E2E_VERBOSE=1 PLUX_E2E_DEVICE=$udid make -C "$root" --no-print-directory e2e-starter 2>&1 | tee "$out/ios.log" || status=$?
+PLUX_E2E_DEVICE_TIMEOUT=30m PLUX_E2E_XCTEST=1 PLUX_E2E_DEVICE=$udid \
+	make -C "$root" --no-print-directory e2e-starter 2>&1 | tee "$out/ios.log" || status=$?
 if [ "$status" -ne 0 ]; then
-	# The app's own log since before its launch: whether the Dart VM
-	# service started (flutter test waits for its address in this log), and
-	# what became of the app, since the log of a hung run ends within a
-	# second of the launch: a crash report, the system's word on the
-	# process, and whether it still runs.
+	# The app's own log, for a failure the XCTest report does not explain.
 	xcrun simctl spawn "$udid" log show --last 45m --style compact \
 		--predicate 'process == "Runner"' >"$out/ios-app.log" 2>&1 || true
-	echo "--- the app's lines about the Dart VM service (none: it never reported one)"
-	grep -i 'vm service\|observatory\|dartvm\|plux-e2e' "$out/ios-app.log" || echo "(none)"
-	echo "--- is the app running?"
-	xcrun simctl spawn "$udid" launchctl list 2>&1 | grep -i 'dev.plux' || echo "(no: the app is gone)"
-	echo "--- crash reports"
-	reports=$(find "$HOME/Library/Logs/DiagnosticReports" "$HOME/Library/Developer/CoreSimulator/Devices/$udid/data/Library/Logs" \
-		\( -name 'Runner*.ips' -o -name 'Runner*.crash' \) 2>/dev/null || true)
-	[ -n "$reports" ] || echo "(none)"
-	for r in $reports; do
-		echo "$r"
-		cp "$r" "$out/" || true
-		# An .ips file is a JSON header line and a JSON report.
-		tail -n +2 "$r" | jq -r '. as $r | "\(.exception // {} | tostring)\n\(.termination // {} | tostring)\n\(.asi // {} | tostring)",
-			([.threads[.faultingThread // 0].frames[:25][] | "  \(.symbol // "?") in \($r.usedImages[.imageIndex].name // "?")"] | join("\n"))' 2>/dev/null \
-			|| head -n 60 "$r"
-	done
-	echo "--- what the system logged about the app's process"
-	log show --last 45m --style compact --predicate 'eventMessage CONTAINS "dev.plux.pluxStarter" AND NOT process == "Runner"' 2>&1 \
-		| grep -i 'terminat\|crash\|exit\|jetsam\|kill\|remov\|invalid\|suspend' | tail -n 40 || true
-	echo "--- the app's simulator log (last 60 lines of 45 minutes)"
-	tail -n 60 "$out/ios-app.log"
+	echo "--- the app's simulator log (last 100 lines of 45 minutes)"
+	tail -n 100 "$out/ios-app.log"
 fi
 exit "$status"

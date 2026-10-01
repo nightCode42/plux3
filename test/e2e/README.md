@@ -12,7 +12,7 @@ the Go driver (`TestStarterAppAgainstTheServer`) starts, publishes the
 |---|---|---|
 | This machine, under `flutter test` | `make e2e-starter` | every change, in the *Starter app end-to-end* job |
 | Android emulator, API 26 and 35 | `make e2e-android ANDROID_API=<level>` | CI job *Device end-to-end (Android)* |
-| iOS simulator: the newest iPhone and runtime, and iOS 18 | `make e2e-ios` (`E2E_IOS_MAJOR=18`) | CI jobs *Device end-to-end (iOS)*, *(iOS 18)* |
+| iOS simulator: the newest iPhone and runtime | `make e2e-ios` (`E2E_IOS_MAJOR=18` for another) | CI job *Device end-to-end (iOS)* |
 
 On a device the driver sets `PLUX_E2E_DEVICE`, and the flows run in the app
 built for that device: the platform's key store (Android Keystore, iOS
@@ -31,10 +31,12 @@ events reached the server.
   `minSdk 24` and the maintainer's device runs cover it.
 - [`ios.sh`](ios.sh) creates and boots the newest iPhone on the newest iOS
   runtime installed, or on the newest of a major version (`E2E_IOS_MAJOR`);
-  the simulator shares the runner's network. flutter test sometimes misses the
-  app's one log line with its Dart VM service address; the test entry point
-  repeats it on iOS, the driver stops a run that waits for it more than three
-  minutes, and a failed run prints the app's lines about it (ADR-0035).
+  the simulator shares the runner's network. It runs the flows under XCTest,
+  not flutter test: the app is built with them as its entry point and
+  `xcodebuild test` runs it, `ios/RunnerTests` reporting integration_test's
+  results. flutter test finds an iOS simulator app only through one line of
+  the simulator's log, which it often misses on CI runners
+  ([ADR-0035](../../docs/adr/0035-device-tests-in-ci.md)).
 
 Both need `PLUX_TEST_DATABASE_URL` (see
 [testing.md](../../docs/engineering/testing.md)). They use no third-party
