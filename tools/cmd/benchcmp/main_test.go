@@ -19,9 +19,11 @@ import (
 // fakeApps pretends to be the benchmark app: each run writes a result
 // whose "open_ms" is the side's value, and records the order of runs.
 type fakeApps struct {
-	ms    map[string]float64
-	order []string
-	fail  string
+	ms        map[string]float64
+	order     []string
+	fail      string
+	scenarios []string // PLUX_BENCH_SCENARIOS of each run
+	empty     bool     // write results without samples
 }
 
 func (f *fakeApps) launch(_ context.Context, path string, env []string, log io.Writer) error {
@@ -37,6 +39,10 @@ func (f *fakeApps) launch(_ context.Context, path string, env []string, log io.W
 	}
 	if _, err := os.Stat(vars["PLUX_BENCH_STORE"]); err != nil {
 		return err
+	}
+	f.scenarios = append(f.scenarios, vars["PLUX_BENCH_SCENARIOS"])
+	if f.empty {
+		return os.WriteFile(vars["PLUX_BENCH_OUT"], []byte(`{"benchmark":"plux-runtime","format":1,"runtime":"0.1.0","platform":"linux","plugins":50,"samples":{}}`), 0o600)
 	}
 	ms := f.ms[path] * (1 + 0.01*float64(len(f.order)%3))
 	body := fmt.Sprintf(`{"benchmark":"plux-runtime","format":1,"runtime":"0.1.0","platform":"linux","plugins":50,"samples":{"open_ms":[%v,%v]}}`, ms, ms)
@@ -184,5 +190,41 @@ func TestExecApp(t *testing.T) {
 	}
 	if err := execApp(context.Background(), filepath.Join(t.TempDir(), "missing"), nil, &log); err == nil {
 		t.Error("ran a missing app")
+	}
+}
+
+// TestRunPassesTheScenariosAndRefusesAnEmptyComparison checks that every
+// run of a shard measures its parts, and that a comparison without a
+// metric fails instead of passing.
+// Verifies: QA-007.
+func TestRunPassesTheScenariosAndRefusesAnEmptyComparison_QA_007(t *testing.T) {
+	t.Parallel()
+	apps := &fakeApps{ms: map[string]float64{"base": 10, "head": 10}}
+	var stdout, stderr bytes.Buffer
+	args := []string{"run", "-base", "base", "-head", "head", "-runs", "5", "-scenarios", "open,native", "-out", t.TempDir()}
+	if code := run(context.Background(), args, &stdout, &stderr, apps.launch); code != exitOK {
+		t.Fatalf("exit %d: %s", code, stderr.String())
+	}
+	for i, sc := range apps.scenarios {
+		if sc != "open,native" {
+			t.Fatalf("run %d had PLUX_BENCH_SCENARIOS=%q", i, sc)
+		}
+	}
+	measured := &fakeApps{ms: map[string]float64{"app": 10}}
+	if code := run(context.Background(), []string{"measure", "-app", "app", "-runs", "1", "-out", t.TempDir()}, &stdout, &stderr, measured.launch); code != exitOK {
+		t.Fatalf("measure: exit %d: %s", code, stderr.String())
+	}
+	if measured.scenarios[0] != "" {
+		t.Errorf("an unlimited run had PLUX_BENCH_SCENARIOS=%q", measured.scenarios[0])
+	}
+
+	empty := &fakeApps{ms: map[string]float64{"base": 10, "head": 10}, empty: true}
+	stderr.Reset()
+	args = []string{"run", "-base", "base", "-head", "head", "-runs", "5", "-out", t.TempDir()}
+	if code := run(context.Background(), args, &stdout, &stderr, empty.launch); code != exitError {
+		t.Fatalf("an empty comparison: exit %d, want %d", code, exitError)
+	}
+	if !strings.Contains(stderr.String(), "no metric to compare") {
+		t.Errorf("stderr = %q", stderr.String())
 	}
 }

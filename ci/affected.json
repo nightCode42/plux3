@@ -1,0 +1,257 @@
+{
+  "$comment": [
+    "Which CI jobs a pull request runs (CI-002, ADR-0043), read by tools/cmd/affected.",
+    "Globs are anchored at the repository root; ** matches any number of directories; a leading ! excludes.",
+    "go and goTest name Go packages (dir or dir/...): their in-repository imports are followed, goTest with their tests' imports.",
+    "dart names Dart packages: their pub workspace dependencies are followed, without the dependencies' tests, examples and Markdown.",
+    "exclude removes files from all of a job's roots. make lists what `make check-changed` runs for the job.",
+    "everything: a change runs every job. noJob: files no selectable job reads (documentation, local scripts, the nightly load test, inputs of the always-on checks); alone they run only the always-on jobs.",
+    "A changed file in neither list nor any job's roots runs every job. Pushes to main, the merge queue, the daily run and manual runs run every job."
+  ],
+  "always": [
+    "changes",
+    "ci-ok",
+    "commits",
+    "dependency-review",
+    "docs-site",
+    "hygiene",
+    "licensing",
+    "links",
+    "sbom",
+    "secrets",
+    "spec",
+    "workflows"
+  ],
+  "everything": [
+    "Makefile",
+    "ci/affected.json",
+    "tools/cmd/affected/**",
+    "tools/internal/affected/**"
+  ],
+  "noJob": [
+    "**/*.md",
+    "**/.gitignore",
+    ".claude/**",
+    ".editorconfig",
+    ".gitattributes",
+    ".gitleaks.toml",
+    ".gitleaksignore",
+    ".pre-commit-config.yaml",
+    "LICENSE",
+    "LICENSES/**",
+    "REUSE.toml",
+    "docs/**",
+    "ee/**",
+    "mk/repo.mk",
+    "scripts/check-commit-msg.sh",
+    "scripts/install.sh",
+    "scripts/session-start.sh",
+    "scripts/test-db.sh",
+    "site/**",
+    "test/load/**"
+  ],
+  "jobs": {
+    "go-lint": {
+      "description": "Format, lint and tidiness of both Go modules, and `make gen` reproducing everything it writes (CI-003) from schema/, proto/ and the licence texts",
+      "paths": [
+        "backend/**",
+        "tools/**",
+        "go.work",
+        "go.work.sum",
+        ".golangci.yml",
+        "mk/go.mk",
+        "schema/**",
+        "proto/**",
+        "docs/reference/**",
+        "studio/packages/schema/**",
+        "packages/**/*.g.dart",
+        "packages/**/*_generated.dart",
+        "packages/*/LICENSE",
+        "packages/**/native/**/LICENSE*",
+        "LICENSES/**"
+      ],
+      "make": ["go-fmt-check", "go-lint", "go-tidy-check", "go-gen-check", "registry-lock-check"]
+    },
+    "api-contract": {
+      "description": "buf lint, format and breaking-change check of the API contract",
+      "paths": ["proto/**", "mk/go.mk"],
+      "make": ["proto-check"]
+    },
+    "go-test": {
+      "description": "Go tests of both modules with the race detector and coverage floors; tests also read schema/, the generated Dart and TypeScript, the benchmark's baseline, and (the policy tests) the workflows, manifests, packages' READMEs, changelogs and examples, and the specification",
+      "paths": [
+        "backend/**",
+        "tools/**",
+        "go.work",
+        "go.work.sum",
+        "mk/go.mk",
+        "coverage.json",
+        "schema/**",
+        "docs/requirements.md",
+        "SECURITY.md",
+        "cliff.toml",
+        "LICENSES/**",
+        ".github/**",
+        "packages/*/pubspec.yaml",
+        "packages/*/README.md",
+        "packages/*/CHANGELOG.md",
+        "packages/*/LICENSE",
+        "packages/*/example/**",
+        "packages/**/native/**/LICENSE*",
+        "packages/**/*.g.dart",
+        "packages/**/*_generated.dart",
+        "test/bench/runtime/assets/**",
+        "test/bench/runtime/sync-baseline.json",
+        "**/go.mod",
+        "**/pubspec.yaml",
+        "**/package.json"
+      ],
+      "make": ["go-cover"]
+    },
+    "go-determinism": {
+      "description": "The compiler reproduces the committed goldens byte for byte on Linux, macOS and Windows (CMP-002)",
+      "goTest": ["backend/internal/pxl", "backend/internal/bundle", "backend/internal/compiler", "backend/cmd/plux"],
+      "paths": ["schema/**", "mk/go.mk"],
+      "exclude": ["**/*.md"],
+      "make": ["go-determinism"]
+    },
+    "go-build": {
+      "description": "Reproducible builds of the binaries (CI-006)",
+      "go": ["backend/cmd/..."],
+      "paths": ["mk/go.mk"],
+      "exclude": ["**/*.md"],
+      "make": ["go-build", "go-reproducible"]
+    },
+    "go-vuln": {
+      "description": "govulncheck over the code both modules build; the daily run catches newly published vulnerabilities",
+      "go": ["backend/...", "tools/..."],
+      "paths": ["mk/go.mk"],
+      "exclude": ["**/*.md"],
+      "make": ["go-vuln"]
+    },
+    "compose": {
+      "description": "The server image and the Compose stack, with the integration tests against PostgreSQL, SeaweedFS and Valkey",
+      "go": ["backend/cmd/plux-server", "backend/cmd/plux"],
+      "goTest": [
+        "backend/internal/storage/...",
+        "backend/internal/cache/...",
+        "backend/internal/server/...",
+        "backend/internal/api/...",
+        "backend/internal/release/..."
+      ],
+      "paths": [
+        "backend/Dockerfile",
+        "deploy/**",
+        "scripts/release/**",
+        "packages/plux_svgc/**",
+        "schema/**",
+        "mk/stack.mk"
+      ],
+      "exclude": ["**/*.md"]
+    },
+    "image-arm64": {
+      "description": "The server image built natively on arm64, its SVG compiler reproducing the amd64 golden",
+      "go": ["backend/cmd/plux-server", "backend/cmd/plux"],
+      "paths": [
+        "backend/Dockerfile",
+        "scripts/release/**",
+        "packages/plux_svgc/**",
+        "schema/testdata/documents/widgets/assets/icons/check.svg",
+        "schema/testdata/bundles/widgets/variants/check.vec",
+        "mk/stack.mk"
+      ],
+      "exclude": ["**/*.md"]
+    },
+    "wasm-codecs": {
+      "description": "The WebAssembly image codecs rebuilt from their pinned sources; it takes minutes, so pushes to main skip it",
+      "paths": ["backend/internal/compiler/media/codecs/**", "mk/codecs.mk"],
+      "skipOnPush": true
+    },
+    "dart": {
+      "description": "Format, analysis and tests with coverage floors of every Dart package; the tests read the shared vectors in schema/",
+      "go": ["tools/cmd/covgate"],
+      "paths": [
+        "packages/**",
+        "apps/**",
+        "test/bench/runtime/**",
+        "test/size/**",
+        "pubspec.yaml",
+        "pubspec.lock",
+        "analysis_options.yaml",
+        "coverage.json",
+        "schema/**",
+        "mk/dart.mk",
+        "!**/*.md"
+      ],
+      "make": ["dart-lock-check", "dart-fmt-check", "dart-analyze", "widgets-api-check", "dart-cover"]
+    },
+    "starter-e2e": {
+      "description": "The starter app's flows under flutter test against a server built from source, and the compatibility matrix",
+      "goTest": ["backend/internal/server"],
+      "dart": ["apps/starter"],
+      "paths": ["test/compat/**", "schema/**", "mk/device.mk"],
+      "exclude": ["**/*.md", "**/android/**", "**/ios/**"]
+    },
+    "e2e-android": {
+      "description": "The starter app's flows on the Android 35 emulator",
+      "goTest": ["backend/internal/server"],
+      "dart": ["apps/starter"],
+      "paths": ["test/e2e/android.sh", "schema/**", "mk/device.mk"],
+      "exclude": ["**/*.md", "**/ios/**"]
+    },
+    "e2e-android-26": {
+      "description": "The Android 26 emulator: on pushes to main, the daily and manual runs, and pull requests that change Android-specific files or dependencies (maintainer, 2026-10-01)",
+      "ci": "e2e-android",
+      "paths": [
+        "apps/starter/android/**",
+        "packages/*/android/**",
+        "packages/plux_flutter/native/**",
+        "packages/plux_flutter/hook/**",
+        "pubspec.lock",
+        "test/e2e/android.sh",
+        "mk/device.mk"
+      ]
+    },
+    "e2e-ios": {
+      "description": "The starter app's flows on the newest iOS simulator under XCTest",
+      "goTest": ["backend/internal/server"],
+      "dart": ["apps/starter"],
+      "paths": ["test/e2e/ios.sh", "schema/**", "mk/device.mk"],
+      "exclude": ["**/*.md", "**/android/**"]
+    },
+    "bench-runtime": {
+      "description": "The runtime benchmark against the base's runtime (QA-007)",
+      "go": ["tools/cmd/benchcmp"],
+      "dart": ["test/bench/runtime"],
+      "paths": ["mk/bench.mk"],
+      "exclude": ["**/*.md", "test/bench/runtime/test/**", "test/bench/runtime/sync-baseline.json", "**/android/**", "**/ios/**"]
+    },
+    "bench-sync": {
+      "description": "The sync benchmark on the simulated slow network against a server built from source (QA-007, NFR-007)",
+      "goTest": ["backend/internal/server"],
+      "dart": ["test/bench/runtime"],
+      "paths": ["schema/**", "mk/bench.mk"],
+      "exclude": ["**/*.md", "**/android/**", "**/ios/**"]
+    },
+    "size-android": {
+      "description": "What plux_flutter adds to the release APKs and App Bundle downloads (RT-061)",
+      "go": ["tools/cmd/sizegate"],
+      "dart": ["test/size/plux"],
+      "paths": ["test/size/**", "mk/bench.mk"],
+      "exclude": ["**/*.md", "**/ios/**"]
+    },
+    "size-ios": {
+      "description": "What plux_flutter adds to a release iOS app (RT-061)",
+      "go": ["tools/cmd/sizegate"],
+      "dart": ["test/size/plux"],
+      "paths": ["test/size/**", "mk/bench.mk"],
+      "exclude": ["**/*.md", "**/android/**"]
+    },
+    "studio": {
+      "description": "Studio: frozen install, Biome, types, tests with coverage floors",
+      "go": ["tools/cmd/covgate"],
+      "paths": ["studio/**", "coverage.json", "mk/studio.mk", "!**/*.md"],
+      "make": ["studio-check"]
+    }
+  }
+}

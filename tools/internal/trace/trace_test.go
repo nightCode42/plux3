@@ -43,6 +43,9 @@ func TestScanFindsEveryEvidenceForm_QA_071(t *testing.T) {
 		"studio/packages/b/src/x.test.ts":  "test('contrast [A11Y-003]', () => {});\n",
 		".github/workflows/ci.yml":         "      # Verifies: CI-006.\n",
 		"Makefile":                         "# Verifies: CI-002.\n",
+		"mk/go.mk":                         "# Verifies: CI-003.\n",
+		"mk/old/go.mk":                     "# Verifies: SYN-001. (not a fragment)\n",
+		"backend/x.mk":                     "# Verifies: SYN-001. (not a fragment)\n",
 		"backend/sync.go":                  "// Verifies: SYN-001. (not a test file)\n",
 		"studio/node_modules/x/y.test.ts":  "test('x [SYN-001]', () => {});\n",
 		"backend/testdata/fixture_test.go": "// Verifies: SYN-001.\n",
@@ -59,6 +62,7 @@ func TestScanFindsEveryEvidenceForm_QA_071(t *testing.T) {
 		{ID: "SYN-005", Path: "backend/sync_test.go", Line: 1, Kind: KindTest},
 		{ID: "SYN-006", Path: "backend/sync_test.go", Line: 1, Kind: KindTest},
 		{ID: "SYN-005", Path: "backend/sync_test.go", Line: 2, Kind: KindTest},
+		{ID: "CI-003", Path: "mk/go.mk", Line: 1, Kind: KindCI},
 		{ID: "SYN-006", Path: "packages/p/test/sync_test.dart", Line: 1, Kind: KindTest},
 		{ID: "A11Y-003", Path: "studio/packages/b/src/x.test.ts", Line: 1, Kind: KindTest},
 	}

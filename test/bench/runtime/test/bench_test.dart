@@ -34,8 +34,36 @@ void main() {
         'PLUX_BENCH_STORE': '/s',
         'PLUX_BENCH_OUT': '/o.json',
         'PLUX_BENCH_REPEAT': '3',
+        'PLUX_BENCH_SCENARIOS': 'startup, scroll',
       });
       expect((o.storageDirectory, o.output, o.repeat), ('/s', '/o.json', 3));
+      expect(o.scenarios, {BenchScenario.startup, BenchScenario.scroll});
+    });
+
+    test('measures every part unless told otherwise', () {
+      expect(BenchOptions.fromEnvironment(const {}).scenarios, {
+        ...BenchScenario.values,
+      });
+      expect(
+        BenchOptions.fromEnvironment(const {'PLUX_BENCH_SCENARIOS': ''})
+            .scenarios,
+        {...BenchScenario.values},
+      );
+    });
+
+    test('refuses an unknown part', () {
+      expect(
+        () => BenchOptions.fromEnvironment({
+          'PLUX_BENCH_SCENARIOS': 'open,render',
+        }),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('startup, open, native, scroll'),
+          ),
+        ),
+      );
     });
 
     test('refuses a repetition count that is not positive', () {

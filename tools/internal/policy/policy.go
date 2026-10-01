@@ -258,6 +258,61 @@ func CheckWorkflowShells(root string) error {
 	return nil
 }
 
+// benchEnum matches the runtime benchmark's BenchScenario enum, whose
+// members are the parts of a run.
+var benchEnum = regexp.MustCompile(`(?s)enum BenchScenario \{(.*?)\n\}`)
+
+// benchMember is one member of the enum, after its doc comment.
+var benchMember = regexp.MustCompile(`(?m)^  ([a-z][A-Za-z0-9]*),$`)
+
+// benchShard is a scenarios list of the runtime benchmark's CI matrix.
+var benchShard = regexp.MustCompile(`(?m)^            scenarios: ([a-z,]+)$`)
+
+// CheckBenchShards verifies that the runtime benchmark's parallel CI jobs
+// together measure every part of a run, each part once, so sharding the
+// benchmark leaves no metric ungated (QA-007, ADR-0043).
+func CheckBenchShards(root string) error {
+	src, err := os.ReadFile(filepath.Join(root, "test", "bench", "runtime", "lib", "src", "bench.dart"))
+	if err != nil {
+		return fmt.Errorf("policy.CheckBenchShards: %w", err)
+	}
+	enum := benchEnum.FindSubmatch(src)
+	if enum == nil {
+		return errors.New("policy.CheckBenchShards: bench.dart declares no BenchScenario enum")
+	}
+	parts := map[string]int{}
+	for _, m := range benchMember.FindAllSubmatch(enum[1], -1) {
+		parts[string(m[1])] = 0
+	}
+	ci, err := os.ReadFile(filepath.Join(root, ".github", "workflows", "ci.yml"))
+	if err != nil {
+		return fmt.Errorf("policy.CheckBenchShards: %w", err)
+	}
+	var problems []string
+	for _, m := range benchShard.FindAllSubmatch(ci, -1) {
+		for part := range strings.SplitSeq(string(m[1]), ",") {
+			n, ok := parts[part]
+			if !ok {
+				problems = append(problems, "ci.yml measures "+part+", which is not a part of the benchmark")
+			}
+			parts[part] = n + 1
+		}
+	}
+	for part, n := range parts {
+		if n != 1 {
+			problems = append(problems, fmt.Sprintf("ci.yml measures %s in %d jobs, not one", part, n))
+		}
+	}
+	if len(parts) == 0 {
+		problems = append(problems, "the BenchScenario enum has no members")
+	}
+	if len(problems) > 0 {
+		sort.Strings(problems)
+		return fmt.Errorf("policy.CheckBenchShards: %s", strings.Join(problems, "; "))
+	}
+	return nil
+}
+
 // publishJob is the release workflow's job that publishes Dart packages.
 const publishJob = "\n  pub:\n"
 

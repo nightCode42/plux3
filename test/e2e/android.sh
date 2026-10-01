@@ -14,6 +14,9 @@
 # forwards the device's loopback port of the test server to this machine
 # (adb reverse), and runs the Go driver with PLUX_E2E_DEVICE, which builds
 # the app for the emulator and runs integration_test/app_test.dart there.
+# While the emulator boots, it builds the Go driver and the app's Android
+# project, so the build the flows start recompiles only the Dart code with
+# their defines (ADR-0043).
 # Cloud development sessions do not start emulators (docs/WORKLOG.md,
 # device testing); this runs on GitHub's runners.
 set -euo pipefail
@@ -48,6 +51,13 @@ emulator=$!
 serial=emulator-5554
 trap '"$adb" -s "$serial" emu kill >/dev/null 2>&1 || kill "$emulator" 2>/dev/null || true' EXIT
 
+prebuild_log=$out/prebuild-$api.log
+(
+	cd "$root/backend" && go test -count=1 -run '^$' ./internal/server
+	cd "$root/apps/starter" && flutter build apk --debug
+) >"$prebuild_log" 2>&1 &
+prebuild=$!
+
 # fail <message>: the emulator's log, then the message.
 fail() {
 	echo "--- $log (last 80 lines)"; tail -n 80 "$log" || true
@@ -67,6 +77,10 @@ while [ "$SECONDS" -lt "$deadline" ]; do
 	sleep 2
 done
 $booted || fail "the emulator did not boot in 10 minutes"
+if ! wait "$prebuild"; then
+	echo "--- $prebuild_log (last 80 lines)"; tail -n 80 "$prebuild_log" || true
+	echo "✗ building the driver or the app failed"; exit 1
+fi
 for s in window_animation_scale transition_animation_scale animator_duration_scale; do
 	"$adb" -s "$serial" shell settings put global "$s" 0
 done

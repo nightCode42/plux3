@@ -72,6 +72,7 @@ The Makefile is the only entry point; `make help` lists every target.
 |---|---|
 | `make setup` | Once after cloning: installs pinned tools and git hooks |
 | `make check` | Before every push: every gate CI runs |
+| `make check-changed` | While working: the gates of the jobs CI would select for your changes since the merge base with `origin/main` ([ci.md §3.1](ci.md#31-which-jobs-a-pull-request-runs)) |
 | `make go-check`, `make dart-check`, `make studio-check`, `make repo-check` | The gates of one area |
 | `make gen` | After changing a contract; commit the result |
 | `make trace` | To see which requirements are verified, and by what |

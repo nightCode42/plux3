@@ -7,10 +7,11 @@ How the pipeline is built and why. The requirements are spec §29 (`CI-001`–`C
 ## 1. Principles
 
 - **One definition of every check.** CI jobs, git hooks and developers all run the same Makefile targets. A green `make check` locally means a green pipeline.
-- **Fast feedback, complete coverage.** Toolchain jobs run only when their files change on a pull request, and always on `main`, on schedule and on manual runs. Repository-wide checks always run.
-- **One required check.** The job **CI OK** depends on every other job and fails if any of them failed or was cancelled; skipped jobs count as passed. The `main` ruleset requires only CI OK, so path filtering never blocks a merge and adding a job never requires a settings change.
+- **Fast feedback, complete coverage.** On a pull request, each job runs only when the change can affect it (§3.1, [ADR-0043](../adr/0043-affected-only-ci.md)); every job runs on pushes to `main`, in the merge queue, on the daily run and on manual runs. Repository-wide checks always run. No gate is removed: a job that a pull request skips still runs on `main` and every night.
+- **One required check.** The job **CI OK** depends on every other job and fails if any of them failed or was cancelled, and if any was skipped other than by the selection (or, for the commit and dependency checks, outside a pull request). The `main` ruleset requires only CI OK, so selection never blocks a merge and adding a job never requires a settings change.
 - **A failing command fails its step.** Every workflow sets `defaults: run: shell: bash`, which GitHub runs with `-eo pipefail`; without it a gate piped into the job summary (`make go-cover | tee …`) passes whatever `make` returned. A policy test (`tools/internal/policy`, `CI-001`) fails if a workflow lacks the default or overrides it.
 - **Least privilege.** Workflows start with `permissions: {}`; each job requests only what it needs. Checkouts never persist credentials. Actions are pinned to full commit SHAs. `actionlint` and `zizmor` check every workflow.
+- **Caches save time, never decide a result.** The pinned Go tools and Gradle's caches are restored by every run and saved only by runs that are not pull requests, so a pull request can never write a cache that `main` reads. Go's test-result cache is not used across runs: it keys files on their modification times, which every fresh checkout changes ([ADR-0043](../adr/0043-affected-only-ci.md)).
 
 ## 2. Workflows
 
@@ -29,7 +30,7 @@ How the pipeline is built and why. The requirements are spec §29 (`CI-001`–`C
 
 | Job | Runs | Make target | Requirements |
 |---|---|---|---|
-| Detect changes | always | — | `CI-002` |
+| Detect changes | always | `tools/cmd/affected` with the rules in `ci/affected.json` (§3.1) | `CI-002` |
 | Hygiene | always | `hygiene` | — |
 | Secret scan | always | `secrets` (full history) | — |
 | Specification and traceability | always | `spec-lint`, `trace` | `QA-070`, `QA-073` |
@@ -40,25 +41,43 @@ How the pipeline is built and why. The requirements are spec §29 (`CI-001`–`C
 | SBOM | always | CycloneDX via Syft | `CI-001` |
 | Commit messages | pull requests | `scripts/check-commit-msg.sh` on title and commits | `CI-009` |
 | Dependency review | pull requests | vulnerabilities and licences of new dependencies | `CI-007` |
-| Go lint | Go changes | `go-fmt-check go-lint go-tidy-check go-gen-check` (regenerates everything `make gen` writes and fails on any difference), `registry-lock-check` (no permanent ID of the base commit changed or removed) | `CI-001`, `CI-003`, `BND-011` |
-| API contract | `proto/` changes | `proto-check`: `buf lint`, `buf format --diff --exit-code` and `buf breaking` against the last `backend/v*` tag | `CI-001`, `SRV-000`, `SRV-002` |
-| Go test | Go changes | `go-cover` (race detector, coverage floors) against a real PostgreSQL service, with `PLUX_TEST_DATABASE_URL` set so the integration tests run rather than skip; `go-budgets` (compiler timing budgets; `ubuntu-latest` is the reference runner) | `QA-001`, `QA-005`, `CMP-050`, `SCH-042` |
-| Go determinism | Go changes, on Linux, macOS and Windows | `go-determinism` (the conformance vectors and projects compile to the committed goldens byte for byte) | `CMP-002` |
-| Go build | Go changes | `go-build go-reproducible` | `CI-006` |
-| Go vulnerabilities | Go changes | `go-vuln` | `CI-001` |
-| Dart and Flutter | Dart changes | `dart-lock-check dart-fmt-check dart-analyze dart-cover`, `widgets-api-check` (the Flutter snapshot matches the pinned SDK) | `CI-001`, `CI-003`, `QA-001`, `WGT-003` |
-| Starter app end-to-end | Go or Dart changes | `compat`: the starter app's flows under `flutter test` against a server built from source, and the compatibility matrix against released runtimes and servers | `QA-006`, `QA-010` |
-| Device end-to-end (Android 26, 35; iOS) | Go or Dart changes | `e2e-android`, `e2e-ios`: the same flows on a headless emulator (the runner's SDK tools, KVM) and the newest iOS simulator under XCTest, with the platform key store and HTTP client ([test/e2e](../../test/e2e/README.md), [ADR-0035](../adr/0035-device-tests-in-ci.md)) | `QA-006`, `RT-002` |
-| Runtime benchmark | Dart changes, on `ubuntu-24.04` | `bench-runtime-ab`: the runtime benchmark ([test/bench/runtime](../../test/bench/runtime/README.md)) in profile mode on Linux desktop under `xvfb`, this commit's runtime and the base's alternately, ten runs each; fails when a metric is more than 10% slower at 99% confidence. The base is the pull request's base, the merge queue's, the previous head of `main`, or the merge base with `main` on manual runs; a base that predates the benchmark is not compared with, and the report says so. Results and logs are an artifact | `QA-007` |
-| Sync benchmark | Go or Dart changes | `bench-sync`: the runtime syncs the fifty-plugin benchmark app through the simulated slow network (spec §30.1) against a server built from source; fails when an update of three plugins takes over 3 s at p95 or a phase costs more than 10% over the bytes in `test/bench/runtime/sync-baseline.json` | `QA-007`, `NFR-007` |
-| Size (Android), Size (iOS) | Dart changes; on `ubuntu-latest` and `macos-latest` | `size-android`, `size-ios`: the blank app of [test/size](../../test/size/README.md) built for release with and without `plux_flutter` — the APK and the App Bundle download for arm64-v8a, armeabi-v7a and x86_64, and the iOS IPA for arm64; fails when the runtime adds more than 6.5 MiB to an APK or 3 MiB to a download, or more than 10% over `test/size/baseline.json` ([ADR-0036](../adr/0036-size-budgets-per-build.md)) | `RT-061`, `NFR-009`, `QA-007` |
-| Studio | Studio changes | `studio-check` (frozen install, Biome, types, coverage) | `CI-001`, `QA-001` |
-| Compose stack | Go or `deploy/` changes | `compose-up` (builds the server image and starts the whole stack), waits for `/readyz`, then `compose-test`: the Go integration and end-to-end tests against the stack's PostgreSQL, SeaweedFS and Valkey; then `image-check` on amd64 (as the arm64 job) | `DEP-002`, `QA-005` |
-| Server image (arm64) | Go changes, on `ubuntu-24.04-arm` | `image-check`: builds the server image natively, so the arm64 half of the release image (Skia path operations and `plux-svgc`, built per platform) is built and tested before a release; the image's own `plux-svgc` must reproduce `packages/plux_svgc/test/icon.pathops.vec`, the golden made on amd64, byte for byte, and the image must carry its third-party notices under `/usr/share/doc` | `CMP-031`, `CMP-002` |
-| Image codecs reproduce | codec changes (`backend/internal/compiler/media/codecs/**`), daily and manual runs | `wasm-codecs-check`: rebuilds `webp.wasm` and `avif.wasm` from their pinned sources with the pinned Ubuntu 24.04 toolchain and compares them with `codecs.lock`, so a committed binary cannot differ from its source; it takes minutes, so it does not run on every push | `CMP-030` |
+| Go lint | Go code, contracts, generated files | `go-fmt-check go-lint go-tidy-check go-gen-check` (regenerates everything `make gen` writes and fails on any difference), `registry-lock-check` (no permanent ID of the base commit changed or removed) | `CI-001`, `CI-003`, `BND-011` |
+| API contract | `proto/` | `proto-check`: `buf lint`, `buf format --diff --exit-code` and `buf breaking` against the last `backend/v*` tag | `CI-001`, `SRV-000`, `SRV-002` |
+| Go test | Go code, and the files Go tests read (schema, workflows, manifests, the specification) | `go-cover` (race detector, coverage floors) against a real PostgreSQL service, with `PLUX_TEST_DATABASE_URL` set so the integration tests run rather than skip; `go-budgets` (compiler timing budgets; `ubuntu-latest` is the reference runner) | `QA-001`, `QA-005`, `CMP-050`, `SCH-042` |
+| Go determinism | the compiler and what it imports; on Linux, macOS and Windows | `go-determinism` (the conformance vectors and projects compile to the committed goldens byte for byte) | `CMP-002` |
+| Go build | what the binaries import | `go-build go-reproducible` | `CI-006` |
+| Go vulnerabilities | Go code and modules; every day | `go-vuln` | `CI-001` |
+| Dart and Flutter | Dart packages, the shared vectors | `dart-lock-check dart-fmt-check dart-analyze dart-cover`, `widgets-api-check` (the Flutter snapshot matches the pinned SDK) | `CI-001`, `CI-003`, `QA-001`, `WGT-003` |
+| Starter app end-to-end | the server's code, the starter and the packages it uses | `compat`: the starter app's flows under `flutter test` against a server built from source, and the compatibility matrix against released runtimes and servers | `QA-006`, `QA-010` |
+| Device end-to-end (Android 26, 35; iOS) | the server's code, the starter and the packages it uses; Android 26 only on `main`, the daily and manual runs, and pull requests that change Android-specific files or `pubspec.lock` (maintainer, 2026-10-01) | `e2e-android`, `e2e-ios`: the same flows on a headless emulator (the runner's SDK tools, KVM) and the newest iOS simulator under XCTest, with the platform key store and HTTP client; the driver and the app are built while the device boots ([test/e2e](../../test/e2e/README.md), [ADR-0035](../adr/0035-device-tests-in-ci.md)) | `QA-006`, `RT-002` |
+| Runtime benchmark (three parts) | the benchmark app and the packages it uses, on `ubuntu-24.04` | `bench-runtime-ab`: the runtime benchmark ([test/bench/runtime](../../test/bench/runtime/README.md)) in profile mode on Linux desktop under `xvfb`, this commit's runtime and the base's alternately, ten runs each; fails when a metric is more than 10% slower at 99% confidence. Three parallel jobs measure the parts of a run (start-up, opening the page, the native control with scrolling), each with both runtimes on one runner; a policy test checks that together they measure every part. The base is the pull request's base, the merge queue's, the previous head of `main`, or the merge base with `main` on manual runs; a base that predates the benchmark is not compared with, and the report says so. Results and logs are an artifact | `QA-007` |
+| Sync benchmark | the server's code, the benchmark app and the packages it uses | `bench-sync`: the runtime syncs the fifty-plugin benchmark app through the simulated slow network (spec §30.1) against a server built from source; fails when an update of three plugins takes over 3 s at p95 or a phase costs more than 10% over the bytes in `test/bench/runtime/sync-baseline.json` | `QA-007`, `NFR-007` |
+| Size (Android), Size (iOS) | the runtime's shipped code and dependencies; on `ubuntu-latest` and `macos-latest` | `size-android`, `size-ios`: the blank app of [test/size](../../test/size/README.md) built for release with and without `plux_flutter` — the APK and the App Bundle download for arm64-v8a, armeabi-v7a and x86_64, and the iOS IPA for arm64; fails when the runtime adds more than 6.5 MiB to an APK or 3 MiB to a download, or more than 10% over `test/size/baseline.json` ([ADR-0036](../adr/0036-size-budgets-per-build.md)) | `RT-061`, `NFR-009`, `QA-007` |
+| Studio | `studio/` | `studio-check` (frozen install, Biome, types, coverage) | `CI-001`, `QA-001` |
+| Compose stack | the server's code, `deploy/`, the image | `compose-up` (builds the server image and starts the whole stack), waits for `/readyz`, then `compose-test`: the Go integration and end-to-end tests against the stack's PostgreSQL, SeaweedFS and Valkey; then `image-check` on amd64 (as the arm64 job) | `DEP-002`, `QA-005` |
+| Server image (arm64) | the binaries' code and the image; on `ubuntu-24.04-arm` | `image-check`: builds the server image natively, so the arm64 half of the release image (Skia path operations and `plux-svgc`, built per platform) is built and tested before a release; the image's own `plux-svgc` must reproduce `packages/plux_svgc/test/icon.pathops.vec`, the golden made on amd64, byte for byte, and the image must carry its third-party notices under `/usr/share/doc` | `CMP-031`, `CMP-002` |
+| Image codecs reproduce | `backend/internal/compiler/media/codecs/**`; daily and manual runs, not pushes | `wasm-codecs-check`: rebuilds `webp.wasm` and `avif.wasm` from their pinned sources with the pinned Ubuntu 24.04 toolchain and compares them with `codecs.lock`, so a committed binary cannot differ from its source; it takes minutes, so it does not run on every push | `CMP-030` |
 | CI OK | always | — | `CI-009` |
 
 The traceability report and coverage tables are written to each job's summary; the report and the SBOM are uploaded as artifacts.
+
+### 3.1 Which jobs a pull request runs
+
+`tools/cmd/affected` (standard library only) reads the changed files of the pull request's merge commit and the rules in [`ci/affected.json`](../../ci/affected.json), and writes one decision per job ([ADR-0043](../adr/0043-affected-only-ci.md)). Each job's roots are:
+
+- **path globs**, such as `schema/**` for the jobs whose tests read the shared vectors;
+- **Go packages**, whose in-repository imports are followed, with or without their tests' imports (`go` and `goTest`): a change to a library runs exactly the jobs that build it;
+- **Dart packages**, whose pub workspace dependencies are followed (`dart`), without the dependencies' tests, examples and Markdown.
+
+Three rules keep the selection on the safe side:
+
+- **`ci.yml` per job.** A change inside one job's block runs that job; a change outside the job blocks (triggers, `env`, `defaults`) runs everything.
+- **The Makefile per area.** The root `Makefile` holds the pins and shared variables and includes one fragment per area from `mk/` (`go`, `codecs`, `dart`, `bench`, `studio`, `stack`, `device`, `repo`); a change to a fragment runs its area's jobs, a change to the root `Makefile` runs everything.
+- **When in doubt, run.** A changed file that no rule names and that is not in the `noJob` list (documentation, local scripts) runs every job, and the job summary says which file. A change to the rules or the tool itself runs every job.
+
+The job summary of **Detect changes** lists every selected job with the files that selected it. The tool's tests check the rules against `ci.yml` (every job has a rule, every selectable job reads the selection, CI OK waits for every job), check that every tracked file is named by a rule, and replay real past changes with the exact jobs each one must run.
+
+Locally, `make check-changed` runs the same selection against the merge base with `origin/main`, including uncommitted and untracked files, and runs the `make` targets of the selected jobs that run locally; it lists the ones only CI's runners run.
 
 ## 4. Generated code
 
@@ -83,8 +102,8 @@ Versions in the Makefile and in workflows are changed **together, in one pull re
 
 ## 6. Adding a component
 
-1. Add its gates as Makefile targets and include them in `check`.
-2. Add a path filter and a job in `ci.yml`, and add the job to the `needs` of CI OK.
+1. Add its gates as Makefile targets, in the fragment of its area under `mk/` (or a new fragment listed in `MK_FRAGMENTS`), and include them in `check`.
+2. Add a job in `ci.yml` whose `if` reads `fromJSON(needs.changes.outputs.jobs)['<job>']`, a rule for it in `ci/affected.json`, and the job to the `needs` of CI OK; the tests of `tools/internal/affected` fail until all three agree.
 3. Add its manifest directory to `.github/dependabot.yml` — the policy test fails otherwise (`CI-007`).
 4. Declare its licence in `REUSE.toml`.
 5. Add its coverage floors to `coverage.json` if they differ from the defaults.
