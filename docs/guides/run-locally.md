@@ -6,16 +6,16 @@ from the repository root, and `make help` lists them all.
 
 ## 1. Set up once
 
-- Install Go (the toolchain in `backend/go.mod`), Flutter 3.47, Bun 1.3, Python 3, GNU Make
-  and Docker.
+- Install Go (the toolchain in `backend/go.mod`), Flutter 3.47, Bun 1.3, Python 3, GNU Make 4
+  or later, and Docker.
+- On Windows, use Git Bash with GNU Make 4 (`winget install ezwinports.make`); GnuWin32's
+  make 3.81 is refused. On macOS, `brew install make` and run `gmake`, or put its `gnubin`
+  first on your `PATH`.
 - Install the pinned tools and git hooks: `make setup`.
-- Create a test database. Many tests need PostgreSQL with an ordinary (non-superuser) role:
-
-  ```bash
-  createuser plux -P            # password: plux
-  createdb plux_test -O plux
-  export PLUX_TEST_DATABASE_URL=postgres://plux:plux@127.0.0.1:5432/plux_test?sslmode=disable
-  ```
+- Only for running tests: start the test database with `make test-db` (Docker), and export
+  the `PLUX_TEST_DATABASE_URL` it prints. Each test creates and migrates its own schema in
+  it. Remove it with `make test-db-down`. Running the stack and the app (§2) does not need
+  it: the stack's server migrates its own database on start.
 
 ## 2. The whole loop: server, app, publish, update
 

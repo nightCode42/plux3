@@ -5,6 +5,12 @@
 # targets, so a green `make check` locally means a green pipeline.
 # Run `make help` for the list of targets.
 
+# GNU Make 4 or later: 3.81 (GnuWin32's, macOS's /usr/bin/make) ignores
+# .SHELLFLAGS, so a failing command in a pipe would pass silently.
+ifeq ($(filter 4.% 5.%,$(MAKE_VERSION)),)
+$(error GNU Make $(MAKE_VERSION) is too old: use 4 or later (Windows: winget install ezwinports.make; macOS: brew install make, then gmake))
+endif
+
 SHELL := bash
 .SHELLFLAGS := -eu -o pipefail -c
 .DEFAULT_GOAL := help
@@ -88,7 +94,7 @@ GO_BUILD_FLAGS  := -trimpath -buildvcs=false -ldflags "-s -w -buildid= \
 	go-determinism go-budgets go-fuzz currencies-check go-vuln go-build go-reproducible \
 	dart-check dart-get dart-lock-check dart-fmt dart-fmt-check dart-analyze dart-test dart-cover widgets-api widgets-api-check \
 	studio-check studio-install studio-fmt studio-lint studio-typecheck studio-test studio-cover \
-	compose-secrets compose-up compose-down compose-seed dev dev-starter dev-app e2e-starter e2e-android e2e-ios compat compose-test image-check \
+	compose-secrets compose-up compose-down test-db test-db-down compose-seed dev dev-starter dev-app e2e-starter e2e-android e2e-ios compat compose-test image-check \
 	bench-runtime bench-runtime-ab bench-sync size-android size-ios docs-site \
 	release-binaries release-notes repo-check spec-lint trace secrets workflows-lint reuse-lint hygiene
 
@@ -102,7 +108,7 @@ help: ## Show this help
 setup: install-go-tools install-python-tools install-flatc ## Install pinned tools and git hooks (run once after cloning)
 	@command -v flutter >/dev/null || echo "! Install Flutter $(FLUTTER_VERSION): https://docs.flutter.dev/get-started/install"
 	@command -v bun >/dev/null || echo "! Install Bun $(BUN_VERSION): https://bun.sh/docs/installation"
-	$(MAKE) hooks-install
+	"$(MAKE)" hooks-install
 
 install-go-tools: install-golangci-lint install-govulncheck install-gitleaks install-actionlint install-buf install-sqlc ## Install the pinned Go-based tools
 
@@ -175,8 +181,8 @@ gen: ## Regenerate all generated code and reference documents (CI-003)
 	sed -i.bak 's|^// ignore_for_file: unused_import,|// ignore_for_file: unnecessary_non_null_assertion, unused_import,|' $(FBS_DART_DIR)/*_generated.dart && rm -f $(FBS_DART_DIR)/*.bak; \
 	"$(FLATC)" --binary --schema -o "$$bfbs" $(FBS_SECTIONS); \
 	$(GO) run ./tools/cmd/schemagen -root . -bfbs "$$bfbs"
-	@$(MAKE) proto
-	@$(MAKE) sqlc
+	@"$(MAKE)" proto
+	@"$(MAKE)" sqlc
 	@for m in $(GO_MODULES); do (cd $$m && $(GO) generate ./...); done
 
 # The API contract generates the Go messages and handlers and the OpenAPI
@@ -368,7 +374,7 @@ bench-runtime-ab: ## Compare the runtime benchmark with BASE's runtime; fail on 
 
 # Verifies: QA-007, NFR-007.
 bench-sync: ## Sync the benchmark app on the simulated slow network against a server built from source (needs PLUX_TEST_DATABASE_URL)
-	@test -n "$$PLUX_TEST_DATABASE_URL" || { echo "✗ set PLUX_TEST_DATABASE_URL to a PostgreSQL database (see docs/engineering/testing.md)"; exit 1; }
+	@test -n "$${PLUX_TEST_DATABASE_URL:-}" || { echo "✗ set PLUX_TEST_DATABASE_URL: run 'make test-db' and export what it prints (docs/engineering/testing.md)"; exit 1; }
 	cd backend && PLUX_E2E_FLUTTER="$$(command -v flutter)" $(GO) test -count=1 -timeout 30m -run TestSyncOnSlowNetwork -v ./internal/server
 
 # Verifies: RT-061, NFR-009.
@@ -422,6 +428,12 @@ compose-up: compose-secrets ## Start the single-node stack: server, PostgreSQL, 
 compose-down: ## Stop the stack (volumes are kept; add -v by hand to delete them)
 	$(COMPOSE) down
 
+test-db: ## Start a throwaway PostgreSQL for the tests and print the PLUX_TEST_DATABASE_URL to export (TEST_DB_PORT=55432)
+	@scripts/test-db.sh up
+
+test-db-down: ## Remove the test database and its data
+	@scripts/test-db.sh down
+
 # The starter app under `make dev`: where the device reaches the stack
 # (after `adb reverse`, localhost works on Android too) and the defines
 # file dev-starter writes from the seeded installation.
@@ -432,13 +444,13 @@ STARTER_DEVICE  := flutter devices --machine 2>/dev/null | grep -Eq '"targetPlat
 
 # Verifies: DEP-020.
 dev: ## Start the stack with hot reload of the server and, with a device or emulator attached, of the starter app; seed sample apps on first run (DEP-020)
-	$(MAKE) compose-seed COMPOSE_OVERLAY=$(COMPOSE_DIR)/compose.dev.yaml
-	$(MAKE) dev-starter
+	"$(MAKE)" compose-seed COMPOSE_OVERLAY=$(COMPOSE_DIR)/compose.dev.yaml
+	"$(MAKE)" dev-starter
 	@if $(STARTER_DEVICE); then \
 		echo "Server: rebuilt on every change under backend/ (log: $(COMPOSE_DIR)/.dev-watch.log)."; \
 		$(COMPOSE) -f $(COMPOSE_DIR)/compose.dev.yaml watch --no-up --quiet > $(COMPOSE_DIR)/.dev-watch.log 2>&1 & watch=$$!; \
 		trap 'kill $$watch 2>/dev/null' EXIT INT TERM; \
-		$(MAKE) --no-print-directory dev-app; \
+		"$(MAKE)" --no-print-directory dev-app; \
 	else \
 		echo "No Android or iOS device, emulator or simulator attached: watching the server only."; \
 		echo "Start one and run 'make dev-app' in a second terminal for the starter app with hot reload."; \
@@ -455,13 +467,13 @@ dev-starter: ## Point the starter app at the seeded dev stack: write its defines
 	@echo "Starter: $(STARTER_DEFINES) and its baseline in apps/starter/assets/plux"
 
 dev-app: ## Run the starter app against the dev stack with Flutter hot reload: r reloads, R restarts, q quits (DEP-020)
-	@test -s $(STARTER_DEFINES) || $(MAKE) --no-print-directory dev-starter
+	@test -s $(STARTER_DEFINES) || "$(MAKE)" --no-print-directory dev-starter
 	@if command -v adb >/dev/null 2>&1; then adb reverse tcp:8080 tcp:8080 >/dev/null 2>&1 || true; fi
 	cd apps/starter && flutter run --dart-define-from-file=.dart_defines.json
 
 # Verifies: QA-006.
 e2e-starter: ## Run the starter app's end-to-end flows on this machine against a server built from source (needs PLUX_TEST_DATABASE_URL)
-	@test -n "$$PLUX_TEST_DATABASE_URL" || { echo "✗ set PLUX_TEST_DATABASE_URL to a PostgreSQL database (see docs/engineering/testing.md)"; exit 1; }
+	@test -n "$${PLUX_TEST_DATABASE_URL:-}" || { echo "✗ set PLUX_TEST_DATABASE_URL: run 'make test-db' and export what it prints (docs/engineering/testing.md)"; exit 1; }
 	cd backend && PLUX_E2E_FLUTTER="$$(command -v flutter)" $(GO) test -count=1 -timeout 45m -run TestStarterAppAgainstTheServer -v ./internal/server
 
 # ANDROID_API picks the emulator's system image for e2e-android.
@@ -477,7 +489,7 @@ e2e-ios: ## Run the starter's flows on an iOS simulator (CI only; needs Xcode, j
 
 # Verifies: QA-010.
 compat: ## Run the compatibility matrix: released runtimes against today's server, today's runtime against released servers (QA-010)
-	@test -n "$$PLUX_TEST_DATABASE_URL" || { echo "✗ set PLUX_TEST_DATABASE_URL to a PostgreSQL database (see docs/engineering/testing.md)"; exit 1; }
+	@test -n "$${PLUX_TEST_DATABASE_URL:-}" || { echo "✗ set PLUX_TEST_DATABASE_URL: run 'make test-db' and export what it prints (docs/engineering/testing.md)"; exit 1; }
 	test/compat/run.sh
 
 # COMPOSE_OVERLAY adds a Compose file for compose-seed (dev or load).
