@@ -1,5 +1,4 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-labelledby="t">
   <title id="t">Plux app icon</title>
-  <rect width="128" height="128" rx="28" fill="#5B3DF5"/>
-  <path d="M40 40 L88 88 M88 40 L40 88" stroke="#FFFFFF" stroke-width="16" stroke-linecap="round"/>
+  <defs><linearGradient id="gi" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7257FF"/><stop offset="1" stop-color="#4A2DE6"/></linearGradient></defs><rect width="128" height="128" rx="28.16" fill="url(#gi)"/><g stroke="#FFFFFF" stroke-width="15" stroke-linecap="round"><path d="M36 36 L50.5 50.5"/><path d="M92 36 L77.5 50.5"/><path d="M36 92 L50.5 77.5"/><path d="M92 92 L77.5 77.5"/></g><circle cx="64" cy="64" r="7.5" fill="#FFFFFF"/>
 </svg>
