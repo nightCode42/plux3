@@ -213,10 +213,9 @@
       ]
     },
     "e2e-ios": {
-      "description": "The starter app's flows on the newest iOS simulator under XCTest",
-      "goTest": ["backend/internal/server"],
+      "description": "The starter app's flows on the newest iOS simulator under XCTest: on pull requests for the runtime, the starter app and their dependencies, iOS-specific files and the flows' fixture, not for server-only changes, which the Android 35 job runs on a device (maintainer, 2026-10-01)",
       "dart": ["apps/starter"],
-      "paths": ["test/e2e/ios.sh", "schema/**", "mk/device.mk"],
+      "paths": ["test/e2e/ios.sh", "schema/testdata/documents/starter/**", "mk/device.mk"],
       "exclude": ["**/*.md", "**/android/**"]
     },
     "bench-runtime": {

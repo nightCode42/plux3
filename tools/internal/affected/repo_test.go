@@ -160,7 +160,7 @@ func TestProjectPastChangesRunTheRightJobs_CI_002(t *testing.T) {
 	for _, job := range rules.Jobs() {
 		all = append(all, job.Name)
 	}
-	goServer := []string{"bench-sync", "compose", "e2e-android", "e2e-ios", "go-lint", "go-test", "starter-e2e"}
+	goServer := []string{"bench-sync", "compose", "e2e-android", "go-lint", "go-test", "starter-e2e"}
 	runtime := []string{"bench-runtime", "bench-sync", "dart", "e2e-android", "e2e-ios", "size-android", "size-ios", "starter-e2e"}
 	cases := []struct {
 		name  string
@@ -238,6 +238,11 @@ func TestProjectPastChangesRunTheRightJobs_CI_002(t *testing.T) {
 			name:  "the runtime's Android plugin",
 			files: []string{"packages/plux_flutter/android/build.gradle.kts"},
 			want:  []string{"dart", "e2e-android", "e2e-android-26", "size-android"},
+		},
+		{
+			name:  "the starter app's iOS project",
+			files: []string{"apps/starter/ios/Runner/AppDelegate.swift"},
+			want:  []string{"dart", "e2e-ios"},
 		},
 		{
 			name:  "a Dart-only package",

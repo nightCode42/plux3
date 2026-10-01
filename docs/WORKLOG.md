@@ -44,6 +44,11 @@ runs and Android-specific changes; `analyzer` widened to `plux_native_scan`; the
 contract additions; coverage floors of new packages at the repository defaults. The
 maintainer aims to handle as much as possible in this phase.
 
+At R0's review the maintainer accepted its recommendations (plan §2.1 A8–A10): the iOS
+device job runs on pull requests for the runtime, the starter and iOS-specific files, not
+for server-only changes; plan §7.2 records what R0 did; `CI-002` is `DONE` with R0. R0
+merges together with the following milestones, on the same branch.
+
 ### P3 scope decisions (maintainer, 2026-09-28, approving the P3 plan)
 
 - **Scope boundary.** P3 renders; it does not act or navigate. Events are wired as no-ops reporting `PLX-4010` in debug builds; bindings read parameters, declared initial page state, translations and the theme; `Plux.open` pushes one page on the host navigator. `nativeRoutes`, `nativeSlots`, `nativeActions`, `events` and exposed-state writes arrive in P4/P5, so `HST-001` stays `WIP`. DPoP (P6) means the DPoP part of `ANL-002` stays open; root rotation (P6) keeps `SEC-051` `WIP`; `QA-010`'s "last three runtimes" starts with the first tag.
@@ -84,9 +89,6 @@ maintainer aims to handle as much as possible in this phase.
 | Legal review of ADR-0022 and the CLA | Maintainer | Before accepting external contributions and before the first public release. |
 | CLA signing automation | Maintainer | e.g. CLA Assistant with signatures stored in a separate branch; needed before external pull requests are merged (`GOV-034`). |
 | Android hosts need `android.uniquePackageNames=false` | Maintainer (follow-up) | Needed on Android Gradle plugin 9 while Play Services Cronet ships `cronet-api` and `cronet-shared` with one namespace, `org.chromium.net`; documented in the host guide, set in the starter and size apps. Agreed: report it upstream to `cronet_http` (dart-lang/http) and drop the line when it is fixed. |
-| R0: the iOS device job on pull requests | Maintainer | The ≤ 8-minute target for a focused change is met outside the server and the runtime, not for a change they build: the iOS job (9.4 min) is then the longest (ADR-0043 § Timings). Options: (a) accept about 10.5 minutes for those changes; (b) run iOS on pull requests only for iOS-specific and runtime changes, as for Android 26, with every run on `main` and daily; (c) try caching Xcode's build products. Recommendation: (b) for server-only changes, keeping iOS for runtime changes. |
-| R0: plan §7.2 levers not taken | Maintainer | Not done, with the reasons in ADR-0043 § What was considered: Go's test cache across runs (keyed on file times, which a fresh checkout changes); reusing the Go build job's server binary (would start the device and sync jobs three minutes later); Docker layer caching (needs a new action, A3); an emulator snapshot (the boot overlaps the build); building the iOS app during the simulator's boot (tried: 16 minutes instead of 9). Recommendation: update §7.2 to match the ADR. |
-| R0: `CI-002` status | Maintainer | Its three parts now hold — the top-level Makefile, path-filtered (affected-only) jobs, dependency caching — and `tools/internal/affected` tests name it. Its `WIP` predates this; no note says what else it waits for. Recommendation: `DONE` once R0 merges. |
 | Baseline format | Maintainer (informational) | `plux pull` will also write each bundle's signature and the asset files the release uses into the baseline (additive), so the runtime can verify baseline bundles (ADR-0029) and render assets offline (ADR-0027 Revision). |
 
 ## Hand-off notes

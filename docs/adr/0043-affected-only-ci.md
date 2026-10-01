@@ -122,7 +122,9 @@ condition fails it.
   made it take 16 minutes instead of 9 on the three-core macOS runner (run 36894816035).
   Android 26 runs on `main`, the daily and manual runs, and pull requests that change
   Android-specific files or `pubspec.lock`; Android 35 runs on every affected pull
-  request (maintainer, 2026-10-01).
+  request. On pull requests, iOS runs for the runtime, the starter app and their
+  dependencies, iOS-specific files and the flows' fixture; a server-only change is run on
+  a device by Android 35 (maintainer, 2026-10-01, after the timings below).
 - **Go lint.** The pinned Go tools are restored from a cache keyed on the `Makefile` (the
   pins) and `backend/go.mod` (the toolchain) instead of being built on every run.
 
@@ -173,12 +175,14 @@ A pull request runs the jobs its change selects, all in parallel, after the sele
 | Studio | Studio | about 1.5 | — |
 | A Dart package outside the runtime (`plux_widget_api`) | Dart and Flutter, 4.1 | about 5 | ≤ 8: met |
 | A Go tool (`tools/cmd/sizegate`) | Size (Android), 6.6 | about 8 | ≤ 8: met |
-| The compiler, the server, or the runtime | Device end-to-end (iOS), 9.4 | about 10.5 | ≤ 8: **not met** |
+| The compiler or the server | Sync benchmark, 7.5 | about 8.5 | ≤ 8: just over |
+| The runtime | Device end-to-end (iOS), 9.4 | about 10.5 | ≤ 8: **not met** |
 
-A change that the server or the runtime builds runs the device flows, and the iOS job,
-which builds the app in Xcode and runs it under XCTest on a three-core runner, is then the
-longest. Making it faster needs a cache of Xcode's build products or a narrower cadence for
-iOS on pull requests, as for Android 26; both are open for the maintainer (work log).
+A change the runtime builds runs the device flows, and the iOS job, which builds the app in
+Xcode and runs it under XCTest on a three-core runner, is then the longest. With these
+timings in hand the maintainer kept iOS for such changes and dropped it for server-only
+ones (above); a cache of Xcode's build products is the remaining lever. A server-only
+change then waits on the sync benchmark, which is the benchmark itself.
 
 ## Consequences
 
