@@ -155,25 +155,22 @@ the manifest's bundles — so a device whose download failed still gets its plan
 
 ## Size (`RT-061`, `NFR-009`)
 
-**Target:** at most 3 MiB added to a release APK for arm64 and to a thinned iOS app,
-against a blank Flutter app. Measured in CI by `make size-android` (`ubuntu-latest`)
-and `make size-ios` (`macos-latest`); [test/size](../../test/size/README.md) has the
-method, and the job lists the files that grew most.
+**Target:** at most 3 MiB added to a host app's download per platform, against a blank
+Flutter app. Measured in CI by `make size-android` (`ubuntu-latest`) and `make size-ios`
+(`macos-latest`); [test/size](../../test/size/README.md) has the method. The
+[size journey](size.md) records every measurement round; its round 1 is the P3 state:
 
-| Build | Blank | With `plux_flutter` | Added |
-|---|---:|---:|---:|
-| iOS app for arm64, archived as an IPA | 6,094,816 B | 8,555,247 B | **2,460,431 B (2.35 MiB)** |
-| Android release APK, arm64 | see below | | |
+| Build | Added by `plux_flutter` |
+|---|---:|
+| iOS IPA, arm64 | **2.35 MiB — met** |
+| Android App Bundle download, arm64-v8a / armeabi-v7a / x86_64 | **2.45 / 2.69 / 2.47 MiB** |
+| Android APK file, arm64-v8a / armeabi-v7a / x86_64 | **5.69 / 6.40 / 5.90 MiB** |
 
-**iOS — met.** **Android:** building any host app that depends on `plux_flutter` failed
-on Flutter 3.47.5's template, whose Android Gradle plugin 9.1 refuses two libraries that
-declare one namespace: Play Services Cronet 18.1.1, which `cronet_http` uses for HTTP/2
-(`SYN-010`), brings `cronet-api` and `cronet-shared`, both `org.chromium.net`. A CI
-experiment found that `android.uniquePackageNames=false` in the host's
-`gradle.properties` builds it (as does the plugin 8.11); the size job and the starter
-app set it. With it, the first measurement put the arm64 APK at about 21 MB against
-15 MB blank — over the budget; the per-file breakdown is in the job summary, and the
-work log records the decision this needs.
+The APK stores the Dart AOT code uncompressed (5.4 MB on arm64, 2.2 MB compressed), so the
+APK file exceeds 3 MiB while every App Bundle download meets it. The maintainer restates
+the budget per build (3 MiB for the App Bundle download, a separate APK budget); until
+`RT-061` is reworded the *Size (Android)* job gates the arm64 APK and stays red (work log,
+open decisions).
 
 ## Reference devices
 

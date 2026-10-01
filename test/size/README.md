@@ -31,3 +31,6 @@ highest level into one ZIP archive (`build/size/android-aab.md`). Language and d
 splits are not applied, so the figure is an upper bound of Play's download size. It is
 comparable with the iOS figure, which is compressed too; RT-061 names the APK, so the
 APK stays the gate until the maintainer decides otherwise (work log, open decisions).
+
+Each measurement round — the figures, where the bytes go, and what was decided — is
+recorded in the [size journey](../../docs/benchmarks/size.md).
