@@ -111,7 +111,10 @@ condition fails it.
   The parts are balanced by the time a run of each takes (here: start-up 11.5 s, opening
   9 s, the control 9 s, scrolling 6.5 s, against 33 s for a whole run). A policy test checks
   that the jobs together measure every part exactly once, and `benchcmp` fails a comparison
-  that holds no metric. A local run measures every part by default.
+  that holds no metric. A local run measures every part by default. The Linux desktop
+  packages' archives are cached: the runners' mirror once took 16 minutes for their 38 MB
+  in two of the three jobs (run 36894816035), and apt still installs what the current
+  index names.
 - **Device jobs.** On Android, the Go driver and the starter app are built while the
   emulator boots, so the build the flows start recompiles only the Dart code with their
   defines (21 s instead of 231 s), and Gradle's distribution and caches are restored.
@@ -143,6 +146,39 @@ number of entries small and their content traceable to `main`.
   `docker/setup-buildx-action`, a new action.
 - **An emulator snapshot.** The boot now overlaps the builds, which take longer.
 - **Sharding Go tests.** Go test is not on the critical path.
+
+## Timings
+
+The full suite before (main run 36886856869) and after, with the caches warm (manual run
+36897308652, which runs every job; the codec rebuild, which pushes leave out, took
+1.4 minutes):
+
+| Job | Before (min) | After (min) |
+|---|---:|---:|
+| Runtime benchmark | 15.6 | 8.2, 7.2 and 6.7 (three parts in parallel) |
+| Device end-to-end (iOS) | 8.8 | 9.4 |
+| Sync benchmark | 7.9 | 7.5 |
+| Device end-to-end (Android 35) | 7.8 | 7.2 |
+| Device end-to-end (Android 26) | 8.3 | 6.3 |
+| Size (Android) | 7.3 | 6.6 |
+| Go lint | 3.7 | 1.7 |
+| **Wall clock, to CI OK** | **16.2** | **10.6** |
+
+A pull request runs the jobs its change selects, all in parallel, after the selection
+(0.3 minutes, plus up to a minute waiting for a runner). From the durations above:
+
+| Change | Longest selected job | Wall clock (min) | Target |
+|---|---|---:|---|
+| Documentation only (PR #12) | the always-on checks | about 1.5 | ≤ 3: met |
+| Studio | Studio | about 1.5 | — |
+| A Dart package outside the runtime (`plux_widget_api`) | Dart and Flutter, 4.1 | about 5 | ≤ 8: met |
+| A Go tool (`tools/cmd/sizegate`) | Size (Android), 6.6 | about 8 | ≤ 8: met |
+| The compiler, the server, or the runtime | Device end-to-end (iOS), 9.4 | about 10.5 | ≤ 8: **not met** |
+
+A change that the server or the runtime builds runs the device flows, and the iOS job,
+which builds the app in Xcode and runs it under XCTest on a three-core runner, is then the
+longest. Making it faster needs a cache of Xcode's build products or a narrower cadence for
+iOS on pull requests, as for Android 26; both are open for the maintainer (work log).
 
 ## Consequences
 

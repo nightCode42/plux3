@@ -15,9 +15,9 @@
 #   - Compiler output is checked against the goldens on Linux, macOS and
 #     Windows (CMP-002); fuzzing runs on a schedule in fuzz.yml.
 #   - Actions are pinned to full commit SHAs; permissions are read-only unless
-#     a job needs more; checkouts never persist credentials. The tool and
-#     Gradle caches are restored by every run and saved only by runs that
-#     are not pull requests (ADR-0043).
+#     a job needs more; checkouts never persist credentials. The tool,
+#     Gradle and package caches are restored by every run and saved only by
+#     runs that are not pull requests (ADR-0043).
 
 name: CI
 
@@ -914,10 +914,26 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
+      # The packages' archives: three parts download the same 38 MB, and
+      # the runners' mirror has taken 16 minutes for them (run 36894816035).
+      # apt still installs what the current index names.
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: apt
+        with:
+          path: ~/apt-archives
+          key: apt-desktop-${{ runner.os }}-ubuntu-24.04
       - name: Install the Linux desktop toolchain and a virtual display
         run: |
+          mkdir -p ~/apt-archives/partial
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends clang cmake ninja-build pkg-config libgtk-3-dev xvfb
+          sudo apt-get install -y --no-install-recommends -o Dir::Cache::Archives="$HOME/apt-archives" \
+            clang cmake ninja-build pkg-config libgtk-3-dev xvfb
+          sudo chown -R "$(id -u):$(id -g)" ~/apt-archives
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        if: github.event_name != 'pull_request' && matrix.scenarios == 'startup' && steps.apt.outputs.cache-hit != 'true'
+        with:
+          path: ~/apt-archives
+          key: ${{ steps.apt.outputs.cache-primary-key }}
       - name: Choose the base to compare with
         id: base
         env:
