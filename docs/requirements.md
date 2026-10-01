@@ -1,7 +1,7 @@
 # Plux — System Requirements Specification
 
 **Document ID:** `SRS-PLUX-001`
-**Version:** 1.1.7
+**Version:** 1.1.8
 **Status:** Draft — living document, revised as implementation proceeds
 **Date:** 2026-10-01
 **Applies to:** Plux Schema, Plux Compiler, Plux Server, Plux Functions, `plux_flutter` runtime, Plux Dev app, Plux Studio, Plux CLI, Plux AI
@@ -917,7 +917,7 @@ Branching is deliberately **not** part of the model (ADR-0015). Each plugin has 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `RT-001` | P3 | MUST | The runtime **MUST** be published as `plux_flutter` (pub.dev and private registries) with a stable, semantically versioned public API, 100% dartdoc coverage of public members and maximum pub points. | WIP |
-| `RT-002` | P3 | MUST | Supported host platforms **MUST** be Android 7.0 (API 24) and later and iOS 15 and later, on the latest stable Flutter and the previous stable. | WIP |
+| `RT-002` | P3 | MUST | Supported host platforms **MUST** be Android 7.0 (API 24) and later and iOS 15 and later, on the latest stable Flutter and the previous stable, from Flutter 3.47 on: no earlier stable is supported (ADR-0038). | WIP |
 | `RT-003` | P3 | MUST | The runtime **MUST** use Riverpod as its state engine and **MUST** work both in host apps that use Riverpod (sharing or nesting the `ProviderContainer`) and in apps that do not (self-contained container). | DONE |
 | `RT-004` | P3 | MUST | `Plux.initialize()` **MUST** return in ≤ 50 ms p95 on the mid-tier reference device (§30) when a cached or baseline release exists; all network, decompression, patching and hashing happen on background isolates (layering rule L-6). | WIP |
 
@@ -1949,7 +1949,7 @@ This section concerns how Plux itself is verified. §22.2 covers the testing too
 | `NFR-003` | P3 | MUST | Page build time for 300 nodes | ≤ 8 ms p95 (mid-tier) | WIP |
 | `NFR-004` | P5 | MUST | Scrolling a 1,000-item Plux list | ≤ 1% janky frames at 60 Hz (mid-tier); no frame > 32 ms | SPEC |
 | `NFR-005` | P2 | MUST | Delta size for a single text change in one page | ≤ 2 KiB | DONE |
-| `NFR-006` | P3 | MUST | Up-to-date check at app start | 1 request, ≤ 1 KiB on the wire (`304`) | WIP |
+| `NFR-006` | P3 | MUST | Up-to-date check at app start | 1 manifest request, ≤ 1 KiB of request and response bodies (`304`-style answer); headers and the device-token request are not counted (ADR-0037) | DONE |
 | `NFR-007` | P3 | MUST | Sync of a typical update (3 plugins changed) on slow network | ≤ 3 s p95 | DONE |
 | `NFR-008` | P3 | MUST | Runtime memory overhead with 50 plugins installed | ≤ 30 MiB (excluding images) | WIP |
 | `NFR-009` | P3 | MUST | Core package size | ≤ 3 MiB downloaded on Android (App Bundle) and iOS; ≤ 6.5 MiB in an Android APK (`RT-061`) | DONE |
@@ -2939,10 +2939,10 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | Field | Value |
 |---|---|
 | Document ID | `SRS-PLUX-001` |
-| Version | 1.1.7 |
+| Version | 1.1.8 |
 | Status | Draft (living document) |
 | Date | 2026-10-01 |
-| Supersedes | 1.1.6 |
+| Supersedes | 1.1.7 |
 | Change process | Amendments are made by pull request against `docs/requirements.md`. A change to a `MUST` requirement requires a corresponding ADR. The version is incremented per Semantic Versioning: a breaking change to an existing requirement is a major increment, a new requirement is a minor increment, and a clarification is a patch increment. |
 
 ### Revision history
@@ -2958,3 +2958,4 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | 1.1.5 | 2026-09-28 | MinIO no longer publishes container images: §6.2, `DEP-002` and App. H name an S3-compatible store, SeaweedFS in the Compose stack (maintainer decision; ADR-0007, Revision). |
 | 1.1.6 | 2026-09-28 | `SRV-020`: documents are stored as their canonical JSON bytes, zstd-compressed and addressed by SHA-256, rather than as `JSONB` (maintainer decision; ADR-0007, Revision). |
 | 1.1.7 | 2026-10-01 | `RT-061`, `NFR-009`: the size budget is set per build — ≤ 3 MiB for the App Bundle download per ABI and the thinned IPA, ≤ 6.5 MiB for an APK per ABI, which stores the Dart code uncompressed — replacing ≤ 3 MiB for the arm64 APK (maintainer decision; ADR-0036). |
+| 1.1.8 | 2026-10-01 | `NFR-006`: the up-to-date check counts the manifest request's bodies, not headers or the device-token request, which grow with DPoP from P6; the device sends a digest of its installed bundles (maintainer decision; ADR-0037). `RT-002`: Flutter support starts at 3.47, the stable current when P3 closes — the previous stable 3.44 cannot resolve the build-hook stack, and no dependency is downgraded (maintainer decision; ADR-0038). |

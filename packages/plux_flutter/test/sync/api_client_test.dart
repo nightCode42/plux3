@@ -14,6 +14,14 @@ import 'package:plux_flutter/src/sync/downloader.dart';
 import 'package:plux_flutter/src/sync/sync_event.dart';
 
 void main() {
+  test('the installed digest matches the server\'s vector [NFR-006]', () {
+    final digest = installedDigest({'loans': 'bb' * 32, '': 'aa' * 32});
+    expect(
+      digest.map((b) => b.toRadixString(16).padLeft(2, '0')).join(),
+      '8f0a15e796b7d9217c248acc882f04d173f350342a0733a60dd1e50d13deedc9',
+    );
+  });
+
   test('reports the OS version within what registration accepts, without '
       'kernel build details [SYN-001] [REL-080]', () {
     // Android's kernel string, as Platform.operatingSystemVersion gives it.

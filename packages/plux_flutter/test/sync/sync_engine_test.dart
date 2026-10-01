@@ -175,9 +175,6 @@ void main() {
     'an unchanged release costs one small request [NFR-006] [SYN-013]',
     () async {
       await firstRelease();
-      // The ETag covers the bundles the device holds, so the first check
-      // after an activation fetches the manifest once more.
-      await sync();
       final before = server.requests.length;
       final (r, events) = await sync();
       expect(r.outcome, SyncOutcome.upToDate);
@@ -185,7 +182,12 @@ void main() {
       final calls = server.requests.sublist(before);
       expect(calls.where((p) => p.endsWith('GetManifest')).length, 1);
       expect(calls.where((p) => p.startsWith('/v1/objects')), isEmpty);
-      expect(server.manifestResponseSizes.last, lessThan(1024));
+      // One manifest request whose bodies stay under 1 KiB: the device
+      // sends the digest of its bundles, not the list.
+      expect(
+        server.manifestRequestSizes.last + server.manifestResponseSizes.last,
+        lessThan(1024),
+      );
     },
   );
 

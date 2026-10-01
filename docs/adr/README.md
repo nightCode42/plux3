@@ -46,5 +46,7 @@ Files are named `NNNN-short-title.md` with a four-digit, never-reused number. Th
 | [0034](0034-runtime-telemetry.md) | Runtime telemetry: consent-gated events buffered and sent by the sync isolate | P3 | Accepted |
 | [0035](0035-device-tests-in-ci.md) | Device end-to-end tests in CI: emulators and simulators on GitHub's free runners | P3 | Accepted |
 | [0036](0036-size-budgets-per-build.md) | Size budgets per build: what a device downloads, and the APK file | P3 | Accepted |
+| [0037](0037-up-to-date-check-installed-digest.md) | Up-to-date check: a digest of the installed bundles, and a budget on bodies | P3 | Accepted |
+| [0038](0038-flutter-support-window.md) | Flutter support window: from 3.47 on, the latest stable and the previous one | P3 | Accepted |
 
 The decisions for planned ADRs are summarised in spec §32 and §34.1. Each is written in full before or alongside the first implementation that depends on it, and its status is updated here.

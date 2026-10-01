@@ -257,3 +257,14 @@ func TestDeviceVerificationVectors(t *testing.T) {
 		t.Errorf("%s differs; run the test with -update and review", manifestVectorsPath)
 	}
 }
+
+// TestInstalledDigestVector pins the digest a device sends for its
+// installed bundles; the runtime's api_client_test checks the same value.
+// Verifies: NFR-006.
+func TestInstalledDigestVector(t *testing.T) {
+	t.Parallel()
+	got := InstalledDigest(map[string][]byte{"loans": bytes.Repeat([]byte{0xbb}, 32), "": bytes.Repeat([]byte{0xaa}, 32)})
+	if want := "8f0a15e796b7d9217c248acc882f04d173f350342a0733a60dd1e50d13deedc9"; hex.EncodeToString(got) != want {
+		t.Errorf("digest %x, want %s", got, want)
+	}
+}

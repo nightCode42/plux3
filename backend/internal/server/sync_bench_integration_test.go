@@ -327,6 +327,24 @@ func (b *syncBench) check(t *testing.T) {
 			updates = append(updates, total(ex))
 		}
 	}
+	// NFR-006: each up-to-date check is one manifest request whose bodies,
+	// both ways, stay within 1 KiB. The device-token request is not
+	// counted, nor are headers (from P6 they carry DPoP proofs; ADR-0037).
+	var checkBodies []int64
+	for _, name := range phaseNames(b.phases, "check-") {
+		var manifests int
+		var bodies int64
+		for _, e := range b.phases[name] {
+			if strings.HasSuffix(e.Path, "/GetManifest") {
+				manifests++
+				bodies += e.UpBody + e.DownBody
+			}
+		}
+		checkBodies = append(checkBodies, bodies)
+		if manifests != 1 || bodies > 1024 {
+			t.Errorf("NFR-006: %s made %d manifest requests with %d body bytes, want 1 within 1,024", name, manifests, bodies)
+		}
+	}
 	if len(checks) == 0 || len(updates) == 0 || len(b.updates) != len(updates) {
 		t.Fatalf("phases missing: %d checks, %d updates, %d times", len(checks), len(updates), len(b.updates))
 	}
@@ -337,6 +355,9 @@ func (b *syncBench) check(t *testing.T) {
 	fmt.Fprintf(&report, "\nTelemetry (`IngestEvents`) is listed but not counted: it rides on the sync's token after the sync.\n")
 	fmt.Fprintf(&report, "\n| Measure | Value |\n|---|---:|\n")
 	fmt.Fprintf(&report, "| First launch, bytes | %d |\n| Up-to-date check, requests | %d |\n| Up-to-date check, bytes (median) | %d |\n", got.First, median(intsToInt64(checkRequests)), got.Check)
+	if len(checkBodies) > 0 {
+		fmt.Fprintf(&report, "| Up-to-date check, manifest bodies (median, NFR-006) | %d |\n", median(checkBodies))
+	}
 	fmt.Fprintf(&report, "| Update of three plugins, bytes (median) | %d |\n| Update of three plugins, p50 (ms) | %.0f |\n| Update of three plugins, p95 (ms) | %.0f |\n",
 		got.Update, times[len(times)/2], p95)
 	t.Log("\n" + report.String())

@@ -10,7 +10,7 @@ tested host to copy from.
 
 | | Minimum |
 |---|---|
-| Flutter | 3.47 (the version the repository pins) |
+| Flutter | 3.47; from then on the latest stable and the previous one (`RT-002`, ADR-0038) |
 | Android | API 24 (Android 7.0) |
 | iOS | 15 |
 
@@ -22,6 +22,10 @@ app's `android/gradle.properties` contains:
 ```properties
 android.uniquePackageNames=false
 ```
+
+The two libraries are Play Services Cronet's `cronet-api` and `cronet-shared`, both
+`org.chromium.net`. This is to be reported to `cronet_http` (dart-lang/http); once a
+release fixes it, the line is no longer needed and this guide says so.
 
 A release build also needs the `INTERNET` permission in
 `android/app/src/main/AndroidManifest.xml` (Flutter's template adds it to debug and

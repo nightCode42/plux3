@@ -6644,6 +6644,15 @@ components:
           type: string
           title: if_none_match
           description: if_none_match is the ETag of the manifest the device already has.
+        installedDigest:
+          type: string
+          title: installed_digest
+          format: byte
+          description: |-
+            installed_digest stands for installed on an up-to-date check
+             (NFR-006, ADR-0037): the SHA-256 of one line `<key>:<sha256 hex>\n`
+             per installed bundle, sorted by key, the app bundle's key empty. A
+             device that sends it with if_none_match sends no installed list.
       title: GetManifestRequest
       additionalProperties: false
     plux.v1.GetManifestResponse:
@@ -6660,6 +6669,13 @@ components:
         etag:
           type: string
           title: etag
+        installedRequired:
+          type: boolean
+          title: installed_required
+          description: |-
+            installed_required is true when a request with installed_digest
+             found the manifest changed: manifest is unset, and the device asks
+             again with installed, from which the server plans its deltas.
       title: GetManifestResponse
       additionalProperties: false
     plux.v1.GetOrganizationRequest:

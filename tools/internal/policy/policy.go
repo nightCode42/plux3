@@ -321,8 +321,45 @@ func releaseWorkflowProblems(root, release string) []string {
 // pubspecVersion is a pubspec's version line.
 var pubspecVersion = regexp.MustCompile(`(?m)^version: *(\S+)$`)
 
+// pinnedDependencies are the dependencies a published package pins to
+// one version: the FlatBuffers runtime, which must match the flatc that
+// generates its accessors (ADR-0002). Every other dependency is a caret
+// range, so users can take compatible releases (RT-001); the workspace's
+// pubspec.lock still fixes what this repository builds and tests.
+var pinnedDependencies = map[string]bool{"flat_buffers": true}
+
+// dependencyLine is a hosted dependency with its version constraint, in
+// a pubspec's dependencies block.
+var dependencyLine = regexp.MustCompile(`^  ([a-z0-9_]+): *(\S+)$`)
+
+// dependencyProblems checks the version constraint of each hosted
+// dependency of a published package.
+func dependencyProblems(name string, pubspec []byte) []string {
+	var problems []string
+	in := false
+	for _, line := range strings.Split(string(pubspec), "\n") {
+		if line != "" && !strings.HasPrefix(line, " ") {
+			in = line == "dependencies:"
+			continue
+		}
+		m := dependencyLine.FindStringSubmatch(line)
+		if !in || m == nil {
+			continue
+		}
+		dep, constraint := m[1], m[2]
+		switch caret := strings.HasPrefix(constraint, "^"); {
+		case pinnedDependencies[dep] && caret:
+			problems = append(problems, name+" must pin "+dep+" to one version (ADR-0002), not "+constraint)
+		case !pinnedDependencies[dep] && !caret:
+			problems = append(problems, name+" pins "+dep+" to "+constraint+"; use a caret range (RT-001)")
+		}
+	}
+	return problems
+}
+
 // dartPackageProblems checks one package: nothing when it is not
-// published, else its README, example, changelog entry and tag pattern.
+// published, else its README, example, changelog entry, tag pattern and
+// dependency constraints.
 func dartPackageProblems(pubspec, release string) ([]string, error) {
 	data, err := os.ReadFile(pubspec) //nolint:gosec // G304: a pubspec of the repository.
 	if err != nil {
@@ -337,7 +374,7 @@ func dartPackageProblems(pubspec, release string) ([]string, error) {
 	if m == nil {
 		return []string{name + " declares no version"}, nil
 	}
-	var problems []string
+	problems := dependencyProblems(name, data)
 	changelog, err := os.ReadFile(filepath.Join(dir, "CHANGELOG.md")) //nolint:gosec // G304: beside the pubspec.
 	if err != nil || !strings.Contains(string(changelog), "\n## "+string(m[1])+"\n") {
 		problems = append(problems, name+" has no CHANGELOG.md entry for "+string(m[1]))

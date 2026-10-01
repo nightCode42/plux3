@@ -65,6 +65,9 @@ type ManifestRequest struct {
 	// of the bundle the device holds.
 	Installed   map[string][]byte
 	IfNoneMatch string
+	// InstalledDigest stands for Installed on an up-to-date check
+	// (NFR-006): InstalledDigest of the bundles the device holds.
+	InstalledDigest []byte
 }
 
 // SyncStep tells a device how to obtain one bundle.
@@ -79,7 +82,10 @@ type SyncStep struct {
 // ServedManifest is a manifest with the plan for one device.
 type ServedManifest struct {
 	NotModified bool
-	ETag        string
+	// InstalledRequired asks a device that sent only InstalledDigest for
+	// its installed bundles: the manifest changed, and its plan needs them.
+	InstalledRequired bool
+	ETag              string
 	// Signed is the canonical JSON the signatures cover.
 	Signed     []byte
 	Document   SignedManifest
@@ -97,7 +103,10 @@ type ServedManifest struct {
 // the manifest's bundles gets "not modified" — one small response
 // (REL-031). A device that sends it without holding them (a download
 // failed after the manifest was accepted) gets the manifest and its plan
-// again.
+// again. A device may send InstalledDigest in place of its bundles
+// (NFR-006): it matches when the device holds exactly the manifest's
+// bundles, and otherwise the device is asked for them (InstalledRequired),
+// since the plan's deltas depend on them.
 func (s *Service) GetManifest(ctx context.Context, r ManifestRequest) (ServedManifest, error) {
 	base, err := s.latestManifest(ctx, r.OrganizationID, r.EnvironmentID, channelOrDefault(r.Channel))
 	if err != nil {
@@ -109,8 +118,11 @@ func (s *Service) GetManifest(ctx context.Context, r ManifestRequest) (ServedMan
 		targets[p.Key] = p.SignedBundle
 	}
 	out.ETag = etag(base.id[:])
-	if r.IfNoneMatch != "" && r.IfNoneMatch == out.ETag && holds(targets, r.Installed) {
+	if r.IfNoneMatch != "" && r.IfNoneMatch == out.ETag && (holds(targets, r.Installed) || digestHolds(targets, r.InstalledDigest)) {
 		return ServedManifest{NotModified: true, ETag: out.ETag}, nil
+	}
+	if len(r.Installed) == 0 && len(r.InstalledDigest) > 0 {
+		return ServedManifest{InstalledRequired: true, ETag: out.ETag}, nil
 	}
 	out.Plan = make(map[string]SyncStep, len(targets))
 	out.URLs = make(map[string]string, len(targets))
@@ -247,6 +259,33 @@ func holds(targets map[string]SignedBundle, installed map[string][]byte) bool {
 		}
 	}
 	return true
+}
+
+// InstalledDigest is what a device holding installed sends in place of it
+// (NFR-006, ADR-0037): the SHA-256 of one line "<key>:<sha256 hex>\n" per
+// bundle, sorted by key, the app bundle's key empty.
+func InstalledDigest(installed map[string][]byte) []byte {
+	h := sha256.New()
+	for _, k := range slices.Sorted(mapsKeys(installed)) {
+		_, _ = fmt.Fprintf(h, "%s:%x\n", k, installed[k])
+	}
+	return h.Sum(nil)
+}
+
+// digestHolds reports whether digest is that of exactly the targets.
+func digestHolds(targets map[string]SignedBundle, digest []byte) bool {
+	if len(digest) == 0 {
+		return false
+	}
+	want := make(map[string][]byte, len(targets))
+	for k, t := range targets {
+		h, ok := parseHashRef(t.Hash)
+		if !ok {
+			return false
+		}
+		want[k] = h
+	}
+	return bytes.Equal(InstalledDigest(want), digest)
 }
 
 func mapsKeys[V any](m map[string]V) func(func(string) bool) {

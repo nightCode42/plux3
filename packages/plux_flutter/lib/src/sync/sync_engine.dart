@@ -147,18 +147,32 @@ final class SyncEngine {
       final active = pointer.active == null
           ? null
           : store.record(pointer.active!);
-      final res = await api.manifest(
+      final hashes = {
+        for (final b in active?.bundles ?? const <RecordBundle>[])
+          b.key: b.hash,
+      };
+      final etag = active == null ? '' : pointer.etag;
+      // An up-to-date check sends the digest of the installed bundles,
+      // and the bundles themselves only when the server asks: when the
+      // manifest changed, its plan's deltas depend on them (NFR-006).
+      Future<ManifestResponse> ask({required bool list}) => api.manifest(
         token: token,
         appId: config.appId,
         environment: config.environment,
         channel: config.channel,
         installedSequence: active?.sequence ?? 0,
         installed: {
-          for (final b in active?.bundles ?? const <RecordBundle>[])
-            b.key: 'sha256:${b.hash}',
+          if (list)
+            for (final MapEntry(:key, :value) in hashes.entries)
+              key: 'sha256:$value',
         },
-        ifNoneMatch: active == null ? '' : pointer.etag,
+        ifNoneMatch: etag,
+        installedDigest: list ? const [] : installedDigest(hashes),
       );
+      var res = await ask(list: etag.isEmpty);
+      if (res.installedRequired) {
+        res = await ask(list: true);
+      }
       if (res.notModified) {
         emit(SyncUpToDate(pointer.active));
         return SyncResult(

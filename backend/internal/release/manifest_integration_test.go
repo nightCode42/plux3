@@ -27,7 +27,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/tenancy"
 )
 
-// Verifies: BND-002, SEC-056, REL-020, REL-021, REL-022, REL-023, REL-024, REL-030, REL-031, REL-032, REL-033, NFR-005.
+// Verifies: BND-002, SEC-056, REL-020, REL-021, REL-022, REL-023, REL-024, REL-030, REL-031, REL-032, REL-033, NFR-005, NFR-006.
 // A promoted release gets a signed manifest; a device holding the old
 // app bundle is told to fetch a small delta that rebuilds the new one;
 // an unchanged device gets "not modified"; switches reach the manifest.
@@ -168,6 +168,23 @@ func TestManifestAndDeltas(t *testing.T) {
 	if partial, err := f.rel.GetManifest(ctx, req); err != nil || partial.NotModified {
 		t.Errorf("a device without a plugin: %+v %v", partial.NotModified, err)
 	}
+	// The digest of the installed bundles stands for them on an
+	// up-to-date check (NFR-006); any other digest, or a changed
+	// manifest, asks the device for its bundles, which the plan needs.
+	req.Installed = nil
+	req.InstalledDigest = release.InstalledDigest(map[string][]byte{"": newApp, "loans": oldPlugin})
+	if nm, err := f.rel.GetManifest(ctx, req); err != nil || !nm.NotModified || nm.InstalledRequired {
+		t.Errorf("not modified by digest: %+v %v", nm, err)
+	}
+	req.InstalledDigest = release.InstalledDigest(map[string][]byte{"": newApp})
+	if ask, err := f.rel.GetManifest(ctx, req); err != nil || ask.NotModified || !ask.InstalledRequired || ask.Signed != nil {
+		t.Errorf("a digest of other bundles: %+v %v", ask, err)
+	}
+	req.IfNoneMatch, req.InstalledDigest = "an older manifest", release.InstalledDigest(map[string][]byte{"": newApp, "loans": oldPlugin})
+	if ask, err := f.rel.GetManifest(ctx, req); err != nil || !ask.InstalledRequired || ask.ETag != m2.ETag {
+		t.Errorf("a digest with an older ETag: %+v %v", ask, err)
+	}
+	req.InstalledDigest = nil
 	// A bundle the organisation never published gets the full bundle.
 	req.IfNoneMatch = ""
 	req.Installed = map[string][]byte{"": bytes.Repeat([]byte{7}, 32)}

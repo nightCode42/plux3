@@ -17,6 +17,7 @@ import 'package:cryptography/cryptography.dart' show SimpleKeyPair;
 import 'package:cryptography/dart.dart';
 import 'package:plux_flutter/src/assets/assets.dart';
 import 'package:plux_flutter/src/bundle/container.dart';
+import 'package:plux_flutter/src/sync/api_client.dart' show installedDigest;
 import 'package:plux_flutter/src/verify/jcs.dart';
 import 'package:plux_flutter/src/verify/manifest.dart';
 
@@ -221,6 +222,9 @@ final class FakePluxServer {
   /// Bytes of each manifest response body.
   final List<int> manifestResponseSizes = [];
 
+  /// Bytes of each manifest request body, as sent.
+  final List<int> manifestRequestSizes = [];
+
   /// When the manifest expires.
   DateTime expires = DateTime.utc(2100);
 
@@ -332,6 +336,9 @@ final class FakePluxServer {
       final raw = await req.fold<List<int>>([], (a, b) => a..addAll(b));
       final gzipped = req.headers.value('content-encoding') == 'gzip';
       if (gzipped) compressedRequests.add(req.uri.path);
+      if (req.uri.path.endsWith('GetManifest')) {
+        manifestRequestSizes.add(raw.length);
+      }
       final body = jsonDecode(
         utf8.decode(gzipped ? gzip.decode(raw) : raw),
       ) as Map<String, Object?>;
@@ -452,9 +459,25 @@ final class FakePluxServer {
           '',
         ),
     };
+    // As the server does: the ETag names the manifest; "not modified"
+    // needs the device to hold exactly its bundles, by list or by digest,
+    // and a digest that does not match asks for the list (NFR-006).
     final etag =
-        '"${sha256.convert(utf8.encode('${r.sequence}|${r.killSwitches}|${r.appKillSwitch}|${installed.entries.map((e) => '${e.key}=${e.value}').join(',')}')).toString().substring(0, 16)}"';
-    if (req['ifNoneMatch'] == etag) return {'notModified': true, 'etag': etag};
+        '"${sha256.convert(utf8.encode('${r.sequence}|${r.killSwitches}|${r.appKillSwitch}')).toString().substring(0, 16)}"';
+    final targets = {
+      '': Goldens.hashOf(r.app),
+      for (final MapEntry(:key, :value) in r.plugins.entries)
+        key: Goldens.hashOf(value),
+    };
+    final digest = req['installedDigest'] as String?;
+    final holds = digest != null
+        ? digest == base64.encode(installedDigest(targets))
+        : targets.length == installed.length &&
+              targets.entries.every((e) => installed[e.key] == e.value);
+    if (req['ifNoneMatch'] == etag && holds) {
+      return {'notModified': true, 'etag': etag};
+    }
+    if (digest != null) return {'installedRequired': true, 'etag': etag};
     Map<String, Object?> bundleJson(Uint8List b) => {
       'hash': 'sha256:${Goldens.hashOf(b)}',
       'size': b.length,

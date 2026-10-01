@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -23,6 +24,9 @@ type Exchange struct {
 	Status       int
 	// Up and Down are the bytes the device sent and received.
 	Up, Down int64
+	// UpBody and DownBody are the request's and the response's bodies
+	// alone, as sent (NFR-006 counts these).
+	UpBody, DownBody int64
 	// Start is when the proxy received the request; End when it had
 	// written the response.
 	Start, End time.Time
@@ -121,12 +125,17 @@ func (p *Proxy) record(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		sw := &statusWriter{ResponseWriter: w, status: http.StatusOK}
+		body := &countingBody{ReadCloser: r.Body}
+		r.Body = body
 		h.ServeHTTP(sw, r)
 		if f, ok := w.(http.Flusher); ok {
 			f.Flush()
 		}
 		c, _ := r.Context().Value(connKey{}).(*countingConn)
-		ex := Exchange{Method: r.Method, Path: r.URL.Path, Status: sw.status, Start: start, End: time.Now()}
+		ex := Exchange{
+			Method: r.Method, Path: r.URL.Path, Status: sw.status, Start: start, End: time.Now(),
+			UpBody: body.n, DownBody: sw.n,
+		}
 		if c != nil {
 			ex.Up, ex.Down = c.take()
 		}
@@ -139,6 +148,25 @@ func (p *Proxy) record(h http.Handler) http.Handler {
 type statusWriter struct {
 	http.ResponseWriter
 	status int
+	n      int64 // body bytes written
+}
+
+func (w *statusWriter) Write(b []byte) (int, error) {
+	n, err := w.ResponseWriter.Write(b)
+	w.n += int64(n)
+	return n, err //nolint:wrapcheck // The handler sees the writer's errors as they are.
+}
+
+// countingBody counts the request body bytes the handler reads.
+type countingBody struct {
+	io.ReadCloser
+	n int64
+}
+
+func (b *countingBody) Read(p []byte) (int, error) {
+	n, err := b.ReadCloser.Read(p)
+	b.n += int64(n)
+	return n, err //nolint:wrapcheck // The handler sees the body's errors as they are.
 }
 
 func (w *statusWriter) WriteHeader(code int) {

@@ -82,7 +82,10 @@ put to the maintainer with `QA-006`'s device farm.
   in CI; the iOS run reports one XCTest result for all the flows, with the Dart failure's
   message, rather than flutter test's per-test output.
 - **Follow-up:** report the log race to Flutter with the evidence of runs 36809265180 and
-  36816150804; decide on a device service for API 24, older iOS and real devices (`QA-006`).
+  36816150804. Real devices, API 24 and a low-end Android come from Firebase Test Lab's
+  no-cost plan in a later phase (maintainer, 2026-10-01; work log): a nightly workflow with a
+  Google Cloud project and service-account secret, an Android instrumentation wrapper for the
+  flows, the `ios/RunnerTests` bundle as it is, and a staging server the devices can reach.
 
 ## Options in detail
 

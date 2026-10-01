@@ -157,7 +157,7 @@ func TestCheckWorkflowShellsReportsGaps(t *testing.T) {
 
 // Dart packages are published by OIDC, and every release has notes with
 // upgrade steps and a changelog entry.
-// Verifies: CI-005, DX-006.
+// Verifies: CI-005, DX-006, RT-001.
 func TestProjectDartPackagesPublishByOIDCWithReleaseNotes(t *testing.T) {
 	t.Parallel()
 
@@ -177,7 +177,7 @@ func TestCheckDartPublishingReportsGaps(t *testing.T) {
 			"  pub:\n    permissions:\n      id-token: write\n    steps:\n      - run: dart pub publish --force\n"+
 			"  other:\n    steps:\n      - run: echo ${{ secrets.X }}\n")
 		write(t, root, "cliff.toml", "body = \"### Upgrading\"\n")
-		write(t, root, "packages/pkg/pubspec.yaml", "name: pkg\nversion: 1.2.0\n")
+		write(t, root, "packages/pkg/pubspec.yaml", "name: pkg\nversion: 1.2.0\ndependencies:\n  flutter:\n    sdk: flutter\n  flat_buffers: 25.9.23\n  http: ^1.6.0\ndev_dependencies:\n  test: 1.26.0\n")
 		write(t, root, "packages/pkg/CHANGELOG.md", "# Changelog\n\n## 1.2.0\n\n- First.\n")
 		write(t, root, "packages/pkg/README.md", "# pkg\n")
 		write(t, root, "packages/pkg/example/main.dart", "void main() {}\n")
@@ -188,6 +188,8 @@ func TestCheckDartPublishingReportsGaps(t *testing.T) {
 		t.Fatalf("a good repository: %v", err)
 	}
 	for _, c := range []struct{ name, file, content, want string }{
+		{"exact pin", "packages/pkg/pubspec.yaml", "name: pkg\nversion: 1.2.0\ndependencies:\n  http: 1.6.0\n", "pins http to 1.6.0"},
+		{"flat_buffers range", "packages/pkg/pubspec.yaml", "name: pkg\nversion: 1.2.0\ndependencies:\n  flat_buffers: ^25.9.23\n", "must pin flat_buffers"},
 		{"stale changelog", "packages/pkg/CHANGELOG.md", "## 1.1.0\n", "no CHANGELOG.md entry for 1.2.0"},
 		{"no upgrade notes", "cliff.toml", "body = \"\"\n", "no Upgrading section"},
 		{"stored credential", ".github/workflows/release.yml", "on:\n  push:\n    tags:\n      - \"pkg/v*\"\njobs:\n" +

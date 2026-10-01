@@ -10,6 +10,7 @@ import 'dart:convert';
 import 'dart:io' show gzip;
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 
@@ -150,6 +151,7 @@ final class ManifestResponse {
   const ManifestResponse._({
     required this.notModified,
     required this.etag,
+    this.installedRequired = false,
     this.signed,
     this.signatures = const [],
     this.bundles = const [],
@@ -161,6 +163,10 @@ final class ManifestResponse {
   /// The manifest's ETag.
   final String etag;
 
+  /// Whether the server asks for the installed bundles a request sent
+  /// only the digest of: the manifest changed, and its plan needs them.
+  final bool installedRequired;
+
   /// The signed document's canonical bytes.
   final Uint8List? signed;
 
@@ -169,6 +175,19 @@ final class ManifestResponse {
 
   /// The plan per bundle: the app bundle and every plugin.
   final List<ServedBundle> bundles;
+}
+
+/// What a device sends in place of its installed bundles on an
+/// up-to-date check (NFR-006, ADR-0037): the SHA-256 of one line
+/// `<key>:<sha256 hex>\n` per bundle, sorted by key, the app bundle's key
+/// empty. [installed] maps a key to its bundle's hex hash.
+List<int> installedDigest(Map<String, String> installed) {
+  final keys = installed.keys.toList()..sort();
+  final lines = StringBuffer();
+  for (final k in keys) {
+    lines.write('$k:${installed[k]}\n');
+  }
+  return sha256.convert(utf8.encode(lines.toString())).bytes;
 }
 
 /// The device API client.
@@ -222,6 +241,7 @@ final class PluxApiClient {
     required int installedSequence,
     required Map<String, String> installed,
     required String ifNoneMatch,
+    List<int> installedDigest = const [],
   }) async {
     final r = await _call('plux.v1.ManifestService/GetManifest', {
       'appId': appId,
@@ -233,10 +253,19 @@ final class PluxApiClient {
           {'key': key, 'sha256': value},
       ],
       'ifNoneMatch': ifNoneMatch,
+      if (installedDigest.isNotEmpty)
+        'installedDigest': base64.encode(installedDigest),
     }, token: token);
     final etag = r['etag'] as String? ?? '';
     if (r['notModified'] == true) {
       return ManifestResponse._(notModified: true, etag: etag);
+    }
+    if (r['installedRequired'] == true) {
+      return ManifestResponse._(
+        notModified: false,
+        etag: etag,
+        installedRequired: true,
+      );
     }
     final m = r['manifest']! as Map<String, Object?>;
     ServedBundle bundle(String key, Map<String, Object?> b) {

@@ -14,19 +14,19 @@ environment:
 resolution: workspace
 
 dependencies:
-  code_assets: 1.2.1
-  cronet_http: 1.9.0
-  crypto: 3.0.7
-  cryptography: 2.9.0
-  cupertino_http: 3.1.0
+  code_assets: ^1.2.1
+  cronet_http: ^1.9.0
+  crypto: ^3.0.7
+  cryptography: ^2.9.0
+  cupertino_http: ^3.1.0
   flat_buffers: 25.9.23
   flutter:
     sdk: flutter
-  flutter_riverpod: 3.4.3
-  hooks: 2.2.0
-  http: 1.6.0
-  native_toolchain_c: 0.19.3
-  vector_graphics: 1.2.3
+  flutter_riverpod: ^3.4.3
+  hooks: ^2.2.0
+  http: ^1.6.0
+  native_toolchain_c: ^0.19.3
+  vector_graphics: ^1.2.3
 
 dev_dependencies:
   flutter_lints: ^6.0.0

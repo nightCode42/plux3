@@ -172,6 +172,10 @@ func TestProxyRecordsExchanges_NFR_006(t *testing.T) {
 	if ex[0].Up <= 10+20 || ex[0].Down <= 100+20 || ex[1].Up <= 20 || ex[1].Down <= 20 || ex[1].Down > 300 {
 		t.Errorf("bytes %+v", ex)
 	}
+	// The bodies alone: 10 bytes up and 100 down, none for the 304.
+	if ex[0].UpBody != 10 || ex[0].DownBody != 100 || ex[1].UpBody != 0 || ex[1].DownBody != 0 {
+		t.Errorf("body bytes %+v", ex)
+	}
 	if !ex[1].End.After(ex[1].Start) && !ex[1].End.Equal(ex[1].Start) {
 		t.Errorf("times %+v", ex[1])
 	}
