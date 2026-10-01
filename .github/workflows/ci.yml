@@ -574,6 +574,13 @@ jobs:
           cache-dependency-path: |
             backend/go.mod
             tools/go.mod
+      # macOS ships GNU Make 3.81, which ignores .SHELLFLAGS; the Makefile
+      # needs 4 or later.
+      - name: Use GNU Make 4 (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install --quiet make
+          echo "$(brew --prefix)/opt/make/libexec/gnubin" >> "$GITHUB_PATH"
       - name: Install make (Windows)
         if: runner.os == 'Windows'
         run: command -v make || choco install make --no-progress
@@ -847,6 +854,13 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
+      # macOS ships GNU Make 3.81, which ignores .SHELLFLAGS; the Makefile
+      # needs 4 or later.
+      - name: Use GNU Make 4 (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install --quiet make
+          echo "$(brew --prefix)/opt/make/libexec/gnubin" >> "$GITHUB_PATH"
       # macOS runners have no service containers: PostgreSQL from Homebrew.
       - name: Start PostgreSQL and create the application role
         run: |
@@ -1053,6 +1067,13 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
+      # macOS ships GNU Make 3.81, which ignores .SHELLFLAGS; the Makefile
+      # needs 4 or later.
+      - name: Use GNU Make 4 (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install --quiet make
+          echo "$(brew --prefix)/opt/make/libexec/gnubin" >> "$GITHUB_PATH"
       # Verifies: RT-061, NFR-009.
       - name: Release app for arm64, blank and with plux_flutter, unsigned
         run: make size-ios

@@ -6,8 +6,11 @@ from the repository root, and `make help` lists them all.
 
 ## 1. Set up once
 
-- Install Go (the toolchain in `backend/go.mod`), Flutter 3.47, Bun 1.3, Python 3, GNU Make
-  and Docker.
+- Install Go (the toolchain in `backend/go.mod`), Flutter 3.47, Bun 1.3, Python 3, GNU Make 4
+  or later, and Docker.
+- On Windows, use Git Bash with GNU Make 4 (`winget install ezwinports.make`); GnuWin32's
+  make 3.81 is refused. On macOS, `brew install make` and run `gmake`, or put its `gnubin`
+  first on your `PATH`.
 - Install the pinned tools and git hooks: `make setup`.
 - Only for running tests: start the test database with `make test-db` (Docker), and export
   the `PLUX_TEST_DATABASE_URL` it prints. Each test creates and migrates its own schema in

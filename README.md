@@ -56,7 +56,7 @@ The full design — document model, bundle format, sync, security, functions, St
 
 ## Getting started
 
-Requirements: Go (the toolchain in `backend/go.mod` is fetched automatically), Flutter 3.47, Bun 1.3, Python 3 and GNU Make.
+Requirements: Go (the toolchain in `backend/go.mod` is fetched automatically), Flutter 3.47, Bun 1.3, Python 3 and GNU Make 4 or later.
 
 ```bash
 git clone https://github.com/nightCode42/plux3.git && cd plux3

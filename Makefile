@@ -5,6 +5,12 @@
 # targets, so a green `make check` locally means a green pipeline.
 # Run `make help` for the list of targets.
 
+# GNU Make 4 or later: 3.81 (GnuWin32's, macOS's /usr/bin/make) ignores
+# .SHELLFLAGS, so a failing command in a pipe would pass silently.
+ifeq ($(filter 4.% 5.%,$(MAKE_VERSION)),)
+$(error GNU Make $(MAKE_VERSION) is too old: use 4 or later (Windows: winget install ezwinports.make; macOS: brew install make, then gmake))
+endif
+
 SHELL := bash
 .SHELLFLAGS := -eu -o pipefail -c
 .DEFAULT_GOAL := help
@@ -102,7 +108,7 @@ help: ## Show this help
 setup: install-go-tools install-python-tools install-flatc ## Install pinned tools and git hooks (run once after cloning)
 	@command -v flutter >/dev/null || echo "! Install Flutter $(FLUTTER_VERSION): https://docs.flutter.dev/get-started/install"
 	@command -v bun >/dev/null || echo "! Install Bun $(BUN_VERSION): https://bun.sh/docs/installation"
-	$(MAKE) hooks-install
+	"$(MAKE)" hooks-install
 
 install-go-tools: install-golangci-lint install-govulncheck install-gitleaks install-actionlint install-buf install-sqlc ## Install the pinned Go-based tools
 
@@ -175,8 +181,8 @@ gen: ## Regenerate all generated code and reference documents (CI-003)
 	sed -i.bak 's|^// ignore_for_file: unused_import,|// ignore_for_file: unnecessary_non_null_assertion, unused_import,|' $(FBS_DART_DIR)/*_generated.dart && rm -f $(FBS_DART_DIR)/*.bak; \
 	"$(FLATC)" --binary --schema -o "$$bfbs" $(FBS_SECTIONS); \
 	$(GO) run ./tools/cmd/schemagen -root . -bfbs "$$bfbs"
-	@$(MAKE) proto
-	@$(MAKE) sqlc
+	@"$(MAKE)" proto
+	@"$(MAKE)" sqlc
 	@for m in $(GO_MODULES); do (cd $$m && $(GO) generate ./...); done
 
 # The API contract generates the Go messages and handlers and the OpenAPI
@@ -438,13 +444,13 @@ STARTER_DEVICE  := flutter devices --machine 2>/dev/null | grep -Eq '"targetPlat
 
 # Verifies: DEP-020.
 dev: ## Start the stack with hot reload of the server and, with a device or emulator attached, of the starter app; seed sample apps on first run (DEP-020)
-	$(MAKE) compose-seed COMPOSE_OVERLAY=$(COMPOSE_DIR)/compose.dev.yaml
-	$(MAKE) dev-starter
+	"$(MAKE)" compose-seed COMPOSE_OVERLAY=$(COMPOSE_DIR)/compose.dev.yaml
+	"$(MAKE)" dev-starter
 	@if $(STARTER_DEVICE); then \
 		echo "Server: rebuilt on every change under backend/ (log: $(COMPOSE_DIR)/.dev-watch.log)."; \
 		$(COMPOSE) -f $(COMPOSE_DIR)/compose.dev.yaml watch --no-up --quiet > $(COMPOSE_DIR)/.dev-watch.log 2>&1 & watch=$$!; \
 		trap 'kill $$watch 2>/dev/null' EXIT INT TERM; \
-		$(MAKE) --no-print-directory dev-app; \
+		"$(MAKE)" --no-print-directory dev-app; \
 	else \
 		echo "No Android or iOS device, emulator or simulator attached: watching the server only."; \
 		echo "Start one and run 'make dev-app' in a second terminal for the starter app with hot reload."; \
@@ -461,7 +467,7 @@ dev-starter: ## Point the starter app at the seeded dev stack: write its defines
 	@echo "Starter: $(STARTER_DEFINES) and its baseline in apps/starter/assets/plux"
 
 dev-app: ## Run the starter app against the dev stack with Flutter hot reload: r reloads, R restarts, q quits (DEP-020)
-	@test -s $(STARTER_DEFINES) || $(MAKE) --no-print-directory dev-starter
+	@test -s $(STARTER_DEFINES) || "$(MAKE)" --no-print-directory dev-starter
 	@if command -v adb >/dev/null 2>&1; then adb reverse tcp:8080 tcp:8080 >/dev/null 2>&1 || true; fi
 	cd apps/starter && flutter run --dart-define-from-file=.dart_defines.json
 
