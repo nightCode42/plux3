@@ -65,6 +65,9 @@ make check   # every quality gate CI runs
 make help    # all tasks
 ```
 
+Everything you can run locally — the server and starter app with `make dev`, the CLI, tests,
+end-to-end runs, benchmarks and size — is in [Run it locally](docs/guides/run-locally.md).
+
 ## Engineering
 
 - **Specification-driven.** [`docs/requirements.md`](docs/requirements.md) defines 640 requirements with stable IDs, phases and status. Tests cite the IDs they verify, and CI generates the [traceability report](docs/engineering/testing.md#3-naming-and-traceability) from code — a requirement marked done without a test fails the build.

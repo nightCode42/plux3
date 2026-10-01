@@ -15,6 +15,8 @@ and renders it as native widgets.
   runtime does with them.
 - [Publish a page and see it on a device](../../../../docs/guides/first-release.md): the
   Phase 3 loop on your machine, from `make dev` to an offline relaunch.
+- [Run it locally](../../../../docs/guides/run-locally.md): everything you can run on your
+  machine — the stack and app, the CLI, tests, end-to-end runs, benchmarks and size.
 - [Host app guide](../../../../docs/guides/host-app.md): add the runtime to a Flutter app, start
   it, show published pages and control sync, theme and consent.
 - The [starter app](https://github.com/nightCode42/plux3/tree/main/apps/starter) is a complete
