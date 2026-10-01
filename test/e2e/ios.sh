@@ -12,9 +12,7 @@
 # ios/RunnerTests), which reports the flows' results without the Dart VM
 # service connection flutter test needs (ADR-0035). The simulator shares
 # this machine's network, so the test server is on its loopback address.
-# While the simulator boots, it builds the Go driver and the app for the
-# simulator, so the build the flows start recompiles only the Dart code
-# with their defines (ADR-0043). Needs Xcode and jq.
+# Needs Xcode and jq.
 set -euo pipefail
 
 root=$(git rev-parse --show-toplevel)
@@ -40,21 +38,7 @@ echo "Simulator: $type on $runtime"
 udid=$(xcrun simctl create plux-e2e "$type" "$runtime")
 trap 'xcrun simctl shutdown "$udid" >/dev/null 2>&1 || true; xcrun simctl delete "$udid" >/dev/null 2>&1 || true' EXIT
 xcrun simctl boot "$udid"
-xcrun simctl bootstatus "$udid" -b >"$out/bootstatus.log" 2>&1 &
-booting=$!
-
-prebuild_log=$out/prebuild.log
-if ! {
-	(cd "$root/backend" && go test -count=1 -run '^$' ./internal/server) &&
-		(cd "$root/apps/starter" && flutter build ios --simulator --debug)
-} >"$prebuild_log" 2>&1; then
-	echo "--- $prebuild_log (last 80 lines)"; tail -n 80 "$prebuild_log" || true
-	echo "✗ building the driver or the app failed"; exit 1
-fi
-if ! wait "$booting"; then
-	cat "$out/bootstatus.log" || true
-	echo "✗ the simulator did not boot"; exit 1
-fi
+xcrun simctl bootstatus "$udid" -b >/dev/null
 
 status=0
 xcresult=$out/ios.xcresult

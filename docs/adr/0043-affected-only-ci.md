@@ -112,11 +112,14 @@ condition fails it.
   9 s, the control 9 s, scrolling 6.5 s, against 33 s for a whole run). A policy test checks
   that the jobs together measure every part exactly once, and `benchcmp` fails a comparison
   that holds no metric. A local run measures every part by default.
-- **Device jobs.** The Go driver and the starter app are built while the emulator or the
-  simulator boots, so the build the flows start recompiles only the Dart code with their
-  defines. Gradle's distribution and caches are restored. Android 26 runs on `main`, the
-  daily and manual runs, and pull requests that change Android-specific files or
-  `pubspec.lock`; Android 35 runs on every affected pull request (maintainer, 2026-10-01).
+- **Device jobs.** On Android, the Go driver and the starter app are built while the
+  emulator boots, so the build the flows start recompiles only the Dart code with their
+  defines (21 s instead of 231 s), and Gradle's distribution and caches are restored.
+  The iOS job keeps its steps in order: an extra Xcode build during the simulator's boot
+  made it take 16 minutes instead of 9 on the three-core macOS runner (run 36894816035).
+  Android 26 runs on `main`, the daily and manual runs, and pull requests that change
+  Android-specific files or `pubspec.lock`; Android 35 runs on every affected pull
+  request (maintainer, 2026-10-01).
 - **Go lint.** The pinned Go tools are restored from a cache keyed on the `Makefile` (the
   pins) and `backend/go.mod` (the toolchain) instead of being built on every run.
 

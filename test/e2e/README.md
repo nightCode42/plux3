@@ -38,10 +38,12 @@ events reached the server.
   the simulator's log, which it often misses on CI runners
   ([ADR-0035](../../docs/adr/0035-device-tests-in-ci.md)).
 
-While the emulator or simulator boots, both scripts build the Go driver and
-the starter app for the device, so the build the flows start recompiles only
-the Dart code with their defines ([ADR-0043](../../docs/adr/0043-affected-only-ci.md));
-the CI job restores Gradle's caches, which only runs on `main` save.
+While the emulator boots, `android.sh` builds the Go driver and the starter
+app's Android project, so the build the flows start recompiles only the Dart
+code with their defines; the CI job restores Gradle's caches, which only runs
+that are not pull requests save ([ADR-0043](../../docs/adr/0043-affected-only-ci.md)).
+`ios.sh` keeps its steps in order: on the three-core macOS runner an extra
+Xcode build during the simulator's boot cost more than it saved.
 
 Both need `PLUX_TEST_DATABASE_URL` (see
 [testing.md](../../docs/engineering/testing.md)). They use no third-party
