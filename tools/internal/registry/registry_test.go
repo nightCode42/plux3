@@ -218,6 +218,18 @@ func TestLoadRejects(t *testing.T) {
 		{"false deprecation", func(f map[string]obj) {
 			f[box]["excluded"] = []any{obj{"flutter": "key", "reason": "deprecated"}}
 		}, "excluded as deprecated but Flutter does not deprecate it"},
+		{"constructor prop type", func(f map[string]obj) {
+			f[box]["props"] = append(f[box]["props"].([]any), obj{"name": "adaptive", "id": 4, "type": "double", "bindable": false, "constructor": "adaptive"})
+		}, `a prop selecting constructor "adaptive" is an optional bool that is not bindable`},
+		{"bindable constructor prop", func(f map[string]obj) {
+			f[box]["props"] = append(f[box]["props"].([]any), obj{"name": "adaptive", "id": 4, "type": "bool", "constructor": "adaptive"})
+		}, "an optional bool that is not bindable"},
+		{"constructor prop mapping", func(f map[string]obj) {
+			f[box]["props"] = append(f[box]["props"].([]any), obj{"name": "adaptive", "id": 4, "type": "bool", "bindable": false, "constructor": "adaptive", "flutter": "width"})
+		}, `a prop selecting constructor "adaptive" maps no Flutter parameter`},
+		{"constructor not mirrored", func(f map[string]obj) {
+			f[box]["props"] = append(f[box]["props"].([]any), obj{"name": "adaptive", "id": 4, "type": "bool", "bindable": false, "constructor": "adaptive"})
+		}, `constructor "adaptive" is not among the widget's Flutter constructors`},
 		{"missing class", func(f map[string]obj) { delete(f[api]["classes"].(obj), "package:flutter/widgets.dart#Box") }, "run 'make widgets-api'"},
 		{"missing constructor", func(f map[string]obj) { f[box]["flutter"].(obj)["constructors"] = []any{"", "tight"} }, `constructor "tight"`},
 		{"uncovered enum value", func(f map[string]obj) { f[axis]["values"] = []any{obj{"name": "vertical", "id": 2}} }, "Axis.horizontal is neither supported nor excluded"},

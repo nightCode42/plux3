@@ -15,7 +15,8 @@
     "library": "package:flutter/material.dart",
     "class": "CheckboxListTile",
     "constructors": [
-      ""
+      "",
+      "adaptive"
     ]
   },
   "category": "input",
@@ -233,6 +234,15 @@
       "id": 31,
       "type": "ListTileTitleAlignment",
       "flutter": "titleAlignment"
+    },
+    {
+      "name": "adaptive",
+      "id": 32,
+      "type": "bool",
+      "default": false,
+      "bindable": false,
+      "constructor": "adaptive",
+      "description": "Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere."
     }
   ],
   "events": [

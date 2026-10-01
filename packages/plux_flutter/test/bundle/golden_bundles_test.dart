@@ -32,7 +32,7 @@ Map<String, Uint8List> _compiled() => {
 void main() {
   final bundles = _compiled();
 
-  test('the goldens of both conformance projects are present', () {
+  test('the goldens of the conformance projects are present', () {
     expect(bundles.keys.toList()..sort(), [
       'features/features.dev.pxb',
       'features/features.pxb',
@@ -40,6 +40,8 @@ void main() {
       'features/tasks.pxb',
       'loan-calculator/demo.pxb',
       'loan-calculator/loans.pxb',
+      'widgets/gallery.pxb',
+      'widgets/widgets.pxb',
     ]);
   });
 
@@ -49,7 +51,13 @@ void main() {
       final dev = path.endsWith('.dev.pxb');
       expect(
         b.kind,
-        dev ? 3 : (path.contains('/tasks') || path.contains('/loans') ? 1 : 2),
+        dev
+            ? 3
+            : (path.contains('/tasks') ||
+                      path.contains('/loans') ||
+                      path.contains('/gallery')
+                  ? 1
+                  : 2),
         reason: path,
       );
       expect(b.flags, dev ? 2 : 0, reason: '$path: source-map flag');

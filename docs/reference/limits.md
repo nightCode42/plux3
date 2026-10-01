@@ -11,7 +11,7 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | `action.stepTimeout` | milliseconds | 30000 | 80% | 600000 | installation, organization, app, plugin | P5 | ACT-005 | Time one action step may take. |
 | `action.stepsPerRun` | count | 10000 | 80% | 100000 | installation, organization, app, plugin | P5 | ACT-005 | Steps one action run may execute. |
 | `api.pageSize` | count | 100 | 80% | 1000 | installation | P2 | SRV-004 | Items one page of a list call returns; a call asking for more gets this many, and one asking for none gets this many too. |
-| `api.requestSize` | bytes | 8388608 | 80% | 268435456 | installation | P2 | SEC-104 | Size of one API request body, refused before a handler reads it. |
+| `api.requestSize` | bytes | 8388608 | 80% | 268435456 | installation | P2 | SEC-104 | Size of one API request body, refused before a handler reads it, and of one request message once decompressed. |
 | `api.requestsPerMinute` | count | 600 | 80% | 100000 | installation, organization | P2 | SRV-065 | API calls one authenticated principal (a user or a token) may make per minute. |
 | `api.requestsPerMinutePerAddress` | count | 300 | 80% | 100000 | installation | P2 | SRV-065 | API calls one client address may make per minute, whoever is calling. |
 | `api.requestsPerMinutePerDevice` | count | 120 | 80% | 10000 | installation, organization, app | P2 | SRV-065 | API calls one registered device may make per minute. |
@@ -36,6 +36,7 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | `page.nodes` | count | 5000 | 1000 | 50000 | installation, organization, app, plugin | P1 | SCH-005, CMP-040 | Nodes in one page document. Above the warning threshold the compiler reports the page. |
 | `plugin.assetBytes` | bytes | 20971520 | 80% | 268435456 | installation, organization, app, plugin | P2 | AST-003 | Bytes of the asset files one plugin's pages and icon use, checked at publish. |
 | `plugin.pages` | count | 500 | 80% | 2000 | installation, organization, app, plugin | P1 | SCH-005 | Pages per plugin. |
+| `publish.assetWait` | milliseconds | 600000 | 80% | 3600000 | installation | P3 | CMP-030, REL-003 | Time a publish waits, from when it was queued, for the app's image assets to finish processing before it fails. |
 | `pxl.collectionSize` | count | 10000 | 80% | 1000000 | installation, organization, app, plugin | P1 | PXL-001 | Elements of a list or map produced during one PXL evaluation. |
 | `pxl.decimalDigits` | count | 1000 | 80% | 10000 | installation, organization, app, plugin | P1 | PXL-001, PXL-005 | Digits of a decimal produced during one PXL evaluation, in plain notation. |
 | `pxl.expressionLength` | codepoints | 4096 | 80% | 65536 | installation, organization, app, plugin | P1 | PXL-001 | Length of one PXL expression. |
@@ -43,4 +44,9 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | `pxl.operationBudget` | operations | 10000 | 80% | 1000000 | installation, organization, app, plugin | P1 | PXL-001 | Operations one PXL evaluation may perform before it stops with a typed error. |
 | `pxl.stringLength` | codepoints | 65536 | 80% | 1048576 | installation, organization, app, plugin | P1 | PXL-001 | Length of a string produced during one PXL evaluation. |
 | `release.appSize` | bytes | 104857600 | 80% | 1073741824 | installation, organization, app | P1 | BND-010 | Total size of one app release: the app bundle and every plugin bundle. |
+| `runtime.imageDiskCacheBytes` | bytes | 67108864 | 80% | 1073741824 | installation, organization, app | P3 | RT-014, AST-002 | Disk space the runtime's cache of remote images may use on one device. |
+| `runtime.imageSize` | bytes | 10485760 | 80% | 104857600 | installation, organization, app | P3 | AST-002, SEC-104 | Size of one remote image the runtime downloads; a larger one is refused. |
+| `runtime.sectionCacheBytes` | bytes | 8388608 | 80% | 268435456 | installation, organization, app | P3 | RT-013 | Memory the runtime's cache of decoded page and component sections may hold. |
+| `runtime.sectionCacheEntries` | count | 64 | 80% | 4096 | installation, organization, app | P3 | RT-013 | Page and component sections the runtime keeps decoded. |
+| `telemetry.bufferBytes` | bytes | 262144 | 80% | 4194304 | installation, organization, app | P3 | ANL-002 | The size of the runtime's buffer of unsent telemetry events; the oldest are dropped first. |
 | `telemetry.eventsPerRequest` | count | 500 | 80% | 5000 | installation, organization, app | P2 | SEC-104 | Runtime events one telemetry request may carry. |

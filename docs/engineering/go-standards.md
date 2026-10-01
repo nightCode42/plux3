@@ -65,7 +65,7 @@ A function that exceeds a limit is split, not annotated. Tests are exempt from l
 - `context.Context` is the first parameter of every function that does I/O, blocks, or crosses a package boundary; deadlines and cancellation are honoured.
 - Every goroutine has an owner, a shutdown path and a test proving it does not leak.
 - Time and randomness are injected; tests never use `time.Sleep` for correctness.
-- No global mutable state, and no `init()` side effects beyond registration.
+- No global mutable state, and no `init()` side effects beyond registration. The one exception is a `sync.Once` that works around a dependency's own process-wide state, with a comment naming the upstream defect (`internal/wasmrt`).
 
 ## 8. Security
 

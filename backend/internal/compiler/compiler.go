@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/nightCode42/plux3/backend/internal/bundle"
+	"github.com/nightCode42/plux3/backend/internal/icons"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/schema"
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
@@ -39,6 +40,10 @@ type Options struct {
 	// file's SHA-256 (CMP-030); nil, or no variants, lists none. The
 	// server supplies the variants its asset pipeline made.
 	AssetVariants func(sum [sha256.Size]byte) []AssetVariant
+	// IconFont returns the font of an icon set subset to the named icons,
+	// which the compiler has checked are the set's (THM-005); nil adds no
+	// icon fonts. The server supplies it (package icons/fonts).
+	IconFont func(set icons.Set, names []string) ([]byte, error)
 }
 
 // AssetVariant is a transcoded form of an asset file.
@@ -87,6 +92,9 @@ type Result struct {
 	Graph *Graph
 	// Diagnostics are sorted by file, path and range.
 	Diagnostics plxerr.Diagnostics
+	// Files are the asset files the compilation made, the bundles' icon
+	// fonts, by SHA-256; the server stores them with the uploaded ones.
+	Files map[[sha256.Size]byte][]byte
 }
 
 // stage is one step of the pipeline (CMP-003). Checking stages run even
@@ -139,7 +147,7 @@ func Compile(fsys fs.FS, opts Options) (res *Result) {
 	res.Diagnostics = u.diags
 	res.Graph = u.graph
 	if !u.diags.HasErrors() {
-		res.App, res.Plugins = u.app, u.outputs
+		res.App, res.Plugins, res.Files = u.app, u.outputs, u.files
 	}
 	return res
 }

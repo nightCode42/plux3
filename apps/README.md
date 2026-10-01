@@ -4,7 +4,7 @@ Flutter host applications. Each is a separate pub workspace member.
 
 | App | Purpose | Arrives |
 |---|---|---|
-| `starter/` | Minimal host app used by the quick start (`DX-001`) | P3 |
+| [`starter/`](starter/README.md) | Minimal host app used by the quick start (`DX-001`), `make dev` and the end-to-end tests (`QA-006`, `QA-010`) | P3 |
 | `plux_bank/` | Reference financial host app (`DX-004`) | P5 |
 | `plux_express/` | Reference delivery host app (`DX-004`) | P5 |
 | `plux_dev/` | Plux Dev companion app for live device preview (`DEV-001`) | P10 |

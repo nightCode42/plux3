@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/netip"
 	"net/url"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"sort"
@@ -347,8 +348,17 @@ func checkURL(p *problems, path, s string) {
 	}
 }
 
-// validateAssets checks the malware scanner's address.
+// validateAssets checks the malware scanner's address and the SVG
+// compiler's paths.
 func (c *Config) validateAssets(p *problems) {
+	if svgc := c.Assets.SVGCompiler; svgc != "" {
+		if !filepath.IsAbs(svgc) {
+			p.addf("assets.svgCompiler", "must be an absolute path")
+		}
+		if !filepath.IsAbs(c.Assets.PathOps) {
+			p.addf("assets.pathOps", "must be an absolute path when assets.svgCompiler is set")
+		}
+	}
 	s := c.Assets.MalwareScanner
 	if s == "" {
 		return

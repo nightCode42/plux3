@@ -24,6 +24,7 @@ for that ID first — it is on the one log line that has the cause.
 |---|---|---|
 | Publishes stay queued | No process runs the `worker` role, or it cannot reach the database | Check `server.roles` includes `worker` on at least one replica, and its logs. |
 | Publish fails with `PLX-8051` | The publish found warnings nobody acknowledged | Expected behaviour: fix the warnings or publish again acknowledging them. |
+| Publishes stay at the `assets` stage, then fail with `PLX-8053` | Image assets of the app are still `pending`: asset jobs are slow, failing, or no worker runs them | Check the worker's logs for `asset.process` jobs and the assets' processing state; raise `publish.assetWait` only if transcoding is legitimately slow. |
 | Release creation fails with `PLX-8050` or `PLX-8052` | A plugin was built against other app-level sources, or has no published version | Publish the plugin again (or delete it), then create the release. |
 | Signing fails for a production environment with the file backend | The file backend never signs for production (`SEC-056`) | Configure Vault Transit (`signing.backend: vault`); the file backend is for development only. |
 | Vault signing fails | Token expired or lacks the policy, Transit key missing | Check `PLUX_SIGNING_VAULT_TOKEN` and its policy (`sign` on the environment keys, `encrypt`/`decrypt` on `wrapKey`). An api-only replica must have no `sign` permission. |

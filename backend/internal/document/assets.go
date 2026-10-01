@@ -208,7 +208,8 @@ func (s *Service) prepareAsset(ctx context.Context, lim limits.Set, data []byte)
 }
 
 // insertAsset records an uploaded file, replacing the one before it
-// under the same name, and asks for a raster image's variants.
+// under the same name, and asks for the variants of a raster image or an
+// SVG.
 func (s *Service) insertAsset(ctx context.Context, tx pgx.Tx, q *dbgen.Queries, d draft, p auth.Principal,
 	assetID, file, mediaType string, sum []byte, size int64, info media.Info,
 ) (dbgen.Asset, error) {
@@ -220,7 +221,7 @@ func (s *Service) insertAsset(ctx context.Context, tx pgx.Tx, q *dbgen.Queries, 
 		return dbgen.Asset{}, err
 	}
 	processing := processingReady
-	if media.Raster(mediaType) && !info.Animated {
+	if media.Raster(mediaType) && !info.Animated || mediaType == media.SVG {
 		processing = processingPending
 	}
 	row, err := q.InsertAsset(ctx, dbgen.InsertAssetParams{
@@ -336,9 +337,10 @@ func (s *Service) AssetURL(ctx context.Context, sum string, ttl time.Duration) (
 	return url, nil
 }
 
-// ProcessAsset transcodes a raster image into its variants (CMP-030):
-// the worker's asset job. The same content transcoded before is reused;
-// an image the codecs cannot handle is marked failed with a diagnostic.
+// ProcessAsset makes an asset's variants, a raster image's WebP and AVIF
+// (CMP-030) or an SVG's vector_graphics (CMP-031): the worker's asset
+// job. The same content processed before is reused; a file that cannot
+// be transcoded is marked failed with a diagnostic.
 // Transcoding runs outside any transaction, so a slow image holds no
 // lock.
 func (s *Service) ProcessAsset(ctx context.Context, job AssetJob) error {
@@ -389,20 +391,64 @@ func (s *Service) ProcessAsset(ctx context.Context, job AssetJob) error {
 	})
 }
 
-// transcode makes and stores an asset's variants. It returns the
-// variants as stored, or diagnostics when the image cannot be
+// RequeueSVGs asks for the vector_graphics variant of every current SVG
+// asset of an organisation that is ready without one: those uploaded
+// before the server compiled SVGs (CMP-031), which devices could not
+// draw. Until the variant is made the asset is pending, so a publish of
+// its app waits for it. The worker's maintenance sweep runs it; a
+// server with no SVG compiler leaves them.
+func (s *Service) RequeueSVGs(ctx context.Context, organizationID string) (int, error) {
+	if s.o.SVG == nil || s.o.Jobs == nil {
+		return 0, nil
+	}
+	n := 0
+	err := s.inOrg(ctx, auth.System(organizationID), func(ctx context.Context, tx pgx.Tx) error {
+		ids, err := dbgen.New(tx).RequeueUncompiledSVGs(ctx)
+		if err != nil {
+			return failure(err, "asset")
+		}
+		for _, id := range ids {
+			if err := s.o.Jobs.Enqueue(ctx, tx, AssetJob{OrganizationID: organizationID, RowID: storage.ID(id)}); err != nil {
+				return fmt.Errorf("document: %w", err)
+			}
+		}
+		n = len(ids)
+		return nil
+	})
+	return n, err
+}
+
+// PendingAssets counts the app's assets whose variants the asset job
+// has not made yet. A publish waits until there are none, so that the
+// variants its bundle lists are the ones a release's recompilation finds
+// (CMP-030, REL-003).
+func (*Service) PendingAssets(ctx context.Context, tx pgx.Tx, appID string) (int64, error) {
+	app, err := parseID(appID, "app")
+	if err != nil {
+		return 0, err
+	}
+	n, err := dbgen.New(tx).CountPendingAssets(ctx, app)
+	if err != nil {
+		return 0, failure(err, "asset")
+	}
+	return n, nil
+}
+
+// transcode makes and stores an asset's variants: WebP and AVIF of a
+// raster image (CMP-030), vector_graphics of an SVG (CMP-031). It returns
+// the variants as stored, or diagnostics when the file cannot be
 // transcoded; an error only for a failure worth retrying.
 func (s *Service) transcode(ctx context.Context, row dbgen.Asset) ([]byte, []byte, error) {
 	original, _, err := s.o.Objects.Get(ctx, objectKey(row.Sha256))
 	if err != nil {
 		return nil, nil, fmt.Errorf("document: read the asset: %w", err)
 	}
-	_, variants, err := s.o.Codecs.Transcode(ctx, original, row.MediaType, s.o.Limits.Get(limits.AssetImagePixels))
+	variants, err := s.variants(ctx, original, row.MediaType)
 	if err != nil {
-		if ctx.Err() != nil {
+		if ctx.Err() != nil || !errors.Is(err, errUntranscodable) {
 			return nil, nil, fmt.Errorf("document: transcode: %w", err)
 		}
-		d := plxerr.NewDiagnostic(plxerr.InvalidFormat, plxerr.Location{File: "assets/" + row.File}, "the image could not be transcoded: %v", err)
+		d := plxerr.NewDiagnostic(plxerr.InvalidFormat, plxerr.Location{File: "assets/" + row.File}, "the file could not be transcoded: %v", err)
 		diags, _ := json.Marshal(plxerr.Diagnostics{d}) //nolint:errcheck // a diagnostic always encodes
 		return nil, diags, nil
 	}
@@ -419,6 +465,32 @@ func (s *Service) transcode(ctx context.Context, row dbgen.Asset) ([]byte, []byt
 		return nil, nil, fmt.Errorf("document: %w", err)
 	}
 	return b, nil, nil
+}
+
+// errUntranscodable marks a file no retry can transcode.
+var errUntranscodable = errors.New("document: the file cannot be transcoded")
+
+// variants makes the variants of a file. An error wrapping
+// errUntranscodable is the file's fault, or a server with no SVG compiler.
+func (s *Service) variants(ctx context.Context, data []byte, mediaType string) ([]media.Variant, error) {
+	if mediaType != media.SVG {
+		_, variants, err := s.o.Codecs.Transcode(ctx, data, mediaType, s.o.Limits.Get(limits.AssetImagePixels))
+		if err != nil {
+			return nil, fmt.Errorf("%w: %w", errUntranscodable, err)
+		}
+		return variants, nil
+	}
+	if s.o.SVG == nil {
+		return nil, fmt.Errorf("%w: this server has no SVG compiler (assets.svgCompiler)", errUntranscodable)
+	}
+	vec, err := s.o.SVG.Compile(ctx, data)
+	switch {
+	case errors.Is(err, media.ErrSVGRejected):
+		return nil, fmt.Errorf("%w: %w", errUntranscodable, err)
+	case err != nil:
+		return nil, err //nolint:wrapcheck // transcode wraps it
+	}
+	return []media.Variant{{MediaType: media.VectorGraphics, Data: vec}}, nil
 }
 
 // AssetVariants returns, for an app, the variants of each asset file by

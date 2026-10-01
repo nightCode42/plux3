@@ -15,7 +15,8 @@
     "library": "package:flutter/material.dart",
     "class": "RadioListTile",
     "constructors": [
-      ""
+      "",
+      "adaptive"
     ]
   },
   "category": "input",
@@ -228,6 +229,23 @@
       "id": 30,
       "type": "WidgetStateDouble",
       "flutter": "radioInnerRadius"
+    },
+    {
+      "name": "adaptive",
+      "id": 31,
+      "type": "bool",
+      "default": false,
+      "bindable": false,
+      "constructor": "adaptive",
+      "description": "Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere."
+    },
+    {
+      "name": "useCupertinoCheckmarkStyle",
+      "id": 32,
+      "type": "bool",
+      "default": false,
+      "flutter": "useCupertinoCheckmarkStyle",
+      "description": "With `adaptive` on iOS, marks the selected option with a checkmark instead of a dot."
     }
   ],
   "events": [

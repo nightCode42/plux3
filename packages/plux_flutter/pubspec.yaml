@@ -2,9 +2,10 @@ name: plux_flutter
 description: >-
   The Plux runtime for Flutter. Syncs signed plugin bundles with delta
   updates and renders them as native widgets.
-version: 0.0.1
-repository: https://github.com/nightCode42/plux3
-publish_to: none # Published from Phase 3 (CI-005).
+version: 0.1.0
+repository: https://github.com/nightCode42/plux3/tree/main/packages/plux_flutter
+documentation: https://nightcode42.github.io/plux3/guides/host-app/
+topics: [server-driven-ui, plugins, ui, sdui]
 
 environment:
   sdk: ^3.13.0
@@ -13,11 +14,32 @@ environment:
 resolution: workspace
 
 dependencies:
+  code_assets: ^1.2.1
+  cronet_http: ^1.9.0
+  crypto: ^3.0.7
+  cryptography: ^2.9.0
+  cupertino_http: ^3.1.0
   flat_buffers: 25.9.23
   flutter:
     sdk: flutter
+  flutter_riverpod: ^3.4.3
+  hooks: ^2.2.0
+  http: ^1.6.0
+  native_toolchain_c: ^0.19.3
+  vector_graphics: ^1.2.3
 
 dev_dependencies:
   flutter_lints: ^6.0.0
   flutter_test:
     sdk: flutter
+
+flutter:
+  # The platform channel for storage and secrets (ADR-0029); the native
+  # library for maps and zstd comes from hook/build.dart (ADR-0030).
+  plugin:
+    platforms:
+      android:
+        package: dev.plux.plux_flutter
+        pluginClass: PluxFlutterPlugin
+      ios:
+        pluginClass: PluxFlutterPlugin

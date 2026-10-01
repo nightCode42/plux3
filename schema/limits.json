@@ -116,7 +116,7 @@
       "requirements": [
         "SEC-104"
       ],
-      "description": "Size of one API request body, refused before a handler reads it."
+      "description": "Size of one API request body, refused before a handler reads it, and of one request message once decompressed."
     },
     {
       "key": "api.requestsPerMinute",
@@ -601,6 +601,24 @@
       "description": "Pages per plugin."
     },
     {
+      "key": "publish.assetWait",
+      "unit": "milliseconds",
+      "default": 600000,
+      "max": 3600000,
+      "scopes": [
+        "installation"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P3",
+      "requirements": [
+        "CMP-030",
+        "REL-003"
+      ],
+      "description": "Time a publish waits, from when it was queued, for the app's image assets to finish processing before it fails."
+    },
+    {
       "key": "pxl.collectionSize",
       "unit": "count",
       "default": 10000,
@@ -747,6 +765,103 @@
         "BND-010"
       ],
       "description": "Total size of one app release: the app bundle and every plugin bundle."
+    },
+    {
+      "key": "runtime.imageDiskCacheBytes",
+      "unit": "bytes",
+      "default": 67108864,
+      "max": 1073741824,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P3",
+      "requirements": [
+        "RT-014",
+        "AST-002"
+      ],
+      "description": "Disk space the runtime's cache of remote images may use on one device."
+    },
+    {
+      "key": "runtime.imageSize",
+      "unit": "bytes",
+      "default": 10485760,
+      "max": 104857600,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P3",
+      "requirements": [
+        "AST-002",
+        "SEC-104"
+      ],
+      "description": "Size of one remote image the runtime downloads; a larger one is refused."
+    },
+    {
+      "key": "runtime.sectionCacheBytes",
+      "unit": "bytes",
+      "default": 8388608,
+      "max": 268435456,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P3",
+      "requirements": [
+        "RT-013"
+      ],
+      "description": "Memory the runtime's cache of decoded page and component sections may hold."
+    },
+    {
+      "key": "runtime.sectionCacheEntries",
+      "unit": "count",
+      "default": 64,
+      "max": 4096,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P3",
+      "requirements": [
+        "RT-013"
+      ],
+      "description": "Page and component sections the runtime keeps decoded."
+    },
+    {
+      "key": "telemetry.bufferBytes",
+      "unit": "bytes",
+      "default": 262144,
+      "max": 4194304,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P3",
+      "requirements": [
+        "ANL-002"
+      ],
+      "description": "The size of the runtime's buffer of unsent telemetry events; the oldest are dropped first."
     },
     {
       "key": "telemetry.eventsPerRequest",

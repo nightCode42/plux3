@@ -13,15 +13,19 @@ import (
 	"image/png"
 	"io"
 	"net"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 
 	"github.com/nightCode42/plux3/backend/internal/compiler/media"
 	"github.com/nightCode42/plux3/backend/internal/document"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
+	"github.com/nightCode42/plux3/backend/internal/storage"
 	"github.com/nightCode42/plux3/backend/internal/storage/objects"
 )
 
@@ -94,6 +98,18 @@ func clamd(t *testing.T) string {
 	return ln.Addr().String()
 }
 
+// fakeSVGCompiler stands in for plux-svgc: it rejects an SVG containing
+// "broken" and otherwise writes "vec:" and the SVG.
+func fakeSVGCompiler(t *testing.T) *media.SVGCompiler {
+	t.Helper()
+	path := filepath.Join(t.TempDir(), "plux-svgc")
+	script := "#!/bin/sh\ninput=$(/bin/cat)\ncase \"$input\" in *broken*) echo 'plux-svgc: the SVG cannot be compiled: broken path' >&2; exit 1;; esac\nprintf 'vec:%s' \"$input\"\n"
+	if err := os.WriteFile(path, []byte(script), 0o700); err != nil { //nolint:gosec // an executable of the test
+		t.Fatal(err)
+	}
+	return &media.SVGCompiler{Path: path, PathOps: "/unused", Timeout: 10 * time.Second, MaxOutput: 1 << 20}
+}
+
 func pngWithText(t *testing.T, w, h int) []byte {
 	t.Helper()
 	img := image.NewNRGBA(image.Rect(0, 0, w, h))
@@ -128,8 +144,9 @@ func TestAssets(t *testing.T) {
 	t.Cleanup(func() { _ = codecs.Close(context.Background()) })
 	queue := &jobs{}
 	addr := clamd(t)
+	svgc := fakeSVGCompiler(t)
 	f := newFixture(t, func(o *document.Options) {
-		o.Objects, o.Jobs, o.Codecs = store, queue, codecs
+		o.Objects, o.Jobs, o.Codecs, o.SVG = store, queue, codecs, svgc
 		o.Scanner = document.Clamd{Network: "tcp", Address: addr}
 	})
 	ctx := context.Background()
@@ -191,7 +208,30 @@ func TestAssets(t *testing.T) {
 	if err != nil || again.ID != a.ID || again.SHA256 == a.SHA256 {
 		t.Errorf("a re-upload: %+v %v", again, err)
 	}
-	queue.take()
+	// The re-upload waits for its job; a publish counts it as pending.
+	pendingOf := func(app string) (int64, error) {
+		var n int64
+		err := f.db.InTx(ctx, storage.Tenant{OrganizationID: f.org}, func(ctx context.Context, tx pgx.Tx) error {
+			var err error
+			n, err = f.docs.PendingAssets(ctx, tx, app)
+			return err
+		})
+		return n, err
+	}
+	if n, err := pendingOf(f.app); err != nil || n != 1 {
+		t.Errorf("pending before the job: %d %v", n, err)
+	}
+	for _, j := range queue.take() {
+		if err := f.docs.ProcessAsset(ctx, j); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if n, err := pendingOf(f.app); err != nil || n != 0 {
+		t.Errorf("pending after the job: %d %v", n, err)
+	}
+	if _, err := pendingOf("not-an-id"); code(err) != plxerr.InvalidFormat {
+		t.Errorf("a bad app: %v", err)
+	}
 	// Lottie becomes dotLottie; an SVG keeps its drawing but not its
 	// metadata.
 	anim, err := f.docs.UploadAsset(ctx, f.owner, f.app, "", s, "anim/spinner.lottie", []byte(`{"v":"5.7.0","fr":30,"ip":0,"op":10,"w":10,"h":10,"layers":[]}`))
@@ -205,6 +245,31 @@ func TestAssets(t *testing.T) {
 	stored, _, err := store.Get(ctx, objectKey(t, svg.SHA256))
 	if err != nil || bytes.Contains(stored, []byte("Ada")) {
 		t.Errorf("the SVG's metadata was kept: %s %v", stored, err)
+	}
+	// An SVG is compiled to vector_graphics by the worker (CMP-031); one
+	// the compiler rejects fails with a diagnostic.
+	broken, err := f.docs.UploadAsset(ctx, f.owner, f.app, "", s, "icons/broken.svg", []byte(`<svg xmlns="http://www.w3.org/2000/svg"><path d="broken"/></svg>`))
+	if err != nil || svg.Processing != "pending" {
+		t.Fatalf("SVG uploads: %+v %+v %v", svg, broken, err)
+	}
+	for _, j := range queue.take() {
+		if err := f.docs.ProcessAsset(ctx, j); err != nil {
+			t.Fatal(err)
+		}
+	}
+	svg, _ = f.docs.GetAsset(ctx, f.viewer, svg.ID)
+	if svg.Processing != "ready" || len(svg.Variants) != 1 || svg.Variants[0].MediaType != media.VectorGraphics {
+		t.Fatalf("the compiled SVG: %+v", svg)
+	}
+	if vec, _, err := store.Get(ctx, objectKey(t, svg.Variants[0].SHA256)); err != nil || !bytes.Equal(vec, append([]byte("vec:"), stored...)) {
+		t.Errorf("the vector_graphics variant: %q %v", vec, err)
+	}
+	broken, _ = f.docs.GetAsset(ctx, f.viewer, broken.ID)
+	if broken.Processing != "failed" || len(broken.Diagnostics) != 1 || !strings.Contains(broken.Diagnostics[0].Message, "broken") {
+		t.Errorf("a rejected SVG: %+v", broken)
+	}
+	if err := f.docs.DeleteAsset(ctx, f.owner, broken.ID, s); err != nil {
+		t.Fatal(err)
 	}
 	for name, c := range map[string]struct {
 		file string
@@ -315,4 +380,73 @@ func dropEntry(t *testing.T, index []byte, file string) []byte {
 		start = j
 	}
 	return []byte(s[:start] + s[end:])
+}
+
+// Verifies: CMP-031.
+// An SVG uploaded before the server compiled SVGs is ready without a
+// vector_graphics variant. It is not a copy a later upload of the same
+// file reuses, and the maintenance sweep asks for its variant.
+func TestLegacySVGsAreCompiled(t *testing.T) {
+	t.Parallel()
+	store, err := objects.NewFilesystem(t.TempDir(), "https://cdn.example")
+	if err != nil {
+		t.Fatal(err)
+	}
+	codecs, err := media.NewCodecs(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = codecs.Close(context.Background()) })
+	queue := &jobs{}
+	f := newFixture(t, func(o *document.Options) {
+		o.Objects, o.Jobs, o.Codecs, o.SVG = store, queue, codecs, fakeSVGCompiler(t)
+	})
+	ctx := context.Background()
+	const s = "tab-1"
+	if _, _, err := f.docs.AcquireLock(ctx, f.owner, f.app, "", s, false); err != nil {
+		t.Fatal(err)
+	}
+	process := func() {
+		t.Helper()
+		for _, j := range queue.take() {
+			if err := f.docs.ProcessAsset(ctx, j); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	icon := []byte(`<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0h1v1z"/></svg>`)
+	legacy, err := f.docs.UploadAsset(ctx, f.owner, f.app, "", s, "icons/old.svg", icon)
+	if err != nil {
+		t.Fatal(err)
+	}
+	process()
+	// As an upload before CMP-031 left it.
+	if err := f.db.InTx(ctx, storage.Tenant{OrganizationID: f.org}, func(ctx context.Context, tx pgx.Tx) error {
+		_, err := tx.Exec(ctx, "UPDATE assets SET variants = '[]' WHERE asset_id = $1", legacy.ID)
+		return err
+	}); err != nil {
+		t.Fatal(err)
+	}
+	copyOf, err := f.docs.UploadAsset(ctx, f.owner, f.app, "", s, "icons/copy.svg", icon)
+	if err != nil {
+		t.Fatal(err)
+	}
+	process()
+	if copyOf, _ = f.docs.GetAsset(ctx, f.viewer, copyOf.ID); copyOf.Processing != "ready" || len(copyOf.Variants) != 1 {
+		t.Errorf("a copy of the legacy SVG: %+v", copyOf)
+	}
+	if n, err := f.docs.RequeueSVGs(ctx, f.org); err != nil || n != 1 {
+		t.Fatalf("RequeueSVGs: %d %v", n, err)
+	}
+	if legacy, _ = f.docs.GetAsset(ctx, f.viewer, legacy.ID); legacy.Processing != "pending" {
+		t.Errorf("the requeued SVG: %+v", legacy)
+	}
+	process()
+	legacy, _ = f.docs.GetAsset(ctx, f.viewer, legacy.ID)
+	if legacy.Processing != "ready" || len(legacy.Variants) != 1 || legacy.Variants[0].MediaType != media.VectorGraphics {
+		t.Errorf("the compiled legacy SVG: %+v", legacy)
+	}
+	if n, err := f.docs.RequeueSVGs(ctx, f.org); err != nil || n != 0 {
+		t.Errorf("a second sweep: %d %v", n, err)
+	}
 }

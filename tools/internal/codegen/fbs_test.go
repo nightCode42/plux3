@@ -55,6 +55,15 @@ func TestLoadFBSReadsEveryFieldKind(t *testing.T) {
 			t.Errorf("layout file lacks %q:\n%s", part, src)
 		}
 	}
+	dart := string(files[1].Content)
+	for _, part := range []string{
+		"DO NOT EDIT.", "FieldLayout('leaves', 7, FieldKind.vectorTable, 0, 0, 0, required: false)",
+		"FieldLayout('name', 2, FieldKind.string, 0, 0, -1, required: true)", "'TEST': 1, // Root",
+	} {
+		if !strings.Contains(dart, part) {
+			t.Errorf("Dart layout file lacks %q:\n%s", part, dart)
+		}
+	}
 }
 
 func TestLoadFBSRejectsUnsupportedInput(t *testing.T) {

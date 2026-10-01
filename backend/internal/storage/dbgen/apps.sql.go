@@ -358,6 +358,24 @@ func (q *Queries) GetChannelByID(ctx context.Context, id pgtype.UUID) (Channel, 
 	return i, err
 }
 
+const getChannelByIDForUpdate = `-- name: GetChannelByIDForUpdate :one
+SELECT id, organization_id, environment_id, key, release_sequence, updated_at FROM channels WHERE id = $1 FOR UPDATE
+`
+
+func (q *Queries) GetChannelByIDForUpdate(ctx context.Context, id pgtype.UUID) (Channel, error) {
+	row := q.db.QueryRow(ctx, getChannelByIDForUpdate, id)
+	var i Channel
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizationID,
+		&i.EnvironmentID,
+		&i.Key,
+		&i.ReleaseSequence,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getEnvironment = `-- name: GetEnvironment :one
 SELECT id, organization_id, app_id, key, name, production, signing_key_ref, created_at FROM environments WHERE id = $1
 `
@@ -643,7 +661,13 @@ func (q *Queries) ListApps(ctx context.Context, arg ListAppsParams) ([]App, erro
 }
 
 const listChannels = `-- name: ListChannels :many
-SELECT id, organization_id, environment_id, key, release_sequence, updated_at FROM channels WHERE environment_id = $1 AND key > $2::text ORDER BY key LIMIT $3
+SELECT c.id, c.organization_id, c.environment_id, c.key, c.release_sequence, c.updated_at,
+       COALESCE((SELECT m.release_sequence FROM manifests m
+                  WHERE m.channel_id = c.id
+                  ORDER BY m.issued_at DESC, m.id DESC LIMIT 1), 0)::bigint AS signed_release_sequence
+  FROM channels c
+ WHERE c.environment_id = $1 AND c.key > $2::text
+ ORDER BY c.key LIMIT $3
 `
 
 type ListChannelsParams struct {
@@ -652,22 +676,29 @@ type ListChannelsParams struct {
 	PageSize      int32
 }
 
-func (q *Queries) ListChannels(ctx context.Context, arg ListChannelsParams) ([]Channel, error) {
+type ListChannelsRow struct {
+	Channel               Channel
+	SignedReleaseSequence int64
+}
+
+// With the release of each channel's newest signed manifest.
+func (q *Queries) ListChannels(ctx context.Context, arg ListChannelsParams) ([]ListChannelsRow, error) {
 	rows, err := q.db.Query(ctx, listChannels, arg.EnvironmentID, arg.AfterKey, arg.PageSize)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Channel{}
+	items := []ListChannelsRow{}
 	for rows.Next() {
-		var i Channel
+		var i ListChannelsRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.OrganizationID,
-			&i.EnvironmentID,
-			&i.Key,
-			&i.ReleaseSequence,
-			&i.UpdatedAt,
+			&i.Channel.ID,
+			&i.Channel.OrganizationID,
+			&i.Channel.EnvironmentID,
+			&i.Channel.Key,
+			&i.Channel.ReleaseSequence,
+			&i.Channel.UpdatedAt,
+			&i.SignedReleaseSequence,
 		); err != nil {
 			return nil, err
 		}

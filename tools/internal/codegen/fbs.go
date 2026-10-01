@@ -18,6 +18,10 @@ import (
 // FBSLayoutPath is the Go file the bundle verifier interprets (ADR-0002).
 const FBSLayoutPath = "backend/internal/bundle/layout_gen.go"
 
+// FBSDartLayoutPath is the same tables for the runtime's verifier
+// (ADR-0029).
+const FBSDartLayoutPath = "packages/plux_flutter/lib/src/verify/layout.g.dart"
+
 // FBSSource names the schemas the layout tables come from.
 const FBSSource = "schema/fbs"
 
@@ -288,7 +292,41 @@ func FBSFiles(s *FBS) ([]File, error) {
 	if err != nil {
 		return nil, err
 	}
-	return []File{f}, nil
+	return []File{f, fbsDart(s, index)}, nil
+}
+
+// fbsDart writes the layout tables as Dart for the runtime's verifier,
+// which interprets them exactly as the Go verifier does.
+func fbsDart(s *FBS, index map[string]int) File {
+	kinds := map[FBSFieldKind]string{
+		FieldScalar: "scalar", FieldStruct: "struct", FieldString: "string", FieldTable: "table",
+		FieldVectorScalar: "vectorScalar", FieldVectorStruct: "vectorStruct",
+		FieldVectorString: "vectorString", FieldVectorTable: "vectorTable",
+	}
+	var b bytes.Buffer
+	b.WriteString(header(LangDart, FBSSource))
+	b.WriteString("/// The layout tables of the bundle section schemas (ADR-0002, ADR-0029):\n")
+	b.WriteString("/// the same tables the Go verifier interprets.\nlibrary;\n\n")
+	b.WriteString("import 'package:plux_flutter/src/verify/flatbuffers_verifier.dart';\n\n")
+	b.WriteString("/// Every table of the section schemas, sorted by name.\nconst List<TableLayout> tableLayouts = [\n")
+	for i, t := range s.Tables {
+		fmt.Fprintf(&b, "  // %d\n  TableLayout('%s', [\n", i, t.Name)
+		for _, f := range t.Fields {
+			table := -1
+			if f.Table != "" {
+				table = index[f.Table]
+			}
+			fmt.Fprintf(&b, "    FieldLayout('%s', %d, FieldKind.%s, %d, %d, %d, required: %t),\n",
+				f.Name, f.ID, kinds[f.Kind], f.Size, f.Align, table, f.Required)
+		}
+		b.WriteString("  ]),\n")
+	}
+	b.WriteString("];\n\n/// Each section's file identifier and the index of its root table.\nconst Map<String, int> rootLayouts = {\n")
+	for _, ident := range slices.Sorted(maps.Keys(s.Roots)) {
+		fmt.Fprintf(&b, "  '%s': %d, // %s\n", ident, index[s.Roots[ident]], s.Roots[ident])
+	}
+	b.WriteString("};\n")
+	return File{Path: FBSDartLayoutPath, Content: b.Bytes()}
 }
 
 // fbReader reads a FlatBuffers buffer without a schema-specific API. It

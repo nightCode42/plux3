@@ -1,0 +1,21 @@
+{
+  "assets": [
+    {
+      "description": "A one-pixel image.",
+      "file": "images/dot.png",
+      "id": "01c0c450-6c00-7000-8000-000000000207",
+      "key": "dot",
+      "mediaType": "image/png"
+    },
+    {
+      "description": "A check mark, an SVG the server compiles to vector_graphics.",
+      "file": "icons/check.svg",
+      "id": "01c0c450-6c00-7000-8000-00000000020c",
+      "key": "check",
+      "mediaType": "image/svg+xml"
+    }
+  ],
+  "id": "01c0c450-6c00-7000-8000-000000000208",
+  "kind": "assetIndex",
+  "schemaVersion": "1.0.0"
+}

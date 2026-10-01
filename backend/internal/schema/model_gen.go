@@ -144,6 +144,8 @@ type AppDocument struct {
 	// UserContext: Attributes the host provides about the signed-in user,
 	// available in PXL as `user.<name>`.
 	UserContext []Field `json:"userContext,omitempty"`
+	// Telemetry: What the runtime reports (ANL-003, ADR-0034).
+	Telemetry *TelemetryPolicy `json:"telemetry,omitempty"`
 }
 
 // AssetEntry — An asset file.
@@ -955,6 +957,15 @@ type SyncPolicy struct {
 	Startup StartupPolicy `json:"startup"`
 	// Activation: When a staged release activates (SYN-004).
 	Activation ActivationPolicy `json:"activation"`
+}
+
+// TelemetryPolicy — What the runtime reports (ANL-003, ADR-0034).
+type TelemetryPolicy struct {
+	// Sampling: The share of each consent-gated event type the runtime keeps,
+	// from 0 to 1 in steps of 0.001; 1 when absent. The host app can only lower
+	// a rate; operational events (`session_start`, `sync_result`, `error`,
+	// `rasp_detection`) are never sampled.
+	Sampling map[string]float64 `json:"sampling,omitempty"`
 }
 
 // TemplateDependencies — What the subtree uses.

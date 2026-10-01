@@ -86,6 +86,11 @@ message Channel {
   // when nothing has been promoted yet.
   int64 release_sequence = 4;
   google.protobuf.Timestamp updated_at = 5;
+  // signed_release_sequence is the release the channel's newest signed
+  // manifest names, which is what devices are served; zero before the
+  // first. The worker signs a manifest after each promotion, so it
+  // equals release_sequence once that promotion reaches devices.
+  int64 signed_release_sequence = 6;
 }
 
 message Variable {

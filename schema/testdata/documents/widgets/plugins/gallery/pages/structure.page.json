@@ -1,0 +1,260 @@
+{
+  "id": "01c0c450-6c00-7000-8000-0000000001fc",
+  "key": "structure",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01c0c450-6c00-7000-8000-0000000001ff",
+    "slots": {
+      "appBar": {
+        "id": "01c0c450-6c00-7000-8000-0000000001fe",
+        "slots": {
+          "title": {
+            "id": "01c0c450-6c00-7000-8000-0000000001fd",
+            "props": {
+              "data": "structure"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "id": "01c0c450-6c00-7000-8000-0000000001f8",
+        "slots": {
+          "child": {
+            "children": [
+              {
+                "id": "01c0c450-6c00-7000-8000-0000000001e8",
+                "props": {
+                  "condition": {
+                    "$expr": "page.flag"
+                  }
+                },
+                "slots": {
+                  "else": {
+                    "id": "01c0c450-6c00-7000-8000-0000000001e7",
+                    "props": {
+                      "data": "if else"
+                    },
+                    "type": "Text"
+                  },
+                  "then": {
+                    "id": "01c0c450-6c00-7000-8000-0000000001e6",
+                    "props": {
+                      "data": "if then"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "If"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-0000000001ec",
+                "props": {
+                  "cases": [
+                    "one",
+                    "two"
+                  ],
+                  "value": {
+                    "$expr": "page.mode"
+                  }
+                },
+                "slots": {
+                  "branches": [
+                    {
+                      "id": "01c0c450-6c00-7000-8000-0000000001e9",
+                      "props": {
+                        "data": "match one"
+                      },
+                      "type": "Text"
+                    },
+                    {
+                      "id": "01c0c450-6c00-7000-8000-0000000001ea",
+                      "props": {
+                        "data": "match two"
+                      },
+                      "type": "Text"
+                    }
+                  ],
+                  "otherwise": {
+                    "id": "01c0c450-6c00-7000-8000-0000000001eb",
+                    "props": {
+                      "data": "match other"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "Match"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-0000000001ee",
+                "props": {
+                  "items": {
+                    "$expr": "page.letters"
+                  }
+                },
+                "slots": {
+                  "item": {
+                    "id": "01c0c450-6c00-7000-8000-0000000001ed",
+                    "props": {
+                      "data": {
+                        "$expr": "\"each \" + item"
+                      }
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "ForEach"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-0000000001f2",
+                "slots": {
+                  "compact": {
+                    "id": "01c0c450-6c00-7000-8000-0000000001ef",
+                    "props": {
+                      "data": "compact"
+                    },
+                    "type": "Text"
+                  },
+                  "expanded": {
+                    "id": "01c0c450-6c00-7000-8000-0000000001f1",
+                    "props": {
+                      "data": "expanded"
+                    },
+                    "type": "Text"
+                  },
+                  "medium": {
+                    "id": "01c0c450-6c00-7000-8000-0000000001f0",
+                    "props": {
+                      "data": "medium"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "Responsive"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-0000000001f3",
+                "props": {
+                  "data": "hidden"
+                },
+                "type": "Text",
+                "visible": {
+                  "$expr": "!page.flag"
+                }
+              },
+              {
+                "component": {
+                  "id": "01c0c450-6c00-7000-8000-000000000020",
+                  "version": 1
+                },
+                "id": "01c0c450-6c00-7000-8000-0000000001f4",
+                "props": {
+                  "title": "component title"
+                },
+                "slots": {
+                  "body": {
+                    "id": "01c0c450-6c00-7000-8000-0000000001f5",
+                    "props": {
+                      "data": "slot fill"
+                    },
+                    "type": "Text"
+                  }
+                }
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-0000000001f6",
+                "props": {
+                  "height": 20.0,
+                  "semanticLabel": "logo",
+                  "source": {
+                    "url": "https://example.com/a.png"
+                  },
+                  "width": 20.0
+                },
+                "slots": {
+                  "error": {
+                    "id": "01c0c450-6c00-7000-8000-000000000206",
+                    "props": {
+                      "data": "image failed"
+                    },
+                    "type": "Text"
+                  },
+                  "loading": {
+                    "id": "01c0c450-6c00-7000-8000-000000000205",
+                    "type": "CircularProgressIndicator"
+                  }
+                },
+                "type": "Image"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-000000000209",
+                "props": {
+                  "height": 20.0,
+                  "semanticLabel": "dot",
+                  "source": {
+                    "asset": {
+                      "$asset": "01c0c450-6c00-7000-8000-000000000207"
+                    }
+                  },
+                  "width": 20.0
+                },
+                "testId": "asset-image",
+                "type": "Image"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-00000000020d",
+                "props": {
+                  "height": 24.0,
+                  "semanticLabel": "check",
+                  "source": {
+                    "asset": {
+                      "$asset": "01c0c450-6c00-7000-8000-00000000020c"
+                    }
+                  },
+                  "width": 24.0
+                },
+                "testId": "svg-image",
+                "type": "Image"
+              }
+            ],
+            "id": "01c0c450-6c00-7000-8000-0000000001f7",
+            "props": {
+              "crossAxisAlignment": "start"
+            },
+            "type": "Column"
+          }
+        },
+        "type": "SingleChildScrollView"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "structure",
+  "schemaVersion": "1.0.0",
+  "state": [
+    {
+      "default": true,
+      "id": "01c0c450-6c00-7000-8000-0000000001f9",
+      "name": "flag",
+      "type": "bool"
+    },
+    {
+      "default": "two",
+      "id": "01c0c450-6c00-7000-8000-0000000001fa",
+      "name": "mode",
+      "type": "string"
+    },
+    {
+      "default": [
+        "x",
+        "y"
+      ],
+      "id": "01c0c450-6c00-7000-8000-0000000001fb",
+      "name": "letters",
+      "type": "list<string>"
+    }
+  ],
+  "title": "structure"
+}

@@ -15,9 +15,13 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/storage/objects"
 )
 
-// Verifies: REL-024.
-// Bundles and deltas are served by content address, cacheable for ever,
-// with range requests; other kinds and malformed keys are not served.
+// pngHeader is the start of a PNG file.
+var pngHeader = []byte("\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00")
+
+// Verifies: REL-024, AST-001.
+// Bundles, deltas and asset files are served by content address,
+// cacheable for ever, with range requests, an asset with the media type
+// it was stored with; other kinds and malformed keys are not served.
 func TestObjectHandler(t *testing.T) {
 	t.Parallel()
 	store, err := objects.NewFilesystem(t.TempDir(), "")
@@ -56,7 +60,22 @@ func TestObjectHandler(t *testing.T) {
 		res.Header.Get("Content-Type") != "application/vnd.plux.delta" || res.Header.Get("ETag") == "" {
 		t.Errorf("a range request: %d %q %v", res.StatusCode, body, res.Header)
 	}
-	for _, path := range []string{asset, "deltas/00/" + hex.EncodeToString(make([]byte, 32)), "deltas/../x", "nope"} {
+	r, _ = http.NewRequestWithContext(context.Background(), http.MethodGet, srv.URL+"/v1/objects/"+asset, nil)
+	res, err = http.DefaultClient.Do(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ = io.ReadAll(res.Body)
+	_ = res.Body.Close()
+	if res.StatusCode != http.StatusOK || string(body) != string(data) || res.Header.Get("Content-Type") != "application/octet-stream" ||
+		res.Header.Get("X-Content-Type-Options") != "nosniff" {
+		t.Errorf("an asset: %d %v", res.StatusCode, res.Header)
+	}
+	if assetMediaType("image/avif", nil) != "image/avif" || assetMediaType("", pngHeader) != "image/png" {
+		t.Error("an asset keeps its stored media type, or the one its bytes show")
+	}
+	export, _ := objects.Key(objects.KindExport, hex.EncodeToString(sum[:]))
+	for _, path := range []string{export, "deltas/00/" + hex.EncodeToString(make([]byte, 32)), "deltas/../x", "nope"} {
 		r, _ := http.NewRequestWithContext(context.Background(), http.MethodGet, srv.URL+"/v1/objects/"+path, nil)
 		res, err := http.DefaultClient.Do(r)
 		if err != nil {

@@ -15,7 +15,8 @@
     "library": "package:flutter/material.dart",
     "class": "CircularProgressIndicator",
     "constructors": [
-      ""
+      "",
+      "adaptive"
     ]
   },
   "category": "display",
@@ -106,6 +107,15 @@
       "id": 11,
       "type": "EdgeInsets",
       "flutter": "padding"
+    },
+    {
+      "name": "adaptive",
+      "id": 12,
+      "type": "bool",
+      "default": false,
+      "bindable": false,
+      "constructor": "adaptive",
+      "description": "Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere. `color` does not apply to it."
     }
   ],
   "excluded": [

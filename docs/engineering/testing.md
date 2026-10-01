@@ -83,6 +83,8 @@ Tests with no requirement (helpers, regressions) omit the ID but still describe 
 
 Performance budgets of the spec (§30) are asserted by tests that run only when a Make target enables them, because timings depend on the machine: `make go-budgets` measures the compiler's (`CMP-050`, `SCH-042`) on CI's reference runner. Benchmarks (`go test -bench`) exist beside them for profiling; results are recorded per phase in [docs/benchmarks/](../benchmarks/README.md).
 
+The runtime's regression gate (`QA-007`) never compares a timing with a committed number: shared runners differ from one another by more than the 10% the gate allows. `make bench-runtime-ab` runs the change's runtime and its base's alternately on one machine and fails only on a slowdown beyond 10% that a one-sided Mann–Whitney test on the runs' medians puts at 99% confidence ([p3-runtime.md](../benchmarks/p3-runtime.md)). Quantities that do not depend on the machine — bytes on the wire, bundle and app sizes — are compared with committed baselines instead (`make bench-sync`, `make size-android`, `make size-ios`).
+
 ## 8. Coverage
 
 - Floors (`QA-001`), defined in [coverage.json](../../coverage.json) and enforced by `covgate`: 85% for the compiler, PXL, bundle, delta, DPoP, approval, sync and security packages; 80% for all other Go and Dart code; 70% for Studio.

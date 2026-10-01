@@ -251,7 +251,7 @@ func TestSeedCommand(t *testing.T) {
 	if code := run(context.Background(), []string{"seed", "-config", path, "-out", out}, &stdout, &stderr); code != exitOK {
 		t.Fatalf("seed: %d; %s", code, stderr.String())
 	}
-	for _, f := range []string{"password", "token", "organization", "app"} {
+	for _, f := range []string{"password", "token", "organization", "app", "starter"} {
 		st, err := os.Stat(filepath.Join(out, f))
 		if err != nil || st.Mode().Perm() != 0o600 {
 			t.Errorf("%s: %v %v", f, st, err)
@@ -270,7 +270,7 @@ func TestSeedCommand(t *testing.T) {
 	}
 	stdout.Reset()
 	if code := run(context.Background(), []string{"seed", "-config", path2, "-out", "-"}, &stdout, &stderr); code != exitOK ||
-		!strings.Contains(stdout.String(), "PLUX_DEV_TOKEN=plux_pat_") {
+		!strings.Contains(stdout.String(), "PLUX_DEV_TOKEN=plux_pat_") || !strings.Contains(stdout.String(), "PLUX_DEV_STARTER=") {
 		t.Errorf("seed -out -: %d %q", code, stdout.String())
 	}
 	if code := run(context.Background(), []string{"seed", "extra"}, &stdout, &stderr); code != exitUsage {

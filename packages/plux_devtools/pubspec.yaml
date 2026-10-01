@@ -1,0 +1,22 @@
+name: plux_devtools
+description: >-
+  A debug overlay for host apps that use the Plux runtime: the sync status,
+  the active release and the problems the runtime reported. It renders
+  nothing in release builds.
+version: 0.1.0
+repository: https://github.com/nightCode42/plux3/tree/main/packages/plux_devtools
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plux_flutter: ^0.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

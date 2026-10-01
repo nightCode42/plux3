@@ -252,6 +252,13 @@ table Limit {
   value: long;
 }
 
+// The share of one event type the runtime keeps (ANL-003, ADR-0034).
+table Sampling {
+  event: string (key);
+  // In thousandths: 0 to 1000.
+  rate: uint;
+}
+
 // A feature flag of the app.
 table Flag {
   name: string (key);
@@ -284,6 +291,8 @@ table Meta {
   flags: [Flag];
   native_catalogue: Uuid;
   security_profile: string;
+  // App bundles: telemetry sampling, sorted by event; absent means 1.
+  telemetry_sampling: [Sampling];
 }
 
 // ── Section page ──────────────────────────────────────────────────────────

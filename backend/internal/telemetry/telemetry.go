@@ -111,32 +111,95 @@ func (s *Service) Ingest(ctx context.Context, src Source, events []Event) (int, 
 	accepted := 0
 	err := s.o.DB.InTx(ctx, storage.Tenant{OrganizationID: src.OrganizationID}, func(ctx context.Context, tx pgx.Tx) error {
 		q := dbgen.New(tx)
+		var newest *session
 		for i, e := range events {
 			fields, err := s.check(src, e)
 			if err != nil {
 				diags = append(diags, plxerr.NewDiagnostic(plxerr.InvalidFormat, plxerr.Location{Path: fmt.Sprintf("/events/%d", i)}, "%v", err))
 				continue
 			}
-			id, err := s.o.IDs.New()
-			if err != nil {
-				return fmt.Errorf("telemetry: %w", err)
-			}
-			if err := q.InsertTelemetryEvent(ctx, dbgen.InsertTelemetryEventParams{
-				ID: storage.MustUUID(id), OrganizationID: storage.MustUUID(src.OrganizationID), AppID: storage.MustUUID(src.AppID),
-				EnvironmentID: storage.MustUUID(src.EnvironmentID), DeviceID: storage.MustUUID(src.DeviceID),
-				Name: e.Name, Time: storage.Timestamp(e.Time), ReleaseSequence: e.ReleaseSequence,
-				PluginKey: e.PluginKey, Route: e.Route, Fields: fields,
-			}); err != nil {
-				return fmt.Errorf("telemetry: %w", err)
+			if err := s.insert(ctx, q, src, e, fields); err != nil {
+				return err
 			}
 			accepted++
+			newest = newest.newer(e, fields)
 		}
-		return nil
+		return newest.record(ctx, q, src.DeviceID)
 	})
 	if err != nil {
 		return 0, nil, err //nolint:wrapcheck // wrapped inside
 	}
 	return accepted, diags, nil
+}
+
+// insert stores one checked event.
+func (s *Service) insert(ctx context.Context, q *dbgen.Queries, src Source, e Event, fields []byte) error {
+	id, err := s.o.IDs.New()
+	if err != nil {
+		return fmt.Errorf("telemetry: %w", err)
+	}
+	if err := q.InsertTelemetryEvent(ctx, dbgen.InsertTelemetryEventParams{
+		ID: storage.MustUUID(id), OrganizationID: storage.MustUUID(src.OrganizationID), AppID: storage.MustUUID(src.AppID),
+		EnvironmentID: storage.MustUUID(src.EnvironmentID), DeviceID: storage.MustUUID(src.DeviceID),
+		Name: e.Name, Time: storage.Timestamp(e.Time), ReleaseSequence: e.ReleaseSequence,
+		PluginKey: e.PluginKey, Route: e.Route, Fields: fields,
+	}); err != nil {
+		return fmt.Errorf("telemetry: %w", err)
+	}
+	return nil
+}
+
+// session is the newest valid session_start of a batch.
+type session struct {
+	time     time.Time
+	versions deviceVersions
+}
+
+// newer returns the newer of s and e, when e is a valid session_start.
+func (s *session) newer(e Event, fields []byte) *session {
+	v, ok := sessionVersions(e, fields)
+	if !ok || s != nil && e.Time.Before(s.time) {
+		return s
+	}
+	return &session{time: e.Time, versions: v}
+}
+
+// record updates the device to what its newest session_start says it
+// runs, which may be newer than what it registered with (REL-080).
+func (s *session) record(ctx context.Context, q *dbgen.Queries, deviceID string) error {
+	if s == nil {
+		return nil
+	}
+	if err := q.UpdateDeviceVersions(ctx, dbgen.UpdateDeviceVersionsParams{
+		ID: storage.MustUUID(deviceID), RuntimeVersion: s.versions.runtime, HostBuild: s.versions.host, OsVersion: s.versions.os,
+	}); err != nil {
+		return fmt.Errorf("telemetry: %w", err)
+	}
+	return nil
+}
+
+// deviceVersions is what a session_start says the device runs.
+type deviceVersions struct{ runtime, host, os string }
+
+// version is the form of a runtime version: MAJOR.MINOR.PATCH, with an
+// optional pre-release or build suffix.
+var version = regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.+-]{1,64})?$`)
+
+// sessionVersions reads the versions of a valid session_start event.
+func sessionVersions(e Event, fields []byte) (deviceVersions, bool) {
+	if e.Name != "session_start" {
+		return deviceVersions{}, false
+	}
+	var f struct {
+		Runtime string `json:"runtime_version"`
+		Host    string `json:"host_build"`
+		OS      string `json:"os_version"`
+	}
+	// The same bound as at registration (device.Register).
+	if json.Unmarshal(fields, &f) != nil || !version.MatchString(f.Runtime) || len(f.Host) > 64 || len(f.OS) > 64 {
+		return deviceVersions{}, false
+	}
+	return deviceVersions{runtime: f.Runtime, host: f.Host, os: f.OS}, true
 }
 
 // check validates one event and returns its fields to store.

@@ -226,8 +226,13 @@ type Channel struct {
 	// when nothing has been promoted yet.
 	ReleaseSequence int64                  `protobuf:"varint,4,opt,name=release_sequence,json=releaseSequence,proto3" json:"release_sequence,omitempty"`
 	UpdatedAt       *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// signed_release_sequence is the release the channel's newest signed
+	// manifest names, which is what devices are served; zero before the
+	// first. The worker signs a manifest after each promotion, so it
+	// equals release_sequence once that promotion reaches devices.
+	SignedReleaseSequence int64 `protobuf:"varint,6,opt,name=signed_release_sequence,json=signedReleaseSequence,proto3" json:"signed_release_sequence,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *Channel) Reset() {
@@ -293,6 +298,13 @@ func (x *Channel) GetUpdatedAt() *timestamppb.Timestamp {
 		return x.UpdatedAt
 	}
 	return nil
+}
+
+func (x *Channel) GetSignedReleaseSequence() int64 {
+	if x != nil {
+		return x.SignedReleaseSequence
+	}
+	return 0
 }
 
 type Variable struct {
@@ -2952,14 +2964,15 @@ const file_plux_v1_app_proto_rawDesc = "" +
 	"production\x12&\n" +
 	"\x0fsigning_key_ref\x18\x06 \x01(\tR\rsigningKeyRef\x129\n" +
 	"\n" +
-	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xb8\x01\n" +
+	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xf0\x01\n" +
 	"\aChannel\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12%\n" +
 	"\x0eenvironment_id\x18\x02 \x01(\tR\renvironmentId\x12\x10\n" +
 	"\x03key\x18\x03 \x01(\tR\x03key\x12)\n" +
 	"\x10release_sequence\x18\x04 \x01(\x03R\x0freleaseSequence\x129\n" +
 	"\n" +
-	"updated_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"2\n" +
+	"updated_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\x126\n" +
+	"\x17signed_release_sequence\x18\x06 \x01(\x03R\x15signedReleaseSequence\"2\n" +
 	"\bVariable\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value\"\x98\x01\n" +

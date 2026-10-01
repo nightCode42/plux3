@@ -76,6 +76,7 @@ An app: its plugins, theme, locales, environments, shared data and policies (SCH
 | `state` | list of [StateEntry](#stateentry) |  |  |
 | `collections` | list of [Collection](#collection) |  |  |
 | `userContext` | list of [Field](#field) |  | Attributes the host provides about the signed-in user, available in PXL as `user.<name>`. |
+| `telemetry` | [TelemetryPolicy](#telemetrypolicy) |  | What the runtime reports (ANL-003, ADR-0034). |
 
 ### AssetEntry
 
@@ -621,6 +622,14 @@ Sync policy (§10.4).
 |---|---|---|---|
 | `startup` | [StartupPolicy](#startuppolicy) | yes | Start-up behaviour (SYN-003). |
 | `activation` | [ActivationPolicy](#activationpolicy) | yes | When a staged release activates (SYN-004). |
+
+### TelemetryPolicy
+
+What the runtime reports (ANL-003, ADR-0034).
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `sampling` | map of number |  | The share of each consent-gated event type the runtime keeps, from 0 to 1 in steps of 0.001; 1 when absent. The host app can only lower a rate; operational events (`session_start`, `sync_result`, `error`, `rasp_detection`) are never sampled. |
 
 ### TemplateDependencies
 

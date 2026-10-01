@@ -1,0 +1,18 @@
+{
+  "id": "01e0c450-6c00-7000-8000-000000000002",
+  "key": "starter",
+  "kind": "theme",
+  "name": "Starter",
+  "schemaVersion": "1.0.0",
+  "tokens": {
+    "color": {
+      "$type": "color",
+      "primary": {
+        "$value": "#5B3DF5",
+        "$extensions": {
+          "dev.plux.dark": "#8B78FF"
+        }
+      }
+    }
+  }
+}

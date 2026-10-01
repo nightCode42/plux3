@@ -52,6 +52,9 @@ type Channel struct {
 	Key             string
 	ReleaseSequence int64
 	UpdatedAt       time.Time
+	// SignedReleaseSequence is the release of the newest signed manifest,
+	// which devices are served; set by ListChannels only.
+	SignedReleaseSequence int64
 }
 
 // Variable is a non-secret value of an environment (DAT-003).
@@ -587,7 +590,8 @@ func (s *Service) ListChannels(ctx context.Context, p auth.Principal, envID stri
 		}
 		out = make([]Channel, len(rows))
 		for i, row := range rows {
-			out[i] = channelOf(row)
+			out[i] = channelOf(row.Channel)
+			out[i].SignedReleaseSequence = row.SignedReleaseSequence
 		}
 		return nil
 	})

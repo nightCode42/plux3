@@ -41,6 +41,7 @@ func TestRegistryFilesAreDeterministic(t *testing.T) {
 		registry.LockFile: `"widget/Text": `,
 		registryGoPath:    "var widgets = [...]Widget{",
 		registryDartPath:  "const List<WidgetDescriptor> widgetDescriptors = [",
+		renderDartPath:    "const Map<int, NodeBuilder> generatedBuilders = {",
 		registryTSPath:    "export const widgets: readonly WidgetDescriptor[] = [",
 		widgetsDocPath:    "# Widget Reference",
 		actionsDocPath:    "# Action Reference",

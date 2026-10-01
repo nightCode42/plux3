@@ -10,20 +10,24 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 
 	"github.com/nightCode42/plux3/backend/internal/audit"
 	"github.com/nightCode42/plux3/backend/internal/delta"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/release"
 	"github.com/nightCode42/plux3/backend/internal/schema/uuid7"
+	"github.com/nightCode42/plux3/backend/internal/storage"
 	"github.com/nightCode42/plux3/backend/internal/storage/objects"
 	"github.com/nightCode42/plux3/backend/internal/tenancy"
 )
 
-// Verifies: BND-002, SEC-056, REL-020, REL-021, REL-022, REL-023, REL-024, REL-030, REL-031, REL-032, REL-033, NFR-005.
+// Verifies: BND-002, SEC-056, REL-020, REL-021, REL-022, REL-023, REL-024, REL-030, REL-031, REL-032, REL-033, NFR-005, NFR-006.
 // A promoted release gets a signed manifest; a device holding the old
 // app bundle is told to fetch a small delta that rebuilds the new one;
 // an unchanged device gets "not modified"; switches reach the manifest.
@@ -41,7 +45,23 @@ func TestManifestAndDeltas(t *testing.T) {
 	if _, err := f.rel.PromoteRelease(ctx, f.owner, f.app, first.Sequence, prod.ID, ""); err != nil {
 		t.Fatal(err)
 	}
+	// The channel says when devices get the promotion: once the worker
+	// has signed its manifest (what `plux publish --promote` waits for).
+	signed := func() int64 {
+		t.Helper()
+		chs, err := f.tenancy.ListChannels(ctx, f.owner, prod.ID, tenancy.Page{Size: 10})
+		if err != nil || len(chs) != 1 || chs[0].ReleaseSequence != first.Sequence {
+			t.Fatalf("ListChannels: %+v %v", chs, err)
+		}
+		return chs[0].SignedReleaseSequence
+	}
+	if n := signed(); n != 0 {
+		t.Errorf("signed before the worker ran: %d", n)
+	}
 	f.run(t)
+	if n := signed(); n != first.Sequence {
+		t.Errorf("signed after the worker ran: %d, want %d", n, first.Sequence)
+	}
 	req := release.ManifestRequest{OrganizationID: f.org, AppID: f.app, EnvironmentID: prod.ID}
 	m1, err := f.rel.GetManifest(ctx, req)
 	if err != nil {
@@ -130,11 +150,41 @@ func TestManifestAndDeltas(t *testing.T) {
 	if err != nil || again.ETag != m2.ETag || !bytes.Equal(again.Signed, m2.Signed) {
 		t.Errorf("the manifest is not deterministic: %v", err)
 	}
+	// The ETag names the manifest: a device that still holds the old
+	// bundles (its download failed) gets the plan again; once it holds
+	// the new ones, the ETag of the response it synced from is "not
+	// modified" (REL-031).
 	req.IfNoneMatch = m2.ETag
+	stale, err := f.rel.GetManifest(ctx, req)
+	if err != nil || stale.NotModified || stale.Plan[""].Action != release.SyncDelta {
+		t.Errorf("a device without the new bundles: %+v %v", stale.Plan, err)
+	}
+	req.Installed = map[string][]byte{"": newApp, "loans": oldPlugin}
 	nm, err := f.rel.GetManifest(ctx, req)
-	if err != nil || !nm.NotModified || nm.Signed != nil {
+	if err != nil || !nm.NotModified || nm.Signed != nil || nm.ETag != m2.ETag {
 		t.Errorf("not modified: %+v %v", nm, err)
 	}
+	req.Installed = map[string][]byte{"": newApp}
+	if partial, err := f.rel.GetManifest(ctx, req); err != nil || partial.NotModified {
+		t.Errorf("a device without a plugin: %+v %v", partial.NotModified, err)
+	}
+	// The digest of the installed bundles stands for them on an
+	// up-to-date check (NFR-006); any other digest, or a changed
+	// manifest, asks the device for its bundles, which the plan needs.
+	req.Installed = nil
+	req.InstalledDigest = release.InstalledDigest(map[string][]byte{"": newApp, "loans": oldPlugin})
+	if nm, err := f.rel.GetManifest(ctx, req); err != nil || !nm.NotModified || nm.InstalledRequired {
+		t.Errorf("not modified by digest: %+v %v", nm, err)
+	}
+	req.InstalledDigest = release.InstalledDigest(map[string][]byte{"": newApp})
+	if ask, err := f.rel.GetManifest(ctx, req); err != nil || ask.NotModified || !ask.InstalledRequired || ask.Signed != nil {
+		t.Errorf("a digest of other bundles: %+v %v", ask, err)
+	}
+	req.IfNoneMatch, req.InstalledDigest = "an older manifest", release.InstalledDigest(map[string][]byte{"": newApp, "loans": oldPlugin})
+	if ask, err := f.rel.GetManifest(ctx, req); err != nil || !ask.InstalledRequired || ask.ETag != m2.ETag {
+		t.Errorf("a digest with an older ETag: %+v %v", ask, err)
+	}
+	req.InstalledDigest = nil
 	// A bundle the organisation never published gets the full bundle.
 	req.IfNoneMatch = ""
 	req.Installed = map[string][]byte{"": bytes.Repeat([]byte{7}, 32)}
@@ -209,4 +259,78 @@ func get(t *testing.T, f *fixture, kind objects.Kind, sum []byte) []byte {
 		t.Fatal(err)
 	}
 	return data
+}
+
+// Verifies: REL-031.
+// The signing job locks the channel, so a job that starts while a
+// promotion is in flight waits for it and signs the release it commits.
+// Reading the channel without the lock, it would sign the release
+// before, and store that manifest after the newer one's.
+func TestSigningWaitsForAPromotionInFlight(t *testing.T) {
+	t.Parallel()
+	f := newFixture(t)
+	ctx := context.Background()
+	prod := f.envs["production"]
+	f.publish(t, "", false)
+	f.publish(t, f.loans, false)
+	dev := f.envs["development"].ID
+	first, _, err := f.rel.CreateRelease(ctx, f.owner, f.app, dev, nil, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	second, _, err := f.rel.CreateRelease(ctx, f.owner, f.app, dev, nil, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.rel.PromoteRelease(ctx, f.owner, f.app, first.Sequence, prod.ID, ""); err != nil {
+		t.Fatal(err)
+	}
+	f.q.mu.Lock()
+	var job release.ManifestJob
+	for _, w := range f.q.jobs {
+		if j, ok := w.(release.ManifestJob); ok {
+			job = j
+		}
+	}
+	f.q.jobs = nil
+	f.q.mu.Unlock()
+	if job.ChannelID == "" {
+		t.Fatal("the promotion queued no signing")
+	}
+	done := make(chan error, 1)
+	// A promotion of the second release, holding the channel's lock
+	// while the job starts.
+	err = f.db.InTx(ctx, storage.Tenant{OrganizationID: f.org}, func(ctx context.Context, tx pgx.Tx) error {
+		if _, err := tx.Exec(ctx, "SELECT 1 FROM channels WHERE id = $1 FOR UPDATE", job.ChannelID); err != nil {
+			return err
+		}
+		go func() { done <- f.rel.SignManifest(ctx, job) }()
+		for deadline := time.Now().Add(10 * time.Second); ; time.Sleep(10 * time.Millisecond) {
+			var waiting int
+			err := f.db.InTx(ctx, storage.Tenant{OrganizationID: f.org}, func(ctx context.Context, q pgx.Tx) error {
+				return q.QueryRow(ctx, "SELECT count(*) FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND datname = current_database() AND query LIKE '%GetChannelByIDForUpdate%'").Scan(&waiting)
+			})
+			if err != nil {
+				return err
+			}
+			if waiting > 0 {
+				break
+			}
+			if time.Now().After(deadline) {
+				return errors.New("the signing job did not wait for the channel's lock")
+			}
+		}
+		_, err := tx.Exec(ctx, "UPDATE channels SET release_sequence = $2 WHERE id = $1", job.ChannelID, second.Sequence)
+		return err
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := <-done; err != nil {
+		t.Fatalf("SignManifest: %v", err)
+	}
+	m, err := f.rel.GetManifest(ctx, release.ManifestRequest{OrganizationID: f.org, AppID: f.app, EnvironmentID: prod.ID})
+	if err != nil || m.Document.ReleaseSequence != second.Sequence {
+		t.Fatalf("the manifest names release %d, want %d (%v)", m.Document.ReleaseSequence, second.Sequence, err)
+	}
 }

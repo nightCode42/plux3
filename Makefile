@@ -39,9 +39,9 @@ FUZZTIME      ?= 30s
 GO_TOOLCHAIN  := $(shell sed -n 's/^toolchain //p' backend/go.mod)
 GO_INSTALL    := GOTOOLCHAIN=$(GO_TOOLCHAIN) $(GO) install
 GO_MODULES    := backend tools
-DART_PACKAGES := packages/plux_flutter packages/plux_widget_api
+DART_PACKAGES := packages/plux_devtools packages/plux_flutter packages/plux_svgc packages/plux_widget_api apps/starter test/bench/runtime
 # Generated Dart code is verified by regeneration (CI-003), not by the formatter.
-DART_SOURCES  := find packages -name '*.dart' ! -name '*.g.dart' ! -name '*_generated.dart' ! -path '*/build/*' -print0
+DART_SOURCES  := find packages apps test/bench test/size -name '*.dart' ! -name '*.g.dart' ! -name '*_generated.dart' ! -path '*/build/*' ! -path '*/.dart_tool/*' -print0
 # Everything `make gen` writes; `go-gen-check` fails if any of it changes.
 GEN_PATHS     := backend tools docs/reference packages studio/packages schema
 TOOLS_BIN     := $(subst \,/,$(shell $(GO) env GOPATH | tr -d '\r'))/bin
@@ -88,7 +88,8 @@ GO_BUILD_FLAGS  := -trimpath -buildvcs=false -ldflags "-s -w -buildid= \
 	go-determinism go-budgets go-fuzz currencies-check go-vuln go-build go-reproducible \
 	dart-check dart-get dart-lock-check dart-fmt dart-fmt-check dart-analyze dart-test dart-cover widgets-api widgets-api-check \
 	studio-check studio-install studio-fmt studio-lint studio-typecheck studio-test studio-cover \
-	compose-secrets compose-up compose-down compose-seed dev compose-test \
+	compose-secrets compose-up compose-down compose-seed dev dev-starter dev-app e2e-starter e2e-android e2e-ios compat compose-test image-check \
+	bench-runtime bench-runtime-ab bench-sync size-android size-ios docs-site \
 	release-binaries release-notes repo-check spec-lint trace secrets workflows-lint reuse-lint hygiene
 
 help: ## Show this help
@@ -163,12 +164,15 @@ build: go-build ## Build every binary into bin/
 # flatc writes the section accessors for Go and Dart from the one schema
 # file, and the binary schema of each section kind, from which schemagen
 # derives the verifier's layout tables (BND-001, BND-012).
+# flatc's Dart output applies `!` to values that cannot be null, which the
+# analysis pub.dev scores (RT-001) reports; it is told to ignore that.
 gen: ## Regenerate all generated code and reference documents (CI-003)
 	@"$(FLATC)" --version 2>/dev/null | grep -qx "flatc version $(FLATC_VERSION)" || { echo "✗ flatc $(FLATC_VERSION) not found at $(FLATC); run 'make install-flatc'" >&2; exit 1; }
 	@bfbs=$$(mktemp -d); trap 'rm -rf "$$bfbs"' EXIT; \
 	rm -rf $(FBS_GO_DIR) $(FBS_DART_DIR); \
 	"$(FLATC)" --go -o $(dir $(FBS_GO_DIR)) $(FBS_SCHEMA); \
 	"$(FLATC)" --dart -o $(FBS_DART_DIR) $(FBS_SCHEMA); \
+	sed -i.bak 's|^// ignore_for_file: unused_import,|// ignore_for_file: unnecessary_non_null_assertion, unused_import,|' $(FBS_DART_DIR)/*_generated.dart && rm -f $(FBS_DART_DIR)/*.bak; \
 	"$(FLATC)" --binary --schema -o "$$bfbs" $(FBS_SECTIONS); \
 	$(GO) run ./tools/cmd/schemagen -root . -bfbs "$$bfbs"
 	@$(MAKE) proto
@@ -312,11 +316,14 @@ go-reproducible: ## Build twice with cold caches and fail unless the binaries ar
 
 dart-check: dart-lock-check dart-fmt-check dart-analyze widgets-api-check dart-cover ## All Dart gates
 
-dart-get: ## Resolve the pub workspace (updates pubspec.lock)
+# plux_svgc is outside the workspace: the server image builds it with the
+# Dart SDK alone, which cannot resolve the workspace's Flutter packages.
+dart-get: ## Resolve the pub workspace and plux_svgc (updates the pubspec.lock files)
 	flutter pub get
+	cd packages/plux_svgc && dart pub get
 
-dart-lock-check: dart-get ## Fail if pubspec.lock is not in sync with the pubspecs (CI-003)
-	@changed=$$(git status --porcelain -- pubspec.lock); if [ -n "$$changed" ]; then \
+dart-lock-check: dart-get ## Fail if a pubspec.lock is not in sync with its pubspecs (CI-003)
+	@changed=$$(git status --porcelain -- pubspec.lock packages/plux_svgc/pubspec.lock); if [ -n "$$changed" ]; then \
 		echo "$$changed"; echo "✗ pubspec.lock is out of date or uncommitted. Run 'make dart-get' and commit."; exit 1; fi
 
 dart-fmt: ## Format hand-written Dart code
@@ -343,6 +350,40 @@ widgets-api: ## Snapshot the pinned Flutter SDK's constructors and enums for the
 # Verifies: WGT-003.
 widgets-api-check: ## Fail if schema/widgets/flutter-api.json does not match the pinned Flutter SDK (WGT-003)
 	$(WIDGETS_API) --check
+
+##@ Benchmarks and size (QA-007)
+
+# Measured runs of the runtime benchmark, and runs per side of the A/B
+# comparison.
+RUNS ?=
+# The commit the A/B comparison measures against.
+BASE ?= origin/main
+
+bench-runtime: ## Build the runtime benchmark in profile mode and run it under xvfb (Linux; RUNS=5)
+	test/bench/runtime/bench.sh measure $(RUNS)
+
+# Verifies: QA-007.
+bench-runtime-ab: ## Compare the runtime benchmark with BASE's runtime; fail on regressions beyond 10% (QA-007; RUNS=10)
+	test/bench/runtime/bench.sh compare $(BASE) $(RUNS)
+
+# Verifies: QA-007, NFR-007.
+bench-sync: ## Sync the benchmark app on the simulated slow network against a server built from source (needs PLUX_TEST_DATABASE_URL)
+	@test -n "$$PLUX_TEST_DATABASE_URL" || { echo "✗ set PLUX_TEST_DATABASE_URL to a PostgreSQL database (see docs/engineering/testing.md)"; exit 1; }
+	cd backend && PLUX_E2E_FLUTTER="$$(command -v flutter)" $(GO) test -count=1 -timeout 30m -run TestSyncOnSlowNetwork -v ./internal/server
+
+# Verifies: RT-061, NFR-009.
+size-android: ## Check what plux_flutter adds to the release APKs and App Bundle downloads (RT-061; needs the Android SDK)
+	test/size/size.sh android
+
+# Verifies: RT-061, NFR-009.
+size-ios: ## Check what plux_flutter adds to a release iOS app for arm64 (RT-061; needs Xcode)
+	test/size/size.sh ios
+
+##@ Documentation site (ADR-0033)
+
+# Verifies: DX-002.
+docs-site: ## Build the documentation site from docs/ into site/dist; fails on a broken internal link
+	cd site && bun install --frozen-lockfile && bun run build
 
 ##@ Studio (Bun, TypeScript)
 
@@ -381,22 +422,77 @@ compose-up: compose-secrets ## Start the single-node stack: server, PostgreSQL, 
 compose-down: ## Stop the stack (volumes are kept; add -v by hand to delete them)
 	$(COMPOSE) down
 
+# The starter app under `make dev`: where the device reaches the stack
+# (after `adb reverse`, localhost works on Android too) and the defines
+# file dev-starter writes from the seeded installation.
+DEV_ENDPOINT    ?= http://localhost:8080
+STARTER_DEFINES := apps/starter/.dart_defines.json
+# A connected Android or iOS device, emulator or simulator for the starter.
+STARTER_DEVICE  := flutter devices --machine 2>/dev/null | grep -Eq '"targetPlatform": *"(android|ios)'
+
 # Verifies: DEP-020.
-dev: ## Start the stack with hot reload of the server, seed a sample app on first run (DEP-020)
+dev: ## Start the stack with hot reload of the server and, with a device or emulator attached, of the starter app; seed sample apps on first run (DEP-020)
 	$(MAKE) compose-seed COMPOSE_OVERLAY=$(COMPOSE_DIR)/compose.dev.yaml
-	$(COMPOSE) -f $(COMPOSE_DIR)/compose.dev.yaml watch
+	$(MAKE) dev-starter
+	@if $(STARTER_DEVICE); then \
+		echo "Server: rebuilt on every change under backend/ (log: $(COMPOSE_DIR)/.dev-watch.log)."; \
+		$(COMPOSE) -f $(COMPOSE_DIR)/compose.dev.yaml watch --no-up --quiet > $(COMPOSE_DIR)/.dev-watch.log 2>&1 & watch=$$!; \
+		trap 'kill $$watch 2>/dev/null' EXIT INT TERM; \
+		$(MAKE) --no-print-directory dev-app; \
+	else \
+		echo "No Android or iOS device, emulator or simulator attached: watching the server only."; \
+		echo "Start one and run 'make dev-app' in a second terminal for the starter app with hot reload."; \
+		$(COMPOSE) -f $(COMPOSE_DIR)/compose.dev.yaml watch --no-up; \
+	fi
+
+dev-starter: ## Point the starter app at the seeded dev stack: write its defines and pull its baseline (DEP-020)
+	@test -s $(COMPOSE_DIR)/.secrets/dev.env || { echo "✗ no seeded stack: run 'make dev' first"; exit 1; }
+	@. ./$(COMPOSE_DIR)/.secrets/dev.env && \
+		{ test -n "$$PLUX_DEV_STARTER" || { echo "✗ this stack was seeded before the starter app: delete its volumes (docker compose down -v) and run 'make dev'"; exit 1; }; } && \
+		printf '{"PLUX_ENDPOINT":"%s","PLUX_APP_ID":"%s","PLUX_ENVIRONMENT":"staging"}\n' "$(DEV_ENDPOINT)" "$$PLUX_DEV_STARTER" > $(STARTER_DEFINES) && \
+		cd backend && PLUX_TOKEN="$$PLUX_DEV_TOKEN" $(GO) run ./cmd/plux pull --server http://localhost:8080 --org "$$PLUX_DEV_ORGANIZATION" \
+			--app "$$PLUX_DEV_STARTER" --env staging -o ../apps/starter/assets/plux
+	@echo "Starter: $(STARTER_DEFINES) and its baseline in apps/starter/assets/plux"
+
+dev-app: ## Run the starter app against the dev stack with Flutter hot reload: r reloads, R restarts, q quits (DEP-020)
+	@test -s $(STARTER_DEFINES) || $(MAKE) --no-print-directory dev-starter
+	@if command -v adb >/dev/null 2>&1; then adb reverse tcp:8080 tcp:8080 >/dev/null 2>&1 || true; fi
+	cd apps/starter && flutter run --dart-define-from-file=.dart_defines.json
+
+# Verifies: QA-006.
+e2e-starter: ## Run the starter app's end-to-end flows on this machine against a server built from source (needs PLUX_TEST_DATABASE_URL)
+	@test -n "$$PLUX_TEST_DATABASE_URL" || { echo "✗ set PLUX_TEST_DATABASE_URL to a PostgreSQL database (see docs/engineering/testing.md)"; exit 1; }
+	cd backend && PLUX_E2E_FLUTTER="$$(command -v flutter)" $(GO) test -count=1 -timeout 45m -run TestStarterAppAgainstTheServer -v ./internal/server
+
+# ANDROID_API picks the emulator's system image for e2e-android.
+ANDROID_API ?= 35
+
+# Verifies: QA-006, RT-002.
+e2e-android: ## Run the starter's flows on a headless Android emulator (CI only; needs the Android SDK, KVM, PLUX_TEST_DATABASE_URL; ANDROID_API=35)
+	test/e2e/android.sh $(ANDROID_API)
+
+# Verifies: QA-006, RT-002.
+e2e-ios: ## Run the starter's flows on an iOS simulator (CI only; needs Xcode, jq, PLUX_TEST_DATABASE_URL)
+	test/e2e/ios.sh
+
+# Verifies: QA-010.
+compat: ## Run the compatibility matrix: released runtimes against today's server, today's runtime against released servers (QA-010)
+	@test -n "$$PLUX_TEST_DATABASE_URL" || { echo "✗ set PLUX_TEST_DATABASE_URL to a PostgreSQL database (see docs/engineering/testing.md)"; exit 1; }
+	test/compat/run.sh
 
 # COMPOSE_OVERLAY adds a Compose file for compose-seed (dev or load).
 COMPOSE_OVERLAY ?=
 
-compose-seed: compose-secrets ## Start the stack and, on first run, seed an administrator and the loan calculator promoted to staging
+compose-seed: compose-secrets ## Start the stack and, on first run, seed an administrator, the loan calculator and the starter app promoted to staging
 	$(COMPOSE) $(if $(COMPOSE_OVERLAY),-f $(COMPOSE_OVERLAY)) up -d --build --wait
 	@if [ ! -s $(COMPOSE_DIR)/.secrets/dev.env ]; then \
 		umask 077; \
 		$(COMPOSE) $(if $(COMPOSE_OVERLAY),-f $(COMPOSE_OVERLAY)) run --rm --no-deps plux-server seed -config /etc/plux/plux.yaml -out - > $(COMPOSE_DIR)/.secrets/dev.env && \
 		. ./$(COMPOSE_DIR)/.secrets/dev.env && \
 		(cd backend && PLUX_TOKEN="$$PLUX_DEV_TOKEN" $(GO) run ./cmd/plux publish --server http://localhost:8080 --org "$$PLUX_DEV_ORGANIZATION" \
-			--app "$$PLUX_DEV_APP" -C ../schema/testdata/documents/loan-calculator --promote staging); \
+			--app "$$PLUX_DEV_APP" -C ../schema/testdata/documents/loan-calculator --promote staging && \
+		 PLUX_TOKEN="$$PLUX_DEV_TOKEN" $(GO) run ./cmd/plux publish --server http://localhost:8080 --org "$$PLUX_DEV_ORGANIZATION" \
+			--app "$$PLUX_DEV_STARTER" -C ../schema/testdata/documents/starter --env staging --promote staging); \
 		echo "Seeded dev@plux.localhost; password and token in $(COMPOSE_DIR)/.secrets/dev.env"; \
 	fi
 
@@ -411,11 +507,29 @@ compose-test: compose-secrets ## Run the Go integration and end-to-end tests aga
 		PLUX_TEST_VALKEY_URL=redis://127.0.0.1:56379 \
 		$(GO) test -race -count=1 ./internal/storage/... ./internal/cache/... ./internal/server/... ./internal/api/... ./internal/release/...
 
+# The image as shipped, for this machine's platform: its plux-svgc and
+# Skia library must reproduce the golden output (CI runs it on amd64 and
+# arm64, CMP-002), and every component must carry its notices.
+IMAGE_CHECK_TAG ?= plux-server:check
+# Verifies: CMP-031, CMP-002.
+image-check: ## Build the server image and check its SVG compiler's output and its third-party notices
+	docker build -f backend/Dockerfile --target server -t $(IMAGE_CHECK_TAG) .
+	@out=$$(mktemp); trap 'rm -f "$$out"' EXIT; \
+	docker run --rm -i --network none --entrypoint /usr/local/bin/plux-svgc $(IMAGE_CHECK_TAG) \
+		--libpathops /usr/local/lib/plux/libpath_ops.so < packages/plux_svgc/test/icon.svg > "$$out"; \
+	cmp "$$out" packages/plux_svgc/test/icon.pathops.vec && echo "✓ plux-svgc in the image reproduces the golden"
+	@id=$$(docker create $(IMAGE_CHECK_TAG)); trap 'docker rm -f "$$id" >/dev/null' EXIT; \
+	docs=$$(docker cp "$$id:/usr/share/doc" - | tar -t); \
+	for f in plux-server/go.LICENSE plux-server/THIRD_PARTY_NOTICES.txt plux-server/LICENSE-material-design-icons \
+		plux-server/LICENSE-cupertino-icons plux-svgc/dart-sdk.LICENSE plux-svgc/skia.LICENSE plux-svgc/flutter-path_ops.LICENSE; do \
+		printf '%s\n' "$$docs" | grep -qx "doc/$$f" || { echo "✗ the image lacks /usr/share/doc/$$f" >&2; exit 1; }; \
+	done; echo "✓ the image carries its third-party notices"
+
 ##@ Releases (CI-008)
 
 # Releasable components and their directories. Tags are <component>/v<semver>.
 COMPONENT ?=
-component_path = $(if $(filter backend,$(1)),backend,$(if $(filter plux_flutter,$(1)),packages/plux_flutter,$(if $(filter studio,$(1)),studio,)))
+component_path = $(if $(filter backend,$(1)),backend,$(if $(filter plux_flutter,$(1)),packages/plux_flutter,$(if $(filter plux_devtools,$(1)),packages/plux_devtools,$(if $(filter studio,$(1)),studio,))))
 
 # Platforms the CLI and server are released for (CLI-001).
 RELEASE_PLATFORMS := linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64
@@ -429,6 +543,7 @@ release-binaries: ## Build reproducible release archives of plux and plux-server
 		dir=$(DIST_DIR)/plux_$(BACKEND_VERSION)_$${os}_$${arch}; mkdir -p $$dir; \
 		(cd backend && CGO_ENABLED=0 GOOS=$$os GOARCH=$$arch $(GO) build $(GO_BUILD_FLAGS) -o ../$$dir/ ./cmd/plux ./cmd/plux-server); \
 		cp -r LICENSES $$dir/; \
+		GO="$(GO)" CGO_ENABLED=0 GOOS=$$os GOARCH=$$arch sh scripts/release/go-notices.sh $$dir/NOTICES ./cmd/plux ./cmd/plux-server; \
 		find $$dir -exec touch -h -d @0 {} +; \
 		if [ "$$os" = windows ]; then (cd $(DIST_DIR) && zip -qrX $${dir#$(DIST_DIR)/}.zip $${dir#$(DIST_DIR)/}); \
 		else tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner -C $(DIST_DIR) -cf - $${dir#$(DIST_DIR)/} | gzip -n > $$dir.tar.gz; fi; \
@@ -437,9 +552,9 @@ release-binaries: ## Build reproducible release archives of plux and plux-server
 	@cd $(DIST_DIR) && sha256sum plux_* > SHA256SUMS && cat SHA256SUMS
 	@scripts/release/package-manifests.sh $(BACKEND_VERSION) $(DIST_DIR)
 
-release-notes: ## Print release notes for COMPONENT (backend, plux_flutter, studio) since its last tag
-	@test -n "$(call component_path,$(COMPONENT))" || { echo "✗ COMPONENT must be backend, plux_flutter or studio" >&2; exit 2; }
-	@git cliff --config cliff.toml --include-path "$(call component_path,$(COMPONENT))/**" \
+release-notes: ## Print release notes for COMPONENT (backend, plux_flutter, plux_devtools, studio) since its last tag
+	@test -n "$(call component_path,$(COMPONENT))" || { echo "✗ COMPONENT must be backend, plux_flutter, plux_devtools or studio" >&2; exit 2; }
+	@COMPONENT=$(COMPONENT) git cliff --config cliff.toml --include-path "$(call component_path,$(COMPONENT))/**" \
 		--tag-pattern "^$(COMPONENT)/v" $(if $(TAG),--tag "$(TAG)" --unreleased,--unreleased)
 
 ##@ Repository

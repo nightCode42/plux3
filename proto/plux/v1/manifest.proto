@@ -122,6 +122,11 @@ message GetManifestRequest {
   repeated InstalledBundle installed = 5;
   // if_none_match is the ETag of the manifest the device already has.
   string if_none_match = 6;
+  // installed_digest stands for installed on an up-to-date check
+  // (NFR-006, ADR-0037): the SHA-256 of one line `<key>:<sha256 hex>\n`
+  // per installed bundle, sorted by key, the app bundle's key empty. A
+  // device that sends it with if_none_match sends no installed list.
+  bytes installed_digest = 7;
 }
 
 message GetManifestResponse {
@@ -129,6 +134,10 @@ message GetManifestResponse {
   bool not_modified = 1;
   Manifest manifest = 2;
   string etag = 3;
+  // installed_required is true when a request with installed_digest
+  // found the manifest changed: manifest is unset, and the device asks
+  // again with installed, from which the server plans its deltas.
+  bool installed_required = 4;
 }
 
 message GetRootKeysRequest {

@@ -237,16 +237,22 @@ func (s Manifest) GetManifest(ctx context.Context, req *connect.Request[pluxv1.G
 		installed[b.GetKey()] = sum
 		bundles = append(bundles, device.Installed{Key: b.GetKey(), SHA256: sum})
 	}
+	if d := m.GetInstalledDigest(); len(d) != 0 && len(d) != 32 {
+		return nil, plxerr.New(plxerr.InvalidFormat, "installed_digest is not a SHA-256")
+	}
 	served, err := s.h.Releases.GetManifest(ctx, release.ManifestRequest{
 		OrganizationID: d.OrganizationID, AppID: d.AppID, EnvironmentID: d.EnvironmentID, Channel: m.GetChannel(),
 		InstalledSequence: m.GetInstalledSequence(), Installed: installed, IfNoneMatch: m.GetIfNoneMatch(),
+		InstalledDigest: m.GetInstalledDigest(),
 	})
 	if err != nil {
 		return nil, err //nolint:wrapcheck // a domain error
 	}
-	res := connect.NewResponse(&pluxv1.GetManifestResponse{NotModified: served.NotModified, Etag: served.ETag})
+	res := connect.NewResponse(&pluxv1.GetManifestResponse{
+		NotModified: served.NotModified, InstalledRequired: served.InstalledRequired, Etag: served.ETag,
+	})
 	res.Header().Set("ETag", served.ETag)
-	if served.NotModified {
+	if served.NotModified || served.InstalledRequired {
 		return res, nil
 	}
 	if err := s.h.Devices.ReportInstalled(ctx, d, m.GetInstalledSequence(), bundles); err != nil {

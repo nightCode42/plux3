@@ -14,6 +14,8 @@ import (
 	"testing/fstest"
 	"time"
 
+	"github.com/nightCode42/plux3/backend/internal/icons/fonts"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
@@ -21,7 +23,9 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/auth"
 	"github.com/nightCode42/plux3/backend/internal/bundle"
 	"github.com/nightCode42/plux3/backend/internal/compiler"
+	"github.com/nightCode42/plux3/backend/internal/compiler/media"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
+	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 	"github.com/nightCode42/plux3/backend/internal/signing"
 	"github.com/nightCode42/plux3/backend/internal/storage"
 	"github.com/nightCode42/plux3/backend/internal/storage/dbgen"
@@ -42,7 +46,7 @@ var stages = []struct {
 	name    string
 	percent int32
 }{
-	{"sources", 5}, {"compile", 20}, {"check", 60}, {"sign", 70}, {"store", 80}, {"record", 95},
+	{"sources", 5}, {"assets", 10}, {"compile", 20}, {"check", 60}, {"sign", 70}, {"store", 80}, {"record", 95},
 }
 
 // PublishJob is a publish and its progress (SRV-050).
@@ -258,18 +262,19 @@ type compiled struct {
 	key string
 }
 
-// RunPublish runs a publish job in the worker (SRV-050): it gathers the
-// sources, compiles, checks the diagnostics, signs and stores the
-// bundle, and records the version. A diagnostic of severity error, or an
+// RunPublish runs a publish job in the worker (SRV-050): it waits for
+// the app's assets to be processed, gathers the sources, compiles, checks
+// the diagnostics, signs and stores the bundle, and records the version. A diagnostic of severity error, or an
 // unacknowledged warning, fails the job with nothing recorded (SRV-051).
-// An error returned is one worth retrying; the job stays running.
+// An error returned is one worth retrying; the job stays running. An
+// *AssetsPendingError asks the worker to run the job again later.
 func (s *Service) RunPublish(ctx context.Context, job Job) error {
 	if s.o.Signer == nil {
 		return errors.New("release: publishing needs the worker's signer")
 	}
 	system := auth.System(job.OrganizationID)
-	row, env, err := s.startJob(ctx, system, job.JobID)
-	if err != nil || !row.ID.Valid {
+	row, env, ok, err := s.claim(ctx, system, job.JobID)
+	if !ok {
 		return err
 	}
 	c, err := s.compileJob(ctx, system, row)
@@ -305,16 +310,9 @@ func (s *Service) RunPublish(ctx context.Context, job Job) error {
 	if err := s.progress(ctx, system, row, "store"); err != nil {
 		return err
 	}
-	var mapSum []byte
-	if err := s.store(ctx, objects.KindBundle, b.Hash[:], b.Data, bundle.MediaType); err != nil {
+	mapSum, err := s.storeOutputs(ctx, c.result, b)
+	if err != nil {
 		return err
-	}
-	if b.SourceMap != nil {
-		sum := sha256.Sum256(b.SourceMap)
-		mapSum = sum[:]
-		if err := s.store(ctx, objects.KindBundle, sum[:], b.SourceMap, "application/octet-stream"); err != nil {
-			return err
-		}
 	}
 	if err := s.progress(ctx, system, row, "record"); err != nil {
 		return err
@@ -322,11 +320,46 @@ func (s *Service) RunPublish(ctx context.Context, job Job) error {
 	return s.recordVersion(ctx, system, row, b, c, versionSignature{sig: sig, keyID: keyID, mapSum: mapSum}, diags)
 }
 
+// storeOutputs stores what a publish produced and returns the source
+// map's hash, if there is one: the files the compilation made (icon fonts)
+// first, since the bundle lists them and a device that has the bundle may
+// ask for them; then the bundle and its source map.
+func (s *Service) storeOutputs(ctx context.Context, res *compiler.Result, b *compiler.Bundle) ([]byte, error) {
+	for sum, data := range res.Files {
+		if err := s.store(ctx, objects.KindAsset, sum[:], data, media.TTF); err != nil {
+			return nil, err
+		}
+	}
+	if err := s.store(ctx, objects.KindBundle, b.Hash[:], b.Data, bundle.MediaType); err != nil {
+		return nil, err
+	}
+	if b.SourceMap == nil {
+		return nil, nil
+	}
+	sum := sha256.Sum256(b.SourceMap)
+	if err := s.store(ctx, objects.KindBundle, sum[:], b.SourceMap, "application/octet-stream"); err != nil {
+		return nil, err
+	}
+	return sum[:], nil
+}
+
 // versionSignature is how a version was signed.
 type versionSignature struct {
 	sig    []byte
 	keyID  string
 	mapSum []byte
+}
+
+// claim starts a job once the app's assets are processed; ok is false
+// when there is nothing more to do now: the job has finished, waits for
+// assets, or failed waiting.
+func (s *Service) claim(ctx context.Context, p auth.Principal, jobID string) (dbgen.PublishJob, dbgen.Environment, bool, error) {
+	row, env, err := s.startJob(ctx, p, jobID)
+	if err != nil || !row.ID.Valid {
+		return row, env, false, err
+	}
+	done, err := s.awaitAssets(ctx, p, row)
+	return row, env, err == nil && !done, err
 }
 
 // startJob marks a job running and returns it with its environment; a
@@ -373,6 +406,51 @@ func (s *Service) progress(ctx context.Context, p auth.Principal, row dbgen.Publ
 		}
 		return err //nolint:wrapcheck // examined by the caller
 	})
+}
+
+// assetPoll is how long a publish waiting for assets sleeps between
+// checks: short against transcoding, which takes seconds per image.
+const assetPoll = 2 * time.Second
+
+// AssetsPendingError reports that a publish is waiting for the app's
+// assets; the worker runs the job again after RetryAfter.
+type AssetsPendingError struct {
+	// Pending is the number of assets not processed yet.
+	Pending int64
+	// RetryAfter is when to check again.
+	RetryAfter time.Duration
+}
+
+func (e *AssetsPendingError) Error() string {
+	return fmt.Sprintf("release: %d assets are still being processed; retry in %s", e.Pending, e.RetryAfter)
+}
+
+// awaitAssets holds a publish until every image asset of the app has its
+// variants (CMP-030). The compiler lists the variants that exist when it
+// runs, so a bundle compiled before an asset job finished would differ
+// from the one a release's recompilation produces (REL-003). The wait is
+// bounded by publish.assetWait from when the job was queued, after which
+// the job fails with PLX-8053; done reports that it did.
+func (s *Service) awaitAssets(ctx context.Context, p auth.Principal, row dbgen.PublishJob) (done bool, err error) {
+	var pending int64
+	if err := s.inOrg(ctx, p, func(ctx context.Context, tx pgx.Tx) error {
+		var err error
+		pending, err = s.o.Documents.PendingAssets(ctx, tx, storage.ID(row.AppID))
+		return err //nolint:wrapcheck // a domain error
+	}); err != nil || pending == 0 {
+		return false, err
+	}
+	wait := time.Duration(s.o.Limits.Get(limits.PublishAssetWait)) * time.Millisecond
+	left := wait - s.now().Sub(storage.Time(row.CreatedAt))
+	if left <= 0 {
+		d := plxerr.NewDiagnostic(plxerr.AssetsNotReady, plxerr.Location{File: "assets/index.json"},
+			"%d assets of the app were still being processed after %s", pending, wait)
+		return true, s.fail(ctx, p, row, plxerr.Diagnostics{d})
+	}
+	if err := s.progress(ctx, p, row, "assets"); err != nil {
+		return false, err
+	}
+	return false, &AssetsPendingError{Pending: pending, RetryAfter: min(assetPoll, left)}
 }
 
 // errCancelled stops a job that was cancelled while it ran.
@@ -471,7 +549,7 @@ func (s *Service) compileOptions(ctx context.Context, tx pgx.Tx, orgID, appID, p
 		return compiler.Options{}, err //nolint:wrapcheck // a domain error
 	}
 	opts := compiler.DefaultOptions()
-	opts.Limits, opts.Version, opts.AssetVariants = lim, s.o.CompilerVersion, variants
+	opts.Limits, opts.Version, opts.AssetVariants, opts.IconFont = lim, s.o.CompilerVersion, variants, fonts.Build
 	return opts, nil
 }
 

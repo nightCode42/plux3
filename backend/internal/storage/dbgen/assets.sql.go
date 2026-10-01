@@ -60,9 +60,21 @@ func (q *Queries) CompleteAsset(ctx context.Context, arg CompleteAssetParams) (A
 	return i, err
 }
 
+const countPendingAssets = `-- name: CountPendingAssets :one
+SELECT count(*) FROM assets WHERE app_id = $1 AND deleted_at IS NULL AND processing = 'pending'
+`
+
+// The app's assets whose variants are not made yet (CMP-030).
+func (q *Queries) CountPendingAssets(ctx context.Context, appID pgtype.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countPendingAssets, appID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const findProcessedAsset = `-- name: FindProcessedAsset :one
 SELECT id, asset_id, organization_id, app_id, file, media_type, sha256, size, width, height, processing, variants, diagnostics, uploaded_by_kind, uploaded_by_id, uploaded_by, created_at, deleted_at FROM assets
- WHERE organization_id = $1 AND sha256 = $2 AND processing = 'ready' AND id <> $3
+ WHERE organization_id = $1 AND sha256 = $2 AND processing = 'ready' AND variants <> '[]'::jsonb AND id <> $3
  ORDER BY created_at
  LIMIT 1
 `
@@ -74,7 +86,9 @@ type FindProcessedAssetParams struct {
 }
 
 // Another asset with the same content whose variants are made, so an
-// upload of the same file is not transcoded twice.
+// upload of the same file is not transcoded twice. Every file an upload
+// asks variants of gets at least one, so a ready one with none (an SVG
+// uploaded before the server compiled SVGs) is not a copy to reuse.
 func (q *Queries) FindProcessedAsset(ctx context.Context, arg FindProcessedAssetParams) (Asset, error) {
 	row := q.db.QueryRow(ctx, findProcessedAsset, arg.OrganizationID, arg.Sha256, arg.ID)
 	var i Asset
@@ -379,6 +393,34 @@ func (q *Queries) ListAssets(ctx context.Context, arg ListAssetsParams) ([]Asset
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const requeueUncompiledSVGs = `-- name: RequeueUncompiledSVGs :many
+UPDATE assets SET processing = 'pending'
+ WHERE media_type = 'image/svg+xml' AND processing = 'ready' AND variants = '[]'::jsonb AND deleted_at IS NULL
+RETURNING id
+`
+
+// Current SVG assets that are ready without their vector_graphics
+// variant: uploaded before the server compiled SVGs (CMP-031).
+func (q *Queries) RequeueUncompiledSVGs(ctx context.Context) ([]pgtype.UUID, error) {
+	rows, err := q.db.Query(ctx, requeueUncompiledSVGs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []pgtype.UUID{}
+	for rows.Next() {
+		var id pgtype.UUID
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

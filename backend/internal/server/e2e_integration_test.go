@@ -5,15 +5,17 @@ package server
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"crypto/ed25519"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"io"
 	"io/fs"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -21,15 +23,10 @@ import (
 
 	"connectrpc.com/connect"
 
-	"github.com/nightCode42/plux3/backend/internal/auth"
 	"github.com/nightCode42/plux3/backend/internal/bundle"
-	"github.com/nightCode42/plux3/backend/internal/cache"
 	"github.com/nightCode42/plux3/backend/internal/delta"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1/pluxv1connect"
-	"github.com/nightCode42/plux3/backend/internal/schema/limits"
-	"github.com/nightCode42/plux3/backend/internal/storage"
-	"github.com/nightCode42/plux3/backend/internal/storage/storagetest"
 )
 
 // Verifies: CLI-002, CLI-003, CLI-004, CLI-007, REL-020, REL-030, REL-031, REL-032.
@@ -41,103 +38,13 @@ func TestPublishWithTheCLIAndSyncADevice(t *testing.T) {
 	if testing.Short() {
 		t.Skip("builds the CLI")
 	}
-	url := storagetest.SchemaURL(t)
-	dir := t.TempDir()
-	const addr = "127.0.0.1:18093"
-	server := "http://" + addr
-	// With a real S3-compatible store and Valkey configured, the test runs
-	// the way the Compose stack does: objects in S3 but served through the
-	// server's own object route, the cache in Valkey (QA-005, DEP-041).
-	stores := "objectStorage:\n  directory: \"" + filepath.Join(dir, "objects") + "\"\n"
-	if endpoint := os.Getenv("PLUX_TEST_S3_ENDPOINT"); endpoint != "" {
-		stores = "objectStorage:\n  backend: s3\n  endpoint: \"" + endpoint + "\"\n  bucket: \"" + os.Getenv("PLUX_TEST_S3_BUCKET") + "\"\n" +
-			"  pathStyle: true\n  accessKeyID: \"" + os.Getenv("PLUX_TEST_S3_ACCESS_KEY_ID") + "\"\n" +
-			"  secretAccessKey: \"" + os.Getenv("PLUX_TEST_S3_SECRET_ACCESS_KEY") + "\"\n  cdnBaseURL: \"" + server + "/v1/objects\"\n"
-	}
-	if valkey := os.Getenv("PLUX_TEST_VALKEY_URL"); valkey != "" {
-		stores += "cache:\n  backend: valkey\n  valkeyURL: \"" + valkey + "\"\n"
-	}
-	cfg := testConfig(t, "server:\n  roles: [api, worker]\n  listen: \""+addr+"\"\n  publicBaseURL: \""+server+"\"\n"+
-		"database:\n  url: \""+url+"\"\n"+stores+
-		"signing:\n  directory: \""+filepath.Join(dir, "keys")+"\"\n")
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	built, err := Build(ctx, cfg, discard(), "test")
-	if err != nil {
-		t.Fatalf("Build: %v", err)
-	}
-	defer built.Close()
-	done := make(chan error, 1)
-	go func() { done <- built.Server.Run(ctx) }()
-	defer func() { cancel(); <-done }()
-	waitReady(t, server)
-
-	// An administrator with a token, an organisation and an app, made
-	// with the services directly.
-	db, err := storage.Open(ctx, storage.Options{URL: url})
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer db.Close()
-	backend, err := BuildSigning(cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
-	svc, err := BuildServices(ctx, cfg, db, cache.NewMemory(nil), limits.Defaults(), backend, WorkDeps{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	user, invitation, err := svc.Auth.Bootstrap(ctx, "admin@example.com")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := svc.Auth.AcceptInvitation(ctx, invitation, "Admin", "correct horse battery"); err != nil {
-		t.Fatal(err)
-	}
-	id := auth.Identity{Kind: auth.KindUser, ID: user.ID, UserID: user.ID, Display: "Admin", SecondFactor: true, InstallationAdmin: true}
-	org, err := svc.Tenancy.CreateOrganization(ctx, id, "acme", "Acme")
-	if err != nil {
-		t.Fatal(err)
-	}
-	owner, err := svc.Auth.Resolve(ctx, id, org.ID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	app, err := svc.Tenancy.CreateApp(ctx, owner, "demo", "Demo")
-	if err != nil {
-		t.Fatal(err)
-	}
-	minted, err := svc.Auth.CreateAccessToken(ctx, owner, "e2e", nil, time.Hour)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	// The CLI, built from source, run as a user would with PLUX_TOKEN.
-	plux := filepath.Join(dir, "plux")
-	if out, err := exec.CommandContext(ctx, "go", "build", "-o", plux, "../../cmd/plux").CombinedOutput(); err != nil { //nolint:gosec // G204: a path the test chose.
-		t.Fatalf("go build: %v\n%s", err, out)
-	}
-	project := filepath.Join(dir, "project")
-	copyTree(t, filepath.Join("..", "..", "..", "schema", "testdata", "documents", "loan-calculator"), project)
+	st := startStack(t, "127.0.0.1:18093")
+	ctx, server, dir, app := st.ctx, st.server, st.dir, st.app
 	run := func(want int, args ...string) []byte {
 		t.Helper()
-		cmd := exec.CommandContext(ctx, plux, args...) //nolint:gosec // G204: the binary the test built.
-		cmd.Env = append(os.Environ(), "PLUX_TOKEN="+minted.Secret, "PLUX_SERVER=", "PLUX_ORGANIZATION=", "HOME="+dir, "XDG_CONFIG_HOME="+filepath.Join(dir, "config"))
-		var stdout, stderr bytes.Buffer
-		cmd.Stdout, cmd.Stderr = &stdout, &stderr
-		err := cmd.Run()
-		code := 0
-		if ee, ok := err.(*exec.ExitError); ok { //nolint:errorlint // exec returns it unwrapped
-			code = ee.ExitCode()
-		} else if err != nil {
-			t.Fatal(err)
-		}
-		if code != want {
-			t.Fatalf("plux %s: exit %d, want %d\n%s%s", strings.Join(args, " "), code, want, stdout.String(), stderr.String())
-		}
-		return stdout.Bytes()
+		return st.run(t, want, args...)
 	}
-	run(0, "init", "--server", server, "--org", org.ID, "--app", "demo", "-C", project, "--json")
+	project := st.project(t, "loan-calculator")
 	var who struct{ Email string }
 	decode(t, run(0, "whoami", "--server", server, "--json"), &who)
 	if who.Email != "admin@example.com" {
@@ -152,17 +59,23 @@ func TestPublishWithTheCLIAndSyncADevice(t *testing.T) {
 	if !pub.OK || pub.Release != 1 {
 		t.Fatalf("publish: %+v", pub)
 	}
-	run(0, "diff", "-C", project)
-	run(0, "doctor", "-C", project)
+	// A promotion returns once its manifest is signed, which also records
+	// the environment's key: keys and pull work at once.
 	var keys struct{ Keys []struct{ PublicKey string } }
 	decode(t, run(0, "keys", "-C", project, "--env", "staging", "--json"), &keys)
+	if len(keys.Keys) != 1 {
+		t.Fatalf("keys %+v", keys)
+	}
+	run(0, "diff", "-C", project)
+	run(0, "doctor", "-C", project)
 	var base struct {
 		ReleaseSequence int64
 		Bundles         []struct{ Plugin, SHA256, File string }
+		Assets          []struct{ SHA256, File string }
 	}
 	decode(t, run(0, "pull", "-C", project, "--env", "staging", "-o", filepath.Join(dir, "host", "assets", "plux"), "--json"), &base)
-	if base.ReleaseSequence != 1 || len(base.Bundles) != 2 || len(keys.Keys) != 1 {
-		t.Fatalf("pull: %+v keys %+v", base, keys)
+	if base.ReleaseSequence != 1 || len(base.Bundles) != 2 {
+		t.Fatalf("pull: %+v", base)
 	}
 	var appBundle []byte
 	for _, b := range base.Bundles {
@@ -175,6 +88,18 @@ func TestPublishWithTheCLIAndSyncADevice(t *testing.T) {
 		}
 		if b.Plugin == "" {
 			appBundle = data
+		}
+	}
+	// The logo's WebP variants — a 1×1 image has only its 3× one — each
+	// its own file named by its hash (AST-001).
+	if len(base.Assets) == 0 {
+		t.Errorf("baseline assets: %+v", base.Assets)
+	}
+	for _, a := range base.Assets {
+		data, err := os.ReadFile(filepath.Join(dir, "host", "assets", "plux", a.File))
+		sum := sha256.Sum256(data)
+		if err != nil || hex.EncodeToString(sum[:]) != a.SHA256 || !bytes.HasPrefix(data, []byte("RIFF")) {
+			t.Errorf("the baseline asset %s: %v", a.File, err)
 		}
 	}
 	var list struct{ Releases []struct{ Sequence int64 } }
@@ -196,7 +121,8 @@ func TestPublishWithTheCLIAndSyncADevice(t *testing.T) {
 		t.Fatal(err)
 	}
 	manifests := pluxv1connect.NewManifestServiceClient(hc, server, connect.WithInterceptors(bearer(tok.Msg.GetAccessToken())))
-	m1 := waitManifest(t, manifests, 1, nil)
+	m1 := manifest(t, manifests, 1, nil)
+	ingestGzip(t, hc, server, tok.Msg.GetAccessToken())
 	pub0, _ := hex.DecodeString(keys.Keys[0].PublicKey)
 	if !ed25519.Verify(pub0, m1.GetSigned(), m1.GetSignatures()[0].GetSignature()) {
 		t.Fatal("the manifest does not verify with the pulled key")
@@ -220,7 +146,7 @@ func TestPublishWithTheCLIAndSyncADevice(t *testing.T) {
 	for _, p := range m1.GetPlugins() {
 		installed = append(installed, &pluxv1.InstalledBundle{Key: p.GetKey(), Sha256: p.GetBundle().GetSha256()})
 	}
-	m2 := waitManifest(t, manifests, 2, installed)
+	m2 := manifest(t, manifests, 2, installed)
 	step := m2.GetAppBundle().GetSync()
 	if step.GetAction() != "delta" || step.GetSize() > 2048 {
 		t.Fatalf("the app bundle's sync step: %+v", step)
@@ -238,6 +164,45 @@ func TestPublishWithTheCLIAndSyncADevice(t *testing.T) {
 	}
 }
 
+// Verifies: ANL-002.
+// A device sends its events as a gzip-compressed Connect request (ADR-0034);
+// the decompressed message is bounded by api.requestSize, so a small body
+// that expands without bound is refused.
+func ingestGzip(t *testing.T, hc *http.Client, server, token string) {
+	t.Helper()
+	post := func(body []byte) (int, string) {
+		t.Helper()
+		var gz bytes.Buffer
+		w := gzip.NewWriter(&gz)
+		_, _ = w.Write(body)
+		_ = w.Close()
+		req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, server+pluxv1connect.TelemetryServiceIngestEventsProcedure, &gz)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Content-Encoding", "gzip")
+		req.Header.Set("Connect-Protocol-Version", "1")
+		req.Header.Set("Authorization", "Bearer "+token)
+		res, err := hc.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer func() { _ = res.Body.Close() }()
+		out, _ := io.ReadAll(res.Body)
+		return res.StatusCode, string(out)
+	}
+	fields := base64.StdEncoding.EncodeToString([]byte(`{"runtime_version":"1.0.0","host_build":"7","os_version":"18.1"}`))
+	batch := `{"events":[{"name":"session_start","time":"` + time.Now().UTC().Format(time.RFC3339) + `","fields":"` + fields + `"}]}`
+	if status, body := post([]byte(batch)); status != http.StatusOK || !strings.Contains(body, `"accepted":1`) {
+		t.Fatalf("a gzip batch: %d %s", status, body)
+	}
+	bomb := append(append([]byte(`{"events":[{"name":"custom","route":"`), bytes.Repeat([]byte("0"), 20<<20)...), []byte(`"}]}`)...)
+	if status, body := post(bomb); status == http.StatusOK || !strings.Contains(body, "resource_exhausted") {
+		t.Fatalf("a gzip bomb: %d %.200s", status, body)
+	}
+}
+
 func waitReady(t *testing.T, server string) {
 	t.Helper()
 	c := &http.Client{Timeout: 2 * time.Second}
@@ -252,18 +217,19 @@ func waitReady(t *testing.T, server string) {
 	t.Fatal("the server did not become ready")
 }
 
-// waitManifest polls until the worker has signed the manifest of a
-// release.
-func waitManifest(t *testing.T, c pluxv1connect.ManifestServiceClient, seq int64, installed []*pluxv1.InstalledBundle) *pluxv1.Manifest {
+// manifest fetches the device's manifest, which must already name
+// release seq: the promotion that made it returned only once it was
+// signed.
+func manifest(t *testing.T, c pluxv1connect.ManifestServiceClient, seq int64, installed []*pluxv1.InstalledBundle) *pluxv1.Manifest {
 	t.Helper()
-	for deadline := time.Now().Add(30 * time.Second); time.Now().Before(deadline); time.Sleep(200 * time.Millisecond) {
-		res, err := c.GetManifest(context.Background(), connect.NewRequest(&pluxv1.GetManifestRequest{Installed: installed}))
-		if err == nil && res.Msg.GetManifest().GetReleaseSequence() == seq {
-			return res.Msg.GetManifest()
-		}
+	res, err := c.GetManifest(context.Background(), connect.NewRequest(&pluxv1.GetManifestRequest{Installed: installed}))
+	if err != nil {
+		t.Fatalf("GetManifest: %v", err)
 	}
-	t.Fatalf("no manifest for release %d", seq)
-	return nil
+	if got := res.Msg.GetManifest().GetReleaseSequence(); got != seq {
+		t.Fatalf("the manifest names release %d, want %d", got, seq)
+	}
+	return res.Msg.GetManifest()
 }
 
 func fetch(t *testing.T, c *http.Client, url string) []byte {

@@ -1,0 +1,378 @@
+{
+  "id": "01c0c450-6c00-7000-8000-000000000198",
+  "key": "inputs",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01c0c450-6c00-7000-8000-00000000019b",
+    "slots": {
+      "appBar": {
+        "id": "01c0c450-6c00-7000-8000-00000000019a",
+        "slots": {
+          "title": {
+            "id": "01c0c450-6c00-7000-8000-000000000199",
+            "props": {
+              "data": "inputs"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "id": "01c0c450-6c00-7000-8000-000000000195",
+        "slots": {
+          "child": {
+            "children": [
+              {
+                "events": {
+                  "onChanged": {
+                    "steps": [
+                      {
+                        "action": "haptic",
+                        "id": "h",
+                        "input": {
+                          "pattern": "light"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01c0c450-6c00-7000-8000-000000000185",
+                "props": {
+                  "decoration": {
+                    "border": {
+                      "kind": "outline"
+                    },
+                    "labelText": "Name"
+                  },
+                  "value": {
+                    "$expr": "page.name"
+                  }
+                },
+                "testId": "name",
+                "type": "TextField"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-000000000186",
+                "props": {
+                  "decoration": {
+                    "hintText": "hint"
+                  },
+                  "value": "form"
+                },
+                "type": "TextFormField"
+              },
+              {
+                "events": {
+                  "onChanged": {
+                    "steps": [
+                      {
+                        "action": "haptic",
+                        "id": "h",
+                        "input": {
+                          "pattern": "light"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01c0c450-6c00-7000-8000-000000000187",
+                "props": {
+                  "adaptive": true,
+                  "value": true
+                },
+                "semantics": {
+                  "label": "check"
+                },
+                "testId": "check",
+                "type": "Checkbox"
+              },
+              {
+                "events": {
+                  "onChanged": {
+                    "steps": [
+                      {
+                        "action": "haptic",
+                        "id": "h",
+                        "input": {
+                          "pattern": "light"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01c0c450-6c00-7000-8000-000000000189",
+                "props": {
+                  "value": false
+                },
+                "slots": {
+                  "title": {
+                    "id": "01c0c450-6c00-7000-8000-000000000188",
+                    "props": {
+                      "data": "checkbox tile"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "CheckboxListTile"
+              },
+              {
+                "events": {
+                  "onChanged": {
+                    "steps": [
+                      {
+                        "action": "haptic",
+                        "id": "h",
+                        "input": {
+                          "pattern": "light"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01c0c450-6c00-7000-8000-00000000018a",
+                "props": {
+                  "groupValue": "a",
+                  "value": "a"
+                },
+                "semantics": {
+                  "label": "radio"
+                },
+                "type": "Radio"
+              },
+              {
+                "events": {
+                  "onChanged": {
+                    "steps": [
+                      {
+                        "action": "haptic",
+                        "id": "h",
+                        "input": {
+                          "pattern": "light"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01c0c450-6c00-7000-8000-00000000018c",
+                "props": {
+                  "groupValue": "a",
+                  "value": "b"
+                },
+                "slots": {
+                  "title": {
+                    "id": "01c0c450-6c00-7000-8000-00000000018b",
+                    "props": {
+                      "data": "radio tile"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "RadioListTile"
+              },
+              {
+                "events": {
+                  "onChanged": {
+                    "steps": [
+                      {
+                        "action": "haptic",
+                        "id": "h",
+                        "input": {
+                          "pattern": "light"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01c0c450-6c00-7000-8000-00000000018d",
+                "props": {
+                  "adaptive": true,
+                  "value": {
+                    "$expr": "page.on"
+                  }
+                },
+                "semantics": {
+                  "label": "switch"
+                },
+                "testId": "switch",
+                "type": "Switch"
+              },
+              {
+                "id": "01c0c450-6c00-7000-8000-00000000018f",
+                "props": {
+                  "value": true
+                },
+                "slots": {
+                  "title": {
+                    "id": "01c0c450-6c00-7000-8000-00000000018e",
+                    "props": {
+                      "data": "switch tile"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "SwitchListTile"
+              },
+              {
+                "events": {
+                  "onChanged": {
+                    "steps": [
+                      {
+                        "action": "haptic",
+                        "id": "h",
+                        "input": {
+                          "pattern": "light"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01c0c450-6c00-7000-8000-000000000190",
+                "props": {
+                  "max": 100.0,
+                  "min": 0.0,
+                  "value": 30.0
+                },
+                "semantics": {
+                  "label": "slider"
+                },
+                "testId": "slider",
+                "type": "Slider"
+              },
+              {
+                "events": {
+                  "onChanged": {
+                    "steps": [
+                      {
+                        "action": "setState",
+                        "id": "low",
+                        "input": {
+                          "path": "page.low",
+                          "value": {
+                            "$expr": "event.start"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01c0c450-6c00-7000-8000-000000000191",
+                "props": {
+                  "max": 100.0,
+                  "min": 0.0,
+                  "values": {
+                    "end": 60.0,
+                    "start": 20.0
+                  }
+                },
+                "semantics": {
+                  "label": "range"
+                },
+                "type": "RangeSlider"
+              },
+              {
+                "events": {
+                  "onSelectionChanged": {
+                    "steps": [
+                      {
+                        "action": "haptic",
+                        "id": "h",
+                        "input": {
+                          "pattern": "light"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01c0c450-6c00-7000-8000-000000000192",
+                "props": {
+                  "segments": [
+                    {
+                      "label": "Day",
+                      "value": "d"
+                    },
+                    {
+                      "label": "Week",
+                      "value": "w"
+                    }
+                  ],
+                  "selected": [
+                    "d"
+                  ]
+                },
+                "semantics": {
+                  "label": "period"
+                },
+                "type": "SegmentedButton"
+              },
+              {
+                "events": {
+                  "onSelected": {
+                    "steps": [
+                      {
+                        "action": "haptic",
+                        "id": "h",
+                        "input": {
+                          "pattern": "light"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01c0c450-6c00-7000-8000-000000000193",
+                "props": {
+                  "dropdownMenuEntries": [
+                    {
+                      "label": "Ex",
+                      "value": "x"
+                    },
+                    {
+                      "label": "Why",
+                      "value": "y"
+                    }
+                  ],
+                  "initialSelection": "x"
+                },
+                "semantics": {
+                  "label": "menu"
+                },
+                "type": "DropdownMenu"
+              }
+            ],
+            "id": "01c0c450-6c00-7000-8000-000000000194",
+            "props": {
+              "crossAxisAlignment": "stretch"
+            },
+            "type": "Column"
+          }
+        },
+        "type": "SingleChildScrollView"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "inputs",
+  "schemaVersion": "1.0.0",
+  "state": [
+    {
+      "default": "Ada",
+      "id": "01c0c450-6c00-7000-8000-000000000196",
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "default": true,
+      "id": "01c0c450-6c00-7000-8000-000000000197",
+      "name": "on",
+      "type": "bool"
+    },
+    {
+      "default": 20.0,
+      "id": "01c0c450-6c00-7000-8000-000000000204",
+      "name": "low",
+      "type": "double"
+    }
+  ],
+  "title": "inputs"
+}

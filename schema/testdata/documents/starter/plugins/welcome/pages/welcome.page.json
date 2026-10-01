@@ -1,0 +1,103 @@
+{
+  "id": "01e0c450-6c00-7000-8000-000000000010",
+  "key": "welcome",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01e0c450-6c00-7000-8000-000000000011",
+    "type": "Scaffold",
+    "slots": {
+      "appBar": {
+        "id": "01e0c450-6c00-7000-8000-000000000012",
+        "type": "AppBar",
+        "slots": {
+          "title": {
+            "id": "01e0c450-6c00-7000-8000-000000000013",
+            "type": "Text",
+            "props": {
+              "data": {
+                "$t": "01e0c450-6c00-7000-8000-000000000050"
+              }
+            }
+          }
+        }
+      },
+      "body": {
+        "id": "01e0c450-6c00-7000-8000-000000000014",
+        "type": "Padding",
+        "props": {
+          "padding": {
+            "all": 24.0
+          }
+        },
+        "slots": {
+          "child": {
+            "id": "01e0c450-6c00-7000-8000-000000000015",
+            "type": "Column",
+            "children": [
+              {
+                "id": "01e0c450-6c00-7000-8000-000000000016",
+                "type": "Icon",
+                "testId": "welcome-icon",
+                "props": {
+                  "icon": {
+                    "name": "waving_hand"
+                  },
+                  "size": 48.0,
+                  "semanticLabel": "Hello"
+                }
+              },
+              {
+                "id": "01e0c450-6c00-7000-8000-000000000017",
+                "type": "SizedBox",
+                "props": {
+                  "height": 16.0
+                }
+              },
+              {
+                "id": "01e0c450-6c00-7000-8000-000000000018",
+                "type": "Text",
+                "testId": "welcome-body",
+                "props": {
+                  "data": {
+                    "$t": "01e0c450-6c00-7000-8000-000000000051"
+                  }
+                }
+              },
+              {
+                "id": "01e0c450-6c00-7000-8000-000000000019",
+                "type": "SizedBox",
+                "props": {
+                  "height": 16.0
+                }
+              },
+              {
+                "id": "01e0c450-6c00-7000-8000-00000000001a",
+                "type": "Image",
+                "testId": "welcome-logo",
+                "props": {
+                  "width": 64.0,
+                  "height": 64.0,
+                  "semanticLabel": "Plux logo",
+                  "source": {
+                    "asset": {
+                      "$asset": "01e0c450-6c00-7000-8000-000000000005"
+                    }
+                  }
+                }
+              }
+            ],
+            "props": {
+              "crossAxisAlignment": "center"
+            }
+          }
+        }
+      }
+    }
+  },
+  "route": "welcome",
+  "schemaVersion": "1.0.0",
+  "title": {
+    "$t": "01e0c450-6c00-7000-8000-000000000050"
+  }
+}

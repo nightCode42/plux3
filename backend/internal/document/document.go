@@ -74,6 +74,9 @@ type Options struct {
 	Scanner Scanner
 	// Codecs transcode images in the worker; nil in the api role.
 	Codecs *media.Codecs
+	// SVG compiles SVGs to vector_graphics in the worker (CMP-031); nil
+	// where the server has no SVG compiler, which fails SVG assets.
+	SVG *media.SVGCompiler
 }
 
 // Service is the domain logic of drafts.

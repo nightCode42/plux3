@@ -35,7 +35,8 @@ enum PluxLimit {
   /// Items one page of a list call returns; a call asking for more gets this
   /// many, and one asking for none gets this many too.
   apiPageSize('api.pageSize', PluxLimitUnit.count, 100, 0, 1000),
-  /// Size of one API request body, refused before a handler reads it.
+  /// Size of one API request body, refused before a handler reads it, and of
+  /// one request message once decompressed.
   apiRequestSize('api.requestSize', PluxLimitUnit.bytes, 8388608, 0, 268435456),
   /// API calls one authenticated principal (a user or a token) may make per
   /// minute.
@@ -94,6 +95,9 @@ enum PluxLimit {
   pluginAssetBytes('plugin.assetBytes', PluxLimitUnit.bytes, 20971520, 0, 268435456),
   /// Pages per plugin.
   pluginPages('plugin.pages', PluxLimitUnit.count, 500, 0, 2000),
+  /// Time a publish waits, from when it was queued, for the app's image assets
+  /// to finish processing before it fails.
+  publishAssetWait('publish.assetWait', PluxLimitUnit.milliseconds, 600000, 0, 3600000),
   /// Elements of a list or map produced during one PXL evaluation.
   pxlCollectionSize('pxl.collectionSize', PluxLimitUnit.count, 10000, 0, 1000000),
   /// Digits of a decimal produced during one PXL evaluation, in plain notation.
@@ -109,6 +113,18 @@ enum PluxLimit {
   pxlStringLength('pxl.stringLength', PluxLimitUnit.codepoints, 65536, 0, 1048576),
   /// Total size of one app release: the app bundle and every plugin bundle.
   releaseAppSize('release.appSize', PluxLimitUnit.bytes, 104857600, 0, 1073741824),
+  /// Disk space the runtime's cache of remote images may use on one device.
+  runtimeImageDiskCacheBytes('runtime.imageDiskCacheBytes', PluxLimitUnit.bytes, 67108864, 0, 1073741824),
+  /// Size of one remote image the runtime downloads; a larger one is refused.
+  runtimeImageSize('runtime.imageSize', PluxLimitUnit.bytes, 10485760, 0, 104857600),
+  /// Memory the runtime's cache of decoded page and component sections may
+  /// hold.
+  runtimeSectionCacheBytes('runtime.sectionCacheBytes', PluxLimitUnit.bytes, 8388608, 0, 268435456),
+  /// Page and component sections the runtime keeps decoded.
+  runtimeSectionCacheEntries('runtime.sectionCacheEntries', PluxLimitUnit.count, 64, 0, 4096),
+  /// The size of the runtime's buffer of unsent telemetry events; the oldest
+  /// are dropped first.
+  telemetryBufferBytes('telemetry.bufferBytes', PluxLimitUnit.bytes, 262144, 0, 4194304),
   /// Runtime events one telemetry request may carry.
   telemetryEventsPerRequest('telemetry.eventsPerRequest', PluxLimitUnit.count, 500, 0, 5000);
 

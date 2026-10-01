@@ -40,6 +40,11 @@ type Assets struct {
 	// MalwareScanner is ClamAV's daemon, "tcp://host:3310" or
 	// "unix:///path/clamd.sock"; empty scans nothing.
 	MalwareScanner string `json:"malwareScanner"`
+	// SVGCompiler is the plux-svgc executable the worker compiles SVGs
+	// with (CMP-031); empty compiles none, so SVG assets fail.
+	SVGCompiler string `json:"svgCompiler"`
+	// PathOps is the libpath_ops library plux-svgc's optimisers load.
+	PathOps string `json:"pathOps"`
 }
 
 // Server is the process itself.

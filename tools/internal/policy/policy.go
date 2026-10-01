@@ -220,3 +220,172 @@ func findUpdate(updates []Update, m Manifest) (Update, bool) {
 	}
 	return Update{}, false
 }
+
+// workflowShell is the top-level default every workflow sets: GitHub runs
+// `shell: bash` with -eo pipefail, but its implicit default without it,
+// so `make check | tee summary` would pass whatever make returned.
+const workflowShell = "\ndefaults:\n  run:\n    shell: bash\n"
+
+// CheckWorkflowShells verifies that every workflow runs its steps in bash
+// with pipefail and that no job or step overrides it, so no failing gate
+// can be hidden by a pipe.
+func CheckWorkflowShells(root string) error {
+	files, err := filepath.Glob(filepath.Join(root, ".github", "workflows", "*.y*ml"))
+	if err != nil {
+		return fmt.Errorf("policy.CheckWorkflowShells: %w", err)
+	}
+	if len(files) == 0 {
+		return errors.New("policy.CheckWorkflowShells: no workflows")
+	}
+	var problems []string
+	for _, f := range files {
+		data, err := os.ReadFile(f)
+		if err != nil {
+			return fmt.Errorf("policy.CheckWorkflowShells: %w", err)
+		}
+		text := strings.ReplaceAll(string(data), "\r\n", "\n")
+		name := filepath.Base(f)
+		if !strings.Contains(text, workflowShell) {
+			problems = append(problems, name+" has no top-level `defaults: run: shell: bash`")
+		}
+		if strings.Count(text, "shell:") != 1 {
+			problems = append(problems, name+" sets a shell other than the top-level default")
+		}
+	}
+	if len(problems) > 0 {
+		return fmt.Errorf("policy.CheckWorkflowShells: %s", strings.Join(problems, "; "))
+	}
+	return nil
+}
+
+// publishJob is the release workflow's job that publishes Dart packages.
+const publishJob = "\n  pub:\n"
+
+// CheckDartPublishing verifies how the Dart packages reach pub.dev and
+// what each release carries: every package without `publish_to: none`
+// under packages/ has a README, an example and a CHANGELOG entry for its
+// version, and a tag pattern in the release workflow (DX-006); that
+// workflow writes release notes with upgrade steps for every tag and
+// publishes with the job's OIDC token, never a stored credential (CI-005).
+func CheckDartPublishing(root string) error {
+	data, err := os.ReadFile(filepath.Join(root, ".github", "workflows", "release.yml"))
+	if err != nil {
+		return fmt.Errorf("policy.CheckDartPublishing: %w", err)
+	}
+	release := strings.ReplaceAll(string(data), "\r\n", "\n")
+	problems := releaseWorkflowProblems(root, release)
+	pubspecs, err := filepath.Glob(filepath.Join(root, "packages", "*", "pubspec.yaml"))
+	if err != nil {
+		return fmt.Errorf("policy.CheckDartPublishing: %w", err)
+	}
+	for _, p := range pubspecs {
+		found, err := dartPackageProblems(p, release)
+		if err != nil {
+			return fmt.Errorf("policy.CheckDartPublishing: %w", err)
+		}
+		problems = append(problems, found...)
+	}
+	if len(problems) > 0 {
+		return fmt.Errorf("policy.CheckDartPublishing: %s", strings.Join(problems, "; "))
+	}
+	return nil
+}
+
+// releaseWorkflowProblems checks the release notes and the pub job.
+func releaseWorkflowProblems(root, release string) []string {
+	var problems []string
+	if !strings.Contains(release, "make release-notes") || !strings.Contains(release, "'^### Upgrading'") {
+		problems = append(problems, "release.yml does not write release notes with upgrade steps for every tag")
+	}
+	if cliff, err := os.ReadFile(filepath.Join(root, "cliff.toml")); err != nil || !strings.Contains(string(cliff), "### Upgrading") {
+		problems = append(problems, "cliff.toml has no Upgrading section")
+	}
+	job := ""
+	if i := strings.Index(release, publishJob); i >= 0 {
+		job = release[i+len(publishJob):]
+		if end := regexp.MustCompile(`\n  [a-z][a-z0-9-]*:\n`).FindStringIndex(job); end != nil {
+			job = job[:end[0]]
+		}
+	}
+	switch {
+	case job == "":
+		problems = append(problems, "release.yml has no pub job")
+	case !strings.Contains(job, "id-token: write") || !strings.Contains(job, "dart pub publish --force"):
+		problems = append(problems, "the pub job does not publish with the job's OIDC token")
+	case strings.Contains(job, "secrets.") || strings.Contains(job, "credentials.json"):
+		problems = append(problems, "the pub job uses a stored credential")
+	}
+	return problems
+}
+
+// pubspecVersion is a pubspec's version line.
+var pubspecVersion = regexp.MustCompile(`(?m)^version: *(\S+)$`)
+
+// pinnedDependencies are the dependencies a published package pins to
+// one version: the FlatBuffers runtime, which must match the flatc that
+// generates its accessors (ADR-0002). Every other dependency is a caret
+// range, so users can take compatible releases (RT-001); the workspace's
+// pubspec.lock still fixes what this repository builds and tests.
+var pinnedDependencies = map[string]bool{"flat_buffers": true}
+
+// dependencyLine is a hosted dependency with its version constraint, in
+// a pubspec's dependencies block.
+var dependencyLine = regexp.MustCompile(`^  ([a-z0-9_]+): *(\S+)$`)
+
+// dependencyProblems checks the version constraint of each hosted
+// dependency of a published package.
+func dependencyProblems(name string, pubspec []byte) []string {
+	var problems []string
+	in := false
+	for _, line := range strings.Split(string(pubspec), "\n") {
+		if line != "" && !strings.HasPrefix(line, " ") {
+			in = line == "dependencies:"
+			continue
+		}
+		m := dependencyLine.FindStringSubmatch(line)
+		if !in || m == nil {
+			continue
+		}
+		dep, constraint := m[1], m[2]
+		switch caret := strings.HasPrefix(constraint, "^"); {
+		case pinnedDependencies[dep] && caret:
+			problems = append(problems, name+" must pin "+dep+" to one version (ADR-0002), not "+constraint)
+		case !pinnedDependencies[dep] && !caret:
+			problems = append(problems, name+" pins "+dep+" to "+constraint+"; use a caret range (RT-001)")
+		}
+	}
+	return problems
+}
+
+// dartPackageProblems checks one package: nothing when it is not
+// published, else its README, example, changelog entry, tag pattern and
+// dependency constraints.
+func dartPackageProblems(pubspec, release string) ([]string, error) {
+	data, err := os.ReadFile(pubspec) //nolint:gosec // G304: a pubspec of the repository.
+	if err != nil {
+		return nil, fmt.Errorf("read %s: %w", pubspec, err)
+	}
+	if strings.Contains(string(data), "\npublish_to: none") {
+		return nil, nil
+	}
+	dir := filepath.Dir(pubspec)
+	name := filepath.Base(dir)
+	m := pubspecVersion.FindSubmatch(data)
+	if m == nil {
+		return []string{name + " declares no version"}, nil
+	}
+	problems := dependencyProblems(name, data)
+	changelog, err := os.ReadFile(filepath.Join(dir, "CHANGELOG.md")) //nolint:gosec // G304: beside the pubspec.
+	if err != nil || !strings.Contains(string(changelog), "\n## "+string(m[1])+"\n") {
+		problems = append(problems, name+" has no CHANGELOG.md entry for "+string(m[1]))
+	}
+	for _, f := range []string{"README.md", "example"} {
+		if _, err := os.Stat(filepath.Join(dir, f)); err != nil {
+			problems = append(problems, name+" has no "+f)
+		}
+	}
+	if !strings.Contains(release, "- \""+name+"/v*\"") {
+		problems = append(problems, "release.yml has no tag pattern for "+name)
+	}
+	return problems, nil
+}

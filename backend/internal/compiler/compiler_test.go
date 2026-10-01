@@ -5,6 +5,8 @@ package compiler
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -48,6 +50,27 @@ func checkGolden(t *testing.T, path string, data []byte) {
 	}
 	if !bytes.Equal(golden, data) {
 		t.Errorf("%s differs from the golden bundle; run the test with -update and review", path)
+	}
+}
+
+// checkGoldenFiles compares the files a compilation made with the golden
+// directory dir, where each is named by its SHA-256; -update rewrites it.
+func checkGoldenFiles(t *testing.T, dir string, files map[[sha256.Size]byte][]byte) {
+	t.Helper()
+	if *update {
+		if err := os.RemoveAll(dir); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for sum, data := range files {
+		checkGolden(t, filepath.Join(dir, hex.EncodeToString(sum[:])+".ttf"), data)
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil && len(files) > 0 {
+		t.Fatal(err)
+	}
+	if len(entries) != len(files) {
+		t.Errorf("%s holds %d files, the compilation made %d; run the test with -update", dir, len(entries), len(files))
 	}
 }
 

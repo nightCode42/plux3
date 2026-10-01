@@ -1,0 +1,11 @@
+{
+  "id": "01c0c450-6c00-7000-8000-000000000004",
+  "kind": "translations",
+  "locale": "en",
+  "messages": {
+    "01c0c450-6c00-7000-8000-000000000050": "Gallery",
+    "01c0c450-6c00-7000-8000-000000000051": "{count, plural, one {# widget} other {# widgets}}",
+    "01c0c450-6c00-7000-8000-000000000052": "OK"
+  },
+  "schemaVersion": "1.0.0"
+}

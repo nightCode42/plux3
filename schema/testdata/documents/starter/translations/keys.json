@@ -1,0 +1,17 @@
+{
+  "id": "01e0c450-6c00-7000-8000-000000000003",
+  "keys": [
+    {
+      "id": "01e0c450-6c00-7000-8000-000000000050",
+      "key": "welcome.title",
+      "description": "Title of the welcome page."
+    },
+    {
+      "id": "01e0c450-6c00-7000-8000-000000000051",
+      "key": "welcome.body",
+      "description": "The welcome message."
+    }
+  ],
+  "kind": "translationKeys",
+  "schemaVersion": "1.0.0"
+}

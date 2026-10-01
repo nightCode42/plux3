@@ -32,7 +32,9 @@ type out struct {
 	shared   *interner
 	features map[string]bool
 	assets   map[string]bool
-	srcmap   *sourceMap
+	// iconFonts are the icon fonts the bundle indexes (THM-005).
+	iconFonts []indexedAsset
+	srcmap    *sourceMap
 	// srcmapData is the encoded source map of a release bundle.
 	srcmapData []byte
 }

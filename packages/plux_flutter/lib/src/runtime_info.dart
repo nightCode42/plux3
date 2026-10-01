@@ -7,11 +7,11 @@ abstract final class PluxRuntimeInfo {
   ///
   /// It always equals the `version` in `pubspec.yaml`; a test enforces this,
   /// so every release is identifiable at run time (CI-008).
-  static const String version = '0.0.1';
+  static const String version = '0.1.0';
 
   /// The package name, as published.
   static const String packageName = 'plux_flutter';
 
-  /// A single line identifying the runtime, for example `plux_flutter/0.0.1`.
+  /// A single line identifying the runtime, for example `plux_flutter/0.1.0`.
   static String get userAgent => '$packageName/$version';
 }

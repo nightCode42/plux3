@@ -1,0 +1,8 @@
+# Platform folders are made by `flutter create` when the size job runs
+# (../README.md), so no generated project is committed.
+/android/
+/ios/
+/.metadata
+/build/
+.dart_tool/
+.flutter-plugins-dependencies

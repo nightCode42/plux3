@@ -387,3 +387,25 @@ func TestCodecsMatchTheLock(t *testing.T) {
 		}
 	}
 }
+
+// Verifies: CMP-030.
+// Codecs started in the background compile while the caller goes on: a
+// wait that gives up reports its context's error, and a transcoding
+// waits for the compilation instead.
+func TestStartCodecs(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	c := StartCodecs(ctx)
+	t.Cleanup(func() { _ = c.Close(ctx) })
+	gone, cancel := context.WithCancel(ctx)
+	cancel()
+	if err := c.Ready(gone); !errors.Is(err, context.Canceled) {
+		t.Errorf("a cancelled wait: %v", err)
+	}
+	if _, variants, err := c.Transcode(ctx, encodePNG(t, gradient(12, 12)), PNG, 1<<20); err != nil || len(variants) != 6 {
+		t.Errorf("Transcode before the codecs were ready: %d %v", len(variants), err)
+	}
+	if err := c.Ready(ctx); err != nil {
+		t.Errorf("Ready: %v", err)
+	}
+}

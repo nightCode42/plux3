@@ -43,6 +43,8 @@ func Defaults() Config {
 		},
 		Observability: Observability{LogLevel: "info", LogFormat: "json", TraceSampleRatio: 1},
 		Telemetry:     Telemetry{Store: "postgres"},
+		// Where the server image installs them (backend/Dockerfile).
+		Assets: Assets{SVGCompiler: "/usr/local/bin/plux-svgc", PathOps: "/usr/local/lib/plux/libpath_ops.so"},
 		Retention: Retention{
 			AuditYears:             10,
 			DevelopmentReleaseDays: 90,

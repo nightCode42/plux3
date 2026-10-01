@@ -333,7 +333,7 @@ ID 9 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `Center` · andro
 
 A Material checkbox.
 
-ID 68 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `Checkbox` · android, ios · cost 20 µs · role checkbox · interactive
+ID 68 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `Checkbox`, `Checkbox.adaptive` · android, ios · cost 20 µs · role checkbox · interactive
 
 | Prop | ID | Type | Default | Description |
 |---|---|---|---|---|
@@ -353,6 +353,7 @@ ID 68 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `Checkbox` · an
 | `side` | 14 | `BorderSide` | — |  |
 | `isError` | 15 | `bool` | `false` |  |
 | `semanticLabel` | 16 | `string` | — |  |
+| `adaptive` | 17 | `bool` | `false` | Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere. Literal only. |
 
 | Event | ID | Payload | Description |
 |---|---|---|---|
@@ -362,7 +363,7 @@ ID 68 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `Checkbox` · an
 
 A list tile with a checkbox.
 
-ID 69 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `CheckboxListTile` · android, ios · cost 45 µs · role checkbox · interactive
+ID 69 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `CheckboxListTile`, `CheckboxListTile.adaptive` · android, ios · cost 45 µs · role checkbox · interactive
 
 | Prop | ID | Type | Default | Description |
 |---|---|---|---|---|
@@ -397,6 +398,7 @@ ID 69 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `CheckboxListTil
 | `checkboxSemanticLabel` | 29 | `string` | — |  |
 | `checkboxScaleFactor` | 30 | `double` | `1.0` |  |
 | `titleAlignment` | 31 | `ListTileTitleAlignment` | — |  |
+| `adaptive` | 32 | `bool` | `false` | Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere. Literal only. |
 
 | Event | ID | Payload | Description |
 |---|---|---|---|
@@ -517,7 +519,7 @@ ID 51 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `CircleAvatar` �
 
 A circular progress indicator, determinate or indeterminate.
 
-ID 64 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `CircularProgressIndicator` · android, ios · cost 15 µs · role progress
+ID 64 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `CircularProgressIndicator`, `CircularProgressIndicator.adaptive` · android, ios · cost 15 µs · role progress
 
 | Prop | ID | Type | Default | Description |
 |---|---|---|---|---|
@@ -532,6 +534,7 @@ ID 64 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `CircularProgres
 | `constraints` | 9 | `BoxConstraints` | — |  |
 | `trackGap` | 10 | `double` | — | Must be at least 0. |
 | `padding` | 11 | `EdgeInsets` | — |  |
+| `adaptive` | 12 | `bool` | `false` | Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere. `color` does not apply to it. Literal only. |
 
 ### ClipOval
 
@@ -1522,8 +1525,8 @@ ID 50 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `Image.asset`, `
 
 | Slot | ID | Holds | Description |
 |---|---|---|---|
-| `loading` | 1 | an item template | Shown while a network image loads. |
-| `error` | 2 | an item template | Shown when the image fails to load. |
+| `loading` | 1 | one node | Shown while a network image loads. |
+| `error` | 2 | one node | Shown when the image fails to load. |
 
 ### IndexedStack
 
@@ -1779,7 +1782,7 @@ ID 102 · Layer 2 · P3 · revision 1 (runtime 0.1.0) · android, ios · cost 15
 | Prop | ID | Type | Default | Description |
 |---|---|---|---|---|
 | `message` | 1 | `string`, required | — | The text shown while offline. |
-| `visible` | 2 | `bool` | `true` | Show only while offline when true. |
+| `visible` | 2 | `bool` | `true` | Whether the banner can show: while true it shows whenever the device is offline; false hides it. |
 
 ### Opacity
 
@@ -1889,7 +1892,7 @@ ID 28 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `Positioned` · 
 
 A Material radio button, selected when `groupValue` equals `value`.
 
-ID 70 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `Radio` · android, ios · cost 20 µs · role radio · interactive
+ID 70 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `Radio`, `Radio.adaptive` · android, ios · cost 20 µs · role radio · interactive
 
 | Prop | ID | Type | Default | Description |
 |---|---|---|---|---|
@@ -1909,6 +1912,8 @@ ID 70 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `Radio` · andro
 | `backgroundColor` | 14 | `WidgetStateColor` | — |  |
 | `side` | 15 | `BorderSide` | — |  |
 | `innerRadius` | 16 | `WidgetStateDouble` | — |  |
+| `adaptive` | 17 | `bool` | `false` | Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere. Literal only. |
+| `useCupertinoCheckmarkStyle` | 18 | `bool` | `false` | With `adaptive` on iOS, marks the selected option with a checkmark instead of a dot. |
 
 | Event | ID | Payload | Description |
 |---|---|---|---|
@@ -1918,7 +1923,7 @@ ID 70 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `Radio` · andro
 
 A list tile with a radio button.
 
-ID 71 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `RadioListTile` · android, ios · cost 45 µs · role radio · interactive
+ID 71 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `RadioListTile`, `RadioListTile.adaptive` · android, ios · cost 45 µs · role radio · interactive
 
 | Prop | ID | Type | Default | Description |
 |---|---|---|---|---|
@@ -1952,6 +1957,8 @@ ID 71 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `RadioListTile` 
 | `radioBackgroundColor` | 28 | `WidgetStateColor` | — |  |
 | `radioSide` | 29 | `BorderSide` | — |  |
 | `radioInnerRadius` | 30 | `WidgetStateDouble` | — |  |
+| `adaptive` | 31 | `bool` | `false` | Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere. Literal only. |
+| `useCupertinoCheckmarkStyle` | 32 | `bool` | `false` | With `adaptive` on iOS, marks the selected option with a checkmark instead of a dot. |
 
 | Event | ID | Payload | Description |
 |---|---|---|---|
@@ -2227,7 +2234,7 @@ ID 99 · Layer 2 · P3 · revision 1 (runtime 0.1.0) · android, ios · cost 25 
 
 Selects a value from a continuous or discrete range.
 
-ID 74 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `Slider` · android, ios · cost 30 µs · role slider · interactive
+ID 74 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `Slider`, `Slider.adaptive` · android, ios · cost 30 µs · role slider · interactive
 
 | Prop | ID | Type | Default | Description |
 |---|---|---|---|---|
@@ -2246,6 +2253,7 @@ ID 74 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `Slider` · andr
 | `allowedInteraction` | 13 | `SliderInteraction` | — |  |
 | `padding` | 14 | `EdgeInsets` | — |  |
 | `showValueIndicator` | 15 | `ShowValueIndicator` | — |  |
+| `adaptive` | 16 | `bool` | `false` | Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere. `padding` does not apply to it. Literal only. |
 
 | Event | ID | Payload | Description |
 |---|---|---|---|
@@ -2445,7 +2453,7 @@ Takes a list of `children`.
 
 A Material on/off switch.
 
-ID 72 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `Switch` · android, ios · cost 25 µs · role switch · interactive
+ID 72 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `Switch`, `Switch.adaptive` · android, ios · cost 25 µs · role switch · interactive
 
 | Prop | ID | Type | Default | Description |
 |---|---|---|---|---|
@@ -2468,6 +2476,8 @@ ID 72 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `Switch` · andr
 | `splashRadius` | 17 | `double` | — | Must be at least 0. |
 | `autofocus` | 18 | `bool` | `false` |  |
 | `padding` | 19 | `EdgeInsets` | — |  |
+| `adaptive` | 20 | `bool` | `false` | Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere. Literal only. |
+| `applyCupertinoTheme` | 21 | `bool` | — | With `adaptive` on iOS, whether the switch takes its colours from the Cupertino theme. |
 
 | Event | ID | Payload | Description |
 |---|---|---|---|
@@ -2480,7 +2490,7 @@ ID 72 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `Switch` · andr
 
 A list tile with a switch.
 
-ID 73 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `SwitchListTile` · android, ios · cost 45 µs · role switch · interactive
+ID 73 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `SwitchListTile`, `SwitchListTile.adaptive` · android, ios · cost 45 µs · role switch · interactive
 
 | Prop | ID | Type | Default | Description |
 |---|---|---|---|---|
@@ -2514,6 +2524,8 @@ ID 73 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `SwitchListTile`
 | `minLeadingWidth` | 28 | `double` | — | Must be at least 0. |
 | `minTileHeight` | 29 | `double` | — | Must be at least 0. |
 | `hoverColor` | 30 | `color` | — |  |
+| `adaptive` | 31 | `bool` | `false` | Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere. Literal only. |
+| `applyCupertinoTheme` | 32 | `bool` | — | With `adaptive` on iOS, whether the switch takes its colours from the Cupertino theme. |
 
 | Event | ID | Payload | Description |
 |---|---|---|---|
@@ -3055,6 +3067,7 @@ ID 15 · revision 1
 |---|---|---|---|---|
 | `asset` | 1 | `asset` | — | A bundled asset. |
 | `url` | 2 | `string` | — | An HTTPS URL on a domain the plugin declares (SEC-080). |
+| `thumbHash` | 3 | `string` | — | A ThumbHash of the image, base64-encoded, shown blurred until the image loads (RT-014). |
 
 ### InputBorder
 

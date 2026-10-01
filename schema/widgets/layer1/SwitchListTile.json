@@ -15,7 +15,8 @@
     "library": "package:flutter/material.dart",
     "class": "SwitchListTile",
     "constructors": [
-      ""
+      "",
+      "adaptive"
     ]
   },
   "category": "input",
@@ -226,6 +227,22 @@
       "id": 30,
       "type": "color",
       "flutter": "hoverColor"
+    },
+    {
+      "name": "adaptive",
+      "id": 31,
+      "type": "bool",
+      "default": false,
+      "bindable": false,
+      "constructor": "adaptive",
+      "description": "Renders the platform's variant through Flutter's adaptive constructor: the Cupertino look on iOS, Material elsewhere."
+    },
+    {
+      "name": "applyCupertinoTheme",
+      "id": 32,
+      "type": "bool",
+      "flutter": "applyCupertinoTheme",
+      "description": "With `adaptive` on iOS, whether the switch takes its colours from the Cupertino theme."
     }
   ],
   "events": [

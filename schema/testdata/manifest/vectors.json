@@ -1,0 +1,438 @@
+{
+  "$comment": "Device verification vectors (SEC-052, SEC-055, ADR-0029), signed by the P2 file signer and written by backend/internal/release (go test -update). Bytes are base64, keys hex. Each manifest is verified with the listed keys, in its app, environment and channel, at `now`, after `highestAccepted`, by a runtime of version `runtime` that lacks unsupportedFeatures; error is the outcome ADR-0029 requires.",
+  "keys": [
+    {
+      "keyId": "34750f98bd59fcfc946da45aaabe933b",
+      "algorithm": "ed25519",
+      "role": "targets",
+      "publicKey": "8a88e3dd7409f195fd52db2d3cba5d72ca6709bf1d94121bf3748801b40f6f5c"
+    },
+    {
+      "keyId": "6a3803d5f059902a1c6dafbc9ba47292",
+      "algorithm": "ed25519",
+      "role": "root",
+      "publicKey": "8139770ea87d175f56a35466c34c7ecccb8d8a91b4ee37a25df60f5b8fc9b394"
+    }
+  ],
+  "unsupportedFeatures": [
+    "widget.Hologram.v1"
+  ],
+  "manifests": [
+    {
+      "name": "valid",
+      "signed": "eyJhcHAiOiIwMWEwYzQ1MC02YzAwLTcwMTAtODAwMC0wMDAwMDAwMWVlZjAiLCJhcHBCdW5kbGUiOnsiaGFzaCI6InNoYTI1NjpjZWM2ZTgyNmMxYjI4ZWEwMjkyNjJhMjlkYmMxYzVjNzcxZjc0ZmNhNTU0YTRmMjk5YTRiMDUyYWQ3ZTAwOWU4IiwibWluUnVudGltZSI6IjAuMS4wIiwicmVxdWlyZWRGZWF0dXJlcyI6WyJweGwudjEiXSwic2l6ZSI6NDgyMTN9LCJjaGFubmVsIjoicHJvZHVjdGlvbiIsImNvbnRyb2wiOnsiYXBwS2lsbFN3aXRjaCI6ZmFsc2UsImtpbGxTd2l0Y2hlcyI6W10sIm1hbmRhdG9yeSI6ZmFsc2UsIm1lc3NhZ2UiOiIifSwiZW52aXJvbm1lbnQiOiJwcm9kdWN0aW9uIiwiZXhwZXJpbWVudHMiOltdLCJleHBpcmVzIjoiMjAyNi0xMC0wMlQxMDowMDowMFoiLCJpc3N1ZWRBdCI6IjIwMjYtMDktMjVUMTA6MDA6MDBaIiwicGx1Z2lucyI6W3siaGFzaCI6InNoYTI1NjowNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3Iiwia2V5IjoibG9hbnMiLCJtaW5SdW50aW1lIjoiMC4xLjAiLCJyZXF1aXJlZEZlYXR1cmVzIjpbInB4bC52MSIsIndpZGdldC5UZXh0LnYxIl0sInNpemUiOjE4MjMzNCwidmVyc2lvbiI6MTR9XSwicmVsZWFzZVNlcXVlbmNlIjoyMzEsInJvbGUiOiJ0YXJnZXRzIiwic3BlY1ZlcnNpb24iOjEsInR5cGUiOiJtYW5pZmVzdCJ9",
+      "signatures": [
+        {
+          "keyid": "34750f98bd59fcfc946da45aaabe933b",
+          "alg": "ed25519",
+          "sig": "QShaWYTjSLj/66aN8t20/aJFCYTtBLUVa/kpAAP8GNyPAEBi/G9py0p+2RCip70lwOdfoD9LePeF4lWAWihEBg=="
+        }
+      ],
+      "app": "01a0c450-6c00-7010-8000-00000001eef0",
+      "environment": "production",
+      "channel": "production",
+      "now": "2026-09-28T12:00:00Z",
+      "highestAccepted": 230,
+      "runtime": "0.1.0"
+    },
+    {
+      "name": "same-sequence-accepted",
+      "signed": "eyJhcHAiOiIwMWEwYzQ1MC02YzAwLTcwMTAtODAwMC0wMDAwMDAwMWVlZjAiLCJhcHBCdW5kbGUiOnsiaGFzaCI6InNoYTI1NjpjZWM2ZTgyNmMxYjI4ZWEwMjkyNjJhMjlkYmMxYzVjNzcxZjc0ZmNhNTU0YTRmMjk5YTRiMDUyYWQ3ZTAwOWU4IiwibWluUnVudGltZSI6IjAuMS4wIiwicmVxdWlyZWRGZWF0dXJlcyI6WyJweGwudjEiXSwic2l6ZSI6NDgyMTN9LCJjaGFubmVsIjoicHJvZHVjdGlvbiIsImNvbnRyb2wiOnsiYXBwS2lsbFN3aXRjaCI6ZmFsc2UsImtpbGxTd2l0Y2hlcyI6W10sIm1hbmRhdG9yeSI6ZmFsc2UsIm1lc3NhZ2UiOiIifSwiZW52aXJvbm1lbnQiOiJwcm9kdWN0aW9uIiwiZXhwZXJpbWVudHMiOltdLCJleHBpcmVzIjoiMjAyNi0xMC0wMlQxMDowMDowMFoiLCJpc3N1ZWRBdCI6IjIwMjYtMDktMjVUMTA6MDA6MDBaIiwicGx1Z2lucyI6W3siaGFzaCI6InNoYTI1NjowNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3Iiwia2V5IjoibG9hbnMiLCJtaW5SdW50aW1lIjoiMC4xLjAiLCJyZXF1aXJlZEZlYXR1cmVzIjpbInB4bC52MSIsIndpZGdldC5UZXh0LnYxIl0sInNpemUiOjE4MjMzNCwidmVyc2lvbiI6MTR9XSwicmVsZWFzZVNlcXVlbmNlIjoyMzEsInJvbGUiOiJ0YXJnZXRzIiwic3BlY1ZlcnNpb24iOjEsInR5cGUiOiJtYW5pZmVzdCJ9",
+      "signatures": [
+        {
+          "keyid": "34750f98bd59fcfc946da45aaabe933b",
+          "alg": "ed25519",
+          "sig": "QShaWYTjSLj/66aN8t20/aJFCYTtBLUVa/kpAAP8GNyPAEBi/G9py0p+2RCip70lwOdfoD9LePeF4lWAWihEBg=="
+        }
+      ],
+      "app": "01a0c450-6c00-7010-8000-00000001eef0",
+      "environment": "production",
+      "channel": "production",
+      "now": "2026-09-28T12:00:00Z",
+      "highestAccepted": 231,
+      "runtime": "0.1.0"
+    },
+    {
+      "name": "first-release",
+      "signed": "eyJhcHAiOiIwMWEwYzQ1MC02YzAwLTcwMTAtODAwMC0wMDAwMDAwMWVlZjAiLCJhcHBCdW5kbGUiOnsiaGFzaCI6InNoYTI1NjpjZWM2ZTgyNmMxYjI4ZWEwMjkyNjJhMjlkYmMxYzVjNzcxZjc0ZmNhNTU0YTRmMjk5YTRiMDUyYWQ3ZTAwOWU4IiwibWluUnVudGltZSI6IjAuMS4wIiwicmVxdWlyZWRGZWF0dXJlcyI6WyJweGwudjEiXSwic2l6ZSI6NDgyMTN9LCJjaGFubmVsIjoicHJvZHVjdGlvbiIsImNvbnRyb2wiOnsiYXBwS2lsbFN3aXRjaCI6ZmFsc2UsImtpbGxTd2l0Y2hlcyI6W10sIm1hbmRhdG9yeSI6ZmFsc2UsIm1lc3NhZ2UiOiIifSwiZW52aXJvbm1lbnQiOiJwcm9kdWN0aW9uIiwiZXhwZXJpbWVudHMiOltdLCJleHBpcmVzIjoiMjAyNi0xMC0wMlQxMDowMDowMFoiLCJpc3N1ZWRBdCI6IjIwMjYtMDktMjVUMTA6MDA6MDBaIiwicGx1Z2lucyI6W3siaGFzaCI6InNoYTI1NjowNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3Iiwia2V5IjoibG9hbnMiLCJtaW5SdW50aW1lIjoiMC4xLjAiLCJyZXF1aXJlZEZlYXR1cmVzIjpbInB4bC52MSIsIndpZGdldC5UZXh0LnYxIl0sInNpemUiOjE4MjMzNCwidmVyc2lvbiI6MTR9XSwicmVsZWFzZVNlcXVlbmNlIjoyMzEsInJvbGUiOiJ0YXJnZXRzIiwic3BlY1ZlcnNpb24iOjEsInR5cGUiOiJtYW5pZmVzdCJ9",
+      "signatures": [
+        {
+          "keyid": "34750f98bd59fcfc946da45aaabe933b",
+          "alg": "ed25519",
+          "sig": "QShaWYTjSLj/66aN8t20/aJFCYTtBLUVa/kpAAP8GNyPAEBi/G9py0p+2RCip70lwOdfoD9LePeF4lWAWihEBg=="
+        }
+      ],
+      "app": "01a0c450-6c00-7010-8000-00000001eef0",
+      "environment": "production",
+      "channel": "production",
+      "now": "2026-09-28T12:00:00Z",
+      "highestAccepted": 0,
+      "runtime": "0.1.0"
+    },
+    {
+      "name": "one-good-signature-of-two",
+      "signed": "eyJhcHAiOiIwMWEwYzQ1MC02YzAwLTcwMTAtODAwMC0wMDAwMDAwMWVlZjAiLCJhcHBCdW5kbGUiOnsiaGFzaCI6InNoYTI1NjpjZWM2ZTgyNmMxYjI4ZWEwMjkyNjJhMjlkYmMxYzVjNzcxZjc0ZmNhNTU0YTRmMjk5YTRiMDUyYWQ3ZTAwOWU4IiwibWluUnVudGltZSI6IjAuMS4wIiwicmVxdWlyZWRGZWF0dXJlcyI6WyJweGwudjEiXSwic2l6ZSI6NDgyMTN9LCJjaGFubmVsIjoicHJvZHVjdGlvbiIsImNvbnRyb2wiOnsiYXBwS2lsbFN3aXRjaCI6ZmFsc2UsImtpbGxTd2l0Y2hlcyI6W10sIm1hbmRhdG9yeSI6ZmFsc2UsIm1lc3NhZ2UiOiIifSwiZW52aXJvbm1lbnQiOiJwcm9kdWN0aW9uIiwiZXhwZXJpbWVudHMiOltdLCJleHBpcmVzIjoiMjAyNi0xMC0wMlQxMDowMDowMFoiLCJpc3N1ZWRBdCI6IjIwMjYtMDktMjVUMTA6MDA6MDBaIiwicGx1Z2lucyI6W3siaGFzaCI6InNoYTI1NjowNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3Iiwia2V5IjoibG9hbnMiLCJtaW5SdW50aW1lIjoiMC4xLjAiLCJyZXF1aXJlZEZlYXR1cmVzIjpbInB4bC52MSIsIndpZGdldC5UZXh0LnYxIl0sInNpemUiOjE4MjMzNCwidmVyc2lvbiI6MTR9XSwicmVsZWFzZVNlcXVlbmNlIjoyMzEsInJvbGUiOiJ0YXJnZXRzIiwic3BlY1ZlcnNpb24iOjEsInR5cGUiOiJtYW5pZmVzdCJ9",
+      "signatures": [
+        {
+          "keyid": "b62e867fa2f33afe62d5d6b1642e1621",
+          "alg": "ed25519",
+          "sig": "Hhrs06OKvE2Pj53JuyyPCK8wvogL4SdKs2EYei5Ad/2KtgRoEXqpYJT2gC2bIya5UaTelFgzN4zGZG6pHBemDQ=="
+        },
+        {
+          "keyid": "34750f98bd59fcfc946da45aaabe933b",
+          "alg": "ed25519",
+          "sig": "QShaWYTjSLj/66aN8t20/aJFCYTtBLUVa/kpAAP8GNyPAEBi/G9py0p+2RCip70lwOdfoD9LePeF4lWAWihEBg=="
+        }
+      ],
+      "app": "01a0c450-6c00-7010-8000-00000001eef0",
+      "environment": "production",
+      "channel": "production",
+      "now": "2026-09-28T12:00:00Z",
+      "highestAccepted": 230,
+      "runtime": "0.1.0"
+    },
+    {
+      "name": "rollback",
+      "signed": "eyJhcHAiOiIwMWEwYzQ1MC02YzAwLTcwMTAtODAwMC0wMDAwMDAwMWVlZjAiLCJhcHBCdW5kbGUiOnsiaGFzaCI6InNoYTI1NjpjZWM2ZTgyNmMxYjI4ZWEwMjkyNjJhMjlkYmMxYzVjNzcxZjc0ZmNhNTU0YTRmMjk5YTRiMDUyYWQ3ZTAwOWU4IiwibWluUnVudGltZSI6IjAuMS4wIiwicmVxdWlyZWRGZWF0dXJlcyI6WyJweGwudjEiXSwic2l6ZSI6NDgyMTN9LCJjaGFubmVsIjoicHJvZHVjdGlvbiIsImNvbnRyb2wiOnsiYXBwS2lsbFN3aXRjaCI6ZmFsc2UsImtpbGxTd2l0Y2hlcyI6W10sIm1hbmRhdG9yeSI6ZmFsc2UsIm1lc3NhZ2UiOiIifSwiZW52aXJvbm1lbnQiOiJwcm9kdWN0aW9uIiwiZXhwZXJpbWVudHMiOltdLCJleHBpcmVzIjoiMjAyNi0xMC0wMlQxMDowMDowMFoiLCJpc3N1ZWRBdCI6IjIwMjYtMDktMjVUMTA6MDA6MDBaIiwicGx1Z2lucyI6W3siaGFzaCI6InNoYTI1NjowNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3Iiwia2V5IjoibG9hbnMiLCJtaW5SdW50aW1lIjoiMC4xLjAiLCJyZXF1aXJlZEZlYXR1cmVzIjpbInB4bC52MSIsIndpZGdldC5UZXh0LnYxIl0sInNpemUiOjE4MjMzNCwidmVyc2lvbiI6MTR9XSwicmVsZWFzZVNlcXVlbmNlIjoyMzEsInJvbGUiOiJ0YXJnZXRzIiwic3BlY1ZlcnNpb24iOjEsInR5cGUiOiJtYW5pZmVzdCJ9",
+      "signatures": [
+        {
+          "keyid": "34750f98bd59fcfc946da45aaabe933b",
+          "alg": "ed25519",
+          "sig": "QShaWYTjSLj/66aN8t20/aJFCYTtBLUVa/kpAAP8GNyPAEBi/G9py0p+2RCip70lwOdfoD9LePeF4lWAWihEBg=="
+        }
+      ],
+      "app": "01a0c450-6c00-7010-8000-00000001eef0",
+      "environment": "production",
+      "channel": "production",
+      "now": "2026-09-28T12:00:00Z",
+      "highestAccepted": 232,
+      "runtime": "0.1.0",
+      "error": "PLX-3003"
+    },
+    {
+      "name": "expired",
+      "signed": "eyJhcHAiOiIwMWEwYzQ1MC02YzAwLTcwMTAtODAwMC0wMDAwMDAwMWVlZjAiLCJhcHBCdW5kbGUiOnsiaGFzaCI6InNoYTI1NjpjZWM2ZTgyNmMxYjI4ZWEwMjkyNjJhMjlkYmMxYzVjNzcxZjc0ZmNhNTU0YTRmMjk5YTRiMDUyYWQ3ZTAwOWU4IiwibWluUnVudGltZSI6IjAuMS4wIiwicmVxdWlyZWRGZWF0dXJlcyI6WyJweGwudjEiXSwic2l6ZSI6NDgyMTN9LCJjaGFubmVsIjoicHJvZHVjdGlvbiIsImNvbnRyb2wiOnsiYXBwS2lsbFN3aXRjaCI6ZmFsc2UsImtpbGxTd2l0Y2hlcyI6W10sIm1hbmRhdG9yeSI6ZmFsc2UsIm1lc3NhZ2UiOiIifSwiZW52aXJvbm1lbnQiOiJwcm9kdWN0aW9uIiwiZXhwZXJpbWVudHMiOltdLCJleHBpcmVzIjoiMjAyNi0xMC0wMlQxMDowMDowMFoiLCJpc3N1ZWRBdCI6IjIwMjYtMDktMjVUMTA6MDA6MDBaIiwicGx1Z2lucyI6W3siaGFzaCI6InNoYTI1NjowNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3Iiwia2V5IjoibG9hbnMiLCJtaW5SdW50aW1lIjoiMC4xLjAiLCJyZXF1aXJlZEZlYXR1cmVzIjpbInB4bC52MSIsIndpZGdldC5UZXh0LnYxIl0sInNpemUiOjE4MjMzNCwidmVyc2lvbiI6MTR9XSwicmVsZWFzZVNlcXVlbmNlIjoyMzEsInJvbGUiOiJ0YXJnZXRzIiwic3BlY1ZlcnNpb24iOjEsInR5cGUiOiJtYW5pZmVzdCJ9",
+      "signatures": [
+        {
+          "keyid": "34750f98bd59fcfc946da45aaabe933b",
+          "alg": "ed25519",
+          "sig": "QShaWYTjSLj/66aN8t20/aJFCYTtBLUVa/kpAAP8GNyPAEBi/G9py0p+2RCip70lwOdfoD9LePeF4lWAWihEBg=="
+        }
+      ],
+      "app": "01a0c450-6c00-7010-8000-00000001eef0",
+      "environment": "production",
+      "channel": "production",
+      "now": "2026-10-02T10:00:00Z",
+      "highestAccepted": 230,
+      "runtime": "0.1.0",
+      "error": "PLX-3002"
+    },
+    {
+      "name": "bad-signature",
+      "signed": "eyJhcHAiOiIwMWEwYzQ1MC02YzAwLTcwMTAtODAwMC0wMDAwMDAwMWVlZjAiLCJhcHBCdW5kbGUiOnsiaGFzaCI6InNoYTI1NjpjZWM2ZTgyNmMxYjI4ZWEwMjkyNjJhMjlkYmMxYzVjNzcxZjc0ZmNhNTU0YTRmMjk5YTRiMDUyYWQ3ZTAwOWU4IiwibWluUnVudGltZSI6IjAuMS4wIiwicmVxdWlyZWRGZWF0dXJlcyI6WyJweGwudjEiXSwic2l6ZSI6NDgyMTN9LCJjaGFubmVsIjoicHJvZHVjdGlvbiIsImNvbnRyb2wiOnsiYXBwS2lsbFN3aXRjaCI6ZmFsc2UsImtpbGxTd2l0Y2hlcyI6W10sIm1hbmRhdG9yeSI6ZmFsc2UsIm1lc3NhZ2UiOiIifSwiZW52aXJvbm1lbnQiOiJwcm9kdWN0aW9uIiwiZXhwZXJpbWVudHMiOltdLCJleHBpcmVzIjoiMjAyNi0xMC0wMlQxMDowMDowMFoiLCJpc3N1ZWRBdCI6IjIwMjYtMDktMjVUMTA6MDA6MDBaIiwicGx1Z2lucyI6W3siaGFzaCI6InNoYTI1NjowNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3Iiwia2V5IjoibG9hbnMiLCJtaW5SdW50aW1lIjoiMC4xLjAiLCJyZXF1aXJlZEZlYXR1cmVzIjpbInB4bC52MSIsIndpZGdldC5UZXh0LnYxIl0sInNpemUiOjE4MjMzNCwidmVyc2lvbiI6MTR9XSwicmVsZWFzZVNlcXVlbmNlIjoyMzEsInJvbGUiOiJ0YXJnZXRzIiwic3BlY1ZlcnNpb24iOjEsInR5cGUiOiJtYW5pZmVzdCJ9",
+      "signatures": [
+        {
+          "keyid": "34750f98bd59fcfc946da45aaabe933b",
+          "alg": "ed25519",
+          "sig": "QShaWYTjSLj/66eN8t20/aJFCYTtBLUVa/kpAAP8GNyPAEBi/G9py0p+2RCip70lwOdfoD9LePeF4lWAWihEBg=="
+        }
+      ],
+      "app": "01a0c450-6c00-7010-8000-00000001eef0",
+      "environment": "production",
+      "channel": "production",
+      "now": "2026-09-28T12:00:00Z",
+      "highestAccepted": 230,
+      "runtime": "0.1.0",
+      "error": "PLX-3001"
+    },
+    {
+      "name": "tampered",
+      "signed": "eyJhcHAiOiIwMWEwYzQ1MC02YzAwLTcwMTAtODAwMC0wMDAwMDAwMWVlZjAiLCJhcHBCdW5kbGUiOnsiaGFzaCI6InNoYTI1NjpjZWM2ZTgyNmMxYjI4ZWEwMjkyNjJhMjlkYmMxYzVjNzcxZjc0ZmNhNTU0YTRmMjk5YTRiMDUyYWQ3ZTAwOWU4IiwibWluUnVudGltZSI6IjAuMS4wIiwicmVxdWlyZWRGZWF0dXJlcyI6WyJweGwudjEiXSwic2l6ZSI6NDgyMTN9LCJjaGFubmVsIjoicHJvZHVjdGlvbiIsImNvbnRyb2wiOnsiYXBwS2lsbFN3aXRjaCI6ZmFsc2UsImtpbGxTd2l0Y2hlcyI6W10sIm1hbmRhdG9yeSI6ZmFsc2UsIm1lc3NhZ2UiOiIifSwiZW52aXJvbm1lbnQiOiJwcm9kdWN0aW9uIiwiZXhwZXJpbWVudHMiOltdLCJleHBpcmVzIjoiMjAyNi0xMC0wMlQxMDowMDowMFoiLCJpc3N1ZWRBdCI6IjIwMjYtMDktMjVUMTA6MDA6MDBaIiwicGx1Z2lucyI6W3siaGFzaCI6InNoYTI1NjowNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3Iiwia2V5IjoibG9hbnMiLCJtaW5SdW50aW1lIjoiMC4xLjAiLCJyZXF1aXJlZEZlYXR1cmVzIjpbInB4bC52MSIsIndpZGdldC5UZXh0LnYxIl0sInNpemUiOjE4MjMzNCwidmVyc2lvbiI6MTR9XSwicmVsZWFzZVNlcXVlbmNlIjoyMzksInJvbGUiOiJ0YXJnZXRzIiwic3BlY1ZlcnNpb24iOjEsInR5cGUiOiJtYW5pZmVzdCJ9",
+      "signatures": [
+        {
+          "keyid": "34750f98bd59fcfc946da45aaabe933b",
+          "alg": "ed25519",
+          "sig": "QShaWYTjSLj/66aN8t20/aJFCYTtBLUVa/kpAAP8GNyPAEBi/G9py0p+2RCip70lwOdfoD9LePeF4lWAWihEBg=="
+        }
+      ],
+      "app": "01a0c450-6c00-7010-8000-00000001eef0",
+      "environment": "production",
+      "channel": "production",
+      "now": "2026-09-28T12:00:00Z",
+      "highestAccepted": 230,
+      "runtime": "0.1.0",
+      "error": "PLX-3001"
+    },
+    {
+      "name": "unknown-key",
+      "signed": "eyJhcHAiOiIwMWEwYzQ1MC02YzAwLTcwMTAtODAwMC0wMDAwMDAwMWVlZjAiLCJhcHBCdW5kbGUiOnsiaGFzaCI6InNoYTI1NjpjZWM2ZTgyNmMxYjI4ZWEwMjkyNjJhMjlkYmMxYzVjNzcxZjc0ZmNhNTU0YTRmMjk5YTRiMDUyYWQ3ZTAwOWU4IiwibWluUnVudGltZSI6IjAuMS4wIiwicmVxdWlyZWRGZWF0dXJlcyI6WyJweGwudjEiXSwic2l6ZSI6NDgyMTN9LCJjaGFubmVsIjoicHJvZHVjdGlvbiIsImNvbnRyb2wiOnsiYXBwS2lsbFN3aXRjaCI6ZmFsc2UsImtpbGxTd2l0Y2hlcyI6W10sIm1hbmRhdG9yeSI6ZmFsc2UsIm1lc3NhZ2UiOiIifSwiZW52aXJvbm1lbnQiOiJwcm9kdWN0aW9uIiwiZXhwZXJpbWVudHMiOltdLCJleHBpcmVzIjoiMjAyNi0xMC0wMlQxMDowMDowMFoiLCJpc3N1ZWRBdCI6IjIwMjYtMDktMjVUMTA6MDA6MDBaIiwicGx1Z2lucyI6W3siaGFzaCI6InNoYTI1NjowNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3Iiwia2V5IjoibG9hbnMiLCJtaW5SdW50aW1lIjoiMC4xLjAiLCJyZXF1aXJlZEZlYXR1cmVzIjpbInB4bC52MSIsIndpZGdldC5UZXh0LnYxIl0sInNpemUiOjE4MjMzNCwidmVyc2lvbiI6MTR9XSwicmVsZWFzZVNlcXVlbmNlIjoyMzEsInJvbGUiOiJ0YXJnZXRzIiwic3BlY1ZlcnNpb24iOjEsInR5cGUiOiJtYW5pZmVzdCJ9",
+      "signatures": [
+        {
+          "keyid": "b62e867fa2f33afe62d5d6b1642e1621",
+          "alg": "ed25519",
+          "sig": "X765B5xl1hmOXMefbHpBsXZ4CT8SZAYGdOVRkhshhqrNRhVtxNqguXkhURudn8D9ffOBP3UXCMjeRs8R7SuLCQ=="
+        }
+      ],
+      "app": "01a0c450-6c00-7010-8000-00000001eef0",
+      "environment": "production",
+      "channel": "production",
+      "now": "2026-09-28T12:00:00Z",
+      "highestAccepted": 230,
+      "runtime": "0.1.0",
+      "error": "PLX-3001"
+    },
+    {
+      "name": "key-of-another-role",
+      "signed": "eyJhcHAiOiIwMWEwYzQ1MC02YzAwLTcwMTAtODAwMC0wMDAwMDAwMWVlZjAiLCJhcHBCdW5kbGUiOnsiaGFzaCI6InNoYTI1NjpjZWM2ZTgyNmMxYjI4ZWEwMjkyNjJhMjlkYmMxYzVjNzcxZjc0ZmNhNTU0YTRmMjk5YTRiMDUyYWQ3ZTAwOWU4IiwibWluUnVudGltZSI6IjAuMS4wIiwicmVxdWlyZWRGZWF0dXJlcyI6WyJweGwudjEiXSwic2l6ZSI6NDgyMTN9LCJjaGFubmVsIjoicHJvZHVjdGlvbiIsImNvbnRyb2wiOnsiYXBwS2lsbFN3aXRjaCI6ZmFsc2UsImtpbGxTd2l0Y2hlcyI6W10sIm1hbmRhdG9yeSI6ZmFsc2UsIm1lc3NhZ2UiOiIifSwiZW52aXJvbm1lbnQiOiJwcm9kdWN0aW9uIiwiZXhwZXJpbWVudHMiOltdLCJleHBpcmVzIjoiMjAyNi0xMC0wMlQxMDowMDowMFoiLCJpc3N1ZWRBdCI6IjIwMjYtMDktMjVUMTA6MDA6MDBaIiwicGx1Z2lucyI6W3siaGFzaCI6InNoYTI1NjowNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3Iiwia2V5IjoibG9hbnMiLCJtaW5SdW50aW1lIjoiMC4xLjAiLCJyZXF1aXJlZEZlYXR1cmVzIjpbInB4bC52MSIsIndpZGdldC5UZXh0LnYxIl0sInNpemUiOjE4MjMzNCwidmVyc2lvbiI6MTR9XSwicmVsZWFzZVNlcXVlbmNlIjoyMzEsInJvbGUiOiJ0YXJnZXRzIiwic3BlY1ZlcnNpb24iOjEsInR5cGUiOiJtYW5pZmVzdCJ9",
+      "signatures": [
+        {
+          "keyid": "6a3803d5f059902a1c6dafbc9ba47292",
+          "alg": "ed25519",
+          "sig": "YN+hRxtHrN+rl9HipYS8vtZcXGHvVyL4yeAjrmYBTMWB/R/zv7DSahi097WYofT5oBuDwJSt/Rf+nt1NQvawCw=="
+        }
+      ],
+      "app": "01a0c450-6c00-7010-8000-00000001eef0",
+      "environment": "production",
+      "channel": "production",
+      "now": "2026-09-28T12:00:00Z",
+      "highestAccepted": 230,
+      "runtime": "0.1.0",
+      "error": "PLX-3001"
+    },
+    {
+      "name": "unknown-algorithm",
+      "signed": "eyJhcHAiOiIwMWEwYzQ1MC02YzAwLTcwMTAtODAwMC0wMDAwMDAwMWVlZjAiLCJhcHBCdW5kbGUiOnsiaGFzaCI6InNoYTI1NjpjZWM2ZTgyNmMxYjI4ZWEwMjkyNjJhMjlkYmMxYzVjNzcxZjc0ZmNhNTU0YTRmMjk5YTRiMDUyYWQ3ZTAwOWU4IiwibWluUnVudGltZSI6IjAuMS4wIiwicmVxdWlyZWRGZWF0dXJlcyI6WyJweGwudjEiXSwic2l6ZSI6NDgyMTN9LCJjaGFubmVsIjoicHJvZHVjdGlvbiIsImNvbnRyb2wiOnsiYXBwS2lsbFN3aXRjaCI6ZmFsc2UsImtpbGxTd2l0Y2hlcyI6W10sIm1hbmRhdG9yeSI6ZmFsc2UsIm1lc3NhZ2UiOiIifSwiZW52aXJvbm1lbnQiOiJwcm9kdWN0aW9uIiwiZXhwZXJpbWVudHMiOltdLCJleHBpcmVzIjoiMjAyNi0xMC0wMlQxMDowMDowMFoiLCJpc3N1ZWRBdCI6IjIwMjYtMDktMjVUMTA6MDA6MDBaIiwicGx1Z2lucyI6W3siaGFzaCI6InNoYTI1NjowNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3Iiwia2V5IjoibG9hbnMiLCJtaW5SdW50aW1lIjoiMC4xLjAiLCJyZXF1aXJlZEZlYXR1cmVzIjpbInB4bC52MSIsIndpZGdldC5UZXh0LnYxIl0sInNpemUiOjE4MjMzNCwidmVyc2lvbiI6MTR9XSwicmVsZWFzZVNlcXVlbmNlIjoyMzEsInJvbGUiOiJ0YXJnZXRzIiwic3BlY1ZlcnNpb24iOjEsInR5cGUiOiJtYW5pZmVzdCJ9",
+      "signatures": [
+        {
+          "keyid": "34750f98bd59fcfc946da45aaabe933b",
+          "alg": "ecdsa-p256-sha256",
+          "sig": "QShaWYTjSLj/66aN8t20/aJFCYTtBLUVa/kpAAP8GNyPAEBi/G9py0p+2RCip70lwOdfoD9LePeF4lWAWihEBg=="
+        }
+      ],
+      "app": "01a0c450-6c00-7010-8000-00000001eef0",
+      "environment": "production",
+      "channel": "production",
+      "now": "2026-09-28T12:00:00Z",
+      "highestAccepted": 230,
+      "runtime": "0.1.0",
+      "error": "PLX-3001"
+    },
+    {
+      "name": "no-signature",
+      "signed": "eyJhcHAiOiIwMWEwYzQ1MC02YzAwLTcwMTAtODAwMC0wMDAwMDAwMWVlZjAiLCJhcHBCdW5kbGUiOnsiaGFzaCI6InNoYTI1NjpjZWM2ZTgyNmMxYjI4ZWEwMjkyNjJhMjlkYmMxYzVjNzcxZjc0ZmNhNTU0YTRmMjk5YTRiMDUyYWQ3ZTAwOWU4IiwibWluUnVudGltZSI6IjAuMS4wIiwicmVxdWlyZWRGZWF0dXJlcyI6WyJweGwudjEiXSwic2l6ZSI6NDgyMTN9LCJjaGFubmVsIjoicHJvZHVjdGlvbiIsImNvbnRyb2wiOnsiYXBwS2lsbFN3aXRjaCI6ZmFsc2UsImtpbGxTd2l0Y2hlcyI6W10sIm1hbmRhdG9yeSI6ZmFsc2UsIm1lc3NhZ2UiOiIifSwiZW52aXJvbm1lbnQiOiJwcm9kdWN0aW9uIiwiZXhwZXJpbWVudHMiOltdLCJleHBpcmVzIjoiMjAyNi0xMC0wMlQxMDowMDowMFoiLCJpc3N1ZWRBdCI6IjIwMjYtMDktMjVUMTA6MDA6MDBaIiwicGx1Z2lucyI6W3siaGFzaCI6InNoYTI1NjowNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3Iiwia2V5IjoibG9hbnMiLCJtaW5SdW50aW1lIjoiMC4xLjAiLCJyZXF1aXJlZEZlYXR1cmVzIjpbInB4bC52MSIsIndpZGdldC5UZXh0LnYxIl0sInNpemUiOjE4MjMzNCwidmVyc2lvbiI6MTR9XSwicmVsZWFzZVNlcXVlbmNlIjoyMzEsInJvbGUiOiJ0YXJnZXRzIiwic3BlY1ZlcnNpb24iOjEsInR5cGUiOiJtYW5pZmVzdCJ9",
+      "signatures": [],
+      "app": "01a0c450-6c00-7010-8000-00000001eef0",
+      "environment": "production",
+      "channel": "production",
+      "now": "2026-09-28T12:00:00Z",
+      "highestAccepted": 230,
+      "runtime": "0.1.0",
+      "error": "PLX-3001"
+    },
+    {
+      "name": "not-canonical",
+      "signed": "ewogICJ0eXBlIjogIm1hbmlmZXN0IiwKICAic3BlY1ZlcnNpb24iOiAxLAogICJyb2xlIjogInRhcmdldHMiLAogICJhcHAiOiAiMDFhMGM0NTAtNmMwMC03MDEwLTgwMDAtMDAwMDAwMDFlZWYwIiwKICAiZW52aXJvbm1lbnQiOiAicHJvZHVjdGlvbiIsCiAgImNoYW5uZWwiOiAicHJvZHVjdGlvbiIsCiAgInJlbGVhc2VTZXF1ZW5jZSI6IDIzMSwKICAiaXNzdWVkQXQiOiAiMjAyNi0wOS0yNVQxMDowMDowMFoiLAogICJleHBpcmVzIjogIjIwMjYtMTAtMDJUMTA6MDA6MDBaIiwKICAiYXBwQnVuZGxlIjogewogICAgImhhc2giOiAic2hhMjU2OmNlYzZlODI2YzFiMjhlYTAyOTI2MmEyOWRiYzFjNWM3NzFmNzRmY2E1NTRhNGYyOTlhNGIwNTJhZDdlMDA5ZTgiLAogICAgInNpemUiOiA0ODIxMywKICAgICJyZXF1aXJlZEZlYXR1cmVzIjogWwogICAgICAicHhsLnYxIgogICAgXSwKICAgICJtaW5SdW50aW1lIjogIjAuMS4wIgogIH0sCiAgInBsdWdpbnMiOiBbCiAgICB7CiAgICAgICJrZXkiOiAibG9hbnMiLAogICAgICAidmVyc2lvbiI6IDE0LAogICAgICAiaGFzaCI6ICJzaGEyNTY6MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNyIsCiAgICAgICJzaXplIjogMTgyMzM0LAogICAgICAicmVxdWlyZWRGZWF0dXJlcyI6IFsKICAgICAgICAicHhsLnYxIiwKICAgICAgICAid2lkZ2V0LlRleHQudjEiCiAgICAgIF0sCiAgICAgICJtaW5SdW50aW1lIjogIjAuMS4wIgogICAgfQogIF0sCiAgImNvbnRyb2wiOiB7CiAgICAia2lsbFN3aXRjaGVzIjogW10sCiAgICAiYXBwS2lsbFN3aXRjaCI6IGZhbHNlLAogICAgIm1hbmRhdG9yeSI6IGZhbHNlLAogICAgIm1lc3NhZ2UiOiAiIgogIH0sCiAgImV4cGVyaW1lbnRzIjogW10KfQ==",
+      "signatures": [
+        {
+          "keyid": "34750f98bd59fcfc946da45aaabe933b",
+          "alg": "ed25519",
+          "sig": "PbOleSCqZ1pKKZ3G9e+VKKc0BNRVUk05ebfSalV7xh4IVz0YDOKYKAhmcdbCgKs5mFBeL3YJ9HWQxT+BFxS1AA=="
+        }
+      ],
+      "app": "01a0c450-6c00-7010-8000-00000001eef0",
+      "environment": "production",
+      "channel": "production",
+      "now": "2026-09-28T12:00:00Z",
+      "highestAccepted": 230,
+      "runtime": "0.1.0",
+      "error": "PLX-3001"
+    },
+    {
+      "name": "another-app",
+      "signed": "eyJhcHAiOiIwMWEwYzQ1MC02YzAwLTcwMTAtODAwMC0wMDAwMDAwMWVlZjAiLCJhcHBCdW5kbGUiOnsiaGFzaCI6InNoYTI1NjpjZWM2ZTgyNmMxYjI4ZWEwMjkyNjJhMjlkYmMxYzVjNzcxZjc0ZmNhNTU0YTRmMjk5YTRiMDUyYWQ3ZTAwOWU4IiwibWluUnVudGltZSI6IjAuMS4wIiwicmVxdWlyZWRGZWF0dXJlcyI6WyJweGwudjEiXSwic2l6ZSI6NDgyMTN9LCJjaGFubmVsIjoicHJvZHVjdGlvbiIsImNvbnRyb2wiOnsiYXBwS2lsbFN3aXRjaCI6ZmFsc2UsImtpbGxTd2l0Y2hlcyI6W10sIm1hbmRhdG9yeSI6ZmFsc2UsIm1lc3NhZ2UiOiIifSwiZW52aXJvbm1lbnQiOiJwcm9kdWN0aW9uIiwiZXhwZXJpbWVudHMiOltdLCJleHBpcmVzIjoiMjAyNi0xMC0wMlQxMDowMDowMFoiLCJpc3N1ZWRBdCI6IjIwMjYtMDktMjVUMTA6MDA6MDBaIiwicGx1Z2lucyI6W3siaGFzaCI6InNoYTI1NjowNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3Iiwia2V5IjoibG9hbnMiLCJtaW5SdW50aW1lIjoiMC4xLjAiLCJyZXF1aXJlZEZlYXR1cmVzIjpbInB4bC52MSIsIndpZGdldC5UZXh0LnYxIl0sInNpemUiOjE4MjMzNCwidmVyc2lvbiI6MTR9XSwicmVsZWFzZVNlcXVlbmNlIjoyMzEsInJvbGUiOiJ0YXJnZXRzIiwic3BlY1ZlcnNpb24iOjEsInR5cGUiOiJtYW5pZmVzdCJ9",
+      "signatures": [
+        {
+          "keyid": "34750f98bd59fcfc946da45aaabe933b",
+          "alg": "ed25519",
+          "sig": "QShaWYTjSLj/66aN8t20/aJFCYTtBLUVa/kpAAP8GNyPAEBi/G9py0p+2RCip70lwOdfoD9LePeF4lWAWihEBg=="
+        }
+      ],
+      "app": "app_other",
+      "environment": "production",
+      "channel": "production",
+      "now": "2026-09-28T12:00:00Z",
+      "highestAccepted": 230,
+      "runtime": "0.1.0",
+      "error": "PLX-3001"
+    },
+    {
+      "name": "another-channel",
+      "signed": "eyJhcHAiOiIwMWEwYzQ1MC02YzAwLTcwMTAtODAwMC0wMDAwMDAwMWVlZjAiLCJhcHBCdW5kbGUiOnsiaGFzaCI6InNoYTI1NjpjZWM2ZTgyNmMxYjI4ZWEwMjkyNjJhMjlkYmMxYzVjNzcxZjc0ZmNhNTU0YTRmMjk5YTRiMDUyYWQ3ZTAwOWU4IiwibWluUnVudGltZSI6IjAuMS4wIiwicmVxdWlyZWRGZWF0dXJlcyI6WyJweGwudjEiXSwic2l6ZSI6NDgyMTN9LCJjaGFubmVsIjoicHJvZHVjdGlvbiIsImNvbnRyb2wiOnsiYXBwS2lsbFN3aXRjaCI6ZmFsc2UsImtpbGxTd2l0Y2hlcyI6W10sIm1hbmRhdG9yeSI6ZmFsc2UsIm1lc3NhZ2UiOiIifSwiZW52aXJvbm1lbnQiOiJwcm9kdWN0aW9uIiwiZXhwZXJpbWVudHMiOltdLCJleHBpcmVzIjoiMjAyNi0xMC0wMlQxMDowMDowMFoiLCJpc3N1ZWRBdCI6IjIwMjYtMDktMjVUMTA6MDA6MDBaIiwicGx1Z2lucyI6W3siaGFzaCI6InNoYTI1NjowNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3Iiwia2V5IjoibG9hbnMiLCJtaW5SdW50aW1lIjoiMC4xLjAiLCJyZXF1aXJlZEZlYXR1cmVzIjpbInB4bC52MSIsIndpZGdldC5UZXh0LnYxIl0sInNpemUiOjE4MjMzNCwidmVyc2lvbiI6MTR9XSwicmVsZWFzZVNlcXVlbmNlIjoyMzEsInJvbGUiOiJ0YXJnZXRzIiwic3BlY1ZlcnNpb24iOjEsInR5cGUiOiJtYW5pZmVzdCJ9",
+      "signatures": [
+        {
+          "keyid": "34750f98bd59fcfc946da45aaabe933b",
+          "alg": "ed25519",
+          "sig": "QShaWYTjSLj/66aN8t20/aJFCYTtBLUVa/kpAAP8GNyPAEBi/G9py0p+2RCip70lwOdfoD9LePeF4lWAWihEBg=="
+        }
+      ],
+      "app": "01a0c450-6c00-7010-8000-00000001eef0",
+      "environment": "production",
+      "channel": "beta",
+      "now": "2026-09-28T12:00:00Z",
+      "highestAccepted": 230,
+      "runtime": "0.1.0",
+      "error": "PLX-3001"
+    },
+    {
+      "name": "another-environment",
+      "signed": "eyJhcHAiOiIwMWEwYzQ1MC02YzAwLTcwMTAtODAwMC0wMDAwMDAwMWVlZjAiLCJhcHBCdW5kbGUiOnsiaGFzaCI6InNoYTI1NjpjZWM2ZTgyNmMxYjI4ZWEwMjkyNjJhMjlkYmMxYzVjNzcxZjc0ZmNhNTU0YTRmMjk5YTRiMDUyYWQ3ZTAwOWU4IiwibWluUnVudGltZSI6IjAuMS4wIiwicmVxdWlyZWRGZWF0dXJlcyI6WyJweGwudjEiXSwic2l6ZSI6NDgyMTN9LCJjaGFubmVsIjoicHJvZHVjdGlvbiIsImNvbnRyb2wiOnsiYXBwS2lsbFN3aXRjaCI6ZmFsc2UsImtpbGxTd2l0Y2hlcyI6W10sIm1hbmRhdG9yeSI6ZmFsc2UsIm1lc3NhZ2UiOiIifSwiZW52aXJvbm1lbnQiOiJwcm9kdWN0aW9uIiwiZXhwZXJpbWVudHMiOltdLCJleHBpcmVzIjoiMjAyNi0xMC0wMlQxMDowMDowMFoiLCJpc3N1ZWRBdCI6IjIwMjYtMDktMjVUMTA6MDA6MDBaIiwicGx1Z2lucyI6W3siaGFzaCI6InNoYTI1NjowNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3Iiwia2V5IjoibG9hbnMiLCJtaW5SdW50aW1lIjoiMC4xLjAiLCJyZXF1aXJlZEZlYXR1cmVzIjpbInB4bC52MSIsIndpZGdldC5UZXh0LnYxIl0sInNpemUiOjE4MjMzNCwidmVyc2lvbiI6MTR9XSwicmVsZWFzZVNlcXVlbmNlIjoyMzEsInJvbGUiOiJ0YXJnZXRzIiwic3BlY1ZlcnNpb24iOjEsInR5cGUiOiJtYW5pZmVzdCJ9",
+      "signatures": [
+        {
+          "keyid": "34750f98bd59fcfc946da45aaabe933b",
+          "alg": "ed25519",
+          "sig": "QShaWYTjSLj/66aN8t20/aJFCYTtBLUVa/kpAAP8GNyPAEBi/G9py0p+2RCip70lwOdfoD9LePeF4lWAWihEBg=="
+        }
+      ],
+      "app": "01a0c450-6c00-7010-8000-00000001eef0",
+      "environment": "staging",
+      "channel": "production",
+      "now": "2026-09-28T12:00:00Z",
+      "highestAccepted": 230,
+      "runtime": "0.1.0",
+      "error": "PLX-3001"
+    },
+    {
+      "name": "another-role",
+      "signed": "eyJhcHAiOiIwMWEwYzQ1MC02YzAwLTcwMTAtODAwMC0wMDAwMDAwMWVlZjAiLCJhcHBCdW5kbGUiOnsiaGFzaCI6InNoYTI1NjpjZWM2ZTgyNmMxYjI4ZWEwMjkyNjJhMjlkYmMxYzVjNzcxZjc0ZmNhNTU0YTRmMjk5YTRiMDUyYWQ3ZTAwOWU4IiwibWluUnVudGltZSI6IjAuMS4wIiwicmVxdWlyZWRGZWF0dXJlcyI6WyJweGwudjEiXSwic2l6ZSI6NDgyMTN9LCJjaGFubmVsIjoicHJvZHVjdGlvbiIsImNvbnRyb2wiOnsiYXBwS2lsbFN3aXRjaCI6ZmFsc2UsImtpbGxTd2l0Y2hlcyI6W10sIm1hbmRhdG9yeSI6ZmFsc2UsIm1lc3NhZ2UiOiIifSwiZW52aXJvbm1lbnQiOiJwcm9kdWN0aW9uIiwiZXhwZXJpbWVudHMiOltdLCJleHBpcmVzIjoiMjAyNi0xMC0wMlQxMDowMDowMFoiLCJpc3N1ZWRBdCI6IjIwMjYtMDktMjVUMTA6MDA6MDBaIiwicGx1Z2lucyI6W3siaGFzaCI6InNoYTI1NjowNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3Iiwia2V5IjoibG9hbnMiLCJtaW5SdW50aW1lIjoiMC4xLjAiLCJyZXF1aXJlZEZlYXR1cmVzIjpbInB4bC52MSIsIndpZGdldC5UZXh0LnYxIl0sInNpemUiOjE4MjMzNCwidmVyc2lvbiI6MTR9XSwicmVsZWFzZVNlcXVlbmNlIjoyMzEsInJvbGUiOiJzbmFwc2hvdCIsInNwZWNWZXJzaW9uIjoxLCJ0eXBlIjoibWFuaWZlc3QifQ==",
+      "signatures": [
+        {
+          "keyid": "34750f98bd59fcfc946da45aaabe933b",
+          "alg": "ed25519",
+          "sig": "sdfILwuz6+DdRxkZt8xhoeeMsWA7jtCyRhigOP4ertIM1sf0e/MyaGXvoy2kMoc/qqTMHdbHg/uY0xnh9l0JDw=="
+        }
+      ],
+      "app": "01a0c450-6c00-7010-8000-00000001eef0",
+      "environment": "production",
+      "channel": "production",
+      "now": "2026-09-28T12:00:00Z",
+      "highestAccepted": 230,
+      "runtime": "0.1.0",
+      "error": "PLX-3001"
+    },
+    {
+      "name": "another-type",
+      "signed": "eyJhcHAiOiIwMWEwYzQ1MC02YzAwLTcwMTAtODAwMC0wMDAwMDAwMWVlZjAiLCJhcHBCdW5kbGUiOnsiaGFzaCI6InNoYTI1NjpjZWM2ZTgyNmMxYjI4ZWEwMjkyNjJhMjlkYmMxYzVjNzcxZjc0ZmNhNTU0YTRmMjk5YTRiMDUyYWQ3ZTAwOWU4IiwibWluUnVudGltZSI6IjAuMS4wIiwicmVxdWlyZWRGZWF0dXJlcyI6WyJweGwudjEiXSwic2l6ZSI6NDgyMTN9LCJjaGFubmVsIjoicHJvZHVjdGlvbiIsImNvbnRyb2wiOnsiYXBwS2lsbFN3aXRjaCI6ZmFsc2UsImtpbGxTd2l0Y2hlcyI6W10sIm1hbmRhdG9yeSI6ZmFsc2UsIm1lc3NhZ2UiOiIifSwiZW52aXJvbm1lbnQiOiJwcm9kdWN0aW9uIiwiZXhwZXJpbWVudHMiOltdLCJleHBpcmVzIjoiMjAyNi0xMC0wMlQxMDowMDowMFoiLCJpc3N1ZWRBdCI6IjIwMjYtMDktMjVUMTA6MDA6MDBaIiwicGx1Z2lucyI6W3siaGFzaCI6InNoYTI1NjowNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3Iiwia2V5IjoibG9hbnMiLCJtaW5SdW50aW1lIjoiMC4xLjAiLCJyZXF1aXJlZEZlYXR1cmVzIjpbInB4bC52MSIsIndpZGdldC5UZXh0LnYxIl0sInNpemUiOjE4MjMzNCwidmVyc2lvbiI6MTR9XSwicmVsZWFzZVNlcXVlbmNlIjoyMzEsInJvbGUiOiJ0YXJnZXRzIiwic3BlY1ZlcnNpb24iOjEsInR5cGUiOiJjb250cm9sIn0=",
+      "signatures": [
+        {
+          "keyid": "34750f98bd59fcfc946da45aaabe933b",
+          "alg": "ed25519",
+          "sig": "0M5ik2sxFvUEcHbZ6MGFvigAmtQ0t2cO0gbS1+YxvAco3kxvYH1kJlwVdeoNGb1ZFlRlsw6fuMZjvGWDePMeAw=="
+        }
+      ],
+      "app": "01a0c450-6c00-7010-8000-00000001eef0",
+      "environment": "production",
+      "channel": "production",
+      "now": "2026-09-28T12:00:00Z",
+      "highestAccepted": 230,
+      "runtime": "0.1.0",
+      "error": "PLX-3001"
+    },
+    {
+      "name": "newer-spec-version",
+      "signed": "eyJhcHAiOiIwMWEwYzQ1MC02YzAwLTcwMTAtODAwMC0wMDAwMDAwMWVlZjAiLCJhcHBCdW5kbGUiOnsiaGFzaCI6InNoYTI1NjpjZWM2ZTgyNmMxYjI4ZWEwMjkyNjJhMjlkYmMxYzVjNzcxZjc0ZmNhNTU0YTRmMjk5YTRiMDUyYWQ3ZTAwOWU4IiwibWluUnVudGltZSI6IjAuMS4wIiwicmVxdWlyZWRGZWF0dXJlcyI6WyJweGwudjEiXSwic2l6ZSI6NDgyMTN9LCJjaGFubmVsIjoicHJvZHVjdGlvbiIsImNvbnRyb2wiOnsiYXBwS2lsbFN3aXRjaCI6ZmFsc2UsImtpbGxTd2l0Y2hlcyI6W10sIm1hbmRhdG9yeSI6ZmFsc2UsIm1lc3NhZ2UiOiIifSwiZW52aXJvbm1lbnQiOiJwcm9kdWN0aW9uIiwiZXhwZXJpbWVudHMiOltdLCJleHBpcmVzIjoiMjAyNi0xMC0wMlQxMDowMDowMFoiLCJpc3N1ZWRBdCI6IjIwMjYtMDktMjVUMTA6MDA6MDBaIiwicGx1Z2lucyI6W3siaGFzaCI6InNoYTI1NjowNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3Iiwia2V5IjoibG9hbnMiLCJtaW5SdW50aW1lIjoiMC4xLjAiLCJyZXF1aXJlZEZlYXR1cmVzIjpbInB4bC52MSIsIndpZGdldC5UZXh0LnYxIl0sInNpemUiOjE4MjMzNCwidmVyc2lvbiI6MTR9XSwicmVsZWFzZVNlcXVlbmNlIjoyMzEsInJvbGUiOiJ0YXJnZXRzIiwic3BlY1ZlcnNpb24iOjIsInR5cGUiOiJtYW5pZmVzdCJ9",
+      "signatures": [
+        {
+          "keyid": "34750f98bd59fcfc946da45aaabe933b",
+          "alg": "ed25519",
+          "sig": "TqogRBe/WRNID5ryNRRcDL0onzJ/jsIWfdkO3MaNESL/WCViB+S1LxzDta3nzS9k1bxPoE87LWyDNDOUM3jxCw=="
+        }
+      ],
+      "app": "01a0c450-6c00-7010-8000-00000001eef0",
+      "environment": "production",
+      "channel": "production",
+      "now": "2026-09-28T12:00:00Z",
+      "highestAccepted": 230,
+      "runtime": "0.1.0",
+      "error": "PLX-3001"
+    },
+    {
+      "name": "unsupported-feature",
+      "signed": "eyJhcHAiOiIwMWEwYzQ1MC02YzAwLTcwMTAtODAwMC0wMDAwMDAwMWVlZjAiLCJhcHBCdW5kbGUiOnsiaGFzaCI6InNoYTI1NjpjZWM2ZTgyNmMxYjI4ZWEwMjkyNjJhMjlkYmMxYzVjNzcxZjc0ZmNhNTU0YTRmMjk5YTRiMDUyYWQ3ZTAwOWU4IiwibWluUnVudGltZSI6IjAuMS4wIiwicmVxdWlyZWRGZWF0dXJlcyI6WyJweGwudjEiXSwic2l6ZSI6NDgyMTN9LCJjaGFubmVsIjoicHJvZHVjdGlvbiIsImNvbnRyb2wiOnsiYXBwS2lsbFN3aXRjaCI6ZmFsc2UsImtpbGxTd2l0Y2hlcyI6W10sIm1hbmRhdG9yeSI6ZmFsc2UsIm1lc3NhZ2UiOiIifSwiZW52aXJvbm1lbnQiOiJwcm9kdWN0aW9uIiwiZXhwZXJpbWVudHMiOltdLCJleHBpcmVzIjoiMjAyNi0xMC0wMlQxMDowMDowMFoiLCJpc3N1ZWRBdCI6IjIwMjYtMDktMjVUMTA6MDA6MDBaIiwicGx1Z2lucyI6W3siaGFzaCI6InNoYTI1NjowNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3Iiwia2V5IjoibG9hbnMiLCJtaW5SdW50aW1lIjoiMC4xLjAiLCJyZXF1aXJlZEZlYXR1cmVzIjpbInB4bC52MSIsIndpZGdldC5Ib2xvZ3JhbS52MSJdLCJzaXplIjoxODIzMzQsInZlcnNpb24iOjE0fV0sInJlbGVhc2VTZXF1ZW5jZSI6MjMxLCJyb2xlIjoidGFyZ2V0cyIsInNwZWNWZXJzaW9uIjoxLCJ0eXBlIjoibWFuaWZlc3QifQ==",
+      "signatures": [
+        {
+          "keyid": "34750f98bd59fcfc946da45aaabe933b",
+          "alg": "ed25519",
+          "sig": "XuqKuqiHsIyaB/mvaPSE/kjy3RZjS6ZATYJVD5MMWpHtiNSa2DtXzvX/4YRHnhhMnyGyxH4ucaxWVoIe5e4ZCQ=="
+        }
+      ],
+      "app": "01a0c450-6c00-7010-8000-00000001eef0",
+      "environment": "production",
+      "channel": "production",
+      "now": "2026-09-28T12:00:00Z",
+      "highestAccepted": 230,
+      "runtime": "0.1.0",
+      "error": "PLX-3010"
+    },
+    {
+      "name": "runtime-too-old",
+      "signed": "eyJhcHAiOiIwMWEwYzQ1MC02YzAwLTcwMTAtODAwMC0wMDAwMDAwMWVlZjAiLCJhcHBCdW5kbGUiOnsiaGFzaCI6InNoYTI1NjpjZWM2ZTgyNmMxYjI4ZWEwMjkyNjJhMjlkYmMxYzVjNzcxZjc0ZmNhNTU0YTRmMjk5YTRiMDUyYWQ3ZTAwOWU4IiwibWluUnVudGltZSI6IjkuMC4wIiwicmVxdWlyZWRGZWF0dXJlcyI6WyJweGwudjEiXSwic2l6ZSI6NDgyMTN9LCJjaGFubmVsIjoicHJvZHVjdGlvbiIsImNvbnRyb2wiOnsiYXBwS2lsbFN3aXRjaCI6ZmFsc2UsImtpbGxTd2l0Y2hlcyI6W10sIm1hbmRhdG9yeSI6ZmFsc2UsIm1lc3NhZ2UiOiIifSwiZW52aXJvbm1lbnQiOiJwcm9kdWN0aW9uIiwiZXhwZXJpbWVudHMiOltdLCJleHBpcmVzIjoiMjAyNi0xMC0wMlQxMDowMDowMFoiLCJpc3N1ZWRBdCI6IjIwMjYtMDktMjVUMTA6MDA6MDBaIiwicGx1Z2lucyI6W3siaGFzaCI6InNoYTI1NjowNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3Iiwia2V5IjoibG9hbnMiLCJtaW5SdW50aW1lIjoiMC4xLjAiLCJyZXF1aXJlZEZlYXR1cmVzIjpbInB4bC52MSIsIndpZGdldC5UZXh0LnYxIl0sInNpemUiOjE4MjMzNCwidmVyc2lvbiI6MTR9XSwicmVsZWFzZVNlcXVlbmNlIjoyMzEsInJvbGUiOiJ0YXJnZXRzIiwic3BlY1ZlcnNpb24iOjEsInR5cGUiOiJtYW5pZmVzdCJ9",
+      "signatures": [
+        {
+          "keyid": "34750f98bd59fcfc946da45aaabe933b",
+          "alg": "ed25519",
+          "sig": "ctVhts4bwk2oBuq0wtY5lKlUCigbU62YPd/1wjTvK9wun5MWhJreICvIzoy0bdhHANwrk3TdlGEwwD1A7bcLBQ=="
+        }
+      ],
+      "app": "01a0c450-6c00-7010-8000-00000001eef0",
+      "environment": "production",
+      "channel": "production",
+      "now": "2026-09-28T12:00:00Z",
+      "highestAccepted": 230,
+      "runtime": "0.1.0",
+      "error": "PLX-3010"
+    },
+    {
+      "name": "kill-switch",
+      "signed": "eyJhcHAiOiIwMWEwYzQ1MC02YzAwLTcwMTAtODAwMC0wMDAwMDAwMWVlZjAiLCJhcHBCdW5kbGUiOnsiaGFzaCI6InNoYTI1NjpjZWM2ZTgyNmMxYjI4ZWEwMjkyNjJhMjlkYmMxYzVjNzcxZjc0ZmNhNTU0YTRmMjk5YTRiMDUyYWQ3ZTAwOWU4IiwibWluUnVudGltZSI6IjAuMS4wIiwicmVxdWlyZWRGZWF0dXJlcyI6WyJweGwudjEiXSwic2l6ZSI6NDgyMTN9LCJjaGFubmVsIjoicHJvZHVjdGlvbiIsImNvbnRyb2wiOnsiYXBwS2lsbFN3aXRjaCI6ZmFsc2UsImtpbGxTd2l0Y2hlcyI6WyJsb2FucyJdLCJtYW5kYXRvcnkiOmZhbHNlLCJtZXNzYWdlIjoiTWFpbnRlbmFuY2UifSwiZW52aXJvbm1lbnQiOiJwcm9kdWN0aW9uIiwiZXhwZXJpbWVudHMiOltdLCJleHBpcmVzIjoiMjAyNi0xMC0wMlQxMDowMDowMFoiLCJpc3N1ZWRBdCI6IjIwMjYtMDktMjVUMTA6MDA6MDBaIiwicGx1Z2lucyI6W3siaGFzaCI6InNoYTI1NjowNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3MDcwNzA3Iiwia2V5IjoibG9hbnMiLCJtaW5SdW50aW1lIjoiMC4xLjAiLCJyZXF1aXJlZEZlYXR1cmVzIjpbInB4bC52MSIsIndpZGdldC5UZXh0LnYxIl0sInNpemUiOjE4MjMzNCwidmVyc2lvbiI6MTR9XSwicmVsZWFzZVNlcXVlbmNlIjoyMzEsInJvbGUiOiJ0YXJnZXRzIiwic3BlY1ZlcnNpb24iOjEsInR5cGUiOiJtYW5pZmVzdCJ9",
+      "signatures": [
+        {
+          "keyid": "34750f98bd59fcfc946da45aaabe933b",
+          "alg": "ed25519",
+          "sig": "W8+H3uXbgOBZXL5nncOdKmfA79xOmqWbZlrjW4A8EUKefsbZQw71GIvWQEJ89/unSJrXQcWdnYZKUMrp5KF+DA=="
+        }
+      ],
+      "app": "01a0c450-6c00-7010-8000-00000001eef0",
+      "environment": "production",
+      "channel": "production",
+      "now": "2026-09-28T12:00:00Z",
+      "highestAccepted": 230,
+      "runtime": "0.1.0"
+    }
+  ],
+  "bundles": [
+    {
+      "name": "signed-by-targets",
+      "hash": "cec6e826c1b28ea029262a29dbc1c5c771f74fca554a4f299a4b052ad7e009e8",
+      "keyId": "34750f98bd59fcfc946da45aaabe933b",
+      "algorithm": "ed25519",
+      "signature": "myHi9gaKDDOh/s8wztMOYMHZPYGlWt7Z+6zAGcL1sRCFqL5KSD5DR2patGQ3f8FPbMD39jzLQ4uQmsvMh4x4DQ==",
+      "valid": true
+    },
+    {
+      "name": "damaged",
+      "hash": "cec6e826c1b28ea029262a29dbc1c5c771f74fca554a4f299a4b052ad7e009e8",
+      "keyId": "34750f98bd59fcfc946da45aaabe933b",
+      "algorithm": "ed25519",
+      "signature": "miHi9gaKDDOh/s8wztMOYMHZPYGlWt7Z+6zAGcL1sRCFqL5KSD5DR2patGQ3f8FPbMD39jzLQ4uQmsvMh4x4DQ==",
+      "valid": false
+    },
+    {
+      "name": "unknown-key",
+      "hash": "cec6e826c1b28ea029262a29dbc1c5c771f74fca554a4f299a4b052ad7e009e8",
+      "keyId": "b62e867fa2f33afe62d5d6b1642e1621",
+      "algorithm": "ed25519",
+      "signature": "KuurgwWsLsb0npMy/IQhWRSQYOFvnFMrmsaamaW4TaepYfnzn0tW6NnSWWiJ2pZqWTyedoABt9Krp+bhg/XaCw==",
+      "valid": false
+    }
+  ]
+}

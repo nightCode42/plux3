@@ -5,6 +5,7 @@ package compiler
 
 import (
 	"encoding/json"
+	"maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -472,10 +473,14 @@ func (t *typer) flow(g *graph, base *scope) {
 
 // graph type-checks the inputs of every step. `event` is the payload of
 // the handlers that run the graph; `steps.<id>` gives the output and error
-// of each step.
+// of each step. A payload may be a registry value type such as a
+// RangeSlider's RangeValues: widget payloads come from the registry, and
+// a component's declared payload was checked where it was declared.
 func (t *typer) graph(g *graph, s *scope) {
 	if g.eventType != "" {
-		if te := t.u.checkTypeIn(t.u.types, g.plugin, s.synth, g.eventType, nil, g.file, g.ptr); te != nil {
+		known := maps.Clone(t.u.types.base)
+		maps.Copy(known, s.synth)
+		if te := t.u.checkTypeIn(t.u.types, g.plugin, known, g.eventType, nil, g.file, g.ptr); te != nil {
 			s = s.with("event", te.String())
 		}
 	}

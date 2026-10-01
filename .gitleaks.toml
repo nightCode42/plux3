@@ -12,4 +12,7 @@ paths = [
   '''go\.sum$''',
   '''pubspec\.lock$''',
   '''bun\.lockb?$''',
+  # Vendored zstd sources, re-imported only by native/zstd/import.sh
+  # (ADR-0030): xxhash.h names SIMD registers data_key_lo/hi.
+  '''^packages/plux_flutter/native/zstd/common/xxhash\.h$''',
 ]

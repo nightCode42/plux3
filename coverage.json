@@ -14,9 +14,16 @@
     "floor": 80,
     "packages": {
       "packages/plux_flutter/lib/src/bundle": 85,
+      "packages/plux_flutter/lib/src/delta": 85,
+      "packages/plux_flutter/lib/src/mmap": 85,
       "packages/plux_flutter/lib/src/pxl": 85,
+      "packages/plux_flutter/lib/src/assets": 85,
+    "packages/plux_flutter/lib/src/render": 85,
       "packages/plux_flutter/lib/src/security": 85,
-      "packages/plux_flutter/lib/src/sync": 85
+      "packages/plux_flutter/lib/src/store": 85,
+      "packages/plux_flutter/lib/src/sync": 85,
+      "packages/plux_flutter/lib/src/verify": 85,
+      "packages/plux_flutter/lib/src/zstd": 85
     }
   },
   "studio": {

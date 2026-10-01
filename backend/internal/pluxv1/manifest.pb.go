@@ -639,9 +639,14 @@ type GetManifestRequest struct {
 	// installed lists the bundles the device holds.
 	Installed []*InstalledBundle `protobuf:"bytes,5,rep,name=installed,proto3" json:"installed,omitempty"`
 	// if_none_match is the ETag of the manifest the device already has.
-	IfNoneMatch   string `protobuf:"bytes,6,opt,name=if_none_match,json=ifNoneMatch,proto3" json:"if_none_match,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	IfNoneMatch string `protobuf:"bytes,6,opt,name=if_none_match,json=ifNoneMatch,proto3" json:"if_none_match,omitempty"`
+	// installed_digest stands for installed on an up-to-date check
+	// (NFR-006, ADR-0037): the SHA-256 of one line `<key>:<sha256 hex>\n`
+	// per installed bundle, sorted by key, the app bundle's key empty. A
+	// device that sends it with if_none_match sends no installed list.
+	InstalledDigest []byte `protobuf:"bytes,7,opt,name=installed_digest,json=installedDigest,proto3" json:"installed_digest,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *GetManifestRequest) Reset() {
@@ -716,14 +721,25 @@ func (x *GetManifestRequest) GetIfNoneMatch() string {
 	return ""
 }
 
+func (x *GetManifestRequest) GetInstalledDigest() []byte {
+	if x != nil {
+		return x.InstalledDigest
+	}
+	return nil
+}
+
 type GetManifestResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// not_modified is true when if_none_match matched; manifest is unset.
-	NotModified   bool      `protobuf:"varint,1,opt,name=not_modified,json=notModified,proto3" json:"not_modified,omitempty"`
-	Manifest      *Manifest `protobuf:"bytes,2,opt,name=manifest,proto3" json:"manifest,omitempty"`
-	Etag          string    `protobuf:"bytes,3,opt,name=etag,proto3" json:"etag,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	NotModified bool      `protobuf:"varint,1,opt,name=not_modified,json=notModified,proto3" json:"not_modified,omitempty"`
+	Manifest    *Manifest `protobuf:"bytes,2,opt,name=manifest,proto3" json:"manifest,omitempty"`
+	Etag        string    `protobuf:"bytes,3,opt,name=etag,proto3" json:"etag,omitempty"`
+	// installed_required is true when a request with installed_digest
+	// found the manifest changed: manifest is unset, and the device asks
+	// again with installed, from which the server plans its deltas.
+	InstalledRequired bool `protobuf:"varint,4,opt,name=installed_required,json=installedRequired,proto3" json:"installed_required,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *GetManifestResponse) Reset() {
@@ -775,6 +791,13 @@ func (x *GetManifestResponse) GetEtag() string {
 		return x.Etag
 	}
 	return ""
+}
+
+func (x *GetManifestResponse) GetInstalledRequired() bool {
+	if x != nil {
+		return x.InstalledRequired
+	}
+	return false
 }
 
 type GetRootKeysRequest struct {
@@ -997,18 +1020,20 @@ const file_plux_v1_manifest_proto_rawDesc = "" +
 	"\avariant\x18\x03 \x01(\tR\avariant\";\n" +
 	"\x0fInstalledBundle\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x16\n" +
-	"\x06sha256\x18\x02 \x01(\tR\x06sha256\"\xf2\x01\n" +
+	"\x06sha256\x18\x02 \x01(\tR\x06sha256\"\x9d\x02\n" +
 	"\x12GetManifestRequest\x12\x15\n" +
 	"\x06app_id\x18\x01 \x01(\tR\x05appId\x12 \n" +
 	"\venvironment\x18\x02 \x01(\tR\venvironment\x12\x18\n" +
 	"\achannel\x18\x03 \x01(\tR\achannel\x12-\n" +
 	"\x12installed_sequence\x18\x04 \x01(\x03R\x11installedSequence\x126\n" +
 	"\tinstalled\x18\x05 \x03(\v2\x18.plux.v1.InstalledBundleR\tinstalled\x12\"\n" +
-	"\rif_none_match\x18\x06 \x01(\tR\vifNoneMatch\"{\n" +
+	"\rif_none_match\x18\x06 \x01(\tR\vifNoneMatch\x12)\n" +
+	"\x10installed_digest\x18\a \x01(\fR\x0finstalledDigest\"\xaa\x01\n" +
 	"\x13GetManifestResponse\x12!\n" +
 	"\fnot_modified\x18\x01 \x01(\bR\vnotModified\x12-\n" +
 	"\bmanifest\x18\x02 \x01(\v2\x11.plux.v1.ManifestR\bmanifest\x12\x12\n" +
-	"\x04etag\x18\x03 \x01(\tR\x04etag\"M\n" +
+	"\x04etag\x18\x03 \x01(\tR\x04etag\x12-\n" +
+	"\x12installed_required\x18\x04 \x01(\bR\x11installedRequired\"M\n" +
 	"\x12GetRootKeysRequest\x12\x15\n" +
 	"\x06app_id\x18\x01 \x01(\tR\x05appId\x12 \n" +
 	"\venvironment\x18\x02 \x01(\tR\venvironment\"=\n" +

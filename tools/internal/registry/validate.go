@@ -115,6 +115,20 @@ func checkWidgetEntry(w *Widget, p *problems) {
 	}
 }
 
+// checkConstructorProp checks a prop that selects a named constructor: a
+// bool that is neither required nor bindable, mapping no parameter, on a
+// widget that mirrors that constructor.
+func checkConstructorProp(p *problems, loc string, w *Widget, prop Prop) {
+	switch {
+	case prop.Type != "bool" || prop.Required || prop.IsBindable():
+		p.add(loc, "a prop selecting constructor %q is an optional bool that is not bindable", prop.Constructor)
+	case len(prop.Flutter) > 0:
+		p.add(loc, "a prop selecting constructor %q maps no Flutter parameter", prop.Constructor)
+	case w.Flutter == nil || !slices.Contains(w.Flutter.Constructors, prop.Constructor):
+		p.add(loc, "constructor %q is not among the widget's Flutter constructors", prop.Constructor)
+	}
+}
+
 // checkWidgetMembers checks props, events and slots, recording the type
 // parameters they use in params.
 func (ix *index) checkWidgetMembers(w *Widget, p *problems, params map[string]bool) {
@@ -125,6 +139,9 @@ func (ix *index) checkWidgetMembers(w *Widget, p *problems, params map[string]bo
 		if t, ok := ix.resolve(p, loc, prop.Type, params); ok {
 			ix.checkDefault(p, loc, t, prop.Default, prop.Required)
 			checkConstraints(p, loc, t, prop.Constraints, prop.Default)
+		}
+		if prop.Constructor != "" {
+			checkConstructorProp(p, loc, w, prop)
 		}
 	}
 	for _, e := range w.Events {

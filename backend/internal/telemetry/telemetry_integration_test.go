@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+
 	"github.com/nightCode42/plux3/backend/internal/audit"
 	"github.com/nightCode42/plux3/backend/internal/auth"
 	"github.com/nightCode42/plux3/backend/internal/cache"
@@ -36,7 +38,7 @@ func code(err error) plxerr.Code {
 	return c
 }
 
-// Verifies: SCH-012.
+// Verifies: SCH-012, REL-080.
 // A device's events are stored when catalogued and clean, refused one by
 // one otherwise, listed for people who can read the app, and purged
 // after their retention.
@@ -117,8 +119,29 @@ func TestIngestListPurge(t *testing.T) {
 	if _, err := svc.List(ctx, owner, app.ID, "nope", "", time.Time{}, storage.Cursor{}, 10); code(err) != plxerr.InvalidFormat {
 		t.Errorf("List(bad environment): %v", err)
 	}
+	// The newest valid session_start says what the device runs now
+	// (REL-080), whatever order the batch is in.
+	if n, _, err := svc.Ingest(ctx, src, []telemetry.Event{
+		{Name: "session_start", Time: now, Fields: []byte(`{"runtime_version":"1.2.0","host_build":"42","os_version":"18.1"}`)},
+		{Name: "session_start", Time: now.Add(-time.Hour), Fields: []byte(`{"runtime_version":"1.1.0","host_build":"41","os_version":"18.0"}`)},
+		{Name: "session_start", Time: now.Add(time.Minute), Fields: []byte(`{"runtime_version":"not a version"}`)},
+	}); err != nil || n != 3 {
+		t.Fatalf("Ingest(session_start): %d %v", n, err)
+	}
+	// Longer than registration accepts: stored, but not the device's.
+	if n, _, err := svc.Ingest(ctx, src, []telemetry.Event{
+		{Name: "session_start", Time: now.Add(2 * time.Minute), Fields: []byte(`{"runtime_version":"1.3.0","host_build":"43","os_version":"` + strings.Repeat("x", 65) + `"}`)},
+	}); err != nil || n != 1 {
+		t.Fatalf("Ingest(long session_start): %d %v", n, err)
+	}
+	var runtime, host, osVersion string
+	if err := db.InTx(ctx, storage.Tenant{OrganizationID: o.ID}, func(ctx context.Context, tx pgx.Tx) error {
+		return tx.QueryRow(ctx, "SELECT runtime_version, host_build, os_version FROM devices WHERE id = $1", d.ID).Scan(&runtime, &host, &osVersion)
+	}); err != nil || runtime != "1.2.0" || host != "42" || osVersion != "18.1" {
+		t.Errorf("the device runs %q %q %q (%v)", runtime, host, osVersion, err)
+	}
 	now = now.Add(telemetry.Retention + time.Hour)
-	if n, err := svc.Purge(ctx, o.ID); err != nil || n != 1 {
+	if n, err := svc.Purge(ctx, o.ID); err != nil || n != 5 {
 		t.Errorf("Purge: %d %v", n, err)
 	}
 }

@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -70,7 +71,9 @@ type WorkDeps struct {
 	Objects objects.Store
 	Queue   *JobQueue
 	Codecs  *media.Codecs
-	Signer  signing.Signer
+	// SVG compiles SVGs; nil where the server has no SVG compiler.
+	SVG    *media.SVGCompiler
+	Signer signing.Signer
 	// ProductionSigning reports whether the signer may sign for
 	// production environments (SEC-056).
 	ProductionSigning bool
@@ -87,6 +90,30 @@ func scanner(cfg *config.Config) document.Scanner {
 	}
 	return document.Clamd{Network: "tcp", Address: u.Host}
 }
+
+// svgCompiler returns the configured SVG compiler, or nil — logged — when
+// it is not configured or not installed, which fails SVG assets (CMP-031).
+func svgCompiler(ctx context.Context, cfg *config.Config, log *slog.Logger) *media.SVGCompiler {
+	a := cfg.Assets
+	if a.SVGCompiler == "" {
+		log.WarnContext(ctx, "no SVG compiler is configured (assets.svgCompiler); SVG assets will fail")
+		return nil
+	}
+	for _, path := range []string{a.SVGCompiler, a.PathOps} {
+		if _, err := os.Stat(path); err != nil {
+			log.WarnContext(ctx, "the SVG compiler is not installed; SVG assets will fail", slog.String("path", path), slog.Any("error", err))
+			return nil
+		}
+	}
+	return &media.SVGCompiler{Path: a.SVGCompiler, PathOps: a.PathOps, Timeout: svgTimeout, MaxOutput: svgMaxOutput}
+}
+
+// The bounds of one SVG compilation: far above what an icon or an
+// illustration needs, far below what would hold up the asset queue.
+const (
+	svgTimeout   = 30 * time.Second
+	svgMaxOutput = 16 << 20
+)
 
 // JobQueue enqueues the services' jobs on the job client, which is built
 // after the services it runs jobs for; Build sets it before serving.
@@ -145,9 +172,18 @@ type publishWorker struct {
 	svc *Services
 }
 
-// Work runs one publish.
+// Work runs one publish. A publish waiting for assets is snoozed, which
+// River does not count as an attempt; RunPublish bounds the wait itself.
 func (w *publishWorker) Work(ctx context.Context, job *river.Job[release.Job]) error {
-	return w.svc.Releases.RunPublish(ctx, job.Args) //nolint:wrapcheck // a domain error
+	return snoozePending(w.svc.Releases.RunPublish(ctx, job.Args))
+}
+
+// snoozePending turns a publish's wait for assets into a snooze.
+func snoozePending(err error) error {
+	if pending, ok := errors.AsType[*release.AssetsPendingError](err); ok {
+		return river.JobSnooze(pending.RetryAfter) //nolint:wrapcheck // River recognises a snooze by its type
+	}
+	return err //nolint:wrapcheck // a domain error
 }
 
 // assetWorker transcodes uploaded images (CMP-030).
@@ -243,7 +279,7 @@ func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shar
 	docs, err := document.NewService(document.Options{
 		DB: db, Audit: log, Tenancy: tenancyService, IDs: gen, Limits: set,
 		SnapshotDays: cfg.Retention.SnapshotDays, CompilerVersion: buildinfo.Get().Version,
-		Objects: work.Objects, Jobs: assetQueue{work.Queue}, Scanner: scanner(cfg), Codecs: work.Codecs,
+		Objects: work.Objects, Jobs: assetQueue{work.Queue}, Scanner: scanner(cfg), Codecs: work.Codecs, SVG: work.SVG,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("server: %w", err)
@@ -359,7 +395,14 @@ func (s *Server) RegisterAPI(svc *Services) {
 	}
 	people := api.Authentication(svc.Auth, api.IdentityPublic, s.trusted, limiter, s.limits.Get(limits.APIRequestsPerMinute))
 	authn := api.DeviceAuthentication(svc.Devices, limiter, s.limits.Get(limits.APIRequestsPerMinutePerDevice), people)
-	opts := connect.WithInterceptors(s.Interceptors(authn)...)
+	// api.requestSize bounds a body as sent, before a handler reads it
+	// (httpx.MaxBytes), and also each message after decompression: Connect
+	// accepts gzip bodies, and a small one could otherwise expand without
+	// bound in memory.
+	opts := connect.WithHandlerOptions(
+		connect.WithInterceptors(s.Interceptors(authn)...),
+		connect.WithReadMaxBytes(int(s.limits.Get(limits.APIRequestSize))),
+	)
 	registrations := []func() (string, http.Handler){
 		func() (string, http.Handler) { return pluxv1connect.NewIdentityServiceHandler(h.Identity(), opts) },
 		func() (string, http.Handler) { return pluxv1connect.NewOrgServiceHandler(h.Org(), opts) },
@@ -440,6 +483,9 @@ func (w *maintenanceWorker) Work(ctx context.Context, _ *river.Job[Maintenance])
 			return err //nolint:wrapcheck // a domain error
 		}
 		if _, err := w.svc.Events.Purge(ctx, org); err != nil {
+			return err //nolint:wrapcheck // a domain error
+		}
+		if _, err := w.svc.Documents.RequeueSVGs(ctx, org); err != nil {
 			return err //nolint:wrapcheck // a domain error
 		}
 		n, err := w.svc.Documents.PurgeSnapshots(ctx, org)

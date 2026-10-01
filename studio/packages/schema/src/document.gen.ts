@@ -78,6 +78,8 @@ export interface AppDocument {
   readonly collections?: readonly Collection[];
   /** Attributes the host provides about the signed-in user, available in PXL as `user.<name>`. */
   readonly userContext?: readonly Field[];
+  /** What the runtime reports (ANL-003, ADR-0034). */
+  readonly telemetry?: TelemetryPolicy;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
@@ -677,6 +679,14 @@ export interface SyncPolicy {
   readonly startup: StartupPolicy;
   /** When a staged release activates (SYN-004). */
   readonly activation: ActivationPolicy;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** What the runtime reports (ANL-003, ADR-0034). */
+export interface TelemetryPolicy {
+  /** The share of each consent-gated event type the runtime keeps, from 0 to 1 in steps of 0.001; 1 when absent. The host app can only lower a rate; operational events (`session_start`, `sync_result`, `error`, `rasp_detection`) are never sampled. */
+  readonly sampling?: { readonly [key: string]: number };
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }

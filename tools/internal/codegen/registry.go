@@ -37,10 +37,15 @@ func RegistryFiles(r *registry.Registry) ([]File, error) {
 	if err != nil {
 		return nil, err
 	}
+	render, err := renderDart(r)
+	if err != nil {
+		return nil, err
+	}
 	return []File{
 		{Path: registry.LockFile, Content: r.Lock.Encode()},
 		goSrc,
 		{Path: registryDartPath, Content: registryDart(r)},
+		{Path: renderDartPath, Content: render},
 		{Path: registryTSPath, Content: ts},
 		{Path: widgetsDocPath, Content: widgetsMarkdown(r)},
 		{Path: actionsDocPath, Content: actionsMarkdown(r)},

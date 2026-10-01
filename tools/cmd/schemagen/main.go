@@ -102,6 +102,11 @@ func generate(root, bfbs string) ([]codegen.File, error) {
 		return nil, fmt.Errorf("pxl: %w", err)
 	}
 	files = append(files, pxlFiles...)
+	notices, err := codegen.NoticeFiles(root)
+	if err != nil {
+		return nil, err //nolint:wrapcheck // it names its source
+	}
+	files = append(files, notices...)
 	if bfbs == "" {
 		return files, nil
 	}

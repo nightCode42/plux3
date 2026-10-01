@@ -19,11 +19,20 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/release"
 )
 
-// runPublishes runs the publish jobs the API enqueued, as the worker
-// would.
+// runPublishes runs the jobs the API enqueued as the worker would, asset
+// jobs first: a publish waits for them.
 func (w *world) runPublishes(t *testing.T) {
 	t.Helper()
 	for {
+		w.assets.mu.Lock()
+		assets := w.assets.jobs
+		w.assets.jobs = nil
+		w.assets.mu.Unlock()
+		for _, j := range assets {
+			if err := w.docs.ProcessAsset(context.Background(), j); err != nil {
+				t.Fatalf("ProcessAsset: %v", err)
+			}
+		}
 		w.queue.mu.Lock()
 		jobs := w.queue.jobs
 		w.queue.jobs = nil

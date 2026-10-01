@@ -9,6 +9,7 @@ How the pipeline is built and why. The requirements are spec §29 (`CI-001`–`C
 - **One definition of every check.** CI jobs, git hooks and developers all run the same Makefile targets. A green `make check` locally means a green pipeline.
 - **Fast feedback, complete coverage.** Toolchain jobs run only when their files change on a pull request, and always on `main`, on schedule and on manual runs. Repository-wide checks always run.
 - **One required check.** The job **CI OK** depends on every other job and fails if any of them failed or was cancelled; skipped jobs count as passed. The `main` ruleset requires only CI OK, so path filtering never blocks a merge and adding a job never requires a settings change.
+- **A failing command fails its step.** Every workflow sets `defaults: run: shell: bash`, which GitHub runs with `-eo pipefail`; without it a gate piped into the job summary (`make go-cover | tee …`) passes whatever `make` returned. A policy test (`tools/internal/policy`, `CI-001`) fails if a workflow lacks the default or overrides it.
 - **Least privilege.** Workflows start with `permissions: {}`; each job requests only what it needs. Checkouts never persist credentials. Actions are pinned to full commit SHAs. `actionlint` and `zizmor` check every workflow.
 
 ## 2. Workflows
@@ -20,6 +21,7 @@ How the pipeline is built and why. The requirements are spec §29 (`CI-001`–`C
 | [scorecard.yml](../../.github/workflows/scorecard.yml) | Pushes to `main`, weekly, ruleset changes | OpenSSF Scorecard; results in code scanning |
 | [load.yml](../../.github/workflows/load.yml) | Nightly, manual (rate as input) | Starts the Compose stack with the load overlay, seeds it and runs `test/load/manifest.js` with k6; results in the job summary (`NFR-020`; the reference numbers are in [p2-backend.md](../benchmarks/p2-backend.md)) |
 | [release.yml](../../.github/workflows/release.yml) | Component tags `<component>/v*` | Verify the signed tag and publish the release (`CI-008`). For `backend/v*` also: `make release-binaries` (reproducible archives of `plux` and `plux-server` for Linux, macOS and Windows on amd64 and arm64, `SHA256SUMS`, a Homebrew formula and a Scoop manifest), a keyless cosign signature of `SHA256SUMS`, SLSA Build Level 3 provenance for the archives, and both images through `image.yml` with their own provenance (`DEP-001`, `CLI-001`, `CI-004`) |
+| [pages.yml](../../.github/workflows/pages.yml) | Pushes to `main`, release tags, manual | Builds the documentation site (`make docs-site`) and deploys it to GitHub Pages ([ADR-0033](../adr/0033-documentation-site.md), `DX-002`); the deploy job alone has `pages: write` and `id-token: write`, and it restores no cache |
 | [image.yml](../../.github/workflows/image.yml) | Called by `release.yml` | Builds one target of `backend/Dockerfile` for linux/amd64 and linux/arm64, pushes it to GHCR, signs it with cosign and attests a CycloneDX SBOM |
 | CodeQL | GitHub default setup | Static analysis of Go, TypeScript and Actions |
 
@@ -34,6 +36,7 @@ How the pipeline is built and why. The requirements are spec §29 (`CI-001`–`C
 | Workflow lint | always | `workflows-lint` | — |
 | Licensing (REUSE) | always | `reuse-lint` | — |
 | Documentation links | always | lychee, offline | — |
+| Documentation site | always | `docs-site`: Starlight renders `docs/` in place; a broken internal link fails the build | `DX-002` |
 | SBOM | always | CycloneDX via Syft | `CI-001` |
 | Commit messages | pull requests | `scripts/check-commit-msg.sh` on title and commits | `CI-009` |
 | Dependency review | pull requests | vulnerabilities and licences of new dependencies | `CI-007` |
@@ -44,8 +47,14 @@ How the pipeline is built and why. The requirements are spec §29 (`CI-001`–`C
 | Go build | Go changes | `go-build go-reproducible` | `CI-006` |
 | Go vulnerabilities | Go changes | `go-vuln` | `CI-001` |
 | Dart and Flutter | Dart changes | `dart-lock-check dart-fmt-check dart-analyze dart-cover`, `widgets-api-check` (the Flutter snapshot matches the pinned SDK) | `CI-001`, `CI-003`, `QA-001`, `WGT-003` |
+| Starter app end-to-end | Go or Dart changes | `compat`: the starter app's flows under `flutter test` against a server built from source, and the compatibility matrix against released runtimes and servers | `QA-006`, `QA-010` |
+| Device end-to-end (Android 26, 35; iOS) | Go or Dart changes | `e2e-android`, `e2e-ios`: the same flows on a headless emulator (the runner's SDK tools, KVM) and the newest iOS simulator under XCTest, with the platform key store and HTTP client ([test/e2e](../../test/e2e/README.md), [ADR-0035](../adr/0035-device-tests-in-ci.md)) | `QA-006`, `RT-002` |
+| Runtime benchmark | Dart changes, on `ubuntu-24.04` | `bench-runtime-ab`: the runtime benchmark ([test/bench/runtime](../../test/bench/runtime/README.md)) in profile mode on Linux desktop under `xvfb`, this commit's runtime and the base's alternately, ten runs each; fails when a metric is more than 10% slower at 99% confidence. The base is the pull request's base, the merge queue's, the previous head of `main`, or the merge base with `main` on manual runs; a base that predates the benchmark is not compared with, and the report says so. Results and logs are an artifact | `QA-007` |
+| Sync benchmark | Go or Dart changes | `bench-sync`: the runtime syncs the fifty-plugin benchmark app through the simulated slow network (spec §30.1) against a server built from source; fails when an update of three plugins takes over 3 s at p95 or a phase costs more than 10% over the bytes in `test/bench/runtime/sync-baseline.json` | `QA-007`, `NFR-007` |
+| Size (Android), Size (iOS) | Dart changes; on `ubuntu-latest` and `macos-latest` | `size-android`, `size-ios`: the blank app of [test/size](../../test/size/README.md) built for release with and without `plux_flutter` — the APK and the App Bundle download for arm64-v8a, armeabi-v7a and x86_64, and the iOS IPA for arm64; fails when the runtime adds more than 6.5 MiB to an APK or 3 MiB to a download, or more than 10% over `test/size/baseline.json` ([ADR-0036](../adr/0036-size-budgets-per-build.md)) | `RT-061`, `NFR-009`, `QA-007` |
 | Studio | Studio changes | `studio-check` (frozen install, Biome, types, coverage) | `CI-001`, `QA-001` |
-| Compose stack | Go or `deploy/` changes | `compose-up` (builds the server image and starts the whole stack), waits for `/readyz`, then `compose-test`: the Go integration and end-to-end tests against the stack's PostgreSQL, SeaweedFS and Valkey | `DEP-002`, `QA-005` |
+| Compose stack | Go or `deploy/` changes | `compose-up` (builds the server image and starts the whole stack), waits for `/readyz`, then `compose-test`: the Go integration and end-to-end tests against the stack's PostgreSQL, SeaweedFS and Valkey; then `image-check` on amd64 (as the arm64 job) | `DEP-002`, `QA-005` |
+| Server image (arm64) | Go changes, on `ubuntu-24.04-arm` | `image-check`: builds the server image natively, so the arm64 half of the release image (Skia path operations and `plux-svgc`, built per platform) is built and tested before a release; the image's own `plux-svgc` must reproduce `packages/plux_svgc/test/icon.pathops.vec`, the golden made on amd64, byte for byte, and the image must carry its third-party notices under `/usr/share/doc` | `CMP-031`, `CMP-002` |
 | Image codecs reproduce | codec changes (`backend/internal/compiler/media/codecs/**`), daily and manual runs | `wasm-codecs-check`: rebuilds `webp.wasm` and `avif.wasm` from their pinned sources with the pinned Ubuntu 24.04 toolchain and compares them with `codecs.lock`, so a committed binary cannot differ from its source; it takes minutes, so it does not run on every push | `CMP-030` |
 | CI OK | always | — | `CI-009` |
 
@@ -62,7 +71,7 @@ One input of `make gen` needs Flutter and is therefore refreshed separately: `sc
 | Tool | Where it is pinned |
 |---|---|
 | Go | `toolchain` line in `backend/go.mod` and `tools/go.mod`; `go.work` |
-| Flutter, Bun, golangci-lint, govulncheck, gitleaks, actionlint, pre-commit, zizmor, reuse | Makefile header; `env:` of `ci.yml` (Flutter, Bun, pre-commit, zizmor, reuse) |
+| Flutter, Bun, golangci-lint, govulncheck, gitleaks, actionlint, pre-commit, zizmor, reuse | Makefile header; `env:` of `ci.yml` (Flutter, Bun, pre-commit, zizmor, reuse), `pages.yml` (Bun) and `release.yml` (Flutter) |
 | buf, protoc-gen-go, protoc-gen-connect-go, protoc-gen-connect-openapi | Makefile header; installed by `make install-buf` and built with the project toolchain ([ADR-0005](../adr/0005-connectrpc-and-protobuf.md)) |
 | flatc | Makefile header (`FLATC_VERSION` and the tag's commit `FLATC_COMMIT`, checked before building); must match the Go `github.com/google/flatbuffers` and Dart `flat_buffers` versions ([ADR-0002](../adr/0002-flatbuffers-sectioned-bundles.md)) |
 | git-cliff | `release.yml` |

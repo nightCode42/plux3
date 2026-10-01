@@ -1,0 +1,12678 @@
+{
+ "$comment": "FlatBuffers verifier conformance corpus (BND-006, ADR-0029), written by backend/internal/bundle (go test -update). Each case applies [offset, byte] edits to one section of a golden bundle; valid is the Go verifier's verdict under the default limits.",
+ "cases": [
+  {
+   "bundle": "features/features.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     330,
+     188
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     762,
+     158
+    ],
+    [
+     139,
+     49
+    ],
+    [
+     628,
+     90
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     65,
+     191
+    ],
+    [
+     214,
+     241
+    ],
+    [
+     452,
+     231
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     331,
+     114
+    ],
+    [
+     269,
+     54
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     712,
+     233
+    ],
+    [
+     700,
+     48
+    ],
+    [
+     521,
+     117
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     392,
+     3
+    ],
+    [
+     558,
+     38
+    ],
+    [
+     818,
+     162
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     455,
+     119
+    ],
+    [
+     524,
+     35
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     428,
+     67
+    ],
+    [
+     67,
+     174
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     1151,
+     29
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     164,
+     122
+    ],
+    [
+     1035,
+     32
+    ],
+    [
+     840,
+     169
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     453,
+     204
+    ],
+    [
+     284,
+     223
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     695,
+     37
+    ],
+    [
+     22,
+     46
+    ],
+    [
+     455,
+     117
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     737,
+     97
+    ],
+    [
+     261,
+     210
+    ],
+    [
+     294,
+     110
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     214,
+     0
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     13,
+     166
+    ],
+    [
+     628,
+     38
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     228,
+     122
+    ],
+    [
+     331,
+     209
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     356,
+     156
+    ],
+    [
+     80,
+     29
+    ],
+    [
+     736,
+     255
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     694,
+     231
+    ],
+    [
+     687,
+     255
+    ],
+    [
+     764,
+     140
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     294,
+     250
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     596,
+     244
+    ],
+    [
+     458,
+     236
+    ],
+    [
+     60,
+     24
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     690,
+     86
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     482,
+     46
+    ],
+    [
+     305,
+     173
+    ],
+    [
+     756,
+     47
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     573,
+     255
+    ],
+    [
+     407,
+     231
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     535,
+     212
+    ],
+    [
+     377,
+     44
+    ],
+    [
+     149,
+     227
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 2,
+   "kind": 4,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 2,
+   "kind": 4,
+   "edits": [
+    [
+     69,
+     121
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 2,
+   "kind": 4,
+   "edits": [
+    [
+     34,
+     42
+    ],
+    [
+     48,
+     1
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 2,
+   "kind": 4,
+   "edits": [
+    [
+     189,
+     49
+    ],
+    [
+     40,
+     43
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 2,
+   "kind": 4,
+   "edits": [
+    [
+     170,
+     13
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 2,
+   "kind": 4,
+   "edits": [
+    [
+     136,
+     133
+    ],
+    [
+     84,
+     192
+    ],
+    [
+     65,
+     34
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 2,
+   "kind": 4,
+   "edits": [
+    [
+     14,
+     60
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 2,
+   "kind": 4,
+   "edits": [
+    [
+     186,
+     104
+    ],
+    [
+     72,
+     79
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 2,
+   "kind": 4,
+   "edits": [
+    [
+     114,
+     232
+    ],
+    [
+     171,
+     247
+    ],
+    [
+     36,
+     191
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 2,
+   "kind": 4,
+   "edits": [
+    [
+     60,
+     142
+    ],
+    [
+     140,
+     220
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 2,
+   "kind": 4,
+   "edits": [
+    [
+     23,
+     67
+    ],
+    [
+     100,
+     79
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 2,
+   "kind": 4,
+   "edits": [
+    [
+     66,
+     137
+    ],
+    [
+     66,
+     208
+    ],
+    [
+     19,
+     153
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 2,
+   "kind": 4,
+   "edits": [
+    [
+     107,
+     55
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 3,
+   "kind": 5,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 3,
+   "kind": 5,
+   "edits": [
+    [
+     108,
+     61
+    ],
+    [
+     229,
+     12
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 3,
+   "kind": 5,
+   "edits": [
+    [
+     27,
+     159
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 3,
+   "kind": 5,
+   "edits": [
+    [
+     29,
+     29
+    ],
+    [
+     93,
+     248
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 3,
+   "kind": 5,
+   "edits": [
+    [
+     162,
+     105
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 3,
+   "kind": 5,
+   "edits": [
+    [
+     258,
+     17
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 3,
+   "kind": 5,
+   "edits": [
+    [
+     226,
+     215
+    ],
+    [
+     68,
+     177
+    ],
+    [
+     159,
+     92
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 3,
+   "kind": 5,
+   "edits": [
+    [
+     9,
+     199
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 3,
+   "kind": 5,
+   "edits": [
+    [
+     176,
+     195
+    ],
+    [
+     117,
+     245
+    ],
+    [
+     109,
+     139
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 3,
+   "kind": 5,
+   "edits": [
+    [
+     98,
+     228
+    ],
+    [
+     32,
+     158
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 3,
+   "kind": 5,
+   "edits": [
+    [
+     232,
+     236
+    ],
+    [
+     208,
+     100
+    ],
+    [
+     227,
+     93
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 3,
+   "kind": 5,
+   "edits": [
+    [
+     80,
+     170
+    ],
+    [
+     5,
+     25
+    ],
+    [
+     209,
+     252
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 3,
+   "kind": 5,
+   "edits": [
+    [
+     260,
+     144
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 4,
+   "kind": 6,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 4,
+   "kind": 6,
+   "edits": [
+    [
+     61,
+     42
+    ],
+    [
+     325,
+     189
+    ],
+    [
+     244,
+     30
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 4,
+   "kind": 6,
+   "edits": [
+    [
+     884,
+     114
+    ],
+    [
+     806,
+     136
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 4,
+   "kind": 6,
+   "edits": [
+    [
+     713,
+     180
+    ],
+    [
+     568,
+     33
+    ],
+    [
+     416,
+     35
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 4,
+   "kind": 6,
+   "edits": [
+    [
+     730,
+     229
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 4,
+   "kind": 6,
+   "edits": [
+    [
+     278,
+     202
+    ],
+    [
+     15,
+     175
+    ],
+    [
+     449,
+     114
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 4,
+   "kind": 6,
+   "edits": [
+    [
+     936,
+     21
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 4,
+   "kind": 6,
+   "edits": [
+    [
+     435,
+     53
+    ],
+    [
+     137,
+     210
+    ],
+    [
+     751,
+     211
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 4,
+   "kind": 6,
+   "edits": [
+    [
+     904,
+     108
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 4,
+   "kind": 6,
+   "edits": [
+    [
+     141,
+     62
+    ],
+    [
+     25,
+     88
+    ],
+    [
+     410,
+     4
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 4,
+   "kind": 6,
+   "edits": [
+    [
+     827,
+     254
+    ],
+    [
+     992,
+     234
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 4,
+   "kind": 6,
+   "edits": [
+    [
+     353,
+     47
+    ],
+    [
+     324,
+     62
+    ],
+    [
+     311,
+     220
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 4,
+   "kind": 6,
+   "edits": [
+    [
+     284,
+     79
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 5,
+   "kind": 7,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 5,
+   "kind": 7,
+   "edits": [
+    [
+     284,
+     219
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 5,
+   "kind": 7,
+   "edits": [
+    [
+     441,
+     73
+    ],
+    [
+     14,
+     103
+    ],
+    [
+     608,
+     217
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 5,
+   "kind": 7,
+   "edits": [
+    [
+     11,
+     147
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 5,
+   "kind": 7,
+   "edits": [
+    [
+     84,
+     68
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 5,
+   "kind": 7,
+   "edits": [
+    [
+     318,
+     95
+    ],
+    [
+     227,
+     43
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 5,
+   "kind": 7,
+   "edits": [
+    [
+     159,
+     63
+    ],
+    [
+     280,
+     204
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 5,
+   "kind": 7,
+   "edits": [
+    [
+     150,
+     53
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 5,
+   "kind": 7,
+   "edits": [
+    [
+     12,
+     248
+    ],
+    [
+     607,
+     255
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 5,
+   "kind": 7,
+   "edits": [
+    [
+     182,
+     254
+    ],
+    [
+     299,
+     252
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 5,
+   "kind": 7,
+   "edits": [
+    [
+     4,
+     140
+    ],
+    [
+     613,
+     23
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 5,
+   "kind": 7,
+   "edits": [
+    [
+     280,
+     244
+    ],
+    [
+     587,
+     13
+    ],
+    [
+     27,
+     41
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 5,
+   "kind": 7,
+   "edits": [
+    [
+     102,
+     103
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 6,
+   "kind": 8,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 6,
+   "kind": 8,
+   "edits": [
+    [
+     104,
+     59
+    ],
+    [
+     319,
+     84
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 6,
+   "kind": 8,
+   "edits": [
+    [
+     240,
+     196
+    ],
+    [
+     319,
+     220
+    ],
+    [
+     283,
+     48
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 6,
+   "kind": 8,
+   "edits": [
+    [
+     31,
+     252
+    ],
+    [
+     21,
+     202
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 6,
+   "kind": 8,
+   "edits": [
+    [
+     13,
+     46
+    ],
+    [
+     251,
+     70
+    ],
+    [
+     286,
+     50
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 6,
+   "kind": 8,
+   "edits": [
+    [
+     298,
+     181
+    ],
+    [
+     61,
+     48
+    ],
+    [
+     25,
+     145
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 6,
+   "kind": 8,
+   "edits": [
+    [
+     8,
+     208
+    ],
+    [
+     211,
+     214
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 6,
+   "kind": 8,
+   "edits": [
+    [
+     182,
+     95
+    ],
+    [
+     215,
+     223
+    ],
+    [
+     194,
+     53
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 6,
+   "kind": 8,
+   "edits": [
+    [
+     41,
+     92
+    ],
+    [
+     155,
+     28
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 6,
+   "kind": 8,
+   "edits": [
+    [
+     58,
+     76
+    ],
+    [
+     133,
+     107
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 6,
+   "kind": 8,
+   "edits": [
+    [
+     54,
+     127
+    ],
+    [
+     206,
+     136
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 6,
+   "kind": 8,
+   "edits": [
+    [
+     225,
+     232
+    ],
+    [
+     292,
+     245
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 6,
+   "kind": 8,
+   "edits": [
+    [
+     8,
+     196
+    ],
+    [
+     244,
+     83
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     707,
+     238
+    ],
+    [
+     385,
+     174
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     374,
+     117
+    ],
+    [
+     374,
+     195
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     473,
+     245
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     326,
+     9
+    ],
+    [
+     552,
+     142
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     529,
+     182
+    ],
+    [
+     648,
+     9
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     173,
+     79
+    ],
+    [
+     44,
+     159
+    ],
+    [
+     677,
+     183
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     461,
+     58
+    ],
+    [
+     643,
+     30
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     371,
+     109
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     457,
+     201
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     128,
+     202
+    ],
+    [
+     366,
+     198
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     281,
+     54
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     113,
+     167
+    ],
+    [
+     190,
+     17
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     80,
+     242
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     142,
+     91
+    ],
+    [
+     75,
+     216
+    ],
+    [
+     60,
+     120
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     120,
+     27
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     66,
+     234
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     42,
+     34
+    ],
+    [
+     91,
+     250
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     48,
+     69
+    ],
+    [
+     119,
+     163
+    ],
+    [
+     81,
+     20
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     41,
+     72
+    ],
+    [
+     66,
+     222
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     20,
+     208
+    ],
+    [
+     125,
+     209
+    ],
+    [
+     15,
+     77
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     15,
+     134
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     12,
+     136
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     14,
+     153
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/features.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     154,
+     57
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     1213,
+     235
+    ],
+    [
+     848,
+     7
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     758,
+     227
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     1258,
+     181
+    ],
+    [
+     672,
+     231
+    ],
+    [
+     840,
+     110
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     713,
+     226
+    ],
+    [
+     1090,
+     123
+    ],
+    [
+     550,
+     107
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     491,
+     97
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     596,
+     105
+    ],
+    [
+     57,
+     114
+    ],
+    [
+     220,
+     113
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     829,
+     79
+    ],
+    [
+     541,
+     81
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     921,
+     255
+    ],
+    [
+     323,
+     102
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     215,
+     206
+    ],
+    [
+     705,
+     195
+    ],
+    [
+     255,
+     155
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     60,
+     92
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     1081,
+     6
+    ],
+    [
+     654,
+     121
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     982,
+     54
+    ],
+    [
+     87,
+     144
+    ],
+    [
+     1161,
+     43
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     3027,
+     11
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     891,
+     135
+    ],
+    [
+     1804,
+     230
+    ],
+    [
+     4180,
+     232
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     2255,
+     27
+    ],
+    [
+     183,
+     161
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     1442,
+     186
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     727,
+     245
+    ],
+    [
+     647,
+     197
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     3279,
+     188
+    ],
+    [
+     3387,
+     207
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     2674,
+     223
+    ],
+    [
+     1592,
+     252
+    ],
+    [
+     1308,
+     204
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     3603,
+     255
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     146,
+     123
+    ],
+    [
+     644,
+     23
+    ],
+    [
+     4140,
+     215
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     49,
+     143
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     538,
+     84
+    ],
+    [
+     4643,
+     77
+    ],
+    [
+     3056,
+     95
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     2982,
+     202
+    ],
+    [
+     1404,
+     119
+    ],
+    [
+     4207,
+     249
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     74,
+     18
+    ],
+    [
+     584,
+     167
+    ],
+    [
+     343,
+     102
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     220,
+     223
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     470,
+     239
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     333,
+     188
+    ],
+    [
+     235,
+     90
+    ],
+    [
+     570,
+     10
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     412,
+     97
+    ],
+    [
+     552,
+     213
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     202,
+     223
+    ],
+    [
+     179,
+     216
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     49,
+     237
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     230,
+     143
+    ],
+    [
+     296,
+     50
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     370,
+     255
+    ],
+    [
+     246,
+     234
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     314,
+     29
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     165,
+     13
+    ],
+    [
+     355,
+     188
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     77,
+     206
+    ],
+    [
+     597,
+     34
+    ],
+    [
+     158,
+     236
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 3,
+   "kind": 3,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 3,
+   "kind": 3,
+   "edits": [
+    [
+     511,
+     248
+    ],
+    [
+     567,
+     43
+    ],
+    [
+     429,
+     197
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 3,
+   "kind": 3,
+   "edits": [
+    [
+     555,
+     212
+    ],
+    [
+     407,
+     33
+    ],
+    [
+     26,
+     156
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 3,
+   "kind": 3,
+   "edits": [
+    [
+     122,
+     164
+    ],
+    [
+     69,
+     156
+    ],
+    [
+     77,
+     234
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 3,
+   "kind": 3,
+   "edits": [
+    [
+     126,
+     254
+    ],
+    [
+     365,
+     139
+    ],
+    [
+     10,
+     12
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 3,
+   "kind": 3,
+   "edits": [
+    [
+     260,
+     11
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 3,
+   "kind": 3,
+   "edits": [
+    [
+     662,
+     244
+    ],
+    [
+     506,
+     110
+    ],
+    [
+     321,
+     212
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 3,
+   "kind": 3,
+   "edits": [
+    [
+     174,
+     170
+    ],
+    [
+     302,
+     166
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 3,
+   "kind": 3,
+   "edits": [
+    [
+     452,
+     7
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 3,
+   "kind": 3,
+   "edits": [
+    [
+     154,
+     75
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 3,
+   "kind": 3,
+   "edits": [
+    [
+     656,
+     102
+    ],
+    [
+     287,
+     50
+    ],
+    [
+     539,
+     81
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 3,
+   "kind": 3,
+   "edits": [
+    [
+     10,
+     152
+    ],
+    [
+     629,
+     249
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 3,
+   "kind": 3,
+   "edits": [
+    [
+     191,
+     202
+    ],
+    [
+     73,
+     188
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 4,
+   "kind": 4,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 4,
+   "kind": 4,
+   "edits": [
+    [
+     812,
+     252
+    ],
+    [
+     1447,
+     80
+    ],
+    [
+     466,
+     86
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 4,
+   "kind": 4,
+   "edits": [
+    [
+     1588,
+     105
+    ],
+    [
+     773,
+     136
+    ],
+    [
+     1351,
+     125
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 4,
+   "kind": 4,
+   "edits": [
+    [
+     858,
+     79
+    ],
+    [
+     283,
+     99
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 4,
+   "kind": 4,
+   "edits": [
+    [
+     1863,
+     228
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 4,
+   "kind": 4,
+   "edits": [
+    [
+     1751,
+     9
+    ],
+    [
+     675,
+     50
+    ],
+    [
+     1320,
+     167
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 4,
+   "kind": 4,
+   "edits": [
+    [
+     1742,
+     211
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 4,
+   "kind": 4,
+   "edits": [
+    [
+     1332,
+     215
+    ],
+    [
+     1441,
+     127
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 4,
+   "kind": 4,
+   "edits": [
+    [
+     2119,
+     21
+    ],
+    [
+     1756,
+     229
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 4,
+   "kind": 4,
+   "edits": [
+    [
+     2045,
+     246
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 4,
+   "kind": 4,
+   "edits": [
+    [
+     1800,
+     96
+    ],
+    [
+     329,
+     231
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 4,
+   "kind": 4,
+   "edits": [
+    [
+     2296,
+     172
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 4,
+   "kind": 4,
+   "edits": [
+    [
+     1693,
+     214
+    ],
+    [
+     1778,
+     134
+    ],
+    [
+     1067,
+     70
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 5,
+   "kind": 5,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 5,
+   "kind": 5,
+   "edits": [
+    [
+     1369,
+     138
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 5,
+   "kind": 5,
+   "edits": [
+    [
+     133,
+     13
+    ],
+    [
+     457,
+     43
+    ],
+    [
+     250,
+     11
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 5,
+   "kind": 5,
+   "edits": [
+    [
+     1505,
+     238
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 5,
+   "kind": 5,
+   "edits": [
+    [
+     1160,
+     85
+    ],
+    [
+     871,
+     119
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 5,
+   "kind": 5,
+   "edits": [
+    [
+     941,
+     105
+    ],
+    [
+     335,
+     224
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 5,
+   "kind": 5,
+   "edits": [
+    [
+     332,
+     129
+    ],
+    [
+     1086,
+     238
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 5,
+   "kind": 5,
+   "edits": [
+    [
+     1078,
+     98
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 5,
+   "kind": 5,
+   "edits": [
+    [
+     677,
+     169
+    ],
+    [
+     97,
+     106
+    ],
+    [
+     407,
+     226
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 5,
+   "kind": 5,
+   "edits": [
+    [
+     728,
+     119
+    ],
+    [
+     11,
+     49
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 5,
+   "kind": 5,
+   "edits": [
+    [
+     276,
+     102
+    ],
+    [
+     426,
+     84
+    ],
+    [
+     886,
+     4
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 5,
+   "kind": 5,
+   "edits": [
+    [
+     557,
+     111
+    ],
+    [
+     1096,
+     133
+    ],
+    [
+     81,
+     169
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 5,
+   "kind": 5,
+   "edits": [
+    [
+     754,
+     238
+    ],
+    [
+     761,
+     20
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 6,
+   "kind": 6,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 6,
+   "kind": 6,
+   "edits": [
+    [
+     57,
+     4
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 6,
+   "kind": 6,
+   "edits": [
+    [
+     55,
+     107
+    ],
+    [
+     203,
+     129
+    ],
+    [
+     79,
+     96
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 6,
+   "kind": 6,
+   "edits": [
+    [
+     277,
+     81
+    ],
+    [
+     102,
+     61
+    ],
+    [
+     191,
+     159
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 6,
+   "kind": 6,
+   "edits": [
+    [
+     113,
+     149
+    ],
+    [
+     254,
+     167
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 6,
+   "kind": 6,
+   "edits": [
+    [
+     377,
+     35
+    ],
+    [
+     120,
+     49
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 6,
+   "kind": 6,
+   "edits": [
+    [
+     316,
+     37
+    ],
+    [
+     8,
+     39
+    ],
+    [
+     273,
+     76
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 6,
+   "kind": 6,
+   "edits": [
+    [
+     35,
+     66
+    ],
+    [
+     80,
+     55
+    ],
+    [
+     110,
+     206
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 6,
+   "kind": 6,
+   "edits": [
+    [
+     205,
+     228
+    ],
+    [
+     112,
+     41
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 6,
+   "kind": 6,
+   "edits": [
+    [
+     264,
+     133
+    ],
+    [
+     275,
+     84
+    ],
+    [
+     210,
+     26
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 6,
+   "kind": 6,
+   "edits": [
+    [
+     316,
+     118
+    ],
+    [
+     268,
+     220
+    ],
+    [
+     405,
+     71
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 6,
+   "kind": 6,
+   "edits": [
+    [
+     387,
+     12
+    ],
+    [
+     244,
+     179
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 6,
+   "kind": 6,
+   "edits": [
+    [
+     337,
+     249
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 7,
+   "kind": 7,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 7,
+   "kind": 7,
+   "edits": [
+    [
+     797,
+     203
+    ],
+    [
+     763,
+     12
+    ],
+    [
+     418,
+     225
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 7,
+   "kind": 7,
+   "edits": [
+    [
+     919,
+     77
+    ],
+    [
+     373,
+     58
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 7,
+   "kind": 7,
+   "edits": [
+    [
+     257,
+     198
+    ],
+    [
+     133,
+     250
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 7,
+   "kind": 7,
+   "edits": [
+    [
+     209,
+     88
+    ],
+    [
+     232,
+     5
+    ],
+    [
+     816,
+     205
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 7,
+   "kind": 7,
+   "edits": [
+    [
+     562,
+     74
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 7,
+   "kind": 7,
+   "edits": [
+    [
+     450,
+     200
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 7,
+   "kind": 7,
+   "edits": [
+    [
+     612,
+     33
+    ],
+    [
+     499,
+     235
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 7,
+   "kind": 7,
+   "edits": [
+    [
+     86,
+     201
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 7,
+   "kind": 7,
+   "edits": [
+    [
+     923,
+     185
+    ],
+    [
+     840,
+     220
+    ],
+    [
+     137,
+     172
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 7,
+   "kind": 7,
+   "edits": [
+    [
+     741,
+     252
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 7,
+   "kind": 7,
+   "edits": [
+    [
+     473,
+     195
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 7,
+   "kind": 7,
+   "edits": [
+    [
+     33,
+     109
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 8,
+   "kind": 10,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 8,
+   "kind": 10,
+   "edits": [
+    [
+     515,
+     52
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 8,
+   "kind": 10,
+   "edits": [
+    [
+     393,
+     176
+    ],
+    [
+     317,
+     97
+    ],
+    [
+     17,
+     239
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 8,
+   "kind": 10,
+   "edits": [
+    [
+     353,
+     251
+    ],
+    [
+     179,
+     166
+    ],
+    [
+     240,
+     37
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 8,
+   "kind": 10,
+   "edits": [
+    [
+     68,
+     233
+    ],
+    [
+     48,
+     129
+    ],
+    [
+     397,
+     28
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 8,
+   "kind": 10,
+   "edits": [
+    [
+     211,
+     191
+    ],
+    [
+     448,
+     70
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 8,
+   "kind": 10,
+   "edits": [
+    [
+     64,
+     122
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 8,
+   "kind": 10,
+   "edits": [
+    [
+     92,
+     188
+    ],
+    [
+     523,
+     245
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 8,
+   "kind": 10,
+   "edits": [
+    [
+     462,
+     201
+    ],
+    [
+     508,
+     114
+    ],
+    [
+     336,
+     127
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 8,
+   "kind": 10,
+   "edits": [
+    [
+     219,
+     195
+    ],
+    [
+     302,
+     18
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 8,
+   "kind": 10,
+   "edits": [
+    [
+     58,
+     235
+    ],
+    [
+     505,
+     133
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 8,
+   "kind": 10,
+   "edits": [
+    [
+     258,
+     114
+    ],
+    [
+     73,
+     56
+    ],
+    [
+     171,
+     171
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 8,
+   "kind": 10,
+   "edits": [
+    [
+     277,
+     27
+    ],
+    [
+     402,
+     9
+    ],
+    [
+     148,
+     97
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 9,
+   "kind": 11,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 9,
+   "kind": 11,
+   "edits": [
+    [
+     65,
+     171
+    ],
+    [
+     115,
+     214
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 9,
+   "kind": 11,
+   "edits": [
+    [
+     83,
+     193
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 9,
+   "kind": 11,
+   "edits": [
+    [
+     104,
+     146
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 9,
+   "kind": 11,
+   "edits": [
+    [
+     59,
+     19
+    ],
+    [
+     113,
+     20
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 9,
+   "kind": 11,
+   "edits": [
+    [
+     97,
+     59
+    ],
+    [
+     66,
+     83
+    ],
+    [
+     102,
+     59
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 9,
+   "kind": 11,
+   "edits": [
+    [
+     57,
+     108
+    ],
+    [
+     55,
+     59
+    ],
+    [
+     117,
+     156
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 9,
+   "kind": 11,
+   "edits": [
+    [
+     114,
+     189
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 9,
+   "kind": 11,
+   "edits": [
+    [
+     100,
+     46
+    ],
+    [
+     28,
+     141
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 9,
+   "kind": 11,
+   "edits": [
+    [
+     8,
+     15
+    ],
+    [
+     8,
+     228
+    ],
+    [
+     110,
+     106
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 9,
+   "kind": 11,
+   "edits": [
+    [
+     56,
+     127
+    ],
+    [
+     28,
+     102
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 9,
+   "kind": 11,
+   "edits": [
+    [
+     159,
+     44
+    ],
+    [
+     69,
+     162
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "features/tasks.pxb",
+   "section": 9,
+   "kind": 11,
+   "edits": [
+    [
+     78,
+     53
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     518,
+     253
+    ],
+    [
+     827,
+     247
+    ],
+    [
+     856,
+     229
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     54,
+     107
+    ],
+    [
+     961,
+     152
+    ],
+    [
+     1068,
+     242
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     93,
+     128
+    ],
+    [
+     696,
+     81
+    ],
+    [
+     1017,
+     85
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     1125,
+     107
+    ],
+    [
+     849,
+     104
+    ],
+    [
+     512,
+     159
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     874,
+     242
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     119,
+     97
+    ],
+    [
+     927,
+     44
+    ],
+    [
+     1087,
+     52
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     354,
+     165
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     83,
+     246
+    ],
+    [
+     39,
+     76
+    ],
+    [
+     588,
+     164
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     269,
+     224
+    ],
+    [
+     993,
+     118
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     428,
+     251
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     218,
+     240
+    ],
+    [
+     31,
+     122
+    ],
+    [
+     27,
+     11
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     1038,
+     125
+    ],
+    [
+     327,
+     236
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 1,
+   "kind": 6,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 1,
+   "kind": 6,
+   "edits": [
+    [
+     203,
+     196
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 1,
+   "kind": 6,
+   "edits": [
+    [
+     557,
+     106
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 1,
+   "kind": 6,
+   "edits": [
+    [
+     672,
+     64
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 1,
+   "kind": 6,
+   "edits": [
+    [
+     926,
+     85
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 1,
+   "kind": 6,
+   "edits": [
+    [
+     819,
+     123
+    ],
+    [
+     560,
+     2
+    ],
+    [
+     925,
+     90
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 1,
+   "kind": 6,
+   "edits": [
+    [
+     441,
+     218
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 1,
+   "kind": 6,
+   "edits": [
+    [
+     275,
+     34
+    ],
+    [
+     444,
+     24
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 1,
+   "kind": 6,
+   "edits": [
+    [
+     159,
+     189
+    ],
+    [
+     506,
+     2
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 1,
+   "kind": 6,
+   "edits": [
+    [
+     595,
+     88
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 1,
+   "kind": 6,
+   "edits": [
+    [
+     584,
+     9
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 1,
+   "kind": 6,
+   "edits": [
+    [
+     517,
+     201
+    ],
+    [
+     886,
+     239
+    ],
+    [
+     485,
+     79
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 1,
+   "kind": 6,
+   "edits": [
+    [
+     279,
+     32
+    ],
+    [
+     533,
+     180
+    ],
+    [
+     819,
+     246
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 2,
+   "kind": 7,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 2,
+   "kind": 7,
+   "edits": [
+    [
+     120,
+     84
+    ],
+    [
+     151,
+     136
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 2,
+   "kind": 7,
+   "edits": [
+    [
+     61,
+     21
+    ],
+    [
+     51,
+     159
+    ],
+    [
+     393,
+     222
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 2,
+   "kind": 7,
+   "edits": [
+    [
+     33,
+     130
+    ],
+    [
+     477,
+     90
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 2,
+   "kind": 7,
+   "edits": [
+    [
+     200,
+     1
+    ],
+    [
+     316,
+     241
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 2,
+   "kind": 7,
+   "edits": [
+    [
+     413,
+     142
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 2,
+   "kind": 7,
+   "edits": [
+    [
+     39,
+     56
+    ],
+    [
+     201,
+     202
+    ],
+    [
+     373,
+     38
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 2,
+   "kind": 7,
+   "edits": [
+    [
+     384,
+     178
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 2,
+   "kind": 7,
+   "edits": [
+    [
+     343,
+     39
+    ],
+    [
+     187,
+     179
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 2,
+   "kind": 7,
+   "edits": [
+    [
+     283,
+     236
+    ],
+    [
+     17,
+     229
+    ],
+    [
+     465,
+     202
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 2,
+   "kind": 7,
+   "edits": [
+    [
+     413,
+     176
+    ],
+    [
+     333,
+     105
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 2,
+   "kind": 7,
+   "edits": [
+    [
+     105,
+     75
+    ],
+    [
+     156,
+     135
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 2,
+   "kind": 7,
+   "edits": [
+    [
+     153,
+     115
+    ],
+    [
+     194,
+     179
+    ],
+    [
+     326,
+     231
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 3,
+   "kind": 8,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 3,
+   "kind": 8,
+   "edits": [
+    [
+     330,
+     105
+    ],
+    [
+     319,
+     93
+    ],
+    [
+     295,
+     101
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 3,
+   "kind": 8,
+   "edits": [
+    [
+     368,
+     148
+    ],
+    [
+     366,
+     227
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 3,
+   "kind": 8,
+   "edits": [
+    [
+     120,
+     212
+    ],
+    [
+     75,
+     42
+    ],
+    [
+     388,
+     131
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 3,
+   "kind": 8,
+   "edits": [
+    [
+     123,
+     45
+    ],
+    [
+     209,
+     177
+    ],
+    [
+     46,
+     26
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 3,
+   "kind": 8,
+   "edits": [
+    [
+     14,
+     204
+    ],
+    [
+     57,
+     41
+    ],
+    [
+     145,
+     158
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 3,
+   "kind": 8,
+   "edits": [
+    [
+     196,
+     164
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 3,
+   "kind": 8,
+   "edits": [
+    [
+     349,
+     206
+    ],
+    [
+     201,
+     221
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 3,
+   "kind": 8,
+   "edits": [
+    [
+     370,
+     107
+    ],
+    [
+     113,
+     253
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 3,
+   "kind": 8,
+   "edits": [
+    [
+     373,
+     136
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 3,
+   "kind": 8,
+   "edits": [
+    [
+     200,
+     244
+    ],
+    [
+     25,
+     160
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 3,
+   "kind": 8,
+   "edits": [
+    [
+     261,
+     175
+    ],
+    [
+     50,
+     71
+    ],
+    [
+     215,
+     158
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 3,
+   "kind": 8,
+   "edits": [
+    [
+     346,
+     39
+    ],
+    [
+     242,
+     191
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 4,
+   "kind": 8,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 4,
+   "kind": 8,
+   "edits": [
+    [
+     9,
+     6
+    ],
+    [
+     369,
+     14
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 4,
+   "kind": 8,
+   "edits": [
+    [
+     117,
+     159
+    ],
+    [
+     263,
+     120
+    ],
+    [
+     25,
+     15
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 4,
+   "kind": 8,
+   "edits": [
+    [
+     206,
+     57
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 4,
+   "kind": 8,
+   "edits": [
+    [
+     374,
+     1
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 4,
+   "kind": 8,
+   "edits": [
+    [
+     301,
+     216
+    ],
+    [
+     260,
+     184
+    ],
+    [
+     342,
+     144
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 4,
+   "kind": 8,
+   "edits": [
+    [
+     195,
+     255
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 4,
+   "kind": 8,
+   "edits": [
+    [
+     92,
+     4
+    ],
+    [
+     258,
+     56
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 4,
+   "kind": 8,
+   "edits": [
+    [
+     67,
+     109
+    ],
+    [
+     320,
+     115
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 4,
+   "kind": 8,
+   "edits": [
+    [
+     334,
+     44
+    ],
+    [
+     286,
+     14
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 4,
+   "kind": 8,
+   "edits": [
+    [
+     207,
+     181
+    ],
+    [
+     115,
+     207
+    ],
+    [
+     315,
+     66
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 4,
+   "kind": 8,
+   "edits": [
+    [
+     80,
+     154
+    ],
+    [
+     59,
+     144
+    ],
+    [
+     271,
+     95
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 4,
+   "kind": 8,
+   "edits": [
+    [
+     85,
+     181
+    ],
+    [
+     50,
+     149
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     348,
+     201
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     217,
+     47
+    ],
+    [
+     2,
+     159
+    ],
+    [
+     12,
+     66
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     44,
+     179
+    ],
+    [
+     260,
+     159
+    ],
+    [
+     219,
+     158
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     182,
+     255
+    ],
+    [
+     219,
+     113
+    ],
+    [
+     363,
+     239
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     179,
+     26
+    ],
+    [
+     373,
+     75
+    ],
+    [
+     30,
+     5
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     225,
+     170
+    ],
+    [
+     73,
+     105
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     11,
+     14
+    ],
+    [
+     314,
+     40
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     168,
+     210
+    ],
+    [
+     259,
+     158
+    ],
+    [
+     126,
+     208
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     271,
+     212
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     290,
+     126
+    ],
+    [
+     283,
+     72
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     180,
+     143
+    ],
+    [
+     116,
+     212
+    ],
+    [
+     220,
+     169
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     15,
+     130
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     188,
+     212
+    ],
+    [
+     274,
+     15
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     85,
+     236
+    ],
+    [
+     127,
+     197
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     232,
+     11
+    ],
+    [
+     272,
+     65
+    ],
+    [
+     197,
+     201
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     109,
+     212
+    ],
+    [
+     137,
+     149
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     258,
+     156
+    ],
+    [
+     103,
+     182
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     69,
+     45
+    ],
+    [
+     262,
+     253
+    ],
+    [
+     117,
+     167
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     152,
+     148
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     49,
+     8
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     255,
+     86
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     107,
+     69
+    ],
+    [
+     139,
+     14
+    ],
+    [
+     177,
+     139
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     272,
+     15
+    ],
+    [
+     130,
+     17
+    ],
+    [
+     162,
+     92
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     273,
+     128
+    ],
+    [
+     72,
+     7
+    ],
+    [
+     244,
+     171
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     82,
+     180
+    ],
+    [
+     148,
+     211
+    ],
+    [
+     104,
+     67
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     60,
+     75
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     81,
+     153
+    ],
+    [
+     139,
+     95
+    ],
+    [
+     59,
+     109
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     111,
+     162
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     129,
+     217
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     61,
+     192
+    ],
+    [
+     9,
+     7
+    ],
+    [
+     38,
+     14
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     33,
+     215
+    ],
+    [
+     11,
+     231
+    ],
+    [
+     34,
+     131
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     129,
+     174
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     31,
+     217
+    ],
+    [
+     16,
+     31
+    ],
+    [
+     26,
+     92
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     109,
+     136
+    ],
+    [
+     15,
+     245
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     39,
+     191
+    ],
+    [
+     131,
+     98
+    ],
+    [
+     46,
+     214
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/demo.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     54,
+     101
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     127,
+     233
+    ],
+    [
+     357,
+     176
+    ],
+    [
+     875,
+     230
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     609,
+     89
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     917,
+     127
+    ],
+    [
+     368,
+     92
+    ],
+    [
+     197,
+     168
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     325,
+     212
+    ],
+    [
+     266,
+     63
+    ],
+    [
+     36,
+     187
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     301,
+     40
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     762,
+     84
+    ],
+    [
+     719,
+     149
+    ],
+    [
+     96,
+     130
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     371,
+     240
+    ],
+    [
+     821,
+     182
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     953,
+     17
+    ],
+    [
+     589,
+     116
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     53,
+     209
+    ],
+    [
+     491,
+     250
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     398,
+     78
+    ],
+    [
+     563,
+     58
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     1070,
+     64
+    ],
+    [
+     557,
+     98
+    ],
+    [
+     643,
+     120
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     113,
+     158
+    ],
+    [
+     247,
+     134
+    ],
+    [
+     1114,
+     223
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     2698,
+     101
+    ],
+    [
+     980,
+     77
+    ],
+    [
+     1660,
+     227
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     1872,
+     97
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     2011,
+     213
+    ],
+    [
+     2590,
+     226
+    ],
+    [
+     2796,
+     202
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     2483,
+     159
+    ],
+    [
+     2567,
+     226
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     1483,
+     200
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     1643,
+     168
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     1327,
+     60
+    ],
+    [
+     613,
+     114
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     52,
+     119
+    ],
+    [
+     319,
+     20
+    ],
+    [
+     1059,
+     239
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     1294,
+     17
+    ],
+    [
+     1923,
+     138
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     2181,
+     82
+    ],
+    [
+     1574,
+     72
+    ],
+    [
+     1206,
+     216
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     540,
+     80
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     1671,
+     125
+    ],
+    [
+     1608,
+     230
+    ],
+    [
+     1536,
+     251
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     60,
+     224
+    ],
+    [
+     437,
+     250
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     247,
+     190
+    ],
+    [
+     571,
+     40
+    ],
+    [
+     373,
+     166
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     381,
+     33
+    ],
+    [
+     735,
+     18
+    ],
+    [
+     713,
+     36
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     94,
+     162
+    ],
+    [
+     276,
+     158
+    ],
+    [
+     252,
+     240
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     100,
+     122
+    ],
+    [
+     145,
+     213
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     195,
+     208
+    ],
+    [
+     19,
+     241
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     599,
+     107
+    ],
+    [
+     191,
+     224
+    ],
+    [
+     645,
+     207
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     256,
+     110
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     545,
+     140
+    ],
+    [
+     330,
+     197
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     113,
+     21
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     471,
+     72
+    ],
+    [
+     870,
+     156
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     668,
+     182
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 3,
+   "kind": 4,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 3,
+   "kind": 4,
+   "edits": [
+    [
+     402,
+     143
+    ],
+    [
+     53,
+     115
+    ],
+    [
+     506,
+     30
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 3,
+   "kind": 4,
+   "edits": [
+    [
+     133,
+     203
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 3,
+   "kind": 4,
+   "edits": [
+    [
+     441,
+     45
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 3,
+   "kind": 4,
+   "edits": [
+    [
+     555,
+     133
+    ],
+    [
+     788,
+     112
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 3,
+   "kind": 4,
+   "edits": [
+    [
+     464,
+     75
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 3,
+   "kind": 4,
+   "edits": [
+    [
+     1193,
+     80
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 3,
+   "kind": 4,
+   "edits": [
+    [
+     1051,
+     234
+    ],
+    [
+     773,
+     44
+    ],
+    [
+     1138,
+     49
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 3,
+   "kind": 4,
+   "edits": [
+    [
+     721,
+     122
+    ],
+    [
+     34,
+     132
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 3,
+   "kind": 4,
+   "edits": [
+    [
+     343,
+     13
+    ],
+    [
+     642,
+     54
+    ],
+    [
+     1098,
+     1
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 3,
+   "kind": 4,
+   "edits": [
+    [
+     958,
+     135
+    ],
+    [
+     633,
+     10
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 3,
+   "kind": 4,
+   "edits": [
+    [
+     1104,
+     145
+    ],
+    [
+     109,
+     221
+    ],
+    [
+     878,
+     219
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 3,
+   "kind": 4,
+   "edits": [
+    [
+     894,
+     112
+    ],
+    [
+     597,
+     79
+    ],
+    [
+     252,
+     99
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 4,
+   "kind": 5,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 4,
+   "kind": 5,
+   "edits": [
+    [
+     694,
+     62
+    ],
+    [
+     666,
+     73
+    ],
+    [
+     762,
+     43
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 4,
+   "kind": 5,
+   "edits": [
+    [
+     821,
+     121
+    ],
+    [
+     152,
+     255
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 4,
+   "kind": 5,
+   "edits": [
+    [
+     402,
+     176
+    ],
+    [
+     729,
+     39
+    ],
+    [
+     405,
+     136
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 4,
+   "kind": 5,
+   "edits": [
+    [
+     728,
+     236
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 4,
+   "kind": 5,
+   "edits": [
+    [
+     653,
+     171
+    ],
+    [
+     513,
+     84
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 4,
+   "kind": 5,
+   "edits": [
+    [
+     441,
+     76
+    ],
+    [
+     934,
+     238
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 4,
+   "kind": 5,
+   "edits": [
+    [
+     941,
+     101
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 4,
+   "kind": 5,
+   "edits": [
+    [
+     41,
+     102
+    ],
+    [
+     1008,
+     47
+    ],
+    [
+     312,
+     112
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 4,
+   "kind": 5,
+   "edits": [
+    [
+     11,
+     95
+    ],
+    [
+     541,
+     13
+    ],
+    [
+     334,
+     19
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 4,
+   "kind": 5,
+   "edits": [
+    [
+     94,
+     128
+    ],
+    [
+     746,
+     105
+    ],
+    [
+     8,
+     151
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 4,
+   "kind": 5,
+   "edits": [
+    [
+     704,
+     101
+    ],
+    [
+     574,
+     80
+    ],
+    [
+     746,
+     186
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 4,
+   "kind": 5,
+   "edits": [
+    [
+     786,
+     8
+    ],
+    [
+     944,
+     231
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 5,
+   "kind": 6,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 5,
+   "kind": 6,
+   "edits": [
+    [
+     146,
+     154
+    ],
+    [
+     196,
+     130
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 5,
+   "kind": 6,
+   "edits": [
+    [
+     250,
+     249
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 5,
+   "kind": 6,
+   "edits": [
+    [
+     222,
+     10
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 5,
+   "kind": 6,
+   "edits": [
+    [
+     47,
+     243
+    ],
+    [
+     194,
+     198
+    ],
+    [
+     147,
+     98
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 5,
+   "kind": 6,
+   "edits": [
+    [
+     173,
+     174
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 5,
+   "kind": 6,
+   "edits": [
+    [
+     83,
+     137
+    ],
+    [
+     55,
+     101
+    ],
+    [
+     134,
+     11
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 5,
+   "kind": 6,
+   "edits": [
+    [
+     161,
+     238
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 5,
+   "kind": 6,
+   "edits": [
+    [
+     247,
+     145
+    ],
+    [
+     131,
+     194
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 5,
+   "kind": 6,
+   "edits": [
+    [
+     157,
+     55
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 5,
+   "kind": 6,
+   "edits": [
+    [
+     211,
+     35
+    ],
+    [
+     125,
+     21
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 5,
+   "kind": 6,
+   "edits": [
+    [
+     22,
+     25
+    ],
+    [
+     101,
+     206
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 5,
+   "kind": 6,
+   "edits": [
+    [
+     203,
+     201
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 6,
+   "kind": 7,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 6,
+   "kind": 7,
+   "edits": [
+    [
+     424,
+     165
+    ],
+    [
+     228,
+     186
+    ],
+    [
+     239,
+     125
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 6,
+   "kind": 7,
+   "edits": [
+    [
+     367,
+     243
+    ],
+    [
+     278,
+     171
+    ],
+    [
+     34,
+     89
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 6,
+   "kind": 7,
+   "edits": [
+    [
+     95,
+     211
+    ],
+    [
+     301,
+     241
+    ],
+    [
+     273,
+     164
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 6,
+   "kind": 7,
+   "edits": [
+    [
+     380,
+     136
+    ],
+    [
+     445,
+     57
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 6,
+   "kind": 7,
+   "edits": [
+    [
+     453,
+     14
+    ],
+    [
+     405,
+     225
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 6,
+   "kind": 7,
+   "edits": [
+    [
+     360,
+     215
+    ],
+    [
+     414,
+     94
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 6,
+   "kind": 7,
+   "edits": [
+    [
+     162,
+     92
+    ],
+    [
+     428,
+     3
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 6,
+   "kind": 7,
+   "edits": [
+    [
+     253,
+     123
+    ],
+    [
+     53,
+     20
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 6,
+   "kind": 7,
+   "edits": [
+    [
+     165,
+     149
+    ],
+    [
+     392,
+     57
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 6,
+   "kind": 7,
+   "edits": [
+    [
+     317,
+     229
+    ],
+    [
+     53,
+     57
+    ],
+    [
+     429,
+     131
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 6,
+   "kind": 7,
+   "edits": [
+    [
+     162,
+     90
+    ],
+    [
+     244,
+     90
+    ],
+    [
+     80,
+     204
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 6,
+   "kind": 7,
+   "edits": [
+    [
+     437,
+     80
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     141,
+     225
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     45,
+     174
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     14,
+     184
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     87,
+     58
+    ],
+    [
+     69,
+     217
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     32,
+     198
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     99,
+     195
+    ],
+    [
+     77,
+     247
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     59,
+     47
+    ],
+    [
+     20,
+     24
+    ],
+    [
+     107,
+     175
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     10,
+     230
+    ],
+    [
+     11,
+     239
+    ],
+    [
+     24,
+     189
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     52,
+     10
+    ],
+    [
+     29,
+     196
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     92,
+     225
+    ],
+    [
+     28,
+     212
+    ],
+    [
+     37,
+     102
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     59,
+     218
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 7,
+   "kind": 10,
+   "edits": [
+    [
+     64,
+     212
+    ],
+    [
+     19,
+     181
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     29,
+     240
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     127,
+     53
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     136,
+     241
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     28,
+     144
+    ],
+    [
+     110,
+     246
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     97,
+     11
+    ],
+    [
+     148,
+     194
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     159,
+     6
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     93,
+     164
+    ],
+    [
+     97,
+     123
+    ],
+    [
+     100,
+     155
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     35,
+     185
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     81,
+     91
+    ],
+    [
+     64,
+     227
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     130,
+     255
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     118,
+     61
+    ],
+    [
+     49,
+     36
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "loan-calculator/loans.pxb",
+   "section": 8,
+   "kind": 11,
+   "edits": [
+    [
+     36,
+     234
+    ],
+    [
+     12,
+     208
+    ],
+    [
+     55,
+     184
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     90,
+     0
+    ],
+    [
+     6,
+     11
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     26,
+     212
+    ],
+    [
+     23,
+     209
+    ],
+    [
+     12,
+     50
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     85,
+     114
+    ],
+    [
+     71,
+     75
+    ],
+    [
+     22,
+     36
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     61,
+     29
+    ],
+    [
+     6,
+     80
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     13,
+     246
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     45,
+     42
+    ],
+    [
+     12,
+     238
+    ],
+    [
+     31,
+     213
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     40,
+     162
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     48,
+     49
+    ],
+    [
+     19,
+     151
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     86,
+     167
+    ],
+    [
+     46,
+     83
+    ],
+    [
+     80,
+     142
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     82,
+     8
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     92,
+     106
+    ],
+    [
+     61,
+     217
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     86,
+     4
+    ],
+    [
+     57,
+     145
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     196,
+     67
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     8,
+     87
+    ],
+    [
+     260,
+     43
+    ],
+    [
+     368,
+     242
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     13,
+     232
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     621,
+     29
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     55,
+     160
+    ],
+    [
+     749,
+     182
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     757,
+     209
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     193,
+     201
+    ],
+    [
+     4,
+     75
+    ],
+    [
+     11,
+     132
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     31,
+     167
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     471,
+     87
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     316,
+     250
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     694,
+     117
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     610,
+     26
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     360,
+     72
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     348,
+     101
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     400,
+     53
+    ],
+    [
+     15,
+     240
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     314,
+     69
+    ],
+    [
+     742,
+     76
+    ],
+    [
+     153,
+     248
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     299,
+     16
+    ],
+    [
+     250,
+     108
+    ],
+    [
+     110,
+     144
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     162,
+     106
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     690,
+     54
+    ],
+    [
+     512,
+     225
+    ],
+    [
+     488,
+     15
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     529,
+     36
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     334,
+     149
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     672,
+     7
+    ],
+    [
+     31,
+     154
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     137,
+     25
+    ],
+    [
+     98,
+     100
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     133,
+     145
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 3,
+   "kind": 7,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 3,
+   "kind": 7,
+   "edits": [
+    [
+     26,
+     170
+    ],
+    [
+     9,
+     12
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 3,
+   "kind": 7,
+   "edits": [
+    [
+     38,
+     178
+    ],
+    [
+     14,
+     225
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 3,
+   "kind": 7,
+   "edits": [
+    [
+     54,
+     85
+    ],
+    [
+     58,
+     143
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 3,
+   "kind": 7,
+   "edits": [
+    [
+     52,
+     231
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 3,
+   "kind": 7,
+   "edits": [
+    [
+     55,
+     38
+    ],
+    [
+     52,
+     167
+    ],
+    [
+     52,
+     27
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 3,
+   "kind": 7,
+   "edits": [
+    [
+     18,
+     128
+    ],
+    [
+     41,
+     129
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 3,
+   "kind": 7,
+   "edits": [
+    [
+     58,
+     136
+    ],
+    [
+     37,
+     53
+    ],
+    [
+     54,
+     234
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 3,
+   "kind": 7,
+   "edits": [
+    [
+     11,
+     64
+    ],
+    [
+     29,
+     133
+    ],
+    [
+     49,
+     3
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 3,
+   "kind": 7,
+   "edits": [
+    [
+     37,
+     50
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 3,
+   "kind": 7,
+   "edits": [
+    [
+     29,
+     195
+    ],
+    [
+     10,
+     28
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 3,
+   "kind": 7,
+   "edits": [
+    [
+     29,
+     162
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "sample.pxb",
+   "section": 3,
+   "kind": 7,
+   "edits": [
+    [
+     45,
+     163
+    ],
+    [
+     9,
+     168
+    ],
+    [
+     29,
+     112
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     1170,
+     208
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     128,
+     122
+    ],
+    [
+     1410,
+     244
+    ],
+    [
+     805,
+     24
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     654,
+     148
+    ],
+    [
+     741,
+     21
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     572,
+     120
+    ],
+    [
+     330,
+     239
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     618,
+     232
+    ],
+    [
+     119,
+     148
+    ],
+    [
+     1086,
+     17
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     197,
+     121
+    ],
+    [
+     672,
+     101
+    ],
+    [
+     557,
+     60
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     1245,
+     247
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     1113,
+     128
+    ],
+    [
+     817,
+     158
+    ],
+    [
+     768,
+     168
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     1279,
+     126
+    ],
+    [
+     862,
+     49
+    ],
+    [
+     390,
+     128
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     1160,
+     0
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     528,
+     200
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     1544,
+     8
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     865,
+     71
+    ],
+    [
+     9859,
+     158
+    ],
+    [
+     9391,
+     202
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     3564,
+     178
+    ],
+    [
+     7856,
+     109
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     6143,
+     124
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     8501,
+     77
+    ],
+    [
+     4207,
+     101
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     571,
+     112
+    ],
+    [
+     8842,
+     68
+    ],
+    [
+     5083,
+     81
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     2600,
+     69
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     8551,
+     109
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     3321,
+     31
+    ],
+    [
+     1308,
+     54
+    ],
+    [
+     2352,
+     72
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     9891,
+     139
+    ],
+    [
+     8638,
+     116
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     7092,
+     97
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     6712,
+     42
+    ],
+    [
+     5133,
+     156
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 1,
+   "kind": 2,
+   "edits": [
+    [
+     8493,
+     220
+    ],
+    [
+     3919,
+     218
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     5757,
+     233
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     2392,
+     206
+    ],
+    [
+     7264,
+     245
+    ],
+    [
+     1680,
+     11
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     5326,
+     25
+    ],
+    [
+     7468,
+     193
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     4844,
+     56
+    ],
+    [
+     7104,
+     185
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     5015,
+     144
+    ],
+    [
+     4772,
+     155
+    ],
+    [
+     2730,
+     216
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     351,
+     244
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     1417,
+     227
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     1459,
+     152
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     4927,
+     249
+    ],
+    [
+     7299,
+     53
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     2327,
+     144
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     3049,
+     105
+    ],
+    [
+     3278,
+     168
+    ],
+    [
+     370,
+     220
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 2,
+   "kind": 2,
+   "edits": [
+    [
+     4187,
+     21
+    ],
+    [
+     6108,
+     156
+    ],
+    [
+     3662,
+     37
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 3,
+   "kind": 2,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 3,
+   "kind": 2,
+   "edits": [
+    [
+     295,
+     183
+    ],
+    [
+     1367,
+     64
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 3,
+   "kind": 2,
+   "edits": [
+    [
+     305,
+     219
+    ],
+    [
+     1879,
+     2
+    ],
+    [
+     258,
+     143
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 3,
+   "kind": 2,
+   "edits": [
+    [
+     3395,
+     116
+    ],
+    [
+     2402,
+     156
+    ],
+    [
+     1720,
+     61
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 3,
+   "kind": 2,
+   "edits": [
+    [
+     831,
+     57
+    ],
+    [
+     3135,
+     141
+    ],
+    [
+     2459,
+     235
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 3,
+   "kind": 2,
+   "edits": [
+    [
+     3616,
+     192
+    ],
+    [
+     66,
+     246
+    ],
+    [
+     245,
+     195
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 3,
+   "kind": 2,
+   "edits": [
+    [
+     833,
+     89
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 3,
+   "kind": 2,
+   "edits": [
+    [
+     616,
+     190
+    ],
+    [
+     2607,
+     52
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 3,
+   "kind": 2,
+   "edits": [
+    [
+     2904,
+     218
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 3,
+   "kind": 2,
+   "edits": [
+    [
+     1212,
+     23
+    ],
+    [
+     326,
+     75
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 3,
+   "kind": 2,
+   "edits": [
+    [
+     38,
+     223
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 3,
+   "kind": 2,
+   "edits": [
+    [
+     3190,
+     150
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 3,
+   "kind": 2,
+   "edits": [
+    [
+     1598,
+     104
+    ],
+    [
+     1701,
+     202
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 4,
+   "kind": 2,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 4,
+   "kind": 2,
+   "edits": [
+    [
+     3116,
+     244
+    ],
+    [
+     1383,
+     81
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 4,
+   "kind": 2,
+   "edits": [
+    [
+     1403,
+     196
+    ],
+    [
+     1356,
+     127
+    ],
+    [
+     1997,
+     148
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 4,
+   "kind": 2,
+   "edits": [
+    [
+     2898,
+     90
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 4,
+   "kind": 2,
+   "edits": [
+    [
+     1549,
+     68
+    ],
+    [
+     3102,
+     18
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 4,
+   "kind": 2,
+   "edits": [
+    [
+     63,
+     36
+    ],
+    [
+     3089,
+     233
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 4,
+   "kind": 2,
+   "edits": [
+    [
+     2977,
+     140
+    ],
+    [
+     458,
+     43
+    ],
+    [
+     429,
+     159
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 4,
+   "kind": 2,
+   "edits": [
+    [
+     890,
+     39
+    ],
+    [
+     479,
+     38
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 4,
+   "kind": 2,
+   "edits": [
+    [
+     1689,
+     7
+    ],
+    [
+     1837,
+     64
+    ],
+    [
+     3406,
+     37
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 4,
+   "kind": 2,
+   "edits": [
+    [
+     483,
+     38
+    ],
+    [
+     3362,
+     127
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 4,
+   "kind": 2,
+   "edits": [
+    [
+     1728,
+     243
+    ],
+    [
+     917,
+     13
+    ],
+    [
+     1513,
+     241
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 4,
+   "kind": 2,
+   "edits": [
+    [
+     3210,
+     154
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 4,
+   "kind": 2,
+   "edits": [
+    [
+     1938,
+     127
+    ],
+    [
+     2220,
+     179
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 5,
+   "kind": 2,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 5,
+   "kind": 2,
+   "edits": [
+    [
+     1193,
+     247
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 5,
+   "kind": 2,
+   "edits": [
+    [
+     273,
+     43
+    ],
+    [
+     2432,
+     54
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 5,
+   "kind": 2,
+   "edits": [
+    [
+     2251,
+     113
+    ],
+    [
+     1659,
+     209
+    ],
+    [
+     2185,
+     101
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 5,
+   "kind": 2,
+   "edits": [
+    [
+     699,
+     195
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 5,
+   "kind": 2,
+   "edits": [
+    [
+     876,
+     191
+    ],
+    [
+     2095,
+     117
+    ],
+    [
+     342,
+     80
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 5,
+   "kind": 2,
+   "edits": [
+    [
+     1122,
+     48
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 5,
+   "kind": 2,
+   "edits": [
+    [
+     1517,
+     184
+    ],
+    [
+     2519,
+     210
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 5,
+   "kind": 2,
+   "edits": [
+    [
+     451,
+     88
+    ],
+    [
+     209,
+     204
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 5,
+   "kind": 2,
+   "edits": [
+    [
+     1832,
+     20
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 5,
+   "kind": 2,
+   "edits": [
+    [
+     1824,
+     53
+    ],
+    [
+     763,
+     16
+    ],
+    [
+     29,
+     51
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 5,
+   "kind": 2,
+   "edits": [
+    [
+     1307,
+     221
+    ],
+    [
+     1311,
+     6
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 5,
+   "kind": 2,
+   "edits": [
+    [
+     1218,
+     61
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 6,
+   "kind": 2,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 6,
+   "kind": 2,
+   "edits": [
+    [
+     1381,
+     239
+    ],
+    [
+     3689,
+     133
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 6,
+   "kind": 2,
+   "edits": [
+    [
+     3197,
+     32
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 6,
+   "kind": 2,
+   "edits": [
+    [
+     1572,
+     5
+    ],
+    [
+     4227,
+     157
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 6,
+   "kind": 2,
+   "edits": [
+    [
+     4921,
+     198
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 6,
+   "kind": 2,
+   "edits": [
+    [
+     54,
+     188
+    ],
+    [
+     3052,
+     26
+    ],
+    [
+     3491,
+     172
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 6,
+   "kind": 2,
+   "edits": [
+    [
+     3775,
+     53
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 6,
+   "kind": 2,
+   "edits": [
+    [
+     1334,
+     84
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 6,
+   "kind": 2,
+   "edits": [
+    [
+     414,
+     5
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 6,
+   "kind": 2,
+   "edits": [
+    [
+     2203,
+     157
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 6,
+   "kind": 2,
+   "edits": [
+    [
+     1197,
+     187
+    ],
+    [
+     4178,
+     165
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 6,
+   "kind": 2,
+   "edits": [
+    [
+     4771,
+     241
+    ],
+    [
+     4176,
+     45
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 6,
+   "kind": 2,
+   "edits": [
+    [
+     3912,
+     45
+    ],
+    [
+     5034,
+     142
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 7,
+   "kind": 2,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 7,
+   "kind": 2,
+   "edits": [
+    [
+     972,
+     91
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 7,
+   "kind": 2,
+   "edits": [
+    [
+     1575,
+     189
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 7,
+   "kind": 2,
+   "edits": [
+    [
+     3795,
+     167
+    ],
+    [
+     3165,
+     128
+    ],
+    [
+     1532,
+     91
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 7,
+   "kind": 2,
+   "edits": [
+    [
+     2256,
+     225
+    ],
+    [
+     371,
+     164
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 7,
+   "kind": 2,
+   "edits": [
+    [
+     2146,
+     130
+    ],
+    [
+     2011,
+     34
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 7,
+   "kind": 2,
+   "edits": [
+    [
+     1352,
+     98
+    ],
+    [
+     322,
+     43
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 7,
+   "kind": 2,
+   "edits": [
+    [
+     1226,
+     18
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 7,
+   "kind": 2,
+   "edits": [
+    [
+     3929,
+     214
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 7,
+   "kind": 2,
+   "edits": [
+    [
+     4042,
+     53
+    ],
+    [
+     1348,
+     144
+    ],
+    [
+     365,
+     198
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 7,
+   "kind": 2,
+   "edits": [
+    [
+     4273,
+     244
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 7,
+   "kind": 2,
+   "edits": [
+    [
+     3033,
+     42
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 7,
+   "kind": 2,
+   "edits": [
+    [
+     707,
+     85
+    ],
+    [
+     4385,
+     0
+    ],
+    [
+     2943,
+     198
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 8,
+   "kind": 2,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 8,
+   "kind": 2,
+   "edits": [
+    [
+     641,
+     96
+    ],
+    [
+     1325,
+     176
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 8,
+   "kind": 2,
+   "edits": [
+    [
+     2195,
+     89
+    ],
+    [
+     129,
+     44
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 8,
+   "kind": 2,
+   "edits": [
+    [
+     1641,
+     235
+    ],
+    [
+     1818,
+     165
+    ],
+    [
+     249,
+     125
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 8,
+   "kind": 2,
+   "edits": [
+    [
+     879,
+     122
+    ],
+    [
+     1827,
+     86
+    ],
+    [
+     1284,
+     6
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 8,
+   "kind": 2,
+   "edits": [
+    [
+     768,
+     92
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 8,
+   "kind": 2,
+   "edits": [
+    [
+     540,
+     114
+    ],
+    [
+     796,
+     255
+    ],
+    [
+     1447,
+     13
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 8,
+   "kind": 2,
+   "edits": [
+    [
+     1733,
+     243
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 8,
+   "kind": 2,
+   "edits": [
+    [
+     2106,
+     64
+    ],
+    [
+     2237,
+     187
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 8,
+   "kind": 2,
+   "edits": [
+    [
+     1311,
+     23
+    ],
+    [
+     1782,
+     77
+    ],
+    [
+     2357,
+     234
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 8,
+   "kind": 2,
+   "edits": [
+    [
+     779,
+     120
+    ],
+    [
+     1833,
+     125
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 8,
+   "kind": 2,
+   "edits": [
+    [
+     1499,
+     180
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 8,
+   "kind": 2,
+   "edits": [
+    [
+     832,
+     163
+    ],
+    [
+     1971,
+     99
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 9,
+   "kind": 4,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 9,
+   "kind": 4,
+   "edits": [
+    [
+     1386,
+     130
+    ],
+    [
+     3304,
+     108
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 9,
+   "kind": 4,
+   "edits": [
+    [
+     3125,
+     99
+    ],
+    [
+     1789,
+     31
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 9,
+   "kind": 4,
+   "edits": [
+    [
+     548,
+     231
+    ],
+    [
+     1031,
+     251
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 9,
+   "kind": 4,
+   "edits": [
+    [
+     1875,
+     44
+    ],
+    [
+     706,
+     229
+    ],
+    [
+     14,
+     105
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 9,
+   "kind": 4,
+   "edits": [
+    [
+     3065,
+     126
+    ],
+    [
+     2924,
+     22
+    ],
+    [
+     2055,
+     255
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 9,
+   "kind": 4,
+   "edits": [
+    [
+     3127,
+     238
+    ],
+    [
+     2534,
+     139
+    ],
+    [
+     2565,
+     219
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 9,
+   "kind": 4,
+   "edits": [
+    [
+     991,
+     56
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 9,
+   "kind": 4,
+   "edits": [
+    [
+     3333,
+     202
+    ],
+    [
+     2370,
+     179
+    ],
+    [
+     1706,
+     168
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 9,
+   "kind": 4,
+   "edits": [
+    [
+     1559,
+     225
+    ],
+    [
+     837,
+     180
+    ],
+    [
+     1298,
+     152
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 9,
+   "kind": 4,
+   "edits": [
+    [
+     1177,
+     109
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 9,
+   "kind": 4,
+   "edits": [
+    [
+     320,
+     238
+    ],
+    [
+     2659,
+     254
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 9,
+   "kind": 4,
+   "edits": [
+    [
+     550,
+     16
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 10,
+   "kind": 5,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 10,
+   "kind": 5,
+   "edits": [
+    [
+     1247,
+     219
+    ],
+    [
+     672,
+     199
+    ],
+    [
+     1008,
+     144
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 10,
+   "kind": 5,
+   "edits": [
+    [
+     404,
+     15
+    ],
+    [
+     152,
+     114
+    ],
+    [
+     1032,
+     248
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 10,
+   "kind": 5,
+   "edits": [
+    [
+     1178,
+     28
+    ],
+    [
+     837,
+     233
+    ],
+    [
+     1062,
+     0
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 10,
+   "kind": 5,
+   "edits": [
+    [
+     1069,
+     139
+    ],
+    [
+     281,
+     130
+    ],
+    [
+     972,
+     55
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 10,
+   "kind": 5,
+   "edits": [
+    [
+     403,
+     135
+    ],
+    [
+     869,
+     43
+    ],
+    [
+     1034,
+     46
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 10,
+   "kind": 5,
+   "edits": [
+    [
+     1123,
+     46
+    ],
+    [
+     63,
+     206
+    ],
+    [
+     1072,
+     241
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 10,
+   "kind": 5,
+   "edits": [
+    [
+     559,
+     17
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 10,
+   "kind": 5,
+   "edits": [
+    [
+     801,
+     220
+    ],
+    [
+     526,
+     21
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 10,
+   "kind": 5,
+   "edits": [
+    [
+     1215,
+     193
+    ],
+    [
+     547,
+     8
+    ],
+    [
+     779,
+     252
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 10,
+   "kind": 5,
+   "edits": [
+    [
+     821,
+     160
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 10,
+   "kind": 5,
+   "edits": [
+    [
+     981,
+     61
+    ],
+    [
+     184,
+     0
+    ],
+    [
+     598,
+     83
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 10,
+   "kind": 5,
+   "edits": [
+    [
+     550,
+     164
+    ],
+    [
+     162,
+     28
+    ],
+    [
+     721,
+     24
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 11,
+   "kind": 6,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 11,
+   "kind": 6,
+   "edits": [
+    [
+     2737,
+     109
+    ],
+    [
+     2460,
+     170
+    ],
+    [
+     1218,
+     241
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 11,
+   "kind": 6,
+   "edits": [
+    [
+     1034,
+     64
+    ],
+    [
+     665,
+     88
+    ],
+    [
+     2028,
+     181
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 11,
+   "kind": 6,
+   "edits": [
+    [
+     1564,
+     106
+    ],
+    [
+     2072,
+     227
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 11,
+   "kind": 6,
+   "edits": [
+    [
+     1049,
+     237
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 11,
+   "kind": 6,
+   "edits": [
+    [
+     974,
+     164
+    ],
+    [
+     395,
+     233
+    ],
+    [
+     2771,
+     49
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 11,
+   "kind": 6,
+   "edits": [
+    [
+     1763,
+     227
+    ],
+    [
+     37,
+     47
+    ],
+    [
+     546,
+     19
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 11,
+   "kind": 6,
+   "edits": [
+    [
+     53,
+     169
+    ],
+    [
+     2312,
+     157
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 11,
+   "kind": 6,
+   "edits": [
+    [
+     2847,
+     251
+    ],
+    [
+     342,
+     115
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 11,
+   "kind": 6,
+   "edits": [
+    [
+     1919,
+     140
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 11,
+   "kind": 6,
+   "edits": [
+    [
+     1791,
+     162
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 11,
+   "kind": 6,
+   "edits": [
+    [
+     2310,
+     224
+    ],
+    [
+     475,
+     5
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 11,
+   "kind": 6,
+   "edits": [
+    [
+     2063,
+     53
+    ],
+    [
+     226,
+     96
+    ],
+    [
+     1414,
+     131
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 12,
+   "kind": 7,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 12,
+   "kind": 7,
+   "edits": [
+    [
+     369,
+     225
+    ],
+    [
+     406,
+     153
+    ],
+    [
+     282,
+     12
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 12,
+   "kind": 7,
+   "edits": [
+    [
+     254,
+     150
+    ],
+    [
+     336,
+     125
+    ],
+    [
+     527,
+     188
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 12,
+   "kind": 7,
+   "edits": [
+    [
+     178,
+     30
+    ],
+    [
+     235,
+     188
+    ],
+    [
+     288,
+     89
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 12,
+   "kind": 7,
+   "edits": [
+    [
+     227,
+     153
+    ],
+    [
+     514,
+     220
+    ],
+    [
+     258,
+     85
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 12,
+   "kind": 7,
+   "edits": [
+    [
+     63,
+     91
+    ],
+    [
+     193,
+     38
+    ],
+    [
+     498,
+     93
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 12,
+   "kind": 7,
+   "edits": [
+    [
+     152,
+     34
+    ],
+    [
+     250,
+     81
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 12,
+   "kind": 7,
+   "edits": [
+    [
+     376,
+     205
+    ],
+    [
+     15,
+     205
+    ],
+    [
+     66,
+     15
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 12,
+   "kind": 7,
+   "edits": [
+    [
+     452,
+     26
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 12,
+   "kind": 7,
+   "edits": [
+    [
+     511,
+     130
+    ],
+    [
+     294,
+     64
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 12,
+   "kind": 7,
+   "edits": [
+    [
+     533,
+     240
+    ],
+    [
+     395,
+     40
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 12,
+   "kind": 7,
+   "edits": [
+    [
+     185,
+     64
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 12,
+   "kind": 7,
+   "edits": [
+    [
+     491,
+     219
+    ],
+    [
+     94,
+     181
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 13,
+   "kind": 10,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 13,
+   "kind": 10,
+   "edits": [
+    [
+     13,
+     187
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 13,
+   "kind": 10,
+   "edits": [
+    [
+     72,
+     47
+    ],
+    [
+     19,
+     41
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 13,
+   "kind": 10,
+   "edits": [
+    [
+     23,
+     142
+    ],
+    [
+     9,
+     61
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 13,
+   "kind": 10,
+   "edits": [
+    [
+     35,
+     168
+    ],
+    [
+     39,
+     183
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 13,
+   "kind": 10,
+   "edits": [
+    [
+     66,
+     16
+    ],
+    [
+     62,
+     119
+    ],
+    [
+     18,
+     37
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 13,
+   "kind": 10,
+   "edits": [
+    [
+     53,
+     165
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 13,
+   "kind": 10,
+   "edits": [
+    [
+     35,
+     214
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 13,
+   "kind": 10,
+   "edits": [
+    [
+     63,
+     240
+    ],
+    [
+     22,
+     127
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 13,
+   "kind": 10,
+   "edits": [
+    [
+     26,
+     111
+    ],
+    [
+     66,
+     112
+    ],
+    [
+     11,
+     91
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 13,
+   "kind": 10,
+   "edits": [
+    [
+     16,
+     193
+    ],
+    [
+     51,
+     234
+    ],
+    [
+     8,
+     253
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 13,
+   "kind": 10,
+   "edits": [
+    [
+     47,
+     189
+    ],
+    [
+     13,
+     190
+    ],
+    [
+     11,
+     212
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 13,
+   "kind": 10,
+   "edits": [
+    [
+     49,
+     144
+    ],
+    [
+     66,
+     178
+    ],
+    [
+     55,
+     233
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 14,
+   "kind": 11,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 14,
+   "kind": 11,
+   "edits": [
+    [
+     132,
+     55
+    ],
+    [
+     247,
+     145
+    ],
+    [
+     137,
+     135
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 14,
+   "kind": 11,
+   "edits": [
+    [
+     84,
+     57
+    ],
+    [
+     39,
+     248
+    ],
+    [
+     133,
+     131
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 14,
+   "kind": 11,
+   "edits": [
+    [
+     131,
+     220
+    ],
+    [
+     271,
+     201
+    ],
+    [
+     19,
+     27
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 14,
+   "kind": 11,
+   "edits": [
+    [
+     293,
+     71
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 14,
+   "kind": 11,
+   "edits": [
+    [
+     244,
+     79
+    ],
+    [
+     217,
+     109
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 14,
+   "kind": 11,
+   "edits": [
+    [
+     76,
+     245
+    ],
+    [
+     176,
+     31
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 14,
+   "kind": 11,
+   "edits": [
+    [
+     265,
+     112
+    ],
+    [
+     271,
+     190
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 14,
+   "kind": 11,
+   "edits": [
+    [
+     214,
+     245
+    ],
+    [
+     224,
+     216
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 14,
+   "kind": 11,
+   "edits": [
+    [
+     237,
+     50
+    ],
+    [
+     271,
+     233
+    ],
+    [
+     190,
+     37
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 14,
+   "kind": 11,
+   "edits": [
+    [
+     159,
+     42
+    ],
+    [
+     152,
+     39
+    ],
+    [
+     225,
+     57
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 14,
+   "kind": 11,
+   "edits": [
+    [
+     203,
+     233
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/gallery.pxb",
+   "section": 14,
+   "kind": 11,
+   "edits": [
+    [
+     138,
+     52
+    ],
+    [
+     178,
+     58
+    ],
+    [
+     131,
+     209
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     1045,
+     28
+    ],
+    [
+     801,
+     195
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     730,
+     36
+    ],
+    [
+     94,
+     205
+    ],
+    [
+     445,
+     145
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     593,
+     134
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     343,
+     200
+    ],
+    [
+     302,
+     114
+    ],
+    [
+     519,
+     248
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     1000,
+     114
+    ],
+    [
+     1064,
+     236
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     201,
+     33
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     1115,
+     121
+    ],
+    [
+     24,
+     32
+    ],
+    [
+     504,
+     141
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     534,
+     176
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     421,
+     53
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     687,
+     77
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     959,
+     13
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 0,
+   "kind": 1,
+   "edits": [
+    [
+     176,
+     23
+    ],
+    [
+     511,
+     77
+    ],
+    [
+     1103,
+     80
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     315,
+     116
+    ],
+    [
+     22,
+     153
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     472,
+     126
+    ],
+    [
+     652,
+     183
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     549,
+     29
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     319,
+     233
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     424,
+     186
+    ],
+    [
+     145,
+     183
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     541,
+     97
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     790,
+     109
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     241,
+     239
+    ],
+    [
+     302,
+     127
+    ],
+    [
+     254,
+     161
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     300,
+     249
+    ],
+    [
+     267,
+     2
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     537,
+     250
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     726,
+     185
+    ],
+    [
+     355,
+     106
+    ],
+    [
+     30,
+     185
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 1,
+   "kind": 3,
+   "edits": [
+    [
+     787,
+     112
+    ],
+    [
+     18,
+     118
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 2,
+   "kind": 5,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 2,
+   "kind": 5,
+   "edits": [
+    [
+     26,
+     55
+    ],
+    [
+     36,
+     11
+    ],
+    [
+     11,
+     89
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 2,
+   "kind": 5,
+   "edits": [
+    [
+     25,
+     98
+    ],
+    [
+     28,
+     188
+    ],
+    [
+     32,
+     5
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 2,
+   "kind": 5,
+   "edits": [
+    [
+     14,
+     90
+    ],
+    [
+     43,
+     188
+    ],
+    [
+     18,
+     245
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 2,
+   "kind": 5,
+   "edits": [
+    [
+     111,
+     103
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 2,
+   "kind": 5,
+   "edits": [
+    [
+     90,
+     171
+    ],
+    [
+     105,
+     227
+    ],
+    [
+     99,
+     203
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 2,
+   "kind": 5,
+   "edits": [
+    [
+     63,
+     7
+    ],
+    [
+     27,
+     248
+    ],
+    [
+     14,
+     110
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 2,
+   "kind": 5,
+   "edits": [
+    [
+     68,
+     42
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 2,
+   "kind": 5,
+   "edits": [
+    [
+     92,
+     83
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 2,
+   "kind": 5,
+   "edits": [
+    [
+     10,
+     149
+    ],
+    [
+     13,
+     206
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 2,
+   "kind": 5,
+   "edits": [
+    [
+     20,
+     140
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 2,
+   "kind": 5,
+   "edits": [
+    [
+     81,
+     4
+    ],
+    [
+     13,
+     250
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 2,
+   "kind": 5,
+   "edits": [
+    [
+     76,
+     166
+    ],
+    [
+     27,
+     14
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 3,
+   "kind": 6,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 3,
+   "kind": 6,
+   "edits": [
+    [
+     688,
+     64
+    ],
+    [
+     575,
+     135
+    ],
+    [
+     782,
+     24
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 3,
+   "kind": 6,
+   "edits": [
+    [
+     168,
+     19
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 3,
+   "kind": 6,
+   "edits": [
+    [
+     184,
+     175
+    ],
+    [
+     774,
+     251
+    ],
+    [
+     534,
+     188
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 3,
+   "kind": 6,
+   "edits": [
+    [
+     562,
+     189
+    ],
+    [
+     301,
+     142
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 3,
+   "kind": 6,
+   "edits": [
+    [
+     788,
+     108
+    ],
+    [
+     524,
+     60
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 3,
+   "kind": 6,
+   "edits": [
+    [
+     299,
+     113
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 3,
+   "kind": 6,
+   "edits": [
+    [
+     348,
+     250
+    ],
+    [
+     65,
+     73
+    ],
+    [
+     784,
+     78
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 3,
+   "kind": 6,
+   "edits": [
+    [
+     439,
+     52
+    ],
+    [
+     719,
+     57
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 3,
+   "kind": 6,
+   "edits": [
+    [
+     144,
+     178
+    ],
+    [
+     676,
+     156
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 3,
+   "kind": 6,
+   "edits": [
+    [
+     318,
+     86
+    ],
+    [
+     262,
+     181
+    ],
+    [
+     294,
+     85
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 3,
+   "kind": 6,
+   "edits": [
+    [
+     822,
+     134
+    ],
+    [
+     162,
+     3
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 3,
+   "kind": 6,
+   "edits": [
+    [
+     361,
+     205
+    ],
+    [
+     385,
+     137
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 4,
+   "kind": 7,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 4,
+   "kind": 7,
+   "edits": [
+    [
+     118,
+     215
+    ],
+    [
+     240,
+     123
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 4,
+   "kind": 7,
+   "edits": [
+    [
+     76,
+     157
+    ],
+    [
+     160,
+     102
+    ],
+    [
+     50,
+     203
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 4,
+   "kind": 7,
+   "edits": [
+    [
+     220,
+     167
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 4,
+   "kind": 7,
+   "edits": [
+    [
+     1,
+     51
+    ],
+    [
+     25,
+     43
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 4,
+   "kind": 7,
+   "edits": [
+    [
+     116,
+     252
+    ],
+    [
+     248,
+     9
+    ],
+    [
+     205,
+     179
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 4,
+   "kind": 7,
+   "edits": [
+    [
+     31,
+     210
+    ],
+    [
+     39,
+     25
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 4,
+   "kind": 7,
+   "edits": [
+    [
+     214,
+     170
+    ],
+    [
+     200,
+     142
+    ],
+    [
+     48,
+     85
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 4,
+   "kind": 7,
+   "edits": [
+    [
+     132,
+     134
+    ],
+    [
+     90,
+     23
+    ],
+    [
+     240,
+     107
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 4,
+   "kind": 7,
+   "edits": [
+    [
+     160,
+     95
+    ],
+    [
+     150,
+     212
+    ],
+    [
+     140,
+     50
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 4,
+   "kind": 7,
+   "edits": [
+    [
+     128,
+     128
+    ],
+    [
+     175,
+     91
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 4,
+   "kind": 7,
+   "edits": [
+    [
+     192,
+     28
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 4,
+   "kind": 7,
+   "edits": [
+    [
+     59,
+     252
+    ],
+    [
+     95,
+     75
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     68,
+     209
+    ],
+    [
+     36,
+     163
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     74,
+     184
+    ],
+    [
+     197,
+     26
+    ],
+    [
+     175,
+     87
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     61,
+     234
+    ],
+    [
+     50,
+     211
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     138,
+     163
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     33,
+     56
+    ],
+    [
+     114,
+     178
+    ],
+    [
+     126,
+     174
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     150,
+     140
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     152,
+     167
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     167,
+     217
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     59,
+     124
+    ],
+    [
+     95,
+     194
+    ],
+    [
+     84,
+     151
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     52,
+     15
+    ],
+    [
+     147,
+     8
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     182,
+     98
+    ],
+    [
+     70,
+     196
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 5,
+   "kind": 8,
+   "edits": [
+    [
+     58,
+     62
+    ],
+    [
+     105,
+     148
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     42,
+     11
+    ],
+    [
+     19,
+     57
+    ],
+    [
+     50,
+     142
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     66,
+     185
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     68,
+     249
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     8,
+     102
+    ],
+    [
+     64,
+     159
+    ],
+    [
+     67,
+     78
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     9,
+     153
+    ],
+    [
+     46,
+     135
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     3,
+     172
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     8,
+     23
+    ],
+    [
+     4,
+     107
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     15,
+     202
+    ],
+    [
+     9,
+     245
+    ],
+    [
+     35,
+     233
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     20,
+     124
+    ],
+    [
+     48,
+     56
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     72,
+     223
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     75,
+     56
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 6,
+   "kind": 10,
+   "edits": [
+    [
+     34,
+     87
+    ],
+    [
+     51,
+     98
+    ],
+    [
+     60,
+     50
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     188,
+     186
+    ],
+    [
+     184,
+     65
+    ],
+    [
+     140,
+     213
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     9,
+     116
+    ],
+    [
+     281,
+     99
+    ],
+    [
+     331,
+     38
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     33,
+     131
+    ],
+    [
+     375,
+     77
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     52,
+     222
+    ],
+    [
+     349,
+     201
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     274,
+     207
+    ],
+    [
+     300,
+     136
+    ],
+    [
+     238,
+     89
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     143,
+     82
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     341,
+     42
+    ],
+    [
+     284,
+     196
+    ],
+    [
+     131,
+     168
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     196,
+     222
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     232,
+     236
+    ],
+    [
+     100,
+     108
+    ],
+    [
+     311,
+     21
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     278,
+     211
+    ]
+   ],
+   "valid": true
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     80,
+     165
+    ],
+    [
+     365,
+     215
+    ]
+   ],
+   "valid": false
+  },
+  {
+   "bundle": "widgets/widgets.pxb",
+   "section": 7,
+   "kind": 11,
+   "edits": [
+    [
+     77,
+     43
+    ],
+    [
+     29,
+     23
+    ],
+    [
+     392,
+     30
+    ]
+   ],
+   "valid": false
+  }
+ ]
+}

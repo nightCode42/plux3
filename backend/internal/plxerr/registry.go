@@ -51,6 +51,7 @@ const (
 	RequiredFeaturesRaised    Code = 1120
 	ConstraintViolation       Code = 1121
 	DeprecatedMember          Code = 1122
+	UnknownIcon               Code = 1123
 	UnknownRoute              Code = 1201
 	RouteParameterMissing     Code = 1203
 	RouteParameterTypeInvalid Code = 1204
@@ -99,6 +100,9 @@ const (
 
 	// Release and sync (PLX-3000–3999).
 
+	ManifestSignatureInvalid   Code = 3001
+	ManifestExpired            Code = 3002
+	RollbackRejected           Code = 3003
 	UnsupportedRequiredFeature Code = 3010
 	PatchHashMismatch          Code = 3011
 	DeltaMalformed             Code = 3012
@@ -107,6 +111,18 @@ const (
 	SectionVerificationFailed  Code = 3042
 	BundleEncryptedUnsupported Code = 3043
 	TransportDecodingFailed    Code = 3044
+	AssetHashMismatch          Code = 3045
+	SyncFailed                 Code = 3050
+	RevertedToLastKnownGood    Code = 3020
+	DiskQuotaExceeded          Code = 3030
+
+	// Runtime rendering and navigation (PLX-4000–4999).
+
+	NodeBuildFailed     Code = 4001
+	PropValueInvalid    Code = 4002
+	UnknownWidget       Code = 4003
+	ActionsNotAvailable Code = 4010
+	PluginDisabled      Code = 4020
 
 	// Security (PLX-6000–6999).
 
@@ -126,6 +142,7 @@ const (
 	ReleaseInconsistent     Code = 8050
 	WarningsNotAcknowledged Code = 8051
 	PluginNotPublished      Code = 8052
+	AssetsNotReady          Code = 8053
 	InternalServerError     Code = 8090
 	UpstreamUnavailable     Code = 8091
 

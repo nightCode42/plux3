@@ -226,6 +226,38 @@
         "$ref": "common.schema.json#/$defs/field"
       },
       "description": "Attributes the host provides about the signed-in user, available in PXL as `user.<name>`."
+    },
+    "telemetry": {
+      "type": "object",
+      "x-plux-type": "TelemetryPolicy",
+      "description": "What the runtime reports (ANL-003, ADR-0034).",
+      "properties": {
+        "sampling": {
+          "type": "object",
+          "description": "The share of each consent-gated event type the runtime keeps, from 0 to 1 in steps of 0.001; 1 when absent. The host app can only lower a rate; operational events (`session_start`, `sync_result`, `error`, `rasp_detection`) are never sampled.",
+          "propertyNames": {
+            "enum": [
+              "session_end",
+              "screen_view",
+              "render_perf",
+              "action_run",
+              "api_call",
+              "function_call",
+              "custom",
+              "experiment_exposure"
+            ]
+          },
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false
     }
   },
   "patternProperties": {

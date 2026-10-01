@@ -733,6 +733,28 @@ func (q *Queries) TouchDevice(ctx context.Context, id pgtype.UUID) error {
 	return err
 }
 
+const updateDeviceVersions = `-- name: UpdateDeviceVersions :exec
+UPDATE devices SET runtime_version = $2, host_build = $3, os_version = $4 WHERE id = $1
+`
+
+type UpdateDeviceVersionsParams struct {
+	ID             pgtype.UUID
+	RuntimeVersion string
+	HostBuild      string
+	OsVersion      string
+}
+
+// What a device's latest session_start reports it runs (REL-080).
+func (q *Queries) UpdateDeviceVersions(ctx context.Context, arg UpdateDeviceVersionsParams) error {
+	_, err := q.db.Exec(ctx, updateDeviceVersions,
+		arg.ID,
+		arg.RuntimeVersion,
+		arg.HostBuild,
+		arg.OsVersion,
+	)
+	return err
+}
+
 const upsertChannelControl = `-- name: UpsertChannelControl :one
 INSERT INTO channel_controls (channel_id, organization_id, kill_switch_plugins, app_kill_switch, mandatory_update, message,
                               updated_by_kind, updated_by_id, updated_by, updated_at)

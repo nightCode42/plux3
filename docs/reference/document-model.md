@@ -9,7 +9,7 @@ A project is a directory with one JSON file per page, component, action graph an
 | File | Kind | Contents |
 |---|---|---|
 | `app.json` | `app` | The app: plugins, theme, locales, environments, flags, shared types, state and collections (`SCH-020`) |
-| `theme.json` | `theme` | Design tokens in the W3C Design Tokens format, with dark-mode values (`THM-001`) |
+| `theme.json` | `theme` | Design tokens in the W3C Design Tokens format, with dark-mode values (`THM-001`; paths and roles in [theming.md](theming.md)) |
 | `native-catalogue.json` | `nativeCatalogue` | Optional: native routes, native slots and custom actions of a host build (`SCH-032`) |
 | `translations/keys.json` | `translationKeys` | Optional: translation keys, referenced by identifier |
 | `translations/<locale>.json` | `translations` | Messages of one locale in ICU MessageFormat |

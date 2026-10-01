@@ -127,7 +127,11 @@ func (s *Service) SignManifest(ctx context.Context, job ManifestJob) error {
 	}
 	err = s.o.DB.InTx(ctx, storage.Tenant{OrganizationID: job.OrganizationID}, func(ctx context.Context, tx pgx.Tx) error {
 		q := dbgen.New(tx)
-		channel, err := q.GetChannelByID(ctx, ch)
+		// The lock orders signing after any promotion in flight, and one
+		// signing after another, so the newest manifest always names the
+		// channel's newest release: without it a job that read the
+		// channel before a promotion could store its older manifest last.
+		channel, err := q.GetChannelByIDForUpdate(ctx, ch)
 		if err != nil {
 			return failure(err, "channel")
 		}
@@ -218,15 +222,28 @@ func (s *Service) manifestDocument(ctx context.Context, q *dbgen.Queries, ch dbg
 	if err != nil {
 		return SignedManifest{}, err
 	}
-	now := s.now().UTC().Truncate(time.Second)
+	return newManifest(env, ch, rel.Sequence, appVersion, versions, control, s.now()), nil
+}
+
+// newManifest builds the signed part of a channel's manifest. Every list
+// is present, empty rather than null, as the runtime's parser requires
+// (Appendix B.3); schema/testdata/manifest pins the form both sides read.
+func newManifest(env dbgen.Environment, ch dbgen.Channel, sequence int64, appVersion dbgen.PluginVersion,
+	versions []dbgen.PluginVersion, control dbgen.ChannelControl, at time.Time,
+) SignedManifest {
+	now := at.UTC().Truncate(time.Second)
+	kills := slices.Sorted(slices.Values(control.KillSwitchPlugins))
+	if kills == nil {
+		kills = []string{}
+	}
 	doc := SignedManifest{
 		Type: "manifest", SpecVersion: 1, Role: "targets",
-		App: storage.ID(env.AppID), Environment: env.Key, Channel: ch.Key, ReleaseSequence: rel.Sequence,
+		App: storage.ID(env.AppID), Environment: env.Key, Channel: ch.Key, ReleaseSequence: sequence,
 		IssuedAt: now.Format(time.RFC3339), Expires: now.Add(ManifestLifetime).Format(time.RFC3339),
 		AppBundle: signedBundle(appVersion),
 		Plugins:   []SignedPlugin{},
 		Control: SignedControl{
-			KillSwitches: slices.Sorted(slices.Values(control.KillSwitchPlugins)), AppKillSwitch: control.AppKillSwitch,
+			KillSwitches: kills, AppKillSwitch: control.AppKillSwitch,
 			Mandatory: control.MandatoryUpdate, Message: control.Message,
 		},
 		Experiments: []SignedVariant{},
@@ -238,7 +255,7 @@ func (s *Service) manifestDocument(ctx context.Context, q *dbgen.Queries, ch dbg
 		doc.Plugins = append(doc.Plugins, SignedPlugin{Key: v.PluginKey, Version: v.Version, SignedBundle: signedBundle(v)})
 	}
 	slices.SortFunc(doc.Plugins, func(a, b SignedPlugin) int { return strings.Compare(a.Key, b.Key) })
-	return doc, nil
+	return doc
 }
 
 func signedBundle(v dbgen.PluginVersion) SignedBundle {

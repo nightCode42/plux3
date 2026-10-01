@@ -100,7 +100,7 @@ enum ActivationPolicy {
 /// An app: its plugins, theme, locales, environments, shared data and policies
 /// (SCH-020). File: `app.json`.
 final class AppDocument {
-  const AppDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.icon, required this.defaultLocale, required this.supportedLocales, required this.theme, required this.entryRoute, required this.plugins, required this.environments, this.variables, this.dataSources, this.nativeCatalogue, required this.securityProfile, required this.sync, required this.minRuntimeVersion, this.requiredFeatures, this.flags, this.types, this.state, this.collections, this.userContext});
+  const AppDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.icon, required this.defaultLocale, required this.supportedLocales, required this.theme, required this.entryRoute, required this.plugins, required this.environments, this.variables, this.dataSources, this.nativeCatalogue, required this.securityProfile, required this.sync, required this.minRuntimeVersion, this.requiredFeatures, this.flags, this.types, this.state, this.collections, this.userContext, this.telemetry});
 
   /// Decodes a JSON object.
   factory AppDocument.fromJson(Object json) {
@@ -131,6 +131,7 @@ final class AppDocument {
       state: m['state'] == null ? null : [for (final e in m['state']! as List<Object?>) StateEntry.fromJson(e!)],
       collections: m['collections'] == null ? null : [for (final e in m['collections']! as List<Object?>) Collection.fromJson(e!)],
       userContext: m['userContext'] == null ? null : [for (final e in m['userContext']! as List<Object?>) Field.fromJson(e!)],
+      telemetry: m['telemetry'] == null ? null : TelemetryPolicy.fromJson(m['telemetry']!),
     );
   }
 
@@ -182,6 +183,8 @@ final class AppDocument {
   /// Attributes the host provides about the signed-in user, available in PXL as
   /// `user.<name>`.
   final List<Field>? userContext;
+  /// What the runtime reports (ANL-003, ADR-0034).
+  final TelemetryPolicy? telemetry;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
@@ -210,6 +213,7 @@ final class AppDocument {
         if (state != null) 'state': [for (final e in state!) e.toJson()],
         if (collections != null) 'collections': [for (final e in collections!) e.toJson()],
         if (userContext != null) 'userContext': [for (final e in userContext!) e.toJson()],
+        if (telemetry != null) 'telemetry': telemetry!.toJson(),
       };
 }
 
@@ -1914,6 +1918,30 @@ final class SyncPolicy {
   Map<String, Object?> toJson() => {
         'startup': startup.toJson(),
         'activation': activation.toJson(),
+      };
+}
+
+/// What the runtime reports (ANL-003, ADR-0034).
+final class TelemetryPolicy {
+  const TelemetryPolicy({this.sampling});
+
+  /// Decodes a JSON object.
+  factory TelemetryPolicy.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return TelemetryPolicy(
+      sampling: m['sampling'] == null ? null : {for (final e in (m['sampling']! as Map<String, Object?>).entries) e.key: (e.value! as num).toDouble()},
+    );
+  }
+
+  /// The share of each consent-gated event type the runtime keeps, from 0 to 1
+  /// in steps of 0.001; 1 when absent. The host app can only lower a rate;
+  /// operational events (`session_start`, `sync_result`, `error`,
+  /// `rasp_detection`) are never sampled.
+  final Map<String, double>? sampling;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (sampling != null) 'sampling': {for (final e in sampling!.entries) e.key: e.value},
       };
 }
 
