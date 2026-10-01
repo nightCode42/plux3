@@ -21,8 +21,21 @@ in. Flutter 3.47.5, CI's `ubuntu-latest` (Android) and `macos-latest` (iOS).
 
 The *Size (Android)* job writes the six Android figures side by side
 (`android-compare.md` in its summary and artifact) and a per-file breakdown of each; the
-*Size (iOS)* job the IPA's. The gate is `RT-061`'s: at most 3 MiB, and no more than 10%
-over the overhead committed in `test/size/baseline.json` (`QA-007`).
+*Size (iOS)* job the IPA's.
+
+## Budgets
+
+Since 2026-10-01 (`RT-061`, `NFR-009`, [ADR-0036](../adr/0036-size-budgets-per-build.md)),
+each build is gated in CI on its own budget, and on no more than 10% over the overhead
+committed in `test/size/baseline.json` (`QA-007`):
+
+| Build | Budget |
+|---|---:|
+| Android App Bundle download, per ABI | 3 MiB |
+| Android APK, per ABI | 6.5 MiB |
+| iOS IPA, arm64 | 3 MiB |
+
+Before, `RT-061` allowed 3 MiB to the arm64 APK and the IPA.
 
 ## Round 1 — the first measurement (2026-09-30 to 2026-10-01)
 
@@ -76,10 +89,11 @@ dependencies (`riverpod` 95 KB, `jni` 87 KB, `cronet_http` 59 KB, `source_span` 
 - Every widget builder stays built in, and the host registers nothing: no reduction that
   adds work for developers.
 - Cronet stays: Play Services Cronet is the Android HTTP client (`SYN-010`).
-- The budget is restated per build: at most 3 MiB for the App Bundle download, and a
-  separate budget for the APK file (6 MiB proposed; armeabi-v7a exceeds it by 0.40 MiB).
-  This changes the wording of `RT-061`, a `MUST`, so it lands with an ADR and the gate
-  targets; until then *Size (Android)* gates the arm64 APK at 3 MiB and stays red.
+- The budget is restated per build: at most 3 MiB for the App Bundle download and the iOS
+  IPA, and 6.5 MiB for the APK file of each ABI (6 MiB was considered; armeabi-v7a exceeds
+  it by 0.40 MiB). `RT-061` and `NFR-009` are reworded (specification 1.1.7,
+  [ADR-0036](../adr/0036-size-budgets-per-build.md)), all seven builds are gated, and every
+  one meets its budget — armeabi-v7a's APK with 0.10 MiB to spare.
 - Size optimization is parked until a later round.
 
 **Candidates for an optimization round**, inside the runtime only and none measured yet:

@@ -155,22 +155,21 @@ the manifest's bundles — so a device whose download failed still gets its plan
 
 ## Size (`RT-061`, `NFR-009`)
 
-**Target:** at most 3 MiB added to a host app's download per platform, against a blank
-Flutter app. Measured in CI by `make size-android` (`ubuntu-latest`) and `make size-ios`
-(`macos-latest`); [test/size](../../test/size/README.md) has the method. The
-[size journey](size.md) records every measurement round; its round 1 is the P3 state:
+**Target** (`RT-061`, [ADR-0036](../adr/0036-size-budgets-per-build.md)): at most 3 MiB
+added to what a device downloads — the App Bundle split per ABI and the thinned iOS IPA —
+and at most 6.5 MiB to the release APK per ABI, against a blank Flutter app. Measured in CI
+by `make size-android` (`ubuntu-latest`) and `make size-ios` (`macos-latest`);
+[test/size](../../test/size/README.md) has the method. The [size journey](size.md) records
+every measurement round; its round 1 is the P3 state:
 
-| Build | Added by `plux_flutter` |
-|---|---:|
-| iOS IPA, arm64 | **2.35 MiB — met** |
-| Android App Bundle download, arm64-v8a / armeabi-v7a / x86_64 | **2.45 / 2.69 / 2.47 MiB** |
-| Android APK file, arm64-v8a / armeabi-v7a / x86_64 | **5.69 / 6.40 / 5.90 MiB** |
+| Build | Added by `plux_flutter` | Budget |
+|---|---:|---:|
+| iOS IPA, arm64 | **2.35 MiB** | 3 MiB |
+| Android App Bundle download, arm64-v8a / armeabi-v7a / x86_64 | **2.45 / 2.69 / 2.47 MiB** | 3 MiB |
+| Android APK file, arm64-v8a / armeabi-v7a / x86_64 | **5.69 / 6.40 / 5.90 MiB** | 6.5 MiB |
 
-The APK stores the Dart AOT code uncompressed (5.4 MB on arm64, 2.2 MB compressed), so the
-APK file exceeds 3 MiB while every App Bundle download meets it. The maintainer restates
-the budget per build (3 MiB for the App Bundle download, a separate APK budget); until
-`RT-061` is reworded the *Size (Android)* job gates the arm64 APK and stays red (work log,
-open decisions).
+All seven meet their budgets. The APK budget is larger because an APK stores the Dart AOT
+code uncompressed (5.4 MB on arm64, 2.2 MB compressed).
 
 ## Reference devices
 

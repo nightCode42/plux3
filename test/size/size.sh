@@ -5,20 +5,19 @@
 # The size job (RT-061, NFR-009), run by `make size-android` and
 # `make size-ios`. See test/size/README.md.
 #
-#   size.sh android [-update]   release APK for arm64, and the App Bundle
-#                               per ABI (needs the Android SDK)
+#   size.sh android [-update]   release APK and App Bundle for arm64-v8a,
+#                               armeabi-v7a and x86_64 (needs the Android SDK)
 #   size.sh ios [-update]       release app for arm64, unsigned (needs Xcode)
 #
 # Builds the blank app and the same app with plux_flutter, then
-# tools/cmd/sizegate fails when the runtime adds more than 3 MiB, or more
-# than 10% over the overhead committed in test/size/baseline.json;
-# -update rewrites that overhead instead. The Markdown report is written
-# to $SIZE_OUT/<platform>.md (default build/size); for Android, Flutter's
-# code-size analysis of the plux app to android-code-size.txt beside it,
-# and the comparison of what plux_flutter adds to the release APK of each
-# ABI and to what the App Bundle delivers to a device of that ABI,
-# compressed as Play downloads it, to android-compare.md (only the arm64
-# APK is gated). Each target's table is $SIZE_OUT/<target>.md.
+# tools/cmd/sizegate fails when the runtime adds more than a build's budget
+# (RT-061, ADR-0036: 6.5 MiB to an APK, 3 MiB to what a device downloads
+# from an App Bundle and to an IPA), or more than 10% over the overhead
+# committed in test/size/baseline.json; -update rewrites the overheads
+# instead. Reports go to $SIZE_OUT (default build/size): <platform>.md,
+# each Android build's table as <target>.md, the six Android builds side
+# by side as android-compare.md, and Flutter's code-size analysis of the
+# plux app as android-code-size.txt.
 set -euo pipefail
 
 root=$(git rev-parse --show-toplevel)
@@ -46,6 +45,7 @@ platform() {
 }
 
 target=${1:-}
+update=${2:-}
 case "$target" in
 android)
 	mkdir -p "$out"
@@ -63,18 +63,19 @@ android)
 		(cd "$here/$app" && flutter build appbundle --release)
 	done
 	aab=build/app/outputs/bundle/release/app-release.aab
-	# report <target> <build>: the target's table, written to $out/<target>.md
-	# and not gating; the gate below decides.
-	report() {
-		(cd "$root/tools" && go run ./cmd/sizegate -target "$1" -report \
+	# check <target> <build>: the target's gate, its table written to
+	# $out/<target>.md; a failure is counted, so every table is written.
+	failed=0
+	check() {
+		(cd "$root/tools" && go run ./cmd/sizegate -target "$1" \
 			-blank "$here/blank/$2" -plux "$here/plux/$2" \
-			-baseline "$here/baseline.json") >"$out/$1.md"
+			-baseline "$here/baseline.json" ${update:+"$update"}) >"$out/$1.md" || failed=1
 	}
 	for abi in arm64-v8a armeabi-v7a x86_64; do
-		report "android-$abi-aab" "$aab"
+		check "android-$abi-aab" "$aab"
 		apk=android-$abi-apk
 		if [ "$abi" = arm64-v8a ]; then apk=android-arm64-apk; fi
-		report "$apk" "build/app/outputs/flutter-apk/app-$abi-release.apk"
+		check "$apk" "build/app/outputs/flutter-apk/app-$abi-release.apk"
 	done
 	# What each ABI adds, side by side: the APK as a file, and what Play
 	# downloads from the App Bundle.
@@ -91,8 +92,12 @@ android)
 			row "$abi | App Bundle download" "$out/android-$abi-aab.md"
 		done
 	} | tee "$out/android-compare.md"
-	build=build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
-	gate=android-arm64-apk
+	# Each build's table with the files that grew most.
+	for f in "$out"/android-*-apk.md "$out"/android-*-aab.md; do
+		cat "$f"
+		echo
+	done | tee "$out/android.md"
+	exit "$failed"
 	;;
 ios)
 	for app in blank plux; do

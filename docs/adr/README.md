@@ -45,5 +45,6 @@ Files are named `NNNN-short-title.md` with a four-digit, never-reused number. Th
 | [0033](0033-documentation-site.md) | Documentation site: Starlight on Bun, published to GitHub Pages | P3 | Accepted |
 | [0034](0034-runtime-telemetry.md) | Runtime telemetry: consent-gated events buffered and sent by the sync isolate | P3 | Accepted |
 | [0035](0035-device-tests-in-ci.md) | Device end-to-end tests in CI: emulators and simulators on GitHub's free runners | P3 | Accepted |
+| [0036](0036-size-budgets-per-build.md) | Size budgets per build: what a device downloads, and the APK file | P3 | Accepted |
 
 The decisions for planned ADRs are summarised in spec §32 and §34.1. Each is written in full before or alongside the first implementation that depends on it, and its status is updated here.

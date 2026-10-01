@@ -979,8 +979,8 @@ jobs:
         if: always()
         run: cat "$PLUX_BENCH_SYNC_OUT" >> "$GITHUB_STEP_SUMMARY" 2>/dev/null || true
 
-  # What plux_flutter adds to a release build for arm64: the blank app of
-  # test/size with and without it (RT-061).
+  # What plux_flutter adds to release builds: the blank app of test/size
+  # with and without it (RT-061, ADR-0036).
   size-android:
     name: Size (Android)
     needs: changes
@@ -1003,7 +1003,7 @@ jobs:
           channel: stable
           cache: true
       # Verifies: RT-061, NFR-009.
-      - name: Release APK for arm64 and App Bundle, blank and with plux_flutter
+      - name: Release APKs and App Bundle, blank and with plux_flutter
         run: make size-android
       - name: Report
         if: always()

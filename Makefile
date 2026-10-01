@@ -372,7 +372,7 @@ bench-sync: ## Sync the benchmark app on the simulated slow network against a se
 	cd backend && PLUX_E2E_FLUTTER="$$(command -v flutter)" $(GO) test -count=1 -timeout 30m -run TestSyncOnSlowNetwork -v ./internal/server
 
 # Verifies: RT-061, NFR-009.
-size-android: ## Check what plux_flutter adds to a release APK for arm64 (RT-061; needs the Android SDK)
+size-android: ## Check what plux_flutter adds to the release APKs and App Bundle downloads (RT-061; needs the Android SDK)
 	test/size/size.sh android
 
 # Verifies: RT-061, NFR-009.

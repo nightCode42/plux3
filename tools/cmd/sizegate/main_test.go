@@ -74,7 +74,7 @@ func TestGateBudgetAndBaseline_RT_061(t *testing.T) {
 		{"within budget and baseline", 1000 + 2<<20, `{"android-arm64-apk": 2097152}`, exitOK},
 		{"grew 9%", 1000 + 2<<20*109/100, `{"android-arm64-apk": 2097152}`, exitOK},
 		{"grew 11%", 1000 + 2<<20*111/100, `{"android-arm64-apk": 2097152}`, exitFailed},
-		{"over budget", 1000 + 3<<20 + 1, `{"android-arm64-apk": 4194304}`, exitFailed},
+		{"over budget", 1000 + 13<<19 + 1, `{"android-arm64-apk": 8388608}`, exitFailed},
 		{"no baseline", 1000 + 2<<20, `{}`, exitFailed},
 	} {
 		plux := filepath.Join(dir, c.name+".apk")
@@ -305,6 +305,22 @@ func TestMeasuresWhatAnAppBundleDelivers_RT_061(t *testing.T) {
 	}
 	if _, err := entries(filepath.Join(dir, "blank.raw"), "arm64-v8a"); err == nil {
 		t.Error("listed a file that is not a bundle")
+	}
+}
+
+// TestBudgets checks each target's budget: 6.5 MiB for an APK, 3 MiB for
+// what a device downloads.
+// Verifies: RT-061, NFR-009.
+func TestBudgets_RT_061(t *testing.T) {
+	t.Parallel()
+	for _, target := range targets() {
+		want := int64(3 << 20)
+		if strings.HasSuffix(target, "-apk") {
+			want = 6815744
+		}
+		if got := budget(target); got != want {
+			t.Errorf("%s: budget %d, want %d", target, got, want)
+		}
 	}
 }
 
