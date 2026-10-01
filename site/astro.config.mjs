@@ -24,6 +24,7 @@ export default defineConfig({
             { slug: "index" },
             { slug: "guides/concepts" },
             { slug: "guides/first-release" },
+            { slug: "guides/run-locally" },
             { slug: "guides/host-app" },
           ],
         },

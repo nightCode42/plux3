@@ -32,16 +32,27 @@ mkdir -p "$out" "$work"
 # it up to date with this script's.
 [ -d "$work/skia/.git" ] || git init -q "$work/skia"
 git -C "$work/skia" sparse-checkout set --no-cone /LICENSE /include /src/core /src/pathops /src/ports /src/base /src/utils
+# Downloads are retried: a reset connection must not fail the image build.
+# The content is pinned (a commit, a tag), so a retry fetches the same bytes.
+fetch() { # fetch <out> <url>
+	curl -sSfL --retry 5 --retry-all-errors --retry-delay 3 --connect-timeout 30 -o "$1" "$2"
+}
 if [ "$(git -C "$work/skia" rev-parse -q --verify HEAD || true)" != "$SKIA_COMMIT" ]; then
-	git -C "$work/skia" fetch -q --depth 1 --filter=blob:none "$SKIA_URL" "$SKIA_COMMIT"
+	tries=0
+	until git -C "$work/skia" fetch -q --depth 1 --filter=blob:none "$SKIA_URL" "$SKIA_COMMIT"; do
+		tries=$((tries + 1))
+		[ "$tries" -lt 5 ] || { echo "fetching skia failed $tries times" >&2; exit 1; }
+		echo "fetching skia failed; retrying in $((tries * 5)) s" >&2
+		sleep $((tries * 5))
+	done
 	git -C "$work/skia" checkout -q FETCH_HEAD
 fi
 test "$(git -C "$work/skia" rev-parse HEAD)" = "$SKIA_COMMIT" || { echo "skia is not at $SKIA_COMMIT" >&2; exit 1; }
 
 wrapper=https://raw.githubusercontent.com/flutter/flutter/$FLUTTER_VERSION/engine/src/flutter/tools/path_ops
-curl -sSfL -o "$work/path_ops.cc" "$wrapper/path_ops.cc"
-curl -sSfL -o "$work/path_ops.h" "$wrapper/path_ops.h"
-curl -sSfL -o "$out/flutter-path_ops.LICENSE" "https://raw.githubusercontent.com/flutter/flutter/$FLUTTER_VERSION/LICENSE"
+fetch "$work/path_ops.cc" "$wrapper/path_ops.cc"
+fetch "$work/path_ops.h" "$wrapper/path_ops.h"
+fetch "$out/flutter-path_ops.LICENSE" "https://raw.githubusercontent.com/flutter/flutter/$FLUTTER_VERSION/LICENSE"
 cp "$work/skia/LICENSE" "$out/skia.LICENSE"
 # The wrapper includes Skia as third_party/skia.
 mkdir -p "$work/inc/third_party"

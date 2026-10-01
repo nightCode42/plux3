@@ -72,5 +72,6 @@ it still renders the new release, from its store, offline.
   refuses it with a diagnostic and nothing reaches the device.
 - Roll back with `plux release rollback --env staging <sequence>`: devices move to a new,
   higher sequence with the older content.
+- See everything else you can run on your machine in [Run it locally](run-locally.md).
 - Read the [host app guide](host-app.md) to add the runtime to your own app, and the
   [runtime runbook](../runbooks/runtime.md) for what can go wrong on devices.
