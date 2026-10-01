@@ -27,6 +27,7 @@ func typecheck(u *unit) {
 	tc.appDecls()
 	u.appScope = tc.baseScope(nil)
 	tc.computed(nil, u.project.App.Doc.State, "app.json", u.appScope)
+	tc.shellTabs()
 	for _, c := range u.shared {
 		if u.inFocus(c.file) {
 			tc.component(c, u.appScope)
@@ -36,6 +37,22 @@ func typecheck(u *unit) {
 		tc.plugin(pl)
 	}
 	u.finishGraph()
+}
+
+// shellTabs compiles the expressions of the tabs' labels and icons over
+// the app scope (NAV-006); checkShellTabs checks their types.
+func (t *typer) shellTabs() {
+	app := t.u.project.App.Doc
+	if app.Navigation == nil {
+		return
+	}
+	for i, sh := range app.Navigation.Shells {
+		for j, tab := range sh.Tabs {
+			ptr := plxerr.Pointer("navigation", "shells", strconv.Itoa(i), "tabs", strconv.Itoa(j))
+			t.compileAll(tab.Label, t.u.appScope, app.ID, "app.json", ptr+"/label")
+			t.compileAll(tab.Icon, t.u.appScope, app.ID, "app.json", ptr+"/icon")
+		}
+	}
 }
 
 // plugin type-checks a plugin's components, pages, flows and page graphs.
@@ -81,6 +98,10 @@ type sourceField struct {
 	name, id, typ string
 }
 
+// userAuthenticated is the built-in member of the user root that says
+// whether the host's auth delegate has a signed-in user (HST-010, NAV-009).
+const userAuthenticated = "authenticated"
+
 // appDecls checks the app-level declarations that become roots.
 func (t *typer) appDecls() {
 	app := t.u.project.App.Doc
@@ -90,6 +111,18 @@ func (t *typer) appDecls() {
 	}
 	t.vars = t.fields(nil, app.Variables, "app.json", "variables")
 	t.user = t.fields(nil, app.UserContext, "app.json", "userContext")
+	for i, f := range app.UserContext {
+		if f.Name == userAuthenticated {
+			t.u.report(plxerr.DuplicateKey, "app.json", plxerr.Pointer("userContext", strconv.Itoa(i), "name"),
+				"user.%s is built in: the host's auth delegate reports it", userAuthenticated)
+		}
+	}
+	t.user = append(t.user, [2]string{userAuthenticated, "bool"})
+	for i, ev := range app.HostEvents {
+		for j, f := range ev.Fields {
+			t.u.checkType(nil, f.Type, "app.json", plxerr.Pointer("hostEvents", strconv.Itoa(i), "fields", strconv.Itoa(j), "type"))
+		}
+	}
 	t.appSources = t.sources(nil, app.DataSources, "app.json")
 }
 
@@ -610,7 +643,11 @@ func (t *typer) stepOutput(g *graph, st schema.Step) string {
 	if !ok || a.Output == "" {
 		return ""
 	}
-	te, err := parseTypeExpr(a.Output)
+	output := a.Output
+	if st.Action == "openDialog" || st.Action == "openBottomSheet" {
+		output = t.presentedResult(st)
+	}
+	te, err := parseTypeExpr(output)
 	if err != nil || len(a.TypeParameters) > 0 && mentions(te, setOf(a.TypeParameters)) {
 		return ""
 	}
@@ -619,6 +656,21 @@ func (t *typer) stepOutput(g *graph, st schema.Step) string {
 	}
 	te.nullable = true
 	return te.String()
+}
+
+// presentedResult is the result type of the route a presenting step
+// opens, as its page or native route declares it (NAV-003), or "".
+func (t *typer) presentedResult(st schema.Step) string {
+	r := t.u.routes[literalString(st.Input["route"])]
+	switch {
+	case r == nil:
+		return ""
+	case r.page != nil:
+		return r.page.doc.Result
+	case r.native != nil:
+		return r.native.Result
+	}
+	return ""
 }
 
 func setOf(xs []string) map[string]bool {

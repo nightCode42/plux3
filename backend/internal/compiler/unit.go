@@ -28,14 +28,15 @@ type unit struct {
 	focus string
 
 	// Built by resolve.
-	ids        map[string]plxerr.Location // every entity ID, for duplicates
-	plugins    []*plugin                  // sorted by key
-	pages      map[string]*page           // by ID
-	routes     map[string]*route          // by route name (SCH-025)
-	graphs     map[string]*graph          // document graphs by ID
-	components map[string]*component      // by ID
-	shared     []*component               // app-level components, by file
-	appGraphs  []*graph                   // inline graphs of shared components
+	ids        map[string]plxerr.Location       // every entity ID, for duplicates
+	plugins    []*plugin                        // sorted by key
+	pages      map[string]*page                 // by ID
+	routes     map[string]*route                // by route name (SCH-025)
+	hostEvents map[string]*schema.HostEventDecl // by name (HST-013)
+	graphs     map[string]*graph                // document graphs by ID
+	components map[string]*component            // by ID
+	shared     []*component                     // app-level components, by file
+	appGraphs  []*graph                         // inline graphs of shared components
 	tkeys      map[string]*schema.TranslationKey
 	tokens     map[string]*token
 	assetIDs   map[string]*schema.AssetEntry

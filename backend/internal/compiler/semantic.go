@@ -245,6 +245,7 @@ func (u *unit) checkDecls() {
 		}
 	}
 	u.checkCollections(nil, app.Collections, "app.json")
+	u.checkShellTabs()
 	for _, pl := range u.plugins {
 		if pl.scope != nil {
 			pl.state = u.checkState(pl, pl.doc.State, pl.file, pl.scope)

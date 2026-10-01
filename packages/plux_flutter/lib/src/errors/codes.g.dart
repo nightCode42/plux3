@@ -292,6 +292,30 @@ enum PluxErrorCode {
   /// Plugin switched off.
   pluginDisabled(4020, 'PLUGIN_DISABLED', 'Plugin switched off'),
 
+  /// Route not found.
+  routeNotFound(4100, 'ROUTE_NOT_FOUND', 'Route not found'),
+
+  /// Invalid route parameters.
+  routeParametersInvalid(4101, 'ROUTE_PARAMETERS_INVALID', 'Invalid route parameters'),
+
+  /// Navigation refused by a guard.
+  navigationRefused(4102, 'NAVIGATION_REFUSED', 'Navigation refused by a guard'),
+
+  /// Deep link not mapped.
+  deepLinkUnmapped(4103, 'DEEP_LINK_UNMAPPED', 'Deep link not mapped'),
+
+  /// Native route not registered.
+  nativeRouteNotRegistered(4200, 'NATIVE_ROUTE_NOT_REGISTERED', 'Native route not registered'),
+
+  /// Native slot not registered.
+  nativeSlotNotRegistered(4201, 'NATIVE_SLOT_NOT_REGISTERED', 'Native slot not registered'),
+
+  /// Custom action not registered.
+  nativeActionNotRegistered(4202, 'NATIVE_ACTION_NOT_REGISTERED', 'Custom action not registered'),
+
+  /// Exposed state written with the wrong type.
+  exposedStateTypeMismatch(4203, 'EXPOSED_STATE_TYPE_MISMATCH', 'Exposed state written with the wrong type'),
+
   /// Outbound request blocked.
   outboundRequestBlocked(6030, 'OUTBOUND_REQUEST_BLOCKED', 'Outbound request blocked'),
 

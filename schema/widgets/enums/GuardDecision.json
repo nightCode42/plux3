@@ -1,0 +1,30 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "GuardDecision",
+  "id": 74,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.2.0"
+    }
+  ],
+  "description": "What a route guard decides about an entry (NAV-009).",
+  "values": [
+    {
+      "name": "allow",
+      "id": 1,
+      "description": "Enter the route."
+    },
+    {
+      "name": "redirect",
+      "id": 2,
+      "description": "Open the guard's redirect route instead."
+    },
+    {
+      "name": "fallback",
+      "id": 3,
+      "description": "Show the route's fallback page instead, and report PLX-4102."
+    }
+  ]
+}

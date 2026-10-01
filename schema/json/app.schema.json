@@ -63,6 +63,135 @@
     "entryRoute": {
       "$ref": "common.schema.json#/$defs/routeName"
     },
+    "navigation": {
+      "type": "object",
+      "x-plux-type": "NavigationPolicy",
+      "description": "App-wide navigation: the page for unknown routes, deep links and tabbed shells (NAV-005, NAV-006, NAV-008, NAV-011, ADR-0040).",
+      "properties": {
+        "notFound": {
+          "$ref": "common.schema.json#/$defs/routeName"
+        },
+        "deepLinks": {
+          "type": "object",
+          "x-plux-type": "DeepLinkPolicy",
+          "description": "The links the app answers (NAV-008): its hosts for `https` links and its custom schemes, and path patterns mapped to routes. `https://<host>/p/<route-name>?…` always resolves, so no pattern may start with `/p/`.",
+          "properties": {
+            "hosts": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)+$",
+                "maxLength": 253
+              },
+              "uniqueItems": true
+            },
+            "schemes": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9+.-]*$",
+                "maxLength": 64,
+                "not": {
+                  "enum": [
+                    "http",
+                    "https"
+                  ]
+                }
+              },
+              "uniqueItems": true
+            },
+            "routes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "x-plux-type": "DeepLinkRoute",
+                "description": "A path pattern mapped to a route: literal segments and `{name}` segments, each naming a parameter of the route; query parameters fill the route's other parameters by name, converted to their declared types.",
+                "required": [
+                  "path",
+                  "route"
+                ],
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "pattern": "^(/([A-Za-z0-9._~-]+|\\{[a-z][a-zA-Z0-9]*\\}))+$",
+                    "maxLength": 512
+                  },
+                  "route": {
+                    "$ref": "common.schema.json#/$defs/routeName"
+                  }
+                },
+                "patternProperties": {
+                  "^x-": true
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "patternProperties": {
+            "^x-": true
+          },
+          "additionalProperties": false
+        },
+        "shells": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "x-plux-type": "Shell",
+            "description": "A tabbed shell; each tab keeps its own navigation stack, and `switchTab` selects a tab by key (NAV-005, NAV-006).",
+            "required": [
+              "key",
+              "tabs"
+            ],
+            "properties": {
+              "key": {
+                "$ref": "common.schema.json#/$defs/key"
+              },
+              "tabs": {
+                "type": "array",
+                "minItems": 2,
+                "items": {
+                  "type": "object",
+                  "x-plux-type": "ShellTab",
+                  "description": "A tab of a shell: its label, icon and the route it opens with.",
+                  "required": [
+                    "key",
+                    "label",
+                    "icon",
+                    "initialRoute"
+                  ],
+                  "properties": {
+                    "key": {
+                      "$ref": "common.schema.json#/$defs/key"
+                    },
+                    "label": {
+                      "$ref": "common.schema.json#/$defs/propValue"
+                    },
+                    "icon": {
+                      "$ref": "common.schema.json#/$defs/propValue"
+                    },
+                    "initialRoute": {
+                      "$ref": "common.schema.json#/$defs/routeName"
+                    }
+                  },
+                  "patternProperties": {
+                    "^x-": true
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "patternProperties": {
+              "^x-": true
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false
+    },
     "plugins": {
       "type": "array",
       "items": {
@@ -227,6 +356,35 @@
       },
       "description": "Attributes the host provides about the signed-in user, available in PXL as `user.<name>`."
     },
+    "hostEvents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "x-plux-type": "HostEventDecl",
+        "description": "A typed event plugins send to the host app with `emitHostEvent`; `plux codegen` generates a Dart class for it (HST-013, HST-030, ADR-0039).",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "common.schema.json#/$defs/name"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "common.schema.json#/$defs/field"
+            }
+          },
+          "description": {
+            "$ref": "common.schema.json#/$defs/description"
+          }
+        },
+        "patternProperties": {
+          "^x-": true
+        },
+        "additionalProperties": false
+      }
+    },
     "telemetry": {
       "type": "object",
       "x-plux-type": "TelemetryPolicy",
@@ -252,6 +410,29 @@
             "minimum": 0,
             "maximum": 1
           }
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false
+    },
+    "push": {
+      "type": "object",
+      "x-plux-type": "PushPolicy",
+      "description": "Push notifications (NAV-008, ADR-0040): whether the app uses them, so a generated project carries the platform configuration, and the payload key under which a notification names `{route, params}` for `Plux.handlePushPayload`.",
+      "required": [
+        "enabled"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "payloadKey": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.-]*$",
+          "maxLength": 64,
+          "description": "The payload key holding `{route, params}`; `plux` when absent."
         }
       },
       "patternProperties": {

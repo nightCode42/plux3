@@ -11,7 +11,7 @@ The built-in actions of the action catalogue (spec Appendix D), generated from t
 | [callFlow](#callflow) | control | P5 | Runs a reusable named action graph with typed input and returns its output (ACT-061). |
 | [callNative](#callnative) | host | P4 | Invokes a custom action the host app registered, with typed input and output (ACT-060). |
 | [capturePhoto](#capturephoto) | device | P5 | Takes a photo with the camera. |
-| [condition](#condition) | control | P5 | Takes the then branch when a PXL condition holds, otherwise the else branch. |
+| [condition](#condition) | control | P4 | Takes the then branch when a PXL condition holds, otherwise the else branch. |
 | [controlAnimation](#controlanimation) | animation | P5 | Plays, pauses, reverses, seeks or stops a timeline. |
 | [copyToClipboard](#copytoclipboard) | device | P5 | Copies text to the clipboard; blocked on secure pages. |
 | [dbDelete](#dbdelete) | localDb | P5 | Deletes the record with a key; deleting a missing record succeeds. |
@@ -20,7 +20,7 @@ The built-in actions of the action catalogue (spec Appendix D), generated from t
 | [dbUpdate](#dbupdate) | localDb | P5 | Updates fields of the record with a key; fails if it does not exist. |
 | [dbUpsert](#dbupsert) | localDb | P5 | Inserts a record, or replaces the record with the same key. |
 | [delay](#delay) | control | P5 | Waits for a duration; the wait is cancelled with the run. |
-| [emitHostEvent](#emithostevent) | host | P5 | Sends a typed event to the host app. |
+| [emitHostEvent](#emithostevent) | host | P4 | Sends a typed event to the host app. |
 | [forEach](#foreach) | control | P5 | Runs the body branch once per item of a list, in order, bounded by the list length and the action.forEachItems limit (ACT-005). |
 | [getLocation](#getlocation) | device | P5 | Reads the device's current position once. |
 | [haptic](#haptic) | feedback | P5 | Plays a haptic feedback pattern. |
@@ -147,7 +147,7 @@ Output: `PickedFile`. Branches: `cancelled`.
 
 Takes the then branch when a PXL condition holds, otherwise the else branch.
 
-ID 30 · control · P5
+ID 30 · control · P4
 
 | Input | ID | Type | Default | Description |
 |---|---|---|---|---|
@@ -272,7 +272,7 @@ ID 34 · control · P5
 
 Sends a typed event to the host app.
 
-ID 51 · host · P5 · effects: host
+ID 51 · host · P4 · effects: host
 
 Type parameters:
 

@@ -2,7 +2,7 @@
   "$schema": "../json/registry/action.schema.json",
   "name": "condition",
   "id": 30,
-  "phase": "P5",
+  "phase": "P4",
   "category": "control",
   "description": "Takes the then branch when a PXL condition holds, otherwise the else branch.",
   "inputs": [

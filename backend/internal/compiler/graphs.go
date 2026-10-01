@@ -179,6 +179,13 @@ func (u *unit) checkInput(g *graph, a *registry.Action, in registry.Input, raw j
 			return u.routeParams(g, raw, bind["P"], c)
 		}
 	}
+	if a.Name == "emitHostEvent" && in.Name == "payload" {
+		return u.eventPayload(g, raw, c)
+	}
+	if a.Name == "pop" && in.Name == "result" && g.page != nil && g.page.doc.Result == "" {
+		u.report(plxerr.PropTypeMismatch, c.file, c.ptr, "page %q declares no result type to return", g.page.doc.Key)
+		return nil
+	}
 	if a.Name == "callFlow" && in.Name == "input" {
 		st := g.steps[stepIndex(c.ptr)]
 		if f := flowByKey(g.plugin, literalString(st.Input["flow"])); f != nil {
@@ -223,14 +230,30 @@ func (u *unit) bindAction(g *graph, a *registry.Action, input map[string]json.Ra
 			}
 		}
 	}
-	if a.Name == "setState" || a.Name == "patchState" {
-		if path := literalString(input["path"]); path != "" {
-			if t := statePathType(g, path); t != nil {
-				bind["T"] = t
-			}
-		}
+	if name, t := declaredBinding(g, a, input); t != nil {
+		bind[name] = t
 	}
 	return bind
+}
+
+// declaredBinding binds the type parameter a declaration fixes: pop's
+// result to the page's declared result (NAV-003), setState's value to
+// the state entry its path names.
+func declaredBinding(g *graph, a *registry.Action, input map[string]json.RawMessage) (string, *texpr) {
+	switch a.Name {
+	case "pop":
+		if g.page == nil || g.page.doc.Result == "" {
+			return "", nil
+		}
+		if t, err := parseTypeExpr(g.page.doc.Result); err == nil {
+			return "R", t
+		}
+	case "setState", "patchState":
+		if path := literalString(input["path"]); path != "" {
+			return "T", statePathType(g, path)
+		}
+	}
+	return "", nil
 }
 
 // literalString decodes a raw JSON string, or "".
@@ -297,6 +320,10 @@ func (u *unit) checkRef(g *graph, in registry.Input, raw json.RawMessage, c vctx
 		resolved, kind, to = g.plugin != nil && g.plugin.functions[name], EdgeUsesFunction, name
 	case "nativeAction":
 		_, resolved = u.natives.actions[name]
+	case "hostEvent":
+		_, resolved = u.hostEvents[name]
+	case "tab":
+		resolved = u.hasTab(name)
 	}
 	if !resolved {
 		u.report(plxerr.UnresolvedReference, c.file, c.ptr, "no %s is named %q", in.Ref, name)
@@ -467,13 +494,37 @@ func (u *unit) routeParams(g *graph, raw json.RawMessage, _ *texpr, c vctx) *val
 	return u.namedParams(raw, params, "route "+strconv.Quote(r.name), pc)
 }
 
+// paramCodes are the codes a check of named values reports: for the form
+// of the object, a missing value and an undeclared name.
+type paramCodes struct{ form, missing, unknown plxerr.Code }
+
+var (
+	// routeCodes are a route's (SCH-025, PLX-1203–1205), also used for a
+	// flow's inputs.
+	routeCodes = paramCodes{plxerr.RouteParameterTypeInvalid, plxerr.RouteParameterMissing, plxerr.UnknownRouteParameter}
+	// fieldCodes are a host event payload's.
+	fieldCodes = paramCodes{plxerr.PropTypeMismatch, plxerr.MissingRequiredProp, plxerr.UnknownProp}
+)
+
 // namedParams checks an object of values and bindings against declared
 // parameters: a route's (SCH-025, PLX-1203–1205) or a flow's inputs.
 func (u *unit) namedParams(raw json.RawMessage, params []schema.Param, what string, c vctx) *value {
+	return u.namedValues(raw, params, what, c, routeCodes)
+}
+
+// fieldValues checks an object of values and bindings against declared
+// fields, such as a host event's.
+func (u *unit) fieldValues(raw json.RawMessage, params []schema.Param, what string, c vctx) *value {
+	return u.namedValues(raw, params, what, c, fieldCodes)
+}
+
+// namedValues checks an object of values and bindings against declared
+// names and types, reporting with the given codes.
+func (u *unit) namedValues(raw json.RawMessage, params []schema.Param, what string, c vctx, codes paramCodes) *value {
 	v, ok := decodeJSON(raw)
 	obj, isObj := v.(map[string]any)
 	if !ok || !isObj || isBinding(obj) {
-		u.report(plxerr.RouteParameterTypeInvalid, c.file, c.ptr, "parameters are written as an object of values and bindings")
+		u.report(codes.form, c.file, c.ptr, "the values of %s are written as an object of values and bindings", what)
 		return nil
 	}
 	out := &value{kind: fbs.ValueKindMap}
@@ -483,7 +534,7 @@ func (u *unit) namedParams(raw json.RawMessage, params []schema.Param, what stri
 		pv, present := obj[p.Name]
 		if !present {
 			if p.Required != nil && *p.Required && len(p.Default) == 0 {
-				u.report(plxerr.RouteParameterMissing, c.file, c.ptr, "%s needs parameter %q", what, p.Name)
+				u.report(codes.missing, c.file, c.ptr, "%s needs %q", what, p.Name)
 			}
 			continue
 		}
@@ -497,7 +548,7 @@ func (u *unit) namedParams(raw json.RawMessage, params []schema.Param, what stri
 	}
 	for _, name := range sortedKeys(obj) {
 		if !declared[name] {
-			u.report(plxerr.UnknownRouteParameter, c.file, c.ptr+plxerr.Pointer(name), "%s has no parameter %q", what, name)
+			u.report(codes.unknown, c.file, c.ptr+plxerr.Pointer(name), "%s has no %q", what, name)
 		}
 	}
 	return out

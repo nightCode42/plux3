@@ -216,8 +216,8 @@ var registry = []Definition{
 	},
 	{
 		RouteParameterTypeInvalid, "ROUTE_PARAMETER_TYPE_INVALID", SeverityError, "Route parameter has the wrong type",
-		"A navigate action passes a parameter value whose type differs from the parameter's declared type.",
-		"Pass a value of the declared type.", false,
+		"A navigate action passes a parameter value whose type differs from the parameter's declared type, or a deep-link pattern reads a parameter whose type a link's text cannot carry (a list, a map or an object).",
+		"Pass a value of the declared type; read only scalar and enum parameters from a link's path.", false,
 	},
 	{
 		UnknownRouteParameter, "UNKNOWN_ROUTE_PARAMETER", SeverityError, "Unknown route parameter",
@@ -488,6 +488,46 @@ var registry = []Definition{
 		PluginDisabled, "PLUGIN_DISABLED", SeverityWarning, "Plugin switched off",
 		"The release's control switches turn the plugin off (kill switch), so every route into it shows its fallback page (RT-022).",
 		"Turn the switch off in the release's channel controls once the problem is fixed.", false,
+	},
+	{
+		RouteNotFound, "ROUTE_NOT_FOUND", SeverityError, "Route not found",
+		"A navigation, a deep link or a PluxView names a route that is neither a page of the active release nor a registered native route. The app's not-found page is shown instead (NAV-011).",
+		"Check the route name, publish the page that should answer it, or register the native route in PluxConfig.", false,
+	},
+	{
+		RouteParametersInvalid, "ROUTE_PARAMETERS_INVALID", SeverityError, "Invalid route parameters",
+		"A route was entered with a parameter missing, unknown or of the wrong type for the page's declaration. The page's error fallback is shown instead of the page (NAV-007).",
+		"Pass every required parameter with the declared type; a deep link's or push payload's values must convert to the parameter types.", false,
+	},
+	{
+		NavigationRefused, "NAVIGATION_REFUSED", SeverityWarning, "Navigation refused by a guard",
+		"A route guard refused entry: its graph decided on the fallback, or it failed and the guard failed closed (NAV-009).",
+		"If the refusal is unexpected, check the guard's condition and the state it reads, such as the auth delegate, flags or the device's assurance level.", false,
+	},
+	{
+		DeepLinkUnmapped, "DEEP_LINK_UNMAPPED", SeverityWarning, "Deep link not mapped",
+		"A deep link or push payload names a host, scheme or path that the app's navigation.deepLinks do not map to a route, so nothing was opened (NAV-008).",
+		"Add a path pattern for the link to navigation.deepLinks, or link to https://<host>/p/<route-name>, which always resolves.", false,
+	},
+	{
+		NativeRouteNotRegistered, "NATIVE_ROUTE_NOT_REGISTERED", SeverityError, "Native route not registered",
+		"A plugin navigated to a native route that the host app did not register in PluxConfig or expose through its router (NAV-002, HST-031).",
+		"Register the route in the host app, or run plux native scan and sync so publishing checks the route against the host build (WGT-032).", false,
+	},
+	{
+		NativeSlotNotRegistered, "NATIVE_SLOT_NOT_REGISTERED", SeverityError, "Native slot not registered",
+		"A page places a native slot widget that the host app did not register in PluxConfig.nativeSlots. The page's error boundary shows a placeholder instead (WGT-033).",
+		"Register the slot's builder in the host app, or run plux native scan and sync so publishing checks the slot against the host build (WGT-032).", false,
+	},
+	{
+		NativeActionNotRegistered, "NATIVE_ACTION_NOT_REGISTERED", SeverityError, "Custom action not registered",
+		"A callNative step names a custom action that the host app did not register in PluxConfig.nativeActions; the step fails and its onError handler runs (ACT-060).",
+		"Register the action in the host app, or run plux native scan and sync so publishing checks the action against the host build (WGT-032).", false,
+	},
+	{
+		ExposedStateTypeMismatch, "EXPOSED_STATE_TYPE_MISMATCH", SeverityError, "Exposed state written with the wrong type",
+		"Native code wrote a value to an exposed state entry whose declared type the value does not have; the write is refused and the entry keeps its value (STA-030, HST-021).",
+		"Write a value of the entry's declared type; plux codegen generates typed accessors that make this a compile error.", false,
 	},
 
 	// Security.

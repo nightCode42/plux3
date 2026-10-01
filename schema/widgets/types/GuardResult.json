@@ -1,0 +1,50 @@
+{
+  "$schema": "../../json/registry/value-type.schema.json",
+  "name": "GuardResult",
+  "id": 37,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.2.0"
+    }
+  ],
+  "description": "The output of a route guard's graph: enter, redirect or fall back (NAV-009, ADR-0040).",
+  "fields": [
+    {
+      "name": "decision",
+      "id": 1,
+      "type": "GuardDecision",
+      "required": true,
+      "description": "What the guard decides."
+    },
+    {
+      "name": "route",
+      "id": 2,
+      "type": "route?",
+      "description": "For redirect: the route to open instead."
+    },
+    {
+      "name": "params",
+      "id": 3,
+      "type": "map<string,string>?",
+      "description": "For redirect: the route's parameters as strings, converted by its parameter types as a deep link's are."
+    }
+  ],
+  "constants": [
+    {
+      "name": "allow",
+      "value": {
+        "decision": "allow"
+      },
+      "description": "Enter the route."
+    },
+    {
+      "name": "fallback",
+      "value": {
+        "decision": "fallback"
+      },
+      "description": "Show the route's fallback page."
+    }
+  ]
+}

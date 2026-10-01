@@ -484,6 +484,14 @@ String? nameGradientKind(Decoding d, Object? v) => switch (v) {
   _ => null,
 };
 
+/// The member name of a GuardDecision, from its permanent value ID or name.
+String? nameGuardDecision(Decoding d, Object? v) => switch (v) {
+  1 || 'allow' => 'allow',
+  2 || 'redirect' => 'redirect',
+  3 || 'fallback' => 'fallback',
+  _ => null,
+};
+
 /// The member name of a HapticPattern, from its permanent value ID or name.
 String? nameHapticPattern(Decoding d, Object? v) => switch (v) {
   1 || 'light' => 'light',

@@ -340,9 +340,9 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 `ROUTE_PARAMETER_TYPE_INVALID` · error · Route parameter has the wrong type
 
-**Cause.** A navigate action passes a parameter value whose type differs from the parameter's declared type.
+**Cause.** A navigate action passes a parameter value whose type differs from the parameter's declared type, or a deep-link pattern reads a parameter whose type a link's text cannot carry (a list, a map or an object).
 
-**Fix.** Pass a value of the declared type.
+**Fix.** Pass a value of the declared type; read only scalar and enum parameters from a link's path.
 
 ### PLX-1205
 
@@ -765,6 +765,70 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 **Cause.** The release's control switches turn the plugin off (kill switch), so every route into it shows its fallback page (RT-022).
 
 **Fix.** Turn the switch off in the release's channel controls once the problem is fixed.
+
+### PLX-4100
+
+`ROUTE_NOT_FOUND` · error · Route not found
+
+**Cause.** A navigation, a deep link or a PluxView names a route that is neither a page of the active release nor a registered native route. The app's not-found page is shown instead (NAV-011).
+
+**Fix.** Check the route name, publish the page that should answer it, or register the native route in PluxConfig.
+
+### PLX-4101
+
+`ROUTE_PARAMETERS_INVALID` · error · Invalid route parameters
+
+**Cause.** A route was entered with a parameter missing, unknown or of the wrong type for the page's declaration. The page's error fallback is shown instead of the page (NAV-007).
+
+**Fix.** Pass every required parameter with the declared type; a deep link's or push payload's values must convert to the parameter types.
+
+### PLX-4102
+
+`NAVIGATION_REFUSED` · warning · Navigation refused by a guard
+
+**Cause.** A route guard refused entry: its graph decided on the fallback, or it failed and the guard failed closed (NAV-009).
+
+**Fix.** If the refusal is unexpected, check the guard's condition and the state it reads, such as the auth delegate, flags or the device's assurance level.
+
+### PLX-4103
+
+`DEEP_LINK_UNMAPPED` · warning · Deep link not mapped
+
+**Cause.** A deep link or push payload names a host, scheme or path that the app's navigation.deepLinks do not map to a route, so nothing was opened (NAV-008).
+
+**Fix.** Add a path pattern for the link to navigation.deepLinks, or link to https://<host>/p/<route-name>, which always resolves.
+
+### PLX-4200
+
+`NATIVE_ROUTE_NOT_REGISTERED` · error · Native route not registered
+
+**Cause.** A plugin navigated to a native route that the host app did not register in PluxConfig or expose through its router (NAV-002, HST-031).
+
+**Fix.** Register the route in the host app, or run plux native scan and sync so publishing checks the route against the host build (WGT-032).
+
+### PLX-4201
+
+`NATIVE_SLOT_NOT_REGISTERED` · error · Native slot not registered
+
+**Cause.** A page places a native slot widget that the host app did not register in PluxConfig.nativeSlots. The page's error boundary shows a placeholder instead (WGT-033).
+
+**Fix.** Register the slot's builder in the host app, or run plux native scan and sync so publishing checks the slot against the host build (WGT-032).
+
+### PLX-4202
+
+`NATIVE_ACTION_NOT_REGISTERED` · error · Custom action not registered
+
+**Cause.** A callNative step names a custom action that the host app did not register in PluxConfig.nativeActions; the step fails and its onError handler runs (ACT-060).
+
+**Fix.** Register the action in the host app, or run plux native scan and sync so publishing checks the action against the host build (WGT-032).
+
+### PLX-4203
+
+`EXPOSED_STATE_TYPE_MISMATCH` · error · Exposed state written with the wrong type
+
+**Cause.** Native code wrote a value to an exposed state entry whose declared type the value does not have; the write is refused and the entry keeps its value (STA-030, HST-021).
+
+**Fix.** Write a value of the entry's declared type; plux codegen generates typed accessors that make this a compile error.
 
 ## Security (PLX-6000–6999)
 

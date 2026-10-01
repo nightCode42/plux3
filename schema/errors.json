@@ -380,8 +380,8 @@
       "reason": "ROUTE_PARAMETER_TYPE_INVALID",
       "severity": "error",
       "title": "Route parameter has the wrong type",
-      "cause": "A navigate action passes a parameter value whose type differs from the parameter's declared type.",
-      "fix": "Pass a value of the declared type."
+      "cause": "A navigate action passes a parameter value whose type differs from the parameter's declared type, or a deep-link pattern reads a parameter whose type a link's text cannot carry (a list, a map or an object).",
+      "fix": "Pass a value of the declared type; read only scalar and enum parameters from a link's path."
     },
     {
       "code": "PLX-1205",
@@ -798,6 +798,70 @@
       "title": "Plugin switched off",
       "cause": "The release's control switches turn the plugin off (kill switch), so every route into it shows its fallback page (RT-022).",
       "fix": "Turn the switch off in the release's channel controls once the problem is fixed."
+    },
+    {
+      "code": "PLX-4100",
+      "reason": "ROUTE_NOT_FOUND",
+      "severity": "error",
+      "title": "Route not found",
+      "cause": "A navigation, a deep link or a PluxView names a route that is neither a page of the active release nor a registered native route. The app's not-found page is shown instead (NAV-011).",
+      "fix": "Check the route name, publish the page that should answer it, or register the native route in PluxConfig."
+    },
+    {
+      "code": "PLX-4101",
+      "reason": "ROUTE_PARAMETERS_INVALID",
+      "severity": "error",
+      "title": "Invalid route parameters",
+      "cause": "A route was entered with a parameter missing, unknown or of the wrong type for the page's declaration. The page's error fallback is shown instead of the page (NAV-007).",
+      "fix": "Pass every required parameter with the declared type; a deep link's or push payload's values must convert to the parameter types."
+    },
+    {
+      "code": "PLX-4102",
+      "reason": "NAVIGATION_REFUSED",
+      "severity": "warning",
+      "title": "Navigation refused by a guard",
+      "cause": "A route guard refused entry: its graph decided on the fallback, or it failed and the guard failed closed (NAV-009).",
+      "fix": "If the refusal is unexpected, check the guard's condition and the state it reads, such as the auth delegate, flags or the device's assurance level."
+    },
+    {
+      "code": "PLX-4103",
+      "reason": "DEEP_LINK_UNMAPPED",
+      "severity": "warning",
+      "title": "Deep link not mapped",
+      "cause": "A deep link or push payload names a host, scheme or path that the app's navigation.deepLinks do not map to a route, so nothing was opened (NAV-008).",
+      "fix": "Add a path pattern for the link to navigation.deepLinks, or link to https://\u003chost\u003e/p/\u003croute-name\u003e, which always resolves."
+    },
+    {
+      "code": "PLX-4200",
+      "reason": "NATIVE_ROUTE_NOT_REGISTERED",
+      "severity": "error",
+      "title": "Native route not registered",
+      "cause": "A plugin navigated to a native route that the host app did not register in PluxConfig or expose through its router (NAV-002, HST-031).",
+      "fix": "Register the route in the host app, or run plux native scan and sync so publishing checks the route against the host build (WGT-032)."
+    },
+    {
+      "code": "PLX-4201",
+      "reason": "NATIVE_SLOT_NOT_REGISTERED",
+      "severity": "error",
+      "title": "Native slot not registered",
+      "cause": "A page places a native slot widget that the host app did not register in PluxConfig.nativeSlots. The page's error boundary shows a placeholder instead (WGT-033).",
+      "fix": "Register the slot's builder in the host app, or run plux native scan and sync so publishing checks the slot against the host build (WGT-032)."
+    },
+    {
+      "code": "PLX-4202",
+      "reason": "NATIVE_ACTION_NOT_REGISTERED",
+      "severity": "error",
+      "title": "Custom action not registered",
+      "cause": "A callNative step names a custom action that the host app did not register in PluxConfig.nativeActions; the step fails and its onError handler runs (ACT-060).",
+      "fix": "Register the action in the host app, or run plux native scan and sync so publishing checks the action against the host build (WGT-032)."
+    },
+    {
+      "code": "PLX-4203",
+      "reason": "EXPOSED_STATE_TYPE_MISMATCH",
+      "severity": "error",
+      "title": "Exposed state written with the wrong type",
+      "cause": "Native code wrote a value to an exposed state entry whose declared type the value does not have; the write is refused and the entry keeps its value (STA-030, HST-021).",
+      "fix": "Write a value of the entry's declared type; plux codegen generates typed accessors that make this a compile error."
     },
     {
       "code": "PLX-6030",

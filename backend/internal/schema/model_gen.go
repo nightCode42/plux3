@@ -116,6 +116,9 @@ type AppDocument struct {
 	Theme string `json:"theme"`
 	// EntryRoute: App-wide unique route name (SCH-025).
 	EntryRoute string `json:"entryRoute"`
+	// Navigation: App-wide navigation: the page for unknown routes, deep links
+	// and tabbed shells (NAV-005, NAV-006, NAV-008, NAV-011, ADR-0040).
+	Navigation *NavigationPolicy `json:"navigation,omitempty"`
 	// Plugins: Keys of the app's plugins, in display order; each has a directory
 	// `plugins/<key>/`.
 	Plugins      []string      `json:"plugins"`
@@ -143,9 +146,15 @@ type AppDocument struct {
 	Collections      []Collection           `json:"collections,omitempty"`
 	// UserContext: Attributes the host provides about the signed-in user,
 	// available in PXL as `user.<name>`.
-	UserContext []Field `json:"userContext,omitempty"`
+	UserContext []Field         `json:"userContext,omitempty"`
+	HostEvents  []HostEventDecl `json:"hostEvents,omitempty"`
 	// Telemetry: What the runtime reports (ANL-003, ADR-0034).
 	Telemetry *TelemetryPolicy `json:"telemetry,omitempty"`
+	// Push: Push notifications (NAV-008, ADR-0040): whether the app uses them,
+	// so a generated project carries the platform configuration, and the payload
+	// key under which a notification names `{route, params}` for
+	// `Plux.handlePushPayload`.
+	Push *PushPolicy `json:"push,omitempty"`
 }
 
 // AssetEntry — An asset file.
@@ -340,6 +349,26 @@ func (v DataSourceKind) Valid() bool {
 	return false
 }
 
+// DeepLinkPolicy — The links the app answers (NAV-008): its hosts for
+// `https` links and its custom schemes, and path patterns mapped to routes.
+// `https://<host>/p/<route-name>?…` always resolves, so no pattern may
+// start with `/p/`.
+type DeepLinkPolicy struct {
+	Hosts   []string        `json:"hosts,omitempty"`
+	Schemes []string        `json:"schemes,omitempty"`
+	Routes  []DeepLinkRoute `json:"routes,omitempty"`
+}
+
+// DeepLinkRoute — A path pattern mapped to a route: literal segments and
+// `{name}` segments, each naming a parameter of the route; query parameters
+// fill the route's other parameters by name, converted to their declared
+// types.
+type DeepLinkRoute struct {
+	Path string `json:"path"`
+	// Route: App-wide unique route name (SCH-025).
+	Route string `json:"route"`
+}
+
 // DeviceAPI — A device API a plugin may request (SEC-080).
 type DeviceAPI string
 
@@ -483,6 +512,17 @@ type HostBuild struct {
 	Build   int64  `json:"build"`
 }
 
+// HostEventDecl — A typed event plugins send to the host app with
+// `emitHostEvent`; `plux codegen` generates a Dart class for it (HST-013,
+// HST-030, ADR-0039).
+type HostEventDecl struct {
+	// Name: Identifier used in PXL and generated code: lowerCamelCase.
+	Name   string  `json:"name"`
+	Fields []Field `json:"fields,omitempty"`
+	// Description: Human-readable description.
+	Description string `json:"description,omitempty"`
+}
+
 // Icon — An uploaded image or a generated monogram (SCH-020).
 type Icon struct {
 	// Asset: Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
@@ -599,6 +639,19 @@ type NativeSlotEvent struct {
 	Payload string `json:"payload,omitempty"`
 }
 
+// NavigationPolicy — App-wide navigation: the page for unknown routes, deep
+// links and tabbed shells (NAV-005, NAV-006, NAV-008, NAV-011, ADR-0040).
+type NavigationPolicy struct {
+	// NotFound: App-wide unique route name (SCH-025).
+	NotFound string `json:"notFound,omitempty"`
+	// DeepLinks: The links the app answers (NAV-008): its hosts for `https`
+	// links and its custom schemes, and path patterns mapped to routes.
+	// `https://<host>/p/<route-name>?…` always resolves, so no pattern may
+	// start with `/p/`.
+	DeepLinks *DeepLinkPolicy `json:"deepLinks,omitempty"`
+	Shells    []Shell         `json:"shells,omitempty"`
+}
+
 // Node — A node of a page or component tree: a widget or a component
 // instance (SCH-023).
 type Node struct {
@@ -645,8 +698,11 @@ type PageDocument struct {
 	// Literal objects and lists may contain bindings in their fields and items.
 	Title json.RawMessage `json:"title"`
 	// Description: Human-readable description.
-	Description string       `json:"description,omitempty"`
-	Params      []Param      `json:"params,omitempty"`
+	Description string  `json:"description,omitempty"`
+	Params      []Param `json:"params,omitempty"`
+	// Result: Type expression of SCH-010, e.g. `string`, `decimal?`,
+	// `list<Transaction>`, `map<string,int>`.
+	Result      string       `json:"result,omitempty"`
 	State       []StateEntry `json:"state,omitempty"`
 	DataSources []DataSource `json:"dataSources,omitempty"`
 	// Lifecycle: Lifecycle handlers (SCH-022).
@@ -766,6 +822,16 @@ type PluginDocument struct {
 	DataSources  []DataSource  `json:"dataSources,omitempty"`
 }
 
+// PushPolicy — Push notifications (NAV-008, ADR-0040): whether the app uses
+// them, so a generated project carries the platform configuration, and the
+// payload key under which a notification names `{route, params}` for
+// `Plux.handlePushPayload`.
+type PushPolicy struct {
+	Enabled bool `json:"enabled"`
+	// PayloadKey: The payload key holding `{route, params}`; `plux` when absent.
+	PayloadKey string `json:"payloadKey,omitempty"`
+}
+
 // RequiredFeaturesPolicy — What the compiler does when a release needs a
 // newer runtime than `minRuntimeVersion`: reject the publish, or raise the
 // release's required features with a warning (WGT-004).
@@ -851,6 +917,30 @@ type Semantics struct {
 	Button           *bool           `json:"button,omitempty"`
 	LiveRegion       *bool           `json:"liveRegion,omitempty"`
 	ExcludeSemantics *bool           `json:"excludeSemantics,omitempty"`
+}
+
+// Shell — A tabbed shell; each tab keeps its own navigation stack, and
+// `switchTab` selects a tab by key (NAV-005, NAV-006).
+type Shell struct {
+	// Key: Human-readable lower-kebab slug, unique within its parent (SCH-002).
+	// Files in the Git layout are named after it.
+	Key  string     `json:"key"`
+	Tabs []ShellTab `json:"tabs"`
+}
+
+// ShellTab — A tab of a shell: its label, icon and the route it opens with.
+type ShellTab struct {
+	// Key: Human-readable lower-kebab slug, unique within its parent (SCH-002).
+	// Files in the Git layout are named after it.
+	Key string `json:"key"`
+	// Label: A prop value: a literal of the prop's type, or a binding (SCH-011).
+	// Literal objects and lists may contain bindings in their fields and items.
+	Label json.RawMessage `json:"label"`
+	// Icon: A prop value: a literal of the prop's type, or a binding (SCH-011).
+	// Literal objects and lists may contain bindings in their fields and items.
+	Icon json.RawMessage `json:"icon"`
+	// InitialRoute: App-wide unique route name (SCH-025).
+	InitialRoute string `json:"initialRoute"`
 }
 
 // SlotFill — The content of a slot: one node, or a list of nodes for list

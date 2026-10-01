@@ -447,6 +447,8 @@ func (u *unit) resolveApp() {
 	if _, ok := names[app.EntryRoute]; !ok {
 		u.report(plxerr.UnknownRoute, "app.json", "/entryRoute", "no page or native route is named %q", app.EntryRoute)
 	}
+	u.resolveNavigation()
+	u.resolveHostEvents()
 }
 
 // buildPage builds a page's node tree and indexes its declarations.

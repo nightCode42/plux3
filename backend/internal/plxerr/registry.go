@@ -118,11 +118,19 @@ const (
 
 	// Runtime rendering and navigation (PLX-4000–4999).
 
-	NodeBuildFailed     Code = 4001
-	PropValueInvalid    Code = 4002
-	UnknownWidget       Code = 4003
-	ActionsNotAvailable Code = 4010
-	PluginDisabled      Code = 4020
+	NodeBuildFailed           Code = 4001
+	PropValueInvalid          Code = 4002
+	UnknownWidget             Code = 4003
+	ActionsNotAvailable       Code = 4010
+	PluginDisabled            Code = 4020
+	RouteNotFound             Code = 4100
+	RouteParametersInvalid    Code = 4101
+	NavigationRefused         Code = 4102
+	DeepLinkUnmapped          Code = 4103
+	NativeRouteNotRegistered  Code = 4200
+	NativeSlotNotRegistered   Code = 4201
+	NativeActionNotRegistered Code = 4202
+	ExposedStateTypeMismatch  Code = 4203
 
 	// Security (PLX-6000–6999).
 

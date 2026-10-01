@@ -1014,6 +1014,12 @@ const List<ValueTypeDescriptor> valueTypeDescriptors = [
     fields: {'kind': 1, 'colors': 2, 'stops': 3, 'tileMode': 4, 'begin': 5, 'end': 6, 'center': 7, 'radius': 8, 'focal': 9, 'focalRadius': 10, 'startAngle': 11, 'endAngle': 12},
   ),
   ValueTypeDescriptor(
+    'GuardResult',
+    37,
+    revision: 1,
+    fields: {'decision': 1, 'route': 2, 'params': 3},
+  ),
+  ValueTypeDescriptor(
     'IconData',
     14,
     revision: 1,
@@ -1304,6 +1310,12 @@ const List<EnumDescriptor> enumDescriptors = [
     24,
     revision: 1,
     values: {'linear': 1, 'radial': 2, 'sweep': 3},
+  ),
+  EnumDescriptor(
+    'GuardDecision',
+    74,
+    revision: 1,
+    values: {'allow': 1, 'redirect': 2, 'fallback': 3},
   ),
   EnumDescriptor(
     'HapticPattern',
