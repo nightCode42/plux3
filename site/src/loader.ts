@@ -18,8 +18,9 @@ const blob = "https://github.com/nightCode42/plux3/blob/main/";
 /** Where a page is edited. */
 const edit = "https://github.com/nightCode42/plux3/edit/main/";
 
-/** Files of docs/ that are not published: the maintainers' work log. */
+/** Files of docs/ that are not published: the maintainers' work log and phase plans. */
 const unpublished = new Set(["WORKLOG.md", "worklog-archive.md"]);
+const unpublishedDirs = ["plans/"];
 
 /** A page: where it comes from, its route, and whether it is a directory's index. */
 interface Page {
@@ -108,7 +109,7 @@ export function pluxDocs(): Loader {
       const repo = resolve(site, "..");
       const pages: Page[] = [];
       for (const path of markdownFiles(join(repo, "docs"))) {
-        if (!unpublished.has(path)) {
+        if (!unpublished.has(path) && !unpublishedDirs.some((d) => path.startsWith(d))) {
           pages.push({ file: `docs/${path}`, id: routeOf(path), index: /(^|\/)README\.md$/.test(path) });
         }
       }
