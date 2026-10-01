@@ -6,6 +6,7 @@
 // plux_flutter (test/size), release mode.
 //
 //	sizegate -target android-arm64-apk -blank app-blank.apk -plux app-plux.apk
+//	sizegate -target android-x86_64-apk -blank blank.apk -plux plux.apk -report
 //	sizegate -target android-arm64-v8a-aab -blank blank.aab -plux plux.aab -report
 //	sizegate -target ios-arm64-ipa -blank Blank.app -plux Plux.app
 //
@@ -52,7 +53,11 @@ const growth = 0.10
 
 // targets are the builds the gate knows.
 func targets() []string {
-	return []string{"android-arm64-apk", "android-arm64-v8a-aab", "android-armeabi-v7a-aab", "android-x86_64-aab", "ios-arm64-ipa"}
+	return []string{
+		"android-arm64-apk", "android-armeabi-v7a-apk", "android-x86_64-apk",
+		"android-arm64-v8a-aab", "android-armeabi-v7a-aab", "android-x86_64-aab",
+		"ios-arm64-ipa",
+	}
 }
 
 // abi is the Android ABI an App Bundle target delivers, or "" for a

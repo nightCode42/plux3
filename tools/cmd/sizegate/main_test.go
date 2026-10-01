@@ -307,3 +307,20 @@ func TestMeasuresWhatAnAppBundleDelivers_RT_061(t *testing.T) {
 		t.Error("listed a file that is not a bundle")
 	}
 }
+
+// TestEveryApkTargetIsKnown checks that the APK of each ABI can be
+// compared, reporting without gating.
+func TestEveryApkTargetIsKnown(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	blank, plux := filepath.Join(dir, "blank.apk"), filepath.Join(dir, "plux.apk")
+	writeAPK(t, blank, 1000)
+	writeAPK(t, plux, 5<<20)
+	for _, target := range []string{"android-arm64-apk", "android-armeabi-v7a-apk", "android-x86_64-apk"} {
+		var stdout, stderr bytes.Buffer
+		args := []string{"-target", target, "-blank", blank, "-plux", plux, "-baseline", filepath.Join(dir, "none.json"), "-report"}
+		if code := run(args, &stdout, &stderr); code != exitOK || !strings.Contains(stdout.String(), target) {
+			t.Errorf("%s: exit %d\n%s%s", target, code, stdout.String(), stderr.String())
+		}
+	}
+}

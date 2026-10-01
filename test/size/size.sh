@@ -15,8 +15,10 @@
 # -update rewrites that overhead instead. The Markdown report is written
 # to $SIZE_OUT/<platform>.md (default build/size); for Android, Flutter's
 # code-size analysis of the plux app to android-code-size.txt beside it,
-# and what the release App Bundle delivers to a device of each ABI,
-# compressed as Play downloads it, to android-aab.md (reported, not gated).
+# and the comparison of what plux_flutter adds to the release APK of each
+# ABI and to what the App Bundle delivers to a device of that ABI,
+# compressed as Play downloads it, to android-compare.md (only the arm64
+# APK is gated). Each target's table is $SIZE_OUT/<target>.md.
 set -euo pipefail
 
 root=$(git rev-parse --show-toplevel)
@@ -54,20 +56,41 @@ android)
 	# made first because it writes the same APK the gate measures.
 	(cd "$here/plux" && flutter build apk --release --target-platform android-arm64 \
 		--analyze-size --code-size-directory "$out/code-size") | tee "$out/android-code-size.txt"
+	# The APK of each ABI, and the App Bundle for the three of them.
 	for app in blank plux; do
-		(cd "$here/$app" && flutter build apk --release --target-platform android-arm64 --split-per-abi)
-	done
-	for app in blank plux; do
+		(cd "$here/$app" && flutter build apk --release --split-per-abi \
+			--target-platform android-arm,android-arm64,android-x64)
 		(cd "$here/$app" && flutter build appbundle --release)
 	done
 	aab=build/app/outputs/bundle/release/app-release.aab
-	: >"$out/android-aab.md"
+	# report <target> <build>: the target's table, written to $out/<target>.md
+	# and not gating; the gate below decides.
+	report() {
+		(cd "$root/tools" && go run ./cmd/sizegate -target "$1" -report \
+			-blank "$here/blank/$2" -plux "$here/plux/$2" \
+			-baseline "$here/baseline.json") >"$out/$1.md"
+	}
 	for abi in arm64-v8a armeabi-v7a x86_64; do
-		(cd "$root/tools" && go run ./cmd/sizegate -target "android-$abi-aab" -report \
-			-blank "$here/blank/$aab" -plux "$here/plux/$aab" \
-			-baseline "$here/baseline.json") | tee -a "$out/android-aab.md"
-		printf '\n' >>"$out/android-aab.md"
+		report "android-$abi-aab" "$aab"
+		apk=android-$abi-apk
+		if [ "$abi" = arm64-v8a ]; then apk=android-arm64-apk; fi
+		report "$apk" "build/app/outputs/flutter-apk/app-$abi-release.apk"
 	done
+	# What each ABI adds, side by side: the APK as a file, and what Play
+	# downloads from the App Bundle.
+	row() { # <label> <report>
+		awk -F'|' -v label="$1" '/^\| blank app/ {b = $4} /^\| with plux_flutter/ {w = $4}
+			/^\| added by plux_flutter/ {a = $4} END {printf "| %s |%s|%s|%s|\n", label, b, w, a}' "$2"
+	}
+	{
+		printf '| ABI | Build | Blank, MiB | With plux_flutter, MiB | Added, MiB |\n|---|---|---:|---:|---:|\n'
+		for abi in arm64-v8a armeabi-v7a x86_64; do
+			apk=android-$abi-apk
+			if [ "$abi" = arm64-v8a ]; then apk=android-arm64-apk; fi
+			row "$abi | APK file" "$out/$apk.md"
+			row "$abi | App Bundle download" "$out/android-$abi-aab.md"
+		done
+	} | tee "$out/android-compare.md"
 	build=build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
 	gate=android-arm64-apk
 	;;

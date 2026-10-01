@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/nightCode42/plux3/backend/internal/storage"
+	"github.com/nightCode42/plux3/backend/internal/telemetry"
 	"github.com/nightCode42/plux3/backend/internal/tenancy"
 )
 
@@ -102,22 +103,19 @@ func TestStarterAppAgainstTheServer(t *testing.T) {
 	err := cmd.Run()
 	t.Logf("flutter test (%s):\n%s", starter, out.String())
 	if err != nil || !strings.Contains(out.String(), "All tests passed!") {
+		// Whether the app ran its flows although flutter test never saw
+		// it: a hung device run (iOS 18, CI runs 36758325004, 36809265180)
+		// leaves the app silent, and the server tells a crash or a freeze
+		// at startup from a lost report.
+		if events, lerr := deviceEvents(st); lerr == nil {
+			t.Logf("events the device reported before the failure: %d", len(events))
+		}
 		t.Fatalf("the starter's flows failed: %v", err)
 	}
 
 	// The device reported what the runtime sends without consent, and
 	// what the flows consented to afterwards.
-	envs, err := st.svc.Tenancy.ListEnvironments(st.ctx, st.owner, st.app.ID, tenancy.Page{Size: 10})
-	if err != nil {
-		t.Fatal(err)
-	}
-	var staging string
-	for _, e := range envs {
-		if e.Key == "staging" {
-			staging = e.ID
-		}
-	}
-	events, err := st.svc.Events.List(st.ctx, st.owner, st.app.ID, staging, "", time.Time{}, storage.Cursor{}, 500)
+	events, err := deviceEvents(st)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -138,6 +136,22 @@ func TestStarterAppAgainstTheServer(t *testing.T) {
 			t.Errorf("no %s event reached the server: %v", want, seen)
 		}
 	}
+}
+
+// deviceEvents lists the events the starter app reported to the staging
+// environment.
+func deviceEvents(st *stack) ([]telemetry.Event, error) {
+	envs, err := st.svc.Tenancy.ListEnvironments(st.ctx, st.owner, st.app.ID, tenancy.Page{Size: 10})
+	if err != nil {
+		return nil, err //nolint:wrapcheck // A test helper; the caller reports it.
+	}
+	var staging string
+	for _, e := range envs {
+		if e.Key == "staging" {
+			staging = e.ID
+		}
+	}
+	return st.svc.Events.List(st.ctx, st.owner, st.app.ID, staging, "", time.Time{}, storage.Cursor{}, 500) //nolint:wrapcheck // A test helper; the caller reports it.
 }
 
 // vmServiceWatch stops a device run whose app never reports its Dart VM
