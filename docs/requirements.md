@@ -1,7 +1,7 @@
 # Plux — System Requirements Specification
 
 **Document ID:** `SRS-PLUX-001`
-**Version:** 1.1.8
+**Version:** 1.1.9
 **Status:** Draft — living document, revised as implementation proceeds
 **Date:** 2026-10-01
 **Applies to:** Plux Schema, Plux Compiler, Plux Server, Plux Functions, `plux_flutter` runtime, Plux Dev app, Plux Studio, Plux CLI, Plux AI
@@ -2864,8 +2864,9 @@ await Plux.sync();                                 // manual sync
 
 | Element | Specification |
 |---|---|
-| Wordmark | "Plux" set in **Sora SemiBold** (Open Font License), letter spacing −2%. The letters "Plu" are in Ink, the **x** in Plux Violet — the x reads as a connection point between plugins. |
-| App icon | Plux Violet rounded square (radius 22% of the size) with a white "x" ([`plux-icon.svg`](assets/brand/plux-icon.svg)). |
+| Wordmark | "Plux" set in **Sora SemiBold** (Open Font License), letter spacing −2%. The letters "Plu" are in Ink, the **x** in Plux Violet — the x reads as a connection point between plugins. The SVG files carry the letters as outlines, so they render the same where Sora is not installed. |
+| App icon | Plux Violet rounded square (radius 22% of the size), shaded with a subtle diagonal gradient around Plux Violet (`#7257FF` to `#4A2DE6`), with a white "x" drawn as four arms meeting at a central node: plugins docking into one core ([`plux-icon.svg`](assets/brand/plux-icon.svg)). |
+| Lockup | The app icon and the wordmark side by side, the wordmark's capitals centred on the icon at about two thirds of its height, one file per theme ([`plux-lockup-light.svg`](assets/brand/plux-lockup-light.svg), [`plux-lockup-dark.svg`](assets/brand/plux-lockup-dark.svg)). |
 | Clear space | At least the height of the "x" on every side. |
 | Minimum size | 16 px height on screen. |
 
@@ -2939,10 +2940,10 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | Field | Value |
 |---|---|
 | Document ID | `SRS-PLUX-001` |
-| Version | 1.1.8 |
+| Version | 1.1.9 |
 | Status | Draft (living document) |
 | Date | 2026-10-01 |
-| Supersedes | 1.1.7 |
+| Supersedes | 1.1.8 |
 | Change process | Amendments are made by pull request against `docs/requirements.md`. A change to a `MUST` requirement requires a corresponding ADR. The version is incremented per Semantic Versioning: a breaking change to an existing requirement is a major increment, a new requirement is a minor increment, and a clarification is a patch increment. |
 
 ### Revision history
@@ -2959,3 +2960,4 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | 1.1.6 | 2026-09-28 | `SRV-020`: documents are stored as their canonical JSON bytes, zstd-compressed and addressed by SHA-256, rather than as `JSONB` (maintainer decision; ADR-0007, Revision). |
 | 1.1.7 | 2026-10-01 | `RT-061`, `NFR-009`: the size budget is set per build — ≤ 3 MiB for the App Bundle download per ABI and the thinned IPA, ≤ 6.5 MiB for an APK per ABI, which stores the Dart code uncompressed — replacing ≤ 3 MiB for the arm64 APK (maintainer decision; ADR-0036). |
 | 1.1.8 | 2026-10-01 | `NFR-006`: the up-to-date check counts the manifest request's bodies, not headers or the device-token request, which grow with DPoP from P6; the device sends a digest of its installed bundles (maintainer decision; ADR-0037). `RT-002`: Flutter support starts at 3.47, the stable current when P3 closes — the previous stable 3.44 cannot resolve the build-hook stack, and no dependency is downgraded (maintainer decision; ADR-0038). |
+| 1.1.9 | 2026-10-01 | Appendix J: the app icon's "x" becomes four arms meeting at a central node on a subtle Plux Violet gradient, a lockup of icon and wordmark is added, and the brand SVGs carry outlined letters (maintainer request: a new README and logo). |
