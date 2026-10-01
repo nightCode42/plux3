@@ -65,7 +65,7 @@ android)
 	for abi in arm64-v8a armeabi-v7a x86_64; do
 		(cd "$root/tools" && go run ./cmd/sizegate -target "android-$abi-aab" -report \
 			-blank "$here/blank/$aab" -plux "$here/plux/$aab" \
-			-baseline "$here/baseline.json") >>"$out/android-aab.md"
+			-baseline "$here/baseline.json") | tee -a "$out/android-aab.md"
 		printf '\n' >>"$out/android-aab.md"
 	done
 	build=build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
