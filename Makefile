@@ -88,7 +88,7 @@ GO_BUILD_FLAGS  := -trimpath -buildvcs=false -ldflags "-s -w -buildid= \
 	go-determinism go-budgets go-fuzz currencies-check go-vuln go-build go-reproducible \
 	dart-check dart-get dart-lock-check dart-fmt dart-fmt-check dart-analyze dart-test dart-cover widgets-api widgets-api-check \
 	studio-check studio-install studio-fmt studio-lint studio-typecheck studio-test studio-cover \
-	compose-secrets compose-up compose-down compose-seed dev dev-starter dev-app e2e-starter e2e-android e2e-ios compat compose-test image-check \
+	compose-secrets compose-up compose-down test-db test-db-down compose-seed dev dev-starter dev-app e2e-starter e2e-android e2e-ios compat compose-test image-check \
 	bench-runtime bench-runtime-ab bench-sync size-android size-ios docs-site \
 	release-binaries release-notes repo-check spec-lint trace secrets workflows-lint reuse-lint hygiene
 
@@ -368,7 +368,7 @@ bench-runtime-ab: ## Compare the runtime benchmark with BASE's runtime; fail on 
 
 # Verifies: QA-007, NFR-007.
 bench-sync: ## Sync the benchmark app on the simulated slow network against a server built from source (needs PLUX_TEST_DATABASE_URL)
-	@test -n "$$PLUX_TEST_DATABASE_URL" || { echo "✗ set PLUX_TEST_DATABASE_URL to a PostgreSQL database (see docs/engineering/testing.md)"; exit 1; }
+	@test -n "$${PLUX_TEST_DATABASE_URL:-}" || { echo "✗ set PLUX_TEST_DATABASE_URL: run 'make test-db' and export what it prints (docs/engineering/testing.md)"; exit 1; }
 	cd backend && PLUX_E2E_FLUTTER="$$(command -v flutter)" $(GO) test -count=1 -timeout 30m -run TestSyncOnSlowNetwork -v ./internal/server
 
 # Verifies: RT-061, NFR-009.
@@ -422,6 +422,12 @@ compose-up: compose-secrets ## Start the single-node stack: server, PostgreSQL, 
 compose-down: ## Stop the stack (volumes are kept; add -v by hand to delete them)
 	$(COMPOSE) down
 
+test-db: ## Start a throwaway PostgreSQL for the tests and print the PLUX_TEST_DATABASE_URL to export (TEST_DB_PORT=55432)
+	@scripts/test-db.sh up
+
+test-db-down: ## Remove the test database and its data
+	@scripts/test-db.sh down
+
 # The starter app under `make dev`: where the device reaches the stack
 # (after `adb reverse`, localhost works on Android too) and the defines
 # file dev-starter writes from the seeded installation.
@@ -461,7 +467,7 @@ dev-app: ## Run the starter app against the dev stack with Flutter hot reload: r
 
 # Verifies: QA-006.
 e2e-starter: ## Run the starter app's end-to-end flows on this machine against a server built from source (needs PLUX_TEST_DATABASE_URL)
-	@test -n "$$PLUX_TEST_DATABASE_URL" || { echo "✗ set PLUX_TEST_DATABASE_URL to a PostgreSQL database (see docs/engineering/testing.md)"; exit 1; }
+	@test -n "$${PLUX_TEST_DATABASE_URL:-}" || { echo "✗ set PLUX_TEST_DATABASE_URL: run 'make test-db' and export what it prints (docs/engineering/testing.md)"; exit 1; }
 	cd backend && PLUX_E2E_FLUTTER="$$(command -v flutter)" $(GO) test -count=1 -timeout 45m -run TestStarterAppAgainstTheServer -v ./internal/server
 
 # ANDROID_API picks the emulator's system image for e2e-android.
@@ -477,7 +483,7 @@ e2e-ios: ## Run the starter's flows on an iOS simulator (CI only; needs Xcode, j
 
 # Verifies: QA-010.
 compat: ## Run the compatibility matrix: released runtimes against today's server, today's runtime against released servers (QA-010)
-	@test -n "$$PLUX_TEST_DATABASE_URL" || { echo "✗ set PLUX_TEST_DATABASE_URL to a PostgreSQL database (see docs/engineering/testing.md)"; exit 1; }
+	@test -n "$${PLUX_TEST_DATABASE_URL:-}" || { echo "✗ set PLUX_TEST_DATABASE_URL: run 'make test-db' and export what it prints (docs/engineering/testing.md)"; exit 1; }
 	test/compat/run.sh
 
 # COMPOSE_OVERLAY adds a Compose file for compose-seed (dev or load).
