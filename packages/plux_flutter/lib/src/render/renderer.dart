@@ -25,6 +25,7 @@ import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/core/config.dart';
 import 'package:plux_flutter/src/core/fallback.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/native_catalogue/registration.dart';
 import 'package:plux_flutter/src/navigation/guards.dart';
 import 'package:plux_flutter/src/navigation/page_navigator.dart';
 import 'package:plux_flutter/src/platform/platform_services.dart';
@@ -425,6 +426,15 @@ final class PluxRenderer implements PageRenderer, RenderServices {
         });
     }
     return const GuardFallsBack('its guard returned no decision');
+  }
+
+  @override
+  ({PluxNativeSlot slot, NativeSlotDecl decl, Map<String, NamedType> types})?
+  nativeSlot(RenderScope scope, String type) {
+    final slot = config.nativeSlots[type];
+    final decl = view(scope.release, '').nativeSlots[type];
+    if (slot == null || decl == null) return null;
+    return (slot: slot, decl: decl, types: typesOf(scope.release, ''));
   }
 
   /// The parameter names [page] declares.

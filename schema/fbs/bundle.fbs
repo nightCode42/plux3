@@ -616,6 +616,31 @@ table Collection {
   indexes: [Index];
 }
 
+// A native route of the catalogue the app was compiled against (NAV-002,
+// ADR-0041): its parameters and the type expression of its result (0 for
+// none).
+table NativeRouteDecl {
+  name: uint;
+  params: [Param];
+  result: uint;
+}
+
+// A native slot: its props and events in the catalogue's order, which slot
+// nodes address by index (WGT-033).
+table NativeSlotDecl {
+  type: uint;
+  props: [Param];
+  events: [ComponentEvent];
+}
+
+// A custom action: its inputs and the type expression of its output (0 for
+// none) (ACT-060).
+table NativeActionDecl {
+  name: uint;
+  inputs: [Param];
+  output: uint;
+}
+
 table Schemas {
   types: [TypeDecl];
   state: [StateEntry];
@@ -623,6 +648,12 @@ table Schemas {
   collections: [Collection];
   variables: [Param];
   user_context: [Param];
+  // App bundles: the native catalogue's declarations, in its order, so the
+  // runtime maps slot props and events and checks every value crossing
+  // into host code (ADR-0041, P4 plan A24).
+  native_routes: [NativeRouteDecl];
+  native_slots: [NativeSlotDecl];
+  native_actions: [NativeActionDecl];
 }
 
 // ── Section assets-index ──────────────────────────────────────────────────

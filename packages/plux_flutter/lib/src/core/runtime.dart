@@ -30,6 +30,7 @@ import 'package:plux_flutter/src/core/plux.dart';
 import 'package:plux_flutter/src/core/plux_view.dart';
 import 'package:plux_flutter/src/devtools_api/diagnostics.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/native_catalogue/host.dart';
 import 'package:plux_flutter/src/navigation/deep_links.dart';
 import 'package:plux_flutter/src/navigation/delegate.dart';
 import 'package:plux_flutter/src/navigation/guards.dart';
@@ -321,6 +322,10 @@ final class PluxRuntime with WidgetsBindingObserver {
       router: router,
       emit: emitHostEvent,
       record: telemetry.record,
+      nativeActions: HostActions(
+        registered: config.nativeActions,
+        declarations: natives,
+      ),
     ),
   );
 
@@ -344,10 +349,41 @@ final class PluxRuntime with WidgetsBindingObserver {
     report: _report,
   );
 
+  /// The active release's native catalogue, or null before one
+  /// (ADR-0041).
+  NativeDeclarations? natives() {
+    final release = active.value;
+    final r = renderer;
+    if (release == null || r is! PluxRenderer) return null;
+    try {
+      final app = r.view(release, '');
+      return (
+        routes: app.nativeRoutes,
+        slots: app.nativeSlots,
+        actions: app.nativeActions,
+        types: r.typesOf(release, ''),
+      );
+    } on Object catch (e) {
+      _report(
+        PluxException(PluxErrorCode.bundleMalformed, 'native catalogue: $e'),
+      );
+      return null;
+    }
+  }
+
+  /// The root navigator deep links and push payloads open on.
+  GlobalKey<NavigatorState>? get navigatorKey =>
+      config.navigatorKey ?? config.router?.navigatorKey;
+
   /// Resolves names and opens routes (ADR-0040).
   late final PluxRouter router = PluxRouter(
     release: () => active.value,
-    delegate: config.navigationDelegate ?? const PluxNavigatorDelegate(),
+    delegate:
+        config.navigationDelegate ??
+        config.router?.delegate ??
+        const PluxNavigatorDelegate(),
+    nativeRoutes: {...?config.router?.routes, ...config.nativeRoutes},
+    natives: natives,
     page: (route, params, {required guarded}) =>
         PluxScope(child: routedPluxView(route, params, guarded: guarded)),
     guards: guards,
@@ -409,7 +445,7 @@ final class PluxRuntime with WidgetsBindingObserver {
   }
 
   Future<bool> _openTarget(ActiveRelease release, LinkTarget target) async {
-    if (config.navigatorKey?.currentContext == null) {
+    if (navigatorKey?.currentContext == null) {
       _report(
         PluxException(
           PluxErrorCode.navigationRefused,
@@ -421,7 +457,7 @@ final class PluxRuntime with WidgetsBindingObserver {
     }
     final params = await _linkParams(release, target);
     final route = await router.resolve(target.route, params);
-    final context = config.navigatorKey?.currentContext;
+    final context = navigatorKey?.currentContext;
     if (context == null || !context.mounted) return false;
     unawaited(router.delegate.push<Object?>(context, route));
     return true;

@@ -641,6 +641,9 @@ func (t *typer) stepOutput(g *graph, st schema.Step) string {
 		te.nullable = true
 		return te.String()
 	}
+	if out, ok := t.customOutput(st); ok {
+		return out
+	}
 	a, ok := registry.LookupAction(st.Action)
 	if !ok || a.Output == "" {
 		return ""
@@ -658,6 +661,31 @@ func (t *typer) stepOutput(g *graph, st schema.Step) string {
 	}
 	te.nullable = true
 	return te.String()
+}
+
+// customOutput is the output type of a custom action step, as the native
+// catalogue declares it (ACT-060): a step named after the action, or a
+// callNative step naming it literally. ok is false for any other step.
+func (t *typer) customOutput(st schema.Step) (string, bool) {
+	name := st.Action
+	if st.Action == "callNative" {
+		name = literalString(st.Input["action"])
+	} else if _, builtin := registry.LookupAction(st.Action); builtin {
+		return "", false
+	}
+	native, ok := t.u.natives.actions[name]
+	if !ok {
+		return "", false
+	}
+	if native.Output == "" {
+		return "", true
+	}
+	te, err := parseTypeExpr(native.Output)
+	if err != nil {
+		return "", true
+	}
+	te.nullable = true
+	return te.String(), true
 }
 
 // presentedResult is the result type of the route a presenting step

@@ -62,23 +62,14 @@ final class PageNavigator implements RunNavigator {
     return c;
   }
 
-  /// The route for an action's target, once its guards have decided
-  /// (NAV-009): compiled routes are a page or a native route, so a name no
-  /// page has is a native route the host did not register (PLX-4200;
-  /// registration arrives with ADR-0041).
+  /// The route for an action's target page, once its guards have decided
+  /// (NAV-009).
   Future<PluxRouteSpec> _spec(
     String route,
     Map<String, Object?> params, {
     PluxPresentation? presentation,
     bool dismissible = true,
   }) {
-    if (router.target(route) == null) {
-      throw ActionError(
-        ActionErrorKind.custom,
-        PluxErrorCode.nativeRouteNotRegistered,
-        'no page has the route $route, and the host registers no native route of that name',
-      );
-    }
     return router.resolve(
       route,
       _json(params),
@@ -97,6 +88,27 @@ final class PageNavigator implements RunNavigator {
     final d = router.delegate;
     if (mode == 'popUntil') {
       d.popUntil(_context(), until ?? route);
+      return;
+    }
+    // Compiled routes are a page or a native route (ADR-0041); a native
+    // route's result is read through a presenting step.
+    if (router.target(route) == null) {
+      final entry = router.checkNative(route, _json(params));
+      unawaited(
+        router
+            .openNative(_context(), entry)
+            .then<void>(
+              (_) {},
+              onError: (Object e) => router.report(
+                e is ActionError
+                    ? e.toException({'route': route})
+                    : PluxException(
+                        PluxErrorCode.hostCodeFailed,
+                        'native route $route failed with ${e.runtimeType}',
+                      ),
+              ),
+            ),
+      );
       return;
     }
     final spec = await _spec(route, params);
@@ -125,6 +137,12 @@ final class PageNavigator implements RunNavigator {
         : target?.presentation == PluxPresentation.fullscreenDialog
         ? PluxPresentation.fullscreenDialog
         : PluxPresentation.dialog;
+    if (target == null) {
+      // A native route: its result is the catalogue's result type
+      // (NAV-002, ADR-0041).
+      final entry = router.checkNative(route, _json(params));
+      return router.openNative(_context(), entry, presentation: presentation);
+    }
     final spec = await _spec(
       route,
       params,

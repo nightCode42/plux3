@@ -127,6 +127,46 @@ shows the fallback; the error is reported, never thrown into the app (`RT-020`).
 with guards decide before they open: a guard can redirect, for example to a login page,
 or show the fallback ([navigation](../reference/navigation.md#4-guards-nav-009)).
 
+### Native routes, slots and actions
+
+Plugins can use what your app already has: its screens as **native routes**, its widgets
+as **native slots** inside plugin pages, and its functions as **custom actions**. Register
+them once, in `PluxConfig`, without changing them:
+
+```dart
+PluxConfig(
+  /* … */
+  nativeRoutes: {
+    'profile': PluxNativeRoute<ProfileParams, bool>(
+      params: ProfileParams.fromJson,
+      builder: (context, p) => ProfileScreen(userId: p.userId),
+    ),
+  },
+  nativeSlots: {
+    'MapCard': PluxNativeSlot(
+      (context, slot) => MapCard(
+        zoom: slot['zoom']! as double,
+        onPan: (offset) => slot.emit('onPan', offset),
+      ),
+    ),
+  },
+  nativeActions: {
+    'openScanner': PluxNativeAction<ScanIn, String>(
+      input: ScanIn.fromJson,
+      handler: (scan) => scanner.scan(prompt: scan.prompt),
+    ),
+  },
+)
+```
+
+Plugins compile against your app's native catalogue (`plux native scan` writes it), and
+every value crossing into your code is checked against it first, and every value your
+code returns before a plugin sees it. A route's screen returns its result with
+`Navigator.pop`. Something a plugin uses that your build does not register fails safely
+(`PLX-4200`–`PLX-4202`), and an exception in your code is reported with its type only
+(`PLX-4205`). Apps using `go_router` or `auto_route` pass their router through its adapter
+instead of registering routes ([navigation](../reference/navigation.md)).
+
 ### Deep links and notifications
 
 Pass `navigatorKey` to `PluxConfig` and to your `MaterialApp`, then hand Plux the links

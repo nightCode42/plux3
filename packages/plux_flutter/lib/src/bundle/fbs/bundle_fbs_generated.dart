@@ -5556,6 +5556,281 @@ class CollectionObjectBuilder extends fb.ObjectBuilder {
     return fbBuilder.buffer;
   }
 }
+class NativeRouteDecl {
+  NativeRouteDecl._(this._bc, this._bcOffset);
+  factory NativeRouteDecl(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<NativeRouteDecl> reader = _NativeRouteDeclReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  int get name => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 4, 0);
+  List<Param>? get params => const fb.ListReader<Param>(Param.reader).vTableGetNullable(_bc, _bcOffset, 6);
+  int get result => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 8, 0);
+
+  @override
+  String toString() {
+    return 'NativeRouteDecl{name: ${name}, params: ${params}, result: ${result}}';
+  }
+}
+
+class _NativeRouteDeclReader extends fb.TableReader<NativeRouteDecl> {
+  const _NativeRouteDeclReader();
+
+  @override
+  NativeRouteDecl createObject(fb.BufferContext bc, int offset) => 
+    NativeRouteDecl._(bc, offset);
+}
+
+class NativeRouteDeclBuilder {
+  NativeRouteDeclBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(3);
+  }
+
+  int addName(int? name) {
+    fbBuilder.addUint32(0, name);
+    return fbBuilder.offset;
+  }
+  int addParamsOffset(int? offset) {
+    fbBuilder.addOffset(1, offset);
+    return fbBuilder.offset;
+  }
+  int addResult(int? result) {
+    fbBuilder.addUint32(2, result);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class NativeRouteDeclObjectBuilder extends fb.ObjectBuilder {
+  final int? _name;
+  final List<ParamObjectBuilder>? _params;
+  final int? _result;
+
+  NativeRouteDeclObjectBuilder({
+    int? name,
+    List<ParamObjectBuilder>? params,
+    int? result,
+  })
+      : _name = name,
+        _params = params,
+        _result = result;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? paramsOffset = _params == null ? null
+        : fbBuilder.writeList(_params!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    fbBuilder.startTable(3);
+    fbBuilder.addUint32(0, _name);
+    fbBuilder.addOffset(1, paramsOffset);
+    fbBuilder.addUint32(2, _result);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
+class NativeSlotDecl {
+  NativeSlotDecl._(this._bc, this._bcOffset);
+  factory NativeSlotDecl(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<NativeSlotDecl> reader = _NativeSlotDeclReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  int get type => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 4, 0);
+  List<Param>? get props => const fb.ListReader<Param>(Param.reader).vTableGetNullable(_bc, _bcOffset, 6);
+  List<ComponentEvent>? get events => const fb.ListReader<ComponentEvent>(ComponentEvent.reader).vTableGetNullable(_bc, _bcOffset, 8);
+
+  @override
+  String toString() {
+    return 'NativeSlotDecl{type: ${type}, props: ${props}, events: ${events}}';
+  }
+}
+
+class _NativeSlotDeclReader extends fb.TableReader<NativeSlotDecl> {
+  const _NativeSlotDeclReader();
+
+  @override
+  NativeSlotDecl createObject(fb.BufferContext bc, int offset) => 
+    NativeSlotDecl._(bc, offset);
+}
+
+class NativeSlotDeclBuilder {
+  NativeSlotDeclBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(3);
+  }
+
+  int addType(int? type) {
+    fbBuilder.addUint32(0, type);
+    return fbBuilder.offset;
+  }
+  int addPropsOffset(int? offset) {
+    fbBuilder.addOffset(1, offset);
+    return fbBuilder.offset;
+  }
+  int addEventsOffset(int? offset) {
+    fbBuilder.addOffset(2, offset);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class NativeSlotDeclObjectBuilder extends fb.ObjectBuilder {
+  final int? _type;
+  final List<ParamObjectBuilder>? _props;
+  final List<ComponentEventObjectBuilder>? _events;
+
+  NativeSlotDeclObjectBuilder({
+    int? type,
+    List<ParamObjectBuilder>? props,
+    List<ComponentEventObjectBuilder>? events,
+  })
+      : _type = type,
+        _props = props,
+        _events = events;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? propsOffset = _props == null ? null
+        : fbBuilder.writeList(_props!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    final int? eventsOffset = _events == null ? null
+        : fbBuilder.writeList(_events!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    fbBuilder.startTable(3);
+    fbBuilder.addUint32(0, _type);
+    fbBuilder.addOffset(1, propsOffset);
+    fbBuilder.addOffset(2, eventsOffset);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
+class NativeActionDecl {
+  NativeActionDecl._(this._bc, this._bcOffset);
+  factory NativeActionDecl(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<NativeActionDecl> reader = _NativeActionDeclReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  int get name => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 4, 0);
+  List<Param>? get inputs => const fb.ListReader<Param>(Param.reader).vTableGetNullable(_bc, _bcOffset, 6);
+  int get output => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 8, 0);
+
+  @override
+  String toString() {
+    return 'NativeActionDecl{name: ${name}, inputs: ${inputs}, output: ${output}}';
+  }
+}
+
+class _NativeActionDeclReader extends fb.TableReader<NativeActionDecl> {
+  const _NativeActionDeclReader();
+
+  @override
+  NativeActionDecl createObject(fb.BufferContext bc, int offset) => 
+    NativeActionDecl._(bc, offset);
+}
+
+class NativeActionDeclBuilder {
+  NativeActionDeclBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(3);
+  }
+
+  int addName(int? name) {
+    fbBuilder.addUint32(0, name);
+    return fbBuilder.offset;
+  }
+  int addInputsOffset(int? offset) {
+    fbBuilder.addOffset(1, offset);
+    return fbBuilder.offset;
+  }
+  int addOutput(int? output) {
+    fbBuilder.addUint32(2, output);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class NativeActionDeclObjectBuilder extends fb.ObjectBuilder {
+  final int? _name;
+  final List<ParamObjectBuilder>? _inputs;
+  final int? _output;
+
+  NativeActionDeclObjectBuilder({
+    int? name,
+    List<ParamObjectBuilder>? inputs,
+    int? output,
+  })
+      : _name = name,
+        _inputs = inputs,
+        _output = output;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? inputsOffset = _inputs == null ? null
+        : fbBuilder.writeList(_inputs!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    fbBuilder.startTable(3);
+    fbBuilder.addUint32(0, _name);
+    fbBuilder.addOffset(1, inputsOffset);
+    fbBuilder.addUint32(2, _output);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
 class Schemas {
   Schemas._(this._bc, this._bcOffset);
   factory Schemas(List<int> bytes) {
@@ -5574,10 +5849,13 @@ class Schemas {
   List<Collection>? get collections => const fb.ListReader<Collection>(Collection.reader).vTableGetNullable(_bc, _bcOffset, 10);
   List<Param>? get variables => const fb.ListReader<Param>(Param.reader).vTableGetNullable(_bc, _bcOffset, 12);
   List<Param>? get userContext => const fb.ListReader<Param>(Param.reader).vTableGetNullable(_bc, _bcOffset, 14);
+  List<NativeRouteDecl>? get nativeRoutes => const fb.ListReader<NativeRouteDecl>(NativeRouteDecl.reader).vTableGetNullable(_bc, _bcOffset, 16);
+  List<NativeSlotDecl>? get nativeSlots => const fb.ListReader<NativeSlotDecl>(NativeSlotDecl.reader).vTableGetNullable(_bc, _bcOffset, 18);
+  List<NativeActionDecl>? get nativeActions => const fb.ListReader<NativeActionDecl>(NativeActionDecl.reader).vTableGetNullable(_bc, _bcOffset, 20);
 
   @override
   String toString() {
-    return 'Schemas{types: ${types}, state: ${state}, dataSources: ${dataSources}, collections: ${collections}, variables: ${variables}, userContext: ${userContext}}';
+    return 'Schemas{types: ${types}, state: ${state}, dataSources: ${dataSources}, collections: ${collections}, variables: ${variables}, userContext: ${userContext}, nativeRoutes: ${nativeRoutes}, nativeSlots: ${nativeSlots}, nativeActions: ${nativeActions}}';
   }
 }
 
@@ -5595,7 +5873,7 @@ class SchemasBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable(6);
+    fbBuilder.startTable(9);
   }
 
   int addTypesOffset(int? offset) {
@@ -5622,6 +5900,18 @@ class SchemasBuilder {
     fbBuilder.addOffset(5, offset);
     return fbBuilder.offset;
   }
+  int addNativeRoutesOffset(int? offset) {
+    fbBuilder.addOffset(6, offset);
+    return fbBuilder.offset;
+  }
+  int addNativeSlotsOffset(int? offset) {
+    fbBuilder.addOffset(7, offset);
+    return fbBuilder.offset;
+  }
+  int addNativeActionsOffset(int? offset) {
+    fbBuilder.addOffset(8, offset);
+    return fbBuilder.offset;
+  }
 
   int finish() {
     return fbBuilder.endTable();
@@ -5635,6 +5925,9 @@ class SchemasObjectBuilder extends fb.ObjectBuilder {
   final List<CollectionObjectBuilder>? _collections;
   final List<ParamObjectBuilder>? _variables;
   final List<ParamObjectBuilder>? _userContext;
+  final List<NativeRouteDeclObjectBuilder>? _nativeRoutes;
+  final List<NativeSlotDeclObjectBuilder>? _nativeSlots;
+  final List<NativeActionDeclObjectBuilder>? _nativeActions;
 
   SchemasObjectBuilder({
     List<TypeDeclObjectBuilder>? types,
@@ -5643,13 +5936,19 @@ class SchemasObjectBuilder extends fb.ObjectBuilder {
     List<CollectionObjectBuilder>? collections,
     List<ParamObjectBuilder>? variables,
     List<ParamObjectBuilder>? userContext,
+    List<NativeRouteDeclObjectBuilder>? nativeRoutes,
+    List<NativeSlotDeclObjectBuilder>? nativeSlots,
+    List<NativeActionDeclObjectBuilder>? nativeActions,
   })
       : _types = types,
         _state = state,
         _dataSources = dataSources,
         _collections = collections,
         _variables = variables,
-        _userContext = userContext;
+        _userContext = userContext,
+        _nativeRoutes = nativeRoutes,
+        _nativeSlots = nativeSlots,
+        _nativeActions = nativeActions;
 
   /// Finish building, and store into the [fbBuilder].
   @override
@@ -5666,13 +5965,22 @@ class SchemasObjectBuilder extends fb.ObjectBuilder {
         : fbBuilder.writeList(_variables!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
     final int? userContextOffset = _userContext == null ? null
         : fbBuilder.writeList(_userContext!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
-    fbBuilder.startTable(6);
+    final int? nativeRoutesOffset = _nativeRoutes == null ? null
+        : fbBuilder.writeList(_nativeRoutes!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    final int? nativeSlotsOffset = _nativeSlots == null ? null
+        : fbBuilder.writeList(_nativeSlots!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    final int? nativeActionsOffset = _nativeActions == null ? null
+        : fbBuilder.writeList(_nativeActions!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    fbBuilder.startTable(9);
     fbBuilder.addOffset(0, typesOffset);
     fbBuilder.addOffset(1, stateOffset);
     fbBuilder.addOffset(2, dataSourcesOffset);
     fbBuilder.addOffset(3, collectionsOffset);
     fbBuilder.addOffset(4, variablesOffset);
     fbBuilder.addOffset(5, userContextOffset);
+    fbBuilder.addOffset(6, nativeRoutesOffset);
+    fbBuilder.addOffset(7, nativeSlotsOffset);
+    fbBuilder.addOffset(8, nativeActionsOffset);
     return fbBuilder.endTable();
   }
 

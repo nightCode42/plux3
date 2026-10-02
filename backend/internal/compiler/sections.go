@@ -555,6 +555,10 @@ func (u *unit) schemasSection(o *out, types map[string]pxl.TypeSpec, state []*st
 	cv := offsetVector(b, colOffs)
 	vv := e.params(fieldParams(vars))
 	uv := e.params(fieldParams(userContext))
+	var natives nativeDecls
+	if o.pl == nil {
+		natives = u.nativeDeclarations(e)
+	}
 	fbs.SchemasStart(b)
 	fbs.SchemasAddTypes(b, tv)
 	fbs.SchemasAddState(b, sv)
@@ -562,6 +566,9 @@ func (u *unit) schemasSection(o *out, types map[string]pxl.TypeSpec, state []*st
 	fbs.SchemasAddCollections(b, cv)
 	fbs.SchemasAddVariables(b, vv)
 	fbs.SchemasAddUserContext(b, uv)
+	addOptional(b, natives.routes, fbs.SchemasAddNativeRoutes)
+	addOptional(b, natives.slots, fbs.SchemasAddNativeSlots)
+	addOptional(b, natives.actions, fbs.SchemasAddNativeActions)
 	o.add(bundle.SectionSchemas, o.id, finish(b, fbs.SchemasEnd(b), bundle.SectionSchemas))
 }
 

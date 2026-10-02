@@ -43,7 +43,7 @@ var tableLayouts = [...]tableLayout{
 	6: {name: "Collection", fields: []fieldLayout{
 		{name: "id", id: 0, kind: fieldStruct, size: 16, align: 8, table: -1, required: false},
 		{name: "key", id: 1, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
-		{name: "fields", id: 2, kind: fieldVectorTable, size: 0, align: 0, table: 29, required: false},
+		{name: "fields", id: 2, kind: fieldVectorTable, size: 0, align: 0, table: 32, required: false},
 		{name: "primary_key", id: 3, kind: fieldVectorScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "indexes", id: 4, kind: fieldVectorTable, size: 0, align: 0, table: 18, required: false},
 	}},
@@ -51,11 +51,11 @@ var tableLayouts = [...]tableLayout{
 		{name: "id", id: 0, kind: fieldStruct, size: 16, align: 8, table: -1, required: false},
 		{name: "key", id: 1, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "version", id: 2, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
-		{name: "props", id: 3, kind: fieldVectorTable, size: 0, align: 0, table: 29, required: false},
+		{name: "props", id: 3, kind: fieldVectorTable, size: 0, align: 0, table: 32, required: false},
 		{name: "slots", id: 4, kind: fieldVectorTable, size: 0, align: 0, table: 9, required: false},
 		{name: "events", id: 5, kind: fieldVectorTable, size: 0, align: 0, table: 8, required: false},
-		{name: "state", id: 6, kind: fieldVectorTable, size: 0, align: 0, table: 42, required: false},
-		{name: "nodes", id: 7, kind: fieldVectorTable, size: 0, align: 0, table: 25, required: false},
+		{name: "state", id: 6, kind: fieldVectorTable, size: 0, align: 0, table: 45, required: false},
+		{name: "nodes", id: 7, kind: fieldVectorTable, size: 0, align: 0, table: 28, required: false},
 		{name: "strings", id: 8, kind: fieldVectorString, size: 0, align: 0, table: -1, required: false},
 	}},
 	8: {name: "ComponentEvent", fields: []fieldLayout{
@@ -72,7 +72,7 @@ var tableLayouts = [...]tableLayout{
 		{name: "name", id: 1, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "kind", id: 2, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
 		{name: "type", id: 3, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
-		{name: "config", id: 4, kind: fieldTable, size: 0, align: 0, table: 52, required: false},
+		{name: "config", id: 4, kind: fieldTable, size: 0, align: 0, table: 55, required: false},
 	}},
 	11: {name: "DeepLinkRoute", fields: []fieldLayout{
 		{name: "path", id: 0, kind: fieldString, size: 0, align: 0, table: -1, required: false},
@@ -85,12 +85,12 @@ var tableLayouts = [...]tableLayout{
 	}},
 	13: {name: "Entry", fields: []fieldLayout{
 		{name: "key", id: 0, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
-		{name: "value", id: 1, kind: fieldTable, size: 0, align: 0, table: 52, required: false},
+		{name: "value", id: 1, kind: fieldTable, size: 0, align: 0, table: 55, required: false},
 	}},
 	14: {name: "Flag", fields: []fieldLayout{
 		{name: "name", id: 0, kind: fieldString, size: 0, align: 0, table: -1, required: true},
 		{name: "type", id: 1, kind: fieldString, size: 0, align: 0, table: -1, required: false},
-		{name: "default", id: 2, kind: fieldTable, size: 0, align: 0, table: 52, required: false},
+		{name: "default", id: 2, kind: fieldTable, size: 0, align: 0, table: 55, required: false},
 	}},
 	15: {name: "FunctionGrant", fields: []fieldLayout{
 		{name: "id", id: 0, kind: fieldStruct, size: 16, align: 8, table: -1, required: false},
@@ -102,9 +102,9 @@ var tableLayouts = [...]tableLayout{
 		{name: "key", id: 1, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "page", id: 2, kind: fieldStruct, size: 16, align: 8, table: -1, required: false},
 		{name: "exported", id: 3, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
-		{name: "inputs", id: 4, kind: fieldVectorTable, size: 0, align: 0, table: 29, required: false},
+		{name: "inputs", id: 4, kind: fieldVectorTable, size: 0, align: 0, table: 32, required: false},
 		{name: "output", id: 5, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
-		{name: "steps", id: 6, kind: fieldVectorTable, size: 0, align: 0, table: 43, required: false},
+		{name: "steps", id: 6, kind: fieldVectorTable, size: 0, align: 0, table: 46, required: false},
 	}},
 	17: {name: "Handler", fields: []fieldLayout{
 		{name: "event", id: 0, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
@@ -118,7 +118,7 @@ var tableLayouts = [...]tableLayout{
 	}},
 	19: {name: "Keyframe", fields: []fieldLayout{
 		{name: "at_us", id: 0, kind: fieldScalar, size: 8, align: 8, table: -1, required: false},
-		{name: "value", id: 1, kind: fieldTable, size: 0, align: 0, table: 52, required: false},
+		{name: "value", id: 1, kind: fieldTable, size: 0, align: 0, table: 55, required: false},
 		{name: "curve", id: 2, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 	}},
 	20: {name: "Limit", fields: []fieldLayout{
@@ -151,7 +151,7 @@ var tableLayouts = [...]tableLayout{
 		{name: "min_runtime", id: 8, kind: fieldString, size: 0, align: 0, table: -1, required: false},
 		{name: "capabilities", id: 9, kind: fieldTable, size: 0, align: 0, table: 5, required: false},
 		{name: "limits", id: 10, kind: fieldVectorTable, size: 0, align: 0, table: 20, required: false},
-		{name: "pages", id: 11, kind: fieldVectorTable, size: 0, align: 0, table: 28, required: false},
+		{name: "pages", id: 11, kind: fieldVectorTable, size: 0, align: 0, table: 31, required: false},
 		{name: "entry_page", id: 12, kind: fieldStruct, size: 16, align: 8, table: -1, required: false},
 		{name: "fallback_page", id: 13, kind: fieldStruct, size: 16, align: 8, table: -1, required: false},
 		{name: "plugins", id: 14, kind: fieldVectorStruct, size: 16, align: 8, table: -1, required: false},
@@ -161,185 +161,203 @@ var tableLayouts = [...]tableLayout{
 		{name: "flags", id: 18, kind: fieldVectorTable, size: 0, align: 0, table: 14, required: false},
 		{name: "native_catalogue", id: 19, kind: fieldStruct, size: 16, align: 8, table: -1, required: false},
 		{name: "security_profile", id: 20, kind: fieldString, size: 0, align: 0, table: -1, required: false},
-		{name: "telemetry_sampling", id: 21, kind: fieldVectorTable, size: 0, align: 0, table: 35, required: false},
+		{name: "telemetry_sampling", id: 21, kind: fieldVectorTable, size: 0, align: 0, table: 38, required: false},
 		{name: "not_found_route", id: 22, kind: fieldString, size: 0, align: 0, table: -1, required: false},
-		{name: "shells", id: 23, kind: fieldVectorTable, size: 0, align: 0, table: 38, required: false},
+		{name: "shells", id: 23, kind: fieldVectorTable, size: 0, align: 0, table: 41, required: false},
 		{name: "deep_links", id: 24, kind: fieldTable, size: 0, align: 0, table: 12, required: false},
-		{name: "push", id: 25, kind: fieldTable, size: 0, align: 0, table: 33, required: false},
+		{name: "push", id: 25, kind: fieldTable, size: 0, align: 0, table: 36, required: false},
 	}},
-	25: {name: "Node", fields: []fieldLayout{
+	25: {name: "NativeActionDecl", fields: []fieldLayout{
+		{name: "name", id: 0, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
+		{name: "inputs", id: 1, kind: fieldVectorTable, size: 0, align: 0, table: 32, required: false},
+		{name: "output", id: 2, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
+	}},
+	26: {name: "NativeRouteDecl", fields: []fieldLayout{
+		{name: "name", id: 0, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
+		{name: "params", id: 1, kind: fieldVectorTable, size: 0, align: 0, table: 32, required: false},
+		{name: "result", id: 2, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
+	}},
+	27: {name: "NativeSlotDecl", fields: []fieldLayout{
+		{name: "type", id: 0, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
+		{name: "props", id: 1, kind: fieldVectorTable, size: 0, align: 0, table: 32, required: false},
+		{name: "events", id: 2, kind: fieldVectorTable, size: 0, align: 0, table: 8, required: false},
+	}},
+	28: {name: "Node", fields: []fieldLayout{
 		{name: "id", id: 0, kind: fieldStruct, size: 16, align: 8, table: -1, required: false},
 		{name: "widget", id: 1, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "component", id: 2, kind: fieldStruct, size: 16, align: 8, table: -1, required: false},
 		{name: "component_version", id: 3, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
-		{name: "props", id: 4, kind: fieldVectorTable, size: 0, align: 0, table: 32, required: false},
+		{name: "props", id: 4, kind: fieldVectorTable, size: 0, align: 0, table: 35, required: false},
 		{name: "handlers", id: 5, kind: fieldVectorTable, size: 0, align: 0, table: 17, required: false},
 		{name: "children", id: 6, kind: fieldVectorScalar, size: 4, align: 4, table: -1, required: false},
-		{name: "slots", id: 7, kind: fieldVectorTable, size: 0, align: 0, table: 40, required: false},
-		{name: "visible", id: 8, kind: fieldTable, size: 0, align: 0, table: 52, required: false},
-		{name: "semantics", id: 9, kind: fieldTable, size: 0, align: 0, table: 37, required: false},
+		{name: "slots", id: 7, kind: fieldVectorTable, size: 0, align: 0, table: 43, required: false},
+		{name: "visible", id: 8, kind: fieldTable, size: 0, align: 0, table: 55, required: false},
+		{name: "semantics", id: 9, kind: fieldTable, size: 0, align: 0, table: 40, required: false},
 		{name: "test_id", id: 10, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
-		{name: "overrides", id: 11, kind: fieldVectorTable, size: 0, align: 0, table: 26, required: false},
+		{name: "overrides", id: 11, kind: fieldVectorTable, size: 0, align: 0, table: 29, required: false},
 		{name: "hints", id: 12, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
 		{name: "type_arguments", id: 13, kind: fieldVectorScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "native_slot", id: 14, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 	}},
-	26: {name: "Override", fields: []fieldLayout{
+	29: {name: "Override", fields: []fieldLayout{
 		{name: "kind", id: 0, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
 		{name: "key", id: 1, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
-		{name: "props", id: 2, kind: fieldVectorTable, size: 0, align: 0, table: 32, required: false},
+		{name: "props", id: 2, kind: fieldVectorTable, size: 0, align: 0, table: 35, required: false},
 	}},
-	27: {name: "Page", fields: []fieldLayout{
+	30: {name: "Page", fields: []fieldLayout{
 		{name: "id", id: 0, kind: fieldStruct, size: 16, align: 8, table: -1, required: false},
 		{name: "key", id: 1, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "route", id: 2, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "kind", id: 3, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
-		{name: "title", id: 4, kind: fieldTable, size: 0, align: 0, table: 52, required: false},
-		{name: "params", id: 5, kind: fieldVectorTable, size: 0, align: 0, table: 29, required: false},
-		{name: "state", id: 6, kind: fieldVectorTable, size: 0, align: 0, table: 42, required: false},
+		{name: "title", id: 4, kind: fieldTable, size: 0, align: 0, table: 55, required: false},
+		{name: "params", id: 5, kind: fieldVectorTable, size: 0, align: 0, table: 32, required: false},
+		{name: "state", id: 6, kind: fieldVectorTable, size: 0, align: 0, table: 45, required: false},
 		{name: "data_sources", id: 7, kind: fieldVectorTable, size: 0, align: 0, table: 10, required: false},
 		{name: "lifecycle", id: 8, kind: fieldVectorTable, size: 0, align: 0, table: 17, required: false},
 		{name: "transition", id: 9, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "guards", id: 10, kind: fieldVectorStruct, size: 16, align: 8, table: -1, required: false},
 		{name: "secure", id: 11, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
 		{name: "requires_assurance", id: 12, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
-		{name: "nodes", id: 13, kind: fieldVectorTable, size: 0, align: 0, table: 25, required: false},
+		{name: "nodes", id: 13, kind: fieldVectorTable, size: 0, align: 0, table: 28, required: false},
 		{name: "strings", id: 14, kind: fieldVectorString, size: 0, align: 0, table: -1, required: false},
 		{name: "result", id: 15, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 	}},
-	28: {name: "PageEntry", fields: []fieldLayout{
+	31: {name: "PageEntry", fields: []fieldLayout{
 		{name: "id", id: 0, kind: fieldStruct, size: 16, align: 8, table: -1, required: false},
 		{name: "key", id: 1, kind: fieldString, size: 0, align: 0, table: -1, required: false},
 		{name: "route", id: 2, kind: fieldString, size: 0, align: 0, table: -1, required: false},
 	}},
-	29: {name: "Param", fields: []fieldLayout{
+	32: {name: "Param", fields: []fieldLayout{
 		{name: "id", id: 0, kind: fieldStruct, size: 16, align: 8, table: -1, required: false},
 		{name: "name", id: 1, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "type", id: 2, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "required", id: 3, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
-		{name: "default", id: 4, kind: fieldTable, size: 0, align: 0, table: 52, required: false},
+		{name: "default", id: 4, kind: fieldTable, size: 0, align: 0, table: 55, required: false},
 		{name: "sensitive", id: 5, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
 	}},
-	30: {name: "Program", fields: []fieldLayout{
+	33: {name: "Program", fields: []fieldLayout{
 		{name: "id", id: 0, kind: fieldScalar, size: 8, align: 8, table: -1, required: false},
 		{name: "code", id: 1, kind: fieldVectorScalar, size: 1, align: 1, table: -1, required: false},
 	}},
-	31: {name: "Programs", fields: []fieldLayout{
-		{name: "programs", id: 0, kind: fieldVectorTable, size: 0, align: 0, table: 30, required: false},
+	34: {name: "Programs", fields: []fieldLayout{
+		{name: "programs", id: 0, kind: fieldVectorTable, size: 0, align: 0, table: 33, required: false},
 	}},
-	32: {name: "Prop", fields: []fieldLayout{
+	35: {name: "Prop", fields: []fieldLayout{
 		{name: "id", id: 0, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
-		{name: "value", id: 1, kind: fieldTable, size: 0, align: 0, table: 52, required: false},
+		{name: "value", id: 1, kind: fieldTable, size: 0, align: 0, table: 55, required: false},
 	}},
-	33: {name: "Push", fields: []fieldLayout{
+	36: {name: "Push", fields: []fieldLayout{
 		{name: "enabled", id: 0, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
 		{name: "payload_key", id: 1, kind: fieldString, size: 0, align: 0, table: -1, required: false},
 	}},
-	34: {name: "Retry", fields: []fieldLayout{
+	37: {name: "Retry", fields: []fieldLayout{
 		{name: "count", id: 0, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "backoff_ms", id: 1, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "max_backoff_ms", id: 2, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "jitter", id: 3, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
 		{name: "on", id: 4, kind: fieldVectorScalar, size: 1, align: 1, table: -1, required: false},
 	}},
-	35: {name: "Sampling", fields: []fieldLayout{
+	38: {name: "Sampling", fields: []fieldLayout{
 		{name: "event", id: 0, kind: fieldString, size: 0, align: 0, table: -1, required: true},
 		{name: "rate", id: 1, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 	}},
-	36: {name: "Schemas", fields: []fieldLayout{
-		{name: "types", id: 0, kind: fieldVectorTable, size: 0, align: 0, table: 51, required: false},
-		{name: "state", id: 1, kind: fieldVectorTable, size: 0, align: 0, table: 42, required: false},
+	39: {name: "Schemas", fields: []fieldLayout{
+		{name: "types", id: 0, kind: fieldVectorTable, size: 0, align: 0, table: 54, required: false},
+		{name: "state", id: 1, kind: fieldVectorTable, size: 0, align: 0, table: 45, required: false},
 		{name: "data_sources", id: 2, kind: fieldVectorTable, size: 0, align: 0, table: 10, required: false},
 		{name: "collections", id: 3, kind: fieldVectorTable, size: 0, align: 0, table: 6, required: false},
-		{name: "variables", id: 4, kind: fieldVectorTable, size: 0, align: 0, table: 29, required: false},
-		{name: "user_context", id: 5, kind: fieldVectorTable, size: 0, align: 0, table: 29, required: false},
+		{name: "variables", id: 4, kind: fieldVectorTable, size: 0, align: 0, table: 32, required: false},
+		{name: "user_context", id: 5, kind: fieldVectorTable, size: 0, align: 0, table: 32, required: false},
+		{name: "native_routes", id: 6, kind: fieldVectorTable, size: 0, align: 0, table: 26, required: false},
+		{name: "native_slots", id: 7, kind: fieldVectorTable, size: 0, align: 0, table: 27, required: false},
+		{name: "native_actions", id: 8, kind: fieldVectorTable, size: 0, align: 0, table: 25, required: false},
 	}},
-	37: {name: "Semantics", fields: []fieldLayout{
-		{name: "label", id: 0, kind: fieldTable, size: 0, align: 0, table: 52, required: false},
-		{name: "hint", id: 1, kind: fieldTable, size: 0, align: 0, table: 52, required: false},
-		{name: "value", id: 2, kind: fieldTable, size: 0, align: 0, table: 52, required: false},
+	40: {name: "Semantics", fields: []fieldLayout{
+		{name: "label", id: 0, kind: fieldTable, size: 0, align: 0, table: 55, required: false},
+		{name: "hint", id: 1, kind: fieldTable, size: 0, align: 0, table: 55, required: false},
+		{name: "value", id: 2, kind: fieldTable, size: 0, align: 0, table: 55, required: false},
 		{name: "header", id: 3, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
 		{name: "button", id: 4, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
 		{name: "live_region", id: 5, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
 		{name: "exclude", id: 6, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
 	}},
-	38: {name: "Shell", fields: []fieldLayout{
+	41: {name: "Shell", fields: []fieldLayout{
 		{name: "key", id: 0, kind: fieldString, size: 0, align: 0, table: -1, required: false},
-		{name: "tabs", id: 1, kind: fieldVectorTable, size: 0, align: 0, table: 39, required: false},
+		{name: "tabs", id: 1, kind: fieldVectorTable, size: 0, align: 0, table: 42, required: false},
 	}},
-	39: {name: "ShellTab", fields: []fieldLayout{
+	42: {name: "ShellTab", fields: []fieldLayout{
 		{name: "key", id: 0, kind: fieldString, size: 0, align: 0, table: -1, required: false},
-		{name: "label", id: 1, kind: fieldTable, size: 0, align: 0, table: 52, required: false},
-		{name: "icon", id: 2, kind: fieldTable, size: 0, align: 0, table: 52, required: false},
+		{name: "label", id: 1, kind: fieldTable, size: 0, align: 0, table: 55, required: false},
+		{name: "icon", id: 2, kind: fieldTable, size: 0, align: 0, table: 55, required: false},
 		{name: "initial_route", id: 3, kind: fieldString, size: 0, align: 0, table: -1, required: false},
 	}},
-	40: {name: "SlotFill", fields: []fieldLayout{
+	43: {name: "SlotFill", fields: []fieldLayout{
 		{name: "id", id: 0, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "nodes", id: 1, kind: fieldVectorScalar, size: 4, align: 4, table: -1, required: false},
 	}},
-	41: {name: "SourceMap", fields: []fieldLayout{
+	44: {name: "SourceMap", fields: []fieldLayout{
 		{name: "files", id: 0, kind: fieldVectorString, size: 0, align: 0, table: -1, required: false},
 		{name: "nodes", id: 1, kind: fieldVectorTable, size: 0, align: 0, table: 22, required: false},
 		{name: "steps", id: 2, kind: fieldVectorTable, size: 0, align: 0, table: 22, required: false},
 	}},
-	42: {name: "StateEntry", fields: []fieldLayout{
+	45: {name: "StateEntry", fields: []fieldLayout{
 		{name: "id", id: 0, kind: fieldStruct, size: 16, align: 8, table: -1, required: false},
 		{name: "name", id: 1, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "type", id: 2, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
-		{name: "default", id: 3, kind: fieldTable, size: 0, align: 0, table: 52, required: false},
+		{name: "default", id: 3, kind: fieldTable, size: 0, align: 0, table: 55, required: false},
 		{name: "computed", id: 4, kind: fieldScalar, size: 8, align: 8, table: -1, required: false},
 		{name: "persistence", id: 5, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
 		{name: "sensitive", id: 6, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
 		{name: "exposed", id: 7, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
 	}},
-	43: {name: "Step", fields: []fieldLayout{
+	46: {name: "Step", fields: []fieldLayout{
 		{name: "id", id: 0, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "action", id: 1, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
-		{name: "input", id: 2, kind: fieldVectorTable, size: 0, align: 0, table: 32, required: false},
+		{name: "input", id: 2, kind: fieldVectorTable, size: 0, align: 0, table: 35, required: false},
 		{name: "next", id: 3, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "on_success", id: 4, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "on_error", id: 5, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "branches", id: 6, kind: fieldVectorTable, size: 0, align: 0, table: 4, required: false},
-		{name: "retry", id: 7, kind: fieldTable, size: 0, align: 0, table: 34, required: false},
+		{name: "retry", id: 7, kind: fieldTable, size: 0, align: 0, table: 37, required: false},
 		{name: "timeout_ms", id: 8, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 	}},
-	44: {name: "Strings", fields: []fieldLayout{
+	47: {name: "Strings", fields: []fieldLayout{
 		{name: "strings", id: 0, kind: fieldVectorString, size: 0, align: 0, table: -1, required: false},
 	}},
-	45: {name: "Style", fields: []fieldLayout{
+	48: {name: "Style", fields: []fieldLayout{
 		{name: "id", id: 0, kind: fieldScalar, size: 8, align: 8, table: -1, required: false},
 		{name: "type", id: 1, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
-		{name: "value", id: 2, kind: fieldTable, size: 0, align: 0, table: 52, required: false},
+		{name: "value", id: 2, kind: fieldTable, size: 0, align: 0, table: 55, required: false},
 	}},
-	46: {name: "Styles", fields: []fieldLayout{
-		{name: "styles", id: 0, kind: fieldVectorTable, size: 0, align: 0, table: 45, required: false},
-		{name: "tokens", id: 1, kind: fieldVectorTable, size: 0, align: 0, table: 49, required: false},
+	49: {name: "Styles", fields: []fieldLayout{
+		{name: "styles", id: 0, kind: fieldVectorTable, size: 0, align: 0, table: 48, required: false},
+		{name: "tokens", id: 1, kind: fieldVectorTable, size: 0, align: 0, table: 52, required: false},
 	}},
-	47: {name: "Timeline", fields: []fieldLayout{
+	50: {name: "Timeline", fields: []fieldLayout{
 		{name: "id", id: 0, kind: fieldStruct, size: 16, align: 8, table: -1, required: false},
 		{name: "duration_us", id: 1, kind: fieldScalar, size: 8, align: 8, table: -1, required: false},
 		{name: "repeat", id: 2, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
-		{name: "tracks", id: 3, kind: fieldVectorTable, size: 0, align: 0, table: 50, required: false},
+		{name: "tracks", id: 3, kind: fieldVectorTable, size: 0, align: 0, table: 53, required: false},
 	}},
-	48: {name: "Timelines", fields: []fieldLayout{
-		{name: "timelines", id: 0, kind: fieldVectorTable, size: 0, align: 0, table: 47, required: false},
+	51: {name: "Timelines", fields: []fieldLayout{
+		{name: "timelines", id: 0, kind: fieldVectorTable, size: 0, align: 0, table: 50, required: false},
 	}},
-	49: {name: "Token", fields: []fieldLayout{
+	52: {name: "Token", fields: []fieldLayout{
 		{name: "path", id: 0, kind: fieldString, size: 0, align: 0, table: -1, required: true},
-		{name: "light", id: 1, kind: fieldTable, size: 0, align: 0, table: 52, required: false},
-		{name: "dark", id: 2, kind: fieldTable, size: 0, align: 0, table: 52, required: false},
+		{name: "light", id: 1, kind: fieldTable, size: 0, align: 0, table: 55, required: false},
+		{name: "dark", id: 2, kind: fieldTable, size: 0, align: 0, table: 55, required: false},
 		{name: "type", id: 3, kind: fieldString, size: 0, align: 0, table: -1, required: false},
 	}},
-	50: {name: "Track", fields: []fieldLayout{
+	53: {name: "Track", fields: []fieldLayout{
 		{name: "prop", id: 0, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "keyframes", id: 1, kind: fieldVectorTable, size: 0, align: 0, table: 19, required: false},
 	}},
-	51: {name: "TypeDecl", fields: []fieldLayout{
+	54: {name: "TypeDecl", fields: []fieldLayout{
 		{name: "name", id: 0, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
-		{name: "fields", id: 1, kind: fieldVectorTable, size: 0, align: 0, table: 29, required: false},
+		{name: "fields", id: 1, kind: fieldVectorTable, size: 0, align: 0, table: 32, required: false},
 		{name: "members", id: 2, kind: fieldVectorScalar, size: 4, align: 4, table: -1, required: false},
 	}},
-	52: {name: "Value", fields: []fieldLayout{
+	55: {name: "Value", fields: []fieldLayout{
 		{name: "kind", id: 0, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
 		{name: "i", id: 1, kind: fieldScalar, size: 8, align: 8, table: -1, required: false},
 		{name: "offset", id: 2, kind: fieldScalar, size: 2, align: 2, table: -1, required: false},
@@ -348,10 +366,10 @@ var tableLayouts = [...]tableLayout{
 		{name: "unscaled", id: 5, kind: fieldVectorScalar, size: 1, align: 1, table: -1, required: false},
 		{name: "scale", id: 6, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "uuid", id: 7, kind: fieldStruct, size: 16, align: 8, table: -1, required: false},
-		{name: "items", id: 8, kind: fieldVectorTable, size: 0, align: 0, table: 52, required: false},
+		{name: "items", id: 8, kind: fieldVectorTable, size: 0, align: 0, table: 55, required: false},
 		{name: "entries", id: 9, kind: fieldVectorTable, size: 0, align: 0, table: 13, required: false},
 	}},
-	53: {name: "WasmModule", fields: []fieldLayout{
+	56: {name: "WasmModule", fields: []fieldLayout{
 		{name: "id", id: 0, kind: fieldStruct, size: 16, align: 8, table: -1, required: false},
 		{name: "hash", id: 1, kind: fieldVectorScalar, size: 1, align: 1, table: -1, required: false},
 		{name: "module", id: 2, kind: fieldVectorScalar, size: 1, align: 1, table: -1, required: false},
@@ -363,14 +381,14 @@ var rootLayouts = map[string]int{
 	"PXAC": 0,  // Actions
 	"PXAS": 2,  // AssetIndex
 	"PXCO": 7,  // Component
-	"PXEX": 31, // Programs
+	"PXEX": 34, // Programs
 	"PXLN": 21, // Locale
 	"PXMT": 24, // Meta
-	"PXPG": 27, // Page
-	"PXSC": 36, // Schemas
-	"PXSG": 44, // Strings
-	"PXSM": 41, // SourceMap
-	"PXST": 46, // Styles
-	"PXTL": 48, // Timelines
-	"PXWM": 53, // WasmModule
+	"PXPG": 30, // Page
+	"PXSC": 39, // Schemas
+	"PXSG": 47, // Strings
+	"PXSM": 44, // SourceMap
+	"PXST": 49, // Styles
+	"PXTL": 51, // Timelines
+	"PXWM": 56, // WasmModule
 }

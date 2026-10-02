@@ -41,6 +41,16 @@
       "name": "picked"
     },
     {
+      "description": "The profile screen returned.",
+      "fields": [
+        {
+          "name": "ok",
+          "type": "bool"
+        }
+      ],
+      "name": "profiled"
+    },
+    {
       "description": "A step failed and its onError ran.",
       "fields": [
         {
@@ -51,9 +61,29 @@
       "name": "recovered"
     },
     {
+      "description": "A custom action returned a code.",
+      "fields": [
+        {
+          "name": "code",
+          "type": "string"
+        }
+      ],
+      "name": "scanned"
+    },
+    {
       "description": "Emitted when user.authenticated holds.",
       "fields": [],
       "name": "signedIn"
+    },
+    {
+      "description": "The host counter was tapped.",
+      "fields": [
+        {
+          "name": "count",
+          "type": "int"
+        }
+      ],
+      "name": "tapped"
     }
   ],
   "icon": {

@@ -319,6 +319,9 @@ enum PluxErrorCode {
   /// User context attribute ignored.
   userContextInvalid(4204, 'USER_CONTEXT_INVALID', 'User context attribute ignored'),
 
+  /// Host code failed.
+  hostCodeFailed(4205, 'HOST_CODE_FAILED', 'Host code failed'),
+
   /// Action timed out.
   actionTimeout(5001, 'ACTION_TIMEOUT', 'Action timed out'),
 

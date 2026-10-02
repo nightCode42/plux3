@@ -29,6 +29,13 @@ export 'src/core/runtime.dart' show PluxStartup;
 export 'src/devtools_api/diagnostics.dart'
     show PluxDiagnostic, PluxDiagnostics, PluxPluginInfo, PluxReleaseInfo;
 export 'src/errors/plux_exception.dart' show PluxErrorCode, PluxException;
+export 'src/native_catalogue/registration.dart'
+    show
+        PluxNativeAction,
+        PluxNativeRoute,
+        PluxNativeSlot,
+        PluxRouterAdapter,
+        PluxSlot;
 export 'src/navigation/delegate.dart'
     show
         PluxNavigationDelegate,

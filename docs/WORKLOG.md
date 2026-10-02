@@ -12,7 +12,7 @@ Per-requirement implementation status is **not** tracked here; it lives only in 
 |---|---|
 | Phase | P4 — Routing, host integration and no-code generation (plan approved 2026-10-01) |
 | Active branch | `claude/kind-ptolemy-tqyty7` (the session branch the environment pins; maintainer-approved, plan §2.1 A2; R0 and the following milestones merge together, A10) |
-| Active work | R4, R5 and R6 together (maintainer, 2026-10-02): R4 — guards, deep links, push, auth and user context — implemented and pushed as a checkpoint (code, tests, docs; local gates pass); R5 router adapters and R6 native catalogue in progress; one exit gate for the three |
+| Active work | R4, R5 and R6 together (maintainer, 2026-10-02): R4 — guards, deep links, push, auth and user context — implemented and pushed as a checkpoint (code, tests, docs; local gates pass); R6's runtime half — native routes, slots and custom actions, the app bundle's catalogue declarations — pushed as a checkpoint; R5 router adapters and R6's tooling and server half in progress; one exit gate for the three |
 | Requirement IDs | R4: `NAV-008`, `NAV-009`, `HST-010`, `HST-011`; R5: `NAV-006`, `HST-031` (route discovery); R6: `NAV-002`, `WGT-030`, `WGT-032`, `WGT-033`, `ACT-060`, `HST-031`, `CLI-006`, `REL-080`; statuses move at R11 (plan §4.1). Then all P4 requirements as scoped by [plans/p4.md](plans/p4.md) §3 |
 
 ## Next up
@@ -74,7 +74,8 @@ specification's version header stays at 1.1.9 until R11 sets it to the latest re
 During R4–R6 (2026-10-02) the maintainer decided (plan §2.1 A22, A23): router adapters
 wrap the host's router, `PluxConfig(router: PluxGoRouter(myGoRouter))`, through a core
 `PluxRouterAdapter` interface; a kill switch's declared fallback page that is guarded
-gives way to the generic fallback.
+gives way to the generic fallback; the app bundle carries the native catalogue's
+declarations (A24).
 
 ### P3 scope decisions (maintainer, 2026-09-28, approving the P3 plan)
 

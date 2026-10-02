@@ -34,6 +34,12 @@ each milestone of the phase.
 - `Plux.setUserContext` attributes are typed by the app document's `userContext`;
   undeclared or ill-typed ones are left out and reported (`PLX-4204`). The user's ID is no
   longer readable as `user.id`, which the compiler never accepted.
+- Native routes, slots and custom actions (ADR-0041): `PluxConfig.nativeRoutes`,
+  `nativeSlots` and `nativeActions` register what plugins use, with
+  `PluxNativeRoute<P, R>`, `PluxNativeSlot` and `PluxNativeAction<I, O>`; every value
+  crossing into host code is checked against the app bundle's native catalogue both ways,
+  and a failing host handler reports `PLX-4205`. `PluxConfig.router` takes a router
+  adapter (`PluxRouterAdapter`).
 - Registry value types reaching expressions, such as a graph's `GuardResult`, are keyed by
   their field names; they were keyed by mismatched strings.
 - Breaking: `PluxAuthDelegate` gains `isAuthenticated`, which PXL reads as

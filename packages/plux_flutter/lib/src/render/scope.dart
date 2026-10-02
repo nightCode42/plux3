@@ -14,6 +14,8 @@ import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/native_catalogue/registration.dart';
+import 'package:plux_flutter/src/pxl/types.dart';
 import 'package:plux_flutter/src/render/node_context.dart';
 import 'package:plux_flutter/src/render/sections.dart';
 import 'package:plux_flutter/src/render/values.dart';
@@ -71,6 +73,12 @@ abstract interface class RenderServices {
   /// Builds the fallback shown instead of a failed page or component of
   /// [plugin] (RT-020).
   Widget fallback(BuildContext context, PluxException error, String plugin);
+
+  /// The host's native slot of [type], with the catalogue's declaration
+  /// and the types its props may name; null when the host registers none
+  /// or the catalogue declares none (WGT-033, ADR-0041).
+  ({PluxNativeSlot slot, NativeSlotDecl decl, Map<String, NamedType> types})?
+  nativeSlot(RenderScope scope, String type);
 }
 
 /// Reports a problem with a node's path (RT-020).

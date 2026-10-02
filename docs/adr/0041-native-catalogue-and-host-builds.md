@@ -75,16 +75,43 @@ Everything is registered in the `PluxConfig` passed to `Plux.initialize`:
 ```dart
 Plux.initialize(PluxConfig(
   hostBuild: '1.4.0+52',
-  nativeRoutes: {'profile': PluxNativeRoute<ProfileParams, void>(builder: ...)},
-  nativeSlots: {'MapCard': PluxNativeSlot(MapCard.new)},
-  nativeActions: {'openScanner': PluxNativeAction<ScanIn, ScanOut>(handler: ...)},
-  router: myGoRouter, // optional: routes discovered by plux_go_router
+  nativeRoutes: {
+    'profile': PluxNativeRoute<ProfileParams, bool>(
+      params: ProfileParams.fromJson,
+      builder: (context, p) => ProfileScreen(userId: p.userId),
+    ),
+  },
+  nativeSlots: {
+    'MapCard': PluxNativeSlot(
+      (context, slot) => MapCard(
+        zoom: slot['zoom']! as double,
+        onPan: (offset) => slot.emit('onPan', offset),
+      ),
+    ),
+  },
+  nativeActions: {
+    'openScanner': PluxNativeAction<ScanIn, String>(
+      input: ScanIn.fromJson,
+      handler: (scan) => scanner.scan(prompt: scan.prompt),
+    ),
+  },
+  router: PluxGoRouter(myGoRouter), // optional: routes discovered by plux_go_router
 ));
 ```
 
-Existing widgets, routes and functions are referenced, never modified. With a router
-adapter (ADR-0040), the host's existing named routes are discovered from the router and
-need no registration.
+Existing widgets, routes and functions are referenced, never modified. A route's and an
+action's type arguments are what `plux native scan` reads; `params` and `input` build them
+from the JSON form the catalogue already checked, and a result or output may be converted
+back with `result` or `output`. A slot's builder reads its props and emits its events; the
+scanner reads the props from the widget's constructor. Calling a constructor tear-off with
+named arguments built at run time would break in builds made with `--obfuscate`, so slots
+take a builder.
+
+With a router adapter (ADR-0040), the host's existing named routes are discovered from the
+router and need no registration. `plux_flutter` cannot name a router's type without
+depending on it, so the adapter wraps the router (`PluxGoRouter(myGoRouter)`,
+`PluxAutoRoute(myRouter)`) behind the core's `PluxRouterAdapter` interface: its navigation
+delegate, the routes it discovers and its navigator key (maintainer, P4 plan A22).
 
 ### `plux.yaml` and the scanner (`WGT-030`, `CLI-006`)
 
@@ -159,9 +186,20 @@ app.
 
 ### Runtime
 
-- **Native routes (`NAV-002`).** `navigate` to a native route resolves it through the
-  registration and returns its typed result. A route that is not registered reports
-  `PLX-4200` and takes the step's `onError`.
+The app bundle carries the declarations of the catalogue it was compiled against — each
+route's parameters and result, each slot's props and events in the catalogue's order, each
+custom action's inputs and output — as optional fields of its schemas section (maintainer,
+P4 plan A24). Slot nodes address props and events by index into them, and every value
+crossing into host code is checked against them on the way in and on the way out. A host
+handler, route conversion or slot builder that throws reports `PLX-4205` with the
+exception's type only, since its message may hold the user's data.
+
+- **Native routes (`NAV-002`).** `navigate` to a native route opens it through the
+  registration, with its parameters checked. Its typed result reaches a graph through a
+  presenting step, `openDialog` or `openBottomSheet`, whose output the compiler types by the
+  catalogue's result: Appendix D gives `navigate` no output. A route that is not
+  registered reports `PLX-4200` and takes the step's `onError`; a result of another type
+  fails the step with a `validation` error.
 - **Slots (`WGT-033`).** A slot node builds the registered widget with props from
   bindings, which update reactively like any node.
   - Layout is constraints in, size out.
@@ -169,7 +207,9 @@ app.
   - A failure is contained by the page's boundary (`RT-020`).
   - A slot that is not registered shows the neutral placeholder and reports `PLX-4201`.
 - **`callNative` (`ACT-060`).** Inputs are checked against the action's declared types
-  before host code runs, and the output after it.
+  before host code runs, and the output after it. A step named after the custom action is
+  compiled as `callNative`, and either form types `steps.<id>.output` by the catalogue's
+  output.
   - An unregistered action reports `PLX-4202`.
   - A value of the wrong type fails the step with a `validation` error.
   - A host handler's exception becomes the step's error. It never escapes the run

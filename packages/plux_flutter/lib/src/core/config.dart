@@ -12,6 +12,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/native_catalogue/registration.dart';
 import 'package:plux_flutter/src/navigation/delegate.dart';
 import 'package:plux_flutter/src/verify/manifest.dart';
 
@@ -208,6 +209,10 @@ final class PluxConfig {
     this.notFoundBuilder,
     this.navigationDelegate,
     this.navigatorKey,
+    this.nativeRoutes = const {},
+    this.nativeSlots = const {},
+    this.nativeActions = const {},
+    this.router,
   }) : assert(downloadParallelism > 0, 'at least one download at a time'),
        assert(
          hostBuild.length <= 64,
@@ -320,6 +325,26 @@ final class PluxConfig {
   /// The key of the app's root `Navigator` (`MaterialApp.navigatorKey`):
   /// where `Plux.handleDeepLink` and `Plux.handlePushPayload` open their
   /// routes, since links and notifications arrive outside any widget
-  /// (NAV-008). Without it they open nothing and report `PLX-4102`.
+  /// (NAV-008). Without it they open nothing and report `PLX-4102`; a
+  /// router adapter's key is used when it is null.
   final GlobalKey<NavigatorState>? navigatorKey;
+
+  /// The host's routes plugins may open by name (NAV-002, HST-031), checked
+  /// against the native catalogue; an unregistered one reports `PLX-4200`.
+  final Map<String, PluxNativeRoute<Object?, Object?>> nativeRoutes;
+
+  /// The host's widgets plugin pages place as native slots, by the type
+  /// name of the catalogue (WGT-033); an unregistered one shows the neutral
+  /// placeholder and reports `PLX-4201`.
+  final Map<String, PluxNativeSlot> nativeSlots;
+
+  /// The host's functions plugins call with `callNative` (ACT-060); an
+  /// unregistered one fails its step with `PLX-4202`.
+  final Map<String, PluxNativeAction<Object?, Object?>> nativeActions;
+
+  /// A router adapter, such as `PluxGoRouter(router)` of `plux_go_router`:
+  /// Plux navigates through the router, unless [navigationDelegate] is set,
+  /// and plugins open the router's named routes as native routes
+  /// ([nativeRoutes] entries of the same name win) (HST-031, ADR-0040).
+  final PluxRouterAdapter? router;
 }

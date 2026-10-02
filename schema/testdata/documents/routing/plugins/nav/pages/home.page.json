@@ -307,6 +307,19 @@
                     "id": "scan",
                     "input": {
                       "prompt": "Scan a code"
+                    },
+                    "next": "emit"
+                  },
+                  {
+                    "action": "emitHostEvent",
+                    "id": "emit",
+                    "input": {
+                      "event": "scanned",
+                      "payload": {
+                        "code": {
+                          "$expr": "steps.scan.output ?? \"\""
+                        }
+                      }
                     }
                   }
                 ]
@@ -411,6 +424,48 @@
                 "id": "01f0c450-6c00-7000-8000-000000000118",
                 "props": {
                   "data": "Who"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "openDialog",
+                    "id": "ask",
+                    "input": {
+                      "params": {
+                        "userId": "u-8"
+                      },
+                      "route": "profile"
+                    },
+                    "next": "emit"
+                  },
+                  {
+                    "action": "emitHostEvent",
+                    "id": "emit",
+                    "input": {
+                      "event": "profiled",
+                      "payload": {
+                        "ok": {
+                          "$expr": "steps.ask.output ?? false"
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000240",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-000000000241",
+                "props": {
+                  "data": "Ask profile"
                 },
                 "type": "Text"
               }

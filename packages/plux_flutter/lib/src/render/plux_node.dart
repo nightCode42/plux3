@@ -20,9 +20,12 @@ import 'package:plux_flutter/src/bundle/container.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/bundle/safe_read.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/native_catalogue/registration.dart';
+import 'package:plux_flutter/src/pxl/types.dart';
 import 'package:plux_flutter/src/render/decoding.dart';
 import 'package:plux_flutter/src/render/generated/render.g.dart';
 import 'package:plux_flutter/src/render/node_context.dart';
+import 'package:plux_flutter/src/render/renderer.dart' show fromHost;
 import 'package:plux_flutter/src/render/scope.dart';
 import 'package:plux_flutter/src/render/sections.dart';
 import 'package:plux_flutter/src/render/values.dart';
@@ -112,11 +115,8 @@ final class NodeContextImpl implements NodeContext {
   Widget _content() {
     if (node.widget == 0) {
       if (node.component != null) return _component();
-      return _unknown(
-        node.nativeSlot != 0
-            ? 'native slots arrive in P4 (WGT-030)'
-            : 'a node with neither a widget nor a component',
-      );
+      if (node.nativeSlot != 0) return _nativeSlot();
+      return _unknown('a node with neither a widget nor a component');
     }
     final builder = scope.builders[node.widget];
     if (builder == null) return _unknown('widget ${node.widget}');
@@ -161,13 +161,7 @@ final class NodeContextImpl implements NodeContext {
       path: _path,
     );
     // A neutral placeholder, labelled in debug builds (WGT-014).
-    return kReleaseMode
-        ? const SizedBox.shrink()
-        : Text(
-            '⟨$what⟩',
-            textDirection: TextDirection.ltr,
-            style: const TextStyle(fontSize: 10),
-          );
+    return _placeholder(what);
   }
 
   // ── Values ───────────────────────────────────────────────────────────────
@@ -499,6 +493,66 @@ final class NodeContextImpl implements NodeContext {
     );
   }
 
+  // ── Native slots ─────────────────────────────────────────────────────────
+
+  /// Builds the host's widget for a native slot node (WGT-033, ADR-0041):
+  /// props come from bindings, checked against the catalogue's types before
+  /// host code sees them, and its events start the node's graphs. A slot
+  /// the host does not register shows the neutral placeholder; a builder
+  /// that throws is contained by the page's boundary.
+  Widget _nativeSlot() {
+    final type = scope.section.string(node.nativeSlot);
+    final found = scope.services.nativeSlot(scope, type);
+    if (found == null) {
+      scope.report(
+        PluxException(
+          PluxErrorCode.nativeSlotNotRegistered,
+          'node $_path: the host registers no native slot $type',
+          details: {'node': _path},
+        ),
+        path: _path,
+      );
+      return _placeholder(type);
+    }
+    final (:slot, :decl, :types) = found;
+    final props = <String, Object?>{};
+    for (var k = 0; k < decl.props.length; k++) {
+      final p = decl.props[k];
+      final given = _merged[k];
+      if (given == null) continue;
+      final json = toJson(toPxl(resolve(given)));
+      try {
+        fromJson(PxlType.parse(p.type, (n) => types[n]), json);
+        props[p.name] = json;
+      } on FormatException catch (e) {
+        _bad(
+          'prop ${p.name} of native slot $type is not a ${p.type}: ${e.message}',
+        );
+      }
+    }
+    try {
+      return slot.builder(context, _Slot(props, decl, types, this, type));
+    } on Object catch (e, stack) {
+      // Only the exception's type: its message may hold the user's data.
+      return failed(
+        PluxException(
+          PluxErrorCode.hostCodeFailed,
+          'node $_path: native slot $type failed with ${e.runtimeType}',
+          details: {'node': _path},
+        ),
+        stack,
+      );
+    }
+  }
+
+  Widget _placeholder(String what) => kReleaseMode
+      ? const SizedBox.shrink()
+      : Text(
+          '⟨$what⟩',
+          textDirection: TextDirection.ltr,
+          style: const TextStyle(fontSize: 10),
+        );
+
   // ── Components ───────────────────────────────────────────────────────────
 
   Widget _component() {
@@ -758,5 +812,44 @@ final class _PluxBoundaryState extends State<PluxBoundary> {
     final e = _error;
     if (e == null) return widget.child;
     return widget.fallback?.call(context, e) ?? const SizedBox.shrink();
+  }
+}
+
+/// What a native slot's builder reads and emits through.
+final class _Slot implements PluxSlot {
+  _Slot(this._props, this._decl, this._types, this._node, this._type);
+
+  final Map<String, Object?> _props;
+  final NativeSlotDecl _decl;
+  final Map<String, NamedType> _types;
+  final NodeContextImpl _node;
+  final String _type;
+
+  @override
+  Object? operator [](String name) => _props[name];
+
+  @override
+  void emit(String name, [Object? payload]) {
+    final i = _decl.events.indexWhere((e) => e.name == name);
+    if (i < 0) {
+      _node._bad('native slot $_type has no event $name');
+      return;
+    }
+    final type = _decl.events[i].payload;
+    Object? value;
+    if (type != null && payload != null) {
+      try {
+        value = fromJson(
+          PxlType.parse(type, (n) => _types[n]),
+          fromHost(payload),
+        );
+      } on FormatException catch (e) {
+        _node._bad(
+          'event $name of native slot $_type carries no $type: ${e.message}',
+        );
+        return;
+      }
+    }
+    _node.fire(i, value);
   }
 }

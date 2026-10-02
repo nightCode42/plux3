@@ -535,6 +535,11 @@ var registry = []Definition{
 		"Pass only the attributes the app declares, each as the text of its declared type: true or false, a number, a decimal, an ISO 8601 date, or an enum member.", false,
 	},
 	{
+		HostCodeFailed, "HOST_CODE_FAILED", SeverityError, "Host code failed",
+		"A custom action's handler, a native route's parameter conversion or screen, or a native slot's builder registered by the host app threw; the step fails, or the page shows its error fallback, and nothing reaches the plugin as a crash (ACT-060, NAV-002, WGT-033).",
+		"Fix the host's handler, conversion or builder; the report names the action, route or slot and only the exception's type, never its message.", false,
+	},
+	{
 		ActionTimeout, "ACTION_TIMEOUT", SeverityError, "Action timed out",
 		"A step or its run took longer than the limits action.stepTimeout or action.runTimeout, or the step's own timeoutMs, allow; time spent waiting for the user in a dialog or bottom sheet does not count (ACT-005, ADR-0039).",
 		"Handle the error with the step's onError, or make the work shorter; an installation may raise the limits within their maximums.", false,

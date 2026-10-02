@@ -34,5 +34,25 @@
       "result": "bool"
     }
   ],
-  "schemaVersion": "1.0.0"
+  "schemaVersion": "1.0.0",
+  "slots": [
+    {
+      "description": "A host counter button.",
+      "events": [
+        {
+          "name": "onTap",
+          "payload": "int"
+        }
+      ],
+      "props": [
+        {
+          "mock": "Taps",
+          "name": "label",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "Counter"
+    }
+  ]
 }

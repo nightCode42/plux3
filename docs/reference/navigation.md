@@ -79,9 +79,12 @@ A name no page has is reported with `PLX-4100`, and shows the first that exists 
 3. Plux's own `PluxNotFoundPage`.
 
 A `navigate` step whose target is not a page names a native route, because the compiler
-checked it. Until the host registers native routes
-([ADR-0041](../adr/0041-native-catalogue-and-host-builds.md)), such a step fails with
-`PLX-4200`.
+checked it ([ADR-0041](../adr/0041-native-catalogue-and-host-builds.md)). It opens the
+route the host registers in `PluxConfig.nativeRoutes`, or that its router adapter
+discovered, with its parameters checked against the native catalogue; a route the host
+does not register fails the step with `PLX-4200`. Its result reaches a graph through
+`openDialog` or `openBottomSheet`, typed by the catalogue's result and checked when the
+screen returns it.
 
 ## 4. Guards (`NAV-009`)
 

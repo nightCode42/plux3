@@ -53,7 +53,7 @@ const List<TableLayout> tableLayouts = [
   TableLayout('Collection', [
     FieldLayout('id', 0, FieldKind.struct, 16, 8, -1, required: false),
     FieldLayout('key', 1, FieldKind.scalar, 4, 4, -1, required: false),
-    FieldLayout('fields', 2, FieldKind.vectorTable, 0, 0, 29, required: false),
+    FieldLayout('fields', 2, FieldKind.vectorTable, 0, 0, 32, required: false),
     FieldLayout('primary_key', 3, FieldKind.vectorScalar, 4, 4, -1, required: false),
     FieldLayout('indexes', 4, FieldKind.vectorTable, 0, 0, 18, required: false),
   ]),
@@ -62,11 +62,11 @@ const List<TableLayout> tableLayouts = [
     FieldLayout('id', 0, FieldKind.struct, 16, 8, -1, required: false),
     FieldLayout('key', 1, FieldKind.scalar, 4, 4, -1, required: false),
     FieldLayout('version', 2, FieldKind.scalar, 4, 4, -1, required: false),
-    FieldLayout('props', 3, FieldKind.vectorTable, 0, 0, 29, required: false),
+    FieldLayout('props', 3, FieldKind.vectorTable, 0, 0, 32, required: false),
     FieldLayout('slots', 4, FieldKind.vectorTable, 0, 0, 9, required: false),
     FieldLayout('events', 5, FieldKind.vectorTable, 0, 0, 8, required: false),
-    FieldLayout('state', 6, FieldKind.vectorTable, 0, 0, 42, required: false),
-    FieldLayout('nodes', 7, FieldKind.vectorTable, 0, 0, 25, required: false),
+    FieldLayout('state', 6, FieldKind.vectorTable, 0, 0, 45, required: false),
+    FieldLayout('nodes', 7, FieldKind.vectorTable, 0, 0, 28, required: false),
     FieldLayout('strings', 8, FieldKind.vectorString, 0, 0, -1, required: false),
   ]),
   // 8
@@ -86,7 +86,7 @@ const List<TableLayout> tableLayouts = [
     FieldLayout('name', 1, FieldKind.scalar, 4, 4, -1, required: false),
     FieldLayout('kind', 2, FieldKind.scalar, 1, 1, -1, required: false),
     FieldLayout('type', 3, FieldKind.scalar, 4, 4, -1, required: false),
-    FieldLayout('config', 4, FieldKind.table, 0, 0, 52, required: false),
+    FieldLayout('config', 4, FieldKind.table, 0, 0, 55, required: false),
   ]),
   // 11
   TableLayout('DeepLinkRoute', [
@@ -102,13 +102,13 @@ const List<TableLayout> tableLayouts = [
   // 13
   TableLayout('Entry', [
     FieldLayout('key', 0, FieldKind.scalar, 4, 4, -1, required: false),
-    FieldLayout('value', 1, FieldKind.table, 0, 0, 52, required: false),
+    FieldLayout('value', 1, FieldKind.table, 0, 0, 55, required: false),
   ]),
   // 14
   TableLayout('Flag', [
     FieldLayout('name', 0, FieldKind.string, 0, 0, -1, required: true),
     FieldLayout('type', 1, FieldKind.string, 0, 0, -1, required: false),
-    FieldLayout('default', 2, FieldKind.table, 0, 0, 52, required: false),
+    FieldLayout('default', 2, FieldKind.table, 0, 0, 55, required: false),
   ]),
   // 15
   TableLayout('FunctionGrant', [
@@ -122,9 +122,9 @@ const List<TableLayout> tableLayouts = [
     FieldLayout('key', 1, FieldKind.scalar, 4, 4, -1, required: false),
     FieldLayout('page', 2, FieldKind.struct, 16, 8, -1, required: false),
     FieldLayout('exported', 3, FieldKind.scalar, 1, 1, -1, required: false),
-    FieldLayout('inputs', 4, FieldKind.vectorTable, 0, 0, 29, required: false),
+    FieldLayout('inputs', 4, FieldKind.vectorTable, 0, 0, 32, required: false),
     FieldLayout('output', 5, FieldKind.scalar, 4, 4, -1, required: false),
-    FieldLayout('steps', 6, FieldKind.vectorTable, 0, 0, 43, required: false),
+    FieldLayout('steps', 6, FieldKind.vectorTable, 0, 0, 46, required: false),
   ]),
   // 17
   TableLayout('Handler', [
@@ -141,7 +141,7 @@ const List<TableLayout> tableLayouts = [
   // 19
   TableLayout('Keyframe', [
     FieldLayout('at_us', 0, FieldKind.scalar, 8, 8, -1, required: false),
-    FieldLayout('value', 1, FieldKind.table, 0, 0, 52, required: false),
+    FieldLayout('value', 1, FieldKind.table, 0, 0, 55, required: false),
     FieldLayout('curve', 2, FieldKind.scalar, 4, 4, -1, required: false),
   ]),
   // 20
@@ -179,7 +179,7 @@ const List<TableLayout> tableLayouts = [
     FieldLayout('min_runtime', 8, FieldKind.string, 0, 0, -1, required: false),
     FieldLayout('capabilities', 9, FieldKind.table, 0, 0, 5, required: false),
     FieldLayout('limits', 10, FieldKind.vectorTable, 0, 0, 20, required: false),
-    FieldLayout('pages', 11, FieldKind.vectorTable, 0, 0, 28, required: false),
+    FieldLayout('pages', 11, FieldKind.vectorTable, 0, 0, 31, required: false),
     FieldLayout('entry_page', 12, FieldKind.struct, 16, 8, -1, required: false),
     FieldLayout('fallback_page', 13, FieldKind.struct, 16, 8, -1, required: false),
     FieldLayout('plugins', 14, FieldKind.vectorStruct, 16, 8, -1, required: false),
@@ -189,90 +189,108 @@ const List<TableLayout> tableLayouts = [
     FieldLayout('flags', 18, FieldKind.vectorTable, 0, 0, 14, required: false),
     FieldLayout('native_catalogue', 19, FieldKind.struct, 16, 8, -1, required: false),
     FieldLayout('security_profile', 20, FieldKind.string, 0, 0, -1, required: false),
-    FieldLayout('telemetry_sampling', 21, FieldKind.vectorTable, 0, 0, 35, required: false),
+    FieldLayout('telemetry_sampling', 21, FieldKind.vectorTable, 0, 0, 38, required: false),
     FieldLayout('not_found_route', 22, FieldKind.string, 0, 0, -1, required: false),
-    FieldLayout('shells', 23, FieldKind.vectorTable, 0, 0, 38, required: false),
+    FieldLayout('shells', 23, FieldKind.vectorTable, 0, 0, 41, required: false),
     FieldLayout('deep_links', 24, FieldKind.table, 0, 0, 12, required: false),
-    FieldLayout('push', 25, FieldKind.table, 0, 0, 33, required: false),
+    FieldLayout('push', 25, FieldKind.table, 0, 0, 36, required: false),
   ]),
   // 25
+  TableLayout('NativeActionDecl', [
+    FieldLayout('name', 0, FieldKind.scalar, 4, 4, -1, required: false),
+    FieldLayout('inputs', 1, FieldKind.vectorTable, 0, 0, 32, required: false),
+    FieldLayout('output', 2, FieldKind.scalar, 4, 4, -1, required: false),
+  ]),
+  // 26
+  TableLayout('NativeRouteDecl', [
+    FieldLayout('name', 0, FieldKind.scalar, 4, 4, -1, required: false),
+    FieldLayout('params', 1, FieldKind.vectorTable, 0, 0, 32, required: false),
+    FieldLayout('result', 2, FieldKind.scalar, 4, 4, -1, required: false),
+  ]),
+  // 27
+  TableLayout('NativeSlotDecl', [
+    FieldLayout('type', 0, FieldKind.scalar, 4, 4, -1, required: false),
+    FieldLayout('props', 1, FieldKind.vectorTable, 0, 0, 32, required: false),
+    FieldLayout('events', 2, FieldKind.vectorTable, 0, 0, 8, required: false),
+  ]),
+  // 28
   TableLayout('Node', [
     FieldLayout('id', 0, FieldKind.struct, 16, 8, -1, required: false),
     FieldLayout('widget', 1, FieldKind.scalar, 4, 4, -1, required: false),
     FieldLayout('component', 2, FieldKind.struct, 16, 8, -1, required: false),
     FieldLayout('component_version', 3, FieldKind.scalar, 4, 4, -1, required: false),
-    FieldLayout('props', 4, FieldKind.vectorTable, 0, 0, 32, required: false),
+    FieldLayout('props', 4, FieldKind.vectorTable, 0, 0, 35, required: false),
     FieldLayout('handlers', 5, FieldKind.vectorTable, 0, 0, 17, required: false),
     FieldLayout('children', 6, FieldKind.vectorScalar, 4, 4, -1, required: false),
-    FieldLayout('slots', 7, FieldKind.vectorTable, 0, 0, 40, required: false),
-    FieldLayout('visible', 8, FieldKind.table, 0, 0, 52, required: false),
-    FieldLayout('semantics', 9, FieldKind.table, 0, 0, 37, required: false),
+    FieldLayout('slots', 7, FieldKind.vectorTable, 0, 0, 43, required: false),
+    FieldLayout('visible', 8, FieldKind.table, 0, 0, 55, required: false),
+    FieldLayout('semantics', 9, FieldKind.table, 0, 0, 40, required: false),
     FieldLayout('test_id', 10, FieldKind.scalar, 4, 4, -1, required: false),
-    FieldLayout('overrides', 11, FieldKind.vectorTable, 0, 0, 26, required: false),
+    FieldLayout('overrides', 11, FieldKind.vectorTable, 0, 0, 29, required: false),
     FieldLayout('hints', 12, FieldKind.scalar, 1, 1, -1, required: false),
     FieldLayout('type_arguments', 13, FieldKind.vectorScalar, 4, 4, -1, required: false),
     FieldLayout('native_slot', 14, FieldKind.scalar, 4, 4, -1, required: false),
   ]),
-  // 26
+  // 29
   TableLayout('Override', [
     FieldLayout('kind', 0, FieldKind.scalar, 1, 1, -1, required: false),
     FieldLayout('key', 1, FieldKind.scalar, 4, 4, -1, required: false),
-    FieldLayout('props', 2, FieldKind.vectorTable, 0, 0, 32, required: false),
+    FieldLayout('props', 2, FieldKind.vectorTable, 0, 0, 35, required: false),
   ]),
-  // 27
+  // 30
   TableLayout('Page', [
     FieldLayout('id', 0, FieldKind.struct, 16, 8, -1, required: false),
     FieldLayout('key', 1, FieldKind.scalar, 4, 4, -1, required: false),
     FieldLayout('route', 2, FieldKind.scalar, 4, 4, -1, required: false),
     FieldLayout('kind', 3, FieldKind.scalar, 1, 1, -1, required: false),
-    FieldLayout('title', 4, FieldKind.table, 0, 0, 52, required: false),
-    FieldLayout('params', 5, FieldKind.vectorTable, 0, 0, 29, required: false),
-    FieldLayout('state', 6, FieldKind.vectorTable, 0, 0, 42, required: false),
+    FieldLayout('title', 4, FieldKind.table, 0, 0, 55, required: false),
+    FieldLayout('params', 5, FieldKind.vectorTable, 0, 0, 32, required: false),
+    FieldLayout('state', 6, FieldKind.vectorTable, 0, 0, 45, required: false),
     FieldLayout('data_sources', 7, FieldKind.vectorTable, 0, 0, 10, required: false),
     FieldLayout('lifecycle', 8, FieldKind.vectorTable, 0, 0, 17, required: false),
     FieldLayout('transition', 9, FieldKind.scalar, 4, 4, -1, required: false),
     FieldLayout('guards', 10, FieldKind.vectorStruct, 16, 8, -1, required: false),
     FieldLayout('secure', 11, FieldKind.scalar, 1, 1, -1, required: false),
     FieldLayout('requires_assurance', 12, FieldKind.scalar, 4, 4, -1, required: false),
-    FieldLayout('nodes', 13, FieldKind.vectorTable, 0, 0, 25, required: false),
+    FieldLayout('nodes', 13, FieldKind.vectorTable, 0, 0, 28, required: false),
     FieldLayout('strings', 14, FieldKind.vectorString, 0, 0, -1, required: false),
     FieldLayout('result', 15, FieldKind.scalar, 4, 4, -1, required: false),
   ]),
-  // 28
+  // 31
   TableLayout('PageEntry', [
     FieldLayout('id', 0, FieldKind.struct, 16, 8, -1, required: false),
     FieldLayout('key', 1, FieldKind.string, 0, 0, -1, required: false),
     FieldLayout('route', 2, FieldKind.string, 0, 0, -1, required: false),
   ]),
-  // 29
+  // 32
   TableLayout('Param', [
     FieldLayout('id', 0, FieldKind.struct, 16, 8, -1, required: false),
     FieldLayout('name', 1, FieldKind.scalar, 4, 4, -1, required: false),
     FieldLayout('type', 2, FieldKind.scalar, 4, 4, -1, required: false),
     FieldLayout('required', 3, FieldKind.scalar, 1, 1, -1, required: false),
-    FieldLayout('default', 4, FieldKind.table, 0, 0, 52, required: false),
+    FieldLayout('default', 4, FieldKind.table, 0, 0, 55, required: false),
     FieldLayout('sensitive', 5, FieldKind.scalar, 1, 1, -1, required: false),
   ]),
-  // 30
+  // 33
   TableLayout('Program', [
     FieldLayout('id', 0, FieldKind.scalar, 8, 8, -1, required: false),
     FieldLayout('code', 1, FieldKind.vectorScalar, 1, 1, -1, required: false),
   ]),
-  // 31
+  // 34
   TableLayout('Programs', [
-    FieldLayout('programs', 0, FieldKind.vectorTable, 0, 0, 30, required: false),
+    FieldLayout('programs', 0, FieldKind.vectorTable, 0, 0, 33, required: false),
   ]),
-  // 32
+  // 35
   TableLayout('Prop', [
     FieldLayout('id', 0, FieldKind.scalar, 4, 4, -1, required: false),
-    FieldLayout('value', 1, FieldKind.table, 0, 0, 52, required: false),
+    FieldLayout('value', 1, FieldKind.table, 0, 0, 55, required: false),
   ]),
-  // 33
+  // 36
   TableLayout('Push', [
     FieldLayout('enabled', 0, FieldKind.scalar, 1, 1, -1, required: false),
     FieldLayout('payload_key', 1, FieldKind.string, 0, 0, -1, required: false),
   ]),
-  // 34
+  // 37
   TableLayout('Retry', [
     FieldLayout('count', 0, FieldKind.scalar, 4, 4, -1, required: false),
     FieldLayout('backoff_ms', 1, FieldKind.scalar, 4, 4, -1, required: false),
@@ -280,121 +298,124 @@ const List<TableLayout> tableLayouts = [
     FieldLayout('jitter', 3, FieldKind.scalar, 1, 1, -1, required: false),
     FieldLayout('on', 4, FieldKind.vectorScalar, 1, 1, -1, required: false),
   ]),
-  // 35
+  // 38
   TableLayout('Sampling', [
     FieldLayout('event', 0, FieldKind.string, 0, 0, -1, required: true),
     FieldLayout('rate', 1, FieldKind.scalar, 4, 4, -1, required: false),
   ]),
-  // 36
+  // 39
   TableLayout('Schemas', [
-    FieldLayout('types', 0, FieldKind.vectorTable, 0, 0, 51, required: false),
-    FieldLayout('state', 1, FieldKind.vectorTable, 0, 0, 42, required: false),
+    FieldLayout('types', 0, FieldKind.vectorTable, 0, 0, 54, required: false),
+    FieldLayout('state', 1, FieldKind.vectorTable, 0, 0, 45, required: false),
     FieldLayout('data_sources', 2, FieldKind.vectorTable, 0, 0, 10, required: false),
     FieldLayout('collections', 3, FieldKind.vectorTable, 0, 0, 6, required: false),
-    FieldLayout('variables', 4, FieldKind.vectorTable, 0, 0, 29, required: false),
-    FieldLayout('user_context', 5, FieldKind.vectorTable, 0, 0, 29, required: false),
+    FieldLayout('variables', 4, FieldKind.vectorTable, 0, 0, 32, required: false),
+    FieldLayout('user_context', 5, FieldKind.vectorTable, 0, 0, 32, required: false),
+    FieldLayout('native_routes', 6, FieldKind.vectorTable, 0, 0, 26, required: false),
+    FieldLayout('native_slots', 7, FieldKind.vectorTable, 0, 0, 27, required: false),
+    FieldLayout('native_actions', 8, FieldKind.vectorTable, 0, 0, 25, required: false),
   ]),
-  // 37
+  // 40
   TableLayout('Semantics', [
-    FieldLayout('label', 0, FieldKind.table, 0, 0, 52, required: false),
-    FieldLayout('hint', 1, FieldKind.table, 0, 0, 52, required: false),
-    FieldLayout('value', 2, FieldKind.table, 0, 0, 52, required: false),
+    FieldLayout('label', 0, FieldKind.table, 0, 0, 55, required: false),
+    FieldLayout('hint', 1, FieldKind.table, 0, 0, 55, required: false),
+    FieldLayout('value', 2, FieldKind.table, 0, 0, 55, required: false),
     FieldLayout('header', 3, FieldKind.scalar, 1, 1, -1, required: false),
     FieldLayout('button', 4, FieldKind.scalar, 1, 1, -1, required: false),
     FieldLayout('live_region', 5, FieldKind.scalar, 1, 1, -1, required: false),
     FieldLayout('exclude', 6, FieldKind.scalar, 1, 1, -1, required: false),
   ]),
-  // 38
+  // 41
   TableLayout('Shell', [
     FieldLayout('key', 0, FieldKind.string, 0, 0, -1, required: false),
-    FieldLayout('tabs', 1, FieldKind.vectorTable, 0, 0, 39, required: false),
+    FieldLayout('tabs', 1, FieldKind.vectorTable, 0, 0, 42, required: false),
   ]),
-  // 39
+  // 42
   TableLayout('ShellTab', [
     FieldLayout('key', 0, FieldKind.string, 0, 0, -1, required: false),
-    FieldLayout('label', 1, FieldKind.table, 0, 0, 52, required: false),
-    FieldLayout('icon', 2, FieldKind.table, 0, 0, 52, required: false),
+    FieldLayout('label', 1, FieldKind.table, 0, 0, 55, required: false),
+    FieldLayout('icon', 2, FieldKind.table, 0, 0, 55, required: false),
     FieldLayout('initial_route', 3, FieldKind.string, 0, 0, -1, required: false),
   ]),
-  // 40
+  // 43
   TableLayout('SlotFill', [
     FieldLayout('id', 0, FieldKind.scalar, 4, 4, -1, required: false),
     FieldLayout('nodes', 1, FieldKind.vectorScalar, 4, 4, -1, required: false),
   ]),
-  // 41
+  // 44
   TableLayout('SourceMap', [
     FieldLayout('files', 0, FieldKind.vectorString, 0, 0, -1, required: false),
     FieldLayout('nodes', 1, FieldKind.vectorTable, 0, 0, 22, required: false),
     FieldLayout('steps', 2, FieldKind.vectorTable, 0, 0, 22, required: false),
   ]),
-  // 42
+  // 45
   TableLayout('StateEntry', [
     FieldLayout('id', 0, FieldKind.struct, 16, 8, -1, required: false),
     FieldLayout('name', 1, FieldKind.scalar, 4, 4, -1, required: false),
     FieldLayout('type', 2, FieldKind.scalar, 4, 4, -1, required: false),
-    FieldLayout('default', 3, FieldKind.table, 0, 0, 52, required: false),
+    FieldLayout('default', 3, FieldKind.table, 0, 0, 55, required: false),
     FieldLayout('computed', 4, FieldKind.scalar, 8, 8, -1, required: false),
     FieldLayout('persistence', 5, FieldKind.scalar, 1, 1, -1, required: false),
     FieldLayout('sensitive', 6, FieldKind.scalar, 1, 1, -1, required: false),
     FieldLayout('exposed', 7, FieldKind.scalar, 1, 1, -1, required: false),
   ]),
-  // 43
+  // 46
   TableLayout('Step', [
     FieldLayout('id', 0, FieldKind.scalar, 4, 4, -1, required: false),
     FieldLayout('action', 1, FieldKind.scalar, 4, 4, -1, required: false),
-    FieldLayout('input', 2, FieldKind.vectorTable, 0, 0, 32, required: false),
+    FieldLayout('input', 2, FieldKind.vectorTable, 0, 0, 35, required: false),
     FieldLayout('next', 3, FieldKind.scalar, 4, 4, -1, required: false),
     FieldLayout('on_success', 4, FieldKind.scalar, 4, 4, -1, required: false),
     FieldLayout('on_error', 5, FieldKind.scalar, 4, 4, -1, required: false),
     FieldLayout('branches', 6, FieldKind.vectorTable, 0, 0, 4, required: false),
-    FieldLayout('retry', 7, FieldKind.table, 0, 0, 34, required: false),
+    FieldLayout('retry', 7, FieldKind.table, 0, 0, 37, required: false),
     FieldLayout('timeout_ms', 8, FieldKind.scalar, 4, 4, -1, required: false),
   ]),
-  // 44
+  // 47
   TableLayout('Strings', [
     FieldLayout('strings', 0, FieldKind.vectorString, 0, 0, -1, required: false),
   ]),
-  // 45
+  // 48
   TableLayout('Style', [
     FieldLayout('id', 0, FieldKind.scalar, 8, 8, -1, required: false),
     FieldLayout('type', 1, FieldKind.scalar, 4, 4, -1, required: false),
-    FieldLayout('value', 2, FieldKind.table, 0, 0, 52, required: false),
+    FieldLayout('value', 2, FieldKind.table, 0, 0, 55, required: false),
   ]),
-  // 46
+  // 49
   TableLayout('Styles', [
-    FieldLayout('styles', 0, FieldKind.vectorTable, 0, 0, 45, required: false),
-    FieldLayout('tokens', 1, FieldKind.vectorTable, 0, 0, 49, required: false),
+    FieldLayout('styles', 0, FieldKind.vectorTable, 0, 0, 48, required: false),
+    FieldLayout('tokens', 1, FieldKind.vectorTable, 0, 0, 52, required: false),
   ]),
-  // 47
+  // 50
   TableLayout('Timeline', [
     FieldLayout('id', 0, FieldKind.struct, 16, 8, -1, required: false),
     FieldLayout('duration_us', 1, FieldKind.scalar, 8, 8, -1, required: false),
     FieldLayout('repeat', 2, FieldKind.scalar, 4, 4, -1, required: false),
-    FieldLayout('tracks', 3, FieldKind.vectorTable, 0, 0, 50, required: false),
+    FieldLayout('tracks', 3, FieldKind.vectorTable, 0, 0, 53, required: false),
   ]),
-  // 48
+  // 51
   TableLayout('Timelines', [
-    FieldLayout('timelines', 0, FieldKind.vectorTable, 0, 0, 47, required: false),
+    FieldLayout('timelines', 0, FieldKind.vectorTable, 0, 0, 50, required: false),
   ]),
-  // 49
+  // 52
   TableLayout('Token', [
     FieldLayout('path', 0, FieldKind.string, 0, 0, -1, required: true),
-    FieldLayout('light', 1, FieldKind.table, 0, 0, 52, required: false),
-    FieldLayout('dark', 2, FieldKind.table, 0, 0, 52, required: false),
+    FieldLayout('light', 1, FieldKind.table, 0, 0, 55, required: false),
+    FieldLayout('dark', 2, FieldKind.table, 0, 0, 55, required: false),
     FieldLayout('type', 3, FieldKind.string, 0, 0, -1, required: false),
   ]),
-  // 50
+  // 53
   TableLayout('Track', [
     FieldLayout('prop', 0, FieldKind.scalar, 4, 4, -1, required: false),
     FieldLayout('keyframes', 1, FieldKind.vectorTable, 0, 0, 19, required: false),
   ]),
-  // 51
+  // 54
   TableLayout('TypeDecl', [
     FieldLayout('name', 0, FieldKind.scalar, 4, 4, -1, required: false),
-    FieldLayout('fields', 1, FieldKind.vectorTable, 0, 0, 29, required: false),
+    FieldLayout('fields', 1, FieldKind.vectorTable, 0, 0, 32, required: false),
     FieldLayout('members', 2, FieldKind.vectorScalar, 4, 4, -1, required: false),
   ]),
-  // 52
+  // 55
   TableLayout('Value', [
     FieldLayout('kind', 0, FieldKind.scalar, 1, 1, -1, required: false),
     FieldLayout('i', 1, FieldKind.scalar, 8, 8, -1, required: false),
@@ -404,10 +425,10 @@ const List<TableLayout> tableLayouts = [
     FieldLayout('unscaled', 5, FieldKind.vectorScalar, 1, 1, -1, required: false),
     FieldLayout('scale', 6, FieldKind.scalar, 4, 4, -1, required: false),
     FieldLayout('uuid', 7, FieldKind.struct, 16, 8, -1, required: false),
-    FieldLayout('items', 8, FieldKind.vectorTable, 0, 0, 52, required: false),
+    FieldLayout('items', 8, FieldKind.vectorTable, 0, 0, 55, required: false),
     FieldLayout('entries', 9, FieldKind.vectorTable, 0, 0, 13, required: false),
   ]),
-  // 53
+  // 56
   TableLayout('WasmModule', [
     FieldLayout('id', 0, FieldKind.struct, 16, 8, -1, required: false),
     FieldLayout('hash', 1, FieldKind.vectorScalar, 1, 1, -1, required: false),
@@ -420,14 +441,14 @@ const Map<String, int> rootLayouts = {
   'PXAC': 0, // Actions
   'PXAS': 2, // AssetIndex
   'PXCO': 7, // Component
-  'PXEX': 31, // Programs
+  'PXEX': 34, // Programs
   'PXLN': 21, // Locale
   'PXMT': 24, // Meta
-  'PXPG': 27, // Page
-  'PXSC': 36, // Schemas
-  'PXSG': 44, // Strings
-  'PXSM': 41, // SourceMap
-  'PXST': 46, // Styles
-  'PXTL': 48, // Timelines
-  'PXWM': 53, // WasmModule
+  'PXPG': 30, // Page
+  'PXSC': 39, // Schemas
+  'PXSG': 47, // Strings
+  'PXSM': 44, // SourceMap
+  'PXST': 49, // Styles
+  'PXTL': 51, // Timelines
+  'PXWM': 56, // WasmModule
 };

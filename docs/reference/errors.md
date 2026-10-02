@@ -838,6 +838,14 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Pass only the attributes the app declares, each as the text of its declared type: true or false, a number, a decimal, an ISO 8601 date, or an enum member.
 
+### PLX-4205
+
+`HOST_CODE_FAILED` · error · Host code failed
+
+**Cause.** A custom action's handler, a native route's parameter conversion or screen, or a native slot's builder registered by the host app threw; the step fails, or the page shows its error fallback, and nothing reaches the plugin as a crash (ACT-060, NAV-002, WGT-033).
+
+**Fix.** Fix the host's handler, conversion or builder; the report names the action, route or slot and only the exception's type, never its message.
+
 ## Actions, data and local database (PLX-5000–5999)
 
 ### PLX-5001

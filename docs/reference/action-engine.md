@@ -16,7 +16,7 @@ The P4 runtime (`plux_flutter` 0.2.0) runs these actions:
 | `pop` | Pops the page, returning its typed result |
 | `openDialog`, `openBottomSheet` | Present a route; the step's output is the route's result |
 | `switchTab` | Selects a tab of the enclosing shell |
-| `callNative` | Calls a custom action of the host (registration arrives with [ADR-0041](../adr/0041-native-catalogue-and-host-builds.md); until then `PLX-4202`) |
+| `callNative` | Calls a custom action the host registers in `PluxConfig.nativeActions`, its input and output checked against the native catalogue; a step named after the action is the same ([ADR-0041](../adr/0041-native-catalogue-and-host-builds.md)) |
 | `condition` | Takes the `then` or `else` branch |
 | `emitHostEvent` | Posts a typed event to `Plux.events` (`HST-013`) |
 | `stop` | Ends the run with the graph's result, or fails it with a custom error |
@@ -69,6 +69,7 @@ host code. Payloads are never reported.
 | `custom` | `PLX-4102` | A navigation is refused: nothing to pop, no shell holds the tab |
 | `custom` | `PLX-4200` | `navigate` names a native route the host has not registered |
 | `custom` | `PLX-4202` | `callNative` names a custom action the host has not registered |
+| `custom` | `PLX-4205` | The host's custom action, native route or slot builder threw; the report names only the exception's type |
 | `cancelled` | — | The page or component that started the run was disposed |
 
 ## 4. Bounds

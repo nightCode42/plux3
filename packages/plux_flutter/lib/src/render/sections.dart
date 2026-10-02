@@ -26,6 +26,21 @@ const int _signBit = 1 << 63;
 /// The UUID of a section ID or an `fbs.Uuid`, as two 64-bit halves.
 typedef UuidKey = (int hi, int lo);
 
+/// A declared parameter, prop or input of the native catalogue.
+typedef NativeParam = ({String name, String type, bool required});
+
+/// A native route's declaration: its parameters and result type.
+typedef NativeRouteDecl = ({List<NativeParam> params, String? result});
+
+/// A native slot's declaration: its props and events, in order.
+typedef NativeSlotDecl = ({
+  List<NativeParam> props,
+  List<({String name, String? payload})> events,
+});
+
+/// A custom action's declaration: its inputs and output type.
+typedef NativeActionDecl = ({List<NativeParam> inputs, String? output});
+
 /// The key of a section ID.
 UuidKey uuidOfId(Uint8List id) {
   final v = ByteData.sublistView(id);
@@ -259,6 +274,50 @@ final class BundleView {
             ),
         ];
       }();
+
+  late final fbs.Schemas? _schemas = () {
+    final s = _single(SectionKind.schemas);
+    return s == null ? null : fbs.Schemas(s.data);
+  }();
+
+  List<NativeParam> _nativeParams(List<fbs.Param>? ps) => [
+    for (final p in ps ?? const <fbs.Param>[])
+      (name: string(p.name), type: string(p.type), required: p.$required),
+  ];
+
+  String? _typeOrNull(int index) => index == 0 ? null : string(index);
+
+  /// The native routes of the catalogue the app was compiled against, by
+  /// name (NAV-002, ADR-0041; app bundles only).
+  late final Map<String, NativeRouteDecl> nativeRoutes = {
+    for (final r in _schemas?.nativeRoutes ?? const <fbs.NativeRouteDecl>[])
+      string(r.name): (
+        params: _nativeParams(r.params),
+        result: _typeOrNull(r.result),
+      ),
+  };
+
+  /// The native slots, by type (WGT-033): props and events in the
+  /// catalogue's order, which slot nodes address by index.
+  late final Map<String, NativeSlotDecl> nativeSlots = {
+    for (final s in _schemas?.nativeSlots ?? const <fbs.NativeSlotDecl>[])
+      string(s.type): (
+        props: _nativeParams(s.props),
+        events: [
+          for (final e in s.events ?? const <fbs.ComponentEvent>[])
+            (name: string(e.name), payload: _typeOrNull(e.payload)),
+        ],
+      ),
+  };
+
+  /// The custom actions, by name (ACT-060).
+  late final Map<String, NativeActionDecl> nativeActions = {
+    for (final a in _schemas?.nativeActions ?? const <fbs.NativeActionDecl>[])
+      string(a.name): (
+        inputs: _nativeParams(a.inputs),
+        output: _typeOrNull(a.output),
+      ),
+  };
 
   /// Fills in the fields of the object types in [all], which holds this
   /// bundle's types and those they may refer to; throws [FormatException].

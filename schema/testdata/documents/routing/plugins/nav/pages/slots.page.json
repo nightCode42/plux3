@@ -1,0 +1,46 @@
+{
+  "id": "01f0c450-6c00-7000-8000-000000000242",
+  "key": "slots",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01f0c450-6c00-7000-8000-000000000243",
+    "slots": {
+      "body": {
+        "id": "01f0c450-6c00-7000-8000-000000000244",
+        "slots": {
+          "child": {
+            "events": {
+              "onTap": {
+                "steps": [
+                  {
+                    "action": "emitHostEvent",
+                    "id": "emit",
+                    "input": {
+                      "event": "tapped",
+                      "payload": {
+                        "count": {
+                          "$expr": "event"
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000245",
+            "props": {
+              "label": "Taps"
+            },
+            "type": "Counter"
+          }
+        },
+        "type": "Center"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "slots",
+  "schemaVersion": "1.0.0",
+  "title": "Slots"
+}

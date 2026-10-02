@@ -161,8 +161,68 @@ func (rcv *Schemas) UserContextLength() int {
 	return 0
 }
 
+func (rcv *Schemas) NativeRoutes(obj *NativeRouteDecl, j int) bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(16))
+	if o != 0 {
+		x := rcv._tab.Vector(o)
+		x += flatbuffers.UOffsetT(j) * 4
+		x = rcv._tab.Indirect(x)
+		obj.Init(rcv._tab.Bytes, x)
+		return true
+	}
+	return false
+}
+
+func (rcv *Schemas) NativeRoutesLength() int {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(16))
+	if o != 0 {
+		return rcv._tab.VectorLen(o)
+	}
+	return 0
+}
+
+func (rcv *Schemas) NativeSlots(obj *NativeSlotDecl, j int) bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(18))
+	if o != 0 {
+		x := rcv._tab.Vector(o)
+		x += flatbuffers.UOffsetT(j) * 4
+		x = rcv._tab.Indirect(x)
+		obj.Init(rcv._tab.Bytes, x)
+		return true
+	}
+	return false
+}
+
+func (rcv *Schemas) NativeSlotsLength() int {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(18))
+	if o != 0 {
+		return rcv._tab.VectorLen(o)
+	}
+	return 0
+}
+
+func (rcv *Schemas) NativeActions(obj *NativeActionDecl, j int) bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(20))
+	if o != 0 {
+		x := rcv._tab.Vector(o)
+		x += flatbuffers.UOffsetT(j) * 4
+		x = rcv._tab.Indirect(x)
+		obj.Init(rcv._tab.Bytes, x)
+		return true
+	}
+	return false
+}
+
+func (rcv *Schemas) NativeActionsLength() int {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(20))
+	if o != 0 {
+		return rcv._tab.VectorLen(o)
+	}
+	return 0
+}
+
 func SchemasStart(builder *flatbuffers.Builder) {
-	builder.StartObject(6)
+	builder.StartObject(9)
 }
 func SchemasAddTypes(builder *flatbuffers.Builder, types flatbuffers.UOffsetT) {
 	builder.PrependUOffsetTSlot(0, flatbuffers.UOffsetT(types), 0)
@@ -198,6 +258,24 @@ func SchemasAddUserContext(builder *flatbuffers.Builder, userContext flatbuffers
 	builder.PrependUOffsetTSlot(5, flatbuffers.UOffsetT(userContext), 0)
 }
 func SchemasStartUserContextVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
+	return builder.StartVector(4, numElems, 4)
+}
+func SchemasAddNativeRoutes(builder *flatbuffers.Builder, nativeRoutes flatbuffers.UOffsetT) {
+	builder.PrependUOffsetTSlot(6, flatbuffers.UOffsetT(nativeRoutes), 0)
+}
+func SchemasStartNativeRoutesVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
+	return builder.StartVector(4, numElems, 4)
+}
+func SchemasAddNativeSlots(builder *flatbuffers.Builder, nativeSlots flatbuffers.UOffsetT) {
+	builder.PrependUOffsetTSlot(7, flatbuffers.UOffsetT(nativeSlots), 0)
+}
+func SchemasStartNativeSlotsVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
+	return builder.StartVector(4, numElems, 4)
+}
+func SchemasAddNativeActions(builder *flatbuffers.Builder, nativeActions flatbuffers.UOffsetT) {
+	builder.PrependUOffsetTSlot(8, flatbuffers.UOffsetT(nativeActions), 0)
+}
+func SchemasStartNativeActionsVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
 	return builder.StartVector(4, numElems, 4)
 }
 func SchemasEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT {

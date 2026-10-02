@@ -13,6 +13,8 @@ import 'package:plux_flutter/src/actions/action_error.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/native_catalogue/host.dart';
+import 'package:plux_flutter/src/native_catalogue/registration.dart';
 import 'package:plux_flutter/src/navigation/delegate.dart';
 import 'package:plux_flutter/src/navigation/guards.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
@@ -50,6 +52,16 @@ typedef RoutedPageBuilder = Widget Function(
   required bool guarded,
 });
 
+/// A native route checked for opening: its registration, its result type
+/// and its parameters in the JSON form host code receives.
+typedef NativeEntry = ({
+  String name,
+  PluxNativeRoute<Object?, Object?> route,
+  String? result,
+  Map<String, NamedType> types,
+  Map<String, Object?> params,
+});
+
 /// Builds the fallback of a page of [plugin] that cannot be shown.
 typedef RouteFallbackBuilder = Widget Function(
   BuildContext context,
@@ -70,7 +82,18 @@ final class PluxRouter {
     required this.guards,
     required this.fallback,
     this.notFoundBuilder,
+    this.nativeRoutes = const {},
+    this.natives = _noNatives,
   });
+
+  static NativeDeclarations? _noNatives() => null;
+
+  /// The host's native routes: those it registers and those its router
+  /// adapter discovers (NAV-002, HST-031).
+  final Map<String, PluxNativeRoute<Object?, Object?>> nativeRoutes;
+
+  /// The active release's native catalogue, or null before one.
+  final NativeDeclarations? Function() natives;
 
   /// The active release, or null before the first one.
   final ActiveRelease? Function() release;
@@ -251,6 +274,70 @@ final class PluxRouter {
       ),
     );
     return null;
+  }
+
+  /// The native route [name] with [params] checked against the catalogue
+  /// before host code sees them (NAV-002, ADR-0041). Throws an
+  /// [ActionError]: `PLX-4200` for a route the host does not register,
+  /// a `validation` error for parameters the catalogue does not accept.
+  NativeEntry checkNative(String name, Map<String, Object?> params) {
+    final route = nativeRoutes[name];
+    if (route == null) {
+      throw ActionError(
+        ActionErrorKind.custom,
+        PluxErrorCode.nativeRouteNotRegistered,
+        'no page has the route $name, and the host registers no native route of that name',
+      );
+    }
+    final d = natives();
+    final decl = d?.routes[name];
+    if (d == null || decl == null) {
+      throw ActionError.validation(
+        'the native catalogue declares no route $name',
+      );
+    }
+    return (
+      name: name,
+      route: route,
+      result: decl.result,
+      types: d.types,
+      params: toHostValues(decl.params, params, d.types, 'native route $name'),
+    );
+  }
+
+  /// Opens a checked native route; completes with its result as the PXL
+  /// value of the catalogue's result type, checked too, or null. A host
+  /// failure or a result of another type throws an [ActionError].
+  Future<Object?> openNative(
+    BuildContext context,
+    NativeEntry entry, {
+    PluxPresentation presentation = PluxPresentation.page,
+  }) async {
+    final Object? result;
+    try {
+      result = await entry.route.openWith(
+        context,
+        delegate,
+        entry.name,
+        entry.params,
+        presentation: presentation,
+      );
+    } on ActionError {
+      rethrow;
+    } on Object catch (e) {
+      // Only the exception's type: its message may hold the user's data.
+      throw ActionError(
+        ActionErrorKind.custom,
+        PluxErrorCode.hostCodeFailed,
+        'native route ${entry.name} failed with ${e.runtimeType}',
+      );
+    }
+    return fromHostValue(
+      entry.result,
+      result,
+      entry.types,
+      'the result of native route ${entry.name}',
+    );
   }
 
   /// The result [json] that route [name] popped with, as the PXL value of

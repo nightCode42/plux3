@@ -111,11 +111,13 @@ void main() {
       );
       expect(find.text('survivor'), findsNWidgets(2));
       expect(find.textContaining('widget 9999'), findsOneWidget);
-      expect(find.textContaining('native slots'), findsOneWidget);
+      // A native slot the host does not register (ADR-0041).
+      expect(find.textContaining('MapView'), findsOneWidget);
       expect(
         codes(),
         containsAll([
           PluxErrorCode.unknownWidget,
+          PluxErrorCode.nativeSlotNotRegistered,
           PluxErrorCode.propValueInvalid,
         ]),
       );
