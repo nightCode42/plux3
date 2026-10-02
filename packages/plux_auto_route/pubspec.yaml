@@ -5,6 +5,8 @@ description: >-
   plugins as native routes.
 version: 0.1.0
 repository: https://github.com/nightCode42/plux3/tree/main/packages/plux_auto_route
+# Not published until its release is wired (release.yml, pub.dev).
+publish_to: none
 
 environment:
   sdk: ^3.13.0

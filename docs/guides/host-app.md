@@ -169,12 +169,13 @@ code returns before a plugin sees it. A route's screen returns its result with
 Build the catalogue and upload it for each build you ship:
 
 ```sh
-dart pub add --dev plux_native_scan
 plux native scan                  # writes plux.catalogue.json
 plux native sync -C ../my-plux-project   # uploads it for the pubspec.yaml version
 ```
 
-List your slot widgets in `plux.yaml` and pass the build to `PluxConfig` as `hostBuild`
+`plux native scan` needs `plux_native_scan` as a dev dependency of your app; until it is
+published, depend on it from this repository (a `git` dependency with `path:
+packages/plux_native_scan`). List your slot widgets in `plux.yaml` and pass the build to `PluxConfig` as `hostBuild`
 (the version in `pubspec.yaml`, such as `1.4.0+52`, unless you choose another). A release
 that uses something a build lacks is flagged at publish, and that build's devices keep the
 newest release they can run ([CLI reference](../reference/cli.md)).

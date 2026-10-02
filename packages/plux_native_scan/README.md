@@ -8,7 +8,9 @@ SPDX-License-Identifier: Apache-2.0
 Builds the native catalogue of a Flutter host app that uses
 [Plux](https://nightcode42.github.io/plux3/): the native routes, native slots and custom
 actions plugins may use, by static analysis with the Dart analyzer, without changing the
-app's code. `plux native scan` runs it; add it as a dev dependency of the host app.
+app's code. `plux native scan` runs it; add it as a dev dependency of the host app (until
+it is published, a `git` dependency on this repository with `path:
+packages/plux_native_scan`).
 
 It reads:
 

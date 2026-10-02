@@ -51,8 +51,29 @@ Directory _app(Map<String, String> lib) {
   return dir;
 }
 
+/// The Dart SDK inside the Flutter SDK the workspace resolves: under
+/// `flutter test` the analyzer cannot find one from its own executable.
+String _dartSdk() {
+  final workspace = File(
+    p.normalize(p.absolute('../../.dart_tool/package_config.json')),
+  );
+  final config =
+      jsonDecode(workspace.readAsStringSync()) as Map<String, Object?>;
+  final flutter = (config['packages']! as List)
+      .cast<Map<String, Object?>>()
+      .singleWhere((e) => e['name'] == 'flutter');
+  final root = workspace.parent.uri.resolve('${flutter['rootUri']}/');
+  return p.join(p.fromUri(root), '..', '..', 'bin', 'cache', 'dart-sdk');
+}
+
 Future<ScanResult> _scan(Directory app, {List<String> slots = const []}) =>
-    scan(root: app.path, slots: slots, host: '1.4.0+52', id: _id);
+    scan(
+      root: app.path,
+      slots: slots,
+      host: '1.4.0+52',
+      id: _id,
+      sdkPath: _dartSdk(),
+    );
 
 /// One host app holding every fixture: go_router routes, auto_route pages,
 /// the registrations of a plain app and a slot with every parameter shape.
