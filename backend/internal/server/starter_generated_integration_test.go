@@ -242,7 +242,7 @@ func TestGeneratedAppAgainstTheServer(t *testing.T) {
 		return
 	}
 	if bundle := os.Getenv("PLUX_E2E_XCRESULT"); bundle != "" {
-		t.Setenv("PLUX_E2E_XCRESULT", bundle+"-generated")
+		t.Setenv("PLUX_E2E_XCRESULT", strings.TrimSuffix(bundle, ".xcresult")+"-generated.xcresult")
 	}
 	steps, succeeded := deviceSteps(flutter, device, nil)
 	var log strings.Builder
@@ -251,11 +251,21 @@ func TestGeneratedAppAgainstTheServer(t *testing.T) {
 		cmd.Dir = app
 		cmd.Stdout, cmd.Stderr = &log, &log
 		if err := cmd.Run(); err != nil {
-			t.Fatalf("the generated app on %s: %v\n%s", device, err, log.String())
+			t.Fatalf("the generated app on %s: %s: %v\n%s", device, strings.Join(step[:2], " "), err, tail(log.String(), 150))
 		}
 	}
 	if !strings.Contains(log.String(), succeeded) {
-		t.Fatalf("the generated app on %s:\n%s", device, log.String())
+		t.Fatalf("the generated app on %s:\n%s", device, tail(log.String(), 150))
 	}
-	t.Logf("the generated app on %s:\n%s", device, log.String())
+	t.Logf("the generated app on %s:\n%s", device, tail(log.String(), 40))
+}
+
+// tail is the last n lines of s, so a device log stays readable in the
+// job's output.
+func tail(s string, n int) string {
+	lines := strings.Split(strings.TrimRight(s, "\n"), "\n")
+	if len(lines) <= n {
+		return s
+	}
+	return "…\n" + strings.Join(lines[len(lines)-n:], "\n")
 }
