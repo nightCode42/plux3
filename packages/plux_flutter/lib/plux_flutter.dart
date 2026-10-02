@@ -46,7 +46,7 @@ export 'src/navigation/delegate.dart'
         PluxTransition;
 export 'src/navigation/plux_page.dart' show PluxPage;
 export 'src/navigation/router.dart' show PluxNotFoundPage;
-export 'src/navigation/shell.dart' show PluxShell, PluxShellScope;
+export 'src/navigation/shell.dart' show PluxShell, PluxShellScope, PluxShellTab;
 export 'src/runtime_info.dart';
 export 'src/sync/sync_event.dart'
     show

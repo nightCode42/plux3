@@ -463,6 +463,20 @@ final class PluxRuntime with WidgetsBindingObserver {
     return true;
   }
 
+  /// The route a URL names, for router adapters (ADR-0040): [query]'s text
+  /// converted by the route's declared types, as a deep link's is, then
+  /// resolved through the route's guards.
+  Future<PluxRouteSpec> resolveLocation(
+    String route,
+    Map<String, String> query,
+  ) async {
+    final r = active.value;
+    final params = r == null
+        ? query
+        : await _linkParams(r, (route: route, params: query));
+    return router.resolve(route, params);
+  }
+
   /// A link's parameters in the host's form: text converted by the route's
   /// declared types, and names it does not declare left out, such as a
   /// campaign's query parameters. Text that does not convert stays text,

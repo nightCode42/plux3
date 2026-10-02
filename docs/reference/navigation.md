@@ -169,8 +169,39 @@ and a builder. The delegate changes the stack: `push`, `replace`, `clearAndPush`
 and `pop`.
 
 The default, `PluxNavigatorDelegate`, drives the nearest `Navigator` with the plain API. It
-needs no router and works in any app, `MaterialApp.router` apps included. `plux_go_router`
-and `plux_auto_route` provide delegates for their routers (P4 R5).
+needs no router and works in any app, `MaterialApp.router` apps included.
+
+### Router adapters
+
+Apps that route with `go_router` or `auto_route` wrap their router in its adapter and pass
+it as `PluxConfig.router` (ADR-0040, P4 plan A22). Each adapter adds Plux's routes to the
+router, implements the delegate on it, and turns the router's routes into native routes:
+
+| | `plux_go_router` | `plux_auto_route` |
+|---|---|---|
+| Wrapper | `PluxGoRouter(goRouter)` | `PluxAutoRoute(rootStackRouter)` |
+| Routes to add | `PluxGoRoutes().routes`: one `GoRoute` at `/plux/:route` | `PluxAutoRoutes().routes`: one route at `/plux/:route` |
+| Shells | `shell('main', tabs: [...])`: a `StatefulShellRoute`, one branch per tab at `/<shell>/<tab>` | `shell('main', tabs: [...])`: an `AutoTabsRouter`, one nested stack per tab |
+| Pages Plux opens | pushed as `/plux/<name>`, or `<tab>/p/<name>` from a shell's tab, with the resolved route as `extra` | pushed on the nearest stack, the tab's included, with the resolved route as `args` |
+| A location that names a page | its guards run in the route's redirect; a guard's redirect changes the location to its target | its guards run in the route's `AutoRouteGuard`; the page shows their outcome in its place |
+| Native routes | every `GoRoute` with a `name`, opened with `pushNamed` | every route, by name, opened with `pushPath` |
+| Navigator for deep links | the router's root navigator | the router's root navigator |
+
+- Parameters of the pages Plux opens never appear in the location. A location written by
+  hand, such as `context.go('/plux/count?n=3')`, carries them as query parameters, converted
+  by their declared types as a deep link's are (`Plux.resolveLocation`).
+- A page restored without the route Plux resolved, as after state restoration, resolves in
+  its place through its guards.
+- The shell's tab keys are given to the route, since the router's routes exist before Plux
+  starts; a tab the app document does not declare shows the fallback. The tab bar is
+  `PluxShell.routed`, and each tab starts with `PluxShellTab`, both public for other
+  routers.
+- A native route opened through the router receives plugins' parameters as path
+  parameters, where its path names them, and as query parameters; `go_router` also passes
+  them all as `extra`. A route that needs typed arguments is registered in
+  `PluxConfig.nativeRoutes`, whose entries win over discovered ones.
+- One delegate suite runs against the default delegate, a `Navigator` 2.0 pages list and
+  both adapters.
 
 ## 8. Transitions (`NAV-010`)
 
@@ -197,6 +228,9 @@ Predictive back needs `android:enableOnBackInvokedCallback="true"` on the host's
 - one nested `Navigator` per tab, which starts at the tab's `initialRoute` and keeps its
   stack while other tabs are shown;
 - the system back gesture pops the current tab's stack first.
+
+In `go_router` and `auto_route` apps the adapter's shell route keeps the tabs' stacks
+instead (§7).
 
 `switchTab` selects a tab of the enclosing shell. Without a shell holding that tab, it fails
 with `PLX-4102`.

@@ -8,8 +8,10 @@ environment:
 
 workspace:
   - apps/starter
+  - packages/plux_auto_route
   - packages/plux_devtools
   - packages/plux_flutter
+  - packages/plux_go_router
   - packages/plux_widget_api
   - test/bench/runtime
   - test/size/blank

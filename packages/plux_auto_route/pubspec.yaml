@@ -1,0 +1,23 @@
+name: plux_auto_route
+description: >-
+  Runs Plux navigation through an auto_route StackRouter: Plux pages as
+  routes, guards as an AutoRouteGuard, and the host's named routes opened by
+  plugins as native routes.
+version: 0.1.0
+repository: https://github.com/nightCode42/plux3/tree/main/packages/plux_auto_route
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+resolution: workspace
+
+dependencies:
+  auto_route: ^11.2.0
+  flutter:
+    sdk: flutter
+  plux_flutter: ^0.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

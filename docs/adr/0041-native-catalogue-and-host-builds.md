@@ -107,8 +107,8 @@ scanner reads the props from the widget's constructor. Calling a constructor tea
 named arguments built at run time would break in builds made with `--obfuscate`, so slots
 take a builder.
 
-With a router adapter (ADR-0040), the host's existing named routes are discovered from the
-router and need no registration. `plux_flutter` cannot name a router's type without
+With a router adapter (ADR-0040), the host's existing routes are discovered from the
+router and need no registration: named `GoRoute`s, and `auto_route`'s routes by name. `plux_flutter` cannot name a router's type without
 depending on it, so the adapter wraps the router (`PluxGoRouter(myGoRouter)`,
 `PluxAutoRoute(myRouter)`) behind the core's `PluxRouterAdapter` interface: its navigation
 delegate, the routes it discovers and its navigator key (maintainer, P4 plan A22).

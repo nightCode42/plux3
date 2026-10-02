@@ -126,6 +126,27 @@ run the same resolution, guards and checks.
 ([dependencies.md](../engineering/dependencies.md)). A shared delegate test suite runs
 against the default delegate, `PluxPage` and both adapters.
 
+As built in R5:
+
+- The host wraps its router, `PluxGoRouter(router)` or `PluxAutoRoute(router)`, behind the
+  core's `PluxRouterAdapter` (P4 plan A22), and adds the adapter's routes to the router:
+  one route at `/plux/:route` and, per shell, a `StatefulShellRoute` or an
+  `AutoTabsRouter` whose tab keys it names, since the router's routes exist before Plux
+  starts.
+- The delegate pushes the route Plux resolved, guards included, as the router route's
+  `extra` or `args`, so parameters never reach the location; a page opened from a shell's
+  tab stays on the tab's stack.
+- A location that names a page, written by hand or restored, runs its guards through
+  `Plux.resolveLocation`. In `go_router` that happens in the route's redirect, and a
+  guard's redirect changes the location to its target. In `auto_route` it happens in the
+  route's `AutoRouteGuard`, which cannot attach a resolved route to another location, so
+  the page shows the outcome in its place, as `PluxView` does.
+- Discovery takes every named `GoRoute`, opened with `pushNamed`, and every `auto_route`
+  route, opened by path; parameters become path and query parameters. A route that needs
+  typed arguments is registered in `PluxConfig.nativeRoutes`.
+- The core gains, for adapters: `Plux.resolveLocation`, `PluxShell.routed` (the tab bar
+  around a router's tab stacks) and `PluxShellTab` (a tab's first page).
+
 ### Typed parameters and results (`NAV-001`–`NAV-003`)
 
 - **Parameters** are typed by the page's `params` and checked at compile time at every

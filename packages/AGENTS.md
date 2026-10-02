@@ -19,7 +19,7 @@ The runtime's design is recorded in ADRs; read the one for the area you change b
 | Native routes, slots, custom actions (P4 R6) | `plux_flutter/lib/src/native_catalogue/`, `plux_native_scan` | [ADR-0041](../docs/adr/0041-native-catalogue-and-host-builds.md) |
 | Mixed screens, `PluxView`, `Plux.events`, exposed state (P4 R7) | `plux_flutter/lib/src/core/` | [ADR-0023](../docs/adr/0023-mixed-screens-slots-and-plux-view.md) |
 
-`plux_native_scan` (P4) is a development-only tool like `plux_widget_api`: it runs in host projects through `dart run`, and no shipped package may depend on it. `plux_go_router` and `plux_auto_route` (P4) are optional adapters; their router is a dependency of the adapter alone, never of `plux_flutter`.
+`plux_native_scan` (P4) is a development-only tool like `plux_widget_api`: it runs in host projects through `dart run`, and no shipped package may depend on it. `plux_go_router` and `plux_auto_route` (P4) are optional adapters; their router is a dependency of the adapter alone, never of `plux_flutter`, and they use only `plux_flutter`'s public API. Their tests run the shared delegate suite of `plux_flutter/test/support/delegate_suite.dart`, which the runtime's own tests run against the default delegate, so every delegate passes the same navigation cases; the adapters reach it by a relative import, test code only.
 
 ## Invariants
 

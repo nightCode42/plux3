@@ -13,6 +13,7 @@ import 'package:plux_flutter/src/core/config.dart';
 import 'package:plux_flutter/src/core/host_events.dart';
 import 'package:plux_flutter/src/core/runtime.dart';
 import 'package:plux_flutter/src/devtools_api/diagnostics.dart';
+import 'package:plux_flutter/src/navigation/delegate.dart';
 import 'package:plux_flutter/src/navigation/plux_page.dart';
 import 'package:plux_flutter/src/state/providers.dart';
 import 'package:plux_flutter/src/sync/sync_event.dart';
@@ -127,6 +128,18 @@ abstract final class Plux {
     params: params,
     key: key ?? ValueKey(route),
   );
+
+  /// Resolves the route a URL names, for router adapters such as
+  /// `plux_go_router` (ADR-0040): each value of [query] is converted by the
+  /// route's declared parameter type, as a deep link's is, names the route
+  /// does not declare are left out, and the route's guards run. Completes
+  /// with the route to show: the route itself, a redirect's target, or the
+  /// fallback of a refused route. Text that does not convert shows the
+  /// page's error fallback on entry (`PLX-4101`).
+  static Future<PluxRouteSpec> resolveLocation(
+    String route, {
+    Map<String, String> query = const {},
+  }) => _rt.resolveLocation(route, query);
 
   /// Opens the page [link] names through the app's deep links (NAV-008):
   /// `https://<host>/p/<route-name>?…`, or a path pattern of the app

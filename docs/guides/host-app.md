@@ -164,8 +164,26 @@ every value crossing into your code is checked against it first, and every value
 code returns before a plugin sees it. A route's screen returns its result with
 `Navigator.pop`. Something a plugin uses that your build does not register fails safely
 (`PLX-4200`–`PLX-4202`), and an exception in your code is reported with its type only
-(`PLX-4205`). Apps using `go_router` or `auto_route` pass their router through its adapter
-instead of registering routes ([navigation](../reference/navigation.md)).
+(`PLX-4205`).
+
+### Apps that use go_router or auto_route
+
+Add Plux's routes to your router and pass the router through its adapter; your existing
+routes become native routes plugins can open, with no registration
+([navigation](../reference/navigation.md) §7):
+
+```dart
+final plux = PluxGoRoutes();
+final router = GoRouter(routes: [
+  ...myRoutes,
+  ...plux.routes,
+  plux.shell('main', tabs: ['home', 'settings']),
+]);
+await Plux.initialize(PluxConfig(..., router: PluxGoRouter(router)));
+```
+
+With `auto_route`, use `PluxAutoRoutes` and `PluxAutoRoute(router)` from `plux_auto_route`
+the same way. Deep links then open on the router's navigator, with no `navigatorKey`.
 
 ### Deep links and notifications
 

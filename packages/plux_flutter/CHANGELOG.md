@@ -39,7 +39,10 @@ each milestone of the phase.
   `PluxNativeRoute<P, R>`, `PluxNativeSlot` and `PluxNativeAction<I, O>`; every value
   crossing into host code is checked against the app bundle's native catalogue both ways,
   and a failing host handler reports `PLX-4205`. `PluxConfig.router` takes a router
-  adapter (`PluxRouterAdapter`).
+  adapter (`PluxRouterAdapter`), such as `plux_go_router`'s or `plux_auto_route`'s.
+- For router adapters: `Plux.resolveLocation` resolves the route a URL names through its
+  guards, `PluxShell.routed` shows a shell's tab bar around a router's tab stacks, and
+  `PluxShellTab` shows a tab's first page.
 - Registry value types reaching expressions, such as a graph's `GuardResult`, are keyed by
   their field names; they were keyed by mismatched strings.
 - Breaking: `PluxAuthDelegate` gains `isAuthenticated`, which PXL reads as
