@@ -98,6 +98,9 @@ type Result struct {
 	// Natives is the native catalogue the project is compiled against, or
 	// nil; HostBuildIncompatibilities checks host builds against it.
 	Natives *schema.NativeCatalogueDocument
+	// Project is the loaded project, or nil when no app document was
+	// found; plux codegen reads its documents (HST-030).
+	Project *schema.Project
 }
 
 // stage is one step of the pipeline (CMP-003). Checking stages run even
@@ -151,6 +154,9 @@ func Compile(fsys fs.FS, opts Options) (res *Result) {
 	res.Graph = u.graph
 	if project != nil && project.NativeCatalogue != nil {
 		res.Natives = project.NativeCatalogue.Doc
+	}
+	if project != nil && project.App.Doc != nil {
+		res.Project = project
 	}
 	if !u.diags.HasErrors() {
 		res.App, res.Plugins, res.Files = u.app, u.outputs, u.files

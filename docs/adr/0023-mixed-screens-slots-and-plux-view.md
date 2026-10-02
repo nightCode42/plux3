@@ -194,8 +194,8 @@ PluxView('counter-badge',
 - An inline page's `pop` is the `pop` event, carrying the result checked against the
   page's `result` type. Without `onEvent`, the `pop` is refused with `PLX-4102`, as in P3.
 - **Component events.** No P4 action emits a component's declared events, so in P4
-  `onEvent` receives only `pop`. The API carries any event name and payload for when one
-  does.
+  `onEvent` receives only `pop`. The API carries any event name and payload; the action
+  that emits them arrives with P5's state and event work (maintainer, plan A32).
 - **A component view:**
   - runs no guards, since components have none;
   - shows the generic fallback when its plugin is switched off, since a declared fallback

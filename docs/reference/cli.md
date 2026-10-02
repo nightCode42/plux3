@@ -29,10 +29,11 @@ sha256sum --check --ignore-missing SHA256SUMS
 | `plux login [--server url]` | Signs in with the OAuth 2.0 device authorization grant: prints a code and a URL, waits (`--timeout`, default 10 minutes) until someone approves the code in Studio, and stores the token (below) (`CLI-002`). |
 | `plux logout [--server url]` | Forgets the stored token for the server. |
 | `plux whoami` | Shows the signed-in user and their organisations; with `--org`, their permissions there. |
-| `plux init --server url --org id --app id-or-key [-C dir] [--env key]` | Writes `plux.json` into the project: server, organisation, app and the environment publishes go to (default `development`). It holds no secret and is meant to be committed. |
+| `plux init --server url --org id --app id-or-key [-C dir] [--env key]` | In a Plux project, or an empty directory a project export will fill: writes `plux.json`, naming the server, organisation, app and the environment publishes go to (default `development`). It holds no secret and is meant to be committed. In a Flutter app — a `pubspec.yaml` on the Flutter SDK and no `app.json` — sets the app up as a Plux host (`HST-032`, below). A directory holding both is a usage error. |
 | `plux doctor [-C dir]` | Checks, in order, the project (`plux.json`, and that it compiles), the configuration, the server's `/readyz`, the credential, the sign-in and the app. |
 | `plux validate [--json] <project-dir>` | Compiles a project in the [Git layout](document-model.md#1-project-layout) and reports every diagnostic, without a server. |
 | `plux build [--dev] [--json] -o <out-dir> <project-dir>` | Compiles the project and writes its bundles, without a server (below). |
+| `plux codegen [--host dir] [-o file] <project-dir>` | Compiles the project, without a server, and writes its typed Dart API into the host app (`--host`, default `.`) as `lib/plux/plux.g.dart` (`-o`, relative to the host) (`HST-030`): `PluxScreens` (a builder per routed page, with typed parameters and its typed result: `push`, `view`, `page`), `PluxComponents` (a view builder per exported component, with typed props), a class per host event and `PluxHostEvents` streams, `PluxAppState` (a typed handle per exposed state entry) and `PluxFlags`, plus a class per declared type. Misuse is a compile error in the host. The output is deterministic; an unchanged API leaves the file untouched. It reads a local project; reading a pulled release instead is planned with the quick start (P10). |
 | `plux diff [-C dir]` | Lists the files the local project adds, changes or lacks against the server's drafts; JSON documents compare by their canonical form. Exits 1 when there are differences. |
 | `plux publish [-C dir] [--env key] [--release] [--promote env[/channel]] [--wait duration] [--notes text] [--acknowledge-warnings] [--no-import]` | Uploads the project as the app's drafts (unless `--no-import`), publishes the app bundle and every plugin to the environment, waits for each job and prints its diagnostics; with `--release` or `--promote` it creates a release of exactly the versions just published and promotes it. A promotion then waits, up to `--wait` (default `2m`; `0` does not wait), until the worker has signed the channel's manifest for it, so devices are served the release and `pull` and `keys` see it at once; it fails if the manifest is not signed in time (a server with the worker role signs it). Exits 1 when a publish fails. |
 | `plux pull [-C dir] [--env key] [--channel key] [-o dir]` | Downloads the release a channel points at (default `production/production`) into the host app as its baseline (`CLI-004`, `SYN-007`): `<dir>/bundles/<plugin>.pxb` (the app bundle is `_app.pxb`), `<dir>/keys.json` with the environment's root public keys, and `<dir>/baseline.json`, which lists every bundle with its plugin key, version, bundle hash and the signature publish made over that hash (`keyId`, `algorithm`, `signature` in base64), so the runtime verifies the baseline before loading it (ADR-0029). `<dir>/assets/<sha256>` holds the asset files the release uses. `-o` defaults to `assets/plux`, relative to the working directory: run it from the host app, and list `assets/plux/`, `assets/plux/bundles/` and `assets/plux/assets/` under `flutter: assets:` in its `pubspec.yaml` (Flutter's asset directories are not recursive; [apps/starter](../../apps/starter/pubspec.yaml) shows it). Every bundle is checked against its bundle hash before it is written. |
@@ -49,6 +50,25 @@ sha256sum --check --ignore-missing SHA256SUMS
 | `plux help` | Lists the commands. `plux <command> -h` lists a command's flags. |
 
 Flags come before positional arguments. Every server command accepts `--server`, `--org` and `--json`; those that act on an app also accept `--app` and `-C <project-dir>` (default `.`).
+
+**Setting up a host app (`plux init` in a Flutter app).** It fetches the environment's
+root public keys (`--env`, as `plux keys`), then:
+
+1. adds `plux_flutter` to `pubspec.yaml`'s dependencies, and `plux_go_router` or
+   `plux_auto_route` when the app depends on `go_router` or `auto_route`;
+2. writes `plux.yaml` when the app has none, with the Android `applicationId` as `appId`
+   when it finds one;
+3. writes `lib/plux/plux_options.g.dart`: `PluxOptions` with the app, server and
+   environment, the root keys embedded (`SEC-051`), and `PluxOptions.config()`;
+4. calls `Plux.initialize(PluxOptions.config())` in `lib/main.dart` and wraps the app in
+   a `PluxScope`, when `main` does nothing but `runApp(…)`; otherwise it prints the exact
+   lines to add and leaves `main.dart` as it is;
+5. runs the server checks of `plux doctor`.
+
+Each step leaves what it already finished as it is, so a second run changes nothing. An
+environment that has signed nothing yet has no key to embed: promote a release to it and
+run `plux init` again. Until `plux_flutter` and the adapters are published, point the
+added dependencies at this repository with `dependency_overrides`.
 
 **Host builds and `plux.yaml`.** The host build is the string the host's devices report as
 `PluxConfig.hostBuild`: `--build`, else `plux.yaml`'s `hostBuild`, else the `version` of

@@ -37,9 +37,17 @@ profile builds only):
 
 ## 1. Add the runtime and a baseline
 
-Add `plux_flutter` to the app's `pubspec.yaml`. Then, from the app's directory, write the
-release your app should start with — its *baseline* — into its assets with the
-[CLI](../reference/cli.md):
+From the app's directory, `plux init` sets it up: it adds `plux_flutter` (and the router
+adapter of a `go_router` or `auto_route` app) to `pubspec.yaml`, writes `plux.yaml` and
+`lib/plux/plux_options.g.dart` with your environment's root keys, and calls
+`Plux.initialize` in `main.dart` when `main` only runs the app
+([CLI reference](../reference/cli.md)):
+
+```bash
+plux init --server https://plux.example.com --org my-org --app my-app --env production
+```
+
+Then write the release your app should start with — its *baseline* — into its assets:
 
 ```bash
 plux pull --env production --channel production   # writes assets/plux/
@@ -64,7 +72,8 @@ An app without a baseline waits for its first sync.
 
 ## 2. Initialize
 
-Start the runtime before `runApp`:
+Start the runtime before `runApp`. `plux init` writes this for you with
+`PluxOptions.config()`; by hand:
 
 ```dart
 import 'package:flutter/material.dart';
@@ -139,6 +148,12 @@ wraps it in a scope itself. A page that fails is contained by its error boundary
 shows the fallback; the error is reported, never thrown into the app (`RT-020`). Pages
 with guards decide before they open: a guard can redirect, for example to a login page,
 or show the fallback ([navigation](../reference/navigation.md#4-guards-nav-009)).
+
+**Typed routes.** `plux codegen <project-dir>` writes `lib/plux/plux.g.dart`, your app's
+typed API (`HST-030`): `PluxScreens.loanCalculator(productId: 'p-12').push(context)`
+completes with the page's typed result, `PluxComponents`, `PluxHostEvents`,
+`PluxAppState` and `PluxFlags` are typed views of the rest, and misuse is a compile error.
+Run it again after the app document changes.
 
 ### Native routes, slots and actions
 

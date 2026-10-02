@@ -184,3 +184,37 @@ func TestBuildJSON(t *testing.T) {
 		t.Errorf("report %+v", rep)
 	}
 }
+
+// TestCodegen writes a project's typed Dart API into a host app, leaves
+// an unchanged library untouched, and writes nothing for a broken
+// project.
+// Verifies: HST-030.
+func TestCodegen(t *testing.T) {
+	t.Parallel()
+	host := t.TempDir()
+	var stdout, stderr bytes.Buffer
+	if code := run([]string{"codegen", "--host", host, projectDir}, &stdout, &stderr); code != exitOK || stdout.String() != "lib/plux/plux.g.dart: written\n" {
+		t.Fatalf("codegen: %d %q %s", code, stdout.String(), stderr.String())
+	}
+	lib, err := os.ReadFile(filepath.Join(host, "lib", "plux", "plux.g.dart")) //nolint:gosec // the test's own file
+	if err != nil || !bytes.Contains(lib, []byte("abstract final class PluxScreens {")) {
+		t.Fatalf("the library: %v\n%s", err, lib)
+	}
+	stdout.Reset()
+	if code := run([]string{"codegen", "--host", host, projectDir}, &stdout, &stderr); code != exitOK || stdout.String() != "lib/plux/plux.g.dart: unchanged\n" {
+		t.Errorf("a second run: %d %q", code, stdout.String())
+	}
+	other := t.TempDir()
+	if code := run([]string{"codegen", "--host", other, "-o", "gen/api.g.dart", brokenProject(t)}, &stdout, &stderr); code != exitFailed {
+		t.Errorf("a broken project: %d", code)
+	}
+	if _, err := os.Stat(filepath.Join(other, "gen")); !os.IsNotExist(err) {
+		t.Errorf("a broken project wrote: %v", err)
+	}
+	if code := run([]string{"codegen", filepath.Join(host, "none")}, &stdout, &stderr); code != exitUsage {
+		t.Errorf("no project: %d", code)
+	}
+	if code := run([]string{"codegen"}, &stdout, &stderr); code != exitUsage {
+		t.Errorf("no argument: %d", code)
+	}
+}

@@ -12,7 +12,7 @@ Every route is addressed by its app-wide name only. No caller knows which plugin
 
 | From | How |
 |---|---|
-| Native code | `Plux.open<T>(context, 'loan-calculator', params: {...})` |
+| Native code | `Plux.open<T>(context, 'loan-calculator', params: {...})`, or typed: `PluxScreens.loanCalculator(...).push(context)`, which `plux codegen` writes (`HST-030`) |
 | A declarative pages list | `Plux.pageFor('loan-calculator', params: {...})`, a `PluxPage` (`NAV-006`) |
 | Inside a native widget tree | `PluxView('loan-calculator', inputs: {...})`, which embeds the page, or an exported component, and owns no route (`NAV-004`) |
 | A plugin page | the `navigate`, `openDialog` and `openBottomSheet` actions |

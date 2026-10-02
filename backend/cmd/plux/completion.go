@@ -10,7 +10,7 @@ import (
 
 // commands are the top-level commands, for help and completion.
 var commands = []string{
-	"login", "logout", "whoami", "init", "doctor", "validate", "build", "diff", "publish", "pull",
+	"login", "logout", "whoami", "init", "doctor", "validate", "build", "codegen", "diff", "publish", "pull",
 	"release", "export", "import", "keys", "native", "completion", "version", "help",
 }
 

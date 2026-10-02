@@ -41,8 +41,20 @@ func (e env) initProject(args []string) int {
 	c.register(set, true)
 	envKey := set.String("env", "development", "the environment `key` publishes go to")
 	if _, code, ok := parse(set, args, e.stderr, "Usage: plux init --server url --org id --app id-or-key [-C dir] [--env key] [--json]\n\n"+
-		"Writes plux.json, which names the server, organisation and app of the project; it holds no secret.", 0); !ok {
+		"In a Plux project, writes plux.json, which names the server, organisation and app of the\n"+
+		"project; it holds no secret. In a Flutter app (a pubspec.yaml on the Flutter SDK), sets\n"+
+		"the app up as a Plux host: plux_flutter and a router adapter in pubspec.yaml, plux.yaml,\n"+
+		"lib/plux/plux_options.g.dart with the environment's root keys, and the runtime's start\n"+
+		"in lib/main.dart when main only calls runApp; then the server checks of plux doctor.\n"+
+		"Running it again changes nothing.", 0); !ok {
 		return code
+	}
+	host, err := dirKind(c.dir)
+	if err != nil {
+		return e.fail("init", err)
+	}
+	if host {
+		return e.initHost(c, *envKey)
 	}
 	if err := c.resolve(); err != nil {
 		return e.fail("init", err)
@@ -102,7 +114,7 @@ func (e env) doctor(args []string) int {
 	if _, code, ok := parse(set, args, e.stderr, "Usage: plux doctor [-C dir] [--json]\n\nChecks the project, the server, the credential and the app.", 0); !ok {
 		return code
 	}
-	checks := e.doctorChecks(&c)
+	checks := e.doctorChecks(&c, true)
 	failed := slices.ContainsFunc(checks, func(ch check) bool { return !ch.OK })
 	var text strings.Builder
 	for _, ch := range checks {
@@ -134,14 +146,16 @@ func newCheck(name string, err error, ok string) check {
 }
 
 // doctorChecks runs the checks in order; each server check needs the
-// one before it to have passed.
-func (e env) doctorChecks(c *common) []check {
+// one before it to have passed. A host app has no project to check.
+func (e env) doctorChecks(c *common, project bool) []check {
 	ctx := context.Background()
 	var out []check
-	if _, err := os.Stat(filepath.Join(c.dir, projectFile)); err != nil {
-		out = append(out, newCheck("project", err, ""))
-	} else {
-		out = append(out, newCheck("project", nil, projectFile+" found"), newCheck("validate", validateDir(c.dir), "no errors"))
+	if project {
+		if _, err := os.Stat(filepath.Join(c.dir, projectFile)); err != nil {
+			out = append(out, newCheck("project", err, ""))
+		} else {
+			out = append(out, newCheck("project", nil, projectFile+" found"), newCheck("validate", validateDir(c.dir), "no errors"))
+		}
 	}
 	var cl *clients
 	steps := []struct {
