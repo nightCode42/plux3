@@ -16,8 +16,8 @@
 // level into one ZIP archive. A directory — an iOS .app — is measured as
 // the ZIP archive an IPA is, with the app under Payload/, compressed at
 // the highest level. The run fails (exit 1) when the runtime adds more
-// than the target's budget (RT-061: 6.5 MiB to an APK, 3 MiB to an App
-// Bundle download or an IPA), or more than 10% over the target's
+// than the target's budget (RT-061: 10 MiB to an APK, 4 MiB to an App
+// Bundle download, 3 MiB to an IPA), or more than 10% over the target's
 // committed overhead in -baseline, unless -report only reports; -update
 // writes the measured overhead there instead. Exit 2 is a usage or I/O
 // error.
@@ -46,13 +46,18 @@ const (
 )
 
 // budget is the most the runtime may add to a target's build (RT-061,
-// ADR-0036): 6.5 MiB to an APK, which stores the Dart code uncompressed,
-// and 3 MiB to what a device downloads, an App Bundle's split or an IPA.
+// ADR-0036, revised 2026-10-02): 10 MiB to an APK, which stores the Dart
+// code uncompressed, 4 MiB to what Google Play downloads from an App
+// Bundle, and 3 MiB to an IPA.
 func budget(target string) int64 {
-	if strings.HasSuffix(target, "-apk") {
-		return 13 << 19
+	switch {
+	case strings.HasSuffix(target, "-apk"):
+		return 10 << 20
+	case strings.HasSuffix(target, "-aab"):
+		return 4 << 20
+	default:
+		return 3 << 20
 	}
-	return 3 << 20
 }
 
 // growth is how much the overhead may grow over the committed baseline

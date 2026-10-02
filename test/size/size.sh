@@ -11,8 +11,8 @@
 #
 # Builds the blank app and the same app with plux_flutter, then
 # tools/cmd/sizegate fails when the runtime adds more than a build's budget
-# (RT-061, ADR-0036: 6.5 MiB to an APK, 3 MiB to what a device downloads
-# from an App Bundle and to an IPA), or more than 10% over the overhead
+# (RT-061, ADR-0036: 10 MiB to an APK, 4 MiB to what a device downloads
+# from an App Bundle, 3 MiB to an IPA), or more than 10% over the overhead
 # committed in test/size/baseline.json; -update rewrites the overheads
 # instead. Reports go to $SIZE_OUT (default build/size): <platform>.md,
 # each Android build's table as <target>.md, the six Android builds side
