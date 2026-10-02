@@ -420,14 +420,38 @@ final class NodeContextImpl implements NodeContext {
 
   @override
   void fire(int id, [Object? payload]) {
-    if (kDebugMode) {
-      scope.report(
-        PluxException(
-          PluxErrorCode.actionsNotAvailable,
-          'node $_path: event $id fired; actions arrive in P5',
-          details: {'node': _path},
-        ),
+    final host = scope.actions;
+    if (host == null) {
+      if (kDebugMode) {
+        scope.report(
+          PluxException(
+            PluxErrorCode.actionsNotAvailable,
+            'node $_path: event $id fired where actions do not run',
+            details: {'node': _path},
+          ),
+          path: _path,
+        );
+      }
+      return;
+    }
+    final s = scope;
+    for (final h in node.handlers ?? const <fbs.Handler>[]) {
+      if (h.event != id) continue;
+      host.fire(
+        handler: h,
+        bundle: s.plugin,
         path: _path,
+        roots: s.roots,
+        payload: toPxl(payload),
+        resolve: (v, roots) => toPxl(
+          ValueResolver(
+            plugin: s.plugin,
+            roots: () => roots,
+            token: s.resolver.token,
+            translation: s.resolver.translation,
+            limits: s.resolver.limits,
+          ).resolve(v, s.plugin.string),
+        ),
       );
     }
   }

@@ -259,6 +259,22 @@ table Sampling {
   rate: uint;
 }
 
+// A tab of a tabbed shell (NAV-005, NAV-006): `label` and `icon` are
+// values over the app scope, their strings in the app bundle's strings
+// section, as a flag's default is.
+table ShellTab {
+  key: string;
+  label: Value;
+  icon: Value;
+  initial_route: string;
+}
+
+// A tabbed shell; each tab keeps its own stack (ADR-0040).
+table Shell {
+  key: string;
+  tabs: [ShellTab];
+}
+
 // A feature flag of the app.
 table Flag {
   name: string (key);
@@ -293,6 +309,11 @@ table Meta {
   security_profile: string;
   // App bundles: telemetry sampling, sorted by event; absent means 1.
   telemetry_sampling: [Sampling];
+  // App bundles: the route shown for an unknown name (NAV-011); empty
+  // means the host's or the built-in not-found page.
+  not_found_route: string;
+  // App bundles: the tabbed shells, in document order (ADR-0040).
+  shells: [Shell];
 }
 
 // ── Section page ──────────────────────────────────────────────────────────
@@ -336,6 +357,9 @@ table Page {
   // nodes[0] is the root.
   nodes: [Node];
   strings: [string];
+  // A string-table index of the type the page returns with pop (NAV-003);
+  // 0 when it returns none.
+  result: uint;
 }
 
 // ── Section component ─────────────────────────────────────────────────────

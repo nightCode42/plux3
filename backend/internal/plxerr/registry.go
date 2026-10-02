@@ -132,6 +132,13 @@ const (
 	NativeActionNotRegistered Code = 4202
 	ExposedStateTypeMismatch  Code = 4203
 
+	// Actions, data and local DB (PLX-5000–5999).
+
+	ActionTimeout           Code = 5001
+	ActionStepLimitExceeded Code = 5002
+	ActionValueInvalid      Code = 5003
+	ActionCustomError       Code = 5004
+
 	// Security (PLX-6000–6999).
 
 	OutboundRequestBlocked Code = 6030

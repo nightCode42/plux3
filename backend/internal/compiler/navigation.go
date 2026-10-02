@@ -8,6 +8,9 @@ import (
 	"strconv"
 	"strings"
 
+	flatbuffers "github.com/google/flatbuffers/go"
+
+	"github.com/nightCode42/plux3/backend/internal/bundle/fbs"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/schema"
 )
@@ -167,16 +170,54 @@ func (u *unit) checkShellTabs() {
 	if nav == nil || u.appScope == nil {
 		return
 	}
+	u.tabValues = map[string][2]*value{}
 	for i, sh := range nav.Shells {
 		for j, tab := range sh.Tabs {
 			ptr := plxerr.Pointer("navigation", "shells", strconv.Itoa(i), "tabs", strconv.Itoa(j))
 			c := vctx{file: "app.json", scope: u.appScope, code: plxerr.PropTypeMismatch, from: u.project.App.Doc.ID}
 			c.ptr = ptr + "/label"
-			u.checkRaw(c, tab.Label, &texpr{name: "string"})
+			label := u.checkRaw(c, tab.Label, &texpr{name: "string"})
 			c.ptr = ptr + "/icon"
-			u.checkRaw(c, tab.Icon, &texpr{name: "IconData"})
+			icon := u.checkRaw(c, tab.Icon, &texpr{name: "IconData"})
+			u.tabValues[ptr] = [2]*value{label, icon}
 		}
 	}
+}
+
+// shellTables writes the app's shells, their tabs' labels and icons as
+// the values checkShellTabs checked (ADR-0040); 0 when there are none.
+func (u *unit) shellTables(e *valueEnc) flatbuffers.UOffsetT {
+	nav := u.project.App.Doc.Navigation
+	if nav == nil || len(nav.Shells) == 0 {
+		return 0
+	}
+	b := e.b
+	shells := make([]flatbuffers.UOffsetT, len(nav.Shells))
+	for i, sh := range nav.Shells {
+		tabs := make([]flatbuffers.UOffsetT, len(sh.Tabs))
+		for j, tab := range sh.Tabs {
+			v := u.tabValues[plxerr.Pointer("navigation", "shells", strconv.Itoa(i), "tabs", strconv.Itoa(j))]
+			label, icon := e.value(v[0]), e.value(v[1])
+			key, route := b.CreateString(tab.Key), b.CreateString(tab.InitialRoute)
+			fbs.ShellTabStart(b)
+			fbs.ShellTabAddKey(b, key)
+			if label != 0 {
+				fbs.ShellTabAddLabel(b, label)
+			}
+			if icon != 0 {
+				fbs.ShellTabAddIcon(b, icon)
+			}
+			fbs.ShellTabAddInitialRoute(b, route)
+			tabs[j] = fbs.ShellTabEnd(b)
+		}
+		tv := offsetVector(b, tabs)
+		key := b.CreateString(sh.Key)
+		fbs.ShellStart(b)
+		fbs.ShellAddKey(b, key)
+		fbs.ShellAddTabs(b, tv)
+		shells[i] = fbs.ShellEnd(b)
+	}
+	return offsetVector(b, shells)
 }
 
 // eventPayload checks an emitHostEvent payload against the fields the

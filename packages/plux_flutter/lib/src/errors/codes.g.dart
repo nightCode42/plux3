@@ -298,8 +298,8 @@ enum PluxErrorCode {
   /// Invalid route parameters.
   routeParametersInvalid(4101, 'ROUTE_PARAMETERS_INVALID', 'Invalid route parameters'),
 
-  /// Navigation refused by a guard.
-  navigationRefused(4102, 'NAVIGATION_REFUSED', 'Navigation refused by a guard'),
+  /// Navigation refused.
+  navigationRefused(4102, 'NAVIGATION_REFUSED', 'Navigation refused'),
 
   /// Deep link not mapped.
   deepLinkUnmapped(4103, 'DEEP_LINK_UNMAPPED', 'Deep link not mapped'),
@@ -315,6 +315,18 @@ enum PluxErrorCode {
 
   /// Exposed state written with the wrong type.
   exposedStateTypeMismatch(4203, 'EXPOSED_STATE_TYPE_MISMATCH', 'Exposed state written with the wrong type'),
+
+  /// Action timed out.
+  actionTimeout(5001, 'ACTION_TIMEOUT', 'Action timed out'),
+
+  /// Step limit exceeded.
+  actionStepLimitExceeded(5002, 'ACTION_STEP_LIMIT_EXCEEDED', 'Step limit exceeded'),
+
+  /// Action value of the wrong type.
+  actionValueInvalid(5003, 'ACTION_VALUE_INVALID', 'Action value of the wrong type'),
+
+  /// Run failed with a custom error.
+  actionCustomError(5004, 'ACTION_CUSTOM_ERROR', 'Run failed with a custom error'),
 
   /// Outbound request blocked.
   outboundRequestBlocked(6030, 'OUTBOUND_REQUEST_BLOCKED', 'Outbound request blocked'),

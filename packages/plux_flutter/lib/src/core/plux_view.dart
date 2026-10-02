@@ -30,7 +30,16 @@ final class PluxView extends ConsumerWidget {
     this.params = const {},
     this.loadingBuilder,
     this.fallbackBuilder,
-  });
+  }) : _routed = false;
+
+  /// A view whose page owns its route, so that its `pop` steps pop it; only
+  /// the routes Plux builds are (ADR-0040).
+  const PluxView._routed(this.route, {this.params = const {}})
+    : loadingBuilder = null,
+      fallbackBuilder = null,
+      _routed = true;
+
+  final bool _routed;
 
   /// The route name (SCH-025).
   final String route;
@@ -63,12 +72,13 @@ final class PluxView extends ConsumerWidget {
       return fallback(e);
     }
     if (page == null) {
-      return fallback(
-        PluxException(
-          PluxErrorCode.resourceNotFound,
-          'no page has the route $route',
-        ),
+      final missing = PluxException(
+        PluxErrorCode.routeNotFound,
+        'no page has the route $route',
+        details: {'route': route},
       );
+      rt.reportProblem(missing);
+      return fallback(missing);
     }
     var shown = page;
     if (release.disabled(page.plugin)) {
@@ -96,10 +106,16 @@ final class PluxView extends ConsumerWidget {
       runtime: rt,
       page: shown,
       params: params,
+      routed: _routed,
       fallback: (e) => fallback(e, shown.plugin),
     );
   }
 }
+
+/// The content of a route Plux built: a [PluxView] of [route] whose page
+/// owns its route, so that its `pop` steps pop it (ADR-0040).
+PluxView routedPluxView(String route, Map<String, Object?> params) =>
+    PluxView._routed(route, params: params);
 
 /// Hosts one page: holds a lease on its release while mounted, checks the
 /// page section before first use (BND-006), contains failures and records
@@ -112,7 +128,11 @@ final class PluxPageHost extends StatefulWidget {
     required this.page,
     required this.params,
     required this.fallback,
+    this.routed = false,
   });
+
+  /// Whether the page owns its route.
+  final bool routed;
 
   /// The runtime.
   final PluxRuntime runtime;
@@ -275,7 +295,13 @@ final class _PluxPageHostState extends State<PluxPageHost> {
     final built = Stopwatch()..start();
     Widget child;
     try {
-      child = renderer.build(context, release, widget.page, widget.params);
+      child = renderer.build(
+        context,
+        release,
+        widget.page,
+        widget.params,
+        routed: widget.routed,
+      );
     } on Object catch (e, stack) {
       final error = e is PluxException
           ? e

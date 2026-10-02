@@ -3758,7 +3758,7 @@ var actions = [...]Action{
 		Effects:  []string{"network", "security"},
 	},
 	{
-		Name: "stop", ID: 35, Phase: "P5", Category: "control", Description: "Ends the run, returning an optional result or failing with a custom error.",
+		Name: "stop", ID: 35, Phase: "P4", Category: "control", Description: "Ends the run, returning an optional result or failing with a custom error.",
 		TypeParameters: []string{"T"},
 		Inputs: []Input{
 			{Name: "result", ID: 1, Type: "T?", Required: false, Default: "", Ref: "", Description: "The run's result."},

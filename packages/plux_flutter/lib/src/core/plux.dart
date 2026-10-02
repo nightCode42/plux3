@@ -10,9 +10,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plux_flutter/src/core/config.dart';
-import 'package:plux_flutter/src/core/plux_view.dart';
+import 'package:plux_flutter/src/core/host_events.dart';
 import 'package:plux_flutter/src/core/runtime.dart';
 import 'package:plux_flutter/src/devtools_api/diagnostics.dart';
+import 'package:plux_flutter/src/navigation/plux_page.dart';
 import 'package:plux_flutter/src/state/providers.dart';
 import 'package:plux_flutter/src/sync/sync_event.dart';
 
@@ -100,19 +101,34 @@ abstract final class Plux {
   /// the active release and the sync status. Empty in release builds.
   static PluxDiagnostics get diagnostics => _rt.diagnostics;
 
-  /// Pushes the page [route] on the navigator of [context], with [params];
-  /// completes when the page is popped. Plux's own navigation stack and
-  /// typed results arrive in P4 (NAV-003).
+  /// Opens the page [route] by its app-wide name only, wherever it is
+  /// (NAV-003): pushed on the navigator of [context], or presented as a
+  /// dialog or bottom sheet when its page kind says so, through the
+  /// navigation delegate. Completes when the page pops, with its result in
+  /// the JSON form of its declared type when that is a [T]; another value
+  /// is reported and completes with null. An unknown name shows the
+  /// not-found page and reports `PLX-4100` (NAV-011); parameters are
+  /// checked on entry (NAV-007).
   static Future<T?> open<T extends Object?>(
     BuildContext context,
     String route, {
     Map<String, Object?> params = const {},
-  }) => Navigator.of(context).push<T>(
-    MaterialPageRoute<T>(
-      settings: RouteSettings(name: route, arguments: params),
-      builder: (_) => PluxScope(child: PluxView(route, params: params)),
-    ),
+  }) => _rt.router.open<T>(context, route, params);
+
+  /// The page [route] for a declarative `Navigator.pages` list (NAV-006).
+  static PluxPage<T> pageFor<T>(
+    String route, {
+    Map<String, Object?> params = const {},
+    LocalKey? key,
+  }) => PluxPage<T>(
+    router: _rt.router,
+    route: route,
+    params: params,
+    key: key ?? ValueKey(route),
   );
+
+  /// The typed events plugins emit with `emitHostEvent` (HST-013).
+  static Stream<PluxHostEvent> get events => _rt.hostEvents;
 
   static void _environment(PluxEnvironment Function(PluxEnvironment) f) {
     final n = container.read(environmentProvider.notifier);

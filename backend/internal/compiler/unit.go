@@ -33,6 +33,7 @@ type unit struct {
 	pages      map[string]*page                 // by ID
 	routes     map[string]*route                // by route name (SCH-025)
 	hostEvents map[string]*schema.HostEventDecl // by name (HST-013)
+	tabValues  map[string][2]*value             // a shell tab's label and icon by pointer (NAV-006)
 	graphs     map[string]*graph                // document graphs by ID
 	components map[string]*component            // by ID
 	shared     []*component                     // app-level components, by file

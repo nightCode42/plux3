@@ -184,6 +184,24 @@ final class BundleView {
     }
   }
 
+  List<fbs.Graph>? _graphs;
+
+  /// The action graph with [id] from the actions section, or null
+  /// (ADR-0039). Graphs are sorted by ID.
+  fbs.Graph? graph(UuidKey id) {
+    final list = _graphs ??= () {
+      final s = _single(SectionKind.actions);
+      return s == null
+          ? const <fbs.Graph>[]
+          : fbs.Actions(s.data).graphs ?? const <fbs.Graph>[];
+    }();
+    final i = _search(list.length, (i) {
+      final g = list[i].id;
+      return g == null ? -1 : _compareUuid(uuidOf(g), id);
+    });
+    return i < 0 ? null : list[i];
+  }
+
   /// The translation [key] in locale [tag], or null.
   String? message(String tag, UuidKey key) {
     final locale = _locales.putIfAbsent(tag, () {

@@ -33,7 +33,7 @@ The runtime's design is recorded in ADRs; read the one for the area you change b
 - No secret is persisted in the clear: the device secret is encrypted under a platform-held key (ADR-0029); access tokens stay in memory.
 - The core package stays within its size budget (`RT-061`); heavy features belong in optional packages.
 - `lib/src/schema/*.g.dart`, the verifier's layout tables and the generated widget builders are written by `make gen` from `schema/`; never edit them. Widget, prop, enum and action IDs come only from the generated registry (`BND-011`).
-- Event handlers are explicit no-ops that report `PLX-4010` in debug builds (ADR-0031) until the action engine lands (P4 R2, ADR-0039). From then, an action or option the runtime does not run fails its step with `PLX-4010`, never a partial implementation.
+- Events run their action graphs on the engine (ADR-0039). An action or option the runtime does not run fails its step with `PLX-4010`, or is reported once in debug builds; it is never partially implemented.
 
 ## Stop and ask before
 

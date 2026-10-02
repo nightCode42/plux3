@@ -15,7 +15,7 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
-  plux_flutter: ^0.1.0
+  plux_flutter: ^0.2.0
 
 dev_dependencies:
   flutter_test:

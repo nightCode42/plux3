@@ -4,9 +4,13 @@
 package compiler
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 	"testing/fstest"
 
+	"github.com/nightCode42/plux3/backend/internal/bundle"
+	"github.com/nightCode42/plux3/backend/internal/bundle/fbs"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 )
 
@@ -147,6 +151,15 @@ func navigationCases() []invalidCase {
 			code: plxerr.PXLUnknownField, file: calculateGraph, ptr: "/steps/3/input/dismissible",
 		},
 		{
+			name: "stop result from a graph that declares no output", edit: withStep(`{"id": "extra", "action": "stop", "input": {"result": 1}}`),
+			code: plxerr.PropTypeMismatch, file: calculateGraph, ptr: "/steps/3/input/result",
+		},
+		{
+			name: "stop result of the wrong type", edit: both(graphDoc(func(t *testing.T, doc map[string]any) { doc["output"] = "int" }),
+				withStep(`{"id": "extra", "action": "stop", "input": {"result": "seven"}}`)),
+			code: plxerr.PropTypeMismatch, file: calculateGraph, ptr: "/steps/3/input/result",
+		},
+		{
 			name: "result of the wrong type", edit: both(onPage(func(t *testing.T, doc map[string]any) { doc["result"] = "int" }),
 				withStep(`{"id": "extra", "action": "pop", "input": {"result": "seven"}}`)),
 			code: plxerr.PropTypeMismatch, file: calculateGraph, ptr: "/steps/3/input/result",
@@ -205,5 +218,104 @@ func TestNavigationCompiles(t *testing.T) {
 	}
 	if res.App == nil {
 		t.Fatal("no app bundle")
+	}
+}
+
+// TestGuardGraphCompiles checks that a graph declaring GuardResult as its
+// output returns one with stop, and that the type needs runtime 0.2.0.
+// Verifies: NAV-009.
+func TestGuardGraphCompiles(t *testing.T) {
+	t.Parallel()
+	guard := func(t *testing.T, m fstest.MapFS) {
+		graphDoc(func(t *testing.T, doc map[string]any) {
+			doc["output"] = "GuardResult"
+			steps := doc["steps"].([]any)
+			steps[len(steps)-1].(map[string]any)["next"] = "redirect"
+			doc["steps"] = append(steps, raw(t, `{"id": "redirect", "action": "stop",
+				"input": {"result": {"decision": "redirect", "route": "loan-calculator", "params": {"productId": "p"}}}}`))
+		})(t, m)
+	}
+	m := fixture(t)
+	guard(t, m)
+	wantDiag(t, compileFS(m), plxerr.RuntimeTooOld, calculateGraph, "/steps/3/input/result")
+
+	m = fixture(t)
+	guard(t, m)
+	onApp(func(t *testing.T, doc map[string]any) { doc["minRuntimeVersion"] = "0.2.0" })(t, m)
+	if res := compileFS(m); len(res.Diagnostics) > 0 {
+		t.Fatalf("diagnostics:\n%v", res.Diagnostics)
+	}
+}
+
+// TestNavigationIsEncoded checks that the app bundle carries the
+// not-found route and the shells with their tabs, and that a page section
+// carries its result type (ADR-0040).
+// Verifies: NAV-003, NAV-005, NAV-011.
+func TestNavigationIsEncoded(t *testing.T) {
+	t.Parallel()
+	m := fixture(t)
+	onApp(func(t *testing.T, doc map[string]any) {
+		doc["navigation"] = raw(t, `{"notFound": "loan-calculator", "shells": [{"key": "main", "tabs": [`+
+			tab("loans", "loan-calculator")+`, `+tab("account", "account-overview")+`]}]}`)
+	})(t, m)
+	onPage(func(t *testing.T, doc map[string]any) { doc["result"] = "decimal" })(t, m)
+	res := compileFS(m)
+	if len(res.Diagnostics) > 0 {
+		t.Fatalf("diagnostics:\n%v", res.Diagnostics)
+	}
+	read := readAll(t, res)
+
+	meta := read[0].Meta
+	if got := string(meta.NotFoundRoute()); got != "loan-calculator" {
+		t.Errorf("not-found route %q", got)
+	}
+	var shell fbs.Shell
+	if meta.ShellsLength() != 1 || !meta.Shells(&shell, 0) || string(shell.Key()) != "main" || shell.TabsLength() != 2 {
+		t.Fatalf("shells: %d", meta.ShellsLength())
+	}
+	var tab fbs.ShellTab
+	shell.Tabs(&tab, 1)
+	if string(tab.Key()) != "account" || string(tab.InitialRoute()) != "account-overview" || tab.Label(nil) == nil || tab.Icon(nil) == nil {
+		t.Errorf("tab %s → %s", tab.Key(), tab.InitialRoute())
+	}
+
+	results := map[string]string{}
+	for _, s := range read[1].Sections {
+		if s.Kind != bundle.SectionPage {
+			continue
+		}
+		p := fbs.GetRootAsPage(s.Data, 0)
+		route := string(p.Strings(int(p.Route())))
+		results[route] = ""
+		if r := p.Result(); r != 0 {
+			results[route] = string(p.Strings(int(r)))
+		}
+	}
+	if results["loan-calculator"] != "decimal" || len(results) != 2 {
+		t.Errorf("page results %v", results)
+	}
+	for route, r := range results {
+		if route != "loan-calculator" && r != "" {
+			t.Errorf("page %s has result %q, declares none", route, r)
+		}
+	}
+}
+
+// routingDir is the conformance project of the action engine and
+// navigation (ADR-0039, ADR-0040), whose bundles the runtime's tests run.
+var routingDir = filepath.Join("..", "..", "..", "schema", "testdata", "documents", "routing")
+
+// TestRoutingGoldenBundles pins the bundles of the routing project byte
+// for byte; the runtime's tests run its graphs and pages.
+// Verifies: CMP-002, QA-003.
+func TestRoutingGoldenBundles(t *testing.T) {
+	t.Parallel()
+	res := Compile(os.DirFS(routingDir), DefaultOptions())
+	if len(res.Diagnostics) > 0 {
+		t.Fatalf("diagnostics:\n%s", list(res.Diagnostics))
+	}
+	readAll(t, res)
+	for _, b := range append([]*Bundle{res.App}, res.Plugins...) {
+		checkGolden(t, filepath.Join(goldenRoot, "routing", b.Key+".pxb"), b.Data)
 	}
 }

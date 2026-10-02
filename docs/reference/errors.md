@@ -754,9 +754,9 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 `ACTIONS_NOT_AVAILABLE` · warning · Actions not available in this runtime
 
-**Cause.** An event handler fired, but this runtime renders pages without running actions; actions arrive with the action executor in phase 5 (ADR-0031).
+**Cause.** A step names an action, or a graph declares an option (a concurrency policy other than drop, a retry, a detached run), that this runtime does not run; the step fails with this error, which its onError can handle, and the option is ignored (ADR-0039).
 
-**Fix.** Nothing to fix in the page; the handler runs once the runtime supports actions.
+**Fix.** Raise the app's minimum runtime version to one that runs the action, or handle the error; the action reference page says which phase delivers each action.
 
 ### PLX-4020
 
@@ -784,11 +784,11 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 ### PLX-4102
 
-`NAVIGATION_REFUSED` · warning · Navigation refused by a guard
+`NAVIGATION_REFUSED` · warning · Navigation refused
 
-**Cause.** A route guard refused entry: its graph decided on the fallback, or it failed and the guard failed closed (NAV-009).
+**Cause.** A route guard refused entry, because its graph decided on the fallback or failed and the guard failed closed (NAV-009); or the navigation needs what the screen does not have, such as a switchTab with no enclosing shell holding the tab, or a pop with nothing to pop (NAV-005).
 
-**Fix.** If the refusal is unexpected, check the guard's condition and the state it reads, such as the auth delegate, flags or the device's assurance level.
+**Fix.** If the refusal is unexpected, check the guard's condition and the state it reads, such as the auth delegate, flags or the device's assurance level, or where the page is shown.
 
 ### PLX-4103
 
@@ -829,6 +829,40 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 **Cause.** Native code wrote a value to an exposed state entry whose declared type the value does not have; the write is refused and the entry keeps its value (STA-030, HST-021).
 
 **Fix.** Write a value of the entry's declared type; plux codegen generates typed accessors that make this a compile error.
+
+## Actions, data and local database (PLX-5000–5999)
+
+### PLX-5001
+
+`ACTION_TIMEOUT` · error · Action timed out
+
+**Cause.** A step or its run took longer than the limits action.stepTimeout or action.runTimeout, or the step's own timeoutMs, allow; time spent waiting for the user in a dialog or bottom sheet does not count (ACT-005, ADR-0039).
+
+**Fix.** Handle the error with the step's onError, or make the work shorter; an installation may raise the limits within their maximums.
+
+### PLX-5002
+
+`ACTION_STEP_LIMIT_EXCEEDED` · error · Step limit exceeded
+
+**Cause.** A run executed more steps than the limit action.stepsPerRun allows, and was stopped (ACT-005, ADR-0039).
+
+**Fix.** Shorten the graph, or move repeated work into a flow.
+
+### PLX-5003
+
+`ACTION_VALUE_INVALID` · error · Action value of the wrong type
+
+**Cause.** A step's input, output or result does not have the type its action, page or graph declares, or a binding of an input could not be evaluated; the step fails with a validation error (ADR-0039).
+
+**Fix.** Check the bindings of the step's inputs and the values the host passes or returns.
+
+### PLX-5004
+
+`ACTION_CUSTOM_ERROR` · error · Run failed with a custom error
+
+**Cause.** A stop step ended the run with a custom error code, and no onError handled it (ADR-0039).
+
+**Fix.** Handle the error with an onError edge, or check why the graph stops with it; the message carries its code.
 
 ## Security (PLX-6000–6999)
 

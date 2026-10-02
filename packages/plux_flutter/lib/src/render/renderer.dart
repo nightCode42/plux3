@@ -12,6 +12,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:plux_flutter/src/actions/engine.dart';
+import 'package:plux_flutter/src/actions/handlers.dart';
+import 'package:plux_flutter/src/actions/run.dart';
 import 'package:plux_flutter/src/assets/assets.dart';
 import 'package:plux_flutter/src/assets/icon_fonts.dart';
 import 'package:plux_flutter/src/assets/image_providers.dart';
@@ -20,10 +23,13 @@ import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/core/config.dart';
 import 'package:plux_flutter/src/core/fallback.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/navigation/page_navigator.dart';
 import 'package:plux_flutter/src/platform/platform_services.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
 import 'package:plux_flutter/src/pxl/vm.dart';
 import 'package:plux_flutter/src/render/builders/builders.dart';
+import 'package:plux_flutter/src/render/decoders.dart';
+import 'package:plux_flutter/src/render/decoding.dart';
 import 'package:plux_flutter/src/render/generated/render.g.dart';
 import 'package:plux_flutter/src/render/node_context.dart';
 import 'package:plux_flutter/src/render/page_renderer.dart';
@@ -54,6 +60,7 @@ final class PluxRenderer implements PageRenderer, RenderServices {
     required this.failure,
     required this.imageCacheDirectory,
     this.assets = AssetDevice.plain,
+    this.actions,
     VerifiedAssets? verified,
     int? cacheEntries,
     int? cacheBytes,
@@ -83,6 +90,10 @@ final class PluxRenderer implements PageRenderer, RenderServices {
   /// Where remote images are cached on disk.
   final String imageCacheDirectory;
 
+  /// What pages run their action graphs with (ADR-0039); without it,
+  /// events report `PLX-4010` as in P3.
+  final ActionServices? actions;
+
   final VerifiedAssets _verified;
   ImageDiskCache? _imageCache;
   http.Client? _client;
@@ -101,14 +112,107 @@ final class PluxRenderer implements PageRenderer, RenderServices {
     BuildContext context,
     ActiveRelease release,
     PageRef page,
-    Map<String, Object?> params,
-  ) => PluxPage(
+    Map<String, Object?> params, {
+    bool routed = false,
+  }) => PluxPageView(
     key: ValueKey((release.sequence, page.route)),
     renderer: this,
     release: release,
     page: page,
     params: params,
+    routed: routed,
   );
+
+  /// The named types the pages of plugin [plugin] may use: the app's and
+  /// the plugin's (SCH-010).
+  Map<String, NamedType> typesOf(ActiveRelease release, String plugin) {
+    final app = view(release, '');
+    final pl = view(release, plugin);
+    final all = {...app.types, ...pl.types};
+    app.resolveFields(all);
+    pl.resolveFields(all);
+    return all;
+  }
+
+  /// A shell tab's label, evaluated over the app scope (NAV-006); null,
+  /// reported, when it cannot be.
+  String? shellLabel(
+    ActiveRelease release,
+    fbs.ShellTab tab,
+    PluxEnvironment env,
+  ) {
+    final v = _appValue(release, tab.label, env);
+    return v is String ? v : null;
+  }
+
+  /// A shell tab's icon from the app's icon fonts (THM-005), or null.
+  PluxIconSource? shellIcon(ActiveRelease release, fbs.ShellTab tab) {
+    final v = _appValue(release, tab.icon, null);
+    return decodeIconData(_AppDecoding(this, release), v);
+  }
+
+  Object? _appValue(ActiveRelease release, fbs.Value? v, PluxEnvironment? env) {
+    final app = view(release, '');
+    final limits = _pxlLimits(release.limits);
+    final literal = ValueResolver(
+      plugin: app,
+      roots: () => const {},
+      token: (_) => null,
+      translation: (_) => null,
+      limits: limits,
+    );
+    final flags = {
+      for (final f in release.meta('').flags ?? const <fbs.Flag>[])
+        if (f.name != null) f.name!: literal.resolve(f.$default, app.string),
+    };
+    final user = env?.user;
+    try {
+      return toPxl(
+        ValueResolver(
+          plugin: app,
+          roots: () => {
+            'flags': flags,
+            'user': {
+              if (user != null) ...user.attributes,
+              if (user != null) 'id': user.id,
+              'authenticated': env?.authDelegate?.isAuthenticated ?? false,
+            },
+          },
+          token: (_) => null,
+          translation: (_) => null,
+          limits: limits,
+        ).resolve(v, app.string),
+      );
+    } on BindingError catch (e) {
+      report(
+        PluxException(
+          PluxErrorCode.propValueInvalid,
+          'shell tab: ${e.message}',
+        ),
+      );
+      return null;
+    }
+  }
+
+  /// An icon of the app bundle's icon fonts (THM-005).
+  PluxIconSource? appIcon(ActiveRelease release, String name, String set) {
+    final key = iconFontKey(set);
+    final a = view(release, '').assetByKey(key);
+    final hash = a == null ? null : hexEncode(a.hash ?? const []);
+    final path = hash == null ? null : release.assetPath(hash);
+    if (hash == null || path == null) {
+      report(
+        PluxException(
+          PluxErrorCode.propValueInvalid,
+          a == null
+              ? 'the release has no $set icon font'
+              : 'the $set icon font is not stored',
+        ),
+      );
+      return null;
+    }
+    return PluxIconSource(iconFonts, hash, path, name);
+  }
 
   // ── Services ──────────────────────────────────────────────────────────────
 
@@ -243,14 +347,15 @@ final class PluxRenderer implements PageRenderer, RenderServices {
 }
 
 /// One page on screen.
-final class PluxPage extends ConsumerStatefulWidget {
+final class PluxPageView extends ConsumerStatefulWidget {
   /// Creates the page.
-  const PluxPage({
+  const PluxPageView({
     super.key,
     required this.renderer,
     required this.release,
     required this.page,
     required this.params,
+    this.routed = false,
   });
 
   /// The renderer.
@@ -262,14 +367,17 @@ final class PluxPage extends ConsumerStatefulWidget {
   /// The page.
   final PageRef page;
 
-  /// The route parameters from the host.
+  /// The route parameters, in the host's or the JSON form of their types.
   final Map<String, Object?> params;
 
+  /// Whether the page owns its route, so that `pop` may pop it.
+  final bool routed;
+
   @override
-  ConsumerState<PluxPage> createState() => _PluxPageState();
+  ConsumerState<PluxPageView> createState() => _PluxPageViewState();
 }
 
-final class _PluxPageState extends ConsumerState<PluxPage> {
+final class _PluxPageViewState extends ConsumerState<PluxPageView> {
   late final BundleView _plugin = widget.renderer.view(
     widget.release,
     widget.page.plugin,
@@ -283,6 +391,35 @@ final class _PluxPageState extends ConsumerState<PluxPage> {
   late final Map<String, Object?> _params;
   late final PageInstance _instance;
   late final Map<String, Object?> _flags;
+
+  /// Why the page's parameters cannot be used (NAV-007), or null.
+  PluxException? _paramError;
+
+  /// The engine of the page's runs (ADR-0039).
+  late final ActionHost? _actions = () {
+    final services = widget.renderer.actions;
+    if (services == null) return null;
+    final result = _section.page?.result ?? 0;
+    return ActionHost(
+      context: StepContext(
+        navigator: PageNavigator(
+          router: services.router,
+          context: () => context,
+          route: widget.page.route,
+          routed: widget.routed,
+          resultType: result == 0 ? null : _section.string(result),
+          types: () => _types,
+        ),
+        emit: services.emit,
+        nativeActions: services.nativeActions,
+      ),
+      limits: ActionLimits.of(widget.release.limits),
+      report: widget.renderer.report,
+      record: services.record,
+      route: widget.page.route,
+      pluginKey: widget.page.plugin,
+    );
+  }();
 
   String get _path => '${widget.page.plugin}/${widget.page.pageKey}';
 
@@ -328,11 +465,40 @@ final class _PluxPageState extends ConsumerState<PluxPage> {
 
     final page = _section.page!;
     _params = {};
+    // Parameters are checked on entry (NAV-007): one missing, unknown or
+    // of the wrong type shows the error fallback instead of the page.
+    final problems = <String>[];
+    final declared = <String>{};
     for (final p in page.params ?? const <fbs.Param>[]) {
       final name = _section.string(p.name);
-      _params[name] = widget.params.containsKey(name)
-          ? _hostParam(name, _section.string(p.type), widget.params[name])
-          : read(literal, p.$default, _section.string);
+      declared.add(name);
+      if (widget.params.containsKey(name)) {
+        try {
+          _params[name] = _hostParam(
+            _section.string(p.type),
+            widget.params[name],
+          );
+        } on FormatException catch (e) {
+          problems.add('$name: ${e.message}');
+        }
+      } else if (p.$default != null) {
+        _params[name] = read(literal, p.$default, _section.string);
+      } else if (p.$required) {
+        problems.add('$name is missing');
+      } else {
+        _params[name] = null;
+      }
+    }
+    for (final name in widget.params.keys) {
+      if (!declared.contains(name)) problems.add('$name is not a parameter');
+    }
+    if (problems.isNotEmpty) {
+      _paramError = PluxException(
+        PluxErrorCode.routeParametersInvalid,
+        'route ${widget.page.route}: ${problems.join('; ')}',
+        details: {'route': widget.page.route, 'plugin': widget.page.plugin},
+      );
+      widget.renderer.report(_paramError!);
     }
     _instance = PageInstance({
       for (final e in page.state ?? const <fbs.StateEntry>[])
@@ -361,26 +527,24 @@ final class _PluxPageState extends ConsumerState<PluxPage> {
     return all;
   }();
 
-  /// A route parameter the host passed, in the literal form of its declared
-  /// type (document-model.md §3), converted to its PXL value; reported and
-  /// absent when it does not fit the type.
-  Object? _hostParam(String name, String type, Object? value) {
-    try {
-      return fromJson(PxlType.parse(type, (n) => _types[n]), fromHost(value));
-    } on FormatException catch (e) {
-      _report(
-        PluxException(
-          PluxErrorCode.propValueInvalid,
-          '$_path: parameter $name: ${e.message}',
-        ),
-        path: _path,
-      );
-      return null;
-    }
+  /// A route parameter in the host's or the literal form of its declared
+  /// type (document-model.md §3), converted to its PXL value; throws
+  /// [FormatException] when it does not fit the type.
+  Object? _hostParam(String type, Object? value) =>
+      fromJson(PxlType.parse(type, (n) => _types[n]), fromHost(value));
+
+  @override
+  void dispose() {
+    _actions?.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final failed = _paramError;
+    if (failed != null) {
+      return widget.renderer.fallback(context, failed, widget.page.plugin);
+    }
     // Keep the page's state alive while the page is shown.
     ref.listen(pageStateProvider(_instance), (_, _) {});
     final env = ref.watch(environmentProvider);
@@ -427,7 +591,12 @@ final class _PluxPageState extends ConsumerState<PluxPage> {
       'params': _params,
       'page': ref.read(pageStateProvider(_instance)),
       'device': device,
-      'user': userRoot,
+      // Read on every evaluation: the host's answer, signed out without a
+      // delegate (ADR-0040).
+      'user': {
+        ...userRoot,
+        'authenticated': env.authDelegate?.isAuthenticated ?? false,
+      },
       'flags': _flags,
     };
     final tokens = TokenReader(
@@ -489,6 +658,7 @@ final class _PluxPageState extends ConsumerState<PluxPage> {
       services: widget.renderer,
       path: _path,
       state: _instance,
+      actions: _actions,
     );
     final plugin = widget.page.plugin;
     Widget page = PluxBoundary(
@@ -576,3 +746,24 @@ Object? fromHost(Object? v) => switch (v) {
   },
   _ => v,
 };
+
+/// Resolves the icons of shell tabs from the app bundle's fonts.
+final class _AppDecoding implements Decoding {
+  const _AppDecoding(this._renderer, this._release);
+
+  final PluxRenderer _renderer;
+  final ActiveRelease _release;
+
+  @override
+  TextDirection get textDirection => TextDirection.ltr;
+
+  @override
+  PluxIconSource? icon(String name, String set) =>
+      _renderer.appIcon(_release, name, set);
+
+  @override
+  ImageProvider<Object>? image({String? asset, String? url}) => null;
+
+  @override
+  PluxVectorSource? vector(String asset) => null;
+}

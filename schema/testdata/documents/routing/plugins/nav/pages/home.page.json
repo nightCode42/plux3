@@ -1,0 +1,430 @@
+{
+  "id": "01f0c450-6c00-7000-8000-000000000010",
+  "key": "home",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01f0c450-6c00-7000-8000-000000000011",
+    "slots": {
+      "appBar": {
+        "id": "01f0c450-6c00-7000-8000-000000000012",
+        "slots": {
+          "title": {
+            "id": "01f0c450-6c00-7000-8000-000000000119",
+            "props": {
+              "data": "Home"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "children": [
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "navigate",
+                    "id": "go",
+                    "input": {
+                      "params": {
+                        "itemId": "42"
+                      },
+                      "route": "detail"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000101",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-000000000102",
+                "props": {
+                  "data": "Push detail"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "navigate",
+                    "id": "go",
+                    "input": {
+                      "mode": "replace",
+                      "params": {
+                        "itemId": "r"
+                      },
+                      "route": "detail"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000103",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-000000000104",
+                "props": {
+                  "data": "Replace with detail"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "navigate",
+                    "id": "go",
+                    "input": {
+                      "mode": "clearAndPush",
+                      "params": {
+                        "itemId": "c"
+                      },
+                      "route": "detail"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000105",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-000000000106",
+                "props": {
+                  "data": "Clear and push detail"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "openDialog",
+                    "id": "ask",
+                    "input": {
+                      "route": "confirm"
+                    },
+                    "next": "check"
+                  },
+                  {
+                    "action": "condition",
+                    "branches": {
+                      "else": "no",
+                      "then": "yes"
+                    },
+                    "id": "check",
+                    "input": {
+                      "when": {
+                        "$expr": "steps.ask.output ?? false"
+                      }
+                    }
+                  },
+                  {
+                    "action": "emitHostEvent",
+                    "id": "yes",
+                    "input": {
+                      "event": "confirmed",
+                      "payload": {
+                        "answer": true
+                      }
+                    }
+                  },
+                  {
+                    "action": "emitHostEvent",
+                    "id": "no",
+                    "input": {
+                      "event": "confirmed",
+                      "payload": {
+                        "answer": false
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000107",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-000000000108",
+                "props": {
+                  "data": "Ask"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "openBottomSheet",
+                    "id": "sheet",
+                    "input": {
+                      "route": "sheet"
+                    },
+                    "next": "tell"
+                  },
+                  {
+                    "action": "emitHostEvent",
+                    "id": "tell",
+                    "input": {
+                      "event": "picked",
+                      "payload": {
+                        "choice": {
+                          "$expr": "steps.sheet.output ?? \"none\""
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000109",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-00000000010a",
+                "props": {
+                  "data": "Choose"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "showToast",
+                    "id": "toast",
+                    "input": {
+                      "message": "Hello"
+                    },
+                    "onError": "recover"
+                  },
+                  {
+                    "action": "emitHostEvent",
+                    "id": "recover",
+                    "input": {
+                      "event": "recovered",
+                      "payload": {
+                        "kind": "handled"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-00000000010b",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-00000000010c",
+                "props": {
+                  "data": "Later action handled"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "showToast",
+                    "id": "toast",
+                    "input": {
+                      "message": "Hello"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-00000000010d",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-00000000010e",
+                "props": {
+                  "data": "Later action"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "stop",
+                    "id": "stop",
+                    "input": {
+                      "error": "E_CUSTOM"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-00000000010f",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-000000000110",
+                "props": {
+                  "data": "Stop with error"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "scan",
+                    "id": "scan",
+                    "input": {
+                      "prompt": "Scan a code"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000111",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-000000000112",
+                "props": {
+                  "data": "Scan"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "navigate",
+                    "id": "go",
+                    "input": {
+                      "params": {
+                        "userId": "u-7"
+                      },
+                      "route": "profile"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000113",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-000000000114",
+                "props": {
+                  "data": "Profile"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "switchTab",
+                    "id": "tab",
+                    "input": {
+                      "tab": "second"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000115",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-000000000116",
+                "props": {
+                  "data": "Second tab"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "condition",
+                    "branches": {
+                      "then": "tell"
+                    },
+                    "id": "check",
+                    "input": {
+                      "when": {
+                        "$expr": "user.authenticated"
+                      }
+                    }
+                  },
+                  {
+                    "action": "emitHostEvent",
+                    "id": "tell",
+                    "input": {
+                      "event": "signedIn"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000117",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-000000000118",
+                "props": {
+                  "data": "Who"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          }
+        ],
+        "id": "01f0c450-6c00-7000-8000-000000000013",
+        "type": "Column"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "home",
+  "schemaVersion": "1.0.0",
+  "title": "Home"
+}

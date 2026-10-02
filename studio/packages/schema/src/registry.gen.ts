@@ -6028,7 +6028,7 @@ export const actions: readonly ActionDescriptor[] = [
   {
     "name": "stop",
     "id": 35,
-    "phase": "P5",
+    "phase": "P4",
     "category": "control",
     "description": "Ends the run, returning an optional result or failing with a custom error.",
     "typeParameters": [

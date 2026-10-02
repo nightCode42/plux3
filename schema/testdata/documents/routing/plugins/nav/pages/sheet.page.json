@@ -1,0 +1,42 @@
+{
+  "id": "01f0c450-6c00-7000-8000-000000000060",
+  "key": "sheet",
+  "kind": "page",
+  "pageKind": "bottomSheet",
+  "result": "string",
+  "root": {
+    "children": [
+      {
+        "events": {
+          "onPressed": {
+            "steps": [
+              {
+                "action": "pop",
+                "id": "pick",
+                "input": {
+                  "result": "picked"
+                }
+              }
+            ]
+          }
+        },
+        "id": "01f0c450-6c00-7000-8000-00000000012a",
+        "slots": {
+          "child": {
+            "id": "01f0c450-6c00-7000-8000-00000000012b",
+            "props": {
+              "data": "Pick"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "FilledButton"
+      }
+    ],
+    "id": "01f0c450-6c00-7000-8000-000000000061",
+    "type": "Column"
+  },
+  "route": "sheet",
+  "schemaVersion": "1.0.0",
+  "title": "Sheet"
+}

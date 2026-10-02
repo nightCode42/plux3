@@ -11,11 +11,13 @@ import 'package:plux_flutter/src/core/active_release.dart';
 
 /// Builds the widget tree of one page.
 abstract interface class PageRenderer {
-  /// Builds [page] of [release] with the route [params].
+  /// Builds [page] of [release] with the route [params]; [routed] says
+  /// whether the page owns its route, so that `pop` may pop it.
   Widget build(
     BuildContext context,
     ActiveRelease release,
     PageRef page,
-    Map<String, Object?> params,
-  );
+    Map<String, Object?> params, {
+    bool routed = false,
+  });
 }

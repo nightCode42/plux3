@@ -1,0 +1,42 @@
+{
+  "id": "01f0c450-6c00-7000-8000-000000000080",
+  "key": "missing",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01f0c450-6c00-7000-8000-000000000081",
+    "slots": {
+      "appBar": {
+        "id": "01f0c450-6c00-7000-8000-000000000082",
+        "slots": {
+          "title": {
+            "id": "01f0c450-6c00-7000-8000-000000000132",
+            "props": {
+              "data": "Missing"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "children": [
+          {
+            "id": "01f0c450-6c00-7000-8000-000000000131",
+            "props": {
+              "data": "No such page"
+            },
+            "testId": "missing",
+            "type": "Text"
+          }
+        ],
+        "id": "01f0c450-6c00-7000-8000-000000000083",
+        "type": "Column"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "missing",
+  "schemaVersion": "1.0.0",
+  "title": "Missing"
+}

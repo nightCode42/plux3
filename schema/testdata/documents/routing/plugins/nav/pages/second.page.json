@@ -1,0 +1,68 @@
+{
+  "id": "01f0c450-6c00-7000-8000-000000000070",
+  "key": "second",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01f0c450-6c00-7000-8000-000000000071",
+    "slots": {
+      "appBar": {
+        "id": "01f0c450-6c00-7000-8000-000000000072",
+        "slots": {
+          "title": {
+            "id": "01f0c450-6c00-7000-8000-000000000130",
+            "props": {
+              "data": "Second"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "children": [
+          {
+            "id": "01f0c450-6c00-7000-8000-00000000012d",
+            "props": {
+              "data": "Second page"
+            },
+            "testId": "second",
+            "type": "Text"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "switchTab",
+                    "id": "tab",
+                    "input": {
+                      "tab": "home"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-00000000012e",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-00000000012f",
+                "props": {
+                  "data": "Home tab"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          }
+        ],
+        "id": "01f0c450-6c00-7000-8000-000000000073",
+        "type": "Column"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "second",
+  "schemaVersion": "1.0.0",
+  "title": "Second"
+}

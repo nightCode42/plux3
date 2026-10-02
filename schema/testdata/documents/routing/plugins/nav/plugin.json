@@ -1,0 +1,24 @@
+{
+  "description": "Pages and graphs that exercise the action engine and navigation.",
+  "entryPage": "01f0c450-6c00-7000-8000-000000000010",
+  "icon": {
+    "monogram": {
+      "background": "#0B6E4F",
+      "text": "N"
+    }
+  },
+  "id": "01f0c450-6c00-7000-8000-000000000007",
+  "key": "nav",
+  "kind": "plugin",
+  "name": "Navigation",
+  "pages": [
+    "01f0c450-6c00-7000-8000-000000000010",
+    "01f0c450-6c00-7000-8000-000000000030",
+    "01f0c450-6c00-7000-8000-000000000050",
+    "01f0c450-6c00-7000-8000-000000000060",
+    "01f0c450-6c00-7000-8000-000000000070",
+    "01f0c450-6c00-7000-8000-000000000080"
+  ],
+  "schemaVersion": "1.0.0",
+  "team": "routing"
+}

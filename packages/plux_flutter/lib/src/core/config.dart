@@ -12,6 +12,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/navigation/delegate.dart';
 import 'package:plux_flutter/src/verify/manifest.dart';
 
 /// How `Plux.initialize` treats the network (SYN-003).
@@ -93,6 +94,11 @@ final class PluxUser {
 /// Supplies the end user's access token to data sources and functions
 /// (HST-010). Plux never implements end-user login; it is used from P4.
 abstract interface class PluxAuthDelegate {
+  /// Whether a user is signed in. Guards and other expressions read it as
+  /// `user.authenticated` (ADR-0040); it is read on every evaluation, so
+  /// it answers from memory, without I/O.
+  bool get isAuthenticated;
+
   /// The current access token, or null when signed out.
   Future<String?> accessToken();
 
@@ -199,6 +205,8 @@ final class PluxConfig {
     this.onError,
     this.fallbackBuilder,
     this.pluginFallbackBuilders = const {},
+    this.notFoundBuilder,
+    this.navigationDelegate,
   }) : assert(downloadParallelism > 0, 'at least one download at a time'),
        assert(
          hostBuild.length <= 64,
@@ -296,4 +304,15 @@ final class PluxConfig {
   /// (RT-020). A plugin that is switched off shows the fallback page it
   /// declares first (RT-022).
   final Map<String, PluxFallbackBuilder> pluginFallbackBuilders;
+
+  /// Builds the page shown for an unknown route [route] when the app's
+  /// document names no not-found route (NAV-011); Plux's own page when
+  /// null.
+  final Widget Function(BuildContext context, String route)? notFoundBuilder;
+
+  /// The seam every navigation goes through (ADR-0040): Plux resolves and
+  /// checks the route, the delegate changes the stack. The nearest
+  /// `Navigator`, with the plain API, when null; `plux_go_router` and
+  /// `plux_auto_route` provide delegates for their routers.
+  final PluxNavigationDelegate? navigationDelegate;
 }

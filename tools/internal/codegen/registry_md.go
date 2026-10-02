@@ -212,7 +212,7 @@ func actionsMarkdown(r *registry.Registry) []byte {
 	b.WriteString("# Action Reference\n\n")
 	b.WriteString("The built-in actions of the action catalogue (spec Appendix D), generated from the descriptors in `schema/actions/`. ")
 	b.WriteString("A step of an action graph names an action, gives its inputs as prop values and continues through `next`, `onSuccess`, `onError` or the action's named branches ([document model](document-model.md#5-action-graphs)). ")
-	b.WriteString("Type parameters are bound by the compiler from the step's context. Each action is implemented in the phase shown; the compiler rejects actions whose phase has not been delivered. IDs are permanent (`BND-011`).\n\n")
+	b.WriteString("Type parameters are bound by the compiler from the step's context. Each action is delivered in the phase shown: a runtime that does not run an action yet fails its step with `PLX-4010`, which the step's `onError` can handle ([action engine](action-engine.md), ADR-0039). IDs are permanent (`BND-011`).\n\n")
 	b.WriteString("| Action | Category | Phase | Description |\n|---|---|---|---|\n")
 	for _, a := range r.Actions {
 		fmt.Fprintf(&b, "| [%s](#%s) | %s | %s | %s |\n", a.Name, mdAnchor(a.Name), a.Category, a.Phase, mdCell(a.Description))

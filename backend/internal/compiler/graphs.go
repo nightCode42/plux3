@@ -186,6 +186,10 @@ func (u *unit) checkInput(g *graph, a *registry.Action, in registry.Input, raw j
 		u.report(plxerr.PropTypeMismatch, c.file, c.ptr, "page %q declares no result type to return", g.page.doc.Key)
 		return nil
 	}
+	if a.Name == "stop" && in.Name == "result" && g.output == "" {
+		u.report(plxerr.PropTypeMismatch, c.file, c.ptr, "the graph declares no output to return")
+		return nil
+	}
 	if a.Name == "callFlow" && in.Name == "input" {
 		st := g.steps[stepIndex(c.ptr)]
 		if f := flowByKey(g.plugin, literalString(st.Input["flow"])); f != nil {
@@ -237,7 +241,8 @@ func (u *unit) bindAction(g *graph, a *registry.Action, input map[string]json.Ra
 }
 
 // declaredBinding binds the type parameter a declaration fixes: pop's
-// result to the page's declared result (NAV-003), setState's value to
+// result to the page's declared result (NAV-003), stop's to the graph's
+// declared output (a guard's GuardResult, NAV-009), setState's value to
 // the state entry its path names.
 func declaredBinding(g *graph, a *registry.Action, input map[string]json.RawMessage) (string, *texpr) {
 	switch a.Name {
@@ -247,6 +252,13 @@ func declaredBinding(g *graph, a *registry.Action, input map[string]json.RawMess
 		}
 		if t, err := parseTypeExpr(g.page.doc.Result); err == nil {
 			return "R", t
+		}
+	case "stop":
+		if g.output == "" {
+			return "", nil
+		}
+		if t, err := parseTypeExpr(g.output); err == nil {
+			return "T", t
 		}
 	case "setState", "patchState":
 		if path := literalString(input["path"]); path != "" {

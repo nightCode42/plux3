@@ -37,7 +37,7 @@
       "enforcedBy": [
         "runtime"
       ],
-      "phase": "P5",
+      "phase": "P4",
       "requirements": [
         "ACT-005"
       ],
@@ -57,7 +57,7 @@
       "enforcedBy": [
         "runtime"
       ],
-      "phase": "P5",
+      "phase": "P4",
       "requirements": [
         "ACT-005"
       ],
@@ -78,7 +78,7 @@
         "compiler",
         "runtime"
       ],
-      "phase": "P5",
+      "phase": "P4",
       "requirements": [
         "ACT-005"
       ],

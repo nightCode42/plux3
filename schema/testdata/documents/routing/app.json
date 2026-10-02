@@ -1,0 +1,109 @@
+{
+  "defaultLocale": "en",
+  "entryRoute": "home",
+  "environments": [
+    {
+      "key": "production",
+      "name": "Production"
+    }
+  ],
+  "flags": [
+    {
+      "default": "Second",
+      "name": "secondLabel",
+      "type": "string"
+    }
+  ],
+  "hostEvents": [
+    {
+      "description": "The confirm dialog closed.",
+      "fields": [
+        {
+          "name": "answer",
+          "type": "bool"
+        }
+      ],
+      "name": "confirmed"
+    },
+    {
+      "description": "The sheet closed.",
+      "fields": [
+        {
+          "name": "choice",
+          "type": "string"
+        }
+      ],
+      "name": "picked"
+    },
+    {
+      "description": "A step failed and its onError ran.",
+      "fields": [
+        {
+          "name": "kind",
+          "type": "string"
+        }
+      ],
+      "name": "recovered"
+    },
+    {
+      "description": "Emitted when user.authenticated holds.",
+      "fields": [],
+      "name": "signedIn"
+    }
+  ],
+  "icon": {
+    "monogram": {
+      "background": "#0B6E4F",
+      "text": "RT"
+    }
+  },
+  "id": "01f0c450-6c00-7000-8000-000000000001",
+  "key": "routing",
+  "kind": "app",
+  "minRuntimeVersion": "0.2.0",
+  "name": "Routing",
+  "nativeCatalogue": "01f0c450-6c00-7000-8000-000000000003",
+  "navigation": {
+    "notFound": "missing",
+    "shells": [
+      {
+        "key": "main",
+        "tabs": [
+          {
+            "icon": {
+              "name": "home"
+            },
+            "initialRoute": "home",
+            "key": "home",
+            "label": "Home"
+          },
+          {
+            "icon": {
+              "name": "settings"
+            },
+            "initialRoute": "second",
+            "key": "second",
+            "label": {
+              "$expr": "flags.secondLabel"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "plugins": [
+    "nav"
+  ],
+  "schemaVersion": "1.0.0",
+  "securityProfile": "standard",
+  "supportedLocales": [
+    "en"
+  ],
+  "sync": {
+    "activation": "atSafePoint",
+    "startup": {
+      "mode": "useCacheThenSync"
+    }
+  },
+  "theme": "01f0c450-6c00-7000-8000-000000000002"
+}

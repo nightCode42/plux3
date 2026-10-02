@@ -29,8 +29,9 @@ final class _TestRenderer implements PageRenderer {
     BuildContext context,
     ActiveRelease release,
     PageRef page,
-    Map<String, Object?> params,
-  ) {
+    Map<String, Object?> params, {
+    bool routed = false,
+  }) {
     if (fail) throw StateError('broken page');
     return Text(
       'page ${page.route} of ${release.sequence} ${params['x'] ?? ''}',
@@ -306,7 +307,7 @@ void main() {
       );
       await tester.pumpWidget(const PluxScope(child: PluxView('nowhere')));
       expect(
-        find.text('fallback PLX-8031'),
+        find.text('fallback PLX-4100'),
         findsOneWidget,
         reason: 'no plugin',
       );
@@ -461,7 +462,7 @@ void main() {
       await tester.pumpWidget(
         const PluxScope(child: PluxView('no-such-route')),
       );
-      expect(find.text('fallback PLX-8031'), findsOneWidget);
+      expect(find.text('fallback PLX-4100'), findsOneWidget);
       final info = Plux.diagnostics.release.value!;
       expect(info.sequence, 10);
       expect(

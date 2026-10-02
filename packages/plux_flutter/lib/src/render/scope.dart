@@ -8,6 +8,7 @@ library;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plux_flutter/src/actions/engine.dart';
 import 'package:plux_flutter/src/assets/icon_fonts.dart';
 import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
@@ -98,6 +99,7 @@ final class RenderScope {
     this.state,
     this.fills,
     this.parent,
+    this.actions,
   });
 
   /// The release rendered.
@@ -147,6 +149,10 @@ final class RenderScope {
   /// The enclosing scope.
   final RenderScope? parent;
 
+  /// The engine the nodes' events start runs on (ADR-0039); null where
+  /// actions do not run.
+  final ActionHost? actions;
+
   /// A scope with [extra] roots, for a template item.
   RenderScope withRoots(Map<String, Object?> extra, String at) {
     Map<String, Object?> all() => {...roots(), ...extra};
@@ -172,6 +178,7 @@ final class RenderScope {
       state: state,
       fills: fills,
       parent: parent,
+      actions: actions,
     );
   }
 

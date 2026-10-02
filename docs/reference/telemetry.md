@@ -14,7 +14,7 @@ The host passes the user's consent in `PluxConfig.consent` and changes it with
 | Category | Sent | Events |
 |---|---|---|
 | necessary | always; anonymous and operational | `session_start` (without locale), `sync_result`, `error`; `rasp_detection` from P6 |
-| analytics | with `PluxConsent(analytics: true)` | `session_end`, `screen_view`, `render_perf`; `action_run`, `api_call`, `custom` from P5; `function_call` from P7 |
+| analytics | with `PluxConsent(analytics: true)` | `session_end`, `screen_view`, `render_perf`; `action_run` from P4 ([action engine](action-engine.md)); `api_call`, `custom` from P5; `function_call` from P7 |
 | experiments | with `PluxConsent(experiments: true)` | `experiment_exposure` from P9 |
 
 Withdrawing consent deletes the buffered, unsent events of that category at once.

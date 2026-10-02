@@ -33,6 +33,8 @@ final class Goldens {
       for (final n in [
         'loan-calculator/demo.pxb',
         'loan-calculator/loans.pxb',
+        'routing/routing.pxb',
+        'routing/nav.pxb',
         'features/features.pxb',
         'features/tasks.pxb',
         'widgets/widgets.pxb',

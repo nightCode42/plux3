@@ -1,0 +1,75 @@
+{
+  "id": "01f0c450-6c00-7000-8000-000000000050",
+  "key": "confirm",
+  "kind": "page",
+  "pageKind": "dialog",
+  "result": "bool",
+  "root": {
+    "children": [
+      {
+        "id": "01f0c450-6c00-7000-8000-000000000124",
+        "props": {
+          "data": "Are you sure?"
+        },
+        "type": "Text"
+      },
+      {
+        "events": {
+          "onPressed": {
+            "steps": [
+              {
+                "action": "pop",
+                "id": "yes",
+                "input": {
+                  "result": true
+                }
+              }
+            ]
+          }
+        },
+        "id": "01f0c450-6c00-7000-8000-000000000125",
+        "slots": {
+          "child": {
+            "id": "01f0c450-6c00-7000-8000-000000000126",
+            "props": {
+              "data": "Yes"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "FilledButton"
+      },
+      {
+        "events": {
+          "onPressed": {
+            "steps": [
+              {
+                "action": "pop",
+                "id": "no",
+                "input": {
+                  "result": false
+                }
+              }
+            ]
+          }
+        },
+        "id": "01f0c450-6c00-7000-8000-000000000127",
+        "slots": {
+          "child": {
+            "id": "01f0c450-6c00-7000-8000-000000000128",
+            "props": {
+              "data": "No"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "FilledButton"
+      }
+    ],
+    "id": "01f0c450-6c00-7000-8000-000000000051",
+    "type": "Column"
+  },
+  "route": "confirm",
+  "schemaVersion": "1.0.0",
+  "title": "Confirm"
+}

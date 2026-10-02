@@ -1,6 +1,6 @@
 # 0040. Navigation: plain `Navigator` by default, router adapters as packages
 
-- **Status:** Proposed (accepted with ADR-0039's guard-result question at R1's review)
+- **Status:** Accepted (maintainer, 2026-10-02, at R1's review)
 - **Date:** 2026-10-01
 - **Requirements:** `NAV-001`–`NAV-012`, `HST-010`, `HST-011`, `HST-031`, `SCH-040`, `BND-008`
 
@@ -89,16 +89,20 @@ The result type is a new `Page.result` field (below).
 
 ### The seam
 
-`PluxNavigationDelegate` is the one interface every navigation goes through. It has one
-method for each operation of `NAV-005`:
+`PluxNavigationDelegate` is the one interface every navigation goes through. Plux resolves
+and checks the route and describes it as a `PluxRouteSpec`: its name, its presentation
+(page, dialog, bottom sheet or full-screen dialog), its transition, whether it is
+dismissible, and a builder. The delegate changes the stack, with one method per operation
+of `NAV-005`:
 
-- push, with a typed result;
+- push, which completes with the route's result, and so also presents dialogs and sheets;
 - replace;
-- pop, with a result;
-- pop until a route;
 - clear the stack and push;
-- present as a dialog, a bottom sheet or a full-screen dialog;
-- switch tab.
+- pop until a route;
+- pop, with a result.
+
+Switching tabs belongs to the enclosing shell: `PluxShell` provides it to its pages (below),
+and in `go_router` apps the adapter's shell routes do (R5).
 
 The default delegate drives the nearest `Navigator` with the plain API. It needs no
 dependency, and works in apps that use `MaterialApp.router` too, because a `Navigator`
@@ -190,10 +194,11 @@ A14):
 - `params`: a `map<string,string>`, converted by the target route's parameter types as a
   deep link's are.
 
-The constants `GuardResult.allow` and `GuardResult.fallback` cover the common cases. Both
-entries first ship in runtime 0.2.0, the P4 runtime's version. How a graph returns the
-value is ADR-0039's open question. R4 enforces the declared output once that question is
-settled.
+A guard returns its value with `stop` (ADR-0039), written as an object of these fields or
+as the name of one of the type's constants, `"allow"` and `"fallback"`, which cover the
+common cases. The compiler checks the value against the graph's declared output. Both
+registry entries first ship in runtime 0.2.0, the P4 runtime's version, so an app that
+uses them declares that minimum (`PLX-1119`).
 
 **The guard kinds:**
 

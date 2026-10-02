@@ -5,6 +5,27 @@ SPDX-License-Identifier: Apache-2.0
 
 # Changelog
 
+## 0.2.0
+
+The runtime of Plux Phase 4: actions and routing. Not released yet; this entry grows with
+each milestone of the phase.
+
+- Actions run (ADR-0039): widget events start runs of their action graphs on a bounded,
+  cancellable engine that routes failures to `onError` and never lets an error reach host
+  code. It runs `navigate`, `pop`, `openDialog`, `openBottomSheet`, `switchTab`,
+  `callNative`, `condition`, `emitHostEvent` and `stop`; every other action fails its step
+  with `PLX-4010`.
+- Navigation by route name (ADR-0040): `Plux.open<T>` returns the page's typed result and
+  presents dialog and sheet pages as such; `Plux.pageFor` builds a `PluxPage` for Navigator
+  2.0 pages lists; `PluxShell` shows a tabbed shell with one stack per tab; page transitions,
+  with Android's predictive back; parameters checked on entry (`PLX-4101`); unknown routes
+  show the not-found page (`PLX-4100`). `PluxConfig.navigationDelegate` is the seam every
+  navigation goes through, and `PluxConfig.notFoundBuilder` the host's not-found page.
+- `Plux.events`: the typed events plugins emit (`PluxHostEvent`).
+- Breaking: `PluxAuthDelegate` gains `isAuthenticated`, which PXL reads as
+  `user.authenticated`.
+- `PluxView` of an unknown route reports `PLX-4100` (was `PLX-8031`).
+
 ## 0.1.0
 
 The first release: the runtime of Plux Phase 3, rendering.

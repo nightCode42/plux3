@@ -24,8 +24,9 @@ final class _Renderer implements PageRenderer {
     BuildContext context,
     ActiveRelease release,
     PageRef page,
-    Map<String, Object?> params,
-  ) => Text('page ${page.route}', textDirection: TextDirection.ltr);
+    Map<String, Object?> params, {
+    bool routed = false,
+  }) => Text('page ${page.route}', textDirection: TextDirection.ltr);
 }
 
 /// Always draws 0, so every sampled event is kept.

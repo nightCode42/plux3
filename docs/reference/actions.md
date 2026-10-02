@@ -2,7 +2,7 @@
 
 # Action Reference
 
-The built-in actions of the action catalogue (spec Appendix D), generated from the descriptors in `schema/actions/`. A step of an action graph names an action, gives its inputs as prop values and continues through `next`, `onSuccess`, `onError` or the action's named branches ([document model](document-model.md#5-action-graphs)). Type parameters are bound by the compiler from the step's context. Each action is implemented in the phase shown; the compiler rejects actions whose phase has not been delivered. IDs are permanent (`BND-011`).
+The built-in actions of the action catalogue (spec Appendix D), generated from the descriptors in `schema/actions/`. A step of an action graph names an action, gives its inputs as prop values and continues through `next`, `onSuccess`, `onError` or the action's named branches ([document model](document-model.md#5-action-graphs)). Type parameters are bound by the compiler from the step's context. Each action is delivered in the phase shown: a runtime that does not run an action yet fails its step with `PLX-4010`, which the step's `onError` can handle ([action engine](action-engine.md), ADR-0039). IDs are permanent (`BND-011`).
 
 | Action | Category | Phase | Description |
 |---|---|---|---|
@@ -52,7 +52,7 @@ The built-in actions of the action catalogue (spec Appendix D), generated from t
 | [signTransaction](#signtransaction) | security | P6 | Signs a transaction for strong customer authentication with dynamic linking of amount and payee (SEC-027). |
 | [startAnimation](#startanimation) | animation | P5 | Plays a timeline from the start. |
 | [startPayment](#startpayment) | payments | P13 | Starts a payment the server verifies before it is confirmed (PAY-002). |
-| [stop](#stop) | control | P5 | Ends the run, returning an optional result or failing with a custom error. |
+| [stop](#stop) | control | P4 | Ends the run, returning an optional result or failing with a custom error. |
 | [submitForm](#submitform) | forms | P5 | Validates a form and, when valid, returns its values as a typed object. |
 | [subscribe](#subscribe) | data | P5 | Opens a WebSocket or server-sent-events stream; messages arrive as the stream's events. |
 | [switch](#switch) | control | P5 | Takes the branch named by the value of a PXL expression, or the default branch. |
@@ -686,7 +686,7 @@ Output: `string`. Branches: `cancelled`, `failed`.
 
 Ends the run, returning an optional result or failing with a custom error.
 
-ID 35 · control · P5
+ID 35 · control · P4
 
 Type parameters:
 

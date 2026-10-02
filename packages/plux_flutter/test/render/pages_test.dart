@@ -51,15 +51,17 @@ void main() {
     },
   );
 
-  testWidgets('a parameter that does not fit its type is reported', (
-    tester,
-  ) async {
-    await open(tester, 'result', {'schedule': 'not an object'});
-    expect(
-      h.errors.map((e) => e.message),
-      contains(contains('parameter schedule')),
-    );
-  });
+  testWidgets(
+    'a parameter that does not fit its type shows the error fallback and reports PLX-4101 [NAV-007]',
+    (tester) async {
+      await open(tester, 'result', {'schedule': 'not an object'});
+      expect(find.text('fallback PLX-4101'), findsOneWidget);
+      final e = h.errors.singleWhere(
+        (e) => e.code == PluxErrorCode.routeParametersInvalid,
+      );
+      expect(e.message, contains('schedule'));
+    },
+  );
 
   testWidgets(
     'the calculator shows its fallback: a state entry without a default is set by actions (P5) [RT-020]',

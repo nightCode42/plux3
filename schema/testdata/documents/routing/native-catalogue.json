@@ -1,0 +1,38 @@
+{
+  "actions": [
+    {
+      "description": "Scans a code.",
+      "inputs": [
+        {
+          "name": "prompt",
+          "type": "string"
+        }
+      ],
+      "name": "scan",
+      "output": "string"
+    }
+  ],
+  "host": {
+    "appId": "dev.plux.routing",
+    "build": 1,
+    "version": "1.0.0"
+  },
+  "id": "01f0c450-6c00-7000-8000-000000000003",
+  "kind": "nativeCatalogue",
+  "routes": [
+    {
+      "description": "The host's profile screen.",
+      "name": "profile",
+      "params": [
+        {
+          "mock": "u-1",
+          "name": "userId",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "result": "bool"
+    }
+  ],
+  "schemaVersion": "1.0.0"
+}

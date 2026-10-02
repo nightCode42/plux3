@@ -1,6 +1,6 @@
 # 0039. Action engine core in P4, the action catalogue in P5
 
-- **Status:** Proposed (the guard-result question below goes to the maintainer at R1's review)
+- **Status:** Accepted (maintainer, 2026-10-02, at R1's review)
 - **Date:** 2026-10-01
 - **Requirements:** `RT-021`, `NAV-005`, `NAV-009`, `HST-013`, `ACT-060`, `LIM-001`; early parts of `ACT-001`–`ACT-005`, `ACT-020`, `NFR-011`
 
@@ -25,7 +25,7 @@ The maintainer decided (P4 plan, D2):
 
 - P4 builds the real core of the engine;
 - it implements the six P4 actions, plus `condition` and `emitHostEvent`, which move to P4
-  in spec 1.2.0;
+  in spec 1.2.0, and `stop`, which moved at R1's review (below);
 - every other action is refused with `PLX-4010`;
 - P5 continues from this core.
 
@@ -50,7 +50,7 @@ rewriting the engine.
 
 ## Considered options
 
-1. **The general engine core**, with handlers for the eight P4 actions and one refusing
+1. **The general engine core**, with handlers for the nine P4 actions and one refusing
    handler for every other action.
 2. **A navigation-only interpreter in P4**, replaced by the general engine in P5.
 3. **The whole engine and catalogue in P4.**
@@ -68,16 +68,21 @@ Chosen option: **1, the general engine core.**
 
 The engine lives in `packages/plux_flutter/lib/src/actions/`:
 
-- `engine.dart`, which starts and owns runs;
-- `run.dart`, which executes one run;
-- `scope.dart`, which holds the PXL roots of a run;
-- `handlers/`, one file per action;
-- a generated `dispatch.g.dart`, written from `schema/actions/*.json` by the generator that
-  writes `render.g.dart`. It maps each permanent action ID to a handler and decodes its
-  inputs by permanent input ID.
+- `engine.dart`: `ActionHost`, the engine of one page or view, which starts and owns runs;
+- `run.dart`: `ActionRun`, which executes one run, and the bounds it reads;
+- `graph.dart`: graphs decoded once from the actions section, with each step's inputs as
+  readers over the run's roots;
+- `handlers.dart`: one handler per action this runtime runs, and the refusing handler;
+- `action_error.dart`: the typed errors.
 
-A descriptor whose `phase` is later than the runtime's gets the refusing handler from the
-generated table, so the table and Appendix D cannot drift apart.
+Actions are dispatched by permanent ID through `registry.g.dart`, which `make gen` writes
+from `schema/actions/*.json` and which carries each action's input IDs and its phase. An
+action whose phase is later than the runtime's gets the refusing handler. A test checks that
+the actions with a handler are exactly those Appendix D tags up to P4, so the handler table
+and Appendix D cannot drift apart.
+
+R2 revised this section: a separate generated `dispatch.g.dart` would have repeated what
+`registry.g.dart` holds, so the phase was added to the generated descriptors instead.
 
 ### Runs
 
@@ -138,6 +143,9 @@ handler that throws is caught at the run boundary and reported in the same way.
 - **Bounds.** Steps per run, step time and run time are bounded by the registry entries
   `action.stepsPerRun`, `action.stepTimeout` and `action.runTimeout`. A step's own
   `timeout_ms` can shorten its time, but never lengthen it.
+  - Time spent waiting for the user is not the engine's work: while an `openDialog` or
+    `openBottomSheet` step shows its page, neither its step time nor the run's time
+    runs, so a dialog left open does not fail its run.
   - These entries exist today and are tagged P5. R2 re-tags them P4 together with the
     engine that reads them.
   - `action.forEachItems` stays P5's, with `forEach`.
@@ -146,7 +154,7 @@ handler that throws is caught at the run boundary and reported in the same way.
 
 | Declared in a graph | P4 runtime | P5 |
 |---|---|---|
-| An action other than the eight | The step fails with `PLX-4010` (`custom`). Its `onError` can handle it, and the run otherwise ends safely. | Each action replaces its refusing handler. |
+| An action other than the nine | The step fails with `PLX-4010` (`custom`). Its `onError` can handle it, and the run otherwise ends safely. | Each action replaces its refusing handler. |
 | A handler's concurrency policy | Every trigger runs as `drop`: a trigger is ignored while the handler's previous run is still active. This is the spec's default for taps, so a double tap cannot push a page twice. A declared `restart`, `queue`, `debounce` or `throttle` reports `PLX-4010` once per handler in debug builds. The compiler encodes an absent policy as `parallel` (P1), so a declared `parallel` cannot be told apart from no policy, and it also runs as `drop`. | All six policies of `ACT-003`, and the encoding of an absent policy (`drop` for taps). |
 | A step's `retry` | The step runs once, and its declaration reports `PLX-4010` once per step in debug builds. | `ACT-006`. |
 | `detached` | The run is cancelled with its page, and this reports `PLX-4010` once in debug builds. | `ACT-004`. |
@@ -164,12 +172,16 @@ One `ActionHandler` per descriptor:
 - `callNative` calls the host's registered action and checks its input and output against
   the native catalogue's types (ADR-0041);
 - `condition` evaluates its boolean;
-- `emitHostEvent` posts a typed event to `Plux.events` (ADR-0023), checked against the app
-  document's `hostEvents` declaration, which spec 1.2.0 adds for `HST-013`.
+- `emitHostEvent` posts a typed event to `Plux.events` (ADR-0023), in the JSON form of its
+  fields; the compiler checked the payload against the app document's `hostEvents`
+  declaration, which spec 1.2.0 adds for `HST-013`;
+- `stop` ends the run with its result, or fails it with a custom error (below).
 
-A handler gets its decoded inputs and a context: the run's cancellation token and its
-navigator context. It returns an output or a typed error. Handlers hold no state between
-runs.
+A handler gets its inputs in PXL form and a context: the page's navigation, the host-event
+sink and the host's custom actions. It returns its result at once when its work is
+synchronous, or a future when it waits, as a presented page or a custom action does; only a
+future is bounded by a timer and raced against cancellation. It fails with a typed error.
+Handlers hold no state between runs.
 
 ### Telemetry
 
@@ -183,23 +195,19 @@ R2 adds a micro-benchmark per step kind: an empty step, `condition`, and a step 
 three-operation input. Its numbers are recorded in `docs/benchmarks/p4-routing.md` and
 not gated. P5 gates `NFR-011` on the reference device with the same method.
 
-### Open question: how a guard graph returns its result
+### How a graph returns its result: `stop` (maintainer, 2026-10-02)
 
-The maintainer decided that a guard graph declares the registry type `GuardResult` as its
-output (P4 plan §2.1, A14). Appendix D has one action that ends a run with a result:
-`stop`, tagged P5, whose `result` input has the enclosing graph's output type. With
-`stop` refused in P4, a guard graph cannot return anything. The options:
+A guard graph declares the registry type `GuardResult` as its output (P4 plan §2.1, A14).
+Appendix D has one action that ends a run with a result: `stop`, whose `result` input has
+the enclosing graph's output type. Two options were put to the maintainer at R1's review:
+move `stop` to P4, or special-case guard graphs so that the value of their last step is
+their result. The maintainer chose the first, so spec 1.2.0 re-tags `stop` to P4 and no
+second way of returning a value exists:
 
-- **A. Move `stop` to P4,** as `condition` and `emitHostEvent` moved. It is a small
-  control action: it ends the run with a result or a custom error. The compiler binds its
-  `T` to the graph's `output`, which it does not do today. A guard's branches then end in
-  `stop {result: …}`.
-- **B. Special-case guard graphs:** the value of a guard's last step is its result. That
-  is a second way of returning a value, which P5 would keep or break.
-
-**Recommendation: A.** It adds one action to P4, and the compiler and the runtime then use
-the specification's own mechanism. Spec 1.2.0 does not re-tag `stop` yet. It is put to
-the maintainer at R1's review, and the re-tag lands in R1 if A is chosen.
+- the compiler binds `stop`'s `T` to the graph's `output`, and refuses a `result` in a
+  graph that declares no output (`PLX-1106`);
+- the runtime ends the run with the result, or, when `error` is set, fails it with a
+  `custom` error carrying that code.
 
 ## Consequences
 

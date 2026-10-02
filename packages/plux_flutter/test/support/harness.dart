@@ -50,6 +50,9 @@ final class Harness {
     Uint8List app,
     Map<String, Uint8List> plugins, {
     PluxThemeSource themeSource = PluxThemeSource.host,
+    PluxNavigationDelegate? navigationDelegate,
+    Widget Function(BuildContext, String)? notFoundBuilder,
+    PluxAuthDelegate? authDelegate,
   }) async {
     server.release = null;
     final baseline = await server.baseline(5, app, plugins);
@@ -71,6 +74,9 @@ final class Harness {
         onError: (e, _) => errors.add(e),
         fallbackBuilder: (_, e) =>
             Text('fallback ${e.code.id}', textDirection: TextDirection.ltr),
+        navigationDelegate: navigationDelegate,
+        notFoundBuilder: notFoundBuilder,
+        authDelegate: authDelegate,
       ),
       RuntimeOverrides(
         credentials: MemoryCredentialStore.new,

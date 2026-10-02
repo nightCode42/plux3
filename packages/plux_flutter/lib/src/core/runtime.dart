@@ -15,6 +15,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:plux_flutter/src/actions/engine.dart';
 import 'package:plux_flutter/src/assets/assets.dart';
 import 'package:plux_flutter/src/assets/avif_probe.dart';
 import 'package:plux_flutter/src/assets/fonts.dart';
@@ -23,9 +24,15 @@ import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/core/config.dart';
 import 'package:plux_flutter/src/core/features.dart';
+import 'package:plux_flutter/src/core/host_events.dart';
+import 'package:plux_flutter/src/core/plux.dart';
+import 'package:plux_flutter/src/core/plux_view.dart';
 import 'package:plux_flutter/src/devtools_api/diagnostics.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/navigation/delegate.dart';
+import 'package:plux_flutter/src/navigation/router.dart';
 import 'package:plux_flutter/src/platform/platform_services.dart';
+import 'package:plux_flutter/src/pxl/types.dart';
 import 'package:plux_flutter/src/render/page_renderer.dart';
 import 'package:plux_flutter/src/render/renderer.dart';
 import 'package:plux_flutter/src/runtime_info.dart';
@@ -306,7 +313,47 @@ final class PluxRuntime with WidgetsBindingObserver {
     imageCacheDirectory: '$_root/images',
     assets: assets,
     verified: _verified,
+    actions: ActionServices(
+      router: router,
+      emit: emitHostEvent,
+      record: telemetry.record,
+    ),
   );
+
+  /// Resolves names and opens routes (ADR-0040).
+  late final PluxRouter router = PluxRouter(
+    release: () => active.value,
+    delegate: config.navigationDelegate ?? const PluxNavigatorDelegate(),
+    page: (route, params) => PluxScope(child: routedPluxView(route, params)),
+    types: (release, plugin) {
+      final r = renderer;
+      return r is PluxRenderer
+          ? r.typesOf(release, plugin)
+          : const <String, NamedType>{};
+    },
+    report: _report,
+    notFoundBuilder: config.notFoundBuilder,
+  );
+
+  final StreamController<PluxHostEvent> _hostEvents =
+      StreamController.broadcast();
+
+  /// The host events plugins emit (HST-013).
+  Stream<PluxHostEvent> get hostEvents => _hostEvents.stream;
+
+  /// Posts a host event; the payload, in PXL form, reaches the host in its
+  /// JSON form.
+  void emitHostEvent(String name, Map<String, Object?> payload) {
+    if (_hostEvents.isClosed) return;
+    _hostEvents.add(
+      PluxHostEvent(name, {
+        for (final e in payload.entries) e.key: toJson(e.value),
+      }),
+    );
+  }
+
+  /// Reports a problem to the diagnostics, telemetry and the host.
+  void reportProblem(PluxException e) => _report(e);
 
   /// Loads the app's font assets under the families their files name, so
   /// `fontFamily` tokens and script fallbacks find them (THM-004). A font
@@ -601,6 +648,7 @@ final class PluxRuntime with WidgetsBindingObserver {
     diagnostics.dispose();
     _worker.close();
     await _events.close();
+    await _hostEvents.close();
     active.value?.retire();
     active.value = null;
   }
