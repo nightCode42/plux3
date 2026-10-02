@@ -5,22 +5,29 @@ SPDX-License-Identifier: Apache-2.0
 
 # Plux starter
 
-The minimal host app, which the quick start (`DX-001`, P4) will build on: it starts the Plux runtime, shows a published page
+The minimal host app, which the quick start (`DX-001`, P10) will build on: it starts the Plux runtime, shows a published page
 inside a native screen, opens it full screen with `Plux.open`, and passes the user's
-theme and analytics consent to the runtime. The end-to-end flows (`QA-006`) and the
+theme and analytics consent to the runtime. Its mixed screens show both directions of
+[ADR-0023](../../docs/adr/0023-mixed-screens-slots-and-plux-view.md): a native screen with
+two views of a plugin component that share the counter a native button writes, and a
+plugin page holding the app's own map card, whose picks run the page's `navigate` step. The end-to-end flows (`QA-006`) and the
 compatibility matrix (`QA-010`) drive it.
 
 | Path | Contents |
 |---|---|
 | `lib/main.dart` | `Plux.initialize`, then the app |
 | `lib/src/config.dart` | `StarterConfig`: the server and app from `--dart-define`s |
-| `lib/src/starter_app.dart` | the home screen: sync status, consent and theme switches, a `PluxView` |
+| `lib/src/starter_app.dart` | the home screen: sync status, consent and theme switches, a `PluxView`, the way to the mixed screens |
+| `lib/src/mixed_screen.dart` | a native screen with two `PluxView`s of the `counter-badge` component and a button that writes `Plux.state<int>('counter')` |
+| `lib/src/map_card.dart` | the app's own map card, registered as the `MapCard` native slot in `lib/src/config.dart` |
 | `integration_test/` | the end-to-end flows; `app_test.dart` runs them on an emulator or simulator |
 | `test/e2e_test.dart` | the same flows under `flutter test`, against a server the Go driver starts |
 | `assets/plux/` | the baseline `make dev` pulls (not committed) |
 
 Its content is the [starter fixture project](../../schema/testdata/documents/starter):
-one plugin, `welcome`, with a page of text, an icon and an image asset.
+one plugin, `welcome`, with a page of text, an icon and an image asset; the exposed app
+state entry `counter`, the exported component `counter-badge`, and the pages `places`
+(with the `MapCard` slot its native catalogue declares) and `place`.
 
 ## Running it
 

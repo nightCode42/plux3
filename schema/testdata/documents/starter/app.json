@@ -22,11 +22,22 @@
   "kind": "app",
   "minRuntimeVersion": "0.1.0",
   "name": "Plux starter",
+  "nativeCatalogue": "01e0c450-6c00-7000-8000-000000000061",
   "plugins": [
     "welcome"
   ],
   "schemaVersion": "1.0.0",
   "securityProfile": "standard",
+  "state": [
+    {
+      "default": 0,
+      "description": "Taps counted by the host's mixed screen; every view of it shows the same value.",
+      "exposed": true,
+      "id": "01e0c450-6c00-7000-8000-000000000060",
+      "name": "counter",
+      "type": "int"
+    }
+  ],
   "supportedLocales": [
     "en"
   ],

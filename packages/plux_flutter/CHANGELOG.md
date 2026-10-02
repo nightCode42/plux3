@@ -48,6 +48,14 @@ each milestone of the phase.
 - Breaking: `PluxAuthDelegate` gains `isAuthenticated`, which PXL reads as
   `user.authenticated`.
 - `PluxView` of an unknown route reports `PLX-4100` (was `PLX-8031`).
+- Mixed screens (ADR-0023): `PluxView` shows a page or an exported component by name, with
+  `onEvent` (`PluxViewEvent`; an inline page's `pop` arrives as the `pop` event) and
+  `sizing` (`PluxViewSizing.intrinsic`, `expand`, `fixed`). Breaking: its `route` and
+  `params` are now `name` and `inputs`.
+- Exposed app state (ADR-0023): `Plux.state<T>(name)` reads, writes and watches an
+  exposed entry of the app document, type-checked (`PLX-4203`); plugin bindings read app
+  state as `app.<name>` and rebuild when the host writes it. `Plux.eventsNamed` filters
+  host events by name, and `Plux.flag<T>` reads a feature flag of the active release.
 
 ## 0.1.0
 

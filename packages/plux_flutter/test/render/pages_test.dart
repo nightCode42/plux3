@@ -33,7 +33,7 @@ void main() {
           // so a test of the renderer reaches a guarded page.
           child: guarded
               ? routedPluxView(route, params, guarded: true)
-              : PluxView(route, params: params),
+              : PluxView(route, inputs: params),
         ),
       ),
     );

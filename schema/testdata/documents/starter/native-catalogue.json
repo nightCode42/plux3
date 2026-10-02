@@ -1,0 +1,32 @@
+{
+  "actions": [],
+  "host": {
+    "appId": "dev.plux.starter",
+    "build": 1,
+    "version": "1.0.0"
+  },
+  "id": "01e0c450-6c00-7000-8000-000000000061",
+  "kind": "nativeCatalogue",
+  "routes": [],
+  "schemaVersion": "1.0.0",
+  "slots": [
+    {
+      "description": "The host's map card: a few places to pick.",
+      "events": [
+        {
+          "name": "onPlace",
+          "payload": "string"
+        }
+      ],
+      "props": [
+        {
+          "mock": "Nearby",
+          "name": "title",
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "MapCard"
+    }
+  ]
+}

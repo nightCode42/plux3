@@ -132,4 +132,38 @@ void starterFlows({
     skip: skip != null,
     timeout: const Timeout(Duration(minutes: 3)),
   );
+
+  testWidgets(
+    'mixed screens: two plugin views share the counter the host writes, and '
+    "a native slot's event in a plugin page runs its navigate action "
+    '[HST-021] [NAV-004] [WGT-033] [STA-030]',
+    (tester) async {
+      problems.clear();
+      final dir = await tester.runAsync(() async => storage?.call());
+      final started = await launch(tester, dir);
+      expect(started.ready, isTrue, reason: '${started.error}');
+      await pumpUntil(tester, find.text(welcomeBody));
+
+      // A native screen with two views of the exported component.
+      await tester.tap(find.byKey(const ValueKey('open-mixed')));
+      await pumpUntil(tester, find.text('Left: 0'));
+      expect(find.text('Right: 0'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('add-one')));
+      await pumpUntil(tester, find.text('Left: 1'));
+      expect(find.text('Right: 1'), findsOneWidget);
+      await pumpUntil(tester, find.text('Native view of the counter: 1'));
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+
+      // A plugin page holding the host's map card.
+      await tester.tap(find.byKey(const ValueKey('open-places')));
+      await pumpUntil(tester, find.text('Harbour'));
+      await tester.tap(find.text('Harbour'));
+      await pumpUntil(tester, find.text('Place: Harbour'));
+      expect(problems, isEmpty, reason: problems.join('\n'));
+      await stop(tester);
+    },
+    skip: skip != null,
+    timeout: const Timeout(Duration(minutes: 3)),
+  );
 }

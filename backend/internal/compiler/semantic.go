@@ -177,6 +177,11 @@ func (u *unit) checkState(pl *plugin, entries []schema.StateEntry, file string, 
 		case len(st.Default) > 0:
 			e.def = u.checkRaw(literalCtx(pl, file, ptr+"/default"), st.Default, te)
 		}
+		if e.exposed && file != "app.json" {
+			// Hosts address exposed entries by name, never by plugin
+			// (ADR-0023).
+			u.report(plxerr.InvalidStructure, file, ptr+"/exposed", "only app state entries can be exposed; %q belongs to a plugin, page or component", st.Name)
+		}
 		if e.sensitive && e.persistence == fbs.PersistencePersisted {
 			u.report(plxerr.SensitiveValueExposed, file, ptr+"/persistence", "sensitive state %q must use secure persistence, not persisted", st.Name)
 		}

@@ -466,7 +466,7 @@ var registry = []Definition{
 	// Runtime rendering and navigation.
 	{
 		NodeBuildFailed, "NODE_BUILD_FAILED", SeverityError, "Build error in node",
-		"Building, laying out or painting a node failed, or a value it needs could not be decoded or evaluated. The page's error boundary rendered its fallback (RT-020).",
+		"Building, laying out or painting a node failed, or a value it needs could not be decoded or evaluated. The page's error boundary rendered its fallback (RT-020). A PluxView that expands in unbounded constraints shows its fallback with it too (NAV-004).",
 		"Look up the node path in the report and fix the page; the source map of a development bundle names the document location.", false,
 	},
 	{
@@ -481,7 +481,7 @@ var registry = []Definition{
 	},
 	{
 		ActionsNotAvailable, "ACTIONS_NOT_AVAILABLE", SeverityWarning, "Actions not available in this runtime",
-		"A step names an action, or a graph declares an option (a concurrency policy other than drop, a retry, a detached run), that this runtime does not run; the step fails with this error, which its onError can handle, and the option is ignored (ADR-0039).",
+		"A step names an action, or a graph declares an option (a concurrency policy other than drop, a retry, a detached run), that this runtime does not run; the step fails with this error, which its onError can handle, and the option is ignored (ADR-0039). An exposed app state entry that declares a persistence is kept in memory until P5, and reported with it once in debug builds (ADR-0023).",
 		"Raise the app's minimum runtime version to one that runs the action, or handle the error; the action reference page says which phase delivers each action.", false,
 	},
 	{
@@ -491,7 +491,7 @@ var registry = []Definition{
 	},
 	{
 		RouteNotFound, "ROUTE_NOT_FOUND", SeverityError, "Route not found",
-		"A navigation, a deep link or a PluxView names a route that is neither a page of the active release nor a registered native route. The app's not-found page is shown instead (NAV-011).",
+		"A navigation, a deep link or a PluxView names a route that is neither a page of the active release nor a registered native route, and for a PluxView no exported component has that key either. The app's not-found page is shown instead (NAV-011).",
 		"Check the route name, publish the page that should answer it, or register the native route in PluxConfig.", false,
 	},
 	{
@@ -526,7 +526,7 @@ var registry = []Definition{
 	},
 	{
 		ExposedStateTypeMismatch, "EXPOSED_STATE_TYPE_MISMATCH", SeverityError, "Exposed state written with the wrong type",
-		"Native code wrote a value to an exposed state entry whose declared type the value does not have; the write is refused and the entry keeps its value (STA-030, HST-021).",
+		"Native code wrote a value to an exposed state entry whose declared type the value does not have, read, wrote or watched a name the app does not expose, or wrote before a release was active; the write is refused and the entry keeps its value (STA-030, HST-021).",
 		"Write a value of the entry's declared type; plux codegen generates typed accessors that make this a compile error.", false,
 	},
 	{

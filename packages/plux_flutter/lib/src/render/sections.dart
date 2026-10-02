@@ -26,6 +26,17 @@ const int _signBit = 1 << 63;
 /// The UUID of a section ID or an `fbs.Uuid`, as two 64-bit halves.
 typedef UuidKey = (int hi, int lo);
 
+/// An app state entry: its name, type expression and default, whether
+/// the host may read and write it (ADR-0023), and whether it declares a
+/// persistence, which P5 brings.
+typedef AppStateDecl = ({
+  String name,
+  String type,
+  fbs.Value? defaultValue,
+  bool exposed,
+  bool persisted,
+});
+
 /// A declared parameter, prop or input of the native catalogue.
 typedef NativeParam = ({String name, String type, bool required});
 
@@ -274,6 +285,20 @@ final class BundleView {
             ),
         ];
       }();
+
+  /// The app's state entries (app bundles only), in document order:
+  /// computed entries arrive with P5 and are left out (ADR-0023).
+  late final List<AppStateDecl> appState = [
+    for (final e in _schemas?.state ?? const <fbs.StateEntry>[])
+      if (e.computed == 0)
+        (
+          name: string(e.name),
+          type: string(e.type),
+          defaultValue: e.$default,
+          exposed: e.exposed,
+          persisted: e.persistence != fbs.Persistence.Memory,
+        ),
+  ];
 
   late final fbs.Schemas? _schemas = () {
     final s = _single(SectionKind.schemas);

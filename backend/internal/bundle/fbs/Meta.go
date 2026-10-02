@@ -408,8 +408,28 @@ func (rcv *Meta) Push(obj *Push) *Push {
 	return nil
 }
 
+func (rcv *Meta) Components(obj *ComponentEntry, j int) bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(56))
+	if o != 0 {
+		x := rcv._tab.Vector(o)
+		x += flatbuffers.UOffsetT(j) * 4
+		x = rcv._tab.Indirect(x)
+		obj.Init(rcv._tab.Bytes, x)
+		return true
+	}
+	return false
+}
+
+func (rcv *Meta) ComponentsLength() int {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(56))
+	if o != 0 {
+		return rcv._tab.VectorLen(o)
+	}
+	return 0
+}
+
 func MetaStart(builder *flatbuffers.Builder) {
-	builder.StartObject(26)
+	builder.StartObject(27)
 }
 func MetaAddKind(builder *flatbuffers.Builder, kind BundleKind) {
 	builder.PrependByteSlot(0, byte(kind), 0)
@@ -512,6 +532,12 @@ func MetaAddDeepLinks(builder *flatbuffers.Builder, deepLinks flatbuffers.UOffse
 }
 func MetaAddPush(builder *flatbuffers.Builder, push flatbuffers.UOffsetT) {
 	builder.PrependUOffsetTSlot(25, flatbuffers.UOffsetT(push), 0)
+}
+func MetaAddComponents(builder *flatbuffers.Builder, components flatbuffers.UOffsetT) {
+	builder.PrependUOffsetTSlot(26, flatbuffers.UOffsetT(components), 0)
+}
+func MetaStartComponentsVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
+	return builder.StartVector(4, numElems, 4)
 }
 func MetaEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
 	return builder.EndObject()

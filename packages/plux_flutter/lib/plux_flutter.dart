@@ -9,6 +9,7 @@
 /// [Plux.open], and follow updates on [Plux.syncEvents].
 library;
 
+export 'src/core/app_state.dart' show PluxState;
 export 'src/core/config.dart'
     show
         ActivationPolicy,
@@ -24,7 +25,7 @@ export 'src/core/config.dart'
 export 'src/core/fallback.dart' show PluxDefaultFallback;
 export 'src/core/host_events.dart' show PluxHostEvent;
 export 'src/core/plux.dart' show Plux, PluxScope, PluxSyncTile;
-export 'src/core/plux_view.dart' show PluxView;
+export 'src/core/plux_view.dart' show PluxView, PluxViewEvent, PluxViewSizing;
 export 'src/core/runtime.dart' show PluxStartup;
 export 'src/devtools_api/diagnostics.dart'
     show PluxDiagnostic, PluxDiagnostics, PluxPluginInfo, PluxReleaseInfo;

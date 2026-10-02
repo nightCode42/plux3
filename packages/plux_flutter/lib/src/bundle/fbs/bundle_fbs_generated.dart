@@ -2006,6 +2006,90 @@ class PageEntryObjectBuilder extends fb.ObjectBuilder {
     return fbBuilder.buffer;
   }
 }
+class ComponentEntry {
+  ComponentEntry._(this._bc, this._bcOffset);
+  factory ComponentEntry(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<ComponentEntry> reader = _ComponentEntryReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  Uuid? get id => Uuid.reader.vTableGetNullable(_bc, _bcOffset, 4);
+  String? get key => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 6);
+
+  @override
+  String toString() {
+    return 'ComponentEntry{id: ${id}, key: ${key}}';
+  }
+}
+
+class _ComponentEntryReader extends fb.TableReader<ComponentEntry> {
+  const _ComponentEntryReader();
+
+  @override
+  ComponentEntry createObject(fb.BufferContext bc, int offset) => 
+    ComponentEntry._(bc, offset);
+}
+
+class ComponentEntryBuilder {
+  ComponentEntryBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(2);
+  }
+
+  int addId(int offset) {
+    fbBuilder.addStruct(0, offset);
+    return fbBuilder.offset;
+  }
+  int addKeyOffset(int? offset) {
+    fbBuilder.addOffset(1, offset);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class ComponentEntryObjectBuilder extends fb.ObjectBuilder {
+  final UuidObjectBuilder? _id;
+  final String? _key;
+
+  ComponentEntryObjectBuilder({
+    UuidObjectBuilder? id,
+    String? key,
+  })
+      : _id = id,
+        _key = key;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? keyOffset = _key == null ? null
+        : fbBuilder.writeString(_key!);
+    fbBuilder.startTable(2);
+    if (_id != null) {
+      fbBuilder.addStruct(0, _id!.finish(fbBuilder));
+    }
+    fbBuilder.addOffset(1, keyOffset);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
 class FunctionGrant {
   FunctionGrant._(this._bc, this._bcOffset);
   factory FunctionGrant(List<int> bytes) {
@@ -2952,10 +3036,11 @@ class Meta {
   List<Shell>? get shells => const fb.ListReader<Shell>(Shell.reader).vTableGetNullable(_bc, _bcOffset, 50);
   DeepLinks? get deepLinks => DeepLinks.reader.vTableGetNullable(_bc, _bcOffset, 52);
   Push? get push => Push.reader.vTableGetNullable(_bc, _bcOffset, 54);
+  List<ComponentEntry>? get components => const fb.ListReader<ComponentEntry>(ComponentEntry.reader).vTableGetNullable(_bc, _bcOffset, 56);
 
   @override
   String toString() {
-    return 'Meta{kind: ${kind}, id: ${id}, key: ${key}, name: ${name}, version: ${version}, compilerVersion: ${compilerVersion}, schemaVersion: ${schemaVersion}, requiredFeatures: ${requiredFeatures}, minRuntime: ${minRuntime}, capabilities: ${capabilities}, limits: ${limits}, pages: ${pages}, entryPage: ${entryPage}, fallbackPage: ${fallbackPage}, plugins: ${plugins}, defaultLocale: ${defaultLocale}, supportedLocales: ${supportedLocales}, entryRoute: ${entryRoute}, flags: ${flags}, nativeCatalogue: ${nativeCatalogue}, securityProfile: ${securityProfile}, telemetrySampling: ${telemetrySampling}, notFoundRoute: ${notFoundRoute}, shells: ${shells}, deepLinks: ${deepLinks}, push: ${push}}';
+    return 'Meta{kind: ${kind}, id: ${id}, key: ${key}, name: ${name}, version: ${version}, compilerVersion: ${compilerVersion}, schemaVersion: ${schemaVersion}, requiredFeatures: ${requiredFeatures}, minRuntime: ${minRuntime}, capabilities: ${capabilities}, limits: ${limits}, pages: ${pages}, entryPage: ${entryPage}, fallbackPage: ${fallbackPage}, plugins: ${plugins}, defaultLocale: ${defaultLocale}, supportedLocales: ${supportedLocales}, entryRoute: ${entryRoute}, flags: ${flags}, nativeCatalogue: ${nativeCatalogue}, securityProfile: ${securityProfile}, telemetrySampling: ${telemetrySampling}, notFoundRoute: ${notFoundRoute}, shells: ${shells}, deepLinks: ${deepLinks}, push: ${push}, components: ${components}}';
   }
 }
 
@@ -2973,7 +3058,7 @@ class MetaBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable(26);
+    fbBuilder.startTable(27);
   }
 
   int addKind(BundleKind? kind) {
@@ -3080,6 +3165,10 @@ class MetaBuilder {
     fbBuilder.addOffset(25, offset);
     return fbBuilder.offset;
   }
+  int addComponentsOffset(int? offset) {
+    fbBuilder.addOffset(26, offset);
+    return fbBuilder.offset;
+  }
 
   int finish() {
     return fbBuilder.endTable();
@@ -3113,6 +3202,7 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
   final List<ShellObjectBuilder>? _shells;
   final DeepLinksObjectBuilder? _deepLinks;
   final PushObjectBuilder? _push;
+  final List<ComponentEntryObjectBuilder>? _components;
 
   MetaObjectBuilder({
     BundleKind? kind,
@@ -3141,6 +3231,7 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
     List<ShellObjectBuilder>? shells,
     DeepLinksObjectBuilder? deepLinks,
     PushObjectBuilder? push,
+    List<ComponentEntryObjectBuilder>? components,
   })
       : _kind = kind,
         _id = id,
@@ -3167,7 +3258,8 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
         _notFoundRoute = notFoundRoute,
         _shells = shells,
         _deepLinks = deepLinks,
-        _push = push;
+        _push = push,
+        _components = components;
 
   /// Finish building, and store into the [fbBuilder].
   @override
@@ -3209,7 +3301,9 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
         : fbBuilder.writeList(_shells!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
     final int? deepLinksOffset = _deepLinks?.getOrCreateOffset(fbBuilder);
     final int? pushOffset = _push?.getOrCreateOffset(fbBuilder);
-    fbBuilder.startTable(26);
+    final int? componentsOffset = _components == null ? null
+        : fbBuilder.writeList(_components!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    fbBuilder.startTable(27);
     fbBuilder.addUint8(0, _kind?.value);
     if (_id != null) {
       fbBuilder.addStruct(1, _id!.finish(fbBuilder));
@@ -3244,6 +3338,7 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
     fbBuilder.addOffset(23, shellsOffset);
     fbBuilder.addOffset(24, deepLinksOffset);
     fbBuilder.addOffset(25, pushOffset);
+    fbBuilder.addOffset(26, componentsOffset);
     return fbBuilder.endTable();
   }
 

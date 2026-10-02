@@ -107,19 +107,32 @@ and returns; the sync of every plugin runs on a background isolate (`SYN-001`). 
 
 ## 3. Show pages
 
-A `PluxView` shows a page inside a native screen; it needs a `PluxScope` above it, the
-provider scope of the runtime:
+A `PluxView` shows a page, or a component a plugin exports, inside a native screen, by
+name only ([ADR-0023](../adr/0023-mixed-screens-slots-and-plux-view.md)); it needs a
+`PluxScope` above it, the provider scope of the runtime:
 
 ```dart
 PluxScope(
   child: PluxView(
-    'welcome',
-    params: {'name': 'Ada'},
+    'welcome',                       // a route, else an exported component's key
+    inputs: {'name': 'Ada'},         // the page's parameters or the component's props
+    onEvent: (event) => debugPrint('${event.name} ${event.payload}'),
+    sizing: PluxViewSizing.intrinsic,
     loadingBuilder: (_) => const Center(child: CircularProgressIndicator()),
     fallbackBuilder: (_, error) => Text('Not available (${error.code.id})'),
   ),
 )
 ```
+
+- **Inputs** are checked on entry like route parameters (`PLX-4101`).
+- **Events.** An embedded page has no route of its own, so its `pop` arrives as a
+  `PluxViewEvent` named `pop`, with the page's checked result.
+- **Sizing.** `PluxViewSizing.intrinsic` (the default) sizes the view to its content,
+  `PluxViewSizing.fixed(size)` gives it a size, and `PluxViewSizing.expand` fills the
+  incoming constraints, which must be bounded: in a scrollable it shows the fallback and
+  reports `PLX-4001`.
+- Any number of views share one runtime, its state and its caches; each has its own error
+  boundary. A name that is neither a route nor an exported component reports `PLX-4100`.
 
 `Plux.open(context, 'welcome')` pushes a page full screen on the host's navigator and
 wraps it in a scope itself. A page that fails is contained by its error boundary and
@@ -179,6 +192,33 @@ packages/plux_native_scan`). List your slot widgets in `plux.yaml` and pass the 
 (the version in `pubspec.yaml`, such as `1.4.0+52`, unless you choose another). A release
 that uses something a build lacks is flagged at publish, and that build's devices keep the
 newest release they can run ([CLI reference](../reference/cli.md)).
+
+### Shared state and plugin events
+
+An app document `state` entry marked `exposed` is shared by your code and every plugin
+view and slot on screen ([ADR-0023](../adr/0023-mixed-screens-slots-and-plux-view.md)).
+Address it by name:
+
+```dart
+final cart = Plux.state<int>('cartCount');
+cart.value;                                   // the current value
+await cart.set(3);                            // every view reading it rebuilds in the same frame
+cart.watch().listen((count) => badge(count)); // one value per change
+```
+
+- A write is checked against the entry's declared type. A value of another type, a name
+  the app does not expose, or a write before the first release is active is refused:
+  `set` completes with `false`, the entry keeps its value and `PLX-4203` is reported.
+- Values cross in their JSON form, as inputs do: strings, numbers, booleans, lists and
+  maps; `DateTime`, `Duration` and `Color` are accepted where the type asks for them.
+- In Phase 4 plugins read exposed state; their own writes (`setState`) and persistence
+  arrive in P5. An exposed entry that declares a persistence is kept in memory and
+  reported once in debug builds (`PLX-4010`).
+
+Plugins send your app typed events with `emitHostEvent`, declared in the app document's
+`hostEvents`. `Plux.events` streams them all, and `Plux.eventsNamed('checkout')` those of
+one name. `Plux.flag<bool>('newCheckout')` reads a feature flag of the active release, as
+plugins read `flags.newCheckout`.
 
 ### Apps that use go_router or auto_route
 

@@ -1,0 +1,51 @@
+{
+  "id": "01e0c450-6c00-7000-8000-00000000006a",
+  "key": "place",
+  "kind": "page",
+  "pageKind": "screen",
+  "params": [
+    {
+      "mock": "Harbour",
+      "name": "name",
+      "required": true,
+      "type": "string"
+    }
+  ],
+  "root": {
+    "id": "01e0c450-6c00-7000-8000-00000000006b",
+    "slots": {
+      "appBar": {
+        "id": "01e0c450-6c00-7000-8000-00000000006c",
+        "slots": {
+          "title": {
+            "id": "01e0c450-6c00-7000-8000-00000000006d",
+            "props": {
+              "data": "Place"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "id": "01e0c450-6c00-7000-8000-00000000006e",
+        "slots": {
+          "child": {
+            "id": "01e0c450-6c00-7000-8000-00000000006f",
+            "props": {
+              "data": {
+                "$expr": "\"Place: \" + params.name"
+              }
+            },
+            "type": "Text"
+          }
+        },
+        "type": "Center"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "place",
+  "schemaVersion": "1.0.0",
+  "title": "Place"
+}

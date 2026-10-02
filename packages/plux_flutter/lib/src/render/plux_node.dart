@@ -19,6 +19,7 @@ import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/bundle/container.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/bundle/safe_read.dart';
+import 'package:plux_flutter/src/core/app_state.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/native_catalogue/registration.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
@@ -123,16 +124,26 @@ final class NodeContextImpl implements NodeContext {
     return builder(this);
   }
 
-  /// Subscribes the node to the page-state paths its bindings read, so a
-  /// change of anything else does not rebuild it (RT-012).
+  /// Subscribes the node to the page-state and app-state paths its
+  /// bindings read, so a change of anything else does not rebuild it
+  /// (RT-012); a host's write of exposed state rebuilds every view and slot
+  /// reading it in the same frame (ADR-0023).
   void subscribe() {
-    final instance = scope.state;
-    final paths = [
+    List<List<String>> under(String root) => [
       for (final r in reads)
-        if (r == 'page' || r.startsWith('page.')) r.split('.').skip(1).toList(),
+        if (r == root || r.startsWith('$root.')) r.split('.').skip(1).toList(),
     ];
-    if (instance == null || paths.isEmpty) return;
-    _ref.watch(pageStateProvider(instance).select((s) => _Selected(paths, s)));
+    final instance = scope.state;
+    final paths = under('page');
+    if (instance != null && paths.isNotEmpty) {
+      _ref.watch(
+        pageStateProvider(instance).select((s) => _Selected(paths, s)),
+      );
+    }
+    final app = under('app');
+    if (app.isNotEmpty) {
+      _ref.watch(appStateProvider.select((s) => _Selected(app, s)));
+    }
   }
 
   /// Reports a failed build and renders nothing; the enclosing boundary

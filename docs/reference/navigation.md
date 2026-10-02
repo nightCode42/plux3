@@ -14,7 +14,7 @@ Every route is addressed by its app-wide name only. No caller knows which plugin
 |---|---|
 | Native code | `Plux.open<T>(context, 'loan-calculator', params: {...})` |
 | A declarative pages list | `Plux.pageFor('loan-calculator', params: {...})`, a `PluxPage` (`NAV-006`) |
-| Inside a native widget tree | `PluxView('loan-calculator', params: {...})`, which embeds the page and owns no route |
+| Inside a native widget tree | `PluxView('loan-calculator', inputs: {...})`, which embeds the page, or an exported component, and owns no route (`NAV-004`) |
 | A plugin page | the `navigate`, `openDialog` and `openBottomSheet` actions |
 
 Every navigation follows the same path:
@@ -45,7 +45,8 @@ kind. `openBottomSheet` presents any page as a sheet.
   first route is left.
 
 `pop` pops the page's own route with an optional result. A page embedded with `PluxView`
-owns no route, so its `pop` is refused with `PLX-4102`.
+owns no route: with an `onEvent`, its `pop` reaches the host as the view's `pop` event
+with the checked result; without one, it is refused with `PLX-4102`.
 
 ## 2. Parameters and results
 
@@ -239,7 +240,8 @@ with `PLX-4102`.
 
 `Plux.events` is a stream of `PluxHostEvent`: the events plugins emit with `emitHostEvent`,
 each with its declared name and its payload in JSON form. The app document declares them in
-`hostEvents`. `plux codegen` generates a typed class per event (P4 R8).
+`hostEvents`. `Plux.eventsNamed(name)` streams the events of one name. `plux codegen`
+generates a typed class per event (P4 R8).
 
 ## 11. Telemetry (`NAV-012`)
 

@@ -121,6 +121,14 @@ void main() {
 
   Iterable<PluxErrorCode> codes() => h.errors.map((e) => e.code);
 
+  // The steps that failed with PLX-4010; the fixture's persisted exposed
+  // state entry reports the code once at start, for its state (ADR-0023).
+  Iterable<PluxException> laterSteps() => h.errors.where(
+    (e) =>
+        e.code == PluxErrorCode.actionsNotAvailable &&
+        !e.details.containsKey('state'),
+  );
+
   BuildContext ctx() => navigator.currentContext!;
 
   testWidgets(
@@ -132,7 +140,7 @@ void main() {
       await tap(tester, 'Return nothing');
       expect(find.text('Item 42'), findsNothing);
       expect(find.text('Push detail'), findsOneWidget);
-      expect(codes(), isNot(contains(PluxErrorCode.actionsNotAvailable)));
+      expect(laterSteps(), isEmpty);
     },
   );
 
@@ -202,11 +210,9 @@ void main() {
       await start(tester);
       await tap(tester, 'Later action handled');
       expect(events.single.name, 'recovered');
-      expect(codes(), isNot(contains(PluxErrorCode.actionsNotAvailable)));
+      expect(laterSteps(), isEmpty);
       await tap(tester, 'Later action');
-      final e = h.errors.singleWhere(
-        (e) => e.code == PluxErrorCode.actionsNotAvailable,
-      );
+      final e = laterSteps().single;
       expect(e.details, containsPair('step', 'toast'));
       expect(e.details, containsPair('route', 'home'));
     },

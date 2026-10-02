@@ -32,6 +32,7 @@ final class _TestRenderer with AllowsEveryGuard implements PageRenderer {
     PageRef page,
     Map<String, Object?> params, {
     bool routed = false,
+    void Function(Object? result)? onPop,
   }) {
     if (fail) throw StateError('broken page');
     return Text(
@@ -155,7 +156,7 @@ void main() {
       expect(startup.sequence, 5);
       expect(startup.toString(), contains('ready'));
       await tester.pumpWidget(
-        const PluxScope(child: PluxView('result', params: {'x': 'p'})),
+        const PluxScope(child: PluxView('result', inputs: {'x': 'p'})),
       );
       expect(find.text('page result of 5 p'), findsOneWidget);
     },

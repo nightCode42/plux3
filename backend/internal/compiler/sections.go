@@ -1025,11 +1025,12 @@ func (u *unit) metaSection(o *out) {
 	e := &valueEnc{u: u, o: o, b: b, strs: o.shared}
 	features := stringVector(b, featureList(o.features))
 	lv := u.runtimeLimits(b)
-	var pages, capabilities, plugins, locales, flags, sampling flatbuffers.UOffsetT
+	var pages, exported, capabilities, plugins, locales, flags, sampling flatbuffers.UOffsetT
 	name, key := app.Name, app.Key
 	if o.pl != nil {
 		name, key = o.pl.doc.Name, o.pl.key
 		pages = pageEntries(b, o.pl)
+		exported = componentEntries(b, o.pl)
 		capabilities = capabilitiesTable(b, o.pl.doc.Capabilities)
 	} else {
 		var ids [][16]byte
@@ -1076,6 +1077,7 @@ func (u *unit) metaSection(o *out) {
 			fhi, flo := uuidHalves(uuidBytes(o.pl.doc.FallbackPage))
 			fbs.MetaAddFallbackPage(b, fbs.CreateUuid(b, fhi, flo))
 		}
+		addOptional(b, exported, fbs.MetaAddComponents)
 	} else {
 		fbs.MetaAddPlugins(b, plugins)
 		fbs.MetaAddDefaultLocale(b, defLocale)
@@ -1151,6 +1153,31 @@ func pageEntries(b *flatbuffers.Builder, pl *plugin) flatbuffers.UOffsetT {
 		fbs.PageEntryAddKey(b, key)
 		fbs.PageEntryAddRoute(b, route)
 		offs[i] = fbs.PageEntryEnd(b)
+	}
+	return offsetVector(b, offs)
+}
+
+// componentEntries lists a plugin's exported components, sorted by key,
+// for PluxView (NAV-004, ADR-0023); 0 when it exports none.
+func componentEntries(b *flatbuffers.Builder, pl *plugin) flatbuffers.UOffsetT {
+	var exported []*component
+	for _, c := range pl.components {
+		if c.doc.Exported != nil && *c.doc.Exported {
+			exported = append(exported, c)
+		}
+	}
+	if len(exported) == 0 {
+		return 0
+	}
+	slices.SortFunc(exported, func(x, y *component) int { return strings.Compare(x.doc.Key, y.doc.Key) })
+	offs := make([]flatbuffers.UOffsetT, len(exported))
+	for i, c := range exported {
+		key := b.CreateString(c.doc.Key)
+		fbs.ComponentEntryStart(b)
+		hi, lo := uuidHalves(uuidBytes(c.doc.ID))
+		fbs.ComponentEntryAddId(b, fbs.CreateUuid(b, hi, lo))
+		fbs.ComponentEntryAddKey(b, key)
+		offs[i] = fbs.ComponentEntryEnd(b)
 	}
 	return offsetVector(b, offs)
 }

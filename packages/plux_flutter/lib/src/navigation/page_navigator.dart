@@ -30,7 +30,12 @@ final class PageNavigator implements RunNavigator {
     required this.routed,
     required this.resultType,
     required this.types,
+    this.onPop,
   });
+
+  /// Receives an embedded page's checked result instead of a pop, when
+  /// the host shows it in a `PluxView` with `onEvent` (ADR-0023).
+  final void Function(Object? result)? onPop;
 
   /// The router.
   final PluxRouter router;
@@ -155,7 +160,8 @@ final class PageNavigator implements RunNavigator {
 
   @override
   void pop(Object? result) {
-    if (!routed) {
+    final embedded = onPop;
+    if (!routed && embedded == null) {
       throw navigationRefused(
         'an embedded page has no route of its own to pop',
       );
@@ -167,6 +173,12 @@ final class PageNavigator implements RunNavigator {
       json = PluxRouter.checkResult(result, resultType, types());
     } on ActionError catch (e) {
       router.report(e.toException({'route': route}));
+    }
+    if (!routed) {
+      // An inline page has no route to pop: its result is an event of the
+      // view that shows it (ADR-0023).
+      embedded!(json);
+      return;
     }
     if (!router.delegate.pop(_context(), json)) {
       throw navigationRefused('there is no route to pop');

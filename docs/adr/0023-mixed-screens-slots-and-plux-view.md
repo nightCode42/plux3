@@ -61,18 +61,16 @@ Chosen option: **1.**
 ### Native slots in plugin pages (`WGT-033`)
 
 A slot node names a slot `type` from the native catalogue (ADR-0041). Its builder is the
-host's registration:
-
-```dart
-nativeSlots: {'MapCard': PluxNativeSlot(MapCard.new)}
-```
+host's registration.
 
 **Building the widget:**
 
-- The runtime decodes each prop by the catalogue's declared type and calls the
-  constructor tear-off with `Function.apply` and named arguments. The widget class is
-  unchanged.
-- A host whose widget needs adapting registers a builder function instead.
+- The decision was to call the widget's constructor tear-off (`PluxNativeSlot(MapCard.new)`)
+  with `Function.apply` and named arguments decoded by the catalogue's declared types.
+  *As built in R6* (ADR-0041): named arguments built at run time break in builds made with
+  `--obfuscate`, so a slot registers a builder that reads its props and emits its events:
+  `PluxNativeSlot((context, slot) => MapCard(title: slot['title']! as String, onPlace: (p) => slot.emit('onPlace', p)))`.
+  The widget class is unchanged either way.
 - Props come from bindings like any node's, so a slot rebuilds when the values it reads
   change.
 
@@ -80,9 +78,8 @@ nativeSlots: {'MapCard': PluxNativeSlot(MapCard.new)}
 
 - A callback parameter named `on…` that the catalogue declares as an event receives a
   closure. Calling it starts the node's handler graph, with the payload as `event`, after
-  checking it against the declared payload type.
-- A closure taking `Object?` fits any one-argument callback type, because function
-  parameters are contravariant. A no-argument callback receives a no-argument closure.
+  checking it against the declared payload type. As built, the builder's closure calls
+  `slot.emit(name, payload)`.
 
 **Layout and failures:**
 
@@ -171,6 +168,70 @@ An exposed entry is an app document `state` entry marked `exposed`.
 An exposed entry that declares persistence is kept in memory in P4, and reports
 `PLX-4010` once in debug builds.
 
+### As built in R7
+
+**Compiler and bundle.**
+
+- A plugin bundle's meta section lists its exported components by key (`Meta.components`,
+  an additive field), so a view finds a component without decoding every section.
+- An exported key equal to a route name is `PLX-1103`, and a key two plugins export is
+  `PLX-1101`, so a name means one thing.
+- `exposed` outside the app document is `PLX-1007`.
+
+**`PluxView`.**
+
+```dart
+PluxView('counter-badge',
+    inputs: {'label': 'Left'},
+    onEvent: (PluxViewEvent e) => debugPrint('${e.name} ${e.payload}'),
+    sizing: PluxViewSizing.intrinsic) // or .expand, or PluxViewSizing.fixed(size)
+```
+
+- P3's `route` and `params` became `name` and `inputs`; `plux_flutter` 0.2.0 is not
+  released yet.
+- A name resolves to a route first, then to an exported component. The routes Plux builds
+  resolve to routes only.
+- An inline page's `pop` is the `pop` event, carrying the result checked against the
+  page's `result` type. Without `onEvent`, the `pop` is refused with `PLX-4102`, as in P3.
+- **Component events.** No P4 action emits a component's declared events, so in P4
+  `onEvent` receives only `pop`. The API carries any event name and payload for when one
+  does.
+- **A component view:**
+  - runs no guards, since components have none;
+  - shows the generic fallback when its plugin is switched off, since a declared fallback
+    page is a screen;
+  - records no `screen_view` or `render_perf`;
+  - reads its inputs as `props`.
+- **Sizing:** `expand` in unbounded constraints shows the view's fallback and reports
+  `PLX-4001`.
+
+**Exposed state.**
+
+- `Plux.state<T>(name)` returns a `PluxState<T>` with `value`, `set` and `watch()`:
+  - `set` completes with whether the write was accepted. It is a `Future`, as the spec's
+    example awaits it, which leaves room for persistence. The write takes effect before it
+    returns.
+  - `watch()` emits one value per change, from the next one.
+- **Before a release is active:** `value` is null and nothing is reported; a write is
+  refused with `PLX-4203`; a watch emits once a release is active and the entry is
+  exposed.
+- **Across releases:** a value the host wrote is kept while the entry keeps its name and
+  type.
+- Plugin bindings read app state as `app.<name>`.
+- The persistence report (`PLX-4010`) is made once per entry, in debug builds, and names
+  the entry in its `state` detail.
+
+**`Plux.eventsNamed(name)`** filters `Plux.events` by event name.
+
+**The starter app** shows both directions:
+
+- a native screen with two views of the exported `counter-badge` component and a native
+  button that writes `counter`;
+- the plugin page `places`, which holds the host's `MapCard` slot; picking a place runs a
+  `navigate` step to the page `place`.
+
+The end-to-end flows run both.
+
 ## Consequences
 
 - **Positive.**
@@ -185,7 +246,7 @@ An exposed entry that declares persistence is kept in memory in P4, and reports
 - **Follow-up.**
   - R6: slot nodes.
   - R7: `PluxView` v2, `Plux.events`, `Plux.state<T>`, the compiler checks above, and the
-    starter's mixed screen.
+    starter's mixed screen (done, *As built in R7*).
   - R8: generated accessors and classes.
   - P5: plugin-side writes, and the host-to-Plux half of `HST-013`.
 

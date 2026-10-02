@@ -20,8 +20,10 @@ import 'package:plux_flutter/src/actions/run.dart';
 import 'package:plux_flutter/src/assets/assets.dart';
 import 'package:plux_flutter/src/assets/icon_fonts.dart';
 import 'package:plux_flutter/src/assets/image_providers.dart';
+import 'package:plux_flutter/src/bundle/container.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/core/active_release.dart';
+import 'package:plux_flutter/src/core/app_state.dart';
 import 'package:plux_flutter/src/core/config.dart';
 import 'package:plux_flutter/src/core/fallback.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
@@ -119,6 +121,7 @@ final class PluxRenderer implements PageRenderer, RenderServices {
     PageRef page,
     Map<String, Object?> params, {
     bool routed = false,
+    void Function(Object? result)? onPop,
   }) => PluxPageView(
     key: ValueKey((release.sequence, page.route)),
     renderer: this,
@@ -126,7 +129,41 @@ final class PluxRenderer implements PageRenderer, RenderServices {
     page: page,
     params: params,
     routed: routed,
+    onPop: onPop,
   );
+
+  /// The app's state entries at their declared defaults, with their
+  /// declarations by name (ADR-0023); a default that cannot be read is
+  /// reported and starts as null.
+  ({Map<String, Object?> values, Map<String, AppStateDecl> decls}) appState(
+    ActiveRelease release,
+  ) {
+    final app = view(release, '');
+    final literal = ValueResolver(
+      plugin: app,
+      roots: () => const {},
+      token: (_) => null,
+      translation: (_) => null,
+      limits: _pxlLimits(release.limits),
+    );
+    final values = <String, Object?>{};
+    final decls = <String, AppStateDecl>{};
+    for (final d in app.appState) {
+      decls[d.name] = d;
+      try {
+        values[d.name] = toPxl(literal.resolve(d.defaultValue, app.string));
+      } on BindingError catch (e) {
+        report(
+          PluxException(
+            PluxErrorCode.propValueInvalid,
+            'app state ${d.name}: ${e.message}',
+          ),
+        );
+        values[d.name] = null;
+      }
+    }
+    return (values: values, decls: decls);
+  }
 
   /// The named types the pages of plugin [plugin] may use: the app's and
   /// the plugin's (SCH-010).
@@ -699,6 +736,7 @@ final class PluxPageView extends ConsumerStatefulWidget {
     required this.page,
     required this.params,
     this.routed = false,
+    this.onPop,
   });
 
   /// The renderer.
@@ -716,6 +754,9 @@ final class PluxPageView extends ConsumerStatefulWidget {
   /// Whether the page owns its route, so that `pop` may pop it.
   final bool routed;
 
+  /// Receives an embedded page's `pop` result, or null (ADR-0023).
+  final void Function(Object? result)? onPop;
+
   @override
   ConsumerState<PluxPageView> createState() => _PluxPageViewState();
 }
@@ -726,9 +767,16 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
     widget.page.plugin,
   );
   late final BundleView _app = widget.renderer.view(widget.release, '');
+
+  /// Whether the view shows an exported component rather than a page
+  /// (NAV-004, ADR-0023): its inputs are props, its state is `component`.
+  late final bool _component =
+      widget.page.section.kind == SectionKind.component;
   late final NodeSection _section = widget.renderer.cache.get(
     widget.page.section,
-    () => NodeSection.page(widget.page.section),
+    () => _component
+        ? NodeSection.component(widget.page.section)
+        : NodeSection.page(widget.page.section),
   );
   late final PxlLimits _limits = _pxlLimits(widget.release.limits);
   late final Map<String, Object?> _params;
@@ -752,6 +800,7 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
           routed: widget.routed,
           resultType: result == 0 ? null : _section.string(result),
           types: () => _types,
+          onPop: widget.onPop,
         ),
         emit: services.emit,
         nativeActions: services.nativeActions,
@@ -806,13 +855,16 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
       }
     }
 
-    final page = _section.page!;
+    final page = _section.page;
+    final component = _section.component;
     _params = {};
-    // Parameters are checked on entry (NAV-007): one missing, unknown or
-    // of the wrong type shows the error fallback instead of the page.
+    // Parameters are checked on entry (NAV-007), and a component view's
+    // props like them (ADR-0023): one missing, unknown or of the wrong type
+    // shows the error fallback instead of the page.
     final problems = <String>[];
     final declared = <String>{};
-    for (final p in page.params ?? const <fbs.Param>[]) {
+    final params = page?.params ?? component?.props ?? const <fbs.Param>[];
+    for (final p in params) {
       final name = _section.string(p.name);
       declared.add(name);
       if (widget.params.containsKey(name)) {
@@ -833,18 +885,22 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
       }
     }
     for (final name in widget.params.keys) {
-      if (!declared.contains(name)) problems.add('$name is not a parameter');
+      if (!declared.contains(name)) {
+        problems.add('$name is not a ${_component ? 'prop' : 'parameter'}');
+      }
     }
     if (problems.isNotEmpty) {
+      final what = _component ? 'component' : 'route';
       _paramError = PluxException(
         PluxErrorCode.routeParametersInvalid,
-        'route ${widget.page.route}: ${problems.join('; ')}',
+        '$what ${widget.page.route}: ${problems.join('; ')}',
         details: {'route': widget.page.route, 'plugin': widget.page.plugin},
       );
       widget.renderer.report(_paramError!);
     }
     _instance = PageInstance({
-      for (final e in page.state ?? const <fbs.StateEntry>[])
+      for (final e
+          in page?.state ?? component?.state ?? const <fbs.StateEntry>[])
         if (e.computed == 0)
           _section.string(e.name): read(literal, e.$default, _section.string),
     });
@@ -915,8 +971,9 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
       dark: dark,
     );
     Map<String, Object?> roots() => {
-      'params': _params,
-      'page': ref.read(pageStateProvider(_instance)),
+      _component ? 'props' : 'params': _params,
+      _component ? 'component' : 'page': ref.read(pageStateProvider(_instance)),
+      'app': ref.read(appStateProvider),
       'device': device,
       // Read on every evaluation: user.authenticated is the host's answer
       // at that moment (ADR-0040).

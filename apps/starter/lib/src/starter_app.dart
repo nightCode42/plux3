@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:plux_devtools/plux_devtools.dart';
 import 'package:plux_flutter/plux_flutter.dart';
 import 'package:plux_starter/src/config.dart';
+import 'package:plux_starter/src/mixed_screen.dart';
 
 /// The app: a native home screen around a Plux page, with the Plux debug
 /// overlay in debug builds.
@@ -57,7 +58,8 @@ final class _StarterAppState extends State<StarterApp> {
   );
 }
 
-/// The home screen: native controls above a published page.
+/// The home screen: native controls above a published page, and the way
+/// to the mixed screens.
 final class HomeScreen extends StatelessWidget {
   /// Creates the screen.
   const HomeScreen({
@@ -109,6 +111,22 @@ final class HomeScreen extends StatelessWidget {
           leading: const Icon(Icons.open_in_full),
           title: Text('Open ${config.route}'),
           onTap: () => Plux.open<void>(context, config.route),
+        ),
+        // Both directions of a mixed screen (ADR-0023): plugin views in a
+        // native screen, and a native slot in a plugin page.
+        ListTile(
+          key: const ValueKey('open-mixed'),
+          leading: const Icon(Icons.splitscreen),
+          title: const Text('Mixed screen'),
+          onTap: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute<void>(builder: (_) => const MixedScreen())),
+        ),
+        ListTile(
+          key: const ValueKey('open-places'),
+          leading: const Icon(Icons.map_outlined),
+          title: const Text('Places'),
+          onTap: () => Plux.open<void>(context, 'places'),
         ),
         const Divider(),
         SizedBox(

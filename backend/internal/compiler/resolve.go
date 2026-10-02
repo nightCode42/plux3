@@ -444,11 +444,39 @@ func (u *unit) resolveApp() {
 		}
 	}
 	u.routes = names
+	u.checkExportedNames(names)
 	if _, ok := names[app.EntryRoute]; !ok {
 		u.report(plxerr.UnknownRoute, "app.json", "/entryRoute", "no page or native route is named %q", app.EntryRoute)
 	}
 	u.resolveNavigation()
 	u.resolveHostEvents()
+}
+
+// checkExportedNames checks that each exported component's key names it
+// alone, since PluxView shows a route or an exported component by name
+// (NAV-004, ADR-0023): unique across the app's exported components and
+// different from every route name.
+func (u *unit) checkExportedNames(routes map[string]*route) {
+	exported := map[string]*component{}
+	for _, pl := range u.plugins {
+		for _, c := range pl.components {
+			if c.doc.Exported == nil || !*c.doc.Exported {
+				continue
+			}
+			loc := plxerr.Location{File: c.file, Path: "/key"}
+			if r, clash := routes[c.doc.Key]; clash {
+				u.duplicate(plxerr.DuplicateRouteName, loc, plxerr.Location{File: r.file, Path: r.ptr},
+					"exported component %q has the name of a route; PluxView shows either by name", c.doc.Key)
+				continue
+			}
+			if first, dup := exported[c.doc.Key]; dup {
+				u.duplicate(plxerr.DuplicateKey, loc, plxerr.Location{File: first.file, Path: "/key"},
+					"exported component key %q is already used by another plugin", c.doc.Key)
+				continue
+			}
+			exported[c.doc.Key] = c
+		}
+	}
 }
 
 // buildPage builds a page's node tree and indexes its declarations.

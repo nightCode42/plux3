@@ -160,6 +160,29 @@
   },
   "schemaVersion": "1.0.0",
   "securityProfile": "standard",
+  "state": [
+    {
+      "default": 0,
+      "exposed": true,
+      "id": "01f0c450-6c00-7000-8000-000000000250",
+      "name": "counter",
+      "type": "int"
+    },
+    {
+      "default": 0,
+      "exposed": true,
+      "id": "01f0c450-6c00-7000-8000-000000000251",
+      "name": "visits",
+      "persistence": "persisted",
+      "type": "int"
+    },
+    {
+      "default": "light",
+      "id": "01f0c450-6c00-7000-8000-000000000252",
+      "name": "theme",
+      "type": "string"
+    }
+  ],
   "supportedLocales": [
     "en"
   ],

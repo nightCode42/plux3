@@ -16,13 +16,17 @@ import 'package:plux_flutter/src/state/providers.dart';
 /// guard graphs and the conversion of text parameters (ADR-0040).
 abstract interface class PageRenderer {
   /// Builds [page] of [release] with the route [params]; [routed] says
-  /// whether the page owns its route, so that `pop` may pop it.
+  /// whether the page owns its route, so that `pop` may pop it. An
+  /// embedded page's `pop` reaches [onPop] with its result instead, when
+  /// given (ADR-0023). [page] may also be an exported component, whose
+  /// props [params] are.
   Widget build(
     BuildContext context,
     ActiveRelease release,
     PageRef page,
     Map<String, Object?> params, {
     bool routed = false,
+    void Function(Object? result)? onPop,
   });
 
   /// Runs guard graph [guard] of [page] over the page's [params], in the

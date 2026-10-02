@@ -231,6 +231,13 @@ table PageEntry {
   route: string;
 }
 
+// An exported component a host shows with PluxView by its key (NAV-004,
+// ADR-0023).
+table ComponentEntry {
+  id: Uuid;
+  key: string;
+}
+
 // A function the plugin may call (FN-012).
 table FunctionGrant {
   id: Uuid;
@@ -343,6 +350,9 @@ table Meta {
   // App bundles: push payloads (NAV-008); absent when the app declares
   // no push.
   push: Push;
+  // Plugin bundles: the exported components, sorted by key, which hosts
+  // show by key (NAV-004, ADR-0023); absent when the plugin exports none.
+  components: [ComponentEntry];
 }
 
 // ── Section page ──────────────────────────────────────────────────────────

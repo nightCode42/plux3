@@ -1,0 +1,51 @@
+{
+  "id": "01f0c450-6c00-7000-8000-000000000255",
+  "key": "mixed",
+  "kind": "page",
+  "pageKind": "screen",
+  "result": "string",
+  "root": {
+    "children": [
+      {
+        "id": "01f0c450-6c00-7000-8000-000000000257",
+        "props": {
+          "data": {
+            "$expr": "\"Shared \" + string(app.counter)"
+          }
+        },
+        "type": "Text"
+      },
+      {
+        "events": {
+          "onPressed": {
+            "steps": [
+              {
+                "action": "pop",
+                "id": "done",
+                "input": {
+                  "result": "closed"
+                }
+              }
+            ]
+          }
+        },
+        "id": "01f0c450-6c00-7000-8000-000000000258",
+        "slots": {
+          "child": {
+            "id": "01f0c450-6c00-7000-8000-000000000259",
+            "props": {
+              "data": "Close"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "TextButton"
+      }
+    ],
+    "id": "01f0c450-6c00-7000-8000-000000000256",
+    "type": "Column"
+  },
+  "route": "mixed",
+  "schemaVersion": "1.0.0",
+  "title": "Mixed"
+}

@@ -9,12 +9,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plux_flutter/src/core/app_state.dart';
 import 'package:plux_flutter/src/core/config.dart';
 import 'package:plux_flutter/src/core/host_events.dart';
 import 'package:plux_flutter/src/core/runtime.dart';
 import 'package:plux_flutter/src/devtools_api/diagnostics.dart';
 import 'package:plux_flutter/src/navigation/delegate.dart';
 import 'package:plux_flutter/src/navigation/plux_page.dart';
+import 'package:plux_flutter/src/pxl/types.dart';
+import 'package:plux_flutter/src/render/renderer.dart';
 import 'package:plux_flutter/src/state/providers.dart';
 import 'package:plux_flutter/src/sync/sync_event.dart';
 
@@ -160,6 +163,28 @@ abstract final class Plux {
 
   /// The typed events plugins emit with `emitHostEvent` (HST-013).
   static Stream<PluxHostEvent> get events => _rt.hostEvents;
+
+  /// The host events named [name] (HST-013, ADR-0023).
+  static Stream<PluxHostEvent> eventsNamed(String name) =>
+      events.where((e) => e.name == name);
+
+  /// The value of the app's feature flag [name] in the active release, in
+  /// the JSON form of its type when that is a [T]; null before a release
+  /// is active, for an undeclared flag or another type (ABT-006). Plugins
+  /// read the same value as `flags.<name>`; `plux codegen` writes typed
+  /// getters over it (HST-030).
+  static T? flag<T>(String name) {
+    final release = _rt.active.value;
+    final renderer = _rt.renderer;
+    if (release == null || renderer is! PluxRenderer) return null;
+    final value = toJson(renderer.flagsRoot(release)[name]);
+    return value is T ? value : null;
+  }
+
+  /// A handle on the exposed app state entry [name] (HST-021, ADR-0023):
+  /// read, write and watch it; `plux codegen` writes typed accessors over
+  /// it (HST-030).
+  static PluxState<T> state<T>(String name) => PluxState<T>(name, container);
 
   static void _environment(PluxEnvironment Function(PluxEnvironment) f) {
     final n = container.read(environmentProvider.notifier);

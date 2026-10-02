@@ -143,4 +143,65 @@ void main() {
     expect(find.text('Dark theme'), findsNothing);
     await tester.pumpWidget(const SizedBox());
   });
+
+  testWidgets('without a release the mixed screen waits: its views load, '
+      'the counter reads nothing and a write is refused [HST-021] [NAV-004]', (
+    tester,
+  ) async {
+    final dir = Directory.systemTemp.createTempSync('plux_starter_mixed');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final problems = <PluxException>[];
+    final config = StarterConfig.parse(const {
+      'PLUX_APP_ID': '01e0c450-6c00-7000-8000-000000000001',
+      'PLUX_ENDPOINT': 'http://127.0.0.1:9',
+    });
+    final startup = await tester.runAsync(
+      () => Plux.initializeWith(
+        config.toPluxConfig(
+          storageDirectory: dir.path,
+          onError: (e, _) => problems.add(e),
+        ),
+        const RuntimeOverrides(credentials: MemoryCredentialStore.new),
+      ),
+    );
+    addTearDown(() => tester.runAsync(Plux.dispose));
+    await tester.pumpWidget(StarterApp(config: config, startup: startup!));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('open-mixed')));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.byType(PluxView), findsNWidgets(2));
+    expect(find.text('Native view of the counter: null'), findsOne);
+    expect(Plux.state<int>('counter').value, isNull);
+    expect(
+      problems.where((e) => e.code == PluxErrorCode.exposedStateTypeMismatch),
+      isEmpty,
+    );
+    await tester.tap(find.byKey(const ValueKey('add-one')));
+    await tester.pump();
+    expect(
+      problems
+          .where((e) => e.code == PluxErrorCode.exposedStateTypeMismatch)
+          .map((e) => e.details['state']),
+      ['counter'],
+    );
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('the map card reports the place picked, and the app registers '
+      'it as the MapCard native slot [WGT-033]', (tester) async {
+    final picked = <String>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: MapCard(title: 'Nearby', onPlace: picked.add),
+        ),
+      ),
+    );
+    expect(find.text('Nearby'), findsOne);
+    await tester.tap(find.text('Old town'));
+    expect(picked, ['Old town']);
+    final config = StarterConfig.parse(const {'PLUX_APP_ID': 'a1'});
+    expect(config.toPluxConfig().nativeSlots.keys, ['MapCard']);
+  });
 }
