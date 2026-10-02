@@ -45,6 +45,12 @@ echo no | "$tools/avdmanager" create avd --force --name "$avd" --package "$image
 
 adb=$sdk/platform-tools/adb
 log=$out/emulator-$api.log
+# The adb server, and its key in ~/.android, exist before the emulator
+# starts, so the emulator's registration with the server cannot race the
+# server's first start. Suspected in CI run 36966274717, where the
+# emulator reported its boot complete and adb never answered for it; fail
+# now prints the devices adb sees.
+"$adb" start-server >/dev/null
 "$sdk/emulator/emulator" -avd "$avd" -no-window -no-audio -no-boot-anim -no-snapshot \
 	-gpu swiftshader_indirect -port 5554 -memory 4096 -no-metrics >"$log" 2>&1 &
 emulator=$!
@@ -58,9 +64,11 @@ prebuild_log=$out/prebuild-$api.log
 ) >"$prebuild_log" 2>&1 &
 prebuild=$!
 
-# fail <message>: the emulator's log, then the message.
+# fail <message>: the emulator's log, the devices adb sees, then the
+# message.
 fail() {
 	echo "--- $log (last 80 lines)"; tail -n 80 "$log" || true
+	echo "--- adb devices"; timeout 10 "$adb" devices -l || true
 	echo "✗ $1"; exit 1
 }
 
