@@ -90,6 +90,23 @@ message Compatibility {
   int64 incompatible_devices = 3;
   // fallback_sequence is what those devices receive instead (REL-080).
   int64 fallback_sequence = 4;
+  // incompatible_host_builds are the host builds whose native catalogue
+  // lacks a native route, slot or custom action the release uses, or
+  // declares it with other types (WGT-032).
+  repeated IncompatibleHostBuild incompatible_host_builds = 5;
+}
+
+// IncompatibleHostBuild is a host build that cannot run a release.
+message IncompatibleHostBuild {
+  string host_build = 1;
+  // devices is how many registered devices report the build.
+  int64 devices = 2;
+  // fallback_sequence is the newest earlier release the build can run,
+  // which its devices receive instead; zero when none.
+  int64 fallback_sequence = 3;
+  // missing names each native entry the build lacks or declares
+  // differently, as "route profile", "slot MapCard" or "action scan".
+  repeated string missing = 4;
 }
 
 message GetPluginVersionRequest {

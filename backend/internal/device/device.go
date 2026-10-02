@@ -127,6 +127,9 @@ type Device struct {
 // Identity is an authenticated device.
 type Identity struct {
 	DeviceID, OrganizationID, AppID, EnvironmentID string
+	// HostBuild is the host app build the device registered or last
+	// reported, which chooses its manifest (REL-080).
+	HostBuild string
 }
 
 // Registration is what a device says about itself.
@@ -272,7 +275,7 @@ func (s *Service) Authenticate(ctx context.Context, token string) (Identity, err
 	}
 	id := Identity{
 		DeviceID: storage.ID(row.DeviceID), OrganizationID: storage.ID(row.OrganizationID),
-		AppID: storage.ID(row.AppID), EnvironmentID: storage.ID(row.EnvironmentID),
+		AppID: storage.ID(row.AppID), EnvironmentID: storage.ID(row.EnvironmentID), HostBuild: row.HostBuild,
 	}
 	until := now.Add(tokenCacheTTL)
 	if expires.Before(until) {
@@ -387,14 +390,18 @@ func (s *Service) List(ctx context.Context, p auth.Principal, appID, environment
 }
 
 // Incompatible counts the devices of an app whose runtime is older than
-// minRuntime (REL-080). Devices report the features their runtime
-// supports from P3; until then the runtime version decides.
-func (*Service) Incompatible(ctx context.Context, tx pgx.Tx, appID, minRuntime string) (int64, error) {
-	if minRuntime == "" {
+// minRuntime, or that report one of the host builds that cannot run the
+// release (REL-080). Devices report the features their runtime supports
+// from P3; until then the runtime version decides.
+func (*Service) Incompatible(ctx context.Context, tx pgx.Tx, appID, minRuntime string, hostBuilds []string) (int64, error) {
+	if minRuntime == "" && len(hostBuilds) == 0 {
 		return 0, nil
 	}
+	if hostBuilds == nil {
+		hostBuilds = []string{}
+	}
 	n, err := dbgen.New(tx).CountIncompatibleDevices(ctx, dbgen.CountIncompatibleDevicesParams{
-		AppID: storage.MustUUID(appID), MinRuntime: minRuntime,
+		AppID: storage.MustUUID(appID), MinRuntime: minRuntime, HostBuilds: hostBuilds,
 	})
 	if err != nil {
 		return 0, fmt.Errorf("device: %w", err)

@@ -3088,6 +3088,130 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.GetRootKeysResponse'
+  /plux.v1.NativeCatalogueService/GetNativeCatalogue:
+    post:
+      tags:
+        - plux.v1.NativeCatalogueService
+      summary: GetNativeCatalogue
+      description: GetNativeCatalogue returns a host build's catalogue.
+      operationId: plux.v1.NativeCatalogueService.GetNativeCatalogue
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.GetNativeCatalogueRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.GetNativeCatalogueResponse'
+  /plux.v1.NativeCatalogueService/ListHostBuilds:
+    post:
+      tags:
+        - plux.v1.NativeCatalogueService
+      summary: ListHostBuilds
+      description: |-
+        ListHostBuilds lists an app's host builds with a catalogue, newest
+         upload first, with how many devices report each.
+      operationId: plux.v1.NativeCatalogueService.ListHostBuilds
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.ListHostBuildsRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.ListHostBuildsResponse'
+  /plux.v1.NativeCatalogueService/UploadNativeCatalogue:
+    post:
+      tags:
+        - plux.v1.NativeCatalogueService
+      summary: UploadNativeCatalogue
+      description: |-
+        UploadNativeCatalogue stores the catalogue of one host build; `plux
+         native sync` calls it. A build's catalogue never changes: the same
+         content again stores nothing, and other content is refused
+         (PLX-8032). It needs release.publish, since it changes which releases
+         the build's devices receive.
+      operationId: plux.v1.NativeCatalogueService.UploadNativeCatalogue
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.UploadNativeCatalogueRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.UploadNativeCatalogueResponse'
   /plux.v1.OrgService/AddMember:
     post:
       tags:
@@ -5457,6 +5581,15 @@ components:
           title: fallback_sequence
           format: int64
           description: fallback_sequence is what those devices receive instead (REL-080).
+        incompatibleHostBuilds:
+          type: array
+          items:
+            $ref: '#/components/schemas/plux.v1.IncompatibleHostBuild'
+          title: incompatible_host_builds
+          description: |-
+            incompatible_host_builds are the host builds whose native catalogue
+             lacks a native route, slot or custom action the release uses, or
+             declares it with other types (WGT-032).
       title: Compatibility
       additionalProperties: false
     plux.v1.CompleteMfaRequest:
@@ -6678,6 +6811,31 @@ components:
              again with installed, from which the server plans its deltas.
       title: GetManifestResponse
       additionalProperties: false
+    plux.v1.GetNativeCatalogueRequest:
+      type: object
+      properties:
+        appId:
+          type: string
+          title: app_id
+        hostBuild:
+          type: string
+          title: host_build
+      title: GetNativeCatalogueRequest
+      additionalProperties: false
+    plux.v1.GetNativeCatalogueResponse:
+      type: object
+      properties:
+        hostBuild:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.HostBuild'
+          title: host_build
+        catalogue:
+          type: string
+          title: catalogue
+          format: byte
+          description: catalogue is the stored canonical JSON.
+      title: GetNativeCatalogueResponse
+      additionalProperties: false
     plux.v1.GetOrganizationRequest:
       type: object
       properties:
@@ -6872,6 +7030,38 @@ components:
           title: grant
       title: GrantAccessResponse
       additionalProperties: false
+    plux.v1.HostBuild:
+      type: object
+      properties:
+        appId:
+          type: string
+          title: app_id
+        hostBuild:
+          type: string
+          title: host_build
+          description: |-
+            host_build is the string the build's devices report as
+             PluxConfig.hostBuild, such as "1.4.0+52".
+        sha256:
+          type: string
+          title: sha256
+          description: sha256 is the hex SHA-256 of the canonical catalogue (RFC 8785).
+        uploadedBy:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Actor'
+          title: uploaded_by
+        uploadedAt:
+          allOf:
+            - $ref: '#/components/schemas/google.protobuf.Timestamp'
+          title: uploaded_at
+        devices:
+          type: string
+          title: devices
+          format: int64
+          description: devices is how many registered devices report this build.
+      title: HostBuild
+      additionalProperties: false
+      description: HostBuild is one build of the host app with its native catalogue.
     plux.v1.ImportDraftRequest:
       type: object
       properties:
@@ -6911,6 +7101,35 @@ components:
           title: diagnostics
       title: ImportDraftResponse
       additionalProperties: false
+    plux.v1.IncompatibleHostBuild:
+      type: object
+      properties:
+        hostBuild:
+          type: string
+          title: host_build
+        devices:
+          type: string
+          title: devices
+          format: int64
+          description: devices is how many registered devices report the build.
+        fallbackSequence:
+          type: string
+          title: fallback_sequence
+          format: int64
+          description: |-
+            fallback_sequence is the newest earlier release the build can run,
+             which its devices receive instead; zero when none.
+        missing:
+          type: array
+          items:
+            type: string
+          title: missing
+          description: |-
+            missing names each native entry the build lacks or declares
+             differently, as "route profile", "slot MapCard" or "action scan".
+      title: IncompatibleHostBuild
+      additionalProperties: false
+      description: IncompatibleHostBuild is a host build that cannot run a release.
     plux.v1.IngestEventsRequest:
       type: object
       properties:
@@ -7414,6 +7633,32 @@ components:
             - $ref: '#/components/schemas/plux.v1.PageResult'
           title: page
       title: ListFactorsResponse
+      additionalProperties: false
+    plux.v1.ListHostBuildsRequest:
+      type: object
+      properties:
+        appId:
+          type: string
+          title: app_id
+        page:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Page'
+          title: page
+      title: ListHostBuildsRequest
+      additionalProperties: false
+    plux.v1.ListHostBuildsResponse:
+      type: object
+      properties:
+        hostBuilds:
+          type: array
+          items:
+            $ref: '#/components/schemas/plux.v1.HostBuild'
+          title: host_builds
+        page:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.PageResult'
+          title: page
+      title: ListHostBuildsResponse
       additionalProperties: false
     plux.v1.ListMembersRequest:
       type: object
@@ -9404,6 +9649,39 @@ components:
           title: asset
       title: UploadAssetResponse
       additionalProperties: false
+    plux.v1.UploadNativeCatalogueRequest:
+      type: object
+      properties:
+        appId:
+          type: string
+          title: app_id
+        hostBuild:
+          type: string
+          title: host_build
+        catalogue:
+          type: string
+          title: catalogue
+          format: byte
+          description: |-
+            catalogue is the native catalogue document, plux.catalogue.json, as
+             JSON.
+      title: UploadNativeCatalogueRequest
+      additionalProperties: false
+    plux.v1.UploadNativeCatalogueResponse:
+      type: object
+      properties:
+        hostBuild:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.HostBuild'
+          title: host_build
+        created:
+          type: boolean
+          title: created
+          description: |-
+            created is false when the build's catalogue was already stored, with
+             the same content.
+      title: UploadNativeCatalogueResponse
+      additionalProperties: false
     plux.v1.Usage:
       type: object
       properties:
@@ -9646,6 +9924,13 @@ tags:
        (REL-030–REL-033). The manifest is also served over plain HTTP with an
        ETag, so an unchanged manifest costs one conditional request and a 304
        (REL-031); this service is the typed form of the same document.
+  - name: plux.v1.NativeCatalogueService
+    description: |-
+      NativeCatalogueService stores the native catalogue of each build of the
+       host app: the native routes, slots and custom actions it registers for
+       plugins (CLI-006, WGT-032, ADR-0041). Publishing checks the release's
+       plugins against every build's catalogue, and devices of a build that
+       cannot run a release keep the newest one they can (REL-080).
   - name: plux.v1.PluginService
     description: |-
       PluginService manages plugins and their editing locks (SRV-040–SRV-042).

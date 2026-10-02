@@ -96,6 +96,7 @@ type world struct {
 	device   pluxv1connect.DeviceServiceClient
 	token    pluxv1connect.TokenServiceClient
 	manifest pluxv1connect.ManifestServiceClient
+	native   pluxv1connect.NativeCatalogueServiceClient
 	control  pluxv1connect.ControlServiceClient
 	events   pluxv1connect.TelemetryServiceClient
 	devices  *device.Service
@@ -196,6 +197,9 @@ func newWorld(t *testing.T) *world {
 		func() (string, http.Handler) { return pluxv1connect.NewDeviceServiceHandler(h.Device(), opts) },
 		func() (string, http.Handler) { return pluxv1connect.NewTokenServiceHandler(h.Token(), opts) },
 		func() (string, http.Handler) { return pluxv1connect.NewManifestServiceHandler(h.Manifest(), opts) },
+		func() (string, http.Handler) {
+			return pluxv1connect.NewNativeCatalogueServiceHandler(h.NativeCatalogue(), opts)
+		},
 		func() (string, http.Handler) { return pluxv1connect.NewControlServiceHandler(h.Control(), opts) },
 		func() (string, http.Handler) { return pluxv1connect.NewTelemetryServiceHandler(h.Telemetry(), opts) },
 	} {
@@ -221,6 +225,7 @@ func newWorld(t *testing.T) *world {
 		device:   pluxv1connect.NewDeviceServiceClient(srv.Client(), srv.URL),
 		token:    pluxv1connect.NewTokenServiceClient(srv.Client(), srv.URL),
 		manifest: pluxv1connect.NewManifestServiceClient(srv.Client(), srv.URL),
+		native:   pluxv1connect.NewNativeCatalogueServiceClient(srv.Client(), srv.URL),
 		control:  pluxv1connect.NewControlServiceClient(srv.Client(), srv.URL),
 		events:   pluxv1connect.NewTelemetryServiceClient(srv.Client(), srv.URL),
 		devices:  devices,

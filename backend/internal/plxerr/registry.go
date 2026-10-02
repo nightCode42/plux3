@@ -160,6 +160,7 @@ const (
 	WarningsNotAcknowledged Code = 8051
 	PluginNotPublished      Code = 8052
 	AssetsNotReady          Code = 8053
+	HostBuildIncompatible   Code = 8054
 	InternalServerError     Code = 8090
 	UpstreamUnavailable     Code = 8091
 

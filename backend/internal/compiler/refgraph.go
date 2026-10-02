@@ -19,6 +19,10 @@ const (
 	EdgeNavigatesPlugin EdgeKind = "navigatesPlugin"
 	// EdgeNavigatesNative: to a native route of the host.
 	EdgeNavigatesNative EdgeKind = "navigatesNative"
+	// EdgeUsesSlot: a node is a native slot of the host (WGT-033).
+	EdgeUsesSlot EdgeKind = "usesSlot"
+	// EdgeUsesAction: a step calls a custom action of the host (ACT-060).
+	EdgeUsesAction      EdgeKind = "usesAction"
 	EdgeUsesComponent   EdgeKind = "usesComponent"
 	EdgeUsesGraph       EdgeKind = "usesGraph"
 	EdgeUsesState       EdgeKind = "usesState"

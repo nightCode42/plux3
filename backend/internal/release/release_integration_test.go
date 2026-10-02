@@ -111,6 +111,13 @@ type fixture struct {
 
 func newFixture(t *testing.T) *fixture {
 	t.Helper()
+	return newFixtureOf(t, "loan-calculator")
+}
+
+// newFixtureOf is newFixture with the conformance project of that name;
+// loans is then its first plugin.
+func newFixtureOf(t *testing.T, name string) *fixture {
+	t.Helper()
 	ctx := context.Background()
 	db := storagetest.Open(t)
 	backend, err := signing.NewFile(t.TempDir())
@@ -181,7 +188,7 @@ func newFixture(t *testing.T) *fixture {
 	if f.viewer, err = authService.Resolve(ctx, auth.Identity{Kind: auth.KindUser, ID: m.UserID, UserID: m.UserID, Display: "v", SecondFactor: true}, f.org); err != nil {
 		t.Fatal(err)
 	}
-	files := project(t)
+	files := projectOf(t, name)
 	if _, err := f.docs.Import(ctx, f.owner, f.app, "", "s", files); err != nil {
 		t.Fatalf("Import: %v", err)
 	}
@@ -196,7 +203,13 @@ func newFixture(t *testing.T) *fixture {
 // project reads the loan calculator, with its assets.
 func project(t *testing.T) []document.File {
 	t.Helper()
-	root := filepath.Join("..", "..", "..", "schema", "testdata", "documents", "loan-calculator")
+	return projectOf(t, "loan-calculator")
+}
+
+// projectOf reads a conformance project, with its assets.
+func projectOf(t *testing.T, name string) []document.File {
+	t.Helper()
+	root := filepath.Join("..", "..", "..", "schema", "testdata", "documents", name)
 	var out []document.File
 	err := fs.WalkDir(os.DirFS(root), ".", func(path string, e fs.DirEntry, err error) error {
 		if err != nil || e.IsDir() {

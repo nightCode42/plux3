@@ -4,11 +4,13 @@
 package compiler
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/nightCode42/plux3/backend/internal/bundle"
 	"github.com/nightCode42/plux3/backend/internal/bundle/fbs"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
+	"github.com/nightCode42/plux3/backend/internal/schema"
 )
 
 // TestNativeDeclarationsReachTheAppBundle checks that the app bundle
@@ -114,5 +116,59 @@ func TestCustomActionOutputsAreTyped(t *testing.T) {
 			}
 			wantDiag(t, res, tc.code, listFile, "/"+message+"/$expr")
 		})
+	}
+}
+
+// TestHostBuildIncompatibilities checks every native entry the routing
+// project uses against host builds: one with the project's catalogue, one
+// lacking the slot, and one declaring the route's result with another
+// type (ADR-0041).
+// Verifies: WGT-032, REL-080.
+func TestHostBuildIncompatibilities(t *testing.T) {
+	t.Parallel()
+	res := compileFS(project(t, routingDir))
+	if res.Diagnostics.HasErrors() || res.Natives == nil {
+		t.Fatalf("diagnostics:\n%v", res.Diagnostics)
+	}
+	same := *res.Natives
+	if got := HostBuildIncompatibilities(res, nil, "1.0.0+1", &same); len(got) != 0 {
+		t.Fatalf("the project's own catalogue: %v", got)
+	}
+	lacking := *res.Natives
+	lacking.Slots = nil
+	got := HostBuildIncompatibilities(res, nil, "1.0.0+2", &lacking)
+	if len(got) != 1 || got[0].Code != plxerr.HostBuildIncompatible || got[0].Path != "/root/slots/body/slots/child/type" ||
+		got[0].Message != `host build 1.0.0+2 registers no native slot "Counter"` {
+		t.Fatalf("lacking the slot: %+v", got)
+	}
+	other := *res.Natives
+	other.Routes = append([]schema.NativeRoute(nil), other.Routes...)
+	other.Routes[0].Result = "string"
+	got = HostBuildIncompatibilities(res, nil, "1.0.0+3", &other)
+	if len(got) != 2 {
+		t.Fatalf("another result type: want both uses of the route, got %+v", got)
+	}
+	for _, d := range got {
+		if d.Message != `host build 1.0.0+3 declares the native route "profile" with other types` {
+			t.Errorf("message %q", d.Message)
+		}
+	}
+	if got := HostBuildIncompatibilities(res, nil, "0.9.0+1", nil); len(got) != 4 {
+		t.Errorf("no catalogue at all: want the route twice, the slot and the action, got %d: %+v", len(got), got)
+	}
+	uses := NativeUses(res, nil)
+	want := []NativeUse{
+		{Kind: NativeActionUse, Name: "scan", Params: []string{"prompt:string"}, Result: "string"},
+		{Kind: NativeRouteUse, Name: "profile", Params: []string{"userId:string!"}, Result: "bool"},
+		{Kind: NativeSlotUse, Name: "Counter", Params: []string{"label:string!"}, Events: []string{"onTap:int"}},
+	}
+	if !reflect.DeepEqual(uses, want) {
+		t.Errorf("uses %+v", uses)
+	}
+	if !Compatible(uses, &same) || Compatible(uses, &lacking) || Compatible(uses, &other) || Compatible(uses, nil) || !Compatible(nil, nil) {
+		t.Error("Compatible disagrees with the diagnostics")
+	}
+	if got := NativeUses(res, func(f string) bool { return f == "plugins/nav/pages/slots.page.json" }); len(got) != 1 || got[0].Name != "Counter" {
+		t.Errorf("uses of one file %+v", got)
 	}
 }

@@ -996,6 +996,14 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Check the assets' processing state, and the worker's asset jobs if an asset stays pending; publish again once every asset is ready.
 
+### PLX-8054
+
+`HOST_BUILD_INCOMPATIBLE` · warning · Host build lacks a native entry
+
+**Cause.** The release uses a native route, native slot or custom action that the native catalogue of one of the app's host builds lacks, or declares with other parameters, props, events, inputs or result types. Devices of that build keep receiving the newest release compatible with it (WGT-032, REL-080).
+
+**Fix.** Ship a host build that registers the entry and upload its catalogue with plux native sync, or keep the release from using the entry; the publisher acknowledges the warning to publish anyway.
+
 ### PLX-8090
 
 `INTERNAL_SERVER_ERROR` · error · Internal error

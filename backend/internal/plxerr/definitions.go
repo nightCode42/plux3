@@ -634,6 +634,11 @@ var registry = []Definition{
 		"Check the assets' processing state, and the worker's asset jobs if an asset stays pending; publish again once every asset is ready.", false,
 	},
 	{
+		HostBuildIncompatible, "HOST_BUILD_INCOMPATIBLE", SeverityWarning, "Host build lacks a native entry",
+		"The release uses a native route, native slot or custom action that the native catalogue of one of the app's host builds lacks, or declares with other parameters, props, events, inputs or result types. Devices of that build keep receiving the newest release compatible with it (WGT-032, REL-080).",
+		"Ship a host build that registers the entry and upload its catalogue with plux native sync, or keep the release from using the entry; the publisher acknowledges the warning to publish anyway.", false,
+	},
+	{
 		InternalServerError, "INTERNAL_SERVER_ERROR", SeverityError, "Internal error",
 		"The server failed in a way it does not recognise. The incident identifier in the message appears in the server's logs; nothing else about the failure is returned.",
 		"Retry the call. If it keeps failing, give the incident identifier to the operator of the installation.", false,

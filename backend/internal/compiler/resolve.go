@@ -566,7 +566,9 @@ func (u *unit) buildNode(o owner, doc *schema.Node, parent *node, slot, ptr stri
 	case doc.Type != "":
 		if w, ok := registry.LookupWidget(doc.Type); ok {
 			n.widget = &w
-		} else if _, native := u.natives.slots[doc.Type]; !native {
+		} else if _, native := u.natives.slots[doc.Type]; native {
+			u.graph.add(Edge{From: from, Kind: EdgeUsesSlot, To: doc.Type, File: file, Path: ptr + "/type"})
+		} else {
 			u.report(plxerr.UnknownWidgetType, file, ptr+"/type", "no widget or native slot is named %q", doc.Type)
 		}
 	case doc.Component != nil:

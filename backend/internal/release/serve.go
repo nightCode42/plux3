@@ -60,7 +60,11 @@ func (DeltaJob) Kind() string { return "delta.precompute" }
 // app and environment come from its credential, not from the request.
 type ManifestRequest struct {
 	OrganizationID, AppID, EnvironmentID, Channel string
-	InstalledSequence                             int64
+	// HostBuild is the build the device registered or last reported; a
+	// build that cannot run the channel's release gets the manifest of
+	// the newest release it can (REL-080).
+	HostBuild         string
+	InstalledSequence int64
 	// Installed maps a plugin key, or "" for the app bundle, to the hash
 	// of the bundle the device holds.
 	Installed   map[string][]byte
@@ -108,7 +112,7 @@ type ServedManifest struct {
 // bundles, and otherwise the device is asked for them (InstalledRequired),
 // since the plan's deltas depend on them.
 func (s *Service) GetManifest(ctx context.Context, r ManifestRequest) (ServedManifest, error) {
-	base, err := s.latestManifest(ctx, r.OrganizationID, r.EnvironmentID, channelOrDefault(r.Channel))
+	base, err := s.latestManifest(ctx, r.OrganizationID, r.EnvironmentID, channelOrDefault(r.Channel), r.HostBuild)
 	if err != nil {
 		return ServedManifest{}, err
 	}
@@ -169,8 +173,8 @@ const maxCachedManifests = 10000
 
 // latestManifest returns a channel's newest manifest, from the cache when
 // it is fresh.
-func (s *Service) latestManifest(ctx context.Context, org, env, channel string) (cachedManifest, error) {
-	key := org + "/" + env + "/" + channel
+func (s *Service) latestManifest(ctx context.Context, org, env, channel, build string) (cachedManifest, error) {
+	key := org + "/" + env + "/" + channel + "/" + build
 	now := s.now()
 	s.manifests.mu.Lock()
 	c, ok := s.manifests.entries[key]
@@ -185,7 +189,12 @@ func (s *Service) latestManifest(ctx context.Context, org, env, channel string) 
 		if err != nil {
 			return failure(err, "channel")
 		}
-		if row, err = q.LatestManifest(ctx, ch.ID); err != nil {
+		if build == "" {
+			row, err = q.LatestManifest(ctx, ch.ID)
+		} else {
+			row, err = q.LatestManifestForBuild(ctx, dbgen.LatestManifestForBuildParams{ChannelID: ch.ID, HostBuild: build})
+		}
+		if err != nil {
 			return failure(err, "manifest")
 		}
 		return nil

@@ -376,6 +376,9 @@ enum PluxErrorCode {
   /// Assets still being processed.
   assetsNotReady(8053, 'ASSETS_NOT_READY', 'Assets still being processed'),
 
+  /// Host build lacks a native entry.
+  hostBuildIncompatible(8054, 'HOST_BUILD_INCOMPATIBLE', 'Host build lacks a native entry'),
+
   /// Internal error.
   internalServerError(8090, 'INTERNAL_SERVER_ERROR', 'Internal error'),
 

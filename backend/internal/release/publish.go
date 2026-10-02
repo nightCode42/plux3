@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 	"testing/fstest"
 	"time"
 
@@ -288,6 +289,12 @@ func (s *Service) RunPublish(ctx context.Context, job Job) error {
 	if diags.HasErrors() {
 		return s.fail(ctx, system, row, diags)
 	}
+	builds, err := s.hostBuildChecks(ctx, system, row, c)
+	if err != nil {
+		return err
+	}
+	diags = append(slices.Clone(diags), builds...)
+	diags.Sort()
 	if !row.AcknowledgeWarnings && slices.ContainsFunc(diags, func(d plxerr.Diagnostic) bool { return d.Severity == plxerr.SeverityWarning }) {
 		d := plxerr.NewDiagnostic(plxerr.WarningsNotAcknowledged, plxerr.Location{}, "the publish found warnings; acknowledge them to publish")
 		return s.fail(ctx, system, row, append(diags, d))
@@ -598,6 +605,13 @@ func (s *Service) recordVersion(ctx context.Context, p auth.Principal, row dbgen
 		if err != nil {
 			return err
 		}
+		uses, err := encodeUses(compiler.NativeUses(c.result, draftFiles(c.key)))
+		if err != nil {
+			return err
+		}
+		if err := q.SetVersionNativeUses(ctx, dbgen.SetVersionNativeUsesParams{ID: storage.MustUUID(id), NativeUses: uses}); err != nil {
+			return failure(err, "version")
+		}
 		if err := s.finishTx(ctx, q, row, StateSucceeded, diags, next); err != nil {
 			return err
 		}
@@ -716,4 +730,34 @@ func jobOf(r dbgen.PublishJob) PublishJob {
 	}
 	_ = json.Unmarshal(r.Diagnostics, &j.Diagnostics) //nolint:errcheck // written by this package
 	return j
+}
+
+// hostBuildChecks checks the native routes, slots and custom actions the
+// published draft uses against the catalogue of every host build of the
+// app (WGT-032): what a build lacks is a warning at the use's JSON path,
+// which the publisher acknowledges; that build's devices keep the newest
+// release they can run (REL-080).
+func (s *Service) hostBuildChecks(ctx context.Context, p auth.Principal, row dbgen.PublishJob, c compiled) (plxerr.Diagnostics, error) {
+	var out plxerr.Diagnostics
+	err := s.inOrg(ctx, p, func(ctx context.Context, tx pgx.Tx) error {
+		builds, err := catalogues(ctx, dbgen.New(tx), row.AppID)
+		if err != nil {
+			return err
+		}
+		for _, b := range builds {
+			out = append(out, compiler.HostBuildIncompatibilities(c.result, draftFiles(c.key), b.build, b.catalogue)...)
+		}
+		return nil
+	})
+	return out, err
+}
+
+// draftFiles accepts the files of the draft a publish records: a plugin's
+// directory, or, for the app bundle, everything outside the plugins.
+func draftFiles(key string) func(string) bool {
+	if key == "" {
+		return func(f string) bool { return !strings.HasPrefix(f, "plugins/") }
+	}
+	prefix := "plugins/" + key + "/"
+	return func(f string) bool { return strings.HasPrefix(f, prefix) }
 }

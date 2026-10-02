@@ -67,6 +67,9 @@ func (u *unit) checkStep(g *graph, i int, index map[string]int32) *step {
 		if input == nil {
 			return nil
 		}
+		u.graph.add(Edge{From: graphFrom(g), Kind: EdgeUsesAction, To: st.Action, File: g.file, Path: ptr + "/action"})
+	} else if name := literalString(st.Input["action"]); st.Action == "callNative" && u.natives.actions[name] != nil {
+		u.graph.add(Edge{From: graphFrom(g), Kind: EdgeUsesAction, To: name, File: g.file, Path: ptr + "/input/action"})
 	}
 	out := &step{ptr: ptr, id: st.ID, action: a.ID, next: -1, onSuccess: -1, onError: -1, retry: st.Retry}
 	if st.TimeoutMs != nil {

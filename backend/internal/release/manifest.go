@@ -16,7 +16,9 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 
+	"github.com/nightCode42/plux3/backend/internal/compiler"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/schema/jcs"
 	"github.com/nightCode42/plux3/backend/internal/signing"
@@ -157,59 +159,112 @@ func (s *Service) SignManifest(ctx context.Context, job ManifestJob) error {
 }
 
 // signAndStore builds, signs and stores a channel's manifest, and
-// records the public key it was signed with.
+// records the public key it was signed with. For each host build that
+// cannot run the channel's release it also signs a manifest of the newest
+// release the build can run, which its devices receive instead (REL-080).
 func (s *Service) signAndStore(ctx context.Context, q *dbgen.Queries, channel dbgen.Channel, env dbgen.Environment) error {
-	doc, err := s.manifestDocument(ctx, q, channel, env)
+	at := s.now()
+	rel, err := q.GetRelease(ctx, dbgen.GetReleaseParams{AppID: env.AppID, Sequence: channel.ReleaseSequence})
+	if err != nil {
+		return failure(err, "release")
+	}
+	own, err := s.signRelease(ctx, q, channel, env, rel, at, "", pgtype.UUID{})
 	if err != nil {
 		return err
 	}
-	plain, err := json.Marshal(doc)
-	if err != nil {
-		return fmt.Errorf("release: %w", err)
+	builds, err := catalogues(ctx, q, env.AppID)
+	if err != nil || len(builds) == 0 {
+		return err
 	}
-	signed, err := jcs.Canonicalize(plain, manifestDepth)
-	if err != nil {
-		return fmt.Errorf("release: %w", err)
-	}
-	sig, keyID, err := s.o.Signer.Sign(ctx, env.SigningKeyRef, signed)
-	if err != nil {
-		return fmt.Errorf("release: sign the manifest: %w", err)
-	}
-	pub, _, err := s.o.Signer.PublicKey(ctx, env.SigningKeyRef)
-	if err != nil {
-		return fmt.Errorf("release: %w", err)
-	}
-	if err := q.UpsertEnvironmentKey(ctx, dbgen.UpsertEnvironmentKeyParams{
-		EnvironmentID: env.ID, OrganizationID: env.OrganizationID, KeyID: keyID, Algorithm: signing.Algorithm, PublicKey: pub,
-	}); err != nil {
-		return failure(err, "environment key")
-	}
-	sigs, err := json.Marshal([]ManifestSignature{{KeyID: keyID, Algorithm: signing.Algorithm, Signature: base64.StdEncoding.EncodeToString(sig)}})
-	if err != nil {
-		return fmt.Errorf("release: %w", err)
-	}
-	id, err := s.newID()
+	uses, err := nativeUses(rel.NativeUses)
 	if err != nil {
 		return err
 	}
-	issued, _ := time.Parse(time.RFC3339, doc.IssuedAt)
-	expires, _ := time.Parse(time.RFC3339, doc.Expires)
-	if _, err := q.InsertManifest(ctx, dbgen.InsertManifestParams{
-		ID: storage.MustUUID(id), OrganizationID: channel.OrganizationID, ChannelID: channel.ID,
-		ReleaseSequence: channel.ReleaseSequence, Signed: signed, Signatures: sigs,
-		IssuedAt: storage.Timestamp(issued), ExpiresAt: storage.Timestamp(expires),
-	}); err != nil {
-		return failure(err, "manifest")
+	all, err := q.ListAllReleases(ctx, env.AppID)
+	if err != nil {
+		return failure(err, "release")
+	}
+	for _, b := range builds {
+		if compiler.Compatible(uses, b.catalogue) {
+			continue
+		}
+		fb, err := fallbackFor(all, rel.Sequence, env.Production, b.catalogue)
+		if err != nil {
+			return err
+		}
+		i := slices.IndexFunc(all, func(r dbgen.Release) bool { return r.Sequence == fb })
+		if i < 0 {
+			continue // no release the build can run: it gets the channel's
+		}
+		if _, err := s.signRelease(ctx, q, channel, env, all[i], at, b.build, own); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-// manifestDocument builds the signed part for a channel.
-func (s *Service) manifestDocument(ctx context.Context, q *dbgen.Queries, ch dbgen.Channel, env dbgen.Environment) (SignedManifest, error) {
-	rel, err := q.GetRelease(ctx, dbgen.GetReleaseParams{AppID: env.AppID, Sequence: ch.ReleaseSequence})
+// signRelease signs and stores the manifest of one release on a channel:
+// the channel's own when build is "", else build's, signed with own.
+func (s *Service) signRelease(ctx context.Context, q *dbgen.Queries, channel dbgen.Channel, env dbgen.Environment,
+	rel dbgen.Release, at time.Time, build string, own pgtype.UUID,
+) (pgtype.UUID, error) {
+	doc, err := s.manifestDocument(ctx, q, channel, env, rel, at)
 	if err != nil {
-		return SignedManifest{}, failure(err, "release")
+		return pgtype.UUID{}, err
 	}
+	plain, err := json.Marshal(doc)
+	if err != nil {
+		return pgtype.UUID{}, fmt.Errorf("release: %w", err)
+	}
+	signed, err := jcs.Canonicalize(plain, manifestDepth)
+	if err != nil {
+		return pgtype.UUID{}, fmt.Errorf("release: %w", err)
+	}
+	sig, keyID, err := s.o.Signer.Sign(ctx, env.SigningKeyRef, signed)
+	if err != nil {
+		return pgtype.UUID{}, fmt.Errorf("release: sign the manifest: %w", err)
+	}
+	pub, _, err := s.o.Signer.PublicKey(ctx, env.SigningKeyRef)
+	if err != nil {
+		return pgtype.UUID{}, fmt.Errorf("release: %w", err)
+	}
+	if err := q.UpsertEnvironmentKey(ctx, dbgen.UpsertEnvironmentKeyParams{
+		EnvironmentID: env.ID, OrganizationID: env.OrganizationID, KeyID: keyID, Algorithm: signing.Algorithm, PublicKey: pub,
+	}); err != nil {
+		return pgtype.UUID{}, failure(err, "environment key")
+	}
+	sigs, err := json.Marshal([]ManifestSignature{{KeyID: keyID, Algorithm: signing.Algorithm, Signature: base64.StdEncoding.EncodeToString(sig)}})
+	if err != nil {
+		return pgtype.UUID{}, fmt.Errorf("release: %w", err)
+	}
+	id, err := s.newID()
+	if err != nil {
+		return pgtype.UUID{}, err
+	}
+	issued, _ := time.Parse(time.RFC3339, doc.IssuedAt)
+	expires, _ := time.Parse(time.RFC3339, doc.Expires)
+	if build == "" {
+		_, err = q.InsertManifest(ctx, dbgen.InsertManifestParams{
+			ID: storage.MustUUID(id), OrganizationID: channel.OrganizationID, ChannelID: channel.ID,
+			ReleaseSequence: rel.Sequence, Signed: signed, Signatures: sigs,
+			IssuedAt: storage.Timestamp(issued), ExpiresAt: storage.Timestamp(expires),
+		})
+	} else {
+		_, err = q.InsertBuildManifest(ctx, dbgen.InsertBuildManifestParams{
+			ID: storage.MustUUID(id), OrganizationID: channel.OrganizationID, ChannelID: channel.ID,
+			ReleaseSequence: rel.Sequence, Signed: signed, Signatures: sigs,
+			IssuedAt: storage.Timestamp(issued), ExpiresAt: storage.Timestamp(expires),
+			HostBuild: build, OwnManifestID: own,
+		})
+	}
+	if err != nil {
+		return pgtype.UUID{}, failure(err, "manifest")
+	}
+	return storage.MustUUID(id), nil
+}
+
+// manifestDocument builds the signed part for a release on a channel.
+func (s *Service) manifestDocument(ctx context.Context, q *dbgen.Queries, ch dbgen.Channel, env dbgen.Environment, rel dbgen.Release, at time.Time) (SignedManifest, error) {
 	appVersion, err := q.GetVersionByID(ctx, rel.AppVersionID)
 	if err != nil {
 		return SignedManifest{}, failure(err, "version")
@@ -222,7 +277,7 @@ func (s *Service) manifestDocument(ctx context.Context, q *dbgen.Queries, ch dbg
 	if err != nil {
 		return SignedManifest{}, err
 	}
-	return newManifest(env, ch, rel.Sequence, appVersion, versions, control, s.now()), nil
+	return newManifest(env, ch, rel.Sequence, appVersion, versions, control, at), nil
 }
 
 // newManifest builds the signed part of a channel's manifest. Every list
