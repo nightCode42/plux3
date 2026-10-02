@@ -132,9 +132,9 @@ download (+68,776 B); the other files change by less than 200 B.
 2. **The armeabi-v7a APK crossed 6.5 MiB,** at 6.61 MiB: round 1 left it 0.10 MiB of
    room, and the job failed on that budget alone; every build stayed within 10% of its
    baseline.
-3. **A measured lever, not taken:** flatc's generated `toString` methods on the bundle
-   classes are about 105 KB of AOT code in a local x64 build; release builds never print
-   them.
+3. **A candidate, not implemented:** a local x64 AOT build without flatc's generated
+   `toString` methods on the bundle classes was about 105 KB smaller. It is not a CI figure,
+   and the runtime still ships those methods.
 
 **Decided by the maintainer:** the Android budgets rise to 4 MiB for the App Bundle download
 and 10 MiB for the APK of each ABI; the IPA stays at 3 MiB (`RT-061`, `NFR-009`,

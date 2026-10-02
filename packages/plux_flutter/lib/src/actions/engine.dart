@@ -211,7 +211,9 @@ final class ActionHost {
   }
 
   /// Reports, once per handler in debug builds, the options P4 ignores: a
-  /// concurrency policy other than drop, and detached runs (ADR-0039).
+  /// concurrency policy other than drop or parallel, which is also how the
+  /// compiler encodes an absent policy, and detached runs (ADR-0039). Every
+  /// policy runs as drop.
   void _unsupported(fbs.Handler h, String key) {
     final policy = h.concurrency;
     if (policy != fbs.Concurrency.Parallel && policy != fbs.Concurrency.Drop) {

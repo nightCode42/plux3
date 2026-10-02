@@ -94,7 +94,9 @@ arrive in P5 (`ACT-004`).
 A graph may declare options that P5 delivers. The P4 runtime runs the graph without them,
 and reports each once in debug builds with `PLX-4010`:
 
-- a concurrency policy other than `drop` or `parallel`: it runs as `drop`;
+- a concurrency policy of `restart`, `queue`, `debounce` or `throttle`: it runs as `drop`. A
+  declared `parallel` also runs as `drop`, and is not reported: the compiler encodes an
+  absent policy as `parallel`, so the two cannot be told apart until P5;
 - a step's `retry`: the step runs once (`ACT-006`);
 - `detached`: the run is cancelled with its page.
 
@@ -104,7 +106,7 @@ Each run records `action_run` with these fields, under analytics consent
 ([telemetry](telemetry.md)):
 
 - `graph_id`;
-- `trigger`: `event`, `guard` or `link`;
+- `trigger`: `event`; `guard` and `link` once guards and deep links start runs (P4 R4);
 - `duration_ms`;
 - `result`: `ok`, `failed` or `cancelled`;
 - `steps`;
