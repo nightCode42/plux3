@@ -12,6 +12,7 @@ workspace:
   - packages/plux_devtools
   - packages/plux_flutter
   - packages/plux_go_router
+  - packages/plux_native_scan
   - packages/plux_widget_api
   - test/bench/runtime
   - test/size/blank

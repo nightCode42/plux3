@@ -42,11 +42,30 @@ sha256sum --check --ignore-missing SHA256SUMS
 | `plux export [-C dir] [-o dir]` | Writes the server's drafts in the Git layout. |
 | `plux import [-C dir]` | Replaces the server's drafts with the local project. |
 | `plux keys [-C dir] [--env key]` | Lists the public keys an environment's manifests and bundles are signed with. |
+| `plux native scan [--host dir] [-o file] [--build id]` | Writes the host app's native catalogue, `plux.catalogue.json`, by static analysis, with no change to its code (`CLI-006`, [ADR-0041](../adr/0041-native-catalogue-and-host-builds.md)): it runs `dart run plux_native_scan` in the host project (`--host`, default `.`), which needs `plux_native_scan` as a dev dependency, with the slot classes `plux.yaml` lists and the host build (below). The scanner's problems, such as a type with no document type, are printed with their locations; its exit code is the command's. |
+| `plux native sync [--build id] [--host dir] [--catalogue file] [-C dir]` | Uploads the catalogue of one host build (`NativeCatalogueService`). A build's catalogue never changes: the same content again changes nothing, and other content is refused (`PLX-8032`), so a new build needs its own identifier. Needs the `release.publish` permission. |
 | `plux completion bash\|zsh\|fish\|powershell` | Prints a shell completion script (`CLI-008`), e.g. `source <(plux completion bash)`. |
 | `plux version` | Prints the version, commit, commit date, Go version and platform of the binary. |
 | `plux help` | Lists the commands. `plux <command> -h` lists a command's flags. |
 
 Flags come before positional arguments. Every server command accepts `--server`, `--org` and `--json`; those that act on an app also accept `--app` and `-C <project-dir>` (default `.`).
+
+**Host builds and `plux.yaml`.** The host build is the string the host's devices report as
+`PluxConfig.hostBuild`: `--build`, else `plux.yaml`'s `hostBuild`, else the `version` of
+the host's `pubspec.yaml`, such as `1.4.0+52`; pass the same string to `PluxConfig`.
+`plux.yaml`, at the host project's root, is read without a YAML library, so it keeps to
+top-level `key: value` lines and lists of names:
+
+```yaml
+slots:            # the widget classes plugins may place as native slots (WGT-030)
+  - MapCard
+hostBuild: 1.4.0+52   # optional
+appId: com.example.shop   # optional: the catalogue's host.appId
+catalogueId: 01f0c450-6c00-7000-8000-000000000003   # optional: keeps the catalogue's ID
+```
+
+The catalogue keeps the ID of the file it replaces, so scanning unchanged code writes the
+same bytes.
 
 `validate` and `build` work fully offline against a local directory, so CI can check a change without a server (`CLI-005`). They run the compiler described in [compiler.md](compiler.md) with the registry's default limits and record the binary's version in every bundle.
 

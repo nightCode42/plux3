@@ -166,6 +166,19 @@ code returns before a plugin sees it. A route's screen returns its result with
 (`PLX-4200`–`PLX-4202`), and an exception in your code is reported with its type only
 (`PLX-4205`).
 
+Build the catalogue and upload it for each build you ship:
+
+```sh
+dart pub add --dev plux_native_scan
+plux native scan                  # writes plux.catalogue.json
+plux native sync -C ../my-plux-project   # uploads it for the pubspec.yaml version
+```
+
+List your slot widgets in `plux.yaml` and pass the build to `PluxConfig` as `hostBuild`
+(the version in `pubspec.yaml`, such as `1.4.0+52`, unless you choose another). A release
+that uses something a build lacks is flagged at publish, and that build's devices keep the
+newest release they can run ([CLI reference](../reference/cli.md)).
+
 ### Apps that use go_router or auto_route
 
 Add Plux's routes to your router and pass the router through its adapter; your existing

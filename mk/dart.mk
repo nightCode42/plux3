@@ -6,7 +6,7 @@
 
 .PHONY: dart-check dart-get dart-lock-check dart-fmt dart-fmt-check dart-analyze dart-test dart-cover widgets-api widgets-api-check
 
-DART_PACKAGES := packages/plux_auto_route packages/plux_devtools packages/plux_flutter packages/plux_go_router packages/plux_svgc packages/plux_widget_api apps/starter test/bench/runtime
+DART_PACKAGES := packages/plux_auto_route packages/plux_devtools packages/plux_flutter packages/plux_go_router packages/plux_native_scan packages/plux_svgc packages/plux_widget_api apps/starter test/bench/runtime
 # Generated Dart code is verified by regeneration (CI-003), not by the formatter.
 DART_SOURCES  := find packages apps test/bench test/size -name '*.dart' ! -name '*.g.dart' ! -name '*_generated.dart' ! -path '*/build/*' ! -path '*/.dart_tool/*' -print0
 

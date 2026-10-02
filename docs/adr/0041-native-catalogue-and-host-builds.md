@@ -133,7 +133,28 @@ package depends on. It reads:
   type arguments.
 
 Dart types map to the document type system. A type with no mapping is reported with its
-source location, and the entry is left out, never guessed. The output is
+source location, and the entry is left out, never guessed.
+
+As built in R6:
+
+- `plux native scan` reads `plux.yaml` and the host's `pubspec.yaml` and passes the slot
+  classes, the host build, an optional `appId` and an optional `catalogueId` to
+  `dart run plux_native_scan`, so the scanner depends on `analyzer` and `path` alone.
+  `plux.yaml` keeps to top-level `key: value` lines and lists of names, which the Go CLI
+  reads without a YAML library ([CLI reference](../reference/cli.md)).
+- Routes come from named `GoRoute`s, whose path parameters are strings; from auto_route
+  `@RoutePage` classes, named as auto_route names them (`ProfilePage` → `ProfileRoute`),
+  whose `@PathParam` and `@QueryParam` parameters are theirs (auto_route declares no
+  result type); and from `nativeRoutes`, where `PluxNativeRoute<P, R>` takes its parameters
+  from the constructor of the class `P` and its result from `R`. A registration wins over a
+  discovered route of the same name, as at run time.
+- "Left out" is per entry: an optional parameter, or a slot prop, of a type with no
+  mapping is left out (the host's builder supplies such a prop); a route or action that
+  requires one, or an auto_route page that requires a typed argument, is left out
+  entirely, since plugins could not open or call it. Slot events take the callback's one
+  parameter as payload; a callback with more is left out.
+- The catalogue keeps the identifier of the file it replaces, so scanning unchanged code
+  writes the same bytes. The output is
 `plux.catalogue.json`, a native catalogue document. It is deterministic: keys and entries
 are sorted, and it holds no timestamps and no absolute paths. Fixture host apps
 (`go_router`, `auto_route`, plain, and slots with every parameter shape) test the scanner.
@@ -141,8 +162,11 @@ are sorted, and it holds no timestamps and no absolute paths. Fixture host apps
 ### Host builds and `plux native sync`
 
 A **host build** is identified by the string devices report as `PluxConfig.hostBuild`. By
-default it is the host's `pubspec.yaml` version, for example `1.4.0+52`. The catalogue's
-`host.version` and `host.build` describe it.
+default `plux native scan` and `sync` take the host's `pubspec.yaml` version, for example
+`1.4.0+52`, unless `--build` or `plux.yaml`'s `hostBuild` names another. The runtime cannot
+read the host's `pubspec.yaml`, so `PluxConfig.hostBuild` has no default: the host passes
+the same string (the code R8 generates does). The catalogue's `host.version` and
+`host.build` describe it.
 
 `plux native sync --build <id>` uploads the catalogue through a new
 `NativeCatalogueService`:
@@ -183,6 +207,24 @@ app.
   - The publisher sees how many devices that affects before approving.
 - Devices that report no host build, or a build with no catalogue, are judged by their
   runtime version alone, as today.
+
+As built in R6:
+
+- Each publish records the native entries its draft uses, with the types it was compiled
+  against, and a release records its versions' together. A build whose catalogue arrives
+  after a release is judged by them, without compiling again.
+- A publish warns with `PLX-8054` at each use a build lacks, in the draft's own files; the
+  publisher acknowledges it as any warning.
+- A build's fallback is the newest earlier release it can run; in a production
+  environment, only a release once promoted to production.
+- The worker signs, with each channel manifest, a manifest of the fallback release for
+  every build that cannot run the channel's release. A device of that build receives it
+  while the channel manifest it was signed with is the newest; a build with no fallback
+  receives the channel's. Uploading a catalogue has every channel of the app signed again.
+- `GetCompatibility` lists the builds that cannot run a release, with their devices,
+  fallback and missing entries, and counts their devices among the incompatible ones.
+- The device's token carries the build it registered or last reported, so choosing its
+  manifest costs no query.
 
 ### Runtime
 

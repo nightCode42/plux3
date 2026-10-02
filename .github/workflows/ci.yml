@@ -307,8 +307,9 @@ jobs:
           # was checked by hand against the package's LICENSE file:
           #   Apache-2.0    clock, cryptography, material_color_utilities,
           #                 webdriver;
-          #                 plux_flutter, plux_devtools, plux_go_router and
-          #                 plux_auto_route are this repository's
+          #                 plux_flutter, plux_devtools, plux_go_router,
+          #                 plux_auto_route and plux_native_scan are this
+          #                 repository's
           #                 (REUSE.toml), not yet on pub.dev
           #   BSD-3-Clause  the Dart team packages below, go_router,
           #                 material_ui and cupertino_ui (Flutter team),
@@ -334,6 +335,7 @@ jobs:
             pkg:pub/objective_c, pkg:pub/path, pkg:pub/petitparser,
             pkg:pub/platform, pkg:pub/plux_auto_route, pkg:pub/plux_devtools,
             pkg:pub/plux_flutter, pkg:pub/plux_go_router,
+            pkg:pub/plux_native_scan,
             pkg:pub/pool, pkg:pub/process, pkg:pub/pub_semver,
             pkg:pub/record_use, pkg:pub/riverpod, pkg:pub/source_maps,
             pkg:pub/stack_trace, pkg:pub/test, pkg:pub/test_api,

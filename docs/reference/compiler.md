@@ -9,8 +9,13 @@ The Plux compiler turns a project in the [Git layout](document-model.md#1-projec
 | `Compile(fsys, opts)` | `Result`: the app bundle, one bundle per plugin (sorted by key), the reference graph and every diagnostic. Bundles are produced only when no error is reported. |
 | `NewValidator(fsys, opts)` | A `Validator` holding the loaded project, and the project's structural diagnostics. |
 | `(*Validator).ValidatePage(file, data)` | The diagnostics of an edited or new page (§5). |
+| `NativeUses(res, keep)` | The native routes, slots and custom actions the compiled project uses, in the files `keep` accepts, each with the types the project's catalogue declares for it (`NativeUse`) ([ADR-0041](../adr/0041-native-catalogue-and-host-builds.md)). |
+| `HostBuildIncompatibilities(res, keep, build, catalogue)` | A `PLX-8054` warning at the JSON path of each use of a native entry that a host build's catalogue lacks or declares with other types (`WGT-032`). |
+| `Compatible(uses, catalogue)` | Whether a host build with that catalogue declares every use the same way (`REL-080`). |
 
 `Options` holds the limits registry (`LIM-001`; `DefaultOptions` uses its defaults), the mode (`Release` or `Development`), the compiler version written into every meta section, and `AssetVariants`, which returns an asset file's transcoded WebP and AVIF variants by its SHA-256 for the asset index (`CMP-030`, [ADR-0027](../adr/0027-asset-pipeline.md)); without it the index lists none. Every asset file is checked against `asset.fileSize` and the assets each plugin uses against `plugin.assetBytes` (`AST-003`). Each `Bundle` carries its kind, UUID, key, encoded bytes, bundle hash (`BND-005`), sorted required features (`BND-008`) and, in release mode, its source map as separate bytes (`CMP-041`).
+
+The reference graph's edges include `navigatesNative`, `usesSlot` and `usesAction`, the uses of the native catalogue that the three functions above read; `Result.Natives` is the catalogue the project is compiled against.
 
 Neither `Compile` nor `ValidatePage` panics: an unexpected failure is recovered and reported as `PLX-2201` (`CMP-052`), and both are fuzzed (`FuzzCompile`, `FuzzValidatePage`).
 

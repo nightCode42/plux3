@@ -12,7 +12,7 @@ Per-requirement implementation status is **not** tracked here; it lives only in 
 |---|---|
 | Phase | P4 — Routing, host integration and no-code generation (plan approved 2026-10-01) |
 | Active branch | `claude/kind-ptolemy-tqyty7` (the session branch the environment pins; maintainer-approved, plan §2.1 A2; R0 and the following milestones merge together, A10) |
-| Active work | R4, R5 and R6 together (maintainer, 2026-10-02): R4 — guards, deep links, push, auth and user context — implemented and pushed as a checkpoint (code, tests, docs; local gates pass); R6's runtime half — native routes, slots and custom actions, the app bundle's catalogue declarations — pushed as a checkpoint; R5 — `plux_go_router` and `plux_auto_route`, with the shared delegate suite — pushed as a checkpoint; R6's tooling and server half in progress; one exit gate for the three |
+| Active work | R4, R5 and R6 together (maintainer, 2026-10-02): R4 — guards, deep links, push, auth and user context — implemented and pushed as a checkpoint (code, tests, docs; local gates pass); R6's runtime half — native routes, slots and custom actions, the app bundle's catalogue declarations — pushed as a checkpoint; R5 — `plux_go_router` and `plux_auto_route`, with the shared delegate suite — pushed as a checkpoint; R6's server half (`NativeCatalogueService`, publish checks, per-build compatibility and manifests) pushed, and its tooling (`plux_native_scan`, `plux native scan` and `sync`) implemented; next the shared exit gate of the three |
 | Requirement IDs | R4: `NAV-008`, `NAV-009`, `HST-010`, `HST-011`; R5: `NAV-006`, `HST-031` (route discovery); R6: `NAV-002`, `WGT-030`, `WGT-032`, `WGT-033`, `ACT-060`, `HST-031`, `CLI-006`, `REL-080`; statuses move at R11 (plan §4.1). Then all P4 requirements as scoped by [plans/p4.md](plans/p4.md) §3 |
 
 ## Next up
@@ -33,9 +33,10 @@ verified and how.
    runtime benchmark in three parts, device builds during boot, caches (ADR-0043).
 2. **R1 — Decisions and contracts** (done, reviewed; A16–A18 applied).
 3. **R2 — Action engine core** and **R3 — Routing core** (done, reviewed; A19–A21 applied).
-4. Next R4 guards, deep links, push, auth and user context; then R5 router
-   adapters, R6 native catalogue, R7 mixed screens, R8 codegen and init, R9 `plux create`,
-   R10 add-to-app, R11 close the phase.
+4. **R4 — guards, deep links, push, auth and user context**, **R5 — router adapters** and
+   **R6 — native catalogue** (implemented, checkpoints pushed; their shared exit gate is
+   next); then R7 mixed screens, R8 codegen and init, R9 `plux create`, R10 add-to-app,
+   R11 close the phase.
 
 ### P4 approvals (maintainer, 2026-10-01)
 

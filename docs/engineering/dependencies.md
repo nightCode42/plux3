@@ -53,7 +53,7 @@ Valkey is reached with a small RESP client in `backend/internal/cache`, so no Re
 | `flutter_lints` | Lint rule set | BSD-3-Clause | In use (dev) |
 | `test` | Tests of the pure-Dart `plux_widget_api` tool | BSD-3-Clause | In use (dev) |
 | `flat_buffers` | Bundle section accessors in `plux_flutter` ([ADR-0002](../adr/0002-flatbuffers-sectioned-bundles.md)) | Apache-2.0 | In use |
-| `analyzer` | Flutter constructor extraction in the development-only `plux_widget_api` tool ([ADR-0010](../adr/0010-layered-widget-model.md)), and the host scanner `plux_native_scan` behind `plux native scan` (`CLI-006`, [ADR-0041](../adr/0041-native-catalogue-and-host-builds.md); maintainer, 2026-10-01); never a dependency of a shipped package | BSD-3-Clause | In use (tool); approved for `plux_native_scan` (P4) |
+| `analyzer` | Flutter constructor extraction in the development-only `plux_widget_api` tool ([ADR-0010](../adr/0010-layered-widget-model.md)), and the host scanner `plux_native_scan` behind `plux native scan` (`CLI-006`, [ADR-0041](../adr/0041-native-catalogue-and-host-builds.md); maintainer, 2026-10-01); never a dependency of a shipped package | BSD-3-Clause | In use (`plux_widget_api`; `plux_native_scan`, P4 R6) |
 | `flutter_riverpod` 3.4.3 (with `riverpod`) | The runtime's state engine (`RT-003`, [ADR-0008](../adr/0008-riverpod-runtime-state-engine.md)); no code generation | MIT | In use (P3) |
 | `cryptography` 2.9.0 | Ed25519 verification of manifests and baseline bundles, pure-Dart implementation only ([ADR-0029](../adr/0029-on-device-verification.md)) | Apache-2.0 | In use (P3) |
 | `crypto` 3.0.7 | SHA-256 of bundles, sections and assets ([ADR-0029](../adr/0029-on-device-verification.md)) | BSD-3-Clause | In use (P3) |
