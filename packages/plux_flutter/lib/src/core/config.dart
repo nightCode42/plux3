@@ -207,6 +207,7 @@ final class PluxConfig {
     this.pluginFallbackBuilders = const {},
     this.notFoundBuilder,
     this.navigationDelegate,
+    this.navigatorKey,
   }) : assert(downloadParallelism > 0, 'at least one download at a time'),
        assert(
          hostBuild.length <= 64,
@@ -315,4 +316,10 @@ final class PluxConfig {
   /// `Navigator`, with the plain API, when null; `plux_go_router` and
   /// `plux_auto_route` provide delegates for their routers.
   final PluxNavigationDelegate? navigationDelegate;
+
+  /// The key of the app's root `Navigator` (`MaterialApp.navigatorKey`):
+  /// where `Plux.handleDeepLink` and `Plux.handlePushPayload` open their
+  /// routes, since links and notifications arrive outside any widget
+  /// (NAV-008). Without it they open nothing and report `PLX-4102`.
+  final GlobalKey<NavigatorState>? navigatorKey;
 }

@@ -62,10 +62,11 @@ final class PageNavigator implements RunNavigator {
     return c;
   }
 
-  /// The route for an action's target: compiled routes are a page or a
-  /// native route, so a name no page has is a native route the host did
-  /// not register (PLX-4200; registration arrives with ADR-0041).
-  PluxRouteSpec _spec(
+  /// The route for an action's target, once its guards have decided
+  /// (NAV-009): compiled routes are a page or a native route, so a name no
+  /// page has is a native route the host did not register (PLX-4200;
+  /// registration arrives with ADR-0041).
+  Future<PluxRouteSpec> _spec(
     String route,
     Map<String, Object?> params, {
     PluxPresentation? presentation,
@@ -78,7 +79,7 @@ final class PageNavigator implements RunNavigator {
         'no page has the route $route, and the host registers no native route of that name',
       );
     }
-    return router.spec(
+    return router.resolve(
       route,
       _json(params),
       presentation: presentation,
@@ -93,17 +94,21 @@ final class PageNavigator implements RunNavigator {
     String mode,
     String? until,
   ) async {
-    final c = _context();
     final d = router.delegate;
+    if (mode == 'popUntil') {
+      d.popUntil(_context(), until ?? route);
+      return;
+    }
+    final spec = await _spec(route, params);
+    final c = _context();
+    if (!c.mounted) return;
     switch (mode) {
-      case 'popUntil':
-        d.popUntil(c, until ?? route);
       case 'replace':
-        unawaited(d.replace<Object?>(c, _spec(route, params)));
+        unawaited(d.replace<Object?>(c, spec));
       case 'clearAndPush':
-        unawaited(d.clearAndPush<Object?>(c, _spec(route, params)));
+        unawaited(d.clearAndPush<Object?>(c, spec));
       default:
-        unawaited(d.push<Object?>(c, _spec(route, params)));
+        unawaited(d.push<Object?>(c, spec));
     }
   }
 
@@ -114,22 +119,19 @@ final class PageNavigator implements RunNavigator {
     required bool sheet,
     required bool dismissible,
   }) async {
-    final c = _context();
     final target = router.target(route);
     final presentation = sheet
         ? PluxPresentation.bottomSheet
         : target?.presentation == PluxPresentation.fullscreenDialog
         ? PluxPresentation.fullscreenDialog
         : PluxPresentation.dialog;
-    final json = await router.delegate.push<Object?>(
-      c,
-      _spec(
-        route,
-        params,
-        presentation: presentation,
-        dismissible: dismissible,
-      ),
+    final spec = await _spec(
+      route,
+      params,
+      presentation: presentation,
+      dismissible: dismissible,
     );
+    final json = await router.delegate.push<Object?>(_context(), spec);
     return router.typedResult(route, json);
   }
 

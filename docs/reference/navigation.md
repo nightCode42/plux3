@@ -20,8 +20,9 @@ Every route is addressed by its app-wide name only. No caller knows which plugin
 Every navigation follows the same path:
 
 1. The name is resolved to a page of the active release.
-2. Its parameters are checked on entry.
-3. The navigation delegate changes the stack.
+2. Its guards decide whether it opens, redirects or shows its fallback (§4).
+3. Its parameters are checked on entry.
+4. The navigation delegate changes the stack.
 
 **Presentation.** `Plux.open`, `PluxPage` and `navigate` show a page as its page kind says:
 
@@ -82,7 +83,81 @@ checked it. Until the host registers native routes
 ([ADR-0041](../adr/0041-native-catalogue-and-host-builds.md)), such a step fails with
 `PLX-4200`.
 
-## 4. The navigation delegate
+## 4. Guards (`NAV-009`)
+
+A page is entered only when these allow it, in this order:
+
+1. **Kill switch.** A plugin switched off shows its fallback page, before anything else
+   runs (`RT-022`).
+2. **Assurance level.** A page whose `security.requiresAssurance` is above `AL0` shows
+   its fallback. The runtime knows no higher level until attestation arrives in P6
+   (`SEC-007`), so such a page fails closed.
+3. **Guard graphs.** Each graph of `routeOptions.guards` runs in order and returns a
+   `GuardResult` with `stop`: `allow` lets the next guard run, `fallback` shows the
+   page's fallback, and a redirect opens its `route` instead, whose own guards then run.
+
+A refusal shows the page's fallback, as a failing page does, and reports `PLX-4102`. So do
+a guard that fails or ends without a result (guards fail closed), and redirects that come
+back to a route already visited.
+
+**What a guard reads.** Its page's parameters and declared initial state (`params`,
+`page`), `device`, `user`, with `user.authenticated` from the auth delegate, and `flags`.
+App and plugin state arrive in P5 with the actions that set them. A guard may emit host
+events but not navigate: its navigation steps fail with `PLX-4102`, and a redirect is one
+of its results. A redirect's `params` are text, converted by the target page's parameter
+types as a deep link's are; one that does not convert is refused.
+
+**Where guards run.** `Plux.open`, `navigate`, deep links and push payloads run the guards
+before the route is pushed, so the stack holds the route they enter. `PluxView`, a
+`PluxPage` and a shell's tabs run them in the page's place before anything of it builds,
+and show the page they enter there, a redirect's target included, since the host owns
+that part of the stack.
+
+Every guard run records `action_run` with the trigger `guard` ([action engine](action-engine.md#6-telemetry)).
+
+## 5. Deep links and push payloads (`NAV-008`)
+
+`Plux.handleDeepLink(uri)` opens the page a link names, and `Plux.handlePushPayload(data)`
+the page a notification names. The host calls them: with the link the platform delivered,
+and from its own push SDK when the user opens a notification. Plux ships no push SDK. Both
+open their route on the navigator of `PluxConfig.navigatorKey`, through the route's guards,
+and complete with whether a route opened.
+
+**Links.** The app document's `navigation.deepLinks` lists the app's hosts, its custom
+schemes and its path patterns:
+
+- An `https` link must name one of the hosts; any other scheme must be one of the custom
+  schemes. A custom scheme's authority is the path's first segment, so `acme://items/42`
+  and `acme:///items/42` both name `/items/42`.
+- `/p/<route-name>` names the route itself, on every app.
+- Otherwise the first pattern whose segments match: literal segments are equal, and a
+  `{name}` segment captures that parameter, percent-decoded. A trailing slash is ignored.
+- Query parameters fill the route's other parameters by name; a path parameter wins over
+  a query parameter of the same name. Names the route does not declare, such as a
+  campaign's, are left out.
+- Text is converted by each parameter's declared type; text that does not convert shows
+  the page's error fallback (`PLX-4101`).
+
+A link nothing maps opens nothing and reports `PLX-4103`, naming only its scheme, host and
+path, since a query can carry user data. A link whose percent-encoding does not decode
+maps nothing. Deep links open plugin pages only: the host routes its own links.
+
+**Push payloads.** The app document's `push` names the payload key, `plux` by default. Under
+it, as an object or as that object's JSON text (the form FCM data messages carry), the
+payload holds `{"route": …, "params": {…}}`. A dotted key reaches into nested objects. The
+route opens as a link's does.
+
+## 6. The user context (`HST-011`)
+
+`Plux.setUserContext(PluxUser(id: …, attributes: {…}))` sets the pseudonymous user and their
+attributes as text. Each attribute the app document's `userContext` declares is converted
+to its declared type and read as `user.<name>`; one that is not set reads as null. An
+attribute the app does not declare, or whose text does not convert, is left out and
+reported once with `PLX-4204`, by name only. No attribute, and not the user's ID, reaches
+telemetry; attributes the app declares non-sensitive may from P9, for rollouts and
+experiments.
+
+## 7. The navigation delegate
 
 `PluxConfig.navigationDelegate` is the seam every navigation goes through. Plux describes the
 route as a `PluxRouteSpec`: its name, presentation, transition, whether it is dismissible,
@@ -93,7 +168,7 @@ The default, `PluxNavigatorDelegate`, drives the nearest `Navigator` with the pl
 needs no router and works in any app, `MaterialApp.router` apps included. `plux_go_router`
 and `plux_auto_route` provide delegates for their routers (P4 R5).
 
-## 5. Transitions (`NAV-010`)
+## 8. Transitions (`NAV-010`)
 
 A page's `routeOptions.transition` picks how its page route moves in:
 
@@ -109,7 +184,7 @@ A page's `routeOptions.transition` picks how its page route moves in:
 Predictive back needs `android:enableOnBackInvokedCallback="true"` on the host's
 `<application>`, as the starter app sets. Custom timelines arrive in P5 with animations.
 
-## 6. Shells and tabs
+## 9. Shells and tabs
 
 `PluxShell('main')` shows the shell of that key from the app document's
 `navigation.shells`:
@@ -122,13 +197,13 @@ Predictive back needs `android:enableOnBackInvokedCallback="true"` on the host's
 `switchTab` selects a tab of the enclosing shell. Without a shell holding that tab, it fails
 with `PLX-4102`.
 
-## 7. Host events (`HST-013`)
+## 10. Host events (`HST-013`)
 
 `Plux.events` is a stream of `PluxHostEvent`: the events plugins emit with `emitHostEvent`,
 each with its declared name and its payload in JSON form. The app document declares them in
 `hostEvents`. `plux codegen` generates a typed class per event (P4 R8).
 
-## 8. Telemetry (`NAV-012`)
+## 11. Telemetry (`NAV-012`)
 
 Every page that is shown records `screen_view` when it is removed, with:
 

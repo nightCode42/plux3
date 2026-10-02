@@ -830,6 +830,14 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Write a value of the entry's declared type; plux codegen generates typed accessors that make this a compile error.
 
+### PLX-4204
+
+`USER_CONTEXT_INVALID` · warning · User context attribute ignored
+
+**Cause.** Plux.setUserContext was given an attribute the app's userContext does not declare, or one whose text does not convert to its declared type; the attribute is left out of user.<name>, which reads as null (HST-011).
+
+**Fix.** Pass only the attributes the app declares, each as the text of its declared type: true or false, a number, a decimal, an ISO 8601 date, or an enum member.
+
 ## Actions, data and local database (PLX-5000–5999)
 
 ### PLX-5001

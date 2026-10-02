@@ -1040,13 +1040,14 @@ func (u *unit) metaSection(o *out) {
 	}
 	nameOff, keyOff := b.CreateString(name), b.CreateString(key)
 	compiler, schemaVersion, minRuntime := b.CreateString(u.opts.Version), b.CreateString(schema.CurrentVersion), b.CreateString(app.MinRuntimeVersion)
-	var defLocale, entryRoute, profile, notFound, shells flatbuffers.UOffsetT
+	var defLocale, entryRoute, profile, notFound, shells, links, push flatbuffers.UOffsetT
 	if o.pl == nil {
 		defLocale, entryRoute, profile = b.CreateString(app.DefaultLocale), b.CreateString(app.EntryRoute), b.CreateString(string(app.SecurityProfile))
 		if nav := app.Navigation; nav != nil && nav.NotFound != "" {
 			notFound = b.CreateString(nav.NotFound)
 		}
 		shells = u.shellTables(e)
+		links, push = u.deepLinksTable(b), u.pushTable(b)
 	}
 	fbs.MetaStart(b)
 	fbs.MetaAddKind(b, fbs.BundleKind(o.kind)) //nolint:gosec // G115: bundle kinds are 1–3.
@@ -1082,6 +1083,8 @@ func (u *unit) metaSection(o *out) {
 		addOptional(b, sampling, fbs.MetaAddTelemetrySampling)
 		addOptional(b, notFound, fbs.MetaAddNotFoundRoute)
 		addOptional(b, shells, fbs.MetaAddShells)
+		addOptional(b, links, fbs.MetaAddDeepLinks)
+		addOptional(b, push, fbs.MetaAddPush)
 	}
 	o.add(bundle.SectionMeta, o.id, finish(b, fbs.MetaEnd(b), bundle.SectionMeta))
 }

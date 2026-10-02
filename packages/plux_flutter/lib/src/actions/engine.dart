@@ -58,9 +58,6 @@ enum RunTrigger {
 
   /// A route guard (NAV-009).
   guard,
-
-  /// A deep link or a push payload opening a route.
-  link,
 }
 
 /// The engine of one page or embedded view.

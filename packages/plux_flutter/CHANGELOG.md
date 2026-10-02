@@ -22,6 +22,20 @@ each milestone of the phase.
   show the not-found page (`PLX-4100`). `PluxConfig.navigationDelegate` is the seam every
   navigation goes through, and `PluxConfig.notFoundBuilder` the host's not-found page.
 - `Plux.events`: the typed events plugins emit (`PluxHostEvent`).
+- Route guards (ADR-0040): before a page is entered, its plugin's kill switch, the
+  assurance level it requires and its guard graphs decide whether it opens, redirects or
+  shows its fallback (`PLX-4102`). Pages that require an assurance level above `AL0` fail
+  closed until attestation arrives. Bundles with guarded pages require
+  `navigation.guards.v1`, which this runtime supports.
+- `Plux.handleDeepLink` and `Plux.handlePushPayload` open the pages links and
+  notifications name, through the app document's deep links and push key and the route's
+  guards, on the navigator of the new `PluxConfig.navigatorKey`; a link nothing maps
+  reports `PLX-4103`.
+- `Plux.setUserContext` attributes are typed by the app document's `userContext`;
+  undeclared or ill-typed ones are left out and reported (`PLX-4204`). The user's ID is no
+  longer readable as `user.id`, which the compiler never accepted.
+- Registry value types reaching expressions, such as a graph's `GuardResult`, are keyed by
+  their field names; they were keyed by mismatched strings.
 - Breaking: `PluxAuthDelegate` gains `isAuthenticated`, which PXL reads as
   `user.authenticated`.
 - `PluxView` of an unknown route reports `PLX-4100` (was `PLX-8031`).

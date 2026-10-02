@@ -12,6 +12,11 @@
       "default": "Second",
       "name": "secondLabel",
       "type": "string"
+    },
+    {
+      "default": false,
+      "name": "betaEnabled",
+      "type": "bool"
     }
   ],
   "hostEvents": [
@@ -64,6 +69,32 @@
   "name": "Routing",
   "nativeCatalogue": "01f0c450-6c00-7000-8000-000000000003",
   "navigation": {
+    "deepLinks": {
+      "hosts": [
+        "routing.plux.dev"
+      ],
+      "routes": [
+        {
+          "path": "/items/{itemId}",
+          "route": "detail"
+        },
+        {
+          "path": "/account",
+          "route": "account"
+        },
+        {
+          "path": "/vault",
+          "route": "vault"
+        },
+        {
+          "path": "/count/{n}",
+          "route": "count"
+        }
+      ],
+      "schemes": [
+        "plux-routing"
+      ]
+    },
     "notFound": "missing",
     "shells": [
       {
@@ -94,6 +125,9 @@
   "plugins": [
     "nav"
   ],
+  "push": {
+    "enabled": true
+  },
   "schemaVersion": "1.0.0",
   "securityProfile": "standard",
   "supportedLocales": [
@@ -105,5 +139,18 @@
       "mode": "useCacheThenSync"
     }
   },
-  "theme": "01f0c450-6c00-7000-8000-000000000002"
+  "theme": "01f0c450-6c00-7000-8000-000000000002",
+  "userContext": [
+    {
+      "description": "The customer's plan.",
+      "name": "tier",
+      "type": "string?"
+    },
+    {
+      "description": "Contact address; never sent anywhere.",
+      "name": "email",
+      "sensitive": true,
+      "type": "string?"
+    }
+  ]
 }

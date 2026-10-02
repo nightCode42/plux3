@@ -864,6 +864,14 @@
       "fix": "Write a value of the entry's declared type; plux codegen generates typed accessors that make this a compile error."
     },
     {
+      "code": "PLX-4204",
+      "reason": "USER_CONTEXT_INVALID",
+      "severity": "warning",
+      "title": "User context attribute ignored",
+      "cause": "Plux.setUserContext was given an attribute the app's userContext does not declare, or one whose text does not convert to its declared type; the attribute is left out of user.\u003cname\u003e, which reads as null (HST-011).",
+      "fix": "Pass only the attributes the app declares, each as the text of its declared type: true or false, a number, a decimal, an ISO 8601 date, or an enum member."
+    },
+    {
       "code": "PLX-5001",
       "reason": "ACTION_TIMEOUT",
       "severity": "error",

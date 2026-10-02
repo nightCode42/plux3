@@ -530,6 +530,11 @@ var registry = []Definition{
 		"Write a value of the entry's declared type; plux codegen generates typed accessors that make this a compile error.", false,
 	},
 	{
+		UserContextInvalid, "USER_CONTEXT_INVALID", SeverityWarning, "User context attribute ignored",
+		"Plux.setUserContext was given an attribute the app's userContext does not declare, or one whose text does not convert to its declared type; the attribute is left out of user.<name>, which reads as null (HST-011).",
+		"Pass only the attributes the app declares, each as the text of its declared type: true or false, a number, a decimal, an ISO 8601 date, or an enum member.", false,
+	},
+	{
 		ActionTimeout, "ACTION_TIMEOUT", SeverityError, "Action timed out",
 		"A step or its run took longer than the limits action.stepTimeout or action.runTimeout, or the step's own timeoutMs, allow; time spent waiting for the user in a dialog or bottom sheet does not count (ACT-005, ADR-0039).",
 		"Handle the error with the step's onError, or make the work shorter; an installation may raise the limits within their maximums.", false,

@@ -1,0 +1,20 @@
+{
+  "id": "01f0c450-6c00-7000-8000-00000000022f",
+  "key": "moved",
+  "kind": "actionGraph",
+  "output": "GuardResult",
+  "page": "01f0c450-6c00-7000-8000-00000000022a",
+  "schemaVersion": "1.0.0",
+  "steps": [
+    {
+      "action": "stop",
+      "id": "away",
+      "input": {
+        "result": {
+          "decision": "redirect",
+          "route": "account"
+        }
+      }
+    }
+  ]
+}

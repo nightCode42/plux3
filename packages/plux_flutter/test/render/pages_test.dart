@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plux_flutter/plux_flutter.dart';
+import 'package:plux_flutter/src/core/plux_view.dart';
 
 import '../support/harness.dart';
 
@@ -17,8 +18,9 @@ void main() {
   Future<void> open(
     WidgetTester tester,
     String route,
-    Map<String, Object?> params,
-  ) async {
+    Map<String, Object?> params, {
+    bool guarded = false,
+  }) async {
     await tester.runAsync(
       () => h.startFrom(g.bundles['loan-calculator/demo.pxb']!, {
         'loans': g.bundles['loan-calculator/loans.pxb']!,
@@ -26,7 +28,13 @@ void main() {
     );
     await tester.pumpWidget(
       MaterialApp(
-        home: PluxScope(child: PluxView(route, params: params)),
+        home: PluxScope(
+          // A view whose guards already decided renders the page at once,
+          // so a test of the renderer reaches a guarded page.
+          child: guarded
+              ? routedPluxView(route, params, guarded: true)
+              : PluxView(route, params: params),
+        ),
       ),
     );
     await settle(tester);
@@ -64,9 +72,23 @@ void main() {
   );
 
   testWidgets(
-    'the calculator shows its fallback: a state entry without a default is set by actions (P5) [RT-020]',
+    'the calculator requires assurance AL1, so it shows its fallback until attestation arrives (P6) [NAV-009]',
     (tester) async {
       await open(tester, 'loan-calculator', {'productId': 'personal-12m'});
+      expect(find.text('fallback PLX-4102'), findsOneWidget);
+      final e = h.errors.singleWhere(
+        (e) => e.code == PluxErrorCode.navigationRefused,
+      );
+      expect(e.message, contains('requires assurance AL1'));
+    },
+  );
+
+  testWidgets(
+    'past its guards, the calculator shows its fallback: a state entry without a default is set by actions (P5) [RT-020]',
+    (tester) async {
+      await open(tester, 'loan-calculator', {
+        'productId': 'personal-12m',
+      }, guarded: true);
       expect(find.text('fallback PLX-4001'), findsOneWidget);
       expect(
         h.errors.map((e) => e.message),

@@ -275,6 +275,29 @@ table Shell {
   tabs: [ShellTab];
 }
 
+// A deep-link path pattern mapped to a page route (NAV-008): literal
+// segments and {name} segments, each naming a parameter of the route.
+table DeepLinkRoute {
+  path: string;
+  route: string;
+}
+
+// The links an app answers (NAV-008, ADR-0040): its hosts for https
+// links, its custom schemes, and its path patterns in document order.
+// https://<host>/p/<route-name>?… resolves without a pattern.
+table DeepLinks {
+  hosts: [string];
+  schemes: [string];
+  routes: [DeepLinkRoute];
+}
+
+// Push payloads (NAV-008): the key under which a notification names
+// {route, params} for Plux.handlePushPayload.
+table Push {
+  enabled: bool;
+  payload_key: string;
+}
+
 // A feature flag of the app.
 table Flag {
   name: string (key);
@@ -314,6 +337,12 @@ table Meta {
   not_found_route: string;
   // App bundles: the tabbed shells, in document order (ADR-0040).
   shells: [Shell];
+  // App bundles: the links the app answers (NAV-008); absent when it
+  // declares none.
+  deep_links: DeepLinks;
+  // App bundles: push payloads (NAV-008); absent when the app declares
+  // no push.
+  push: Push;
 }
 
 // ── Section page ──────────────────────────────────────────────────────────

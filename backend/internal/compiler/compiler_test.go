@@ -116,7 +116,7 @@ func TestCompileConformanceProject(t *testing.T) {
 		t.Errorf("plugin sections %v", got)
 	}
 	meta := read[1].Meta
-	if string(meta.CompilerVersion()) != "dev" || string(meta.SchemaVersion()) != "1.0.0" || string(meta.MinRuntime()) != "0.1.0" {
+	if string(meta.CompilerVersion()) != "dev" || string(meta.SchemaVersion()) != "1.0.0" || string(meta.MinRuntime()) != "0.2.0" {
 		t.Errorf("meta versions %s %s %s", meta.CompilerVersion(), meta.SchemaVersion(), meta.MinRuntime())
 	}
 	if !slices.Equal(res.Plugins[0].Features, []string{"pxl.v1"}) || meta.RequiredFeaturesLength() != 1 {

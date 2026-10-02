@@ -242,6 +242,24 @@ final class BundleView {
     return out;
   }();
 
+  /// The user-context attributes the app declares (HST-011): name, type
+  /// expression and whether each is sensitive (app bundles only).
+  late final List<({String name, String type, bool sensitive})> userContext =
+      () {
+        final s = _single(SectionKind.schemas);
+        final decls = s == null
+            ? const <fbs.Param>[]
+            : fbs.Schemas(s.data).userContext ?? const <fbs.Param>[];
+        return [
+          for (final p in decls)
+            (
+              name: string(p.name),
+              type: string(p.type),
+              sensitive: p.sensitive,
+            ),
+        ];
+      }();
+
   /// Fills in the fields of the object types in [all], which holds this
   /// bundle's types and those they may refer to; throws [FormatException].
   void resolveFields(Map<String, NamedType> all) {

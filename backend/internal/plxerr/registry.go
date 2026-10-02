@@ -131,6 +131,7 @@ const (
 	NativeSlotNotRegistered   Code = 4201
 	NativeActionNotRegistered Code = 4202
 	ExposedStateTypeMismatch  Code = 4203
+	UserContextInvalid        Code = 4204
 
 	// Actions, data and local DB (PLX-5000–5999).
 

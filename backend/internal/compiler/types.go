@@ -109,7 +109,7 @@ func (u *unit) declareTypes(t *universe, pl *plugin, decls []schema.TypeDecl, fi
 		for j, f := range d.Fields {
 			fptr := plxerr.Pointer("types", strconv.Itoa(i), "fields", strconv.Itoa(j))
 			fields.claim(f.Name, file, fptr+"/name")
-			if u.checkTypeIn(t, pl, out, f.Type, nil, file, fptr+"/type") != nil {
+			if u.checkTypeIn(t, pl, out, f.Type, file, fptr+"/type") != nil {
 				spec.Fields[f.Name] = f.Type
 			}
 		}
@@ -121,10 +121,10 @@ func (u *unit) declareTypes(t *universe, pl *plugin, decls []schema.TypeDecl, fi
 // the type parameters in scope. It returns nil after reporting a problem
 // (PLX-1115, PLX-1116).
 func (u *unit) checkType(pl *plugin, expr, file, ptr string) *texpr {
-	return u.checkTypeIn(u.types, pl, nil, expr, nil, file, ptr)
+	return u.checkTypeIn(u.types, pl, nil, expr, file, ptr)
 }
 
-func (u *unit) checkTypeIn(t *universe, pl *plugin, extra map[string]pxl.TypeSpec, expr string, params []string, file, ptr string) *texpr {
+func (u *unit) checkTypeIn(t *universe, pl *plugin, extra map[string]pxl.TypeSpec, expr, file, ptr string) *texpr {
 	te, err := parseTypeExpr(expr)
 	if err != nil {
 		u.report(plxerr.InvalidTypeExpression, file, ptr, "%q: %v", expr, err)
@@ -132,7 +132,7 @@ func (u *unit) checkTypeIn(t *universe, pl *plugin, extra map[string]pxl.TypeSpe
 	}
 	ok := true
 	te.names(func(name string) {
-		if !t.known(pl, name) && !slices.Contains(params, name) && !hasKey(extra, name) {
+		if !t.known(pl, name) && !hasKey(extra, name) {
 			u.report(plxerr.UnknownType, file, ptr, "type %q is not declared", name)
 			ok = false
 		}

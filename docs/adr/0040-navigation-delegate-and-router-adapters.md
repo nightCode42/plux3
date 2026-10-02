@@ -209,6 +209,9 @@ uses them declares that minimum (`PLX-1119`).
   - The delegate gains `isAuthenticated` in R4, next to `accessToken`, `refresh` and
     `onLogout`, which exist today.
   - Tokens never reach PXL, logs, traces or storage (`SEC-092`).
+  - The user context's attributes are converted from the host's text to the types the
+    app's `userContext` declares; one it does not declare, or that does not convert, is
+    left out and reported once by name with `PLX-4204` (`HST-011`).
 - **Kill switch.** P3's per-plugin switch already shows the plugin's fallback page
   (`RT-022`). Guards see it before any other check.
 - **Feature flag.** A guard reads `flags.<name>`: the app document's flag defaults, which
@@ -219,14 +222,35 @@ uses them declares that minimum (`PLX-1119`).
   `AL0` (`SEC-007`), so a page that asks for more always takes its fallback. It fails
   closed.
 
-The compiler rejects redirect loops (`PLX-1206`). At run time, a chain of redirects is
-bounded by the number of routes, and a chain that comes back to a route already visited
-is refused with `PLX-4102`.
+**At run time** (R4):
 
-**Older runtimes.** A plugin bundle with a guarded page lists `navigation.guards.v1` in
-its `required_features`. A runtime that cannot run guards refuses the bundle (`BND-008`),
-and the device keeps its last compatible release (`REL-080`). A guarded page therefore
-never opens unguarded.
+- The kill switch is seen first, then the assurance level, then each guard graph in order.
+  `allow` lets the next guard run; `fallback` shows the route's fallback, as a failing
+  page does; a redirect opens its target, whose own guards then run.
+- A guard that fails, or ends without a result, shows the fallback: guards fail closed.
+- A guard reads its page's parameters and declared initial state, `device`, `user` and
+  `flags`; app and plugin state arrive in P5. It may emit host events but not navigate:
+  its navigation steps fail with `PLX-4102`. A guard that is a plugin flow declares no
+  inputs (`PLX-1113`), since no entry passes any.
+- `Plux.open`, `navigate`, deep links and push payloads run the guards before the route is
+  pushed. `PluxView`, `PluxPage` and a shell's tabs run them in the page's place, before
+  anything of the page builds, and show the page they enter there, a redirect's target
+  included, because the host owns that part of the stack.
+- Each guard run records `action_run` with the trigger `guard`.
+
+The compiler rejects redirect loops (`PLX-1206`): pages whose first guard redirects
+unconditionally, in a cycle. At run time, a chain of redirects is bounded by the number
+of routes, and a chain that comes back to a route already visited is refused with
+`PLX-4102`.
+
+**Older runtimes.** A page with guards, or with an assurance level above `AL0`, needs
+the feature `navigation.guards.v1`, which runtime 0.2.0 is the first to support. An app
+whose `minRuntimeVersion` is 0.2.0 or later needs nothing more: older runtimes refuse its
+bundles by their minimum runtime. Under an older minimum, the app's `requiredFeatures`
+policy rejects the publish (`PLX-1119`) or lists the feature in the plugin bundle's
+`required_features` (`PLX-1120`), and a runtime that cannot run guards refuses the bundle
+(`BND-008`), so the device keeps its last compatible release (`REL-080`). A guarded page
+therefore never opens unguarded.
 
 ### Deep links and push payloads (`NAV-008`)
 
@@ -251,14 +275,23 @@ The app document's `navigation.deepLinks` lists:
 **At run time:**
 
 - `Plux.handleDeepLink(Uri)` matches the link. It then converts each value to its
-  parameter's type, runs the guards, checks the parameters and navigates.
-- A link with no mapping reports `PLX-4103` and opens nothing. The host decides what
-  happens next.
+  parameter's type, runs the guards, checks the parameters and navigates, on the
+  navigator of `PluxConfig.navigatorKey`, since links arrive outside any widget; without
+  it nothing opens and `PLX-4102` is reported.
+- A custom scheme's authority is the path's first segment (`acme://items/42` names
+  `/items/42`); `{name}` segments are percent-decoded; a trailing slash is ignored; query
+  parameters fill the route's other parameters, and those it does not declare, such as a
+  campaign's, are left out.
+- A link with no mapping, or whose percent-encoding does not decode, reports `PLX-4103`
+  with only its scheme, host and path, and opens nothing. The host decides what happens
+  next.
 - A value that does not convert is a parameter error (`PLX-4101`).
 
 The app document's `push` says whether the app uses push and which payload key holds the
 Plux target (default `plux`, holding `{route, params}`). `Plux.handlePushPayload(map)`
-resolves that key through the same path as a deep link. Plux ships no push SDK: the
+resolves that key through the same path as a deep link. The target may be an object or
+its JSON text, the form FCM data messages carry, and a dotted key reaches into nested
+objects. Plux ships no push SDK: the
 host's SDK calls this hook when a notification is opened (P4 plan D6).
 
 **Bundle.** The app bundle's `Meta` gains `not_found_route`, `deep_links` (hosts, schemes,

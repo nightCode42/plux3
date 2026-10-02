@@ -1,0 +1,53 @@
+{
+  "id": "01f0c450-6c00-7000-8000-000000000239",
+  "key": "count",
+  "kind": "page",
+  "pageKind": "screen",
+  "params": [
+    {
+      "id": "01f0c450-6c00-7000-8000-000000000238",
+      "mock": 1,
+      "name": "n",
+      "required": true,
+      "type": "int"
+    }
+  ],
+  "root": {
+    "id": "01f0c450-6c00-7000-8000-00000000023a",
+    "slots": {
+      "appBar": {
+        "id": "01f0c450-6c00-7000-8000-00000000023b",
+        "slots": {
+          "title": {
+            "id": "01f0c450-6c00-7000-8000-00000000023c",
+            "props": {
+              "data": "Count"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "children": [
+          {
+            "id": "01f0c450-6c00-7000-8000-000000000237",
+            "props": {
+              "data": {
+                "$expr": "\"Count \" + string(params.n)"
+              }
+            },
+            "testId": "count",
+            "type": "Text"
+          }
+        ],
+        "id": "01f0c450-6c00-7000-8000-00000000023d",
+        "type": "Column"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "count",
+  "schemaVersion": "1.0.0",
+  "title": "Count"
+}

@@ -1,0 +1,37 @@
+{
+  "id": "01f0c450-6c00-7000-8000-00000000021a",
+  "key": "beta-gate",
+  "kind": "actionGraph",
+  "output": "GuardResult",
+  "page": "01f0c450-6c00-7000-8000-000000000215",
+  "schemaVersion": "1.0.0",
+  "steps": [
+    {
+      "action": "condition",
+      "branches": {
+        "else": "no",
+        "then": "yes"
+      },
+      "id": "gate",
+      "input": {
+        "when": {
+          "$expr": "flags.betaEnabled"
+        }
+      }
+    },
+    {
+      "action": "stop",
+      "id": "yes",
+      "input": {
+        "result": "allow"
+      }
+    },
+    {
+      "action": "stop",
+      "id": "no",
+      "input": {
+        "result": "fallback"
+      }
+    }
+  ]
+}

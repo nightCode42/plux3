@@ -241,3 +241,50 @@ func (u *unit) eventPayload(g *graph, raw json.RawMessage, c vctx) *value {
 	pc.code = plxerr.PropTypeMismatch
 	return u.fieldValues(raw, params, "host event "+strconv.Quote(ev.Name), pc)
 }
+
+// deepLinksTable writes the links the app answers (NAV-008); 0 when it
+// declares none.
+func (u *unit) deepLinksTable(b *flatbuffers.Builder) flatbuffers.UOffsetT {
+	nav := u.project.App.Doc.Navigation
+	if nav == nil || nav.DeepLinks == nil {
+		return 0
+	}
+	dl := nav.DeepLinks
+	routes := make([]flatbuffers.UOffsetT, len(dl.Routes))
+	for i, r := range dl.Routes {
+		path, route := b.CreateString(r.Path), b.CreateString(r.Route)
+		fbs.DeepLinkRouteStart(b)
+		fbs.DeepLinkRouteAddPath(b, path)
+		fbs.DeepLinkRouteAddRoute(b, route)
+		routes[i] = fbs.DeepLinkRouteEnd(b)
+	}
+	rv := offsetVector(b, routes)
+	hosts, schemes := stringVector(b, dl.Hosts), stringVector(b, dl.Schemes)
+	fbs.DeepLinksStart(b)
+	fbs.DeepLinksAddHosts(b, hosts)
+	fbs.DeepLinksAddSchemes(b, schemes)
+	fbs.DeepLinksAddRoutes(b, rv)
+	return fbs.DeepLinksEnd(b)
+}
+
+// defaultPushKey holds {route, params} in a push payload when the app
+// names no other key (NAV-008).
+const defaultPushKey = "plux"
+
+// pushTable writes the app's push payload handling (NAV-008); 0 when it
+// declares no push.
+func (u *unit) pushTable(b *flatbuffers.Builder) flatbuffers.UOffsetT {
+	p := u.project.App.Doc.Push
+	if p == nil {
+		return 0
+	}
+	key := p.PayloadKey
+	if key == "" {
+		key = defaultPushKey
+	}
+	k := b.CreateString(key)
+	fbs.PushStart(b)
+	fbs.PushAddEnabled(b, p.Enabled)
+	fbs.PushAddPayloadKey(b, k)
+	return fbs.PushEnd(b)
+}

@@ -1,0 +1,49 @@
+{
+  "id": "01f0c450-6c00-7000-8000-000000000231",
+  "key": "trap",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01f0c450-6c00-7000-8000-000000000232",
+    "slots": {
+      "appBar": {
+        "id": "01f0c450-6c00-7000-8000-000000000233",
+        "slots": {
+          "title": {
+            "id": "01f0c450-6c00-7000-8000-000000000234",
+            "props": {
+              "data": "Trap"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "children": [
+          {
+            "id": "01f0c450-6c00-7000-8000-000000000230",
+            "props": {
+              "data": "Trap"
+            },
+            "testId": "trap",
+            "type": "Text"
+          }
+        ],
+        "id": "01f0c450-6c00-7000-8000-000000000235",
+        "type": "Column"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "trap",
+  "routeOptions": {
+    "guards": [
+      {
+        "$graph": "01f0c450-6c00-7000-8000-000000000236"
+      }
+    ]
+  },
+  "schemaVersion": "1.0.0",
+  "title": "Trap"
+}

@@ -1,0 +1,45 @@
+{
+  "id": "01f0c450-6c00-7000-8000-00000000020f",
+  "key": "vault",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01f0c450-6c00-7000-8000-000000000210",
+    "slots": {
+      "appBar": {
+        "id": "01f0c450-6c00-7000-8000-000000000211",
+        "slots": {
+          "title": {
+            "id": "01f0c450-6c00-7000-8000-000000000212",
+            "props": {
+              "data": "Vault"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "children": [
+          {
+            "id": "01f0c450-6c00-7000-8000-00000000020e",
+            "props": {
+              "data": "Vault"
+            },
+            "testId": "vault",
+            "type": "Text"
+          }
+        ],
+        "id": "01f0c450-6c00-7000-8000-000000000213",
+        "type": "Column"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "vault",
+  "schemaVersion": "1.0.0",
+  "security": {
+    "requiresAssurance": "AL1"
+  },
+  "title": "Vault"
+}

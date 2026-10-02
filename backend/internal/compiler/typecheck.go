@@ -499,7 +499,9 @@ func (t *typer) flow(g *graph, base *scope) {
 		"PluxFlowParams": objectType(t.params(g.plugin, g.doc.Inputs, g.file, "inputs")),
 	})
 	if g.doc.Output != "" {
-		t.u.checkType(g.plugin, g.doc.Output, g.file, "/output")
+		// A flow may return a registry value type, such as a guard's
+		// GuardResult (NAV-009).
+		t.u.checkTypeIn(t.u.types, g.plugin, t.u.types.base, g.doc.Output, g.file, "/output")
 	}
 	t.graph(g, s)
 }
@@ -513,7 +515,7 @@ func (t *typer) graph(g *graph, s *scope) {
 	if g.eventType != "" {
 		known := maps.Clone(t.u.types.base)
 		maps.Copy(known, s.synth)
-		if te := t.u.checkTypeIn(t.u.types, g.plugin, known, g.eventType, nil, g.file, g.ptr); te != nil {
+		if te := t.u.checkTypeIn(t.u.types, g.plugin, known, g.eventType, g.file, g.ptr); te != nil {
 			s = s.with("event", te.String())
 		}
 	}

@@ -225,6 +225,30 @@ Object? fromJson(PxlType t, Object? v) {
   return out ?? (throw FormatException('$v is not a ${t.kind.name}'));
 }
 
+/// Converts text, such as a deep link's or a redirect's parameter or a
+/// user-context attribute, into a PXL value of type [t] (ADR-0040): the
+/// literal forms of the scalars and declared enums; throws
+/// [FormatException] for text that is not one, or for a type text cannot
+/// carry.
+Object? fromText(PxlType t, String text) {
+  final Object? out = switch (t.kind) {
+    PxlKind.bool => switch (text) {
+      'true' => true,
+      'false' => false,
+      _ => null,
+    },
+    PxlKind.int => int.tryParse(text),
+    PxlKind.double => double.tryParse(text),
+    PxlKind.string ||
+    PxlKind.enumeration ||
+    PxlKind.decimal ||
+    PxlKind.date ||
+    PxlKind.dateTime => _scalarFromString(t, text),
+    _ => throw FormatException('a ${t.kind.name} cannot be written as text'),
+  };
+  return out ?? (throw FormatException('"$text" is not a ${t.kind.name}'));
+}
+
 Map<String, Object?> _mapFromJson(PxlType t, Map<String, Object?> v) {
   final fields = t.named?.fields;
   final out = <String, Object?>{};

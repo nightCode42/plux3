@@ -316,6 +316,9 @@ enum PluxErrorCode {
   /// Exposed state written with the wrong type.
   exposedStateTypeMismatch(4203, 'EXPOSED_STATE_TYPE_MISMATCH', 'Exposed state written with the wrong type'),
 
+  /// User context attribute ignored.
+  userContextInvalid(4204, 'USER_CONTEXT_INVALID', 'User context attribute ignored'),
+
   /// Action timed out.
   actionTimeout(5001, 'ACTION_TIMEOUT', 'Action timed out'),
 

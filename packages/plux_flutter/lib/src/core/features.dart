@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /// The features this runtime supports, for `required_features` (BND-008):
-/// `pxl.v1`, and registry revisions — `widget.<Type>.v<n>`,
+/// `pxl.v1`, `navigation.guards.v1` (route guards, ADR-0040), and
+/// registry revisions — `widget.<Type>.v<n>`,
 /// `type.<Name>.v<n>`, `enum.<Name>.v<n>` — up to the revision this
 /// runtime's generated registry knows, for widgets it can build.
 library;
@@ -31,9 +32,13 @@ final class RuntimeFeatures {
   /// The PXL features this runtime evaluates.
   static const Set<String> pxl = {'pxl.v1'};
 
+  /// The navigation features this runtime honours: a bundle with a guarded
+  /// page requires them, so a runtime without guards never opens it.
+  static const Set<String> navigation = {'navigation.guards.v1'};
+
   /// Whether [feature] is supported.
   bool supports(String feature) {
-    if (pxl.contains(feature)) return true;
+    if (pxl.contains(feature) || navigation.contains(feature)) return true;
     final m = RegExp(
       r'^(widget|type|enum)\.([A-Za-z][A-Za-z0-9]*)\.v([1-9]\d*)$',
     ).firstMatch(feature);

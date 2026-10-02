@@ -19,6 +19,7 @@ import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/core/fallback.dart';
 import 'package:plux_flutter/src/core/runtime.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/navigation/guards.dart';
 import 'package:plux_flutter/src/state/providers.dart';
 
 /// Shows a Plux page, by app-wide route name, inside any widget tree.
@@ -30,16 +31,33 @@ final class PluxView extends ConsumerWidget {
     this.params = const {},
     this.loadingBuilder,
     this.fallbackBuilder,
-  }) : _routed = false;
+  }) : _routed = false,
+       _guarded = false;
 
   /// A view whose page owns its route, so that its `pop` steps pop it; only
-  /// the routes Plux builds are (ADR-0040).
-  const PluxView._routed(this.route, {this.params = const {}})
-    : loadingBuilder = null,
-      fallbackBuilder = null,
-      _routed = true;
+  /// the routes Plux builds are (ADR-0040). [guarded] when the route's
+  /// guards already decided the entry.
+  const PluxView._routed(
+    this.route, {
+    this.params = const {},
+    this._guarded = false,
+  }) : loadingBuilder = null,
+       fallbackBuilder = null,
+       _routed = true;
+
+  /// The page a view's guards entered: its target, decided already.
+  const PluxView._entered(
+    this.route, {
+    required this.params,
+    required this.loadingBuilder,
+    required this.fallbackBuilder,
+    required this._routed,
+  }) : _guarded = true;
 
   final bool _routed;
+
+  /// Whether the route's guards already decided this entry (NAV-009).
+  final bool _guarded;
 
   /// The route name (SCH-025).
   final String route;
@@ -100,6 +118,15 @@ final class PluxView extends ConsumerWidget {
       }
       if (declared == null) return fallback(off, page.plugin);
       shown = declared;
+    } else if (!_guarded && RouteGuards.needsDecision(release, page)) {
+      // An entry nothing decided yet: an embedded view, a declarative page
+      // or a shell's tab runs the route's guards here (NAV-009).
+      return _GuardGate(
+        key: ValueKey((release.sequence, route)),
+        view: this,
+        guards: rt.guards,
+        fallback: fallback,
+      );
     }
     return PluxPageHost(
       key: ValueKey((release.sequence, route, shown.pageKey)),
@@ -113,9 +140,67 @@ final class PluxView extends ConsumerWidget {
 }
 
 /// The content of a route Plux built: a [PluxView] of [route] whose page
-/// owns its route, so that its `pop` steps pop it (ADR-0040).
-PluxView routedPluxView(String route, Map<String, Object?> params) =>
-    PluxView._routed(route, params: params);
+/// owns its route, so that its `pop` steps pop it, [guarded] when its
+/// guards already decided the entry (ADR-0040).
+PluxView routedPluxView(
+  String route,
+  Map<String, Object?> params, {
+  bool guarded = false,
+}) => PluxView._routed(route, params: params, guarded: guarded);
+
+/// Runs the guards of [view]'s route, then shows the page they enter in
+/// its place, which may be a redirect's target, or the fallback of the
+/// route they refuse (NAV-009). Nothing of the guarded page builds before
+/// they decide.
+final class _GuardGate extends StatefulWidget {
+  const _GuardGate({
+    super.key,
+    required this.view,
+    required this.guards,
+    required this.fallback,
+  });
+
+  final PluxView view;
+  final RouteGuards guards;
+  final Widget Function(PluxException e, [String? plugin]) fallback;
+
+  @override
+  State<_GuardGate> createState() => _GuardGateState();
+}
+
+final class _GuardGateState extends State<_GuardGate> {
+  GuardVerdict? _verdict;
+
+  @override
+  void initState() {
+    super.initState();
+    final v = widget.view;
+    unawaited(
+      widget.guards.decide(v.route, v.params).then((verdict) {
+        if (mounted) setState(() => _verdict = verdict);
+      }),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final v = widget.view;
+    return switch (_verdict) {
+      null => v.loadingBuilder?.call(context) ?? const SizedBox.shrink(),
+      GuardEnter(:final route, :final params) => PluxView._entered(
+        route,
+        params: params,
+        loadingBuilder: v.loadingBuilder,
+        fallbackBuilder: v.fallbackBuilder,
+        routed: v._routed,
+      ),
+      GuardRefused(:final reason, :final plugin) => widget.fallback(
+        reason,
+        plugin,
+      ),
+    };
+  }
+}
 
 /// Hosts one page: holds a lease on its release while mounted, checks the
 /// page section before first use (BND-006), contains failures and records

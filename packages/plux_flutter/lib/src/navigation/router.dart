@@ -14,7 +14,9 @@ import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/navigation/delegate.dart';
+import 'package:plux_flutter/src/navigation/guards.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
+import 'package:plux_flutter/src/verify/bundle_verifier.dart';
 
 /// A page a name resolves to.
 final class RouteTarget {
@@ -40,10 +42,19 @@ final class RouteTarget {
 }
 
 /// Builds the content of a routed page: the page host of `PluxView`,
-/// marked as owning its route so that `pop` may pop it.
+/// marked as owning its route so that `pop` may pop it, and as [guarded]
+/// when its guards already decided the entry (NAV-009).
 typedef RoutedPageBuilder = Widget Function(
   String route,
-  Map<String, Object?> params,
+  Map<String, Object?> params, {
+  required bool guarded,
+});
+
+/// Builds the fallback of a page of [plugin] that cannot be shown.
+typedef RouteFallbackBuilder = Widget Function(
+  BuildContext context,
+  PluxException error,
+  String plugin,
 );
 
 /// Resolves names and builds the routes the navigation delegate shows.
@@ -56,6 +67,8 @@ final class PluxRouter {
     required this.page,
     required this.types,
     required this.report,
+    required this.guards,
+    required this.fallback,
     this.notFoundBuilder,
   });
 
@@ -76,6 +89,12 @@ final class PluxRouter {
   /// Reports a problem.
   final void Function(PluxException error) report;
 
+  /// Decides each entry (NAV-009).
+  final RouteGuards guards;
+
+  /// Builds the fallback of a refused route.
+  final RouteFallbackBuilder fallback;
+
   /// The host's not-found page, used when the app names none.
   final Widget Function(BuildContext context, String route)? notFoundBuilder;
 
@@ -91,6 +110,12 @@ final class PluxRouter {
       return null;
     }
     if (ref == null) return null;
+    if (ref.section.data.length > SectionGate.uiIsolateLimit &&
+        !r.gate.passed(ref.section)) {
+      // Large sections are checked off the UI isolate (L-6): until then
+      // the page shows as a screen, and its host checks it.
+      return RouteTarget(page: ref);
+    }
     try {
       r.gate.check(ref.section);
       final p = fbs.Page(ref.section.data);
@@ -121,6 +146,7 @@ final class PluxRouter {
     Map<String, Object?> params, {
     PluxPresentation? presentation,
     bool dismissible = true,
+    bool guarded = false,
   }) {
     final t = target(name);
     if (release() == null) {
@@ -131,7 +157,7 @@ final class PluxRouter {
         arguments: params,
         presentation: presentation ?? PluxPresentation.page,
         dismissible: dismissible,
-        builder: (_) => page(name, params),
+        builder: (_) => page(name, params, guarded: false),
       );
     }
     if (t != null) {
@@ -141,7 +167,7 @@ final class PluxRouter {
         presentation: presentation ?? t.presentation,
         transition: t.transition,
         dismissible: dismissible,
-        builder: (_) => page(name, params),
+        builder: (_) => page(name, params, guarded: guarded),
       );
     }
     report(
@@ -161,7 +187,7 @@ final class PluxRouter {
     if (declared != null && declared.isNotEmpty && target(declared) != null) {
       return PluxRouteSpec(
         name: declared,
-        builder: (_) => page(declared, const {}),
+        builder: (_) => page(declared, const {}, guarded: false),
       );
     }
     return PluxRouteSpec(
@@ -171,15 +197,51 @@ final class PluxRouter {
     );
   }
 
-  /// Opens [name] for the host (NAV-003): pushes it, or presents it as its
-  /// page kind says, and completes with its result in JSON form when it is
-  /// a [T]; another value is reported and completes with null.
+  /// The route for an entry of [name] with [params], once its guards have
+  /// decided (NAV-009): the route they enter, which may be a redirect's
+  /// target, or the fallback of the route they refuse, presented as
+  /// [presentation] or as the entered page's kind says.
+  Future<PluxRouteSpec> resolve(
+    String name,
+    Map<String, Object?> params, {
+    PluxPresentation? presentation,
+    bool dismissible = true,
+  }) async {
+    final verdict = await guards.decide(name, params);
+    switch (verdict) {
+      case GuardEnter(:final route, :final params):
+        return spec(
+          route,
+          params,
+          presentation: presentation,
+          dismissible: dismissible,
+          guarded: true,
+        );
+      case GuardRefused(:final route, :final plugin, :final reason):
+        return PluxRouteSpec(
+          name: route,
+          presentation:
+              presentation ??
+              target(route)?.presentation ??
+              PluxPresentation.page,
+          dismissible: dismissible,
+          builder: (c) => fallback(c, reason, plugin),
+        );
+    }
+  }
+
+  /// Opens [name] for the host (NAV-003): runs its guards, then pushes the
+  /// route they enter, or presents it as its page kind says, and completes
+  /// with its result in JSON form when it is a [T]; another value is
+  /// reported and completes with null.
   Future<T?> open<T extends Object?>(
     BuildContext context,
     String name,
     Map<String, Object?> params,
   ) async {
-    final result = await delegate.push<Object?>(context, spec(name, params));
+    final route = await resolve(name, params);
+    if (!context.mounted) return null;
+    final result = await delegate.push<Object?>(context, route);
     if (result == null || result is T) return result as T?;
     report(
       PluxException(

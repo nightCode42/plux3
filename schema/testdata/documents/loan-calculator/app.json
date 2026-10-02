@@ -35,7 +35,7 @@
   "id": "01a0c450-6c00-7010-8000-00000001eef0",
   "key": "demo",
   "kind": "app",
-  "minRuntimeVersion": "0.1.0",
+  "minRuntimeVersion": "0.2.0",
   "name": "Plux Demo",
   "nativeCatalogue": "01a0c450-6c00-700f-8000-00000001d001",
   "plugins": [

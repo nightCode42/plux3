@@ -2559,6 +2559,267 @@ class ShellObjectBuilder extends fb.ObjectBuilder {
     return fbBuilder.buffer;
   }
 }
+class DeepLinkRoute {
+  DeepLinkRoute._(this._bc, this._bcOffset);
+  factory DeepLinkRoute(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<DeepLinkRoute> reader = _DeepLinkRouteReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  String? get path => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 4);
+  String? get route => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 6);
+
+  @override
+  String toString() {
+    return 'DeepLinkRoute{path: ${path}, route: ${route}}';
+  }
+}
+
+class _DeepLinkRouteReader extends fb.TableReader<DeepLinkRoute> {
+  const _DeepLinkRouteReader();
+
+  @override
+  DeepLinkRoute createObject(fb.BufferContext bc, int offset) => 
+    DeepLinkRoute._(bc, offset);
+}
+
+class DeepLinkRouteBuilder {
+  DeepLinkRouteBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(2);
+  }
+
+  int addPathOffset(int? offset) {
+    fbBuilder.addOffset(0, offset);
+    return fbBuilder.offset;
+  }
+  int addRouteOffset(int? offset) {
+    fbBuilder.addOffset(1, offset);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class DeepLinkRouteObjectBuilder extends fb.ObjectBuilder {
+  final String? _path;
+  final String? _route;
+
+  DeepLinkRouteObjectBuilder({
+    String? path,
+    String? route,
+  })
+      : _path = path,
+        _route = route;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? pathOffset = _path == null ? null
+        : fbBuilder.writeString(_path!);
+    final int? routeOffset = _route == null ? null
+        : fbBuilder.writeString(_route!);
+    fbBuilder.startTable(2);
+    fbBuilder.addOffset(0, pathOffset);
+    fbBuilder.addOffset(1, routeOffset);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
+class DeepLinks {
+  DeepLinks._(this._bc, this._bcOffset);
+  factory DeepLinks(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<DeepLinks> reader = _DeepLinksReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  List<String>? get hosts => const fb.ListReader<String>(fb.StringReader()).vTableGetNullable(_bc, _bcOffset, 4);
+  List<String>? get schemes => const fb.ListReader<String>(fb.StringReader()).vTableGetNullable(_bc, _bcOffset, 6);
+  List<DeepLinkRoute>? get routes => const fb.ListReader<DeepLinkRoute>(DeepLinkRoute.reader).vTableGetNullable(_bc, _bcOffset, 8);
+
+  @override
+  String toString() {
+    return 'DeepLinks{hosts: ${hosts}, schemes: ${schemes}, routes: ${routes}}';
+  }
+}
+
+class _DeepLinksReader extends fb.TableReader<DeepLinks> {
+  const _DeepLinksReader();
+
+  @override
+  DeepLinks createObject(fb.BufferContext bc, int offset) => 
+    DeepLinks._(bc, offset);
+}
+
+class DeepLinksBuilder {
+  DeepLinksBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(3);
+  }
+
+  int addHostsOffset(int? offset) {
+    fbBuilder.addOffset(0, offset);
+    return fbBuilder.offset;
+  }
+  int addSchemesOffset(int? offset) {
+    fbBuilder.addOffset(1, offset);
+    return fbBuilder.offset;
+  }
+  int addRoutesOffset(int? offset) {
+    fbBuilder.addOffset(2, offset);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class DeepLinksObjectBuilder extends fb.ObjectBuilder {
+  final List<String>? _hosts;
+  final List<String>? _schemes;
+  final List<DeepLinkRouteObjectBuilder>? _routes;
+
+  DeepLinksObjectBuilder({
+    List<String>? hosts,
+    List<String>? schemes,
+    List<DeepLinkRouteObjectBuilder>? routes,
+  })
+      : _hosts = hosts,
+        _schemes = schemes,
+        _routes = routes;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? hostsOffset = _hosts == null ? null
+        : fbBuilder.writeList(_hosts!.map(fbBuilder.writeString).toList());
+    final int? schemesOffset = _schemes == null ? null
+        : fbBuilder.writeList(_schemes!.map(fbBuilder.writeString).toList());
+    final int? routesOffset = _routes == null ? null
+        : fbBuilder.writeList(_routes!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    fbBuilder.startTable(3);
+    fbBuilder.addOffset(0, hostsOffset);
+    fbBuilder.addOffset(1, schemesOffset);
+    fbBuilder.addOffset(2, routesOffset);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
+class Push {
+  Push._(this._bc, this._bcOffset);
+  factory Push(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<Push> reader = _PushReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  bool get enabled => const fb.BoolReader().vTableGet(_bc, _bcOffset, 4, false);
+  String? get payloadKey => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 6);
+
+  @override
+  String toString() {
+    return 'Push{enabled: ${enabled}, payloadKey: ${payloadKey}}';
+  }
+}
+
+class _PushReader extends fb.TableReader<Push> {
+  const _PushReader();
+
+  @override
+  Push createObject(fb.BufferContext bc, int offset) => 
+    Push._(bc, offset);
+}
+
+class PushBuilder {
+  PushBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(2);
+  }
+
+  int addEnabled(bool? enabled) {
+    fbBuilder.addBool(0, enabled);
+    return fbBuilder.offset;
+  }
+  int addPayloadKeyOffset(int? offset) {
+    fbBuilder.addOffset(1, offset);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class PushObjectBuilder extends fb.ObjectBuilder {
+  final bool? _enabled;
+  final String? _payloadKey;
+
+  PushObjectBuilder({
+    bool? enabled,
+    String? payloadKey,
+  })
+      : _enabled = enabled,
+        _payloadKey = payloadKey;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? payloadKeyOffset = _payloadKey == null ? null
+        : fbBuilder.writeString(_payloadKey!);
+    fbBuilder.startTable(2);
+    fbBuilder.addBool(0, _enabled);
+    fbBuilder.addOffset(1, payloadKeyOffset);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
 class Flag {
   Flag._(this._bc, this._bcOffset);
   factory Flag(List<int> bytes) {
@@ -2689,10 +2950,12 @@ class Meta {
   List<Sampling>? get telemetrySampling => const fb.ListReader<Sampling>(Sampling.reader).vTableGetNullable(_bc, _bcOffset, 46);
   String? get notFoundRoute => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 48);
   List<Shell>? get shells => const fb.ListReader<Shell>(Shell.reader).vTableGetNullable(_bc, _bcOffset, 50);
+  DeepLinks? get deepLinks => DeepLinks.reader.vTableGetNullable(_bc, _bcOffset, 52);
+  Push? get push => Push.reader.vTableGetNullable(_bc, _bcOffset, 54);
 
   @override
   String toString() {
-    return 'Meta{kind: ${kind}, id: ${id}, key: ${key}, name: ${name}, version: ${version}, compilerVersion: ${compilerVersion}, schemaVersion: ${schemaVersion}, requiredFeatures: ${requiredFeatures}, minRuntime: ${minRuntime}, capabilities: ${capabilities}, limits: ${limits}, pages: ${pages}, entryPage: ${entryPage}, fallbackPage: ${fallbackPage}, plugins: ${plugins}, defaultLocale: ${defaultLocale}, supportedLocales: ${supportedLocales}, entryRoute: ${entryRoute}, flags: ${flags}, nativeCatalogue: ${nativeCatalogue}, securityProfile: ${securityProfile}, telemetrySampling: ${telemetrySampling}, notFoundRoute: ${notFoundRoute}, shells: ${shells}}';
+    return 'Meta{kind: ${kind}, id: ${id}, key: ${key}, name: ${name}, version: ${version}, compilerVersion: ${compilerVersion}, schemaVersion: ${schemaVersion}, requiredFeatures: ${requiredFeatures}, minRuntime: ${minRuntime}, capabilities: ${capabilities}, limits: ${limits}, pages: ${pages}, entryPage: ${entryPage}, fallbackPage: ${fallbackPage}, plugins: ${plugins}, defaultLocale: ${defaultLocale}, supportedLocales: ${supportedLocales}, entryRoute: ${entryRoute}, flags: ${flags}, nativeCatalogue: ${nativeCatalogue}, securityProfile: ${securityProfile}, telemetrySampling: ${telemetrySampling}, notFoundRoute: ${notFoundRoute}, shells: ${shells}, deepLinks: ${deepLinks}, push: ${push}}';
   }
 }
 
@@ -2710,7 +2973,7 @@ class MetaBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable(24);
+    fbBuilder.startTable(26);
   }
 
   int addKind(BundleKind? kind) {
@@ -2809,6 +3072,14 @@ class MetaBuilder {
     fbBuilder.addOffset(23, offset);
     return fbBuilder.offset;
   }
+  int addDeepLinksOffset(int? offset) {
+    fbBuilder.addOffset(24, offset);
+    return fbBuilder.offset;
+  }
+  int addPushOffset(int? offset) {
+    fbBuilder.addOffset(25, offset);
+    return fbBuilder.offset;
+  }
 
   int finish() {
     return fbBuilder.endTable();
@@ -2840,6 +3111,8 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
   final List<SamplingObjectBuilder>? _telemetrySampling;
   final String? _notFoundRoute;
   final List<ShellObjectBuilder>? _shells;
+  final DeepLinksObjectBuilder? _deepLinks;
+  final PushObjectBuilder? _push;
 
   MetaObjectBuilder({
     BundleKind? kind,
@@ -2866,6 +3139,8 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
     List<SamplingObjectBuilder>? telemetrySampling,
     String? notFoundRoute,
     List<ShellObjectBuilder>? shells,
+    DeepLinksObjectBuilder? deepLinks,
+    PushObjectBuilder? push,
   })
       : _kind = kind,
         _id = id,
@@ -2890,7 +3165,9 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
         _securityProfile = securityProfile,
         _telemetrySampling = telemetrySampling,
         _notFoundRoute = notFoundRoute,
-        _shells = shells;
+        _shells = shells,
+        _deepLinks = deepLinks,
+        _push = push;
 
   /// Finish building, and store into the [fbBuilder].
   @override
@@ -2930,7 +3207,9 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
         : fbBuilder.writeString(_notFoundRoute!);
     final int? shellsOffset = _shells == null ? null
         : fbBuilder.writeList(_shells!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
-    fbBuilder.startTable(24);
+    final int? deepLinksOffset = _deepLinks?.getOrCreateOffset(fbBuilder);
+    final int? pushOffset = _push?.getOrCreateOffset(fbBuilder);
+    fbBuilder.startTable(26);
     fbBuilder.addUint8(0, _kind?.value);
     if (_id != null) {
       fbBuilder.addStruct(1, _id!.finish(fbBuilder));
@@ -2963,6 +3242,8 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
     fbBuilder.addOffset(21, telemetrySamplingOffset);
     fbBuilder.addOffset(22, notFoundRouteOffset);
     fbBuilder.addOffset(23, shellsOffset);
+    fbBuilder.addOffset(24, deepLinksOffset);
+    fbBuilder.addOffset(25, pushOffset);
     return fbBuilder.endTable();
   }
 

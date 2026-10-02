@@ -28,9 +28,9 @@ refusing handler with the action's own.
 ## 2. Runs
 
 A **trigger** starts a run of one graph. In P4 the triggers are widget events, such as a
-button's `onPressed`. Guards, deep links and native slot events start runs in later P4
-milestones; lifecycle, timers, state watchers and host events into Plux arrive in P5
-(`ACT-002`).
+button's `onPressed`, and route guards, which run before a page is entered
+([navigation](navigation.md#4-guards-nav-009)). Native slot events start runs from P4 R6;
+lifecycle, timers, state watchers and host events into Plux arrive in P5 (`ACT-002`).
 
 A run executes `steps[0]` first. After each step it follows:
 
@@ -106,7 +106,7 @@ Each run records `action_run` with these fields, under analytics consent
 ([telemetry](telemetry.md)):
 
 - `graph_id`;
-- `trigger`: `event`; `guard` and `link` once guards and deep links start runs (P4 R4);
+- `trigger`: `event` or `guard`;
 - `duration_ms`;
 - `result`: `ok`, `failed` or `cancelled`;
 - `steps`;

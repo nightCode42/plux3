@@ -64,6 +64,7 @@ abstract final class Plux {
     _container = container;
     _ownsContainer = config.container == null;
     container.read(pluxRuntimeProvider.notifier).set(rt);
+    rt.environment = () => container.read(environmentProvider);
     container
         .read(environmentProvider.notifier)
         .replace(
@@ -126,6 +127,23 @@ abstract final class Plux {
     params: params,
     key: key ?? ValueKey(route),
   );
+
+  /// Opens the page [link] names through the app's deep links (NAV-008):
+  /// `https://<host>/p/<route-name>?…`, or a path pattern of the app
+  /// document's `navigation.deepLinks`, on one of its hosts or custom
+  /// schemes. The route's guards run first; parameters are converted by
+  /// their declared types. Completes with whether a route opened: false,
+  /// reported, for a link nothing maps (`PLX-4103`) or without
+  /// `PluxConfig.navigatorKey` (`PLX-4102`).
+  static Future<bool> handleDeepLink(Uri link) => _rt.handleDeepLink(link);
+
+  /// Opens the page a notification names (NAV-008): the host's push SDK
+  /// calls this when the user opens a notification, with its data payload,
+  /// whose payload key (`plux` unless the app document names another)
+  /// holds `{"route": …, "params": {…}}`, as an object or JSON text. Plux
+  /// ships no push SDK. Completes as [handleDeepLink] does.
+  static Future<bool> handlePushPayload(Map<String, Object?> payload) =>
+      _rt.handlePushPayload(payload);
 
   /// The typed events plugins emit with `emitHostEvent` (HST-013).
   static Stream<PluxHostEvent> get events => _rt.hostEvents;

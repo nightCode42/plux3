@@ -6,6 +6,7 @@ package compiler
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 	"testing/fstest"
 
@@ -167,12 +168,91 @@ func navigationCases() []invalidCase {
 	}
 }
 
+// guardID names the guard flows the guard cases add, by page.
+var guardID = map[string]string{
+	calculatorPage: "01a0c450-6c00-7099-8000-0000000000a1",
+	resultPage:     "01a0c450-6c00-7099-8000-0000000000a2",
+}
+
+// withGuard adds a guard flow returning a GuardResult through steps to
+// the loans plugin, and guards the page with it.
+func withGuard(page, steps string) func(*testing.T, fstest.MapFS) {
+	return func(t *testing.T, m fstest.MapFS) {
+		id := guardID[page]
+		m["plugins/loans/actions/guard-"+id[len(id)-2:]+".graph.json"] = &fstest.MapFile{Data: []byte(`{"id": "` + id +
+			`", "key": "guard-` + id[len(id)-2:] + `", "kind": "actionGraph", "output": "GuardResult", "schemaVersion": "1.0.0", "steps": ` + steps + `}`)}
+		edit(t, m, page, func(doc map[string]any) { doc["routeOptions"] = raw(t, `{"guards": [{"$graph": "`+id+`"}]}`) })
+	}
+}
+
+// redirectTo is a guard's steps that always redirect with this result.
+func redirectTo(result string) string {
+	return `[{"id": "go", "action": "stop", "input": {"result": ` + result + `}}]`
+}
+
+// guardFile is the document withGuard adds for the page.
+func guardFile(page string) string {
+	id := guardID[page]
+	return "plugins/loans/actions/guard-" + id[len(id)-2:] + ".graph.json"
+}
+
+// guardCases break route guards (NAV-009, ADR-0040).
+func guardCases() []invalidCase {
+	return []invalidCase{
+		{
+			name: "guard without a GuardResult", edit: onPage(func(t *testing.T, doc map[string]any) {
+				doc["routeOptions"] = raw(t, `{"guards": [{"$graph": "01a0c450-6c00-7021-8000-00000003fccf"}]}`)
+			}),
+			code: plxerr.InvalidActionGraph, file: calculatorPage, ptr: "/routeOptions/guards/0/$graph",
+		},
+		{
+			name: "guard flow with inputs", edit: func(t *testing.T, m fstest.MapFS) {
+				withGuard(calculatorPage, redirectTo(`"allow"`))(t, m)
+				edit(t, m, guardFile(calculatorPage), func(doc map[string]any) {
+					doc["inputs"] = raw(t, `[{"name": "who", "type": "string"}]`)
+				})
+			},
+			code: plxerr.InvalidActionGraph, file: calculatorPage, ptr: "/routeOptions/guards/0/$graph",
+		},
+		{
+			name: "guard redirect to an unknown route", edit: withGuard(calculatorPage, redirectTo(`{"decision": "redirect", "route": "nowhere"}`)),
+			code: plxerr.UnknownRoute, file: guardFile(calculatorPage), ptr: "/steps/0/input/result/route",
+		},
+		{
+			name: "guard redirect with an unknown parameter", edit: withGuard(resultPage,
+				redirectTo(`{"decision": "redirect", "route": "loan-calculator", "params": {"productId": "p", "product": "p"}}`)),
+			code: plxerr.UnknownRouteParameter, file: guardFile(resultPage), ptr: "/steps/0/input/result/params/product",
+		},
+		{
+			name: "guard redirect to a parameter no text carries", edit: withGuard(calculatorPage,
+				redirectTo(`{"decision": "redirect", "route": "result", "params": {"schedule": "s"}}`)),
+			code: plxerr.RouteParameterTypeInvalid, file: guardFile(calculatorPage), ptr: "/steps/0/input/result/params/schedule",
+		},
+		{
+			name: "guard redirect without a required parameter", edit: withGuard(resultPage,
+				redirectTo(`{"decision": "redirect", "route": "loan-calculator"}`)),
+			code: plxerr.RouteParameterMissing, file: guardFile(resultPage), ptr: "/steps/0/input/result/params",
+		},
+		{
+			name: "guard redirect loop", edit: func(t *testing.T, m fstest.MapFS) {
+				withGuard(calculatorPage, redirectTo(`{"decision": "redirect", "route": "result"}`))(t, m)
+				withGuard(resultPage, redirectTo(`{"decision": "redirect", "route": "loan-calculator", "params": {"productId": "p"}}`))(t, m)
+			},
+			code: plxerr.RedirectLoop, file: guardFile(calculatorPage), ptr: "/steps/0/input/result",
+		},
+		{
+			name: "guarded page on an older runtime", edit: onApp(func(t *testing.T, doc map[string]any) { doc["minRuntimeVersion"] = "0.1.0" }),
+			code: plxerr.RuntimeTooOld, file: calculatorPage, ptr: "/security/requiresAssurance",
+		},
+	}
+}
+
 // TestInvalidNavigation checks the diagnostics of the app's navigation,
 // host events and typed results.
 // Verifies: NAV-003, NAV-005, NAV-008, NAV-011, HST-013.
 func TestInvalidNavigation(t *testing.T) {
 	t.Parallel()
-	for _, tc := range navigationCases() {
+	for _, tc := range append(navigationCases(), guardCases()...) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			m := fixture(t)
@@ -237,6 +317,7 @@ func TestGuardGraphCompiles(t *testing.T) {
 	}
 	m := fixture(t)
 	guard(t, m)
+	onApp(func(t *testing.T, doc map[string]any) { doc["minRuntimeVersion"] = "0.1.0" })(t, m)
 	wantDiag(t, compileFS(m), plxerr.RuntimeTooOld, calculateGraph, "/steps/3/input/result")
 
 	m = fixture(t)
@@ -317,5 +398,50 @@ func TestRoutingGoldenBundles(t *testing.T) {
 	readAll(t, res)
 	for _, b := range append([]*Bundle{res.App}, res.Plugins...) {
 		checkGolden(t, filepath.Join(goldenRoot, "routing", b.Key+".pxb"), b.Data)
+	}
+}
+
+// TestGuardsAndLinksAreEncoded checks that a plugin with a guarded page
+// requires navigation.guards.v1 when its app allows older runtimes, so
+// they never open the page unguarded, and that the app bundle carries the
+// deep links and the push payload key, `plux` by default (ADR-0040).
+// Verifies: NAV-008, NAV-009.
+func TestGuardsAndLinksAreEncoded(t *testing.T) {
+	t.Parallel()
+	m := fixture(t)
+	onApp(func(t *testing.T, doc map[string]any) {
+		doc["minRuntimeVersion"] = "0.1.0"
+		doc["requiredFeatures"] = "raise"
+		doc["navigation"] = raw(t, `{"deepLinks": {"hosts": ["loans.example.com"], "schemes": ["acme"],
+			"routes": [{"path": "/loans/{productId}", "route": "loan-calculator"}]}}`)
+		doc["push"] = raw(t, `{"enabled": true}`)
+	})(t, m)
+	res := compileFS(m)
+	if res.Diagnostics.HasErrors() {
+		t.Fatalf("diagnostics:\n%v", res.Diagnostics)
+	}
+	if !slices.Contains(res.Plugins[0].Features, "navigation.guards.v1") {
+		t.Errorf("plugin features %v lack navigation.guards.v1", res.Plugins[0].Features)
+	}
+	meta := readAll(t, res)[0].Meta
+	links := meta.DeepLinks(nil)
+	if links == nil || links.HostsLength() != 1 || string(links.Hosts(0)) != "loans.example.com" ||
+		links.SchemesLength() != 1 || string(links.Schemes(0)) != "acme" || links.RoutesLength() != 1 {
+		t.Fatalf("deep links not encoded")
+	}
+	var r fbs.DeepLinkRoute
+	links.Routes(&r, 0)
+	if string(r.Path()) != "/loans/{productId}" || string(r.Route()) != "loan-calculator" {
+		t.Errorf("deep link %s → %s", r.Path(), r.Route())
+	}
+	push := meta.Push(nil)
+	if push == nil || !push.Enabled() || string(push.PayloadKey()) != "plux" {
+		t.Errorf("push not encoded with the default key")
+	}
+
+	// Without them, neither is written.
+	res = compileFS(fixture(t))
+	if meta := readAll(t, res)[0].Meta; meta.DeepLinks(nil) != nil || meta.Push(nil) != nil {
+		t.Errorf("deep links or push written for an app that declares neither")
 	}
 }

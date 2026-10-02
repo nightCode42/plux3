@@ -35,6 +35,7 @@ func semantic(u *unit) {
 		u.checkPlugin(pl)
 	}
 	u.checkRedirects()
+	u.checkGuards()
 	u.finishGraph()
 }
 

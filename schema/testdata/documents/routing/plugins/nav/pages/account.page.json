@@ -1,0 +1,49 @@
+{
+  "id": "01f0c450-6c00-7000-8000-000000000202",
+  "key": "account",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01f0c450-6c00-7000-8000-000000000203",
+    "slots": {
+      "appBar": {
+        "id": "01f0c450-6c00-7000-8000-000000000204",
+        "slots": {
+          "title": {
+            "id": "01f0c450-6c00-7000-8000-000000000205",
+            "props": {
+              "data": "Account"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "children": [
+          {
+            "id": "01f0c450-6c00-7000-8000-000000000201",
+            "props": {
+              "data": "Account"
+            },
+            "testId": "account",
+            "type": "Text"
+          }
+        ],
+        "id": "01f0c450-6c00-7000-8000-000000000206",
+        "type": "Column"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "account",
+  "routeOptions": {
+    "guards": [
+      {
+        "$graph": "01f0c450-6c00-7000-8000-000000000200"
+      }
+    ]
+  },
+  "schemaVersion": "1.0.0",
+  "title": "Account"
+}

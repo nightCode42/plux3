@@ -53,6 +53,8 @@ final class Harness {
     PluxNavigationDelegate? navigationDelegate,
     Widget Function(BuildContext, String)? notFoundBuilder,
     PluxAuthDelegate? authDelegate,
+    GlobalKey<NavigatorState>? navigatorKey,
+    PluxConsent consent = PluxConsent.necessaryOnly,
   }) async {
     server.release = null;
     final baseline = await server.baseline(5, app, plugins);
@@ -77,6 +79,8 @@ final class Harness {
         navigationDelegate: navigationDelegate,
         notFoundBuilder: notFoundBuilder,
         authDelegate: authDelegate,
+        navigatorKey: navigatorKey,
+        consent: consent,
       ),
       RuntimeOverrides(
         credentials: MemoryCredentialStore.new,
