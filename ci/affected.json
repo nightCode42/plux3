@@ -189,14 +189,14 @@
       "description": "The starter app's flows under flutter test against a server built from source, and the compatibility matrix",
       "goTest": ["backend/internal/server"],
       "dart": ["apps/starter"],
-      "paths": ["test/compat/**", "schema/**", "mk/device.mk"],
+      "paths": ["test/compat/**", "schema/**", "mk/device.mk", "backend/cmd/plux/**", "backend/internal/generator/**", "backend/internal/codegen/**"],
       "exclude": ["**/*.md", "**/android/**", "**/ios/**"]
     },
     "e2e-android": {
       "description": "The starter app's flows on the Android 35 emulator",
       "goTest": ["backend/internal/server"],
       "dart": ["apps/starter"],
-      "paths": ["test/e2e/android.sh", "schema/**", "mk/device.mk"],
+      "paths": ["test/e2e/android.sh", "schema/**", "mk/device.mk", "backend/cmd/plux/**", "backend/internal/generator/**", "backend/internal/codegen/**"],
       "exclude": ["**/*.md", "**/ios/**"]
     },
     "e2e-android-26": {
@@ -209,13 +209,14 @@
         "packages/plux_flutter/hook/**",
         "pubspec.lock",
         "test/e2e/android.sh",
-        "mk/device.mk"
+        "mk/device.mk",
+        "backend/internal/generator/templates/android/**"
       ]
     },
     "e2e-ios": {
       "description": "The starter app's flows on the newest iOS simulator under XCTest: on pull requests for the runtime, the starter app and their dependencies, iOS-specific files and the flows' fixture, not for server-only changes, which the Android 35 job runs on a device (maintainer, 2026-10-01)",
       "dart": ["apps/starter"],
-      "paths": ["test/e2e/ios.sh", "schema/testdata/documents/starter/**", "mk/device.mk"],
+      "paths": ["test/e2e/ios.sh", "schema/testdata/documents/starter/**", "mk/device.mk", "backend/internal/generator/templates/ios/**"],
       "exclude": ["**/*.md", "**/android/**"]
     },
     "bench-runtime": {

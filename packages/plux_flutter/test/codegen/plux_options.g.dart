@@ -1,10 +1,11 @@
-// Written by plux init for the app "demo" in its "production" environment. Do not edit:
+// Written by plux for the app "demo" in its "production" environment. Do not edit:
 // run plux init again to update it, for example after the keys rotate.
 //
 // ignore_for_file: type=lint
 
 import 'dart:typed_data';
 
+import 'package:flutter/widgets.dart';
 import 'package:plux_flutter/plux_flutter.dart';
 
 /// Where this app's Plux content comes from, and the root keys its
@@ -19,6 +20,9 @@ abstract final class PluxOptions {
   /// The environment the app syncs from.
   static const environment = 'production';
 
+  /// The environment's channel.
+  static const channel = 'production';
+
   /// The environment's root public keys.
   static final rootKeys = <PluxPublicKey>[
     PluxPublicKey(
@@ -29,12 +33,16 @@ abstract final class PluxOptions {
     ),
   ];
 
-  /// The runtime's configuration with these values; pass other options
-  /// to PluxConfig yourself where you need them.
-  static PluxConfig config() => PluxConfig(
-    appId: appId,
-    endpoint: Uri.parse(endpoint),
-    environment: environment,
-    rootKeys: rootKeys,
-  );
+  /// The runtime's configuration with these values; [navigatorKey] is the
+  /// app's root navigator, where deep links open their pages. Pass other
+  /// options to PluxConfig yourself where you need them.
+  static PluxConfig config({GlobalKey<NavigatorState>? navigatorKey}) =>
+      PluxConfig(
+        appId: appId,
+        endpoint: Uri.parse(endpoint),
+        environment: environment,
+        channel: channel,
+        rootKeys: rootKeys,
+        navigatorKey: navigatorKey,
+      );
 }

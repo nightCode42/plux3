@@ -14,6 +14,13 @@ the Go driver (`TestStarterAppAgainstTheServer`) starts, publishes the
 | Android emulator, API 26 and 35 | `make e2e-android ANDROID_API=<level>` | CI job *Device end-to-end (Android)* |
 | iOS simulator: the newest iPhone and runtime | `make e2e-ios` (`E2E_IOS_MAJOR=18` for another) | CI job *Device end-to-end (iOS)* |
 
+Beside them, `TestGeneratedAppAgainstTheServer` generates the starter fixture's project
+with `plux create` and proves it (`GEN-002`, `GEN-005`, `GEN-006`;
+[ADR-0024](../../docs/adr/0024-no-code-generated-projects.md)). On the host it runs the
+generated app from its embedded release, from a newer release after a relaunch, and
+through a page that uses native code added to the project. On a device it also runs the
+project's own `integration_test/app_test.dart` there, which waits for the entry page.
+
 On a device the driver sets `PLUX_E2E_DEVICE`, and the flows run in the app
 built for that device: the platform's key store (Android Keystore, iOS
 Keychain) holds the device credential and the platform's HTTP client (Cronet,

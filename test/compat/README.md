@@ -23,6 +23,10 @@ runs its own flows and its own fixture exactly as released. Until three releases
 component are tagged, the matrix runs the ones that exist (none before the first P3
 tags), and `QA-010` stays `WIP`.
 
+Before the matrix, the run also proves the project `plux create` generates from the starter
+fixture, on this commit only (`TestGeneratedAppAgainstTheServer`, `GEN-002`, `GEN-005`,
+`GEN-006`).
+
 **Keeping the matrix meaningful.** The flows of one release run against the fixture of
 another, so the starter fixture evolves additively: the welcome page's route, texts and
 semantics labels that the flows look for are never changed or removed.

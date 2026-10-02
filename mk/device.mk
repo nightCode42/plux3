@@ -9,9 +9,9 @@
 ##@ End to end (QA-006, QA-010)
 
 # Verifies: QA-006.
-e2e-starter: ## Run the starter app's end-to-end flows on this machine against a server built from source (needs PLUX_TEST_DATABASE_URL)
+e2e-starter: ## Run the starter app's end-to-end flows, and a project plux create generates, against a server built from source (needs PLUX_TEST_DATABASE_URL)
 	@test -n "$${PLUX_TEST_DATABASE_URL:-}" || { echo "✗ set PLUX_TEST_DATABASE_URL: run 'make test-db' and export what it prints (docs/engineering/testing.md)"; exit 1; }
-	cd backend && PLUX_E2E_FLUTTER="$$(command -v flutter)" $(GO) test -count=1 -timeout 45m -run TestStarterAppAgainstTheServer -v ./internal/server
+	cd backend && PLUX_E2E_FLUTTER="$$(command -v flutter)" $(GO) test -count=1 -timeout 45m -run 'TestStarterAppAgainstTheServer|TestGeneratedAppAgainstTheServer' -v ./internal/server
 
 # ANDROID_API picks the emulator's system image for e2e-android.
 ANDROID_API ?= 35

@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -50,6 +51,10 @@ type fake struct {
 	channels map[string]*pluxv1.Channel
 	lag      int
 	unsigned bool
+	// release and blobs, when set, are the release GetRelease returns and
+	// its bundles by hash.
+	release []*pluxv1.PluginVersion
+	blobs   map[string][]byte
 }
 
 // point moves a channel to a release, not yet signed.
@@ -198,6 +203,9 @@ func (*fake) ListReleases(context.Context, *connect.Request[pluxv1.ListReleasesR
 }
 
 func (f *fake) GetRelease(context.Context, *connect.Request[pluxv1.GetReleaseRequest]) (*connect.Response[pluxv1.GetReleaseResponse], error) {
+	if f.release != nil {
+		return connect.NewResponse(&pluxv1.GetReleaseResponse{Release: &pluxv1.Release{Sequence: 3}, Versions: f.release}), nil
+	}
 	return connect.NewResponse(&pluxv1.GetReleaseResponse{Release: &pluxv1.Release{Sequence: 3}, Versions: []*pluxv1.PluginVersion{
 		{PluginKey: "", Version: 1, BundleSha256: f.hash, KeyId: "k1", Algorithm: "ed25519", Signature: []byte{9, 9}},
 		{PluginKey: "loans", Version: 2, BundleSha256: f.hash, KeyId: "k1", Algorithm: "ed25519", Signature: []byte{8, 8}},
@@ -236,7 +244,13 @@ func newFake(t *testing.T) (*fake, string) {
 		p, h := r()
 		mux.Handle(p, h)
 	}
-	mux.HandleFunc("GET /v1/objects/bundles/", func(w http.ResponseWriter, _ *http.Request) { _, _ = w.Write(f.bundle) })
+	mux.HandleFunc("GET /v1/objects/bundles/", func(w http.ResponseWriter, r *http.Request) {
+		if b, ok := f.blobs[path.Base(r.URL.Path)]; ok {
+			_, _ = w.Write(b)
+			return
+		}
+		_, _ = w.Write(f.bundle)
+	})
 	mux.HandleFunc("GET /readyz", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)

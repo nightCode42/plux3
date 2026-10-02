@@ -1,0 +1,29 @@
+import 'package:flutter/widgets.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
+import 'package:plux_flutter/plux_flutter.dart';
+import 'package:{%.Package%}/main.dart' as app;
+
+/// Launches the app on a device and waits until its entry page renders,
+/// from the embedded release or the server (GEN-002):
+/// `flutter test integration_test/app_test.dart -d <device>`.
+void main() {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
+  testWidgets('the app starts and renders its entry page', (tester) async {
+    await app.main();
+    bool rendered() =>
+        Plux.diagnostics.release.value != null &&
+        find.byType(PluxView).evaluate().isNotEmpty &&
+        find.byKey(const ValueKey('plux-loading')).evaluate().isEmpty &&
+        find.byKey(const ValueKey('plux-unavailable')).evaluate().isEmpty;
+    final end = DateTime.now().add(const Duration(seconds: 60));
+    while (!rendered()) {
+      if (DateTime.now().isAfter(end)) fail('the entry page did not render');
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+  });
+}

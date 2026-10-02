@@ -45,6 +45,7 @@ sha256sum --check --ignore-missing SHA256SUMS
 | `plux keys [-C dir] [--env key]` | Lists the public keys an environment's manifests and bundles are signed with. |
 | `plux native scan [--host dir] [-o file] [--build id]` | Writes the host app's native catalogue, `plux.catalogue.json`, by static analysis, with no change to its code (`CLI-006`, [ADR-0041](../adr/0041-native-catalogue-and-host-builds.md)): it runs `dart run plux_native_scan` in the host project (`--host`, default `.`), which needs `plux_native_scan` as a dev dependency, with the slot classes `plux.yaml` lists and the host build (below). The scanner's problems, such as a type with no document type, are printed with their locations; its exit code is the command's. |
 | `plux native sync [--build id] [--host dir] [--catalogue file] [-C dir]` | Uploads the catalogue of one host build (`NativeCatalogueService`). A build's catalogue never changes: the same content again changes nothing, and other content is refused (`PLX-8032`), so a new build needs its own identifier. Needs the `release.publish` permission. |
+| `plux create <app> --out dir \| --zip file \| --git remote [--branch name] [--env key] [--channel key] [--name text] [--application-id id] [--bundle-id id] [--version x.y.z+n] [--icon file.png] [--splash #RRGGBB] [--plux-path dir]` | Generates the ready-to-build Flutter project of a no-code app (`GEN-001`, [ADR-0024](../adr/0024-no-code-generated-projects.md), below), written into a new or empty directory, as one zip, or committed and pushed to a Git remote and branch (default `main`) with your own `git` and credentials (`GEN-003`). |
 | `plux completion bash\|zsh\|fish\|powershell` | Prints a shell completion script (`CLI-008`), e.g. `source <(plux completion bash)`. |
 | `plux version` | Prints the version, commit, commit date, Go version and platform of the binary. |
 | `plux help` | Lists the commands. `plux <command> -h` lists a command's flags. |
@@ -69,6 +70,29 @@ Each step leaves what it already finished as it is, so a second run changes noth
 environment that has signed nothing yet has no key to embed: promote a release to it and
 run `plux init` again. Until `plux_flutter` and the adapters are published, point the
 added dependencies at this repository with `dependency_overrides`.
+
+**Generating a no-code app (`plux create`).** It pulls the channel's release (default
+`production/production`) as `plux pull` does, and reads the shell from it: the app's
+name and entry route, push and deep links from the app bundle, and the device APIs the
+plugins request. Flags give what a release does not hold: the identifiers (default
+`com.example.<package>`; set your own before publishing), the version (default
+`1.0.0+1`), the icon (a square PNG of 1024 to 4096 pixels; default a disc on the splash
+colour) and the splash colour (default `#FFFFFF`). The project holds:
+
+- the Android and iOS projects of the pinned Flutter, with the icons and launch screens,
+  the permissions and usage descriptions the device APIs need, push (iOS entitlement and
+  background mode, Android notification permission) and deep links (intent filters,
+  associated domains, URL schemes);
+- `lib/main.dart`, which starts Plux and shows the entry page, and
+  `lib/plux/plux_options.g.dart` with the environment's root keys;
+- the release embedded under `assets/plux/`, `plux.yaml` and `plux.shell.json`, the
+  shell settings it was generated from;
+- `integration_test/app_test.dart`, which waits for the entry page on a device;
+- `scripts/build_android.sh` and `scripts/build_ios.sh`, and GitHub Actions and GitLab
+  CI templates for signed release builds, which read their secrets by name and hold none.
+
+The same input gives the same files and the same zip bytes. Until `plux_flutter` is
+published, `--plux-path` points the project at a checkout of it.
 
 **Host builds and `plux.yaml`.** The host build is the string the host's devices report as
 `PluxConfig.hostBuild`: `--build`, else `plux.yaml`'s `hostBuild`, else the `version` of

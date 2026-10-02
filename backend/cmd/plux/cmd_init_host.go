@@ -191,59 +191,19 @@ func writeHostConfig(dir string) (hostStep, error) {
 // writeOptions writes the generated configuration: the server, app and
 // environment, and the environment's root keys embedded (SEC-051).
 func writeOptions(dir, key, appID, server, envKey string, keys []*pluxv1.PublicKey) (hostStep, error) {
-	var b strings.Builder
-	fmt.Fprintf(&b, `// Written by plux init for the app %q in its %q environment. Do not edit:
-// run plux init again to update it, for example after the keys rotate.
-//
-// ignore_for_file: type=lint
-
-import 'dart:typed_data';
-
-import 'package:plux_flutter/plux_flutter.dart';
-
-/// Where this app's Plux content comes from, and the root keys its
-/// releases are verified with, embedded at build time (SEC-051, HST-032).
-abstract final class PluxOptions {
-  /// The Plux app.
-  static const appId = %s;
-
-  /// The Plux server.
-  static const endpoint = %s;
-
-  /// The environment the app syncs from.
-  static const environment = %s;
-
-  /// The environment's root public keys.
-  static final rootKeys = <PluxPublicKey>[
-`, key, envKey, codegen.DartString(appID), codegen.DartString(server), codegen.DartString(envKey))
+	spec := codegen.OptionsSpec{AppKey: key, AppID: appID, Endpoint: server, Environment: envKey}
 	for _, k := range keys {
-		var hex []string
-		for _, by := range k.GetPublicKey() {
-			hex = append(hex, fmt.Sprintf("0x%02x", by))
-		}
-		fmt.Fprintf(&b, "    PluxPublicKey(\n      keyId: %s,\n      algorithm: %s,\n      role: %s,\n      publicKey: Uint8List.fromList([%s]),\n    ),\n",
-			codegen.DartString(k.GetKeyId()), codegen.DartString(k.GetAlgorithm()), codegen.DartString(k.GetRole()), strings.Join(hex, ", "))
+		spec.Keys = append(spec.Keys, codegen.RootKey{KeyID: k.GetKeyId(), Algorithm: k.GetAlgorithm(), Role: k.GetRole(), PublicKey: k.GetPublicKey()})
 	}
-	b.WriteString(`  ];
-
-  /// The runtime's configuration with these values; pass other options
-  /// to PluxConfig yourself where you need them.
-  static PluxConfig config() => PluxConfig(
-    appId: appId,
-    endpoint: Uri.parse(endpoint),
-    environment: environment,
-    rootKeys: rootKeys,
-  );
-}
-`)
+	content := codegen.Options(spec)
 	path := filepath.Join(dir, filepath.FromSlash(optionsFile))
-	if old, err := os.ReadFile(path); err == nil && bytes.Equal(old, []byte(b.String())) { //nolint:gosec // the developer's own project
+	if old, err := os.ReadFile(path); err == nil && bytes.Equal(old, content) { //nolint:gosec // the developer's own project
 		return hostStep{optionsFile, "unchanged"}, nil
 	}
 	if err := os.MkdirAll(filepath.Dir(path), 0o750); err != nil {
 		return hostStep{}, fmt.Errorf("create %s: %w", filepath.Dir(optionsFile), err)
 	}
-	if err := writeFile(path, []byte(b.String())); err != nil {
+	if err := writeFile(path, content); err != nil {
 		return hostStep{}, err
 	}
 	return hostStep{optionsFile, fmt.Sprintf("written (%d root keys)", len(keys))}, nil

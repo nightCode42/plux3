@@ -1,0 +1,14 @@
+#!/bin/sh
+# Builds the signed iOS archive for the App Store with the signing
+# certificate and provisioning profile installed on this Mac. The CI
+# templates write ios/ExportOptions.plist for manual signing; without it,
+# Xcode's automatic signing with the team set in the project is used
+# (README.md, "Release builds").
+set -eu
+cd "$(dirname "$0")/.."
+flutter pub get
+if [ -f ios/ExportOptions.plist ]; then
+  flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+else
+  flutter build ipa --release --export-method app-store
+fi

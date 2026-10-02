@@ -191,6 +191,51 @@ Generated projects are ordinary embedded-mode Flutter apps (`GEN-006`):
 - **`GEN-006`.** The test adds a native route and a slot to the generated project, runs
   `plux native scan`, and uses both from a plugin.
 
+### As built in R9
+
+**Where the shell comes from.**
+
+- `plux create <app>` reads the shell from the release it embeds, not from the app
+  document: the app bundle gives the name, entry route, push and deep links, and the
+  plugin bundles give their device APIs. Flags give the rest — identifiers, version, icon,
+  splash colour. No `shell.json` input was needed.
+- Identifiers default to `com.example.<package>`.
+- An app without an icon gets a generated one: a disc on the splash colour.
+
+**Templates.**
+
+- They are the starter's platform projects, made with the pinned Flutter (a test keeps
+  the templates' Flutter version and GitHub action pins in step with the repository's).
+- `RunnerTests` runs a build's Dart integration tests under XCTest (ADR-0035), so the
+  project's `integration_test/app_test.dart`, which waits for the entry page, runs on a
+  simulator as on an emulator.
+
+**Generated files.**
+
+- `lib/main.dart` hands the links the app is opened with to `Plux.handleDeepLink`.
+- `lib/plux/plux_options.g.dart` is the file `plux init` writes, now with the channel.
+- Release signing on Android reads `android/key.properties` when present. The iOS
+  script uses `ios/ExportOptions.plist`, which the CI templates write, or Xcode's
+  automatic signing.
+- The push entitlement is `development`; App Store signing with a distribution profile
+  uses the profile's.
+- `--plux-path` makes the project depend on a checkout of `plux_flutter` until it is
+  published.
+
+**Proofs.** `TestGeneratedAppAgainstTheServer` (`make e2e-starter`) proves `GEN-002`,
+`GEN-005` and `GEN-006` against a server built from source:
+
+1. It publishes the starter fixture and generates its project.
+2. A team adds a native route and a slot, and `plux native scan` finds both.
+3. A newer release changes a title and adds a page that uses the slot and the route.
+4. The generated app then runs:
+   - from its embedded release, whose title it shows: the newer release was already
+     published, so a first sync would have shown the new one;
+   - after a relaunch, from the newer release, without a rebuild;
+   - through the page that uses the native code.
+5. In the device jobs, the same test runs the project's own launch test on the emulator
+   or simulator.
+
 ## Consequences
 
 - **Positive.**
@@ -204,7 +249,7 @@ Generated projects are ordinary embedded-mode Flutter apps (`GEN-006`):
   - The in-house resize is simpler than an image library's, which is enough for icons.
 - **Follow-up.**
   - R9 builds the library, the CLI outputs, the job, and the `GEN-005` and `GEN-006`
-    tests.
+    tests (done, *As built in R9*).
   - P11 builds the endpoint and `GEN-004`.
 
 ## Options in detail

@@ -76,6 +76,7 @@ void main() {
     expect(config.appId, '01e0c450-6c00-7000-8000-000000000001');
     expect(config.endpoint, Uri.parse('https://plux.example.com'));
     expect(config.environment, 'production');
+    expect(config.channel, 'production');
     final key = config.rootKeys.single;
     expect((key.keyId, key.algorithm, key.role), ('k1', 'ed25519', 'targets'));
     expect(key.publicKey, [0xab, 0x01]);
