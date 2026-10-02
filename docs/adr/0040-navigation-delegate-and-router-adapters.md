@@ -213,7 +213,9 @@ uses them declares that minimum (`PLX-1119`).
     app's `userContext` declares; one it does not declare, or that does not convert, is
     left out and reported once by name with `PLX-4204` (`HST-011`).
 - **Kill switch.** P3's per-plugin switch already shows the plugin's fallback page
-  (`RT-022`). Guards see it before any other check.
+  (`RT-022`). Guards see it before any other check. A declared fallback page that has
+  guards, or asks for an assurance level above `AL0`, gives way to the generic fallback,
+  so the kill switch never opens a guarded page (maintainer, P4 plan A23).
 - **Feature flag.** A guard reads `flags.<name>`: the app document's flag defaults, which
   the host can override through generated accessors (R8). Targeting arrives in P9.
 - **Custom PXL** conditions, over every root of the guard's scope.

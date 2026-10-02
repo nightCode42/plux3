@@ -117,6 +117,15 @@ final class PluxView extends ConsumerWidget {
         return fallback(e, page.plugin);
       }
       if (declared == null) return fallback(off, page.plugin);
+      // The kill switch never opens a guarded page: a declared fallback
+      // page with guards or an assurance level, or whose requirements
+      // cannot be read yet, gives way to the generic fallback (ADR-0040).
+      final needs = RouteGuards.requirementsNow(release, declared);
+      if (needs == null ||
+          needs.guards.isNotEmpty ||
+          needs.assurance > deviceAssurance) {
+        return fallback(off, page.plugin);
+      }
       shown = declared;
     } else if (!_guarded && RouteGuards.needsDecision(release, page)) {
       // An entry nothing decided yet: an embedded view, a declarative page

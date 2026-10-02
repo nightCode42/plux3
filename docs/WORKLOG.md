@@ -71,6 +71,11 @@ At R2 and R3's review (2026-10-02) the maintainer accepted their recommendations
 for the user in a dialog or sheet counts against no action bound, as implemented; the
 specification's version header stays at 1.1.9 until R11 sets it to the latest revision.
 
+During R4–R6 (2026-10-02) the maintainer decided (plan §2.1 A22, A23): router adapters
+wrap the host's router, `PluxConfig(router: PluxGoRouter(myGoRouter))`, through a core
+`PluxRouterAdapter` interface; a kill switch's declared fallback page that is guarded
+gives way to the generic fallback.
+
 ### P3 scope decisions (maintainer, 2026-09-28, approving the P3 plan)
 
 - **Scope boundary.** P3 renders; it does not act or navigate. Events are wired as no-ops reporting `PLX-4010` in debug builds; bindings read parameters, declared initial page state, translations and the theme; `Plux.open` pushes one page on the host navigator. `nativeRoutes`, `nativeSlots`, `nativeActions`, `events` and exposed-state writes arrive in P4/P5, so `HST-001` stays `WIP`. DPoP (P6) means the DPoP part of `ANL-002` stays open; root rotation (P6) keeps `SEC-051` `WIP`; `QA-010`'s "last three runtimes" starts with the first tag.

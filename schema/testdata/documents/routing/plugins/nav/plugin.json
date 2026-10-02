@@ -1,6 +1,7 @@
 {
   "description": "Pages and graphs that exercise the action engine and navigation.",
   "entryPage": "01f0c450-6c00-7000-8000-000000000010",
+  "fallbackPage": "01f0c450-6c00-7000-8000-00000000020f",
   "icon": {
     "monogram": {
       "background": "#0B6E4F",

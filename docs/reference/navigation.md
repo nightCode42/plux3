@@ -88,7 +88,8 @@ checked it. Until the host registers native routes
 A page is entered only when these allow it, in this order:
 
 1. **Kill switch.** A plugin switched off shows its fallback page, before anything else
-   runs (`RT-022`).
+   runs (`RT-022`). A fallback page that has guards, or asks for an assurance level, gives
+   way to the generic fallback: the kill switch never opens a guarded page.
 2. **Assurance level.** A page whose `security.requiresAssurance` is above `AL0` shows
    its fallback. The runtime knows no higher level until attestation arrives in P6
    (`SEC-007`), so such a page fails closed.

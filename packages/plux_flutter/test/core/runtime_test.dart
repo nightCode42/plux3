@@ -493,7 +493,26 @@ void main() {
         await start(config());
       });
       await tester.pumpWidget(const PluxScope(child: PluxView('tasks')));
-      expect(find.text('page task-detail of 10 '), findsOneWidget);
+      expect(find.text('page tasks-unavailable of 10 '), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'a switched-off plugin whose fallback page is guarded shows the generic fallback: the kill switch never opens a guarded page [RT-022] [NAV-009]',
+    (tester) async {
+      await tester.runAsync(() async {
+        server.release = FakeRelease(
+          10,
+          goldens.bundles['routing/routing.pxb']!,
+          {'nav': goldens.bundles['routing/nav.pxb']!},
+          killSwitches: ['nav'],
+        );
+        await start(config());
+      });
+      // nav's fallback page is the vault, which requires assurance AL1.
+      await tester.pumpWidget(const PluxScope(child: PluxView('home')));
+      expect(find.text('page vault of 10 '), findsNothing);
+      expect(find.text('fallback PLX-4020'), findsOneWidget);
     },
   );
 
