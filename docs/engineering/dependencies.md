@@ -80,6 +80,16 @@ Each router adapter declares its router with a caret range bounded below the nex
 | zstd v1.5.7 (`lib/common`, `lib/decompress`), vendored in `packages/plux_flutter/native/zstd/` | Delta patching and transport decompression on the device | BSD-3-Clause | [ADR-0030](../adr/0030-native-code-in-plux-flutter.md) |
 | Skia path operations at the revision the pinned Flutter uses, with the Flutter engine's `path_ops` wrapper, built for `plux-svgc` | Mask, clip and overdraw optimisation of SVGs at publish time | BSD-3-Clause | [ADR-0027](../adr/0027-asset-pipeline.md) Revision |
 
+### Add-to-app hosts (`apps/add_to_app/`)
+
+The native Android and iOS hosts embed the Plux module with the Flutter SDK's own add-to-app tooling (`HST-033`, plan p4 §5.10). The Android host's `:flutter` project brings the Flutter embedding and the AndroidX libraries it declares, as any Flutter app has them; among them `androidx.fragment`, whose `FragmentActivity` holds the `FlutterFragment`. Beyond those, the hosts use only their UI tests' libraries (maintainer, 2026-10-02, plan p4 A33):
+
+| Dependency | Used for | Licence | Status |
+|---|---|---|---|
+| `androidx.test:runner` 1.6.2, `androidx.test.ext:junit` 1.2.1 | The Kotlin host's instrumentation tests: `AndroidJUnitRunner` and the JUnit 4 runner class; `androidTest` only, never in the app | Apache-2.0 | In use (P4 R10, test) |
+| `androidx.test.uiautomator:uiautomator` 2.3.0 | The Kotlin host's UI tests, which find Plux pages and native views by their accessibility labels; `androidTest` only | Apache-2.0 | In use (P4 R10, test) |
+| `junit:junit` 4.13.2, with `org.hamcrest:hamcrest-core` 1.3 | Brought by the two above, whose test API JUnit 4 is; `androidTest` only, never distributed | EPL-1.0; BSD-3-Clause | In use (P4 R10, test). EPL-1.0 is a weak copyleft licence, which §1 point 3 accepts only with an ADR: put to the maintainer at R10 |
+
 ### Documentation site (`site/`)
 
 | Package | Used for | Licence | Record |
@@ -111,6 +121,7 @@ Planned for P11 (ADR-0014): React, TanStack Router and Query, shadcn/ui on Radix
 | cosign (sigstore/cosign-installer), Syft (anchore/sbom-action), Docker Buildx and QEMU | Action SHAs in `release.yml` and `image.yml` | Keyless signatures, CycloneDX SBOMs and multi-arch images (`DEP-001`, `CI-004`) |
 | SLSA GitHub generators (`generator_generic_slsa3`, `generator_container_slsa3`) v2.1.0 | Tag in `release.yml` — the generators must be referenced by tag to be verifiable | SLSA level 3 provenance (`CI-004`) |
 | k6 (grafana/setup-k6-action) | Action SHA in `load.yml` | The manifest load test (`NFR-020`) |
+| CocoaPods | GitHub's macOS images; Homebrew where it is missing (`test/e2e/ios.sh`) | Installs the add-to-app module's pods into the Swift host, as Flutter's add-to-app guide describes (`HST-033`, plan p4 A33) |
 
 ### Container images
 

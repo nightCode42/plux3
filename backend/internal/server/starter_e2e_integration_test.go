@@ -75,19 +75,9 @@ func TestStarterAppAgainstTheServer(t *testing.T) {
 	ctx := st.ctx
 	live := io.Discard
 	if device := os.Getenv("PLUX_E2E_DEVICE"); device != "" {
-		// A device build and run can hang in the platform's tools: bound
-		// it (PLUX_E2E_DEVICE_TIMEOUT, default 30m), and show its output as
-		// it comes so a hang can be diagnosed.
-		bound := 30 * time.Minute
-		if s := os.Getenv("PLUX_E2E_DEVICE_TIMEOUT"); s != "" {
-			d, err := time.ParseDuration(s)
-			if err != nil {
-				t.Fatalf("PLUX_E2E_DEVICE_TIMEOUT: %v", err)
-			}
-			bound = d
-		}
+		// Show the device's output as it comes, so a hang can be diagnosed.
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, bound)
+		ctx, cancel = context.WithTimeout(ctx, deviceTimeout(t))
 		defer cancel()
 		live = os.Stdout
 		steps, succeeded = deviceSteps(flutter, device, defines)
@@ -135,6 +125,21 @@ func TestStarterAppAgainstTheServer(t *testing.T) {
 			t.Errorf("no %s event reached the server: %v", want, seen)
 		}
 	}
+}
+
+// deviceTimeout bounds a test's builds and runs on a device, which can
+// hang in the platform's tools: PLUX_E2E_DEVICE_TIMEOUT, default 30m.
+func deviceTimeout(t *testing.T) time.Duration {
+	t.Helper()
+	s := os.Getenv("PLUX_E2E_DEVICE_TIMEOUT")
+	if s == "" {
+		return 30 * time.Minute
+	}
+	d, err := time.ParseDuration(s)
+	if err != nil {
+		t.Fatalf("PLUX_E2E_DEVICE_TIMEOUT: %v", err)
+	}
+	return d
 }
 
 // deviceSteps are the commands that run the flows on device, and the line

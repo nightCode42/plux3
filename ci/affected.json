@@ -181,22 +181,24 @@
         "coverage.json",
         "schema/**",
         "mk/dart.mk",
-        "!**/*.md"
+        "!**/*.md",
+        "!apps/add_to_app/android_host/**",
+        "!apps/add_to_app/ios_host/**"
       ],
       "make": ["dart-lock-check", "dart-fmt-check", "dart-analyze", "widgets-api-check", "dart-cover"]
     },
     "starter-e2e": {
-      "description": "The starter app's flows under flutter test against a server built from source, and the compatibility matrix",
+      "description": "The starter app's and the add-to-app module's flows under flutter test against a server built from source, and the compatibility matrix",
       "goTest": ["backend/internal/server"],
-      "dart": ["apps/starter"],
+      "dart": ["apps/starter", "apps/add_to_app/plux_module"],
       "paths": ["test/compat/**", "schema/**", "mk/device.mk", "backend/cmd/plux/**", "backend/internal/generator/**", "backend/internal/codegen/**"],
       "exclude": ["**/*.md", "**/android/**", "**/ios/**"]
     },
     "e2e-android": {
-      "description": "The starter app's flows on the Android 35 emulator",
+      "description": "The starter app's flows and the Kotlin add-to-app host's on the Android 35 emulator",
       "goTest": ["backend/internal/server"],
-      "dart": ["apps/starter"],
-      "paths": ["test/e2e/android.sh", "schema/**", "mk/device.mk", "backend/cmd/plux/**", "backend/internal/generator/**", "backend/internal/codegen/**"],
+      "dart": ["apps/starter", "apps/add_to_app/plux_module"],
+      "paths": ["test/e2e/android.sh", "schema/**", "mk/device.mk", "backend/cmd/plux/**", "backend/internal/generator/**", "backend/internal/codegen/**", "apps/add_to_app/android_host/**"],
       "exclude": ["**/*.md", "**/ios/**"]
     },
     "e2e-android-26": {
@@ -204,6 +206,7 @@
       "ci": "e2e-android",
       "paths": [
         "apps/starter/android/**",
+        "apps/add_to_app/android_host/**",
         "packages/*/android/**",
         "packages/plux_flutter/native/**",
         "packages/plux_flutter/hook/**",
@@ -214,9 +217,9 @@
       ]
     },
     "e2e-ios": {
-      "description": "The starter app's flows on the newest iOS simulator under XCTest: on pull requests for the runtime, the starter app and their dependencies, iOS-specific files and the flows' fixture, not for server-only changes, which the Android 35 job runs on a device (maintainer, 2026-10-01)",
-      "dart": ["apps/starter"],
-      "paths": ["test/e2e/ios.sh", "schema/testdata/documents/starter/**", "mk/device.mk", "backend/internal/generator/templates/ios/**"],
+      "description": "The starter app's flows and the Swift add-to-app host's on the newest iOS simulator under XCTest: on pull requests for the runtime, the starter app and their dependencies, iOS-specific files and the flows' fixture, not for server-only changes, which the Android 35 job runs on a device (maintainer, 2026-10-01)",
+      "dart": ["apps/starter", "apps/add_to_app/plux_module"],
+      "paths": ["test/e2e/ios.sh", "schema/testdata/documents/starter/**", "mk/device.mk", "backend/internal/generator/templates/ios/**", "apps/add_to_app/ios_host/**"],
       "exclude": ["**/*.md", "**/android/**"]
     },
     "bench-runtime": {

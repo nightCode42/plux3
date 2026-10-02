@@ -300,6 +300,40 @@ An iOS app adds the Associated Domains entitlement `applinks:links.example.com` 
 scheme `acme` under `CFBundleURLTypes` in `Info.plist`. Verified `https` links also need the
 site to publish its `assetlinks.json` (Android) and `apple-app-site-association` (iOS).
 
+### Native Android and iOS apps (add-to-app)
+
+An app written in Kotlin or Swift embeds Plux through a Flutter module (`HST-033`).
+[`apps/add_to_app`](../../apps/add_to_app/README.md) is a working example with both hosts
+and their UI tests; in outline:
+
+1. Create the module (`flutter create -t module`), add `plux_flutter`, and pull a baseline
+   into its assets as in §1. Its `main` starts Plux before `runApp`, with settings the host
+   passes over a method channel or that the module is built with, and wraps a
+   `MaterialApp` whose `navigatorKey` it also gives `PluxConfig`.
+2. Let the native side ask for pages by route: the module's channel handler calls
+   `Plux.open(navigatorKey.currentContext!, route)` and, when the page pops,
+   `SystemNavigator.pop()`, which finishes a `FlutterActivity`, takes a `FlutterFragment`'s
+   activity back and dismisses a `FlutterViewController`.
+3. Register the host's native screens as `PluxNativeRoute.opened` routes that ask the host
+   over the same channel, so plugin pages open them with `navigate`.
+4. **Android:** `flutter pub get` in the module writes `.android/include_flutter.groovy`.
+   Apply it in the host's `settings.gradle.kts`, depend on `project(":flutter")`, and set
+   `android.newDsl=false`, `android.builtInKotlin=false` and
+   `android.uniquePackageNames=false` in `gradle.properties`, as Flutter's own templates do.
+   Create one `FlutterEngine`, run the module's entry point, put it in
+   `FlutterEngineCache`, and open pages with `FlutterActivity.withCachedEngine(id)` or a
+   `FlutterFragment.withCachedEngine(id).shouldAutomaticallyHandleOnBackPressed(true)`.
+5. **iOS:** load the module's `.ios/Flutter/podhelper.rb` in the `Podfile`, call
+   `install_all_flutter_pods` with `use_frameworks!` and `flutter_post_install` in
+   `post_install`, then `pod install`. Set `ENABLE_USER_SCRIPT_SANDBOXING = NO`, so the
+   module's build scripts run. Create one `FlutterEngine`, `run()` it and
+   `GeneratedPluginRegistrant.register(with:)`, and show pages in a
+   `FlutterViewController(engine:nibName:bundle:)`, presented or as a child; an engine
+   shows one view controller at a time.
+
+The runtime keeps the engine's state while the app runs, so a release that sync staged
+activates once no Plux page is open, as in a Flutter app.
+
 ## 4. Sync, theme and consent at run time
 
 | Call | Does |

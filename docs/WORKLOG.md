@@ -12,7 +12,7 @@ Per-requirement implementation status is **not** tracked here; it lives only in 
 |---|---|
 | Phase | P4 — Routing, host integration and no-code generation (plan approved 2026-10-01) |
 | Active branch | `claude/kind-ptolemy-tqyty7` (the session branch the environment pins; maintainer-approved, plan §2.1 A2; R0 and the following milestones merge together, A10) |
-| Active work | R7–R11 together (maintainer, 2026-10-02: "handle all five milestones"), each pushed as a checkpoint, with one exit gate at R11: R7 — `PluxView` v2, `Plux.state<T>`, `Plux.eventsNamed`, the compiler's mixed-screen checks and the starter's mixed screens — implemented (code, tests, docs); next R8 `plux codegen` and `plux init`, R9 `plux create`, R10 add-to-app, R11 close the phase |
+| Active work | R7–R11 together (maintainer, 2026-10-02: "handle all five milestones"), each pushed as a checkpoint, with one exit gate at R11: R7 mixed screens and the host API, R8 `plux codegen` and `plux init`, R9 `plux create` and R10 add-to-app (the Flutter module, the Kotlin and Swift hosts and their UI tests, `TestAddToAppAgainstTheServer`) implemented and pushed; next R11 close the phase |
 | Requirement IDs | R7: `NAV-004`, `HST-021`, `STA-030` (native side), `HST-013` (plugin to host), `WGT-033`; R8: `HST-030`, `HST-032`; R9: `GEN-001`, `GEN-002`, `GEN-003`, `GEN-005`, `GEN-006`; R10: `HST-033`; statuses move at R11 (plan §4.1). Then all P4 requirements as scoped by [plans/p4.md](plans/p4.md) §3 |
 
 ## Next up
@@ -36,9 +36,9 @@ verified and how.
 4. **R4 — guards, deep links, push, auth and user context**, **R5 — router adapters** and
    **R6 — native catalogue** (done; their shared exit gate passed 2026-10-02, A25–A29
    decided).
-5. **R7 — mixed screens and the host API** (implemented), then R8 codegen and init, R9
-   `plux create`, R10 add-to-app and R11 close the phase, together, with one exit gate at
-   R11.
+5. **R7 — mixed screens and the host API**, **R8 — codegen and init**, **R9 — `plux
+   create`** and **R10 — add-to-app** (implemented), then R11 closes the phase, together,
+   with one exit gate at R11.
 
 ### P4 approvals (maintainer, 2026-10-01)
 

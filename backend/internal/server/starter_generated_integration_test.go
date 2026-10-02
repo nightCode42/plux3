@@ -189,6 +189,9 @@ func TestGeneratedAppAgainstTheServer(t *testing.T) {
 	}
 	write("test/generated_test.dart", generatedTest)
 	flutterIn("pub", "get")
+	// The project as generated, with the team's code, analyses clean,
+	// its launch test included, which only a device run compiles.
+	flutterIn("analyze") //nolint:misspell // the flutter subcommand
 	st.run(t, 0, "native", "scan", "--host", app, "--dart", filepath.Join(filepath.Dir(flutter), "dart"))
 	var scanned map[string]any
 	if err := json.Unmarshal([]byte(read(filepath.Join(app, "plux.catalogue.json"))), &scanned); err != nil {

@@ -21,6 +21,15 @@ generated app from its embedded release, from a newer release after a relaunch, 
 through a page that uses native code added to the project. On a device it also runs the
 project's own `integration_test/app_test.dart` there, which waits for the entry page.
 
+`TestAddToAppAgainstTheServer` proves the runtime inside a Flutter module embedded in
+native apps (`HST-033`; [`apps/add_to_app`](../../apps/add_to_app/README.md)): a native
+screen opens a Plux page by route, rendered from the module's baseline while the server is
+out of reach; sync applies a newer release once no Plux page is open; a plugin page opens
+the host's native screen through a native route. Each flow runs in a process of its own.
+On the host the module's Dart test plays the native host; on the emulator the Kotlin
+host's UiAutomator tests run, one instrumentation per flow, and on the simulator the Swift
+host's XCUITests, one `xcodebuild` run per flow, after `pod install`.
+
 On a device the driver sets `PLUX_E2E_DEVICE`, and the flows run in the app
 built for that device: the platform's key store (Android Keystore, iOS
 Keychain) holds the device credential and the platform's HTTP client (Cronet,

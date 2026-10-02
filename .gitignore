@@ -63,5 +63,6 @@ node_modules/
 /studio/coverage/
 /packages/*/coverage/
 /apps/*/coverage/
+/apps/add_to_app/*/coverage/
 reqtrace.md
 reqtrace.json

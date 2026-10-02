@@ -7,6 +7,7 @@ environment:
   sdk: ^3.13.0
 
 workspace:
+  - apps/add_to_app/plux_module
   - apps/starter
   - packages/plux_auto_route
   - packages/plux_devtools

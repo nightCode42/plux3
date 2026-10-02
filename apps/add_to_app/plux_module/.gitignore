@@ -1,0 +1,20 @@
+# The platform projects flutter pub get generates for the hosts to include
+# (.android/include_flutter.groovy, .ios/Flutter/podhelper.rb).
+.android/
+.ios/
+.dart_tool/
+.flutter-plugins-dependencies
+build/
+*.iml
+.idea/
+
+# The baseline plux pull writes (assets/plux/README.md); the directories
+# the pubspec lists stay, with a placeholder each.
+/assets/plux/*
+!/assets/plux/README.md
+!/assets/plux/bundles/
+!/assets/plux/assets/
+/assets/plux/bundles/*
+/assets/plux/assets/*
+!/assets/plux/bundles/.gitkeep
+!/assets/plux/assets/.gitkeep

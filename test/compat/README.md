@@ -24,8 +24,9 @@ component are tagged, the matrix runs the ones that exist (none before the first
 tags), and `QA-010` stays `WIP`.
 
 Before the matrix, the run also proves the project `plux create` generates from the starter
-fixture, on this commit only (`TestGeneratedAppAgainstTheServer`, `GEN-002`, `GEN-005`,
-`GEN-006`).
+fixture (`TestGeneratedAppAgainstTheServer`, `GEN-002`, `GEN-005`, `GEN-006`) and the
+add-to-app module's flows (`TestAddToAppAgainstTheServer`, `HST-033`), on this commit
+only.
 
 **Keeping the matrix meaningful.** The flows of one release run against the fixture of
 another, so the starter fixture evolves additively: the welcome page's route, texts and

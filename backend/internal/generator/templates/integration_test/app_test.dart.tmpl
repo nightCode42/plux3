@@ -1,3 +1,4 @@
+import 'package:flutter/semantics.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
@@ -9,6 +10,7 @@ import 'package:{%.Package%}/main.dart' as app;
 /// `flutter test integration_test/app_test.dart -d <device>`.
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+  _holdPlatformSemantics();
 
   testWidgets('the app starts and renders its entry page', (tester) async {
     await app.main();
@@ -26,4 +28,20 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
     }
   });
+}
+
+/// Keeps the platform from turning semantics on or off while the test
+/// runs. When it does, the framework takes or releases a semantics handle
+/// for it, and the test framework, which checks that a test ends with no
+/// more handles than it started with, fails the test. Under XCTest
+/// (ios/RunnerTests) the test starts with the app, and XCTest turns the
+/// app's accessibility on when it attaches, seconds into the test.
+void _holdPlatformSemantics() {
+  final dispatcher = SemanticsBinding.instance.platformDispatcher;
+  VoidCallback? framework;
+  setUpAll(() {
+    framework = dispatcher.onSemanticsEnabledChanged;
+    dispatcher.onSemanticsEnabledChanged = () {};
+  });
+  tearDownAll(() => dispatcher.onSemanticsEnabledChanged = framework);
 }
