@@ -42,6 +42,14 @@ Future<void> pumpUntil(
   }
 }
 
+/// Taps [finder] once the screen has settled: a page still sliding in
+/// moves its widgets, and a tap aimed at a moving widget can miss it
+/// (CI run 37156438886, iOS).
+Future<void> tapSettled(WidgetTester tester, Finder finder) async {
+  await tester.pumpAndSettle();
+  await tester.tap(finder);
+}
+
 /// Registers the flows. [config] is the app's configuration; the flows
 /// are skipped without one. [storage] gives the release store's directory
 /// for each launch, null for the platform's, as a device does.
@@ -167,17 +175,18 @@ void starterFlows({
       await tester.tap(find.byKey(const ValueKey('open-mixed')));
       await pumpUntil(tester, find.text('Left: 0'));
       expect(find.text('Right: 0'), findsOneWidget);
-      await tester.tap(find.byKey(const ValueKey('add-one')));
+      await tapSettled(tester, find.byKey(const ValueKey('add-one')));
       await pumpUntil(tester, find.text('Left: 1'));
       expect(find.text('Right: 1'), findsOneWidget);
       await pumpUntil(tester, find.text('Native view of the counter: 1'));
+      await tester.pumpAndSettle();
       await tester.pageBack();
       await tester.pumpAndSettle();
 
       // A plugin page holding the host's map card.
       await tester.tap(find.byKey(const ValueKey('open-places')));
       await pumpUntil(tester, find.text('Harbour'));
-      await tester.tap(find.text('Harbour'));
+      await tapSettled(tester, find.text('Harbour'));
       await pumpUntil(tester, find.text('Place: Harbour'));
       expect(problems, isEmpty, reason: problems.join('\n'));
       await stop(tester);
@@ -219,9 +228,9 @@ void starterFlows({
       // action, emit a host event and open the host's native route.
       await tapTile(tester, 'open-link');
       await pumpUntil(tester, find.text('Place: Lighthouse'));
-      await tester.tap(find.text('Share'));
+      await tapSettled(tester, find.text('Share'));
       await pumpUntil(tester, find.text('Shared: Place: Lighthouse'));
-      await tester.tap(find.text('Profile'));
+      await tapSettled(tester, find.text('Profile'));
       await pumpUntil(tester, find.text('Profile of Lighthouse'));
       // Past the transitions, so one back button is on screen.
       await tester.pumpAndSettle();
