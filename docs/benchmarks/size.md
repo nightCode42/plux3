@@ -142,6 +142,39 @@ specification 1.2.1, [ADR-0036](../adr/0036-size-budgets-per-build.md) Revision)
 baseline is the round 2 state, so the 10% gate measures growth from here. Size optimization
 stays parked.
 
+## Round 3 — Phase 4 complete (2026-10-03)
+
+**State:** commit `3572b40`, P4 R4 to R10 on top of round 2: guards, deep links and push
+payloads, the auth delegate and user context, the native catalogue (native routes, slots
+and custom actions), `PluxView` for components, host events and exposed state. CI run
+37082540130. No size work. The router adapters, `plux_native_scan` and the add-to-app module
+are packages of their own and not in the measured app.
+
+| Platform | Build | Blank | With `plux_flutter` | Added | Change |
+|---|---|---:|---:|---:|---:|
+| Android arm64-v8a | APK file | 14.35 MiB | 20.29 MiB | **6,224,031 B (5.94 MiB)** | +65,536 B |
+| Android arm64-v8a | App Bundle download | 7.00 MiB | 9.55 MiB | **2,672,665 B (2.55 MiB)** | +39,474 B |
+| Android armeabi-v7a | APK file | 11.68 MiB | 18.42 MiB | **7,074,087 B (6.75 MiB)** | +147,456 B |
+| Android armeabi-v7a | App Bundle download | 6.25 MiB | 9.06 MiB | **2,950,310 B (2.81 MiB)** | +49,777 B |
+| Android x86_64 | APK file | 15.72 MiB | 21.81 MiB | **6,387,329 B (6.09 MiB)** | +65,536 B |
+| Android x86_64 | App Bundle download | 7.02 MiB | 9.59 MiB | **2,696,484 B (2.57 MiB)** | +36,556 B |
+| iOS arm64 | IPA | 5.81 MiB | 8.26 MiB | **2,568,062 B (2.45 MiB)** | +32,474 B |
+
+**Where the bytes go:** all of the change is Dart AOT code. On arm64 `libapp.so` adds
+5,636,096 B to the APK (+65,536 B over round 2) and 2,319,734 B to the App Bundle
+download (+39,474 B); the other files are unchanged.
+
+**Findings:**
+
+1. **Every download grows by 1.3% to 1.7%:** 37 to 50 KB on Android, 32 KB on iOS, about
+   half of what R2 and R3 added (69 to 83 KB and 75 KB).
+2. **Every build is within its budget and within 10% of the round 2 baseline.** The
+   largest are the armeabi-v7a APK at 6.75 MiB (budget 10 MiB, +2.1% over its baseline),
+   the armeabi-v7a App Bundle download at 2.81 MiB (budget 4 MiB) and the IPA at 2.45 MiB
+   (budget 3 MiB).
+3. **The committed baseline is still round 2's,** so the 10% gate keeps measuring growth
+   from there; whether P5 starts from round 3 is for the maintainer to decide.
+
 ## Adding a round
 
 Copy the shape of the latest round: the date and commit, what changed since the previous

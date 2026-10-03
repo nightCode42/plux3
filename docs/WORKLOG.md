@@ -12,8 +12,8 @@ Per-requirement implementation status is **not** tracked here; it lives only in 
 |---|---|
 | Phase | P4 — Routing, host integration and no-code generation (plan approved 2026-10-01) |
 | Active branch | `claude/kind-ptolemy-tqyty7` (the session branch the environment pins; maintainer-approved, plan §2.1 A2; R0 and the following milestones merge together, A10) |
-| Active work | R7–R11 together (maintainer, 2026-10-02: "handle all five milestones"), each pushed as a checkpoint, with one exit gate at R11: R7 mixed screens and the host API, R8 `plux codegen` and `plux init`, R9 `plux create` and R10 add-to-app (the Flutter module, the Kotlin and Swift hosts and their UI tests, `TestAddToAppAgainstTheServer`) implemented and pushed; next R11 close the phase |
-| Requirement IDs | R7: `NAV-004`, `HST-021`, `STA-030` (native side), `HST-013` (plugin to host), `WGT-033`; R8: `HST-030`, `HST-032`; R9: `GEN-001`, `GEN-002`, `GEN-003`, `GEN-005`, `GEN-006`; R10: `HST-033`; statuses move at R11 (plan §4.1). Then all P4 requirements as scoped by [plans/p4.md](plans/p4.md) §3 |
+| Active work | R7–R11 together (maintainer, 2026-10-02: "handle all five milestones"), each pushed as a checkpoint, with one exit gate at R11: R7 mixed screens and the host API, R8 `plux codegen` and `plux init`, R9 `plux create`, R10 add-to-app and R11 closing the phase are done; next the maintainer's review of P4 and its open decisions (latest hand-off note), then P5 |
+| Requirement IDs | All P4 requirements as scoped by [plans/p4.md](plans/p4.md) §3: 23 of P4's `MUST`s `DONE`; `WGT-030`, `ACT-060`, `NAV-009`, `NAV-010`, `HST-010`, `HST-021` `WIP` until the phases §3.2 names; `RT-021`, `HST-013`, `STA-030`, `NFR-011` advanced and `WIP` (§3.4) |
 
 ## Next up
 
@@ -37,8 +37,8 @@ verified and how.
    **R6 — native catalogue** (done; their shared exit gate passed 2026-10-02, A25–A29
    decided).
 5. **R7 — mixed screens and the host API**, **R8 — codegen and init**, **R9 — `plux
-   create`** and **R10 — add-to-app** (implemented), then R11 closes the phase, together,
-   with one exit gate at R11.
+   create`**, **R10 — add-to-app** and **R11 — close the phase** (done, with one exit gate
+   at R11; awaiting the maintainer's review).
 
 ### P4 approvals (maintainer, 2026-10-01)
 
@@ -72,7 +72,8 @@ Revision, [size journey](benchmarks/size.md) round 2). The runtime is not trimme
 At R2 and R3's review (2026-10-02) the maintainer accepted their recommendations (plan
 §2.1 A20, A21) and asked that documents always match what is implemented: time waiting
 for the user in a dialog or sheet counts against no action bound, as implemented; the
-specification's version header stays at 1.1.9 until R11 sets it to the latest revision.
+specification's version header stays at 1.1.9 until R11 sets it to the latest revision
+(R11 set it to 1.2.2).
 
 During R4–R6 (2026-10-02) the maintainer decided (plan §2.1 A22, A23): router adapters
 wrap the host's router, `PluxConfig(router: PluxGoRouter(myGoRouter))`, through a core
