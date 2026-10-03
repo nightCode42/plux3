@@ -5,6 +5,7 @@ package compiler
 
 import (
 	"encoding/json"
+	"fmt"
 	"slices"
 	"strconv"
 	"strings"
@@ -63,10 +64,7 @@ func (u *unit) checkStep(g *graph, i int, index map[string]int32) *step {
 		}
 		// A custom action is called through callNative (ACT-060).
 		a, _ = registry.LookupAction("callNative")
-		input = u.nativeInput(g, native, st.Input, ptr)
-		if input == nil {
-			return nil
-		}
+		input = nativeInput(native, st.Input)
 		u.graph.add(Edge{From: graphFrom(g), Kind: EdgeUsesAction, To: st.Action, File: g.file, Path: ptr + "/action"})
 	} else if name := literalString(st.Input["action"]); st.Action == "callNative" && u.natives.actions[name] != nil {
 		u.graph.add(Edge{From: graphFrom(g), Kind: EdgeUsesAction, To: name, File: g.file, Path: ptr + "/input/action"})
@@ -121,23 +119,14 @@ func branchNames(a *registry.Action, input map[string]json.RawMessage) []string 
 }
 
 // nativeInput rewrites the inputs of a custom action as the inputs of
-// callNative: the action's name and an object of its inputs.
-func (u *unit) nativeInput(g *graph, na *schema.NativeAction, input map[string]json.RawMessage, ptr string) map[string]json.RawMessage {
-	declared := map[string]bool{}
-	for _, p := range na.Inputs {
-		declared[p.Name] = true
-		if _, set := input[p.Name]; !set && p.Required != nil && *p.Required {
-			u.report(plxerr.MissingRequiredProp, g.file, ptr, "custom action %q needs input %q", na.Name, p.Name)
-		}
-	}
-	for _, name := range sortedKeys(input) {
-		if !declared[name] {
-			u.report(plxerr.UnknownProp, g.file, ptr+plxerr.Pointer("input", name), "custom action %q has no input %q", na.Name, name)
-			return nil
-		}
-	}
+// callNative: the action's name and an object of its inputs, which
+// nativeActionInput checks against the action's declaration.
+func nativeInput(na *schema.NativeAction, input map[string]json.RawMessage) map[string]json.RawMessage {
 	name, _ := json.Marshal(na.Name)
 	obj, _ := json.Marshal(input)
+	if input == nil {
+		obj = []byte("{}")
+	}
 	return map[string]json.RawMessage{"action": name, "input": obj}
 }
 
@@ -193,6 +182,9 @@ func (u *unit) checkInput(g *graph, a *registry.Action, in registry.Input, raw j
 		u.report(plxerr.PropTypeMismatch, c.file, c.ptr, "the graph declares no output to return")
 		return nil
 	}
+	if a.Name == "callNative" && in.Name == "input" {
+		return u.nativeActionInput(g, raw, c)
+	}
 	if a.Name == "callFlow" && in.Name == "input" {
 		st := g.steps[stepIndex(c.ptr)]
 		if f := flowByKey(g.plugin, literalString(st.Input["flow"])); f != nil {
@@ -210,6 +202,23 @@ func (u *unit) checkInput(g *graph, a *registry.Action, in registry.Input, raw j
 		return u.inferred(c, raw)
 	}
 	return u.checkRaw(c, raw, te)
+}
+
+// nativeActionInput checks a custom action's inputs against the native
+// catalogue's declaration (ACT-060). A step named after the action has
+// its inputs moved under callNative's input (nativeInput), so their
+// expressions were type-checked at the step's own input pointers.
+func (u *unit) nativeActionInput(g *graph, raw json.RawMessage, c vctx) *value {
+	st := g.steps[stepIndex(c.ptr)]
+	name, src := literalString(st.Input["action"]), c
+	if st.Action != "callNative" {
+		name, src.ptr = st.Action, strings.TrimSuffix(c.ptr, plxerr.Pointer("input"))
+	}
+	na := u.natives.actions[name]
+	if na == nil {
+		return u.inferred(c, raw) // an unknown action is reported by its reference
+	}
+	return u.fieldValues(raw, na.Inputs, fmt.Sprintf("custom action %q", name), src)
 }
 
 // unbound reports whether a type still names a type parameter.

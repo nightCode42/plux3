@@ -5,12 +5,14 @@ package compiler
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/nightCode42/plux3/backend/internal/bundle"
 	"github.com/nightCode42/plux3/backend/internal/bundle/fbs"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/schema"
+	"github.com/nightCode42/plux3/backend/internal/schema/registry"
 )
 
 // TestNativeDeclarationsReachTheAppBundle checks that the app bundle
@@ -115,6 +117,86 @@ func TestCustomActionOutputsAreTyped(t *testing.T) {
 				return
 			}
 			wantDiag(t, res, tc.code, listFile, "/"+message+"/$expr")
+		})
+	}
+}
+
+// TestCustomActionInputsAreChecked checks a custom action's inputs
+// against the native catalogue's declaration, named after the action or
+// as callNative, and that an expression input reaches the bundle: named
+// after the action, its inputs move under callNative's, where the
+// expressions compiled at the step's own pointers must follow them
+// (ACT-060).
+// Verifies: ACT-060.
+func TestCustomActionInputsAreChecked(t *testing.T) {
+	t.Parallel()
+	const listFile = "plugins/tasks/pages/list.page.json"
+	const share = "root/slots/body/children/8/events/onPressed/steps/5"
+	t.Run("an expression input is compiled", func(t *testing.T) {
+		t.Parallel()
+		res := compileFS(project(t, featuresDir))
+		if res.Diagnostics.HasErrors() {
+			t.Fatalf("diagnostics:\n%v", res.Diagnostics)
+		}
+		callNative, _ := registry.LookupAction("callNative")
+		var found bool
+		for _, b := range readAll(t, res) {
+			for _, sec := range b.Sections {
+				if sec.Kind != bundle.SectionActions {
+					continue
+				}
+				actions := fbs.GetRootAsActions(sec.Data, 0)
+				var g fbs.Graph
+				var st fbs.Step
+				var in fbs.Prop
+				var v, text fbs.Value
+				var e fbs.Entry
+				for i := range actions.GraphsLength() {
+					actions.Graphs(&g, i)
+					for j := range g.StepsLength() {
+						g.Steps(&st, j)
+						if st.Action() != callNative.ID {
+							continue
+						}
+						for k := range st.InputLength() {
+							st.Input(&in, k)
+							if in.Id() != 2 || in.Value(&v).Kind() != fbs.ValueKindMap || v.EntriesLength() != 1 {
+								continue
+							}
+							v.Entries(&e, 0)
+							found = e.Value(&text).Kind() == fbs.ValueKindExpr
+						}
+					}
+				}
+			}
+		}
+		if !found {
+			t.Error("the shareNote step's text input is not an expression in the bundle")
+		}
+	})
+	for _, tc := range []struct {
+		name  string
+		input string
+		code  plxerr.Code
+		ptr   string
+	}{
+		{"named, an input of the wrong type", `{"text": 5}`, plxerr.PropTypeMismatch, "/input/text"},
+		{"named, an expression of the wrong type", `{"text": {"$expr": "1 + 1"}}`, plxerr.PropTypeMismatch, "/input/text"},
+		{"named, an undeclared input", `{"text": "a", "tone": "b"}`, plxerr.UnknownProp, "/input/tone"},
+		{"named, a required input missing", `{}`, plxerr.MissingRequiredProp, "/input"},
+		{"callNative, an input of the wrong type", `{"action": "shareNote", "input": {"text": 5}}`, plxerr.PropTypeMismatch, "/input/input/text"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			m := project(t, featuresDir)
+			edit(t, m, listFile, func(doc map[string]any) {
+				step := at(t, doc, share)
+				if strings.HasPrefix(tc.name, "callNative") {
+					step["action"] = "callNative"
+				}
+				step["input"] = raw(t, tc.input)
+			})
+			wantDiag(t, compileFS(m), tc.code, listFile, "/"+share+tc.ptr)
 		})
 	}
 }
