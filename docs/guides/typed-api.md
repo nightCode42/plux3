@@ -65,9 +65,9 @@ PluxConfig(
 )
 ```
 
-A custom action's name never repeats a catalogue action's: a step of that name runs the
-catalogue's. List the slot widget classes in `plux.yaml`, add `plux_native_scan` as a dev
-dependency, and run:
+A custom action may not take a built-in action's name, such as `share`: a step of that name
+would run the built-in, so publishing refuses the catalogue (`PLX-1124`). List the slot
+widget classes in `plux.yaml`, add `plux_native_scan` as a dev dependency, and run:
 
 ```sh
 plux native scan          # writes plux.catalogue.json by static analysis (CLI-006)

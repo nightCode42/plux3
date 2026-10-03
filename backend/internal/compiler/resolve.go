@@ -119,8 +119,14 @@ func indexNatives(u *unit, p *schema.Project) natives {
 		n.routes[doc.Routes[i].Name] = &doc.Routes[i]
 	}
 	for i := range doc.Actions {
-		actions.claim(doc.Actions[i].Name, file, plxerr.Pointer("actions", strconv.Itoa(i), "name"))
-		n.actions[doc.Actions[i].Name] = &doc.Actions[i]
+		name, ptr := doc.Actions[i].Name, plxerr.Pointer("actions", strconv.Itoa(i), "name")
+		actions.claim(name, file, ptr)
+		// A step of a built-in action's name runs the built-in, whatever
+		// the host registers under it.
+		if _, builtIn := registry.LookupAction(name); builtIn {
+			u.report(plxerr.CustomActionNamedLikeBuiltIn, file, ptr, "the custom action %q has the name of a built-in action, which a step of that name runs instead", name)
+		}
+		n.actions[name] = &doc.Actions[i]
 	}
 	slots := u.newKeys("native slot")
 	for i := range doc.Slots {

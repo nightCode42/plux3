@@ -72,6 +72,11 @@ func (e env) create(args []string) int {
 	if outputs != 1 {
 		return e.fail("create", usageError("give exactly one of --out, --zip and --git"))
 	}
+	if *f.remote != "" {
+		if err := generator.CheckGitTarget(*f.remote, *f.branch); err != nil {
+			return e.fail("create", usageError(err.Error()))
+		}
+	}
 	c.app = rest[0]
 	if err := c.resolve(); err != nil {
 		return e.fail("create", err)
@@ -242,6 +247,11 @@ func deliver(ctx context.Context, files []generator.File, pkg, out, zipFile, rem
 		}
 		return zipFile, writeFile(zipFile, data)
 	}
+	// Checked again here, where git runs: a remote or branch git would
+	// read as an option never reaches it (GEN-003).
+	if err := generator.CheckGitTarget(remote, branch); err != nil {
+		return "", err //nolint:wrapcheck // its errors name the value
+	}
 	dir, err := os.MkdirTemp("", "plux-create-git-")
 	if err != nil {
 		return "", fmt.Errorf("create a work tree: %w", err)
@@ -256,7 +266,7 @@ func deliver(ctx context.Context, files []generator.File, pkg, out, zipFile, rem
 		{"init", "--quiet", "--initial-branch", branch},
 		{"add", "--all"},
 		{"commit", "--quiet", "--message", "Generate the Flutter project with plux create"},
-		{"push", "--quiet", remote, "HEAD:refs/heads/" + branch},
+		{"push", "--quiet", "--", remote, "HEAD:refs/heads/" + branch},
 	} {
 		cmd := exec.CommandContext(ctx, "git", args...) //nolint:gosec // G204: git with fixed subcommands and the developer's remote and branch
 		cmd.Dir = dir

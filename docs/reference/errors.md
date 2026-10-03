@@ -320,6 +320,14 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Use a name from the set's catalogue (docs/reference/icons.md), written literally.
 
+### PLX-1124
+
+`CUSTOM_ACTION_NAMED_LIKE_BUILT_IN` · error · Custom action named like a built-in action
+
+**Cause.** The native catalogue declares a custom action with the name of a built-in action (spec Appendix D). A step of that name always runs the built-in action, so the host's action would be reachable only through callNative (ACT-060).
+
+**Fix.** Rename the custom action in the host app, for example with a prefix of its own, and run plux native scan again.
+
 ### PLX-1201
 
 `UNKNOWN_ROUTE` · error · Unknown route

@@ -205,6 +205,11 @@ var registry = []Definition{
 		"Use a name from the set's catalogue (docs/reference/icons.md), written literally.", false,
 	},
 	{
+		CustomActionNamedLikeBuiltIn, "CUSTOM_ACTION_NAMED_LIKE_BUILT_IN", SeverityError, "Custom action named like a built-in action",
+		"The native catalogue declares a custom action with the name of a built-in action (spec Appendix D). A step of that name always runs the built-in action, so the host's action would be reachable only through callNative (ACT-060).",
+		"Rename the custom action in the host app, for example with a prefix of its own, and run plux native scan again.", false,
+	},
+	{
 		UnknownRoute, "UNKNOWN_ROUTE", SeverityError, "Unknown route",
 		"A navigate action targets a route name that no page and no native route declares.",
 		"Correct the route name, or add the page.", false,

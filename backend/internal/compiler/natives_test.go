@@ -201,6 +201,18 @@ func TestCustomActionInputsAreChecked(t *testing.T) {
 	}
 }
 
+// TestCustomActionNamedLikeBuiltIn checks that a custom action cannot take
+// a built-in action's name, which a step of that name would run instead.
+// Verifies: ACT-060.
+func TestCustomActionNamedLikeBuiltIn(t *testing.T) {
+	t.Parallel()
+	m := project(t, featuresDir)
+	edit(t, m, "native-catalogue.json", func(doc map[string]any) {
+		at(t, doc, "actions/0")["name"] = "share"
+	})
+	wantDiag(t, compileFS(m), plxerr.CustomActionNamedLikeBuiltIn, "native-catalogue.json", "/actions/0/name")
+}
+
 // TestHostBuildIncompatibilities checks every native entry the routing
 // project uses against host builds: one with the project's catalogue, one
 // lacking the slot, and one declaring the route's result with another

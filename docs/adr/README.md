@@ -53,5 +53,6 @@ Files are named `NNNN-short-title.md` with a four-digit, never-reused number. Th
 | [0041](0041-native-catalogue-and-host-builds.md) | Native catalogue and host builds: one registration, a static scanner, validation per build | P4 | Accepted |
 | [0042](0042-quick-start-moves-to-p10.md) | The ten-minute quick start is measured in P10 | P4 | Accepted |
 | [0043](0043-affected-only-ci.md) | Affected-only CI: a pull request runs what it can affect, `main` runs everything | P4 | Accepted |
+| [0044](0044-junit-4-for-the-android-host-tests.md) | JUnit 4 is accepted for the Android add-to-app host's tests only | P4 | Accepted |
 
 The decisions for planned ADRs are summarised in spec §32 and §34.1. Each is written in full before or alongside the first implementation that depends on it, and its status is updated here.

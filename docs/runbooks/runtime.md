@@ -73,7 +73,7 @@ Search for the `PLX-` code first; each is explained in [errors.md](../reference/
 | `PLX-4205` | Host code threw: a custom action's handler, a native route's builder or a slot's widget | Contained to the step or the node's boundary; the report names only the exception's type. Reproduce with the host team; Crashlytics or Sentry hold the stack. |
 | `PLX-4203` | The host wrote an exposed state entry with a value of another type, or before a release was active | Use the typed accessors `plux codegen` writes (`PluxAppState`). |
 | `PLX-4204` | The host's user context carries attributes the app document does not declare, or of another type | Reported by name only; declare them in `userContext`, or stop sending them. |
-| A custom action's step does something other than the host's code | Its name repeats a catalogue action's, and a step of that name runs the catalogue's | Rename the host's action ([typed API guide](../guides/typed-api.md) §3). |
+| Publishing fails with `PLX-1124` | The host registers a custom action with a built-in action's name, which a step of that name would run instead | Rename the host's action and run `plux native scan` again ([typed API guide](../guides/typed-api.md) §3). |
 | Some devices stay on an older release after a publish | Their host build's catalogue lacks a native entry the new release uses (`PLX-8054` at publishing) | Expected (`WGT-032`, `REL-080`). Ship the host build that registers it; `ReleaseService.GetCompatibility` lists the builds held back. |
 
 ## Generated projects and add-to-app

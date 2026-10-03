@@ -172,8 +172,11 @@ download (+39,474 B); the other files are unchanged.
    largest are the armeabi-v7a APK at 6.75 MiB (budget 10 MiB, +2.1% over its baseline),
    the armeabi-v7a App Bundle download at 2.81 MiB (budget 4 MiB) and the IPA at 2.45 MiB
    (budget 3 MiB).
-3. **The committed baseline is still round 2's,** so the 10% gate keeps measuring growth
-   from there; whether P5 starts from round 3 is for the maintainer to decide.
+3. **The committed baseline was round 2's** until P4's close.
+
+**Decided by the maintainer** (2026-10-03): the baseline moves to round 3, so the 10% gate
+measures P5's growth from P4's state (`test/size/baseline.json`). Size optimization stays
+parked.
 
 ## Adding a round
 

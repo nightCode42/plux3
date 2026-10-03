@@ -127,6 +127,9 @@ enum PluxErrorCode {
   /// Unknown icon.
   unknownIcon(1123, 'UNKNOWN_ICON', 'Unknown icon'),
 
+  /// Custom action named like a built-in action.
+  customActionNamedLikeBuiltIn(1124, 'CUSTOM_ACTION_NAMED_LIKE_BUILT_IN', 'Custom action named like a built-in action'),
+
   /// Unknown route.
   unknownRoute(1201, 'UNKNOWN_ROUTE', 'Unknown route'),
 

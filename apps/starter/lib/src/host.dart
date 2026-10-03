@@ -54,8 +54,8 @@ final class StarterHost implements PluxAuthDelegate {
     ),
   };
 
-  /// The native actions plugin pages call by name (ACT-060). A name
-  /// never repeats a catalogue action's: a step names the catalogue's.
+  /// The native actions plugin pages call by name (ACT-060). A name is
+  /// never a built-in action's, which publishing refuses (PLX-1124).
   Map<String, PluxNativeAction<Object?, Object?>> get nativeActions => {
     'sharePlace': PluxNativeAction<String, bool>(
       input: (json) => json['text']! as String,

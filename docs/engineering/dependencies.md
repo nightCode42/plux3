@@ -88,7 +88,7 @@ The native Android and iOS hosts embed the Plux module with the Flutter SDK's ow
 |---|---|---|---|
 | `androidx.test:runner` 1.6.2, `androidx.test.ext:junit` 1.2.1 | The Kotlin host's instrumentation tests: `AndroidJUnitRunner` and the JUnit 4 runner class; `androidTest` only, never in the app | Apache-2.0 | In use (P4 R10, test) |
 | `androidx.test.uiautomator:uiautomator` 2.3.0 | The Kotlin host's UI tests, which find Plux pages and native views by their accessibility labels; `androidTest` only | Apache-2.0 | In use (P4 R10, test) |
-| `junit:junit` 4.13.2, with `org.hamcrest:hamcrest-core` 1.3 | Brought by the two above, whose test API JUnit 4 is; `androidTest` only, never distributed | EPL-1.0; BSD-3-Clause | In use (P4 R10, test). EPL-1.0 is a weak copyleft licence, which §1 point 3 accepts only with an ADR: put to the maintainer at R10 |
+| `junit:junit` 4.13.2, with `org.hamcrest:hamcrest-core` 1.3 | Brought by the two above, whose test API JUnit 4 is; `androidTest` only, never distributed | EPL-1.0; BSD-3-Clause | In use (P4 R10, test). EPL-1.0, a weak copyleft licence, is accepted for `androidTest` only by [ADR-0044](../adr/0044-junit-4-for-the-android-host-tests.md) |
 
 ### Documentation site (`site/`)
 
