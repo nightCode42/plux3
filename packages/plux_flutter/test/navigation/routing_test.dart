@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -84,6 +85,7 @@ void main() {
     Widget Function(BuildContext, String)? notFound,
     PluxAuthDelegate? auth,
     bool loanCalculator = false,
+    PluxConsent consent = PluxConsent.necessaryOnly,
   }) async {
     tester.view
       ..physicalSize = const Size(800, 1400)
@@ -100,6 +102,7 @@ void main() {
               navigationDelegate: delegate,
               notFoundBuilder: notFound,
               authDelegate: auth,
+              consent: consent,
             ),
     );
     final sub = Plux.events.listen(events.add);
@@ -141,6 +144,28 @@ void main() {
       expect(find.text('Item 42'), findsNothing);
       expect(find.text('Push detail'), findsOneWidget);
       expect(laterSteps(), isEmpty);
+    },
+  );
+
+  testWidgets(
+    'every navigation records a screen_view with its source and target routes [NAV-012]',
+    (tester) async {
+      await start(tester, consent: const PluxConsent(analytics: true));
+      await tap(tester, 'Push detail');
+      await tap(tester, 'Return nothing');
+      await tester.pumpWidget(const SizedBox());
+      await tester.runAsync(h.runtime.flushTelemetry);
+      String view(Map<String, Object?> e) {
+        final fields = jsonDecode(
+          utf8.decode(base64.decode(e['fields']! as String)),
+        ) as Map<String, Object?>;
+        return '${fields['source_route']} > ${e['route']}';
+      }
+
+      expect([
+        for (final e in h.server.events)
+          if (e['name'] == 'screen_view') view(e),
+      ], containsAll(['home > detail', ' > home']));
     },
   );
 

@@ -10,15 +10,22 @@ inside a native screen, opens it full screen with `Plux.open`, and passes the us
 theme and analytics consent to the runtime. Its mixed screens show both directions of
 [ADR-0023](../../docs/adr/0023-mixed-screens-slots-and-plux-view.md): a native screen with
 two views of a plugin component that share the counter a native button writes, and a
-plugin page holding the app's own map card, whose picks run the page's `navigate` step. The end-to-end flows (`QA-006`) and the
-compatibility matrix (`QA-010`) drive it.
+plugin page holding the app's own map card, whose picks run the page's `navigate` step. It
+shows the rest of Phase 4 too: typed routes, components, state, events and flags from the
+API `plux codegen` writes; a guarded account page that sends a signed-out user to sign in,
+with the app's auth delegate and user context; a deep link and a notification payload
+handed to Plux; and a place page that calls the app's native action `sharePlace`, emits the
+plugin event the home screen shows, and opens the app's native `profile` screen. The
+end-to-end flows (`QA-006`) and the compatibility matrix (`QA-010`) drive it.
 
 | Path | Contents |
 |---|---|
 | `lib/main.dart` | `Plux.initialize`, then the app |
-| `lib/src/config.dart` | `StarterConfig`: the server and app from `--dart-define`s |
-| `lib/src/starter_app.dart` | the home screen: sync status, consent and theme switches, a `PluxView`, the way to the mixed screens |
-| `lib/src/mixed_screen.dart` | a native screen with two `PluxView`s of the `counter-badge` component and a button that writes `Plux.state<int>('counter')` |
+| `lib/src/config.dart` | `StarterConfig`: the server and app from `--dart-define`s, and the runtime's configuration |
+| `lib/src/host.dart` | `StarterHost`: the native route and action, the auth delegate and user context, the navigator and messenger keys |
+| `lib/plux/plux.g.dart` | the typed API `plux codegen` writes from the fixture (`make gen` regenerates it) |
+| `lib/src/starter_app.dart` | the home screen: sync status, consent and theme switches, a `PluxView`, the mixed screens, sign-in, the guarded account page, a link, a notification, the last shared place and a flagged tip |
+| `lib/src/mixed_screen.dart` | a native screen with two typed views of the `counter-badge` component and a button that writes the typed `counter` state |
 | `lib/src/map_card.dart` | the app's own map card, registered as the `MapCard` native slot in `lib/src/config.dart` |
 | `integration_test/` | the end-to-end flows; `app_test.dart` runs them on an emulator or simulator |
 | `test/e2e_test.dart` | the same flows under `flutter test`, against a server the Go driver starts |
@@ -26,8 +33,11 @@ compatibility matrix (`QA-010`) drive it.
 
 Its content is the [starter fixture project](../../schema/testdata/documents/starter):
 one plugin, `welcome`, with a page of text, an icon and an image asset; the exposed app
-state entry `counter`, the exported component `counter-badge`, and the pages `places`
-(with the `MapCard` slot its native catalogue declares) and `place`.
+state entry `counter`, the exported component `counter-badge`, the pages `places` (with the
+`MapCard` slot its native catalogue declares), `place`, `account` (guarded by the graph
+`require-sign-in`) and `sign-in`; the native route `profile` and action `sharePlace`; the
+host event `placeShared`, the flag `showTips`, the user context's `tier`, the deep-link
+scheme `plux-starter` and push payloads.
 
 ## Running it
 
