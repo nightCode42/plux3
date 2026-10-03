@@ -119,8 +119,8 @@ func addHostLink(t *testing.T, project string) {
 		t.Fatal(err)
 	}
 	edit(t, filepath.Join(project, "plugins", "welcome", "plugin.json"), `"pages": [`, `"pages": ["01e0c450-6c00-7000-8000-000000000080", `)
-	edit(t, filepath.Join(project, "native-catalogue.json"), `"routes": []`,
-		`"routes": [{"name": "host-settings", "description": "The host's native settings screen."}]`)
+	edit(t, filepath.Join(project, "native-catalogue.json"), `"routes": [`,
+		`"routes": [{"name": "host-settings", "description": "The host's native settings screen."}, `)
 }
 
 // edit replaces the first from in the file at path with to, and fails the
@@ -171,7 +171,7 @@ func androidHost(ctx context.Context, t *testing.T, hosts, device string, flows 
 		}
 		return string(out)
 	}
-	run(host, "sh", filepath.Join(hosts, "plux_module", ".android", "gradlew"), "--no-daemon", "--console=plain",
+	run(host, filepath.Join(hosts, "plux_module", ".android", "gradlew"), "--no-daemon", "--console=plain",
 		"-Ptarget-platform=android-x64", ":app:assembleDebug", ":app:assembleDebugAndroidTest")
 	adb := "adb"
 	for _, v := range []string{"ANDROID_HOME", "ANDROID_SDK_ROOT"} {

@@ -9,6 +9,7 @@ import 'package:plux_starter/starter.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final config = StarterConfig.fromEnvironment();
-  final startup = await Plux.initialize(config.toPluxConfig());
-  runApp(StarterApp(config: config, startup: startup));
+  final host = StarterHost();
+  final startup = await Plux.initialize(config.toPluxConfig(host: host));
+  runApp(StarterApp(config: config, startup: startup, host: host));
 }

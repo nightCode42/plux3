@@ -2,19 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import 'package:flutter/material.dart';
-import 'package:plux_flutter/plux_flutter.dart';
+import 'package:plux_starter/plux/plux.g.dart';
 
 /// A native screen holding two views of the plugin's exported
 /// `counter-badge` component (NAV-004). Both read the app's exposed
 /// `counter` entry; the screen's native button writes it, and both views
-/// show the new value in the same frame (HST-021, STA-030).
+/// show the new value in the same frame (HST-021, STA-030). Both go
+/// through the typed API plux codegen writes (HST-030).
 final class MixedScreen extends StatelessWidget {
   /// Creates the screen.
   const MixedScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final counter = Plux.state<int>('counter');
+    final counter = PluxAppState.counter;
     return Scaffold(
       appBar: AppBar(title: const Text('Mixed screen')),
       body: ListView(
@@ -22,9 +23,9 @@ final class MixedScreen extends StatelessWidget {
         children: [
           const Text('Two plugin views, one shared value:'),
           const SizedBox(height: 12),
-          const PluxView('counter-badge', inputs: {'label': 'Left'}),
+          PluxComponents.counterBadge(label: 'Left'),
           const SizedBox(height: 8),
-          const PluxView('counter-badge', inputs: {'label': 'Right'}),
+          PluxComponents.counterBadge(label: 'Right'),
           const SizedBox(height: 16),
           StreamBuilder<int?>(
             stream: counter.watch(),

@@ -3,6 +3,7 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:plux_flutter/plux_flutter.dart';
+import 'package:plux_starter/src/host.dart';
 import 'package:plux_starter/src/map_card.dart';
 
 /// Where the starter app finds its Plux server and app, from
@@ -116,10 +117,12 @@ final class StarterConfig {
 
   /// The runtime's configuration: this app, its environment and channel,
   /// the host's theme under Plux pages (HST-012), the host's map card as
-  /// the `MapCard` native slot (WGT-033), and the [baseline] directory of
+  /// the `MapCard` native slot (WGT-033), [host]'s native route and
+  /// action, signed-in user and navigator, and the [baseline] directory of
   /// the app's assets, where `plux pull` writes it; null starts without
   /// one.
   PluxConfig toPluxConfig({
+    required StarterHost host,
     String? storageDirectory,
     PluxErrorHandler? onError,
     String? baseline = 'assets/plux',
@@ -132,6 +135,10 @@ final class StarterConfig {
     storageDirectory: storageDirectory,
     onError: onError,
     baseline: baseline,
+    navigatorKey: host.navigatorKey,
+    authDelegate: host,
+    nativeRoutes: host.nativeRoutes,
+    nativeActions: host.nativeActions,
     nativeSlots: {
       'MapCard': PluxNativeSlot(
         (context, slot) => MapCard(

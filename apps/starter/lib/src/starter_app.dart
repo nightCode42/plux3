@@ -1,24 +1,36 @@
 // SPDX-FileCopyrightText: 2026 Plux contributors
 // SPDX-License-Identifier: Apache-2.0
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:plux_devtools/plux_devtools.dart';
 import 'package:plux_flutter/plux_flutter.dart';
+import 'package:plux_starter/plux/plux.g.dart';
 import 'package:plux_starter/src/config.dart';
+import 'package:plux_starter/src/host.dart';
 import 'package:plux_starter/src/mixed_screen.dart';
 
 /// The app: a native home screen around a Plux page, with the Plux debug
 /// overlay in debug builds.
 final class StarterApp extends StatefulWidget {
-  /// Creates the app for [config], after `Plux.initialize` returned
-  /// [startup].
-  const StarterApp({super.key, required this.config, required this.startup});
+  /// Creates the app for [config] and [host], after `Plux.initialize`
+  /// returned [startup].
+  const StarterApp({
+    super.key,
+    required this.config,
+    required this.startup,
+    required this.host,
+  });
 
   /// Where the app's content comes from.
   final StarterConfig config;
 
   /// What start-up found.
   final PluxStartup startup;
+
+  /// The host's side of Plux, which the runtime's configuration also has.
+  final StarterHost host;
 
   @override
   State<StarterApp> createState() => _StarterAppState();
@@ -32,6 +44,8 @@ final class _StarterAppState extends State<StarterApp> {
   Widget build(BuildContext context) => PluxScope(
     child: MaterialApp(
       title: 'Plux starter',
+      navigatorKey: widget.host.navigatorKey,
+      scaffoldMessengerKey: widget.host.messengerKey,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(colorSchemeSeed: const Color(0xFF5B3DF5)),
       darkTheme: ThemeData(
@@ -43,6 +57,7 @@ final class _StarterAppState extends State<StarterApp> {
       home: HomeScreen(
         config: widget.config,
         startup: widget.startup,
+        host: widget.host,
         dark: _dark,
         analytics: _analytics,
         onDark: (v) {
@@ -66,6 +81,7 @@ final class HomeScreen extends StatelessWidget {
     super.key,
     required this.config,
     required this.startup,
+    required this.host,
     required this.dark,
     required this.analytics,
     required this.onDark,
@@ -77,6 +93,9 @@ final class HomeScreen extends StatelessWidget {
 
   /// What start-up found.
   final PluxStartup startup;
+
+  /// The host's side of Plux.
+  final StarterHost host;
 
   /// Whether the dark theme is on.
   final bool dark;
@@ -122,11 +141,12 @@ final class HomeScreen extends StatelessWidget {
             context,
           ).push(MaterialPageRoute<void>(builder: (_) => const MixedScreen())),
         ),
+        // The typed routes plux codegen writes from the app (HST-030).
         ListTile(
           key: const ValueKey('open-places'),
           leading: const Icon(Icons.map_outlined),
           title: const Text('Places'),
-          onTap: () => Plux.open<void>(context, 'places'),
+          onTap: () => PluxScreens.places().push(context),
         ),
         const Divider(),
         SizedBox(
@@ -146,7 +166,83 @@ final class HomeScreen extends StatelessWidget {
             ),
           ),
         ),
+        const Divider(),
+        // A guarded page: signed out, its guard sends the user to the
+        // sign-in page (NAV-009, HST-010).
+        ValueListenableBuilder(
+          valueListenable: host.signedIn,
+          builder: (context, signedIn, _) => SwitchListTile(
+            key: const ValueKey('sign-in'),
+            title: const Text('Signed in'),
+            value: signedIn,
+            onChanged: (v) => host.signIn(signedIn: v),
+          ),
+        ),
+        ListTile(
+          key: const ValueKey('open-account'),
+          leading: const Icon(Icons.account_circle_outlined),
+          title: const Text('Account'),
+          onTap: () => PluxScreens.account().push(context),
+        ),
+        // What a host's link handling and push SDK hand Plux (NAV-008).
+        ListTile(
+          key: const ValueKey('open-link'),
+          leading: const Icon(Icons.link),
+          title: const Text('Open a link'),
+          subtitle: const LastShared(),
+          onTap: () => Plux.handleDeepLink(
+            Uri.parse('plux-starter://places/Lighthouse'),
+          ),
+        ),
+        ListTile(
+          key: const ValueKey('open-notification'),
+          leading: const Icon(Icons.notifications_outlined),
+          title: const Text('Open a notification'),
+          onTap: () => Plux.handlePushPayload(const {
+            'plux': '{"route": "place", "params": {"name": "Beach"}}',
+          }),
+        ),
+        // A feature flag of the active release (ABT-006).
+        if (PluxFlags.showTips)
+          const ListTile(
+            key: ValueKey('tip'),
+            leading: Icon(Icons.lightbulb_outline),
+            title: Text('Tip: a place page shares and opens its profile.'),
+          ),
       ],
     ),
   );
+}
+
+/// The place a plugin page last shared, from its `placeShared` events
+/// (HST-013).
+final class LastShared extends StatefulWidget {
+  /// Creates the line.
+  const LastShared({super.key});
+
+  @override
+  State<LastShared> createState() => _LastSharedState();
+}
+
+final class _LastSharedState extends State<LastShared> {
+  StreamSubscription<PlaceSharedEvent>? _events;
+  String? _name;
+
+  @override
+  void initState() {
+    super.initState();
+    _events = PluxHostEvents.placeShared.listen(
+      (e) => setState(() => _name = e.name),
+    );
+  }
+
+  @override
+  void dispose() {
+    unawaited(_events?.cancel());
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      Text(_name == null ? 'Nothing shared yet' : 'Last shared: $_name');
 }

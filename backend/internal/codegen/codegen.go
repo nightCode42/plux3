@@ -10,7 +10,12 @@
 // It reads a project the compiler checked without errors. The output is
 // deterministic: every list is sorted, and nothing of the environment or
 // the clock reaches it (CMP-002).
+//
+// make gen writes the starter app's API from the starter fixture with the
+// CLI, as a host app would (go-gen-check verifies the committed file).
 package codegen
+
+//go:generate go run ../../cmd/plux codegen --host ../../../apps/starter ../../../schema/testdata/documents/starter
 
 import (
 	"bytes"

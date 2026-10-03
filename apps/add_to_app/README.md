@@ -37,7 +37,7 @@ Run `flutter pub get` in `plux_module` first: it writes the platform glue the ho
 (`.android/include_flutter.groovy`, `.ios/Flutter/podhelper.rb`).
 
 - **Android:** build with the Gradle wrapper it writes into the module,
-  `sh ../plux_module/.android/gradlew :app:assembleDebug` in `android_host`, or open
+  `../plux_module/.android/gradlew :app:assembleDebug` in `android_host`, or open
   `android_host` in Android Studio. Start it with the runtime's settings as extras:
   `adb shell am start -n dev.plux.addtoapp.host/.MainActivity -e endpoint
   http://10.0.2.2:8080 -e appId <app-id> -e environment staging`.

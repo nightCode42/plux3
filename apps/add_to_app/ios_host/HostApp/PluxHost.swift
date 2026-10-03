@@ -55,12 +55,15 @@ final class PluxHost {
 
   private func start() -> FlutterEngine {
     let engine = FlutterEngine(name: "plux")
+    engine.run()
+    GeneratedPluginRegistrant.register(with: engine)
+    // After run(), which an engine needs before a handler is set. The
+    // module's first call reaches this thread's run loop only after this
+    // returns, so the handler is there to answer it.
     let channel = FlutterMethodChannel(name: "dev.plux/host", binaryMessenger: engine.binaryMessenger)
     channel.setMethodCallHandler { [weak self] call, result in
       self?.handle(call, result: result)
     }
-    engine.run()
-    GeneratedPluginRegistrant.register(with: engine)
     self.channel = channel
     return engine
   }

@@ -1,5 +1,17 @@
 {
-  "actions": [],
+  "actions": [
+    {
+      "description": "Shares a text through the host.",
+      "inputs": [
+        {
+          "name": "text",
+          "type": "string"
+        }
+      ],
+      "name": "sharePlace",
+      "output": "bool"
+    }
+  ],
   "host": {
     "appId": "dev.plux.starter",
     "build": 1,
@@ -7,7 +19,20 @@
   },
   "id": "01e0c450-6c00-7000-8000-000000000061",
   "kind": "nativeCatalogue",
-  "routes": [],
+  "routes": [
+    {
+      "description": "The host's profile screen for a place.",
+      "name": "profile",
+      "params": [
+        {
+          "mock": "Harbour",
+          "name": "name",
+          "required": true,
+          "type": "string"
+        }
+      ]
+    }
+  ],
   "schemaVersion": "1.0.0",
   "slots": [
     {

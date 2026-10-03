@@ -54,14 +54,17 @@ void main() {
       expect(k.publicKey.first, 0x00);
       expect(k.publicKey[1], 0x11);
       expect(k.publicKey.last, 0xff);
-      final p = c.toPluxConfig(storageDirectory: '/s');
+      final host = StarterHost();
+      final p = c.toPluxConfig(host: host, storageDirectory: '/s');
       expect(p.appId, 'a1');
       expect(p.environment, 'production');
       expect(p.hostBuild, '7');
       expect(p.storageDirectory, '/s');
       expect(p.rootKeys, c.rootKeys);
       expect(p.baseline, 'assets/plux');
-      expect(c.toPluxConfig(baseline: null).baseline, isNull);
+      expect(p.navigatorKey, host.navigatorKey);
+      expect(p.authDelegate, host);
+      expect(c.toPluxConfig(host: host, baseline: null).baseline, isNull);
     });
 
     for (final (name, defines) in [
@@ -106,15 +109,18 @@ void main() {
       // Nothing listens on port 9 (discard) here: the first sync fails.
       'PLUX_ENDPOINT': 'http://127.0.0.1:9',
     });
+    final host = StarterHost();
     final startup = await tester.runAsync(
       () => Plux.initializeWith(
-        config.toPluxConfig(storageDirectory: dir.path),
+        config.toPluxConfig(host: host, storageDirectory: dir.path),
         const RuntimeOverrides(credentials: MemoryCredentialStore.new),
       ),
     );
     addTearDown(() => tester.runAsync(Plux.dispose));
     expect(startup!.ready, isFalse);
-    await tester.pumpWidget(StarterApp(config: config, startup: startup));
+    await tester.pumpWidget(
+      StarterApp(config: config, startup: startup, host: host),
+    );
     await tester.pump();
     // No release yet: the page waits for one, and the sync tile says why
     // none came.
@@ -155,9 +161,11 @@ void main() {
       'PLUX_APP_ID': '01e0c450-6c00-7000-8000-000000000001',
       'PLUX_ENDPOINT': 'http://127.0.0.1:9',
     });
+    final host = StarterHost();
     final startup = await tester.runAsync(
       () => Plux.initializeWith(
         config.toPluxConfig(
+          host: host,
           storageDirectory: dir.path,
           onError: (e, _) => problems.add(e),
         ),
@@ -165,7 +173,9 @@ void main() {
       ),
     );
     addTearDown(() => tester.runAsync(Plux.dispose));
-    await tester.pumpWidget(StarterApp(config: config, startup: startup!));
+    await tester.pumpWidget(
+      StarterApp(config: config, startup: startup!, host: host),
+    );
     await tester.pump();
     await tester.tap(find.byKey(const ValueKey('open-mixed')));
     await tester.pump();
@@ -202,6 +212,38 @@ void main() {
     await tester.tap(find.text('Old town'));
     expect(picked, ['Old town']);
     final config = StarterConfig.parse(const {'PLUX_APP_ID': 'a1'});
-    expect(config.toPluxConfig().nativeSlots.keys, ['MapCard']);
+    expect(config.toPluxConfig(host: StarterHost()).nativeSlots.keys, [
+      'MapCard',
+    ]);
+  });
+
+  testWidgets('the host registers its native route and action, shares into '
+      'its messenger and holds no token [NAV-002] [ACT-060] [HST-010]', (
+    tester,
+  ) async {
+    final host = StarterHost();
+    final config = StarterConfig.parse(const {'PLUX_APP_ID': 'a1'})
+        .toPluxConfig(host: host);
+    expect(config.nativeRoutes.keys, ['profile']);
+    expect(config.nativeActions.keys, ['sharePlace']);
+    expect(host.share('nothing'), isFalse);
+    await tester.pumpWidget(
+      MaterialApp(
+        scaffoldMessengerKey: host.messengerKey,
+        home: const Scaffold(body: ProfileScreen(name: 'Harbour')),
+      ),
+    );
+    expect(find.text('Profile of Harbour'), findsOne);
+    expect(
+      await config.nativeActions['sharePlace']!.callWith({
+        'text': 'Place: Park',
+      }),
+      isTrue,
+    );
+    await tester.pump();
+    expect(find.text('Shared: Place: Park'), findsOne);
+    expect(host.isAuthenticated, isFalse);
+    expect(await host.accessToken(), isNull);
+    expect(await host.refresh(), isNull);
   });
 }

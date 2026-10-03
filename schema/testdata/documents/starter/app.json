@@ -11,6 +11,26 @@
       "name": "Staging"
     }
   ],
+  "flags": [
+    {
+      "default": true,
+      "description": "Whether the home screen shows its tip.",
+      "name": "showTips",
+      "type": "bool"
+    }
+  ],
+  "hostEvents": [
+    {
+      "description": "The user shared a place from its page.",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ],
+      "name": "placeShared"
+    }
+  ],
   "icon": {
     "monogram": {
       "background": "#5B3DF5",
@@ -20,12 +40,28 @@
   "id": "01e0c450-6c00-7000-8000-000000000001",
   "key": "starter",
   "kind": "app",
-  "minRuntimeVersion": "0.1.0",
+  "minRuntimeVersion": "0.2.0",
   "name": "Plux starter",
   "nativeCatalogue": "01e0c450-6c00-7000-8000-000000000061",
+  "navigation": {
+    "deepLinks": {
+      "routes": [
+        {
+          "path": "/places/{name}",
+          "route": "place"
+        }
+      ],
+      "schemes": [
+        "plux-starter"
+      ]
+    }
+  },
   "plugins": [
     "welcome"
   ],
+  "push": {
+    "enabled": true
+  },
   "schemaVersion": "1.0.0",
   "securityProfile": "standard",
   "state": [
@@ -47,5 +83,12 @@
       "mode": "useCacheThenSync"
     }
   },
-  "theme": "01e0c450-6c00-7000-8000-000000000002"
+  "theme": "01e0c450-6c00-7000-8000-000000000002",
+  "userContext": [
+    {
+      "description": "The signed-in user's plan.",
+      "name": "tier",
+      "type": "string?"
+    }
+  ]
 }

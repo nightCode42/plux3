@@ -66,7 +66,7 @@ prebuild_log=$out/prebuild-$api.log
 	# into the module (TestAddToAppAgainstTheServer builds it again, with
 	# the baseline it pulls).
 	cd "$root/apps/add_to_app/plux_module" && flutter pub get
-	cd "$root/apps/add_to_app/android_host" && sh ../plux_module/.android/gradlew --no-daemon --console=plain \
+	cd "$root/apps/add_to_app/android_host" && ../plux_module/.android/gradlew --no-daemon --console=plain \
 		-Ptarget-platform=android-x64 :app:assembleDebug :app:assembleDebugAndroidTest
 ) >"$prebuild_log" 2>&1 &
 prebuild=$!

@@ -31,13 +31,94 @@
         "id": "01e0c450-6c00-7000-8000-00000000006e",
         "slots": {
           "child": {
-            "id": "01e0c450-6c00-7000-8000-00000000006f",
-            "props": {
-              "data": {
-                "$expr": "\"Place: \" + params.name"
+            "children": [
+              {
+                "id": "01e0c450-6c00-7000-8000-00000000006f",
+                "props": {
+                  "data": {
+                    "$expr": "\"Place: \" + params.name"
+                  }
+                },
+                "type": "Text"
+              },
+              {
+                "events": {
+                  "onPressed": {
+                    "steps": [
+                      {
+                        "action": "sharePlace",
+                        "id": "share",
+                        "input": {
+                          "text": {
+                            "$expr": "\"Place: \" + params.name"
+                          }
+                        },
+                        "next": "tell"
+                      },
+                      {
+                        "action": "emitHostEvent",
+                        "id": "tell",
+                        "input": {
+                          "event": "placeShared",
+                          "payload": {
+                            "name": {
+                              "$expr": "params.name"
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01e0c450-6c00-7000-8000-000000000091",
+                "slots": {
+                  "child": {
+                    "id": "01e0c450-6c00-7000-8000-000000000092",
+                    "props": {
+                      "data": "Share"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "TextButton"
+              },
+              {
+                "events": {
+                  "onPressed": {
+                    "steps": [
+                      {
+                        "action": "navigate",
+                        "id": "go",
+                        "input": {
+                          "params": {
+                            "name": {
+                              "$expr": "params.name"
+                            }
+                          },
+                          "route": "profile"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01e0c450-6c00-7000-8000-000000000093",
+                "slots": {
+                  "child": {
+                    "id": "01e0c450-6c00-7000-8000-000000000094",
+                    "props": {
+                      "data": "Profile"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "TextButton"
               }
+            ],
+            "id": "01e0c450-6c00-7000-8000-000000000090",
+            "props": {
+              "mainAxisSize": "min"
             },
-            "type": "Text"
+            "type": "Column"
           }
         },
         "type": "Center"

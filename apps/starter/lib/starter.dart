@@ -7,6 +7,7 @@
 library;
 
 export 'src/config.dart';
+export 'src/host.dart';
 export 'src/map_card.dart';
 export 'src/mixed_screen.dart';
 export 'src/starter_app.dart';
