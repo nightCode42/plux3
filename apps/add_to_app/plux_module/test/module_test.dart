@@ -156,7 +156,14 @@ void main() {
     expect(host.pops, 0);
 
     await tester.tap(find.text('page welcome'));
+    // The host's screen closes only once the page has left the tree: its
+    // exit transition needs frames, which stop once the screen closes.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.text('page welcome'), findsOneWidget);
+    expect(host.pops, 0);
     await tester.pumpAndSettle();
+    expect(find.text('page welcome'), findsNothing);
     expect(find.text('started'), findsOneWidget);
     expect(host.pops, 1);
   });

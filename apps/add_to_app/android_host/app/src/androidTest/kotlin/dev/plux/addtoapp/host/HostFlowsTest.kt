@@ -97,7 +97,9 @@ class HostFlowsTest {
         while (true) {
             find(label, exact)?.let { return it }
             if (SystemClock.uptimeMillis() > deadline) {
-                throw AssertionError("nothing on screen reads \"$label\"; it reads: ${labels()}")
+                throw AssertionError(
+                    "nothing on screen reads \"$label\"; it reads: ${labels()}; ${resumedActivity()}",
+                )
             }
             SystemClock.sleep(200)
         }
@@ -114,6 +116,18 @@ class HostFlowsTest {
             }
         return if (labels.isEmpty()) "nothing" else labels.joinToString { "\"$it\"" }
     }
+
+    // The activity in front, for a failure's message.
+    private fun resumedActivity(): String =
+        runCatching {
+            device
+                .executeShellCommand("dumpsys activity activities")
+                .lines()
+                .map { it.trim() }
+                .filter { it.contains("ResumedActivity") }
+                .distinct()
+                .joinToString("; ")
+        }.getOrElse { "no activity dump: $it" }
 
     private fun tap(label: String) = waitFor(label).click()
 }

@@ -19,7 +19,7 @@ The module and a host talk on the method channel `dev.plux/host`:
 | Method | Called by | Does |
 |---|---|---|
 | `config` | the module | returns the runtime's settings: `endpoint`, `appId`, `environment`, `hostBuild`, `rootKeys` |
-| `open` | the host | opens the Plux page at `route`; when it pops, the module closes the host's screen with `SystemNavigator.pop` |
+| `open` | the host | opens the Plux page at `route`; once the popped page has left the screen, the module closes the host's screen with `SystemNavigator.pop` |
 | `openNative` | the module | shows the host's native screen behind the native route `host-settings`, and answers once it closes |
 
 ## Run the flows

@@ -311,16 +311,21 @@ An app written in Kotlin or Swift embeds Plux through a Flutter module (`HST-033
 and their UI tests; in outline:
 
 1. Create the module (`flutter create -t module`), add `plux_flutter`, and pull a baseline
-   into its assets as in §1. Its `main` starts Plux before `runApp`, with settings the host
-   passes over a method channel or that the module is built with, and wraps a
-   `MaterialApp` whose `navigatorKey` it also gives `PluxConfig`. It leaves semantics to
+   into its assets as in §1. Its `main` runs its widget tree at once — a `MaterialApp`
+   whose `navigatorKey` it also gives `PluxConfig`, wrapped in a `PluxScope` once Plux has
+   started — and then starts Plux, with settings the host passes over a method channel or
+   that the module is built with: an Android `FlutterActivity` draws nothing until
+   Flutter's first frame, so that frame should not wait on the start. It leaves semantics to
    the platform, which turns them on as each native view attaches when a screen reader
    runs: a `SemanticsBinding.instance.ensureSemantics()` handle held by the module keeps a
    view attached later from receiving the semantics tree.
 2. Let the native side ask for pages by route: the module's channel handler calls
-   `Plux.open(navigatorKey.currentContext!, route)` and, when the page pops,
-   `SystemNavigator.pop()`, which finishes a `FlutterActivity`, takes a `FlutterFragment`'s
-   activity back and dismisses a `FlutterViewController`.
+   `Plux.open(navigatorKey.currentContext!, route)` and, once the popped page has left the
+   screen, `SystemNavigator.pop()`, which finishes a `FlutterActivity`, takes a
+   `FlutterFragment`'s activity back and dismisses a `FlutterViewController`. The page
+   leaves the widget tree when its exit transition ends (`TransitionRoute.completed`,
+   through a `NavigatorObserver`), and that takes frames, which the engine stops once the
+   host's screen closes: a page still mounted would keep a staged release from activating.
 3. Register the host's native screens as `PluxNativeRoute.opened` routes that ask the host
    over the same channel, so plugin pages open them with `navigate`.
 4. **Android:** `flutter pub get` in the module writes `.android/include_flutter.groovy`.

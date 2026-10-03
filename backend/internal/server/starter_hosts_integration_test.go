@@ -185,16 +185,22 @@ func androidHost(ctx context.Context, t *testing.T, hosts, device string, flows 
 	run(host, adb, "-s", device, "install", "-r", "-t", filepath.Join(apks, "androidTest", "debug", "app-debug-androidTest.apk"))
 	run(host, adb, "-s", device, "shell", "pm", "clear", "dev.plux.addtoapp.host")
 	for _, f := range flows {
-		run(host, adb, "-s", device, "logcat", "-c")
+		// A larger log, emptied, holds the flow's whole run; some emulator
+		// images refuse either ("failed to clear the 'main' log", Android
+		// 26), which costs only older lines in a failure's report.
+		_ = exec.CommandContext(ctx, adb, "-s", device, "logcat", "-G", "16M").Run() //nolint:gosec // G204: the SDK's adb and the device the developer named.
+		_ = exec.CommandContext(ctx, adb, "-s", device, "logcat", "-c").Run()        //nolint:gosec // G204: as above.
 		args := []string{"-s", device, "shell", "am", "instrument", "-w", "-e", "class", "dev.plux.addtoapp.host.HostFlowsTest#" + f.android, "-e", "endpoint", f.endpoint}
 		for _, k := range []string{"appId", "environment", "hostBuild", "rootKeys"} {
 			args = append(args, "-e", k, settings[k])
 		}
 		out := run(host, adb, append(args, "dev.plux.addtoapp.host.test/androidx.test.runner.AndroidJUnitRunner")...)
 		if !strings.Contains(out, "OK (1 test)") {
-			// The module's and the runtime's messages, and crashes.
-			log, _ := exec.CommandContext(ctx, adb, "-s", device, "logcat", "-d", "-s", "flutter:V", "AndroidRuntime:E").CombinedOutput() //nolint:gosec // G204: the SDK's adb and the device the developer named.
-			t.Fatalf("the Android host's %s flow on %s:\n%s\nthe device log:\n%s", f.name, device, tail(out, 150), tail(string(log), 80))
+			// The module's, the runtime's and the Flutter embedding's
+			// messages, the activities started and finished, and crashes.
+			log, _ := exec.CommandContext(ctx, adb, "-s", device, "logcat", "-d", "-s", "flutter:V", "AndroidRuntime:E", //nolint:gosec // G204: the SDK's adb and the device the developer named.
+				"ActivityTaskManager:I", "FlutterActivity:V", "FlutterActivityAndFragmentDelegate:V", "FlutterEngine:V", "FlutterLoader:V", "FlutterJNI:V").CombinedOutput()
+			t.Fatalf("the Android host's %s flow on %s:\n%s\nthe device log:\n%s", f.name, device, tail(out, 150), tail(string(log), 120))
 		}
 		t.Logf("the Android host's %s flow on %s:\n%s", f.name, device, tail(out, 10))
 	}

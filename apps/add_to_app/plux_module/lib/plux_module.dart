@@ -63,6 +63,10 @@ final class PluxModule {
   /// The navigator Plux pages open on.
   final navigatorKey = GlobalKey<NavigatorState>();
 
+  /// Observes that navigator, so the module knows when a page it opened
+  /// has left the screen.
+  final navigatorObserver = PoppedRouteObserver();
+
   /// What the module's own screen shows: starting, started, or why the
   /// runtime could not start.
   final status = ValueNotifier<String>('Starting Plux');
@@ -152,8 +156,26 @@ final class PluxModule {
     }
     if (!context.mounted) return;
     await openPage(context, route);
+    // A popped page leaves the widget tree only once its exit transition
+    // has run, which takes frames, and the engine stops producing frames
+    // once the host's screen closes. A page left mounted would hold back a
+    // staged release, which activates only when no page is mounted
+    // (SYN-004), so the host's screen closes after the page has gone.
+    if (navigatorObserver.last case final TransitionRoute<Object?> popped) {
+      await popped.completed;
+    }
     await SystemNavigator.pop();
   }
+}
+
+/// Remembers the route a navigator popped last.
+final class PoppedRouteObserver extends NavigatorObserver {
+  /// The route popped last; null before the first pop.
+  Route<Object?>? last;
+
+  @override
+  void didPop(Route<Object?> route, Route<Object?>? previousRoute) =>
+      last = route;
 }
 
 /// Reads a `keyId:<64 hex digits>` Ed25519 public key.
@@ -177,8 +199,9 @@ PluxPublicKey parseKey(String s) {
 }
 
 /// The module's widget tree: the navigator Plux pages open on, over a
-/// screen that shows the runtime's status while no page is open. The
-/// runtime's scope wraps it once the runtime has started.
+/// screen that shows the runtime's status while no page is open. It shows
+/// before the runtime has started, so a host's screen never waits on the
+/// start for its first frame; the runtime's scope wraps it once started.
 final class ModuleApp extends StatelessWidget {
   /// Creates the app for [module].
   const ModuleApp({super.key, required this.module});
@@ -195,6 +218,7 @@ final class ModuleApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: ThemeData(colorSchemeSeed: const Color(0xFF5B3DF5)),
         navigatorKey: module.navigatorKey,
+        navigatorObservers: [module.navigatorObserver],
         home: Scaffold(body: Center(child: Text(status))),
       );
       return Plux.isInitialized ? PluxScope(child: app) : app;
