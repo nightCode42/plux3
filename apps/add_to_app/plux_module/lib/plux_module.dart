@@ -104,6 +104,9 @@ final class PluxModule {
       ],
       storageDirectory: storageDirectory,
       navigatorKey: navigatorKey,
+      // What the runtime reports goes to the device log, where the
+      // hosts' UI tests collect it when a flow fails.
+      onError: (error, _) => debugPrint('plux_module: $error'),
       nativeRoutes: {
         for (final MapEntry(key: route, value: screen) in nativeScreens.entries)
           route: PluxNativeRoute<Object?, Object?>.opened(

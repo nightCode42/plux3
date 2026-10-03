@@ -12,6 +12,7 @@ import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.regex.Pattern
 
 /**
  * The add-to-app flows (HST-033) on an emulator, against the server
@@ -95,9 +96,23 @@ class HostFlowsTest {
         val deadline = SystemClock.uptimeMillis() + 60_000
         while (true) {
             find(label, exact)?.let { return it }
-            if (SystemClock.uptimeMillis() > deadline) throw AssertionError("nothing on screen reads \"$label\"")
+            if (SystemClock.uptimeMillis() > deadline) {
+                throw AssertionError("nothing on screen reads \"$label\"; it reads: ${labels()}")
+            }
             SystemClock.sleep(200)
         }
+    }
+
+    // Every text and content description on screen, for a failure's message;
+    // a view that went away meanwhile is left out.
+    private fun labels(): String {
+        val labels =
+            device.findObjects(By.clazz(Pattern.compile(".*"))).flatMap { o ->
+                runCatching { listOfNotNull(o.text, o.contentDescription) }
+                    .getOrDefault(emptyList())
+                    .filter { it.isNotEmpty() }
+            }
+        return if (labels.isEmpty()) "nothing" else labels.joinToString { "\"$it\"" }
     }
 
     private fun tap(label: String) = waitFor(label).click()

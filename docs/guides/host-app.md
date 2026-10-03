@@ -1,10 +1,14 @@
 # Host App Guide
 
 How a Flutter app hosts Plux pages with the `plux_flutter` runtime: what to add, how the
-runtime starts and syncs, and what the host controls. The runtime renders published
-pages in Phase 3; navigation between Plux pages, actions and state writes arrive in
-later phases (spec §5). The [starter app](../../apps/starter/README.md) is a complete,
-tested host to copy from.
+runtime starts and syncs, and what the host controls. The runtime renders published pages
+(Phase 3), and navigates between them and the host's screens, guards them and runs the
+actions of Phase 4; the remaining actions and plugin-side state writes arrive in Phase 5
+(spec §5). The [starter app](../../apps/starter/README.md) is a complete, tested host to
+copy from. Plugin authors' side of navigation is in the [routing guide](routing.md);
+`plux init`, `plux codegen` and the native catalogue in the
+[typed API guide](typed-api.md); store projects for no-code apps in the
+[no-code apps guide](no-code-apps.md).
 
 ## Requirements
 
@@ -309,7 +313,10 @@ and their UI tests; in outline:
 1. Create the module (`flutter create -t module`), add `plux_flutter`, and pull a baseline
    into its assets as in §1. Its `main` starts Plux before `runApp`, with settings the host
    passes over a method channel or that the module is built with, and wraps a
-   `MaterialApp` whose `navigatorKey` it also gives `PluxConfig`.
+   `MaterialApp` whose `navigatorKey` it also gives `PluxConfig`. It leaves semantics to
+   the platform, which turns them on as each native view attaches when a screen reader
+   runs: a `SemanticsBinding.instance.ensureSemantics()` handle held by the module keeps a
+   view attached later from receiving the semantics tree.
 2. Let the native side ask for pages by route: the module's channel handler calls
    `Plux.open(navigatorKey.currentContext!, route)` and, when the page pops,
    `SystemNavigator.pop()`, which finishes a `FlutterActivity`, takes a `FlutterFragment`'s
@@ -327,9 +334,11 @@ and their UI tests; in outline:
    `install_all_flutter_pods` with `use_frameworks!` and `flutter_post_install` in
    `post_install`, then `pod install`. Set `ENABLE_USER_SCRIPT_SANDBOXING = NO`, so the
    module's build scripts run. Create one `FlutterEngine`, `run()` it and
-   `GeneratedPluginRegistrant.register(with:)`, and show pages in a
-   `FlutterViewController(engine:nibName:bundle:)`, presented or as a child; an engine
-   shows one view controller at a time.
+   `GeneratedPluginRegistrant.register(with:)`, then create one
+   `FlutterViewController(engine:nibName:bundle:)` and show every page in it, presented or
+   as a child. The engine drops its accessibility bridge when its view controller changes
+   and does not rebuild it while semantics stay on, so VoiceOver would find nothing on a
+   second view controller (Flutter 3.47).
 
 The runtime keeps the engine's state while the app runs, so a release that sync staged
 activates once no Plux page is open, as in a Flutter app.

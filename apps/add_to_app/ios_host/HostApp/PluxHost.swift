@@ -15,6 +15,12 @@ final class PluxHost {
   static let shared = PluxHost()
 
   private lazy var engine: FlutterEngine = start()
+  /// The one view controller that shows the module's pages. The engine
+  /// drops its accessibility bridge whenever its view controller changes,
+  /// and builds a new one only when the framework turns semantics on, which
+  /// it already is; so a second view controller on the running engine would
+  /// show pages that VoiceOver and the UI tests cannot see.
+  private lazy var flutter = FlutterViewController(engine: engine, nibName: nil, bundle: nil)
   private var channel: FlutterMethodChannel?
   private var nativeScreen: FlutterResult?
 
@@ -44,13 +50,17 @@ final class PluxHost {
     return flutter
   }
 
-  /// A view controller that shows the Plux page at `route`. The engine
-  /// shows one view controller at a time, so it leaves the previous one.
+  /// The view controller that shows the Plux page at `route`, to present
+  /// or to add as a child. It leaves the screen that held it last.
   func controller(_ route: String) -> FlutterViewController {
-    let engine = self.engine
-    engine.viewController = nil
+    let flutter = self.flutter
+    if flutter.parent != nil {
+      flutter.willMove(toParent: nil)
+      flutter.view.removeFromSuperview()
+      flutter.removeFromParent()
+    }
     channel?.invokeMethod("open", arguments: ["route": route])
-    return FlutterViewController(engine: engine, nibName: nil, bundle: nil)
+    return flutter
   }
 
   private func start() -> FlutterEngine {

@@ -12,7 +12,7 @@ The Plux runtime inside a Flutter module embedded in native apps (`HST-033`, pla
 |---|---|
 | [`plux_module/`](plux_module/lib/plux_module.dart) | The Flutter module: it asks its host for the runtime's settings, starts Plux, opens the pages the host asks for, and asks the host for its native screens |
 | [`android_host/`](android_host/app/src/main/kotlin/dev/plux/addtoapp/host/HostApp.kt) | A Kotlin app with one cached `FlutterEngine`: pages full screen in a `FlutterActivity`, or below a native header in a `FlutterFragment`; UiAutomator tests in `androidTest` |
-| [`ios_host/`](ios_host/HostApp/PluxHost.swift) | A Swift app with one `FlutterEngine`, embedded with CocoaPods: pages in a `FlutterViewController`, full screen or below a native header; XCUITests |
+| [`ios_host/`](ios_host/HostApp/PluxHost.swift) | A Swift app with one `FlutterEngine` and one `FlutterViewController`, embedded with CocoaPods: pages full screen or below a native header, always in that view controller, since a new one on the running engine starts without the accessibility tree; XCUITests |
 
 The module and a host talk on the method channel `dev.plux/host`:
 

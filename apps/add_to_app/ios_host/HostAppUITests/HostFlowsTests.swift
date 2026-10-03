@@ -74,8 +74,22 @@ final class HostFlowsTests: XCTestCase {
   @discardableResult
   private func waitFor(_ app: XCUIApplication, _ label: String, exact: Bool = false) -> XCUIElement {
     let found = element(app, label, exact: exact)
-    XCTAssertTrue(found.waitForExistence(timeout: 60), "nothing on screen reads \"\(label)\"")
+    if !found.waitForExistence(timeout: 60) {
+      XCTFail("nothing on screen reads \"\(label)\"; it reads: \(labels(app))")
+    }
     return found
+  }
+
+  // Every label on screen, for a failure's message.
+  private func labels(_ app: XCUIApplication) -> String {
+    guard let root = try? app.snapshot() else { return "(no snapshot)" }
+    var labels: [String] = []
+    var pending = [root]
+    while let next = pending.popLast() {
+      if !next.label.isEmpty { labels.append(next.label) }
+      pending.append(contentsOf: next.children.reversed())
+    }
+    return labels.isEmpty ? "nothing" : labels.map { "\"\($0)\"" }.joined(separator: ", ")
   }
 
   private func tap(_ app: XCUIApplication, _ label: String, exact: Bool = false) {

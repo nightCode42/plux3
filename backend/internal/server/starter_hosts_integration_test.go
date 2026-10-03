@@ -185,13 +185,16 @@ func androidHost(ctx context.Context, t *testing.T, hosts, device string, flows 
 	run(host, adb, "-s", device, "install", "-r", "-t", filepath.Join(apks, "androidTest", "debug", "app-debug-androidTest.apk"))
 	run(host, adb, "-s", device, "shell", "pm", "clear", "dev.plux.addtoapp.host")
 	for _, f := range flows {
+		run(host, adb, "-s", device, "logcat", "-c")
 		args := []string{"-s", device, "shell", "am", "instrument", "-w", "-e", "class", "dev.plux.addtoapp.host.HostFlowsTest#" + f.android, "-e", "endpoint", f.endpoint}
 		for _, k := range []string{"appId", "environment", "hostBuild", "rootKeys"} {
 			args = append(args, "-e", k, settings[k])
 		}
 		out := run(host, adb, append(args, "dev.plux.addtoapp.host.test/androidx.test.runner.AndroidJUnitRunner")...)
 		if !strings.Contains(out, "OK (1 test)") {
-			t.Fatalf("the Android host's %s flow on %s:\n%s", f.name, device, tail(out, 150))
+			// The module's and the runtime's messages, and crashes.
+			log, _ := exec.CommandContext(ctx, adb, "-s", device, "logcat", "-d", "-s", "flutter:V", "AndroidRuntime:E").CombinedOutput() //nolint:gosec // G204: the SDK's adb and the device the developer named.
+			t.Fatalf("the Android host's %s flow on %s:\n%s\nthe device log:\n%s", f.name, device, tail(out, 150), tail(string(log), 80))
 		}
 		t.Logf("the Android host's %s flow on %s:\n%s", f.name, device, tail(out, 10))
 	}
@@ -204,23 +207,20 @@ func androidHost(ctx context.Context, t *testing.T, hosts, device string, flows 
 // the result bundles.
 func iosHost(ctx context.Context, t *testing.T, host, device string, flows []hostFlow, settings map[string]string) {
 	t.Helper()
-	run := func(env []string, name string, args ...string) string {
+	run := func(name string, args ...string) {
 		t.Helper()
 		cmd := exec.CommandContext(ctx, name, args...) //nolint:gosec // G204: CocoaPods, Xcode and the simulator the developer named.
 		cmd.Dir = host
-		cmd.Env = append(os.Environ(), env...)
-		out, err := cmd.CombinedOutput()
-		if err != nil {
+		if out, err := cmd.CombinedOutput(); err != nil {
 			t.Fatalf("%s %s: %v\n%s", name, strings.Join(args, " "), err, tail(string(out), 150))
 		}
-		return string(out)
 	}
-	run(nil, "pod", "install")
+	run("pod", "install")
 	xcodebuild := []string{
 		"-workspace", "HostApp.xcworkspace", "-scheme", "HostApp", "-configuration", "Debug",
 		"-destination", "platform=iOS Simulator,id=" + device, "-derivedDataPath", filepath.Join(t.TempDir(), "derived"),
 	}
-	run(nil, "xcodebuild", append([]string{"build-for-testing"}, xcodebuild...)...)
+	run("xcodebuild", append([]string{"build-for-testing"}, xcodebuild...)...)
 	// A new install: the offline flow starts without the runtime's state.
 	_ = exec.CommandContext(ctx, "xcrun", "simctl", "uninstall", device, "dev.plux.addtoapp.host").Run() //nolint:gosec // G204: the simulator the developer named.
 	for _, f := range flows {
@@ -236,10 +236,16 @@ func iosHost(ctx context.Context, t *testing.T, host, device string, flows []hos
 			"TEST_RUNNER_PLUX_HOST_BUILD=" + settings["hostBuild"],
 			"TEST_RUNNER_PLUX_ROOT_KEYS=" + settings["rootKeys"],
 		}
-		out := run(env, "xcodebuild", args...)
-		if !strings.Contains(out, "** TEST EXECUTE SUCCEEDED **") {
-			t.Fatalf("the iOS host's %s flow on %s:\n%s", f.name, device, tail(out, 150))
+		cmd := exec.CommandContext(ctx, "xcodebuild", args...) //nolint:gosec // G204: Xcode and the simulator the developer named.
+		cmd.Dir = host
+		cmd.Env = append(os.Environ(), env...)
+		out, err := cmd.CombinedOutput()
+		if err != nil || !strings.Contains(string(out), "** TEST EXECUTE SUCCEEDED **") {
+			// The module's and the runtime's messages.
+			log, _ := exec.CommandContext(ctx, "xcrun", "simctl", "spawn", device, "log", "show", "--last", "10m", "--style", "compact", //nolint:gosec // G204: the simulator the developer named.
+				"--predicate", `process == "HostApp" AND eventMessage CONTAINS "flutter:"`).CombinedOutput()
+			t.Fatalf("the iOS host's %s flow on %s: %v\n%s\nthe app's log:\n%s", f.name, device, err, tail(string(out), 150), tail(string(log), 80))
 		}
-		t.Logf("the iOS host's %s flow on %s:\n%s", f.name, device, tail(out, 10))
+		t.Logf("the iOS host's %s flow on %s:\n%s", f.name, device, tail(string(out), 10))
 	}
 }
