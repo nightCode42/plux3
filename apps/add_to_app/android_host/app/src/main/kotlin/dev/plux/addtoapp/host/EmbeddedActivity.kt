@@ -24,20 +24,22 @@ class EmbeddedActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         val padding = (16 * resources.displayMetrics.density).toInt()
         setContentView(
-            LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                addView(
-                    TextView(this@EmbeddedActivity).apply {
-                        text = "Native header"
-                        textSize = 18f
-                        setPadding(padding, padding, padding, padding)
-                    },
-                )
-                addView(
-                    FrameLayout(this@EmbeddedActivity).apply { id = R.id.flutter_container },
-                    LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f),
-                )
-            },
+            withSystemBars(
+                LinearLayout(this).apply {
+                    orientation = LinearLayout.VERTICAL
+                    addView(
+                        TextView(this@EmbeddedActivity).apply {
+                            text = "Native header"
+                            textSize = 18f
+                            setPadding(padding, padding, padding, padding)
+                        },
+                    )
+                    addView(
+                        FrameLayout(this@EmbeddedActivity).apply { id = R.id.flutter_container },
+                        LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f),
+                    )
+                },
+            ),
         )
         flutter =
             supportFragmentManager.findFragmentByTag(TAG) as FlutterFragment?

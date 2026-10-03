@@ -17,11 +17,13 @@ class SettingsActivity : Activity() {
         super.onCreate(savedInstanceState)
         val padding = (24 * resources.displayMetrics.density).toInt()
         setContentView(
-            TextView(this).apply {
-                text = "Host settings"
-                textSize = 22f
-                setPadding(padding, padding, padding, padding)
-            },
+            withSystemBars(
+                TextView(this).apply {
+                    text = "Host settings"
+                    textSize = 22f
+                    setPadding(padding, padding, padding, padding)
+                },
+            ),
         )
     }
 

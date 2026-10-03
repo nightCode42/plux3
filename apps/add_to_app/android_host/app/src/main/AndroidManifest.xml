@@ -9,7 +9,7 @@ SPDX-License-Identifier: Apache-2.0
     <application
         android:name=".HostApp"
         android:label="Plux host"
-        android:theme="@android:style/Theme.Material.Light.DarkActionBar">
+        android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <activity
             android:name=".MainActivity"
             android:exported="true">

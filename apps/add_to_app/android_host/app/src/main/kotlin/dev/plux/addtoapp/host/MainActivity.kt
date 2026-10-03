@@ -23,18 +23,20 @@ class MainActivity : Activity() {
         intent.extras?.let { app.configure(it) }
         val padding = (24 * resources.displayMetrics.density).toInt()
         setContentView(
-            LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                setPadding(padding, padding, padding, padding)
-                addView(
-                    TextView(this@MainActivity).apply {
-                        text = "Native home"
-                        textSize = 22f
-                    },
-                )
-                addView(button("Open welcome") { app.openPage(this@MainActivity, "welcome") })
-                addView(button("Open host link") { app.openEmbedded(this@MainActivity, "host-link") })
-            },
+            withSystemBars(
+                LinearLayout(this).apply {
+                    orientation = LinearLayout.VERTICAL
+                    setPadding(padding, padding, padding, padding)
+                    addView(
+                        TextView(this@MainActivity).apply {
+                            text = "Native home"
+                            textSize = 22f
+                        },
+                    )
+                    addView(button("Open welcome") { app.openPage(this@MainActivity, "welcome") })
+                    addView(button("Open host link") { app.openEmbedded(this@MainActivity, "host-link") })
+                },
+            ),
         )
     }
 
