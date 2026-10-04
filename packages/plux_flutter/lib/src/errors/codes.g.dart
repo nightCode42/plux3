@@ -127,6 +127,9 @@ enum PluxErrorCode {
   /// Unknown icon.
   unknownIcon(1123, 'UNKNOWN_ICON', 'Unknown icon'),
 
+  /// Custom action named like a built-in action.
+  customActionNamedLikeBuiltIn(1124, 'CUSTOM_ACTION_NAMED_LIKE_BUILT_IN', 'Custom action named like a built-in action'),
+
   /// Unknown route.
   unknownRoute(1201, 'UNKNOWN_ROUTE', 'Unknown route'),
 
@@ -292,6 +295,48 @@ enum PluxErrorCode {
   /// Plugin switched off.
   pluginDisabled(4020, 'PLUGIN_DISABLED', 'Plugin switched off'),
 
+  /// Route not found.
+  routeNotFound(4100, 'ROUTE_NOT_FOUND', 'Route not found'),
+
+  /// Invalid route parameters.
+  routeParametersInvalid(4101, 'ROUTE_PARAMETERS_INVALID', 'Invalid route parameters'),
+
+  /// Navigation refused.
+  navigationRefused(4102, 'NAVIGATION_REFUSED', 'Navigation refused'),
+
+  /// Deep link not mapped.
+  deepLinkUnmapped(4103, 'DEEP_LINK_UNMAPPED', 'Deep link not mapped'),
+
+  /// Native route not registered.
+  nativeRouteNotRegistered(4200, 'NATIVE_ROUTE_NOT_REGISTERED', 'Native route not registered'),
+
+  /// Native slot not registered.
+  nativeSlotNotRegistered(4201, 'NATIVE_SLOT_NOT_REGISTERED', 'Native slot not registered'),
+
+  /// Custom action not registered.
+  nativeActionNotRegistered(4202, 'NATIVE_ACTION_NOT_REGISTERED', 'Custom action not registered'),
+
+  /// Exposed state written with the wrong type.
+  exposedStateTypeMismatch(4203, 'EXPOSED_STATE_TYPE_MISMATCH', 'Exposed state written with the wrong type'),
+
+  /// User context attribute ignored.
+  userContextInvalid(4204, 'USER_CONTEXT_INVALID', 'User context attribute ignored'),
+
+  /// Host code failed.
+  hostCodeFailed(4205, 'HOST_CODE_FAILED', 'Host code failed'),
+
+  /// Action timed out.
+  actionTimeout(5001, 'ACTION_TIMEOUT', 'Action timed out'),
+
+  /// Step limit exceeded.
+  actionStepLimitExceeded(5002, 'ACTION_STEP_LIMIT_EXCEEDED', 'Step limit exceeded'),
+
+  /// Action value of the wrong type.
+  actionValueInvalid(5003, 'ACTION_VALUE_INVALID', 'Action value of the wrong type'),
+
+  /// Run failed with a custom error.
+  actionCustomError(5004, 'ACTION_CUSTOM_ERROR', 'Run failed with a custom error'),
+
   /// Outbound request blocked.
   outboundRequestBlocked(6030, 'OUTBOUND_REQUEST_BLOCKED', 'Outbound request blocked'),
 
@@ -333,6 +378,9 @@ enum PluxErrorCode {
 
   /// Assets still being processed.
   assetsNotReady(8053, 'ASSETS_NOT_READY', 'Assets still being processed'),
+
+  /// Host build lacks a native entry.
+  hostBuildIncompatible(8054, 'HOST_BUILD_INCOMPATIBLE', 'Host build lacks a native entry'),
 
   /// Internal error.
   internalServerError(8090, 'INTERNAL_SERVER_ERROR', 'Internal error'),

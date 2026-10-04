@@ -3046,6 +3046,20 @@ ID 13 · revision 1 · Flutter `LinearGradient`, `RadialGradient`, `SweepGradien
 | `startAngle` | 11 | `double` | — | Start angle of a sweep gradient, in radians. |
 | `endAngle` | 12 | `double` | — | End angle of a sweep gradient, in radians. |
 
+### GuardResult
+
+The output of a route guard's graph: enter, redirect or fall back (NAV-009, ADR-0040).
+
+ID 37 · revision 1
+
+| Field | ID | Type | Default | Description |
+|---|---|---|---|---|
+| `decision` | 1 | `GuardDecision`, required | — | What the guard decides. |
+| `route` | 2 | `route?` | — | For redirect: the route to open instead. |
+| `params` | 3 | `map<string,string>?` | — | For redirect: the route's parameters as strings, converted by its parameter types as a deep link's are. |
+
+Constants: `allow`, `fallback`.
+
 ### IconData
 
 An icon by name from an icon set (THM-005).
@@ -3789,6 +3803,18 @@ ID 24 · revision 1
 | `linear` | 1 |  |
 | `radial` | 2 |  |
 | `sweep` | 3 |  |
+
+### GuardDecision
+
+What a route guard decides about an entry (NAV-009).
+
+ID 74 · revision 1
+
+| Value | ID | Description |
+|---|---|---|
+| `allow` | 1 | Enter the route. |
+| `redirect` | 2 | Open the guard's redirect route instead. |
+| `fallback` | 3 | Show the route's fallback page instead, and report PLX-4102. |
 
 ### HapticPattern
 

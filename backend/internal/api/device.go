@@ -241,7 +241,7 @@ func (s Manifest) GetManifest(ctx context.Context, req *connect.Request[pluxv1.G
 		return nil, plxerr.New(plxerr.InvalidFormat, "installed_digest is not a SHA-256")
 	}
 	served, err := s.h.Releases.GetManifest(ctx, release.ManifestRequest{
-		OrganizationID: d.OrganizationID, AppID: d.AppID, EnvironmentID: d.EnvironmentID, Channel: m.GetChannel(),
+		OrganizationID: d.OrganizationID, AppID: d.AppID, EnvironmentID: d.EnvironmentID, Channel: m.GetChannel(), HostBuild: d.HostBuild,
 		InstalledSequence: m.GetInstalledSequence(), Installed: installed, IfNoneMatch: m.GetIfNoneMatch(),
 		InstalledDigest: m.GetInstalledDigest(),
 	})

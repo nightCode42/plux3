@@ -1,0 +1,25 @@
+name: plux_go_router
+description: >-
+  Runs Plux navigation through a go_router GoRouter: Plux pages as GoRoutes,
+  guards as the route's redirect, and the host's named routes opened by
+  plugins as native routes.
+version: 0.1.0
+repository: https://github.com/nightCode42/plux3/tree/main/packages/plux_go_router
+# Not published until its release is wired (release.yml, pub.dev).
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  go_router: ^18.0.2
+  plux_flutter: ^0.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

@@ -290,6 +290,8 @@ type Manifest struct {
 	Signatures      []byte
 	IssuedAt        pgtype.Timestamptz
 	ExpiresAt       pgtype.Timestamptz
+	HostBuild       string
+	OwnManifestID   pgtype.UUID
 }
 
 type Membership struct {
@@ -323,6 +325,18 @@ type MfaFactor struct {
 	LastUsedAt   pgtype.Timestamptz
 	CredentialID []byte
 	PublicKey    []byte
+}
+
+type NativeCatalogue struct {
+	OrganizationID pgtype.UUID
+	AppID          pgtype.UUID
+	HostBuild      string
+	Catalogue      []byte
+	Sha256         []byte
+	UploadedByKind string
+	UploadedByID   string
+	UploadedBy     string
+	UploadedAt     pgtype.Timestamptz
 }
 
 type OidcLogin struct {
@@ -378,6 +392,7 @@ type PluginVersion struct {
 	PublishedByID    string
 	PublishedBy      string
 	CreatedAt        pgtype.Timestamptz
+	NativeUses       []byte
 }
 
 type PublishJob struct {
@@ -420,6 +435,7 @@ type Release struct {
 	CreatedByID      string
 	CreatedBy        string
 	CreatedAt        pgtype.Timestamptz
+	NativeUses       []byte
 }
 
 type ReleaseVersion struct {

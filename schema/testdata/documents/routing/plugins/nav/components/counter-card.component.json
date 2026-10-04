@@ -1,0 +1,30 @@
+{
+  "events": [
+    {
+      "name": "onReset"
+    }
+  ],
+  "exported": true,
+  "id": "01f0c450-6c00-7000-8000-000000000253",
+  "key": "counter-card",
+  "kind": "component",
+  "name": "Counter card",
+  "props": [
+    {
+      "name": "label",
+      "required": true,
+      "type": "string"
+    }
+  ],
+  "root": {
+    "id": "01f0c450-6c00-7000-8000-000000000254",
+    "props": {
+      "data": {
+        "$expr": "props.label + \" \" + string(app.counter)"
+      }
+    },
+    "type": "Text"
+  },
+  "schemaVersion": "1.0.0",
+  "version": 1
+}

@@ -155,6 +155,50 @@ func TestCheckWorkflowShellsReportsGaps(t *testing.T) {
 	}
 }
 
+// The runtime benchmark's parallel CI jobs measure every part of a run.
+// Verifies: QA-007.
+func TestProjectRuntimeBenchmarkShardsMeasureEveryPart_QA_007(t *testing.T) {
+	t.Parallel()
+
+	if err := CheckBenchShards(repoRoot); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// TestCheckBenchShardsReportsGaps checks the failures.
+func TestCheckBenchShardsReportsGaps(t *testing.T) {
+	t.Parallel()
+	if err := CheckBenchShards(t.TempDir()); err == nil {
+		t.Error("a repository without the benchmark passed")
+	}
+	root := t.TempDir()
+	write(t, root, "test/bench/runtime/lib/src/bench.dart",
+		"enum BenchScenario {\n  /// Doc.\n  startup,\n\n  open,\n\n  scroll,\n}\n")
+	shards := func(lists ...string) string {
+		var b strings.Builder
+		b.WriteString("jobs:\n  bench-runtime:\n    strategy:\n      matrix:\n        include:\n")
+		for _, l := range lists {
+			b.WriteString("          - shard: x\n            scenarios: " + l + "\n")
+		}
+		return b.String()
+	}
+	write(t, root, ".github/workflows/ci.yml", shards("startup,scroll", "open"))
+	if err := CheckBenchShards(root); err != nil {
+		t.Errorf("complete shards: %v", err)
+	}
+	write(t, root, ".github/workflows/ci.yml", shards("startup,open", "open", "render"))
+	err := CheckBenchShards(root)
+	for _, want := range []string{"measures open in 2 jobs", "measures scroll in 0 jobs", "render, which is not a part"} {
+		if err == nil || !strings.Contains(err.Error(), want) {
+			t.Errorf("CheckBenchShards = %v, want %q", err, want)
+		}
+	}
+	write(t, root, "test/bench/runtime/lib/src/bench.dart", "class Benchmark {}\n")
+	if err := CheckBenchShards(root); err == nil || !strings.Contains(err.Error(), "no BenchScenario enum") {
+		t.Errorf("no enum: %v", err)
+	}
+}
+
 // Dart packages are published by OIDC, and every release has notes with
 // upgrade steps and a changelog entry.
 // Verifies: CI-005, DX-006, RT-001.

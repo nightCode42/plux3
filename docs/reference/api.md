@@ -20,12 +20,13 @@ for integrators who call it as plain HTTP/JSON.
 | `TemplateService` | Templates and instantiation with fresh identifiers | `SCH-031` |
 | `AssetService` | Uploads, sniffing, variants | `SRV-060`, `AST-003` |
 | `PublishService` | Publish jobs with streamed progress | `SRV-050`, `SRV-051` |
-| `ReleaseService` | Plugin versions, app releases, promotion, rollback, changelog, compatibility | `REL-001`–`REL-007`, `REL-080`, `REL-081` |
+| `ReleaseService` | Plugin versions, app releases, promotion, rollback, changelog, compatibility by runtime and host build | `REL-001`–`REL-007`, `REL-080`, `REL-081` |
 | `ManifestService` | Signed manifest, sync plan, public keys | `REL-020`–`REL-024`, `REL-030`–`REL-033` |
 | `DeviceService` | Device registration and installed releases | `GOV-010`, `REL-080` |
 | `TokenService` | Short-lived device tokens | `GOV-010`, `SRV-065` |
 | `TelemetryService` | Runtime event ingestion and listing | Appendix G.2, `SCH-012` |
 | `ControlService` | Kill switches and the mandatory-update flag | `REL-030` |
+| `NativeCatalogueService` | Host builds' native catalogues, immutable once uploaded; publishing checks plugins against them, and a build that cannot run a release gets a manifest of the newest release it can | `CLI-006`, `WGT-032`, `REL-080` |
 
 Services listed in `SRV-003` for later phases — rollouts, experiments,
 functions, localisation, approvals, dev sessions, AI, payments, admin —

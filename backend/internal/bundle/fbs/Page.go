@@ -275,8 +275,20 @@ func (rcv *Page) StringsLength() int {
 	return 0
 }
 
+func (rcv *Page) Result() uint32 {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(34))
+	if o != 0 {
+		return rcv._tab.GetUint32(o + rcv._tab.Pos)
+	}
+	return 0
+}
+
+func (rcv *Page) MutateResult(n uint32) bool {
+	return rcv._tab.MutateUint32Slot(34, n)
+}
+
 func PageStart(builder *flatbuffers.Builder) {
-	builder.StartObject(15)
+	builder.StartObject(16)
 }
 func PageAddId(builder *flatbuffers.Builder, id flatbuffers.UOffsetT) {
 	builder.PrependStructSlot(0, flatbuffers.UOffsetT(id), 0)
@@ -343,6 +355,9 @@ func PageAddStrings(builder *flatbuffers.Builder, strings flatbuffers.UOffsetT) 
 }
 func PageStartStringsVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
 	return builder.StartVector(4, numElems, 4)
+}
+func PageAddResult(builder *flatbuffers.Builder, result uint32) {
+	builder.PrependUint32Slot(15, result, 0)
 }
 func PageEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
 	return builder.EndObject()

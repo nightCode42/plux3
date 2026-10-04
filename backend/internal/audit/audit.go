@@ -76,31 +76,34 @@ const (
 	TrashRestored    Action = "trash.restored"
 	TrashPurged      Action = "trash.purged"
 
-	PluginCreated        Action = "plugin.created"
-	PluginUpdated        Action = "plugin.updated"
-	PluginDeleted        Action = "plugin.deleted"
-	PluginRestored       Action = "plugin.restored"
-	PluginPurged         Action = "plugin.purged"
-	DocumentWritten      Action = "document.written"
-	DocumentDeleted      Action = "document.deleted"
-	DocumentRestored     Action = "document.restored"
-	DocumentPurged       Action = "document.purged"
-	DraftImported        Action = "draft.imported"
-	AssetUploaded        Action = "asset.uploaded"
-	AssetDeleted         Action = "asset.deleted"
-	VersionPublished     Action = "release.version_published"
-	PublishCancelled     Action = "release.publish_cancelled"
-	ReleaseCreated       Action = "release.created"
-	ReleasePromoted      Action = "release.promoted"
-	ReleaseRolledBack    Action = "release.rolled_back"
-	ReleasesPurged       Action = "release.purged"
-	ControlChanged       Action = "release.control_changed"
-	SnapshotRestored     Action = "snapshot.restored"
-	TemplateInstantiated Action = "template.instantiated"
-	LockAcquired         Action = "plugin.lock.acquired"
-	LockTakenOver        Action = "plugin.lock.override"
-	LockReleased         Action = "plugin.lock.released"
-	LockRequested        Action = "plugin.lock.requested"
+	PluginCreated     Action = "plugin.created"
+	PluginUpdated     Action = "plugin.updated"
+	PluginDeleted     Action = "plugin.deleted"
+	PluginRestored    Action = "plugin.restored"
+	PluginPurged      Action = "plugin.purged"
+	DocumentWritten   Action = "document.written"
+	DocumentDeleted   Action = "document.deleted"
+	DocumentRestored  Action = "document.restored"
+	DocumentPurged    Action = "document.purged"
+	DraftImported     Action = "draft.imported"
+	AssetUploaded     Action = "asset.uploaded"
+	AssetDeleted      Action = "asset.deleted"
+	VersionPublished  Action = "release.version_published"
+	PublishCancelled  Action = "release.publish_cancelled"
+	ReleaseCreated    Action = "release.created"
+	ReleasePromoted   Action = "release.promoted"
+	ReleaseRolledBack Action = "release.rolled_back"
+	// NativeCatalogueUploaded: a host build's native catalogue was stored
+	// (ADR-0041).
+	NativeCatalogueUploaded Action = "native_catalogue.uploaded"
+	ReleasesPurged          Action = "release.purged"
+	ControlChanged          Action = "release.control_changed"
+	SnapshotRestored        Action = "snapshot.restored"
+	TemplateInstantiated    Action = "template.instantiated"
+	LockAcquired            Action = "plugin.lock.acquired"
+	LockTakenOver           Action = "plugin.lock.override"
+	LockReleased            Action = "plugin.lock.released"
+	LockRequested           Action = "plugin.lock.requested"
 )
 
 // actions is the registry, sorted, so that Registered can search it and
@@ -117,7 +120,7 @@ var actions = sorted(
 	VariableSet, SecretSet, SecretDeleted, LimitSet, TrashRestored, TrashPurged,
 	PluginCreated, PluginUpdated, PluginDeleted, PluginRestored, PluginPurged,
 	DocumentWritten, DocumentDeleted, DocumentRestored, DocumentPurged, DraftImported, AssetUploaded, AssetDeleted,
-	VersionPublished, PublishCancelled, ReleaseCreated, ReleasePromoted, ReleaseRolledBack, ReleasesPurged, ControlChanged,
+	VersionPublished, PublishCancelled, ReleaseCreated, ReleasePromoted, ReleaseRolledBack, ReleasesPurged, ControlChanged, NativeCatalogueUploaded,
 	SnapshotRestored, TemplateInstantiated, LockAcquired, LockTakenOver, LockReleased, LockRequested,
 )
 

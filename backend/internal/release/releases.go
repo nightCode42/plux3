@@ -253,6 +253,19 @@ func (s *Service) insertRelease(ctx context.Context, tx pgx.Tx, p auth.Principal
 			return Release{}, failure(err, "release")
 		}
 	}
+	// The native entries the release uses decide which host builds can
+	// run it (REL-080).
+	all, err := unionUses(versions)
+	if err != nil {
+		return Release{}, err
+	}
+	uses, err := encodeUses(all)
+	if err != nil {
+		return Release{}, err
+	}
+	if err := q.SetReleaseNativeUses(ctx, dbgen.SetReleaseNativeUsesParams{ID: row.ID, NativeUses: uses}); err != nil {
+		return Release{}, failure(err, "release")
+	}
 	action := audit.ReleaseCreated
 	if rollbackOf > 0 {
 		action = audit.ReleaseRolledBack

@@ -9,10 +9,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plux_flutter/src/core/app_state.dart';
 import 'package:plux_flutter/src/core/config.dart';
-import 'package:plux_flutter/src/core/plux_view.dart';
+import 'package:plux_flutter/src/core/host_events.dart';
 import 'package:plux_flutter/src/core/runtime.dart';
 import 'package:plux_flutter/src/devtools_api/diagnostics.dart';
+import 'package:plux_flutter/src/navigation/delegate.dart';
+import 'package:plux_flutter/src/navigation/plux_page.dart';
+import 'package:plux_flutter/src/pxl/types.dart';
+import 'package:plux_flutter/src/render/renderer.dart';
 import 'package:plux_flutter/src/state/providers.dart';
 import 'package:plux_flutter/src/sync/sync_event.dart';
 
@@ -63,6 +68,7 @@ abstract final class Plux {
     _container = container;
     _ownsContainer = config.container == null;
     container.read(pluxRuntimeProvider.notifier).set(rt);
+    rt.environment = () => container.read(environmentProvider);
     container
         .read(environmentProvider.notifier)
         .replace(
@@ -100,19 +106,85 @@ abstract final class Plux {
   /// the active release and the sync status. Empty in release builds.
   static PluxDiagnostics get diagnostics => _rt.diagnostics;
 
-  /// Pushes the page [route] on the navigator of [context], with [params];
-  /// completes when the page is popped. Plux's own navigation stack and
-  /// typed results arrive in P4 (NAV-003).
+  /// Opens the page [route] by its app-wide name only, wherever it is
+  /// (NAV-003): pushed on the navigator of [context], or presented as a
+  /// dialog or bottom sheet when its page kind says so, through the
+  /// navigation delegate. Completes when the page pops, with its result in
+  /// the JSON form of its declared type when that is a [T]; another value
+  /// is reported and completes with null. An unknown name shows the
+  /// not-found page and reports `PLX-4100` (NAV-011); parameters are
+  /// checked on entry (NAV-007).
   static Future<T?> open<T extends Object?>(
     BuildContext context,
     String route, {
     Map<String, Object?> params = const {},
-  }) => Navigator.of(context).push<T>(
-    MaterialPageRoute<T>(
-      settings: RouteSettings(name: route, arguments: params),
-      builder: (_) => PluxScope(child: PluxView(route, params: params)),
-    ),
+  }) => _rt.router.open<T>(context, route, params);
+
+  /// The page [route] for a declarative `Navigator.pages` list (NAV-006).
+  static PluxPage<T> pageFor<T>(
+    String route, {
+    Map<String, Object?> params = const {},
+    LocalKey? key,
+  }) => PluxPage<T>(
+    router: _rt.router,
+    route: route,
+    params: params,
+    key: key ?? ValueKey(route),
   );
+
+  /// Resolves the route a URL names, for router adapters such as
+  /// `plux_go_router` (ADR-0040): each value of [query] is converted by the
+  /// route's declared parameter type, as a deep link's is, names the route
+  /// does not declare are left out, and the route's guards run. Completes
+  /// with the route to show: the route itself, a redirect's target, or the
+  /// fallback of a refused route. Text that does not convert shows the
+  /// page's error fallback on entry (`PLX-4101`).
+  static Future<PluxRouteSpec> resolveLocation(
+    String route, {
+    Map<String, String> query = const {},
+  }) => _rt.resolveLocation(route, query);
+
+  /// Opens the page [link] names through the app's deep links (NAV-008):
+  /// `https://<host>/p/<route-name>?…`, or a path pattern of the app
+  /// document's `navigation.deepLinks`, on one of its hosts or custom
+  /// schemes. The route's guards run first; parameters are converted by
+  /// their declared types. Completes with whether a route opened: false,
+  /// reported, for a link nothing maps (`PLX-4103`) or without
+  /// `PluxConfig.navigatorKey` (`PLX-4102`).
+  static Future<bool> handleDeepLink(Uri link) => _rt.handleDeepLink(link);
+
+  /// Opens the page a notification names (NAV-008): the host's push SDK
+  /// calls this when the user opens a notification, with its data payload,
+  /// whose payload key (`plux` unless the app document names another)
+  /// holds `{"route": …, "params": {…}}`, as an object or JSON text. Plux
+  /// ships no push SDK. Completes as [handleDeepLink] does.
+  static Future<bool> handlePushPayload(Map<String, Object?> payload) =>
+      _rt.handlePushPayload(payload);
+
+  /// The typed events plugins emit with `emitHostEvent` (HST-013).
+  static Stream<PluxHostEvent> get events => _rt.hostEvents;
+
+  /// The host events named [name] (HST-013, ADR-0023).
+  static Stream<PluxHostEvent> eventsNamed(String name) =>
+      events.where((e) => e.name == name);
+
+  /// The value of the app's feature flag [name] in the active release, in
+  /// the JSON form of its type when that is a [T]; null before a release
+  /// is active, for an undeclared flag or another type (ABT-006). Plugins
+  /// read the same value as `flags.<name>`; `plux codegen` writes typed
+  /// getters over it (HST-030).
+  static T? flag<T>(String name) {
+    final release = _rt.active.value;
+    final renderer = _rt.renderer;
+    if (release == null || renderer is! PluxRenderer) return null;
+    final value = toJson(renderer.flagsRoot(release)[name]);
+    return value is T ? value : null;
+  }
+
+  /// A handle on the exposed app state entry [name] (HST-021, ADR-0023):
+  /// read, write and watch it; `plux codegen` writes typed accessors over
+  /// it (HST-030).
+  static PluxState<T> state<T>(String name) => PluxState<T>(name, container);
 
   static void _environment(PluxEnvironment Function(PluxEnvironment) f) {
     final n = container.read(environmentProvider.notifier);

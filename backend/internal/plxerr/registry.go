@@ -29,34 +29,35 @@ const (
 
 	// Schema and validation: references and semantics (PLX-1100–1199).
 
-	DuplicateKey              Code = 1101
-	UnresolvedReference       Code = 1102
-	DuplicateRouteName        Code = 1103
-	UnknownWidgetType         Code = 1104
-	UnknownProp               Code = 1105
-	PropTypeMismatch          Code = 1106
-	MissingRequiredProp       Code = 1107
-	UnknownEvent              Code = 1108
-	InvalidChildren           Code = 1109
-	UnknownSlot               Code = 1110
-	MissingRequiredSlot       Code = 1111
-	UnknownAction             Code = 1112
-	InvalidActionGraph        Code = 1113
-	ComponentVersionNotFound  Code = 1114
-	UnknownType               Code = 1115
-	InvalidTypeExpression     Code = 1116
-	ValueTypeMismatch         Code = 1117
-	MissingMock               Code = 1118
-	RuntimeTooOld             Code = 1119
-	RequiredFeaturesRaised    Code = 1120
-	ConstraintViolation       Code = 1121
-	DeprecatedMember          Code = 1122
-	UnknownIcon               Code = 1123
-	UnknownRoute              Code = 1201
-	RouteParameterMissing     Code = 1203
-	RouteParameterTypeInvalid Code = 1204
-	UnknownRouteParameter     Code = 1205
-	RedirectLoop              Code = 1206
+	DuplicateKey                 Code = 1101
+	UnresolvedReference          Code = 1102
+	DuplicateRouteName           Code = 1103
+	UnknownWidgetType            Code = 1104
+	UnknownProp                  Code = 1105
+	PropTypeMismatch             Code = 1106
+	MissingRequiredProp          Code = 1107
+	UnknownEvent                 Code = 1108
+	InvalidChildren              Code = 1109
+	UnknownSlot                  Code = 1110
+	MissingRequiredSlot          Code = 1111
+	UnknownAction                Code = 1112
+	InvalidActionGraph           Code = 1113
+	ComponentVersionNotFound     Code = 1114
+	UnknownType                  Code = 1115
+	InvalidTypeExpression        Code = 1116
+	ValueTypeMismatch            Code = 1117
+	MissingMock                  Code = 1118
+	RuntimeTooOld                Code = 1119
+	RequiredFeaturesRaised       Code = 1120
+	ConstraintViolation          Code = 1121
+	DeprecatedMember             Code = 1122
+	UnknownIcon                  Code = 1123
+	CustomActionNamedLikeBuiltIn Code = 1124
+	UnknownRoute                 Code = 1201
+	RouteParameterMissing        Code = 1203
+	RouteParameterTypeInvalid    Code = 1204
+	UnknownRouteParameter        Code = 1205
+	RedirectLoop                 Code = 1206
 
 	// Schema and validation: limits and budgets (PLX-1300–1399).
 
@@ -118,11 +119,28 @@ const (
 
 	// Runtime rendering and navigation (PLX-4000–4999).
 
-	NodeBuildFailed     Code = 4001
-	PropValueInvalid    Code = 4002
-	UnknownWidget       Code = 4003
-	ActionsNotAvailable Code = 4010
-	PluginDisabled      Code = 4020
+	NodeBuildFailed           Code = 4001
+	PropValueInvalid          Code = 4002
+	UnknownWidget             Code = 4003
+	ActionsNotAvailable       Code = 4010
+	PluginDisabled            Code = 4020
+	RouteNotFound             Code = 4100
+	RouteParametersInvalid    Code = 4101
+	NavigationRefused         Code = 4102
+	DeepLinkUnmapped          Code = 4103
+	NativeRouteNotRegistered  Code = 4200
+	NativeSlotNotRegistered   Code = 4201
+	NativeActionNotRegistered Code = 4202
+	ExposedStateTypeMismatch  Code = 4203
+	UserContextInvalid        Code = 4204
+	HostCodeFailed            Code = 4205
+
+	// Actions, data and local DB (PLX-5000–5999).
+
+	ActionTimeout           Code = 5001
+	ActionStepLimitExceeded Code = 5002
+	ActionValueInvalid      Code = 5003
+	ActionCustomError       Code = 5004
 
 	// Security (PLX-6000–6999).
 
@@ -143,6 +161,7 @@ const (
 	WarningsNotAcknowledged Code = 8051
 	PluginNotPublished      Code = 8052
 	AssetsNotReady          Code = 8053
+	HostBuildIncompatible   Code = 8054
 	InternalServerError     Code = 8090
 	UpstreamUnavailable     Code = 8091
 

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -100,7 +101,7 @@ func classify(rel string) (Kind, bool) {
 		strings.HasSuffix(base, ".test.ts"), strings.HasSuffix(base, ".test.tsx"):
 		return KindTest, true
 	case strings.HasPrefix(rel, ".github/workflows/") && (strings.HasSuffix(base, ".yml") || strings.HasSuffix(base, ".yaml")),
-		rel == "Makefile":
+		rel == "Makefile", path.Dir(rel) == "mk" && strings.HasSuffix(base, ".mk"):
 		return KindCI, true
 	}
 	return "", false

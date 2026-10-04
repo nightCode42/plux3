@@ -2006,6 +2006,90 @@ class PageEntryObjectBuilder extends fb.ObjectBuilder {
     return fbBuilder.buffer;
   }
 }
+class ComponentEntry {
+  ComponentEntry._(this._bc, this._bcOffset);
+  factory ComponentEntry(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<ComponentEntry> reader = _ComponentEntryReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  Uuid? get id => Uuid.reader.vTableGetNullable(_bc, _bcOffset, 4);
+  String? get key => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 6);
+
+  @override
+  String toString() {
+    return 'ComponentEntry{id: ${id}, key: ${key}}';
+  }
+}
+
+class _ComponentEntryReader extends fb.TableReader<ComponentEntry> {
+  const _ComponentEntryReader();
+
+  @override
+  ComponentEntry createObject(fb.BufferContext bc, int offset) => 
+    ComponentEntry._(bc, offset);
+}
+
+class ComponentEntryBuilder {
+  ComponentEntryBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(2);
+  }
+
+  int addId(int offset) {
+    fbBuilder.addStruct(0, offset);
+    return fbBuilder.offset;
+  }
+  int addKeyOffset(int? offset) {
+    fbBuilder.addOffset(1, offset);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class ComponentEntryObjectBuilder extends fb.ObjectBuilder {
+  final UuidObjectBuilder? _id;
+  final String? _key;
+
+  ComponentEntryObjectBuilder({
+    UuidObjectBuilder? id,
+    String? key,
+  })
+      : _id = id,
+        _key = key;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? keyOffset = _key == null ? null
+        : fbBuilder.writeString(_key!);
+    fbBuilder.startTable(2);
+    if (_id != null) {
+      fbBuilder.addStruct(0, _id!.finish(fbBuilder));
+    }
+    fbBuilder.addOffset(1, keyOffset);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
 class FunctionGrant {
   FunctionGrant._(this._bc, this._bcOffset);
   factory FunctionGrant(List<int> bytes) {
@@ -2371,6 +2455,455 @@ class SamplingObjectBuilder extends fb.ObjectBuilder {
     return fbBuilder.buffer;
   }
 }
+class ShellTab {
+  ShellTab._(this._bc, this._bcOffset);
+  factory ShellTab(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<ShellTab> reader = _ShellTabReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  String? get key => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 4);
+  Value? get label => Value.reader.vTableGetNullable(_bc, _bcOffset, 6);
+  Value? get icon => Value.reader.vTableGetNullable(_bc, _bcOffset, 8);
+  String? get initialRoute => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 10);
+
+  @override
+  String toString() {
+    return 'ShellTab{key: ${key}, label: ${label}, icon: ${icon}, initialRoute: ${initialRoute}}';
+  }
+}
+
+class _ShellTabReader extends fb.TableReader<ShellTab> {
+  const _ShellTabReader();
+
+  @override
+  ShellTab createObject(fb.BufferContext bc, int offset) => 
+    ShellTab._(bc, offset);
+}
+
+class ShellTabBuilder {
+  ShellTabBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(4);
+  }
+
+  int addKeyOffset(int? offset) {
+    fbBuilder.addOffset(0, offset);
+    return fbBuilder.offset;
+  }
+  int addLabelOffset(int? offset) {
+    fbBuilder.addOffset(1, offset);
+    return fbBuilder.offset;
+  }
+  int addIconOffset(int? offset) {
+    fbBuilder.addOffset(2, offset);
+    return fbBuilder.offset;
+  }
+  int addInitialRouteOffset(int? offset) {
+    fbBuilder.addOffset(3, offset);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class ShellTabObjectBuilder extends fb.ObjectBuilder {
+  final String? _key;
+  final ValueObjectBuilder? _label;
+  final ValueObjectBuilder? _icon;
+  final String? _initialRoute;
+
+  ShellTabObjectBuilder({
+    String? key,
+    ValueObjectBuilder? label,
+    ValueObjectBuilder? icon,
+    String? initialRoute,
+  })
+      : _key = key,
+        _label = label,
+        _icon = icon,
+        _initialRoute = initialRoute;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? keyOffset = _key == null ? null
+        : fbBuilder.writeString(_key!);
+    final int? labelOffset = _label?.getOrCreateOffset(fbBuilder);
+    final int? iconOffset = _icon?.getOrCreateOffset(fbBuilder);
+    final int? initialRouteOffset = _initialRoute == null ? null
+        : fbBuilder.writeString(_initialRoute!);
+    fbBuilder.startTable(4);
+    fbBuilder.addOffset(0, keyOffset);
+    fbBuilder.addOffset(1, labelOffset);
+    fbBuilder.addOffset(2, iconOffset);
+    fbBuilder.addOffset(3, initialRouteOffset);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
+class Shell {
+  Shell._(this._bc, this._bcOffset);
+  factory Shell(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<Shell> reader = _ShellReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  String? get key => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 4);
+  List<ShellTab>? get tabs => const fb.ListReader<ShellTab>(ShellTab.reader).vTableGetNullable(_bc, _bcOffset, 6);
+
+  @override
+  String toString() {
+    return 'Shell{key: ${key}, tabs: ${tabs}}';
+  }
+}
+
+class _ShellReader extends fb.TableReader<Shell> {
+  const _ShellReader();
+
+  @override
+  Shell createObject(fb.BufferContext bc, int offset) => 
+    Shell._(bc, offset);
+}
+
+class ShellBuilder {
+  ShellBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(2);
+  }
+
+  int addKeyOffset(int? offset) {
+    fbBuilder.addOffset(0, offset);
+    return fbBuilder.offset;
+  }
+  int addTabsOffset(int? offset) {
+    fbBuilder.addOffset(1, offset);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class ShellObjectBuilder extends fb.ObjectBuilder {
+  final String? _key;
+  final List<ShellTabObjectBuilder>? _tabs;
+
+  ShellObjectBuilder({
+    String? key,
+    List<ShellTabObjectBuilder>? tabs,
+  })
+      : _key = key,
+        _tabs = tabs;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? keyOffset = _key == null ? null
+        : fbBuilder.writeString(_key!);
+    final int? tabsOffset = _tabs == null ? null
+        : fbBuilder.writeList(_tabs!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    fbBuilder.startTable(2);
+    fbBuilder.addOffset(0, keyOffset);
+    fbBuilder.addOffset(1, tabsOffset);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
+class DeepLinkRoute {
+  DeepLinkRoute._(this._bc, this._bcOffset);
+  factory DeepLinkRoute(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<DeepLinkRoute> reader = _DeepLinkRouteReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  String? get path => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 4);
+  String? get route => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 6);
+
+  @override
+  String toString() {
+    return 'DeepLinkRoute{path: ${path}, route: ${route}}';
+  }
+}
+
+class _DeepLinkRouteReader extends fb.TableReader<DeepLinkRoute> {
+  const _DeepLinkRouteReader();
+
+  @override
+  DeepLinkRoute createObject(fb.BufferContext bc, int offset) => 
+    DeepLinkRoute._(bc, offset);
+}
+
+class DeepLinkRouteBuilder {
+  DeepLinkRouteBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(2);
+  }
+
+  int addPathOffset(int? offset) {
+    fbBuilder.addOffset(0, offset);
+    return fbBuilder.offset;
+  }
+  int addRouteOffset(int? offset) {
+    fbBuilder.addOffset(1, offset);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class DeepLinkRouteObjectBuilder extends fb.ObjectBuilder {
+  final String? _path;
+  final String? _route;
+
+  DeepLinkRouteObjectBuilder({
+    String? path,
+    String? route,
+  })
+      : _path = path,
+        _route = route;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? pathOffset = _path == null ? null
+        : fbBuilder.writeString(_path!);
+    final int? routeOffset = _route == null ? null
+        : fbBuilder.writeString(_route!);
+    fbBuilder.startTable(2);
+    fbBuilder.addOffset(0, pathOffset);
+    fbBuilder.addOffset(1, routeOffset);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
+class DeepLinks {
+  DeepLinks._(this._bc, this._bcOffset);
+  factory DeepLinks(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<DeepLinks> reader = _DeepLinksReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  List<String>? get hosts => const fb.ListReader<String>(fb.StringReader()).vTableGetNullable(_bc, _bcOffset, 4);
+  List<String>? get schemes => const fb.ListReader<String>(fb.StringReader()).vTableGetNullable(_bc, _bcOffset, 6);
+  List<DeepLinkRoute>? get routes => const fb.ListReader<DeepLinkRoute>(DeepLinkRoute.reader).vTableGetNullable(_bc, _bcOffset, 8);
+
+  @override
+  String toString() {
+    return 'DeepLinks{hosts: ${hosts}, schemes: ${schemes}, routes: ${routes}}';
+  }
+}
+
+class _DeepLinksReader extends fb.TableReader<DeepLinks> {
+  const _DeepLinksReader();
+
+  @override
+  DeepLinks createObject(fb.BufferContext bc, int offset) => 
+    DeepLinks._(bc, offset);
+}
+
+class DeepLinksBuilder {
+  DeepLinksBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(3);
+  }
+
+  int addHostsOffset(int? offset) {
+    fbBuilder.addOffset(0, offset);
+    return fbBuilder.offset;
+  }
+  int addSchemesOffset(int? offset) {
+    fbBuilder.addOffset(1, offset);
+    return fbBuilder.offset;
+  }
+  int addRoutesOffset(int? offset) {
+    fbBuilder.addOffset(2, offset);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class DeepLinksObjectBuilder extends fb.ObjectBuilder {
+  final List<String>? _hosts;
+  final List<String>? _schemes;
+  final List<DeepLinkRouteObjectBuilder>? _routes;
+
+  DeepLinksObjectBuilder({
+    List<String>? hosts,
+    List<String>? schemes,
+    List<DeepLinkRouteObjectBuilder>? routes,
+  })
+      : _hosts = hosts,
+        _schemes = schemes,
+        _routes = routes;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? hostsOffset = _hosts == null ? null
+        : fbBuilder.writeList(_hosts!.map(fbBuilder.writeString).toList());
+    final int? schemesOffset = _schemes == null ? null
+        : fbBuilder.writeList(_schemes!.map(fbBuilder.writeString).toList());
+    final int? routesOffset = _routes == null ? null
+        : fbBuilder.writeList(_routes!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    fbBuilder.startTable(3);
+    fbBuilder.addOffset(0, hostsOffset);
+    fbBuilder.addOffset(1, schemesOffset);
+    fbBuilder.addOffset(2, routesOffset);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
+class Push {
+  Push._(this._bc, this._bcOffset);
+  factory Push(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<Push> reader = _PushReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  bool get enabled => const fb.BoolReader().vTableGet(_bc, _bcOffset, 4, false);
+  String? get payloadKey => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 6);
+
+  @override
+  String toString() {
+    return 'Push{enabled: ${enabled}, payloadKey: ${payloadKey}}';
+  }
+}
+
+class _PushReader extends fb.TableReader<Push> {
+  const _PushReader();
+
+  @override
+  Push createObject(fb.BufferContext bc, int offset) => 
+    Push._(bc, offset);
+}
+
+class PushBuilder {
+  PushBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(2);
+  }
+
+  int addEnabled(bool? enabled) {
+    fbBuilder.addBool(0, enabled);
+    return fbBuilder.offset;
+  }
+  int addPayloadKeyOffset(int? offset) {
+    fbBuilder.addOffset(1, offset);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class PushObjectBuilder extends fb.ObjectBuilder {
+  final bool? _enabled;
+  final String? _payloadKey;
+
+  PushObjectBuilder({
+    bool? enabled,
+    String? payloadKey,
+  })
+      : _enabled = enabled,
+        _payloadKey = payloadKey;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? payloadKeyOffset = _payloadKey == null ? null
+        : fbBuilder.writeString(_payloadKey!);
+    fbBuilder.startTable(2);
+    fbBuilder.addBool(0, _enabled);
+    fbBuilder.addOffset(1, payloadKeyOffset);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
 class Flag {
   Flag._(this._bc, this._bcOffset);
   factory Flag(List<int> bytes) {
@@ -2499,10 +3032,15 @@ class Meta {
   Uuid? get nativeCatalogue => Uuid.reader.vTableGetNullable(_bc, _bcOffset, 42);
   String? get securityProfile => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 44);
   List<Sampling>? get telemetrySampling => const fb.ListReader<Sampling>(Sampling.reader).vTableGetNullable(_bc, _bcOffset, 46);
+  String? get notFoundRoute => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 48);
+  List<Shell>? get shells => const fb.ListReader<Shell>(Shell.reader).vTableGetNullable(_bc, _bcOffset, 50);
+  DeepLinks? get deepLinks => DeepLinks.reader.vTableGetNullable(_bc, _bcOffset, 52);
+  Push? get push => Push.reader.vTableGetNullable(_bc, _bcOffset, 54);
+  List<ComponentEntry>? get components => const fb.ListReader<ComponentEntry>(ComponentEntry.reader).vTableGetNullable(_bc, _bcOffset, 56);
 
   @override
   String toString() {
-    return 'Meta{kind: ${kind}, id: ${id}, key: ${key}, name: ${name}, version: ${version}, compilerVersion: ${compilerVersion}, schemaVersion: ${schemaVersion}, requiredFeatures: ${requiredFeatures}, minRuntime: ${minRuntime}, capabilities: ${capabilities}, limits: ${limits}, pages: ${pages}, entryPage: ${entryPage}, fallbackPage: ${fallbackPage}, plugins: ${plugins}, defaultLocale: ${defaultLocale}, supportedLocales: ${supportedLocales}, entryRoute: ${entryRoute}, flags: ${flags}, nativeCatalogue: ${nativeCatalogue}, securityProfile: ${securityProfile}, telemetrySampling: ${telemetrySampling}}';
+    return 'Meta{kind: ${kind}, id: ${id}, key: ${key}, name: ${name}, version: ${version}, compilerVersion: ${compilerVersion}, schemaVersion: ${schemaVersion}, requiredFeatures: ${requiredFeatures}, minRuntime: ${minRuntime}, capabilities: ${capabilities}, limits: ${limits}, pages: ${pages}, entryPage: ${entryPage}, fallbackPage: ${fallbackPage}, plugins: ${plugins}, defaultLocale: ${defaultLocale}, supportedLocales: ${supportedLocales}, entryRoute: ${entryRoute}, flags: ${flags}, nativeCatalogue: ${nativeCatalogue}, securityProfile: ${securityProfile}, telemetrySampling: ${telemetrySampling}, notFoundRoute: ${notFoundRoute}, shells: ${shells}, deepLinks: ${deepLinks}, push: ${push}, components: ${components}}';
   }
 }
 
@@ -2520,7 +3058,7 @@ class MetaBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable(22);
+    fbBuilder.startTable(27);
   }
 
   int addKind(BundleKind? kind) {
@@ -2611,6 +3149,26 @@ class MetaBuilder {
     fbBuilder.addOffset(21, offset);
     return fbBuilder.offset;
   }
+  int addNotFoundRouteOffset(int? offset) {
+    fbBuilder.addOffset(22, offset);
+    return fbBuilder.offset;
+  }
+  int addShellsOffset(int? offset) {
+    fbBuilder.addOffset(23, offset);
+    return fbBuilder.offset;
+  }
+  int addDeepLinksOffset(int? offset) {
+    fbBuilder.addOffset(24, offset);
+    return fbBuilder.offset;
+  }
+  int addPushOffset(int? offset) {
+    fbBuilder.addOffset(25, offset);
+    return fbBuilder.offset;
+  }
+  int addComponentsOffset(int? offset) {
+    fbBuilder.addOffset(26, offset);
+    return fbBuilder.offset;
+  }
 
   int finish() {
     return fbBuilder.endTable();
@@ -2640,6 +3198,11 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
   final UuidObjectBuilder? _nativeCatalogue;
   final String? _securityProfile;
   final List<SamplingObjectBuilder>? _telemetrySampling;
+  final String? _notFoundRoute;
+  final List<ShellObjectBuilder>? _shells;
+  final DeepLinksObjectBuilder? _deepLinks;
+  final PushObjectBuilder? _push;
+  final List<ComponentEntryObjectBuilder>? _components;
 
   MetaObjectBuilder({
     BundleKind? kind,
@@ -2664,6 +3227,11 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
     UuidObjectBuilder? nativeCatalogue,
     String? securityProfile,
     List<SamplingObjectBuilder>? telemetrySampling,
+    String? notFoundRoute,
+    List<ShellObjectBuilder>? shells,
+    DeepLinksObjectBuilder? deepLinks,
+    PushObjectBuilder? push,
+    List<ComponentEntryObjectBuilder>? components,
   })
       : _kind = kind,
         _id = id,
@@ -2686,7 +3254,12 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
         _flags = flags,
         _nativeCatalogue = nativeCatalogue,
         _securityProfile = securityProfile,
-        _telemetrySampling = telemetrySampling;
+        _telemetrySampling = telemetrySampling,
+        _notFoundRoute = notFoundRoute,
+        _shells = shells,
+        _deepLinks = deepLinks,
+        _push = push,
+        _components = components;
 
   /// Finish building, and store into the [fbBuilder].
   @override
@@ -2722,7 +3295,15 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
         : fbBuilder.writeString(_securityProfile!);
     final int? telemetrySamplingOffset = _telemetrySampling == null ? null
         : fbBuilder.writeList(_telemetrySampling!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
-    fbBuilder.startTable(22);
+    final int? notFoundRouteOffset = _notFoundRoute == null ? null
+        : fbBuilder.writeString(_notFoundRoute!);
+    final int? shellsOffset = _shells == null ? null
+        : fbBuilder.writeList(_shells!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    final int? deepLinksOffset = _deepLinks?.getOrCreateOffset(fbBuilder);
+    final int? pushOffset = _push?.getOrCreateOffset(fbBuilder);
+    final int? componentsOffset = _components == null ? null
+        : fbBuilder.writeList(_components!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    fbBuilder.startTable(27);
     fbBuilder.addUint8(0, _kind?.value);
     if (_id != null) {
       fbBuilder.addStruct(1, _id!.finish(fbBuilder));
@@ -2753,6 +3334,11 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
     }
     fbBuilder.addOffset(20, securityProfileOffset);
     fbBuilder.addOffset(21, telemetrySamplingOffset);
+    fbBuilder.addOffset(22, notFoundRouteOffset);
+    fbBuilder.addOffset(23, shellsOffset);
+    fbBuilder.addOffset(24, deepLinksOffset);
+    fbBuilder.addOffset(25, pushOffset);
+    fbBuilder.addOffset(26, componentsOffset);
     return fbBuilder.endTable();
   }
 
@@ -2791,10 +3377,11 @@ class Page {
   int get requiresAssurance => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 28, 0);
   List<Node>? get nodes => const fb.ListReader<Node>(Node.reader).vTableGetNullable(_bc, _bcOffset, 30);
   List<String>? get strings => const fb.ListReader<String>(fb.StringReader()).vTableGetNullable(_bc, _bcOffset, 32);
+  int get result => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 34, 0);
 
   @override
   String toString() {
-    return 'Page{id: ${id}, key: ${key}, route: ${route}, kind: ${kind}, title: ${title}, params: ${params}, state: ${state}, dataSources: ${dataSources}, lifecycle: ${lifecycle}, transition: ${transition}, guards: ${guards}, secure: ${secure}, requiresAssurance: ${requiresAssurance}, nodes: ${nodes}, strings: ${strings}}';
+    return 'Page{id: ${id}, key: ${key}, route: ${route}, kind: ${kind}, title: ${title}, params: ${params}, state: ${state}, dataSources: ${dataSources}, lifecycle: ${lifecycle}, transition: ${transition}, guards: ${guards}, secure: ${secure}, requiresAssurance: ${requiresAssurance}, nodes: ${nodes}, strings: ${strings}, result: ${result}}';
   }
 }
 
@@ -2812,7 +3399,7 @@ class PageBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable(15);
+    fbBuilder.startTable(16);
   }
 
   int addId(int offset) {
@@ -2875,6 +3462,10 @@ class PageBuilder {
     fbBuilder.addOffset(14, offset);
     return fbBuilder.offset;
   }
+  int addResult(int? result) {
+    fbBuilder.addUint32(15, result);
+    return fbBuilder.offset;
+  }
 
   int finish() {
     return fbBuilder.endTable();
@@ -2897,6 +3488,7 @@ class PageObjectBuilder extends fb.ObjectBuilder {
   final int? _requiresAssurance;
   final List<NodeObjectBuilder>? _nodes;
   final List<String>? _strings;
+  final int? _result;
 
   PageObjectBuilder({
     UuidObjectBuilder? id,
@@ -2914,6 +3506,7 @@ class PageObjectBuilder extends fb.ObjectBuilder {
     int? requiresAssurance,
     List<NodeObjectBuilder>? nodes,
     List<String>? strings,
+    int? result,
   })
       : _id = id,
         _key = key,
@@ -2929,7 +3522,8 @@ class PageObjectBuilder extends fb.ObjectBuilder {
         _secure = secure,
         _requiresAssurance = requiresAssurance,
         _nodes = nodes,
-        _strings = strings;
+        _strings = strings,
+        _result = result;
 
   /// Finish building, and store into the [fbBuilder].
   @override
@@ -2949,7 +3543,7 @@ class PageObjectBuilder extends fb.ObjectBuilder {
         : fbBuilder.writeList(_nodes!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
     final int? stringsOffset = _strings == null ? null
         : fbBuilder.writeList(_strings!.map(fbBuilder.writeString).toList());
-    fbBuilder.startTable(15);
+    fbBuilder.startTable(16);
     if (_id != null) {
       fbBuilder.addStruct(0, _id!.finish(fbBuilder));
     }
@@ -2967,6 +3561,7 @@ class PageObjectBuilder extends fb.ObjectBuilder {
     fbBuilder.addUint32(12, _requiresAssurance);
     fbBuilder.addOffset(13, nodesOffset);
     fbBuilder.addOffset(14, stringsOffset);
+    fbBuilder.addUint32(15, _result);
     return fbBuilder.endTable();
   }
 
@@ -5056,6 +5651,281 @@ class CollectionObjectBuilder extends fb.ObjectBuilder {
     return fbBuilder.buffer;
   }
 }
+class NativeRouteDecl {
+  NativeRouteDecl._(this._bc, this._bcOffset);
+  factory NativeRouteDecl(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<NativeRouteDecl> reader = _NativeRouteDeclReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  int get name => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 4, 0);
+  List<Param>? get params => const fb.ListReader<Param>(Param.reader).vTableGetNullable(_bc, _bcOffset, 6);
+  int get result => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 8, 0);
+
+  @override
+  String toString() {
+    return 'NativeRouteDecl{name: ${name}, params: ${params}, result: ${result}}';
+  }
+}
+
+class _NativeRouteDeclReader extends fb.TableReader<NativeRouteDecl> {
+  const _NativeRouteDeclReader();
+
+  @override
+  NativeRouteDecl createObject(fb.BufferContext bc, int offset) => 
+    NativeRouteDecl._(bc, offset);
+}
+
+class NativeRouteDeclBuilder {
+  NativeRouteDeclBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(3);
+  }
+
+  int addName(int? name) {
+    fbBuilder.addUint32(0, name);
+    return fbBuilder.offset;
+  }
+  int addParamsOffset(int? offset) {
+    fbBuilder.addOffset(1, offset);
+    return fbBuilder.offset;
+  }
+  int addResult(int? result) {
+    fbBuilder.addUint32(2, result);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class NativeRouteDeclObjectBuilder extends fb.ObjectBuilder {
+  final int? _name;
+  final List<ParamObjectBuilder>? _params;
+  final int? _result;
+
+  NativeRouteDeclObjectBuilder({
+    int? name,
+    List<ParamObjectBuilder>? params,
+    int? result,
+  })
+      : _name = name,
+        _params = params,
+        _result = result;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? paramsOffset = _params == null ? null
+        : fbBuilder.writeList(_params!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    fbBuilder.startTable(3);
+    fbBuilder.addUint32(0, _name);
+    fbBuilder.addOffset(1, paramsOffset);
+    fbBuilder.addUint32(2, _result);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
+class NativeSlotDecl {
+  NativeSlotDecl._(this._bc, this._bcOffset);
+  factory NativeSlotDecl(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<NativeSlotDecl> reader = _NativeSlotDeclReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  int get type => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 4, 0);
+  List<Param>? get props => const fb.ListReader<Param>(Param.reader).vTableGetNullable(_bc, _bcOffset, 6);
+  List<ComponentEvent>? get events => const fb.ListReader<ComponentEvent>(ComponentEvent.reader).vTableGetNullable(_bc, _bcOffset, 8);
+
+  @override
+  String toString() {
+    return 'NativeSlotDecl{type: ${type}, props: ${props}, events: ${events}}';
+  }
+}
+
+class _NativeSlotDeclReader extends fb.TableReader<NativeSlotDecl> {
+  const _NativeSlotDeclReader();
+
+  @override
+  NativeSlotDecl createObject(fb.BufferContext bc, int offset) => 
+    NativeSlotDecl._(bc, offset);
+}
+
+class NativeSlotDeclBuilder {
+  NativeSlotDeclBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(3);
+  }
+
+  int addType(int? type) {
+    fbBuilder.addUint32(0, type);
+    return fbBuilder.offset;
+  }
+  int addPropsOffset(int? offset) {
+    fbBuilder.addOffset(1, offset);
+    return fbBuilder.offset;
+  }
+  int addEventsOffset(int? offset) {
+    fbBuilder.addOffset(2, offset);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class NativeSlotDeclObjectBuilder extends fb.ObjectBuilder {
+  final int? _type;
+  final List<ParamObjectBuilder>? _props;
+  final List<ComponentEventObjectBuilder>? _events;
+
+  NativeSlotDeclObjectBuilder({
+    int? type,
+    List<ParamObjectBuilder>? props,
+    List<ComponentEventObjectBuilder>? events,
+  })
+      : _type = type,
+        _props = props,
+        _events = events;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? propsOffset = _props == null ? null
+        : fbBuilder.writeList(_props!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    final int? eventsOffset = _events == null ? null
+        : fbBuilder.writeList(_events!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    fbBuilder.startTable(3);
+    fbBuilder.addUint32(0, _type);
+    fbBuilder.addOffset(1, propsOffset);
+    fbBuilder.addOffset(2, eventsOffset);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
+class NativeActionDecl {
+  NativeActionDecl._(this._bc, this._bcOffset);
+  factory NativeActionDecl(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<NativeActionDecl> reader = _NativeActionDeclReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  int get name => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 4, 0);
+  List<Param>? get inputs => const fb.ListReader<Param>(Param.reader).vTableGetNullable(_bc, _bcOffset, 6);
+  int get output => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 8, 0);
+
+  @override
+  String toString() {
+    return 'NativeActionDecl{name: ${name}, inputs: ${inputs}, output: ${output}}';
+  }
+}
+
+class _NativeActionDeclReader extends fb.TableReader<NativeActionDecl> {
+  const _NativeActionDeclReader();
+
+  @override
+  NativeActionDecl createObject(fb.BufferContext bc, int offset) => 
+    NativeActionDecl._(bc, offset);
+}
+
+class NativeActionDeclBuilder {
+  NativeActionDeclBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(3);
+  }
+
+  int addName(int? name) {
+    fbBuilder.addUint32(0, name);
+    return fbBuilder.offset;
+  }
+  int addInputsOffset(int? offset) {
+    fbBuilder.addOffset(1, offset);
+    return fbBuilder.offset;
+  }
+  int addOutput(int? output) {
+    fbBuilder.addUint32(2, output);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class NativeActionDeclObjectBuilder extends fb.ObjectBuilder {
+  final int? _name;
+  final List<ParamObjectBuilder>? _inputs;
+  final int? _output;
+
+  NativeActionDeclObjectBuilder({
+    int? name,
+    List<ParamObjectBuilder>? inputs,
+    int? output,
+  })
+      : _name = name,
+        _inputs = inputs,
+        _output = output;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? inputsOffset = _inputs == null ? null
+        : fbBuilder.writeList(_inputs!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    fbBuilder.startTable(3);
+    fbBuilder.addUint32(0, _name);
+    fbBuilder.addOffset(1, inputsOffset);
+    fbBuilder.addUint32(2, _output);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
 class Schemas {
   Schemas._(this._bc, this._bcOffset);
   factory Schemas(List<int> bytes) {
@@ -5074,10 +5944,13 @@ class Schemas {
   List<Collection>? get collections => const fb.ListReader<Collection>(Collection.reader).vTableGetNullable(_bc, _bcOffset, 10);
   List<Param>? get variables => const fb.ListReader<Param>(Param.reader).vTableGetNullable(_bc, _bcOffset, 12);
   List<Param>? get userContext => const fb.ListReader<Param>(Param.reader).vTableGetNullable(_bc, _bcOffset, 14);
+  List<NativeRouteDecl>? get nativeRoutes => const fb.ListReader<NativeRouteDecl>(NativeRouteDecl.reader).vTableGetNullable(_bc, _bcOffset, 16);
+  List<NativeSlotDecl>? get nativeSlots => const fb.ListReader<NativeSlotDecl>(NativeSlotDecl.reader).vTableGetNullable(_bc, _bcOffset, 18);
+  List<NativeActionDecl>? get nativeActions => const fb.ListReader<NativeActionDecl>(NativeActionDecl.reader).vTableGetNullable(_bc, _bcOffset, 20);
 
   @override
   String toString() {
-    return 'Schemas{types: ${types}, state: ${state}, dataSources: ${dataSources}, collections: ${collections}, variables: ${variables}, userContext: ${userContext}}';
+    return 'Schemas{types: ${types}, state: ${state}, dataSources: ${dataSources}, collections: ${collections}, variables: ${variables}, userContext: ${userContext}, nativeRoutes: ${nativeRoutes}, nativeSlots: ${nativeSlots}, nativeActions: ${nativeActions}}';
   }
 }
 
@@ -5095,7 +5968,7 @@ class SchemasBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable(6);
+    fbBuilder.startTable(9);
   }
 
   int addTypesOffset(int? offset) {
@@ -5122,6 +5995,18 @@ class SchemasBuilder {
     fbBuilder.addOffset(5, offset);
     return fbBuilder.offset;
   }
+  int addNativeRoutesOffset(int? offset) {
+    fbBuilder.addOffset(6, offset);
+    return fbBuilder.offset;
+  }
+  int addNativeSlotsOffset(int? offset) {
+    fbBuilder.addOffset(7, offset);
+    return fbBuilder.offset;
+  }
+  int addNativeActionsOffset(int? offset) {
+    fbBuilder.addOffset(8, offset);
+    return fbBuilder.offset;
+  }
 
   int finish() {
     return fbBuilder.endTable();
@@ -5135,6 +6020,9 @@ class SchemasObjectBuilder extends fb.ObjectBuilder {
   final List<CollectionObjectBuilder>? _collections;
   final List<ParamObjectBuilder>? _variables;
   final List<ParamObjectBuilder>? _userContext;
+  final List<NativeRouteDeclObjectBuilder>? _nativeRoutes;
+  final List<NativeSlotDeclObjectBuilder>? _nativeSlots;
+  final List<NativeActionDeclObjectBuilder>? _nativeActions;
 
   SchemasObjectBuilder({
     List<TypeDeclObjectBuilder>? types,
@@ -5143,13 +6031,19 @@ class SchemasObjectBuilder extends fb.ObjectBuilder {
     List<CollectionObjectBuilder>? collections,
     List<ParamObjectBuilder>? variables,
     List<ParamObjectBuilder>? userContext,
+    List<NativeRouteDeclObjectBuilder>? nativeRoutes,
+    List<NativeSlotDeclObjectBuilder>? nativeSlots,
+    List<NativeActionDeclObjectBuilder>? nativeActions,
   })
       : _types = types,
         _state = state,
         _dataSources = dataSources,
         _collections = collections,
         _variables = variables,
-        _userContext = userContext;
+        _userContext = userContext,
+        _nativeRoutes = nativeRoutes,
+        _nativeSlots = nativeSlots,
+        _nativeActions = nativeActions;
 
   /// Finish building, and store into the [fbBuilder].
   @override
@@ -5166,13 +6060,22 @@ class SchemasObjectBuilder extends fb.ObjectBuilder {
         : fbBuilder.writeList(_variables!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
     final int? userContextOffset = _userContext == null ? null
         : fbBuilder.writeList(_userContext!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
-    fbBuilder.startTable(6);
+    final int? nativeRoutesOffset = _nativeRoutes == null ? null
+        : fbBuilder.writeList(_nativeRoutes!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    final int? nativeSlotsOffset = _nativeSlots == null ? null
+        : fbBuilder.writeList(_nativeSlots!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    final int? nativeActionsOffset = _nativeActions == null ? null
+        : fbBuilder.writeList(_nativeActions!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    fbBuilder.startTable(9);
     fbBuilder.addOffset(0, typesOffset);
     fbBuilder.addOffset(1, stateOffset);
     fbBuilder.addOffset(2, dataSourcesOffset);
     fbBuilder.addOffset(3, collectionsOffset);
     fbBuilder.addOffset(4, variablesOffset);
     fbBuilder.addOffset(5, userContextOffset);
+    fbBuilder.addOffset(6, nativeRoutesOffset);
+    fbBuilder.addOffset(7, nativeSlotsOffset);
+    fbBuilder.addOffset(8, nativeActionsOffset);
     return fbBuilder.endTable();
   }
 

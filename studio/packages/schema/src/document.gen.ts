@@ -56,6 +56,8 @@ export interface AppDocument {
   readonly theme: string;
   /** App-wide unique route name (SCH-025). */
   readonly entryRoute: string;
+  /** App-wide navigation: the page for unknown routes, deep links and tabbed shells (NAV-005, NAV-006, NAV-008, NAV-011, ADR-0040). */
+  readonly navigation?: NavigationPolicy;
   /** Keys of the app's plugins, in display order; each has a directory `plugins/<key>/`. */
   readonly plugins: readonly string[];
   readonly environments: readonly Environment[];
@@ -78,8 +80,11 @@ export interface AppDocument {
   readonly collections?: readonly Collection[];
   /** Attributes the host provides about the signed-in user, available in PXL as `user.<name>`. */
   readonly userContext?: readonly Field[];
+  readonly hostEvents?: readonly HostEventDecl[];
   /** What the runtime reports (ANL-003, ADR-0034). */
   readonly telemetry?: TelemetryPolicy;
+  /** Push notifications (NAV-008, ADR-0040): whether the app uses them, so a generated project carries the platform configuration, and the payload key under which a notification names `{route, params}` for `Plux.handlePushPayload`. */
+  readonly push?: PushPolicy;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
@@ -240,6 +245,24 @@ export interface DataSource {
 
 export type DataSourceKind = "rest" | "graphql" | "websocket" | "sse" | "function" | "database" | "static";
 
+/** The links the app answers (NAV-008): its hosts for `https` links and its custom schemes, and path patterns mapped to routes. `https://<host>/p/<route-name>?…` always resolves, so no pattern may start with `/p/`. */
+export interface DeepLinkPolicy {
+  readonly hosts?: readonly string[];
+  readonly schemes?: readonly string[];
+  readonly routes?: readonly DeepLinkRoute[];
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** A path pattern mapped to a route: literal segments and `{name}` segments, each naming a parameter of the route; query parameters fill the route's other parameters by name, converted to their declared types. */
+export interface DeepLinkRoute {
+  readonly path: string;
+  /** App-wide unique route name (SCH-025). */
+  readonly route: string;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
 /** A device API a plugin may request (SEC-080). */
 export type DeviceAPI = "camera" | "photos" | "files" | "location" | "contacts" | "biometrics" | "notifications" | "clipboard" | "share" | "haptics";
 
@@ -322,6 +345,17 @@ export interface HostBuild {
   readonly appId?: string;
   readonly version: string;
   readonly build: number;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** A typed event plugins send to the host app with `emitHostEvent`; `plux codegen` generates a Dart class for it (HST-013, HST-030, ADR-0039). */
+export interface HostEventDecl {
+  /** Identifier used in PXL and generated code: lowerCamelCase. */
+  readonly name: string;
+  readonly fields?: readonly Field[];
+  /** Human-readable description. */
+  readonly description?: string;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
@@ -426,6 +460,17 @@ export interface NativeSlotEvent {
   readonly [extension: `x-${string}`]: unknown;
 }
 
+/** App-wide navigation: the page for unknown routes, deep links and tabbed shells (NAV-005, NAV-006, NAV-008, NAV-011, ADR-0040). */
+export interface NavigationPolicy {
+  /** App-wide unique route name (SCH-025). */
+  readonly notFound?: string;
+  /** The links the app answers (NAV-008): its hosts for `https` links and its custom schemes, and path patterns mapped to routes. `https://<host>/p/<route-name>?…` always resolves, so no pattern may start with `/p/`. */
+  readonly deepLinks?: DeepLinkPolicy;
+  readonly shells?: readonly Shell[];
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
 /** A node of a page or component tree: a widget or a component instance (SCH-023). */
 export interface Node {
   /** Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). */
@@ -469,6 +514,8 @@ export interface PageDocument {
   /** Human-readable description. */
   readonly description?: string;
   readonly params?: readonly Param[];
+  /** Type expression of SCH-010, e.g. `string`, `decimal?`, `list<Transaction>`, `map<string,int>`. */
+  readonly result?: string;
   readonly state?: readonly StateEntry[];
   readonly dataSources?: readonly DataSource[];
   /** Lifecycle handlers (SCH-022). */
@@ -551,6 +598,15 @@ export interface PluginDocument {
   readonly [extension: `x-${string}`]: unknown;
 }
 
+/** Push notifications (NAV-008, ADR-0040): whether the app uses them, so a generated project carries the platform configuration, and the payload key under which a notification names `{route, params}` for `Plux.handlePushPayload`. */
+export interface PushPolicy {
+  readonly enabled: boolean;
+  /** The payload key holding `{route, params}`; `plux` when absent. */
+  readonly payloadKey?: string;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
 /** What the compiler does when a release needs a newer runtime than `minRuntimeVersion`: reject the publish, or raise the release's required features with a warning (WGT-004). */
 export type RequiredFeaturesPolicy = "reject" | "raise";
 
@@ -607,6 +663,29 @@ export interface Semantics {
   readonly button?: boolean;
   readonly liveRegion?: boolean;
   readonly excludeSemantics?: boolean;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** A tabbed shell; each tab keeps its own navigation stack, and `switchTab` selects a tab by key (NAV-005, NAV-006). */
+export interface Shell {
+  /** Human-readable lower-kebab slug, unique within its parent (SCH-002). Files in the Git layout are named after it. */
+  readonly key: string;
+  readonly tabs: readonly ShellTab[];
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** A tab of a shell: its label, icon and the route it opens with. */
+export interface ShellTab {
+  /** Human-readable lower-kebab slug, unique within its parent (SCH-002). Files in the Git layout are named after it. */
+  readonly key: string;
+  /** A prop value: a literal of the prop's type, or a binding (SCH-011). Literal objects and lists may contain bindings in their fields and items. */
+  readonly label: JsonValue;
+  /** A prop value: a literal of the prop's type, or a binding (SCH-011). Literal objects and lists may contain bindings in their fields and items. */
+  readonly icon: JsonValue;
+  /** App-wide unique route name (SCH-025). */
+  readonly initialRoute: string;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }

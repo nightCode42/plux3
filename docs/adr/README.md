@@ -32,8 +32,8 @@ Files are named `NNNN-short-title.md` with a four-digit, never-reused number. Th
 | [0020](0020-build-once-promote-releases.md) | Build-once-promote app releases as the unit of activation | P2 | Accepted |
 | [0021](0021-sync-all-plugins-at-start.md) | Sync all plugins at app start instead of lazy loading | P3 | Accepted |
 | [0022](0022-open-core-licensing.md) | Open-core licensing: Apache-2.0 client side, AGPL-3.0 server and Studio, commercial `ee/` | P0 | Accepted |
-| 0023 | Mixed native/plugin screens: native slots and `PluxView` with shared exposed state | P4 | Planned |
-| 0024 | No-code generated projects and shell-update detection | P4 | Planned |
+| [0023](0023-mixed-screens-slots-and-plux-view.md) | Mixed native/plugin screens: native slots and `PluxView` with shared exposed state | P4 | Accepted |
+| [0024](0024-no-code-generated-projects.md) | No-code generated projects: a deterministic Go generator over a versioned shell spec | P4 | Accepted |
 | [0025](0025-document-schema-toolchain.md) | Document schema toolchain: validation, canonicalisation and code generation | P1 | Accepted |
 | [0026](0026-identity-tenancy-and-access.md) | Built-in accounts with TOTP, org-bound credentials and row-level scopes | P2 | Accepted |
 | [0027](0027-asset-pipeline.md) | Asset pipeline: uploads, WebAssembly image codecs and dotLottie | P2 | Accepted |
@@ -48,5 +48,11 @@ Files are named `NNNN-short-title.md` with a four-digit, never-reused number. Th
 | [0036](0036-size-budgets-per-build.md) | Size budgets per build: what a device downloads, and the APK file | P3 | Accepted |
 | [0037](0037-up-to-date-check-installed-digest.md) | Up-to-date check: a digest of the installed bundles, and a budget on bodies | P3 | Accepted |
 | [0038](0038-flutter-support-window.md) | Flutter support window: from 3.47 on, the latest stable and the previous one | P3 | Accepted |
+| [0039](0039-action-engine-core.md) | Action engine core in P4, the action catalogue in P5 | P4 | Accepted |
+| [0040](0040-navigation-delegate-and-router-adapters.md) | Navigation: plain `Navigator` by default, router adapters as packages | P4 | Accepted |
+| [0041](0041-native-catalogue-and-host-builds.md) | Native catalogue and host builds: one registration, a static scanner, validation per build | P4 | Accepted |
+| [0042](0042-quick-start-moves-to-p10.md) | The ten-minute quick start is measured in P10 | P4 | Accepted |
+| [0043](0043-affected-only-ci.md) | Affected-only CI: a pull request runs what it can affect, `main` runs everything | P4 | Accepted |
+| [0044](0044-junit-4-for-the-android-host-tests.md) | JUnit 4 is accepted for the Android add-to-app host's tests only | P4 | Accepted |
 
 The decisions for planned ADRs are summarised in spec §32 and §34.1. Each is written in full before or alongside the first implementation that depends on it, and its status is updated here.

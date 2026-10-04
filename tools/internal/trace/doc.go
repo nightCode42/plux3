@@ -6,11 +6,11 @@
 // hand (QA-070, QA-071).
 //
 // Evidence is found in test files (Go, Dart, TypeScript) and in CI definitions
-// (workflows and the Makefile) in three forms:
+// (workflows, the Makefile and its fragments in mk/) in three forms:
 //
 //   - a comment line starting with "Verifies:" and listing identifiers:
 //     `// Verifies: SYN-005, QA-070.` (Go, Dart, TypeScript) or
-//     `# Verifies: CI-006.` (workflows, Makefile)
+//     `# Verifies: CI-006.` (workflows, Makefile, mk/*.mk)
 //   - a Go test, fuzz or benchmark name ending in the identifier with
 //     underscores: `TestActivationIsAtomic_SYN_005`
 //   - an identifier in square brackets in a Dart or TypeScript test file:

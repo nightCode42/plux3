@@ -2,7 +2,7 @@
   "$schema": "../json/registry/action.schema.json",
   "name": "emitHostEvent",
   "id": 51,
-  "phase": "P5",
+  "phase": "P4",
   "category": "host",
   "description": "Sends a typed event to the host app.",
   "typeParameters": [

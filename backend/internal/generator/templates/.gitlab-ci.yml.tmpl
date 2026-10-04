@@ -1,0 +1,58 @@
+# Signed release builds of {%.Name%} (GEN-003). Set these CI/CD variables,
+# masked and protected, in the project's settings; they are never written to
+# the repository (README.md, "Release builds"):
+#   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS,
+#   ANDROID_KEY_PASSWORD; IOS_CERTIFICATE_P12_BASE64, IOS_CERTIFICATE_PASSWORD,
+#   IOS_PROVISIONING_PROFILE_BASE64, IOS_PROVISIONING_PROFILE_NAME,
+#   APPLE_TEAM_ID; PLUX_TOKEN, to upload each build's native catalogue.
+stages: [build, catalogue]
+
+variables:
+  FLUTTER_VERSION: "{%.FlutterVersion%}"
+
+.release:
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v/
+    - when: manual
+
+android:
+  extends: .release
+  stage: build
+  image: ghcr.io/cirruslabs/flutter:$FLUTTER_VERSION
+  script:
+    - printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$CI_PROJECT_DIR/upload.jks"
+    - printf 'storeFile=%s\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$CI_PROJECT_DIR/upload.jks" "$ANDROID_KEYSTORE_PASSWORD" "$ANDROID_KEY_ALIAS" "$ANDROID_KEY_PASSWORD" > android/key.properties
+    - scripts/build_android.sh
+  artifacts:
+    paths:
+      - build/app/outputs/bundle/release/app-release.aab
+
+ios:
+  extends: .release
+  stage: build
+  # A macOS runner with Xcode and Flutter $FLUTTER_VERSION installed.
+  tags: [macos]
+  script:
+    - keychain="$CI_PROJECT_DIR/signing.keychain-db"; password="$(uuidgen)"
+    - security create-keychain -p "$password" "$keychain"
+    - security unlock-keychain -p "$password" "$keychain"
+    - printf '%s' "$IOS_CERTIFICATE_P12_BASE64" | base64 -d > "$CI_PROJECT_DIR/certificate.p12"
+    - security import "$CI_PROJECT_DIR/certificate.p12" -P "$IOS_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$keychain"
+    - security set-key-partition-list -S apple-tool:,apple: -k "$password" "$keychain"
+    - security list-keychain -d user -s "$keychain"
+    - mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+    - printf '%s' "$IOS_PROVISIONING_PROFILE_BASE64" | base64 -d > "$HOME/Library/MobileDevice/Provisioning Profiles/release.mobileprovision"
+    - printf '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0"><dict><key>method</key><string>app-store</string><key>teamID</key><string>%s</string><key>signingStyle</key><string>manual</string><key>provisioningProfiles</key><dict><key>{%.BundleID%}</key><string>%s</string></dict></dict></plist>\n' "$APPLE_TEAM_ID" "$IOS_PROVISIONING_PROFILE_NAME" > ios/ExportOptions.plist
+    - scripts/build_ios.sh
+  artifacts:
+    paths:
+      - build/ios/ipa/
+
+catalogue:
+  extends: .release
+  stage: catalogue
+  image: ghcr.io/cirruslabs/flutter:$FLUTTER_VERSION
+  # Uploads this build's native catalogue (ADR-0041); it needs the plux CLI.
+  script:
+    - plux native scan
+    - plux native sync --server {%.Plux.Endpoint%} --app {%.Plux.AppID%}

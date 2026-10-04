@@ -56,7 +56,7 @@ func writeAPK(t *testing.T, path string, n int) {
 	}
 }
 
-// TestGateBudgetAndBaseline checks the 3 MiB budget and the 10% growth
+// TestGateBudgetAndBaseline checks the APK budget and the 10% growth
 // over the committed overhead, and -update.
 // Verifies: RT-061, QA-007.
 func TestGateBudgetAndBaseline_RT_061(t *testing.T) {
@@ -74,7 +74,7 @@ func TestGateBudgetAndBaseline_RT_061(t *testing.T) {
 		{"within budget and baseline", 1000 + 2<<20, `{"android-arm64-apk": 2097152}`, exitOK},
 		{"grew 9%", 1000 + 2<<20*109/100, `{"android-arm64-apk": 2097152}`, exitOK},
 		{"grew 11%", 1000 + 2<<20*111/100, `{"android-arm64-apk": 2097152}`, exitFailed},
-		{"over budget", 1000 + 13<<19 + 1, `{"android-arm64-apk": 8388608}`, exitFailed},
+		{"over budget", 1000 + 10<<20 + 1, `{"android-arm64-apk": 10485760}`, exitFailed},
 		{"no baseline", 1000 + 2<<20, `{}`, exitFailed},
 	} {
 		plux := filepath.Join(dir, c.name+".apk")
@@ -308,15 +308,18 @@ func TestMeasuresWhatAnAppBundleDelivers_RT_061(t *testing.T) {
 	}
 }
 
-// TestBudgets checks each target's budget: 6.5 MiB for an APK, 3 MiB for
-// what a device downloads.
+// TestBudgets checks each target's budget: 10 MiB for an APK, 4 MiB for
+// an App Bundle download, 3 MiB for an IPA.
 // Verifies: RT-061, NFR-009.
 func TestBudgets_RT_061(t *testing.T) {
 	t.Parallel()
 	for _, target := range targets() {
-		want := int64(3 << 20)
-		if strings.HasSuffix(target, "-apk") {
-			want = 6815744
+		want := int64(3145728) // the IPA
+		switch {
+		case strings.HasSuffix(target, "-apk"):
+			want = 10485760
+		case strings.HasSuffix(target, "-aab"):
+			want = 4194304
 		}
 		if got := budget(target); got != want {
 			t.Errorf("%s: budget %d, want %d", target, got, want)

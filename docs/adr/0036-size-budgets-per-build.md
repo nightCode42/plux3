@@ -77,3 +77,18 @@ As decided.
 ### Option 3
 
 Measures only what Play users download and leaves APK distribution without a ceiling.
+
+## Revision (2026-10-02)
+
+The P4 action engine and routing core (R2, R3) added 131 to 213 KB to each APK: CI run
+36964307810 measured the armeabi-v7a APK at +6.61 MiB, over its 6.5 MiB budget, while every
+download stayed under 3 MiB ([size journey](../benchmarks/size.md), round 2). The maintainer
+raised the Android budgets rather than trim the runtime:
+
+- **Android App Bundle download, per ABI: ≤ 4 MiB** (was 3 MiB).
+- **Android APK, per ABI: ≤ 10 MiB** (was 6.5 MiB).
+- **iOS IPA, arm64, thinned: ≤ 3 MiB** — unchanged.
+
+The 10% gate over `test/size/baseline.json` (`QA-007`) still catches each regression, so
+growth stays visible and reviewed even with room under the budgets. `RT-061` and `NFR-009`
+are reworded accordingly (specification 1.2.1).

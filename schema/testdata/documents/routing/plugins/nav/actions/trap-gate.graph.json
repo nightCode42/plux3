@@ -1,0 +1,25 @@
+{
+  "id": "01f0c450-6c00-7000-8000-000000000236",
+  "key": "trap-gate",
+  "kind": "actionGraph",
+  "output": "GuardResult",
+  "page": "01f0c450-6c00-7000-8000-000000000231",
+  "schemaVersion": "1.0.0",
+  "steps": [
+    {
+      "action": "navigate",
+      "id": "away",
+      "input": {
+        "route": "home"
+      },
+      "next": "enter"
+    },
+    {
+      "action": "stop",
+      "id": "enter",
+      "input": {
+        "result": "allow"
+      }
+    }
+  ]
+}

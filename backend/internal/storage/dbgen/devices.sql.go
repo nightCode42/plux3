@@ -25,20 +25,24 @@ func (q *Queries) CountDevices(ctx context.Context, organizationID pgtype.UUID) 
 const countIncompatibleDevices = `-- name: CountIncompatibleDevices :one
 SELECT count(*) FROM devices
  WHERE app_id = $1
-   AND string_to_array(NULLIF(substring(runtime_version FROM '^[0-9]+(?:\.[0-9]+)*'), ''), '.')::int[]
-       < string_to_array($2::text, '.')::int[]
+   AND (($2::text <> ''
+         AND string_to_array(NULLIF(substring(runtime_version FROM '^[0-9]+(?:\.[0-9]+)*'), ''), '.')::int[]
+             < string_to_array($2::text, '.')::int[])
+        OR host_build = ANY($3::text[]))
 `
 
 type CountIncompatibleDevicesParams struct {
 	AppID      pgtype.UUID
 	MinRuntime string
+	HostBuilds []string
 }
 
-// Devices of an app whose runtime is older than a release needs
-// (REL-080): a release may be promoted to any environment. Versions
-// compare numerically by component.
+// Devices of an app that cannot use a release (REL-080): their runtime
+// is older than it needs, or they report a host build that cannot run it.
+// A release may be promoted to any environment. Versions compare
+// numerically by component.
 func (q *Queries) CountIncompatibleDevices(ctx context.Context, arg CountIncompatibleDevicesParams) (int64, error) {
-	row := q.db.QueryRow(ctx, countIncompatibleDevices, arg.AppID, arg.MinRuntime)
+	row := q.db.QueryRow(ctx, countIncompatibleDevices, arg.AppID, arg.MinRuntime, arg.HostBuilds)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -84,7 +88,7 @@ func (q *Queries) ExpireDeviceTokens(ctx context.Context, expiresAt pgtype.Times
 const expiringChannels = `-- name: ExpiringChannels :many
 SELECT c.id, c.organization_id, c.environment_id, c.key, c.release_sequence, c.updated_at FROM channels c
  WHERE c.release_sequence > 0
-   AND NOT EXISTS (SELECT 1 FROM manifests m WHERE m.channel_id = c.id AND m.expires_at >= $1::timestamptz)
+   AND NOT EXISTS (SELECT 1 FROM manifests m WHERE m.channel_id = c.id AND m.host_build = '' AND m.expires_at >= $1::timestamptz)
 `
 
 // Channels pointing at a release whose newest manifest expires before
@@ -159,7 +163,7 @@ func (q *Queries) FindDeviceSecret(ctx context.Context, id pgtype.UUID) (FindDev
 }
 
 const findDeviceToken = `-- name: FindDeviceToken :one
-SELECT t.id, t.organization_id, t.device_id, t.expires_at, d.app_id, d.environment_id
+SELECT t.id, t.organization_id, t.device_id, t.expires_at, d.app_id, d.environment_id, d.host_build
   FROM device_tokens t JOIN devices d ON d.id = t.device_id
  WHERE t.secret_hash = $1
 `
@@ -171,6 +175,7 @@ type FindDeviceTokenRow struct {
 	ExpiresAt      pgtype.Timestamptz
 	AppID          pgtype.UUID
 	EnvironmentID  pgtype.UUID
+	HostBuild      string
 }
 
 // Runs in the authentication scope.
@@ -184,6 +189,7 @@ func (q *Queries) FindDeviceToken(ctx context.Context, secretHash []byte) (FindD
 		&i.ExpiresAt,
 		&i.AppID,
 		&i.EnvironmentID,
+		&i.HostBuild,
 	)
 	return i, err
 }
@@ -362,7 +368,7 @@ func (q *Queries) InsertDeviceToken(ctx context.Context, arg InsertDeviceTokenPa
 const insertManifest = `-- name: InsertManifest :one
 INSERT INTO manifests (id, organization_id, channel_id, release_sequence, signed, signatures, issued_at, expires_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING id, organization_id, channel_id, release_sequence, signed, signatures, issued_at, expires_at
+RETURNING id, organization_id, channel_id, release_sequence, signed, signatures, issued_at, expires_at, host_build, own_manifest_id
 `
 
 type InsertManifestParams struct {
@@ -397,6 +403,8 @@ func (q *Queries) InsertManifest(ctx context.Context, arg InsertManifestParams) 
 		&i.Signatures,
 		&i.IssuedAt,
 		&i.ExpiresAt,
+		&i.HostBuild,
+		&i.OwnManifestID,
 	)
 	return i, err
 }
@@ -439,9 +447,11 @@ func (q *Queries) InsertTelemetryEvent(ctx context.Context, arg InsertTelemetryE
 }
 
 const latestManifest = `-- name: LatestManifest :one
-SELECT id, organization_id, channel_id, release_sequence, signed, signatures, issued_at, expires_at FROM manifests WHERE channel_id = $1 ORDER BY issued_at DESC, id DESC LIMIT 1
+SELECT id, organization_id, channel_id, release_sequence, signed, signatures, issued_at, expires_at, host_build, own_manifest_id FROM manifests WHERE channel_id = $1 AND host_build = '' ORDER BY issued_at DESC, id DESC LIMIT 1
 `
 
+// The channel's own manifest, the one devices of any build without one
+// of their own receive.
 func (q *Queries) LatestManifest(ctx context.Context, channelID pgtype.UUID) (Manifest, error) {
 	row := q.db.QueryRow(ctx, latestManifest, channelID)
 	var i Manifest
@@ -454,6 +464,8 @@ func (q *Queries) LatestManifest(ctx context.Context, channelID pgtype.UUID) (Ma
 		&i.Signatures,
 		&i.IssuedAt,
 		&i.ExpiresAt,
+		&i.HostBuild,
+		&i.OwnManifestID,
 	)
 	return i, err
 }
@@ -651,10 +663,13 @@ func (q *Queries) PopularBundles(ctx context.Context, arg PopularBundlesParams) 
 const purgeManifests = `-- name: PurgeManifests :execrows
 DELETE FROM manifests m
  WHERE m.expires_at < $1
-   AND m.id <> (SELECT n.id FROM manifests n WHERE n.channel_id = m.channel_id ORDER BY n.issued_at DESC, n.id DESC LIMIT 1)
+   AND m.host_build = ''
+   AND m.id <> (SELECT n.id FROM manifests n WHERE n.channel_id = m.channel_id AND n.host_build = ''
+                 ORDER BY n.issued_at DESC, n.id DESC LIMIT 1)
 `
 
-// Keeps each channel's newest manifest.
+// Keeps each channel's newest manifest; the host builds' manifests
+// signed with an older one go with it.
 func (q *Queries) PurgeManifests(ctx context.Context, expiresAt pgtype.Timestamptz) (int64, error) {
 	result, err := q.db.Exec(ctx, purgeManifests, expiresAt)
 	if err != nil {

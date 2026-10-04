@@ -1,0 +1,53 @@
+import 'package:flutter/material.dart';
+import 'package:plux_flutter/plux_flutter.dart';
+
+import 'plux/plux_options.g.dart';
+
+/// The app's root navigator, where Plux opens the pages links name.
+final navigatorKey = GlobalKey<NavigatorState>();
+
+/// {%.Name%}, a Plux app. Its screens, flows and content ship as Plux
+/// releases, without a new build (GEN-005); this shell changes only for a
+/// new store build.
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  WidgetsBinding.instance.addObserver(_Links());
+  await Plux.initialize(PluxOptions.config(navigatorKey: navigatorKey));
+  runApp(const App());
+}
+
+/// The app: the entry page of its default plugin.
+class App extends StatelessWidget {
+  /// Creates the app.
+  const App({super.key});
+
+  @override
+  Widget build(BuildContext context) => PluxScope(
+    child: MaterialApp(
+      title: '{%dart .Name%}',
+      navigatorKey: navigatorKey,
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        body: PluxView(
+          '{%.Plux.EntryRoute%}',
+          loadingBuilder: (_) => const Center(
+            key: ValueKey('plux-loading'),
+            child: CircularProgressIndicator(),
+          ),
+          fallbackBuilder: (_, error) => Center(
+            key: const ValueKey('plux-unavailable'),
+            child: Text('Not available (${error.code.id})'),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+/// Hands the links the app is opened with to Plux, which maps them to
+/// pages through the app's deep links (NAV-008).
+final class _Links with WidgetsBindingObserver {
+  @override
+  Future<bool> didPushRouteInformation(RouteInformation routeInformation) =>
+      Plux.handleDeepLink(routeInformation.uri);
+}

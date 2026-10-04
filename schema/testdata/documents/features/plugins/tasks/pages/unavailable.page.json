@@ -1,0 +1,22 @@
+{
+  "id": "01b0c450-6c00-7000-8000-0000000000f1",
+  "key": "unavailable",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01b0c450-6c00-7000-8000-0000000000f2",
+    "slots": {
+      "child": {
+        "id": "01b0c450-6c00-7000-8000-0000000000f3",
+        "props": {
+          "data": "Tasks are unavailable"
+        },
+        "type": "Text"
+      }
+    },
+    "type": "Center"
+  },
+  "route": "tasks-unavailable",
+  "schemaVersion": "1.0.0",
+  "title": "Unavailable"
+}

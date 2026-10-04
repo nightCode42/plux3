@@ -18,6 +18,11 @@
 /// 4. the build and raster times of every frame while the 500-item feed
 ///    scrolls, whose rows are bound through PXL.
 ///
+/// The control — the catalog page written in Flutter — opens after the
+/// Plux page. [BenchOptions.scenarios] can limit a run to some of these
+/// parts: CI measures them in parallel jobs, each comparing the same parts
+/// of the base and the change (ADR-0043).
+///
 /// The server is unreachable (the discard port of the loopback address),
 /// so every run renders what is on the device, as an app start without a
 /// network does.
@@ -54,6 +59,21 @@ const baselineDirectory = 'assets/plux';
 /// Starts the runtime; `Plux.initialize` outside tests.
 typedef BenchInitialize = Future<PluxStartup> Function(PluxConfig config);
 
+/// A part of a run, in the order a run measures the parts.
+enum BenchScenario {
+  /// `Plux.initialize`, first and repeated, and the memory it adds.
+  startup,
+
+  /// Opening the catalog page, cold and warm.
+  open,
+
+  /// The control: the same page written in Flutter.
+  native,
+
+  /// Scrolling the feed.
+  scroll,
+}
+
 /// What one run does.
 @immutable
 final class BenchOptions {
@@ -64,12 +84,15 @@ final class BenchOptions {
     this.repeat = 10,
     this.scrollDistance = 20000,
     this.scrollDuration = const Duration(seconds: 4),
+    this.scenarios = const {...BenchScenario.values},
   }) : assert(repeat > 0, 'at least one repetition');
 
   /// Reads the options from the process environment:
   /// `PLUX_BENCH_STORE` (the release store's directory; the platform's
   /// otherwise), `PLUX_BENCH_OUT` (a file for the result; printed
-  /// otherwise) and `PLUX_BENCH_REPEAT` (repetitions, 10 by default).
+  /// otherwise), `PLUX_BENCH_REPEAT` (repetitions, 10 by default) and
+  /// `PLUX_BENCH_SCENARIOS` (the parts to measure, comma-separated; all by
+  /// default).
   factory BenchOptions.fromEnvironment(Map<String, String> env) {
     String? get(String k) => (env[k] ?? '').isEmpty ? null : env[k];
     final repeat = get('PLUX_BENCH_REPEAT');
@@ -77,10 +100,27 @@ final class BenchOptions {
     if (n == null || n < 1) {
       throw FormatException('PLUX_BENCH_REPEAT is not a positive integer', n);
     }
+    final names = get('PLUX_BENCH_SCENARIOS');
+    final scenarios = <BenchScenario>{...BenchScenario.values};
+    if (names != null) {
+      scenarios.clear();
+      for (final name in names.split(',')) {
+        final s = BenchScenario.values.asNameMap()[name.trim()];
+        if (s == null) {
+          throw FormatException(
+            'PLUX_BENCH_SCENARIOS names an unknown part; known: '
+            '${BenchScenario.values.map((s) => s.name).join(', ')}',
+            name,
+          );
+        }
+        scenarios.add(s);
+      }
+    }
     return BenchOptions(
       storageDirectory: get('PLUX_BENCH_STORE'),
       output: get('PLUX_BENCH_OUT'),
       repeat: n,
+      scenarios: scenarios,
     );
   }
 
@@ -98,6 +138,9 @@ final class BenchOptions {
 
   /// How long the scroll takes.
   final Duration scrollDuration;
+
+  /// The parts of the run to measure. Plux is started either way.
+  final Set<BenchScenario> scenarios;
 }
 
 /// The samples of one run, by metric, in the unit the name ends with.
@@ -352,30 +395,38 @@ final class Benchmark {
       await settle(binding);
       final rssBefore = _rss();
 
-      await _initialize(config, result, 'initialize_first_ms');
-      result.add('memory_overhead_mib', (_rss() - rssBefore) / (1024 * 1024));
-      for (var i = 0; i < options.repeat; i++) {
-        await Plux.dispose();
-        await _initialize(config, result, 'initialize_ms');
+      final parts = options.scenarios;
+      final startup = parts.contains(BenchScenario.startup);
+      await _initialize(config, startup ? result : null, 'initialize_first_ms');
+      if (startup) {
+        result.add('memory_overhead_mib', (_rss() - rssBefore) / (1024 * 1024));
+        for (var i = 0; i < options.repeat; i++) {
+          await Plux.dispose();
+          await _initialize(config, result, 'initialize_ms');
+        }
       }
 
-      await _open(catalogRoute, result, 'open_first_frame_cold_ms');
-      await _pop();
-      for (var i = 0; i < options.repeat; i++) {
-        await _open(catalogRoute, result, 'open_first_frame_ms');
+      if (parts.contains(BenchScenario.open)) {
+        await _open(catalogRoute, result, 'open_first_frame_cold_ms');
         await _pop();
+        for (var i = 0; i < options.repeat; i++) {
+          await _open(catalogRoute, result, 'open_first_frame_ms');
+          await _pop();
+        }
       }
 
       // The control: the same page written in Flutter, so the report can
       // tell Plux's cost from Flutter's own.
-      await _open(null, null, null);
-      await _pop();
-      for (var i = 0; i < options.repeat; i++) {
-        await _open(null, result, 'native_open_first_frame_ms');
+      if (parts.contains(BenchScenario.native)) {
+        await _open(null, null, null);
         await _pop();
+        for (var i = 0; i < options.repeat; i++) {
+          await _open(null, result, 'native_open_first_frame_ms');
+          await _pop();
+        }
       }
 
-      await _scroll(result);
+      if (parts.contains(BenchScenario.scroll)) await _scroll(result);
 
       await Plux.dispose();
     } finally {
@@ -388,9 +439,10 @@ final class Benchmark {
     return result;
   }
 
+  /// Starts Plux and, with a [result], records how long it took.
   Future<void> _initialize(
     PluxConfig config,
-    BenchResult result,
+    BenchResult? result,
     String metric,
   ) async {
     final watch = Stopwatch()..start();
@@ -399,7 +451,7 @@ final class Benchmark {
     if (!startup.ready) {
       throw BenchFailure('Plux started without a release: $startup');
     }
-    result.add(metric, watch.elapsedMicroseconds / 1000);
+    result?.add(metric, watch.elapsedMicroseconds / 1000);
   }
 
   /// Pushes the Plux page [route] — or, for null, [NativeCatalog] — and,

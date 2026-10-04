@@ -26,6 +26,22 @@ type Compatibility struct {
 	// device — a lower minimum runtime, or fewer features — which the
 	// manifest gives devices that cannot use this one; zero when none.
 	FallbackSequence int64
+	// IncompatibleBuilds are the host builds that cannot run the release
+	// (WGT-032), by build.
+	IncompatibleBuilds []IncompatibleBuild
+}
+
+// IncompatibleBuild is a host build that cannot run a release.
+type IncompatibleBuild struct {
+	Build string
+	// Devices is how many registered devices report the build.
+	Devices int64
+	// FallbackSequence is the newest earlier release the build can run,
+	// which its devices receive instead; zero when none.
+	FallbackSequence int64
+	// Missing names the native entries it lacks or declares differently,
+	// as "route profile".
+	Missing []string
 }
 
 // Compatibility computes which runtimes can use a release and how many
@@ -51,16 +67,65 @@ func (s *Service) Compatibility(ctx context.Context, p auth.Principal, appID str
 				out.FallbackSequence = r.Sequence
 			}
 		}
-		if s.o.Devices != nil {
-			n, err := s.o.Devices.Incompatible(ctx, tx, appID, row.MinRuntime)
-			if err != nil {
-				return fmt.Errorf("release: %w", err)
-			}
-			out.IncompatibleDevices = n
+		if out.IncompatibleBuilds, err = incompatibleBuilds(ctx, q, row, all); err != nil {
+			return err
 		}
-		return nil
+		out.IncompatibleDevices, err = s.incompatibleDevices(ctx, tx, appID, row.MinRuntime, out.IncompatibleBuilds)
+		return err
 	})
 	return out, err
+}
+
+// incompatibleBuilds lists the host builds whose catalogue cannot run a
+// release, each with its devices and the newest earlier release it can
+// run among those the release's environment may receive (REL-080).
+func incompatibleBuilds(ctx context.Context, q *dbgen.Queries, row dbgen.Release, all []dbgen.Release) ([]IncompatibleBuild, error) {
+	builds, err := catalogues(ctx, q, row.AppID)
+	if err != nil || len(builds) == 0 {
+		return nil, err
+	}
+	uses, err := nativeUses(row.NativeUses)
+	if err != nil {
+		return nil, err
+	}
+	env, err := q.GetEnvironment(ctx, row.EnvironmentID)
+	if err != nil {
+		return nil, failure(err, "environment")
+	}
+	counts, err := deviceCounts(ctx, q, row.AppID)
+	if err != nil {
+		return nil, err
+	}
+	var out []IncompatibleBuild
+	for _, b := range builds {
+		m := missing(uses, b.catalogue)
+		if len(m) == 0 {
+			continue
+		}
+		fb, err := fallbackFor(all, row.Sequence, env.Production, b.catalogue)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, IncompatibleBuild{Build: b.build, Devices: counts[b.build], FallbackSequence: fb, Missing: m})
+	}
+	return out, nil
+}
+
+// incompatibleDevices counts the devices that cannot use a release, by
+// runtime or by host build; zero without a device counter.
+func (s *Service) incompatibleDevices(ctx context.Context, tx pgx.Tx, appID, minRuntime string, builds []IncompatibleBuild) (int64, error) {
+	if s.o.Devices == nil {
+		return 0, nil
+	}
+	names := make([]string, len(builds))
+	for i, b := range builds {
+		names[i] = b.Build
+	}
+	n, err := s.o.Devices.Incompatible(ctx, tx, appID, minRuntime, names)
+	if err != nil {
+		return 0, fmt.Errorf("release: %w", err)
+	}
+	return n, nil
 }
 
 // asksLess reports whether release a asks strictly less of a device than

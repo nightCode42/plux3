@@ -36,7 +36,15 @@ The platform folders are not committed: `bench.sh` makes the Linux one with
 ```bash
 make bench-runtime                      # five runs of this checkout, summarised
 make bench-runtime-ab BASE=origin/main  # A/B against BASE's runtime; fails beyond 10%
+make bench-runtime-ab SCENARIOS=open    # the same, measuring one part of each run
 ```
+
+`SCENARIOS` (the app's `PLUX_BENCH_SCENARIOS`) limits every run to some of its parts:
+`startup` (initialize and memory), `open` (the catalog page), `native` (the control)
+and `scroll` (the feed), comma-separated; all of them by default. CI compares the parts
+in three parallel jobs — start-up, opening, the control with scrolling — each running both
+runtimes alternately on one runner with the method below, and a policy test checks that
+together they measure every part ([ADR-0043](../../../docs/adr/0043-affected-only-ci.md)).
 
 Results, logs and each side's release store are written to `build/bench-runtime`;
 `report.md` there is the summary. `make bench-runtime-ab` builds this checkout's app

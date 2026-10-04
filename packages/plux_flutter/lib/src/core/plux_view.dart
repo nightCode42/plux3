@@ -14,29 +14,111 @@ import 'dart:ui' as ui;
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plux_flutter/src/bundle/container.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/core/fallback.dart';
 import 'package:plux_flutter/src/core/runtime.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/navigation/guards.dart';
 import 'package:plux_flutter/src/state/providers.dart';
 
-/// Shows a Plux page, by app-wide route name, inside any widget tree.
+/// An event a [PluxView] passes to its host (ADR-0023): an inline page's
+/// `pop`, named `pop`, with its checked result as [payload].
+final class PluxViewEvent {
+  /// Creates an event.
+  const PluxViewEvent(this.name, this.payload);
+
+  /// The event's name: `pop`, or a component's declared event (`on…`).
+  final String name;
+
+  /// The payload in the JSON form of its declared type, or null.
+  final Object? payload;
+
+  @override
+  String toString() => 'PluxViewEvent($name, $payload)';
+}
+
+/// How a [PluxView] sizes itself (NAV-004, ADR-0023).
+final class PluxViewSizing {
+  const PluxViewSizing._(this._mode, [this.size]);
+
+  /// The host gives the view [size].
+  const PluxViewSizing.fixed(Size size) : this._(_SizingMode.fixed, size);
+
+  /// The view sizes to its content within the incoming constraints.
+  static const intrinsic = PluxViewSizing._(_SizingMode.intrinsic);
+
+  /// The view fills the incoming constraints, which must be bounded; in
+  /// unbounded ones it shows its fallback.
+  static const expand = PluxViewSizing._(_SizingMode.expand);
+
+  final _SizingMode _mode;
+
+  /// The size a fixed view takes; null otherwise.
+  final Size? size;
+}
+
+enum _SizingMode { intrinsic, fixed, expand }
+
+/// Shows a Plux page or an exported component, by name, inside any widget
+/// tree, never naming a plugin (NAV-004, ADR-0023).
 final class PluxView extends ConsumerWidget {
-  /// Creates a view of [route] with [params].
+  /// Creates a view of [name]: a route, else an exported component's key.
+  /// [inputs] are the page's parameters or the component's props, checked
+  /// on entry (PLX-4101).
   const PluxView(
-    this.route, {
+    this.name, {
     super.key,
-    this.params = const {},
+    this.inputs = const {},
+    this.onEvent,
+    this.sizing = PluxViewSizing.intrinsic,
     this.loadingBuilder,
     this.fallbackBuilder,
-  });
+  }) : _routed = false,
+       _guarded = false;
 
-  /// The route name (SCH-025).
-  final String route;
+  /// A view whose page owns its route, so that its `pop` steps pop it; only
+  /// the routes Plux builds are (ADR-0040). [guarded] when the route's
+  /// guards already decided the entry.
+  const PluxView._routed(
+    this.name, {
+    this.inputs = const {},
+    this._guarded = false,
+  }) : loadingBuilder = null,
+       fallbackBuilder = null,
+       onEvent = null,
+       sizing = PluxViewSizing.intrinsic,
+       _routed = true;
 
-  /// The page parameters.
-  final Map<String, Object?> params;
+  /// The page a view's guards entered: its target, decided already.
+  const PluxView._entered(
+    this.name, {
+    required this.inputs,
+    required this.onEvent,
+    required this.sizing,
+    required this.loadingBuilder,
+    required this.fallbackBuilder,
+    required this._routed,
+  }) : _guarded = true;
+
+  final bool _routed;
+
+  /// Whether the route's guards already decided this entry (NAV-009).
+  final bool _guarded;
+
+  /// The route name (SCH-025), or the key of an exported component.
+  final String name;
+
+  /// The page parameters or the component props.
+  final Map<String, Object?> inputs;
+
+  /// Receives the view's events: an inline page's `pop` (ADR-0023). Without
+  /// it, an inline page's `pop` step fails, as it has no route to pop.
+  final void Function(PluxViewEvent event)? onEvent;
+
+  /// How the view sizes itself.
+  final PluxViewSizing sizing;
 
   /// Shown while no release is available yet; empty when null.
   final WidgetBuilder? loadingBuilder;
@@ -51,25 +133,43 @@ final class PluxView extends ConsumerWidget {
     final rt = ref.watch(pluxRuntimeProvider);
     final release = ref.watch(activeReleaseProvider);
     if (rt == null || release == null) {
-      return loadingBuilder?.call(context) ?? const SizedBox.shrink();
+      return _sized(
+        rt,
+        null,
+        loadingBuilder?.call(context) ?? const SizedBox.shrink(),
+      );
     }
     Widget fallback(PluxException e, [String? plugin]) =>
         fallbackBuilder?.call(context, e) ??
         buildFallback(context, rt.config, e, plugin: plugin);
-    final PageRef? page;
+    return _sized(rt, fallback, _content(rt, release, fallback));
+  }
+
+  /// The content: the page or component [name] resolves to, its guards'
+  /// gate, or a fallback.
+  Widget _content(
+    PluxRuntime rt,
+    ActiveRelease release,
+    Widget Function(PluxException e, [String? plugin]) fallback,
+  ) {
+    PageRef? page;
     try {
-      page = release.page(route);
+      // A name is a route first, then an exported component; the
+      // routes Plux builds are routes only (ADR-0023).
+      page = release.page(name) ?? (_routed ? null : release.component(name));
     } on PluxException catch (e) {
       return fallback(e);
     }
     if (page == null) {
-      return fallback(
-        PluxException(
-          PluxErrorCode.resourceNotFound,
-          'no page has the route $route',
-        ),
+      final missing = PluxException(
+        PluxErrorCode.routeNotFound,
+        'no page has the route $name, and no component that key',
+        details: {'route': name},
       );
+      rt.reportProblem(missing);
+      return fallback(missing);
     }
+    final component = page.section.kind == SectionKind.component;
     var shown = page;
     if (release.disabled(page.plugin)) {
       final message = release.control.message;
@@ -79,25 +179,145 @@ final class PluxView extends ConsumerWidget {
         details: {'plugin': page.plugin, 'reason': 'killSwitch'},
       );
       // The plugin's own fallback page, unless the whole app is switched
-      // off; otherwise the app-level fallback (RT-022).
+      // off or the view shows a component; otherwise the app-level
+      // fallback (RT-022).
       final PageRef? declared;
       try {
-        declared = release.control.appKillSwitch
+        declared = release.control.appKillSwitch || component
             ? null
             : release.fallbackPage(page.plugin);
       } on PluxException catch (e) {
         return fallback(e, page.plugin);
       }
       if (declared == null) return fallback(off, page.plugin);
+      // The kill switch never opens a guarded page: a declared fallback
+      // page with guards or an assurance level, or whose requirements
+      // cannot be read yet, gives way to the generic fallback (ADR-0040).
+      final needs = RouteGuards.requirementsNow(release, declared);
+      if (needs == null ||
+          needs.guards.isNotEmpty ||
+          needs.assurance > deviceAssurance) {
+        return fallback(off, page.plugin);
+      }
       shown = declared;
+    } else if (!component &&
+        !_guarded &&
+        RouteGuards.needsDecision(release, page)) {
+      // An entry nothing decided yet: an embedded view, a declarative page
+      // or a shell's tab runs the route's guards here (NAV-009).
+      return _GuardGate(
+        key: ValueKey((release.sequence, name)),
+        view: this,
+        guards: rt.guards,
+        fallback: fallback,
+      );
     }
+    final events = onEvent;
     return PluxPageHost(
-      key: ValueKey((release.sequence, route, shown.pageKey)),
+      key: ValueKey((release.sequence, name, shown.pageKey)),
       runtime: rt,
       page: shown,
-      params: params,
+      params: inputs,
+      routed: _routed,
+      onPop: _routed || events == null
+          ? null
+          : (result) => events(PluxViewEvent('pop', result)),
       fallback: (e) => fallback(e, shown.plugin),
     );
+  }
+
+  /// Applies [sizing] to [child]; an expanding view in unbounded
+  /// constraints shows the fallback instead, reported once.
+  Widget _sized(
+    PluxRuntime? rt,
+    Widget Function(PluxException e, [String? plugin])? fallback,
+    Widget child,
+  ) => switch (sizing._mode) {
+    _SizingMode.intrinsic => child,
+    _SizingMode.fixed => SizedBox.fromSize(size: sizing.size, child: child),
+    _SizingMode.expand => LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.hasBoundedWidth && constraints.hasBoundedHeight) {
+          return SizedBox.expand(child: child);
+        }
+        final e = PluxException(
+          PluxErrorCode.nodeBuildFailed,
+          'PluxView $name expands, but its constraints are unbounded',
+          details: {'route': name},
+        );
+        rt?.reportProblem(e);
+        return SizedBox(
+          width: constraints.hasBoundedWidth ? constraints.maxWidth : null,
+          height: constraints.hasBoundedHeight ? constraints.maxHeight : null,
+          child: fallback?.call(e) ?? const SizedBox.shrink(),
+        );
+      },
+    ),
+  };
+}
+
+/// The content of a route Plux built: a [PluxView] of [route] whose page
+/// owns its route, so that its `pop` steps pop it, [guarded] when its
+/// guards already decided the entry (ADR-0040).
+PluxView routedPluxView(
+  String route,
+  Map<String, Object?> params, {
+  bool guarded = false,
+}) => PluxView._routed(route, inputs: params, guarded: guarded);
+
+/// Runs the guards of [view]'s route, then shows the page they enter in
+/// its place, which may be a redirect's target, or the fallback of the
+/// route they refuse (NAV-009). Nothing of the guarded page builds before
+/// they decide.
+final class _GuardGate extends StatefulWidget {
+  const _GuardGate({
+    super.key,
+    required this.view,
+    required this.guards,
+    required this.fallback,
+  });
+
+  final PluxView view;
+  final RouteGuards guards;
+  final Widget Function(PluxException e, [String? plugin]) fallback;
+
+  @override
+  State<_GuardGate> createState() => _GuardGateState();
+}
+
+final class _GuardGateState extends State<_GuardGate> {
+  GuardVerdict? _verdict;
+
+  @override
+  void initState() {
+    super.initState();
+    final v = widget.view;
+    unawaited(
+      widget.guards.decide(v.name, v.inputs).then((verdict) {
+        if (mounted) setState(() => _verdict = verdict);
+      }),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final v = widget.view;
+    return switch (_verdict) {
+      null => v.loadingBuilder?.call(context) ?? const SizedBox.shrink(),
+      GuardEnter(:final route, :final params) => PluxView._entered(
+        route,
+        inputs: params,
+        onEvent: v.onEvent,
+        sizing: PluxViewSizing.intrinsic,
+        loadingBuilder: v.loadingBuilder,
+        fallbackBuilder: v.fallbackBuilder,
+        routed: v._routed,
+      ),
+      GuardRefused(:final reason, :final plugin) => widget.fallback(
+        reason,
+        plugin,
+      ),
+    };
   }
 }
 
@@ -112,7 +332,19 @@ final class PluxPageHost extends StatefulWidget {
     required this.page,
     required this.params,
     required this.fallback,
+    this.routed = false,
+    this.onPop,
   });
+
+  /// Whether the page owns its route.
+  final bool routed;
+
+  /// Receives an embedded page's `pop` result, or null (ADR-0023).
+  final void Function(Object? result)? onPop;
+
+  /// Whether the host shows an exported component, which is no screen: no
+  /// `screen_view` or `render_perf` is recorded for it.
+  bool get _component => page.section.kind == SectionKind.component;
 
   /// The runtime.
   final PluxRuntime runtime;
@@ -160,7 +392,7 @@ final class _PluxPageHostState extends State<PluxPageHost> {
   void initState() {
     super.initState();
     _source = widget.runtime.lastRoute;
-    widget.runtime.lastRoute = widget.page.route;
+    if (!widget._component) widget.runtime.lastRoute = widget.page.route;
     SchedulerBinding.instance.addTimingsCallback(_onTimings);
     final release = _release = widget.runtime.mount();
     if (release == null) return;
@@ -219,6 +451,7 @@ final class _PluxPageHostState extends State<PluxPageHost> {
   /// it performed (ANL-001, RT-015). Only routes and numbers: never the
   /// page's parameters or state.
   void _recordView() {
+    if (widget._component) return;
     final t = widget.runtime.telemetry;
     final route = widget.page.route;
     t.record(
@@ -275,7 +508,14 @@ final class _PluxPageHostState extends State<PluxPageHost> {
     final built = Stopwatch()..start();
     Widget child;
     try {
-      child = renderer.build(context, release, widget.page, widget.params);
+      child = renderer.build(
+        context,
+        release,
+        widget.page,
+        widget.params,
+        routed: widget.routed,
+        onPop: widget.onPop,
+      );
     } on Object catch (e, stack) {
       final error = e is PluxException
           ? e

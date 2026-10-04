@@ -42,6 +42,14 @@ Future<void> pumpUntil(
   }
 }
 
+/// Taps [finder] once the screen has settled: a page still sliding in
+/// moves its widgets, and a tap aimed at a moving widget can miss it
+/// (CI run 37156438886, iOS).
+Future<void> tapSettled(WidgetTester tester, Finder finder) async {
+  await tester.pumpAndSettle();
+  await tester.tap(finder);
+}
+
 /// Registers the flows. [config] is the app's configuration; the flows
 /// are skipped without one. [storage] gives the release store's directory
 /// for each launch, null for the platform's, as a device does.
@@ -57,19 +65,38 @@ void starterFlows({
 }) {
   final problems = <PluxException>[];
 
+  late StarterHost host;
+
   Future<PluxStartup> launch(WidgetTester tester, String? dir) async {
     final c = config()!;
+    host = StarterHost();
     final startup = await tester.runAsync(
       () => initialize(
         c.toPluxConfig(
+          host: host,
           storageDirectory: dir,
           onError: (e, _) => problems.add(e),
           baseline: null,
         ),
       ),
     );
-    await tester.pumpWidget(StarterApp(config: c, startup: startup!));
+    await tester.pumpWidget(
+      StarterApp(config: c, startup: startup!, host: host),
+    );
     return startup;
+  }
+
+  // Scrolls the home screen to the tile [key] and taps it.
+  Future<void> tapTile(WidgetTester tester, String key) async {
+    final tile = find.byKey(ValueKey(key));
+    // The home screen's list is the first scrollable; plugin pages may
+    // hold others.
+    await tester.scrollUntilVisible(
+      tile,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.tap(tile);
   }
 
   Future<void> stop(WidgetTester tester) async {
@@ -127,6 +154,99 @@ void starterFlows({
       final second = await launch(tester, dir);
       expect(second.sequence, first.sequence);
       await pumpUntil(tester, find.text(welcomeBody));
+      await stop(tester);
+    },
+    skip: skip != null,
+    timeout: const Timeout(Duration(minutes: 3)),
+  );
+
+  testWidgets(
+    'mixed screens: two plugin views share the counter the host writes, and '
+    "a native slot's event in a plugin page runs its navigate action "
+    '[HST-021] [NAV-004] [WGT-033] [STA-030]',
+    (tester) async {
+      problems.clear();
+      final dir = await tester.runAsync(() async => storage?.call());
+      final started = await launch(tester, dir);
+      expect(started.ready, isTrue, reason: '${started.error}');
+      await pumpUntil(tester, find.text(welcomeBody));
+
+      // A native screen with two views of the exported component.
+      await tester.tap(find.byKey(const ValueKey('open-mixed')));
+      await pumpUntil(tester, find.text('Left: 0'));
+      expect(find.text('Right: 0'), findsOneWidget);
+      await tapSettled(tester, find.byKey(const ValueKey('add-one')));
+      await pumpUntil(tester, find.text('Left: 1'));
+      expect(find.text('Right: 1'), findsOneWidget);
+      await pumpUntil(tester, find.text('Native view of the counter: 1'));
+      await tester.pumpAndSettle();
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+
+      // A plugin page holding the host's map card.
+      await tester.tap(find.byKey(const ValueKey('open-places')));
+      await pumpUntil(tester, find.text('Harbour'));
+      await tapSettled(tester, find.text('Harbour'));
+      await pumpUntil(tester, find.text('Place: Harbour'));
+      expect(problems, isEmpty, reason: problems.join('\n'));
+      await stop(tester);
+    },
+    skip: skip != null,
+    timeout: const Timeout(Duration(minutes: 3)),
+  );
+
+  testWidgets(
+    'typed routes, a guard, a deep link, a notification, a native route '
+    'and action, and a plugin event [NAV-002] [NAV-008] [NAV-009] '
+    '[HST-010] [HST-011] [HST-013] [HST-030] [ACT-060]',
+    (tester) async {
+      problems.clear();
+      final dir = await tester.runAsync(() async => storage?.call());
+      final started = await launch(tester, dir);
+      expect(started.ready, isTrue, reason: '${started.error}');
+      await pumpUntil(tester, find.text(welcomeBody));
+
+      // Signed out, the account page's guard sends the user to sign in.
+      await tapTile(tester, 'open-account');
+      await pumpUntil(
+        tester,
+        find.text('Sign in on the home screen to see your account.'),
+      );
+      await tester.pumpAndSettle();
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      // Signed in, the guard lets the page open, which reads the plan.
+      await tapTile(tester, 'sign-in');
+      await tester.pump();
+      await tapTile(tester, 'open-account');
+      await pumpUntil(tester, find.text('Plan: pro'));
+      await tester.pumpAndSettle();
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+
+      // A link opens a plugin page, whose buttons call the host's native
+      // action, emit a host event and open the host's native route.
+      await tapTile(tester, 'open-link');
+      await pumpUntil(tester, find.text('Place: Lighthouse'));
+      await tapSettled(tester, find.text('Share'));
+      await pumpUntil(tester, find.text('Shared: Place: Lighthouse'));
+      await tapSettled(tester, find.text('Profile'));
+      await pumpUntil(tester, find.text('Profile of Lighthouse'));
+      // Past the transitions, so one back button is on screen.
+      await tester.pumpAndSettle();
+      await tester.pageBack();
+      await pumpUntil(tester, find.text('Place: Lighthouse'));
+      await tester.pumpAndSettle();
+      await tester.pageBack();
+      await pumpUntil(tester, find.text('Last shared: Lighthouse'));
+
+      // A notification's payload opens its page.
+      await tapTile(tester, 'open-notification');
+      await pumpUntil(tester, find.text('Place: Beach'));
+      await tester.pumpAndSettle();
+      await tester.pageBack();
+      await tester.pumpAndSettle();
+      expect(problems, isEmpty, reason: problems.join('\n'));
       await stop(tester);
     },
     skip: skip != null,

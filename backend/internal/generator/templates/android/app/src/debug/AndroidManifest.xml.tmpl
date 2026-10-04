@@ -1,0 +1,11 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The INTERNET permission is required for development. Specifically,
+         the Flutter tool needs it to communicate with the running application
+         to allow setting breakpoints, to provide hot reload, etc.
+    -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Debug builds only: `make dev` serves Plux over plain HTTP on the
+         development machine (http://10.0.2.2:8080 from the emulator).
+         Profile and release builds keep Android's default, HTTPS only. -->
+    <application android:usesCleartextTraffic="true" />
+</manifest>

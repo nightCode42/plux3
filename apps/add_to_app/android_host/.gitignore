@@ -1,0 +1,7 @@
+# What Gradle and Android Studio write.
+.gradle/
+.kotlin/
+build/
+local.properties
+*.iml
+.idea/

@@ -1,0 +1,41 @@
+{
+  "id": "01e0c450-6c00-7000-8000-00000000009c",
+  "key": "sign-in",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01e0c450-6c00-7000-8000-00000000009d",
+    "slots": {
+      "appBar": {
+        "id": "01e0c450-6c00-7000-8000-00000000009e",
+        "slots": {
+          "title": {
+            "id": "01e0c450-6c00-7000-8000-00000000009f",
+            "props": {
+              "data": "Sign in"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "id": "01e0c450-6c00-7000-8000-0000000000a0",
+        "slots": {
+          "child": {
+            "id": "01e0c450-6c00-7000-8000-0000000000a1",
+            "props": {
+              "data": "Sign in on the home screen to see your account."
+            },
+            "type": "Text"
+          }
+        },
+        "type": "Center"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "sign-in",
+  "schemaVersion": "1.0.0",
+  "title": "Sign in"
+}

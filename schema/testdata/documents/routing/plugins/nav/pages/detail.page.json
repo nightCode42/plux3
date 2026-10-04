@@ -1,0 +1,167 @@
+{
+  "id": "01f0c450-6c00-7000-8000-000000000030",
+  "key": "detail",
+  "kind": "page",
+  "pageKind": "screen",
+  "params": [
+    {
+      "id": "01f0c450-6c00-7000-8000-00000000003f",
+      "mock": "1",
+      "name": "itemId",
+      "required": true,
+      "type": "string"
+    }
+  ],
+  "result": "string",
+  "root": {
+    "id": "01f0c450-6c00-7000-8000-000000000031",
+    "slots": {
+      "appBar": {
+        "id": "01f0c450-6c00-7000-8000-000000000032",
+        "slots": {
+          "title": {
+            "id": "01f0c450-6c00-7000-8000-000000000123",
+            "props": {
+              "data": "Detail"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "children": [
+          {
+            "id": "01f0c450-6c00-7000-8000-00000000011a",
+            "props": {
+              "data": {
+                "$expr": "\"Item \" + params.itemId"
+              }
+            },
+            "testId": "item",
+            "type": "Text"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "pop",
+                    "id": "back",
+                    "input": {
+                      "result": {
+                        "$expr": "params.itemId"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-00000000011b",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-00000000011c",
+                "props": {
+                  "data": "Return"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "pop",
+                    "id": "back"
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-00000000011d",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-00000000011e",
+                "props": {
+                  "data": "Return nothing"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "navigate",
+                    "id": "home",
+                    "input": {
+                      "mode": "popUntil",
+                      "route": "home",
+                      "until": "home"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-00000000011f",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-000000000120",
+                "props": {
+                  "data": "Back to home"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "navigate",
+                    "id": "go",
+                    "input": {
+                      "params": {
+                        "itemId": {
+                          "$expr": "params.itemId + \"+\""
+                        }
+                      },
+                      "route": "detail"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000121",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-000000000122",
+                "props": {
+                  "data": "Deeper"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          }
+        ],
+        "id": "01f0c450-6c00-7000-8000-000000000033",
+        "type": "Column"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "detail",
+  "routeOptions": {
+    "transition": "slideLeft"
+  },
+  "schemaVersion": "1.0.0",
+  "title": "Detail"
+}

@@ -320,6 +320,14 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Use a name from the set's catalogue (docs/reference/icons.md), written literally.
 
+### PLX-1124
+
+`CUSTOM_ACTION_NAMED_LIKE_BUILT_IN` · error · Custom action named like a built-in action
+
+**Cause.** The native catalogue declares a custom action with the name of a built-in action (spec Appendix D). A step of that name always runs the built-in action, so the host's action would be reachable only through callNative (ACT-060).
+
+**Fix.** Rename the custom action in the host app, for example with a prefix of its own, and run plux native scan again.
+
 ### PLX-1201
 
 `UNKNOWN_ROUTE` · error · Unknown route
@@ -340,9 +348,9 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 `ROUTE_PARAMETER_TYPE_INVALID` · error · Route parameter has the wrong type
 
-**Cause.** A navigate action passes a parameter value whose type differs from the parameter's declared type.
+**Cause.** A navigate action passes a parameter value whose type differs from the parameter's declared type, or a deep-link pattern reads a parameter whose type a link's text cannot carry (a list, a map or an object).
 
-**Fix.** Pass a value of the declared type.
+**Fix.** Pass a value of the declared type; read only scalar and enum parameters from a link's path.
 
 ### PLX-1205
 
@@ -730,7 +738,7 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 `NODE_BUILD_FAILED` · error · Build error in node
 
-**Cause.** Building, laying out or painting a node failed, or a value it needs could not be decoded or evaluated. The page's error boundary rendered its fallback (RT-020).
+**Cause.** Building, laying out or painting a node failed, or a value it needs could not be decoded or evaluated. The page's error boundary rendered its fallback (RT-020). A PluxView that expands in unbounded constraints shows its fallback with it too (NAV-004).
 
 **Fix.** Look up the node path in the report and fix the page; the source map of a development bundle names the document location.
 
@@ -754,9 +762,9 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 `ACTIONS_NOT_AVAILABLE` · warning · Actions not available in this runtime
 
-**Cause.** An event handler fired, but this runtime renders pages without running actions; actions arrive with the action executor in phase 5 (ADR-0031).
+**Cause.** A step names an action, or a graph declares an option (a concurrency policy other than drop, a retry, a detached run), that this runtime does not run; the step fails with this error, which its onError can handle, and the option is ignored (ADR-0039). An exposed app state entry that declares a persistence is kept in memory until P5, and reported with it once in debug builds (ADR-0023).
 
-**Fix.** Nothing to fix in the page; the handler runs once the runtime supports actions.
+**Fix.** Raise the app's minimum runtime version to one that runs the action, or handle the error; the action reference page says which phase delivers each action.
 
 ### PLX-4020
 
@@ -765,6 +773,120 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 **Cause.** The release's control switches turn the plugin off (kill switch), so every route into it shows its fallback page (RT-022).
 
 **Fix.** Turn the switch off in the release's channel controls once the problem is fixed.
+
+### PLX-4100
+
+`ROUTE_NOT_FOUND` · error · Route not found
+
+**Cause.** A navigation, a deep link or a PluxView names a route that is neither a page of the active release nor a registered native route, and for a PluxView no exported component has that key either. The app's not-found page is shown instead (NAV-011).
+
+**Fix.** Check the route name, publish the page that should answer it, or register the native route in PluxConfig.
+
+### PLX-4101
+
+`ROUTE_PARAMETERS_INVALID` · error · Invalid route parameters
+
+**Cause.** A route was entered with a parameter missing, unknown or of the wrong type for the page's declaration. The page's error fallback is shown instead of the page (NAV-007).
+
+**Fix.** Pass every required parameter with the declared type; a deep link's or push payload's values must convert to the parameter types.
+
+### PLX-4102
+
+`NAVIGATION_REFUSED` · warning · Navigation refused
+
+**Cause.** A route guard refused entry, because its graph decided on the fallback or failed and the guard failed closed (NAV-009); or the navigation needs what the screen does not have, such as a switchTab with no enclosing shell holding the tab, or a pop with nothing to pop (NAV-005).
+
+**Fix.** If the refusal is unexpected, check the guard's condition and the state it reads, such as the auth delegate, flags or the device's assurance level, or where the page is shown.
+
+### PLX-4103
+
+`DEEP_LINK_UNMAPPED` · warning · Deep link not mapped
+
+**Cause.** A deep link or push payload names a host, scheme or path that the app's navigation.deepLinks do not map to a route, so nothing was opened (NAV-008).
+
+**Fix.** Add a path pattern for the link to navigation.deepLinks, or link to https://<host>/p/<route-name>, which always resolves.
+
+### PLX-4200
+
+`NATIVE_ROUTE_NOT_REGISTERED` · error · Native route not registered
+
+**Cause.** A plugin navigated to a native route that the host app did not register in PluxConfig or expose through its router (NAV-002, HST-031).
+
+**Fix.** Register the route in the host app, or run plux native scan and sync so publishing checks the route against the host build (WGT-032).
+
+### PLX-4201
+
+`NATIVE_SLOT_NOT_REGISTERED` · error · Native slot not registered
+
+**Cause.** A page places a native slot widget that the host app did not register in PluxConfig.nativeSlots. The page's error boundary shows a placeholder instead (WGT-033).
+
+**Fix.** Register the slot's builder in the host app, or run plux native scan and sync so publishing checks the slot against the host build (WGT-032).
+
+### PLX-4202
+
+`NATIVE_ACTION_NOT_REGISTERED` · error · Custom action not registered
+
+**Cause.** A callNative step names a custom action that the host app did not register in PluxConfig.nativeActions; the step fails and its onError handler runs (ACT-060).
+
+**Fix.** Register the action in the host app, or run plux native scan and sync so publishing checks the action against the host build (WGT-032).
+
+### PLX-4203
+
+`EXPOSED_STATE_TYPE_MISMATCH` · error · Exposed state written with the wrong type
+
+**Cause.** Native code wrote a value to an exposed state entry whose declared type the value does not have, read, wrote or watched a name the app does not expose, or wrote before a release was active; the write is refused and the entry keeps its value (STA-030, HST-021).
+
+**Fix.** Write a value of the entry's declared type; plux codegen generates typed accessors that make this a compile error.
+
+### PLX-4204
+
+`USER_CONTEXT_INVALID` · warning · User context attribute ignored
+
+**Cause.** Plux.setUserContext was given an attribute the app's userContext does not declare, or one whose text does not convert to its declared type; the attribute is left out of user.<name>, which reads as null (HST-011).
+
+**Fix.** Pass only the attributes the app declares, each as the text of its declared type: true or false, a number, a decimal, an ISO 8601 date, or an enum member.
+
+### PLX-4205
+
+`HOST_CODE_FAILED` · error · Host code failed
+
+**Cause.** A custom action's handler, a native route's parameter conversion or screen, or a native slot's builder registered by the host app threw; the step fails, or the page shows its error fallback, and nothing reaches the plugin as a crash (ACT-060, NAV-002, WGT-033).
+
+**Fix.** Fix the host's handler, conversion or builder; the report names the action, route or slot and only the exception's type, never its message.
+
+## Actions, data and local database (PLX-5000–5999)
+
+### PLX-5001
+
+`ACTION_TIMEOUT` · error · Action timed out
+
+**Cause.** A step or its run took longer than the limits action.stepTimeout or action.runTimeout, or the step's own timeoutMs, allow; time spent waiting for the user in a dialog or bottom sheet does not count (ACT-005, ADR-0039).
+
+**Fix.** Handle the error with the step's onError, or make the work shorter; an installation may raise the limits within their maximums.
+
+### PLX-5002
+
+`ACTION_STEP_LIMIT_EXCEEDED` · error · Step limit exceeded
+
+**Cause.** A run executed more steps than the limit action.stepsPerRun allows, and was stopped (ACT-005, ADR-0039).
+
+**Fix.** Shorten the graph, or move repeated work into a flow.
+
+### PLX-5003
+
+`ACTION_VALUE_INVALID` · error · Action value of the wrong type
+
+**Cause.** A step's input, output or result does not have the type its action, page or graph declares, or a binding of an input could not be evaluated; the step fails with a validation error (ADR-0039).
+
+**Fix.** Check the bindings of the step's inputs and the values the host passes or returns.
+
+### PLX-5004
+
+`ACTION_CUSTOM_ERROR` · error · Run failed with a custom error
+
+**Cause.** A stop step ended the run with a custom error code, and no onError handled it (ADR-0039).
+
+**Fix.** Handle the error with an onError edge, or check why the graph stops with it; the message carries its code.
 
 ## Security (PLX-6000–6999)
 
@@ -881,6 +1003,14 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 **Cause.** A publish waits until every image asset of the app has its variants (CMP-030), since a bundle compiled without them would differ from the release's (REL-003). Some were still being processed when the wait, publish.assetWait, ran out: the worker's asset jobs are slow, failing or not running.
 
 **Fix.** Check the assets' processing state, and the worker's asset jobs if an asset stays pending; publish again once every asset is ready.
+
+### PLX-8054
+
+`HOST_BUILD_INCOMPATIBLE` · warning · Host build lacks a native entry
+
+**Cause.** The release uses a native route, native slot or custom action that the native catalogue of one of the app's host builds lacks, or declares with other parameters, props, events, inputs or result types. Devices of that build keep receiving the newest release compatible with it (WGT-032, REL-080).
+
+**Fix.** Ship a host build that registers the entry and upload its catalogue with plux native sync, or keep the release from using the entry; the publisher acknowledges the warning to publish anyway.
 
 ### PLX-8090
 

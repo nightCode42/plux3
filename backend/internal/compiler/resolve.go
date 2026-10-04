@@ -119,8 +119,14 @@ func indexNatives(u *unit, p *schema.Project) natives {
 		n.routes[doc.Routes[i].Name] = &doc.Routes[i]
 	}
 	for i := range doc.Actions {
-		actions.claim(doc.Actions[i].Name, file, plxerr.Pointer("actions", strconv.Itoa(i), "name"))
-		n.actions[doc.Actions[i].Name] = &doc.Actions[i]
+		name, ptr := doc.Actions[i].Name, plxerr.Pointer("actions", strconv.Itoa(i), "name")
+		actions.claim(name, file, ptr)
+		// A step of a built-in action's name runs the built-in, whatever
+		// the host registers under it.
+		if _, builtIn := registry.LookupAction(name); builtIn {
+			u.report(plxerr.CustomActionNamedLikeBuiltIn, file, ptr, "the custom action %q has the name of a built-in action, which a step of that name runs instead", name)
+		}
+		n.actions[name] = &doc.Actions[i]
 	}
 	slots := u.newKeys("native slot")
 	for i := range doc.Slots {
@@ -444,8 +450,38 @@ func (u *unit) resolveApp() {
 		}
 	}
 	u.routes = names
+	u.checkExportedNames(names)
 	if _, ok := names[app.EntryRoute]; !ok {
 		u.report(plxerr.UnknownRoute, "app.json", "/entryRoute", "no page or native route is named %q", app.EntryRoute)
+	}
+	u.resolveNavigation()
+	u.resolveHostEvents()
+}
+
+// checkExportedNames checks that each exported component's key names it
+// alone, since PluxView shows a route or an exported component by name
+// (NAV-004, ADR-0023): unique across the app's exported components and
+// different from every route name.
+func (u *unit) checkExportedNames(routes map[string]*route) {
+	exported := map[string]*component{}
+	for _, pl := range u.plugins {
+		for _, c := range pl.components {
+			if c.doc.Exported == nil || !*c.doc.Exported {
+				continue
+			}
+			loc := plxerr.Location{File: c.file, Path: "/key"}
+			if r, clash := routes[c.doc.Key]; clash {
+				u.duplicate(plxerr.DuplicateRouteName, loc, plxerr.Location{File: r.file, Path: r.ptr},
+					"exported component %q has the name of a route; PluxView shows either by name", c.doc.Key)
+				continue
+			}
+			if first, dup := exported[c.doc.Key]; dup {
+				u.duplicate(plxerr.DuplicateKey, loc, plxerr.Location{File: first.file, Path: "/key"},
+					"exported component key %q is already used by another plugin", c.doc.Key)
+				continue
+			}
+			exported[c.doc.Key] = c
+		}
 	}
 }
 
@@ -564,7 +600,9 @@ func (u *unit) buildNode(o owner, doc *schema.Node, parent *node, slot, ptr stri
 	case doc.Type != "":
 		if w, ok := registry.LookupWidget(doc.Type); ok {
 			n.widget = &w
-		} else if _, native := u.natives.slots[doc.Type]; !native {
+		} else if _, native := u.natives.slots[doc.Type]; native {
+			u.graph.add(Edge{From: from, Kind: EdgeUsesSlot, To: doc.Type, File: file, Path: ptr + "/type"})
+		} else {
 			u.report(plxerr.UnknownWidgetType, file, ptr+"/type", "no widget or native slot is named %q", doc.Type)
 		}
 	case doc.Component != nil:

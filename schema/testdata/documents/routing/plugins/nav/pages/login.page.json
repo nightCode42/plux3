@@ -1,0 +1,52 @@
+{
+  "id": "01f0c450-6c00-7000-8000-000000000209",
+  "key": "login",
+  "kind": "page",
+  "pageKind": "screen",
+  "params": [
+    {
+      "id": "01f0c450-6c00-7000-8000-000000000208",
+      "mock": "account",
+      "name": "from",
+      "type": "string?"
+    }
+  ],
+  "root": {
+    "id": "01f0c450-6c00-7000-8000-00000000020a",
+    "slots": {
+      "appBar": {
+        "id": "01f0c450-6c00-7000-8000-00000000020b",
+        "slots": {
+          "title": {
+            "id": "01f0c450-6c00-7000-8000-00000000020c",
+            "props": {
+              "data": "Login"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "children": [
+          {
+            "id": "01f0c450-6c00-7000-8000-000000000207",
+            "props": {
+              "data": {
+                "$expr": "\"Login from \" + (params.from ?? \"nowhere\")"
+              }
+            },
+            "testId": "login",
+            "type": "Text"
+          }
+        ],
+        "id": "01f0c450-6c00-7000-8000-00000000020d",
+        "type": "Column"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "login",
+  "schemaVersion": "1.0.0",
+  "title": "Login"
+}

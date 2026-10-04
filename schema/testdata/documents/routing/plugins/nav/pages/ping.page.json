@@ -1,0 +1,49 @@
+{
+  "id": "01f0c450-6c00-7000-8000-00000000021c",
+  "key": "ping",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01f0c450-6c00-7000-8000-00000000021d",
+    "slots": {
+      "appBar": {
+        "id": "01f0c450-6c00-7000-8000-00000000021e",
+        "slots": {
+          "title": {
+            "id": "01f0c450-6c00-7000-8000-00000000021f",
+            "props": {
+              "data": "Ping"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "children": [
+          {
+            "id": "01f0c450-6c00-7000-8000-00000000021b",
+            "props": {
+              "data": "Ping"
+            },
+            "testId": "ping",
+            "type": "Text"
+          }
+        ],
+        "id": "01f0c450-6c00-7000-8000-000000000220",
+        "type": "Column"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "ping",
+  "routeOptions": {
+    "guards": [
+      {
+        "$graph": "01f0c450-6c00-7000-8000-000000000227"
+      }
+    ]
+  },
+  "schemaVersion": "1.0.0",
+  "title": "Ping"
+}

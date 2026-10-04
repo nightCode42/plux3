@@ -4,8 +4,8 @@
 // Command benchcmp runs the runtime benchmark (test/bench/runtime) and
 // gates regressions (QA-007).
 //
-//	benchcmp measure -app <app> [-runs 5] [-out dir]
-//	benchcmp run -base <app> -head <app> [-runs 10] [-out dir]
+//	benchcmp measure -app <app> [-runs 5] [-scenarios list] [-out dir]
+//	benchcmp run -base <app> -head <app> [-runs 10] [-scenarios list] [-out dir]
 //	benchcmp compare -base <dir> -head <dir>
 //	benchcmp report <result.json | device.log>...
 //
@@ -21,7 +21,9 @@
 // result files or from a device's log.
 //
 // run and measure also write their report to report.md in the output
-// directory.
+// directory. -scenarios limits each run to some of its parts
+// (PLUX_BENCH_SCENARIOS, comma-separated: startup, open, native,
+// scroll); CI compares the parts in parallel jobs (ADR-0043).
 //
 // Exit codes: 0 no regression, 1 a regression, 2 usage, I/O or a run
 // that failed.
@@ -100,11 +102,13 @@ func runCmd(ctx context.Context, args []string, stdout, stderr io.Writer, launch
 	base := fs.String("base", "", "the benchmark app built from the base commit")
 	head := fs.String("head", "", "the benchmark app built from the change")
 	runs := fs.Int("runs", 10, "measured runs of each app")
+	scenarios := fs.String("scenarios", "", "the parts of each run to measure, comma-separated (default all)")
 	out := fs.String("out", "bench-results", "directory for results, logs and the apps' stores")
 	timeout := fs.Duration("timeout", 5*time.Minute, "the longest one run may take")
 	if err := fs.Parse(args); err != nil || *base == "" || *head == "" || *runs < 1 || fs.NArg() > 0 {
 		return usage(stderr)
 	}
+	env := appEnv(*scenarios)
 	apps := map[string]string{"base": *base, "head": *head}
 	for side := range apps {
 		if err := os.MkdirAll(filepath.Join(*out, side, "store"), 0o750); err != nil {
@@ -132,7 +136,7 @@ func runCmd(ctx context.Context, args []string, stdout, stderr io.Writer, launch
 			name = strconv.Itoa(count[side])
 		}
 		_, _ = fmt.Fprintf(stderr, "benchcmp: %s run %s\n", side, name)
-		if err := once(ctx, launch, apps[side], filepath.Join(*out, side), name, *timeout); err != nil {
+		if err := once(ctx, launch, apps[side], filepath.Join(*out, side), name, *timeout, env); err != nil {
 			_, _ = fmt.Fprintln(stderr, err)
 			return exitError
 		}
@@ -147,11 +151,13 @@ func measureCmd(ctx context.Context, args []string, stdout, stderr io.Writer, la
 	fs.SetOutput(stderr)
 	app := fs.String("app", "", "the benchmark app")
 	runs := fs.Int("runs", 5, "measured runs")
+	scenarios := fs.String("scenarios", "", "the parts of each run to measure, comma-separated (default all)")
 	out := fs.String("out", "bench-results", "directory for results, logs and the app's store")
 	timeout := fs.Duration("timeout", 5*time.Minute, "the longest one run may take")
 	if err := fs.Parse(args); err != nil || *app == "" || *runs < 1 || fs.NArg() > 0 {
 		return usage(stderr)
 	}
+	env := appEnv(*scenarios)
 	if err := os.MkdirAll(filepath.Join(*out, "store"), 0o750); err != nil {
 		_, _ = fmt.Fprintln(stderr, err)
 		return exitError
@@ -164,7 +170,7 @@ func measureCmd(ctx context.Context, args []string, stdout, stderr io.Writer, la
 			paths = append(paths, filepath.Join(*out, name+".json"))
 		}
 		_, _ = fmt.Fprintf(stderr, "benchcmp: run %s\n", name)
-		if err := once(ctx, launch, *app, *out, name, *timeout); err != nil {
+		if err := once(ctx, launch, *app, *out, name, *timeout, env); err != nil {
 			_, _ = fmt.Fprintln(stderr, err)
 			return exitError
 		}
@@ -191,8 +197,17 @@ func withReport(dir string, stdout, stderr io.Writer, f func(io.Writer) int) int
 	return code
 }
 
+// appEnv is the environment every run of the app gets besides its store
+// and output: the parts to measure, when limited.
+func appEnv(scenarios string) []string {
+	if scenarios == "" {
+		return nil
+	}
+	return []string{"PLUX_BENCH_SCENARIOS=" + scenarios}
+}
+
 // once runs the app once, writing name.json and name.log in dir.
-func once(ctx context.Context, launch launcher, app, dir, name string, timeout time.Duration) error {
+func once(ctx context.Context, launch launcher, app, dir, name string, timeout time.Duration, env []string) error {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	logPath := filepath.Join(dir, name+".log")
@@ -202,7 +217,7 @@ func once(ctx context.Context, launch launcher, app, dir, name string, timeout t
 	}
 	store, _ := filepath.Abs(filepath.Join(dir, "store"))
 	result, _ := filepath.Abs(filepath.Join(dir, name+".json"))
-	runErr := launch(ctx, app, []string{"PLUX_BENCH_STORE=" + store, "PLUX_BENCH_OUT=" + result}, log)
+	runErr := launch(ctx, app, append([]string{"PLUX_BENCH_STORE=" + store, "PLUX_BENCH_OUT=" + result}, env...), log)
 	closeErr := log.Close()
 	if err := errors.Join(runErr, closeErr); err != nil {
 		return fmt.Errorf("%w (output in %s)", err, logPath)
@@ -237,6 +252,11 @@ func compare(baseDir, headDir string, stdout, stderr io.Writer) int {
 	verdicts, err := gate.Compare(base, head)
 	if err != nil {
 		_, _ = fmt.Fprintln(stderr, err)
+		return exitError
+	}
+	// A comparison of nothing would pass whatever the change did.
+	if len(verdicts) == 0 {
+		_, _ = fmt.Fprintln(stderr, "benchcmp: the runs hold no metric to compare")
 		return exitError
 	}
 	_, _ = fmt.Fprintf(stdout, "Runtime benchmark: %d runs of the base (runtime %s) and of the change (runtime %s), alternating.\n\n",

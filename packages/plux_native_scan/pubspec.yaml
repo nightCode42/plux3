@@ -1,0 +1,22 @@
+name: plux_native_scan
+description: >-
+  Development tool that builds a host app's native catalogue by static
+  analysis: its native routes, native slots and custom actions, for
+  `plux native scan` (CLI-006, ADR-0041). A dev dependency of host apps,
+  never a dependency of a shipped package.
+version: 0.1.0
+repository: https://github.com/nightCode42/plux3/tree/main/packages/plux_native_scan
+# Not published until its release is wired (release.yml, pub.dev).
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+
+resolution: workspace
+
+dependencies:
+  analyzer: ^13.3.0
+  path: ^1.9.0
+
+dev_dependencies:
+  test: ^1.26.0

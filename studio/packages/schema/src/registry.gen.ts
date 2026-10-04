@@ -3924,6 +3924,22 @@ export const valueTypes: readonly ValueTypeDescriptor[] = [
     "constants": []
   },
   {
+    "name": "GuardResult",
+    "id": 37,
+    "revision": 1,
+    "runtimes": ["0.2.0"],
+    "description": "The output of a route guard's graph: enter, redirect or fall back (NAV-009, ADR-0040).",
+    "fields": [
+      {"name": "decision", "id": 1, "type": "GuardDecision", "required": true, "revision": 1, "description": "What the guard decides."},
+      {"name": "route", "id": 2, "type": "route?", "required": false, "revision": 1, "description": "For redirect: the route to open instead."},
+      {"name": "params", "id": 3, "type": "map<string,string>?", "required": false, "revision": 1, "description": "For redirect: the route's parameters as strings, converted by its parameter types as a deep link's are."}
+    ],
+    "constants": [
+      {"name": "allow", "value": {"decision": "allow"}},
+      {"name": "fallback", "value": {"decision": "fallback"}}
+    ]
+  },
+  {
     "name": "IconData",
     "id": 14,
     "revision": 1,
@@ -4692,6 +4708,18 @@ export const enums: readonly EnumDescriptor[] = [
     ]
   },
   {
+    "name": "GuardDecision",
+    "id": 74,
+    "revision": 1,
+    "runtimes": ["0.2.0"],
+    "description": "What a route guard decides about an entry (NAV-009).",
+    "values": [
+      {"name": "allow", "id": 1, "revision": 1, "description": "Enter the route."},
+      {"name": "redirect", "id": 2, "revision": 1, "description": "Open the guard's redirect route instead."},
+      {"name": "fallback", "id": 3, "revision": 1, "description": "Show the route's fallback page instead, and report PLX-4102."}
+    ]
+  },
+  {
     "name": "HapticPattern",
     "id": 69,
     "revision": 1,
@@ -5386,7 +5414,7 @@ export const actions: readonly ActionDescriptor[] = [
   {
     "name": "condition",
     "id": 30,
-    "phase": "P5",
+    "phase": "P4",
     "category": "control",
     "description": "Takes the then branch when a PXL condition holds, otherwise the else branch.",
     "typeParameters": [],
@@ -5526,7 +5554,7 @@ export const actions: readonly ActionDescriptor[] = [
   {
     "name": "emitHostEvent",
     "id": 51,
-    "phase": "P5",
+    "phase": "P4",
     "category": "host",
     "description": "Sends a typed event to the host app.",
     "typeParameters": [
@@ -6000,7 +6028,7 @@ export const actions: readonly ActionDescriptor[] = [
   {
     "name": "stop",
     "id": 35,
-    "phase": "P5",
+    "phase": "P4",
     "category": "control",
     "description": "Ends the run, returning an optional result or failing with a custom error.",
     "typeParameters": [

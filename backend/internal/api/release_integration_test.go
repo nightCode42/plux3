@@ -180,6 +180,23 @@ func TestPublishAndReleaseEndToEnd(t *testing.T) {
 	if _, err := w.release.GetRelease(ctx, req(admin, &pluxv1.GetReleaseRequest{AppId: app, Sequence: 99})); codeOf(err) != connect.CodeNotFound {
 		t.Errorf("a missing release: %v", err)
 	}
+	// Host builds and their native catalogues (CLI-006).
+	catalogue := []byte(`{"id":"01f0c450-6c00-7000-8000-00000000c001","kind":"nativeCatalogue","schemaVersion":"1.0.0",` +
+		`"host":{"version":"1.0.0","build":1},"routes":[],"slots":[],"actions":[]}`)
+	up := must(w.native.UploadNativeCatalogue(ctx, req(admin, &pluxv1.UploadNativeCatalogueRequest{AppId: app, HostBuild: "1.0.0+1", Catalogue: catalogue})))(t)
+	if !up.GetCreated() || up.GetHostBuild().GetHostBuild() != "1.0.0+1" || len(up.GetHostBuild().GetSha256()) != 64 {
+		t.Errorf("UploadNativeCatalogue = %+v", up)
+	}
+	stored := must(w.native.GetNativeCatalogue(ctx, req(admin, &pluxv1.GetNativeCatalogueRequest{AppId: app, HostBuild: "1.0.0+1"})))(t)
+	if stored.GetHostBuild().GetSha256() != up.GetHostBuild().GetSha256() || len(stored.GetCatalogue()) == 0 {
+		t.Errorf("GetNativeCatalogue = %+v", stored)
+	}
+	if list := must(w.native.ListHostBuilds(ctx, req(admin, &pluxv1.ListHostBuildsRequest{AppId: app})))(t); len(list.GetHostBuilds()) != 1 {
+		t.Errorf("ListHostBuilds = %+v", list)
+	}
+	if _, err := w.native.UploadNativeCatalogue(ctx, req(admin, &pluxv1.UploadNativeCatalogueRequest{AppId: app, HostBuild: "1.0.0+1", Catalogue: []byte(`{}`)})); codeOf(err) != connect.CodeInvalidArgument {
+		t.Errorf("an invalid catalogue: %v", err)
+	}
 }
 
 // totpNow is the current code of a TOTP secret.

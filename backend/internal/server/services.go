@@ -421,6 +421,9 @@ func (s *Server) RegisterAPI(svc *Services) {
 			func() (string, http.Handler) { return pluxv1connect.NewPublishServiceHandler(h.Publish(), opts) },
 			func() (string, http.Handler) { return pluxv1connect.NewReleaseServiceHandler(h.Release(), opts) },
 			func() (string, http.Handler) { return pluxv1connect.NewManifestServiceHandler(h.Manifest(), opts) },
+			func() (string, http.Handler) {
+				return pluxv1connect.NewNativeCatalogueServiceHandler(h.NativeCatalogue(), opts)
+			},
 			func() (string, http.Handler) { return pluxv1connect.NewControlServiceHandler(h.Control(), opts) })
 	}
 	for _, register := range registrations {

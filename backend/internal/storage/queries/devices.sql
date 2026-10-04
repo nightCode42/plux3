@@ -47,13 +47,16 @@ SELECT b.bundle_sha256, count(*) AS devices
  LIMIT sqlc.arg(n);
 
 -- name: CountIncompatibleDevices :one
--- Devices of an app whose runtime is older than a release needs
--- (REL-080): a release may be promoted to any environment. Versions
--- compare numerically by component.
+-- Devices of an app that cannot use a release (REL-080): their runtime
+-- is older than it needs, or they report a host build that cannot run it.
+-- A release may be promoted to any environment. Versions compare
+-- numerically by component.
 SELECT count(*) FROM devices
  WHERE app_id = $1
-   AND string_to_array(NULLIF(substring(runtime_version FROM '^[0-9]+(?:\.[0-9]+)*'), ''), '.')::int[]
-       < string_to_array(sqlc.arg(min_runtime)::text, '.')::int[];
+   AND ((sqlc.arg(min_runtime)::text <> ''
+         AND string_to_array(NULLIF(substring(runtime_version FROM '^[0-9]+(?:\.[0-9]+)*'), ''), '.')::int[]
+             < string_to_array(sqlc.arg(min_runtime)::text, '.')::int[])
+        OR host_build = ANY(sqlc.arg(host_builds)::text[]));
 
 -- name: InsertDeviceToken :exec
 INSERT INTO device_tokens (id, organization_id, device_id, secret_hash, expires_at)
@@ -61,7 +64,7 @@ VALUES ($1, $2, $3, $4, $5);
 
 -- name: FindDeviceToken :one
 -- Runs in the authentication scope.
-SELECT t.id, t.organization_id, t.device_id, t.expires_at, d.app_id, d.environment_id
+SELECT t.id, t.organization_id, t.device_id, t.expires_at, d.app_id, d.environment_id, d.host_build
   FROM device_tokens t JOIN devices d ON d.id = t.device_id
  WHERE t.secret_hash = $1;
 
@@ -100,20 +103,25 @@ VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 RETURNING *;
 
 -- name: LatestManifest :one
-SELECT * FROM manifests WHERE channel_id = $1 ORDER BY issued_at DESC, id DESC LIMIT 1;
+-- The channel's own manifest, the one devices of any build without one
+-- of their own receive.
+SELECT * FROM manifests WHERE channel_id = $1 AND host_build = '' ORDER BY issued_at DESC, id DESC LIMIT 1;
 
 -- name: ExpiringChannels :many
 -- Channels pointing at a release whose newest manifest expires before
 -- the given time, or that have none.
 SELECT c.* FROM channels c
  WHERE c.release_sequence > 0
-   AND NOT EXISTS (SELECT 1 FROM manifests m WHERE m.channel_id = c.id AND m.expires_at >= sqlc.arg(before)::timestamptz);
+   AND NOT EXISTS (SELECT 1 FROM manifests m WHERE m.channel_id = c.id AND m.host_build = '' AND m.expires_at >= sqlc.arg(before)::timestamptz);
 
 -- name: PurgeManifests :execrows
--- Keeps each channel's newest manifest.
+-- Keeps each channel's newest manifest; the host builds' manifests
+-- signed with an older one go with it.
 DELETE FROM manifests m
  WHERE m.expires_at < $1
-   AND m.id <> (SELECT n.id FROM manifests n WHERE n.channel_id = m.channel_id ORDER BY n.issued_at DESC, n.id DESC LIMIT 1);
+   AND m.host_build = ''
+   AND m.id <> (SELECT n.id FROM manifests n WHERE n.channel_id = m.channel_id AND n.host_build = ''
+                 ORDER BY n.issued_at DESC, n.id DESC LIMIT 1);
 
 -- name: UpsertEnvironmentKey :exec
 INSERT INTO environment_keys (environment_id, organization_id, key_id, algorithm, public_key)

@@ -110,6 +110,7 @@ final class ActiveRelease {
   final Map<String, MappedBundle> _bundles = {};
   final Map<String, PluxException> _failed = {};
   Map<String, (String, fbs.PageEntry)>? _routes;
+  Map<String, (String, fbs.ComponentEntry)>? _components;
   int _leases = 0;
   bool _retired = false;
 
@@ -225,6 +226,34 @@ final class ActiveRelease {
     if (hit == null) return null;
     final (plugin, entry) = hit;
     return _pageRef(plugin, entry, route);
+  }
+
+  /// Resolves the key of an exported component to its section (NAV-004,
+  /// ADR-0023): a [PageRef] whose route is the key; null when no plugin
+  /// exports one of that key.
+  PageRef? component(String key) {
+    final index = _components ??= {
+      for (final b in record.bundles)
+        if (!b.isApp)
+          for (final c
+              in meta(b.key).components ?? const <fbs.ComponentEntry>[])
+            if (c.key != null && c.id != null) c.key!: (b.key, c),
+    };
+    final hit = index[key];
+    if (hit == null) return null;
+    final (plugin, entry) = hit;
+    final id = _uuid(entry.id!);
+    final section = bundle(plugin).container
+        .ofKind(SectionKind.component)
+        .where((s) => _same(s.id, id))
+        .firstOrNull;
+    if (section == null) {
+      throw PluxException(
+        PluxErrorCode.bundleMalformed,
+        'plugin $plugin exports component $key without its section',
+      );
+    }
+    return PageRef(plugin: plugin, pageKey: key, route: key, section: section);
   }
 
   /// The fallback page plugin [key] declares (RT-022), or null.

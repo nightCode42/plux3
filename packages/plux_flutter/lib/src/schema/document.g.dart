@@ -100,7 +100,7 @@ enum ActivationPolicy {
 /// An app: its plugins, theme, locales, environments, shared data and policies
 /// (SCH-020). File: `app.json`.
 final class AppDocument {
-  const AppDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.icon, required this.defaultLocale, required this.supportedLocales, required this.theme, required this.entryRoute, required this.plugins, required this.environments, this.variables, this.dataSources, this.nativeCatalogue, required this.securityProfile, required this.sync, required this.minRuntimeVersion, this.requiredFeatures, this.flags, this.types, this.state, this.collections, this.userContext, this.telemetry});
+  const AppDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.icon, required this.defaultLocale, required this.supportedLocales, required this.theme, required this.entryRoute, this.navigation, required this.plugins, required this.environments, this.variables, this.dataSources, this.nativeCatalogue, required this.securityProfile, required this.sync, required this.minRuntimeVersion, this.requiredFeatures, this.flags, this.types, this.state, this.collections, this.userContext, this.hostEvents, this.telemetry, this.push});
 
   /// Decodes a JSON object.
   factory AppDocument.fromJson(Object json) {
@@ -117,6 +117,7 @@ final class AppDocument {
       supportedLocales: [for (final e in m['supportedLocales']! as List<Object?>) e! as String],
       theme: m['theme']! as String,
       entryRoute: m['entryRoute']! as String,
+      navigation: m['navigation'] == null ? null : NavigationPolicy.fromJson(m['navigation']!),
       plugins: [for (final e in m['plugins']! as List<Object?>) e! as String],
       environments: [for (final e in m['environments']! as List<Object?>) Environment.fromJson(e!)],
       variables: m['variables'] == null ? null : [for (final e in m['variables']! as List<Object?>) Field.fromJson(e!)],
@@ -131,7 +132,9 @@ final class AppDocument {
       state: m['state'] == null ? null : [for (final e in m['state']! as List<Object?>) StateEntry.fromJson(e!)],
       collections: m['collections'] == null ? null : [for (final e in m['collections']! as List<Object?>) Collection.fromJson(e!)],
       userContext: m['userContext'] == null ? null : [for (final e in m['userContext']! as List<Object?>) Field.fromJson(e!)],
+      hostEvents: m['hostEvents'] == null ? null : [for (final e in m['hostEvents']! as List<Object?>) HostEventDecl.fromJson(e!)],
       telemetry: m['telemetry'] == null ? null : TelemetryPolicy.fromJson(m['telemetry']!),
+      push: m['push'] == null ? null : PushPolicy.fromJson(m['push']!),
     );
   }
 
@@ -156,6 +159,9 @@ final class AppDocument {
   final String theme;
   /// App-wide unique route name (SCH-025).
   final String entryRoute;
+  /// App-wide navigation: the page for unknown routes, deep links and tabbed
+  /// shells (NAV-005, NAV-006, NAV-008, NAV-011, ADR-0040).
+  final NavigationPolicy? navigation;
   /// Keys of the app's plugins, in display order; each has a directory
   /// `plugins/<key>/`.
   final List<String> plugins;
@@ -183,8 +189,14 @@ final class AppDocument {
   /// Attributes the host provides about the signed-in user, available in PXL as
   /// `user.<name>`.
   final List<Field>? userContext;
+  final List<HostEventDecl>? hostEvents;
   /// What the runtime reports (ANL-003, ADR-0034).
   final TelemetryPolicy? telemetry;
+  /// Push notifications (NAV-008, ADR-0040): whether the app uses them, so a
+  /// generated project carries the platform configuration, and the payload key
+  /// under which a notification names `{route, params}` for
+  /// `Plux.handlePushPayload`.
+  final PushPolicy? push;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
@@ -199,6 +211,7 @@ final class AppDocument {
         'supportedLocales': [for (final e in supportedLocales) e],
         'theme': theme,
         'entryRoute': entryRoute,
+        if (navigation != null) 'navigation': navigation!.toJson(),
         'plugins': [for (final e in plugins) e],
         'environments': [for (final e in environments) e.toJson()],
         if (variables != null) 'variables': [for (final e in variables!) e.toJson()],
@@ -213,7 +226,9 @@ final class AppDocument {
         if (state != null) 'state': [for (final e in state!) e.toJson()],
         if (collections != null) 'collections': [for (final e in collections!) e.toJson()],
         if (userContext != null) 'userContext': [for (final e in userContext!) e.toJson()],
+        if (hostEvents != null) 'hostEvents': [for (final e in hostEvents!) e.toJson()],
         if (telemetry != null) 'telemetry': telemetry!.toJson(),
+        if (push != null) 'push': push!.toJson(),
       };
 }
 
@@ -653,6 +668,61 @@ enum DataSourceKind {
   String toJson() => json;
 }
 
+/// The links the app answers (NAV-008): its hosts for `https` links and its
+/// custom schemes, and path patterns mapped to routes.
+/// `https://<host>/p/<route-name>?…` always resolves, so no pattern may start
+/// with `/p/`.
+final class DeepLinkPolicy {
+  const DeepLinkPolicy({this.hosts, this.schemes, this.routes});
+
+  /// Decodes a JSON object.
+  factory DeepLinkPolicy.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return DeepLinkPolicy(
+      hosts: m['hosts'] == null ? null : [for (final e in m['hosts']! as List<Object?>) e! as String],
+      schemes: m['schemes'] == null ? null : [for (final e in m['schemes']! as List<Object?>) e! as String],
+      routes: m['routes'] == null ? null : [for (final e in m['routes']! as List<Object?>) DeepLinkRoute.fromJson(e!)],
+    );
+  }
+
+  final List<String>? hosts;
+  final List<String>? schemes;
+  final List<DeepLinkRoute>? routes;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (hosts != null) 'hosts': [for (final e in hosts!) e],
+        if (schemes != null) 'schemes': [for (final e in schemes!) e],
+        if (routes != null) 'routes': [for (final e in routes!) e.toJson()],
+      };
+}
+
+/// A path pattern mapped to a route: literal segments and `{name}` segments,
+/// each naming a parameter of the route; query parameters fill the route's
+/// other parameters by name, converted to their declared types.
+final class DeepLinkRoute {
+  const DeepLinkRoute({required this.path, required this.route});
+
+  /// Decodes a JSON object.
+  factory DeepLinkRoute.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return DeepLinkRoute(
+      path: m['path']! as String,
+      route: m['route']! as String,
+    );
+  }
+
+  final String path;
+  /// App-wide unique route name (SCH-025).
+  final String route;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'path': path,
+        'route': route,
+      };
+}
+
 /// A device API a plugin may request (SEC-080).
 enum DeviceAPI {
   camera('camera'),
@@ -924,6 +994,35 @@ final class HostBuild {
         if (appId != null) 'appId': appId!,
         'version': version,
         'build': build,
+      };
+}
+
+/// A typed event plugins send to the host app with `emitHostEvent`; `plux
+/// codegen` generates a Dart class for it (HST-013, HST-030, ADR-0039).
+final class HostEventDecl {
+  const HostEventDecl({required this.name, this.fields, this.description});
+
+  /// Decodes a JSON object.
+  factory HostEventDecl.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return HostEventDecl(
+      name: m['name']! as String,
+      fields: m['fields'] == null ? null : [for (final e in m['fields']! as List<Object?>) Field.fromJson(e!)],
+      description: m['description'] == null ? null : m['description']! as String,
+    );
+  }
+
+  /// Identifier used in PXL and generated code: lowerCamelCase.
+  final String name;
+  final List<Field>? fields;
+  /// Human-readable description.
+  final String? description;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'name': name,
+        if (fields != null) 'fields': [for (final e in fields!) e.toJson()],
+        if (description != null) 'description': description!,
       };
 }
 
@@ -1207,6 +1306,38 @@ final class NativeSlotEvent {
       };
 }
 
+/// App-wide navigation: the page for unknown routes, deep links and tabbed
+/// shells (NAV-005, NAV-006, NAV-008, NAV-011, ADR-0040).
+final class NavigationPolicy {
+  const NavigationPolicy({this.notFound, this.deepLinks, this.shells});
+
+  /// Decodes a JSON object.
+  factory NavigationPolicy.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return NavigationPolicy(
+      notFound: m['notFound'] == null ? null : m['notFound']! as String,
+      deepLinks: m['deepLinks'] == null ? null : DeepLinkPolicy.fromJson(m['deepLinks']!),
+      shells: m['shells'] == null ? null : [for (final e in m['shells']! as List<Object?>) Shell.fromJson(e!)],
+    );
+  }
+
+  /// App-wide unique route name (SCH-025).
+  final String? notFound;
+  /// The links the app answers (NAV-008): its hosts for `https` links and its
+  /// custom schemes, and path patterns mapped to routes.
+  /// `https://<host>/p/<route-name>?…` always resolves, so no pattern may
+  /// start with `/p/`.
+  final DeepLinkPolicy? deepLinks;
+  final List<Shell>? shells;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (notFound != null) 'notFound': notFound!,
+        if (deepLinks != null) 'deepLinks': deepLinks!.toJson(),
+        if (shells != null) 'shells': [for (final e in shells!) e.toJson()],
+      };
+}
+
 /// A node of a page or component tree: a widget or a component instance
 /// (SCH-023).
 final class Node {
@@ -1270,7 +1401,7 @@ final class Node {
 /// A page: route, parameters, state, data, lifecycle and node tree (SCH-022).
 /// File: `plugins/<plugin>/pages/<key>.page.json`.
 final class PageDocument {
-  const PageDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, this.route, required this.pageKind, required this.title, this.description, this.params, this.state, this.dataSources, this.lifecycle, this.routeOptions, this.security, required this.root});
+  const PageDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, this.route, required this.pageKind, required this.title, this.description, this.params, this.result, this.state, this.dataSources, this.lifecycle, this.routeOptions, this.security, required this.root});
 
   /// Decodes a JSON object.
   factory PageDocument.fromJson(Object json) {
@@ -1285,6 +1416,7 @@ final class PageDocument {
       title: m['title'],
       description: m['description'] == null ? null : m['description']! as String,
       params: m['params'] == null ? null : [for (final e in m['params']! as List<Object?>) Param.fromJson(e!)],
+      result: m['result'] == null ? null : m['result']! as String,
       state: m['state'] == null ? null : [for (final e in m['state']! as List<Object?>) StateEntry.fromJson(e!)],
       dataSources: m['dataSources'] == null ? null : [for (final e in m['dataSources']! as List<Object?>) DataSource.fromJson(e!)],
       lifecycle: m['lifecycle'] == null ? null : Lifecycle.fromJson(m['lifecycle']!),
@@ -1313,6 +1445,9 @@ final class PageDocument {
   /// Human-readable description.
   final String? description;
   final List<Param>? params;
+  /// Type expression of SCH-010, e.g. `string`, `decimal?`,
+  /// `list<Transaction>`, `map<string,int>`.
+  final String? result;
   final List<StateEntry>? state;
   final List<DataSource>? dataSources;
   /// Lifecycle handlers (SCH-022).
@@ -1336,6 +1471,7 @@ final class PageDocument {
         'title': title,
         if (description != null) 'description': description!,
         if (params != null) 'params': [for (final e in params!) e.toJson()],
+        if (result != null) 'result': result!,
         if (state != null) 'state': [for (final e in state!) e.toJson()],
         if (dataSources != null) 'dataSources': [for (final e in dataSources!) e.toJson()],
         if (lifecycle != null) 'lifecycle': lifecycle!.toJson(),
@@ -1541,6 +1677,33 @@ final class PluginDocument {
       };
 }
 
+/// Push notifications (NAV-008, ADR-0040): whether the app uses them, so a
+/// generated project carries the platform configuration, and the payload key
+/// under which a notification names `{route, params}` for
+/// `Plux.handlePushPayload`.
+final class PushPolicy {
+  const PushPolicy({required this.enabled, this.payloadKey});
+
+  /// Decodes a JSON object.
+  factory PushPolicy.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return PushPolicy(
+      enabled: m['enabled']! as bool,
+      payloadKey: m['payloadKey'] == null ? null : m['payloadKey']! as String,
+    );
+  }
+
+  final bool enabled;
+  /// The payload key holding `{route, params}`; `plux` when absent.
+  final String? payloadKey;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'enabled': enabled,
+        if (payloadKey != null) 'payloadKey': payloadKey!,
+      };
+}
+
 /// What the compiler does when a release needs a newer runtime than
 /// `minRuntimeVersion`: reject the publish, or raise the release's required
 /// features with a warning (WGT-004).
@@ -1724,6 +1887,68 @@ final class Semantics {
         if (button != null) 'button': button!,
         if (liveRegion != null) 'liveRegion': liveRegion!,
         if (excludeSemantics != null) 'excludeSemantics': excludeSemantics!,
+      };
+}
+
+/// A tabbed shell; each tab keeps its own navigation stack, and `switchTab`
+/// selects a tab by key (NAV-005, NAV-006).
+final class Shell {
+  const Shell({required this.key, required this.tabs});
+
+  /// Decodes a JSON object.
+  factory Shell.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return Shell(
+      key: m['key']! as String,
+      tabs: [for (final e in m['tabs']! as List<Object?>) ShellTab.fromJson(e!)],
+    );
+  }
+
+  /// Human-readable lower-kebab slug, unique within its parent (SCH-002). Files
+  /// in the Git layout are named after it.
+  final String key;
+  final List<ShellTab> tabs;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'key': key,
+        'tabs': [for (final e in tabs) e.toJson()],
+      };
+}
+
+/// A tab of a shell: its label, icon and the route it opens with.
+final class ShellTab {
+  const ShellTab({required this.key, required this.label, required this.icon, required this.initialRoute});
+
+  /// Decodes a JSON object.
+  factory ShellTab.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ShellTab(
+      key: m['key']! as String,
+      label: m['label'],
+      icon: m['icon'],
+      initialRoute: m['initialRoute']! as String,
+    );
+  }
+
+  /// Human-readable lower-kebab slug, unique within its parent (SCH-002). Files
+  /// in the Git layout are named after it.
+  final String key;
+  /// A prop value: a literal of the prop's type, or a binding (SCH-011).
+  /// Literal objects and lists may contain bindings in their fields and items.
+  final Object? label;
+  /// A prop value: a literal of the prop's type, or a binding (SCH-011).
+  /// Literal objects and lists may contain bindings in their fields and items.
+  final Object? icon;
+  /// App-wide unique route name (SCH-025).
+  final String initialRoute;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'key': key,
+        'label': label,
+        'icon': icon,
+        'initialRoute': initialRoute,
       };
 }
 

@@ -1,0 +1,49 @@
+{
+  "id": "01f0c450-6c00-7000-8000-000000000222",
+  "key": "pong",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01f0c450-6c00-7000-8000-000000000223",
+    "slots": {
+      "appBar": {
+        "id": "01f0c450-6c00-7000-8000-000000000224",
+        "slots": {
+          "title": {
+            "id": "01f0c450-6c00-7000-8000-000000000225",
+            "props": {
+              "data": "Pong"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "children": [
+          {
+            "id": "01f0c450-6c00-7000-8000-000000000221",
+            "props": {
+              "data": "Pong"
+            },
+            "testId": "pong",
+            "type": "Text"
+          }
+        ],
+        "id": "01f0c450-6c00-7000-8000-000000000226",
+        "type": "Column"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "pong",
+  "routeOptions": {
+    "guards": [
+      {
+        "$graph": "01f0c450-6c00-7000-8000-000000000228"
+      }
+    ]
+  },
+  "schemaVersion": "1.0.0",
+  "title": "Pong"
+}

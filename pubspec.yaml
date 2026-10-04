@@ -7,9 +7,13 @@ environment:
   sdk: ^3.13.0
 
 workspace:
+  - apps/add_to_app/plux_module
   - apps/starter
+  - packages/plux_auto_route
   - packages/plux_devtools
   - packages/plux_flutter
+  - packages/plux_go_router
+  - packages/plux_native_scan
   - packages/plux_widget_api
   - test/bench/runtime
   - test/size/blank

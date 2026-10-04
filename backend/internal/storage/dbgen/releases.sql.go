@@ -307,7 +307,7 @@ func (q *Queries) GetPublishJobForUpdate(ctx context.Context, id pgtype.UUID) (P
 }
 
 const getRelease = `-- name: GetRelease :one
-SELECT id, organization_id, app_id, environment_id, sequence, app_version_id, rollback_of, notes, min_runtime, required_features, size, production, created_by_kind, created_by_id, created_by, created_at FROM releases WHERE app_id = $1 AND sequence = $2
+SELECT id, organization_id, app_id, environment_id, sequence, app_version_id, rollback_of, notes, min_runtime, required_features, size, production, created_by_kind, created_by_id, created_by, created_at, native_uses FROM releases WHERE app_id = $1 AND sequence = $2
 `
 
 type GetReleaseParams struct {
@@ -335,12 +335,13 @@ func (q *Queries) GetRelease(ctx context.Context, arg GetReleaseParams) (Release
 		&i.CreatedByID,
 		&i.CreatedBy,
 		&i.CreatedAt,
+		&i.NativeUses,
 	)
 	return i, err
 }
 
 const getVersion = `-- name: GetVersion :one
-SELECT id, organization_id, app_id, plugin_id, plugin_key, version, label, notes, bundle_sha256, bundle_size, source_map_sha256, required_features, min_runtime, signature, key_id, algorithm, environment_id, source_snapshot_id, sources, published_by_kind, published_by_id, published_by, created_at FROM plugin_versions
+SELECT id, organization_id, app_id, plugin_id, plugin_key, version, label, notes, bundle_sha256, bundle_size, source_map_sha256, required_features, min_runtime, signature, key_id, algorithm, environment_id, source_snapshot_id, sources, published_by_kind, published_by_id, published_by, created_at, native_uses FROM plugin_versions
  WHERE app_id = $1 AND plugin_id IS NOT DISTINCT FROM $3::uuid AND version = $2
 `
 
@@ -377,12 +378,13 @@ func (q *Queries) GetVersion(ctx context.Context, arg GetVersionParams) (PluginV
 		&i.PublishedByID,
 		&i.PublishedBy,
 		&i.CreatedAt,
+		&i.NativeUses,
 	)
 	return i, err
 }
 
 const getVersionByID = `-- name: GetVersionByID :one
-SELECT id, organization_id, app_id, plugin_id, plugin_key, version, label, notes, bundle_sha256, bundle_size, source_map_sha256, required_features, min_runtime, signature, key_id, algorithm, environment_id, source_snapshot_id, sources, published_by_kind, published_by_id, published_by, created_at FROM plugin_versions WHERE id = $1
+SELECT id, organization_id, app_id, plugin_id, plugin_key, version, label, notes, bundle_sha256, bundle_size, source_map_sha256, required_features, min_runtime, signature, key_id, algorithm, environment_id, source_snapshot_id, sources, published_by_kind, published_by_id, published_by, created_at, native_uses FROM plugin_versions WHERE id = $1
 `
 
 func (q *Queries) GetVersionByID(ctx context.Context, id pgtype.UUID) (PluginVersion, error) {
@@ -412,6 +414,7 @@ func (q *Queries) GetVersionByID(ctx context.Context, id pgtype.UUID) (PluginVer
 		&i.PublishedByID,
 		&i.PublishedBy,
 		&i.CreatedAt,
+		&i.NativeUses,
 	)
 	return i, err
 }
@@ -422,7 +425,7 @@ INSERT INTO plugin_versions (id, organization_id, app_id, plugin_id, plugin_key,
                              signature, key_id, algorithm, environment_id, source_snapshot_id, sources,
                              published_by_kind, published_by_id, published_by)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
-RETURNING id, organization_id, app_id, plugin_id, plugin_key, version, label, notes, bundle_sha256, bundle_size, source_map_sha256, required_features, min_runtime, signature, key_id, algorithm, environment_id, source_snapshot_id, sources, published_by_kind, published_by_id, published_by, created_at
+RETURNING id, organization_id, app_id, plugin_id, plugin_key, version, label, notes, bundle_sha256, bundle_size, source_map_sha256, required_features, min_runtime, signature, key_id, algorithm, environment_id, source_snapshot_id, sources, published_by_kind, published_by_id, published_by, created_at, native_uses
 `
 
 type InsertPluginVersionParams struct {
@@ -500,6 +503,7 @@ func (q *Queries) InsertPluginVersion(ctx context.Context, arg InsertPluginVersi
 		&i.PublishedByID,
 		&i.PublishedBy,
 		&i.CreatedAt,
+		&i.NativeUses,
 	)
 	return i, err
 }
@@ -508,7 +512,7 @@ const insertRelease = `-- name: InsertRelease :one
 INSERT INTO releases (id, organization_id, app_id, environment_id, sequence, app_version_id, rollback_of, notes,
                       min_runtime, required_features, size, created_by_kind, created_by_id, created_by)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-RETURNING id, organization_id, app_id, environment_id, sequence, app_version_id, rollback_of, notes, min_runtime, required_features, size, production, created_by_kind, created_by_id, created_by, created_at
+RETURNING id, organization_id, app_id, environment_id, sequence, app_version_id, rollback_of, notes, min_runtime, required_features, size, production, created_by_kind, created_by_id, created_by, created_at, native_uses
 `
 
 type InsertReleaseParams struct {
@@ -563,6 +567,7 @@ func (q *Queries) InsertRelease(ctx context.Context, arg InsertReleaseParams) (R
 		&i.CreatedByID,
 		&i.CreatedBy,
 		&i.CreatedAt,
+		&i.NativeUses,
 	)
 	return i, err
 }
@@ -583,7 +588,7 @@ func (q *Queries) InsertReleaseVersion(ctx context.Context, arg InsertReleaseVer
 }
 
 const latestReleaseInEnvironment = `-- name: LatestReleaseInEnvironment :one
-SELECT id, organization_id, app_id, environment_id, sequence, app_version_id, rollback_of, notes, min_runtime, required_features, size, production, created_by_kind, created_by_id, created_by, created_at FROM releases WHERE app_id = $1 AND environment_id = $2 ORDER BY sequence DESC LIMIT 1
+SELECT id, organization_id, app_id, environment_id, sequence, app_version_id, rollback_of, notes, min_runtime, required_features, size, production, created_by_kind, created_by_id, created_by, created_at, native_uses FROM releases WHERE app_id = $1 AND environment_id = $2 ORDER BY sequence DESC LIMIT 1
 `
 
 type LatestReleaseInEnvironmentParams struct {
@@ -611,6 +616,7 @@ func (q *Queries) LatestReleaseInEnvironment(ctx context.Context, arg LatestRele
 		&i.CreatedByID,
 		&i.CreatedBy,
 		&i.CreatedAt,
+		&i.NativeUses,
 	)
 	return i, err
 }
@@ -627,7 +633,7 @@ func (q *Queries) LatestReleaseSize(ctx context.Context, appID pgtype.UUID) (int
 }
 
 const latestVersion = `-- name: LatestVersion :one
-SELECT id, organization_id, app_id, plugin_id, plugin_key, version, label, notes, bundle_sha256, bundle_size, source_map_sha256, required_features, min_runtime, signature, key_id, algorithm, environment_id, source_snapshot_id, sources, published_by_kind, published_by_id, published_by, created_at FROM plugin_versions
+SELECT id, organization_id, app_id, plugin_id, plugin_key, version, label, notes, bundle_sha256, bundle_size, source_map_sha256, required_features, min_runtime, signature, key_id, algorithm, environment_id, source_snapshot_id, sources, published_by_kind, published_by_id, published_by, created_at, native_uses FROM plugin_versions
  WHERE app_id = $1 AND plugin_id IS NOT DISTINCT FROM $2::uuid
  ORDER BY version DESC
  LIMIT 1
@@ -665,12 +671,13 @@ func (q *Queries) LatestVersion(ctx context.Context, arg LatestVersionParams) (P
 		&i.PublishedByID,
 		&i.PublishedBy,
 		&i.CreatedAt,
+		&i.NativeUses,
 	)
 	return i, err
 }
 
 const listAllReleases = `-- name: ListAllReleases :many
-SELECT id, organization_id, app_id, environment_id, sequence, app_version_id, rollback_of, notes, min_runtime, required_features, size, production, created_by_kind, created_by_id, created_by, created_at FROM releases WHERE app_id = $1 ORDER BY sequence
+SELECT id, organization_id, app_id, environment_id, sequence, app_version_id, rollback_of, notes, min_runtime, required_features, size, production, created_by_kind, created_by_id, created_by, created_at, native_uses FROM releases WHERE app_id = $1 ORDER BY sequence
 `
 
 func (q *Queries) ListAllReleases(ctx context.Context, appID pgtype.UUID) ([]Release, error) {
@@ -699,6 +706,7 @@ func (q *Queries) ListAllReleases(ctx context.Context, appID pgtype.UUID) ([]Rel
 			&i.CreatedByID,
 			&i.CreatedBy,
 			&i.CreatedAt,
+			&i.NativeUses,
 		); err != nil {
 			return nil, err
 		}
@@ -775,7 +783,7 @@ func (q *Queries) ListPublishJobs(ctx context.Context, arg ListPublishJobsParams
 }
 
 const listPurgeableReleases = `-- name: ListPurgeableReleases :many
-SELECT r.id, r.organization_id, r.app_id, r.environment_id, r.sequence, r.app_version_id, r.rollback_of, r.notes, r.min_runtime, r.required_features, r.size, r.production, r.created_by_kind, r.created_by_id, r.created_by, r.created_at FROM releases r
+SELECT r.id, r.organization_id, r.app_id, r.environment_id, r.sequence, r.app_version_id, r.rollback_of, r.notes, r.min_runtime, r.required_features, r.size, r.production, r.created_by_kind, r.created_by_id, r.created_by, r.created_at, r.native_uses FROM releases r
  WHERE NOT r.production
    AND r.created_at < $1::timestamptz
    AND r.sequence < (SELECT MAX(sequence) FROM releases n WHERE n.app_id = r.app_id)
@@ -819,6 +827,7 @@ func (q *Queries) ListPurgeableReleases(ctx context.Context, arg ListPurgeableRe
 			&i.CreatedByID,
 			&i.CreatedBy,
 			&i.CreatedAt,
+			&i.NativeUses,
 		); err != nil {
 			return nil, err
 		}
@@ -831,7 +840,7 @@ func (q *Queries) ListPurgeableReleases(ctx context.Context, arg ListPurgeableRe
 }
 
 const listReleaseVersions = `-- name: ListReleaseVersions :many
-SELECT v.id, v.organization_id, v.app_id, v.plugin_id, v.plugin_key, v.version, v.label, v.notes, v.bundle_sha256, v.bundle_size, v.source_map_sha256, v.required_features, v.min_runtime, v.signature, v.key_id, v.algorithm, v.environment_id, v.source_snapshot_id, v.sources, v.published_by_kind, v.published_by_id, v.published_by, v.created_at FROM plugin_versions v
+SELECT v.id, v.organization_id, v.app_id, v.plugin_id, v.plugin_key, v.version, v.label, v.notes, v.bundle_sha256, v.bundle_size, v.source_map_sha256, v.required_features, v.min_runtime, v.signature, v.key_id, v.algorithm, v.environment_id, v.source_snapshot_id, v.sources, v.published_by_kind, v.published_by_id, v.published_by, v.created_at, v.native_uses FROM plugin_versions v
   JOIN release_versions rv ON rv.plugin_version_id = v.id
  WHERE rv.release_id = $1
  ORDER BY v.plugin_key
@@ -870,6 +879,7 @@ func (q *Queries) ListReleaseVersions(ctx context.Context, releaseID pgtype.UUID
 			&i.PublishedByID,
 			&i.PublishedBy,
 			&i.CreatedAt,
+			&i.NativeUses,
 		); err != nil {
 			return nil, err
 		}
@@ -882,7 +892,7 @@ func (q *Queries) ListReleaseVersions(ctx context.Context, releaseID pgtype.UUID
 }
 
 const listReleases = `-- name: ListReleases :many
-SELECT id, organization_id, app_id, environment_id, sequence, app_version_id, rollback_of, notes, min_runtime, required_features, size, production, created_by_kind, created_by_id, created_by, created_at FROM releases
+SELECT id, organization_id, app_id, environment_id, sequence, app_version_id, rollback_of, notes, min_runtime, required_features, size, production, created_by_kind, created_by_id, created_by, created_at, native_uses FROM releases
  WHERE app_id = $1
    AND ($2::uuid IS NULL OR environment_id = $2::uuid)
    AND sequence < $3::bigint
@@ -928,6 +938,7 @@ func (q *Queries) ListReleases(ctx context.Context, arg ListReleasesParams) ([]R
 			&i.CreatedByID,
 			&i.CreatedBy,
 			&i.CreatedAt,
+			&i.NativeUses,
 		); err != nil {
 			return nil, err
 		}
@@ -940,7 +951,7 @@ func (q *Queries) ListReleases(ctx context.Context, arg ListReleasesParams) ([]R
 }
 
 const listVersions = `-- name: ListVersions :many
-SELECT id, organization_id, app_id, plugin_id, plugin_key, version, label, notes, bundle_sha256, bundle_size, source_map_sha256, required_features, min_runtime, signature, key_id, algorithm, environment_id, source_snapshot_id, sources, published_by_kind, published_by_id, published_by, created_at FROM plugin_versions
+SELECT id, organization_id, app_id, plugin_id, plugin_key, version, label, notes, bundle_sha256, bundle_size, source_map_sha256, required_features, min_runtime, signature, key_id, algorithm, environment_id, source_snapshot_id, sources, published_by_kind, published_by_id, published_by, created_at, native_uses FROM plugin_versions
  WHERE app_id = $1 AND plugin_id IS NOT DISTINCT FROM $2::uuid
    AND version < $3::bigint
  ORDER BY version DESC
@@ -992,6 +1003,7 @@ func (q *Queries) ListVersions(ctx context.Context, arg ListVersionsParams) ([]P
 			&i.PublishedByID,
 			&i.PublishedBy,
 			&i.CreatedAt,
+			&i.NativeUses,
 		); err != nil {
 			return nil, err
 		}

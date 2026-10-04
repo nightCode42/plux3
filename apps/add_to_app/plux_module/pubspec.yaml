@@ -1,0 +1,35 @@
+name: plux_module
+description: >-
+  The Flutter module the add-to-app hosts embed (HST-033): native Android
+  and iOS screens open Plux pages in it by route, and its plugin pages open
+  the hosts' native screens.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plux_flutter: ^0.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  # The baseline `plux pull` writes (SYN-007); asset directories are not
+  # recursive, so each of its directories is listed.
+  assets:
+    - assets/plux/
+    - assets/plux/bundles/
+    - assets/plux/assets/
+  module:
+    androidX: true
+    androidPackage: dev.plux.addtoapp.module
+    iosBundleIdentifier: dev.plux.addtoapp.module

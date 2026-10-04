@@ -207,8 +207,9 @@ func TestInstalledAndCompatibility(t *testing.T) {
 	f := newFixture(t)
 	ctx := context.Background()
 	var ids []device.Identity
+	builds := map[string]string{"0.9.0": "1.0.0+1", "2.0": "1.0.0+2"}
 	for _, v := range []string{"0.9.0", "1.2.3-beta", "2.0", ""} {
-		d, secret, err := f.svc.Register(ctx, device.Registration{AppID: f.app, Environment: "production", Platform: "android", RuntimeVersion: v})
+		d, secret, err := f.svc.Register(ctx, device.Registration{AppID: f.app, Environment: "production", Platform: "android", RuntimeVersion: v, Build: builds[v]})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -219,6 +220,9 @@ func TestInstalledAndCompatibility(t *testing.T) {
 		id, err := f.svc.Authenticate(ctx, tok.Value)
 		if err != nil {
 			t.Fatal(err)
+		}
+		if id.HostBuild != builds[v] {
+			t.Errorf("the token of a device of build %q names build %q", builds[v], id.HostBuild)
 		}
 		ids = append(ids, id)
 	}
@@ -250,12 +254,27 @@ func TestInstalledAndCompatibility(t *testing.T) {
 			t.Errorf("the device holds %d bundles, want 1", held)
 		}
 		for minRuntime, want := range map[string]int64{"": 0, "1.0.0": 1, "1.2.3": 1, "1.2.4": 2, "3": 3} {
-			n, err := f.svc.Incompatible(ctx, tx, f.app, minRuntime)
+			n, err := f.svc.Incompatible(ctx, tx, f.app, minRuntime, nil)
 			if err != nil {
 				return err
 			}
 			if n != want {
 				t.Errorf("Incompatible(%q) = %d, want %d", minRuntime, n, want)
+			}
+		}
+		// Devices of a host build that cannot run a release count too,
+		// once each (REL-080).
+		for _, c := range []struct {
+			minRuntime string
+			builds     []string
+			want       int64
+		}{{"", []string{"1.0.0+2"}, 1}, {"1.0.0", []string{"1.0.0+1"}, 1}, {"1.0.0", []string{"1.0.0+2"}, 2}, {"", []string{"7.0.0+1"}, 0}} {
+			n, err := f.svc.Incompatible(ctx, tx, f.app, c.minRuntime, c.builds)
+			if err != nil {
+				return err
+			}
+			if n != c.want {
+				t.Errorf("Incompatible(%q, %v) = %d, want %d", c.minRuntime, c.builds, n, c.want)
 			}
 		}
 		return nil

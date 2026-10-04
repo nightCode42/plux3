@@ -41,7 +41,7 @@ func registryDart(r *registry.Registry) []byte {
 	}
 	b.WriteString("];\n\n/// Every action, sorted by name.\nconst List<ActionDescriptor> actionDescriptors = [\n")
 	for _, a := range r.Actions {
-		fmt.Fprintf(&b, "  ActionDescriptor(\n    %s,\n    %d,\n", quoteDart(a.Name), a.ID)
+		fmt.Fprintf(&b, "  ActionDescriptor(\n    %s,\n    %d,\n    phase: %s,\n", quoteDart(a.Name), a.ID, quoteDart(a.Phase))
 		writeDartIDs(&b, "inputs", a.Inputs, func(in registry.Input) (string, uint32) { return in.Name, in.ID })
 		b.WriteString("  ),\n")
 	}
@@ -139,13 +139,16 @@ final class EnumDescriptor {
 /// An action and the permanent IDs of its inputs.
 final class ActionDescriptor {
   /// Creates a descriptor.
-  const ActionDescriptor(this.name, this.id, {this.inputs = const {}});
+  const ActionDescriptor(this.name, this.id, {required this.phase, this.inputs = const {}});
 
   /// The action name used in action graphs.
   final String name;
 
   /// The permanent ID encoded in bundles.
   final int id;
+
+  /// The phase that delivers the action (spec Appendix D), such as P4.
+  final String phase;
 
   /// Input IDs by name.
   final Map<String, int> inputs;

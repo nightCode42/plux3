@@ -55,4 +55,28 @@ void main() {
     );
     expect(result.samples['initialize_ms'], hasLength(2));
   });
+
+  testWidgets('a run limited to some parts measures only those', (
+    tester,
+  ) async {
+    final dir = Directory.systemTemp.createTempSync('plux_bench');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final result = await Benchmark(
+      BenchOptions(
+        storageDirectory: dir.path,
+        repeat: 2,
+        scenarios: const {BenchScenario.native},
+      ),
+      binding: binding,
+      initialize: (c) => Plux.initializeWith(
+        c,
+        const RuntimeOverrides(credentials: MemoryCredentialStore.new),
+      ),
+    ).run();
+    expect(result.samples.keys.toSet(), {
+      'native_open_first_frame_ms',
+      'native_page_frame_ui_ms',
+    });
+    expect(result.samples['native_open_first_frame_ms'], hasLength(2));
+  });
 }

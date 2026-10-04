@@ -50,6 +50,15 @@ final class Harness {
     Uint8List app,
     Map<String, Uint8List> plugins, {
     PluxThemeSource themeSource = PluxThemeSource.host,
+    PluxNavigationDelegate? navigationDelegate,
+    Widget Function(BuildContext, String)? notFoundBuilder,
+    PluxAuthDelegate? authDelegate,
+    GlobalKey<NavigatorState>? navigatorKey,
+    PluxConsent consent = PluxConsent.necessaryOnly,
+    Map<String, PluxNativeRoute<Object?, Object?>> nativeRoutes = const {},
+    Map<String, PluxNativeSlot> nativeSlots = const {},
+    Map<String, PluxNativeAction<Object?, Object?>> nativeActions = const {},
+    PluxRouterAdapter? router,
   }) async {
     server.release = null;
     final baseline = await server.baseline(5, app, plugins);
@@ -71,6 +80,15 @@ final class Harness {
         onError: (e, _) => errors.add(e),
         fallbackBuilder: (_, e) =>
             Text('fallback ${e.code.id}', textDirection: TextDirection.ltr),
+        navigationDelegate: navigationDelegate,
+        notFoundBuilder: notFoundBuilder,
+        authDelegate: authDelegate,
+        navigatorKey: navigatorKey,
+        consent: consent,
+        nativeRoutes: nativeRoutes,
+        nativeSlots: nativeSlots,
+        nativeActions: nativeActions,
+        router: router,
       ),
       RuntimeOverrides(
         credentials: MemoryCredentialStore.new,

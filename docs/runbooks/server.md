@@ -1,6 +1,6 @@
 # Server Runbook
 
-Failure modes introduced in P2 (DoD-9), how each shows itself and what to do. Alert rules
+Failure modes introduced in P2 and P4 (DoD-9), how each shows itself and what to do. Alert rules
 and dashboards for these arrive in P9 (`OBS-004`); until then the signals are `/readyz`,
 the metrics of [Appendix G.1](../requirements.md#appendix-g--metrics-and-telemetry-events),
 the JSON logs and the audit log. Background: [server.md](../reference/server.md).
@@ -28,6 +28,9 @@ for that ID first — it is on the one log line that has the cause.
 | Release creation fails with `PLX-8050` or `PLX-8052` | A plugin was built against other app-level sources, or has no published version | Publish the plugin again (or delete it), then create the release. |
 | Signing fails for a production environment with the file backend | The file backend never signs for production (`SEC-056`) | Configure Vault Transit (`signing.backend: vault`); the file backend is for development only. |
 | Vault signing fails | Token expired or lacks the policy, Transit key missing | Check `PLUX_SIGNING_VAULT_TOKEN` and its policy (`sign` on the environment keys, `encrypt`/`decrypt` on `wrapKey`). An api-only replica must have no `sign` permission. |
+| Publishing warns `PLX-8054` | The release uses a native route, slot or custom action a host build's catalogue lacks or declares otherwise (`WGT-032`) | Devices of that build keep the newest release compatible with them (`REL-080`). Upload the catalogue of a build that has the entry (`plux native sync`), or acknowledge the warning; `ReleaseService.GetCompatibility` lists the builds held back. |
+| `plux native sync` fails with `PLX-8032` (resource exists) | The build already has a stored catalogue with other content; a catalogue never changes once stored | A changed host gets a new build string (the `pubspec.yaml` version, or `--build`). The same content again is accepted. |
+| `plux native sync` fails with `PLX-8030` (permission denied) | The caller is not a publisher of the app | Grant the publisher role; viewers may read catalogues, not upload them. |
 
 ## Manifests and devices
 

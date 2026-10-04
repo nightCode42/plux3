@@ -190,7 +190,7 @@ End every task with:
 
 ## 10. Environment notes
 
-- `make help` lists every task. The Makefile is the single entry point; CI runs the same targets.
+- `make help` lists every task. The Makefile is the single entry point; CI runs the same targets. It includes one fragment per area from `mk/`; `make check-changed` runs the gates of the CI jobs your changes affect ([ci.md](docs/engineering/ci.md) §3.1).
 - `make setup` installs the pinned tools (built with the project's Go toolchain) and the git hooks. Flutter and Bun are installed separately at the versions pinned in the Makefile.
 - Toolchain versions: Go from the `toolchain` line in `backend/go.mod`; Flutter and Bun in the Makefile and `.github/workflows/ci.yml`; changed together, in one PR ([ci.md](docs/engineering/ci.md)).
 - The repository uses LF line endings only (`.gitattributes`). On Windows, prefer an editor over `sed -i`, which can write CRLF.
@@ -209,6 +209,7 @@ End every task with:
 | `studio/` | Bun workspace for Plux Studio |
 | `schema/`, `proto/` | Contracts and conformance vectors (from P1, P2) |
 | `deploy/`, `test/` | Deployment assets and cross-component suites |
+| `mk/`, `ci/` | Makefile fragments per area; the rules that select CI jobs per change (ADR-0043) |
 | `ee/` | Enterprise edition (from P9) |
 | `docs/requirements.md` | The specification |
 | `docs/engineering/` | The engineering handbook |

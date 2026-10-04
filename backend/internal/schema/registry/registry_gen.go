@@ -2583,6 +2583,18 @@ var valueTypes = [...]ValueType{
 		},
 	},
 	{
+		Name: "GuardResult", ID: 37, Revision: 1, Runtimes: []string{"0.2.0"}, Description: "The output of a route guard's graph: enter, redirect or fall back (NAV-009, ADR-0040).",
+		Fields: []Field{
+			{Name: "decision", ID: 1, Type: "GuardDecision", Required: true, Default: "", Revision: 1, Deprecated: nil, Description: "What the guard decides."},
+			{Name: "route", ID: 2, Type: "route?", Required: false, Default: "", Revision: 1, Deprecated: nil, Description: "For redirect: the route to open instead."},
+			{Name: "params", ID: 3, Type: "map<string,string>?", Required: false, Default: "", Revision: 1, Deprecated: nil, Description: "For redirect: the route's parameters as strings, converted by its parameter types as a deep link's are."},
+		},
+		Constants: []Constant{
+			{Name: "allow", Value: "{\"decision\":\"allow\"}"},
+			{Name: "fallback", Value: "{\"decision\":\"fallback\"}"},
+		},
+	},
+	{
 		Name: "IconData", ID: 14, Revision: 1, Runtimes: []string{"0.1.0"}, Description: "An icon by name from an icon set (THM-005).",
 		Fields: []Field{
 			{Name: "name", ID: 1, Type: "string", Required: true, Default: "", Revision: 1, Deprecated: nil, Description: "Icon name, e.g. `home` or `arrow_back`."},
@@ -3059,6 +3071,11 @@ var enums = [...]Enum{
 		{Name: "radial", ID: 2, Revision: 1, Deprecated: nil, Description: ""},
 		{Name: "sweep", ID: 3, Revision: 1, Deprecated: nil, Description: ""},
 	}},
+	{Name: "GuardDecision", ID: 74, Revision: 1, Runtimes: []string{"0.2.0"}, Description: "What a route guard decides about an entry (NAV-009).", Values: []EnumValue{
+		{Name: "allow", ID: 1, Revision: 1, Deprecated: nil, Description: "Enter the route."},
+		{Name: "redirect", ID: 2, Revision: 1, Deprecated: nil, Description: "Open the guard's redirect route instead."},
+		{Name: "fallback", ID: 3, Revision: 1, Deprecated: nil, Description: "Show the route's fallback page instead, and report PLX-4102."},
+	}},
 	{Name: "HapticPattern", ID: 69, Revision: 1, Runtimes: []string{"0.1.0"}, Description: "A haptic feedback pattern.", Values: []EnumValue{
 		{Name: "light", ID: 1, Revision: 1, Deprecated: nil, Description: "A light impact."},
 		{Name: "medium", ID: 2, Revision: 1, Deprecated: nil, Description: "A medium impact."},
@@ -3387,7 +3404,7 @@ var actions = [...]Action{
 		Effects:  []string{"device"},
 	},
 	{
-		Name: "condition", ID: 30, Phase: "P5", Category: "control", Description: "Takes the then branch when a PXL condition holds, otherwise the else branch.",
+		Name: "condition", ID: 30, Phase: "P4", Category: "control", Description: "Takes the then branch when a PXL condition holds, otherwise the else branch.",
 		Inputs: []Input{
 			{Name: "when", ID: 1, Type: "bool", Required: true, Default: "", Ref: "", Description: "The condition."},
 		},
@@ -3468,7 +3485,7 @@ var actions = [...]Action{
 		},
 	},
 	{
-		Name: "emitHostEvent", ID: 51, Phase: "P5", Category: "host", Description: "Sends a typed event to the host app.",
+		Name: "emitHostEvent", ID: 51, Phase: "P4", Category: "host", Description: "Sends a typed event to the host app.",
 		TypeParameters: []string{"E"},
 		Inputs: []Input{
 			{Name: "event", ID: 1, Type: "string", Required: true, Default: "", Ref: "hostEvent", Description: "The host event."},
@@ -3741,7 +3758,7 @@ var actions = [...]Action{
 		Effects:  []string{"network", "security"},
 	},
 	{
-		Name: "stop", ID: 35, Phase: "P5", Category: "control", Description: "Ends the run, returning an optional result or failing with a custom error.",
+		Name: "stop", ID: 35, Phase: "P4", Category: "control", Description: "Ends the run, returning an optional result or failing with a custom error.",
 		TypeParameters: []string{"T"},
 		Inputs: []Input{
 			{Name: "result", ID: 1, Type: "T?", Required: false, Default: "", Ref: "", Description: "The run's result."},

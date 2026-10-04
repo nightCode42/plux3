@@ -205,6 +205,11 @@ var registry = []Definition{
 		"Use a name from the set's catalogue (docs/reference/icons.md), written literally.", false,
 	},
 	{
+		CustomActionNamedLikeBuiltIn, "CUSTOM_ACTION_NAMED_LIKE_BUILT_IN", SeverityError, "Custom action named like a built-in action",
+		"The native catalogue declares a custom action with the name of a built-in action (spec Appendix D). A step of that name always runs the built-in action, so the host's action would be reachable only through callNative (ACT-060).",
+		"Rename the custom action in the host app, for example with a prefix of its own, and run plux native scan again.", false,
+	},
+	{
 		UnknownRoute, "UNKNOWN_ROUTE", SeverityError, "Unknown route",
 		"A navigate action targets a route name that no page and no native route declares.",
 		"Correct the route name, or add the page.", false,
@@ -216,8 +221,8 @@ var registry = []Definition{
 	},
 	{
 		RouteParameterTypeInvalid, "ROUTE_PARAMETER_TYPE_INVALID", SeverityError, "Route parameter has the wrong type",
-		"A navigate action passes a parameter value whose type differs from the parameter's declared type.",
-		"Pass a value of the declared type.", false,
+		"A navigate action passes a parameter value whose type differs from the parameter's declared type, or a deep-link pattern reads a parameter whose type a link's text cannot carry (a list, a map or an object).",
+		"Pass a value of the declared type; read only scalar and enum parameters from a link's path.", false,
 	},
 	{
 		UnknownRouteParameter, "UNKNOWN_ROUTE_PARAMETER", SeverityError, "Unknown route parameter",
@@ -466,7 +471,7 @@ var registry = []Definition{
 	// Runtime rendering and navigation.
 	{
 		NodeBuildFailed, "NODE_BUILD_FAILED", SeverityError, "Build error in node",
-		"Building, laying out or painting a node failed, or a value it needs could not be decoded or evaluated. The page's error boundary rendered its fallback (RT-020).",
+		"Building, laying out or painting a node failed, or a value it needs could not be decoded or evaluated. The page's error boundary rendered its fallback (RT-020). A PluxView that expands in unbounded constraints shows its fallback with it too (NAV-004).",
 		"Look up the node path in the report and fix the page; the source map of a development bundle names the document location.", false,
 	},
 	{
@@ -481,13 +486,83 @@ var registry = []Definition{
 	},
 	{
 		ActionsNotAvailable, "ACTIONS_NOT_AVAILABLE", SeverityWarning, "Actions not available in this runtime",
-		"An event handler fired, but this runtime renders pages without running actions; actions arrive with the action executor in phase 5 (ADR-0031).",
-		"Nothing to fix in the page; the handler runs once the runtime supports actions.", false,
+		"A step names an action, or a graph declares an option (a concurrency policy other than drop, a retry, a detached run), that this runtime does not run; the step fails with this error, which its onError can handle, and the option is ignored (ADR-0039). An exposed app state entry that declares a persistence is kept in memory until P5, and reported with it once in debug builds (ADR-0023).",
+		"Raise the app's minimum runtime version to one that runs the action, or handle the error; the action reference page says which phase delivers each action.", false,
 	},
 	{
 		PluginDisabled, "PLUGIN_DISABLED", SeverityWarning, "Plugin switched off",
 		"The release's control switches turn the plugin off (kill switch), so every route into it shows its fallback page (RT-022).",
 		"Turn the switch off in the release's channel controls once the problem is fixed.", false,
+	},
+	{
+		RouteNotFound, "ROUTE_NOT_FOUND", SeverityError, "Route not found",
+		"A navigation, a deep link or a PluxView names a route that is neither a page of the active release nor a registered native route, and for a PluxView no exported component has that key either. The app's not-found page is shown instead (NAV-011).",
+		"Check the route name, publish the page that should answer it, or register the native route in PluxConfig.", false,
+	},
+	{
+		RouteParametersInvalid, "ROUTE_PARAMETERS_INVALID", SeverityError, "Invalid route parameters",
+		"A route was entered with a parameter missing, unknown or of the wrong type for the page's declaration. The page's error fallback is shown instead of the page (NAV-007).",
+		"Pass every required parameter with the declared type; a deep link's or push payload's values must convert to the parameter types.", false,
+	},
+	{
+		NavigationRefused, "NAVIGATION_REFUSED", SeverityWarning, "Navigation refused",
+		"A route guard refused entry, because its graph decided on the fallback or failed and the guard failed closed (NAV-009); or the navigation needs what the screen does not have, such as a switchTab with no enclosing shell holding the tab, or a pop with nothing to pop (NAV-005).",
+		"If the refusal is unexpected, check the guard's condition and the state it reads, such as the auth delegate, flags or the device's assurance level, or where the page is shown.", false,
+	},
+	{
+		DeepLinkUnmapped, "DEEP_LINK_UNMAPPED", SeverityWarning, "Deep link not mapped",
+		"A deep link or push payload names a host, scheme or path that the app's navigation.deepLinks do not map to a route, so nothing was opened (NAV-008).",
+		"Add a path pattern for the link to navigation.deepLinks, or link to https://<host>/p/<route-name>, which always resolves.", false,
+	},
+	{
+		NativeRouteNotRegistered, "NATIVE_ROUTE_NOT_REGISTERED", SeverityError, "Native route not registered",
+		"A plugin navigated to a native route that the host app did not register in PluxConfig or expose through its router (NAV-002, HST-031).",
+		"Register the route in the host app, or run plux native scan and sync so publishing checks the route against the host build (WGT-032).", false,
+	},
+	{
+		NativeSlotNotRegistered, "NATIVE_SLOT_NOT_REGISTERED", SeverityError, "Native slot not registered",
+		"A page places a native slot widget that the host app did not register in PluxConfig.nativeSlots. The page's error boundary shows a placeholder instead (WGT-033).",
+		"Register the slot's builder in the host app, or run plux native scan and sync so publishing checks the slot against the host build (WGT-032).", false,
+	},
+	{
+		NativeActionNotRegistered, "NATIVE_ACTION_NOT_REGISTERED", SeverityError, "Custom action not registered",
+		"A callNative step names a custom action that the host app did not register in PluxConfig.nativeActions; the step fails and its onError handler runs (ACT-060).",
+		"Register the action in the host app, or run plux native scan and sync so publishing checks the action against the host build (WGT-032).", false,
+	},
+	{
+		ExposedStateTypeMismatch, "EXPOSED_STATE_TYPE_MISMATCH", SeverityError, "Exposed state written with the wrong type",
+		"Native code wrote a value to an exposed state entry whose declared type the value does not have, read, wrote or watched a name the app does not expose, or wrote before a release was active; the write is refused and the entry keeps its value (STA-030, HST-021).",
+		"Write a value of the entry's declared type; plux codegen generates typed accessors that make this a compile error.", false,
+	},
+	{
+		UserContextInvalid, "USER_CONTEXT_INVALID", SeverityWarning, "User context attribute ignored",
+		"Plux.setUserContext was given an attribute the app's userContext does not declare, or one whose text does not convert to its declared type; the attribute is left out of user.<name>, which reads as null (HST-011).",
+		"Pass only the attributes the app declares, each as the text of its declared type: true or false, a number, a decimal, an ISO 8601 date, or an enum member.", false,
+	},
+	{
+		HostCodeFailed, "HOST_CODE_FAILED", SeverityError, "Host code failed",
+		"A custom action's handler, a native route's parameter conversion or screen, or a native slot's builder registered by the host app threw; the step fails, or the page shows its error fallback, and nothing reaches the plugin as a crash (ACT-060, NAV-002, WGT-033).",
+		"Fix the host's handler, conversion or builder; the report names the action, route or slot and only the exception's type, never its message.", false,
+	},
+	{
+		ActionTimeout, "ACTION_TIMEOUT", SeverityError, "Action timed out",
+		"A step or its run took longer than the limits action.stepTimeout or action.runTimeout, or the step's own timeoutMs, allow; time spent waiting for the user in a dialog or bottom sheet does not count (ACT-005, ADR-0039).",
+		"Handle the error with the step's onError, or make the work shorter; an installation may raise the limits within their maximums.", false,
+	},
+	{
+		ActionStepLimitExceeded, "ACTION_STEP_LIMIT_EXCEEDED", SeverityError, "Step limit exceeded",
+		"A run executed more steps than the limit action.stepsPerRun allows, and was stopped (ACT-005, ADR-0039).",
+		"Shorten the graph, or move repeated work into a flow.", false,
+	},
+	{
+		ActionValueInvalid, "ACTION_VALUE_INVALID", SeverityError, "Action value of the wrong type",
+		"A step's input, output or result does not have the type its action, page or graph declares, or a binding of an input could not be evaluated; the step fails with a validation error (ADR-0039).",
+		"Check the bindings of the step's inputs and the values the host passes or returns.", false,
+	},
+	{
+		ActionCustomError, "ACTION_CUSTOM_ERROR", SeverityError, "Run failed with a custom error",
+		"A stop step ended the run with a custom error code, and no onError handled it (ADR-0039).",
+		"Handle the error with an onError edge, or check why the graph stops with it; the message carries its code.", false,
 	},
 
 	// Security.
@@ -562,6 +637,11 @@ var registry = []Definition{
 		AssetsNotReady, "ASSETS_NOT_READY", SeverityError, "Assets still being processed",
 		"A publish waits until every image asset of the app has its variants (CMP-030), since a bundle compiled without them would differ from the release's (REL-003). Some were still being processed when the wait, publish.assetWait, ran out: the worker's asset jobs are slow, failing or not running.",
 		"Check the assets' processing state, and the worker's asset jobs if an asset stays pending; publish again once every asset is ready.", false,
+	},
+	{
+		HostBuildIncompatible, "HOST_BUILD_INCOMPATIBLE", SeverityWarning, "Host build lacks a native entry",
+		"The release uses a native route, native slot or custom action that the native catalogue of one of the app's host builds lacks, or declares with other parameters, props, events, inputs or result types. Devices of that build keep receiving the newest release compatible with it (WGT-032, REL-080).",
+		"Ship a host build that registers the entry and upload its catalogue with plux native sync, or keep the release from using the entry; the publisher acknowledges the warning to publish anyway.", false,
 	},
 	{
 		InternalServerError, "INTERNAL_SERVER_ERROR", SeverityError, "Internal error",

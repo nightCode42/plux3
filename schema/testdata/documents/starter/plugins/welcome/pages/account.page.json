@@ -1,0 +1,50 @@
+{
+  "id": "01e0c450-6c00-7000-8000-000000000096",
+  "key": "account",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01e0c450-6c00-7000-8000-000000000097",
+    "slots": {
+      "appBar": {
+        "id": "01e0c450-6c00-7000-8000-000000000098",
+        "slots": {
+          "title": {
+            "id": "01e0c450-6c00-7000-8000-000000000099",
+            "props": {
+              "data": "Account"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "id": "01e0c450-6c00-7000-8000-00000000009a",
+        "slots": {
+          "child": {
+            "id": "01e0c450-6c00-7000-8000-00000000009b",
+            "props": {
+              "data": {
+                "$expr": "\"Plan: \" + (user.tier ?? \"free\")"
+              }
+            },
+            "type": "Text"
+          }
+        },
+        "type": "Center"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "account",
+  "routeOptions": {
+    "guards": [
+      {
+        "$graph": "01e0c450-6c00-7000-8000-000000000095"
+      }
+    ]
+  },
+  "schemaVersion": "1.0.0",
+  "title": "Account"
+}

@@ -25,6 +25,7 @@ Commands:
   doctor      Check the project, server, credential and app
   validate    Validate a project directory offline
   build       Compile a project directory into bundles offline
+  codegen     Write a project's typed Dart API into the host app
   diff        Compare the project with the server's drafts
   publish     Upload, publish and optionally release and promote
   pull        Download a channel's release and keys as the host's baseline
@@ -32,6 +33,8 @@ Commands:
   export      Write the server's drafts into the project
   import      Replace the server's drafts with the project
   keys        List an environment's public keys
+  native      scan | sync the host app's native catalogue
+  create      Generate the Flutter project of a no-code app
   completion  Print a shell completion script (bash, zsh, fish, powershell)
   version     Print version information
   help        Show this help
@@ -62,6 +65,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 			return validate(args[1:], stdout, stderr)
 		case "build":
 			return build(args[1:], stdout, stderr)
+		case "codegen":
+			return codegenCmd(args[1:], stdout, stderr)
 		}
 		e := newEnv(stdout, stderr)
 		if cmd, ok := e.commands()[args[0]]; ok {
@@ -90,6 +95,6 @@ func (e env) commands() map[string]func([]string) int {
 	return map[string]func([]string) int{
 		"login": e.login, "logout": e.logout, "whoami": e.whoami, "init": e.initProject, "doctor": e.doctor,
 		"diff": e.diff, "publish": e.publish, "pull": e.pull, "release": e.release, "export": e.export,
-		"import": e.importCmd, "keys": e.keys, "completion": e.completion,
+		"import": e.importCmd, "keys": e.keys, "native": e.native, "create": e.create, "completion": e.completion,
 	}
 }

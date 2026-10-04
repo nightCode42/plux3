@@ -46,7 +46,7 @@ void main() {
         debugShowCheckedModeBanner: false,
         theme: theme,
         builder: builder,
-        home: PluxScope(child: PluxView(route, params: params)),
+        home: PluxScope(child: PluxView(route, inputs: params)),
       ),
     );
     await settle(tester);

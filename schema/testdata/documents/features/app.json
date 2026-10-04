@@ -65,6 +65,26 @@
       "type": "string"
     }
   ],
+  "hostEvents": [
+    {
+      "description": "A task was marked done.",
+      "fields": [
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "priority",
+          "type": "Priority"
+        },
+        {
+          "name": "note",
+          "type": "string?"
+        }
+      ],
+      "name": "taskCompleted"
+    }
+  ],
   "icon": {
     "monogram": {
       "background": "#0B6E4F",
@@ -74,12 +94,57 @@
   "id": "01b0c450-6c00-7000-8000-000000000001",
   "key": "features",
   "kind": "app",
-  "minRuntimeVersion": "0.1.0",
+  "minRuntimeVersion": "0.2.0",
   "name": "Feature Tour",
   "nativeCatalogue": "01b0c450-6c00-7000-8000-000000000003",
+  "navigation": {
+    "deepLinks": {
+      "hosts": [
+        "tasks.example.com"
+      ],
+      "routes": [
+        {
+          "path": "/tasks",
+          "route": "tasks"
+        }
+      ],
+      "schemes": [
+        "featuretour"
+      ]
+    },
+    "notFound": "tasks",
+    "shells": [
+      {
+        "key": "main",
+        "tabs": [
+          {
+            "icon": {
+              "name": "home"
+            },
+            "initialRoute": "tasks",
+            "key": "tasks",
+            "label": "Tasks"
+          },
+          {
+            "icon": {
+              "name": "settings"
+            },
+            "initialRoute": "settings",
+            "key": "settings",
+            "label": {
+              "$expr": "flags.greeting"
+            }
+          }
+        ]
+      }
+    ]
+  },
   "plugins": [
     "tasks"
   ],
+  "push": {
+    "enabled": true
+  },
   "requiredFeatures": "raise",
   "schemaVersion": "1.0.0",
   "securityProfile": "standard",

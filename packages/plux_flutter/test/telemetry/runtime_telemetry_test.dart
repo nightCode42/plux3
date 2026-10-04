@@ -16,16 +16,19 @@ import 'package:plux_flutter/src/render/page_renderer.dart';
 import 'package:plux_flutter/src/state/providers.dart';
 import 'package:plux_flutter/src/sync/sync_engine.dart';
 
+import '../support/entering.dart';
 import '../sync/fake_server.dart';
 
-final class _Renderer implements PageRenderer {
+final class _Renderer with AllowsEveryGuard implements PageRenderer {
   @override
   Widget build(
     BuildContext context,
     ActiveRelease release,
     PageRef page,
-    Map<String, Object?> params,
-  ) => Text('page ${page.route}', textDirection: TextDirection.ltr);
+    Map<String, Object?> params, {
+    bool routed = false,
+    void Function(Object? result)? onPop,
+  }) => Text('page ${page.route}', textDirection: TextDirection.ltr);
 }
 
 /// Always draws 0, so every sampled event is kept.
@@ -142,9 +145,7 @@ void main() {
       server.compressedRequests.where((p) => p.endsWith('IngestEvents')),
       isNotEmpty,
     );
-    await tester.pumpWidget(
-      const PluxScope(child: PluxView('loan-calculator')),
-    );
+    await tester.pumpWidget(const PluxScope(child: PluxView('result')));
     await tester.pumpWidget(const SizedBox());
     rt().didChangeAppLifecycleState(AppLifecycleState.paused);
     await flush(tester);
@@ -156,16 +157,14 @@ void main() {
       'rendering, and leaving ends the stretch of the session '
       '[ANL-001] [RT-015]', (tester) async {
     await start(tester, consent: const PluxConsent(analytics: true));
-    await tester.pumpWidget(
-      const PluxScope(child: PluxView('loan-calculator')),
-    );
+    await tester.pumpWidget(const PluxScope(child: PluxView('result')));
     await tester.pump();
     now = now.add(const Duration(seconds: 3));
     await tester.pumpWidget(const SizedBox());
     rt().didChangeAppLifecycleState(AppLifecycleState.paused);
     await flush(tester);
     final view = only('screen_view');
-    expect(view['route'], 'loan-calculator');
+    expect(view['route'], 'result');
     expect(view['pluginKey'], 'loans');
     expect(fieldsOf(view).keys, containsAll(['duration_ms', 'source_route']));
     final perf = fieldsOf(only('render_perf'));
@@ -194,9 +193,7 @@ void main() {
   testWidgets('withdrawing consent deletes the analytics events not yet '
       'sent [SEC-161] [ANL-003]', (tester) async {
     await start(tester, consent: const PluxConsent(analytics: true));
-    await tester.pumpWidget(
-      const PluxScope(child: PluxView('loan-calculator')),
-    );
+    await tester.pumpWidget(const PluxScope(child: PluxView('result')));
     await tester.pumpWidget(const SizedBox());
     Plux.setConsent(PluxConsent.necessaryOnly);
     rt().telemetry.error(

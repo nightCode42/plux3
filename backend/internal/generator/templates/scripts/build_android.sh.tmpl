@@ -1,0 +1,8 @@
+#!/bin/sh
+# Builds the signed Android App Bundle for the stores. android/key.properties
+# names the upload keystore (README.md, "Release builds"); without it the
+# bundle is signed with the debug key.
+set -eu
+cd "$(dirname "$0")/.."
+flutter pub get
+flutter build appbundle --release

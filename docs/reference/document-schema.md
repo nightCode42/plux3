@@ -62,6 +62,7 @@ An app: its plugins, theme, locales, environments, shared data and policies (SCH
 | `supportedLocales` | list of string | yes |  |
 | `theme` | string | yes | Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). |
 | `entryRoute` | string | yes | App-wide unique route name (SCH-025). |
+| `navigation` | [NavigationPolicy](#navigationpolicy) |  | App-wide navigation: the page for unknown routes, deep links and tabbed shells (NAV-005, NAV-006, NAV-008, NAV-011, ADR-0040). |
 | `plugins` | list of string | yes | Keys of the app's plugins, in display order; each has a directory `plugins/<key>/`. |
 | `environments` | list of [Environment](#environment) | yes |  |
 | `variables` | list of [Field](#field) |  | Non-secret environment variables available in PXL as `env.<name>` (DAT-003). |
@@ -76,7 +77,9 @@ An app: its plugins, theme, locales, environments, shared data and policies (SCH
 | `state` | list of [StateEntry](#stateentry) |  |  |
 | `collections` | list of [Collection](#collection) |  |  |
 | `userContext` | list of [Field](#field) |  | Attributes the host provides about the signed-in user, available in PXL as `user.<name>`. |
+| `hostEvents` | list of [HostEventDecl](#hosteventdecl) |  |  |
 | `telemetry` | [TelemetryPolicy](#telemetrypolicy) |  | What the runtime reports (ANL-003, ADR-0034). |
+| `push` | [PushPolicy](#pushpolicy) |  | Push notifications (NAV-008, ADR-0040): whether the app uses them, so a generated project carries the platform configuration, and the payload key under which a notification names `{route, params}` for `Plux.handlePushPayload`. |
 
 ### AssetEntry
 
@@ -217,6 +220,25 @@ A data source with its value type and design-time mock (SCH-024, DAT-080).
 
 One of `rest`, `graphql`, `websocket`, `sse`, `function`, `database`, `static`.
 
+### DeepLinkPolicy
+
+The links the app answers (NAV-008): its hosts for `https` links and its custom schemes, and path patterns mapped to routes. `https://<host>/p/<route-name>?…` always resolves, so no pattern may start with `/p/`.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `hosts` | list of string |  |  |
+| `schemes` | list of string |  |  |
+| `routes` | list of [DeepLinkRoute](#deeplinkroute) |  |  |
+
+### DeepLinkRoute
+
+A path pattern mapped to a route: literal segments and `{name}` segments, each naming a parameter of the route; query parameters fill the route's other parameters by name, converted to their declared types.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `path` | string | yes |  |
+| `route` | string | yes | App-wide unique route name (SCH-025). |
+
 ### DeviceAPI
 
 A device API a plugin may request (SEC-080).
@@ -303,6 +325,16 @@ The host app build the catalogue describes.
 | `appId` | string |  |  |
 | `version` | string | yes |  |
 | `build` | integer | yes |  |
+
+### HostEventDecl
+
+A typed event plugins send to the host app with `emitHostEvent`; `plux codegen` generates a Dart class for it (HST-013, HST-030, ADR-0039).
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `name` | string | yes | Identifier used in PXL and generated code: lowerCamelCase. |
+| `fields` | list of [Field](#field) |  |  |
+| `description` | string |  | Human-readable description. |
 
 ### Icon
 
@@ -396,6 +428,16 @@ An event the native slot emits.
 | `name` | string | yes |  |
 | `payload` | string |  | Type expression of SCH-010, e.g. `string`, `decimal?`, `list<Transaction>`, `map<string,int>`. |
 
+### NavigationPolicy
+
+App-wide navigation: the page for unknown routes, deep links and tabbed shells (NAV-005, NAV-006, NAV-008, NAV-011, ADR-0040).
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `notFound` | string |  | App-wide unique route name (SCH-025). |
+| `deepLinks` | [DeepLinkPolicy](#deeplinkpolicy) |  | The links the app answers (NAV-008): its hosts for `https` links and its custom schemes, and path patterns mapped to routes. `https://<host>/p/<route-name>?…` always resolves, so no pattern may start with `/p/`. |
+| `shells` | list of [Shell](#shell) |  |  |
+
 ### Node
 
 A node of a page or component tree: a widget or a component instance (SCH-023).
@@ -429,6 +471,7 @@ A page: route, parameters, state, data, lifecycle and node tree (SCH-022). File:
 | `title` | JSON value | yes | A prop value: a literal of the prop's type, or a binding (SCH-011). Literal objects and lists may contain bindings in their fields and items. |
 | `description` | string |  | Human-readable description. |
 | `params` | list of [Param](#param) |  |  |
+| `result` | string |  | Type expression of SCH-010, e.g. `string`, `decimal?`, `list<Transaction>`, `map<string,int>`. |
 | `state` | list of [StateEntry](#stateentry) |  |  |
 | `dataSources` | list of [DataSource](#datasource) |  |  |
 | `lifecycle` | [Lifecycle](#lifecycle) |  | Lifecycle handlers (SCH-022). |
@@ -496,6 +539,15 @@ A plugin: its pages, state, collections and requested capabilities (SCH-021). Fi
 | `collections` | list of [Collection](#collection) |  |  |
 | `dataSources` | list of [DataSource](#datasource) |  |  |
 
+### PushPolicy
+
+Push notifications (NAV-008, ADR-0040): whether the app uses them, so a generated project carries the platform configuration, and the payload key under which a notification names `{route, params}` for `Plux.handlePushPayload`.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `enabled` | boolean | yes |  |
+| `payloadKey` | string |  | The payload key holding `{route, params}`; `plux` when absent. |
+
 ### RequiredFeaturesPolicy
 
 What the compiler does when a release needs a newer runtime than `minRuntimeVersion`: reject the publish, or raise the release's required features with a warning (WGT-004).
@@ -559,6 +611,26 @@ Accessibility semantics of a node (A11Y-002).
 | `button` | boolean |  |  |
 | `liveRegion` | boolean |  |  |
 | `excludeSemantics` | boolean |  |  |
+
+### Shell
+
+A tabbed shell; each tab keeps its own navigation stack, and `switchTab` selects a tab by key (NAV-005, NAV-006).
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `key` | string | yes | Human-readable lower-kebab slug, unique within its parent (SCH-002). Files in the Git layout are named after it. |
+| `tabs` | list of [ShellTab](#shelltab) | yes |  |
+
+### ShellTab
+
+A tab of a shell: its label, icon and the route it opens with.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `key` | string | yes | Human-readable lower-kebab slug, unique within its parent (SCH-002). Files in the Git layout are named after it. |
+| `label` | JSON value | yes | A prop value: a literal of the prop's type, or a binding (SCH-011). Literal objects and lists may contain bindings in their fields and items. |
+| `icon` | JSON value | yes | A prop value: a literal of the prop's type, or a binding (SCH-011). Literal objects and lists may contain bindings in their fields and items. |
+| `initialRoute` | string | yes | App-wide unique route name (SCH-025). |
 
 ### SlotFill
 

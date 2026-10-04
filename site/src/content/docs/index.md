@@ -18,9 +18,16 @@ and renders it as native widgets.
 - [Run it locally](../../../../docs/guides/run-locally.md): everything you can run on your
   machine — the stack and app, the CLI, tests, end-to-end runs, benchmarks and size.
 - [Host app guide](../../../../docs/guides/host-app.md): add the runtime to a Flutter app, start
-  it, show published pages and control sync, theme and consent.
+  it, show published pages, mix them with native screens and widgets, hand it links and
+  notifications, embed it in native Android and iOS apps, and control sync, theme and consent.
+- [Routing guide](../../../../docs/guides/routing.md): route names, parameters and results,
+  the host's screens, guards, links and notifications.
+- [Typed API and host setup](../../../../docs/guides/typed-api.md): `plux init`, `plux codegen`
+  and the native catalogue.
+- [No-code apps](../../../../docs/guides/no-code-apps.md): generate, build and ship the store
+  project of an app built entirely in Plux with `plux create`.
 - The [starter app](https://github.com/nightCode42/plux3/tree/main/apps/starter) is a complete
-  host to copy from; the ten-minute quick start arrives with Phase 4.
+  host to copy from; the ten-minute quick start arrives with Phase 10.
 
 ## Reference
 

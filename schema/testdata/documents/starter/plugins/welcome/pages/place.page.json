@@ -1,0 +1,132 @@
+{
+  "id": "01e0c450-6c00-7000-8000-00000000006a",
+  "key": "place",
+  "kind": "page",
+  "pageKind": "screen",
+  "params": [
+    {
+      "mock": "Harbour",
+      "name": "name",
+      "required": true,
+      "type": "string"
+    }
+  ],
+  "root": {
+    "id": "01e0c450-6c00-7000-8000-00000000006b",
+    "slots": {
+      "appBar": {
+        "id": "01e0c450-6c00-7000-8000-00000000006c",
+        "slots": {
+          "title": {
+            "id": "01e0c450-6c00-7000-8000-00000000006d",
+            "props": {
+              "data": "Place"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "id": "01e0c450-6c00-7000-8000-00000000006e",
+        "slots": {
+          "child": {
+            "children": [
+              {
+                "id": "01e0c450-6c00-7000-8000-00000000006f",
+                "props": {
+                  "data": {
+                    "$expr": "\"Place: \" + params.name"
+                  }
+                },
+                "type": "Text"
+              },
+              {
+                "events": {
+                  "onPressed": {
+                    "steps": [
+                      {
+                        "action": "sharePlace",
+                        "id": "share",
+                        "input": {
+                          "text": {
+                            "$expr": "\"Place: \" + params.name"
+                          }
+                        },
+                        "next": "tell"
+                      },
+                      {
+                        "action": "emitHostEvent",
+                        "id": "tell",
+                        "input": {
+                          "event": "placeShared",
+                          "payload": {
+                            "name": {
+                              "$expr": "params.name"
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01e0c450-6c00-7000-8000-000000000091",
+                "slots": {
+                  "child": {
+                    "id": "01e0c450-6c00-7000-8000-000000000092",
+                    "props": {
+                      "data": "Share"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "TextButton"
+              },
+              {
+                "events": {
+                  "onPressed": {
+                    "steps": [
+                      {
+                        "action": "navigate",
+                        "id": "go",
+                        "input": {
+                          "params": {
+                            "name": {
+                              "$expr": "params.name"
+                            }
+                          },
+                          "route": "profile"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01e0c450-6c00-7000-8000-000000000093",
+                "slots": {
+                  "child": {
+                    "id": "01e0c450-6c00-7000-8000-000000000094",
+                    "props": {
+                      "data": "Profile"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "TextButton"
+              }
+            ],
+            "id": "01e0c450-6c00-7000-8000-000000000090",
+            "props": {
+              "mainAxisSize": "min"
+            },
+            "type": "Column"
+          }
+        },
+        "type": "Center"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "place",
+  "schemaVersion": "1.0.0",
+  "title": "Place"
+}

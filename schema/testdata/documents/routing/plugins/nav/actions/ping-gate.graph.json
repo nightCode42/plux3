@@ -1,0 +1,40 @@
+{
+  "id": "01f0c450-6c00-7000-8000-000000000227",
+  "key": "ping-gate",
+  "kind": "actionGraph",
+  "output": "GuardResult",
+  "page": "01f0c450-6c00-7000-8000-00000000021c",
+  "schemaVersion": "1.0.0",
+  "steps": [
+    {
+      "action": "condition",
+      "branches": {
+        "else": "no",
+        "then": "yes"
+      },
+      "id": "gate",
+      "input": {
+        "when": {
+          "$expr": "user.tier == \"loop\""
+        }
+      }
+    },
+    {
+      "action": "stop",
+      "id": "yes",
+      "input": {
+        "result": {
+          "decision": "redirect",
+          "route": "pong"
+        }
+      }
+    },
+    {
+      "action": "stop",
+      "id": "no",
+      "input": {
+        "result": "allow"
+      }
+    }
+  ]
+}

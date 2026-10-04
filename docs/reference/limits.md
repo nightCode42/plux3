@@ -7,9 +7,9 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | Key | Unit | Default | Warning | Maximum | Scopes | Phase | Requirements | Description |
 |---|---|---|---|---|---|---|---|---|
 | `action.forEachItems` | count | 1000 | 80% | 100000 | installation, organization, app, plugin | P5 | ACT-005 | Items one forEach step may iterate over. |
-| `action.runTimeout` | milliseconds | 120000 | 80% | 3600000 | installation, organization, app, plugin | P5 | ACT-005 | Time one action run may take. |
-| `action.stepTimeout` | milliseconds | 30000 | 80% | 600000 | installation, organization, app, plugin | P5 | ACT-005 | Time one action step may take. |
-| `action.stepsPerRun` | count | 10000 | 80% | 100000 | installation, organization, app, plugin | P5 | ACT-005 | Steps one action run may execute. |
+| `action.runTimeout` | milliseconds | 120000 | 80% | 3600000 | installation, organization, app, plugin | P4 | ACT-005 | Time one action run may take. |
+| `action.stepTimeout` | milliseconds | 30000 | 80% | 600000 | installation, organization, app, plugin | P4 | ACT-005 | Time one action step may take. |
+| `action.stepsPerRun` | count | 10000 | 80% | 100000 | installation, organization, app, plugin | P4 | ACT-005 | Steps one action run may execute. |
 | `api.pageSize` | count | 100 | 80% | 1000 | installation | P2 | SRV-004 | Items one page of a list call returns; a call asking for more gets this many, and one asking for none gets this many too. |
 | `api.requestSize` | bytes | 8388608 | 80% | 268435456 | installation | P2 | SEC-104 | Size of one API request body, refused before a handler reads it, and of one request message once decompressed. |
 | `api.requestsPerMinute` | count | 600 | 80% | 100000 | installation, organization | P2 | SRV-065 | API calls one authenticated principal (a user or a token) may make per minute. |

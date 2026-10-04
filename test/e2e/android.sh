@@ -2,8 +2,9 @@
 # SPDX-FileCopyrightText: 2026 Plux contributors
 # SPDX-License-Identifier: Apache-2.0
 #
-# The starter app's end-to-end flows on an Android emulator (QA-006), run
-# by `make e2e-android` in CI. See test/e2e/README.md.
+# The starter app's end-to-end flows on an Android emulator (QA-006), and
+# the Kotlin add-to-app host's (HST-033), run by `make e2e-android` in CI.
+# See test/e2e/README.md.
 #
 #   android.sh [api]   API level of the system image (default 35; 26 or
 #                      later: the API 24 kernel panics on the emulator,
@@ -14,6 +15,9 @@
 # forwards the device's loopback port of the test server to this machine
 # (adb reverse), and runs the Go driver with PLUX_E2E_DEVICE, which builds
 # the app for the emulator and runs integration_test/app_test.dart there.
+# While the emulator boots, it builds the Go driver, the app's Android
+# project and the add-to-app host, so the builds the flows start recompile
+# only the Dart code with their defines (ADR-0043).
 # Cloud development sessions do not start emulators (docs/WORKLOG.md,
 # device testing); this runs on GitHub's runners.
 set -euo pipefail
@@ -42,15 +46,36 @@ echo no | "$tools/avdmanager" create avd --force --name "$avd" --package "$image
 
 adb=$sdk/platform-tools/adb
 log=$out/emulator-$api.log
+# The adb server, and its key in ~/.android, exist before the emulator
+# starts, so the emulator's registration with the server cannot race the
+# server's first start. Suspected in CI run 36966274717, where the
+# emulator reported its boot complete and adb never answered for it; fail
+# now prints the devices adb sees.
+"$adb" start-server >/dev/null
 "$sdk/emulator/emulator" -avd "$avd" -no-window -no-audio -no-boot-anim -no-snapshot \
 	-gpu swiftshader_indirect -port 5554 -memory 4096 -no-metrics >"$log" 2>&1 &
 emulator=$!
 serial=emulator-5554
 trap '"$adb" -s "$serial" emu kill >/dev/null 2>&1 || kill "$emulator" 2>/dev/null || true' EXIT
 
-# fail <message>: the emulator's log, then the message.
+prebuild_log=$out/prebuild-$api.log
+(
+	cd "$root/backend" && go test -count=1 -run '^$' ./internal/server
+	cd "$root/apps/starter" && flutter build apk --debug
+	# The add-to-app host with the Gradle wrapper flutter pub get writes
+	# into the module (TestAddToAppAgainstTheServer builds it again, with
+	# the baseline it pulls).
+	cd "$root/apps/add_to_app/plux_module" && flutter pub get
+	cd "$root/apps/add_to_app/android_host" && ../plux_module/.android/gradlew --no-daemon --console=plain \
+		-Ptarget-platform=android-x64 :app:assembleDebug :app:assembleDebugAndroidTest
+) >"$prebuild_log" 2>&1 &
+prebuild=$!
+
+# fail <message>: the emulator's log, the devices adb sees, then the
+# message.
 fail() {
 	echo "--- $log (last 80 lines)"; tail -n 80 "$log" || true
+	echo "--- adb devices"; timeout 10 "$adb" devices -l || true
 	echo "✗ $1"; exit 1
 }
 
@@ -67,6 +92,10 @@ while [ "$SECONDS" -lt "$deadline" ]; do
 	sleep 2
 done
 $booted || fail "the emulator did not boot in 10 minutes"
+if ! wait "$prebuild"; then
+	echo "--- $prebuild_log (last 80 lines)"; tail -n 80 "$prebuild_log" || true
+	echo "✗ building the driver or the app failed"; exit 1
+fi
 for s in window_animation_scale transition_animation_scale animator_duration_scale; do
 	"$adb" -s "$serial" shell settings put global "$s" 0
 done

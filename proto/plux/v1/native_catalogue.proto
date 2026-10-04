@@ -1,0 +1,77 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package plux.v1;
+
+import "google/protobuf/timestamp.proto";
+import "plux/v1/common.proto";
+
+option go_package = "github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1";
+
+// NativeCatalogueService stores the native catalogue of each build of the
+// host app: the native routes, slots and custom actions it registers for
+// plugins (CLI-006, WGT-032, ADR-0041). Publishing checks the release's
+// plugins against every build's catalogue, and devices of a build that
+// cannot run a release keep the newest one they can (REL-080).
+service NativeCatalogueService {
+  // UploadNativeCatalogue stores the catalogue of one host build; `plux
+  // native sync` calls it. A build's catalogue never changes: the same
+  // content again stores nothing, and other content is refused
+  // (PLX-8032). It needs release.publish, since it changes which releases
+  // the build's devices receive.
+  rpc UploadNativeCatalogue(UploadNativeCatalogueRequest) returns (UploadNativeCatalogueResponse) {}
+  // GetNativeCatalogue returns a host build's catalogue.
+  rpc GetNativeCatalogue(GetNativeCatalogueRequest) returns (GetNativeCatalogueResponse) {}
+  // ListHostBuilds lists an app's host builds with a catalogue, newest
+  // upload first, with how many devices report each.
+  rpc ListHostBuilds(ListHostBuildsRequest) returns (ListHostBuildsResponse) {}
+}
+
+// HostBuild is one build of the host app with its native catalogue.
+message HostBuild {
+  string app_id = 1;
+  // host_build is the string the build's devices report as
+  // PluxConfig.hostBuild, such as "1.4.0+52".
+  string host_build = 2;
+  // sha256 is the hex SHA-256 of the canonical catalogue (RFC 8785).
+  string sha256 = 3;
+  Actor uploaded_by = 4;
+  google.protobuf.Timestamp uploaded_at = 5;
+  // devices is how many registered devices report this build.
+  int64 devices = 6;
+}
+
+message UploadNativeCatalogueRequest {
+  string app_id = 1;
+  string host_build = 2;
+  // catalogue is the native catalogue document, plux.catalogue.json, as
+  // JSON.
+  bytes catalogue = 3;
+}
+message UploadNativeCatalogueResponse {
+  HostBuild host_build = 1;
+  // created is false when the build's catalogue was already stored, with
+  // the same content.
+  bool created = 2;
+}
+
+message GetNativeCatalogueRequest {
+  string app_id = 1;
+  string host_build = 2;
+}
+message GetNativeCatalogueResponse {
+  HostBuild host_build = 1;
+  // catalogue is the stored canonical JSON.
+  bytes catalogue = 2;
+}
+
+message ListHostBuildsRequest {
+  string app_id = 1;
+  Page page = 2;
+}
+message ListHostBuildsResponse {
+  repeated HostBuild host_builds = 1;
+  PageResult page = 2;
+}

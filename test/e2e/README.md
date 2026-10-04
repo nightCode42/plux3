@@ -14,6 +14,22 @@ the Go driver (`TestStarterAppAgainstTheServer`) starts, publishes the
 | Android emulator, API 26 and 35 | `make e2e-android ANDROID_API=<level>` | CI job *Device end-to-end (Android)* |
 | iOS simulator: the newest iPhone and runtime | `make e2e-ios` (`E2E_IOS_MAJOR=18` for another) | CI job *Device end-to-end (iOS)* |
 
+Beside them, `TestGeneratedAppAgainstTheServer` generates the starter fixture's project
+with `plux create` and proves it (`GEN-002`, `GEN-005`, `GEN-006`;
+[ADR-0024](../../docs/adr/0024-no-code-generated-projects.md)). On the host it runs the
+generated app from its embedded release, from a newer release after a relaunch, and
+through a page that uses native code added to the project. On a device it also runs the
+project's own `integration_test/app_test.dart` there, which waits for the entry page.
+
+`TestAddToAppAgainstTheServer` proves the runtime inside a Flutter module embedded in
+native apps (`HST-033`; [`apps/add_to_app`](../../apps/add_to_app/README.md)): a native
+screen opens a Plux page by route, rendered from the module's baseline while the server is
+out of reach; sync applies a newer release once no Plux page is open; a plugin page opens
+the host's native screen through a native route. Each flow runs in a process of its own.
+On the host the module's Dart test plays the native host; on the emulator the Kotlin
+host's UiAutomator tests run, one instrumentation per flow, and on the simulator the Swift
+host's XCUITests, one `xcodebuild` run per flow, after `pod install`.
+
 On a device the driver sets `PLUX_E2E_DEVICE`, and the flows run in the app
 built for that device: the platform's key store (Android Keystore, iOS
 Keychain) holds the device credential and the platform's HTTP client (Cronet,
@@ -37,6 +53,13 @@ events reached the server.
   results. flutter test finds an iOS simulator app only through one line of
   the simulator's log, which it often misses on CI runners
   ([ADR-0035](../../docs/adr/0035-device-tests-in-ci.md)).
+
+While the emulator boots, `android.sh` builds the Go driver and the starter
+app's Android project, so the build the flows start recompiles only the Dart
+code with their defines; the CI job restores Gradle's caches, which only runs
+that are not pull requests save ([ADR-0043](../../docs/adr/0043-affected-only-ci.md)).
+`ios.sh` keeps its steps in order: on the three-core macOS runner an extra
+Xcode build during the simulator's boot cost more than it saved.
 
 Both need `PLUX_TEST_DATABASE_URL` (see
 [testing.md](../../docs/engineering/testing.md)). They use no third-party

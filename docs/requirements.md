@@ -1,9 +1,9 @@
 # Plux — System Requirements Specification
 
 **Document ID:** `SRS-PLUX-001`
-**Version:** 1.1.9
+**Version:** 1.2.2
 **Status:** Draft — living document, revised as implementation proceeds
-**Date:** 2026-10-01
+**Date:** 2026-10-03
 **Applies to:** Plux Schema, Plux Compiler, Plux Server, Plux Functions, `plux_flutter` runtime, Plux Dev app, Plux Studio, Plux CLI, Plux AI
 
 > **Plux — Plugin Experience.** Build native Flutter screens visually, compile them into signed binary plugins, and ship them to every device in seconds — with high-assurance security, zero parse cost, and full control over who changes what.
@@ -350,13 +350,13 @@ flowchart LR
 | **P1** | **Schema and compiler** | JSON Schema for the document model (§7); widget descriptor registry and generated coverage table (§8); FlatBuffers bundle schema and container format (§9); deterministic Go compiler with validation, PXL type-checking and optimisation; diagnostics with codes and JSON paths; generated types for Go, Dart and TypeScript; conformance test vectors. | Golden tests pass; the same input produces byte-identical output across runs and platforms; every Layer 1 widget in scope for P3 has a descriptor. |
 | **P2** | **Backend core** | Plux Server (`api` and `worker` roles); ConnectRPC API (§11); PostgreSQL schema and migrations; object storage; organisations, apps, plugins, pages; drafts with snapshots and per-plugin editing locks; publish pipeline (validate → compile → sign → store); immutable plugin versions and app releases; delta generation against every older version; signed manifest endpoint; CLI `login`, `validate`, `publish`, `pull`; Docker Compose stack; baseline logging, metrics and tracing. | A plugin authored as JSON is published via the CLI; the manifest and deltas are fetched and verified by a test client; compose stack starts with one command. |
 | **P3** | **Runtime rendering** | `plux_flutter` package on Riverpod; memory-mapped zero-copy bundle reader; FlatBuffers verifier; signature and hash verification; renderer for P3 widget set; theming and assets; **sync of all plugins at app start** with deltas, manual sync API, atomic activation, last-known-good rollback, baseline bundles; error boundaries; minimal example host app. | Example host app renders published pages offline; render and sync benchmarks recorded; corrupted and tampered bundles are rejected in tests. |
-| **P4** | **Routing and host integration** | Route addressing; plugin → plugin and plugin → native navigation; native → plugin screen by app-wide route name; **mixed screens**: native slots inside plugin pages and `PluxView` inside native screens, with shared exposed state; typed parameters and results; `go_router`/`auto_route` discovery; deep links; guards; one-place registration of native routes, widgets and actions without changes to existing code; `plux native scan`; `plux codegen` typed routes; **`plux create`** generated projects for no-code apps. | The example host app mixes native and plugin content in both directions — across screens and within one screen — with typed routes; a generated project builds and runs unchanged; unknown routes and bad parameters fail safely. |
-| **P5** | **Actions, state, data, local DB, animation** | Action graph engine and built-in catalogue (Appendix D); PXL VM; Riverpod-based scoped state with fine-grained rebuilds; forms and validators; data sources (REST, GraphQL, WebSocket, SSE) with caching, pagination and offline outbox; local database adapter layer (Drift default, others pluggable); animations (implicit, timelines, transitions, Hero, Lottie, Rive). | A complete multi-page flow (login → dashboard → form → result) built from JSON alone runs on device with API calls, local persistence and animations, meeting §30 performance targets. |
+| **P4** | **Routing and host integration** | The action-graph engine core with the navigation and host actions (Appendix D); route addressing; plugin → plugin and plugin → native navigation; native → plugin screen by app-wide route name; **mixed screens**: native slots inside plugin pages and `PluxView` inside native screens, with shared exposed state; typed parameters and results; `go_router`/`auto_route` discovery; deep links; guards; one-place registration of native routes, widgets and actions without changes to existing code; `plux native scan`; `plux codegen` typed routes; **`plux create`** generated projects for no-code apps. | The example host app mixes native and plugin content in both directions — across screens and within one screen — with typed routes; a generated project builds and runs unchanged; unknown routes and bad parameters fail safely. |
+| **P5** | **Actions, state, data, local DB, animation** | Action catalogue completion on the P4 engine core (Appendix D); PXL VM; Riverpod-based scoped state with fine-grained rebuilds; forms and validators; data sources (REST, GraphQL, WebSocket, SSE) with caching, pagination and offline outbox; local database adapter layer (Drift default, others pluggable); animations (implicit, timelines, transitions, Hero, Lottie, Rive). | A complete multi-page flow (login → dashboard → form → result) built from JSON alone runs on device with API calls, local persistence and animations, meeting §30 performance targets. |
 | **P6** | **Security hardening** | Hardware-backed device keys; Play Integrity, Android Key Attestation and App Attest; device registration and assurance levels; **DPoP (RFC 9449)** on every request with nonces and replay protection; sender-constrained tokens; certificate pinning; TUF-style update metadata and key rotation; confidential (encrypted) bundles; RASP; secure widgets; encrypted local storage; security profiles; audit log; threat model; OWASP MASVS L2 + resilience checklist. | Security test suite passes: replayed, forged, mis-bound and expired requests are rejected; tampered and rolled-back bundles are rejected; MASVS checklist complete with evidence. |
 | **P7** | **Plux Functions** | Interface-only Go SDK; standard-Go WASM build pipeline; `fnrunner` role on `wazero` with resource limits and deny-by-default capabilities; **on-device execution** through a sandboxed WASM interpreter for functions placed on the device; typed schemas for binding; versioning and aliases; server invocation protected by DPoP and assurance levels; `plux fn` CLI. | A loan calculator runs on the device offline and on the server with a trusted result; limit, fuzz and isolation tests pass on both; latency targets met. |
 | **P8** | **Localisation and accessibility** | ICU MessageFormat and CLDR; English, German, Arabic and Amharic at launch; non-Gregorian calendar support (Ethiopian first); RTL; runtime locale switch; translation workflow and import/export; WCAG 2.2 AA checks at publish; accessibility report. | One plugin runs in all launch locales and RTL; publish-time accessibility checks pass on reference apps. |
 | **P9** | **Enterprise and operations** | Teams, roles and custom roles; SSO (OIDC, SAML) and SCIM; generic approval engine with four-eyes and step-up; break-glass; change freezes; environments and promotion; staged rollouts, targeting, scheduling, health-based auto-pause and rollback; kill switch; experiment and feature-flag engine; telemetry ingestion and dashboards; observability stack; Helm chart; HA; backups; air-gapped install; license files. | A self-hosted HA install passes a scripted regulated-industry audit walkthrough: approvals, rollout, kill switch, rollback, audit export and "what did the user see" reconstruction. |
-| **P10** | **Dev app and live debugging** | Plux Dev app; QR pairing; live draft push with incremental compile; streaming of logs, action traces (process flow), state, network, function calls, sync and performance; on-device inspect mode; mocks and network simulation; `plux_devtools` for developers' own host apps (debug builds only). | Edit-to-device latency target met; a Studio-less developer can debug a flow using the CLI viewer; devtools proven absent from release builds. |
+| **P10** | **Dev app and live debugging** | The ten-minute quick start (`HST-034`, `DX-001`); Plux Dev app; QR pairing; live draft push with incremental compile; streaming of logs, action traces (process flow), state, network, function calls, sync and performance; on-device inspect mode; mocks and network simulation; `plux_devtools` for developers' own host apps (debug builds only). | Edit-to-device latency target met; a Studio-less developer can debug a flow using the CLI viewer; devtools proven absent from release builds. |
 | **P11** | **Plux Studio** | Studio shell, design system and themes; **Plux Canvas** (WebGL design surface with a Flutter-compatible layout engine and conformance suite); apps grid; plugin graph with bundled arrows; plugin canvas with ghost screens; no-code project generation and shell-update detection; screen editor with panels, full-screen overlays and bottom drawer; multi-device frames; components and templates; release, approval, experiment, function, localisation, design system, data, analytics, device and admin screens. | A complete app is built in Studio alone, previewed on a paired device, approved and released; Studio performance targets met. |
 | **P12** | **AI generation** | Provider-agnostic AI adapter with structured JSON output; prompt → page/plugin/flow; screenshot → page; edit selection; actions, translations, mock data and function scaffolds; review-before-apply; evaluation suite; MCP server. | ≥ 95% of the evaluation prompts produce schema-valid, publishable output with a supported free provider. **Plux 1.0 is tagged at the end of P12.** |
 | **P13** | **Payments** | Payment action and server-side provider interface; adapters for Telebirr, Chapa, M-Pesa and Stripe; SCA transaction signing; webhooks; reconciliation. | Sandbox payments complete end to end for every adapter with SCA; PCI DSS scope stays at SAQ A. |
@@ -675,10 +675,10 @@ The full catalogue with phases is in Appendix C.
 |---|---|---|---|---|
 | `WGT-020` | P3 | MUST | Layer 2 components **MUST** be implemented in Dart inside the Plux packages using only Layer 1 widgets, the theme, and runtime services, and **MUST** each have a descriptor, widget tests, golden tests in light/dark/RTL/200% text, and a screen-reader test script. | DONE |
 | `WGT-021` | P3 | SHOULD | Heavy Layer 2 components with third-party dependencies (charts, maps, Lottie, Rive, video, camera, QR scanning) **SHOULD** live in optional packages so that apps pay only for what they use (`RT-060`). | SPEC |
-| `WGT-030` | P4 | MUST | Host apps **MUST** be able to expose existing widgets as **native slots** (Layer 3) without modifying them: the widget class names are listed in `plux.yaml`, `plux native scan` derives their prop descriptors from constructor parameters using the Dart analyzer, and the builders are registered in one place at startup. Studio **MUST** show native slots in its catalogue with their props. | SPEC |
+| `WGT-030` | P4 | MUST | Host apps **MUST** be able to expose existing widgets as **native slots** (Layer 3) without modifying them: the widget class names are listed in `plux.yaml`, `plux native scan` derives their prop descriptors from constructor parameters using the Dart analyzer, and the builders are registered in one place at startup. Studio **MUST** show native slots in its catalogue with their props. | WIP |
 | `WGT-031` | P11 | MUST | On the Studio canvas a native slot **MUST** render as a labelled placeholder at its declared or constrained size, and **SHOULD** show a screenshot of the real widget captured from a paired device (`DEV-033`). | SPEC |
-| `WGT-033` | P4 | MUST | A native slot **MUST** receive its props from plugin bindings (reactively, like any node), **MUST** be able to emit typed events into the page's action graphs, and **MUST** participate in layout like any other child (constraints in, size out). A failure inside a native slot is contained by the page's error boundary (`RT-020`). | SPEC |
-| `WGT-032` | P4 | MUST | Publishing a plugin that uses a custom widget or custom action **MUST** be validated against the native catalogues of the host app builds targeted by the release; builds lacking the widget receive the last compatible release (`REL-080`). | SPEC |
+| `WGT-033` | P4 | MUST | A native slot **MUST** receive its props from plugin bindings (reactively, like any node), **MUST** be able to emit typed events into the page's action graphs, and **MUST** participate in layout like any other child (constraints in, size out). A failure inside a native slot is contained by the page's error boundary (`RT-020`). | DONE |
+| `WGT-032` | P4 | MUST | Publishing a plugin that uses a custom widget or custom action **MUST** be validated against the native catalogues of the host app builds targeted by the release; builds lacking the widget receive the last compatible release (`REL-080`). | DONE |
 
 ---
 
@@ -938,7 +938,7 @@ Branching is deliberately **not** part of the model (ADR-0015). Each plugin has 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `RT-020` | P3 | MUST | Every page and every component instance **MUST** be wrapped in an error boundary. A build, decode or PXL error **MUST** render a themed fallback (configurable per app and plugin), log the error with its node path, report it (`ANL-040`), and **MUST NOT** crash the host app or affect other pages. Layout and paint errors are contained by Flutter to the render object that raised them and reach the host's `FlutterError.onError` (ADR-0031). | DONE |
-| `RT-021` | P3 | MUST | Uncaught errors in action execution **MUST** be contained to the action run, routed to the nearest `onError` handler (`ACT-020`), and reported. | SPEC |
+| `RT-021` | P3 | MUST | Uncaught errors in action execution **MUST** be contained to the action run, routed to the nearest `onError` handler (`ACT-020`), and reported. | WIP |
 | `RT-022` | P3 | MUST | A plugin disabled by kill switch or failing verification **MUST** render its declared fallback page, or the app-level fallback, for every route into it. | DONE |
 
 ### 12.4 Web target (withdrawn)
@@ -955,7 +955,7 @@ The Studio canvas no longer uses a Flutter Web build of the runtime (ADR-0013); 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `RT-060` | P3 | MUST | Optional capabilities **MUST** ship as separate packages so apps pay only for what they use: `plux_flutter` (core), `plux_db_drift`, `plux_lottie`, `plux_rive`, `plux_maps`, `plux_charts`, `plux_media`, `plux_scanner`, `plux_security` (RASP), `plux_payments`, `plux_devtools` (debug only). The on-device function interpreter **MUST** be part of an optional package (`plux_functions`) so apps that do not place functions on the device do not ship it. | WIP |
-| `RT-061` | P3 | MUST | The core package **MUST** add, per ABI (arm64-v8a, armeabi-v7a, x86_64), ≤ 3 MiB to what Google Play downloads from a release App Bundle and ≤ 6.5 MiB to a release APK, and ≤ 3 MiB to an iOS IPA (thinned, arm64), measured in CI against a blank Flutter app (ADR-0036). | DONE |
+| `RT-061` | P3 | MUST | The core package **MUST** add, per ABI (arm64-v8a, armeabi-v7a, x86_64), ≤ 4 MiB to what Google Play downloads from a release App Bundle and ≤ 10 MiB to a release APK, and ≤ 3 MiB to an iOS IPA (thinned, arm64), measured in CI against a blank Flutter app (ADR-0036). | DONE |
 
 ---
 
@@ -969,40 +969,40 @@ A Plux screen is addressed by its **app-wide unique route name** with typed para
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `NAV-001` | P4 | MUST | Any plugin page **MUST** be able to navigate to any page of any plugin in the same app, with typed parameters checked at compile time (`SCH-040`). | SPEC |
-| `NAV-002` | P4 | MUST | Any plugin page **MUST** be able to navigate to any native route declared in the native catalogue, with typed parameters and an optional typed result. | SPEC |
-| `NAV-003` | P4 | MUST | Native code **MUST** be able to open any plugin page from anywhere by route name only — `Plux.open(context, 'loan-calculator', params)` — without knowing which plugin contains it, (returning a typed `Future` result when the page pops with a value) and via `PluxScreens` generated by `plux codegen` (`HST-030`). | SPEC |
-| `NAV-004` | P4 | MUST | Native code **MUST** be able to embed a plugin page or exported component inline inside any native widget tree with `PluxView('<route or component name>')` — again without naming a plugin — with typed inputs, events back to native code, its own error boundary and sizing modes (intrinsic, fixed, expand). | SPEC |
-| `NAV-005` | P4 | MUST | Navigation operations **MUST** include push, replace, pop (with result), pop until route, clear stack and push, present as dialog / bottom sheet / full-screen dialog, and switch tab in a tabbed shell. | SPEC |
-| `NAV-006` | P4 | MUST | The runtime **MUST** integrate with Navigator 2.0 and **MUST** ship an adapter for `go_router` (Plux pages as routes, shells with independent tab stacks); an adapter for `auto_route` **SHOULD** be provided. Apps using plain `Navigator` **MUST** also work. | SPEC |
-| `NAV-007` | P4 | MUST | Parameters **MUST** be validated at runtime on entry; missing or invalid parameters **MUST** render the error fallback and report `PLX-4101`, never crash. | SPEC |
-| `NAV-008` | P4 | MUST | Deep links (`https://<host>/p/<route-name>?…` and custom schemes) and push-notification payloads **MUST** be resolvable to Plux routes through a documented mapping, with guards applied. | SPEC |
-| `NAV-009` | P4 | MUST | Route guards **MUST** support: authentication required (delegated to the host, `HST-010`), minimum assurance level (`SEC-007`), feature flag, kill switch and custom PXL conditions, each with a redirect or fallback. | SPEC |
-| `NAV-010` | P4 | MUST | Page transitions **MUST** be configurable per route (platform default, fade, slide in four directions, scale, shared axis, none, or a custom timeline) and **MUST** support Android predictive back. | SPEC |
-| `NAV-011` | P4 | MUST | Unknown routes **MUST** resolve to a configurable not-found page and report `PLX-4100`. | SPEC |
-| `NAV-012` | P4 | MUST | Every navigation **MUST** emit a `screen_view` telemetry event with source and target routes (`ANL-001`). | SPEC |
+| `NAV-001` | P4 | MUST | Any plugin page **MUST** be able to navigate to any page of any plugin in the same app, with typed parameters checked at compile time (`SCH-040`). | DONE |
+| `NAV-002` | P4 | MUST | Any plugin page **MUST** be able to navigate to any native route declared in the native catalogue, with typed parameters and an optional typed result. | DONE |
+| `NAV-003` | P4 | MUST | Native code **MUST** be able to open any plugin page from anywhere by route name only — `Plux.open(context, 'loan-calculator', params)` — without knowing which plugin contains it, (returning a typed `Future` result when the page pops with a value) and via `PluxScreens` generated by `plux codegen` (`HST-030`). | DONE |
+| `NAV-004` | P4 | MUST | Native code **MUST** be able to embed a plugin page or exported component inline inside any native widget tree with `PluxView('<route or component name>')` — again without naming a plugin — with typed inputs, events back to native code, its own error boundary and sizing modes (intrinsic, fixed, expand). | DONE |
+| `NAV-005` | P4 | MUST | Navigation operations **MUST** include push, replace, pop (with result), pop until route, clear stack and push, present as dialog / bottom sheet / full-screen dialog, and switch tab in a tabbed shell. | DONE |
+| `NAV-006` | P4 | MUST | The runtime **MUST** integrate with Navigator 2.0 and **MUST** ship an adapter for `go_router` (Plux pages as routes, shells with independent tab stacks); an adapter for `auto_route` **SHOULD** be provided. Apps using plain `Navigator` **MUST** also work. | DONE |
+| `NAV-007` | P4 | MUST | Parameters **MUST** be validated at runtime on entry; missing or invalid parameters **MUST** render the error fallback and report `PLX-4101`, never crash. | DONE |
+| `NAV-008` | P4 | MUST | Deep links (`https://<host>/p/<route-name>?…` and custom schemes) and push-notification payloads **MUST** be resolvable to Plux routes through a documented mapping, with guards applied. | DONE |
+| `NAV-009` | P4 | MUST | Route guards **MUST** support: authentication required (delegated to the host, `HST-010`), minimum assurance level (`SEC-007`), feature flag, kill switch and custom PXL conditions, each with a redirect or fallback. | WIP |
+| `NAV-010` | P4 | MUST | Page transitions **MUST** be configurable per route (platform default, fade, slide in four directions, scale, shared axis, none, or a custom timeline) and **MUST** support Android predictive back. | WIP |
+| `NAV-011` | P4 | MUST | Unknown routes **MUST** resolve to a configurable not-found page and report `PLX-4100`. | DONE |
+| `NAV-012` | P4 | MUST | Every navigation **MUST** emit a `screen_view` telemetry event with source and target routes (`ANL-001`). | DONE |
 
 ### 13.2 Host API
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `HST-001` | P3 | MUST | The host API **MUST** provide: `initialize`, `open`, `PluxView`, `sync`, `syncEvents`, `nativeRoutes`, `nativeSlots` and `nativeActions` registration, `setAuthDelegate`, `setUserContext`, `events` (typed events emitted by plugins), exposed state read/write, `setLocale`, `setThemeMode`, `setConsent` and `dispose` (Appendix I). | WIP |
-| `HST-010` | P4 | MUST | Host apps **MUST** supply an **auth delegate** that provides the end-user access token for data sources and functions, refreshes it on `401`, and receives logout signals. Plux **MUST NOT** implement end-user login itself. | SPEC |
-| `HST-011` | P4 | MUST | `setUserContext` **MUST** accept a pseudonymous user ID and targeting attributes (tier, segment, region…) used for rollouts and experiments; attributes are never sent to analytics unless declared non-sensitive. | SPEC |
+| `HST-010` | P4 | MUST | Host apps **MUST** supply an **auth delegate** that provides the end-user access token for data sources and functions, refreshes it on `401`, and receives logout signals. Plux **MUST NOT** implement end-user login itself. | WIP |
+| `HST-011` | P4 | MUST | `setUserContext` **MUST** accept a pseudonymous user ID and targeting attributes (tier, segment, region…) used for rollouts and experiments; attributes are never sent to analytics unless declared non-sensitive. | DONE |
 | `HST-012` | P3 | MUST | Plux pages **MUST** inherit the host's `ThemeData` by default and **MAY** override it with the app's Plux theme or a white-label overlay (`THM-003`). | DONE |
-| `HST-013` | P5 | MUST | Plugins **MUST** be able to emit typed events to the host (e.g. `loanApplicationSubmitted`) and the host **MUST** be able to send typed events into Plux; event types are declared in the app document and generated as Dart classes (`HST-030`). | SPEC |
+| `HST-013` | P5 | MUST | Plugins **MUST** be able to emit typed events to the host (e.g. `loanApplicationSubmitted`) and the host **MUST** be able to send typed events into Plux; event types are declared in the app document and generated as Dart classes (`HST-030`). | WIP |
 
 ### 13.3 Registration, code generation and setup
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `HST-020` | P9 | MUST | The runtime **MUST** support a **mini-app mode** in which one host binary runs several Plux apps (e.g. partner mini-apps in a super-app), each with its own bundles, state, storage namespace, theme and capability grants approved by the host; one mini-app **MUST NOT** read another's state, storage or events. | SPEC |
-| `HST-030` | P4 | MUST | `plux codegen` **MUST** generate typed Dart APIs from the app document: route builders with typed parameters and results, event classes, exposed-state accessors and feature-flag accessors, so misuse is a compile error in the host app. | SPEC |
-| `HST-031` | P4 | MUST | Integrating native routes, native slots and custom actions **MUST NOT** require changing existing host code beyond one registration point at startup: apps using `go_router` or `auto_route` have their existing named routes discovered automatically; other apps register routes, slot builders and actions in the `Plux.initialize` configuration; `plux native scan` derives descriptors by static analysis (`WGT-030`) and `plux native sync` uploads the catalogue for a host build. | SPEC |
-| `HST-021` | P4 | MUST | **Mixed screens** **MUST** be supported in both directions: a plugin page may contain native slots (`WGT-033`), and a native screen may contain any number of `PluxView`s (`NAV-004`). Both sides share state through exposed state entries (`STA-030`), which are observable from native code as streams, so native and plugin content on one screen stay consistent. | SPEC |
-| `HST-032` | P4 | MUST | `plux init` **MUST** add the dependencies, create configuration, embed the signing root public keys, wire initialisation into `main.dart` where it can do so safely (or print exact instructions), and run `plux doctor`. | SPEC |
-| `HST-033` | P4 | MUST | The runtime **MUST** work inside Flutter modules embedded in native Android and iOS apps (add-to-app). | SPEC |
-| `HST-034` | P4 | MUST | Time from `flutter create` to rendering a published Plux page on a device, following the quick-start guide, **MUST** be ≤ 10 minutes for a developer new to Plux (verified by recorded usability sessions, `DX-001`). | SPEC |
+| `HST-030` | P4 | MUST | `plux codegen` **MUST** generate typed Dart APIs from the app document: route builders with typed parameters and results, event classes, exposed-state accessors and feature-flag accessors, so misuse is a compile error in the host app. | DONE |
+| `HST-031` | P4 | MUST | Integrating native routes, native slots and custom actions **MUST NOT** require changing existing host code beyond one registration point at startup: apps using `go_router` or `auto_route` have their existing named routes discovered automatically; other apps register routes, slot builders and actions in the `Plux.initialize` configuration; `plux native scan` derives descriptors by static analysis (`WGT-030`) and `plux native sync` uploads the catalogue for a host build. | DONE |
+| `HST-021` | P4 | MUST | **Mixed screens** **MUST** be supported in both directions: a plugin page may contain native slots (`WGT-033`), and a native screen may contain any number of `PluxView`s (`NAV-004`). Both sides share state through exposed state entries (`STA-030`), which are observable from native code as streams, so native and plugin content on one screen stay consistent. | WIP |
+| `HST-032` | P4 | MUST | `plux init` **MUST** add the dependencies, create configuration, embed the signing root public keys, wire initialisation into `main.dart` where it can do so safely (or print exact instructions), and run `plux doctor`. | DONE |
+| `HST-033` | P4 | MUST | The runtime **MUST** work inside Flutter modules embedded in native Android and iOS apps (add-to-app). | DONE |
+| `HST-034` | P10 | MUST | Time from `flutter create` to rendering a published Plux page on a device, following the quick-start guide, **MUST** be ≤ 10 minutes for a developer new to Plux (verified by recorded usability sessions, `DX-001`). | SPEC |
 
 ---
 
@@ -1025,7 +1025,7 @@ An **action graph** is a small, typed, bounded program attached to a trigger. No
 | `ACT-020` | P5 | MUST | Errors **MUST** be typed (`network`, `http(status)`, `timeout`, `validation`, `function(code)`, `permission`, `cancelled`, `custom`) and routed to the step's `onError` edge, then the page, plugin and app error handlers in that order; unhandled errors show a themed, localised error message and are reported. | SPEC |
 | `ACT-030` | P5 | MUST | Every action run **MUST** produce a structured trace (run ID, trigger, steps with start/end, status, redacted inputs/outputs, errors). Traces are streamed to paired Studio sessions in development (`DEV-020`) and sampled into telemetry in production. | SPEC |
 | `ACT-031` | P5 | MUST | Values tagged `sensitive` **MUST** never appear in traces, logs or telemetry, even in development. | SPEC |
-| `ACT-060` | P4 | MUST | Host apps **MUST** be able to register custom actions with typed inputs and outputs in the one-place startup registration (`HST-031`), without modifying existing code; Studio lists them in the action catalogue. | SPEC |
+| `ACT-060` | P4 | MUST | Host apps **MUST** be able to register custom actions with typed inputs and outputs in the one-place startup registration (`HST-031`), without modifying existing code; Studio lists them in the action catalogue. | WIP |
 | `ACT-061` | P5 | MUST | Plugins **MUST** be able to declare reusable named action graphs ("flows") callable from other graphs with typed inputs and outputs, within the plugin or across plugins through declared exports. | SPEC |
 
 ### 14.2 PXL — Plux Expression Language
@@ -1053,7 +1053,7 @@ PXL is a small, typed, side-effect-free expression language with CEL-like syntax
 | `STA-004` | P5 | MUST | Computed state (PXL over other state) **MUST** be supported, memoised and recomputed only when its dependencies change. | SPEC |
 | `STA-010` | P5 | MUST | State **MUST** be implemented with Riverpod providers so that each binding rebuilds only when the exact path it reads changes (`RT-012`). | SPEC |
 | `STA-020` | P5 | MUST | Forms **MUST** have first-class state: fields, values, validators, dirty/touched flags, submit status and error messages. Built-in validators **MUST** include required, length, range, regex, email, phone number by region (E.164, default region from the device locale), IBAN (with checksum), date range, decimal precision, and custom PXL; asynchronous validators via API or function **MUST** be supported with debouncing. | SPEC |
-| `STA-030` | P5 | MUST | State entries marked `exposed` **MUST** be readable, writable and observable (as streams) by the host through typed accessors (`HST-030`), so native and plugin content on the same screen stay in sync (`HST-021`). | SPEC |
+| `STA-030` | P5 | MUST | State entries marked `exposed` **MUST** be readable, writable and observable (as streams) by the host through typed accessors (`HST-030`), so native and plugin content on the same screen stay in sync (`HST-021`). | WIP |
 | `STA-040` | P5 | MUST | Persisted state **MUST** be versioned; a release changing the type of persisted state **MUST** provide a migration expression or explicitly reset the value, validated at publish. | SPEC |
 
 ### 14.4 Data sources
@@ -1753,7 +1753,7 @@ The screen editor is the canvas of §21.6 with a screen selected for editing and
 | `CLI-003` | P2 | MUST | Commands **MUST** include: `login`, `logout`, `whoami`, `init`, `doctor`, `validate`, `build` (local compile), `diff`, `publish`, `pull`, `release list/promote/rollback`, `export`, `import`, `keys`. P4 adds `create`, `codegen`, `native scan` and `native sync`; P7 adds `fn new/build/test/deploy/logs`; P8 adds `l10n pull/push`; P10 adds `dev pair/logs`; P12 adds `ai`. | DONE |
 | `CLI-004` | P2 | MUST | `plux pull` **MUST** download the current release for an environment and channel into the host project as a baseline (`SYN-007`), together with the root public keys. | DONE |
 | `CLI-005` | P1 | MUST | `validate` and `build` **MUST** work fully offline against a local directory (Git layout, `SCH-006`) so CI can validate changes without a server. | DONE |
-| `CLI-006` | P4 | MUST | `plux native scan` **MUST** build the host's native catalogue (native routes from router discovery or startup registration, native slots from `plux.yaml`, custom actions) by static analysis, without changes to host code, and `plux native sync` **MUST** upload it for a host build. | SPEC |
+| `CLI-006` | P4 | MUST | `plux native scan` **MUST** build the host's native catalogue (native routes from router discovery or startup registration, native slots from `plux.yaml`, custom actions) by static analysis, without changes to host code, and `plux native sync` **MUST** upload it for a host build. | DONE |
 | `CLI-007` | P2 | MUST | Every command **MUST** support `--json` output, documented exit codes and a non-interactive mode; interactive prompts **MUST** never block in CI. | DONE |
 | `CLI-008` | P2 | SHOULD | Shell completion for bash, zsh, fish and PowerShell **SHOULD** be generated. | DONE |
 
@@ -1771,7 +1771,7 @@ The screen editor is the canvas of §21.6 with a screen selected for editing and
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `DX-001` | P4 | MUST | The quick start **MUST** get a new developer from `flutter create` to a published Plux page on a device in ≤ 10 minutes (`HST-034`). | SPEC |
+| `DX-001` | P10 | MUST | The quick start **MUST** get a new developer from `flutter create` to a published Plux page on a device in ≤ 10 minutes (`HST-034`). | SPEC |
 | `DX-002` | P3 | MUST | A documentation site **MUST** cover concepts, quick start, guides per use case (financial services, delivery, campaigns, super-app, no-code apps), the widget catalogue (generated from descriptors), the action catalogue, PXL reference, API references (dartdoc, Go doc, protobuf docs), the security whitepaper, the compliance pack and runbooks. | WIP |
 | `DX-003` | P1 | MUST | Every error and diagnostic **MUST** have a stable code (Appendix F), a clear message, the likely cause, a suggested fix and a link to its documentation page. | DONE |
 | `DX-004` | P5 | MUST | Reference host apps **MUST** be maintained: **Plux Bank** (accounts, transfers with SCA, loan calculator via Functions, KYC capture, secure PIN, English/German/Arabic/Amharic, `maximum` profile) and **Plux Express** (catalogue, cart, scheduled campaign, A/B banners, live order tracking via WebSocket, courier flow with offline outbox), plus a minimal **Starter** app. | SPEC |
@@ -1784,12 +1784,12 @@ Two adoption modes are first-class: **no-code** (Plux generates the whole Flutte
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `GEN-001` | P4 | MUST | Creating an app **MUST** be able to produce a complete, ready-to-build Flutter project — via `plux create` (P4) and Studio download (P11) — containing: app name, bundle and application IDs, icons and splash screen, the Plux runtime wired in with root keys and configuration, an embedded baseline release whose entry is the app's default plugin, platform permissions and usage descriptions derived from the plugins' declared capabilities, push-notification configuration, and build scripts. | SPEC |
-| `GEN-002` | P4 | MUST | The generated project **MUST** build and run unchanged with the pinned Flutter version on Android and iOS, and **MUST** be verified in CI by generating, building and launching a sample app. | SPEC |
-| `GEN-003` | P4 | MUST | The generated project **MUST** be deliverable as a zip download, as a push to a Git repository, or into a local directory, and **MUST** include CI templates (GitHub Actions and GitLab CI) for signed release builds. | SPEC |
+| `GEN-001` | P4 | MUST | Creating an app **MUST** be able to produce a complete, ready-to-build Flutter project — via `plux create` (P4) and Studio download (P11) — containing: app name, bundle and application IDs, icons and splash screen, the Plux runtime wired in with root keys and configuration, an embedded baseline release whose entry is the app's default plugin, platform permissions and usage descriptions derived from the plugins' declared capabilities, push-notification configuration, and build scripts. | DONE |
+| `GEN-002` | P4 | MUST | The generated project **MUST** build and run unchanged with the pinned Flutter version on Android and iOS, and **MUST** be verified in CI by generating, building and launching a sample app. | DONE |
+| `GEN-003` | P4 | MUST | The generated project **MUST** be deliverable as a zip download, as a push to a Git repository, or into a local directory, and **MUST** include CI templates (GitHub Actions and GitLab CI) for signed release builds. | DONE |
 | `GEN-004` | P11 | MUST | Studio **MUST** manage the native shell settings of a no-code app — name, icons, splash, identifiers, version, permissions, optional packages, push configuration — and **MUST** detect when a change requires a new store build ("shell update required"), showing exactly what changed and offering a regenerated project or a patch. | SPEC |
-| `GEN-005` | P4 | MUST | Everything that does not change the native shell (screens, flows, state, data, functions, translations, themes) **MUST** ship through Plux releases without regenerating or rebuilding the project. | SPEC |
-| `GEN-006` | P4 | MUST | Generated projects **MUST** remain valid embedded-mode projects: a team **MAY** later add native code to them without losing any Plux capability. | SPEC |
+| `GEN-005` | P4 | MUST | Everything that does not change the native shell (screens, flows, state, data, functions, translations, themes) **MUST** ship through Plux releases without regenerating or rebuilding the project. | DONE |
+| `GEN-006` | P4 | MUST | Generated projects **MUST** remain valid embedded-mode projects: a team **MAY** later add native code to them without losing any Plux capability. | DONE |
 
 ---
 
@@ -1916,7 +1916,7 @@ This section concerns how Plux itself is verified. §22.2 covers the testing too
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `CI-001` | P0 | MUST | Required checks on `main` **MUST** include: format and lint (golangci-lint, `dart analyze` with strict rules, Biome or ESLint for TypeScript), unit tests, integration tests, `buf lint` and `buf breaking`, FlatBuffers and JSON Schema compatibility checks, builds for all targets, vulnerability scanning (`govulncheck`, OSV-Scanner), secret scanning (gitleaks), license compliance, and Conventional Commits. | WIP |
-| `CI-002` | P0 | MUST | The monorepo **MUST** have a top-level `Makefile` (`make check`, `make test`, `make dev`, `make gen`) delegating to per-component tooling, with path-filtered CI jobs and dependency caching. | WIP |
+| `CI-002` | P0 | MUST | The monorepo **MUST** have a top-level `Makefile` (`make check`, `make test`, `make dev`, `make gen`) delegating to per-component tooling, with path-filtered CI jobs and dependency caching. | DONE |
 | `CI-003` | P0 | MUST | Generated code (protobuf, FlatBuffers, JSON Schema types, widget decoders) **MUST** be committed and CI **MUST** fail if regeneration produces a diff. | DONE |
 | `CI-004` | P2 | MUST | Release artifacts **MUST** carry SLSA v1.0 Build Level 3 provenance and be signed keylessly with Sigstore cosign via CI OIDC. | DONE |
 | `CI-005` | P3 | MUST | Dart packages **MUST** be published to pub.dev by automated publishing with CI OIDC, never with personal credentials. | DONE |
@@ -1952,9 +1952,9 @@ This section concerns how Plux itself is verified. §22.2 covers the testing too
 | `NFR-006` | P3 | MUST | Up-to-date check at app start | 1 manifest request, ≤ 1 KiB of request and response bodies (`304`-style answer); headers and the device-token request are not counted (ADR-0037) | DONE |
 | `NFR-007` | P3 | MUST | Sync of a typical update (3 plugins changed) on slow network | ≤ 3 s p95 | DONE |
 | `NFR-008` | P3 | MUST | Runtime memory overhead with 50 plugins installed | ≤ 30 MiB (excluding images) | WIP |
-| `NFR-009` | P3 | MUST | Core package size | ≤ 3 MiB downloaded on Android (App Bundle) and iOS; ≤ 6.5 MiB in an Android APK (`RT-061`) | DONE |
+| `NFR-009` | P3 | MUST | Core package size | ≤ 4 MiB downloaded on Android (App Bundle) and ≤ 3 MiB on iOS; ≤ 10 MiB in an Android APK (`RT-061`) | DONE |
 | `NFR-010` | P5 | MUST | PXL typical binding evaluation | ≤ 2 µs p95 (`PXL-004`) | SPEC |
-| `NFR-011` | P5 | MUST | Action interpreter overhead | ≤ 20 µs per step p95 (`ACT-008`) | SPEC |
+| `NFR-011` | P5 | MUST | Action interpreter overhead | ≤ 20 µs per step p95 (`ACT-008`) | WIP |
 | `NFR-020` | P2 | MUST | Manifest endpoint throughput | ≥ 5,000 req/s per `api` replica at p99 ≤ 50 ms (cache hit) | DONE |
 | `NFR-021` | P2 | MUST | Publish of a 50-page plugin with deltas | ≤ 15 s p95 (`SRV-053`) | DONE |
 | `NFR-022` | P7 | MUST | Function invocation overhead | warm ≤ 1 ms p99; first after deploy ≤ 50 ms p99 (`FN-023`) | SPEC |
@@ -2543,11 +2543,12 @@ Dialogs, bottom sheets and snack bars are page kinds and actions (Appendix D), n
 | `kvGet`, `kvSet`, `kvRemove` | Local DB | Key-value store | P5 |
 | `invokeFunction` | Compute | Call a Plux Function with typed input/output — on the device or the server, according to the function's placement | P7 |
 | `callFlow` | Control | Call a reusable named action graph | P5 |
-| `condition`, `switch` | Control | Branch on PXL | P5 |
+| `condition` | Control | Branch on a PXL condition | P4 |
+| `switch` | Control | Branch on a PXL value | P5 |
 | `forEach` | Control | Bounded iteration over a list | P5 |
 | `parallel` | Control | Run branches concurrently and join | P5 |
 | `delay` | Control | Wait for a duration | P5 |
-| `stop` | Control | End the run with an optional result or error | P5 |
+| `stop` | Control | End the run with an optional result or error | P4 |
 | `trackEvent` | Analytics | Custom telemetry event | P5 |
 | `setLocale`, `setThemeMode` | App | Change locale or theme mode | P8 |
 | `copyToClipboard`, `share` | Device | Clipboard (blocked on secure pages) and share sheet | P5 |
@@ -2558,7 +2559,7 @@ Dialogs, bottom sheets and snack bars are page kinds and actions (Appendix D), n
 | `biometricAuth` | Security | Local biometric or device-credential check | P6 |
 | `signTransaction` | Security | SCA signing with dynamic linking (`SEC-027`) | P6 |
 | `startAnimation`, `controlAnimation` | Animation | Play, pause, seek, reverse timelines | P5 |
-| `emitHostEvent` | Host | Send a typed event to the host app | P5 |
+| `emitHostEvent` | Host | Send a typed event to the host app | P4 |
 | `callNative` | Host | Invoke a host-registered custom action | P4 |
 | `sync` | Plux | Trigger a manual sync | P5 |
 | `logout` | Host | Signal logout to the host (wipe per policy) | P5 |
@@ -2617,7 +2618,7 @@ The complete grammar — including the receiver-style macros `map`, `filter`, `a
 | `flags.<key>` | Feature flags |
 | `env.<key>` | Non-secret environment variables |
 | `device` | Platform, OS version, locale, text scale, dark mode, window size class, assurance level |
-| `user` | Host-provided user context attributes |
+| `user` | Host-provided user context attributes, and `user.authenticated`, whether the host's auth delegate has a signed-in user (`HST-010`) |
 | `now` | Current time (frozen per evaluation for determinism) |
 
 ### E.3 Built-in functions
@@ -2645,7 +2646,7 @@ Every error and diagnostic has a stable code `PLX-NNNN` (`DX-003`). Codes are gr
 | `PLX-1000`–`1999` | Schema and validation | `PLX-1001` unknown property · `PLX-1102` unresolved reference · `PLX-1203` route parameter missing at navigate · `PLX-1310` page exceeds node budget · `PLX-1401` interactive node without accessible name · `PLX-1500` secret-like value detected |
 | `PLX-2000`–`2999` | Compiler and PXL | `PLX-2001` PXL syntax error · `PLX-2002` PXL type mismatch · `PLX-2010` operation budget exceeded at compile-time evaluation · `PLX-2100` asset transcoding failed |
 | `PLX-3000`–`3999` | Release and sync | `PLX-3001` manifest signature invalid · `PLX-3002` manifest expired · `PLX-3003` rollback attempt rejected · `PLX-3010` unsupported required feature · `PLX-3011` hash mismatch after patch · `PLX-3020` automatic revert to last known good · `PLX-3030` disk quota exceeded |
-| `PLX-4000`–`4999` | Runtime rendering and navigation | `PLX-4001` build error in node · `PLX-4003` unknown widget type · `PLX-4100` unknown route · `PLX-4101` invalid route parameters · `PLX-4200` native route not registered |
+| `PLX-4000`–`4999` | Runtime rendering and navigation | `PLX-4001` build error in node · `PLX-4003` unknown widget type · `PLX-4100` unknown route · `PLX-4101` invalid route parameters · `PLX-4102` navigation refused by a guard · `PLX-4103` deep link not mapped · `PLX-4200` native route not registered · `PLX-4201` native slot not registered · `PLX-4202` custom action not registered · `PLX-4203` exposed state written with the wrong type |
 | `PLX-5000`–`5999` | Actions, data and local DB | `PLX-5001` action timeout · `PLX-5002` step limit exceeded · `PLX-5100` request to undeclared domain blocked · `PLX-5200` DB migration failed · `PLX-5300` outbox replay conflict |
 | `PLX-6000`–`6999` | Security | `PLX-6001` attestation failed · `PLX-6002` assurance level insufficient · `PLX-6010` DPoP proof invalid · `PLX-6011` DPoP replay detected · `PLX-6012` DPoP nonce required · `PLX-6020` certificate pin mismatch · `PLX-6100` RASP detection |
 | `PLX-7000`–`7999` | Functions | `PLX-7001` function timeout · `PLX-7002` memory limit exceeded · `PLX-7003` capability denied · `PLX-7100` business error (carries function-defined code) |
@@ -2915,13 +2916,13 @@ Four requirements are `WITHDRAWN` (`RT-050`, `RT-051`, `SAAS-004`, `SAAS-009`) a
 | P1 | Schema and compiler | 72 | 1 | 0 | 73 |
 | P2 | Backend core | 85 | 2 | 0 | 87 |
 | P3 | Runtime rendering | 67 | 2 | 0 | 69 |
-| P4 | Routing, host integration and no-code generation | 31 | 0 | 0 | 31 |
+| P4 | Routing, host integration and no-code generation | 29 | 0 | 0 | 29 |
 | P5 | Actions, state, data, DB, animation | 55 | 4 | 0 | 59 |
 | P6 | Security hardening | 44 | 2 | 0 | 46 |
 | P7 | Plux Functions | 29 | 0 | 1 | 30 |
 | P8 | Localisation and accessibility | 21 | 1 | 0 | 22 |
 | P9 | Enterprise and operations | 53 | 4 | 1 | 58 |
-| P10 | Dev app and debugging | 15 | 2 | 0 | 17 |
+| P10 | Dev app and debugging | 17 | 2 | 0 | 19 |
 | P11 | Studio | 88 | 2 | 0 | 90 |
 | P12 | AI generation | 13 | 4 | 0 | 17 |
 | P13 | Payments | 8 | 0 | 0 | 8 |
@@ -2940,10 +2941,10 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | Field | Value |
 |---|---|
 | Document ID | `SRS-PLUX-001` |
-| Version | 1.1.9 |
+| Version | 1.2.2 |
 | Status | Draft (living document) |
-| Date | 2026-10-01 |
-| Supersedes | 1.1.8 |
+| Date | 2026-10-03 |
+| Supersedes | 1.2.1 |
 | Change process | Amendments are made by pull request against `docs/requirements.md`. A change to a `MUST` requirement requires a corresponding ADR. The version is incremented per Semantic Versioning: a breaking change to an existing requirement is a major increment, a new requirement is a minor increment, and a clarification is a patch increment. |
 
 ### Revision history
@@ -2961,3 +2962,6 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | 1.1.7 | 2026-10-01 | `RT-061`, `NFR-009`: the size budget is set per build — ≤ 3 MiB for the App Bundle download per ABI and the thinned IPA, ≤ 6.5 MiB for an APK per ABI, which stores the Dart code uncompressed — replacing ≤ 3 MiB for the arm64 APK (maintainer decision; ADR-0036). |
 | 1.1.8 | 2026-10-01 | `NFR-006`: the up-to-date check counts the manifest request's bodies, not headers or the device-token request, which grow with DPoP from P6; the device sends a digest of its installed bundles (maintainer decision; ADR-0037). `RT-002`: Flutter support starts at 3.47, the stable current when P3 closes — the previous stable 3.44 cannot resolve the build-hook stack, and no dependency is downgraded (maintainer decision; ADR-0038). |
 | 1.1.9 | 2026-10-01 | Appendix J: the app icon's "x" becomes four arms meeting at a central node on a subtle Plux Violet gradient, a lockup of icon and wordmark is added, and the brand SVGs carry outlined letters (maintainer request: a new README and logo). |
+| 1.2.0 | 2026-10-01 | Phase 4 plan (maintainer decisions; ADR-0039, ADR-0042): the action-graph engine core moves into P4, so `condition`, `emitHostEvent` and `stop` are re-tagged P4 in Appendix D (`stop` at R1's review, 2026-10-02, so a guard graph returns its result) and §5.1's P4 and P5 rows say who delivers the engine; `HST-034` and `DX-001`, the ten-minute quick start, move to P10 and its deliverables, so Appendix K counts 29 P4 and 17 P10 `MUST`s; Appendix F lists the navigation and host-integration codes `PLX-4102`, `PLX-4103` and `PLX-4201`–`PLX-4203`; Appendix E.2 adds `user.authenticated`, read from the host's auth delegate (ADR-0040). `CI-002` is `DONE` with affected-only CI and dependency caching (ADR-0043). |
+| 1.2.1 | 2026-10-02 | `RT-061`, `NFR-009`: the Android budgets are raised — ≤ 4 MiB for the App Bundle download per ABI and ≤ 10 MiB for an APK per ABI, replacing 3 MiB and 6.5 MiB; the thinned IPA stays ≤ 3 MiB (maintainer decision; ADR-0036, Revision). |
+| 1.2.2 | 2026-10-03 | Phase 4 delivered: P4 requirement statuses updated — 23 of its `MUST`s `DONE`; `WGT-030`, `ACT-060`, `NAV-009`, `NAV-010`, `HST-010` and `HST-021` `WIP` until the phases the P4 plan names complete them (§3.2); `RT-021`, `HST-013`, `STA-030` and `NFR-011`, which P4 advances, `WIP`. The header and Document Control carry the latest revision (P4 plan, A21). |

@@ -1,0 +1,35 @@
+name: {%.Package%}
+description: {%json .Name%}
+publish_to: none
+version: {%.AppVersion%}
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+{%- if .PluxPath%}
+  plux_flutter:
+    path: {%.PluxPath%}
+{%- else%}
+  plux_flutter: {%.RuntimeConstraint%}
+{%- end%}
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  # The release the app starts with, verified before it loads (SYN-007);
+  # asset directories are not recursive, so each one is listed.
+  assets:
+    - assets/plux/
+    - assets/plux/bundles/
+{%- if .BaselineAssets%}
+    - assets/plux/assets/
+{%- end%}

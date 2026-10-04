@@ -15,6 +15,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:plux_flutter/src/actions/engine.dart';
 import 'package:plux_flutter/src/assets/assets.dart';
 import 'package:plux_flutter/src/assets/avif_probe.dart';
 import 'package:plux_flutter/src/assets/fonts.dart';
@@ -22,14 +23,25 @@ import 'package:plux_flutter/src/assets/icon_fonts.dart';
 import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/core/config.dart';
+import 'package:plux_flutter/src/core/fallback.dart';
 import 'package:plux_flutter/src/core/features.dart';
+import 'package:plux_flutter/src/core/host_events.dart';
+import 'package:plux_flutter/src/core/plux.dart';
+import 'package:plux_flutter/src/core/plux_view.dart';
 import 'package:plux_flutter/src/devtools_api/diagnostics.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/native_catalogue/host.dart';
+import 'package:plux_flutter/src/navigation/deep_links.dart';
+import 'package:plux_flutter/src/navigation/delegate.dart';
+import 'package:plux_flutter/src/navigation/guards.dart';
+import 'package:plux_flutter/src/navigation/router.dart';
 import 'package:plux_flutter/src/platform/platform_services.dart';
+import 'package:plux_flutter/src/pxl/types.dart';
 import 'package:plux_flutter/src/render/page_renderer.dart';
 import 'package:plux_flutter/src/render/renderer.dart';
 import 'package:plux_flutter/src/runtime_info.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
+import 'package:plux_flutter/src/state/providers.dart';
 import 'package:plux_flutter/src/store/baseline.dart';
 import 'package:plux_flutter/src/store/pointer.dart';
 import 'package:plux_flutter/src/store/release_store.dart';
@@ -306,7 +318,220 @@ final class PluxRuntime with WidgetsBindingObserver {
     imageCacheDirectory: '$_root/images',
     assets: assets,
     verified: _verified,
+    actions: ActionServices(
+      router: router,
+      emit: emitHostEvent,
+      record: telemetry.record,
+      nativeActions: HostActions(
+        registered: config.nativeActions,
+        declarations: natives,
+      ),
+    ),
   );
+
+  /// What Plux renders with: locale, theme, consent, the user context and
+  /// the auth delegate. `Plux.initialize` connects it to its container.
+  PluxEnvironment Function() environment = () => const PluxEnvironment();
+
+  /// Decides each entry of a route (NAV-009, ADR-0040).
+  late final RouteGuards guards = RouteGuards(
+    release: () => active.value,
+    run: (release, page, guard, params) =>
+        renderer?.runGuard(release, page, guard, params, environment()) ??
+        Future.value(const GuardFallsBack('no renderer runs guards')),
+    convert: (release, page, params) {
+      final r = renderer;
+      if (r == null) {
+        throw const FormatException('no renderer converts parameters');
+      }
+      return r.textParams(release, page, params);
+    },
+    report: _report,
+  );
+
+  /// The active release's native catalogue, or null before one
+  /// (ADR-0041).
+  NativeDeclarations? natives() {
+    final release = active.value;
+    final r = renderer;
+    if (release == null || r is! PluxRenderer) return null;
+    try {
+      final app = r.view(release, '');
+      return (
+        routes: app.nativeRoutes,
+        slots: app.nativeSlots,
+        actions: app.nativeActions,
+        types: r.typesOf(release, ''),
+      );
+    } on Object catch (e) {
+      _report(
+        PluxException(PluxErrorCode.bundleMalformed, 'native catalogue: $e'),
+      );
+      return null;
+    }
+  }
+
+  /// The root navigator deep links and push payloads open on.
+  GlobalKey<NavigatorState>? get navigatorKey =>
+      config.navigatorKey ?? config.router?.navigatorKey;
+
+  /// Resolves names and opens routes (ADR-0040).
+  late final PluxRouter router = PluxRouter(
+    release: () => active.value,
+    delegate:
+        config.navigationDelegate ??
+        config.router?.delegate ??
+        const PluxNavigatorDelegate(),
+    nativeRoutes: {...?config.router?.routes, ...config.nativeRoutes},
+    natives: natives,
+    page: (route, params, {required guarded}) =>
+        PluxScope(child: routedPluxView(route, params, guarded: guarded)),
+    guards: guards,
+    fallback: (context, error, plugin) =>
+        buildFallback(context, config, error, plugin: plugin),
+    types: (release, plugin) {
+      final r = renderer;
+      return r is PluxRenderer
+          ? r.typesOf(release, plugin)
+          : const <String, NamedType>{};
+    },
+    report: _report,
+    notFoundBuilder: config.notFoundBuilder,
+  );
+
+  /// Opens the route [link] maps to (NAV-008), through its guards, on the
+  /// navigator of `PluxConfig.navigatorKey`; false, reported, when no
+  /// mapping matches (`PLX-4103`) or there is no navigator (`PLX-4102`).
+  Future<bool> handleDeepLink(Uri link) async {
+    final r = active.value;
+    final target = r == null
+        ? null
+        : resolveDeepLink(r.meta('').deepLinks, link);
+    if (r == null || target == null) {
+      // Only the link's scheme, host and path: its query may carry user
+      // data (SEC-092).
+      final where = '${link.scheme}://${link.host}${link.path}';
+      _report(
+        PluxException(
+          PluxErrorCode.deepLinkUnmapped,
+          r == null
+              ? 'no release yet to resolve $where'
+              : 'no deep link maps $where',
+          details: {'link': where},
+        ),
+      );
+      return false;
+    }
+    return _openTarget(r, target);
+  }
+
+  /// Opens the route a notification's [payload] names under the app's
+  /// push payload key (NAV-008), as [handleDeepLink] opens a link.
+  Future<bool> handlePushPayload(Map<String, Object?> payload) async {
+    final r = active.value;
+    final target = r == null
+        ? null
+        : resolvePushPayload(r.meta('').push, payload);
+    if (r == null || target == null) {
+      _report(
+        const PluxException(
+          PluxErrorCode.deepLinkUnmapped,
+          'the push payload names no route of this app',
+        ),
+      );
+      return false;
+    }
+    return _openTarget(r, target);
+  }
+
+  Future<bool> _openTarget(ActiveRelease release, LinkTarget target) async {
+    if (navigatorKey?.currentContext == null) {
+      _report(
+        PluxException(
+          PluxErrorCode.navigationRefused,
+          'no navigator to open ${target.route} on: set PluxConfig.navigatorKey',
+          details: {'route': target.route},
+        ),
+      );
+      return false;
+    }
+    final params = await _linkParams(release, target);
+    final route = await router.resolve(target.route, params);
+    final context = navigatorKey?.currentContext;
+    if (context == null || !context.mounted) return false;
+    unawaited(router.delegate.push<Object?>(context, route));
+    return true;
+  }
+
+  /// The route a URL names, for router adapters (ADR-0040): [query]'s text
+  /// converted by the route's declared types, as a deep link's is, then
+  /// resolved through the route's guards.
+  Future<PluxRouteSpec> resolveLocation(
+    String route,
+    Map<String, String> query,
+  ) async {
+    final r = active.value;
+    final params = r == null
+        ? query
+        : await _linkParams(r, (route: route, params: query));
+    return router.resolve(route, params);
+  }
+
+  /// A link's parameters in the host's form: text converted by the route's
+  /// declared types, and names it does not declare left out, such as a
+  /// campaign's query parameters. Text that does not convert stays text,
+  /// so entering the page reports it (`PLX-4101`).
+  Future<Map<String, Object?>> _linkParams(
+    ActiveRelease release,
+    LinkTarget target,
+  ) async {
+    final r = renderer;
+    final PageRef? page;
+    try {
+      page = release.page(target.route);
+      if (page == null || r == null) return target.params;
+      await release.gate.prepare(
+        release.bundle(page.plugin).container.sections,
+      );
+    } on Object {
+      return target.params; // the page host reports it
+    }
+    final declared = r.paramNames(release, page);
+    final out = <String, Object?>{};
+    for (final MapEntry(:key, :value) in target.params.entries) {
+      if (!declared.contains(key)) continue;
+      if (value is! String) {
+        out[key] = value;
+        continue;
+      }
+      try {
+        out.addAll(r.textParams(release, page, {key: value}));
+      } on FormatException {
+        out[key] = value;
+      }
+    }
+    return out;
+  }
+
+  final StreamController<PluxHostEvent> _hostEvents =
+      StreamController.broadcast();
+
+  /// The host events plugins emit (HST-013).
+  Stream<PluxHostEvent> get hostEvents => _hostEvents.stream;
+
+  /// Posts a host event; the payload, in PXL form, reaches the host in its
+  /// JSON form.
+  void emitHostEvent(String name, Map<String, Object?> payload) {
+    if (_hostEvents.isClosed) return;
+    _hostEvents.add(
+      PluxHostEvent(name, {
+        for (final e in payload.entries) e.key: toJson(e.value),
+      }),
+    );
+  }
+
+  /// Reports a problem to the diagnostics, telemetry and the host.
+  void reportProblem(PluxException e) => _report(e);
 
   /// Loads the app's font assets under the families their files name, so
   /// `fontFamily` tokens and script fallbacks find them (THM-004). A font
@@ -601,6 +826,7 @@ final class PluxRuntime with WidgetsBindingObserver {
     diagnostics.dispose();
     _worker.close();
     await _events.close();
+    await _hostEvents.close();
     active.value?.retire();
     active.value = null;
   }

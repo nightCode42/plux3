@@ -80,13 +80,16 @@ final class EnumDescriptor {
 /// An action and the permanent IDs of its inputs.
 final class ActionDescriptor {
   /// Creates a descriptor.
-  const ActionDescriptor(this.name, this.id, {this.inputs = const {}});
+  const ActionDescriptor(this.name, this.id, {required this.phase, this.inputs = const {}});
 
   /// The action name used in action graphs.
   final String name;
 
   /// The permanent ID encoded in bundles.
   final int id;
+
+  /// The phase that delivers the action (spec Appendix D), such as P4.
+  final String phase;
 
   /// Input IDs by name.
   final Map<String, int> inputs;
@@ -1014,6 +1017,12 @@ const List<ValueTypeDescriptor> valueTypeDescriptors = [
     fields: {'kind': 1, 'colors': 2, 'stops': 3, 'tileMode': 4, 'begin': 5, 'end': 6, 'center': 7, 'radius': 8, 'focal': 9, 'focalRadius': 10, 'startAngle': 11, 'endAngle': 12},
   ),
   ValueTypeDescriptor(
+    'GuardResult',
+    37,
+    revision: 1,
+    fields: {'decision': 1, 'route': 2, 'params': 3},
+  ),
+  ValueTypeDescriptor(
     'IconData',
     14,
     revision: 1,
@@ -1306,6 +1315,12 @@ const List<EnumDescriptor> enumDescriptors = [
     values: {'linear': 1, 'radial': 2, 'sweep': 3},
   ),
   EnumDescriptor(
+    'GuardDecision',
+    74,
+    revision: 1,
+    values: {'allow': 1, 'redirect': 2, 'fallback': 3},
+  ),
+  EnumDescriptor(
     'HapticPattern',
     69,
     revision: 1,
@@ -1594,274 +1609,329 @@ const List<ActionDescriptor> actionDescriptors = [
   ActionDescriptor(
     'apiCall',
     16,
+    phase: 'P5',
     inputs: {'operation': 1, 'input': 2, 'optimistic': 3},
   ),
   ActionDescriptor(
     'biometricAuth',
     47,
+    phase: 'P6',
     inputs: {'reason': 1, 'allowDeviceCredential': 2},
   ),
   ActionDescriptor(
     'callFlow',
     29,
+    phase: 'P5',
     inputs: {'flow': 1, 'input': 2},
   ),
   ActionDescriptor(
     'callNative',
     52,
+    phase: 'P4',
     inputs: {'action': 1, 'input': 2},
   ),
   ActionDescriptor(
     'capturePhoto',
     43,
+    phase: 'P5',
     inputs: {'maxDimension': 1},
   ),
   ActionDescriptor(
     'condition',
     30,
+    phase: 'P4',
     inputs: {'when': 1},
   ),
   ActionDescriptor(
     'controlAnimation',
     50,
+    phase: 'P5',
     inputs: {'animation': 1, 'command': 2, 'position': 3},
   ),
   ActionDescriptor(
     'copyToClipboard',
     39,
+    phase: 'P5',
     inputs: {'text': 1},
   ),
   ActionDescriptor(
     'dbDelete',
     23,
+    phase: 'P5',
     inputs: {'collection': 1, 'key': 2},
   ),
   ActionDescriptor(
     'dbInsert',
     20,
+    phase: 'P5',
     inputs: {'collection': 1, 'record': 2},
   ),
   ActionDescriptor(
     'dbQuery',
     24,
+    phase: 'P5',
     inputs: {'collection': 1, 'where': 2, 'orderBy': 3, 'descending': 4, 'limit': 5, 'offset': 6},
   ),
   ActionDescriptor(
     'dbUpdate',
     21,
+    phase: 'P5',
     inputs: {'collection': 1, 'key': 2, 'patch': 3},
   ),
   ActionDescriptor(
     'dbUpsert',
     22,
+    phase: 'P5',
     inputs: {'collection': 1, 'key': 2, 'record': 3},
   ),
   ActionDescriptor(
     'delay',
     34,
+    phase: 'P5',
     inputs: {'duration': 1},
   ),
   ActionDescriptor(
     'emitHostEvent',
     51,
+    phase: 'P4',
     inputs: {'event': 1, 'payload': 2},
   ),
   ActionDescriptor(
     'forEach',
     32,
+    phase: 'P5',
     inputs: {'items': 1},
   ),
   ActionDescriptor(
     'getLocation',
     46,
+    phase: 'P5',
     inputs: {'accuracy': 1},
   ),
   ActionDescriptor(
     'haptic',
     9,
+    phase: 'P5',
     inputs: {'pattern': 1},
   ),
   ActionDescriptor(
     'invokeFunction',
     28,
+    phase: 'P7',
     inputs: {'function': 1, 'input': 2},
   ),
   ActionDescriptor(
     'kvGet',
     25,
+    phase: 'P5',
     inputs: {'key': 1},
   ),
   ActionDescriptor(
     'kvRemove',
     27,
+    phase: 'P5',
     inputs: {'key': 1},
   ),
   ActionDescriptor(
     'kvSet',
     26,
+    phase: 'P5',
     inputs: {'key': 1, 'value': 2},
   ),
   ActionDescriptor(
     'logout',
     54,
+    phase: 'P5',
   ),
   ActionDescriptor(
     'navigate',
     1,
+    phase: 'P4',
     inputs: {'route': 1, 'params': 2, 'mode': 3, 'until': 4},
   ),
   ActionDescriptor(
     'openBottomSheet',
     4,
+    phase: 'P4',
     inputs: {'route': 1, 'params': 2, 'dismissible': 3},
   ),
   ActionDescriptor(
     'openDialog',
     3,
+    phase: 'P4',
     inputs: {'route': 1, 'params': 2, 'dismissible': 3},
   ),
   ActionDescriptor(
     'openUrl',
     6,
+    phase: 'P5',
     inputs: {'url': 1},
   ),
   ActionDescriptor(
     'parallel',
     33,
+    phase: 'P5',
     inputs: {'lanes': 1},
   ),
   ActionDescriptor(
     'patchState',
     12,
+    phase: 'P5',
     inputs: {'path': 1, 'patch': 2, 'optimistic': 3},
   ),
   ActionDescriptor(
     'pickFile',
     44,
+    phase: 'P5',
     inputs: {'mimeTypes': 1, 'multiple': 2},
   ),
   ActionDescriptor(
     'pickImage',
     42,
+    phase: 'P5',
     inputs: {'multiple': 1, 'maxDimension': 2},
   ),
   ActionDescriptor(
     'pop',
     2,
+    phase: 'P4',
     inputs: {'result': 1},
   ),
   ActionDescriptor(
     'refreshData',
     17,
+    phase: 'P5',
     inputs: {'source': 1},
   ),
   ActionDescriptor(
     'requestPermission',
     41,
+    phase: 'P5',
     inputs: {'permission': 1},
   ),
   ActionDescriptor(
     'resetForm',
     15,
+    phase: 'P5',
     inputs: {'form': 1},
   ),
   ActionDescriptor(
     'resetState',
     11,
+    phase: 'P5',
     inputs: {'path': 1},
   ),
   ActionDescriptor(
     'scanCode',
     45,
+    phase: 'P5',
     inputs: {'formats': 1},
   ),
   ActionDescriptor(
     'setLocale',
     37,
+    phase: 'P8',
     inputs: {'locale': 1},
   ),
   ActionDescriptor(
     'setState',
     10,
+    phase: 'P5',
     inputs: {'path': 1, 'value': 2},
   ),
   ActionDescriptor(
     'setThemeMode',
     38,
+    phase: 'P8',
     inputs: {'mode': 1},
   ),
   ActionDescriptor(
     'share',
     40,
+    phase: 'P5',
     inputs: {'text': 1, 'url': 2, 'file': 3},
   ),
   ActionDescriptor(
     'showSnackbar',
     7,
+    phase: 'P5',
     inputs: {'message': 1, 'actionLabel': 2, 'duration': 3},
   ),
   ActionDescriptor(
     'showToast',
     8,
+    phase: 'P5',
     inputs: {'message': 1, 'duration': 2},
   ),
   ActionDescriptor(
     'signTransaction',
     48,
+    phase: 'P6',
     inputs: {'transaction': 1, 'amount': 2, 'payee': 3},
   ),
   ActionDescriptor(
     'startAnimation',
     49,
+    phase: 'P5',
     inputs: {'animation': 1},
   ),
   ActionDescriptor(
     'startPayment',
     55,
+    phase: 'P13',
     inputs: {'intent': 1, 'amount': 2},
   ),
   ActionDescriptor(
     'stop',
     35,
+    phase: 'P4',
     inputs: {'result': 1, 'error': 2},
   ),
   ActionDescriptor(
     'submitForm',
     14,
+    phase: 'P5',
     inputs: {'form': 1},
   ),
   ActionDescriptor(
     'subscribe',
     18,
+    phase: 'P5',
     inputs: {'stream': 1, 'params': 2},
   ),
   ActionDescriptor(
     'switch',
     31,
+    phase: 'P5',
     inputs: {'value': 1, 'cases': 2},
   ),
   ActionDescriptor(
     'switchTab',
     5,
+    phase: 'P4',
     inputs: {'tab': 1},
   ),
   ActionDescriptor(
     'sync',
     53,
+    phase: 'P5',
   ),
   ActionDescriptor(
     'trackEvent',
     36,
+    phase: 'P5',
     inputs: {'name': 1, 'props': 2},
   ),
   ActionDescriptor(
     'unsubscribe',
     19,
+    phase: 'P5',
     inputs: {'stream': 1},
   ),
   ActionDescriptor(
     'validateForm',
     13,
+    phase: 'P5',
     inputs: {'form': 1},
   ),
 ];

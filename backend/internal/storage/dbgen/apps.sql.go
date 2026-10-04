@@ -663,7 +663,7 @@ func (q *Queries) ListApps(ctx context.Context, arg ListAppsParams) ([]App, erro
 const listChannels = `-- name: ListChannels :many
 SELECT c.id, c.organization_id, c.environment_id, c.key, c.release_sequence, c.updated_at,
        COALESCE((SELECT m.release_sequence FROM manifests m
-                  WHERE m.channel_id = c.id
+                  WHERE m.channel_id = c.id AND m.host_build = ''
                   ORDER BY m.issued_at DESC, m.id DESC LIMIT 1), 0)::bigint AS signed_release_sequence
   FROM channels c
  WHERE c.environment_id = $1 AND c.key > $2::text

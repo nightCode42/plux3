@@ -1,0 +1,7 @@
+# What `pod install` writes: the pods, the workspace and the lockfile (the
+# pods are the module's, by path, so nothing is pinned here).
+Pods/
+HostApp.xcworkspace/
+Podfile.lock
+build/
+xcuserdata/

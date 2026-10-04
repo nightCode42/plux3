@@ -18,10 +18,11 @@ import 'package:plux_flutter/src/state/providers.dart';
 import 'package:plux_flutter/src/store/release_store.dart';
 import 'package:plux_flutter/src/sync/sync_engine.dart';
 
+import '../support/entering.dart';
 import '../sync/fake_server.dart';
 
 /// Renders a page as its route, or throws when told to.
-final class _TestRenderer implements PageRenderer {
+final class _TestRenderer with AllowsEveryGuard implements PageRenderer {
   bool fail = false;
 
   @override
@@ -29,8 +30,10 @@ final class _TestRenderer implements PageRenderer {
     BuildContext context,
     ActiveRelease release,
     PageRef page,
-    Map<String, Object?> params,
-  ) {
+    Map<String, Object?> params, {
+    bool routed = false,
+    void Function(Object? result)? onPop,
+  }) {
     if (fail) throw StateError('broken page');
     return Text(
       'page ${page.route} of ${release.sequence} ${params['x'] ?? ''}',
@@ -153,9 +156,9 @@ void main() {
       expect(startup.sequence, 5);
       expect(startup.toString(), contains('ready'));
       await tester.pumpWidget(
-        const PluxScope(child: PluxView('loan-calculator', params: {'x': 'p'})),
+        const PluxScope(child: PluxView('result', inputs: {'x': 'p'})),
       );
-      expect(find.text('page loan-calculator of 5 p'), findsOneWidget);
+      expect(find.text('page result of 5 p'), findsOneWidget);
     },
   );
 
@@ -273,7 +276,18 @@ void main() {
       for (final route in ['loan-calculator', 'result']) {
         expect(rt().active.value!.page(route), isNotNull, reason: route);
         await tester.pumpWidget(PluxScope(child: PluxView(route)));
-        expect(find.text('page $route of 10 '), findsOneWidget);
+        await tester.pump();
+        if (route == 'loan-calculator') {
+          // It requires assurance AL1, which no device has before P6: it
+          // resolves offline and fails closed (NAV-009).
+          expect(find.text('page $route of 10 '), findsNothing);
+          expect(
+            errors.map((e) => e.code),
+            contains(PluxErrorCode.navigationRefused),
+          );
+        } else {
+          expect(find.text('page $route of 10 '), findsOneWidget);
+        }
         await tester.pumpWidget(const SizedBox());
       }
     },
@@ -296,9 +310,7 @@ void main() {
         );
       });
       renderer.fail = true;
-      await tester.pumpWidget(
-        const PluxScope(child: PluxView('loan-calculator')),
-      );
+      await tester.pumpWidget(const PluxScope(child: PluxView('result')));
       expect(find.text('loans fallback PLX-4001'), findsOneWidget);
       expect(
         errors.map((e) => e.code),
@@ -306,7 +318,7 @@ void main() {
       );
       await tester.pumpWidget(const PluxScope(child: PluxView('nowhere')));
       expect(
-        find.text('fallback PLX-8031'),
+        find.text('fallback PLX-4100'),
         findsOneWidget,
         reason: 'no plugin',
       );
@@ -325,7 +337,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData(colorSchemeSeed: Colors.teal),
-          home: const PluxScope(child: PluxView('loan-calculator')),
+          home: const PluxScope(child: PluxView('result')),
         ),
       );
       final fallback = find.byType(PluxDefaultFallback);
@@ -348,10 +360,8 @@ void main() {
         server.release = FakeRelease(10, demo, {'loans': loans});
         await start(config());
       });
-      await tester.pumpWidget(
-        const PluxScope(child: PluxView('loan-calculator')),
-      );
-      expect(find.text('page loan-calculator of 10 '), findsOneWidget);
+      await tester.pumpWidget(const PluxScope(child: PluxView('result')));
+      expect(find.text('page result of 10 '), findsOneWidget);
       expect(rt().mountedPages, 1);
       await tester.runAsync(() async {
         server.release = FakeRelease(11, features, {'tasks': tasks});
@@ -371,11 +381,12 @@ void main() {
         10,
         reason: 'the page is still on screen',
       );
-      expect(find.text('page loan-calculator of 10 '), findsOneWidget);
+      expect(find.text('page result of 10 '), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
       await settle(tester, () => rt().active.value?.sequence == 11);
       expect((rt().lastEvent.value! as SyncActivated).sequence, 11);
       await tester.pumpWidget(const PluxScope(child: PluxView('tasks')));
+      await tester.pump(); // its guard decides first (NAV-009)
       expect(find.text('page tasks of 11 '), findsOneWidget);
     },
   );
@@ -452,16 +463,14 @@ void main() {
         );
         await start(config());
       });
-      await tester.pumpWidget(
-        const PluxScope(child: PluxView('loan-calculator')),
-      );
+      await tester.pumpWidget(const PluxScope(child: PluxView('result')));
       expect(find.text('fallback PLX-4020'), findsOneWidget);
       await tester.pumpWidget(const PluxScope(child: PluxView('result')));
       expect(find.text('fallback PLX-4020'), findsOneWidget);
       await tester.pumpWidget(
         const PluxScope(child: PluxView('no-such-route')),
       );
-      expect(find.text('fallback PLX-8031'), findsOneWidget);
+      expect(find.text('fallback PLX-4100'), findsOneWidget);
       final info = Plux.diagnostics.release.value!;
       expect(info.sequence, 10);
       expect(
@@ -485,7 +494,26 @@ void main() {
         await start(config());
       });
       await tester.pumpWidget(const PluxScope(child: PluxView('tasks')));
-      expect(find.text('page task-detail of 10 '), findsOneWidget);
+      expect(find.text('page tasks-unavailable of 10 '), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'a switched-off plugin whose fallback page is guarded shows the generic fallback: the kill switch never opens a guarded page [RT-022] [NAV-009]',
+    (tester) async {
+      await tester.runAsync(() async {
+        server.release = FakeRelease(
+          10,
+          goldens.bundles['routing/routing.pxb']!,
+          {'nav': goldens.bundles['routing/nav.pxb']!},
+          killSwitches: ['nav'],
+        );
+        await start(config());
+      });
+      // nav's fallback page is the vault, which requires assurance AL1.
+      await tester.pumpWidget(const PluxScope(child: PluxView('home')));
+      expect(find.text('page vault of 10 '), findsNothing);
+      expect(find.text('fallback PLX-4020'), findsOneWidget);
     },
   );
 
@@ -536,9 +564,7 @@ void main() {
         server.release = null;
         await start(config());
       });
-      await tester.pumpWidget(
-        const PluxScope(child: PluxView('loan-calculator')),
-      );
+      await tester.pumpWidget(const PluxScope(child: PluxView('result')));
       expect(find.textContaining('fallback PLX-30'), findsOneWidget);
       await tester.pumpWidget(const PluxScope(child: PluxView('result')));
       expect(find.textContaining('fallback PLX-30'), findsOneWidget);
@@ -572,9 +598,7 @@ void main() {
         server.release = null;
         await start(config());
       });
-      await tester.pumpWidget(
-        const PluxScope(child: PluxView('loan-calculator')),
-      );
+      await tester.pumpWidget(const PluxScope(child: PluxView('result')));
       expect(find.textContaining('fallback PLX-30'), findsOneWidget);
       expect(
         errors.where((e) => e.message.contains('cannot be read')),
@@ -608,6 +632,7 @@ void main() {
         await tester.pumpWidget(
           PluxScope(key: ValueKey(i), child: const PluxView('tasks')),
         );
+        await tester.pump(); // its guard decides first (NAV-009)
         expect(find.textContaining('fallback PLX-4001'), findsOneWidget);
         await tester.pumpWidget(const SizedBox());
         await settle(tester, () => true);
@@ -636,10 +661,10 @@ void main() {
       await tester.pumpWidget(
         UncontrolledProviderScope(
           container: host,
-          child: const PluxScope(child: PluxView('loan-calculator')),
+          child: const PluxScope(child: PluxView('result')),
         ),
       );
-      expect(find.text('page loan-calculator of 5 '), findsOneWidget);
+      expect(find.text('page result of 5 '), findsOneWidget);
       final parent = ProviderContainer(
         overrides: [_hostValue.overrideWithValue(42)],
       );
@@ -724,9 +749,8 @@ void main() {
       MaterialApp(
         home: Builder(
           builder: (c) => TextButton(
-            onPressed: () => unawaited(
-              Plux.open<void>(c, 'loan-calculator', params: {'x': 'q'}),
-            ),
+            onPressed: () =>
+                unawaited(Plux.open<void>(c, 'result', params: {'x': 'q'})),
             child: const Text('go'),
           ),
         ),
@@ -734,6 +758,6 @@ void main() {
     );
     await tester.tap(find.text('go'));
     await tester.pumpAndSettle();
-    expect(find.text('page loan-calculator of 5 q'), findsOneWidget);
+    expect(find.text('page result of 5 q'), findsOneWidget);
   });
 }

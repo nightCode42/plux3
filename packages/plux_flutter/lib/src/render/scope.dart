@@ -8,11 +8,14 @@ library;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plux_flutter/src/actions/engine.dart';
 import 'package:plux_flutter/src/assets/icon_fonts.dart';
 import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/native_catalogue/registration.dart';
+import 'package:plux_flutter/src/pxl/types.dart';
 import 'package:plux_flutter/src/render/node_context.dart';
 import 'package:plux_flutter/src/render/sections.dart';
 import 'package:plux_flutter/src/render/values.dart';
@@ -70,6 +73,12 @@ abstract interface class RenderServices {
   /// Builds the fallback shown instead of a failed page or component of
   /// [plugin] (RT-020).
   Widget fallback(BuildContext context, PluxException error, String plugin);
+
+  /// The host's native slot of [type], with the catalogue's declaration
+  /// and the types its props may name; null when the host registers none
+  /// or the catalogue declares none (WGT-033, ADR-0041).
+  ({PluxNativeSlot slot, NativeSlotDecl decl, Map<String, NamedType> types})?
+  nativeSlot(RenderScope scope, String type);
 }
 
 /// Reports a problem with a node's path (RT-020).
@@ -98,6 +107,7 @@ final class RenderScope {
     this.state,
     this.fills,
     this.parent,
+    this.actions,
   });
 
   /// The release rendered.
@@ -147,6 +157,10 @@ final class RenderScope {
   /// The enclosing scope.
   final RenderScope? parent;
 
+  /// The engine the nodes' events start runs on (ADR-0039); null where
+  /// actions do not run.
+  final ActionHost? actions;
+
   /// A scope with [extra] roots, for a template item.
   RenderScope withRoots(Map<String, Object?> extra, String at) {
     Map<String, Object?> all() => {...roots(), ...extra};
@@ -172,6 +186,7 @@ final class RenderScope {
       state: state,
       fills: fills,
       parent: parent,
+      actions: actions,
     );
   }
 

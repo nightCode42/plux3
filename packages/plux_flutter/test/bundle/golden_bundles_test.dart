@@ -40,6 +40,8 @@ void main() {
       'features/tasks.pxb',
       'loan-calculator/demo.pxb',
       'loan-calculator/loans.pxb',
+      'routing/nav.pxb',
+      'routing/routing.pxb',
       'widgets/gallery.pxb',
       'widgets/widgets.pxb',
     ]);
@@ -55,6 +57,7 @@ void main() {
             ? 3
             : (path.contains('/tasks') ||
                       path.contains('/loans') ||
+                      path.contains('/nav') ||
                       path.contains('/gallery')
                   ? 1
                   : 2),
@@ -66,7 +69,16 @@ void main() {
       final meta = fbs.Meta(b.ofKind(SectionKind.meta).single.data);
       expect(meta.compilerVersion, 'dev', reason: path);
       expect(meta.schemaVersion, '1.0.0', reason: path);
-      expect(meta.minRuntime, '0.1.0', reason: path);
+      // The routing project uses what runtime 0.2.0 brings; the
+      // loan-calculator and features projects have guarded pages, which
+      // runtime 0.2.0 is the first to honour (ADR-0040).
+      expect(
+        meta.minRuntime,
+        ['routing/', 'loan-calculator/', 'features/'].any(path.startsWith)
+            ? '0.2.0'
+            : '0.1.0',
+        reason: path,
+      );
       expect(meta.requiredFeatures, isNotNull, reason: path);
       final features = meta.requiredFeatures!;
       expect(

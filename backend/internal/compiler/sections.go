@@ -248,6 +248,29 @@ var pageKinds = map[schema.PageKind]fbs.PageKind{
 	schema.PageKindBottomSheet: fbs.PageKindBottomSheet, schema.PageKindFullscreenDialog: fbs.PageKindFullscreenDialog,
 }
 
+// pageOptions are a page's route and security options as the page
+// section stores them: string-table indices and the assurance level.
+type pageOptions struct {
+	transition, result, assurance uint32
+	secure                        bool
+}
+
+// pageOptionsOf reads a page's transition, result type and security.
+func pageOptionsOf(e *valueEnc, pg *page) pageOptions {
+	var o pageOptions
+	if ro := pg.doc.RouteOptions; ro != nil {
+		o.transition = e.strs.of(string(ro.Transition))
+	}
+	o.result = e.strs.of(pg.doc.Result)
+	if sec := pg.doc.Security; sec != nil {
+		o.secure = sec.Secure != nil && *sec.Secure
+		if lvl := string(sec.RequiresAssurance); len(lvl) == 3 {
+			o.assurance = uint32(lvl[2] - '0')
+		}
+	}
+	return o
+}
+
 // pageSection encodes a page with its own string table (CMP-020).
 func (u *unit) pageSection(o *out, pg *page) []byte {
 	b := flatbuffers.NewBuilder(4096)
@@ -265,18 +288,7 @@ func (u *unit) pageSection(o *out, pg *page) []byte {
 	}
 	gv := uuidVector(b, guards)
 	key, route := e.strs.of(pg.doc.Key), e.strs.of(pg.route)
-	var transition uint32
-	var secure bool
-	var assurance uint32
-	if ro := pg.doc.RouteOptions; ro != nil {
-		transition = e.strs.of(string(ro.Transition))
-	}
-	if sec := pg.doc.Security; sec != nil {
-		secure = sec.Secure != nil && *sec.Secure
-		if lvl := string(sec.RequiresAssurance); len(lvl) == 3 {
-			assurance = uint32(lvl[2] - '0')
-		}
-	}
+	opts := pageOptionsOf(e, pg)
 	strs := e.strs.vector(b)
 	fbs.PageStart(b)
 	hi, lo := uuidHalves(id)
@@ -291,16 +303,19 @@ func (u *unit) pageSection(o *out, pg *page) []byte {
 	fbs.PageAddState(b, state)
 	fbs.PageAddDataSources(b, sources)
 	fbs.PageAddLifecycle(b, lifecycle)
-	if transition != 0 {
-		fbs.PageAddTransition(b, transition)
+	if opts.transition != 0 {
+		fbs.PageAddTransition(b, opts.transition)
 	}
 	fbs.PageAddGuards(b, gv)
-	fbs.PageAddSecure(b, secure)
-	if assurance != 0 {
-		fbs.PageAddRequiresAssurance(b, assurance)
+	fbs.PageAddSecure(b, opts.secure)
+	if opts.assurance != 0 {
+		fbs.PageAddRequiresAssurance(b, opts.assurance)
 	}
 	fbs.PageAddNodes(b, nodes)
 	fbs.PageAddStrings(b, strs)
+	if opts.result != 0 {
+		fbs.PageAddResult(b, opts.result)
+	}
 	data := finish(b, fbs.PageEnd(b), bundle.SectionPage)
 	if max := u.opts.Limits.Get(limits.BundlePageSectionSize); int64(len(data)) > max {
 		u.report(plxerr.LimitExceeded, pg.file, "", "the page section has %d bytes, above bundle.pageSectionSize = %d", len(data), max)
@@ -540,6 +555,10 @@ func (u *unit) schemasSection(o *out, types map[string]pxl.TypeSpec, state []*st
 	cv := offsetVector(b, colOffs)
 	vv := e.params(fieldParams(vars))
 	uv := e.params(fieldParams(userContext))
+	var natives nativeDecls
+	if o.pl == nil {
+		natives = u.nativeDeclarations(e)
+	}
 	fbs.SchemasStart(b)
 	fbs.SchemasAddTypes(b, tv)
 	fbs.SchemasAddState(b, sv)
@@ -547,6 +566,9 @@ func (u *unit) schemasSection(o *out, types map[string]pxl.TypeSpec, state []*st
 	fbs.SchemasAddCollections(b, cv)
 	fbs.SchemasAddVariables(b, vv)
 	fbs.SchemasAddUserContext(b, uv)
+	addOptional(b, natives.routes, fbs.SchemasAddNativeRoutes)
+	addOptional(b, natives.slots, fbs.SchemasAddNativeSlots)
+	addOptional(b, natives.actions, fbs.SchemasAddNativeActions)
 	o.add(bundle.SectionSchemas, o.id, finish(b, fbs.SchemasEnd(b), bundle.SectionSchemas))
 }
 
@@ -1003,11 +1025,12 @@ func (u *unit) metaSection(o *out) {
 	e := &valueEnc{u: u, o: o, b: b, strs: o.shared}
 	features := stringVector(b, featureList(o.features))
 	lv := u.runtimeLimits(b)
-	var pages, capabilities, plugins, locales, flags, sampling flatbuffers.UOffsetT
+	var pages, exported, capabilities, plugins, locales, flags, sampling flatbuffers.UOffsetT
 	name, key := app.Name, app.Key
 	if o.pl != nil {
 		name, key = o.pl.doc.Name, o.pl.key
 		pages = pageEntries(b, o.pl)
+		exported = componentEntries(b, o.pl)
 		capabilities = capabilitiesTable(b, o.pl.doc.Capabilities)
 	} else {
 		var ids [][16]byte
@@ -1025,9 +1048,14 @@ func (u *unit) metaSection(o *out) {
 	}
 	nameOff, keyOff := b.CreateString(name), b.CreateString(key)
 	compiler, schemaVersion, minRuntime := b.CreateString(u.opts.Version), b.CreateString(schema.CurrentVersion), b.CreateString(app.MinRuntimeVersion)
-	var defLocale, entryRoute, profile flatbuffers.UOffsetT
+	var defLocale, entryRoute, profile, notFound, shells, links, push flatbuffers.UOffsetT
 	if o.pl == nil {
 		defLocale, entryRoute, profile = b.CreateString(app.DefaultLocale), b.CreateString(app.EntryRoute), b.CreateString(string(app.SecurityProfile))
+		if nav := app.Navigation; nav != nil && nav.NotFound != "" {
+			notFound = b.CreateString(nav.NotFound)
+		}
+		shells = u.shellTables(e)
+		links, push = u.deepLinksTable(b), u.pushTable(b)
 	}
 	fbs.MetaStart(b)
 	fbs.MetaAddKind(b, fbs.BundleKind(o.kind)) //nolint:gosec // G115: bundle kinds are 1–3.
@@ -1049,6 +1077,7 @@ func (u *unit) metaSection(o *out) {
 			fhi, flo := uuidHalves(uuidBytes(o.pl.doc.FallbackPage))
 			fbs.MetaAddFallbackPage(b, fbs.CreateUuid(b, fhi, flo))
 		}
+		addOptional(b, exported, fbs.MetaAddComponents)
 	} else {
 		fbs.MetaAddPlugins(b, plugins)
 		fbs.MetaAddDefaultLocale(b, defLocale)
@@ -1060,11 +1089,21 @@ func (u *unit) metaSection(o *out) {
 			fbs.MetaAddNativeCatalogue(b, fbs.CreateUuid(b, nhi, nlo))
 		}
 		fbs.MetaAddSecurityProfile(b, profile)
-		if sampling != 0 {
-			fbs.MetaAddTelemetrySampling(b, sampling)
-		}
+		addOptional(b, sampling, fbs.MetaAddTelemetrySampling)
+		addOptional(b, notFound, fbs.MetaAddNotFoundRoute)
+		addOptional(b, shells, fbs.MetaAddShells)
+		addOptional(b, links, fbs.MetaAddDeepLinks)
+		addOptional(b, push, fbs.MetaAddPush)
 	}
 	o.add(bundle.SectionMeta, o.id, finish(b, fbs.MetaEnd(b), bundle.SectionMeta))
+}
+
+// addOptional adds an optional field to the table being built, unless its
+// offset is 0 (absent).
+func addOptional(b *flatbuffers.Builder, off flatbuffers.UOffsetT, add func(*flatbuffers.Builder, flatbuffers.UOffsetT)) {
+	if off != 0 {
+		add(b, off)
+	}
 }
 
 // samplingTables writes the app's telemetry sampling rates in
@@ -1114,6 +1153,31 @@ func pageEntries(b *flatbuffers.Builder, pl *plugin) flatbuffers.UOffsetT {
 		fbs.PageEntryAddKey(b, key)
 		fbs.PageEntryAddRoute(b, route)
 		offs[i] = fbs.PageEntryEnd(b)
+	}
+	return offsetVector(b, offs)
+}
+
+// componentEntries lists a plugin's exported components, sorted by key,
+// for PluxView (NAV-004, ADR-0023); 0 when it exports none.
+func componentEntries(b *flatbuffers.Builder, pl *plugin) flatbuffers.UOffsetT {
+	var exported []*component
+	for _, c := range pl.components {
+		if c.doc.Exported != nil && *c.doc.Exported {
+			exported = append(exported, c)
+		}
+	}
+	if len(exported) == 0 {
+		return 0
+	}
+	slices.SortFunc(exported, func(x, y *component) int { return strings.Compare(x.doc.Key, y.doc.Key) })
+	offs := make([]flatbuffers.UOffsetT, len(exported))
+	for i, c := range exported {
+		key := b.CreateString(c.doc.Key)
+		fbs.ComponentEntryStart(b)
+		hi, lo := uuidHalves(uuidBytes(c.doc.ID))
+		fbs.ComponentEntryAddId(b, fbs.CreateUuid(b, hi, lo))
+		fbs.ComponentEntryAddKey(b, key)
+		offs[i] = fbs.ComponentEntryEnd(b)
 	}
 	return offsetVector(b, offs)
 }

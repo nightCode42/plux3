@@ -26,6 +26,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/auth"
 	"github.com/nightCode42/plux3/backend/internal/document"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
+	"github.com/nightCode42/plux3/backend/internal/schema"
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 	"github.com/nightCode42/plux3/backend/internal/signing"
 	"github.com/nightCode42/plux3/backend/internal/storage"
@@ -59,9 +60,9 @@ type Enqueuer interface {
 }
 
 // Devices counts the registered devices of an app that cannot use a
-// release, for REL-080; nil counts none.
+// release, for REL-080: by runtime, or by host build; nil counts none.
 type Devices interface {
-	Incompatible(ctx context.Context, tx pgx.Tx, appID, minRuntime string) (int64, error)
+	Incompatible(ctx context.Context, tx pgx.Tx, appID, minRuntime string, hostBuilds []string) (int64, error)
 }
 
 // Options configures a Service.
@@ -102,6 +103,8 @@ type Service struct {
 	now       func() time.Time
 	flights   *flightGroup
 	manifests *manifestCache
+	// validator checks uploaded native catalogues.
+	validator *schema.Validator
 }
 
 // NewService returns the service.
@@ -125,7 +128,11 @@ func NewService(o Options) (*Service, error) {
 	if now == nil {
 		now = time.Now
 	}
-	return &Service{o: o, now: now, flights: &flightGroup{}, manifests: &manifestCache{}}, nil
+	validator, err := schema.NewValidator()
+	if err != nil {
+		return nil, fmt.Errorf("release: %w", err)
+	}
+	return &Service{o: o, now: now, flights: &flightGroup{}, manifests: &manifestCache{}, validator: validator}, nil
 }
 
 // inOrg runs f in a transaction bound to the principal's organisation.

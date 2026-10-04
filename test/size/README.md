@@ -2,9 +2,9 @@
 
 What `plux_flutter` adds to a host app (`RT-061`, `NFR-009`,
 [ADR-0036](../../docs/adr/0036-size-budgets-per-build.md)), measured against a blank
-Flutter app: at most 3 MiB to what a device downloads — the App Bundle split for each ABI
-and the thinned iOS IPA — and at most 6.5 MiB to the release APK of each ABI, which stores
-the Dart code uncompressed.
+Flutter app: at most 4 MiB to what a device downloads from the App Bundle for each ABI, at
+most 10 MiB to the release APK of each ABI, which stores the Dart code uncompressed, and at
+most 3 MiB to the thinned iOS IPA.
 
 - [blank](blank) is a `MaterialApp` with a scaffold and a text.
 - [plux](plux) is the same app with the runtime: it calls `Plux.initialize` and shows a

@@ -53,7 +53,7 @@ Valkey is reached with a small RESP client in `backend/internal/cache`, so no Re
 | `flutter_lints` | Lint rule set | BSD-3-Clause | In use (dev) |
 | `test` | Tests of the pure-Dart `plux_widget_api` tool | BSD-3-Clause | In use (dev) |
 | `flat_buffers` | Bundle section accessors in `plux_flutter` ([ADR-0002](../adr/0002-flatbuffers-sectioned-bundles.md)) | Apache-2.0 | In use |
-| `analyzer` | Flutter constructor extraction in the development-only `plux_widget_api` tool ([ADR-0010](../adr/0010-layered-widget-model.md)); never a dependency of a shipped package | BSD-3-Clause | In use (tool) |
+| `analyzer` | Flutter constructor extraction in the development-only `plux_widget_api` tool ([ADR-0010](../adr/0010-layered-widget-model.md)), and the host scanner `plux_native_scan` behind `plux native scan` (`CLI-006`, [ADR-0041](../adr/0041-native-catalogue-and-host-builds.md); maintainer, 2026-10-01); never a dependency of a shipped package | BSD-3-Clause | In use (`plux_widget_api`; `plux_native_scan`, P4 R6) |
 | `flutter_riverpod` 3.4.3 (with `riverpod`) | The runtime's state engine (`RT-003`, [ADR-0008](../adr/0008-riverpod-runtime-state-engine.md)); no code generation | MIT | In use (P3) |
 | `cryptography` 2.9.0 | Ed25519 verification of manifests and baseline bundles, pure-Dart implementation only ([ADR-0029](../adr/0029-on-device-verification.md)) | Apache-2.0 | In use (P3) |
 | `crypto` 3.0.7 | SHA-256 of bundles, sections and assets ([ADR-0029](../adr/0029-on-device-verification.md)) | BSD-3-Clause | In use (P3) |
@@ -64,8 +64,12 @@ Valkey is reached with a small RESP client in `backend/internal/cache`, so no Re
 | `hooks` 2.2.0, `code_assets` 1.2.1, `native_toolchain_c` 0.19.3 | The build hook that compiles `plux_native` (mmap and zstd) for every target; build time only, never imported by `lib/` ([ADR-0030](../adr/0030-native-code-in-plux-flutter.md)) | BSD-3-Clause | In use (P3, build) |
 | `vector_graphics_compiler` 1.3.0 | The SVG encoder inside the server-side `plux-svgc` helper; never a dependency of a shipped package ([ADR-0027](../adr/0027-asset-pipeline.md) Revision) | BSD-3-Clause | In use (P3, server tool) |
 | `integration_test` (SDK) | End-to-end tests of the example host app on emulators and simulators (`QA-006`) | BSD-3-Clause | In use (P3, dev) |
+| `go_router` (publisher flutter.dev; 18.0.2 when approved) | The `plux_go_router` adapter only: Plux pages as `GoRoute`s, shells as `StatefulShellRoute`, discovery of the host's named routes (`NAV-006`, `HST-031`, [ADR-0040](../adr/0040-navigation-delegate-and-router-adapters.md)); never a dependency of `plux_flutter` | BSD-3-Clause | In use (`plux_go_router`, P4 R5; approved by plan D3) |
+| `auto_route` (publisher codeness.ly; 11.2.0 when approved) | The `plux_auto_route` adapter only: the delegate on `StackRouter` and discovery from the router's routes, which the host's generated code declares (`NAV-006`, [ADR-0040](../adr/0040-navigation-delegate-and-router-adapters.md)); never a dependency of `plux_flutter` | MIT | In use (`plux_auto_route`, P4 R5; approved by plan D3) |
 
 Transitive packages these bring, all published by the Dart and Flutter teams or the Riverpod author and all BSD-3-Clause or MIT: `state_notifier`, `listen`, `uuid`, `fixnum` (Riverpod); `http_parser`, `http_profile`, `web`, `web_socket` (HTTP); `jni`, `jni_flutter`, `jni_util`, `package_config`, `plugin_platform_interface` (Cronet); `objective_c`, `ffi` (`URLSession`, `cryptography`); `vector_graphics_codec`; and, at build time only, `logging`, `pub_semver`, `record_use`, `yaml`, `glob`, `file`. `flutter_riverpod` declares `flutter_test` as a dependency; nothing in `plux_flutter/lib` imports it, so release builds do not contain it.
+
+Each router adapter declares its router with a caret range bounded below the next major release ([ADR-0040](../adr/0040-navigation-delegate-and-router-adapters.md)); the lockfile fixes the version (`go_router` 18.0.2, `auto_route` 11.2.0 at R5). Their transitive packages — `collection`, `intl`, `logging`, `meta`, `path` and `web` (publisher dart.dev), `material_ui` and `cupertino_ui` (flutter.dev), and the SDK's `flutter_web_plugins` and `flutter_localizations` — are published by the Dart and Flutter teams; `intl` and `flutter_localizations` come through `material_ui` and `cupertino_ui`. `auto_route_generator` and `build_runner` are not dependencies: the adapter reads the host's generated routes, and its tests declare routes by hand.
 
 `vector_graphics_compiler` brings, into `plux-svgc` only: `args` and `path_parsing` (Dart and Flutter teams, BSD-3-Clause), and `xml` with `petitparser` (Lukas Renggli, MIT), which it pins to audited versions; the maintainer approved these transitive dependencies on 2026-09-29. `plux_svgc` is outside the pub workspace with its own `pubspec.lock`, because the server image builds it with the Dart SDK alone.
 
@@ -75,6 +79,16 @@ Transitive packages these bring, all published by the Dart and Flutter teams or 
 |---|---|---|---|
 | zstd v1.5.7 (`lib/common`, `lib/decompress`), vendored in `packages/plux_flutter/native/zstd/` | Delta patching and transport decompression on the device | BSD-3-Clause | [ADR-0030](../adr/0030-native-code-in-plux-flutter.md) |
 | Skia path operations at the revision the pinned Flutter uses, with the Flutter engine's `path_ops` wrapper, built for `plux-svgc` | Mask, clip and overdraw optimisation of SVGs at publish time | BSD-3-Clause | [ADR-0027](../adr/0027-asset-pipeline.md) Revision |
+
+### Add-to-app hosts (`apps/add_to_app/`)
+
+The native Android and iOS hosts embed the Plux module with the Flutter SDK's own add-to-app tooling (`HST-033`, plan p4 §5.10). The Android host's `:flutter` project brings the Flutter embedding and the AndroidX libraries it declares, as any Flutter app has them; among them `androidx.fragment`, whose `FragmentActivity` holds the `FlutterFragment`. Beyond those, the hosts use only their UI tests' libraries (maintainer, 2026-10-02, plan p4 A33):
+
+| Dependency | Used for | Licence | Status |
+|---|---|---|---|
+| `androidx.test:runner` 1.6.2, `androidx.test.ext:junit` 1.2.1 | The Kotlin host's instrumentation tests: `AndroidJUnitRunner` and the JUnit 4 runner class; `androidTest` only, never in the app | Apache-2.0 | In use (P4 R10, test) |
+| `androidx.test.uiautomator:uiautomator` 2.3.0 | The Kotlin host's UI tests, which find Plux pages and native views by their accessibility labels; `androidTest` only | Apache-2.0 | In use (P4 R10, test) |
+| `junit:junit` 4.13.2, with `org.hamcrest:hamcrest-core` 1.3 | Brought by the two above, whose test API JUnit 4 is; `androidTest` only, never distributed | EPL-1.0; BSD-3-Clause | In use (P4 R10, test). EPL-1.0, a weak copyleft licence, is accepted for `androidTest` only by [ADR-0044](../adr/0044-junit-4-for-the-android-host-tests.md) |
 
 ### Documentation site (`site/`)
 
@@ -107,6 +121,7 @@ Planned for P11 (ADR-0014): React, TanStack Router and Query, shadcn/ui on Radix
 | cosign (sigstore/cosign-installer), Syft (anchore/sbom-action), Docker Buildx and QEMU | Action SHAs in `release.yml` and `image.yml` | Keyless signatures, CycloneDX SBOMs and multi-arch images (`DEP-001`, `CI-004`) |
 | SLSA GitHub generators (`generator_generic_slsa3`, `generator_container_slsa3`) v2.1.0 | Tag in `release.yml` — the generators must be referenced by tag to be verifiable | SLSA level 3 provenance (`CI-004`) |
 | k6 (grafana/setup-k6-action) | Action SHA in `load.yml` | The manifest load test (`NFR-020`) |
+| CocoaPods | GitHub's macOS images; Homebrew where it is missing (`test/e2e/ios.sh`) | Installs the add-to-app module's pods into the Swift host, as Flutter's add-to-app guide describes (`HST-033`, plan p4 A33) |
 
 ### Container images
 

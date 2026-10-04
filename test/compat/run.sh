@@ -45,6 +45,10 @@ checkout() {
 }
 
 e2e "$root/backend" "$root/apps/starter" "runtime HEAD, server HEAD"
+echo "── a project plux create generates, runtime HEAD, server HEAD (GEN-002, GEN-005, GEN-006)"
+(cd "$root/backend" && PLUX_E2E_FLUTTER="$flutter" go test -count=1 -timeout 30m -run TestGeneratedAppAgainstTheServer ./internal/server)
+echo "── the add-to-app module, runtime HEAD, server HEAD (HST-033)"
+(cd "$root/backend" && PLUX_E2E_FLUTTER="$flutter" go test -count=1 -timeout 30m -run TestAddToAppAgainstTheServer ./internal/server)
 runs=1
 for tag in $(releases plux_flutter); do
 	dir=$(checkout "$tag")

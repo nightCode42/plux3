@@ -344,10 +344,16 @@ func (s Release) GetCompatibility(ctx context.Context, req *connect.Request[plux
 		if err != nil {
 			return nil, err //nolint:wrapcheck // a domain error
 		}
-		return &pluxv1.GetCompatibilityResponse{Compatibility: &pluxv1.Compatibility{
+		out := &pluxv1.Compatibility{
 			MinRuntime: c.MinRuntime, RequiredFeatures: c.RequiredFeatures,
 			IncompatibleDevices: c.IncompatibleDevices, FallbackSequence: c.FallbackSequence,
-		}}, nil
+		}
+		for _, b := range c.IncompatibleBuilds {
+			out.IncompatibleHostBuilds = append(out.IncompatibleHostBuilds, &pluxv1.IncompatibleHostBuild{
+				HostBuild: b.Build, Devices: b.Devices, FallbackSequence: b.FallbackSequence, Missing: b.Missing,
+			})
+		}
+		return &pluxv1.GetCompatibilityResponse{Compatibility: out}, nil
 	})
 }
 

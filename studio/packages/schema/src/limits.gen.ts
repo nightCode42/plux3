@@ -40,7 +40,7 @@ export const limits = [
     warning: 0,
     max: 3600000,
     scopes: ["installation", "organization", "app", "plugin"],
-    phase: "P5",
+    phase: "P4",
     description: "Time one action run may take.",
   },
   {
@@ -50,7 +50,7 @@ export const limits = [
     warning: 0,
     max: 600000,
     scopes: ["installation", "organization", "app", "plugin"],
-    phase: "P5",
+    phase: "P4",
     description: "Time one action step may take.",
   },
   {
@@ -60,7 +60,7 @@ export const limits = [
     warning: 0,
     max: 100000,
     scopes: ["installation", "organization", "app", "plugin"],
-    phase: "P5",
+    phase: "P4",
     description: "Steps one action run may execute.",
   },
   {

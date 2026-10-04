@@ -1,0 +1,64 @@
+{
+  "id": "01e0c450-6c00-7000-8000-000000000064",
+  "key": "places",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01e0c450-6c00-7000-8000-000000000065",
+    "slots": {
+      "appBar": {
+        "id": "01e0c450-6c00-7000-8000-000000000066",
+        "slots": {
+          "title": {
+            "id": "01e0c450-6c00-7000-8000-000000000067",
+            "props": {
+              "data": "Places"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "id": "01e0c450-6c00-7000-8000-000000000068",
+        "props": {
+          "padding": {
+            "all": 16.0
+          }
+        },
+        "slots": {
+          "child": {
+            "events": {
+              "onPlace": {
+                "steps": [
+                  {
+                    "action": "navigate",
+                    "id": "open",
+                    "input": {
+                      "params": {
+                        "name": {
+                          "$expr": "event"
+                        }
+                      },
+                      "route": "place"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01e0c450-6c00-7000-8000-000000000069",
+            "props": {
+              "title": "Nearby"
+            },
+            "type": "MapCard"
+          }
+        },
+        "type": "Padding"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "places",
+  "schemaVersion": "1.0.0",
+  "title": "Places"
+}

@@ -17,6 +17,7 @@ import 'package:plux_flutter/src/pxl/vm.dart' as vm;
 import 'package:plux_flutter/src/render/decoding.dart';
 import 'package:plux_flutter/src/render/messages.dart';
 import 'package:plux_flutter/src/render/sections.dart';
+import 'package:plux_flutter/src/schema/registry.g.dart';
 
 /// A binding that could not be evaluated; the prop takes its default and
 /// the node reports it (PLX-4002).
@@ -108,8 +109,20 @@ final class ValueResolver {
 
   Object? _style(int id, Set<String>? reads) {
     final s = plugin.style(id);
-    return resolve(s.value, plugin.string, reads);
+    final v = s.value;
+    // A value type's object is keyed by permanent field IDs, which its
+    // style's type names (BND-017).
+    if (v != null && readEnum(() => v.kind) == fbs.ValueKind.Object) {
+      return _Object(this, v, plugin.string, reads, names: _fieldNames[s.type]);
+    }
+    return resolve(v, plugin.string, reads);
   }
+
+  /// The field names of each registry value type, by permanent field ID.
+  static final Map<int, Map<int, String>> _fieldNames = {
+    for (final t in valueTypeDescriptors)
+      t.id: {for (final f in t.fields.entries) f.value: f.key},
+  };
 
   /// Evaluates [program] against the roots; adds its read set to [reads].
   Object? evaluate(Program program, [Set<String>? reads]) {
@@ -172,14 +185,20 @@ String uuidString(UuidKey u) {
       '${s.substring(16, 20)}-${s.substring(20)}';
 }
 
-/// An object literal whose fields are resolved when read.
+/// An object literal whose fields are resolved when read: a declared
+/// type's, keyed by string index, or a registry value type's, keyed by
+/// permanent field ID and named by [names].
 final class _Object implements PluxObject {
-  _Object(this._r, this._v, this._strings, this._reads);
+  _Object(this._r, this._v, this._strings, this._reads, {this.names});
 
   final ValueResolver _r;
   final fbs.Value _v;
   final StringTable _strings;
   final Set<String>? _reads;
+
+  /// A value type's field names by permanent field ID; null for a declared
+  /// type.
+  final Map<int, String>? names;
 
   @override
   Object? field(int id) {
@@ -192,6 +211,6 @@ final class _Object implements PluxObject {
   @override
   Map<String, Object?> toMap() => {
     for (final e in _v.entries ?? const <fbs.Entry>[])
-      _strings(e.key): _r.resolve(e.value, _strings, _reads),
+      (names?[e.key] ?? _strings(e.key)): _r.resolve(e.value, _strings, _reads),
   };
 }
