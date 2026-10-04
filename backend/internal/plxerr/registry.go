@@ -59,11 +59,19 @@ const (
 	UndeclaredComponentEvent     Code = 1128
 	EmitEventOutsideComponent    Code = 1129
 	InvalidRetryPolicy           Code = 1130
-	UnknownRoute                 Code = 1201
-	RouteParameterMissing        Code = 1203
-	RouteParameterTypeInvalid    Code = 1204
-	UnknownRouteParameter        Code = 1205
-	RedirectLoop                 Code = 1206
+
+	// Schema and validation: data sources (PLX-1170–1189, P5 R4).
+
+	DataSourceConfigInvalid    Code = 1170
+	DataSourceDomainUndeclared Code = 1171
+	DataMappingInvalid         Code = 1172
+	DataPaginationInvalid      Code = 1173
+	DataSourceSecretHeader     Code = 1174
+	UnknownRoute               Code = 1201
+	RouteParameterMissing      Code = 1203
+	RouteParameterTypeInvalid  Code = 1204
+	UnknownRouteParameter      Code = 1205
+	RedirectLoop               Code = 1206
 
 	// Schema and validation: limits and budgets (PLX-1300–1399).
 
@@ -152,6 +160,19 @@ const (
 	FlowNotFound            Code = 5007
 	ErrorHandlerFailed      Code = 5008
 	ActionQueueFull         Code = 5009
+
+	// Data sources (PLX-5100–5199, P5 R4).
+
+	DataDomainBlocked     Code = 5100
+	DataNetworkFailed     Code = 5101
+	DataHTTPError         Code = 5102
+	DataRequestTimeout    Code = 5103
+	DataMappingFailed     Code = 5104
+	DataSizeExceeded      Code = 5105
+	DataGraphQLError      Code = 5106
+	DataUnauthorised      Code = 5107
+	DataSourceUnavailable Code = 5108
+	DataCacheUnavailable  Code = 5109
 
 	// Security (PLX-6000–6999).
 

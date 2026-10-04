@@ -1,0 +1,105 @@
+{
+  "defaultLocale": "en",
+  "entryRoute": "tasks",
+  "environments": [
+    {
+      "key": "production",
+      "name": "Production",
+      "values": {
+        "apiBaseUrl": "https://api.example.com/v1",
+        "graphUrl": "https://graph.example.org"
+      }
+    },
+    {
+      "key": "staging",
+      "name": "Staging",
+      "values": {
+        "apiBaseUrl": "https://staging.api.example.com/v1",
+        "graphUrl": "https://staging.example.org"
+      }
+    }
+  ],
+  "icon": {
+    "monogram": {
+      "background": "#0B6E4F",
+      "text": "DA"
+    }
+  },
+  "id": "01d0c450-6c00-7000-8000-000000000001",
+  "key": "data",
+  "kind": "app",
+  "minRuntimeVersion": "0.2.0",
+  "name": "Data",
+  "plugins": [
+    "shop"
+  ],
+  "requiredFeatures": "raise",
+  "schemaVersion": "1.0.0",
+  "securityProfile": "standard",
+  "supportedLocales": [
+    "en"
+  ],
+  "sync": {
+    "activation": "atSafePoint",
+    "startup": {
+      "mode": "useCacheThenSync"
+    }
+  },
+  "theme": "01d0c450-6c00-7000-8000-000000000002",
+  "types": [
+    {
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "done",
+          "type": "bool"
+        }
+      ],
+      "name": "Task"
+    },
+    {
+      "fields": [
+        {
+          "name": "title",
+          "type": "string"
+        }
+      ],
+      "name": "NewTask"
+    },
+    {
+      "fields": [
+        {
+          "name": "total",
+          "type": "int"
+        }
+      ],
+      "name": "Count"
+    },
+    {
+      "fields": [
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ],
+      "name": "Profile"
+    }
+  ],
+  "variables": [
+    {
+      "name": "apiBaseUrl",
+      "type": "string"
+    },
+    {
+      "name": "graphUrl",
+      "type": "string"
+    }
+  ]
+}

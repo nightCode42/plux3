@@ -240,6 +240,31 @@ var registry = []Definition{
 		"Set maxBackoffMs to at least backoffMs, and remove cancelled from the error kinds it retries.", false,
 	},
 	{
+		DataSourceConfigInvalid, "DATA_SOURCE_CONFIG_INVALID", SeverityError, "Invalid data source configuration",
+		"The configuration of a REST or GraphQL data source, or of one of its operations, is not what the data layer runs: a property is unknown or missing, the method, path or GraphQL document is malformed, the base URL names no string variable, a cache policy or TTL is invalid, or an operation's input or output type is unknown (DAT-001, DAT-003, DAT-010, ADR-0048).",
+		"Correct the configuration as the data sources reference describes; the message names the property.", false,
+	},
+	{
+		DataSourceDomainUndeclared, "DATA_SOURCE_DOMAIN_UNDECLARED", SeverityError, "Data source on an undeclared domain",
+		"An environment's base URL of a data source is not an HTTPS URL on a domain the plugin declares in capabilities.networkDomains, so every request would be blocked at run time (DAT-030, SEC-080).",
+		"Declare the domain in the plugin's capabilities, or correct the environment's base URL.", false,
+	},
+	{
+		DataMappingInvalid, "DATA_MAPPING_INVALID", SeverityError, "Invalid response mapping",
+		"A data source's selector, response type or transform cannot produce its declared type: the selector is malformed, a transform is given without a response type, or the transform's type is not the declared one (DAT-004).",
+		"Declare the response type the selector yields and a transform that returns the source's type, or select the declared type directly.", false,
+	},
+	{
+		DataPaginationInvalid, "DATA_PAGINATION_INVALID", SeverityError, "Invalid pagination",
+		"A paginated data source does not declare a list type, names a style other than cursor, page or offset, lacks the parameter or selector its style needs, or asks for pages larger than the limit data.pageSize (DAT-011).",
+		"Declare a list type and the parameters of the style, and keep pageSize within data.pageSize.", false,
+	},
+	{
+		DataSourceSecretHeader, "DATA_SOURCE_SECRET_HEADER", SeverityError, "Credential in a data source header",
+		"A data source or operation sets a header that carries credentials (Authorization, Cookie, an API key or token). Secrets never appear in bundles; the auth delegate supplies the user's token and calls needing server-held secrets go through a Plux Function (DAT-003, SEC-107).",
+		"Remove the header and set auth to true to send the auth delegate's token, or call the API through a Plux Function.", false,
+	},
+	{
 		UnknownRoute, "UNKNOWN_ROUTE", SeverityError, "Unknown route",
 		"A navigate action targets a route name that no page and no native route declares.",
 		"Correct the route name, or add the page.", false,
@@ -618,6 +643,56 @@ var registry = []Definition{
 		ActionQueueFull, "ACTION_QUEUE_FULL", SeverityWarning, "Action queue full",
 		"A handler with the queue policy was triggered while it already held as many waiting triggers as the limit action.queueLength allows; the trigger was dropped (ACT-003).",
 		"Use the drop, restart or debounce policy for triggers that come faster than their runs finish, or raise the limit within its maximum.", false,
+	},
+	{
+		DataDomainBlocked, "DATA_DOMAIN_BLOCKED", SeverityError, "Request to an undeclared domain blocked",
+		"A data source or operation was about to send a request to a host the plugin does not declare in capabilities.networkDomains, or over a scheme other than HTTPS. The request never left the device, and the attempt is reported (DAT-030, SEC-080).",
+		"Declare the domain in the plugin's capabilities, or correct the base URL of the environment.", false,
+	},
+	{
+		DataNetworkFailed, "DATA_NETWORK_FAILED", SeverityError, "Network request failed",
+		"A data request could not be completed: the device is offline, the connection failed or was reset. The step's error has the kind network (DAT-001).",
+		"Handle the error with onError, show the source's error state, or retry when the network returns.", false,
+	},
+	{
+		DataHTTPError, "DATA_HTTP_ERROR", SeverityError, "Request answered with an error status",
+		"The server answered a data request with a status outside 2xx. The step's error has the kind http and carries the status, never the response body (DAT-001, SCH-012).",
+		"Handle the error with onError; check the request against the API.", false,
+	},
+	{
+		DataRequestTimeout, "DATA_REQUEST_TIMEOUT", SeverityError, "Data request timed out",
+		"A data request took longer than the limit data.requestTimeout. The step's error has the kind timeout (DAT-001).",
+		"Handle the error with onError, or ask the API owner why it is slow; an installation may raise the limit within its maximum.", false,
+	},
+	{
+		DataMappingFailed, "DATA_MAPPING_FAILED", SeverityError, "Response does not match its declared type",
+		"A response is not JSON, its selector finds nothing, a value does not have the type the source or operation declares, or the transform failed. The step's error has the kind validation and names the path, never the value (DAT-004).",
+		"Correct the selector, the declared types or the transform, or ask the API owner about the response.", false,
+	},
+	{
+		DataSizeExceeded, "DATA_SIZE_EXCEEDED", SeverityError, "Request or response too large",
+		"A data request's body is larger than data.requestSize, or its response larger than data.responseSize; the transfer is stopped (LIM-004).",
+		"Request less data, for example with pagination, or raise the limit within its maximum.", false,
+	},
+	{
+		DataGraphQLError, "DATA_GRAPHQL_ERROR", SeverityError, "GraphQL request failed",
+		"A GraphQL response carried errors and no data. The step's error has the kind http; the GraphQL messages are not reported, since they may echo user data (DAT-001, SCH-012).",
+		"Check the GraphQL document and its variables against the schema.", false,
+	},
+	{
+		DataUnauthorised, "DATA_UNAUTHORISED", SeverityError, "Request unauthorised",
+		"A data request that sends the auth delegate's token was answered with 401 again after one refresh, or no token was available. The step's error has the kind http (HST-010).",
+		"Sign the user in again through the host app; check the auth delegate's refresh.", false,
+	},
+	{
+		DataSourceUnavailable, "DATA_SOURCE_UNAVAILABLE", SeverityError, "Data source unavailable",
+		"A step or binding names a data source or operation this release does not declare, the source has no base URL for the current environment, or its kind is one this runtime does not load yet (DAT-001, DAT-003).",
+		"Declare the source and a base URL for every environment, or raise the app's minimum runtime version to one that loads its kind.", false,
+	},
+	{
+		DataCacheUnavailable, "DATA_CACHE_UNAVAILABLE", SeverityWarning, "Response cache unavailable",
+		"The response cache could not be read or written, or its encryption key could not be obtained; the request goes to the network as with networkOnly, and nothing is stored in the clear (DAT-010, LIM-004).",
+		"Check the device's free storage and the key provider; the runtime keeps working without the cache.", false,
 	},
 
 	// Security.

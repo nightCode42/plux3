@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /// The features this runtime supports, for `required_features` (BND-008):
-/// `pxl.v1`, `navigation.guards.v1` (route guards, ADR-0040), and
+/// `pxl.v1`, `navigation.guards.v1` (route guards, ADR-0040), `data.v1`
+/// (the data layer, ADR-0048), and
 /// registry revisions — `widget.<Type>.v<n>`,
 /// `type.<Name>.v<n>`, `enum.<Name>.v<n>` — up to the revision this
 /// runtime's generated registry knows, for widgets it can build.
@@ -47,11 +48,16 @@ final class RuntimeFeatures {
     'actions.control.v1',
   };
 
+  /// The data layer (ADR-0048): a bundle declaring a REST or GraphQL
+  /// source requires it.
+  static const Set<String> data = {'data.v1'};
+
   /// Whether [feature] is supported.
   bool supports(String feature) {
     if (pxl.contains(feature) ||
         navigation.contains(feature) ||
-        actions.contains(feature)) {
+        actions.contains(feature) ||
+        data.contains(feature)) {
       return true;
     }
     final m = RegExp(

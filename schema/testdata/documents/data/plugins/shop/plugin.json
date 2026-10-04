@@ -1,0 +1,134 @@
+{
+  "capabilities": {
+    "networkDomains": [
+      "api.example.com",
+      "staging.api.example.com",
+      "*.example.org"
+    ]
+  },
+  "dataSources": [
+    {
+      "config": {
+        "auth": true,
+        "baseUrl": "apiBaseUrl",
+        "cache": {
+          "policy": "cacheFirst",
+          "ttlSeconds": 60
+        },
+        "headers": {
+          "Accept-Language": "en"
+        },
+        "mocks": {
+          "empty": [],
+          "error": {
+            "kind": "http",
+            "message": "unavailable",
+            "status": 503
+          }
+        },
+        "operations": {
+          "createTask": {
+            "input": "NewTask",
+            "method": "POST",
+            "output": "Task",
+            "path": "/tasks"
+          },
+          "deleteTask": {
+            "input": "Task",
+            "method": "DELETE",
+            "path": "/tasks/{id}"
+          }
+        },
+        "pagination": {
+          "cursorParam": "after",
+          "hasMore": "more",
+          "nextCursor": "next",
+          "pageSize": 2,
+          "sizeParam": "limit",
+          "style": "cursor"
+        },
+        "params": {
+          "filter": "open"
+        },
+        "path": "/tasks",
+        "select": "items"
+      },
+      "id": "01d0c450-6c00-7000-8000-000000000004",
+      "kind": "rest",
+      "mock": [
+        {
+          "done": false,
+          "id": "t1",
+          "title": "Mocked"
+        }
+      ],
+      "name": "tasks",
+      "type": "list<Task>"
+    },
+    {
+      "config": {
+        "baseUrl": "apiBaseUrl",
+        "cache": {
+          "policy": "staleWhileRevalidate",
+          "ttlSeconds": 30
+        },
+        "path": "/tasks/count",
+        "responseType": "Count",
+        "transform": {
+          "$expr": "response.total"
+        }
+      },
+      "id": "01d0c450-6c00-7000-8000-000000000005",
+      "kind": "rest",
+      "mock": 3,
+      "name": "count",
+      "type": "int"
+    },
+    {
+      "config": {
+        "auth": true,
+        "baseUrl": "graphUrl",
+        "cache": {
+          "encrypted": true,
+          "policy": "networkFirst",
+          "ttlSeconds": 300
+        },
+        "operations": {
+          "rename": {
+            "input": "NewTask",
+            "output": "Profile",
+            "query": "mutation Rename($title: String!) { rename(title: $title) { name } }",
+            "select": "rename"
+          }
+        },
+        "path": "/graphql",
+        "query": "query Me { me { name } }",
+        "select": "me"
+      },
+      "id": "01d0c450-6c00-7000-8000-000000000006",
+      "kind": "graphql",
+      "mock": {
+        "name": "Ada"
+      },
+      "name": "profile",
+      "type": "Profile"
+    }
+  ],
+  "description": "REST and GraphQL data sources, pagination, caching and mocks.",
+  "entryPage": "01d0c450-6c00-7000-8000-000000000010",
+  "icon": {
+    "monogram": {
+      "background": "#0B6E4F",
+      "text": "S"
+    }
+  },
+  "id": "01d0c450-6c00-7000-8000-000000000003",
+  "key": "shop",
+  "kind": "plugin",
+  "name": "Shop",
+  "pages": [
+    "01d0c450-6c00-7000-8000-000000000010"
+  ],
+  "schemaVersion": "1.0.0",
+  "team": "data"
+}

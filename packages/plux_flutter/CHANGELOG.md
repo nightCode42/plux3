@@ -26,6 +26,17 @@ released yet; this entry grows with each milestone of the phase.
   sensitive; each run is a timeline task in DevTools.
 - Bundles may require `actions.triggers.v1`, `actions.concurrency.v1`, `actions.retry.v1`,
   `actions.flows.v1` and `actions.control.v1`, which this runtime is the first to support.
+- Data layer I (ADR-0048): REST and GraphQL sources and operations on the
+  runtime's HTTP client, on a data isolate; base URLs per environment; the
+  auth delegate's token, refreshed once on `401`; every request checked
+  against the plugin's network domains first (`PLX-5100`); size and time
+  limits from the registry; mapping by selectors and PXL transforms; the
+  `networkOnly`, `cacheFirst`, `networkFirst` and `staleWhileRevalidate`
+  cache policies with optional AES-GCM encryption; cursor, page and offset
+  pagination bound to lists through `data.<name>.status` and `hasMore`;
+  `apiCall` and `refreshData` (with `more`); mock states in tests and
+  development builds; `api_call` telemetry without payloads. Requires the
+  feature `data.v1`.
 
 ## 0.2.0
 

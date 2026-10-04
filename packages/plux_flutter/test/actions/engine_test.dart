@@ -10,6 +10,7 @@ import 'package:plux_flutter/src/actions/engine.dart';
 import 'package:plux_flutter/src/actions/graph.dart';
 import 'package:plux_flutter/src/actions/handlers.dart';
 import 'package:plux_flutter/src/actions/run.dart';
+import 'package:plux_flutter/src/data/handlers.dart';
 import 'package:plux_flutter/src/render/values.dart';
 import 'package:plux_flutter/src/schema/registry.g.dart';
 
@@ -461,7 +462,7 @@ void main() {
     },
   );
 
-  test('the engine runs every action Appendix D tags up to P4 and R1\'s of P5, and refuses the rest (ADR-0039)', () {
+  test('the engine runs every action Appendix D tags up to P4 and the P5 ones delivered so far, and refuses the rest (ADR-0039)', () {
     for (final d in actionDescriptors) {
       final handler = handlerFor(d);
       if (runsInThisRuntime(d)) {
@@ -478,6 +479,7 @@ void main() {
           if (runsInThisRuntime(d)) d.name,
       ]..sort(),
       [
+        'apiCall',
         'callFlow',
         'callNative',
         'condition',
@@ -490,6 +492,7 @@ void main() {
         'openDialog',
         'parallel',
         'pop',
+        'refreshData',
         'stop',
         'switch',
         'switchTab',

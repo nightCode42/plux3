@@ -4,7 +4,7 @@
   "id": 17,
   "phase": "P5",
   "category": "data",
-  "description": "Reloads a data source, bypassing its cache.",
+  "description": "Reloads a data source, bypassing its cache, or loads the next page of a paginated source.",
   "inputs": [
     {
       "name": "source",
@@ -13,6 +13,13 @@
       "required": true,
       "ref": "dataSource",
       "description": "The data source."
+    },
+    {
+      "name": "more",
+      "id": 2,
+      "type": "bool",
+      "default": false,
+      "description": "Loads the next page of a paginated source instead of reloading it (DAT-011)."
     }
   ],
   "effects": [

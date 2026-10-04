@@ -13,6 +13,8 @@ import 'package:plux_flutter/src/actions/action_error.dart';
 import 'package:plux_flutter/src/actions/clock.dart';
 import 'package:plux_flutter/src/actions/control.dart';
 import 'package:plux_flutter/src/actions/graph.dart';
+import 'package:plux_flutter/src/data/handlers.dart';
+import 'package:plux_flutter/src/data/services.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/schema/registry.g.dart';
 
@@ -189,6 +191,7 @@ final class StepContext {
     this.sync,
     this.emitEvent,
     this.run,
+    this.data,
   });
 
   /// Navigation for the run's page.
@@ -234,6 +237,7 @@ final class StepContext {
     sync: sync,
     emitEvent: emitEvent,
     run: run,
+    data: data,
   );
 
   /// This context with [emitEvent] for a component's handlers.
@@ -249,7 +253,12 @@ final class StepContext {
     track: track,
     sync: sync,
     emitEvent: emitEvent,
+    data: data,
   );
+
+  /// The data of the run's page, for `apiCall` and `refreshData`
+  /// (ADR-0048); null where no data layer runs.
+  final DataActions? data;
 }
 
 /// What a step produced.
@@ -342,7 +351,25 @@ ActionHandler actionHandler(
 final Map<String, ActionHandler> builtInHandlers = {
   ...p4Handlers,
   ...controlHandlers,
+  ...dataHandlers,
 };
+
+/// A handler written as a function, for handler tables outside this
+/// library, such as the data layer's.
+final class FunctionHandler implements ActionHandler {
+  /// Creates the handler.
+  const FunctionHandler(this._run);
+
+  final FutureOr<StepResult> Function(StepContext c, Map<String, Object?> i)
+  _run;
+
+  @override
+  bool get waitsForUser => false;
+
+  @override
+  FutureOr<StepResult> run(StepContext c, Map<String, Object?> inputs) =>
+      _run(c, inputs);
+}
 
 /// The handlers of the actions P4 runs, by action name.
 final Map<String, ActionHandler> p4Handlers = {

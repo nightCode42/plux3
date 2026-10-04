@@ -31,6 +31,7 @@ func typecheck(u *unit) {
 		tc.triggers(u.appTriggers, u.appScope, "app")
 		tc.typeOwnGraphs(u.appTriggers, u.appScope)
 	}
+	tc.compileDataSources(nil, u.project.App.Doc.DataSources, "app.json", u.appScope, u.project.App.Doc.ID)
 	tc.shellTabs()
 	for _, c := range u.shared {
 		if u.inFocus(c.file) {
@@ -68,6 +69,7 @@ func (t *typer) plugin(pl *plugin) {
 	if u.inFocus(pl.file) {
 		t.triggers(pl.triggers, base, "app", "plugin")
 	}
+	t.compileDataSources(pl, pl.doc.DataSources, pl.file, base, pl.doc.ID)
 	for _, c := range pl.components {
 		if u.inFocus(c.file) {
 			t.component(c, base)
@@ -181,7 +183,10 @@ func (t *typer) sources(pl *plugin, sources []schema.DataSource, file string) []
 	return out
 }
 
-// dataTypes builds the data root: data.<name> is {value, loading, error}.
+// dataTypes builds the data root: data.<name> is {value, loading, error,
+// hasMore, status}. hasMore says a paginated source has another page
+// (DAT-011); status is the ListStatus a list bound to the source shows
+// (WGT-012).
 func dataTypes(sources []sourceField) map[string]pxl.TypeSpec {
 	types := map[string]pxl.TypeSpec{}
 	var fields [][2]string
@@ -189,7 +194,7 @@ func dataTypes(sources []sourceField) map[string]pxl.TypeSpec {
 		name := "PluxData" + upperFirst(s.name)
 		value, _ := parseTypeExpr(s.typ)
 		value.nullable = true
-		types[name] = objectType([][2]string{{"value", value.String()}, {"loading", "bool"}, {"error", "PluxActionError?"}})
+		types[name] = objectType([][2]string{{"value", value.String()}, {"loading", "bool"}, {"error", "PluxActionError?"}, {"hasMore", "bool"}, {"status", "ListStatus"}})
 		fields = append(fields, [2]string{s.name, name})
 	}
 	types["PluxData"] = objectType(fields)
@@ -274,6 +279,7 @@ func (t *typer) page(pg *page, base *scope) {
 	s := t.pageScope(pg, base)
 	from := pg.doc.ID
 	t.computed(pg.plugin, pg.doc.State, pg.file, s)
+	t.compileDataSources(pg.plugin, pg.doc.DataSources, pg.file, s, from)
 	t.compileAll(pg.doc.Title, s, from, pg.file, "/title")
 	t.node(pg.root, s)
 	for _, name := range sortedKeys(pg.graphs) {
@@ -655,6 +661,9 @@ func (t *typer) stepOutput(g *graph, st schema.Step) string {
 	}
 	if out, ok := t.customOutput(st); ok {
 		return out
+	}
+	if st.Action == "apiCall" {
+		return t.apiCallOutput(g, st)
 	}
 	a, ok := registry.LookupAction(st.Action)
 	if !ok || a.Output == "" {

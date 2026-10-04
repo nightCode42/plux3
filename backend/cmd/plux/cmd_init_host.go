@@ -23,7 +23,7 @@ import (
 // The constraints plux init adds, in step with the runtime this CLI
 // generates code for (a test keeps them in step with the packages).
 const (
-	runtimeConstraint = "^0.2.0"
+	runtimeConstraint = "^0.3.0"
 	adapterConstraint = "^0.1.0"
 )
 

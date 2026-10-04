@@ -34,12 +34,8 @@
   ],
   "dataSources": [
     {
-      "config": {
-        "method": "GET",
-        "path": "/tasks"
-      },
       "id": "01b0c450-6c00-7000-8000-00000000002c",
-      "kind": "rest",
+      "kind": "static",
       "mock": [
         {
           "done": true,

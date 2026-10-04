@@ -34,6 +34,8 @@ void main() {
 
   test('the goldens of the conformance projects are present', () {
     expect(bundles.keys.toList()..sort(), [
+      'data/data.pxb',
+      'data/shop.pxb',
       'features/features.dev.pxb',
       'features/features.pxb',
       'features/tasks.dev.pxb',
@@ -58,6 +60,7 @@ void main() {
             : (path.contains('/tasks') ||
                       path.contains('/loans') ||
                       path.contains('/nav') ||
+                      path.contains('/shop') ||
                       path.contains('/gallery')
                   ? 1
                   : 2),
@@ -69,14 +72,16 @@ void main() {
       final meta = fbs.Meta(b.ofKind(SectionKind.meta).single.data);
       expect(meta.compilerVersion, 'dev', reason: path);
       expect(meta.schemaVersion, '1.0.0', reason: path);
-      // The routing project uses what runtime 0.2.0 brings (ADR-0040);
-      // the loan-calculator and features projects use lifecycle handlers
-      // and R1's actions, which runtime 0.3.0 is the first to run.
+      // The routing project uses what runtime 0.2.0 brings (ADR-0040),
+      // and the data project raises data.v1 above its minimum of 0.2.0
+      // (ADR-0048); the loan-calculator and features projects use
+      // lifecycle handlers and R1's actions, which runtime 0.3.0 is the
+      // first to run.
       expect(
         meta.minRuntime,
         ['loan-calculator/', 'features/'].any(path.startsWith)
             ? '0.3.0'
-            : path.startsWith('routing/')
+            : ['routing/', 'data/'].any(path.startsWith)
             ? '0.2.0'
             : '0.1.0',
         reason: path,

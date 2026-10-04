@@ -1807,7 +1807,7 @@ const List<ActionDescriptor> actionDescriptors = [
     'refreshData',
     17,
     phase: 'P5',
-    inputs: {'source': 1},
+    inputs: {'source': 1, 'more': 2},
   ),
   ActionDescriptor(
     'requestPermission',
