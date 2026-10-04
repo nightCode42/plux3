@@ -354,10 +354,14 @@ func icons(source []byte, bg color.NRGBA, files map[string]File) error {
 	return nil
 }
 
-// splash parses #RRGGBB.
+// splash parses #RRGGBB, which the spec's validation has checked. Each
+// channel is parsed as 8 bits, so no conversion narrows a wider value.
 func splash(hex string) color.NRGBA {
-	v, _ := strconv.ParseUint(hex[1:], 16, 32)
-	return color.NRGBA{R: uint8(v >> 16), G: uint8(v >> 8), B: uint8(v), A: 0xff} //nolint:gosec // 8-bit channels of a 24-bit value
+	channel := func(i int) uint8 {
+		v, _ := strconv.ParseUint(hex[i:i+2], 16, 8)
+		return uint8(v)
+	}
+	return color.NRGBA{R: channel(1), G: channel(3), B: channel(5), A: 0xff}
 }
 
 // unit is a channel as Interface Builder writes it, from 0 to 1.
