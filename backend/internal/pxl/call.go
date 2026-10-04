@@ -192,6 +192,7 @@ func (c *checker) checkCall(x *ir, n *node) *ir {
 	if def.group != "core" {
 		c.features[groupFeature(def.group)] = true
 		x.noFold = true
+		return c.checkGroupArgs(def.name, x, n)
 	}
 	return x
 }

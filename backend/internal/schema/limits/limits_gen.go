@@ -138,6 +138,15 @@ const (
 	// PXLOperationBudget: Operations one PXL evaluation may perform before it
 	// stops with a typed error. (PXL-001)
 	PXLOperationBudget Key = "pxl.operationBudget"
+	// PXLRegexPatternLength: Length of one regular-expression pattern of
+	// pxl.regex.v1. (PXL-001, PXL-006, LIM-001)
+	PXLRegexPatternLength Key = "pxl.regexPatternLength"
+	// PXLRegexProgramSize: Instructions of one compiled regular-expression
+	// pattern of pxl.regex.v1 (schema/pxl/regex.md). (PXL-001, PXL-006, LIM-001)
+	PXLRegexProgramSize Key = "pxl.regexProgramSize"
+	// PXLRegexRepeat: The largest count of a {n,m} repetition in a
+	// regular-expression pattern of pxl.regex.v1. (PXL-001, PXL-006, LIM-001)
+	PXLRegexRepeat Key = "pxl.regexRepeat"
 	// PXLStringLength: Length of a string produced during one PXL evaluation.
 	// (PXL-001)
 	PXLStringLength Key = "pxl.stringLength"
@@ -212,6 +221,9 @@ var registry = [...]Definition{
 	{Key: PXLExpressionLength, Unit: UnitCodepoints, Default: 4096, Warning: 0, Max: 65536, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Length of one PXL expression."},
 	{Key: PXLNestingDepth, Unit: UnitCount, Default: 64, Warning: 0, Max: 256, Scopes: ScopeInstallation, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Nesting depth of one PXL expression's syntax tree."},
 	{Key: PXLOperationBudget, Unit: UnitOperations, Default: 10000, Warning: 0, Max: 1000000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P1", Description: "Operations one PXL evaluation may perform before it stops with a typed error."},
+	{Key: PXLRegexPatternLength, Unit: UnitCodepoints, Default: 1000, Warning: 0, Max: 10000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P5", Description: "Length of one regular-expression pattern of pxl.regex.v1."},
+	{Key: PXLRegexProgramSize, Unit: UnitCount, Default: 2000, Warning: 0, Max: 20000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P5", Description: "Instructions of one compiled regular-expression pattern of pxl.regex.v1 (schema/pxl/regex.md)."},
+	{Key: PXLRegexRepeat, Unit: UnitCount, Default: 100, Warning: 0, Max: 1000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P5", Description: "The largest count of a {n,m} repetition in a regular-expression pattern of pxl.regex.v1."},
 	{Key: PXLStringLength, Unit: UnitCodepoints, Default: 65536, Warning: 0, Max: 1048576, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P1", Description: "Length of a string produced during one PXL evaluation."},
 	{Key: ReleaseAppSize, Unit: UnitBytes, Default: 104857600, Warning: 0, Max: 1073741824, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Total size of one app release: the app bundle and every plugin bundle."},
 	{Key: RuntimeImageDiskCacheBytes, Unit: UnitBytes, Default: 67108864, Warning: 0, Max: 1073741824, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "Disk space the runtime's cache of remote images may use on one device."},

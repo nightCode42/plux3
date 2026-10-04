@@ -18,7 +18,7 @@
       "name": "phone",
       "feature": "pxl.phone.v1",
       "phase": "P5",
-      "description": "Phone-number metadata."
+      "description": "Phone-number validation from libphonenumber metadata; formatting is in the format group."
     },
     {
       "name": "format",
@@ -2192,7 +2192,7 @@
     {
       "name": "format.phone",
       "category": "formatting",
-      "group": "phone",
+      "group": "format",
       "description": "A phone number formatted for a region.",
       "overloads": [
         {

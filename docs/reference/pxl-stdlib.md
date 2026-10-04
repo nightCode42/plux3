@@ -10,7 +10,7 @@ Every built-in function of PXL (spec Appendix E.3), generated from `schema/pxl/s
 |---|---|---|---|
 | `core` | `pxl.v1` | P1 | Functions every runtime evaluates. |
 | `regex` | `pxl.regex.v1` | P5 | Bounded regular expressions shared by Go and Dart. |
-| `phone` | `pxl.phone.v1` | P5 | Phone-number metadata. |
+| `phone` | `pxl.phone.v1` | P5 | Phone-number validation from libphonenumber metadata; formatting is in the format group. |
 | `format` | `pxl.format.v1` | P8 | Locale-aware formatting from CLDR data. |
 | `l10n` | `pxl.l10n.v1` | P8 | Translations and plural rules. |
 | `calendar` | `pxl.calendar.v1` | P8 | Non-Gregorian calendars. |
@@ -190,7 +190,7 @@ Every built-in function of PXL (spec Appendix E.3), generated from `schema/pxl/s
 | `format.compact` | 127 | `format.compact(x int) string` | format | A number in compact form, such as 1.2K, for the user's locale. |
 | `format.compact` | 128 | `format.compact(x double) string` | format |  |
 | `format.compact` | 129 | `format.compact(x decimal) string` | format |  |
-| `format.phone` | 130 | `format.phone(s string, region string) string` | phone | A phone number formatted for a region. |
+| `format.phone` | 130 | `format.phone(s string, region string) string` | format | A phone number formatted for a region. |
 | `format.iban` | 131 | `format.iban(s string) string` | core | An IBAN in groups of four, upper case, without other spaces. |
 
 ## Localisation

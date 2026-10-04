@@ -36,6 +36,7 @@ import 'package:plux_flutter/src/native_catalogue/registration.dart';
 import 'package:plux_flutter/src/navigation/guards.dart';
 import 'package:plux_flutter/src/navigation/page_navigator.dart';
 import 'package:plux_flutter/src/platform/platform_services.dart';
+import 'package:plux_flutter/src/pxl/regex.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
 import 'package:plux_flutter/src/pxl/vm.dart';
 import 'package:plux_flutter/src/render/builders/builders.dart';
@@ -1319,6 +1320,15 @@ PxlLimits _pxlLimits(Map<String, int> app) => PxlLimits(
       app['pxl.collectionSize'] ?? PluxLimit.pxlCollectionSize.defaultValue,
   decimalDigits:
       app['pxl.decimalDigits'] ?? PluxLimit.pxlDecimalDigits.defaultValue,
+  regex: RegexLimits(
+    patternLength:
+        app['pxl.regexPatternLength'] ??
+        PluxLimit.pxlRegexPatternLength.defaultValue,
+    programSize:
+        app['pxl.regexProgramSize'] ??
+        PluxLimit.pxlRegexProgramSize.defaultValue,
+    repeat: app['pxl.regexRepeat'] ?? PluxLimit.pxlRegexRepeat.defaultValue,
+  ),
 );
 
 /// PXL's `device` root (Appendix E.2) for a window [width] logical pixels

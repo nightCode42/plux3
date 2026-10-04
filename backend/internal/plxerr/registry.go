@@ -110,6 +110,10 @@ const (
 	PXLUnknownEnumMember    Code = 2014
 	PXLInvalidMacro         Code = 2015
 	PXLExpressionTooComplex Code = 2016
+	PXLRegexInvalid         Code = 2020
+	PXLRegexNotConstant     Code = 2021
+	PXLRegexTooLarge        Code = 2022
+	PXLUnknownPhoneRegion   Code = 2023
 	InternalCompilerError   Code = 2201
 	ContentIDCollision      Code = 2202
 

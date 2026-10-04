@@ -52,6 +52,9 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | `pxl.expressionLength` | codepoints | 4096 | 80% | 65536 | installation, organization, app, plugin | P1 | PXL-001 | Length of one PXL expression. |
 | `pxl.nestingDepth` | count | 64 | 80% | 256 | installation | P1 | PXL-001 | Nesting depth of one PXL expression's syntax tree. |
 | `pxl.operationBudget` | operations | 10000 | 80% | 1000000 | installation, organization, app, plugin | P1 | PXL-001 | Operations one PXL evaluation may perform before it stops with a typed error. |
+| `pxl.regexPatternLength` | codepoints | 1000 | 80% | 10000 | installation, organization, app, plugin | P5 | PXL-001, PXL-006, LIM-001 | Length of one regular-expression pattern of pxl.regex.v1. |
+| `pxl.regexProgramSize` | count | 2000 | 80% | 20000 | installation, organization, app, plugin | P5 | PXL-001, PXL-006, LIM-001 | Instructions of one compiled regular-expression pattern of pxl.regex.v1 (schema/pxl/regex.md). |
+| `pxl.regexRepeat` | count | 100 | 80% | 1000 | installation, organization, app, plugin | P5 | PXL-001, PXL-006, LIM-001 | The largest count of a {n,m} repetition in a regular-expression pattern of pxl.regex.v1. |
 | `pxl.stringLength` | codepoints | 65536 | 80% | 1048576 | installation, organization, app, plugin | P1 | PXL-001 | Length of a string produced during one PXL evaluation. |
 | `release.appSize` | bytes | 104857600 | 80% | 1073741824 | installation, organization, app | P1 | BND-010 | Total size of one app release: the app bundle and every plugin bundle. |
 | `runtime.imageDiskCacheBytes` | bytes | 67108864 | 80% | 1073741824 | installation, organization, app | P3 | RT-014, AST-002 | Disk space the runtime's cache of remote images may use on one device. |

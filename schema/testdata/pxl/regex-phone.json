@@ -1,0 +1,252 @@
+{
+  "description": "The regex and phone groups (pxl.regex.v1, pxl.phone.v1; schema/pxl/regex.md, schema/pxl/phone.md): patterns are literals checked at compile time, matching charges (n+1)·m operations, isPhone reads national numbers in the region.",
+  "env": {
+    "roots": {
+      "code": "string",
+      "email": "string",
+      "long": "string",
+      "name": "string",
+      "phone": "string",
+      "region": "string"
+    }
+  },
+  "limits": {
+    "budget": 2000
+  },
+  "inputs": {
+    "code": "ref ABC-1234 ok",
+    "email": "user@example.com",
+    "long": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "name": "привет",
+    "phone": "07400 123456",
+    "region": "GB"
+  },
+  "cases": [
+    {
+      "name": "regex needs pxl.regex.v1",
+      "expr": "matches(\"abc\", \"a.c\")",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBANhYmMEA2EuYwAKBAAABAEASQ8AAg==",
+      "asm": [
+        "0000 CONST 0 ; \"abc\"",
+        "0003 CONST 1 ; \"a.c\"",
+        "0006 CALL 15 2 ; matches"
+      ]
+    },
+    {
+      "name": "search anywhere",
+      "expr": "matches(code, \"\\\\d{4}\")",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBARjb2RlBAVcZHs0fQEEY29kZQoGAAAEAQBJDwAC",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"code\"",
+        "0003 CONST 1 ; \"\\\\d{4}\"",
+        "0006 CALL 15 2 ; matches"
+      ],
+      "reads": [
+        "code"
+      ]
+    },
+    {
+      "name": "anchors need the whole input",
+      "expr": "matches(code, \"^[A-Z]{3}-\\\\d{4}$\")",
+      "value": false,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBARjb2RlBBBeW0EtWl17M30tXGR7NH0kAQRjb2RlCgYAAAQBAEkPAAI=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"code\"",
+        "0003 CONST 1 ; \"^[A-Z]{3}-\\\\d{4}$\"",
+        "0006 CALL 15 2 ; matches"
+      ],
+      "reads": [
+        "code"
+      ]
+    },
+    {
+      "name": "anchored mismatch",
+      "expr": "matches(name, \"^[A-Z]{3}-\\\\d{4}$\")",
+      "value": false,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBARuYW1lBBBeW0EtWl17M30tXGR7NH0kAQRuYW1lCgYAAAQBAEkPAAI=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"name\"",
+        "0003 CONST 1 ; \"^[A-Z]{3}-\\\\d{4}$\"",
+        "0006 CALL 15 2 ; matches"
+      ],
+      "reads": [
+        "name"
+      ]
+    },
+    {
+      "name": "unicode class",
+      "expr": "matches(name, \"^[а-я]+$\")",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBARuYW1lBApeW9CwLdGPXSskAQRuYW1lCgYAAAQBAEkPAAI=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"name\"",
+        "0003 CONST 1 ; \"^[а-я]+$\"",
+        "0006 CALL 15 2 ; matches"
+      ],
+      "reads": [
+        "name"
+      ]
+    },
+    {
+      "name": "email-like",
+      "expr": "matches(email, \"^[^@\\\\s]+@[^@\\\\s]+\\\\.[A-Za-z]{2,}$\")",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBAVlbWFpbAQfXlteQFxzXStAW15AXHNdK1wuW0EtWmEtel17Mix9JAEFZW1haWwKBgAABAEASQ8AAg==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"email\"",
+        "0003 CONST 1 ; \"^[^@\\\\s]+@[^@\\\\s]+\\\\.[A-Za-z]{2,}$\"",
+        "0006 CALL 15 2 ; matches"
+      ],
+      "reads": [
+        "email"
+      ]
+    },
+    {
+      "name": "budget charges (n+1)·m",
+      "expr": "matches(long, \"a*b\")",
+      "error": "budgetExceeded",
+      "type": "bool",
+      "program": "AQACBGJvb2wCBARsb25nBANhKmIBBGxvbmcKBgAABAEASQ8AAg==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"long\"",
+        "0003 CONST 1 ; \"a*b\"",
+        "0006 CALL 15 2 ; matches"
+      ],
+      "reads": [
+        "long"
+      ]
+    },
+    {
+      "name": "invalid pattern",
+      "expr": "matches(code, \"(a\")",
+      "diagnostics": [
+        {
+          "code": "PLX-2020",
+          "range": [
+            14,
+            18
+          ]
+        }
+      ]
+    },
+    {
+      "name": "lookaround rejected",
+      "expr": "matches(code, \"(?=a)\")",
+      "diagnostics": [
+        {
+          "code": "PLX-2020",
+          "range": [
+            14,
+            21
+          ]
+        }
+      ]
+    },
+    {
+      "name": "computed pattern rejected",
+      "expr": "matches(code, name)",
+      "diagnostics": [
+        {
+          "code": "PLX-2021",
+          "range": [
+            14,
+            18
+          ]
+        }
+      ]
+    },
+    {
+      "name": "repeat above the limit",
+      "expr": "matches(code, \"a{101}\")",
+      "diagnostics": [
+        {
+          "code": "PLX-2022",
+          "range": [
+            14,
+            22
+          ]
+        }
+      ]
+    },
+    {
+      "name": "phone needs pxl.phone.v1",
+      "expr": "isPhone(\"+44 7400 123456\", \"GB\")",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBA8rNDQgNzQwMCAxMjM0NTYEAkdCAAoEAAAEAQBJlgAC",
+      "asm": [
+        "0000 CONST 0 ; \"+44 7400 123456\"",
+        "0003 CONST 1 ; \"GB\"",
+        "0006 CALL 150 2 ; isPhone"
+      ]
+    },
+    {
+      "name": "phone national with region",
+      "expr": "isPhone(phone, region)",
+      "value": true,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBAVwaG9uZQQGcmVnaW9uAgVwaG9uZQZyZWdpb24KBgAABgEASZYAAg==",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"phone\"",
+        "0003 LOAD_ROOT 1 ; \"region\"",
+        "0006 CALL 150 2 ; isPhone"
+      ],
+      "reads": [
+        "phone",
+        "region"
+      ]
+    },
+    {
+      "name": "phone national in another region",
+      "expr": "isPhone(phone, \"US\")",
+      "value": false,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBAVwaG9uZQQCVVMBBXBob25lCgYAAAQBAEmWAAI=",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"phone\"",
+        "0003 CONST 1 ; \"US\"",
+        "0006 CALL 150 2 ; isPhone"
+      ],
+      "reads": [
+        "phone"
+      ]
+    },
+    {
+      "name": "phone unknown literal region",
+      "expr": "isPhone(phone, \"XX\")",
+      "diagnostics": [
+        {
+          "code": "PLX-2023",
+          "range": [
+            15,
+            19
+          ]
+        }
+      ]
+    },
+    {
+      "name": "phone unknown region at run time",
+      "expr": "isPhone(phone, name)",
+      "value": false,
+      "type": "bool",
+      "program": "AQACBGJvb2wCBAVwaG9uZQQEbmFtZQIEbmFtZQVwaG9uZQoGAAAGAQBJlgAC",
+      "asm": [
+        "0000 LOAD_ROOT 0 ; \"phone\"",
+        "0003 LOAD_ROOT 1 ; \"name\"",
+        "0006 CALL 150 2 ; isPhone"
+      ],
+      "reads": [
+        "name",
+        "phone"
+      ]
+    }
+  ]
+}

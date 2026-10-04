@@ -1,5 +1,5 @@
 {
-  "description": "Functions of later-phase groups are type-checked, add a required feature and are not evaluated by a P1 runtime (ADR-0009).",
+  "description": "Functions of later-phase groups (P8: format, l10n, calendar) are type-checked, add a required feature and are not evaluated by runtimes without it (ADR-0009). The regex and phone groups are in regex-phone.json.",
   "env": {
     "types": {
       "Loan": {
@@ -111,18 +111,6 @@
       "asm": [
         "0000 CONST 0 ; \"greeting\"",
         "0003 CALL 132 1 ; t"
-      ]
-    },
-    {
-      "name": "regex needs pxl.regex.v1",
-      "expr": "matches(\"abc\", \"a.c\")",
-      "error": "unsupported",
-      "type": "bool",
-      "program": "AQACBGJvb2wCBANhYmMEA2EuYwAKBAAABAEASQ8AAg==",
-      "asm": [
-        "0000 CONST 0 ; \"abc\"",
-        "0003 CONST 1 ; \"a.c\"",
-        "0006 CALL 15 2 ; matches"
       ]
     },
     {

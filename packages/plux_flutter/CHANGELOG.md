@@ -37,6 +37,14 @@ released yet; this entry grows with each milestone of the phase.
   `apiCall` and `refreshData` (with `more`); mock states in tests and
   development builds; `api_call` telemetry without payloads. Requires the
   feature `data.v1`.
+- PXL `matches` (`pxl.regex.v1`): a bounded, linear-time RE2 subset (schema/pxl/regex.md)
+  on the runtime's own Pike VM, identical to the compiler's; patterns are literals checked
+  at publish time (`PLX-2020`–`PLX-2022`) and bounded by `pxl.regexPatternLength`,
+  `pxl.regexProgramSize` and `pxl.regexRepeat`.
+- PXL `isPhone` (`pxl.phone.v1`): phone validation by region from libphonenumber v9.0.40
+  metadata (schema/pxl/phone.md); `format.phone` moves to the `format` group (P8).
+- Form validators (`STA-020`, internal until forms land): required, length, range, regex,
+  e-mail, phone by region, IBAN, date range and decimal precision.
 
 ## 0.2.0
 

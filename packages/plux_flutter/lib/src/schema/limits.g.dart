@@ -135,6 +135,14 @@ enum PluxLimit {
   /// Operations one PXL evaluation may perform before it stops with a typed
   /// error.
   pxlOperationBudget('pxl.operationBudget', PluxLimitUnit.operations, 10000, 0, 1000000),
+  /// Length of one regular-expression pattern of pxl.regex.v1.
+  pxlRegexPatternLength('pxl.regexPatternLength', PluxLimitUnit.codepoints, 1000, 0, 10000),
+  /// Instructions of one compiled regular-expression pattern of pxl.regex.v1
+  /// (schema/pxl/regex.md).
+  pxlRegexProgramSize('pxl.regexProgramSize', PluxLimitUnit.count, 2000, 0, 20000),
+  /// The largest count of a {n,m} repetition in a regular-expression pattern of
+  /// pxl.regex.v1.
+  pxlRegexRepeat('pxl.regexRepeat', PluxLimitUnit.count, 100, 0, 1000),
   /// Length of a string produced during one PXL evaluation.
   pxlStringLength('pxl.stringLength', PluxLimitUnit.codepoints, 65536, 0, 1048576),
   /// Total size of one app release: the app bundle and every plugin bundle.

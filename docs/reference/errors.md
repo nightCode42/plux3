@@ -682,6 +682,38 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Split the logic into computed state entries or a Plux Function.
 
+### PLX-2020
+
+`PXL_REGEX_INVALID` · error · Invalid regular expression
+
+**Cause.** A pattern of `matches` is not in the pxl.regex.v1 subset of RE2: for example an unbalanced group, a lookaround, a backreference, a lazy quantifier or an unknown escape (schema/pxl/regex.md).
+
+**Fix.** Correct the pattern at the reported position; the PXL reference lists the supported syntax.
+
+### PLX-2021
+
+`PXL_REGEX_NOT_CONSTANT` · error · Regular expression is not a constant
+
+**Cause.** The pattern of `matches` is computed, so it cannot be compiled and checked at publish time.
+
+**Fix.** Write the pattern as a string literal.
+
+### PLX-2022
+
+`PXL_REGEX_TOO_LARGE` · error · Regular expression too large
+
+**Cause.** A pattern of `matches` exceeds the limits pxl.regexPatternLength, pxl.regexProgramSize or pxl.regexRepeat, which keep matching bounded on devices.
+
+**Fix.** Shorten the pattern or reduce its repetition counts; an installation may raise the limits within their maximums.
+
+### PLX-2023
+
+`PXL_UNKNOWN_PHONE_REGION` · error · Unknown phone region
+
+**Cause.** The region of `isPhone` is a literal that is not a two-letter region with phone metadata (schema/pxl/phone.md).
+
+**Fix.** Use an ISO 3166 region code such as "GB", or pass the region from state or `device`.
+
 ### PLX-2201
 
 `INTERNAL_COMPILER_ERROR` · error · Internal compiler error
