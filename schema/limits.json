@@ -352,6 +352,149 @@
       "description": "Maximum number of tables and vectors the FlatBuffers verifier visits in one section."
     },
     {
+      "key": "data.cacheBytes",
+      "unit": "bytes",
+      "default": 16777216,
+      "max": 268435456,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "DAT-010",
+        "LIM-004"
+      ],
+      "description": "Bytes the response cache of data sources keeps on the device; the least recently used entries are evicted beyond it."
+    },
+    {
+      "key": "data.cacheEntries",
+      "unit": "count",
+      "default": 1000,
+      "max": 100000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "DAT-010",
+        "LIM-004"
+      ],
+      "description": "Responses the cache of data sources keeps on the device; the least recently used are evicted beyond it."
+    },
+    {
+      "key": "data.pageSize",
+      "unit": "count",
+      "default": 50,
+      "max": 1000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "DAT-011"
+      ],
+      "description": "Items one page of a paginated data source may ask for."
+    },
+    {
+      "key": "data.requestSize",
+      "unit": "bytes",
+      "default": 1048576,
+      "max": 16777216,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "DAT-001",
+        "LIM-004"
+      ],
+      "description": "Bytes the body of one data request may have."
+    },
+    {
+      "key": "data.requestTimeout",
+      "unit": "milliseconds",
+      "default": 30000,
+      "max": 300000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "DAT-001"
+      ],
+      "description": "Time one data request may take before it fails with a timeout."
+    },
+    {
+      "key": "data.responseSize",
+      "unit": "bytes",
+      "default": 4194304,
+      "max": 67108864,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "DAT-001",
+        "LIM-004"
+      ],
+      "description": "Bytes the response of one data request may have; a larger response is stopped."
+    },
+    {
+      "key": "data.sourcesPerPlugin",
+      "unit": "count",
+      "default": 100,
+      "max": 1000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "DAT-001"
+      ],
+      "description": "Data sources a plugin, its pages and the app may declare for it together."
+    },
+    {
       "key": "device.diskQuota",
       "unit": "bytes",
       "default": 209715200,

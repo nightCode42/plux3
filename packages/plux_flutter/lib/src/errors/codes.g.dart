@@ -130,6 +130,21 @@ enum PluxErrorCode {
   /// Custom action named like a built-in action.
   customActionNamedLikeBuiltIn(1124, 'CUSTOM_ACTION_NAMED_LIKE_BUILT_IN', 'Custom action named like a built-in action'),
 
+  /// Invalid data source configuration.
+  dataSourceConfigInvalid(1170, 'DATA_SOURCE_CONFIG_INVALID', 'Invalid data source configuration'),
+
+  /// Data source on an undeclared domain.
+  dataSourceDomainUndeclared(1171, 'DATA_SOURCE_DOMAIN_UNDECLARED', 'Data source on an undeclared domain'),
+
+  /// Invalid response mapping.
+  dataMappingInvalid(1172, 'DATA_MAPPING_INVALID', 'Invalid response mapping'),
+
+  /// Invalid pagination.
+  dataPaginationInvalid(1173, 'DATA_PAGINATION_INVALID', 'Invalid pagination'),
+
+  /// Credential in a data source header.
+  dataSourceSecretHeader(1174, 'DATA_SOURCE_SECRET_HEADER', 'Credential in a data source header'),
+
   /// Unknown route.
   unknownRoute(1201, 'UNKNOWN_ROUTE', 'Unknown route'),
 
@@ -336,6 +351,36 @@ enum PluxErrorCode {
 
   /// Run failed with a custom error.
   actionCustomError(5004, 'ACTION_CUSTOM_ERROR', 'Run failed with a custom error'),
+
+  /// Request to an undeclared domain blocked.
+  dataDomainBlocked(5100, 'DATA_DOMAIN_BLOCKED', 'Request to an undeclared domain blocked'),
+
+  /// Network request failed.
+  dataNetworkFailed(5101, 'DATA_NETWORK_FAILED', 'Network request failed'),
+
+  /// Request answered with an error status.
+  dataHttpError(5102, 'DATA_HTTP_ERROR', 'Request answered with an error status'),
+
+  /// Data request timed out.
+  dataRequestTimeout(5103, 'DATA_REQUEST_TIMEOUT', 'Data request timed out'),
+
+  /// Response does not match its declared type.
+  dataMappingFailed(5104, 'DATA_MAPPING_FAILED', 'Response does not match its declared type'),
+
+  /// Request or response too large.
+  dataSizeExceeded(5105, 'DATA_SIZE_EXCEEDED', 'Request or response too large'),
+
+  /// GraphQL request failed.
+  dataGraphqlError(5106, 'DATA_GRAPHQL_ERROR', 'GraphQL request failed'),
+
+  /// Request unauthorised.
+  dataUnauthorized(5107, 'DATA_UNAUTHORIZED', 'Request unauthorised'),
+
+  /// Data source unavailable.
+  dataSourceUnavailable(5108, 'DATA_SOURCE_UNAVAILABLE', 'Data source unavailable'),
+
+  /// Response cache unavailable.
+  dataCacheUnavailable(5109, 'DATA_CACHE_UNAVAILABLE', 'Response cache unavailable'),
 
   /// Outbound request blocked.
   outboundRequestBlocked(6030, 'OUTBOUND_REQUEST_BLOCKED', 'Outbound request blocked'),

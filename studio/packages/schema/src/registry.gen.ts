@@ -5833,10 +5833,11 @@ export const actions: readonly ActionDescriptor[] = [
     "id": 17,
     "phase": "P5",
     "category": "data",
-    "description": "Reloads a data source, bypassing its cache.",
+    "description": "Reloads a data source, bypassing its cache, or loads the next page of a paginated source.",
     "typeParameters": [],
     "inputs": [
-      {"name": "source", "id": 1, "type": "string", "required": true, "ref": "dataSource", "description": "The data source."}
+      {"name": "source", "id": 1, "type": "string", "required": true, "ref": "dataSource", "description": "The data source."},
+      {"name": "more", "id": 2, "type": "bool", "required": false, "default": false, "description": "Loads the next page of a paginated source instead of reloading it (DAT-011)."}
     ],
     "branches": [],
     "effects": ["state", "network"]

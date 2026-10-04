@@ -97,6 +97,7 @@
     "action/pop": 2,
     "action/pop/input/result": 1,
     "action/refreshData": 17,
+    "action/refreshData/input/more": 2,
     "action/refreshData/input/source": 1,
     "action/requestPermission": 41,
     "action/requestPermission/input/permission": 1,

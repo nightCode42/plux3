@@ -3641,9 +3641,10 @@ var actions = [...]Action{
 		Effects: []string{"navigation"},
 	},
 	{
-		Name: "refreshData", ID: 17, Phase: "P5", Category: "data", Description: "Reloads a data source, bypassing its cache.",
+		Name: "refreshData", ID: 17, Phase: "P5", Category: "data", Description: "Reloads a data source, bypassing its cache, or loads the next page of a paginated source.",
 		Inputs: []Input{
 			{Name: "source", ID: 1, Type: "string", Required: true, Default: "", Ref: "dataSource", Description: "The data source."},
+			{Name: "more", ID: 2, Type: "bool", Required: false, Default: "false", Ref: "", Description: "Loads the next page of a paginated source instead of reloading it (DAT-011)."},
 		},
 		Effects: []string{"state", "network"},
 	},

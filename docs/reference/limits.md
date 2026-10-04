@@ -24,6 +24,13 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | `bundle.pluginSize` | bytes | 20971520 | 80% | 268435456 | installation, organization, app, plugin | P1 | BND-010 | Size of one plugin bundle. |
 | `bundle.verifierDepth` | count | 64 | 80% | 256 | installation | P1 | BND-006, QA-004 | Maximum nesting of tables the FlatBuffers verifier accepts in one section. |
 | `bundle.verifierTables` | count | 1000000 | 80% | 10000000 | installation | P1 | BND-006, QA-004 | Maximum number of tables and vectors the FlatBuffers verifier visits in one section. |
+| `data.cacheBytes` | bytes | 16777216 | 80% | 268435456 | installation, organization, app | P5 | DAT-010, LIM-004 | Bytes the response cache of data sources keeps on the device; the least recently used entries are evicted beyond it. |
+| `data.cacheEntries` | count | 1000 | 80% | 100000 | installation, organization, app | P5 | DAT-010, LIM-004 | Responses the cache of data sources keeps on the device; the least recently used are evicted beyond it. |
+| `data.pageSize` | count | 50 | 80% | 1000 | installation, organization, app, plugin | P5 | DAT-011 | Items one page of a paginated data source may ask for. |
+| `data.requestSize` | bytes | 1048576 | 80% | 16777216 | installation, organization, app, plugin | P5 | DAT-001, LIM-004 | Bytes the body of one data request may have. |
+| `data.requestTimeout` | milliseconds | 30000 | 80% | 300000 | installation, organization, app, plugin | P5 | DAT-001 | Time one data request may take before it fails with a timeout. |
+| `data.responseSize` | bytes | 4194304 | 80% | 67108864 | installation, organization, app, plugin | P5 | DAT-001, LIM-004 | Bytes the response of one data request may have; a larger response is stopped. |
+| `data.sourcesPerPlugin` | count | 100 | 80% | 1000 | installation, organization, app, plugin | P5 | DAT-001 | Data sources a plugin, its pages and the app may declare for it together. |
 | `device.diskQuota` | bytes | 209715200 | 80% | 4294967296 | installation, organization, app | P3 | SYN-012 | Disk space the runtime may use for releases on one device. |
 | `document.fileSize` | bytes | 8388608 | 80% | 67108864 | installation, organization | P1 | SCH-006 | Size of one document file in the project layout, checked before parsing. |
 | `document.jsonDepth` | count | 512 | 80% | 4096 | installation | P1 | SCH-003 | Nesting of arrays and objects in one document, checked while parsing. |

@@ -55,6 +55,28 @@ const (
 	// BundleVerifierTables: Maximum number of tables and vectors the FlatBuffers
 	// verifier visits in one section. (BND-006, QA-004)
 	BundleVerifierTables Key = "bundle.verifierTables"
+	// DataCacheBytes: Bytes the response cache of data sources keeps on the
+	// device; the least recently used entries are evicted beyond it. (DAT-010,
+	// LIM-004)
+	DataCacheBytes Key = "data.cacheBytes"
+	// DataCacheEntries: Responses the cache of data sources keeps on the device;
+	// the least recently used are evicted beyond it. (DAT-010, LIM-004)
+	DataCacheEntries Key = "data.cacheEntries"
+	// DataPageSize: Items one page of a paginated data source may ask for.
+	// (DAT-011)
+	DataPageSize Key = "data.pageSize"
+	// DataRequestSize: Bytes the body of one data request may have. (DAT-001,
+	// LIM-004)
+	DataRequestSize Key = "data.requestSize"
+	// DataRequestTimeout: Time one data request may take before it fails with a
+	// timeout. (DAT-001)
+	DataRequestTimeout Key = "data.requestTimeout"
+	// DataResponseSize: Bytes the response of one data request may have; a
+	// larger response is stopped. (DAT-001, LIM-004)
+	DataResponseSize Key = "data.responseSize"
+	// DataSourcesPerPlugin: Data sources a plugin, its pages and the app may
+	// declare for it together. (DAT-001)
+	DataSourcesPerPlugin Key = "data.sourcesPerPlugin"
 	// DeviceDiskQuota: Disk space the runtime may use for releases on one
 	// device. (SYN-012)
 	DeviceDiskQuota Key = "device.diskQuota"
@@ -152,6 +174,13 @@ var registry = [...]Definition{
 	{Key: BundlePluginSize, Unit: UnitBytes, Default: 20971520, Warning: 0, Max: 268435456, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Size of one plugin bundle."},
 	{Key: BundleVerifierDepth, Unit: UnitCount, Default: 64, Warning: 0, Max: 256, Scopes: ScopeInstallation, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P1", Description: "Maximum nesting of tables the FlatBuffers verifier accepts in one section."},
 	{Key: BundleVerifierTables, Unit: UnitCount, Default: 1000000, Warning: 0, Max: 10000000, Scopes: ScopeInstallation, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P1", Description: "Maximum number of tables and vectors the FlatBuffers verifier visits in one section."},
+	{Key: DataCacheBytes, Unit: UnitBytes, Default: 16777216, Warning: 0, Max: 268435456, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the response cache of data sources keeps on the device; the least recently used entries are evicted beyond it."},
+	{Key: DataCacheEntries, Unit: UnitCount, Default: 1000, Warning: 0, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Responses the cache of data sources keeps on the device; the least recently used are evicted beyond it."},
+	{Key: DataPageSize, Unit: UnitCount, Default: 50, Warning: 0, Max: 1000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerRuntime, Phase: "P5", Description: "Items one page of a paginated data source may ask for."},
+	{Key: DataRequestSize, Unit: UnitBytes, Default: 1048576, Warning: 0, Max: 16777216, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the body of one data request may have."},
+	{Key: DataRequestTimeout, Unit: UnitMilliseconds, Default: 30000, Warning: 0, Max: 300000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Time one data request may take before it fails with a timeout."},
+	{Key: DataResponseSize, Unit: UnitBytes, Default: 4194304, Warning: 0, Max: 67108864, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the response of one data request may have; a larger response is stopped."},
+	{Key: DataSourcesPerPlugin, Unit: UnitCount, Default: 100, Warning: 0, Max: 1000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler, Phase: "P5", Description: "Data sources a plugin, its pages and the app may declare for it together."},
 	{Key: DeviceDiskQuota, Unit: UnitBytes, Default: 209715200, Warning: 0, Max: 4294967296, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "Disk space the runtime may use for releases on one device."},
 	{Key: DocumentFileSize, Unit: UnitBytes, Default: 8388608, Warning: 0, Max: 67108864, Scopes: ScopeInstallation | ScopeOrganization, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Size of one document file in the project layout, checked before parsing."},
 	{Key: DocumentJSONDepth, Unit: UnitCount, Default: 512, Warning: 0, Max: 4096, Scopes: ScopeInstallation, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Nesting of arrays and objects in one document, checked while parsing."},

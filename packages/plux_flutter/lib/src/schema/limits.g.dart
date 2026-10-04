@@ -67,6 +67,23 @@ enum PluxLimit {
   /// Maximum number of tables and vectors the FlatBuffers verifier visits in
   /// one section.
   bundleVerifierTables('bundle.verifierTables', PluxLimitUnit.count, 1000000, 0, 10000000),
+  /// Bytes the response cache of data sources keeps on the device; the least
+  /// recently used entries are evicted beyond it.
+  dataCacheBytes('data.cacheBytes', PluxLimitUnit.bytes, 16777216, 0, 268435456),
+  /// Responses the cache of data sources keeps on the device; the least
+  /// recently used are evicted beyond it.
+  dataCacheEntries('data.cacheEntries', PluxLimitUnit.count, 1000, 0, 100000),
+  /// Items one page of a paginated data source may ask for.
+  dataPageSize('data.pageSize', PluxLimitUnit.count, 50, 0, 1000),
+  /// Bytes the body of one data request may have.
+  dataRequestSize('data.requestSize', PluxLimitUnit.bytes, 1048576, 0, 16777216),
+  /// Time one data request may take before it fails with a timeout.
+  dataRequestTimeout('data.requestTimeout', PluxLimitUnit.milliseconds, 30000, 0, 300000),
+  /// Bytes the response of one data request may have; a larger response is
+  /// stopped.
+  dataResponseSize('data.responseSize', PluxLimitUnit.bytes, 4194304, 0, 67108864),
+  /// Data sources a plugin, its pages and the app may declare for it together.
+  dataSourcesPerPlugin('data.sourcesPerPlugin', PluxLimitUnit.count, 100, 0, 1000),
   /// Disk space the runtime may use for releases on one device.
   deviceDiskQuota('device.diskQuota', PluxLimitUnit.bytes, 209715200, 0, 4294967296),
   /// Size of one document file in the project layout, checked before parsing.

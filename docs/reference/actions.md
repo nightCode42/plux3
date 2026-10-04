@@ -38,7 +38,7 @@ The built-in actions of the action catalogue (spec Appendix D), generated from t
 | [pickFile](#pickfile) | device | P5 | Lets the user pick files. |
 | [pickImage](#pickimage) | device | P5 | Lets the user pick images from the photo library. |
 | [pop](#pop) | navigation | P4 | Pops the current page, optionally returning a typed result to the page that opened it. |
-| [refreshData](#refreshdata) | data | P5 | Reloads a data source, bypassing its cache. |
+| [refreshData](#refreshdata) | data | P5 | Reloads a data source, bypassing its cache, or loads the next page of a paginated source. |
 | [requestPermission](#requestpermission) | device | P5 | Requests a device permission the plugin declares; takes the granted or denied branch. |
 | [resetForm](#resetform) | forms | P5 | Resets every field of a form to its initial value and clears its errors. |
 | [resetState](#resetstate) | state | P5 | Resets a state entry to its declared initial value. |
@@ -521,13 +521,14 @@ Type parameters:
 
 ### refreshData
 
-Reloads a data source, bypassing its cache.
+Reloads a data source, bypassing its cache, or loads the next page of a paginated source.
 
 ID 17 · data · P5 · effects: state, network
 
 | Input | ID | Type | Default | Description |
 |---|---|---|---|---|
 | `source` | 1 | `string`, required | — | The data source. Names a dataSource. |
+| `more` | 2 | `bool` | `false` | Loads the next page of a paginated source instead of reloading it (DAT-011). |
 
 ### requestPermission
 
