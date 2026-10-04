@@ -59,6 +59,7 @@ func (u *unit) lintNode(n *node) {
 // lintGraph checks a graph's literal inputs and what it sends to
 // analytics.
 func (u *unit) lintGraph(g *graph) {
+	u.redactions(g)
 	for _, s := range g.lowered {
 		for _, in := range s.inputs {
 			u.lintValue(g.file, in.ptr, in.value)

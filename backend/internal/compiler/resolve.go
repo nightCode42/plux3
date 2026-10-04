@@ -409,6 +409,7 @@ func (u *unit) resolvePlugin(pl *plugin) {
 	for _, g := range pl.graphs {
 		u.resolveGraphRefs(g)
 	}
+	pl.triggers = u.resolveTriggers(doc.Triggers, pl, nil, doc.ID, pl.file)
 }
 
 // pageRef checks that id is a page of pl.
@@ -456,6 +457,7 @@ func (u *unit) resolveApp() {
 	}
 	u.resolveNavigation()
 	u.resolveHostEvents()
+	u.appTriggers = u.resolveTriggers(app.Triggers, nil, nil, app.ID, "app.json")
 }
 
 // checkExportedNames checks that each exported component's key names it
@@ -521,6 +523,7 @@ func (u *unit) buildPage(pg *page) {
 		u.claimNodeIDs(&doc.Root, pg.file, "/root")
 	}
 	u.lifecycleGraphs(pg, o)
+	pg.triggers = u.resolveTriggers(doc.Triggers, pg.plugin, pg, doc.ID, pg.file)
 	u.scanRefs(doc.ID, pg.file, "/title", doc.Title)
 	if doc.RouteOptions != nil {
 		for i, g := range doc.RouteOptions.Guards {
@@ -669,7 +672,7 @@ func (u *unit) handlerGraph(o owner, eh *schema.EventHandler, anchor, event, fil
 		}
 		return u.graphRef(pl, o.page, eh.Graph, ownerID(o), file, ptr+"/$graph")
 	}
-	g := &graph{id: derivedID("graph", anchor, event), key: event, file: file, ptr: ptr, steps: eh.Steps, plugin: pl, page: o.page, inline: true, used: true}
+	g := &graph{id: derivedID("graph", anchor, event), key: event, file: file, ptr: ptr, steps: eh.Steps, plugin: pl, page: o.page, component: o.component, inline: true, used: true}
 	for i := range g.steps {
 		for _, name := range sortedKeys(g.steps[i].Input) {
 			u.scanRefs(ownerID(o), file, ptr+plxerr.Pointer("steps", strconv.Itoa(i), "input", name), g.steps[i].Input[name])

@@ -74,6 +74,7 @@ func (u *unit) checkStep(g *graph, i int, index map[string]int32) *step {
 		out.timeoutMs = uint32(max(0, min(*st.TimeoutMs, 1<<32-1))) //nolint:gosec // G115: clamped.
 	}
 	out.inputs = u.checkInputs(g, &a, input, ptr)
+	u.stepFeatures(g, &a, st, ptr)
 	for _, e := range []struct {
 		name, target string
 		dst          *int32
@@ -185,12 +186,11 @@ func (u *unit) checkInput(g *graph, a *registry.Action, in registry.Input, raw j
 	if a.Name == "callNative" && in.Name == "input" {
 		return u.nativeActionInput(g, raw, c)
 	}
+	if a.Name == "emitEvent" && in.Name == "payload" {
+		return u.componentEventPayload(g, raw, c)
+	}
 	if a.Name == "callFlow" && in.Name == "input" {
-		st := g.steps[stepIndex(c.ptr)]
-		if f := flowByKey(g.plugin, literalString(st.Input["flow"])); f != nil {
-			return u.namedParams(raw, f.doc.Inputs, "flow "+f.key, c)
-		}
-		return nil
+		return u.flowInput(g, raw, c)
 	}
 	te, err := parseTypeExpr(in.Type)
 	if err != nil {
@@ -328,7 +328,11 @@ func (u *unit) checkRef(g *graph, in registry.Input, raw json.RawMessage, c vctx
 		id, ok := g.scope.ids[root][entry]
 		resolved, kind, to = ok && refRoots[root], EdgeUsesState, id
 	case "flow":
-		f := flowByKey(g.plugin, name)
+		f, private := u.flowRef(g.plugin, name)
+		if private {
+			u.report(plxerr.FlowNotExported, c.file, c.ptr, "flow %q is not exported by its plugin", name)
+			return nil
+		}
 		resolved = f != nil
 		if f != nil {
 			f.used = true
@@ -346,6 +350,8 @@ func (u *unit) checkRef(g *graph, in registry.Input, raw json.RawMessage, c vctx
 		_, resolved = u.natives.actions[name]
 	case "hostEvent":
 		_, resolved = u.hostEvents[name]
+	case "componentEvent":
+		return u.componentEventRef(g, name, c)
 	case "tab":
 		resolved = u.hasTab(name)
 	}

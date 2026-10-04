@@ -68,7 +68,9 @@ func baseTypes() map[string]pxl.TypeSpec {
 		"platform": "PluxPlatform", "osVersion": "string", "locale": "string", "textScale": "double",
 		"darkMode": "bool", "sizeClass": "PluxSizeClass", "assuranceLevel": "PluxAssuranceLevel",
 	}}
-	out["PluxActionError"] = pxl.TypeSpec{Fields: map[string]string{"kind": "PluxErrorKind", "message": "string"}}
+	// code is a function's or a custom error's code, status an HTTP status
+	// (ACT-020).
+	out["PluxActionError"] = pxl.TypeSpec{Fields: map[string]string{"kind": "PluxErrorKind", "message": "string", "code": "string?", "status": "int?"}}
 	return out
 }
 

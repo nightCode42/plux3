@@ -28,22 +28,23 @@ type unit struct {
 	focus string
 
 	// Built by resolve.
-	ids        map[string]plxerr.Location       // every entity ID, for duplicates
-	plugins    []*plugin                        // sorted by key
-	pages      map[string]*page                 // by ID
-	routes     map[string]*route                // by route name (SCH-025)
-	hostEvents map[string]*schema.HostEventDecl // by name (HST-013)
-	tabValues  map[string][2]*value             // a shell tab's label and icon by pointer (NAV-006)
-	graphs     map[string]*graph                // document graphs by ID
-	components map[string]*component            // by ID
-	shared     []*component                     // app-level components, by file
-	appGraphs  []*graph                         // inline graphs of shared components
-	tkeys      map[string]*schema.TranslationKey
-	tokens     map[string]*token
-	assetIDs   map[string]*schema.AssetEntry
-	natives    natives
-	types      *universe
-	graph      *Graph
+	ids         map[string]plxerr.Location       // every entity ID, for duplicates
+	plugins     []*plugin                        // sorted by key
+	pages       map[string]*page                 // by ID
+	routes      map[string]*route                // by route name (SCH-025)
+	hostEvents  map[string]*schema.HostEventDecl // by name (HST-013)
+	tabValues   map[string][2]*value             // a shell tab's label and icon by pointer (NAV-006)
+	graphs      map[string]*graph                // document graphs by ID
+	components  map[string]*component            // by ID
+	shared      []*component                     // app-level components, by file
+	appGraphs   []*graph                         // inline graphs of shared components and app triggers
+	appTriggers []*trigger                       // the app's triggers (ACT-002)
+	tkeys       map[string]*schema.TranslationKey
+	tokens      map[string]*token
+	assetIDs    map[string]*schema.AssetEntry
+	natives     natives
+	types       *universe
+	graph       *Graph
 
 	// features are the required features raised per bundle (nil: the app
 	// bundle) by WGT-004.
@@ -122,6 +123,7 @@ type plugin struct {
 	scope      *scope
 	state      []*stateEntry
 	sources    []*dataSource
+	triggers   []*trigger // the plugin's triggers (ACT-002)
 }
 
 // route is a route name's target: a page or a native route.
@@ -173,6 +175,7 @@ type page struct {
 	sources   []*dataSource
 	guards    []*graph
 	scope     *scope
+	triggers  []*trigger // the page's triggers (ACT-002)
 }
 
 // component is a component definition (SCH-030).
@@ -265,7 +268,13 @@ type graph struct {
 	steps  []schema.Step
 	plugin *plugin
 	page   *page // page-scoped graphs
-	inline bool
+	// component is the component whose node handler runs an inline graph;
+	// emitEvent emits its events (D11).
+	component *component
+	// eventTypes declares the type `event` names when it is synthesised,
+	// such as a host event's payload (ACT-002).
+	eventTypes map[string]pxl.TypeSpec
+	inline     bool
 	// eventType is the payload type every handler running the graph agrees
 	// on; "" when they carry none.
 	eventType string
@@ -289,6 +298,8 @@ type step struct {
 	branches  []branch
 	retry     *schema.Retry
 	timeoutMs uint32
+	// redact lists the inputs that read sensitive values (ACT-031).
+	redact []uint32
 }
 
 // branch is a named successor.

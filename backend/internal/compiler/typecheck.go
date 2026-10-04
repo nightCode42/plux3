@@ -27,6 +27,10 @@ func typecheck(u *unit) {
 	tc.appDecls()
 	u.appScope = tc.baseScope(nil)
 	tc.computed(nil, u.project.App.Doc.State, "app.json", u.appScope)
+	if u.inFocus("app.json") {
+		tc.triggers(u.appTriggers, u.appScope, "app")
+		tc.typeOwnGraphs(u.appTriggers, u.appScope)
+	}
 	tc.shellTabs()
 	for _, c := range u.shared {
 		if u.inFocus(c.file) {
@@ -61,6 +65,9 @@ func (t *typer) plugin(pl *plugin) {
 	base := t.baseScope(pl)
 	pl.scope = base
 	t.computed(pl, pl.doc.State, pl.file, base)
+	if u.inFocus(pl.file) {
+		t.triggers(pl.triggers, base, "app", "plugin")
+	}
 	for _, c := range pl.components {
 		if u.inFocus(c.file) {
 			t.component(c, base)
@@ -81,6 +88,7 @@ func (t *typer) plugin(pl *plugin) {
 			t.graph(g, t.pageScope(g.page, base))
 		}
 	}
+	t.typeOwnGraphs(pl.triggers, base)
 }
 
 // typer holds the typecheck state.
@@ -271,6 +279,7 @@ func (t *typer) page(pg *page, base *scope) {
 	for _, name := range sortedKeys(pg.graphs) {
 		t.useGraph(pg.graphs[name], "", pg.file, plxerr.Pointer("lifecycle", name))
 	}
+	t.triggers(pg.triggers, s, "app", "plugin", "page")
 	for _, g := range pg.plugin.inline {
 		if g.page == pg {
 			t.graph(g, s)
@@ -512,6 +521,9 @@ func (t *typer) flow(g *graph, base *scope) {
 // RangeSlider's RangeValues: widget payloads come from the registry, and
 // a component's declared payload was checked where it was declared.
 func (t *typer) graph(g *graph, s *scope) {
+	if g.eventTypes != nil {
+		s = s.withTypes(g.eventTypes)
+	}
 	if g.eventType != "" {
 		known := maps.Clone(t.u.types.base)
 		maps.Copy(known, s.synth)
@@ -630,7 +642,7 @@ func branchTargets(st schema.Step) []string {
 // may not have run.
 func (t *typer) stepOutput(g *graph, st schema.Step) string {
 	if st.Action == "callFlow" {
-		f := flowByKey(g.plugin, literalString(st.Input["flow"]))
+		f, _ := t.u.flowRef(g.plugin, literalString(st.Input["flow"]))
 		if f == nil || f.doc.Output == "" {
 			return ""
 		}
