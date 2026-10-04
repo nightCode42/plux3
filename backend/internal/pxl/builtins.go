@@ -47,7 +47,7 @@ func arg[T any](args []Value, i int) T {
 // implementations maps overload keys to their implementations.
 func implementations() map[string]builtinFn {
 	impl := map[string]builtinFn{}
-	for _, table := range []map[string]builtinFn{stringFns(), numberFns(), decimalFns(), moneyFns(), dateFns(), collectionFns(), logicFns()} {
+	for _, table := range []map[string]builtinFn{stringFns(), numberFns(), decimalFns(), moneyFns(), dateFns(), collectionFns(), logicFns(), regexFns()} {
 		for k, f := range table {
 			impl[k] = f
 		}

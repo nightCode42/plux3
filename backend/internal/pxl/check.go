@@ -75,6 +75,9 @@ type checker struct {
 	next     int // next free local slot
 	locals   int // number of local slots used
 	features map[string]bool
+	// limits bound literal arguments checked at compile time, such as
+	// regular expressions.
+	limits Limits
 	// nonNull holds the paths a guard has checked are not null where the
 	// expression being checked runs (narrowing, ADR-0009).
 	nonNull map[string]bool

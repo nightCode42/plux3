@@ -583,7 +583,7 @@ const List<OverloadDef> overloads = [
   OverloadDef('format.compact', 'format', ['int']), // 127
   OverloadDef('format.compact', 'format', ['double']), // 128
   OverloadDef('format.compact', 'format', ['decimal']), // 129
-  OverloadDef('format.phone', 'phone', ['string', 'string']), // 130
+  OverloadDef('format.phone', 'format', ['string', 'string']), // 130
   OverloadDef('format.iban', 'core', ['string']), // 131
   OverloadDef('t', 'l10n', ['string']), // 132
   OverloadDef('t', 'l10n', ['string', 'map<string,string>']), // 133

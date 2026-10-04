@@ -763,7 +763,21 @@ func (t *typer) compile(src string, s *scope, from, file, ptr string) {
 	e.prog, e.typ = prog, typ
 	if prog != nil {
 		t.recordReads(prog.Reads, s, from, file, ptr)
+		for _, f := range prog.Features {
+			if runtimes, ok := pxlFeatureRuntimes[f]; ok {
+				t.u.useRevision(strings.TrimSuffix(f, ".v1"), runtimes, 1, vctx{file: file, ptr: ptr + "/$expr", pl: s.plugin})
+			}
+		}
 	}
+}
+
+// pxlFeatureRuntimes lists the runtime each PXL group feature first
+// shipped in: an expression that needs one under an older
+// minRuntimeVersion is rejected or raises the plugin's required features
+// (PLX-1119, PLX-1120), as guards do (ADR-0040).
+var pxlFeatureRuntimes = map[string][]string{
+	"pxl.regex.v1": {"0.3.0"},
+	"pxl.phone.v1": {"0.3.0"},
 }
 
 // recordReads adds the state and data sources an expression reads to the

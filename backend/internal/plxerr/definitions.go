@@ -381,6 +381,26 @@ var registry = []Definition{
 		"Split the logic into computed state entries or a Plux Function.", false,
 	},
 	{
+		PXLRegexInvalid, "PXL_REGEX_INVALID", SeverityError, "Invalid regular expression",
+		"A pattern of `matches` is not in the pxl.regex.v1 subset of RE2: for example an unbalanced group, a lookaround, a backreference, a lazy quantifier or an unknown escape (schema/pxl/regex.md).",
+		"Correct the pattern at the reported position; the PXL reference lists the supported syntax.", false,
+	},
+	{
+		PXLRegexNotConstant, "PXL_REGEX_NOT_CONSTANT", SeverityError, "Regular expression is not a constant",
+		"The pattern of `matches` is computed, so it cannot be compiled and checked at publish time.",
+		"Write the pattern as a string literal.", false,
+	},
+	{
+		PXLRegexTooLarge, "PXL_REGEX_TOO_LARGE", SeverityError, "Regular expression too large",
+		"A pattern of `matches` exceeds the limits pxl.regexPatternLength, pxl.regexProgramSize or pxl.regexRepeat, which keep matching bounded on devices.",
+		"Shorten the pattern or reduce its repetition counts; an installation may raise the limits within their maximums.", false,
+	},
+	{
+		PXLUnknownPhoneRegion, "PXL_UNKNOWN_PHONE_REGION", SeverityError, "Unknown phone region",
+		"The region of `isPhone` is a literal that is not a two-letter region with phone metadata (schema/pxl/phone.md).",
+		"Use an ISO 3166 region code such as \"GB\", or pass the region from state or `device`.", false,
+	},
+	{
 		InternalCompilerError, "INTERNAL_COMPILER_ERROR", SeverityError, "Internal compiler error",
 		"The compiler met an unexpected condition. This is a bug: the compiler must report problems as diagnostics and never crash (CMP-052).",
 		"Report the input to the Plux maintainers.", false,

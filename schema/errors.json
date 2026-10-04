@@ -632,6 +632,38 @@
       "fix": "Split the logic into computed state entries or a Plux Function."
     },
     {
+      "code": "PLX-2020",
+      "reason": "PXL_REGEX_INVALID",
+      "severity": "error",
+      "title": "Invalid regular expression",
+      "cause": "A pattern of `matches` is not in the pxl.regex.v1 subset of RE2: for example an unbalanced group, a lookaround, a backreference, a lazy quantifier or an unknown escape (schema/pxl/regex.md).",
+      "fix": "Correct the pattern at the reported position; the PXL reference lists the supported syntax."
+    },
+    {
+      "code": "PLX-2021",
+      "reason": "PXL_REGEX_NOT_CONSTANT",
+      "severity": "error",
+      "title": "Regular expression is not a constant",
+      "cause": "The pattern of `matches` is computed, so it cannot be compiled and checked at publish time.",
+      "fix": "Write the pattern as a string literal."
+    },
+    {
+      "code": "PLX-2022",
+      "reason": "PXL_REGEX_TOO_LARGE",
+      "severity": "error",
+      "title": "Regular expression too large",
+      "cause": "A pattern of `matches` exceeds the limits pxl.regexPatternLength, pxl.regexProgramSize or pxl.regexRepeat, which keep matching bounded on devices.",
+      "fix": "Shorten the pattern or reduce its repetition counts; an installation may raise the limits within their maximums."
+    },
+    {
+      "code": "PLX-2023",
+      "reason": "PXL_UNKNOWN_PHONE_REGION",
+      "severity": "error",
+      "title": "Unknown phone region",
+      "cause": "The region of `isPhone` is a literal that is not a two-letter region with phone metadata (schema/pxl/phone.md).",
+      "fix": "Use an ISO 3166 region code such as \"GB\", or pass the region from state or `device`."
+    },
+    {
       "code": "PLX-2201",
       "reason": "INTERNAL_COMPILER_ERROR",
       "severity": "error",

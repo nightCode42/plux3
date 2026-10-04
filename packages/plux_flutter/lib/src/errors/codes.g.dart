@@ -229,6 +229,18 @@ enum PluxErrorCode {
   /// Expression too complex.
   pxlExpressionTooComplex(2016, 'PXL_EXPRESSION_TOO_COMPLEX', 'Expression too complex'),
 
+  /// Invalid regular expression.
+  pxlRegexInvalid(2020, 'PXL_REGEX_INVALID', 'Invalid regular expression'),
+
+  /// Regular expression is not a constant.
+  pxlRegexNotConstant(2021, 'PXL_REGEX_NOT_CONSTANT', 'Regular expression is not a constant'),
+
+  /// Regular expression too large.
+  pxlRegexTooLarge(2022, 'PXL_REGEX_TOO_LARGE', 'Regular expression too large'),
+
+  /// Unknown phone region.
+  pxlUnknownPhoneRegion(2023, 'PXL_UNKNOWN_PHONE_REGION', 'Unknown phone region'),
+
   /// Internal compiler error.
   internalCompilerError(2201, 'INTERNAL_COMPILER_ERROR', 'Internal compiler error'),
 

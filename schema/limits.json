@@ -725,6 +725,78 @@
       "description": "Operations one PXL evaluation may perform before it stops with a typed error."
     },
     {
+      "key": "pxl.regexPatternLength",
+      "unit": "codepoints",
+      "default": 1000,
+      "max": 10000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server",
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "PXL-001",
+        "PXL-006",
+        "LIM-001"
+      ],
+      "description": "Length of one regular-expression pattern of pxl.regex.v1."
+    },
+    {
+      "key": "pxl.regexProgramSize",
+      "unit": "count",
+      "default": 2000,
+      "max": 20000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server",
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "PXL-001",
+        "PXL-006",
+        "LIM-001"
+      ],
+      "description": "Instructions of one compiled regular-expression pattern of pxl.regex.v1 (schema/pxl/regex.md)."
+    },
+    {
+      "key": "pxl.regexRepeat",
+      "unit": "count",
+      "default": 100,
+      "max": 1000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler",
+        "server",
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "PXL-001",
+        "PXL-006",
+        "LIM-001"
+      ],
+      "description": "The largest count of a {n,m} repetition in a regular-expression pattern of pxl.regex.v1."
+    },
+    {
       "key": "pxl.stringLength",
       "unit": "codepoints",
       "default": 65536,

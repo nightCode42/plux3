@@ -69,7 +69,7 @@ func compile(src string, env *Env, opts Options, loc plxerr.Location, folding bo
 		d.add(code, serr.span, "%s", serr.msg)
 		return nil, nil, d.out
 	}
-	c := &checker{env: env, features: map[string]bool{}, nonNull: map[string]bool{}}
+	c := &checker{env: env, limits: opts.Limits, features: map[string]bool{}, nonNull: map[string]bool{}}
 	c.assume(opts.NonNull)
 	root := c.check(tree)
 	for _, x := range c.diags {

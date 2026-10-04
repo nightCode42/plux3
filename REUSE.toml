@@ -107,3 +107,18 @@ path = ["apps/starter/android/**", "apps/starter/ios/**", "apps/starter/.metadat
 precedence = "closest"
 SPDX-FileCopyrightText = ["2014 The Flutter Authors", "2026 Plux contributors"]
 SPDX-License-Identifier = "BSD-3-Clause"
+
+# Phone-number validation metadata (pxl.phone.v1), derived by tools/cmd/phonemeta
+# (make phone-metadata) from libphonenumber's PhoneNumberMetadata.xml at the
+# release phone.json records, and the tables and vectors generated from it.
+# Vendored data approved by the maintainer (plan p5.md §2.1 B2).
+[[annotations]]
+path = [
+    "schema/pxl/phone.json",
+    "schema/testdata/phone/examples.json",
+    "backend/internal/pxl/phone/table_gen.go",
+    "packages/plux_flutter/lib/src/pxl/phone.g.dart",
+]
+precedence = "override"
+SPDX-FileCopyrightText = ["2009 The Libphonenumber Authors", "2026 Plux contributors"]
+SPDX-License-Identifier = "Apache-2.0"
