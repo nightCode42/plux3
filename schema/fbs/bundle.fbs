@@ -117,6 +117,15 @@ table StateEntry {
   persistence: Persistence;
   sensitive: bool;
   exposed: bool;
+  // The version of a session, persisted or secure entry's type: a
+  // fingerprint of its structure, which a stored value carries (STA-040).
+  fingerprint: uint;
+  // How a stored value of the previous release's type becomes a value of
+  // this one (STA-040): the fingerprint of that type and a program over
+  // `previous`, or a reset to the default.
+  migration_from: uint;
+  migration: ulong;
+  migration_reset: bool;
 }
 
 enum DataSourceKind : ubyte {
@@ -492,6 +501,8 @@ table Graph {
   output: uint;
   // steps[0] is the entry.
   steps: [Step];
+  // The run's variables, scope `run` (STA-001).
+  state: [StateEntry];
 }
 
 table Actions {

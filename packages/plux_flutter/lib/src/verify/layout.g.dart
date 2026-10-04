@@ -130,6 +130,7 @@ const List<TableLayout> tableLayouts = [
     FieldLayout('inputs', 4, FieldKind.vectorTable, 0, 0, 33, required: false),
     FieldLayout('output', 5, FieldKind.scalar, 4, 4, -1, required: false),
     FieldLayout('steps', 6, FieldKind.vectorTable, 0, 0, 47, required: false),
+    FieldLayout('state', 7, FieldKind.vectorTable, 0, 0, 46, required: false),
   ]),
   // 18
   TableLayout('Handler', [
@@ -364,6 +365,10 @@ const List<TableLayout> tableLayouts = [
     FieldLayout('persistence', 5, FieldKind.scalar, 1, 1, -1, required: false),
     FieldLayout('sensitive', 6, FieldKind.scalar, 1, 1, -1, required: false),
     FieldLayout('exposed', 7, FieldKind.scalar, 1, 1, -1, required: false),
+    FieldLayout('fingerprint', 8, FieldKind.scalar, 4, 4, -1, required: false),
+    FieldLayout('migration_from', 9, FieldKind.scalar, 4, 4, -1, required: false),
+    FieldLayout('migration', 10, FieldKind.scalar, 8, 8, -1, required: false),
+    FieldLayout('migration_reset', 11, FieldKind.scalar, 1, 1, -1, required: false),
   ]),
   // 47
   TableLayout('Step', [

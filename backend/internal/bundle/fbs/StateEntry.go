@@ -139,8 +139,56 @@ func (rcv *StateEntry) MutateExposed(n bool) bool {
 	return rcv._tab.MutateBoolSlot(18, n)
 }
 
+func (rcv *StateEntry) Fingerprint() uint32 {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(20))
+	if o != 0 {
+		return rcv._tab.GetUint32(o + rcv._tab.Pos)
+	}
+	return 0
+}
+
+func (rcv *StateEntry) MutateFingerprint(n uint32) bool {
+	return rcv._tab.MutateUint32Slot(20, n)
+}
+
+func (rcv *StateEntry) MigrationFrom() uint32 {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(22))
+	if o != 0 {
+		return rcv._tab.GetUint32(o + rcv._tab.Pos)
+	}
+	return 0
+}
+
+func (rcv *StateEntry) MutateMigrationFrom(n uint32) bool {
+	return rcv._tab.MutateUint32Slot(22, n)
+}
+
+func (rcv *StateEntry) Migration() uint64 {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(24))
+	if o != 0 {
+		return rcv._tab.GetUint64(o + rcv._tab.Pos)
+	}
+	return 0
+}
+
+func (rcv *StateEntry) MutateMigration(n uint64) bool {
+	return rcv._tab.MutateUint64Slot(24, n)
+}
+
+func (rcv *StateEntry) MigrationReset() bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(26))
+	if o != 0 {
+		return rcv._tab.GetBool(o + rcv._tab.Pos)
+	}
+	return false
+}
+
+func (rcv *StateEntry) MutateMigrationReset(n bool) bool {
+	return rcv._tab.MutateBoolSlot(26, n)
+}
+
 func StateEntryStart(builder *flatbuffers.Builder) {
-	builder.StartObject(8)
+	builder.StartObject(12)
 }
 func StateEntryAddId(builder *flatbuffers.Builder, id flatbuffers.UOffsetT) {
 	builder.PrependStructSlot(0, flatbuffers.UOffsetT(id), 0)
@@ -165,6 +213,18 @@ func StateEntryAddSensitive(builder *flatbuffers.Builder, sensitive bool) {
 }
 func StateEntryAddExposed(builder *flatbuffers.Builder, exposed bool) {
 	builder.PrependBoolSlot(7, exposed, false)
+}
+func StateEntryAddFingerprint(builder *flatbuffers.Builder, fingerprint uint32) {
+	builder.PrependUint32Slot(8, fingerprint, 0)
+}
+func StateEntryAddMigrationFrom(builder *flatbuffers.Builder, migrationFrom uint32) {
+	builder.PrependUint32Slot(9, migrationFrom, 0)
+}
+func StateEntryAddMigration(builder *flatbuffers.Builder, migration uint64) {
+	builder.PrependUint64Slot(10, migration, 0)
+}
+func StateEntryAddMigrationReset(builder *flatbuffers.Builder, migrationReset bool) {
+	builder.PrependBoolSlot(11, migrationReset, false)
 }
 func StateEntryEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
 	return builder.EndObject()

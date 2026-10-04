@@ -23,7 +23,7 @@ final class JsonValue {
 /// flow callable with typed inputs (§14.1, ACT-061). File:
 /// `plugins/<plugin>/actions/<key>.graph.json`.
 final class ActionGraphDocument {
-  const ActionGraphDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, this.description, this.page, this.exported, this.inputs, this.output, required this.steps});
+  const ActionGraphDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, this.description, this.page, this.exported, this.inputs, this.output, this.state, required this.steps});
 
   /// Decodes a JSON object.
   factory ActionGraphDocument.fromJson(Object json) {
@@ -38,6 +38,7 @@ final class ActionGraphDocument {
       exported: m['exported'] == null ? null : m['exported']! as bool,
       inputs: m['inputs'] == null ? null : [for (final e in m['inputs']! as List<Object?>) Param.fromJson(e!)],
       output: m['output'] == null ? null : m['output']! as String,
+      state: m['state'] == null ? null : [for (final e in m['state']! as List<Object?>) StateEntry.fromJson(e!)],
       steps: [for (final e in m['steps']! as List<Object?>) Step.fromJson(e!)],
     );
   }
@@ -61,6 +62,9 @@ final class ActionGraphDocument {
   /// Type expression of SCH-010, e.g. `string`, `decimal?`,
   /// `list<Transaction>`, `map<string,int>`.
   final String? output;
+  /// The run's variables: state of scope `run`, read and written as
+  /// `run.<name>` by the graph's steps and gone when the run ends (STA-001).
+  final List<StateEntry>? state;
   final List<Step> steps;
 
   /// Encodes a JSON object.
@@ -74,6 +78,7 @@ final class ActionGraphDocument {
         if (exported != null) 'exported': exported!,
         if (inputs != null) 'inputs': [for (final e in inputs!) e.toJson()],
         if (output != null) 'output': output!,
+        if (state != null) 'state': [for (final e in state!) e.toJson()],
         'steps': [for (final e in steps) e.toJson()],
       };
 }
@@ -1000,7 +1005,7 @@ final class HostBuild {
 /// A typed event plugins send to the host app with `emitHostEvent`; `plux
 /// codegen` generates a Dart class for it (HST-013, HST-030, ADR-0039).
 final class HostEventDecl {
-  const HostEventDecl({required this.name, this.fields, this.description});
+  const HostEventDecl({required this.name, this.fields, this.direction, this.description});
 
   /// Decodes a JSON object.
   factory HostEventDecl.fromJson(Object json) {
@@ -1008,6 +1013,7 @@ final class HostEventDecl {
     return HostEventDecl(
       name: m['name']! as String,
       fields: m['fields'] == null ? null : [for (final e in m['fields']! as List<Object?>) Field.fromJson(e!)],
+      direction: m['direction'] == null ? null : HostEventDirection.fromJson(m['direction']!),
       description: m['description'] == null ? null : m['description']! as String,
     );
   }
@@ -1015,6 +1021,10 @@ final class HostEventDecl {
   /// Identifier used in PXL and generated code: lowerCamelCase.
   final String name;
   final List<Field>? fields;
+  /// Who sends a host event: plugins to the host with `emitHostEvent`
+  /// (`toHost`, the default), the host into Plux with `Plux.sendEvent`
+  /// (`toPlux`), or both (HST-013).
+  final HostEventDirection? direction;
   /// Human-readable description.
   final String? description;
 
@@ -1022,8 +1032,30 @@ final class HostEventDecl {
   Map<String, Object?> toJson() => {
         'name': name,
         if (fields != null) 'fields': [for (final e in fields!) e.toJson()],
+        if (direction != null) 'direction': direction!.toJson(),
         if (description != null) 'description': description!,
       };
+}
+
+/// Who sends a host event: plugins to the host with `emitHostEvent` (`toHost`,
+/// the default), the host into Plux with `Plux.sendEvent` (`toPlux`), or both
+/// (HST-013).
+enum HostEventDirection {
+  toHost('toHost'),
+  toPlux('toPlux'),
+  both('both');
+
+  const HostEventDirection(this.json);
+
+  /// Decodes a JSON value.
+  factory HostEventDirection.fromJson(Object json) =>
+      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown HostEventDirection', json));
+
+  /// The JSON value.
+  final String json;
+
+  /// Encodes the JSON value.
+  String toJson() => json;
 }
 
 /// An uploaded image or a generated monogram (SCH-020).
@@ -2014,7 +2046,7 @@ final class StartupPolicy {
 /// A typed state entry with a default or a computed expression (STA-002,
 /// STA-004).
 final class StateEntry {
-  const StateEntry({required this.id, required this.name, required this.type, this.defaultValue, this.computed, this.persistence, this.sensitive, this.exposed, this.description});
+  const StateEntry({required this.id, required this.name, required this.type, this.defaultValue, this.computed, this.persistence, this.sensitive, this.exposed, this.migration, this.description});
 
   /// Decodes a JSON object.
   factory StateEntry.fromJson(Object json) {
@@ -2028,6 +2060,7 @@ final class StateEntry {
       persistence: m['persistence'] == null ? null : Persistence.fromJson(m['persistence']!),
       sensitive: m['sensitive'] == null ? null : m['sensitive']! as bool,
       exposed: m['exposed'] == null ? null : m['exposed']! as bool,
+      migration: m['migration'] == null ? null : StateMigration.fromJson(m['migration']!),
       description: m['description'] == null ? null : m['description']! as String,
     );
   }
@@ -2049,6 +2082,12 @@ final class StateEntry {
   final bool? sensitive;
   /// Readable and writable by the host (STA-030).
   final bool? exposed;
+  /// How a persisted state entry whose type changed since the previous release
+  /// takes its stored value (STA-040): with `from`, the entry's type in the
+  /// previous release, and `value`, an expression over `previous` (the stored
+  /// value, of type `from`) giving the new value; or with `reset`, the declared
+  /// default.
+  final StateMigration? migration;
   /// Human-readable description.
   final String? description;
 
@@ -2062,6 +2101,45 @@ final class StateEntry {
         if (persistence != null) 'persistence': persistence!.toJson(),
         if (sensitive != null) 'sensitive': sensitive!,
         if (exposed != null) 'exposed': exposed!,
+        if (migration != null) 'migration': migration!.toJson(),
+        if (description != null) 'description': description!,
+      };
+}
+
+/// How a persisted state entry whose type changed since the previous release
+/// takes its stored value (STA-040): with `from`, the entry's type in the
+/// previous release, and `value`, an expression over `previous` (the stored
+/// value, of type `from`) giving the new value; or with `reset`, the declared
+/// default.
+final class StateMigration {
+  const StateMigration({this.from, this.value, this.reset, this.description});
+
+  /// Decodes a JSON object.
+  factory StateMigration.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return StateMigration(
+      from: m['from'] == null ? null : m['from']! as String,
+      value: m['value'] == null ? null : Expr.fromJson(m['value']!),
+      reset: m['reset'] == null ? null : m['reset']! as bool,
+      description: m['description'] == null ? null : m['description']! as String,
+    );
+  }
+
+  /// Type expression of SCH-010, e.g. `string`, `decimal?`,
+  /// `list<Transaction>`, `map<string,int>`.
+  final String? from;
+  /// PXL binding (SCH-011).
+  final Expr? value;
+  /// Start from the declared default instead of the stored value.
+  final bool? reset;
+  /// Human-readable description.
+  final String? description;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (from != null) 'from': from!,
+        if (value != null) 'value': value!.toJson(),
+        if (reset != null) 'reset': reset!,
         if (description != null) 'description': description!,
       };
 }

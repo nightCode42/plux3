@@ -328,6 +328,54 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Rename the custom action in the host app, for example with a prefix of its own, and run plux native scan again.
 
+### PLX-1140
+
+`STATE_ENTRY_READ_ONLY` · error · State entry written that cannot be
+
+**Cause.** A setState, patchState or resetState step names a computed state entry, whose value is derived from other state and recomputed when it changes (STA-004).
+
+**Fix.** Write the entries the computed entry reads, or declare the entry with a default instead of a computed expression.
+
+### PLX-1141
+
+`STATE_PATCH_NOT_OBJECT` · error · State patch of a value that is not an object
+
+**Cause.** A patchState step names a state entry whose type is not a declared object type, so it has no fields to merge (STA-002).
+
+**Fix.** Use setState to replace the value, or declare the entry with an object type.
+
+### PLX-1142
+
+`STATE_PERSISTENCE_NOT_ALLOWED` · error · Persistence that the entry cannot have
+
+**Cause.** A computed state entry, or a run variable (an action graph's state), declares a persistence other than memory: a computed value is derived again from the state it reads, and a run variable ends with its run (STA-001, STA-003).
+
+**Fix.** Remove the persistence, or persist the entries the computed value reads.
+
+### PLX-1143
+
+`STATE_MIGRATION_REQUIRED` · error · Stored state changes type without a migration
+
+**Cause.** A session, persisted or secure state entry has another type than in the previous release and declares no migration, so devices could not read the value they stored (STA-040).
+
+**Fix.** Declare a migration on the entry: `from` the previous type with an expression `value` over `previous`, or `reset: true` to start from the default.
+
+### PLX-1144
+
+`STATE_MIGRATION_MISMATCH` · error · State migration from a type the previous release did not have
+
+**Cause.** A state entry's migration declares `from` a type other than the entry's type in the previous release, so it would never run on the values devices stored (STA-040).
+
+**Fix.** Set `from` to the entry's type in the previous release, or use `reset: true`.
+
+### PLX-1145
+
+`STATE_MIGRATION_INVALID` · error · State migration that can never run
+
+**Cause.** A state entry declares a migration although it is computed or kept only in memory, or its migration says `reset: false`, or migrates `from` the type the entry already has (STA-040).
+
+**Fix.** Remove the migration, or give the entry a session, persisted or secure persistence and its previous type in `from`.
+
 ### PLX-1201
 
 `UNKNOWN_ROUTE` · error · Unknown route
@@ -887,6 +935,62 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 **Cause.** A stop step ended the run with a custom error code, and no onError handled it (ADR-0039).
 
 **Fix.** Handle the error with an onError edge, or check why the graph stops with it; the message carries its code.
+
+### PLX-5301
+
+`STATE_WRITE_TYPE_MISMATCH` · error · State written with a value of the wrong type
+
+**Cause.** A state write received a value from outside the bundle (an API response, a custom action, the host) that does not have the entry's declared type; the step fails with a validation error and the entry keeps its value (STA-002).
+
+**Fix.** Map the value to the declared type before writing it, or handle the step's error with onError.
+
+### PLX-5302
+
+`STATE_WRITE_REFUSED` · error · State write refused
+
+**Cause.** A state write names a path its scope does not have or a computed entry, or patches an entry that is not an object; the step fails and nothing changes (STA-001, STA-004).
+
+**Fix.** Check the path against the entries the page, component, plugin, app or run declares; the compiler reports this for literal paths (PLX-1140, PLX-1141).
+
+### PLX-5303
+
+`STATE_STORE_UNAVAILABLE` · warning · State store unavailable
+
+**Cause.** The runtime could not open or write its local state store, or could not obtain the store's key from the platform's secure storage; session, persisted and secure entries are kept in memory until the store works again (STA-003).
+
+**Fix.** Check the device's free space and the platform's secure storage; the message names the failing operation, never a value.
+
+### PLX-5304
+
+`STATE_STORE_CORRUPT` · error · State store failed authentication
+
+**Cause.** The local state store did not decrypt under its key: it was altered, truncated or written by another installation. It is discarded, and every stored entry starts from its default (STA-003).
+
+**Fix.** Nothing to fix in the app; if it repeats, check the device for tampering with the app's storage.
+
+### PLX-5305
+
+`STATE_MIGRATION_FAILED` · warning · Stored state could not be migrated
+
+**Cause.** A stored value had neither the entry's type nor the type its migration reads, or the migration failed; the entry starts from its default (STA-040).
+
+**Fix.** Declare a migration from the previous type, and check that it handles every stored value.
+
+### PLX-5306
+
+`STATE_LIMIT_EXCEEDED` · error · Stored state over its limit
+
+**Cause.** The values to store exceed state.persistedBytes or state.secureBytes; the write takes effect in memory but is not stored, so it is lost when the app is closed (LIM-001, LIM-004).
+
+**Fix.** Store less, for example by keeping large data in a local collection, or raise the limit for the app.
+
+### PLX-5307
+
+`HOST_EVENT_REFUSED` · error · Host event refused
+
+**Cause.** Plux.sendEvent named an event the app does not declare for the host to send (direction toPlux or both), or a payload without the event's fields and types; nothing runs (HST-013).
+
+**Fix.** Declare the event in the app's hostEvents with the direction toPlux or both; plux codegen generates typed senders that make this a compile error.
 
 ## Security (PLX-6000–6999)
 

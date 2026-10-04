@@ -69,7 +69,10 @@ type ActionGraphDocument struct {
 	// Output: Type expression of SCH-010, e.g. `string`, `decimal?`,
 	// `list<Transaction>`, `map<string,int>`.
 	Output string `json:"output,omitempty"`
-	Steps  []Step `json:"steps"`
+	// State: The run's variables: state of scope `run`, read and written as
+	// `run.<name>` by the graph's steps and gone when the run ends (STA-001).
+	State []StateEntry `json:"state,omitempty"`
+	Steps []Step       `json:"steps"`
 }
 
 // ActivationPolicy — When a staged release activates (SYN-004).
@@ -519,8 +522,33 @@ type HostEventDecl struct {
 	// Name: Identifier used in PXL and generated code: lowerCamelCase.
 	Name   string  `json:"name"`
 	Fields []Field `json:"fields,omitempty"`
+	// Direction: Who sends a host event: plugins to the host with
+	// `emitHostEvent` (`toHost`, the default), the host into Plux with
+	// `Plux.sendEvent` (`toPlux`), or both (HST-013).
+	Direction HostEventDirection `json:"direction,omitempty"`
 	// Description: Human-readable description.
 	Description string `json:"description,omitempty"`
+}
+
+// HostEventDirection — Who sends a host event: plugins to the host with
+// `emitHostEvent` (`toHost`, the default), the host into Plux with
+// `Plux.sendEvent` (`toPlux`), or both (HST-013).
+type HostEventDirection string
+
+// Values of HostEventDirection.
+const (
+	HostEventDirectionToHost HostEventDirection = "toHost"
+	HostEventDirectionToPlux HostEventDirection = "toPlux"
+	HostEventDirectionBoth   HostEventDirection = "both"
+)
+
+// Valid reports whether v is one of the values of HostEventDirection.
+func (v HostEventDirection) Valid() bool {
+	switch v {
+	case HostEventDirectionToHost, HostEventDirectionToPlux, HostEventDirectionBoth:
+		return true
+	}
+	return false
 }
 
 // Icon — An uploaded image or a generated monogram (SCH-020).
@@ -1015,6 +1043,29 @@ type StateEntry struct {
 	Sensitive   *bool       `json:"sensitive,omitempty"`
 	// Exposed: Readable and writable by the host (STA-030).
 	Exposed *bool `json:"exposed,omitempty"`
+	// Migration: How a persisted state entry whose type changed since the
+	// previous release takes its stored value (STA-040): with `from`, the
+	// entry's type in the previous release, and `value`, an expression over
+	// `previous` (the stored value, of type `from`) giving the new value; or
+	// with `reset`, the declared default.
+	Migration *StateMigration `json:"migration,omitempty"`
+	// Description: Human-readable description.
+	Description string `json:"description,omitempty"`
+}
+
+// StateMigration — How a persisted state entry whose type changed since the
+// previous release takes its stored value (STA-040): with `from`, the entry's
+// type in the previous release, and `value`, an expression over `previous`
+// (the stored value, of type `from`) giving the new value; or with `reset`,
+// the declared default.
+type StateMigration struct {
+	// From: Type expression of SCH-010, e.g. `string`, `decimal?`,
+	// `list<Transaction>`, `map<string,int>`.
+	From string `json:"from,omitempty"`
+	// Value: PXL binding (SCH-011).
+	Value *Expr `json:"value,omitempty"`
+	// Reset: Start from the declared default instead of the stored value.
+	Reset *bool `json:"reset,omitempty"`
 	// Description: Human-readable description.
 	Description string `json:"description,omitempty"`
 }

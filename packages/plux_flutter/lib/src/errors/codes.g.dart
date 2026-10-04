@@ -130,6 +130,24 @@ enum PluxErrorCode {
   /// Custom action named like a built-in action.
   customActionNamedLikeBuiltIn(1124, 'CUSTOM_ACTION_NAMED_LIKE_BUILT_IN', 'Custom action named like a built-in action'),
 
+  /// State entry written that cannot be.
+  stateEntryReadOnly(1140, 'STATE_ENTRY_READ_ONLY', 'State entry written that cannot be'),
+
+  /// State patch of a value that is not an object.
+  statePatchNotObject(1141, 'STATE_PATCH_NOT_OBJECT', 'State patch of a value that is not an object'),
+
+  /// Persistence that the entry cannot have.
+  statePersistenceNotAllowed(1142, 'STATE_PERSISTENCE_NOT_ALLOWED', 'Persistence that the entry cannot have'),
+
+  /// Stored state changes type without a migration.
+  stateMigrationRequired(1143, 'STATE_MIGRATION_REQUIRED', 'Stored state changes type without a migration'),
+
+  /// State migration from a type the previous release did not have.
+  stateMigrationMismatch(1144, 'STATE_MIGRATION_MISMATCH', 'State migration from a type the previous release did not have'),
+
+  /// State migration that can never run.
+  stateMigrationInvalid(1145, 'STATE_MIGRATION_INVALID', 'State migration that can never run'),
+
   /// Unknown route.
   unknownRoute(1201, 'UNKNOWN_ROUTE', 'Unknown route'),
 
@@ -336,6 +354,27 @@ enum PluxErrorCode {
 
   /// Run failed with a custom error.
   actionCustomError(5004, 'ACTION_CUSTOM_ERROR', 'Run failed with a custom error'),
+
+  /// State written with a value of the wrong type.
+  stateWriteTypeMismatch(5301, 'STATE_WRITE_TYPE_MISMATCH', 'State written with a value of the wrong type'),
+
+  /// State write refused.
+  stateWriteRefused(5302, 'STATE_WRITE_REFUSED', 'State write refused'),
+
+  /// State store unavailable.
+  stateStoreUnavailable(5303, 'STATE_STORE_UNAVAILABLE', 'State store unavailable'),
+
+  /// State store failed authentication.
+  stateStoreCorrupt(5304, 'STATE_STORE_CORRUPT', 'State store failed authentication'),
+
+  /// Stored state could not be migrated.
+  stateMigrationFailed(5305, 'STATE_MIGRATION_FAILED', 'Stored state could not be migrated'),
+
+  /// Stored state over its limit.
+  stateLimitExceeded(5306, 'STATE_LIMIT_EXCEEDED', 'Stored state over its limit'),
+
+  /// Host event refused.
+  hostEventRefused(5307, 'HOST_EVENT_REFUSED', 'Host event refused'),
 
   /// Outbound request blocked.
   outboundRequestBlocked(6030, 'OUTBOUND_REQUEST_BLOCKED', 'Outbound request blocked'),

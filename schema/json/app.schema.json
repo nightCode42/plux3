@@ -375,6 +375,9 @@
               "$ref": "common.schema.json#/$defs/field"
             }
           },
+          "direction": {
+            "$ref": "common.schema.json#/$defs/hostEventDirection"
+          },
           "description": {
             "$ref": "common.schema.json#/$defs/description"
           }

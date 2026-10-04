@@ -1075,10 +1075,14 @@ class StateEntry {
   Persistence get persistence => Persistence.fromValue(const fb.Uint8Reader().vTableGet(_bc, _bcOffset, 14, 0));
   bool get sensitive => const fb.BoolReader().vTableGet(_bc, _bcOffset, 16, false);
   bool get exposed => const fb.BoolReader().vTableGet(_bc, _bcOffset, 18, false);
+  int get fingerprint => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 20, 0);
+  int get migrationFrom => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 22, 0);
+  int get migration => const fb.Uint64Reader().vTableGet(_bc, _bcOffset, 24, 0);
+  bool get migrationReset => const fb.BoolReader().vTableGet(_bc, _bcOffset, 26, false);
 
   @override
   String toString() {
-    return 'StateEntry{id: ${id}, name: ${name}, type: ${type}, \$default: ${$default}, computed: ${computed}, persistence: ${persistence}, sensitive: ${sensitive}, exposed: ${exposed}}';
+    return 'StateEntry{id: ${id}, name: ${name}, type: ${type}, \$default: ${$default}, computed: ${computed}, persistence: ${persistence}, sensitive: ${sensitive}, exposed: ${exposed}, fingerprint: ${fingerprint}, migrationFrom: ${migrationFrom}, migration: ${migration}, migrationReset: ${migrationReset}}';
   }
 }
 
@@ -1096,7 +1100,7 @@ class StateEntryBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable(8);
+    fbBuilder.startTable(12);
   }
 
   int addId(int offset) {
@@ -1131,6 +1135,22 @@ class StateEntryBuilder {
     fbBuilder.addBool(7, exposed);
     return fbBuilder.offset;
   }
+  int addFingerprint(int? fingerprint) {
+    fbBuilder.addUint32(8, fingerprint);
+    return fbBuilder.offset;
+  }
+  int addMigrationFrom(int? migrationFrom) {
+    fbBuilder.addUint32(9, migrationFrom);
+    return fbBuilder.offset;
+  }
+  int addMigration(int? migration) {
+    fbBuilder.addUint64(10, migration);
+    return fbBuilder.offset;
+  }
+  int addMigrationReset(bool? migrationReset) {
+    fbBuilder.addBool(11, migrationReset);
+    return fbBuilder.offset;
+  }
 
   int finish() {
     return fbBuilder.endTable();
@@ -1146,6 +1166,10 @@ class StateEntryObjectBuilder extends fb.ObjectBuilder {
   final Persistence? _persistence;
   final bool? _sensitive;
   final bool? _exposed;
+  final int? _fingerprint;
+  final int? _migrationFrom;
+  final int? _migration;
+  final bool? _migrationReset;
 
   StateEntryObjectBuilder({
     UuidObjectBuilder? id,
@@ -1156,6 +1180,10 @@ class StateEntryObjectBuilder extends fb.ObjectBuilder {
     Persistence? persistence,
     bool? sensitive,
     bool? exposed,
+    int? fingerprint,
+    int? migrationFrom,
+    int? migration,
+    bool? migrationReset,
   })
       : _id = id,
         _name = name,
@@ -1164,13 +1192,17 @@ class StateEntryObjectBuilder extends fb.ObjectBuilder {
         _computed = computed,
         _persistence = persistence,
         _sensitive = sensitive,
-        _exposed = exposed;
+        _exposed = exposed,
+        _fingerprint = fingerprint,
+        _migrationFrom = migrationFrom,
+        _migration = migration,
+        _migrationReset = migrationReset;
 
   /// Finish building, and store into the [fbBuilder].
   @override
   int finish(fb.Builder fbBuilder) {
     final int? $defaultOffset = _$default?.getOrCreateOffset(fbBuilder);
-    fbBuilder.startTable(8);
+    fbBuilder.startTable(12);
     if (_id != null) {
       fbBuilder.addStruct(0, _id!.finish(fbBuilder));
     }
@@ -1181,6 +1213,10 @@ class StateEntryObjectBuilder extends fb.ObjectBuilder {
     fbBuilder.addUint8(5, _persistence?.value);
     fbBuilder.addBool(6, _sensitive);
     fbBuilder.addBool(7, _exposed);
+    fbBuilder.addUint32(8, _fingerprint);
+    fbBuilder.addUint32(9, _migrationFrom);
+    fbBuilder.addUint64(10, _migration);
+    fbBuilder.addBool(11, _migrationReset);
     return fbBuilder.endTable();
   }
 
@@ -4255,10 +4291,11 @@ class Graph {
   List<Param>? get inputs => const fb.ListReader<Param>(Param.reader).vTableGetNullable(_bc, _bcOffset, 12);
   int get output => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 14, 0);
   List<Step>? get steps => const fb.ListReader<Step>(Step.reader).vTableGetNullable(_bc, _bcOffset, 16);
+  List<StateEntry>? get state => const fb.ListReader<StateEntry>(StateEntry.reader).vTableGetNullable(_bc, _bcOffset, 18);
 
   @override
   String toString() {
-    return 'Graph{id: ${id}, key: ${key}, page: ${page}, exported: ${exported}, inputs: ${inputs}, output: ${output}, steps: ${steps}}';
+    return 'Graph{id: ${id}, key: ${key}, page: ${page}, exported: ${exported}, inputs: ${inputs}, output: ${output}, steps: ${steps}, state: ${state}}';
   }
 }
 
@@ -4276,7 +4313,7 @@ class GraphBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable(7);
+    fbBuilder.startTable(8);
   }
 
   int addId(int offset) {
@@ -4307,6 +4344,10 @@ class GraphBuilder {
     fbBuilder.addOffset(6, offset);
     return fbBuilder.offset;
   }
+  int addStateOffset(int? offset) {
+    fbBuilder.addOffset(7, offset);
+    return fbBuilder.offset;
+  }
 
   int finish() {
     return fbBuilder.endTable();
@@ -4321,6 +4362,7 @@ class GraphObjectBuilder extends fb.ObjectBuilder {
   final List<ParamObjectBuilder>? _inputs;
   final int? _output;
   final List<StepObjectBuilder>? _steps;
+  final List<StateEntryObjectBuilder>? _state;
 
   GraphObjectBuilder({
     UuidObjectBuilder? id,
@@ -4330,6 +4372,7 @@ class GraphObjectBuilder extends fb.ObjectBuilder {
     List<ParamObjectBuilder>? inputs,
     int? output,
     List<StepObjectBuilder>? steps,
+    List<StateEntryObjectBuilder>? state,
   })
       : _id = id,
         _key = key,
@@ -4337,7 +4380,8 @@ class GraphObjectBuilder extends fb.ObjectBuilder {
         _exported = exported,
         _inputs = inputs,
         _output = output,
-        _steps = steps;
+        _steps = steps,
+        _state = state;
 
   /// Finish building, and store into the [fbBuilder].
   @override
@@ -4346,7 +4390,9 @@ class GraphObjectBuilder extends fb.ObjectBuilder {
         : fbBuilder.writeList(_inputs!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
     final int? stepsOffset = _steps == null ? null
         : fbBuilder.writeList(_steps!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
-    fbBuilder.startTable(7);
+    final int? stateOffset = _state == null ? null
+        : fbBuilder.writeList(_state!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    fbBuilder.startTable(8);
     if (_id != null) {
       fbBuilder.addStruct(0, _id!.finish(fbBuilder));
     }
@@ -4358,6 +4404,7 @@ class GraphObjectBuilder extends fb.ObjectBuilder {
     fbBuilder.addOffset(4, inputsOffset);
     fbBuilder.addUint32(5, _output);
     fbBuilder.addOffset(6, stepsOffset);
+    fbBuilder.addOffset(7, stateOffset);
     return fbBuilder.endTable();
   }
 

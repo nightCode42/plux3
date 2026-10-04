@@ -53,6 +53,12 @@ const (
 	DeprecatedMember             Code = 1122
 	UnknownIcon                  Code = 1123
 	CustomActionNamedLikeBuiltIn Code = 1124
+	StateEntryReadOnly           Code = 1140
+	StatePatchNotObject          Code = 1141
+	StatePersistenceNotAllowed   Code = 1142
+	StateMigrationRequired       Code = 1143
+	StateMigrationMismatch       Code = 1144
+	StateMigrationInvalid        Code = 1145
 	UnknownRoute                 Code = 1201
 	RouteParameterMissing        Code = 1203
 	RouteParameterTypeInvalid    Code = 1204
@@ -141,6 +147,13 @@ const (
 	ActionStepLimitExceeded Code = 5002
 	ActionValueInvalid      Code = 5003
 	ActionCustomError       Code = 5004
+	StateWriteTypeMismatch  Code = 5301
+	StateWriteRefused       Code = 5302
+	StateStoreUnavailable   Code = 5303
+	StateStoreCorrupt       Code = 5304
+	StateMigrationFailed    Code = 5305
+	StateLimitExceeded      Code = 5306
+	HostEventRefused        Code = 5307
 
 	// Security (PLX-6000–6999).
 

@@ -122,6 +122,12 @@ enum PluxLimit {
   runtimeSectionCacheBytes('runtime.sectionCacheBytes', PluxLimitUnit.bytes, 8388608, 0, 268435456),
   /// Page and component sections the runtime keeps decoded.
   runtimeSectionCacheEntries('runtime.sectionCacheEntries', PluxLimitUnit.count, 64, 0, 4096),
+  /// Bytes the persisted state of one app may take in the runtime's local
+  /// store, encrypted; writes beyond it stay in memory and are reported.
+  statePersistedBytes('state.persistedBytes', PluxLimitUnit.bytes, 1048576, 0, 16777216),
+  /// Bytes the secure state of one app may take in the runtime's local store,
+  /// encrypted; writes beyond it stay in memory and are reported.
+  stateSecureBytes('state.secureBytes', PluxLimitUnit.bytes, 65536, 0, 1048576),
   /// The size of the runtime's buffer of unsent telemetry events; the oldest
   /// are dropped first.
   telemetryBufferBytes('telemetry.bufferBytes', PluxLimitUnit.bytes, 262144, 0, 4194304),

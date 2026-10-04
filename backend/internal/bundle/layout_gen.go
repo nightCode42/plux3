@@ -109,6 +109,7 @@ var tableLayouts = [...]tableLayout{
 		{name: "inputs", id: 4, kind: fieldVectorTable, size: 0, align: 0, table: 33, required: false},
 		{name: "output", id: 5, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "steps", id: 6, kind: fieldVectorTable, size: 0, align: 0, table: 47, required: false},
+		{name: "state", id: 7, kind: fieldVectorTable, size: 0, align: 0, table: 46, required: false},
 	}},
 	18: {name: "Handler", fields: []fieldLayout{
 		{name: "event", id: 0, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
@@ -314,6 +315,10 @@ var tableLayouts = [...]tableLayout{
 		{name: "persistence", id: 5, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
 		{name: "sensitive", id: 6, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
 		{name: "exposed", id: 7, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
+		{name: "fingerprint", id: 8, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
+		{name: "migration_from", id: 9, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
+		{name: "migration", id: 10, kind: fieldScalar, size: 8, align: 8, table: -1, required: false},
+		{name: "migration_reset", id: 11, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
 	}},
 	47: {name: "Step", fields: []fieldLayout{
 		{name: "id", id: 0, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
