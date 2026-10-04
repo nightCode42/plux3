@@ -26,12 +26,21 @@ enum PluxLimitUnit {
 enum PluxLimit {
   /// Items one forEach step may iterate over.
   actionForEachItems('action.forEachItems', PluxLimitUnit.count, 1000, 0, 100000),
+  /// Triggers a handler with the queue policy may hold while its run is in
+  /// progress; a trigger beyond it is dropped and reported.
+  actionQueueLength('action.queueLength', PluxLimitUnit.count, 32, 0, 1000),
   /// Time one action run may take.
   actionRunTimeout('action.runTimeout', PluxLimitUnit.milliseconds, 120000, 0, 3600000),
   /// Time one action step may take.
   actionStepTimeout('action.stepTimeout', PluxLimitUnit.milliseconds, 30000, 0, 600000),
   /// Steps one action run may execute.
   actionStepsPerRun('action.stepsPerRun', PluxLimitUnit.count, 10000, 0, 100000),
+  /// Action run traces the runtime keeps for diagnostics; the oldest are
+  /// dropped first.
+  actionTraceRuns('action.traceRuns', PluxLimitUnit.count, 50, 0, 1000),
+  /// Steps one action run trace records; later steps are counted but not
+  /// recorded.
+  actionTraceSteps('action.traceSteps', PluxLimitUnit.count, 200, 0, 10000),
   /// Items one page of a list call returns; a call asking for more gets this
   /// many, and one asking for none gets this many too.
   apiPageSize('api.pageSize', PluxLimitUnit.count, 100, 0, 1000),

@@ -17,6 +17,11 @@ final class _Diagnostics implements PluxDiagnostics {
 
   @override
   final ValueNotifier<SyncEvent?> syncStatus = ValueNotifier(null);
+
+  @override
+  final ValueNotifier<List<PluxActionTrace>> actionTraces = ValueNotifier(
+    const [],
+  );
 }
 
 void main() {

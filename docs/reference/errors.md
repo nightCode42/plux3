@@ -328,6 +328,54 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Rename the custom action in the host app, for example with a prefix of its own, and run plux native scan again.
 
+### PLX-1125
+
+`FLOW_CALL_CYCLE` · error · Flows call each other in a cycle
+
+**Cause.** A callFlow step calls a flow that, through its own callFlow steps, calls the graph back. Action graphs are acyclic across flows too, so a run cannot recurse (ACT-001, ACT-061).
+
+**Fix.** Break the cycle: move the shared steps into a flow that calls neither graph.
+
+### PLX-1126
+
+`FLOW_NOT_EXPORTED` · error · Flow private to its plugin
+
+**Cause.** A callFlow step names a flow of another plugin as <plugin>/<flow>, and that flow is not exported. Only exported flows are callable across plugins (ACT-061).
+
+**Fix.** Set exported on the flow in its plugin, or call a flow of the step's own plugin by its key.
+
+### PLX-1127
+
+`INVALID_TRIGGER` · error · Invalid trigger
+
+**Cause.** A trigger names something its owner cannot see — a state entry, a host event or a data source — or two timers share a name (ACT-002).
+
+**Fix.** Name a state entry of the page, the plugin or the app, a host event the app document declares, or a data source in scope; give each timer its own name.
+
+### PLX-1128
+
+`UNDECLARED_COMPONENT_EVENT` · error · Component event not declared
+
+**Cause.** An emitEvent step names an event its component does not declare, or sends a payload to an event that declares none. A component's events are its contract with its users (SCH-030).
+
+**Fix.** Declare the event in the component's events, with the payload type the step sends, or correct its name.
+
+### PLX-1129
+
+`EMIT_EVENT_OUTSIDE_COMPONENT` · error · emitEvent outside a component
+
+**Cause.** An emitEvent step is in a graph that does not belong to a component: a page's graph or a flow has no component events to emit.
+
+**Fix.** Emit host events with emitHostEvent, or move the step into a handler of the component.
+
+### PLX-1130
+
+`INVALID_RETRY_POLICY` · error · Invalid retry policy
+
+**Cause.** A step's retry policy cannot work as written: its maxBackoffMs is below its backoffMs, or it retries cancelled errors, which end the run whatever the step declares (ACT-006).
+
+**Fix.** Set maxBackoffMs to at least backoffMs, and remove cancelled from the error kinds it retries.
+
 ### PLX-1201
 
 `UNKNOWN_ROUTE` · error · Unknown route
@@ -887,6 +935,46 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 **Cause.** A stop step ended the run with a custom error code, and no onError handled it (ADR-0039).
 
 **Fix.** Handle the error with an onError edge, or check why the graph stops with it; the message carries its code.
+
+### PLX-5005
+
+`ACTION_CANCELLED` · info · Action run cancelled
+
+**Cause.** A run, or a branch of a parallel step, was cancelled: its page or component was disposed, a restart policy started a newer run, or another branch of the parallel step failed (ACT-003, ACT-004). Cancellation ends the run; it is never routed to an error handler.
+
+**Fix.** Nothing to fix when the owner went away. Mark the handler detached when its run must outlive its page.
+
+### PLX-5006
+
+`ACTION_FOREACH_LIMIT_EXCEEDED` · error · forEach item limit exceeded
+
+**Cause.** A forEach step was given more items than the limit action.forEachItems allows; the step fails before its body runs (ACT-005).
+
+**Fix.** Iterate over fewer items, for example a page of them, or raise the limit within its maximum.
+
+### PLX-5007
+
+`FLOW_NOT_FOUND` · error · Flow not found
+
+**Cause.** A callFlow step names a flow the active release does not hold, or a flow of another plugin that is not exported in that plugin's active version (ACT-061).
+
+**Fix.** Publish the plugin that declares the flow, export it, or handle the error with the step's onError.
+
+### PLX-5008
+
+`ERROR_HANDLER_FAILED` · error · Error handler failed
+
+**Cause.** A page, plugin or app error handler failed while handling a run's error; its failure is reported and the original error goes on to the next handler (ACT-020).
+
+**Fix.** Fix the error handler's graph; the report names the handler's owner and its own error code.
+
+### PLX-5009
+
+`ACTION_QUEUE_FULL` · warning · Action queue full
+
+**Cause.** A handler with the queue policy was triggered while it already held as many waiting triggers as the limit action.queueLength allows; the trigger was dropped (ACT-003).
+
+**Fix.** Use the drop, restart or debounce policy for triggers that come faster than their runs finish, or raise the limit within its maximum.
 
 ## Security (PLX-6000–6999)
 

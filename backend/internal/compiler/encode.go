@@ -398,16 +398,21 @@ func (e *valueEnc) sources(ds []*dataSource) flatbuffers.UOffsetT {
 func handlers(b *flatbuffers.Builder, hs []*handler) flatbuffers.UOffsetT {
 	offs := make([]flatbuffers.UOffsetT, len(hs))
 	for i, h := range hs {
-		fbs.HandlerStart(b)
-		fbs.HandlerAddEvent(b, h.event)
-		hi, lo := uuidHalves(h.graph.id)
-		fbs.HandlerAddGraph(b, fbs.CreateUuid(b, hi, lo))
-		fbs.HandlerAddConcurrency(b, h.concurrency)
-		if h.interval != 0 {
-			fbs.HandlerAddIntervalMs(b, h.interval)
-		}
-		fbs.HandlerAddDetached(b, h.detached)
-		offs[i] = fbs.HandlerEnd(b)
+		offs[i] = handlerTable(b, h)
 	}
 	return offsetVector(b, offs)
+}
+
+// handlerTable writes one handler.
+func handlerTable(b *flatbuffers.Builder, h *handler) flatbuffers.UOffsetT {
+	fbs.HandlerStart(b)
+	fbs.HandlerAddEvent(b, h.event)
+	hi, lo := uuidHalves(h.graph.id)
+	fbs.HandlerAddGraph(b, fbs.CreateUuid(b, hi, lo))
+	fbs.HandlerAddConcurrency(b, h.concurrency)
+	if h.interval != 0 {
+		fbs.HandlerAddIntervalMs(b, h.interval)
+	}
+	fbs.HandlerAddDetached(b, h.detached)
+	return fbs.HandlerEnd(b)
 }

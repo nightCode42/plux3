@@ -31,9 +31,13 @@ func semantic(u *unit) {
 		}
 		g.navs = u.navigations(g)
 	}
+	if u.inFocus("app.json") {
+		u.checkTriggers(u.appTriggers, nil)
+	}
 	for _, pl := range u.plugins {
 		u.checkPlugin(pl)
 	}
+	u.checkFlowCycles()
 	u.checkRedirects()
 	u.checkGuards()
 	u.finishGraph()
@@ -41,6 +45,9 @@ func semantic(u *unit) {
 
 // checkPlugin checks a plugin's components, pages and graphs.
 func (u *unit) checkPlugin(pl *plugin) {
+	if u.inFocus(pl.file) {
+		u.checkTriggers(pl.triggers, pl)
+	}
 	for _, c := range pl.components {
 		if u.inFocus(c.file) {
 			u.checkComponent(c)
@@ -88,12 +95,14 @@ func (u *unit) checkPage(pg *page) {
 		if g := pg.graphs[name]; g != nil {
 			h := &handler{event: uint32(i), graph: g} //nolint:gosec // G115: five events.
 			if eh := lifecycleHandler(doc.Lifecycle, name); eh != nil {
-				u.concurrency(h, eh.Concurrency, file, plxerr.Pointer("lifecycle", name))
-				h.detached = eh.Detached != nil && *eh.Detached
+				c := vctx{file: file, ptr: plxerr.Pointer("lifecycle", name), pl: pl}
+				u.policy(h, eh, fbs.ConcurrencyQueue, c)
+				u.requireFeature(triggersFeature, c, false)
 			}
 			pg.lifecycle = append(pg.lifecycle, h)
 		}
 	}
+	u.checkTriggers(pg.triggers, pl)
 }
 
 // lifecycleHandler returns a lifecycle event's handler.

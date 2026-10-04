@@ -24,6 +24,25 @@
       "description": "Items one forEach step may iterate over."
     },
     {
+      "key": "action.queueLength",
+      "unit": "count",
+      "default": 32,
+      "max": 1000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "ACT-003"
+      ],
+      "description": "Triggers a handler with the queue policy may hold while its run is in progress; a trigger beyond it is dropped and reported."
+    },
+    {
       "key": "action.runTimeout",
       "unit": "milliseconds",
       "default": 120000,
@@ -83,6 +102,44 @@
         "ACT-005"
       ],
       "description": "Steps one action run may execute."
+    },
+    {
+      "key": "action.traceRuns",
+      "unit": "count",
+      "default": 50,
+      "max": 1000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "ACT-030"
+      ],
+      "description": "Action run traces the runtime keeps for diagnostics; the oldest are dropped first."
+    },
+    {
+      "key": "action.traceSteps",
+      "unit": "count",
+      "default": 200,
+      "max": 10000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "ACT-030"
+      ],
+      "description": "Steps one action run trace records; later steps are counted but not recorded."
     },
     {
       "key": "api.pageSize",

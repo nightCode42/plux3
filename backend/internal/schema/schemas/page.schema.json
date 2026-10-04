@@ -88,6 +88,9 @@
       },
       "additionalProperties": false
     },
+    "triggers": {
+      "$ref": "common.schema.json#/$defs/triggers"
+    },
     "routeOptions": {
       "type": "object",
       "x-plux-type": "RouteOptions",

@@ -80,6 +80,7 @@ An app: its plugins, theme, locales, environments, shared data and policies (SCH
 | `hostEvents` | list of [HostEventDecl](#hosteventdecl) |  |  |
 | `telemetry` | [TelemetryPolicy](#telemetrypolicy) |  | What the runtime reports (ANL-003, ADR-0034). |
 | `push` | [PushPolicy](#pushpolicy) |  | Push notifications (NAV-008, ADR-0040): whether the app uses them, so a generated project carries the platform configuration, and the payload key under which a notification names `{route, params}` for `Plux.handlePushPayload`. |
+| `triggers` | [Triggers](#triggers) |  | Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active. |
 
 ### AssetEntry
 
@@ -219,6 +220,15 @@ A data source with its value type and design-time mock (SCH-024, DAT-080).
 ### DataSourceKind
 
 One of `rest`, `graphql`, `websocket`, `sse`, `function`, `database`, `static`.
+
+### DataSourceTriggers
+
+Handlers of a data source's events (ACT-002): the loaded value is onLoaded's `event`, the error onFailed's.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `onLoaded` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
+| `onFailed` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
 
 ### DeepLinkPolicy
 
@@ -475,6 +485,7 @@ A page: route, parameters, state, data, lifecycle and node tree (SCH-022). File:
 | `state` | list of [StateEntry](#stateentry) |  |  |
 | `dataSources` | list of [DataSource](#datasource) |  |  |
 | `lifecycle` | [Lifecycle](#lifecycle) |  | Lifecycle handlers (SCH-022). |
+| `triggers` | [Triggers](#triggers) |  | Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active. |
 | `routeOptions` | [RouteOptions](#routeoptions) |  | Route options (SCH-022, NAV-010). |
 | `security` | [PageSecurity](#pagesecurity) |  | Security flags (SCH-022). |
 | `root` | [Node](#node) | yes | A node of a page or component tree: a widget or a component instance (SCH-023). |
@@ -538,6 +549,7 @@ A plugin: its pages, state, collections and requested capabilities (SCH-021). Fi
 | `state` | list of [StateEntry](#stateentry) |  |  |
 | `collections` | list of [Collection](#collection) |  |  |
 | `dataSources` | list of [DataSource](#datasource) |  |  |
+| `triggers` | [Triggers](#triggers) |  | Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active. |
 
 ### PushPolicy
 
@@ -669,6 +681,16 @@ A typed state entry with a default or a computed expression (STA-002, STA-004).
 | `exposed` | boolean |  | Readable and writable by the host (STA-030). |
 | `description` | string |  | Human-readable description. |
 
+### StateWatcher
+
+Runs its handler when a state entry changes (ACT-002); `event` is the new value. A debounce policy on the handler waits for the value to settle.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `path` | string | yes | The state entry: <scope>.<name>. |
+| `handler` | [EventHandler](#eventhandler) | yes | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
+| `description` | string |  | Human-readable description. |
+
 ### Step
 
 One step of an action graph; edges name other steps (§14.1).
@@ -764,6 +786,18 @@ Design tokens for light and dark modes (THM-001, THM-002). File: `theme.json`.
 | `name` | string | yes |  |
 | `tokens` | JSON value | yes | A design token or a group of tokens in the W3C Design Tokens format (THM-001). Dark-mode values are given in `$extensions.dev.plux.dark`. |
 
+### TimerTrigger
+
+A timer (ACT-002): it fires every intervalMs while its owner lives, or once, intervalMs after its owner starts, when repeat is false; `event` is the number of times it has fired.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `name` | string | yes | Identifier used in PXL and generated code: lowerCamelCase. |
+| `intervalMs` | integer | yes |  |
+| `repeat` | boolean |  | Fires every intervalMs; true when absent. |
+| `handler` | [EventHandler](#eventhandler) | yes | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
+| `description` | string |  | Human-readable description. |
+
 ### Transition
 
 Page transition (NAV-010).
@@ -804,6 +838,21 @@ The messages of one locale, by translation-key identifier, in ICU MessageFormat 
 | `id` | string | yes | Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). |
 | `locale` | string | yes | BCP 47 language tag: language, optional script, optional region. |
 | `messages` | map of string | yes |  |
+
+### Triggers
+
+Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `timers` | list of [TimerTrigger](#timertrigger) |  |  |
+| `watch` | list of [StateWatcher](#statewatcher) |  |  |
+| `onAppResume` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
+| `onAppPause` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
+| `onPushOpened` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
+| `hostEvents` | map of [EventHandler](#eventhandler) |  | Handlers of host events sent into Plux, by declared host event name (HST-013); `event` is the event's payload. |
+| `dataSources` | map of [DataSourceTriggers](#datasourcetriggers) |  | Handlers of data-source events, by data source name. |
+| `onError` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
 
 ### TypeDecl
 

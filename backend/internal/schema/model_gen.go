@@ -155,6 +155,10 @@ type AppDocument struct {
 	// key under which a notification names `{route, params}` for
 	// `Plux.handlePushPayload`.
 	Push *PushPolicy `json:"push,omitempty"`
+	// Triggers: Triggers besides widget events and page lifecycle (ACT-002), and
+	// the owner's error handler (ACT-020). A page's runs are cancelled with the
+	// page; a plugin's and the app's run while the release is active.
+	Triggers *Triggers `json:"triggers,omitempty"`
 }
 
 // AssetEntry — An asset file.
@@ -347,6 +351,17 @@ func (v DataSourceKind) Valid() bool {
 		return true
 	}
 	return false
+}
+
+// DataSourceTriggers — Handlers of a data source's events (ACT-002): the
+// loaded value is onLoaded's `event`, the error onFailed's.
+type DataSourceTriggers struct {
+	// OnLoaded: A trigger's handler: a reference to an action graph or an inline
+	// graph (SCH-023).
+	OnLoaded *EventHandler `json:"onLoaded,omitempty"`
+	// OnFailed: A trigger's handler: a reference to an action graph or an inline
+	// graph (SCH-023).
+	OnFailed *EventHandler `json:"onFailed,omitempty"`
 }
 
 // DeepLinkPolicy — The links the app answers (NAV-008): its hosts for
@@ -707,6 +722,10 @@ type PageDocument struct {
 	DataSources []DataSource `json:"dataSources,omitempty"`
 	// Lifecycle: Lifecycle handlers (SCH-022).
 	Lifecycle *Lifecycle `json:"lifecycle,omitempty"`
+	// Triggers: Triggers besides widget events and page lifecycle (ACT-002), and
+	// the owner's error handler (ACT-020). A page's runs are cancelled with the
+	// page; a plugin's and the app's run while the release is active.
+	Triggers *Triggers `json:"triggers,omitempty"`
 	// RouteOptions: Route options (SCH-022, NAV-010).
 	RouteOptions *RouteOptions `json:"routeOptions,omitempty"`
 	// Security: Security flags (SCH-022).
@@ -820,6 +839,10 @@ type PluginDocument struct {
 	State        []StateEntry  `json:"state,omitempty"`
 	Collections  []Collection  `json:"collections,omitempty"`
 	DataSources  []DataSource  `json:"dataSources,omitempty"`
+	// Triggers: Triggers besides widget events and page lifecycle (ACT-002), and
+	// the owner's error handler (ACT-020). A page's runs are cancelled with the
+	// page; a plugin's and the app's run while the release is active.
+	Triggers *Triggers `json:"triggers,omitempty"`
 }
 
 // PushPolicy — Push notifications (NAV-008, ADR-0040): whether the app uses
@@ -1019,6 +1042,19 @@ type StateEntry struct {
 	Description string `json:"description,omitempty"`
 }
 
+// StateWatcher — Runs its handler when a state entry changes (ACT-002);
+// `event` is the new value. A debounce policy on the handler waits for the
+// value to settle.
+type StateWatcher struct {
+	// Path: The state entry: <scope>.<name>.
+	Path string `json:"path"`
+	// Handler: A trigger's handler: a reference to an action graph or an inline
+	// graph (SCH-023).
+	Handler EventHandler `json:"handler"`
+	// Description: Human-readable description.
+	Description string `json:"description,omitempty"`
+}
+
 // Step — One step of an action graph; edges name other steps (§14.1).
 type Step struct {
 	// ID: Identifier used in PXL and generated code: lowerCamelCase.
@@ -1148,6 +1184,22 @@ type ThemeDocument struct {
 	Tokens json.RawMessage `json:"tokens"`
 }
 
+// TimerTrigger — A timer (ACT-002): it fires every intervalMs while its
+// owner lives, or once, intervalMs after its owner starts, when repeat is
+// false; `event` is the number of times it has fired.
+type TimerTrigger struct {
+	// Name: Identifier used in PXL and generated code: lowerCamelCase.
+	Name       string `json:"name"`
+	IntervalMs int64  `json:"intervalMs"`
+	// Repeat: Fires every intervalMs; true when absent.
+	Repeat *bool `json:"repeat,omitempty"`
+	// Handler: A trigger's handler: a reference to an action graph or an inline
+	// graph (SCH-023).
+	Handler EventHandler `json:"handler"`
+	// Description: Human-readable description.
+	Description string `json:"description,omitempty"`
+}
+
 // Transition — Page transition (NAV-010).
 type Transition string
 
@@ -1209,6 +1261,31 @@ type TranslationsDocument struct {
 	// Locale: BCP 47 language tag: language, optional script, optional region.
 	Locale   string            `json:"locale"`
 	Messages map[string]string `json:"messages"`
+}
+
+// Triggers — Triggers besides widget events and page lifecycle (ACT-002),
+// and the owner's error handler (ACT-020). A page's runs are cancelled with
+// the page; a plugin's and the app's run while the release is active.
+type Triggers struct {
+	Timers []TimerTrigger `json:"timers,omitempty"`
+	Watch  []StateWatcher `json:"watch,omitempty"`
+	// OnAppResume: A trigger's handler: a reference to an action graph or an
+	// inline graph (SCH-023).
+	OnAppResume *EventHandler `json:"onAppResume,omitempty"`
+	// OnAppPause: A trigger's handler: a reference to an action graph or an
+	// inline graph (SCH-023).
+	OnAppPause *EventHandler `json:"onAppPause,omitempty"`
+	// OnPushOpened: A trigger's handler: a reference to an action graph or an
+	// inline graph (SCH-023).
+	OnPushOpened *EventHandler `json:"onPushOpened,omitempty"`
+	// HostEvents: Handlers of host events sent into Plux, by declared host event
+	// name (HST-013); `event` is the event's payload.
+	HostEvents map[string]EventHandler `json:"hostEvents,omitempty"`
+	// DataSources: Handlers of data-source events, by data source name.
+	DataSources map[string]DataSourceTriggers `json:"dataSources,omitempty"`
+	// OnError: A trigger's handler: a reference to an action graph or an inline
+	// graph (SCH-023).
+	OnError *EventHandler `json:"onError,omitempty"`
 }
 
 // TypeDecl — A named object type or enum (SCH-010).

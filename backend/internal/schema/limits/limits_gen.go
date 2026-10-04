@@ -9,12 +9,22 @@ package limits
 const (
 	// ActionForEachItems: Items one forEach step may iterate over. (ACT-005)
 	ActionForEachItems Key = "action.forEachItems"
+	// ActionQueueLength: Triggers a handler with the queue policy may hold while
+	// its run is in progress; a trigger beyond it is dropped and reported.
+	// (ACT-003)
+	ActionQueueLength Key = "action.queueLength"
 	// ActionRunTimeout: Time one action run may take. (ACT-005)
 	ActionRunTimeout Key = "action.runTimeout"
 	// ActionStepTimeout: Time one action step may take. (ACT-005)
 	ActionStepTimeout Key = "action.stepTimeout"
 	// ActionStepsPerRun: Steps one action run may execute. (ACT-005)
 	ActionStepsPerRun Key = "action.stepsPerRun"
+	// ActionTraceRuns: Action run traces the runtime keeps for diagnostics; the
+	// oldest are dropped first. (ACT-030)
+	ActionTraceRuns Key = "action.traceRuns"
+	// ActionTraceSteps: Steps one action run trace records; later steps are
+	// counted but not recorded. (ACT-030)
+	ActionTraceSteps Key = "action.traceSteps"
 	// APIPageSize: Items one page of a list call returns; a call asking for more
 	// gets this many, and one asking for none gets this many too. (SRV-004)
 	APIPageSize Key = "api.pageSize"
@@ -135,9 +145,12 @@ const (
 // registry holds every definition in key order. It is read-only.
 var registry = [...]Definition{
 	{Key: ActionForEachItems, Unit: UnitCount, Default: 1000, Warning: 0, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerRuntime, Phase: "P5", Description: "Items one forEach step may iterate over."},
+	{Key: ActionQueueLength, Unit: UnitCount, Default: 32, Warning: 0, Max: 1000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Triggers a handler with the queue policy may hold while its run is in progress; a trigger beyond it is dropped and reported."},
 	{Key: ActionRunTimeout, Unit: UnitMilliseconds, Default: 120000, Warning: 0, Max: 3600000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P4", Description: "Time one action run may take."},
 	{Key: ActionStepTimeout, Unit: UnitMilliseconds, Default: 30000, Warning: 0, Max: 600000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P4", Description: "Time one action step may take."},
 	{Key: ActionStepsPerRun, Unit: UnitCount, Default: 10000, Warning: 0, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerRuntime, Phase: "P4", Description: "Steps one action run may execute."},
+	{Key: ActionTraceRuns, Unit: UnitCount, Default: 50, Warning: 0, Max: 1000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Action run traces the runtime keeps for diagnostics; the oldest are dropped first."},
+	{Key: ActionTraceSteps, Unit: UnitCount, Default: 200, Warning: 0, Max: 10000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Steps one action run trace records; later steps are counted but not recorded."},
 	{Key: APIPageSize, Unit: UnitCount, Default: 100, Warning: 0, Max: 1000, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P2", Description: "Items one page of a list call returns; a call asking for more gets this many, and one asking for none gets this many too."},
 	{Key: APIRequestSize, Unit: UnitBytes, Default: 8388608, Warning: 0, Max: 268435456, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P2", Description: "Size of one API request body, refused before a handler reads it, and of one request message once decompressed."},
 	{Key: APIRequestsPerMinute, Unit: UnitCount, Default: 600, Warning: 0, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization, EnforcedBy: EnforcerServer, Phase: "P2", Description: "API calls one authenticated principal (a user or a token) may make per minute."},

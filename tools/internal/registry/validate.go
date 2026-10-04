@@ -227,7 +227,7 @@ var (
 	}
 	categories = []string{
 		"navigation", "feedback", "state", "forms", "data", "localDb", "compute", "control", "analytics", "app",
-		"device", "security", "animation", "host", "plux", "payments",
+		"device", "security", "animation", "component", "host", "plux", "payments",
 	}
 	effects = []string{"navigation", "state", "network", "storage", "device", "ui", "telemetry", "security", "host"}
 )

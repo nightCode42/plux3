@@ -53,6 +53,12 @@ const (
 	DeprecatedMember             Code = 1122
 	UnknownIcon                  Code = 1123
 	CustomActionNamedLikeBuiltIn Code = 1124
+	FlowCallCycle                Code = 1125
+	FlowNotExported              Code = 1126
+	InvalidTrigger               Code = 1127
+	UndeclaredComponentEvent     Code = 1128
+	EmitEventOutsideComponent    Code = 1129
+	InvalidRetryPolicy           Code = 1130
 	UnknownRoute                 Code = 1201
 	RouteParameterMissing        Code = 1203
 	RouteParameterTypeInvalid    Code = 1204
@@ -141,6 +147,11 @@ const (
 	ActionStepLimitExceeded Code = 5002
 	ActionValueInvalid      Code = 5003
 	ActionCustomError       Code = 5004
+	ActionCancelled         Code = 5005
+	ForEachLimitExceeded    Code = 5006
+	FlowNotFound            Code = 5007
+	ErrorHandlerFailed      Code = 5008
+	ActionQueueFull         Code = 5009
 
 	// Security (PLX-6000–6999).
 

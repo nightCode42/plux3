@@ -130,6 +130,24 @@ enum PluxErrorCode {
   /// Custom action named like a built-in action.
   customActionNamedLikeBuiltIn(1124, 'CUSTOM_ACTION_NAMED_LIKE_BUILT_IN', 'Custom action named like a built-in action'),
 
+  /// Flows call each other in a cycle.
+  flowCallCycle(1125, 'FLOW_CALL_CYCLE', 'Flows call each other in a cycle'),
+
+  /// Flow private to its plugin.
+  flowNotExported(1126, 'FLOW_NOT_EXPORTED', 'Flow private to its plugin'),
+
+  /// Invalid trigger.
+  invalidTrigger(1127, 'INVALID_TRIGGER', 'Invalid trigger'),
+
+  /// Component event not declared.
+  undeclaredComponentEvent(1128, 'UNDECLARED_COMPONENT_EVENT', 'Component event not declared'),
+
+  /// emitEvent outside a component.
+  emitEventOutsideComponent(1129, 'EMIT_EVENT_OUTSIDE_COMPONENT', 'emitEvent outside a component'),
+
+  /// Invalid retry policy.
+  invalidRetryPolicy(1130, 'INVALID_RETRY_POLICY', 'Invalid retry policy'),
+
   /// Unknown route.
   unknownRoute(1201, 'UNKNOWN_ROUTE', 'Unknown route'),
 
@@ -336,6 +354,21 @@ enum PluxErrorCode {
 
   /// Run failed with a custom error.
   actionCustomError(5004, 'ACTION_CUSTOM_ERROR', 'Run failed with a custom error'),
+
+  /// Action run cancelled.
+  actionCancelled(5005, 'ACTION_CANCELLED', 'Action run cancelled'),
+
+  /// forEach item limit exceeded.
+  actionForeachLimitExceeded(5006, 'ACTION_FOREACH_LIMIT_EXCEEDED', 'forEach item limit exceeded'),
+
+  /// Flow not found.
+  flowNotFound(5007, 'FLOW_NOT_FOUND', 'Flow not found'),
+
+  /// Error handler failed.
+  errorHandlerFailed(5008, 'ERROR_HANDLER_FAILED', 'Error handler failed'),
+
+  /// Action queue full.
+  actionQueueFull(5009, 'ACTION_QUEUE_FULL', 'Action queue full'),
 
   /// Outbound request blocked.
   outboundRequestBlocked(6030, 'OUTBOUND_REQUEST_BLOCKED', 'Outbound request blocked'),

@@ -69,12 +69,14 @@ void main() {
       final meta = fbs.Meta(b.ofKind(SectionKind.meta).single.data);
       expect(meta.compilerVersion, 'dev', reason: path);
       expect(meta.schemaVersion, '1.0.0', reason: path);
-      // The routing project uses what runtime 0.2.0 brings; the
-      // loan-calculator and features projects have guarded pages, which
-      // runtime 0.2.0 is the first to honour (ADR-0040).
+      // The routing project uses what runtime 0.2.0 brings (ADR-0040);
+      // the loan-calculator and features projects use lifecycle handlers
+      // and R1's actions, which runtime 0.3.0 is the first to run.
       expect(
         meta.minRuntime,
-        ['routing/', 'loan-calculator/', 'features/'].any(path.startsWith)
+        ['loan-calculator/', 'features/'].any(path.startsWith)
+            ? '0.3.0'
+            : path.startsWith('routing/')
             ? '0.2.0'
             : '0.1.0',
         reason: path,

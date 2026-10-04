@@ -1,0 +1,30 @@
+{
+  "$schema": "../json/registry/action.schema.json",
+  "name": "emitEvent",
+  "id": 56,
+  "phase": "P5",
+  "category": "component",
+  "description": "Inside a component, emits one of the component's declared events with a payload of its declared type, to the instance's handler or to PluxView.onEvent.",
+  "typeParameters": [
+    {
+      "name": "E",
+      "description": "The payload type the referenced component event declares."
+    }
+  ],
+  "inputs": [
+    {
+      "name": "event",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "ref": "componentEvent",
+      "description": "The component event."
+    },
+    {
+      "name": "payload",
+      "id": 2,
+      "type": "E",
+      "description": "The event payload."
+    }
+  ]
+}

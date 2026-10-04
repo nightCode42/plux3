@@ -282,6 +282,7 @@ func (u *unit) pageSection(o *out, pg *page) []byte {
 	state := e.state(pg.state)
 	sources := e.sources(pg.sources)
 	lifecycle := handlers(b, pg.lifecycle)
+	triggers := triggerTables(b, pg.triggers)
 	var guards [][16]byte
 	for _, g := range pg.guards {
 		guards = append(guards, g.id)
@@ -303,6 +304,7 @@ func (u *unit) pageSection(o *out, pg *page) []byte {
 	fbs.PageAddState(b, state)
 	fbs.PageAddDataSources(b, sources)
 	fbs.PageAddLifecycle(b, lifecycle)
+	addOptional(b, triggers, fbs.PageAddTriggers)
 	if opts.transition != 0 {
 		fbs.PageAddTransition(b, opts.transition)
 	}
@@ -462,6 +464,7 @@ func stepTable(e *valueEnc, s *step) flatbuffers.UOffsetT {
 		fbs.RetryAddOn(b, on)
 		retry = fbs.RetryEnd(b)
 	}
+	redact := redactVector(b, s.redact)
 	id := e.strs.of(s.id)
 	fbs.StepStart(b)
 	fbs.StepAddId(b, id)
@@ -477,6 +480,7 @@ func stepTable(e *valueEnc, s *step) flatbuffers.UOffsetT {
 	if s.timeoutMs != 0 {
 		fbs.StepAddTimeoutMs(b, s.timeoutMs)
 	}
+	addOptional(b, redact, fbs.StepAddRedact)
 	return fbs.StepEnd(b)
 }
 
@@ -1048,6 +1052,7 @@ func (u *unit) metaSection(o *out) {
 	}
 	nameOff, keyOff := b.CreateString(name), b.CreateString(key)
 	compiler, schemaVersion, minRuntime := b.CreateString(u.opts.Version), b.CreateString(schema.CurrentVersion), b.CreateString(app.MinRuntimeVersion)
+	tv := triggerTables(b, u.ownTriggers(o))
 	var defLocale, entryRoute, profile, notFound, shells, links, push flatbuffers.UOffsetT
 	if o.pl == nil {
 		defLocale, entryRoute, profile = b.CreateString(app.DefaultLocale), b.CreateString(app.EntryRoute), b.CreateString(string(app.SecurityProfile))
@@ -1068,6 +1073,7 @@ func (u *unit) metaSection(o *out) {
 	fbs.MetaAddRequiredFeatures(b, features)
 	fbs.MetaAddMinRuntime(b, minRuntime)
 	fbs.MetaAddLimits(b, lv)
+	addOptional(b, tv, fbs.MetaAddTriggers)
 	if o.pl != nil {
 		fbs.MetaAddCapabilities(b, capabilities)
 		fbs.MetaAddPages(b, pages)

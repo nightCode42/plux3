@@ -3485,6 +3485,14 @@ var actions = [...]Action{
 		},
 	},
 	{
+		Name: "emitEvent", ID: 56, Phase: "P5", Category: "component", Description: "Inside a component, emits one of the component's declared events with a payload of its declared type, to the instance's handler or to PluxView.onEvent.",
+		TypeParameters: []string{"E"},
+		Inputs: []Input{
+			{Name: "event", ID: 1, Type: "string", Required: true, Default: "", Ref: "componentEvent", Description: "The component event."},
+			{Name: "payload", ID: 2, Type: "E", Required: false, Default: "", Ref: "", Description: "The event payload."},
+		},
+	},
+	{
 		Name: "emitHostEvent", ID: 51, Phase: "P4", Category: "host", Description: "Sends a typed event to the host app.",
 		TypeParameters: []string{"E"},
 		Inputs: []Input{

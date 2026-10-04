@@ -439,6 +439,9 @@
         "^x-": true
       },
       "additionalProperties": false
+    },
+    "triggers": {
+      "$ref": "common.schema.json#/$defs/triggers"
     }
   },
   "patternProperties": {
