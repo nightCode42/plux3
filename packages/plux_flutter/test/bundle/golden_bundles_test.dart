@@ -34,6 +34,8 @@ void main() {
 
   test('the goldens of the conformance projects are present', () {
     expect(bundles.keys.toList()..sort(), [
+      'data/data.pxb',
+      'data/shop.pxb',
       'features/features.dev.pxb',
       'features/features.pxb',
       'features/tasks.dev.pxb',
@@ -58,6 +60,7 @@ void main() {
             : (path.contains('/tasks') ||
                       path.contains('/loans') ||
                       path.contains('/nav') ||
+                      path.contains('/shop') ||
                       path.contains('/gallery')
                   ? 1
                   : 2),
@@ -71,10 +74,16 @@ void main() {
       expect(meta.schemaVersion, '1.0.0', reason: path);
       // The routing project uses what runtime 0.2.0 brings; the
       // loan-calculator and features projects have guarded pages, which
-      // runtime 0.2.0 is the first to honour (ADR-0040).
+      // runtime 0.2.0 is the first to honour (ADR-0040); the data project
+      // raises data.v1 above its minimum of 0.2.0 (ADR-0048).
       expect(
         meta.minRuntime,
-        ['routing/', 'loan-calculator/', 'features/'].any(path.startsWith)
+        [
+              'routing/',
+              'loan-calculator/',
+              'features/',
+              'data/',
+            ].any(path.startsWith)
             ? '0.2.0'
             : '0.1.0',
         reason: path,

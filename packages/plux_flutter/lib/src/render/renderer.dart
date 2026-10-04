@@ -26,6 +26,10 @@ import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/core/app_state.dart';
 import 'package:plux_flutter/src/core/config.dart';
 import 'package:plux_flutter/src/core/fallback.dart';
+import 'package:plux_flutter/src/data/client.dart' show DataCaller;
+import 'package:plux_flutter/src/data/services.dart';
+import 'package:plux_flutter/src/data/source.dart';
+import 'package:plux_flutter/src/data/spec.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/native_catalogue/registration.dart';
 import 'package:plux_flutter/src/navigation/guards.dart';
@@ -68,6 +72,7 @@ final class PluxRenderer implements PageRenderer, RenderServices {
     required this.imageCacheDirectory,
     this.assets = AssetDevice.plain,
     this.actions,
+    this.data,
     VerifiedAssets? verified,
     int? cacheEntries,
     int? cacheBytes,
@@ -100,6 +105,80 @@ final class PluxRenderer implements PageRenderer, RenderServices {
   /// What pages run their action graphs with (ADR-0039); without it,
   /// events report `PLX-4010` as in P3.
   final ActionServices? actions;
+
+  /// What pages load data sources with (ADR-0048); without it, `data`
+  /// reads nothing and the data actions fail.
+  final DataServices? data;
+
+  /// The data a page of [plugin] sees (ADR-0048): its own sources from
+  /// [page] (a page section's sources and strings), its plugin's and the
+  /// app's, shared by the plugin's pages of [release].
+  DataScope? dataScope(
+    ActiveRelease release,
+    String plugin,
+    ({List<fbs.DataSource> sources, String Function(int) string})? page,
+    Map<String, Object?> Function() roots,
+    String route,
+  ) {
+    final services = data;
+    if (services == null) return null;
+    services.limits = release.limits;
+    final limits = _pxlLimits(release.limits);
+    final pl = view(release, plugin), app = view(release, '');
+    final types = typesOf(release, plugin);
+    final caller = DataCaller(
+      pluginKey: plugin,
+      domains:
+          release.meta(plugin).capabilities?.networkDomains ?? const <String>[],
+      route: route,
+    );
+    List<DataSourceSpec> decode(
+      List<fbs.DataSource> list,
+      String Function(int) string,
+      BundleView bundle,
+    ) => [
+      for (final d in list)
+        DataSourceSpec.decode(
+          d,
+          strings: string,
+          plugin: bundle,
+          limits: limits,
+        ),
+    ];
+    try {
+      final shared = [
+        for (final s in [
+          ...decode(pl.dataSources, pl.string, pl),
+          ...decode(app.dataSources, app.string, app),
+        ])
+          services.shared(release, s, caller, types),
+      ];
+      final own = [
+        if (page != null)
+          for (final s in decode(page.sources, page.string, pl))
+            DataSourceController(
+              spec: s,
+              context: services,
+              caller: caller,
+              types: types,
+            ),
+      ];
+      return DataScope(
+        services: services,
+        own: own,
+        shared: shared,
+        roots: roots,
+      );
+    } on PluxException catch (e) {
+      report(e);
+      return null;
+    } on FormatException catch (e) {
+      report(
+        PluxException(PluxErrorCode.bundleMalformed, 'data: ${e.message}'),
+      );
+      return null;
+    }
+  }
 
   final VerifiedAssets _verified;
   ImageDiskCache? _imageCache;
@@ -804,6 +883,7 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
         ),
         emit: services.emit,
         nativeActions: services.nativeActions,
+        data: _data,
       ),
       limits: ActionLimits.of(widget.release.limits),
       report: widget.renderer.report,
@@ -814,6 +894,32 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
   }();
 
   String get _path => '${widget.page.plugin}/${widget.page.pageKey}';
+
+  /// The roots of the last build, for data parameters and transforms.
+  Map<String, Object?> Function() _roots = () => const {};
+
+  /// The page's data (ADR-0048).
+  late final DataScope? _data = () {
+    final page = _section.page;
+    final scope = widget.renderer.dataScope(
+      widget.release,
+      widget.page.plugin,
+      page == null
+          ? null
+          : (
+              sources: page.dataSources ?? const <fbs.DataSource>[],
+              string: _section.string,
+            ),
+      () => _roots(),
+      widget.page.route,
+    );
+    scope?.addListener(_dataChanged);
+    return scope;
+  }();
+
+  void _dataChanged() {
+    if (mounted) setState(() {});
+  }
 
   void _report(PluxException e, {required String path}) {
     // A failed node counts against the release's trial, which reports it.
@@ -935,6 +1041,8 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
   @override
   void dispose() {
     _actions?.dispose();
+    _data?.removeListener(_dataChanged);
+    _data?.dispose();
     super.dispose();
   }
 
@@ -979,7 +1087,9 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
       // at that moment (ADR-0040).
       'user': widget.renderer.userRoot(widget.release, env),
       'flags': _flags,
+      'data': _data?.root ?? const <String, Object?>{},
     };
+    _roots = roots;
     final tokens = TokenReader(
       app: _app,
       dark: dark,

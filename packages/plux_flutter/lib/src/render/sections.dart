@@ -300,6 +300,10 @@ final class BundleView {
         ),
   ];
 
+  /// The data sources the bundle's schemas section declares (ADR-0048).
+  List<fbs.DataSource> get dataSources =>
+      _schemas?.dataSources ?? const <fbs.DataSource>[];
+
   late final fbs.Schemas? _schemas = () {
     final s = _single(SectionKind.schemas);
     return s == null ? null : fbs.Schemas(s.data);

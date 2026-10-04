@@ -10,6 +10,7 @@ import 'package:plux_flutter/src/actions/engine.dart';
 import 'package:plux_flutter/src/actions/graph.dart';
 import 'package:plux_flutter/src/actions/handlers.dart';
 import 'package:plux_flutter/src/actions/run.dart';
+import 'package:plux_flutter/src/data/handlers.dart';
 import 'package:plux_flutter/src/render/values.dart';
 import 'package:plux_flutter/src/schema/registry.g.dart';
 
@@ -486,7 +487,8 @@ void main() {
   test('the engine runs exactly the actions Appendix D tags up to P4, and refuses the rest (ADR-0039)', () {
     for (final d in actionDescriptors) {
       final handler = handlerFor(d);
-      if (runsInThisRuntime(d)) {
+      // The data layer's actions run before the rest of P5 (ADR-0048).
+      if (runsInThisRuntime(d) || dataHandlers.containsKey(d.name)) {
         expect(handler, isNot(isA<RefusingHandler>()), reason: d.name);
       } else {
         expect(handler, isA<RefusingHandler>(), reason: d.name);

@@ -28,6 +28,8 @@ import 'package:plux_flutter/src/core/features.dart';
 import 'package:plux_flutter/src/core/host_events.dart';
 import 'package:plux_flutter/src/core/plux.dart';
 import 'package:plux_flutter/src/core/plux_view.dart';
+import 'package:plux_flutter/src/data/services.dart';
+import 'package:plux_flutter/src/data/worker.dart';
 import 'package:plux_flutter/src/devtools_api/diagnostics.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/native_catalogue/host.dart';
@@ -310,6 +312,25 @@ final class PluxRuntime with WidgetsBindingObserver {
   /// The latest sync event, for status displays.
   final ValueNotifier<SyncEvent?> lastEvent = ValueNotifier(null);
 
+  late final LazyDataWorker _dataWorker = LazyDataWorker(
+    () => DataWorker.start(
+      httpClient: config.httpClient ?? platformHttpClient,
+      cacheDirectory: '$_root/data',
+    ),
+  );
+
+  /// The data layer's services (ADR-0048). The cache key provider and the
+  /// data-source events are wired by the integration of P5 R2 and R1.
+  late final DataServices _dataServices = DataServices(
+    transport: _dataWorker,
+    plainStore: _dataWorker.store(secure: false),
+    secureStore: _dataWorker.store(secure: true),
+    authDelegate: () => environment().authDelegate,
+    environment: config.environment,
+    record: telemetry.record,
+    report: _report,
+  );
+
   /// Turns page sections into widgets (ADR-0031).
   late PageRenderer? renderer = PluxRenderer(
     config: config,
@@ -318,6 +339,7 @@ final class PluxRuntime with WidgetsBindingObserver {
     imageCacheDirectory: '$_root/images',
     assets: assets,
     verified: _verified,
+    data: _dataServices,
     actions: ActionServices(
       router: router,
       emit: emitHostEvent,

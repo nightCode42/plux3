@@ -48,8 +48,7 @@ abstract final class PluxScreens {
       PluxScreen<void>._('account', {}, (_) {});
 
   /// The page `beta`.
-  static PluxScreen<void> beta() =>
-      PluxScreen<void>._('beta', {}, (_) {});
+  static PluxScreen<void> beta() => PluxScreen<void>._('beta', {}, (_) {});
 
   /// The page `confirm`.
   static PluxScreen<bool> confirm() =>
@@ -61,11 +60,12 @@ abstract final class PluxScreens {
 
   /// The page `detail`.
   static PluxScreen<String> detail({required String itemId}) =>
-      PluxScreen<String>._('detail', {'itemId': itemId}, (j) => _nullable(j, (j) => j as String));
+      PluxScreen<String>._('detail', {
+        'itemId': itemId,
+      }, (j) => _nullable(j, (j) => j as String));
 
   /// The page `home`.
-  static PluxScreen<void> home() =>
-      PluxScreen<void>._('home', {}, (_) {});
+  static PluxScreen<void> home() => PluxScreen<void>._('home', {}, (_) {});
 
   /// The page `login`.
   static PluxScreen<void> login({String? from}) =>
@@ -76,46 +76,50 @@ abstract final class PluxScreens {
       PluxScreen<void>._('missing', {}, (_) {});
 
   /// The page `mixed`.
-  static PluxScreen<String> mixed() =>
-      PluxScreen<String>._('mixed', {}, (j) => _nullable(j, (j) => j as String));
+  static PluxScreen<String> mixed() => PluxScreen<String>._(
+    'mixed',
+    {},
+    (j) => _nullable(j, (j) => j as String),
+  );
 
   /// The page `old`.
-  static PluxScreen<void> old() =>
-      PluxScreen<void>._('old', {}, (_) {});
+  static PluxScreen<void> old() => PluxScreen<void>._('old', {}, (_) {});
 
   /// The page `ping`.
-  static PluxScreen<void> ping() =>
-      PluxScreen<void>._('ping', {}, (_) {});
+  static PluxScreen<void> ping() => PluxScreen<void>._('ping', {}, (_) {});
 
   /// The page `pong`.
-  static PluxScreen<void> pong() =>
-      PluxScreen<void>._('pong', {}, (_) {});
+  static PluxScreen<void> pong() => PluxScreen<void>._('pong', {}, (_) {});
 
   /// The page `second`.
-  static PluxScreen<void> second() =>
-      PluxScreen<void>._('second', {}, (_) {});
+  static PluxScreen<void> second() => PluxScreen<void>._('second', {}, (_) {});
 
   /// The page `sheet`.
-  static PluxScreen<String> sheet() =>
-      PluxScreen<String>._('sheet', {}, (j) => _nullable(j, (j) => j as String));
+  static PluxScreen<String> sheet() => PluxScreen<String>._(
+    'sheet',
+    {},
+    (j) => _nullable(j, (j) => j as String),
+  );
 
   /// The page `slots`.
-  static PluxScreen<void> slots() =>
-      PluxScreen<void>._('slots', {}, (_) {});
+  static PluxScreen<void> slots() => PluxScreen<void>._('slots', {}, (_) {});
 
   /// The page `trap`.
-  static PluxScreen<void> trap() =>
-      PluxScreen<void>._('trap', {}, (_) {});
+  static PluxScreen<void> trap() => PluxScreen<void>._('trap', {}, (_) {});
 
   /// The page `vault`.
-  static PluxScreen<void> vault() =>
-      PluxScreen<void>._('vault', {}, (_) {});
+  static PluxScreen<void> vault() => PluxScreen<void>._('vault', {}, (_) {});
 }
 
 /// The components plugins export, shown inline by name (NAV-004).
 abstract final class PluxComponents {
   /// The component `counter-card`.
-  static plux.PluxView counterCard({required String label, w.Key? key, void Function(plux.PluxViewEvent event)? onEvent, plux.PluxViewSizing sizing = plux.PluxViewSizing.intrinsic}) => plux.PluxView(
+  static plux.PluxView counterCard({
+    required String label,
+    w.Key? key,
+    void Function(plux.PluxViewEvent event)? onEvent,
+    plux.PluxViewSizing sizing = plux.PluxViewSizing.intrinsic,
+  }) => plux.PluxView(
     'counter-card',
     key: key,
     inputs: {'label': label},
@@ -130,7 +134,8 @@ final class ConfirmedEvent {
   const ConfirmedEvent({required this.answer});
 
   /// The value of JSON form [json].
-  factory ConfirmedEvent.fromJson(Map<String, Object?> json) => ConfirmedEvent(answer: json['answer'] as bool);
+  factory ConfirmedEvent.fromJson(Map<String, Object?> json) =>
+      ConfirmedEvent(answer: json['answer'] as bool);
 
   /// The field `answer`.
   final bool answer;
@@ -142,7 +147,8 @@ final class PickedEvent {
   const PickedEvent({required this.choice});
 
   /// The value of JSON form [json].
-  factory PickedEvent.fromJson(Map<String, Object?> json) => PickedEvent(choice: json['choice'] as String);
+  factory PickedEvent.fromJson(Map<String, Object?> json) =>
+      PickedEvent(choice: json['choice'] as String);
 
   /// The field `choice`.
   final String choice;
@@ -154,7 +160,8 @@ final class ProfiledEvent {
   const ProfiledEvent({required this.ok});
 
   /// The value of JSON form [json].
-  factory ProfiledEvent.fromJson(Map<String, Object?> json) => ProfiledEvent(ok: json['ok'] as bool);
+  factory ProfiledEvent.fromJson(Map<String, Object?> json) =>
+      ProfiledEvent(ok: json['ok'] as bool);
 
   /// The field `ok`.
   final bool ok;
@@ -166,7 +173,8 @@ final class RecoveredEvent {
   const RecoveredEvent({required this.kind});
 
   /// The value of JSON form [json].
-  factory RecoveredEvent.fromJson(Map<String, Object?> json) => RecoveredEvent(kind: json['kind'] as String);
+  factory RecoveredEvent.fromJson(Map<String, Object?> json) =>
+      RecoveredEvent(kind: json['kind'] as String);
 
   /// The field `kind`.
   final String kind;
@@ -178,7 +186,8 @@ final class ScannedEvent {
   const ScannedEvent({required this.code});
 
   /// The value of JSON form [json].
-  factory ScannedEvent.fromJson(Map<String, Object?> json) => ScannedEvent(code: json['code'] as String);
+  factory ScannedEvent.fromJson(Map<String, Object?> json) =>
+      ScannedEvent(code: json['code'] as String);
 
   /// The field `code`.
   final String code;
@@ -199,7 +208,8 @@ final class TappedEvent {
   const TappedEvent({required this.count});
 
   /// The value of JSON form [json].
-  factory TappedEvent.fromJson(Map<String, Object?> json) => TappedEvent(count: json['count'] as int);
+  factory TappedEvent.fromJson(Map<String, Object?> json) =>
+      TappedEvent(count: json['count'] as int);
 
   /// The field `count`.
   final int count;
@@ -209,31 +219,38 @@ final class TappedEvent {
 abstract final class PluxHostEvents {
   /// The `confirmed` events.
   static Stream<ConfirmedEvent> get confirmed =>
-      plux.Plux.eventsNamed('confirmed').map((e) => ConfirmedEvent.fromJson(e.payload));
+      plux.Plux.eventsNamed('confirmed')
+          .map((e) => ConfirmedEvent.fromJson(e.payload));
 
   /// The `picked` events.
   static Stream<PickedEvent> get picked =>
-      plux.Plux.eventsNamed('picked').map((e) => PickedEvent.fromJson(e.payload));
+      plux.Plux.eventsNamed('picked')
+          .map((e) => PickedEvent.fromJson(e.payload));
 
   /// The `profiled` events.
   static Stream<ProfiledEvent> get profiled =>
-      plux.Plux.eventsNamed('profiled').map((e) => ProfiledEvent.fromJson(e.payload));
+      plux.Plux.eventsNamed('profiled')
+          .map((e) => ProfiledEvent.fromJson(e.payload));
 
   /// The `recovered` events.
   static Stream<RecoveredEvent> get recovered =>
-      plux.Plux.eventsNamed('recovered').map((e) => RecoveredEvent.fromJson(e.payload));
+      plux.Plux.eventsNamed('recovered')
+          .map((e) => RecoveredEvent.fromJson(e.payload));
 
   /// The `scanned` events.
   static Stream<ScannedEvent> get scanned =>
-      plux.Plux.eventsNamed('scanned').map((e) => ScannedEvent.fromJson(e.payload));
+      plux.Plux.eventsNamed('scanned')
+          .map((e) => ScannedEvent.fromJson(e.payload));
 
   /// The `signedIn` events.
   static Stream<SignedInEvent> get signedIn =>
-      plux.Plux.eventsNamed('signedIn').map((e) => SignedInEvent.fromJson(e.payload));
+      plux.Plux.eventsNamed('signedIn')
+          .map((e) => SignedInEvent.fromJson(e.payload));
 
   /// The `tapped` events.
   static Stream<TappedEvent> get tapped =>
-      plux.Plux.eventsNamed('tapped').map((e) => TappedEvent.fromJson(e.payload));
+      plux.Plux.eventsNamed('tapped')
+          .map((e) => TappedEvent.fromJson(e.payload));
 }
 
 /// A typed handle on an exposed app state entry (STA-030).
@@ -285,7 +302,9 @@ abstract final class PluxFlags {
   static bool get betaEnabled => plux.Plux.flag<bool>('betaEnabled') ?? false;
 
   /// The feature flag `secondLabel`.
-  static String get secondLabel => plux.Plux.flag<String>('secondLabel') ?? 'Second';
+  static String get secondLabel =>
+      plux.Plux.flag<String>('secondLabel') ?? 'Second';
 }
 
-R? _nullable<T extends Object, R>(T? v, R Function(T v) f) => v == null ? null : f(v);
+R? _nullable<T extends Object, R>(T? v, R Function(T v) f) =>
+    v == null ? null : f(v);
