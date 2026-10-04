@@ -1,9 +1,9 @@
 # Plux — System Requirements Specification
 
 **Document ID:** `SRS-PLUX-001`
-**Version:** 1.2.2
+**Version:** 1.3.0
 **Status:** Draft — living document, revised as implementation proceeds
-**Date:** 2026-10-03
+**Date:** 2026-10-04
 **Applies to:** Plux Schema, Plux Compiler, Plux Server, Plux Functions, `plux_flutter` runtime, Plux Dev app, Plux Studio, Plux CLI, Plux AI
 
 > **Plux — Plugin Experience.** Build native Flutter screens visually, compile them into signed binary plugins, and ship them to every device in seconds — with high-assurance security, zero parse cost, and full control over who changes what.
@@ -511,7 +511,7 @@ plux_flutter/lib/src/
   pxl/          bytecode VM and standard library
   state/        scoped Riverpod providers, persistence, forms
   data/         REST, GraphQL, WebSocket, SSE clients, cache, outbox
-  db/           adapter interface; drift adapter lives in plux_db_drift
+  db/           adapter interface, built-in store; drift adapter lives in plux_db_drift
   anim/         timelines, transitions, gesture- and scroll-linked animation
   theme/        design tokens mapped to Material and Cupertino, white-label overlays
   l10n/         ICU formatter, locale resolution, calendar systems
@@ -583,7 +583,7 @@ The document model is the contract between every author (Studio, CLI, AI, Git) a
 | Level | Contains | Owns |
 |---|---|---|
 | **Organization** | Apps, teams, members | Keys, policies, limits |
-| **App** | Plugins | Theme, locales, environments, data sources, native catalogue, security and sync policy, app state, shared collections, shared components, feature flags |
+| **App** | Plugins | Theme, locales, environments, data sources, native catalogue, approved capabilities, security and sync policy, app state, shared collections, shared components, feature flags |
 | **Plugin** | Pages | Plugin state, local collections, capabilities, fallback page, flows, function references |
 | **Page** | Nodes | Route name, parameters, page state, data sources, lifecycle events, route options |
 | **Node** | Child nodes or slots | Widget type, props, bindings, events |
@@ -954,7 +954,7 @@ The Studio canvas no longer uses a Flutter Web build of the runtime (ADR-0013); 
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `RT-060` | P3 | MUST | Optional capabilities **MUST** ship as separate packages so apps pay only for what they use: `plux_flutter` (core), `plux_db_drift`, `plux_lottie`, `plux_rive`, `plux_maps`, `plux_charts`, `plux_media`, `plux_scanner`, `plux_security` (RASP), `plux_payments`, `plux_devtools` (debug only). The on-device function interpreter **MUST** be part of an optional package (`plux_functions`) so apps that do not place functions on the device do not ship it. | WIP |
+| `RT-060` | P3 | MUST | Optional capabilities **MUST** ship as separate packages so apps pay only for what they use: `plux_flutter` (core), `plux_db_drift`, `plux_lottie`, `plux_rive`, `plux_maps`, `plux_charts`, `plux_media`, `plux_scanner`, `plux_location`, `plux_security` (RASP), `plux_payments`, `plux_devtools` (debug only). The on-device function interpreter **MUST** be part of an optional package (`plux_functions`) so apps that do not place functions on the device do not ship it. | WIP |
 | `RT-061` | P3 | MUST | The core package **MUST** add, per ABI (arm64-v8a, armeabi-v7a, x86_64), ≤ 4 MiB to what Google Play downloads from a release App Bundle and ≤ 10 MiB to a release APK, and ≤ 3 MiB to an iOS IPA (thinned, arm64), measured in CI against a blank Flutter app (ADR-0036). | DONE |
 
 ---
@@ -1076,9 +1076,9 @@ PXL is a small, typed, side-effect-free expression language with CEL-like syntax
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `DB-001` | P5 | MUST | Local persistence **MUST** be accessed only through a `PluxDatabaseAdapter` interface (collections, typed queries, reactive watches, transactions, migrations). | SPEC |
+| `DB-001` | P5 | MUST | Local persistence **MUST** be accessed only through a `PluxDatabaseAdapter` interface (collections, typed queries, reactive watches, transactions, migrations). The core's built-in store implements `PluxDatabaseAdapter` for persisted state, the key-value store, the response cache and the outbox; collections use `plux_db_drift` by default or a host-supplied adapter (ADR-0049). | SPEC |
 | `DB-002` | P5 | MUST | The default adapter **MUST** be Drift on SQLite, with SQLCipher encryption available and required under the `strict` and `maximum` profiles. | SPEC |
-| `DB-003` | P5 | SHOULD | Additional adapters **SHOULD** be provided for ObjectBox, Hive CE and Sembast, and host apps **MUST** be able to supply a custom adapter (e.g. to reuse an existing database). | SPEC |
+| `DB-003` | P5 | SHOULD | Additional adapters **SHOULD** be provided for ObjectBox, Hive CE and Sembast, and host apps **MUST** be able to supply a custom adapter (e.g. to reuse an existing database). *Note: P5 delivers the custom adapter; the ObjectBox, Hive CE and Sembast adapters are deferred to a later phase (maintainer, 2026-10-04, P5 plan B1).* | SPEC |
 | `DB-004` | P5 | MUST | Collections **MUST** be declared in documents with typed fields, primary keys, indexes and scope (plugin-private or app-shared); plugin-private collections are namespaced so plugins cannot read each other's private data. | SPEC |
 | `DB-005` | P5 | MUST | Schema changes **MUST** produce versioned migrations at publish time; destructive changes (dropping a field or collection, narrowing a type) **MUST** require an explicit migration plan and a warning acknowledged by the publisher. | SPEC |
 | `DB-006` | P5 | MUST | Actions **MUST** support insert, update, upsert, delete, query (filter, sort, limit, offset) and watch; watched queries bind to lists and re-render only changed items. | SPEC |
@@ -1203,7 +1203,7 @@ The update channel follows the design of **The Update Framework (TUF)**: separat
 | `SEC-072` | P6 | MUST | Tokens, keys and secure state **MUST** be stored only in Keystore/Keychain-protected storage; nothing sensitive may be stored in plain shared preferences, files or logs. | SPEC |
 | `SEC-073` | P6 | MUST | The local database, response cache and outbox **MUST** be encrypted at rest under the `strict` and `maximum` profiles, with keys wrapped by secure hardware. | SPEC |
 | `SEC-074` | P6 | MUST | Release builds **MUST** contain no Plux dev tooling, verbose logging or source maps; this **MUST** be enforced by compile-time constants and verified by a test inspecting a release build (`DEV-050`). | SPEC |
-| `SEC-080` | P5 | MUST | Plugins **MUST** only perform operations covered by their declared capabilities (network domains, functions, device APIs such as camera, location, contacts, biometrics, native routes); the host **MUST** approve the capability set per app, and undeclared operations **MUST** be blocked and reported. | SPEC |
+| `SEC-080` | P5 | MUST | Plugins **MUST** only perform operations covered by their declared capabilities (network domains, functions, device APIs such as camera, location, contacts, biometrics, native routes); the host **MUST** approve the capability set per app, and undeclared operations **MUST** be blocked and reported. The approved set is the app document's optional `capabilities`, checked when a release is published; `PluxConfig.allowedCapabilities` lets the host narrow it further at run time. Governance approval of the set arrives with the approval engine in P9 (ADR-0051). | SPEC |
 
 ### 15.7 Secure UI
 
@@ -1883,7 +1883,7 @@ One Plux installation can serve many independent organisations — for example a
 | `DEP-041` | P2 | MUST | The server **MUST** serve bundles and deltas itself when no CDN is configured, and **MUST** support any CDN in front of object storage because artifacts are immutable and content-addressed. | DONE |
 | `DEP-050` | P9 | SHOULD | Reference infrastructure-as-code modules (OpenTofu/Terraform) **SHOULD** be provided for AWS, Google Cloud and Azure, and an on-premises reference architecture for regulated industries. | SPEC |
 | `DEP-051` | P9 | MUST | A sizing guide **MUST** document resource needs by active devices, apps and publish frequency, backed by load-test results (`QA-007`). | SPEC |
-| `DEP-060` | P5 | SHOULD | A public demonstration environment **SHOULD** run the latest release with the reference apps, reset nightly, with abuse and cost controls. | SPEC |
+| `DEP-060` | P5 | SHOULD | A public demonstration environment **SHOULD** run the latest release with the reference apps, reset nightly, with abuse and cost controls. *Note: deferred to P9, which brings HA deployment and cost controls (maintainer, 2026-10-04, P5 plan B1).* | SPEC |
 
 ---
 
@@ -2105,7 +2105,7 @@ plux/
 ├── packages/                  # Dart packages (pub workspace members)
 │   ├── plux_flutter/          # core runtime
 │   ├── plux_devtools/  plux_security/  plux_db_drift/
-│   ├── plux_lottie/  plux_rive/  plux_maps/  plux_charts/  plux_media/  plux_scanner/  plux_payments/
+│   ├── plux_lottie/  plux_rive/  plux_maps/  plux_charts/  plux_media/  plux_scanner/  plux_location/  plux_payments/
 │   └── plux_functions/        # on-device WASM interpreter (optional)
 ├── apps/
 │   ├── plux_dev/              # Plux Dev companion app
@@ -2559,6 +2559,7 @@ Dialogs, bottom sheets and snack bars are page kinds and actions (Appendix D), n
 | `biometricAuth` | Security | Local biometric or device-credential check | P6 |
 | `signTransaction` | Security | SCA signing with dynamic linking (`SEC-027`) | P6 |
 | `startAnimation`, `controlAnimation` | Animation | Play, pause, seek, reverse timelines | P5 |
+| `emitEvent` | Component | Inside a component, emit one of the component's declared events (`SCH-030`) with a payload of its declared type, checked at compile time; the instance's handler or `PluxView.onEvent` receives it | P5 |
 | `emitHostEvent` | Host | Send a typed event to the host app | P4 |
 | `callNative` | Host | Invoke a host-registered custom action | P4 |
 | `sync` | Plux | Trigger a manual sync | P5 |
@@ -2777,7 +2778,8 @@ retention:
 | `nativeRoutes` | `Map<String, PluxRouteBuilder>` | – | `HST-031` |
 | `nativeSlots` | `Map<String, PluxSlotBuilder>` | – | `WGT-030` |
 | `nativeActions` | `Map<String, PluxActionHandler>` | – | `ACT-060` |
-| `databaseAdapter` | `PluxDatabaseAdapter` | Drift | `DB-001` |
+| `databaseAdapter` | `PluxDatabaseAdapter?` | built-in store; collections need `plux_db_drift` or a host adapter | `DB-001`–`DB-003` |
+| `allowedCapabilities` | `Set<String>?` | the app's approved set | Narrows the approved capability set at run time (`SEC-080`) |
 | `themeMode` | `ThemeMode` | host | `THM-002` |
 | `locale` | `Locale?` | host | `I18N-005` |
 | `consent` | `PluxConsent` | necessary only | `SEC-161` |
@@ -2941,10 +2943,10 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | Field | Value |
 |---|---|
 | Document ID | `SRS-PLUX-001` |
-| Version | 1.2.2 |
+| Version | 1.3.0 |
 | Status | Draft (living document) |
-| Date | 2026-10-03 |
-| Supersedes | 1.2.1 |
+| Date | 2026-10-04 |
+| Supersedes | 1.2.2 |
 | Change process | Amendments are made by pull request against `docs/requirements.md`. A change to a `MUST` requirement requires a corresponding ADR. The version is incremented per Semantic Versioning: a breaking change to an existing requirement is a major increment, a new requirement is a minor increment, and a clarification is a patch increment. |
 
 ### Revision history
@@ -2965,3 +2967,4 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | 1.2.0 | 2026-10-01 | Phase 4 plan (maintainer decisions; ADR-0039, ADR-0042): the action-graph engine core moves into P4, so `condition`, `emitHostEvent` and `stop` are re-tagged P4 in Appendix D (`stop` at R1's review, 2026-10-02, so a guard graph returns its result) and §5.1's P4 and P5 rows say who delivers the engine; `HST-034` and `DX-001`, the ten-minute quick start, move to P10 and its deliverables, so Appendix K counts 29 P4 and 17 P10 `MUST`s; Appendix F lists the navigation and host-integration codes `PLX-4102`, `PLX-4103` and `PLX-4201`–`PLX-4203`; Appendix E.2 adds `user.authenticated`, read from the host's auth delegate (ADR-0040). `CI-002` is `DONE` with affected-only CI and dependency caching (ADR-0043). |
 | 1.2.1 | 2026-10-02 | `RT-061`, `NFR-009`: the Android budgets are raised — ≤ 4 MiB for the App Bundle download per ABI and ≤ 10 MiB for an APK per ABI, replacing 3 MiB and 6.5 MiB; the thinned IPA stays ≤ 3 MiB (maintainer decision; ADR-0036, Revision). |
 | 1.2.2 | 2026-10-03 | Phase 4 delivered: P4 requirement statuses updated — 23 of its `MUST`s `DONE`; `WGT-030`, `ACT-060`, `NAV-009`, `NAV-010`, `HST-010` and `HST-021` `WIP` until the phases the P4 plan names complete them (§3.2); `RT-021`, `HST-013`, `STA-030` and `NFR-011`, which P4 advances, `WIP`. The header and Document Control carry the latest revision (P4 plan, A21). |
+| 1.3.0 | 2026-10-04 | Phase 5 decisions (maintainer, 2026-10-04; P5 plan §2.1, B1–B2): Appendix D adds `emitEvent` (Component, P5), with which a component emits its declared events (ADR-0045); `RT-060` and §33 add the optional package `plux_location` for `getLocation` (ADR-0051); `DB-001` says the core's built-in store implements `PluxDatabaseAdapter` for persisted state, the key-value store, the response cache and the outbox, and collections use `plux_db_drift` or a host adapter, as §6.4's `db/` and Appendix H.2's `databaseAdapter` now say (ADR-0049); `SEC-080` names the approved capability set — the app document's optional `capabilities`, narrowed at run time by `PluxConfig.allowedCapabilities` — and leaves its governance approval to P9, with §7.1 and Appendix H.2 to match (ADR-0051); notes on `DB-003` and `DEP-060` record the deferral of the ObjectBox, Hive CE and Sembast adapters to a later phase and of the demonstration environment to P9. ADRs 0045–0052 record the P5 designs. |

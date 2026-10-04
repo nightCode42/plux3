@@ -1,7 +1,7 @@
 # 0023. Mixed native and plugin screens: native slots and `PluxView` with shared exposed state
 
 - **Status:** Accepted
-- **Date:** 2026-10-01
+- **Date:** 2026-10-01; revised 2026-10-04 (see [Revision](#revision-2026-10-04-plugin-side-writes-and-component-events))
 - **Requirements:** `HST-021`, `WGT-033`, `NAV-004`, `STA-030`, `HST-001`, `HST-013`, `RT-020`
 
 ## Context and problem
@@ -231,6 +231,21 @@ PluxView('counter-badge',
   `navigate` step to the page `place`.
 
 The end-to-end flows run both.
+
+## Revision (2026-10-04, plugin-side writes and component events)
+
+What this ADR left to P5 is designed in [ADR-0046](0046-state-engine.md) and
+[ADR-0045](0045-action-engine-completion.md):
+
+- **Plugin-side writes** to exposed entries use the same write path as
+  `Plux.state<T>().set`, so host watchers see them; exposed entries may declare
+  persistence, and P4's `PLX-4010` report for persistence goes (`STA-030`, `HST-021`).
+- **Host to Plux** (`HST-013`): `Plux.sendEvent` sends a typed event, checked against the
+  app document's declaration, which starts host-event triggers; `plux codegen` writes the
+  senders and writable state handles.
+- **Component events:** the new action `emitEvent` (spec 1.3.0, Appendix D; plan p5 D11)
+  emits a component's declared events, checked at compile time, so `PluxView.onEvent`
+  receives them as well as `pop`.
 
 ## Consequences
 

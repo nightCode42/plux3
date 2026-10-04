@@ -54,5 +54,13 @@ Files are named `NNNN-short-title.md` with a four-digit, never-reused number. Th
 | [0042](0042-quick-start-moves-to-p10.md) | The ten-minute quick start is measured in P10 | P4 | Accepted |
 | [0043](0043-affected-only-ci.md) | Affected-only CI: a pull request runs what it can affect, `main` runs everything | P4 | Accepted |
 | [0044](0044-junit-4-for-the-android-host-tests.md) | JUnit 4 is accepted for the Android add-to-app host's tests only | P4 | Accepted |
+| [0045](0045-action-engine-completion.md) | Action engine completion: triggers, policies, errors, flows and traces on the P4 core | P5 | Accepted |
+| [0046](0046-state-engine.md) | State engine: scoped providers, typed writes, computed entries, persistence and migrations | P5 | Accepted |
+| [0047](0047-forms-validators-regex-and-phone.md) | Forms and validators, with one regex engine and one phone table for Go and Dart | P5 | Accepted |
+| [0048](0048-data-layer.md) | Data layer: own clients on the runtime's HTTP stack, an encrypted outbox, no new dependency | P5 | Accepted |
+| [0049](0049-local-persistence.md) | Local persistence: one adapter interface, a built-in store in the core, Drift with SQLCipher for collections | P5 | Accepted |
+| [0050](0050-animation-engine.md) | Animation: Flutter's animation framework driven by the bundle, Lottie and Rive in optional packages | P5 | Accepted |
+| [0051](0051-device-actions-packages-and-capabilities.md) | Device actions, optional device packages and the capability model | P5 | Accepted |
+| [0052](0052-plux-test-and-import-tools.md) | Plux Test and the import tools: generated Flutter tests, YAML scenarios, OpenAPI and GraphQL libraries | P5 | Accepted |
 
 The decisions for planned ADRs are summarised in spec §32 and §34.1. Each is written in full before or alongside the first implementation that depends on it, and its status is updated here.

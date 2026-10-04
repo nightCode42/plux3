@@ -1,7 +1,7 @@
 # 0039. Action engine core in P4, the action catalogue in P5
 
 - **Status:** Accepted (maintainer, 2026-10-02, at R1's review)
-- **Date:** 2026-10-01
+- **Date:** 2026-10-01; revised 2026-10-04 (see [Revision](#revision-2026-10-04-p5-completes-the-engine))
 - **Requirements:** `RT-021`, `NAV-005`, `NAV-009`, `HST-013`, `ACT-060`, `LIM-001`; early parts of `ACT-001`–`ACT-005`, `ACT-020`, `NFR-011`
 
 ## Context and problem
@@ -208,6 +208,18 @@ second way of returning a value exists:
   graph that declares no output (`PLX-1106`);
 - the runtime ends the run with the result, or, when `error` is set, fails it with a
   `custom` error carrying that code.
+
+## Revision (2026-10-04, P5 completes the engine)
+
+P5 completes the engine on this core, as this ADR intended; the design is
+[ADR-0045](0045-action-engine-completion.md). Every row of *What P4 refuses* gets its P5
+behaviour there: the rest of the catalogue as handlers, all six concurrency policies with
+a default per trigger (the compiler stops encoding an absent policy as `parallel`, and a
+`required_features` key keeps P4 runtimes from running such bundles differently),
+`retry`, `detached` runs, the page, plugin and app error handlers with the themed message,
+and every trigger of `ACT-002`. Flows, traces and the new action `emitEvent` (spec 1.3.0)
+are added. The run loop, the handler interface, the bounds and the synchronous fast path
+stay as described here.
 
 ## Consequences
 
