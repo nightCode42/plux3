@@ -39,8 +39,20 @@ enum ActionErrorKind {
 
 /// A step's failure.
 final class ActionError implements Exception {
-  /// Creates the error.
-  const ActionError(this.kind, this.code, this.message);
+  /// Creates the error; [status] is an `http` error's status, [errorCode]
+  /// a `function` or `custom` error's own code (ACT-020).
+  const ActionError(
+    this.kind,
+    this.code,
+    this.message, {
+    this.status,
+    this.errorCode,
+  });
+
+  /// A `cancelled` error: the run, or a branch of a `parallel` step, was
+  /// cancelled (ACT-004).
+  const ActionError.cancelled([String message = 'the run was cancelled'])
+    : this(ActionErrorKind.cancelled, PluxErrorCode.actionCancelled, message);
 
   /// A `validation` error: a value does not have its declared type.
   const ActionError.validation(String message)
@@ -59,8 +71,21 @@ final class ActionError implements Exception {
   /// What went wrong, for developers.
   final String message;
 
-  /// The value of `steps.<id>.error`, a `PluxActionError`.
-  Map<String, Object?> toPxl() => {'kind': kind.name, 'message': message};
+  /// The HTTP status of an `http` error.
+  final int? status;
+
+  /// The code a function or a `stop` step gave a `function` or `custom`
+  /// error.
+  final String? errorCode;
+
+  /// The value of `steps.<id>.error` and of an error handler's `event`, a
+  /// `PluxActionError`.
+  Map<String, Object?> toPxl() => {
+    'kind': kind.name,
+    'message': message,
+    'code': errorCode,
+    'status': status,
+  };
 
   /// The error as the runtime reports it, with structured [details].
   PluxException toException(Map<String, String> details) =>

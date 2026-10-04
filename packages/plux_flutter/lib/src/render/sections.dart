@@ -228,6 +228,16 @@ final class BundleView {
     return i < 0 ? null : list[i];
   }
 
+  /// The flow [key]: a graph of the actions section that belongs to no
+  /// page (ACT-061), or null.
+  fbs.Graph? flow(String key) {
+    graph((0, 0));
+    for (final g in _graphs ?? const <fbs.Graph>[]) {
+      if (g.page == null && g.key != 0 && string(g.key) == key) return g;
+    }
+    return null;
+  }
+
   /// The translation [key] in locale [tag], or null.
   String? message(String tag, UuidKey key) {
     final locale = _locales.putIfAbsent(tag, () {

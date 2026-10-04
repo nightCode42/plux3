@@ -36,9 +36,24 @@ final class RuntimeFeatures {
   /// page requires them, so a runtime without guards never opens it.
   static const Set<String> navigation = {'navigation.guards.v1'};
 
+  /// The action engine features this runtime runs, first in 0.3.0:
+  /// triggers, concurrency policies and detached runs, retries, flows and
+  /// R1's control actions (ACT-002–ACT-006, ACT-061).
+  static const Set<String> actions = {
+    'actions.triggers.v1',
+    'actions.concurrency.v1',
+    'actions.retry.v1',
+    'actions.flows.v1',
+    'actions.control.v1',
+  };
+
   /// Whether [feature] is supported.
   bool supports(String feature) {
-    if (pxl.contains(feature) || navigation.contains(feature)) return true;
+    if (pxl.contains(feature) ||
+        navigation.contains(feature) ||
+        actions.contains(feature)) {
+      return true;
+    }
     final m = RegExp(
       r'^(widget|type|enum)\.([A-Za-z][A-Za-z0-9]*)\.v([1-9]\d*)$',
     ).firstMatch(feature);

@@ -9,6 +9,8 @@
 /// [Plux.open], and follow updates on [Plux.syncEvents].
 library;
 
+export 'src/actions/trace.dart'
+    show PluxActionTrace, PluxStepTrace, PluxTraceStatus;
 export 'src/core/app_state.dart' show PluxState;
 export 'src/core/config.dart'
     show

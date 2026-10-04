@@ -7,6 +7,7 @@ library;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:plux_flutter/src/actions/trace.dart';
 import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/sync/sync_event.dart';
@@ -73,6 +74,10 @@ abstract interface class PluxDiagnostics {
 
   /// The latest sync event.
   ValueListenable<SyncEvent?> get syncStatus;
+
+  /// The latest action run traces, oldest first (ACT-030): steps, status
+  /// and errors, with values only in debug builds and never sensitive ones.
+  ValueListenable<List<PluxActionTrace>> get actionTraces;
 }
 
 /// The runtime's diagnostics.
@@ -82,7 +87,9 @@ final class RuntimeDiagnostics implements PluxDiagnostics {
     ValueListenable<ActiveRelease?> active,
     this.syncStatus, {
     this.capacity = 200,
-  }) : _active = active {
+    ValueListenable<List<PluxActionTrace>>? traces,
+  }) : _active = active,
+       actionTraces = traces ?? ValueNotifier(const []) {
     if (kReleaseMode) return;
     _active.addListener(_follow);
     _follow();
@@ -104,6 +111,9 @@ final class RuntimeDiagnostics implements PluxDiagnostics {
 
   @override
   final ValueListenable<SyncEvent?> syncStatus;
+
+  @override
+  final ValueListenable<List<PluxActionTrace>> actionTraces;
 
   final List<PluxDiagnostic> _pending = [];
   bool _publishing = false;

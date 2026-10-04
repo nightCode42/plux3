@@ -461,35 +461,15 @@ void main() {
     },
   );
 
-  test(
-    'options this runtime ignores are reported once in debug builds (ADR-0039)',
-    () async {
-      final h = host(debug: true);
-      for (var i = 0; i < 2; i++) {
-        await h.start(
-          const ActionGraph(
-            id: 'g',
-            steps: [GraphStep(id: 'retried', action: 30, retry: true)],
-          ),
-          roots: () => const {},
-          key: 'k',
-        );
-      }
-      final warnings = reports
-          .where((e) => e.code == PluxErrorCode.actionsNotAvailable)
-          .toList();
-      expect(warnings, hasLength(1));
-      expect(warnings.single.message, contains('retry'));
-    },
-  );
-
-  test('the engine runs exactly the actions Appendix D tags up to P4, and refuses the rest (ADR-0039)', () {
+  test('the engine runs every action Appendix D tags up to P4 and R1\'s of P5, and refuses the rest (ADR-0039)', () {
     for (final d in actionDescriptors) {
       final handler = handlerFor(d);
       if (runsInThisRuntime(d)) {
         expect(handler, isNot(isA<RefusingHandler>()), reason: d.name);
+        expect(int.parse(d.phase.substring(1)), lessThanOrEqualTo(5));
       } else {
         expect(handler, isA<RefusingHandler>(), reason: d.name);
+        expect(d.phase, isNot('P4'), reason: d.name);
       }
     }
     expect(
@@ -498,15 +478,23 @@ void main() {
           if (runsInThisRuntime(d)) d.name,
       ]..sort(),
       [
+        'callFlow',
         'callNative',
         'condition',
+        'delay',
+        'emitEvent',
         'emitHostEvent',
+        'forEach',
         'navigate',
         'openBottomSheet',
         'openDialog',
+        'parallel',
         'pop',
         'stop',
+        'switch',
         'switchTab',
+        'sync',
+        'trackEvent',
       ],
     );
   });

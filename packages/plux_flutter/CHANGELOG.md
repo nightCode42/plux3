@@ -5,6 +5,28 @@ SPDX-License-Identifier: Apache-2.0
 
 # Changelog
 
+## 0.3.0
+
+The runtime of Plux Phase 5: actions, state, data, local database and animation. Not
+released yet; this entry grows with each milestone of the phase.
+
+- The action engine is complete (P5 R1, plan §5.1): every concurrency policy (`parallel`,
+  `drop`, `restart`, `queue`, `debounce`, `throttle`) with per-trigger defaults; detached
+  runs that outlive their page; retries with exponential backoff, jitter and a
+  retryable-error filter; optimistic updates rolled back with a failed step or run; `forEach`
+  bounded by `action.forEachItems`; `parallel`, whose first error cancels the other lanes;
+  `callFlow` with flows of other plugins; `switch`, `delay`, `trackEvent`, `sync` and
+  `emitEvent`.
+- Triggers besides widget events: timers, state watchers, app lifecycle, push opening, host
+  events and data-source events, through a `TriggerHub` that later milestones feed; errors no
+  `onError` handled go to the page's, the plugin's and the app's error handlers, and
+  otherwise show a built-in message.
+- Every run is traced into a bounded ring buffer (`action.traceRuns`, `action.traceSteps`)
+  with its steps, status and errors; values are recorded only in debug builds and never when
+  sensitive; each run is a timeline task in DevTools.
+- Bundles may require `actions.triggers.v1`, `actions.concurrency.v1`, `actions.retry.v1`,
+  `actions.flows.v1` and `actions.control.v1`, which this runtime is the first to support.
+
 ## 0.2.0
 
 The runtime of Plux Phase 4: actions and routing. Not released yet; this entry grows with

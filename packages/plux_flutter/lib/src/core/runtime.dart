@@ -16,6 +16,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:plux_flutter/src/actions/engine.dart';
+import 'package:plux_flutter/src/actions/trace.dart';
+import 'package:plux_flutter/src/actions/triggers.dart';
 import 'package:plux_flutter/src/assets/assets.dart';
 import 'package:plux_flutter/src/assets/avif_probe.dart';
 import 'package:plux_flutter/src/assets/fonts.dart';
@@ -326,6 +328,9 @@ final class PluxRuntime with WidgetsBindingObserver {
         registered: config.nativeActions,
         declarations: natives,
       ),
+      triggers: triggers,
+      traces: traces,
+      sync: () => unawaited(sync().then((_) {}, onError: (Object _) {})),
     ),
   );
 
@@ -441,7 +446,9 @@ final class PluxRuntime with WidgetsBindingObserver {
       );
       return false;
     }
-    return _openTarget(r, target);
+    final opened = await _openTarget(r, target);
+    if (opened) triggers.pushOpened();
+    return opened;
   }
 
   Future<bool> _openTarget(ActiveRelease release, LinkTarget target) async {
@@ -560,6 +567,16 @@ final class PluxRuntime with WidgetsBindingObserver {
   late final RuntimeDiagnostics diagnostics = RuntimeDiagnostics(
     active,
     lastEvent,
+    traces: traces.listenable,
+  );
+
+  /// Dispatches app lifecycle, push, host and data-source events to the
+  /// triggers that handle them (ACT-002).
+  final TriggerHub triggers = TriggerHub();
+
+  /// The latest action run traces (ACT-030).
+  final TraceBuffer traces = TraceBuffer(
+    capacity: PluxLimit.actionTraceRuns.defaultValue,
   );
 
   int _mounted = 0;
@@ -783,6 +800,8 @@ final class PluxRuntime with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) triggers.appPaused();
+    if (state == AppLifecycleState.resumed) triggers.appResumed();
     if (state == AppLifecycleState.paused) {
       // Reaching the background normally ends the launch healthily.
       if (_healthyScheduled) unawaited(_worker.markHealthy());

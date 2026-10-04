@@ -17,6 +17,7 @@ import 'package:plux_flutter/src/actions/engine.dart';
 import 'package:plux_flutter/src/actions/graph.dart';
 import 'package:plux_flutter/src/actions/handlers.dart';
 import 'package:plux_flutter/src/actions/run.dart';
+import 'package:plux_flutter/src/actions/triggers.dart';
 import 'package:plux_flutter/src/assets/assets.dart';
 import 'package:plux_flutter/src/assets/icon_fonts.dart';
 import 'package:plux_flutter/src/assets/image_providers.dart';
@@ -38,6 +39,7 @@ import 'package:plux_flutter/src/render/decoders.dart';
 import 'package:plux_flutter/src/render/decoding.dart';
 import 'package:plux_flutter/src/render/generated/render.g.dart';
 import 'package:plux_flutter/src/render/node_context.dart';
+import 'package:plux_flutter/src/render/page_actions.dart';
 import 'package:plux_flutter/src/render/page_renderer.dart';
 import 'package:plux_flutter/src/render/plux_node.dart';
 import 'package:plux_flutter/src/render/scope.dart';
@@ -804,14 +806,85 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
         ),
         emit: services.emit,
         nativeActions: services.nativeActions,
+        state: _ProviderState(ref, () => _instance),
+        flows: BundleFlows(
+          own: widget.page.plugin,
+          bundles: (key) {
+            try {
+              return widget.renderer.view(widget.release, key);
+            } on PluxException {
+              return null;
+            }
+          },
+          roots: () => _roots?.call() ?? const {},
+          resolve: _resolveIn,
+        ),
+        clock: services.clock,
+        track: (name, props) => services.record(
+          'custom',
+          route: widget.page.route,
+          pluginKey: widget.page.plugin,
+          fields: {'name': name, 'props': props},
+        ),
+        sync: services.sync,
       ),
       limits: ActionLimits.of(widget.release.limits),
       report: widget.renderer.report,
       record: services.record,
       route: widget.page.route,
       pluginKey: widget.page.plugin,
+      traces: services.traces,
+      honoursParallel:
+          widget.release
+              .meta(widget.page.plugin)
+              .requiredFeatures
+              ?.contains('actions.concurrency.v1') ??
+          false,
+      presenter: (error) {
+        if (!mounted) return;
+        ScaffoldMessenger.maybeOf(context)
+            ?.showSnackBar(SnackBar(content: Text(fallbackMessage(error))));
+      },
     );
   }();
+
+  /// The page's triggers and lifecycle (ACT-002), on [_actions].
+  late final PageActions? _pageActions = () {
+    final host = _actions;
+    final services = widget.renderer.actions;
+    if (host == null || services == null) return null;
+    return PageActions(
+      host: host,
+      page: _section.page,
+      bundle: _plugin,
+      path: _path,
+      roots: () => _roots?.call() ?? const {},
+      resolve: _resolveIn(_plugin),
+      hub: services.triggers,
+      clock: services.clock,
+      watches: _ProviderWatches(ref, () => _instance),
+    );
+  }();
+
+  /// The roots and resolver of the latest build, for runs that triggers
+  /// start outside a build.
+  Map<String, Object?> Function()? _roots;
+  ValueResolver? _resolver;
+
+  /// An input resolver over [bundle], with the latest build's tokens and
+  /// translations.
+  Resolve _resolveIn(BundleView bundle) => (v, roots) {
+    final r = _resolver;
+    return toPxl(
+      ValueResolver(
+        plugin: bundle,
+        roots: () => roots,
+        token: r?.token ?? (_) => null,
+        translation: r?.translation ?? (_) => null,
+        limits: _limits,
+      ).resolve(v, bundle.string),
+    );
+  };
 
   String get _path => '${widget.page.plugin}/${widget.page.pageKey}';
 
@@ -932,9 +1005,33 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
   Object? _hostParam(String type, Object? value) =>
       fromJson(PxlType.parse(type, (n) => _types[n]), fromHost(value));
 
+  bool _started = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final current = ModalRoute.of(context)?.isCurrent ?? true;
+    if (!_started) {
+      _started = true;
+      if (_paramError == null) {
+        // After the first frame, so the first runs read built roots.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _pageActions?.start();
+        });
+      }
+      return;
+    }
+    _pageActions?.routeCurrent(current);
+  }
+
   @override
   void dispose() {
-    _actions?.dispose();
+    final page = _pageActions;
+    if (page != null) {
+      page.dispose();
+    } else {
+      _actions?.dispose();
+    }
     super.dispose();
   }
 
@@ -1019,19 +1116,22 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
       return null;
     }
 
+    final resolver = ValueResolver(
+      plugin: _plugin,
+      roots: roots,
+      token: (path) => theme.role(path) ?? tokens.read(path, appResolver),
+      translation: translation,
+      limits: _limits,
+    );
+    _roots = roots;
+    _resolver = resolver;
     final scope = RenderScope(
       release: widget.release,
       plugin: _plugin,
       app: _app,
       pluginKey: widget.page.plugin,
       section: _section,
-      resolver: ValueResolver(
-        plugin: _plugin,
-        roots: roots,
-        token: (path) => theme.role(path) ?? tokens.read(path, appResolver),
-        translation: translation,
-        limits: _limits,
-      ),
+      resolver: resolver,
       roots: roots,
       builders: nodeBuilders,
       cache: widget.renderer.cache,
@@ -1203,4 +1303,82 @@ final class _AppDecoding implements Decoding {
 
   @override
   PluxVectorSource? vector(String asset) => null;
+}
+
+/// The page's and the app's state as runs write it (ACT-007): through the
+/// page's state notifier and the app's, the state engine's write path
+/// until P5's R2 replaces them.
+final class _ProviderState implements ActionState {
+  _ProviderState(this._ref, this._instance);
+
+  final WidgetRef _ref;
+  final PageInstance Function() _instance;
+
+  @override
+  Object? read(String path) {
+    final (root, name) = _split(path);
+    return switch (root) {
+      'page' => _ref.read(pageStateProvider(_instance()))[name],
+      'app' => _ref.read(appStateProvider)[name],
+      _ => null,
+    };
+  }
+
+  @override
+  void write(String path, Object? value) {
+    final (root, name) = _split(path);
+    switch (root) {
+      case 'page':
+        _ref.read(pageStateProvider(_instance()).notifier).set(name, value);
+      case 'app':
+        _ref.read(appStateProvider.notifier).set(name, value);
+      default:
+        throw ActionError(
+          ActionErrorKind.custom,
+          PluxErrorCode.actionsNotAvailable,
+          'state $path cannot be written here',
+        );
+    }
+  }
+}
+
+/// Watches the page's and the app's state entries (ACT-002).
+final class _ProviderWatches implements StateWatchSource {
+  _ProviderWatches(this._ref, this._instance);
+
+  final WidgetRef _ref;
+  final PageInstance Function() _instance;
+
+  @override
+  StateWatch watch(String path, void Function(Object? value) onChange) {
+    final (root, name) = _split(path);
+    final ProviderSubscription<Object?>? sub = switch (root) {
+      'page' => _ref.listenManual(
+        pageStateProvider(_instance()).select((s) => s[name]),
+        (_, v) => onChange(v),
+      ),
+      'app' => _ref.listenManual(
+        appStateProvider.select((s) => s[name]),
+        (_, v) => onChange(v),
+      ),
+      _ => null,
+    };
+    return _Subscription(sub);
+  }
+}
+
+final class _Subscription implements StateWatch {
+  _Subscription(this._sub);
+
+  final ProviderSubscription<Object?>? _sub;
+
+  @override
+  void cancel() => _sub?.close();
+}
+
+(String, String) _split(String path) {
+  final dot = path.indexOf('.');
+  return dot < 0
+      ? (path, '')
+      : (path.substring(0, dot), path.substring(dot + 1));
 }

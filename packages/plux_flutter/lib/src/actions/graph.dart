@@ -6,6 +6,9 @@
 /// evaluate against a run's roots when the step executes.
 library;
 
+import 'dart:math' as math;
+
+import 'package:plux_flutter/src/actions/action_error.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/render/sections.dart';
 import 'package:plux_flutter/src/render/values.dart';
@@ -13,6 +16,57 @@ import 'package:plux_flutter/src/render/values.dart';
 /// Reads one step input against the run's roots: `params`, `page`,
 /// `event`, `steps`, `user`, … Throws [BindingError] when a binding fails.
 typedef InputReader = Object? Function(Map<String, Object?> roots);
+
+/// A step's retry policy (ACT-006): how often a failed step runs again,
+/// how long it waits before each attempt, and which errors it retries.
+final class RetryPolicy {
+  /// Creates a policy.
+  const RetryPolicy({
+    required this.count,
+    this.backoffMs = 0,
+    this.maxBackoffMs = 0,
+    this.jitter = false,
+    this.on = const {},
+  });
+
+  /// The error kinds retried when a policy names none: the transient ones.
+  static const Set<ActionErrorKind> transient = {
+    ActionErrorKind.network,
+    ActionErrorKind.timeout,
+  };
+
+  /// Retries after the first attempt.
+  final int count;
+
+  /// The wait before the first retry, in milliseconds; each later wait
+  /// doubles it.
+  final int backoffMs;
+
+  /// The longest wait, in milliseconds; 0 for no cap.
+  final int maxBackoffMs;
+
+  /// Whether each wait is randomised between half and all of its length,
+  /// so clients that failed together do not retry together.
+  final bool jitter;
+
+  /// The error kinds retried; [transient] when empty. A cancelled step is
+  /// never retried.
+  final Set<ActionErrorKind> on;
+
+  /// Whether an error of [kind] is retried.
+  bool retries(ActionErrorKind kind) =>
+      kind != ActionErrorKind.cancelled &&
+      (on.isEmpty ? transient : on).contains(kind);
+
+  /// The wait before retry [attempt] (1 for the first retry); [random] is a
+  /// value in [0, 1) that jitter scales the wait by.
+  Duration backoff(int attempt, double random) {
+    var ms = backoffMs * math.pow(2, math.min(attempt - 1, 30)).toDouble();
+    if (maxBackoffMs > 0) ms = math.min(ms, maxBackoffMs.toDouble());
+    if (jitter) ms = ms / 2 + ms / 2 * random;
+    return Duration(milliseconds: ms.round());
+  }
+}
 
 /// One step of a graph.
 final class GraphStep {
@@ -25,8 +79,9 @@ final class GraphStep {
     this.onSuccess = -1,
     this.onError = -1,
     this.branches = const {},
-    this.retry = false,
+    this.retry,
     this.timeoutMs = 0,
+    this.redact = const {},
   });
 
   /// The step's ID in its graph, which `steps.<id>` names.
@@ -50,17 +105,27 @@ final class GraphStep {
   /// The named successors, by branch name; -1 ends the run.
   final Map<String, int> branches;
 
-  /// Whether the step declares a retry policy (P5, `ACT-006`).
-  final bool retry;
+  /// The step's retry policy, or null (ACT-006).
+  final RetryPolicy? retry;
 
   /// The step's own time bound in milliseconds; 0 when it sets none.
   final int timeoutMs;
+
+  /// The permanent IDs of the inputs that read sensitive values: traces
+  /// never record them, nor the step's output (ACT-031).
+  final Set<int> redact;
 }
 
 /// A graph: its steps, `steps[0]` first, and its declared output.
 final class ActionGraph {
   /// Creates a graph.
-  const ActionGraph({required this.id, required this.steps, this.output});
+  const ActionGraph({
+    required this.id,
+    required this.steps,
+    this.output,
+    this.key = '',
+    this.exported = false,
+  });
 
   /// The graph's UUID, for reports and telemetry.
   final String id;
@@ -70,6 +135,12 @@ final class ActionGraph {
 
   /// The type expression of the graph's output, or null.
   final String? output;
+
+  /// The graph's key: a flow's name within its plugin (ACT-061).
+  final String key;
+
+  /// Whether other plugins may call the flow.
+  final bool exported;
 }
 
 /// Decodes [graph], whose strings are in [strings]; [resolve] evaluates an
@@ -83,6 +154,8 @@ ActionGraph decodeGraph(
   return ActionGraph(
     id: graph.id == null ? '' : uuidString(uuidOf(graph.id!)),
     output: out == 0 ? null : strings(out),
+    key: graph.key == 0 ? '' : strings(graph.key),
+    exported: graph.exported,
     steps: [
       for (final s in graph.steps ?? const <fbs.Step>[])
         GraphStep(
@@ -99,9 +172,24 @@ ActionGraph decodeGraph(
             for (final b in s.branches ?? const <fbs.Branch>[])
               strings(b.name): b.step,
           },
-          retry: s.retry != null,
+          retry: _retry(s.retry),
           timeoutMs: s.timeoutMs,
+          redact: {...?s.redact},
         ),
     ],
   );
 }
+
+RetryPolicy? _retry(fbs.Retry? r) => r == null
+    ? null
+    : RetryPolicy(
+        count: r.count,
+        backoffMs: r.backoffMs,
+        maxBackoffMs: r.maxBackoffMs,
+        jitter: r.jitter,
+        on: {
+          for (final k in r.$on ?? const <fbs.ErrorKind>[])
+            if (k.value < ActionErrorKind.values.length)
+              ActionErrorKind.values[k.value],
+        },
+      );
