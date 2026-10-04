@@ -20,6 +20,7 @@ The built-in actions of the action catalogue (spec Appendix D), generated from t
 | [dbUpdate](#dbupdate) | localDb | P5 | Updates fields of the record with a key; fails if it does not exist. |
 | [dbUpsert](#dbupsert) | localDb | P5 | Inserts a record, or replaces the record with the same key. |
 | [delay](#delay) | control | P5 | Waits for a duration; the wait is cancelled with the run. |
+| [emitEvent](#emitevent) | component | P5 | Inside a component, emits one of the component's declared events with a payload of its declared type, to the instance's handler or to PluxView.onEvent. |
 | [emitHostEvent](#emithostevent) | host | P4 | Sends a typed event to the host app. |
 | [forEach](#foreach) | control | P5 | Runs the body branch once per item of a list, in order, bounded by the list length and the action.forEachItems limit (ACT-005). |
 | [getLocation](#getlocation) | device | P5 | Reads the device's current position once. |
@@ -267,6 +268,21 @@ ID 34 · control · P5
 | Input | ID | Type | Default | Description |
 |---|---|---|---|---|
 | `duration` | 1 | `duration`, required | — | How long to wait, in milliseconds. |
+
+### emitEvent
+
+Inside a component, emits one of the component's declared events with a payload of its declared type, to the instance's handler or to PluxView.onEvent.
+
+ID 56 · component · P5
+
+Type parameters:
+
+- `E` — The payload type the referenced component event declares.
+
+| Input | ID | Type | Default | Description |
+|---|---|---|---|---|
+| `event` | 1 | `string`, required | — | The component event. Names a componentEvent. |
+| `payload` | 2 | `E` | — | The event payload. |
 
 ### emitHostEvent
 

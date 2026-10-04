@@ -89,6 +89,32 @@ table Handler {
   detached: bool;
 }
 
+// A trigger besides widget events and page lifecycle (ACT-002), or the
+// owner's error handler (ACT-020).
+enum TriggerKind : ubyte {
+  Timer = 0,
+  StateChange,
+  AppResume,
+  AppPause,
+  PushOpened,
+  HostEvent,
+  DataLoaded,
+  DataFailed,
+  Error
+}
+
+// A trigger and the handler it runs. `name` is a timer's name, a
+// watcher's state path (`page.count`), a host event's name or a data
+// source's name, and empty for the other kinds; `interval_ms` is a
+// timer's period, or its delay when it does not repeat.
+table Trigger {
+  kind: TriggerKind;
+  name: string;
+  interval_ms: uint;
+  repeat: bool;
+  handler: Handler;
+}
+
 // A declared parameter, input or field. `type` is a string-table index of
 // a type expression (SCH-010).
 table Param {
@@ -353,6 +379,9 @@ table Meta {
   // Plugin bundles: the exported components, sorted by key, which hosts
   // show by key (NAV-004, ADR-0023); absent when the plugin exports none.
   components: [ComponentEntry];
+  // The app's or the plugin's triggers (ACT-002) and error handler
+  // (ACT-020); absent when it declares none.
+  triggers: [Trigger];
 }
 
 // ── Section page ──────────────────────────────────────────────────────────
@@ -399,6 +428,8 @@ table Page {
   // A string-table index of the type the page returns with pop (NAV-003);
   // 0 when it returns none.
   result: uint;
+  // The page's triggers (ACT-002) and error handler (ACT-020).
+  triggers: [Trigger];
 }
 
 // ── Section component ─────────────────────────────────────────────────────
@@ -481,6 +512,9 @@ table Step {
   branches: [Branch];
   retry: Retry;
   timeout_ms: uint;
+  // The permanent IDs of the inputs that read sensitive values: a trace
+  // never records them, nor the step's output (ACT-031, SCH-012).
+  redact: [uint];
 }
 
 table Graph {

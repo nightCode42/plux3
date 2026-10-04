@@ -100,7 +100,7 @@ enum ActivationPolicy {
 /// An app: its plugins, theme, locales, environments, shared data and policies
 /// (SCH-020). File: `app.json`.
 final class AppDocument {
-  const AppDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.icon, required this.defaultLocale, required this.supportedLocales, required this.theme, required this.entryRoute, this.navigation, required this.plugins, required this.environments, this.variables, this.dataSources, this.nativeCatalogue, required this.securityProfile, required this.sync, required this.minRuntimeVersion, this.requiredFeatures, this.flags, this.types, this.state, this.collections, this.userContext, this.hostEvents, this.telemetry, this.push});
+  const AppDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.icon, required this.defaultLocale, required this.supportedLocales, required this.theme, required this.entryRoute, this.navigation, required this.plugins, required this.environments, this.variables, this.dataSources, this.nativeCatalogue, required this.securityProfile, required this.sync, required this.minRuntimeVersion, this.requiredFeatures, this.flags, this.types, this.state, this.collections, this.userContext, this.hostEvents, this.telemetry, this.push, this.triggers});
 
   /// Decodes a JSON object.
   factory AppDocument.fromJson(Object json) {
@@ -135,6 +135,7 @@ final class AppDocument {
       hostEvents: m['hostEvents'] == null ? null : [for (final e in m['hostEvents']! as List<Object?>) HostEventDecl.fromJson(e!)],
       telemetry: m['telemetry'] == null ? null : TelemetryPolicy.fromJson(m['telemetry']!),
       push: m['push'] == null ? null : PushPolicy.fromJson(m['push']!),
+      triggers: m['triggers'] == null ? null : Triggers.fromJson(m['triggers']!),
     );
   }
 
@@ -197,6 +198,10 @@ final class AppDocument {
   /// under which a notification names `{route, params}` for
   /// `Plux.handlePushPayload`.
   final PushPolicy? push;
+  /// Triggers besides widget events and page lifecycle (ACT-002), and the
+  /// owner's error handler (ACT-020). A page's runs are cancelled with the
+  /// page; a plugin's and the app's run while the release is active.
+  final Triggers? triggers;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
@@ -229,6 +234,7 @@ final class AppDocument {
         if (hostEvents != null) 'hostEvents': [for (final e in hostEvents!) e.toJson()],
         if (telemetry != null) 'telemetry': telemetry!.toJson(),
         if (push != null) 'push': push!.toJson(),
+        if (triggers != null) 'triggers': triggers!.toJson(),
       };
 }
 
@@ -666,6 +672,34 @@ enum DataSourceKind {
 
   /// Encodes the JSON value.
   String toJson() => json;
+}
+
+/// Handlers of a data source's events (ACT-002): the loaded value is onLoaded's
+/// `event`, the error onFailed's.
+final class DataSourceTriggers {
+  const DataSourceTriggers({this.onLoaded, this.onFailed});
+
+  /// Decodes a JSON object.
+  factory DataSourceTriggers.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return DataSourceTriggers(
+      onLoaded: m['onLoaded'] == null ? null : EventHandler.fromJson(m['onLoaded']!),
+      onFailed: m['onFailed'] == null ? null : EventHandler.fromJson(m['onFailed']!),
+    );
+  }
+
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler? onLoaded;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler? onFailed;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (onLoaded != null) 'onLoaded': onLoaded!.toJson(),
+        if (onFailed != null) 'onFailed': onFailed!.toJson(),
+      };
 }
 
 /// The links the app answers (NAV-008): its hosts for `https` links and its
@@ -1401,7 +1435,7 @@ final class Node {
 /// A page: route, parameters, state, data, lifecycle and node tree (SCH-022).
 /// File: `plugins/<plugin>/pages/<key>.page.json`.
 final class PageDocument {
-  const PageDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, this.route, required this.pageKind, required this.title, this.description, this.params, this.result, this.state, this.dataSources, this.lifecycle, this.routeOptions, this.security, required this.root});
+  const PageDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, this.route, required this.pageKind, required this.title, this.description, this.params, this.result, this.state, this.dataSources, this.lifecycle, this.triggers, this.routeOptions, this.security, required this.root});
 
   /// Decodes a JSON object.
   factory PageDocument.fromJson(Object json) {
@@ -1420,6 +1454,7 @@ final class PageDocument {
       state: m['state'] == null ? null : [for (final e in m['state']! as List<Object?>) StateEntry.fromJson(e!)],
       dataSources: m['dataSources'] == null ? null : [for (final e in m['dataSources']! as List<Object?>) DataSource.fromJson(e!)],
       lifecycle: m['lifecycle'] == null ? null : Lifecycle.fromJson(m['lifecycle']!),
+      triggers: m['triggers'] == null ? null : Triggers.fromJson(m['triggers']!),
       routeOptions: m['routeOptions'] == null ? null : RouteOptions.fromJson(m['routeOptions']!),
       security: m['security'] == null ? null : PageSecurity.fromJson(m['security']!),
       root: Node.fromJson(m['root']!),
@@ -1452,6 +1487,10 @@ final class PageDocument {
   final List<DataSource>? dataSources;
   /// Lifecycle handlers (SCH-022).
   final Lifecycle? lifecycle;
+  /// Triggers besides widget events and page lifecycle (ACT-002), and the
+  /// owner's error handler (ACT-020). A page's runs are cancelled with the
+  /// page; a plugin's and the app's run while the release is active.
+  final Triggers? triggers;
   /// Route options (SCH-022, NAV-010).
   final RouteOptions? routeOptions;
   /// Security flags (SCH-022).
@@ -1475,6 +1514,7 @@ final class PageDocument {
         if (state != null) 'state': [for (final e in state!) e.toJson()],
         if (dataSources != null) 'dataSources': [for (final e in dataSources!) e.toJson()],
         if (lifecycle != null) 'lifecycle': lifecycle!.toJson(),
+        if (triggers != null) 'triggers': triggers!.toJson(),
         if (routeOptions != null) 'routeOptions': routeOptions!.toJson(),
         if (security != null) 'security': security!.toJson(),
         'root': root.toJson(),
@@ -1599,7 +1639,7 @@ enum Persistence {
 /// A plugin: its pages, state, collections and requested capabilities
 /// (SCH-021). File: `plugins/<key>/plugin.json`.
 final class PluginDocument {
-  const PluginDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.icon, required this.team, required this.entryPage, required this.pages, this.fallbackPage, this.capabilities, this.tags, this.types, this.state, this.collections, this.dataSources});
+  const PluginDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.icon, required this.team, required this.entryPage, required this.pages, this.fallbackPage, this.capabilities, this.tags, this.types, this.state, this.collections, this.dataSources, this.triggers});
 
   /// Decodes a JSON object.
   factory PluginDocument.fromJson(Object json) {
@@ -1622,6 +1662,7 @@ final class PluginDocument {
       state: m['state'] == null ? null : [for (final e in m['state']! as List<Object?>) StateEntry.fromJson(e!)],
       collections: m['collections'] == null ? null : [for (final e in m['collections']! as List<Object?>) Collection.fromJson(e!)],
       dataSources: m['dataSources'] == null ? null : [for (final e in m['dataSources']! as List<Object?>) DataSource.fromJson(e!)],
+      triggers: m['triggers'] == null ? null : Triggers.fromJson(m['triggers']!),
     );
   }
 
@@ -1654,6 +1695,10 @@ final class PluginDocument {
   final List<StateEntry>? state;
   final List<Collection>? collections;
   final List<DataSource>? dataSources;
+  /// Triggers besides widget events and page lifecycle (ACT-002), and the
+  /// owner's error handler (ACT-020). A page's runs are cancelled with the
+  /// page; a plugin's and the app's run while the release is active.
+  final Triggers? triggers;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
@@ -1674,6 +1719,7 @@ final class PluginDocument {
         if (state != null) 'state': [for (final e in state!) e.toJson()],
         if (collections != null) 'collections': [for (final e in collections!) e.toJson()],
         if (dataSources != null) 'dataSources': [for (final e in dataSources!) e.toJson()],
+        if (triggers != null) 'triggers': triggers!.toJson(),
       };
 }
 
@@ -2066,6 +2112,37 @@ final class StateEntry {
       };
 }
 
+/// Runs its handler when a state entry changes (ACT-002); `event` is the new
+/// value. A debounce policy on the handler waits for the value to settle.
+final class StateWatcher {
+  const StateWatcher({required this.path, required this.handler, this.description});
+
+  /// Decodes a JSON object.
+  factory StateWatcher.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return StateWatcher(
+      path: m['path']! as String,
+      handler: EventHandler.fromJson(m['handler']!),
+      description: m['description'] == null ? null : m['description']! as String,
+    );
+  }
+
+  /// The state entry: <scope>.<name>.
+  final String path;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler handler;
+  /// Human-readable description.
+  final String? description;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'path': path,
+        'handler': handler.toJson(),
+        if (description != null) 'description': description!,
+      };
+}
+
 /// One step of an action graph; edges name other steps (§14.1).
 final class Step {
   const Step({required this.id, required this.action, this.input, this.next, this.onSuccess, this.onError, this.branches, this.retry, this.timeoutMs, this.description});
@@ -2365,6 +2442,45 @@ final class ThemeDocument {
       };
 }
 
+/// A timer (ACT-002): it fires every intervalMs while its owner lives, or once,
+/// intervalMs after its owner starts, when repeat is false; `event` is the
+/// number of times it has fired.
+final class TimerTrigger {
+  const TimerTrigger({required this.name, required this.intervalMs, this.repeat, required this.handler, this.description});
+
+  /// Decodes a JSON object.
+  factory TimerTrigger.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return TimerTrigger(
+      name: m['name']! as String,
+      intervalMs: (m['intervalMs']! as num).toInt(),
+      repeat: m['repeat'] == null ? null : m['repeat']! as bool,
+      handler: EventHandler.fromJson(m['handler']!),
+      description: m['description'] == null ? null : m['description']! as String,
+    );
+  }
+
+  /// Identifier used in PXL and generated code: lowerCamelCase.
+  final String name;
+  final int intervalMs;
+  /// Fires every intervalMs; true when absent.
+  final bool? repeat;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler handler;
+  /// Human-readable description.
+  final String? description;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'name': name,
+        'intervalMs': intervalMs,
+        if (repeat != null) 'repeat': repeat!,
+        'handler': handler.toJson(),
+        if (description != null) 'description': description!,
+      };
+}
+
 /// Page transition (NAV-010).
 enum Transition {
   platform('platform'),
@@ -2491,6 +2607,60 @@ final class TranslationsDocument {
         'id': id,
         'locale': locale,
         'messages': {for (final e in messages.entries) e.key: e.value},
+      };
+}
+
+/// Triggers besides widget events and page lifecycle (ACT-002), and the owner's
+/// error handler (ACT-020). A page's runs are cancelled with the page; a
+/// plugin's and the app's run while the release is active.
+final class Triggers {
+  const Triggers({this.timers, this.watch, this.onAppResume, this.onAppPause, this.onPushOpened, this.hostEvents, this.dataSources, this.onError});
+
+  /// Decodes a JSON object.
+  factory Triggers.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return Triggers(
+      timers: m['timers'] == null ? null : [for (final e in m['timers']! as List<Object?>) TimerTrigger.fromJson(e!)],
+      watch: m['watch'] == null ? null : [for (final e in m['watch']! as List<Object?>) StateWatcher.fromJson(e!)],
+      onAppResume: m['onAppResume'] == null ? null : EventHandler.fromJson(m['onAppResume']!),
+      onAppPause: m['onAppPause'] == null ? null : EventHandler.fromJson(m['onAppPause']!),
+      onPushOpened: m['onPushOpened'] == null ? null : EventHandler.fromJson(m['onPushOpened']!),
+      hostEvents: m['hostEvents'] == null ? null : {for (final e in (m['hostEvents']! as Map<String, Object?>).entries) e.key: EventHandler.fromJson(e.value!)},
+      dataSources: m['dataSources'] == null ? null : {for (final e in (m['dataSources']! as Map<String, Object?>).entries) e.key: DataSourceTriggers.fromJson(e.value!)},
+      onError: m['onError'] == null ? null : EventHandler.fromJson(m['onError']!),
+    );
+  }
+
+  final List<TimerTrigger>? timers;
+  final List<StateWatcher>? watch;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler? onAppResume;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler? onAppPause;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler? onPushOpened;
+  /// Handlers of host events sent into Plux, by declared host event name
+  /// (HST-013); `event` is the event's payload.
+  final Map<String, EventHandler>? hostEvents;
+  /// Handlers of data-source events, by data source name.
+  final Map<String, DataSourceTriggers>? dataSources;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler? onError;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (timers != null) 'timers': [for (final e in timers!) e.toJson()],
+        if (watch != null) 'watch': [for (final e in watch!) e.toJson()],
+        if (onAppResume != null) 'onAppResume': onAppResume!.toJson(),
+        if (onAppPause != null) 'onAppPause': onAppPause!.toJson(),
+        if (onPushOpened != null) 'onPushOpened': onPushOpened!.toJson(),
+        if (hostEvents != null) 'hostEvents': {for (final e in hostEvents!.entries) e.key: e.value.toJson()},
+        if (dataSources != null) 'dataSources': {for (final e in dataSources!.entries) e.key: e.value.toJson()},
+        if (onError != null) 'onError': onError!.toJson(),
       };
 }
 

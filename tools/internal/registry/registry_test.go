@@ -477,7 +477,7 @@ func TestFlutterNames(t *testing.T) {
 
 func TestVocabularies(t *testing.T) {
 	t.Parallel()
-	if len(Reasons()) != 6 || len(Roles()) == 0 || len(ActionCategories()) != 16 || len(ActionEffects()) == 0 || len(Platforms()) != 2 {
+	if len(Reasons()) != 6 || len(Roles()) == 0 || len(ActionCategories()) != 17 || len(ActionEffects()) == 0 || len(Platforms()) != 2 {
 		t.Error("vocabularies are incomplete")
 	}
 	r := Reasons()

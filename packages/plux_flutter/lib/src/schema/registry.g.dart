@@ -1691,6 +1691,12 @@ const List<ActionDescriptor> actionDescriptors = [
     inputs: {'duration': 1},
   ),
   ActionDescriptor(
+    'emitEvent',
+    56,
+    phase: 'P5',
+    inputs: {'event': 1, 'payload': 2},
+  ),
+  ActionDescriptor(
     'emitHostEvent',
     51,
     phase: 'P4',

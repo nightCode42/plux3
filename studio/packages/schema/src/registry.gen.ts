@@ -12,7 +12,7 @@ export type Platform = "android" | "ios";
 export type AccessibilityRole = "none" | "button" | "checkbox" | "radio" | "switch" | "slider" | "textField" | "image" | "text" | "header" | "list" | "progress";
 
 /** A category of the action catalogue (Appendix D). */
-export type ActionCategory = "navigation" | "feedback" | "state" | "forms" | "data" | "localDb" | "compute" | "control" | "analytics" | "app" | "device" | "security" | "animation" | "host" | "plux" | "payments";
+export type ActionCategory = "navigation" | "feedback" | "state" | "forms" | "data" | "localDb" | "compute" | "control" | "analytics" | "app" | "device" | "security" | "animation" | "component" | "host" | "plux" | "payments";
 
 /** A kind of side effect an action has. */
 export type ActionEffect = "navigation" | "state" | "network" | "storage" | "device" | "ui" | "telemetry" | "security" | "host";
@@ -176,7 +176,7 @@ export interface ActionDescriptor {
 export type WidgetType = "ActionChip" | "Align" | "AppBar" | "AspectRatio" | "BackButton" | "Badge" | "Baseline" | "BottomAppBar" | "Card" | "Center" | "Checkbox" | "CheckboxListTile" | "Chip" | "ChoiceChip" | "CircleAvatar" | "CircularProgressIndicator" | "ClipOval" | "ClipRRect" | "CloseButton" | "ColoredBox" | "Column" | "ConstrainedBox" | "Container" | "CupertinoActivityIndicator" | "CupertinoButton" | "CupertinoListSection" | "CupertinoListTile" | "CupertinoSlider" | "CupertinoSlidingSegmentedControl" | "CupertinoSwitch" | "CupertinoTextField" | "CustomScrollView" | "DecoratedBox" | "Divider" | "DropdownMenu" | "ElevatedButton" | "EmptyState" | "ErrorState" | "Expanded" | "ExpansionTile" | "FilledButton" | "FilterChip" | "FittedBox" | "Flex" | "Flexible" | "FloatingActionButton" | "ForEach" | "FractionallySizedBox" | "GestureDetector" | "GridView" | "Icon" | "IconButton" | "If" | "Image" | "IndexedStack" | "InkWell" | "InputChip" | "LimitedBox" | "LinearProgressIndicator" | "ListTile" | "ListView" | "Match" | "OfflineBanner" | "Opacity" | "OutlinedButton" | "Padding" | "PageView" | "Positioned" | "Radio" | "RadioListTile" | "RangeSlider" | "Responsive" | "RichText" | "Row" | "SafeArea" | "Scaffold" | "Scrollbar" | "SegmentedButton" | "SelectableText" | "SingleChildScrollView" | "SizedBox" | "SkeletonLoader" | "Slider" | "SliverAppBar" | "SliverFillRemaining" | "SliverGrid" | "SliverList" | "SliverPadding" | "SliverToBoxAdapter" | "Slot" | "Spacer" | "Stack" | "Switch" | "SwitchListTile" | "Text" | "TextButton" | "TextField" | "TextFormField" | "Tooltip" | "Transform" | "VerticalDivider" | "Wrap";
 
 /** An action name. */
-export type ActionName = "apiCall" | "biometricAuth" | "callFlow" | "callNative" | "capturePhoto" | "condition" | "controlAnimation" | "copyToClipboard" | "dbDelete" | "dbInsert" | "dbQuery" | "dbUpdate" | "dbUpsert" | "delay" | "emitHostEvent" | "forEach" | "getLocation" | "haptic" | "invokeFunction" | "kvGet" | "kvRemove" | "kvSet" | "logout" | "navigate" | "openBottomSheet" | "openDialog" | "openUrl" | "parallel" | "patchState" | "pickFile" | "pickImage" | "pop" | "refreshData" | "requestPermission" | "resetForm" | "resetState" | "scanCode" | "setLocale" | "setState" | "setThemeMode" | "share" | "showSnackbar" | "showToast" | "signTransaction" | "startAnimation" | "startPayment" | "stop" | "submitForm" | "subscribe" | "switch" | "switchTab" | "sync" | "trackEvent" | "unsubscribe" | "validateForm";
+export type ActionName = "apiCall" | "biometricAuth" | "callFlow" | "callNative" | "capturePhoto" | "condition" | "controlAnimation" | "copyToClipboard" | "dbDelete" | "dbInsert" | "dbQuery" | "dbUpdate" | "dbUpsert" | "delay" | "emitEvent" | "emitHostEvent" | "forEach" | "getLocation" | "haptic" | "invokeFunction" | "kvGet" | "kvRemove" | "kvSet" | "logout" | "navigate" | "openBottomSheet" | "openDialog" | "openUrl" | "parallel" | "patchState" | "pickFile" | "pickImage" | "pop" | "refreshData" | "requestPermission" | "resetForm" | "resetState" | "scanCode" | "setLocale" | "setState" | "setThemeMode" | "share" | "showSnackbar" | "showToast" | "signTransaction" | "startAnimation" | "startPayment" | "stop" | "submitForm" | "subscribe" | "switch" | "switchTab" | "sync" | "trackEvent" | "unsubscribe" | "validateForm";
 
 /** Every widget descriptor, sorted by type name (WGT-001). */
 export const widgets: readonly WidgetDescriptor[] = [
@@ -5547,6 +5547,22 @@ export const actions: readonly ActionDescriptor[] = [
     "typeParameters": [],
     "inputs": [
       {"name": "duration", "id": 1, "type": "duration", "required": true, "description": "How long to wait, in milliseconds."}
+    ],
+    "branches": [],
+    "effects": []
+  },
+  {
+    "name": "emitEvent",
+    "id": 56,
+    "phase": "P5",
+    "category": "component",
+    "description": "Inside a component, emits one of the component's declared events with a payload of its declared type, to the instance's handler or to PluxView.onEvent.",
+    "typeParameters": [
+      {"name": "E", "description": "The payload type the referenced component event declares."}
+    ],
+    "inputs": [
+      {"name": "event", "id": 1, "type": "string", "required": true, "ref": "componentEvent", "description": "The component event."},
+      {"name": "payload", "id": 2, "type": "E", "required": false, "description": "The event payload."}
     ],
     "branches": [],
     "effects": []

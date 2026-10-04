@@ -210,6 +210,36 @@ var registry = []Definition{
 		"Rename the custom action in the host app, for example with a prefix of its own, and run plux native scan again.", false,
 	},
 	{
+		FlowCallCycle, "FLOW_CALL_CYCLE", SeverityError, "Flows call each other in a cycle",
+		"A callFlow step calls a flow that, through its own callFlow steps, calls the graph back. Action graphs are acyclic across flows too, so a run cannot recurse (ACT-001, ACT-061).",
+		"Break the cycle: move the shared steps into a flow that calls neither graph.", false,
+	},
+	{
+		FlowNotExported, "FLOW_NOT_EXPORTED", SeverityError, "Flow private to its plugin",
+		"A callFlow step names a flow of another plugin as <plugin>/<flow>, and that flow is not exported. Only exported flows are callable across plugins (ACT-061).",
+		"Set exported on the flow in its plugin, or call a flow of the step's own plugin by its key.", false,
+	},
+	{
+		InvalidTrigger, "INVALID_TRIGGER", SeverityError, "Invalid trigger",
+		"A trigger names something its owner cannot see — a state entry, a host event or a data source — or two timers share a name (ACT-002).",
+		"Name a state entry of the page, the plugin or the app, a host event the app document declares, or a data source in scope; give each timer its own name.", false,
+	},
+	{
+		UndeclaredComponentEvent, "UNDECLARED_COMPONENT_EVENT", SeverityError, "Component event not declared",
+		"An emitEvent step names an event its component does not declare, or sends a payload to an event that declares none. A component's events are its contract with its users (SCH-030).",
+		"Declare the event in the component's events, with the payload type the step sends, or correct its name.", false,
+	},
+	{
+		EmitEventOutsideComponent, "EMIT_EVENT_OUTSIDE_COMPONENT", SeverityError, "emitEvent outside a component",
+		"An emitEvent step is in a graph that does not belong to a component: a page's graph or a flow has no component events to emit.",
+		"Emit host events with emitHostEvent, or move the step into a handler of the component.", false,
+	},
+	{
+		InvalidRetryPolicy, "INVALID_RETRY_POLICY", SeverityError, "Invalid retry policy",
+		"A step's retry policy cannot work as written: its maxBackoffMs is below its backoffMs, or it retries cancelled errors, which end the run whatever the step declares (ACT-006).",
+		"Set maxBackoffMs to at least backoffMs, and remove cancelled from the error kinds it retries.", false,
+	},
+	{
 		UnknownRoute, "UNKNOWN_ROUTE", SeverityError, "Unknown route",
 		"A navigate action targets a route name that no page and no native route declares.",
 		"Correct the route name, or add the page.", false,
@@ -563,6 +593,31 @@ var registry = []Definition{
 		ActionCustomError, "ACTION_CUSTOM_ERROR", SeverityError, "Run failed with a custom error",
 		"A stop step ended the run with a custom error code, and no onError handled it (ADR-0039).",
 		"Handle the error with an onError edge, or check why the graph stops with it; the message carries its code.", false,
+	},
+	{
+		ActionCancelled, "ACTION_CANCELLED", SeverityInfo, "Action run cancelled",
+		"A run, or a branch of a parallel step, was cancelled: its page or component was disposed, a restart policy started a newer run, or another branch of the parallel step failed (ACT-003, ACT-004). Cancellation ends the run; it is never routed to an error handler.",
+		"Nothing to fix when the owner went away. Mark the handler detached when its run must outlive its page.", false,
+	},
+	{
+		ForEachLimitExceeded, "ACTION_FOREACH_LIMIT_EXCEEDED", SeverityError, "forEach item limit exceeded",
+		"A forEach step was given more items than the limit action.forEachItems allows; the step fails before its body runs (ACT-005).",
+		"Iterate over fewer items, for example a page of them, or raise the limit within its maximum.", false,
+	},
+	{
+		FlowNotFound, "FLOW_NOT_FOUND", SeverityError, "Flow not found",
+		"A callFlow step names a flow the active release does not hold, or a flow of another plugin that is not exported in that plugin's active version (ACT-061).",
+		"Publish the plugin that declares the flow, export it, or handle the error with the step's onError.", false,
+	},
+	{
+		ErrorHandlerFailed, "ERROR_HANDLER_FAILED", SeverityError, "Error handler failed",
+		"A page, plugin or app error handler failed while handling a run's error; its failure is reported and the original error goes on to the next handler (ACT-020).",
+		"Fix the error handler's graph; the report names the handler's owner and its own error code.", false,
+	},
+	{
+		ActionQueueFull, "ACTION_QUEUE_FULL", SeverityWarning, "Action queue full",
+		"A handler with the queue policy was triggered while it already held as many waiting triggers as the limit action.queueLength allows; the trigger was dropped (ACT-003).",
+		"Use the drop, restart or debounce policy for triggers that come faster than their runs finish, or raise the limit within its maximum.", false,
 	},
 
 	// Security.

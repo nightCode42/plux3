@@ -158,6 +158,9 @@
       "items": {
         "$ref": "common.schema.json#/$defs/dataSource"
       }
+    },
+    "triggers": {
+      "$ref": "common.schema.json#/$defs/triggers"
     }
   },
   "patternProperties": {

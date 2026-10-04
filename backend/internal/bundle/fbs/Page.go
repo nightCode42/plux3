@@ -287,8 +287,28 @@ func (rcv *Page) MutateResult(n uint32) bool {
 	return rcv._tab.MutateUint32Slot(34, n)
 }
 
+func (rcv *Page) Triggers(obj *Trigger, j int) bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(36))
+	if o != 0 {
+		x := rcv._tab.Vector(o)
+		x += flatbuffers.UOffsetT(j) * 4
+		x = rcv._tab.Indirect(x)
+		obj.Init(rcv._tab.Bytes, x)
+		return true
+	}
+	return false
+}
+
+func (rcv *Page) TriggersLength() int {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(36))
+	if o != 0 {
+		return rcv._tab.VectorLen(o)
+	}
+	return 0
+}
+
 func PageStart(builder *flatbuffers.Builder) {
-	builder.StartObject(16)
+	builder.StartObject(17)
 }
 func PageAddId(builder *flatbuffers.Builder, id flatbuffers.UOffsetT) {
 	builder.PrependStructSlot(0, flatbuffers.UOffsetT(id), 0)
@@ -358,6 +378,12 @@ func PageStartStringsVector(builder *flatbuffers.Builder, numElems int) flatbuff
 }
 func PageAddResult(builder *flatbuffers.Builder, result uint32) {
 	builder.PrependUint32Slot(15, result, 0)
+}
+func PageAddTriggers(builder *flatbuffers.Builder, triggers flatbuffers.UOffsetT) {
+	builder.PrependUOffsetTSlot(16, flatbuffers.UOffsetT(triggers), 0)
+}
+func PageStartTriggersVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
+	return builder.StartVector(4, numElems, 4)
 }
 func PageEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
 	return builder.EndObject()

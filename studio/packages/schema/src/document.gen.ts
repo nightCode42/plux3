@@ -85,6 +85,8 @@ export interface AppDocument {
   readonly telemetry?: TelemetryPolicy;
   /** Push notifications (NAV-008, ADR-0040): whether the app uses them, so a generated project carries the platform configuration, and the payload key under which a notification names `{route, params}` for `Plux.handlePushPayload`. */
   readonly push?: PushPolicy;
+  /** Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active. */
+  readonly triggers?: Triggers;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
@@ -244,6 +246,16 @@ export interface DataSource {
 }
 
 export type DataSourceKind = "rest" | "graphql" | "websocket" | "sse" | "function" | "database" | "static";
+
+/** Handlers of a data source's events (ACT-002): the loaded value is onLoaded's `event`, the error onFailed's. */
+export interface DataSourceTriggers {
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly onLoaded?: EventHandler;
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly onFailed?: EventHandler;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
 
 /** The links the app answers (NAV-008): its hosts for `https` links and its custom schemes, and path patterns mapped to routes. `https://<host>/p/<route-name>?…` always resolves, so no pattern may start with `/p/`. */
 export interface DeepLinkPolicy {
@@ -520,6 +532,8 @@ export interface PageDocument {
   readonly dataSources?: readonly DataSource[];
   /** Lifecycle handlers (SCH-022). */
   readonly lifecycle?: Lifecycle;
+  /** Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active. */
+  readonly triggers?: Triggers;
   /** Route options (SCH-022, NAV-010). */
   readonly routeOptions?: RouteOptions;
   /** Security flags (SCH-022). */
@@ -594,6 +608,8 @@ export interface PluginDocument {
   readonly state?: readonly StateEntry[];
   readonly collections?: readonly Collection[];
   readonly dataSources?: readonly DataSource[];
+  /** Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active. */
+  readonly triggers?: Triggers;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
@@ -728,6 +744,18 @@ export interface StateEntry {
   readonly [extension: `x-${string}`]: unknown;
 }
 
+/** Runs its handler when a state entry changes (ACT-002); `event` is the new value. A debounce policy on the handler waits for the value to settle. */
+export interface StateWatcher {
+  /** The state entry: <scope>.<name>. */
+  readonly path: string;
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly handler: EventHandler;
+  /** Human-readable description. */
+  readonly description?: string;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
 /** One step of an action graph; edges name other steps (§14.1). */
 export interface Step {
   /** Identifier used in PXL and generated code: lowerCamelCase. */
@@ -841,6 +869,21 @@ export interface ThemeDocument {
   readonly [extension: `x-${string}`]: unknown;
 }
 
+/** A timer (ACT-002): it fires every intervalMs while its owner lives, or once, intervalMs after its owner starts, when repeat is false; `event` is the number of times it has fired. */
+export interface TimerTrigger {
+  /** Identifier used in PXL and generated code: lowerCamelCase. */
+  readonly name: string;
+  readonly intervalMs: number;
+  /** Fires every intervalMs; true when absent. */
+  readonly repeat?: boolean;
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly handler: EventHandler;
+  /** Human-readable description. */
+  readonly description?: string;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
 /** Page transition (NAV-010). */
 export type Transition = "platform" | "fade" | "slideLeft" | "slideRight" | "slideUp" | "slideDown" | "scale" | "sharedAxis" | "none";
 
@@ -879,6 +922,26 @@ export interface TranslationsDocument {
   /** BCP 47 language tag: language, optional script, optional region. */
   readonly locale: string;
   readonly messages: { readonly [key: string]: string };
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active. */
+export interface Triggers {
+  readonly timers?: readonly TimerTrigger[];
+  readonly watch?: readonly StateWatcher[];
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly onAppResume?: EventHandler;
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly onAppPause?: EventHandler;
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly onPushOpened?: EventHandler;
+  /** Handlers of host events sent into Plux, by declared host event name (HST-013); `event` is the event's payload. */
+  readonly hostEvents?: { readonly [key: string]: EventHandler };
+  /** Handlers of data-source events, by data source name. */
+  readonly dataSources?: { readonly [key: string]: DataSourceTriggers };
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly onError?: EventHandler;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }

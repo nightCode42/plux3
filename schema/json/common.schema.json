@@ -703,6 +703,138 @@
       ],
       "x-plux-type": "EventHandler"
     },
+    "triggers": {
+      "type": "object",
+      "description": "Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active.",
+      "properties": {
+        "timers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/timerTrigger"
+          }
+        },
+        "watch": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/stateWatcher"
+          }
+        },
+        "onAppResume": {
+          "$ref": "#/$defs/eventHandler"
+        },
+        "onAppPause": {
+          "$ref": "#/$defs/eventHandler"
+        },
+        "onPushOpened": {
+          "$ref": "#/$defs/eventHandler"
+        },
+        "hostEvents": {
+          "type": "object",
+          "description": "Handlers of host events sent into Plux, by declared host event name (HST-013); `event` is the event's payload.",
+          "propertyNames": {
+            "$ref": "#/$defs/name"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/eventHandler"
+          }
+        },
+        "dataSources": {
+          "type": "object",
+          "description": "Handlers of data-source events, by data source name.",
+          "propertyNames": {
+            "$ref": "#/$defs/name"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/dataSourceTriggers"
+          }
+        },
+        "onError": {
+          "$ref": "#/$defs/eventHandler"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "Triggers"
+    },
+    "timerTrigger": {
+      "type": "object",
+      "description": "A timer (ACT-002): it fires every intervalMs while its owner lives, or once, intervalMs after its owner starts, when repeat is false; `event` is the number of times it has fired.",
+      "required": [
+        "name",
+        "intervalMs",
+        "handler"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/name"
+        },
+        "intervalMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 86400000
+        },
+        "repeat": {
+          "type": "boolean",
+          "description": "Fires every intervalMs; true when absent."
+        },
+        "handler": {
+          "$ref": "#/$defs/eventHandler"
+        },
+        "description": {
+          "$ref": "#/$defs/description"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "TimerTrigger"
+    },
+    "stateWatcher": {
+      "type": "object",
+      "description": "Runs its handler when a state entry changes (ACT-002); `event` is the new value. A debounce policy on the handler waits for the value to settle.",
+      "required": [
+        "path",
+        "handler"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^(app|plugin|page)\\.[a-z][a-zA-Z0-9]*$",
+          "description": "The state entry: <scope>.<name>."
+        },
+        "handler": {
+          "$ref": "#/$defs/eventHandler"
+        },
+        "description": {
+          "$ref": "#/$defs/description"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "StateWatcher"
+    },
+    "dataSourceTriggers": {
+      "type": "object",
+      "description": "Handlers of a data source's events (ACT-002): the loaded value is onLoaded's `event`, the error onFailed's.",
+      "properties": {
+        "onLoaded": {
+          "$ref": "#/$defs/eventHandler"
+        },
+        "onFailed": {
+          "$ref": "#/$defs/eventHandler"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "DataSourceTriggers"
+    },
     "semantics": {
       "type": "object",
       "description": "Accessibility semantics of a node (A11Y-002).",
