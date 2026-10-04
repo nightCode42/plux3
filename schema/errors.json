@@ -1017,7 +1017,7 @@
     },
     {
       "code": "PLX-5107",
-      "reason": "DATA_UNAUTHORIZED",
+      "reason": "DATA_UNAUTHORISED",
       "severity": "error",
       "title": "Request unauthorised",
       "cause": "A data request that sends the auth delegate's token was answered with 401 again after one refresh, or no token was available. The step's error has the kind http (HST-010).",

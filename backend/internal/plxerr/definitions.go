@@ -625,7 +625,7 @@ var registry = []Definition{
 		"Check the GraphQL document and its variables against the schema.", false,
 	},
 	{
-		DataUnauthorized, "DATA_UNAUTHORIZED", SeverityError, "Request unauthorised",
+		DataUnauthorised, "DATA_UNAUTHORISED", SeverityError, "Request unauthorised",
 		"A data request that sends the auth delegate's token was answered with 401 again after one refresh, or no token was available. The step's error has the kind http (HST-010).",
 		"Sign the user in again through the host app; check the auth delegate's refresh.", false,
 	},

@@ -77,7 +77,7 @@ func (u *unit) checkPage(pg *page) {
 		pg.params = append(pg.params, u.checkParam(pl, p, file, ptr, true))
 	}
 	pg.state = u.checkState(pl, doc.State, file, pg.scope)
-	pg.sources = u.checkSources(pl, doc.DataSources, file)
+	pg.sources = u.checkSources(pl, doc.DataSources, file, pg.scope)
 	if len(doc.Title) > 0 {
 		pg.title = u.checkRaw(vctx{file: file, ptr: "/title", scope: pg.scope, pl: pl, code: plxerr.PropTypeMismatch, from: doc.ID}, doc.Title, &texpr{name: "string"})
 	}
@@ -200,9 +200,10 @@ var dataSourceKinds = map[schema.DataSourceKind]fbs.DataSourceKind{
 
 // checkSources checks data sources: the mock against the type, and the
 // configuration as a value.
-func (u *unit) checkSources(pl *plugin, sources []schema.DataSource, file string) []*dataSource {
+func (u *unit) checkSources(pl *plugin, sources []schema.DataSource, file string, sc *scope) []*dataSource {
 	var out []*dataSource
-	for i, s := range sources {
+	for i := range sources {
+		s := &sources[i]
 		ptr := plxerr.Pointer("dataSources", strconv.Itoa(i))
 		d := &dataSource{id: uuidBytes(s.ID), name: s.Name, kind: dataSourceKinds[s.Kind], typ: s.Type}
 		if te, err := parseTypeExpr(s.Type); err == nil {
@@ -212,7 +213,10 @@ func (u *unit) checkSources(pl *plugin, sources []schema.DataSource, file string
 				u.checkRaw(literalCtx(pl, file, ptr+"/mock"), s.Mock, te)
 			}
 		}
-		if len(s.Config) > 0 {
+		switch {
+		case runsData(s.Kind):
+			d.config = u.checkDataSource(pl, s, file, ptr, sc)
+		case len(s.Config) > 0:
 			d.config = u.inferred(literalCtx(pl, file, ptr+"/config"), s.Config)
 		}
 		out = append(out, d)
@@ -228,7 +232,7 @@ func (u *unit) checkDecls() {
 	if u.appScope != nil {
 		u.appState = u.checkState(nil, app.State, "app.json", u.appScope)
 	}
-	u.appSources = u.checkSources(nil, app.DataSources, "app.json")
+	u.appSources = u.checkSources(nil, app.DataSources, "app.json", u.appScope)
 	for i, f := range app.Flags {
 		ptr := plxerr.Pointer("flags", strconv.Itoa(i))
 		u.checkRaw(literalCtx(nil, "app.json", ptr+"/default"), f.Default, &texpr{name: string(f.Type)})
@@ -256,7 +260,8 @@ func (u *unit) checkDecls() {
 		if pl.scope != nil {
 			pl.state = u.checkState(pl, pl.doc.State, pl.file, pl.scope)
 		}
-		pl.sources = u.checkSources(pl, pl.doc.DataSources, pl.file)
+		pl.sources = u.checkSources(pl, pl.doc.DataSources, pl.file, pl.scope)
+		u.checkSourceCount(pl)
 		u.checkCollections(pl, pl.doc.Collections, pl.file)
 	}
 }

@@ -986,7 +986,7 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 ### PLX-5107
 
-`DATA_UNAUTHORIZED` · error · Request unauthorised
+`DATA_UNAUTHORISED` · error · Request unauthorised
 
 **Cause.** A data request that sends the auth delegate's token was answered with 401 again after one refresh, or no token was available. The step's error has the kind http (HST-010).
 

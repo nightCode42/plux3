@@ -159,7 +159,7 @@ const (
 	DataMappingFailed     Code = 5104
 	DataSizeExceeded      Code = 5105
 	DataGraphQLError      Code = 5106
-	DataUnauthorized      Code = 5107
+	DataUnauthorised      Code = 5107
 	DataSourceUnavailable Code = 5108
 	DataCacheUnavailable  Code = 5109
 

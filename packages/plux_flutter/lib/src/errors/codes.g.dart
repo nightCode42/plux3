@@ -374,7 +374,7 @@ enum PluxErrorCode {
   dataGraphqlError(5106, 'DATA_GRAPHQL_ERROR', 'GraphQL request failed'),
 
   /// Request unauthorised.
-  dataUnauthorized(5107, 'DATA_UNAUTHORIZED', 'Request unauthorised'),
+  dataUnauthorised(5107, 'DATA_UNAUTHORISED', 'Request unauthorised'),
 
   /// Data source unavailable.
   dataSourceUnavailable(5108, 'DATA_SOURCE_UNAVAILABLE', 'Data source unavailable'),

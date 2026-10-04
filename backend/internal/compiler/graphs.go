@@ -153,6 +153,9 @@ func (u *unit) checkInputs(g *graph, a *registry.Action, input map[string]json.R
 		}
 		ic := c
 		ic.ptr = ptr + plxerr.Pointer("input", in.Name)
+		if a.Name == "apiCall" && in.Name == "input" && !u.apiCallInput(g, ic) {
+			continue
+		}
 		v := u.checkInput(g, a, in, raw, ic, bind)
 		if v != nil {
 			out = append(out, &prop{name: in.Name, id: in.ID, ptr: ic.ptr, value: v})
@@ -249,6 +252,14 @@ func (u *unit) bindAction(g *graph, a *registry.Action, input map[string]json.Ra
 	if name, t := declaredBinding(g, a, input); t != nil {
 		bind[name] = t
 	}
+	if a.Name == "apiCall" {
+		// The operation declares its input type (DAT-001).
+		if _, op := u.operation(g, literalString(input["operation"])); op != nil && op.Input != "" {
+			if t, err := parseTypeExpr(op.Input); err == nil {
+				bind["I"] = t
+			}
+		}
+	}
 	return bind
 }
 
@@ -337,6 +348,12 @@ func (u *unit) checkRef(g *graph, in registry.Input, raw json.RawMessage, c vctx
 	case "dataSource":
 		id, ok := g.scope.ids["data"][name]
 		resolved, kind, to = ok, EdgeUsesDataSource, id
+	case "operation":
+		src, _ := u.operation(g, name)
+		resolved = src != nil
+		if src != nil {
+			kind, to = EdgeUsesDataSource, src.ID
+		}
 	case "collection":
 		id := u.collectionID(g.plugin, name)
 		resolved, kind, to = id != "", EdgeUsesCollection, id

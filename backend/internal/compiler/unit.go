@@ -60,6 +60,9 @@ type unit struct {
 	appSources []*dataSource
 	envs       map[string]*pxl.Env
 	exprs      map[string]*expr // by file + "#" + pointer
+	// dataConfigs are the decoded configurations of REST and GraphQL
+	// sources, by source ID (ADR-0048).
+	dataConfigs map[string]*parsedConfig
 
 	// Encoding state and outputs.
 	appOut     *out
@@ -76,6 +79,7 @@ func newUnit(opts Options) *unit {
 		tokens: map[string]*token{}, assetIDs: map[string]*schema.AssetEntry{}, envs: map[string]*pxl.Env{},
 		exprs: map[string]*expr{}, graph: &Graph{}, features: map[*plugin]map[string]bool{},
 		icons: map[*plugin]map[icons.Set]map[string]bool{}, files: map[[sha256.Size]byte][]byte{},
+		dataConfigs: map[string]*parsedConfig{},
 	}
 }
 
