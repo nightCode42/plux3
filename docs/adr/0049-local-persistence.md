@@ -2,6 +2,7 @@
 
 - **Status:** Accepted (maintainer, 2026-10-04, P5 plan §2.1, B1–B2)
 - **Date:** 2026-10-04
+- **Supersedes:** the planned ADR-0016 (spec §32), whose decision this record makes (P5 plan §2.1, B5)
 - **Requirements:** `DB-001`–`DB-009`, `STA-003`, `DAT-010`, `DAT-020`, `SCH-012`, `SEC-073`, `HST-010`, `RT-060`, `RT-061`, `LIM-004`
 
 ## Context and problem
