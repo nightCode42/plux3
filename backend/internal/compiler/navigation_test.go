@@ -322,7 +322,7 @@ func TestGuardGraphCompiles(t *testing.T) {
 
 	m = fixture(t)
 	guard(t, m)
-	onApp(func(t *testing.T, doc map[string]any) { doc["minRuntimeVersion"] = "0.2.0" })(t, m)
+	onApp(func(t *testing.T, doc map[string]any) { doc["minRuntimeVersion"] = "0.3.0" })(t, m)
 	if res := compileFS(m); len(res.Diagnostics) > 0 {
 		t.Fatalf("diagnostics:\n%v", res.Diagnostics)
 	}

@@ -23,6 +23,9 @@ func (u *unit) checkGraph(g *graph) {
 	if g.scope == nil {
 		return // not type-checked: its page or plugin failed earlier
 	}
+	if g.doc != nil && len(g.doc.State) > 0 {
+		g.state = u.checkEntries(g.plugin, g.doc.State, g.file, g.scope, true)
+	}
 	index := map[string]int32{}
 	ids := u.newKeys("step")
 	for i, st := range g.steps {
@@ -74,6 +77,9 @@ func (u *unit) checkStep(g *graph, i int, index map[string]int32) *step {
 		out.timeoutMs = uint32(max(0, min(*st.TimeoutMs, 1<<32-1))) //nolint:gosec // G115: clamped.
 	}
 	out.inputs = u.checkInputs(g, &a, input, ptr)
+	if stateWrites[a.Name] {
+		u.checkStateWrite(g, a.Name, input, ptr)
+	}
 	for _, e := range []struct {
 		name, target string
 		dst          *int32
@@ -170,6 +176,9 @@ func (u *unit) checkInput(g *graph, a *registry.Action, in registry.Input, raw j
 		if in.Name == "params" {
 			return u.routeParams(g, raw, bind["P"], c)
 		}
+	}
+	if a.Name == "patchState" && in.Name == "patch" {
+		return u.patchValue(g, raw, c)
 	}
 	if a.Name == "emitHostEvent" && in.Name == "payload" {
 		return u.eventPayload(g, raw, c)
@@ -312,7 +321,7 @@ func statePathType(g *graph, path string) *texpr {
 }
 
 // refRoots are the roots whose entries a state path may name.
-var refRoots = map[string]bool{"app": true, "plugin": true, "page": true, "component": true}
+var refRoots = map[string]bool{"app": true, "plugin": true, "page": true, "component": true, "run": true}
 
 // checkRef resolves a string input that names an entity (ADR-0010).
 func (u *unit) checkRef(g *graph, in registry.Input, raw json.RawMessage, c vctx) *value {
