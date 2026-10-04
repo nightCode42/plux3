@@ -25,7 +25,7 @@ Files are named `NNNN-short-title.md` with a four-digit, never-reused number. Th
 | 0013 | Plux Canvas: TypeScript WebGL2 design surface with a conformance suite | P11 | Planned |
 | 0014 | Studio on Bun with a backend-for-frontend; React and shadcn/ui | P11 | Planned |
 | [0015](0015-single-draft-with-snapshots-and-locks.md) | Single draft with snapshots and exclusive plugin locks | P2 | Accepted |
-| 0016 | Local database adapter model with Drift as default | P5 | Planned |
+| 0016 | Local database adapter model with Drift as default | P5 | Covered by [ADR-0049](0049-local-persistence.md) |
 | 0017 | AI provider abstraction with structured output and validation-driven repair | P12 | Planned |
 | [0018](0018-unified-error-model.md) | Unified error model with registered codes and reasons | P1 | Accepted |
 | 0019 | Approvals bound to artifact content hashes | P9 | Planned |

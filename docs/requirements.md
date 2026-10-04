@@ -2049,7 +2049,7 @@ Significant decisions are recorded as ADRs in `docs/adr/` using MADR. These ADRs
 | 0013 | Plux Canvas: TypeScript WebGL2 design surface with a Flutter-compatible layout engine and conformance suite | P11 |
 | 0014 | Studio on Bun with a backend-for-frontend; React and shadcn/ui | P11 |
 | 0015 | Single draft with snapshots and exclusive plugin locks instead of branching (to be superseded by CRDTs in P14) | P2 |
-| 0016 | Local database adapter model with Drift as default | P5 |
+| 0016 | Local database adapter model with Drift as default (recorded as ADR-0049) | P5 |
 | 0017 | AI provider abstraction with structured output and validation-driven repair | P12 |
 | 0018 | Unified error model with registered reasons and Plux error codes | P1 |
 | 0019 | Approvals bound to artifact content hashes | P9 |
