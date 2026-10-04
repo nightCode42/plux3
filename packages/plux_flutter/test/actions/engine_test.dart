@@ -10,6 +10,7 @@ import 'package:plux_flutter/src/actions/engine.dart';
 import 'package:plux_flutter/src/actions/graph.dart';
 import 'package:plux_flutter/src/actions/handlers.dart';
 import 'package:plux_flutter/src/actions/run.dart';
+import 'package:plux_flutter/src/actions/state_handlers.dart';
 import 'package:plux_flutter/src/render/values.dart';
 import 'package:plux_flutter/src/schema/registry.g.dart';
 
@@ -483,10 +484,10 @@ void main() {
     },
   );
 
-  test('the engine runs exactly the actions Appendix D tags up to P4, and refuses the rest (ADR-0039)', () {
+  test('the engine runs exactly the actions Appendix D tags up to P4 and the state actions, and refuses the rest (ADR-0039) [STA-002]', () {
     for (final d in actionDescriptors) {
       final handler = handlerFor(d);
-      if (runsInThisRuntime(d)) {
+      if (runsInThisRuntime(d) || stateHandlers.containsKey(d.name)) {
         expect(handler, isNot(isA<RefusingHandler>()), reason: d.name);
       } else {
         expect(handler, isA<RefusingHandler>(), reason: d.name);

@@ -17,6 +17,7 @@ import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/render/values.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
 import 'package:plux_flutter/src/schema/registry.g.dart';
+import 'package:plux_flutter/src/state/access.dart';
 
 /// The bounds of one run (ACT-005, LIM-001).
 final class ActionLimits {
@@ -124,8 +125,35 @@ final class ActionRun {
     if (!_cancel.isCompleted) _cancel.complete();
   }
 
+  late StepContext _ctx = context;
+  RunVariables? _vars;
+
   /// Executes the run. It never throws: every failure is in the result.
+  /// The run's variables (STA-001) live until it ends.
   Future<RunResult> execute() async {
+    RunVariables? vars;
+    try {
+      vars = _vars = context.state?.openRun(graph.state);
+    } on Object catch (e) {
+      return _failed(
+        ActionError(
+          ActionErrorKind.custom,
+          PluxErrorCode.stateWriteRefused,
+          'the run variables cannot be opened: $e',
+        ),
+        null,
+        0,
+      );
+    }
+    if (vars != null) _ctx = context.withState(vars.access);
+    try {
+      return await _execute();
+    } finally {
+      vars?.close();
+    }
+  }
+
+  Future<RunResult> _execute() async {
     final steps = <String, Object?>{
       for (final s in graph.steps) s.id: _record(null, null),
     };
@@ -171,7 +199,7 @@ final class ActionRun {
       ActionError? error;
       try {
         final inputs = _inputs(step, descriptor, steps);
-        final work = handler.run(context, inputs);
+        final work = handler.run(_ctx, inputs);
         if (work is StepResult) {
           // Done synchronously: nothing to bound or cancel.
           result = work;
@@ -248,7 +276,13 @@ final class ActionRun {
       if (descriptor != null)
         for (final e in descriptor.inputs.entries) e.value: e.key,
     };
-    final scope = {...roots(), 'event': event, 'steps': steps};
+    final vars = _vars;
+    final scope = {
+      ...roots(),
+      'event': event,
+      'steps': steps,
+      if (vars != null) 'run': vars.values,
+    };
     return {
       for (final e in step.inputs.entries)
         names[e.key] ?? '${e.key}': toPxl(e.value(scope)),

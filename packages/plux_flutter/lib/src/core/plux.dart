@@ -14,6 +14,7 @@ import 'package:plux_flutter/src/core/config.dart';
 import 'package:plux_flutter/src/core/host_events.dart';
 import 'package:plux_flutter/src/core/runtime.dart';
 import 'package:plux_flutter/src/devtools_api/diagnostics.dart';
+import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/navigation/delegate.dart';
 import 'package:plux_flutter/src/navigation/plux_page.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
@@ -185,6 +186,52 @@ abstract final class Plux {
   /// read, write and watch it; `plux codegen` writes typed accessors over
   /// it (HST-030).
   static PluxState<T> state<T>(String name) => PluxState<T>(name, container);
+
+  /// Sends host event [name] into Plux with [payload] in its JSON form
+  /// (HST-013): the triggers that handle it run. Completes with false,
+  /// reported with PLX-5307, when nothing accepts it: the app does not
+  /// declare the event for the host to send, or the payload does not have
+  /// its fields and types. `plux codegen` writes typed senders over it.
+  static Future<bool> sendEvent(
+    String name, [
+    Map<String, Object?> payload = const {},
+  ]) async {
+    final rt = _rt;
+    final sink = rt.hostEventSink;
+    final converted = fromHost(payload) as Map<String, Object?>;
+    if (sink != null && sink.deliver(PluxHostEvent(name, converted))) {
+      return true;
+    }
+    rt.reportProblem(
+      PluxException(
+        PluxErrorCode.hostEventRefused,
+        sink == null
+            ? 'no trigger handles host event $name'
+            : 'host event $name is not declared for the host to send, or its payload does not fit',
+        details: {'event': name},
+      ),
+    );
+    return false;
+  }
+
+  /// Removes the data Plux keeps on the device for this app (HST-001):
+  /// session, persisted and secure state with the stores' keys; app and
+  /// plugin state start again from their defaults. Pages already shown
+  /// keep their in-memory values until they close.
+  static Future<void> wipeData() async {
+    final rt = _rt;
+    await rt.statePersistence.wipe();
+    final c = container;
+    c.read(appStateProvider.notifier).restart();
+    final keys = [
+      for (final b in rt.active.value?.record.bundles ?? const <Never>[]) b.key,
+    ];
+    for (final key in keys) {
+      if (key.isNotEmpty && c.exists(pluginStateProvider(key))) {
+        c.read(pluginStateProvider(key).notifier).restart();
+      }
+    }
+  }
 
   static void _environment(PluxEnvironment Function(PluxEnvironment) f) {
     final n = container.read(environmentProvider.notifier);

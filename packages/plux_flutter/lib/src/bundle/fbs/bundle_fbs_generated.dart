@@ -1079,10 +1079,11 @@ class StateEntry {
   int get migrationFrom => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 22, 0);
   int get migration => const fb.Uint64Reader().vTableGet(_bc, _bcOffset, 24, 0);
   bool get migrationReset => const fb.BoolReader().vTableGet(_bc, _bcOffset, 26, false);
+  int get migrationType => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 28, 0);
 
   @override
   String toString() {
-    return 'StateEntry{id: ${id}, name: ${name}, type: ${type}, \$default: ${$default}, computed: ${computed}, persistence: ${persistence}, sensitive: ${sensitive}, exposed: ${exposed}, fingerprint: ${fingerprint}, migrationFrom: ${migrationFrom}, migration: ${migration}, migrationReset: ${migrationReset}}';
+    return 'StateEntry{id: ${id}, name: ${name}, type: ${type}, \$default: ${$default}, computed: ${computed}, persistence: ${persistence}, sensitive: ${sensitive}, exposed: ${exposed}, fingerprint: ${fingerprint}, migrationFrom: ${migrationFrom}, migration: ${migration}, migrationReset: ${migrationReset}, migrationType: ${migrationType}}';
   }
 }
 
@@ -1100,7 +1101,7 @@ class StateEntryBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable(12);
+    fbBuilder.startTable(13);
   }
 
   int addId(int offset) {
@@ -1151,6 +1152,10 @@ class StateEntryBuilder {
     fbBuilder.addBool(11, migrationReset);
     return fbBuilder.offset;
   }
+  int addMigrationType(int? migrationType) {
+    fbBuilder.addUint32(12, migrationType);
+    return fbBuilder.offset;
+  }
 
   int finish() {
     return fbBuilder.endTable();
@@ -1170,6 +1175,7 @@ class StateEntryObjectBuilder extends fb.ObjectBuilder {
   final int? _migrationFrom;
   final int? _migration;
   final bool? _migrationReset;
+  final int? _migrationType;
 
   StateEntryObjectBuilder({
     UuidObjectBuilder? id,
@@ -1184,6 +1190,7 @@ class StateEntryObjectBuilder extends fb.ObjectBuilder {
     int? migrationFrom,
     int? migration,
     bool? migrationReset,
+    int? migrationType,
   })
       : _id = id,
         _name = name,
@@ -1196,13 +1203,14 @@ class StateEntryObjectBuilder extends fb.ObjectBuilder {
         _fingerprint = fingerprint,
         _migrationFrom = migrationFrom,
         _migration = migration,
-        _migrationReset = migrationReset;
+        _migrationReset = migrationReset,
+        _migrationType = migrationType;
 
   /// Finish building, and store into the [fbBuilder].
   @override
   int finish(fb.Builder fbBuilder) {
     final int? $defaultOffset = _$default?.getOrCreateOffset(fbBuilder);
-    fbBuilder.startTable(12);
+    fbBuilder.startTable(13);
     if (_id != null) {
       fbBuilder.addStruct(0, _id!.finish(fbBuilder));
     }
@@ -1217,6 +1225,7 @@ class StateEntryObjectBuilder extends fb.ObjectBuilder {
     fbBuilder.addUint32(9, _migrationFrom);
     fbBuilder.addUint64(10, _migration);
     fbBuilder.addBool(11, _migrationReset);
+    fbBuilder.addUint32(12, _migrationType);
     return fbBuilder.endTable();
   }
 

@@ -39,6 +39,8 @@ final class Goldens {
         'features/tasks.pxb',
         'widgets/widgets.pxb',
         'widgets/gallery.pxb',
+        'state/state.pxb',
+        'state/notes.pxb',
       ])
         n: read(n),
     };

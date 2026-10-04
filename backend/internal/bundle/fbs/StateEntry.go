@@ -187,8 +187,20 @@ func (rcv *StateEntry) MutateMigrationReset(n bool) bool {
 	return rcv._tab.MutateBoolSlot(26, n)
 }
 
+func (rcv *StateEntry) MigrationType() uint32 {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(28))
+	if o != 0 {
+		return rcv._tab.GetUint32(o + rcv._tab.Pos)
+	}
+	return 0
+}
+
+func (rcv *StateEntry) MutateMigrationType(n uint32) bool {
+	return rcv._tab.MutateUint32Slot(28, n)
+}
+
 func StateEntryStart(builder *flatbuffers.Builder) {
-	builder.StartObject(12)
+	builder.StartObject(13)
 }
 func StateEntryAddId(builder *flatbuffers.Builder, id flatbuffers.UOffsetT) {
 	builder.PrependStructSlot(0, flatbuffers.UOffsetT(id), 0)
@@ -225,6 +237,9 @@ func StateEntryAddMigration(builder *flatbuffers.Builder, migration uint64) {
 }
 func StateEntryAddMigrationReset(builder *flatbuffers.Builder, migrationReset bool) {
 	builder.PrependBoolSlot(11, migrationReset, false)
+}
+func StateEntryAddMigrationType(builder *flatbuffers.Builder, migrationType uint32) {
+	builder.PrependUint32Slot(12, migrationType, 0)
 }
 func StateEntryEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
 	return builder.EndObject()

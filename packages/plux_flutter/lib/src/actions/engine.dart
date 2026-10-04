@@ -18,6 +18,7 @@ import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/navigation/router.dart';
 import 'package:plux_flutter/src/render/sections.dart';
+import 'package:plux_flutter/src/state/access.dart';
 
 /// Records a telemetry event, as `TelemetryRecorder.record` does.
 typedef RecordEvent = void Function(
@@ -116,6 +117,7 @@ final class ActionHost {
     required Object? Function(fbs.Value? value, Map<String, Object?> roots)
     resolve,
     Object? payload,
+    StateAccess? state,
   }) {
     if (_disposed) return;
     final id = handler.graph;
@@ -138,7 +140,16 @@ final class ActionHost {
       report(_with(e, path));
       return;
     }
-    unawaited(start(graph, roots: roots, event: payload, key: key, path: path));
+    unawaited(
+      start(
+        graph,
+        roots: roots,
+        event: payload,
+        key: key,
+        path: path,
+        state: state,
+      ),
+    );
   }
 
   /// Starts a run of [graph] unless one for [key] is in progress; completes
@@ -150,6 +161,7 @@ final class ActionHost {
     String path = '',
     Object? event,
     RunTrigger trigger = RunTrigger.event,
+    StateAccess? state,
   }) async {
     if (_disposed || !_busy.add(key)) return null;
     for (final s in graph.steps) {
@@ -158,7 +170,7 @@ final class ActionHost {
     final run = ActionRun(
       graph: graph,
       roots: roots,
-      context: context,
+      context: state == null ? context : context.withState(state),
       limits: limits,
       event: event,
     );

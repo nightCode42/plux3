@@ -9,8 +9,10 @@ library;
 import 'dart:async';
 
 import 'package:plux_flutter/src/actions/action_error.dart';
+import 'package:plux_flutter/src/actions/state_handlers.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/schema/registry.g.dart';
+import 'package:plux_flutter/src/state/access.dart';
 
 /// The phase whose actions this runtime runs: an action whose descriptor
 /// names a later phase gets the refusing handler.
@@ -75,7 +77,16 @@ final class StepContext {
     required this.navigator,
     required this.emit,
     required this.nativeActions,
+    this.state,
   });
+
+  /// This context with [state] (STA-001).
+  StepContext withState(StateAccess state) => StepContext(
+    navigator: navigator,
+    emit: emit,
+    nativeActions: nativeActions,
+    state: state,
+  );
 
   /// Navigation for the run's page.
   final RunNavigator navigator;
@@ -85,6 +96,9 @@ final class StepContext {
 
   /// The host's custom actions.
   final NativeActions nativeActions;
+
+  /// The state the run reads and writes, or null where none is in scope.
+  final StateAccess? state;
 }
 
 /// What a step produced.
@@ -267,7 +281,9 @@ ActionDescriptor? actionDescriptor(int id) => _byId[id];
 
 /// The handler of an action: its P4 handler, or the refusing one.
 ActionHandler handlerFor(ActionDescriptor d) =>
-    p4Handlers[d.name] ?? RefusingHandler(d.name, d.phase);
+    p4Handlers[d.name] ??
+    stateHandlers[d.name] ??
+    RefusingHandler(d.name, d.phase);
 
 /// Whether the descriptor's phase is one this runtime runs.
 bool runsInThisRuntime(ActionDescriptor d) =>

@@ -369,6 +369,7 @@ const List<TableLayout> tableLayouts = [
     FieldLayout('migration_from', 9, FieldKind.scalar, 4, 4, -1, required: false),
     FieldLayout('migration', 10, FieldKind.scalar, 8, 8, -1, required: false),
     FieldLayout('migration_reset', 11, FieldKind.scalar, 1, 1, -1, required: false),
+    FieldLayout('migration_type', 12, FieldKind.scalar, 4, 4, -1, required: false),
   ]),
   // 47
   TableLayout('Step', [

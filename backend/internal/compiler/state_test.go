@@ -39,7 +39,7 @@ func TestStateGoldenBundles(t *testing.T) {
 		checkGolden(t, filepath.Join(goldenRoot, "state", b.Key+".pxb"), b.Data)
 	}
 	app := res.StoredState[""]
-	if len(app) != 3 {
+	if len(app) != 4 {
 		t.Fatalf("app stored state %+v", app)
 	}
 	for _, e := range app {
@@ -56,7 +56,7 @@ func TestStateGoldenBundles(t *testing.T) {
 		t.Errorf("stored state read back %+v, %v", fromBundle, err)
 	}
 	fromApp, err := StoredState(res.App.Data)
-	if err != nil || len(fromApp) != 3 {
+	if err != nil || len(fromApp) != 4 || !slices.ContainsFunc(fromApp, func(e StoredEntry) bool { return e.Name == "level" && e.MigrationFrom != "" }) {
 		t.Errorf("app stored state read back %+v, %v", fromApp, err)
 	}
 }

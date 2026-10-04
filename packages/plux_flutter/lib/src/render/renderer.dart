@@ -11,6 +11,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 import 'package:http/http.dart' as http;
 import 'package:plux_flutter/src/actions/action_error.dart';
 import 'package:plux_flutter/src/actions/engine.dart';
@@ -47,7 +48,9 @@ import 'package:plux_flutter/src/render/tokens.dart';
 import 'package:plux_flutter/src/render/values.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
 import 'package:plux_flutter/src/schema/registry.g.dart';
+import 'package:plux_flutter/src/state/persistence.dart';
 import 'package:plux_flutter/src/state/providers.dart';
+import 'package:plux_flutter/src/state/scope_state.dart';
 import 'package:plux_flutter/src/verify/manifest.dart';
 
 /// The builders by permanent widget ID: generated ones and hand-written
@@ -68,10 +71,12 @@ final class PluxRenderer implements PageRenderer, RenderServices {
     required this.imageCacheDirectory,
     this.assets = AssetDevice.plain,
     this.actions,
+    StatePersistence? statePersistence,
     VerifiedAssets? verified,
     int? cacheEntries,
     int? cacheBytes,
-  }) : _verified = verified ?? VerifiedAssets(),
+  }) : statePersistence = statePersistence ?? StatePersistence.inMemory(),
+       _verified = verified ?? VerifiedAssets(),
        cache = SectionCache(
          maxEntries:
              cacheEntries ?? PluxLimit.runtimeSectionCacheEntries.defaultValue,
@@ -100,6 +105,9 @@ final class PluxRenderer implements PageRenderer, RenderServices {
   /// What pages run their action graphs with (ADR-0039); without it,
   /// events report `PLX-4010` as in P3.
   final ActionServices? actions;
+
+  /// Where session, persisted and secure state lives (STA-003).
+  final StatePersistence statePersistence;
 
   final VerifiedAssets _verified;
   ImageDiskCache? _imageCache;
@@ -132,37 +140,64 @@ final class PluxRenderer implements PageRenderer, RenderServices {
     onPop: onPop,
   );
 
-  /// The app's state entries at their declared defaults, with their
-  /// declarations by name (ADR-0023); a default that cannot be read is
-  /// reported and starts as null.
-  ({Map<String, Object?> values, Map<String, AppStateDecl> decls}) appState(
+  /// The state model of a scope instance of plugin [plugin] ('' for the
+  /// app) in [release] (STA-001): its [entries], decoded from [strings];
+  /// computed entries read [parents] and [extraRoots].
+  ScopeModel scopeModel(
     ActiveRelease release,
-  ) {
-    final app = view(release, '');
+    String plugin,
+    StateScopeKind kind,
+    List<fbs.StateEntry>? entries, {
+    StringTable? strings,
+    Map<String, ProviderListenable<Map<String, Object?>>> parents = const {},
+    Map<String, Object?> Function()? extraRoots,
+  }) {
+    final bundle = view(release, plugin);
+    final limits = _pxlLimits(release.limits);
     final literal = ValueResolver(
-      plugin: app,
+      plugin: bundle,
       roots: () => const {},
       token: (_) => null,
       translation: (_) => null,
-      limits: _pxlLimits(release.limits),
+      limits: limits,
     );
-    final values = <String, Object?>{};
-    final decls = <String, AppStateDecl>{};
-    for (final d in app.appState) {
-      decls[d.name] = d;
-      try {
-        values[d.name] = toPxl(literal.resolve(d.defaultValue, app.string));
-      } on BindingError catch (e) {
-        report(
-          PluxException(
-            PluxErrorCode.propValueInvalid,
-            'app state ${d.name}: ${e.message}',
-          ),
-        );
-        values[d.name] = null;
-      }
-    }
-    return (values: values, decls: decls);
+    final str = strings ?? bundle.string;
+    final types = typesOf(release, plugin);
+    return ScopeModel(
+      kind: kind,
+      owner: plugin,
+      decls: decodeState(
+        entries,
+        bundle: bundle,
+        strings: str,
+        types: types,
+        literal: (v) {
+          try {
+            return toPxl(literal.resolve(v, str));
+          } on BindingError catch (e) {
+            report(
+              PluxException(
+                PluxErrorCode.propValueInvalid,
+                '${kind.name} state: ${e.message}',
+              ),
+            );
+            return null;
+          }
+        },
+      ),
+      types: types,
+      evaluate: (program, roots) => ValueResolver(
+        plugin: bundle,
+        roots: () => roots,
+        token: (_) => null,
+        translation: (_) => null,
+        limits: limits,
+      ).evaluate(program),
+      persistence: statePersistence,
+      report: report,
+      parents: parents,
+      extraRoots: extraRoots,
+    );
   }
 
   /// The named types the pages of plugin [plugin] may use: the app's and
@@ -898,12 +933,21 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
       );
       widget.renderer.report(_paramError!);
     }
-    _instance = PageInstance({
-      for (final e
-          in page?.state ?? component?.state ?? const <fbs.StateEntry>[])
-        if (e.computed == 0)
-          _section.string(e.name): read(literal, e.$default, _section.string),
-    });
+    _instance = PageInstance(
+      const {},
+      model: widget.renderer.scopeModel(
+        widget.release,
+        widget.page.plugin,
+        _component ? StateScopeKind.component : StateScopeKind.page,
+        page?.state ?? component?.state,
+        strings: _section.string,
+        parents: {
+          'app': appStateProvider,
+          'plugin': pluginStateProvider(widget.page.plugin),
+        },
+        extraRoots: () => {_component ? 'props' : 'params': _params},
+      ),
+    );
     final appLiteral = ValueResolver(
       plugin: _app,
       roots: () => const {},
@@ -974,6 +1018,7 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
       _component ? 'props' : 'params': _params,
       _component ? 'component' : 'page': ref.read(pageStateProvider(_instance)),
       'app': ref.read(appStateProvider),
+      'plugin': ref.read(pluginStateProvider(widget.page.plugin)),
       'device': device,
       // Read on every evaluation: user.authenticated is the host's answer
       // at that moment (ADR-0040).
@@ -1040,6 +1085,7 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
       path: _path,
       state: _instance,
       actions: _actions,
+      componentState: _component ? _instance : null,
     );
     final plugin = widget.page.plugin;
     Widget page = PluxBoundary(

@@ -13,44 +13,52 @@ import 'package:plux_flutter/src/assets/icon_fonts.dart';
 import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/core/active_release.dart';
+import 'package:plux_flutter/src/core/app_state.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/native_catalogue/registration.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
 import 'package:plux_flutter/src/render/node_context.dart';
 import 'package:plux_flutter/src/render/sections.dart';
 import 'package:plux_flutter/src/render/values.dart';
+import 'package:plux_flutter/src/state/scope_state.dart';
 
-/// One page shown on screen: the key of its state.
+/// One instance of a page, component or action run on screen: the key of
+/// its state (STA-001).
 final class PageInstance {
-  /// Creates an instance with the page's initial [state].
-  PageInstance(this.initial);
+  /// Creates an instance with the [initial] state, or the values [model]
+  /// gives: stored, migrated or default, and computed (STA-003, STA-004).
+  PageInstance(this.initial, {this.model});
 
-  /// The declared initial state, by entry name.
+  /// The declared initial state, by entry name, when there is no [model].
   final Map<String, Object?> initial;
+
+  /// The instance's declarations and services.
+  final ScopeModel? model;
 }
 
-/// The state of a page instance (STA-*): its declared initial values in
-/// P3; actions write it from P5. Nodes subscribe with `select` on the
-/// paths their bindings read (RT-012).
-final class PageStateNotifier extends Notifier<Map<String, Object?>> {
+/// The state of a page, component or run instance (STA-001). Nodes
+/// subscribe with `select` on the paths their bindings read (RT-012).
+final class PageStateNotifier extends Notifier<Map<String, Object?>>
+    with ScopeValues {
   /// Creates the state of [instance].
   PageStateNotifier(this.instance);
 
-  /// The page instance.
+  /// The instance.
   final PageInstance instance;
 
   @override
-  Map<String, Object?> build() => instance.initial;
+  ScopeModel? get model => instance.model;
 
-  /// Replaces entry [name].
-  void set(String name, Object? value) => state = {...state, name: value};
+  @override
+  Map<String, Object?> build() =>
+      instance.model == null ? instance.initial : initialValues();
 }
 
-/// The state of each page instance.
+/// The state of each page, component and run instance, disposed with it.
 final pageStateProvider = NotifierProvider.autoDispose
     .family<PageStateNotifier, Map<String, Object?>, PageInstance>(
       PageStateNotifier.new,
-      dependencies: const [],
+      dependencies: [appStateProvider, pluginStateProvider],
     );
 
 /// What the renderer provides to every node: icons (THM-005), images of
@@ -108,6 +116,7 @@ final class RenderScope {
     this.fills,
     this.parent,
     this.actions,
+    this.componentState,
   });
 
   /// The release rendered.
@@ -161,6 +170,10 @@ final class RenderScope {
   /// actions do not run.
   final ActionHost? actions;
 
+  /// The state of the component instance whose nodes this scope renders,
+  /// which bindings under `component` read (STA-001).
+  final PageInstance? componentState;
+
   /// A scope with [extra] roots, for a template item.
   RenderScope withRoots(Map<String, Object?> extra, String at) {
     Map<String, Object?> all() => {...roots(), ...extra};
@@ -187,6 +200,7 @@ final class RenderScope {
       fills: fills,
       parent: parent,
       actions: actions,
+      componentState: componentState,
     );
   }
 

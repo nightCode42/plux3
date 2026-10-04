@@ -60,7 +60,12 @@ final class GraphStep {
 /// A graph: its steps, `steps[0]` first, and its declared output.
 final class ActionGraph {
   /// Creates a graph.
-  const ActionGraph({required this.id, required this.steps, this.output});
+  const ActionGraph({
+    required this.id,
+    required this.steps,
+    this.output,
+    this.state = const [],
+  });
 
   /// The graph's UUID, for reports and telemetry.
   final String id;
@@ -70,6 +75,9 @@ final class ActionGraph {
 
   /// The type expression of the graph's output, or null.
   final String? output;
+
+  /// The run's variables (STA-001).
+  final List<fbs.StateEntry> state;
 }
 
 /// Decodes [graph], whose strings are in [strings]; [resolve] evaluates an
@@ -83,6 +91,7 @@ ActionGraph decodeGraph(
   return ActionGraph(
     id: graph.id == null ? '' : uuidString(uuidOf(graph.id!)),
     output: out == 0 ? null : strings(out),
+    state: graph.state ?? const [],
     steps: [
       for (final s in graph.steps ?? const <fbs.Step>[])
         GraphStep(

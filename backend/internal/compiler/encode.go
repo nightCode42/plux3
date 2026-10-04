@@ -358,12 +358,12 @@ func (e *valueEnc) state(entries []*stateEntry) flatbuffers.UOffsetT {
 			migration = e.u.program(e.o, s.migration.prog)
 		}
 		name, typ := e.strs.of(s.name), e.strs.of(s.typ)
-		var fingerprint, from uint32
+		var fingerprint, from, fromType uint32
 		if s.fingerprint != "" {
 			fingerprint = e.strs.of(s.fingerprint)
 		}
 		if s.migrationFrom != "" {
-			from = e.strs.of(s.migrationFrom)
+			from, fromType = e.strs.of(s.migrationFrom), e.strs.of(s.migrationType)
 		}
 		fbs.StateEntryStart(b)
 		hi, lo := uuidHalves(s.id)
@@ -384,6 +384,7 @@ func (e *valueEnc) state(entries []*stateEntry) flatbuffers.UOffsetT {
 		}
 		if from != 0 {
 			fbs.StateEntryAddMigrationFrom(b, from)
+			fbs.StateEntryAddMigrationType(b, fromType)
 		}
 		if migration != 0 {
 			fbs.StateEntryAddMigration(b, migration)

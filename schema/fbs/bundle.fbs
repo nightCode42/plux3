@@ -126,6 +126,9 @@ table StateEntry {
   migration_from: uint;
   migration: ulong;
   migration_reset: bool;
+  // The type expression of the previous release's type, which the
+  // migration reads as `previous`.
+  migration_type: uint;
 }
 
 enum DataSourceKind : ubyte {

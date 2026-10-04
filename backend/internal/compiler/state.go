@@ -182,7 +182,7 @@ func (u *unit) checkMigration(pl *plugin, st *schema.StateEntry, e *stateEntry, 
 		}
 		c := vctx{file: file, ptr: mptr + "/value", pl: pl, code: plxerr.ValueTypeMismatch}
 		if v := u.exprValue(c, te); v != nil {
-			e.migrationFrom, e.migration = fp, &expr{prog: v.prog}
+			e.migrationFrom, e.migrationType, e.migration = fp, from.String(), &expr{prog: v.prog}
 		}
 	}
 }

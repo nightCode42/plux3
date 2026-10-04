@@ -327,6 +327,7 @@ type stateEntry struct {
 	// type is read (STA-040).
 	fingerprint    string
 	migrationFrom  string
+	migrationType  string
 	migration      *expr
 	migrationReset bool
 }

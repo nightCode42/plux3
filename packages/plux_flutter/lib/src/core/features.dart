@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /// The features this runtime supports, for `required_features` (BND-008):
-/// `pxl.v1`, `navigation.guards.v1` (route guards, ADR-0040), and
+/// `pxl.v1`, `navigation.guards.v1` (route guards, ADR-0040), the state
+/// engine's `state.write.v1`, `state.computed.v1` and
+/// `state.persistence.v1`, and
 /// registry revisions — `widget.<Type>.v<n>`,
 /// `type.<Name>.v<n>`, `enum.<Name>.v<n>` — up to the revision this
 /// runtime's generated registry knows, for widgets it can build.
@@ -36,9 +38,21 @@ final class RuntimeFeatures {
   /// page requires them, so a runtime without guards never opens it.
   static const Set<String> navigation = {'navigation.guards.v1'};
 
+  /// The state engine's features (STA-*): writes, computed entries and
+  /// session, persisted and secure entries.
+  static const Set<String> state = {
+    'state.write.v1',
+    'state.computed.v1',
+    'state.persistence.v1',
+  };
+
   /// Whether [feature] is supported.
   bool supports(String feature) {
-    if (pxl.contains(feature) || navigation.contains(feature)) return true;
+    if (pxl.contains(feature) ||
+        navigation.contains(feature) ||
+        state.contains(feature)) {
+      return true;
+    }
     final m = RegExp(
       r'^(widget|type|enum)\.([A-Za-z][A-Za-z0-9]*)\.v([1-9]\d*)$',
     ).firstMatch(feature);

@@ -319,6 +319,7 @@ var tableLayouts = [...]tableLayout{
 		{name: "migration_from", id: 9, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 		{name: "migration", id: 10, kind: fieldScalar, size: 8, align: 8, table: -1, required: false},
 		{name: "migration_reset", id: 11, kind: fieldScalar, size: 1, align: 1, table: -1, required: false},
+		{name: "migration_type", id: 12, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
 	}},
 	47: {name: "Step", fields: []fieldLayout{
 		{name: "id", id: 0, kind: fieldScalar, size: 4, align: 4, table: -1, required: false},
