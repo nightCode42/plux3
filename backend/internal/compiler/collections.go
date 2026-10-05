@@ -127,9 +127,12 @@ func (u *unit) checkCollectionDecl(pl *plugin, cols []schema.Collection, dropped
 		ptr := plxerr.Pointer("collections", strconv.Itoa(i))
 		u.useRevision(dbFeature, dbRuntimes, 1, vctx{file: file, ptr: ptr, pl: pl})
 		declared[c.ID] = true
-		u.checkCollectionKey(pl, c, file, ptr)
-		u.checkCollectionPlans(pl, c, file, ptr)
+		u.checkCollectionKey(c, file, ptr)
+		u.checkCollectionPlans(c, file, ptr)
 		set.Collections = append(set.Collections, storedCollection(c, file, ptr))
+	}
+	if len(dropped) > 0 {
+		u.useRevision(dbFeature, dbRuntimes, 1, vctx{file: file, ptr: "/droppedCollections", pl: pl})
 	}
 	for i, id := range dropped {
 		if declared[id] {
@@ -146,7 +149,7 @@ func (u *unit) checkCollectionDecl(pl *plugin, cols []schema.Collection, dropped
 
 // checkCollectionKey checks that primary key fields are non-null strings or
 // ints (DB-004).
-func (u *unit) checkCollectionKey(pl *plugin, c schema.Collection, file, ptr string) {
+func (u *unit) checkCollectionKey(c schema.Collection, file, ptr string) {
 	types := map[string]string{}
 	for _, f := range c.Fields {
 		types[f.Name] = f.Type
@@ -165,8 +168,7 @@ func (u *unit) checkCollectionKey(pl *plugin, c schema.Collection, file, ptr str
 
 // checkCollectionPlans checks a collection's migration plans on their own
 // (DB-005): versions, and that they name fields they can act on.
-func (u *unit) checkCollectionPlans(pl *plugin, c schema.Collection, file, ptr string) {
-	version := collectionVersion(c)
+func (u *unit) checkCollectionPlans(c schema.Collection, file, ptr string) {
 	types := map[string]string{}
 	for _, f := range c.Fields {
 		types[f.Name] = f.Type
@@ -177,32 +179,37 @@ func (u *unit) checkCollectionPlans(pl *plugin, c schema.Collection, file, ptr s
 		bad := func(sub, format string, args ...any) {
 			u.report(plxerr.CollectionPlanInvalid, file, mptr+sub, format, args...)
 		}
-		if m.From >= version {
-			bad("/from", "a migration from version %d cannot lead to version %d", m.From, version)
+		if m.From >= collectionVersion(c) {
+			bad("/from", "a migration from version %d cannot lead to version %d", m.From, collectionVersion(c))
 		}
 		if seen[m.From] {
 			bad("/from", "two migrations start from version %d", m.From)
 		}
 		seen[m.From] = true
-		for j, d := range m.Drop {
-			if _, still := types[d]; still {
-				bad(plxerr.Pointer("drop", strconv.Itoa(j)), "field %q is dropped but collection %q still declares it", d, c.Key)
-			}
+		checkPlanFields(c.Key, m, types, bad)
+	}
+}
+
+// checkPlanFields checks the field names a plan drops, resets and renames.
+func checkPlanFields(key string, m schema.CollectionMigration, types map[string]string, bad func(sub, format string, args ...any)) {
+	for j, d := range m.Drop {
+		if _, still := types[d]; still {
+			bad(plxerr.Pointer("drop", strconv.Itoa(j)), "field %q is dropped but collection %q still declares it", d, key)
 		}
-		for j, r := range m.Reset {
-			t, ok := types[r]
-			if !ok {
-				bad(plxerr.Pointer("reset", strconv.Itoa(j)), "collection %q has no field %q to reset", c.Key, r)
-				continue
-			}
-			if te, err := parseTypeExpr(t); err == nil && !te.nullable && !emptyValued[te.name] {
-				bad(plxerr.Pointer("reset", strconv.Itoa(j)), "field %q is a non-null %s, which has no empty value to reset to; make it nullable", r, t)
-			}
+	}
+	for j, r := range m.Reset {
+		t, ok := types[r]
+		if !ok {
+			bad(plxerr.Pointer("reset", strconv.Itoa(j)), "collection %q has no field %q to reset", key, r)
+			continue
 		}
-		for _, to := range sortedKeys(m.Rename) {
-			if _, ok := types[to]; !ok {
-				bad(plxerr.Pointer("rename", to), "collection %q has no field %q", c.Key, to)
-			}
+		if te, err := parseTypeExpr(t); err == nil && !te.nullable && !emptyValued[te.name] {
+			bad(plxerr.Pointer("reset", strconv.Itoa(j)), "field %q is a non-null %s, which has no empty value to reset to; make it nullable", r, t)
+		}
+	}
+	for _, to := range sortedKeys(m.Rename) {
+		if _, ok := types[to]; !ok {
+			bad(plxerr.Pointer("rename", to), "collection %q has no field %q", key, to)
 		}
 	}
 }
@@ -319,28 +326,11 @@ func readCollection(c *fbs.Collection, str func(uint32) string) StoredCollection
 		}
 		out.Indexes = append(out.Indexes, fields)
 	}
-	var m fbs.CollectionMigration
 	for i := range c.MigrationsLength() {
-		if !c.Migrations(&m, i) {
-			continue
+		var m fbs.CollectionMigration
+		if c.Migrations(&m, i) {
+			out.Migrations = append(out.Migrations, readMigration(&m, str))
 		}
-		sm := StoredMigration{From: int(m.From())}
-		var r fbs.FieldRename
-		for j := range m.RenameLength() {
-			if m.Rename(&r, j) {
-				if sm.Rename == nil {
-					sm.Rename = map[string]string{}
-				}
-				sm.Rename[str(r.To())] = str(r.From())
-			}
-		}
-		for j := range m.DropLength() {
-			sm.Drop = append(sm.Drop, str(m.Drop(j)))
-		}
-		for j := range m.ResetLength() {
-			sm.Reset = append(sm.Reset, str(m.Reset(j)))
-		}
-		out.Migrations = append(out.Migrations, sm)
 	}
 	return out
 }
@@ -409,34 +399,7 @@ func checkCollection(p, c StoredCollection) plxerr.Diagnostics {
 // current one on the previous fields, as a device does, and reports what
 // is left unexplained.
 func checkMigrated(p, c StoredCollection, loc plxerr.Location) plxerr.Diagnostics {
-	fields := map[string]string{}
-	for _, f := range p.Fields {
-		fields[f.Name] = f.Type
-	}
-	resets := map[string]bool{}
-	var deleted []string
-	plans := slices.SortedFunc(slices.Values(c.Migrations), func(a, b StoredMigration) int { return a.From - b.From })
-	for _, m := range plans {
-		if m.From < p.Version || m.From >= c.Version {
-			continue
-		}
-		for _, to := range slices.Sorted(maps.Keys(m.Rename)) {
-			if t, ok := fields[m.Rename[to]]; ok {
-				delete(fields, m.Rename[to])
-				fields[to] = t
-			}
-		}
-		for _, d := range m.Drop {
-			if _, ok := fields[d]; ok {
-				delete(fields, d)
-				deleted = append(deleted, d)
-			}
-		}
-		for _, r := range m.Reset {
-			resets[r] = true
-			deleted = append(deleted, r)
-		}
-	}
+	fields, resets, deleted := simulatePlans(p, c)
 	var out plxerr.Diagnostics
 	need := func(format string, args ...any) {
 		out = append(out, plxerr.NewDiagnostic(plxerr.CollectionPlanRequired, loc, format, args...))
@@ -462,4 +425,60 @@ func checkMigrated(p, c StoredCollection, loc plxerr.Location) plxerr.Diagnostic
 			"collection %q: migrating from version %d deletes the values of %s", c.Key, p.Version, strings.Join(slices.Compact(deleted), ", ")))
 	}
 	return out
+}
+
+// readMigration reads one migration plan table.
+func readMigration(m *fbs.CollectionMigration, str func(uint32) string) StoredMigration {
+	sm := StoredMigration{From: int(m.From())}
+	var r fbs.FieldRename
+	for j := range m.RenameLength() {
+		if m.Rename(&r, j) {
+			if sm.Rename == nil {
+				sm.Rename = map[string]string{}
+			}
+			sm.Rename[str(r.To())] = str(r.From())
+		}
+	}
+	for j := range m.DropLength() {
+		sm.Drop = append(sm.Drop, str(m.Drop(j)))
+	}
+	for j := range m.ResetLength() {
+		sm.Reset = append(sm.Reset, str(m.Reset(j)))
+	}
+	return sm
+}
+
+// simulatePlans applies the plans from the previous version to the current
+// one, oldest first, to the previous fields, as a device does: the fields
+// that remain with their types, the fields reset, and the fields whose
+// values are deleted.
+func simulatePlans(p, c StoredCollection) (fields map[string]string, resets map[string]bool, deleted []string) {
+	fields = map[string]string{}
+	for _, f := range p.Fields {
+		fields[f.Name] = f.Type
+	}
+	resets = map[string]bool{}
+	plans := slices.SortedFunc(slices.Values(c.Migrations), func(a, b StoredMigration) int { return a.From - b.From })
+	for _, m := range plans {
+		if m.From < p.Version || m.From >= c.Version {
+			continue
+		}
+		for _, to := range slices.Sorted(maps.Keys(m.Rename)) {
+			if t, ok := fields[m.Rename[to]]; ok {
+				delete(fields, m.Rename[to])
+				fields[to] = t
+			}
+		}
+		for _, d := range m.Drop {
+			if _, ok := fields[d]; ok {
+				delete(fields, d)
+				deleted = append(deleted, d)
+			}
+		}
+		for _, r := range m.Reset {
+			resets[r] = true
+			deleted = append(deleted, r)
+		}
+	}
+	return fields, resets, deleted
 }

@@ -298,11 +298,6 @@ func (s *Service) RunPublish(ctx context.Context, job Job) error {
 	if err != nil {
 		return err
 	}
-	collections, err := s.collectionChecks(ctx, system, row, c)
-	if err != nil {
-		return err
-	}
-	stored = append(stored, collections...)
 	if stored.HasErrors() {
 		return s.fail(ctx, system, row, append(diags, stored...))
 	}
@@ -765,10 +760,12 @@ func (s *Service) hostBuildChecks(ctx context.Context, p auth.Principal, row dbg
 	return out, err
 }
 
-// storedStateChecks compares the stored state of the published bundle
+// storedStateChecks compares what devices store of the published bundle
 // with the bundle's latest version, which is newer than any release
-// devices hold (STA-040): a session, persisted or secure entry whose type
-// changed needs a migration from the previous type or a reset. The first
+// devices hold: a session, persisted or secure state entry whose type
+// changed needs a migration from the previous type or a reset (STA-040),
+// and a changed collection needs a new version, a plan where data would
+// be lost, and a warning the publisher acknowledges (DB-005). The first
 // version of a bundle needs nothing.
 func (s *Service) storedStateChecks(ctx context.Context, p auth.Principal, row dbgen.PublishJob, c compiled) (plxerr.Diagnostics, error) {
 	data, err := s.previousBundle(ctx, p, row)
@@ -779,24 +776,12 @@ func (s *Service) storedStateChecks(ctx context.Context, p auth.Principal, row d
 	if err != nil {
 		return nil, fmt.Errorf("release: the previous bundle: %w", err)
 	}
-	return compiler.CheckStoredState(before, c.result.StoredState[c.key]), nil
-}
-
-// collectionChecks compares the local collections of the published bundle
-// with the bundle's latest version (DB-005): a changed schema raises the
-// version, a change that loses data needs a plan, and a plan that deletes
-// data is a warning the publisher acknowledges. The first version of a
-// bundle needs nothing.
-func (s *Service) collectionChecks(ctx context.Context, p auth.Principal, row dbgen.PublishJob, c compiled) (plxerr.Diagnostics, error) {
-	data, err := s.previousBundle(ctx, p, row)
-	if err != nil || data == nil {
-		return nil, err
-	}
-	before, err := compiler.StoredCollections(data)
+	collections, err := compiler.StoredCollections(data)
 	if err != nil {
 		return nil, fmt.Errorf("release: the previous bundle: %w", err)
 	}
-	return compiler.CheckCollections(before, c.result.Collections[c.key]), nil
+	out := compiler.CheckStoredState(before, c.result.StoredState[c.key])
+	return append(out, compiler.CheckCollections(collections, c.result.Collections[c.key])...), nil
 }
 
 // previousBundle reads the bundle's latest version, or nil for the first

@@ -97,6 +97,7 @@ const (
 	CollectionPlanInvalid    Code = 1192
 	CollectionKeyChanged     Code = 1193
 	CollectionDestructive    Code = 1194
+	DatabaseSourceInvalid    Code = 1195
 	CollectionKeyTypeInvalid Code = 1250
 
 	// Schema and validation: limits and budgets (PLX-1300–1399).

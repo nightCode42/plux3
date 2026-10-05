@@ -1,0 +1,206 @@
+{
+  "id": "01e0c450-6c00-7000-8000-000000000610",
+  "key": "list",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01e0c450-6c00-7000-8000-000000000611",
+    "slots": {
+      "body": {
+        "children": [
+          {
+            "id": "01e0c450-6c00-7000-8000-000000000613",
+            "props": {
+              "data": {
+                "$expr": "\"Open \" + string(size(data.open.value ?? []))"
+              }
+            },
+            "testId": "open",
+            "type": "Text"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "dbInsert",
+                    "id": "add",
+                    "input": {
+                      "collection": "tasks",
+                      "record": {
+                        "done": false,
+                        "id": "c",
+                        "note": null,
+                        "rank": 3,
+                        "title": "Cleaning"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01e0c450-6c00-7000-8000-000000000614",
+            "slots": {
+              "child": {
+                "id": "01e0c450-6c00-7000-8000-000000000615",
+                "props": {
+                  "data": "add"
+                },
+                "type": "Text"
+              }
+            },
+            "testId": "add",
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "dbUpdate",
+                    "id": "mark",
+                    "input": {
+                      "collection": "tasks",
+                      "key": "a",
+                      "patch": {
+                        "done": true
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01e0c450-6c00-7000-8000-000000000616",
+            "slots": {
+              "child": {
+                "id": "01e0c450-6c00-7000-8000-000000000617",
+                "props": {
+                  "data": "mark"
+                },
+                "type": "Text"
+              }
+            },
+            "testId": "mark",
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "kvSet",
+                    "id": "remember",
+                    "input": {
+                      "key": "theme",
+                      "value": "dark"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01e0c450-6c00-7000-8000-000000000618",
+            "slots": {
+              "child": {
+                "id": "01e0c450-6c00-7000-8000-000000000619",
+                "props": {
+                  "data": "remember"
+                },
+                "type": "Text"
+              }
+            },
+            "testId": "remember",
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "dbUpsert",
+                    "id": "label",
+                    "input": {
+                      "collection": "labels",
+                      "key": "l1",
+                      "record": {
+                        "name": "Home"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01e0c450-6c00-7000-8000-000000000620",
+            "slots": {
+              "child": {
+                "id": "01e0c450-6c00-7000-8000-000000000621",
+                "props": {
+                  "data": "label"
+                },
+                "type": "Text"
+              }
+            },
+            "testId": "label",
+            "type": "FilledButton"
+          },
+          {
+            "id": "01e0c450-6c00-7000-8000-000000000622",
+            "slots": {
+              "child": {
+                "id": "01e0c450-6c00-7000-8000-000000000623",
+                "props": {
+                  "items": {
+                    "$expr": "data.tasks.value ?? []"
+                  },
+                  "status": {
+                    "$expr": "data.tasks.status"
+                  }
+                },
+                "slots": {
+                  "empty": {
+                    "id": "01e0c450-6c00-7000-8000-000000000624",
+                    "props": {
+                      "data": "Nothing"
+                    },
+                    "type": "Text"
+                  },
+                  "error": {
+                    "id": "01e0c450-6c00-7000-8000-000000000625",
+                    "props": {
+                      "data": "Failed"
+                    },
+                    "type": "Text"
+                  },
+                  "item": {
+                    "id": "01e0c450-6c00-7000-8000-000000000627",
+                    "props": {
+                      "data": {
+                        "$expr": "item.title"
+                      }
+                    },
+                    "type": "Text"
+                  },
+                  "loading": {
+                    "id": "01e0c450-6c00-7000-8000-000000000626",
+                    "props": {
+                      "data": "Loading"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "testId": "list",
+                "type": "ListView"
+              }
+            },
+            "type": "Expanded"
+          }
+        ],
+        "id": "01e0c450-6c00-7000-8000-000000000612",
+        "type": "Column"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "list",
+  "schemaVersion": "1.0.0",
+  "title": "Tasks"
+}

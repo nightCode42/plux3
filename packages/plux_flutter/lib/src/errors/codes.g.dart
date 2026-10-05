@@ -220,6 +220,9 @@ enum PluxErrorCode {
   /// Collection migration deletes data.
   collectionDestructive(1194, 'COLLECTION_DESTRUCTIVE', 'Collection migration deletes data'),
 
+  /// Invalid database data source.
+  databaseSourceInvalid(1195, 'DATABASE_SOURCE_INVALID', 'Invalid database data source'),
+
   /// Unknown route.
   unknownRoute(1201, 'UNKNOWN_ROUTE', 'Unknown route'),
 

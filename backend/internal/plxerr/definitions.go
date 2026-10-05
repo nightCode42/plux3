@@ -360,6 +360,11 @@ var registry = []Definition{
 		"Acknowledge the warning if the data is no longer needed, or keep the field.", false,
 	},
 	{
+		DatabaseSourceInvalid, "DATABASE_SOURCE_INVALID", SeverityError, "Invalid database data source",
+		"The configuration of a data source of kind database is not a query the runtime can watch: it names no collection the plugin or the app declares, a filter names a field or operator the collection cannot use or compares with a value of the wrong type, it sorts by a field that cannot be sorted, or its limit or offset is out of range (DB-006).",
+		"Correct the configuration as the message says: collection, filter, orderBy, descending, limit and offset.", false,
+	},
+	{
 		UnknownRoute, "UNKNOWN_ROUTE", SeverityError, "Unknown route",
 		"A navigate action targets a route name that no page and no native route declares.",
 		"Correct the route name, or add the page.", false,

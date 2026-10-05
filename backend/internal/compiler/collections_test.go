@@ -16,12 +16,12 @@ const (
 )
 
 // collection builds a collection document.
-func collection(id, key string, version int, fields [][2]string, pk []string, extra map[string]any) map[string]any {
+func collection(version int, fields [][2]string, pk []string, extra map[string]any) map[string]any {
 	fs := make([]any, len(fields))
 	for i, f := range fields {
 		fs[i] = map[string]any{"name": f[0], "type": f[1]}
 	}
-	c := map[string]any{"id": id, "key": key, "fields": fs, "primaryKey": pk, "version": version}
+	c := map[string]any{"id": taskID, "key": "tasks", "fields": fs, "primaryKey": pk, "version": version}
 	for k, v := range extra {
 		c[k] = v
 	}
@@ -71,7 +71,7 @@ func TestCollectionsRoundTripThroughTheBundle(t *testing.T) {
 	plan := map[string]any{"migrations": []any{map[string]any{
 		"from": 1, "rename": map[string]any{"title": "name"}, "drop": []any{"legacy"}, "reset": []any{"done"},
 	}}, "indexes": []any{[]any{"done"}}}
-	cols := []any{collection(taskID, "tasks", 2, taskFields, []string{"id"}, plan)}
+	cols := []any{collection(2, taskFields, []string{"id"}, plan)}
 	res := compileCollections(t, cols, notesID)
 	if res.App == nil {
 		t.Fatalf("diagnostics:\n%s", list(res.Diagnostics))
@@ -115,9 +115,9 @@ func TestCollectionsRoundTripThroughTheBundle(t *testing.T) {
 // Verifies: DB-005.
 func TestCollectionMigrationChecks(t *testing.T) {
 	t.Parallel()
-	v1 := collectionSet(t, []any{collection(taskID, "tasks", 1, taskFields, []string{"id"}, nil)})
+	v1 := collectionSet(t, []any{collection(1, taskFields, []string{"id"}, nil)})
 	withFields := func(version int, fields [][2]string, extra map[string]any) CollectionSet {
-		return collectionSet(t, []any{collection(taskID, "tasks", version, fields, []string{"id"}, extra)})
+		return collectionSet(t, []any{collection(version, fields, []string{"id"}, extra)})
 	}
 	plan := func(m map[string]any) map[string]any {
 		m["from"] = 1
@@ -141,7 +141,7 @@ func TestCollectionMigrationChecks(t *testing.T) {
 		{"added field reset", withFields(2, append(slices.Clone(taskFields), [2]string{"count", "int"}), plan(map[string]any{"reset": []any{"count"}})), []plxerr.Code{plxerr.CollectionDestructive}},
 		{"narrowed type without a plan", withFields(2, [][2]string{{"id", "string"}, {"title", "int"}, {"done", "bool"}}, nil), []plxerr.Code{plxerr.CollectionPlanRequired}},
 		{"narrowed type reset", withFields(2, [][2]string{{"id", "string"}, {"title", "int"}, {"done", "bool"}}, plan(map[string]any{"reset": []any{"title"}})), []plxerr.Code{plxerr.CollectionDestructive}},
-		{"primary key changed", collectionSet(t, []any{collection(taskID, "tasks", 2, taskFields, []string{"title"}, nil)}), []plxerr.Code{plxerr.CollectionKeyChanged}},
+		{"primary key changed", collectionSet(t, []any{collection(2, taskFields, []string{"title"}, nil)}), []plxerr.Code{plxerr.CollectionKeyChanged}},
 		{"collection removed", collectionSet(t, []any{}), []plxerr.Code{plxerr.CollectionPlanRequired}},
 		{"collection dropped", collectionSet(t, []any{}, taskID), []plxerr.Code{plxerr.CollectionDestructive}},
 	}
@@ -166,8 +166,8 @@ func TestCollectionMigrationChecks(t *testing.T) {
 // Verifies: DB-005.
 func TestCollectionMigrationChain(t *testing.T) {
 	t.Parallel()
-	v1 := collectionSet(t, []any{collection(taskID, "tasks", 1, taskFields, []string{"id"}, nil)})
-	cur := collectionSet(t, []any{collection(taskID, "tasks", 3, taskFields[:2], []string{"id"}, map[string]any{
+	v1 := collectionSet(t, []any{collection(1, taskFields, []string{"id"}, nil)})
+	cur := collectionSet(t, []any{collection(3, taskFields[:2], []string{"id"}, map[string]any{
 		"migrations": []any{
 			map[string]any{"from": 2, "drop": []any{"extra"}},
 			map[string]any{"from": 1, "drop": []any{"done"}, "reset": []any{}},
@@ -189,23 +189,23 @@ func TestCollectionDeclarationChecks(t *testing.T) {
 		code plxerr.Code
 		ptr  string
 	}{
-		{"plan from the current version", collection(taskID, "tasks", 2, taskFields, []string{"id"}, map[string]any{
+		{"plan from the current version", collection(2, taskFields, []string{"id"}, map[string]any{
 			"migrations": []any{map[string]any{"from": 2}},
 		}), plxerr.CollectionPlanInvalid, "/collections/0/migrations/0/from"},
-		{"two plans from one version", collection(taskID, "tasks", 3, taskFields, []string{"id"}, map[string]any{
+		{"two plans from one version", collection(3, taskFields, []string{"id"}, map[string]any{
 			"migrations": []any{map[string]any{"from": 1}, map[string]any{"from": 1}},
 		}), plxerr.CollectionPlanInvalid, "/collections/0/migrations/1/from"},
-		{"drop of a declared field", collection(taskID, "tasks", 2, taskFields, []string{"id"}, map[string]any{
+		{"drop of a declared field", collection(2, taskFields, []string{"id"}, map[string]any{
 			"migrations": []any{map[string]any{"from": 1, "drop": []any{"title"}}},
 		}), plxerr.CollectionPlanInvalid, "/collections/0/migrations/0/drop/0"},
-		{"reset of an unknown field", collection(taskID, "tasks", 2, taskFields, []string{"id"}, map[string]any{
+		{"reset of an unknown field", collection(2, taskFields, []string{"id"}, map[string]any{
 			"migrations": []any{map[string]any{"from": 1, "reset": []any{"nope"}}},
 		}), plxerr.CollectionPlanInvalid, "/collections/0/migrations/0/reset/0"},
-		{"reset of a field with no empty value", collection(taskID, "tasks", 2, [][2]string{{"id", "string"}, {"at", "date"}}, []string{"id"}, map[string]any{
+		{"reset of a field with no empty value", collection(2, [][2]string{{"id", "string"}, {"at", "date"}}, []string{"id"}, map[string]any{
 			"migrations": []any{map[string]any{"from": 1, "reset": []any{"at"}}},
 		}), plxerr.CollectionPlanInvalid, "/collections/0/migrations/0/reset/0"},
-		{"key of a double", collection(taskID, "tasks", 1, [][2]string{{"id", "double"}}, []string{"id"}, nil), plxerr.CollectionKeyTypeInvalid, "/collections/0/primaryKey/0"},
-		{"nullable key", collection(taskID, "tasks", 1, [][2]string{{"id", "string?"}}, []string{"id"}, nil), plxerr.CollectionKeyTypeInvalid, "/collections/0/primaryKey/0"},
+		{"key of a double", collection(1, [][2]string{{"id", "double"}}, []string{"id"}, nil), plxerr.CollectionKeyTypeInvalid, "/collections/0/primaryKey/0"},
+		{"nullable key", collection(1, [][2]string{{"id", "string?"}}, []string{"id"}, nil), plxerr.CollectionKeyTypeInvalid, "/collections/0/primaryKey/0"},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
@@ -213,7 +213,7 @@ func TestCollectionDeclarationChecks(t *testing.T) {
 			wantDiag(t, compileCollections(t, []any{c.col}), c.code, stateApp, c.ptr)
 		})
 	}
-	both := compileCollections(t, []any{collection(taskID, "tasks", 1, taskFields, []string{"id"}, nil)}, taskID)
+	both := compileCollections(t, []any{collection(1, taskFields, []string{"id"}, nil)}, taskID)
 	wantDiag(t, both, plxerr.CollectionPlanInvalid, stateApp, "/droppedCollections/0")
 }
 
@@ -226,7 +226,7 @@ func TestDBQueryConditionSeesTheRecord(t *testing.T) {
 	compile := func(where string) *Result {
 		m := project(t, stateDir)
 		edit(t, m, statePl, func(doc map[string]any) {
-			doc["collections"] = []any{collection(taskID, "tasks", 1, taskFields, []string{"id"}, nil)}
+			doc["collections"] = []any{collection(1, taskFields, []string{"id"}, nil)}
 		})
 		edit(t, m, stateGraph, func(doc map[string]any) {
 			steps := doc["steps"].([]any)

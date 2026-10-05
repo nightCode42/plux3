@@ -568,6 +568,14 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Acknowledge the warning if the data is no longer needed, or keep the field.
 
+### PLX-1195
+
+`DATABASE_SOURCE_INVALID` · error · Invalid database data source
+
+**Cause.** The configuration of a data source of kind database is not a query the runtime can watch: it names no collection the plugin or the app declares, a filter names a field or operator the collection cannot use or compares with a value of the wrong type, it sorts by a field that cannot be sorted, or its limit or offset is out of range (DB-006).
+
+**Fix.** Correct the configuration as the message says: collection, filter, orderBy, descending, limit and offset.
+
 ### PLX-1201
 
 `UNKNOWN_ROUTE` · error · Unknown route
