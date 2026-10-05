@@ -183,14 +183,42 @@ func derive(data []byte, src source) ([]byte, error) {
 	return b.Bytes(), nil
 }
 
+// territoryErr is the error of a territory that cannot be resolved.
+func territoryErr(t xmlTerritory, format string, args ...any) error {
+	return fmt.Errorf("phonemeta: territory %s: %s", t.ID, fmt.Sprintf(format, args...))
+}
+
 // convert resolves one territory.
 func convert(t xmlTerritory) (territory, error) {
-	fail := func(format string, args ...any) (territory, error) {
-		return territory{}, fmt.Errorf("phonemeta: territory %s: %s", t.ID, fmt.Sprintf(format, args...))
+	out, err := territoryHead(t)
+	if err != nil {
+		return territory{}, err
 	}
+	if t.General == nil || strings.TrimSpace(t.General.Pattern) == "" {
+		return territory{}, territoryErr(t, "no generalDesc pattern")
+	}
+	out.General.Pattern = space.ReplaceAllString(t.General.Pattern, "")
+	if len(t.General.Lengths) > 0 {
+		return territory{}, territoryErr(t, "possibleLengths on generalDesc")
+	}
+	descs, national, local, err := collectDescs(t)
+	if err != nil {
+		return territory{}, err
+	}
+	out.General.Lengths = sortedKeys(national, nil)
+	out.General.LocalOnly = sortedKeys(local, national)
+	if out.Types, err = typeEntries(t, descs, out.General.Lengths); err != nil {
+		return territory{}, err
+	}
+	return out, nil
+}
+
+// territoryHead resolves a territory's identity and prefixes, and checks
+// their patterns.
+func territoryHead(t xmlTerritory) (territory, error) {
 	cc, err := strconv.Atoi(t.CountryCode)
 	if !regionID.MatchString(t.ID) || err != nil || cc < 1 || cc > 999 {
-		return fail("invalid id or country code %q", t.CountryCode)
+		return territory{}, territoryErr(t, "invalid id or country code %q", t.CountryCode)
 	}
 	out := territory{
 		ID: t.ID, CountryCode: cc, MainCountryForCode: t.MainCountryForCode == "true",
@@ -204,28 +232,27 @@ func convert(t xmlTerritory) (territory, error) {
 	}
 	for _, p := range []string{out.LeadingDigits, out.InternationalPrefix, out.NationalPrefixForParsing} {
 		if space.MatchString(p) || p != "" && !compiles(p) {
-			return fail("pattern %q", p)
+			return territory{}, territoryErr(t, "pattern %q", p)
 		}
 	}
 	if !transform.MatchString(out.NationalPrefixTransformRule) {
-		return fail("transform rule %q is not digits and $1–$9", out.NationalPrefixTransformRule)
+		return territory{}, territoryErr(t, "transform rule %q is not digits and $1–$9", out.NationalPrefixTransformRule)
 	}
-	if t.General == nil || strings.TrimSpace(t.General.Pattern) == "" {
-		return fail("no generalDesc pattern")
-	}
-	out.General.Pattern = space.ReplaceAllString(t.General.Pattern, "")
-	if len(t.General.Lengths) > 0 {
-		return fail("possibleLengths on generalDesc")
-	}
-	national, local := map[int]bool{}, map[int]bool{}
-	descs := map[string]xmlDesc{}
+	return out, nil
+}
+
+// collectDescs indexes a territory's descriptions by element name, and
+// gathers the national and local-only lengths of its number types.
+func collectDescs(t xmlTerritory) (descs map[string]xmlDesc, national, local map[int]bool, err error) {
+	national, local = map[int]bool{}, map[int]bool{}
+	descs = map[string]xmlDesc{}
 	for _, d := range t.Descs {
 		name := d.XMLName.Local
 		if name != "noInternationalDialling" && !slices.Contains(typeNames, name) {
 			continue
 		}
 		if _, dup := descs[name]; dup {
-			return fail("two %s elements", name)
+			return nil, nil, nil, territoryErr(t, "two %s elements", name)
 		}
 		descs[name] = d.xmlDesc
 		if name == "noInternationalDialling" {
@@ -233,7 +260,7 @@ func convert(t xmlTerritory) (territory, error) {
 		}
 		n, l, err := lengths(d.Lengths)
 		if err != nil {
-			return fail("%s: %v", name, err)
+			return nil, nil, nil, territoryErr(t, "%s: %v", name, err)
 		}
 		for _, x := range n {
 			national[x] = true
@@ -242,8 +269,13 @@ func convert(t xmlTerritory) (territory, error) {
 			local[x] = true
 		}
 	}
-	out.General.Lengths = sortedKeys(national, nil)
-	out.General.LocalOnly = sortedKeys(local, national)
+	return descs, national, local, nil
+}
+
+// typeEntries resolves the number types a territory describes, in the
+// order of typeNames; a type without lengths takes the general ones.
+func typeEntries(t xmlTerritory, descs map[string]xmlDesc, general []int) ([]numberTy, error) {
+	var types []numberTy
 	for _, name := range typeNames {
 		d, ok := descs[name]
 		if !ok {
@@ -251,19 +283,19 @@ func convert(t xmlTerritory) (territory, error) {
 		}
 		p := space.ReplaceAllString(d.Pattern, "")
 		if p == "" || !compiles(p) {
-			return fail("%s has no valid pattern", name)
+			return nil, territoryErr(t, "%s has no valid pattern", name)
 		}
 		n, _, _ := lengths(d.Lengths)
 		if len(n) == 0 {
-			n = out.General.Lengths
+			n = general
 		}
 		ex := strings.TrimSpace(d.Example)
 		if ex != "" && !digitsOnly.MatchString(ex) {
-			return fail("%s example %q", name, ex)
+			return nil, territoryErr(t, "%s example %q", name, ex)
 		}
-		out.Types = append(out.Types, numberTy{Type: name, Pattern: p, Lengths: n, Example: ex})
+		types = append(types, numberTy{Type: name, Pattern: p, Lengths: n, Example: ex})
 	}
-	return out, nil
+	return types, nil
 }
 
 // compiles checks a pattern against Go's RE2 syntax; the backend's tests

@@ -127,6 +127,37 @@ func branchNames(a *registry.Action, input map[string]json.RawMessage) []string 
 
 // nativeInput rewrites the inputs of a custom action as the inputs of
 // callNative: the action's name and an object of its inputs, which
+// specialInput checks the inputs whose type an action does not declare
+// alone: route parameters, patches, event payloads, results, and a custom
+// action's or flow's inputs. handled is false for any other input.
+func (u *unit) specialInput(g *graph, action, input string, raw json.RawMessage, c vctx, bind map[string]*texpr) (v *value, handled bool) {
+	switch [2]string{action, input} {
+	case [2]string{"navigate", "params"}, [2]string{"openDialog", "params"}, [2]string{"openBottomSheet", "params"}:
+		return u.routeParams(g, raw, bind["P"], c), true
+	case [2]string{"patchState", "patch"}:
+		return u.patchValue(g, raw, c), true
+	case [2]string{"emitHostEvent", "payload"}:
+		return u.eventPayload(g, raw, c), true
+	case [2]string{"pop", "result"}:
+		if g.page != nil && g.page.doc.Result == "" {
+			u.report(plxerr.PropTypeMismatch, c.file, c.ptr, "page %q declares no result type to return", g.page.doc.Key)
+			return nil, true
+		}
+	case [2]string{"stop", "result"}:
+		if g.output == "" {
+			u.report(plxerr.PropTypeMismatch, c.file, c.ptr, "the graph declares no output to return")
+			return nil, true
+		}
+	case [2]string{"callNative", "input"}:
+		return u.nativeActionInput(g, raw, c), true
+	case [2]string{"emitEvent", "payload"}:
+		return u.componentEventPayload(g, raw, c), true
+	case [2]string{"callFlow", "input"}:
+		return u.flowInput(g, raw, c), true
+	}
+	return nil, false
+}
+
 // nativeActionInput checks against the action's declaration.
 func nativeInput(na *schema.NativeAction, input map[string]json.RawMessage) map[string]json.RawMessage {
 	name, _ := json.Marshal(na.Name)
@@ -176,33 +207,8 @@ func (u *unit) checkInput(g *graph, a *registry.Action, in registry.Input, raw j
 	if in.Ref != "" {
 		return u.checkRef(g, in, raw, c)
 	}
-	if a.Name == "navigate" || a.Name == "openDialog" || a.Name == "openBottomSheet" {
-		if in.Name == "params" {
-			return u.routeParams(g, raw, bind["P"], c)
-		}
-	}
-	if a.Name == "patchState" && in.Name == "patch" {
-		return u.patchValue(g, raw, c)
-	}
-	if a.Name == "emitHostEvent" && in.Name == "payload" {
-		return u.eventPayload(g, raw, c)
-	}
-	if a.Name == "pop" && in.Name == "result" && g.page != nil && g.page.doc.Result == "" {
-		u.report(plxerr.PropTypeMismatch, c.file, c.ptr, "page %q declares no result type to return", g.page.doc.Key)
-		return nil
-	}
-	if a.Name == "stop" && in.Name == "result" && g.output == "" {
-		u.report(plxerr.PropTypeMismatch, c.file, c.ptr, "the graph declares no output to return")
-		return nil
-	}
-	if a.Name == "callNative" && in.Name == "input" {
-		return u.nativeActionInput(g, raw, c)
-	}
-	if a.Name == "emitEvent" && in.Name == "payload" {
-		return u.componentEventPayload(g, raw, c)
-	}
-	if a.Name == "callFlow" && in.Name == "input" {
-		return u.flowInput(g, raw, c)
+	if v, handled := u.specialInput(g, a.Name, in.Name, raw, c, bind); handled {
+		return v
 	}
 	te, err := parseTypeExpr(in.Type)
 	if err != nil {

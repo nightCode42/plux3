@@ -213,7 +213,7 @@ func TestStateMigrationCompiles(t *testing.T) {
 		t.Fatalf("diagnostics:\n%s", list(none.Diagnostics))
 	}
 	diags := CheckStoredState(before, none.StoredState[""])
-	if len(diags) != 1 || diags[0].Code != plxerr.StateMigrationRequired || diags[0].Location.Path != "/state/1" {
+	if len(diags) != 1 || diags[0].Code != plxerr.StateMigrationRequired || diags[0].Path != "/state/1" {
 		t.Errorf("without a migration: %v", diags)
 	}
 
@@ -231,7 +231,7 @@ func TestStateMigrationCompiles(t *testing.T) {
 
 	wrong := retype(map[string]any{"from": "double", "value": map[string]any{"$expr": "int(previous)"}})
 	diags = CheckStoredState(before, wrong.StoredState[""])
-	if len(diags) != 1 || diags[0].Code != plxerr.StateMigrationMismatch || diags[0].Location.Path != "/state/1/migration/from" {
+	if len(diags) != 1 || diags[0].Code != plxerr.StateMigrationMismatch || diags[0].Path != "/state/1/migration/from" {
 		t.Errorf("with a migration from another type: %v", diags)
 	}
 

@@ -340,73 +340,23 @@ func (re *Regexp) run(in []rune, m mode, captures bool) []int {
 	if captures {
 		ncap = 2 * (re.groups + 1)
 	}
+	v := &vm{re: re, in: in, ncap: ncap, scratch: make([]int, ncap)}
 	cur := &queue{seen: make([]bool, len(re.prog))}
 	next := &queue{seen: make([]bool, len(re.prog))}
-	var (
-		stack   []job
-		matched []int
-		scratch = make([]int, ncap)
-	)
-	add := func(q *queue, pc, pos int, caps []int) {
-		copy(scratch, caps)
-		stack = append(stack[:0], job{pc: pc})
-		for len(stack) > 0 {
-			j := stack[len(stack)-1]
-			stack = stack[:len(stack)-1]
-			if j.restore {
-				scratch[j.slot] = j.old
-				continue
-			}
-			if q.seen[j.pc] {
-				continue
-			}
-			q.seen[j.pc] = true
-			i := &re.prog[j.pc]
-			switch i.op {
-			case opSplit:
-				stack = append(stack, job{pc: i.y}, job{pc: i.x})
-			case opSave:
-				if i.arg < ncap {
-					stack = append(stack, job{restore: true, slot: i.arg, old: scratch[i.arg]})
-					scratch[i.arg] = pos
-				}
-				stack = append(stack, job{pc: i.x})
-			case opBegin:
-				if pos == 0 {
-					stack = append(stack, job{pc: i.x})
-				}
-			case opEnd:
-				if pos == len(in) {
-					stack = append(stack, job{pc: i.x})
-				}
-			default:
-				q.threads = append(q.threads, thread{pc: j.pc, cap: append([]int(nil), scratch...)})
-			}
-		}
-	}
 	fresh := make([]int, ncap)
 	for i := range fresh {
 		fresh[i] = -1
 	}
+	var matched []int
 	for pos := 0; ; pos++ {
 		if matched == nil && (pos == 0 || m == search) {
-			add(cur, re.start, pos, fresh)
+			v.add(cur, re.start, pos, fresh)
 		}
 		next.reset()
-		for _, t := range cur.threads {
-			i := &re.prog[t.pc]
-			if i.op == opMatch {
-				if m == full && pos != len(in) {
-					continue
-				}
-				matched = t.cap
-				if !captures {
-					return []int{}
-				}
-				break // lower-priority threads can only find worse matches
-			}
-			if pos < len(in) && accepts(i, in[pos]) {
-				add(next, i.x, pos+1, t.cap)
+		if caps, ok := v.step(cur, next, pos, m); ok {
+			matched = caps
+			if !captures {
+				return []int{}
 			}
 		}
 		if pos == len(in) {
@@ -418,6 +368,81 @@ func (re *Regexp) run(in []rune, m mode, captures bool) []int {
 		}
 	}
 	return matched
+}
+
+// vm is the state of one run: the program, the input, and the scratch
+// buffers add reuses for every position.
+type vm struct {
+	re      *Regexp
+	in      []rune
+	ncap    int // the capture slots tracked; 0 without captures
+	stack   []job
+	scratch []int
+}
+
+// add adds the thread at pc to q, following splits, saves and anchors, so
+// q holds only consuming instructions and matches, in priority order.
+func (v *vm) add(q *queue, pc, pos int, caps []int) {
+	copy(v.scratch, caps)
+	v.stack = append(v.stack[:0], job{pc: pc})
+	for len(v.stack) > 0 {
+		j := v.stack[len(v.stack)-1]
+		v.stack = v.stack[:len(v.stack)-1]
+		if j.restore {
+			v.scratch[j.slot] = j.old
+			continue
+		}
+		if q.seen[j.pc] {
+			continue
+		}
+		q.seen[j.pc] = true
+		v.follow(q, j.pc, pos)
+	}
+}
+
+// follow expands the instruction at pc: it pushes what an empty
+// instruction leads to, and queues a consuming one or a match.
+func (v *vm) follow(q *queue, pc, pos int) {
+	i := &v.re.prog[pc]
+	switch i.op {
+	case opSplit:
+		v.stack = append(v.stack, job{pc: i.y}, job{pc: i.x})
+	case opSave:
+		if i.arg < v.ncap {
+			v.stack = append(v.stack, job{restore: true, slot: i.arg, old: v.scratch[i.arg]})
+			v.scratch[i.arg] = pos
+		}
+		v.stack = append(v.stack, job{pc: i.x})
+	case opBegin:
+		if pos == 0 {
+			v.stack = append(v.stack, job{pc: i.x})
+		}
+	case opEnd:
+		if pos == len(v.in) {
+			v.stack = append(v.stack, job{pc: i.x})
+		}
+	default:
+		q.threads = append(q.threads, thread{pc: pc, cap: append([]int(nil), v.scratch...)})
+	}
+}
+
+// step advances the threads of cur over the input at pos into next, in
+// priority order. It stops at the first thread that matches and returns
+// its slots, as lower-priority threads can only find worse matches.
+func (v *vm) step(cur, next *queue, pos int, m mode) (caps []int, matched bool) {
+	for _, t := range cur.threads {
+		i := &v.re.prog[t.pc]
+		if i.op == opMatch {
+			if m == full && pos != len(v.in) {
+				continue
+			}
+			return t.cap, true
+		}
+		if pos < len(v.in) && accepts(i, v.in[pos]) {
+			v.add(next, i.x, pos+1, t.cap)
+		}
+	}
+	return nil, false
 }
 
 // accepts reports whether a consuming instruction accepts r.

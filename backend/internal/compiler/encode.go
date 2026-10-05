@@ -345,56 +345,76 @@ func (e *valueEnc) params(ps []*param) flatbuffers.UOffsetT {
 
 // state writes a vector of state entries.
 func (e *valueEnc) state(entries []*stateEntry) flatbuffers.UOffsetT {
-	b := e.b
 	offs := make([]flatbuffers.UOffsetT, len(entries))
 	for i, s := range entries {
-		def := e.value(s.def)
-		var computed uint64
-		if s.computed != nil && s.computed.prog != nil {
-			computed = e.u.program(e.o, s.computed.prog)
-		}
-		var migration uint64
-		if s.migration != nil && s.migration.prog != nil {
-			migration = e.u.program(e.o, s.migration.prog)
-		}
-		name, typ := e.strs.of(s.name), e.strs.of(s.typ)
-		var fingerprint, from, fromType uint32
-		if s.fingerprint != "" {
-			fingerprint = e.strs.of(s.fingerprint)
-		}
-		if s.migrationFrom != "" {
-			from, fromType = e.strs.of(s.migrationFrom), e.strs.of(s.migrationType)
-		}
-		fbs.StateEntryStart(b)
-		hi, lo := uuidHalves(s.id)
-		fbs.StateEntryAddId(b, fbs.CreateUuid(b, hi, lo))
-		fbs.StateEntryAddName(b, name)
-		fbs.StateEntryAddType(b, typ)
-		if def != 0 {
-			fbs.StateEntryAddDefault(b, def)
-		}
-		if computed != 0 {
-			fbs.StateEntryAddComputed(b, computed)
-		}
-		fbs.StateEntryAddPersistence(b, s.persistence)
-		fbs.StateEntryAddSensitive(b, s.sensitive)
-		fbs.StateEntryAddExposed(b, s.exposed)
-		if fingerprint != 0 {
-			fbs.StateEntryAddFingerprint(b, fingerprint)
-		}
-		if from != 0 {
-			fbs.StateEntryAddMigrationFrom(b, from)
-			fbs.StateEntryAddMigrationType(b, fromType)
-		}
-		if migration != 0 {
-			fbs.StateEntryAddMigration(b, migration)
-		}
-		if s.migrationReset {
-			fbs.StateEntryAddMigrationReset(b, true)
-		}
-		offs[i] = fbs.StateEntryEnd(b)
+		offs[i] = e.stateEntry(s)
 	}
-	return offsetVector(b, offs)
+	return offsetVector(e.b, offs)
+}
+
+// stateParts are the children of a state entry, written before its table;
+// a zero part is absent.
+type stateParts struct {
+	def                 flatbuffers.UOffsetT
+	computed, migration uint64
+	name, typ           uint32
+	fingerprint         uint32
+	from, fromType      uint32
+}
+
+// stateChildren writes the children of a state entry, in the order that
+// fixes the bundle's bytes.
+func (e *valueEnc) stateChildren(s *stateEntry) stateParts {
+	var p stateParts
+	p.def = e.value(s.def)
+	if s.computed != nil && s.computed.prog != nil {
+		p.computed = e.u.program(e.o, s.computed.prog)
+	}
+	if s.migration != nil && s.migration.prog != nil {
+		p.migration = e.u.program(e.o, s.migration.prog)
+	}
+	p.name, p.typ = e.strs.of(s.name), e.strs.of(s.typ)
+	if s.fingerprint != "" {
+		p.fingerprint = e.strs.of(s.fingerprint)
+	}
+	if s.migrationFrom != "" {
+		p.from, p.fromType = e.strs.of(s.migrationFrom), e.strs.of(s.migrationType)
+	}
+	return p
+}
+
+// stateEntry writes one state entry.
+func (e *valueEnc) stateEntry(s *stateEntry) flatbuffers.UOffsetT {
+	b := e.b
+	p := e.stateChildren(s)
+	fbs.StateEntryStart(b)
+	hi, lo := uuidHalves(s.id)
+	fbs.StateEntryAddId(b, fbs.CreateUuid(b, hi, lo))
+	fbs.StateEntryAddName(b, p.name)
+	fbs.StateEntryAddType(b, p.typ)
+	if p.def != 0 {
+		fbs.StateEntryAddDefault(b, p.def)
+	}
+	if p.computed != 0 {
+		fbs.StateEntryAddComputed(b, p.computed)
+	}
+	fbs.StateEntryAddPersistence(b, s.persistence)
+	fbs.StateEntryAddSensitive(b, s.sensitive)
+	fbs.StateEntryAddExposed(b, s.exposed)
+	if p.fingerprint != 0 {
+		fbs.StateEntryAddFingerprint(b, p.fingerprint)
+	}
+	if p.from != 0 {
+		fbs.StateEntryAddMigrationFrom(b, p.from)
+		fbs.StateEntryAddMigrationType(b, p.fromType)
+	}
+	if p.migration != 0 {
+		fbs.StateEntryAddMigration(b, p.migration)
+	}
+	if s.migrationReset {
+		fbs.StateEntryAddMigrationReset(b, true)
+	}
+	return fbs.StateEntryEnd(b)
 }
 
 // sources writes a vector of data sources.

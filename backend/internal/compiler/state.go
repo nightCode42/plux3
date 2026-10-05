@@ -345,6 +345,16 @@ func StoredState(data []byte) (entries []StoredEntry, err error) {
 	if err != nil {
 		return nil, fmt.Errorf("compiler: %w", err)
 	}
+	r := &storedReader{strs: bundleStrings(b)}
+	for _, s := range b.Sections {
+		r.section(s)
+	}
+	slices.SortFunc(r.entries, func(a, b StoredEntry) int { return strings.Compare(a.ID, b.ID) })
+	return r.entries, nil
+}
+
+// bundleStrings reads the bundle's string table.
+func bundleStrings(b *bundle.Bundle) []string {
 	var strs []string
 	for _, s := range b.Sections {
 		if s.Kind == bundle.SectionStrings {
@@ -354,43 +364,55 @@ func StoredState(data []byte) (entries []StoredEntry, err error) {
 			}
 		}
 	}
-	str := func(i uint32) string {
-		if int(i) < len(strs) {
-			return strs[i]
-		}
-		return ""
+	return strs
+}
+
+// storedReader collects the stored state entries of a bundle's sections.
+type storedReader struct {
+	strs    []string
+	entries []StoredEntry
+}
+
+// str resolves a string-table index; "" when it is out of range.
+func (r *storedReader) str(i uint32) string {
+	if int(i) < len(r.strs) {
+		return r.strs[i]
 	}
-	add := func(n int, at func(*fbs.StateEntry, int) bool) {
-		var e fbs.StateEntry
-		for i := range n {
-			if !at(&e, i) || e.Persistence() == fbs.PersistenceMemory {
-				continue
-			}
-			var id [16]byte
-			if u := e.Id(nil); u != nil {
-				id = uuidOfHalves(u.Hi(), u.Lo())
-			}
-			entries = append(entries, StoredEntry{
-				ID: uuidString(id), Name: str(e.Name()), Type: str(e.Type()), Fingerprint: str(e.Fingerprint()),
-				MigrationFrom: str(e.MigrationFrom()), Reset: e.MigrationReset(),
-			})
-		}
+	return ""
+}
+
+// section collects the stored entries of a schemas, page or component
+// section; any other section has none.
+func (r *storedReader) section(s bundle.Section) {
+	switch s.Kind {
+	case bundle.SectionSchemas:
+		sc := fbs.GetRootAsSchemas(s.Data, 0)
+		r.add(sc.StateLength(), sc.State)
+	case bundle.SectionPage:
+		pg := fbs.GetRootAsPage(s.Data, 0)
+		r.add(pg.StateLength(), pg.State)
+	case bundle.SectionComponent:
+		c := fbs.GetRootAsComponent(s.Data, 0)
+		r.add(c.StateLength(), c.State)
 	}
-	for _, s := range b.Sections {
-		switch s.Kind {
-		case bundle.SectionSchemas:
-			sc := fbs.GetRootAsSchemas(s.Data, 0)
-			add(sc.StateLength(), sc.State)
-		case bundle.SectionPage:
-			pg := fbs.GetRootAsPage(s.Data, 0)
-			add(pg.StateLength(), pg.State)
-		case bundle.SectionComponent:
-			c := fbs.GetRootAsComponent(s.Data, 0)
-			add(c.StateLength(), c.State)
+}
+
+// add collects the n entries that at reads and that are not memory-only.
+func (r *storedReader) add(n int, at func(*fbs.StateEntry, int) bool) {
+	var e fbs.StateEntry
+	for i := range n {
+		if !at(&e, i) || e.Persistence() == fbs.PersistenceMemory {
+			continue
 		}
+		var id [16]byte
+		if u := e.Id(nil); u != nil {
+			id = uuidOfHalves(u.Hi(), u.Lo())
+		}
+		r.entries = append(r.entries, StoredEntry{
+			ID: uuidString(id), Name: r.str(e.Name()), Type: r.str(e.Type()), Fingerprint: r.str(e.Fingerprint()),
+			MigrationFrom: r.str(e.MigrationFrom()), Reset: e.MigrationReset(),
+		})
 	}
-	slices.SortFunc(entries, func(a, b StoredEntry) int { return strings.Compare(a.ID, b.ID) })
-	return entries, nil
 }
 
 // CheckStoredState compares the stored state of a bundle with the same

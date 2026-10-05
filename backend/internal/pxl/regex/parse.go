@@ -50,7 +50,7 @@ type parser struct {
 }
 
 // syntaxErr builds a syntax error at a code-point offset.
-func (p *parser) syntaxErr(at int, format string, args ...any) *Error {
+func syntaxErr(at int, format string, args ...any) *Error {
 	return &Error{Kind: ErrSyntax, Offset: at, Message: fmt.Sprintf(format, args...)}
 }
 
@@ -66,7 +66,7 @@ func parse(src []rune, lim Limits) (*node, int, *Error) {
 		return nil, 0, err
 	}
 	if p.more() { // only an unmatched ')' stops an alternation early
-		return nil, 0, p.syntaxErr(p.pos, "unmatched )")
+		return nil, 0, syntaxErr(p.pos, "unmatched )")
 	}
 	return n, p.groups, nil
 }
@@ -99,22 +99,11 @@ func (p *parser) sequence() (*node, *Error) {
 		if c == '|' || c == ')' {
 			break
 		}
-		atom, err := p.atom()
+		t, err := p.term()
 		if err != nil {
 			return nil, err
 		}
-		if p.more() && isQuantifier(p.peek()) {
-			if atom.kind == nBegin || atom.kind == nEnd {
-				return nil, p.syntaxErr(p.pos, "missing argument to repetition operator")
-			}
-			if atom, err = p.quantifier(atom); err != nil {
-				return nil, err
-			}
-			if p.more() && isQuantifier(p.peek()) {
-				return nil, p.syntaxErr(p.pos, "invalid nested repetition operator")
-			}
-		}
-		items = append(items, atom)
+		items = append(items, t)
 	}
 	switch len(items) {
 	case 0:
@@ -123,6 +112,27 @@ func (p *parser) sequence() (*node, *Error) {
 		return items[0], nil
 	}
 	return &node{kind: nConcat, subs: items}, nil
+}
+
+// term = atom [ quantifier ]; a second quantifier is an error.
+func (p *parser) term() (*node, *Error) {
+	atom, err := p.atom()
+	if err != nil {
+		return nil, err
+	}
+	if !p.more() || !isQuantifier(p.peek()) {
+		return atom, nil
+	}
+	if atom.kind == nBegin || atom.kind == nEnd {
+		return nil, syntaxErr(p.pos, "missing argument to repetition operator")
+	}
+	if atom, err = p.quantifier(atom); err != nil {
+		return nil, err
+	}
+	if p.more() && isQuantifier(p.peek()) {
+		return nil, syntaxErr(p.pos, "invalid nested repetition operator")
+	}
+	return atom, nil
 }
 
 func isQuantifier(c rune) bool { return c == '*' || c == '+' || c == '?' || c == '{' }
@@ -153,9 +163,9 @@ func (p *parser) atom() (*node, *Error) {
 		}
 		return &node{kind: nRune, r: r}, nil
 	case '*', '+', '?', '{':
-		return nil, p.syntaxErr(at, "missing argument to repetition operator")
+		return nil, syntaxErr(at, "missing argument to repetition operator")
 	case ']', '}':
-		return nil, p.syntaxErr(at, "unescaped %c", c)
+		return nil, syntaxErr(at, "unescaped %c", c)
 	}
 	return &node{kind: nRune, r: c}, nil
 }
@@ -163,12 +173,12 @@ func (p *parser) atom() (*node, *Error) {
 // group parses "(" [ "?:" ] alternation ")"; the "(" is consumed.
 func (p *parser) group(at int) (*node, *Error) {
 	if p.depth++; p.depth > MaxNesting {
-		return nil, p.syntaxErr(at, "groups nested deeper than %d", MaxNesting)
+		return nil, syntaxErr(at, "groups nested deeper than %d", MaxNesting)
 	}
 	capture := true
 	if p.more() && p.peek() == '?' {
 		if p.pos+1 >= len(p.src) || p.src[p.pos+1] != ':' {
-			return nil, p.syntaxErr(at, "unsupported group syntax; only (?: is allowed")
+			return nil, syntaxErr(at, "unsupported group syntax; only (?: is allowed")
 		}
 		p.pos += 2
 		capture = false
@@ -183,7 +193,7 @@ func (p *parser) group(at int) (*node, *Error) {
 		return nil, err
 	}
 	if !p.more() || p.peek() != ')' {
-		return nil, p.syntaxErr(at, "missing )")
+		return nil, syntaxErr(at, "missing )")
 	}
 	p.pos++
 	p.depth--
@@ -211,29 +221,43 @@ func (p *parser) quantifier(atom *node) (*node, *Error) {
 		return nil, err
 	}
 	if !ok {
-		return nil, p.syntaxErr(at, "invalid repetition; write {n}, {n,} or {n,m}")
+		return nil, syntaxErr(at, badRepetition)
 	}
-	hi := lo
-	if p.more() && p.peek() == ',' {
-		p.pos++
-		hi = -1
-		if p.more() && p.peek() != '}' {
-			if hi, ok, err = p.count(at); err != nil {
-				return nil, err
-			}
-			if !ok {
-				return nil, p.syntaxErr(at, "invalid repetition; write {n}, {n,} or {n,m}")
-			}
-		}
+	hi, err := p.upperBound(at, lo)
+	if err != nil {
+		return nil, err
 	}
 	if !p.more() || p.peek() != '}' {
-		return nil, p.syntaxErr(at, "invalid repetition; write {n}, {n,} or {n,m}")
+		return nil, syntaxErr(at, badRepetition)
 	}
 	p.pos++
 	if hi >= 0 && hi < lo {
-		return nil, p.syntaxErr(at, "invalid repetition: {%d,%d} has its maximum below its minimum", lo, hi)
+		return nil, syntaxErr(at, "invalid repetition: {%d,%d} has its maximum below its minimum", lo, hi)
 	}
 	return &node{kind: nRepeat, min: lo, max: hi, subs: []*node{atom}}, nil
+}
+
+// badRepetition is the message of a malformed "{…}" quantifier.
+const badRepetition = "invalid repetition; write {n}, {n,} or {n,m}"
+
+// upperBound reads the optional ",m" or "," after the minimum lo of a
+// "{…}" quantifier: lo without a comma, -1 for no bound.
+func (p *parser) upperBound(at, lo int) (int, *Error) {
+	if !p.more() || p.peek() != ',' {
+		return lo, nil
+	}
+	p.pos++
+	if !p.more() || p.peek() == '}' {
+		return -1, nil
+	}
+	hi, ok, err := p.count(at)
+	if err != nil {
+		return 0, err
+	}
+	if !ok {
+		return 0, syntaxErr(at, badRepetition)
+	}
+	return hi, nil
 }
 
 // count reads decimal digits; a count above the repeat limit is an error.
@@ -254,7 +278,7 @@ func (p *parser) count(at int) (int, bool, *Error) {
 // escape parses an escape after its "\": a code point, or a class's ranges.
 func (p *parser) escape(at int) (rune, []rune, *Error) {
 	if !p.more() {
-		return 0, nil, p.syntaxErr(at, "trailing backslash")
+		return 0, nil, syntaxErr(at, "trailing backslash")
 	}
 	c := p.peek()
 	p.pos++
@@ -285,15 +309,15 @@ func (p *parser) escape(at int) (rune, []rune, *Error) {
 		r, err := p.hex(at)
 		return r, nil, err
 	}
-	if c < 0x80 && isPunct(byte(c)) {
+	if isPunct(c) {
 		return c, nil, nil
 	}
-	return 0, nil, p.syntaxErr(at, "invalid escape \\%c", c)
+	return 0, nil, syntaxErr(at, "invalid escape \\%c", c)
 }
 
 // hex parses \xHH or \x{H…} after the "x".
 func (p *parser) hex(at int) (rune, *Error) {
-	bad := p.syntaxErr(at, "invalid hexadecimal escape; write \\xHH or \\x{H…}")
+	bad := syntaxErr(at, "invalid hexadecimal escape; write \\xHH or \\x{H…}")
 	var v rune
 	if p.more() && p.peek() == '{' {
 		p.pos++
@@ -321,7 +345,7 @@ func (p *parser) hex(at int) (rune, *Error) {
 		}
 	}
 	if v > maxRune || v >= 0xD800 && v <= 0xDFFF {
-		return 0, p.syntaxErr(at, "\\x escapes a surrogate or a value beyond U+10FFFF")
+		return 0, syntaxErr(at, "\\x escapes a surrogate or a value beyond U+10FFFF")
 	}
 	return v, nil
 }
@@ -339,68 +363,87 @@ func hexValue(c rune) rune {
 }
 
 // isPunct reports ASCII punctuation, which an escape makes literal.
-func isPunct(c byte) bool {
+func isPunct(c rune) bool {
 	return c >= '!' && c <= '/' || c >= ':' && c <= '@' || c >= '[' && c <= '`' || c >= '{' && c <= '~'
 }
 
 // class parses a bracketed class; the "[" is consumed.
 func (p *parser) class(at int) (*node, *Error) {
-	negated := false
-	if p.more() && p.peek() == '^' {
-		negated = true
+	negated := p.more() && p.peek() == '^'
+	if negated {
 		p.pos++
 	}
 	var ranges []rune
-	first := true
-	for {
+	for first := true; ; first = false {
 		if !p.more() {
-			return nil, p.syntaxErr(at, "missing ]")
+			return nil, syntaxErr(at, "missing ]")
 		}
-		c := p.peek()
-		if c == ']' {
+		if p.peek() == ']' {
 			if first {
-				return nil, p.syntaxErr(at, "empty class; escape a literal ] as \\]")
+				return nil, syntaxErr(at, "empty class; escape a literal ] as \\]")
 			}
 			p.pos++
 			break
 		}
-		itemAt := p.pos
-		lo, set, err := p.classPoint(first)
-		if err != nil {
+		var err *Error
+		if ranges, err = p.classItem(at, first, ranges); err != nil {
 			return nil, err
 		}
-		first = false
-		if set != nil {
-			if p.more() && p.peek() == '-' && !p.closesNext() {
-				return nil, p.syntaxErr(p.pos, "a class escape cannot start a range")
-			}
-			ranges = append(ranges, set...)
-			continue
-		}
-		hi := lo
-		if p.more() && p.peek() == '-' && !p.closesNext() {
-			p.pos++
-			if !p.more() {
-				return nil, p.syntaxErr(at, "missing ]")
-			}
-			var hset []rune
-			if hi, hset, err = p.classPoint(false); err != nil {
-				return nil, err
-			}
-			if hset != nil {
-				return nil, p.syntaxErr(itemAt, "a class escape cannot end a range")
-			}
-			if hi < lo {
-				return nil, p.syntaxErr(itemAt, "invalid range %c-%c", lo, hi)
-			}
-		}
-		ranges = append(ranges, lo, hi)
 	}
-	ranges = normalize(ranges)
+	ranges = normalise(ranges)
 	if negated {
 		ranges = negate(ranges)
 	}
 	return &node{kind: nClass, ranges: ranges}, nil
+}
+
+// classItem parses one item of a class, a code point, a range or a class
+// escape, and appends its ranges; at is the class's offset.
+func (p *parser) classItem(at int, first bool, ranges []rune) ([]rune, *Error) {
+	itemAt := p.pos
+	lo, set, err := p.classPoint(first)
+	if err != nil {
+		return nil, err
+	}
+	if set != nil {
+		if p.atRangeDash() {
+			return nil, syntaxErr(p.pos, "a class escape cannot start a range")
+		}
+		return append(ranges, set...), nil
+	}
+	hi := lo
+	if p.atRangeDash() {
+		p.pos++
+		if hi, err = p.rangeEnd(at, itemAt, lo); err != nil {
+			return nil, err
+		}
+	}
+	return append(ranges, lo, hi), nil
+}
+
+// atRangeDash reports a "-" that joins two class points, not one that
+// ends the class.
+func (p *parser) atRangeDash() bool {
+	return p.more() && p.peek() == '-' && !p.closesNext()
+}
+
+// rangeEnd reads the upper end of the range that starts at lo, after its
+// "-"; itemAt is the offset of the range.
+func (p *parser) rangeEnd(at, itemAt int, lo rune) (rune, *Error) {
+	if !p.more() {
+		return 0, syntaxErr(at, "missing ]")
+	}
+	hi, set, err := p.classPoint(false)
+	if err != nil {
+		return 0, err
+	}
+	if set != nil {
+		return 0, syntaxErr(itemAt, "a class escape cannot end a range")
+	}
+	if hi < lo {
+		return 0, syntaxErr(itemAt, "invalid range %c-%c", lo, hi)
+	}
+	return hi, nil
 }
 
 // closesNext reports whether the "-" at the position is followed by "]".
@@ -415,10 +458,10 @@ func (p *parser) classPoint(first bool) (rune, []rune, *Error) {
 		p.pos++
 		return p.escape(at)
 	case '[':
-		return 0, nil, p.syntaxErr(at, "unescaped [ in a class")
+		return 0, nil, syntaxErr(at, "unescaped [ in a class")
 	case '-':
 		if !first && !p.closesNext() {
-			return 0, nil, p.syntaxErr(at, "unescaped - in a class; escape it or put it first or last")
+			return 0, nil, syntaxErr(at, "unescaped - in a class; escape it or put it first or last")
 		}
 	}
 	p.pos++
@@ -432,8 +475,8 @@ var (
 	spaceRanges = []rune{'\t', '\n', '\f', '\r', ' ', ' '}
 )
 
-// normalize sorts ranges and merges overlapping and adjacent ones.
-func normalize(r []rune) []rune {
+// normalise sorts ranges and merges overlapping and adjacent ones.
+func normalise(r []rune) []rune {
 	type span struct{ lo, hi rune }
 	spans := make([]span, 0, len(r)/2)
 	for i := 0; i < len(r); i += 2 {
@@ -451,7 +494,7 @@ func normalize(r []rune) []rune {
 	return out
 }
 
-// negate returns the complement of normalized ranges over all code points.
+// negate returns the complement of normalised ranges over all code points.
 func negate(r []rune) []rune {
 	var out []rune
 	next := rune(0)

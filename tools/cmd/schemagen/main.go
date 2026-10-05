@@ -62,60 +62,17 @@ func run(args []string, stdout, stderr io.Writer) int {
 // generate runs every generator; the layout tables need the binary
 // schemas flatc writes, so they are generated only when bfbs names them.
 func generate(root, bfbs string) ([]codegen.File, error) {
-	limits, err := codegen.LoadLimits(filepath.Join(root, filepath.FromSlash(codegen.LimitsSource)))
-	if err != nil {
-		return nil, fmt.Errorf("limits: %w", err)
+	steps := []func(root string) ([]codegen.File, error){
+		limitsFiles, modelFiles, registryFiles, pxlFiles, phoneFiles, codegen.NoticeFiles,
 	}
-	files, err := codegen.LimitsFiles(limits)
-	if err != nil {
-		return nil, fmt.Errorf("limits: %w", err)
+	var files []codegen.File
+	for _, step := range steps {
+		fs, err := step(root)
+		if err != nil {
+			return nil, err
+		}
+		files = append(files, fs...)
 	}
-	dir := filepath.Join(root, filepath.FromSlash(codegen.SchemaDir))
-	model, err := codegen.LoadModel(dir)
-	if err != nil {
-		return nil, fmt.Errorf("document model: %w", err)
-	}
-	schemas, err := codegen.Schemas(dir)
-	if err != nil {
-		return nil, fmt.Errorf("document model: %w", err)
-	}
-	modelFiles, err := codegen.ModelFiles(model, schemas)
-	if err != nil {
-		return nil, fmt.Errorf("document model: %w", err)
-	}
-	files = append(files, modelFiles...)
-	reg, err := registry.Load(root)
-	if err != nil {
-		return nil, fmt.Errorf("registry: %w", err)
-	}
-	regFiles, err := codegen.RegistryFiles(reg)
-	if err != nil {
-		return nil, fmt.Errorf("registry: %w", err)
-	}
-	files = append(files, regFiles...)
-	pxl, err := codegen.LoadPXL(root)
-	if err != nil {
-		return nil, fmt.Errorf("pxl: %w", err)
-	}
-	pxlFiles, err := codegen.PXLFiles(pxl)
-	if err != nil {
-		return nil, fmt.Errorf("pxl: %w", err)
-	}
-	files = append(files, pxlFiles...)
-	phone, err := codegen.LoadPhone(root)
-	if err != nil {
-		return nil, fmt.Errorf("phone: %w", err)
-	}
-	phoneFiles, err := codegen.PhoneFiles(phone)
-	if err != nil {
-		return nil, fmt.Errorf("phone: %w", err)
-	}
-	files = append(files, phoneFiles...)
-	notices, err := codegen.NoticeFiles(root)
-	if err != nil {
-		return nil, err //nolint:wrapcheck // it names its source
-	}
-	files = append(files, notices...)
 	if bfbs == "" {
 		return files, nil
 	}
@@ -128,6 +85,76 @@ func generate(root, bfbs string) ([]codegen.File, error) {
 		return nil, fmt.Errorf("fbs: %w", err)
 	}
 	return append(files, fbsFiles...), nil
+}
+
+// limitsFiles generates the limits registry's files.
+func limitsFiles(root string) ([]codegen.File, error) {
+	limits, err := codegen.LoadLimits(filepath.Join(root, filepath.FromSlash(codegen.LimitsSource)))
+	if err != nil {
+		return nil, fmt.Errorf("limits: %w", err)
+	}
+	files, err := codegen.LimitsFiles(limits)
+	if err != nil {
+		return nil, fmt.Errorf("limits: %w", err)
+	}
+	return files, nil
+}
+
+// modelFiles generates the document model's files.
+func modelFiles(root string) ([]codegen.File, error) {
+	dir := filepath.Join(root, filepath.FromSlash(codegen.SchemaDir))
+	model, err := codegen.LoadModel(dir)
+	if err != nil {
+		return nil, fmt.Errorf("document model: %w", err)
+	}
+	schemas, err := codegen.Schemas(dir)
+	if err != nil {
+		return nil, fmt.Errorf("document model: %w", err)
+	}
+	files, err := codegen.ModelFiles(model, schemas)
+	if err != nil {
+		return nil, fmt.Errorf("document model: %w", err)
+	}
+	return files, nil
+}
+
+// registryFiles generates the action registry's files.
+func registryFiles(root string) ([]codegen.File, error) {
+	reg, err := registry.Load(root)
+	if err != nil {
+		return nil, fmt.Errorf("registry: %w", err)
+	}
+	files, err := codegen.RegistryFiles(reg)
+	if err != nil {
+		return nil, fmt.Errorf("registry: %w", err)
+	}
+	return files, nil
+}
+
+// pxlFiles generates the PXL tables' files.
+func pxlFiles(root string) ([]codegen.File, error) {
+	pxl, err := codegen.LoadPXL(root)
+	if err != nil {
+		return nil, fmt.Errorf("pxl: %w", err)
+	}
+	files, err := codegen.PXLFiles(pxl)
+	if err != nil {
+		return nil, fmt.Errorf("pxl: %w", err)
+	}
+	return files, nil
+}
+
+// phoneFiles generates the phone metadata's files.
+func phoneFiles(root string) ([]codegen.File, error) {
+	phone, err := codegen.LoadPhone(root)
+	if err != nil {
+		return nil, fmt.Errorf("phone: %w", err)
+	}
+	files, err := codegen.PhoneFiles(phone)
+	if err != nil {
+		return nil, fmt.Errorf("phone: %w", err)
+	}
+	return files, nil
 }
 
 // checkLock fails unless the lock under root keeps every entry of base.

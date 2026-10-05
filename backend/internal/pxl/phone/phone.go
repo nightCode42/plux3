@@ -159,7 +159,7 @@ func IsValid(number, region string) bool {
 	if utf8.RuneCountInString(number) > maxInput {
 		return false
 	}
-	digits, plus, ok := normalize(number)
+	digits, plus, ok := normalise(number)
 	if !ok {
 		return false
 	}
@@ -183,9 +183,9 @@ func IsValid(number, region string) bool {
 	return g != nil && g.valid(national)
 }
 
-// normalize removes separators and returns the digits and whether a "+"
+// normalise removes separators and returns the digits and whether a "+"
 // preceded them.
-func normalize(s string) (string, bool, bool) {
+func normalise(s string) (string, bool, bool) {
 	var b strings.Builder
 	plus := false
 	for _, r := range s {

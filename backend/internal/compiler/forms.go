@@ -121,34 +121,51 @@ func (t *typer) formTypes(pl *plugin, forms []schema.Form, file string) ([][2]st
 func (t *typer) formHandlers(pl *plugin, pg *page, forms []schema.Form, file, from string, s *scope) {
 	for i, f := range forms {
 		valuesType := formTypeName(f.Name) + "Values"
-		values := s.synth[valuesType]
+		fs := formScope{pl: pl, pg: pg, file: file, from: from, valuesType: valuesType, values: s.synth[valuesType]}
 		for j, fd := range f.Fields {
 			te, err := parseTypeExpr(fd.Type)
 			if err != nil {
 				continue // reported by formTypes
 			}
-			for k, v := range fd.Validators {
+			for k := range fd.Validators {
 				ptr := plxerr.Pointer("forms", strconv.Itoa(i), "fields", strconv.Itoa(j), "validators", strconv.Itoa(k))
-				if v.Rule != nil && v.Kind == schema.FormValidatorKindCustom {
-					rs := &scope{
-						plugin: pl,
-						roots:  map[string]string{"value": te.String(), "form": valuesType},
-						synth:  map[string]pxl.TypeSpec{valuesType: values},
-						ids:    map[string]map[string]string{},
-					}
-					t.compile(v.Rule.Expr, rs, from, file, ptr+"/rule")
-				}
-				if v.Graph != "" && v.Kind == schema.FormValidatorKindAsync {
-					if pl == nil {
-						t.u.report(plxerr.FormAsyncValidatorInvalid, file, ptr+"/$graph", "a shared component has no graphs to run an asynchronous validator")
-						continue
-					}
-					if g := t.u.graphRef(pl, pg, v.Graph, from, file, ptr+"/$graph"); g != nil {
-						t.useGraph(g, te.String(), file, ptr+"/$graph")
-					}
-				}
+				t.validatorHandlers(fs, &fd.Validators[k], te, ptr)
 			}
 		}
+	}
+}
+
+// formScope is what formHandlers shares with the checks of one form: the
+// owner, the file and the form's values type.
+type formScope struct {
+	pl         *plugin
+	pg         *page
+	file, from string
+	valuesType string
+	values     pxl.TypeSpec
+}
+
+// validatorHandlers compiles a custom validator's rule, or records the
+// payload of an asynchronous validator's graph.
+func (t *typer) validatorHandlers(fs formScope, v *schema.FormValidator, te *texpr, ptr string) {
+	if v.Rule != nil && v.Kind == schema.FormValidatorKindCustom {
+		rs := &scope{
+			plugin: fs.pl,
+			roots:  map[string]string{"value": te.String(), "form": fs.valuesType},
+			synth:  map[string]pxl.TypeSpec{fs.valuesType: fs.values},
+			ids:    map[string]map[string]string{},
+		}
+		t.compile(v.Rule.Expr, rs, fs.from, fs.file, ptr+"/rule")
+	}
+	if v.Graph == "" || v.Kind != schema.FormValidatorKindAsync {
+		return
+	}
+	if fs.pl == nil {
+		t.u.report(plxerr.FormAsyncValidatorInvalid, fs.file, ptr+"/$graph", "a shared component has no graphs to run an asynchronous validator")
+		return
+	}
+	if g := t.u.graphRef(fs.pl, fs.pg, v.Graph, fs.from, fs.file, ptr+"/$graph"); g != nil {
+		t.useGraph(g, te.String(), fs.file, ptr+"/$graph")
 	}
 }
 
@@ -334,102 +351,171 @@ func (u *unit) checkValidator(pl *plugin, v *schema.FormValidator, te *texpr, fi
 		u.report(plxerr.FormValidatorNotApplicable, file, ptr+"/kind", "a %s validator does not apply to a %s field", v.Kind, te)
 		return nil
 	}
+	if !u.checkValidatorOptions(v, file, ptr) {
+		return nil
+	}
+	c := &validatorCheck{
+		u: u, pl: pl, v: v, te: te, file: file, ptr: ptr,
+		out: &formValidator{kind: validatorKinds[v.Kind], message: v.Message, maxScale: -1, maxIntegerDigits: -1},
+	}
+	if !c.kind() {
+		return nil
+	}
+	return c.out
+}
+
+// checkValidatorOptions reports each option the validator's kind does not
+// take; it is false when there is one.
+func (u *unit) checkValidatorOptions(v *schema.FormValidator, file, ptr string) bool {
 	allowed := validatorOptions[v.Kind]
-	bad := false
+	ok := true
 	for _, o := range presentOptions(v) {
 		if !slices.Contains(allowed, o) {
 			u.report(plxerr.FormValidatorOptions, file, ptr+"/"+o, "a %s validator takes no %s", v.Kind, o)
-			bad = true
+			ok = false
 		}
 	}
-	if bad {
-		return nil
+	return ok
+}
+
+// validatorCheck is the state of checking one validator, which the checks
+// of its kinds share; out is what they lower it into.
+type validatorCheck struct {
+	u         *unit
+	pl        *plugin
+	v         *schema.FormValidator
+	te        *texpr
+	file, ptr string
+	out       *formValidator
+}
+
+// need reports a validator that lacks what its kind requires.
+func (c *validatorCheck) need(ok bool, what string) bool {
+	if !ok {
+		c.u.report(plxerr.FormValidatorOptions, c.file, c.ptr, "a %s validator needs %s", c.v.Kind, what)
 	}
-	out := &formValidator{kind: validatorKinds[v.Kind], message: v.Message, maxScale: -1, maxIntegerDigits: -1}
-	need := func(ok bool, what string) bool {
-		if !ok {
-			u.report(plxerr.FormValidatorOptions, file, ptr, "a %s validator needs %s", v.Kind, what)
-		}
-		return ok
-	}
-	switch v.Kind {
+	return ok
+}
+
+// kind runs the check of the validator's kind; it is false when the
+// validator is invalid.
+func (c *validatorCheck) kind() bool {
+	switch c.v.Kind {
 	case schema.FormValidatorKindLength:
-		if !need(len(v.Min) > 0 || len(v.Max) > 0, "min or max") {
-			return nil
-		}
-		if !u.checkBounds(pl, v, &texpr{name: "int"}, file, ptr, out) {
-			return nil
-		}
-		for _, b := range []*value{out.min, out.max} {
-			if b != nil && b.i < 0 {
-				u.report(plxerr.FormValidatorOptions, file, ptr, "a length cannot be negative")
-				return nil
-			}
-		}
+		return c.length()
 	case schema.FormValidatorKindRange:
 		// A number field's bounds have its type; numeric text's are decimals.
-		bound := &texpr{name: te.name}
-		if te.name == "string" {
+		bound := &texpr{name: c.te.name}
+		if c.te.name == "string" {
 			bound.name = "decimal"
 		}
-		if !need(len(v.Min) > 0 || len(v.Max) > 0, "min or max") || !u.checkBounds(pl, v, bound, file, ptr, out) {
-			return nil
-		}
+		return c.bounds(bound)
 	case schema.FormValidatorKindDateRange:
-		if !need(len(v.Min) > 0 || len(v.Max) > 0, "min or max") || !u.checkBounds(pl, v, &texpr{name: te.name}, file, ptr, out) {
-			return nil
-		}
+		return c.bounds(&texpr{name: c.te.name})
 	case schema.FormValidatorKindRegex:
-		if !need(v.Pattern != "", "a pattern") {
-			return nil
-		}
-		if _, err := regex.Compile(v.Pattern, pxl.LimitsFrom(u.opts.Limits).Regex); err != nil {
-			u.report(plxerr.FormPatternInvalid, file, ptr+"/pattern", "%s at code point %d: %s", err.Kind, err.Offset, err.Message)
-			return nil
-		}
-		out.pattern = v.Pattern
+		return c.regex()
 	case schema.FormValidatorKindPhone:
-		if v.Region != "" && !phone.Known(v.Region) {
-			u.report(plxerr.FormPhoneRegionUnknown, file, ptr+"/region", "the phone table knows no region %q", v.Region)
-			return nil
-		}
-		out.region = v.Region
+		return c.phone()
 	case schema.FormValidatorKindDecimalPrecision:
-		if !need(v.MaxScale != nil || v.MaxIntegerDigits != nil, "maxScale or maxIntegerDigits") {
-			return nil
-		}
-		if v.MaxScale != nil {
-			out.maxScale = int32(min(*v.MaxScale, 1<<31-1)) //nolint:gosec // G115: clamped.
-		}
-		if v.MaxIntegerDigits != nil {
-			out.maxIntegerDigits = int32(min(*v.MaxIntegerDigits, 1<<31-1)) //nolint:gosec // G115: clamped.
-		}
+		return c.decimalPrecision()
 	case schema.FormValidatorKindCustom:
-		if !need(v.Rule != nil, "a rule") {
-			return nil
-		}
-		val := u.exprValue(vctx{file: file, ptr: ptr + "/rule", pl: pl, code: plxerr.ValueTypeMismatch}, &texpr{name: "bool"})
-		if val == nil {
-			return nil
-		}
-		out.rule = val.prog
+		return c.custom()
 	case schema.FormValidatorKindAsync:
-		if !need(v.Graph != "", "a graph") {
-			return nil
-		}
-		g := u.graphs[v.Graph]
-		if g == nil || pl == nil || g.plugin != pl {
-			return nil // reported by formHandlers
-		}
-		if !u.checkAsyncGraph(g, file, ptr+"/$graph") {
-			return nil
-		}
-		out.graph = g
-		if v.DebounceMs != nil {
-			out.debounceMs = uint32(min(*v.DebounceMs, 1<<32-1)) //nolint:gosec // G115: clamped.
+		return c.async()
+	}
+	return true
+}
+
+// bounds checks a validator that needs min or max, of type t.
+func (c *validatorCheck) bounds(t *texpr) bool {
+	return c.need(len(c.v.Min) > 0 || len(c.v.Max) > 0, "min or max") &&
+		c.u.checkBounds(c.pl, c.v, t, c.file, c.ptr, c.out)
+}
+
+// length checks a length validator: integer bounds that are not negative.
+func (c *validatorCheck) length() bool {
+	if !c.bounds(&texpr{name: "int"}) {
+		return false
+	}
+	for _, b := range []*value{c.out.min, c.out.max} {
+		if b != nil && b.i < 0 {
+			c.u.report(plxerr.FormValidatorOptions, c.file, c.ptr, "a length cannot be negative")
+			return false
 		}
 	}
-	return out
+	return true
+}
+
+// regex checks a regex validator's pattern against the regex limits.
+func (c *validatorCheck) regex() bool {
+	if !c.need(c.v.Pattern != "", "a pattern") {
+		return false
+	}
+	if _, err := regex.Compile(c.v.Pattern, pxl.LimitsFrom(c.u.opts.Limits).Regex); err != nil {
+		c.u.report(plxerr.FormPatternInvalid, c.file, c.ptr+"/pattern", "%s at code point %d: %s", err.Kind, err.Offset, err.Message)
+		return false
+	}
+	c.out.pattern = c.v.Pattern
+	return true
+}
+
+// phone checks a phone validator's region.
+func (c *validatorCheck) phone() bool {
+	if c.v.Region != "" && !phone.Known(c.v.Region) {
+		c.u.report(plxerr.FormPhoneRegionUnknown, c.file, c.ptr+"/region", "the phone table knows no region %q", c.v.Region)
+		return false
+	}
+	c.out.region = c.v.Region
+	return true
+}
+
+// decimalPrecision checks a decimal-precision validator and clamps its
+// limits to 32 bits.
+func (c *validatorCheck) decimalPrecision() bool {
+	v := c.v
+	if !c.need(v.MaxScale != nil || v.MaxIntegerDigits != nil, "maxScale or maxIntegerDigits") {
+		return false
+	}
+	if v.MaxScale != nil {
+		c.out.maxScale = int32(min(*v.MaxScale, 1<<31-1)) //nolint:gosec // G115: clamped.
+	}
+	if v.MaxIntegerDigits != nil {
+		c.out.maxIntegerDigits = int32(min(*v.MaxIntegerDigits, 1<<31-1)) //nolint:gosec // G115: clamped.
+	}
+	return true
+}
+
+// custom checks a custom validator's rule, a bool expression.
+func (c *validatorCheck) custom() bool {
+	if !c.need(c.v.Rule != nil, "a rule") {
+		return false
+	}
+	val := c.u.exprValue(vctx{file: c.file, ptr: c.ptr + "/rule", pl: c.pl, code: plxerr.ValueTypeMismatch}, &texpr{name: "bool"})
+	if val == nil {
+		return false
+	}
+	c.out.rule = val.prog
+	return true
+}
+
+// async checks an asynchronous validator's graph and clamps its debounce
+// to 32 bits.
+func (c *validatorCheck) async() bool {
+	if !c.need(c.v.Graph != "", "a graph") {
+		return false
+	}
+	g := c.u.graphs[c.v.Graph]
+	if g == nil || c.pl == nil || g.plugin != c.pl {
+		return false // reported by formHandlers
+	}
+	if !c.u.checkAsyncGraph(g, c.file, c.ptr+"/$graph") {
+		return false
+	}
+	c.out.graph = g
+	if c.v.DebounceMs != nil {
+		c.out.debounceMs = uint32(min(*c.v.DebounceMs, 1<<32-1)) //nolint:gosec // G115: clamped.
+	}
+	return true
 }
 
 // checkAsyncGraph checks an asynchronous validator's graph: it takes the
