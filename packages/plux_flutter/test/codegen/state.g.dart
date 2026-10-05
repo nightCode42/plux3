@@ -44,14 +44,18 @@ final class PluxScreen<R> {
 /// The app's pages by route name (NAV-003, HST-030).
 abstract final class PluxScreens {
   /// The page `home`.
-  static PluxScreen<void> home() =>
-      PluxScreen<void>._('home', {}, (_) {});
+  static PluxScreen<void> home() => PluxScreen<void>._('home', {}, (_) {});
 }
 
 /// The components plugins export, shown inline by name (NAV-004).
 abstract final class PluxComponents {
   /// The component `tally`.
-  static plux.PluxView tally({required String label, w.Key? key, void Function(plux.PluxViewEvent event)? onEvent, plux.PluxViewSizing sizing = plux.PluxViewSizing.intrinsic}) => plux.PluxView(
+  static plux.PluxView tally({
+    required String label,
+    w.Key? key,
+    void Function(plux.PluxViewEvent event)? onEvent,
+    plux.PluxViewSizing sizing = plux.PluxViewSizing.intrinsic,
+  }) => plux.PluxView(
     'tally',
     key: key,
     inputs: {'label': label},
@@ -75,7 +79,8 @@ final class RefreshEvent {
   const RefreshEvent({required this.by});
 
   /// The value of JSON form [json].
-  factory RefreshEvent.fromJson(Map<String, Object?> json) => RefreshEvent(by: json['by'] as int);
+  factory RefreshEvent.fromJson(Map<String, Object?> json) =>
+      RefreshEvent(by: json['by'] as int);
 
   /// The field `by`.
   final int by;
@@ -90,7 +95,8 @@ final class SavedEvent {
   const SavedEvent({required this.count});
 
   /// The value of JSON form [json].
-  factory SavedEvent.fromJson(Map<String, Object?> json) => SavedEvent(count: json['count'] as int);
+  factory SavedEvent.fromJson(Map<String, Object?> json) =>
+      SavedEvent(count: json['count'] as int);
 
   /// The field `count`.
   final int count;
@@ -104,7 +110,8 @@ final class SavedEvent {
 abstract final class PluxHostEvents {
   /// The `opened` events.
   static Stream<OpenedEvent> get opened =>
-      plux.Plux.eventsNamed('opened').map((e) => OpenedEvent.fromJson(e.payload));
+      plux.Plux.eventsNamed('opened')
+          .map((e) => OpenedEvent.fromJson(e.payload));
 
   /// Sends a `refresh` event into Plux; completes with whether it was
   /// accepted.
@@ -177,7 +184,8 @@ final class Draft {
   const Draft({required this.done, required this.title});
 
   /// The value of JSON form [json].
-  factory Draft.fromJson(Map<String, Object?> json) => Draft(done: json['done'] as bool, title: json['title'] as String);
+  factory Draft.fromJson(Map<String, Object?> json) =>
+      Draft(done: json['done'] as bool, title: json['title'] as String);
 
   /// The field `done`.
   final bool done;

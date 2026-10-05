@@ -52,12 +52,10 @@ abstract final class PluxScreens {
       PluxScreen<void>._('place', {'name': name}, (_) {});
 
   /// The page `places`.
-  static PluxScreen<void> places() =>
-      PluxScreen<void>._('places', {}, (_) {});
+  static PluxScreen<void> places() => PluxScreen<void>._('places', {}, (_) {});
 
   /// The page `sign-in`.
-  static PluxScreen<void> signIn() =>
-      PluxScreen<void>._('sign-in', {}, (_) {});
+  static PluxScreen<void> signIn() => PluxScreen<void>._('sign-in', {}, (_) {});
 
   /// The page `welcome`.
   static PluxScreen<void> welcome() =>
@@ -67,7 +65,12 @@ abstract final class PluxScreens {
 /// The components plugins export, shown inline by name (NAV-004).
 abstract final class PluxComponents {
   /// The component `counter-badge`.
-  static plux.PluxView counterBadge({required String label, w.Key? key, void Function(plux.PluxViewEvent event)? onEvent, plux.PluxViewSizing sizing = plux.PluxViewSizing.intrinsic}) => plux.PluxView(
+  static plux.PluxView counterBadge({
+    required String label,
+    w.Key? key,
+    void Function(plux.PluxViewEvent event)? onEvent,
+    plux.PluxViewSizing sizing = plux.PluxViewSizing.intrinsic,
+  }) => plux.PluxView(
     'counter-badge',
     key: key,
     inputs: {'label': label},
@@ -82,7 +85,8 @@ final class PlaceSharedEvent {
   const PlaceSharedEvent({required this.name});
 
   /// The value of JSON form [json].
-  factory PlaceSharedEvent.fromJson(Map<String, Object?> json) => PlaceSharedEvent(name: json['name'] as String);
+  factory PlaceSharedEvent.fromJson(Map<String, Object?> json) =>
+      PlaceSharedEvent(name: json['name'] as String);
 
   /// The field `name`.
   final String name;
@@ -93,7 +97,8 @@ final class PlaceSharedEvent {
 abstract final class PluxHostEvents {
   /// The `placeShared` events.
   static Stream<PlaceSharedEvent> get placeShared =>
-      plux.Plux.eventsNamed('placeShared').map((e) => PlaceSharedEvent.fromJson(e.payload));
+      plux.Plux.eventsNamed('placeShared')
+          .map((e) => PlaceSharedEvent.fromJson(e.payload));
 }
 
 /// A typed handle on an exposed app state entry (STA-030).

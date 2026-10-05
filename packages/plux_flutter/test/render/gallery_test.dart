@@ -28,8 +28,9 @@ void main() {
     haptics = [];
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(SystemChannels.platform, (call) async {
-          if (call.method.startsWith('HapticFeedback.'))
+          if (call.method.startsWith('HapticFeedback.')) {
             haptics.add(call.method);
+          }
           return null;
         });
   });
