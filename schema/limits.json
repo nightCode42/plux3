@@ -449,6 +449,104 @@
       "description": "Responses the cache of data sources keeps on the device; the least recently used are evicted beyond it."
     },
     {
+      "key": "data.downloadSize",
+      "unit": "bytes",
+      "default": 52428800,
+      "max": 2147483648,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "DAT-031",
+        "LIM-004"
+      ],
+      "description": "Bytes one download may have; checked against the declared length before the transfer and counted during it, a larger one is stopped."
+    },
+    {
+      "key": "data.outboxBackoffMax",
+      "unit": "milliseconds",
+      "default": 300000,
+      "max": 3600000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "DAT-020"
+      ],
+      "description": "Longest wait between two replays of the offline outbox that left entries; the wait doubles from data.outboxBackoffMin up to it."
+    },
+    {
+      "key": "data.outboxBackoffMin",
+      "unit": "milliseconds",
+      "default": 5000,
+      "max": 600000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "DAT-020"
+      ],
+      "description": "First wait before the offline outbox replays again after a replay left entries behind."
+    },
+    {
+      "key": "data.outboxBytes",
+      "unit": "bytes",
+      "default": 4194304,
+      "max": 67108864,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "DAT-020",
+        "LIM-004"
+      ],
+      "description": "Bytes the offline outbox keeps on the device, encoded; a mutation that would exceed it is refused with a typed error."
+    },
+    {
+      "key": "data.outboxEntries",
+      "unit": "count",
+      "default": 200,
+      "max": 10000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "DAT-020",
+        "LIM-004"
+      ],
+      "description": "Mutations the offline outbox keeps on the device; a further mutation is refused with a typed error."
+    },
+    {
       "key": "data.pageSize",
       "unit": "count",
       "default": 50,
@@ -550,6 +648,107 @@
         "DAT-001"
       ],
       "description": "Data sources a plugin, its pages and the app may declare for it together."
+    },
+    {
+      "key": "data.streamBackoffMax",
+      "unit": "milliseconds",
+      "default": 30000,
+      "max": 600000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "DAT-012"
+      ],
+      "description": "Longest wait between two reconnection attempts of a stream; the wait doubles from data.streamBackoffMin up to it, with jitter."
+    },
+    {
+      "key": "data.streamBackoffMin",
+      "unit": "milliseconds",
+      "default": 1000,
+      "max": 60000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "DAT-012"
+      ],
+      "description": "First wait before a stream reconnects after its connection ended."
+    },
+    {
+      "key": "data.streamMessageSize",
+      "unit": "bytes",
+      "default": 1048576,
+      "max": 16777216,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "DAT-012",
+        "LIM-004"
+      ],
+      "description": "Bytes one stream message may have; a larger message closes the stream with a typed error."
+    },
+    {
+      "key": "data.streamsOpen",
+      "unit": "count",
+      "default": 8,
+      "max": 64,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "DAT-012",
+        "LIM-004"
+      ],
+      "description": "Streams the runtime keeps open at once; a further subscription is refused with a typed error."
+    },
+    {
+      "key": "data.uploadSize",
+      "unit": "bytes",
+      "default": 26214400,
+      "max": 1073741824,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "DAT-031",
+        "LIM-004"
+      ],
+      "description": "Bytes one upload may have; the file's size is checked before the transfer and a larger file is refused."
     },
     {
       "key": "device.diskQuota",

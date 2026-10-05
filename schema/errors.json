@@ -568,6 +568,30 @@
       "fix": "Remove the header and set auth to true to send the auth delegate's token, or call the API through a Plux Function."
     },
     {
+      "code": "PLX-1175",
+      "reason": "DATA_STREAM_INVALID",
+      "severity": "error",
+      "title": "Invalid stream configuration",
+      "cause": "A WebSocket, SSE or GraphQL subscription source is not what the data layer runs: a property is unknown or missing, the path is malformed, a subscription document is not a subscription, or a source of another kind is configured as a stream (DAT-012, ADR-0048).",
+      "fix": "Correct the configuration as the data sources reference describes; the message names the property."
+    },
+    {
+      "code": "PLX-1176",
+      "reason": "DATA_OUTBOX_INVALID",
+      "severity": "error",
+      "title": "Invalid offline mutation",
+      "cause": "An operation marked offlineCapable cannot be replayed: it reads (GET, or a GraphQL query) instead of mutating, or it is also a file transfer (DAT-020).",
+      "fix": "Mark only mutating operations offlineCapable, and treat their output as optional."
+    },
+    {
+      "code": "PLX-1177",
+      "reason": "DATA_TRANSFER_INVALID",
+      "severity": "error",
+      "title": "Invalid file transfer",
+      "cause": "An operation's upload or download is not what the data layer runs: it is not a REST operation, its method does not fit the direction, its body mode or file parameter is unknown, or it is combined with offlineCapable (DAT-031).",
+      "fix": "Declare a REST operation with a transfer of kind upload (POST, PUT or PATCH) or download (GET), and a file parameter."
+    },
+    {
       "code": "PLX-1201",
       "reason": "UNKNOWN_ROUTE",
       "severity": "error",
@@ -1278,6 +1302,78 @@
       "title": "Response cache unavailable",
       "cause": "The response cache could not be read or written, or its encryption key could not be obtained; the request goes to the network as with networkOnly, and nothing is stored in the clear (DAT-010, LIM-004).",
       "fix": "Check the device's free storage and the key provider; the runtime keeps working without the cache."
+    },
+    {
+      "code": "PLX-5110",
+      "reason": "DATA_STREAM_FAILED",
+      "severity": "error",
+      "title": "Stream failed",
+      "cause": "A stream ended and will not reconnect: the server refused the connection for good (a client error), the stream's protocol was violated, or a GraphQL subscription reported an error. Network failures and server errors are not this error: they reconnect with backoff (DAT-012).",
+      "fix": "Check the stream's URL, parameters and the user's access; subscribe again after correcting the cause."
+    },
+    {
+      "code": "PLX-5111",
+      "reason": "DATA_STREAM_MESSAGE_TOO_LARGE",
+      "severity": "error",
+      "title": "Stream message too large",
+      "cause": "A message of a stream is larger than data.streamMessageSize; the stream is closed (DAT-012, LIM-004).",
+      "fix": "Make the server send smaller messages, or raise data.streamMessageSize for the app."
+    },
+    {
+      "code": "PLX-5112",
+      "reason": "DATA_STREAM_LIMIT",
+      "severity": "error",
+      "title": "Too many open streams",
+      "cause": "A subscription would open more streams than data.streamsOpen allows; it is refused and the open streams stay (DAT-012, LIM-004).",
+      "fix": "Unsubscribe from a stream first, or raise data.streamsOpen for the app."
+    },
+    {
+      "code": "PLX-5120",
+      "reason": "DATA_OUTBOX_FULL",
+      "severity": "error",
+      "title": "Outbox full",
+      "cause": "An offline mutation could not be queued because the outbox holds data.outboxEntries entries or data.outboxBytes bytes; the mutation is refused with a custom error and nothing is queued (DAT-020, LIM-004).",
+      "fix": "Wait until connectivity returns and the outbox drains, or raise the limits for the app."
+    },
+    {
+      "code": "PLX-5121",
+      "reason": "DATA_OUTBOX_UNAVAILABLE",
+      "severity": "error",
+      "title": "Outbox unavailable",
+      "cause": "The outbox could not be read or written, or its encryption key could not be obtained, so an offline mutation is refused rather than stored in the clear (DAT-020).",
+      "fix": "Check the device's free storage and secure storage; the mutation can be repeated."
+    },
+    {
+      "code": "PLX-5122",
+      "reason": "DATA_OUTBOX_CONFLICT",
+      "severity": "warning",
+      "title": "Outbox replay conflict",
+      "cause": "A queued mutation was answered 409 or 412 when it was replayed: the server's state changed meanwhile. The entry is removed and the data source's conflict event runs, so the graph can reconcile (DAT-020).",
+      "fix": "Handle the conflict trigger of the data source: reload the data and ask the user, or apply the change again."
+    },
+    {
+      "code": "PLX-5123",
+      "reason": "DATA_OUTBOX_REJECTED",
+      "severity": "warning",
+      "title": "Outbox replay rejected",
+      "cause": "A queued mutation was answered with a client error other than a conflict when it was replayed, so it can never succeed. The entry is removed and the data source's failure event runs (DAT-020).",
+      "fix": "Handle the failure trigger of the data source: undo the optimistic change and tell the user."
+    },
+    {
+      "code": "PLX-5130",
+      "reason": "DATA_TRANSFER_TOO_LARGE",
+      "severity": "error",
+      "title": "Transfer too large",
+      "cause": "An upload's file, or a download's declared or received length, is larger than data.uploadSize or data.downloadSize; the transfer is refused or stopped and a partial download is removed (DAT-031, LIM-004).",
+      "fix": "Choose a smaller file, or raise the limit for the app."
+    },
+    {
+      "code": "PLX-5131",
+      "reason": "DATA_TRANSFER_FILE_FAILED",
+      "severity": "error",
+      "title": "Transfer file unavailable",
+      "cause": "The file to upload does not exist or cannot be read, or the name a download is saved under is not a plain file name or cannot be written in the runtime's directory (DAT-031).",
+      "fix": "Give an existing file, and a download a plain name without directories."
     },
     {
       "code": "PLX-5301",

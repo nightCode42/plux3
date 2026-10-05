@@ -130,7 +130,12 @@ enum TriggerKind {
   HostEvent(5),
   DataLoaded(6),
   DataFailed(7),
-  Error(8);
+  Error(8),
+  DataMessage(9),
+  DataProgress(10),
+  OutboxSynced(11),
+  OutboxFailed(12),
+  OutboxConflict(13);
 
   final int value;
   const TriggerKind(this.value);
@@ -146,6 +151,11 @@ enum TriggerKind {
       case 6: return TriggerKind.DataLoaded;
       case 7: return TriggerKind.DataFailed;
       case 8: return TriggerKind.Error;
+      case 9: return TriggerKind.DataMessage;
+      case 10: return TriggerKind.DataProgress;
+      case 11: return TriggerKind.OutboxSynced;
+      case 12: return TriggerKind.OutboxFailed;
+      case 13: return TriggerKind.OutboxConflict;
       default: throw StateError('Invalid value $value for bit flag enum');
     }
   }
@@ -154,7 +164,7 @@ enum TriggerKind {
       value == null ? null : TriggerKind.fromValue(value);
 
   static const int minValue = 0;
-  static const int maxValue = 8;
+  static const int maxValue = 13;
   static const fb.Reader<TriggerKind> reader = _TriggerKindReader();
 }
 

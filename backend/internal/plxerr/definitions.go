@@ -335,6 +335,21 @@ var registry = []Definition{
 		"Remove the header and set auth to true to send the auth delegate's token, or call the API through a Plux Function.", false,
 	},
 	{
+		DataStreamInvalid, "DATA_STREAM_INVALID", SeverityError, "Invalid stream configuration",
+		"A WebSocket, SSE or GraphQL subscription source is not what the data layer runs: a property is unknown or missing, the path is malformed, a subscription document is not a subscription, or a source of another kind is configured as a stream (DAT-012, ADR-0048).",
+		"Correct the configuration as the data sources reference describes; the message names the property.", false,
+	},
+	{
+		DataOutboxInvalid, "DATA_OUTBOX_INVALID", SeverityError, "Invalid offline mutation",
+		"An operation marked offlineCapable cannot be replayed: it reads (GET, or a GraphQL query) instead of mutating, or it is also a file transfer (DAT-020).",
+		"Mark only mutating operations offlineCapable, and treat their output as optional.", false,
+	},
+	{
+		DataTransferInvalid, "DATA_TRANSFER_INVALID", SeverityError, "Invalid file transfer",
+		"An operation's upload or download is not what the data layer runs: it is not a REST operation, its method does not fit the direction, its body mode or file parameter is unknown, or it is combined with offlineCapable (DAT-031).",
+		"Declare a REST operation with a transfer of kind upload (POST, PUT or PATCH) or download (GET), and a file parameter.", false,
+	},
+	{
 		UnknownRoute, "UNKNOWN_ROUTE", SeverityError, "Unknown route",
 		"A navigate action targets a route name that no page and no native route declares.",
 		"Correct the route name, or add the page.", false,
@@ -788,6 +803,51 @@ var registry = []Definition{
 		DataCacheUnavailable, "DATA_CACHE_UNAVAILABLE", SeverityWarning, "Response cache unavailable",
 		"The response cache could not be read or written, or its encryption key could not be obtained; the request goes to the network as with networkOnly, and nothing is stored in the clear (DAT-010, LIM-004).",
 		"Check the device's free storage and the key provider; the runtime keeps working without the cache.", false,
+	},
+	{
+		DataStreamFailed, "DATA_STREAM_FAILED", SeverityError, "Stream failed",
+		"A stream ended and will not reconnect: the server refused the connection for good (a client error), the stream's protocol was violated, or a GraphQL subscription reported an error. Network failures and server errors are not this error: they reconnect with backoff (DAT-012).",
+		"Check the stream's URL, parameters and the user's access; subscribe again after correcting the cause.", false,
+	},
+	{
+		DataStreamMessageTooLarge, "DATA_STREAM_MESSAGE_TOO_LARGE", SeverityError, "Stream message too large",
+		"A message of a stream is larger than data.streamMessageSize; the stream is closed (DAT-012, LIM-004).",
+		"Make the server send smaller messages, or raise data.streamMessageSize for the app.", false,
+	},
+	{
+		DataStreamLimit, "DATA_STREAM_LIMIT", SeverityError, "Too many open streams",
+		"A subscription would open more streams than data.streamsOpen allows; it is refused and the open streams stay (DAT-012, LIM-004).",
+		"Unsubscribe from a stream first, or raise data.streamsOpen for the app.", false,
+	},
+	{
+		DataOutboxFull, "DATA_OUTBOX_FULL", SeverityError, "Outbox full",
+		"An offline mutation could not be queued because the outbox holds data.outboxEntries entries or data.outboxBytes bytes; the mutation is refused with a custom error and nothing is queued (DAT-020, LIM-004).",
+		"Wait until connectivity returns and the outbox drains, or raise the limits for the app.", false,
+	},
+	{
+		DataOutboxUnavailable, "DATA_OUTBOX_UNAVAILABLE", SeverityError, "Outbox unavailable",
+		"The outbox could not be read or written, or its encryption key could not be obtained, so an offline mutation is refused rather than stored in the clear (DAT-020).",
+		"Check the device's free storage and secure storage; the mutation can be repeated.", false,
+	},
+	{
+		DataOutboxConflict, "DATA_OUTBOX_CONFLICT", SeverityWarning, "Outbox replay conflict",
+		"A queued mutation was answered 409 or 412 when it was replayed: the server's state changed meanwhile. The entry is removed and the data source's conflict event runs, so the graph can reconcile (DAT-020).",
+		"Handle the conflict trigger of the data source: reload the data and ask the user, or apply the change again.", false,
+	},
+	{
+		DataOutboxRejected, "DATA_OUTBOX_REJECTED", SeverityWarning, "Outbox replay rejected",
+		"A queued mutation was answered with a client error other than a conflict when it was replayed, so it can never succeed. The entry is removed and the data source's failure event runs (DAT-020).",
+		"Handle the failure trigger of the data source: undo the optimistic change and tell the user.", false,
+	},
+	{
+		DataTransferTooLarge, "DATA_TRANSFER_TOO_LARGE", SeverityError, "Transfer too large",
+		"An upload's file, or a download's declared or received length, is larger than data.uploadSize or data.downloadSize; the transfer is refused or stopped and a partial download is removed (DAT-031, LIM-004).",
+		"Choose a smaller file, or raise the limit for the app.", false,
+	},
+	{
+		DataTransferFileFailed, "DATA_TRANSFER_FILE_FAILED", SeverityError, "Transfer file unavailable",
+		"The file to upload does not exist or cannot be read, or the name a download is saved under is not a plain file name or cannot be written in the runtime's directory (DAT-031).",
+		"Give an existing file, and a download a plain name without directories.", false,
 	},
 	{
 		StateWriteTypeMismatch, "STATE_WRITE_TYPE_MISMATCH", SeverityError, "State written with a value of the wrong type",

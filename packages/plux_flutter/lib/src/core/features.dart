@@ -3,7 +3,8 @@
 
 /// The features this runtime supports, for `required_features` (BND-008):
 /// `pxl.v1`, `pxl.regex.v1` and `pxl.phone.v1` (0.3.0), `navigation.guards.v1`
-/// (route guards, ADR-0040), `data.v1` (the data layer, ADR-0048), the state
+/// (route guards, ADR-0040), `data.v1` (the data layer, ADR-0048) with `data.streams.v1`, `data.outbox.v1` and
+/// `data.transfers.v1`, the state
 /// engine's `state.write.v1`, `state.computed.v1` and `state.persistence.v1`,
 /// forms' `forms.v1` (ADR-0047), and
 /// registry revisions — `widget.<Type>.v<n>`,
@@ -54,6 +55,16 @@ final class RuntimeFeatures {
   /// source requires it.
   static const Set<String> data = {'data.v1'};
 
+  /// The data layer's streams, offline outbox and file transfers
+  /// (DAT-012, DAT-020, DAT-031): a bundle declaring a WebSocket, SSE or
+  /// subscription source, an offline-capable mutation or a transfer
+  /// requires them.
+  static const Set<String> dataIo = {
+    'data.streams.v1',
+    'data.outbox.v1',
+    'data.transfers.v1',
+  };
+
   /// The state engine's features (STA-*): writes, computed entries and
   /// session, persisted and secure entries.
   static const Set<String> state = {
@@ -73,6 +84,7 @@ final class RuntimeFeatures {
         navigation.contains(feature) ||
         actions.contains(feature) ||
         data.contains(feature) ||
+        dataIo.contains(feature) ||
         state.contains(feature)) {
       return true;
     }

@@ -374,6 +374,12 @@ func (u *unit) checkRef(g *graph, in registry.Input, raw json.RawMessage, c vctx
 	case "dataSource":
 		id, ok := g.scope.ids["data"][name]
 		resolved, kind, to = ok, EdgeUsesDataSource, id
+	case "stream":
+		src := u.streamSource(g, name)
+		resolved = src != nil
+		if src != nil {
+			kind, to = EdgeUsesDataSource, src.ID
+		}
 	case "operation":
 		src, _ := u.operation(g, name)
 		resolved = src != nil

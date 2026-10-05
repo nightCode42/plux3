@@ -96,7 +96,7 @@ func defaultPolicy(kind fbs.TriggerKind) fbs.Concurrency {
 	switch kind {
 	case fbs.TriggerKindTimer:
 		return fbs.ConcurrencyDrop
-	case fbs.TriggerKindStateChange:
+	case fbs.TriggerKindStateChange, fbs.TriggerKindDataProgress:
 		return fbs.ConcurrencyRestart
 	}
 	return fbs.ConcurrencyQueue
@@ -142,8 +142,9 @@ func (u *unit) resolveTriggers(ts *schema.Triggers, pl *plugin, pg *page, anchor
 	}
 	for _, name := range sortedKeys(ts.DataSources) {
 		ds := ts.DataSources[name]
-		add(fbs.TriggerKindDataLoaded, name, ds.OnLoaded, "data:"+name+":onLoaded", plxerr.Pointer("triggers", "dataSources", name, "onLoaded"))
-		add(fbs.TriggerKindDataFailed, name, ds.OnFailed, "data:"+name+":onFailed", plxerr.Pointer("triggers", "dataSources", name, "onFailed"))
+		for _, e := range dataEvents(ds) {
+			add(e.kind, name, e.eh, "data:"+name+":"+e.name, plxerr.Pointer("triggers", "dataSources", name, e.name))
+		}
 	}
 	add(fbs.TriggerKindError, "", ts.OnError, "onError", "/triggers/onError")
 	return out
@@ -234,6 +235,9 @@ func (t *typer) triggerPayload(tr *trigger, s *scope, roots []string) (string, b
 		if tr.kind == fbs.TriggerKindDataFailed {
 			payload = "PluxActionError"
 		}
+	case fbs.TriggerKindDataMessage, fbs.TriggerKindDataProgress,
+		fbs.TriggerKindOutboxSynced, fbs.TriggerKindOutboxFailed, fbs.TriggerKindOutboxConflict:
+		return t.dataIOPayload(tr, s)
 	case fbs.TriggerKindError:
 		payload = "PluxActionError"
 	}

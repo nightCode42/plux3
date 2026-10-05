@@ -44,6 +44,14 @@ type dataConfig struct {
 	Pagination   *pageConfig                 `json:"pagination"`
 	Mocks        *mockConfig                 `json:"mocks"`
 	Operations   map[string]*operationConfig `json:"operations"`
+
+	// Subscription is a GraphQL source's subscription document (DAT-012);
+	// SubscribeMessage is the message a WebSocket source sends after each
+	// connection; OfflineCapable marks the source's mutations for the
+	// outbox (DAT-020).
+	Subscription     string          `json:"subscription"`
+	SubscribeMessage json.RawMessage `json:"subscribeMessage"`
+	OfflineCapable   bool            `json:"offlineCapable"`
 }
 
 // cacheConfig is a source's caching (DAT-010).
@@ -91,6 +99,12 @@ type operationConfig struct {
 	Input   string            `json:"input"`
 	Output  string            `json:"output"`
 	Select  string            `json:"select"`
+
+	// OfflineCapable overrides the source's setting for this mutation
+	// (DAT-020); Transfer makes the operation a file upload or download
+	// (DAT-031).
+	OfflineCapable *bool           `json:"offlineCapable"`
+	Transfer       *transferConfig `json:"transfer"`
 }
 
 // parsedConfig is a decoded configuration or why it could not be read.
@@ -115,10 +129,10 @@ var (
 // maxTTLSeconds is the longest cache TTL, a year.
 const maxTTLSeconds = 365 * 24 * 3600
 
-// runsData reports whether the data layer loads sources of a kind in this
-// milestone: REST and GraphQL (P5 R4).
+// runsData reports whether the data layer runs sources of a kind in this
+// milestone: REST and GraphQL (P5 R4), WebSocket and SSE streams (P5 R5).
 func runsData(k schema.DataSourceKind) bool {
-	return k == schema.DataSourceKindRest || k == schema.DataSourceKindGraphql
+	return k == schema.DataSourceKindRest || k == schema.DataSourceKindGraphql || isStreamKind(k)
 }
 
 // dataConfigOf decodes a REST or GraphQL source's configuration once.
@@ -234,9 +248,13 @@ func (u *unit) checkDataSource(pl *plugin, s *schema.DataSource, file, ptr strin
 	bad := func(sub, format string, args ...any) {
 		u.report(plxerr.DataSourceConfigInvalid, file, cptr+sub, format, args...)
 	}
-	if graphql {
+	u.checkStreamAndOutbox(pl, s, c, file, ptr, cptr)
+	switch {
+	case isStreamKind(s.Kind):
+		u.checkPath(c.Path, c.Params, file, cptr)
+	case graphql:
 		checkGraphQLSource(c, bad)
-	} else {
+	default:
 		if c.Query != "" {
 			bad("/query", "only a GraphQL source has a query")
 		}
@@ -475,6 +493,7 @@ func (u *unit) checkOperation(pl *plugin, name string, op *operationConfig, grap
 		return
 	}
 	checkOperationRequest(op, graphql, bad)
+	u.checkTransfer(pl, op, graphql, file, ptr)
 	if op.Input != "" {
 		if te := u.checkType(pl, op.Input, file, ptr+"/input"); te != nil {
 			if _, ok := u.declared(pl, te.name); !ok || te.nullable || te.elem != nil {
@@ -532,6 +551,9 @@ func (u *unit) apiCallInput(g *graph, c vctx) bool {
 // declared output, nullable, or "".
 func (t *typer) apiCallOutput(g *graph, st schema.Step) string {
 	_, op := t.u.operation(g, literalString(st.Input["operation"]))
+	if op != nil && op.Transfer != nil && op.Transfer.Kind == transferDownload {
+		return "string?"
+	}
 	if op == nil || op.Output == "" {
 		return ""
 	}

@@ -7,39 +7,54 @@ import "strconv"
 type TriggerKind byte
 
 const (
-	TriggerKindTimer       TriggerKind = 0
-	TriggerKindStateChange TriggerKind = 1
-	TriggerKindAppResume   TriggerKind = 2
-	TriggerKindAppPause    TriggerKind = 3
-	TriggerKindPushOpened  TriggerKind = 4
-	TriggerKindHostEvent   TriggerKind = 5
-	TriggerKindDataLoaded  TriggerKind = 6
-	TriggerKindDataFailed  TriggerKind = 7
-	TriggerKindError       TriggerKind = 8
+	TriggerKindTimer          TriggerKind = 0
+	TriggerKindStateChange    TriggerKind = 1
+	TriggerKindAppResume      TriggerKind = 2
+	TriggerKindAppPause       TriggerKind = 3
+	TriggerKindPushOpened     TriggerKind = 4
+	TriggerKindHostEvent      TriggerKind = 5
+	TriggerKindDataLoaded     TriggerKind = 6
+	TriggerKindDataFailed     TriggerKind = 7
+	TriggerKindError          TriggerKind = 8
+	TriggerKindDataMessage    TriggerKind = 9
+	TriggerKindDataProgress   TriggerKind = 10
+	TriggerKindOutboxSynced   TriggerKind = 11
+	TriggerKindOutboxFailed   TriggerKind = 12
+	TriggerKindOutboxConflict TriggerKind = 13
 )
 
 var EnumNamesTriggerKind = map[TriggerKind]string{
-	TriggerKindTimer:       "Timer",
-	TriggerKindStateChange: "StateChange",
-	TriggerKindAppResume:   "AppResume",
-	TriggerKindAppPause:    "AppPause",
-	TriggerKindPushOpened:  "PushOpened",
-	TriggerKindHostEvent:   "HostEvent",
-	TriggerKindDataLoaded:  "DataLoaded",
-	TriggerKindDataFailed:  "DataFailed",
-	TriggerKindError:       "Error",
+	TriggerKindTimer:          "Timer",
+	TriggerKindStateChange:    "StateChange",
+	TriggerKindAppResume:      "AppResume",
+	TriggerKindAppPause:       "AppPause",
+	TriggerKindPushOpened:     "PushOpened",
+	TriggerKindHostEvent:      "HostEvent",
+	TriggerKindDataLoaded:     "DataLoaded",
+	TriggerKindDataFailed:     "DataFailed",
+	TriggerKindError:          "Error",
+	TriggerKindDataMessage:    "DataMessage",
+	TriggerKindDataProgress:   "DataProgress",
+	TriggerKindOutboxSynced:   "OutboxSynced",
+	TriggerKindOutboxFailed:   "OutboxFailed",
+	TriggerKindOutboxConflict: "OutboxConflict",
 }
 
 var EnumValuesTriggerKind = map[string]TriggerKind{
-	"Timer":       TriggerKindTimer,
-	"StateChange": TriggerKindStateChange,
-	"AppResume":   TriggerKindAppResume,
-	"AppPause":    TriggerKindAppPause,
-	"PushOpened":  TriggerKindPushOpened,
-	"HostEvent":   TriggerKindHostEvent,
-	"DataLoaded":  TriggerKindDataLoaded,
-	"DataFailed":  TriggerKindDataFailed,
-	"Error":       TriggerKindError,
+	"Timer":          TriggerKindTimer,
+	"StateChange":    TriggerKindStateChange,
+	"AppResume":      TriggerKindAppResume,
+	"AppPause":       TriggerKindAppPause,
+	"PushOpened":     TriggerKindPushOpened,
+	"HostEvent":      TriggerKindHostEvent,
+	"DataLoaded":     TriggerKindDataLoaded,
+	"DataFailed":     TriggerKindDataFailed,
+	"Error":          TriggerKindError,
+	"DataMessage":    TriggerKindDataMessage,
+	"DataProgress":   TriggerKindDataProgress,
+	"OutboxSynced":   TriggerKindOutboxSynced,
+	"OutboxFailed":   TriggerKindOutboxFailed,
+	"OutboxConflict": TriggerKindOutboxConflict,
 }
 
 func (v TriggerKind) String() string {

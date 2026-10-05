@@ -100,7 +100,12 @@ enum TriggerKind : ubyte {
   HostEvent,
   DataLoaded,
   DataFailed,
-  Error
+  Error,
+  DataMessage,
+  DataProgress,
+  OutboxSynced,
+  OutboxFailed,
+  OutboxConflict
 }
 
 // A trigger and the handler it runs. `name` is a timer's name, a

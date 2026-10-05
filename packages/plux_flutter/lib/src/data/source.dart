@@ -19,6 +19,8 @@ import 'package:plux_flutter/src/data/failure.dart';
 import 'package:plux_flutter/src/data/mapping.dart';
 import 'package:plux_flutter/src/data/mocks.dart';
 import 'package:plux_flutter/src/data/spec.dart';
+import 'package:plux_flutter/src/data/stream_session.dart';
+import 'package:plux_flutter/src/data/streams.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
 import 'package:plux_flutter/src/render/values.dart' show BindingError;
@@ -61,6 +63,34 @@ abstract interface class DataSourceEvents {
   void failed(DataSourceEvent event);
 }
 
+/// How a replayed mutation of the outbox ended (DAT-020).
+enum OutboxOutcome {
+  /// The server accepted it.
+  synced,
+
+  /// The server refused it for good.
+  failed,
+
+  /// The server's state had changed (409, 412).
+  conflict,
+}
+
+/// Receives the events of streams, transfers and the outbox (DAT-012,
+/// DAT-020, DAT-031); [DataTriggers] turns them into triggers of action
+/// graphs. A [DataSourceEvent]'s `value` is the message mapped to the
+/// source's type, the progress (`operation`, `sent`, `total`) or the
+/// outbox entry (`operation`, `key`, `status`).
+abstract interface class DataIoEvents {
+  /// A stream delivered a message.
+  void message(DataSourceEvent event);
+
+  /// A transfer made progress.
+  void progress(DataSourceEvent event);
+
+  /// A queued mutation was replayed.
+  void outbox(OutboxOutcome outcome, DataSourceEvent event);
+}
+
 /// What a controller loads with; [DataServices] provides it.
 abstract interface class DataContext {
   /// The client.
@@ -78,8 +108,19 @@ abstract interface class DataContext {
   /// The events listener, or null.
   DataSourceEvents? get events;
 
+  /// The listener of the events of streams, transfers and the outbox, or
+  /// null.
+  DataIoEvents? get ioEvents;
+
+  /// The open streams, or null where none can be opened.
+  DataStreams? get streams;
+
   /// Reports a problem.
   void report(PluxException e);
+
+  /// Tells the services that [spec] is in use for [caller]: the outbox
+  /// finds the source of a queued mutation this way (DAT-020).
+  void register(DataSourceSpec spec, DataCaller caller);
 
   /// Records telemetry.
   DataRecord get record;
@@ -93,7 +134,9 @@ final class DataSourceController extends ChangeNotifier {
     required this.context,
     required this.caller,
     required this.types,
-  });
+  }) {
+    context.register(spec, caller);
+  }
 
   /// The source.
   final DataSourceSpec spec;
@@ -110,6 +153,7 @@ final class DataSourceController extends ChangeNotifier {
   Object? _value;
   bool _loading = false, _loadingMore = false, _hasMore = false;
   bool _started = false, _disposed = false;
+  StreamSession? _stream;
   ActionError? _error;
   int _generation = 0;
   Object? _cursor;
@@ -148,6 +192,11 @@ final class DataSourceController extends ChangeNotifier {
     final gen = ++_generation;
     final mock = context.mocks.of(caller.pluginKey, spec.name);
     if (mock != null) return _mock(mock, rethrowing);
+    if (spec.kind == DataKind.webSocket || spec.kind == DataKind.sse) {
+      // A stream's value is its latest message: it loads nothing, and
+      // `subscribe` opens it (DAT-012).
+      return;
+    }
     _set(() {
       _loading = true;
       _loadingMore = false;
@@ -191,6 +240,98 @@ final class DataSourceController extends ChangeNotifier {
       if (gen == _generation) _fail(f, rethrowing);
     } finally {
       if (gen == _generation) _set(() => _loadingMore = false);
+    }
+  }
+
+  /// Whether a stream is open for this source.
+  bool get subscribed => _stream != null;
+
+  /// Opens the source's stream with [input] over its parameters
+  /// (DAT-012): each message is mapped to the source's type and becomes
+  /// `data.<name>`. Completes when the first attempt to connect has an
+  /// outcome; fails with a [DataFailure] when the stream cannot be opened
+  /// at all (a blocked domain, no token, a refused connection, too many
+  /// open streams). A connection lost afterwards is opened again with
+  /// backoff and the subscription is made again.
+  Future<void> subscribe(
+    Map<String, Object?> Function() roots,
+    Map<String, Object?> input,
+  ) async {
+    final streams = context.streams;
+    if (!spec.isStream || streams == null) {
+      throw DataFailure.unavailable('source ${spec.name} is not a stream');
+    }
+    if (context.mocks.of(caller.pluginKey, spec.name) != null) return;
+    await unsubscribe();
+    final params = {..._params(roots), ...input};
+    _started = true;
+    _set(() {
+      _loading = _value == null;
+      _error = null;
+    });
+    final session = streams.open(
+      spec: spec,
+      caller: caller,
+      params: params,
+      onMessage: (m) => _message(m, roots),
+      onStatus: _streamStatus,
+      onEnd: _streamEnded,
+      onProblem: (f) => context.report(f.toException(_details)),
+    );
+    _stream = session;
+    try {
+      await session.ready;
+    } on DataFailure {
+      _stream = null;
+      rethrow;
+    }
+  }
+
+  /// Closes the source's stream, if one is open.
+  Future<void> unsubscribe() async {
+    final session = _stream;
+    if (session == null) return;
+    _stream = null;
+    await context.streams?.close(session);
+    _set(() => _loading = false);
+  }
+
+  void _message(Object? raw, Map<String, Object?> Function() roots) {
+    final Object? value;
+    try {
+      value = _map(raw, roots);
+    } on DataFailure catch (f) {
+      _fail(f, false);
+      return;
+    }
+    _set(() {
+      _value = value;
+      _loading = false;
+      _error = null;
+    });
+    context.ioEvents?.message(
+      DataSourceEvent(
+        pluginKey: caller.pluginKey,
+        source: spec.name,
+        sourceId: spec.id,
+        value: _value,
+      ),
+    );
+  }
+
+  void _streamStatus(StreamStatus status) {
+    final waiting =
+        status == StreamStatus.connecting ||
+        status == StreamStatus.reconnecting;
+    _set(() => _loading = waiting && _value == null);
+  }
+
+  void _streamEnded(DataFailure? failure) {
+    _stream = null;
+    if (failure == null) {
+      _set(() => _loading = false);
+    } else {
+      _fail(failure, false);
     }
   }
 
@@ -480,6 +621,9 @@ final class DataSourceController extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _generation++;
+    final session = _stream;
+    _stream = null;
+    if (session != null) unawaited(context.streams?.close(session));
     super.dispose();
   }
 }

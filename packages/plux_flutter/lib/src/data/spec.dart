@@ -18,16 +18,63 @@ import 'package:plux_flutter/src/render/values.dart';
 /// Evaluates a configured value against PXL roots.
 typedef DataValue = Object? Function(Map<String, Object?> roots);
 
-/// The kinds of source; this runtime loads REST and GraphQL (P5 R4).
+/// The kinds of source; this runtime runs REST and GraphQL (P5 R4) and
+/// WebSocket and SSE streams (P5 R5).
 enum DataKind {
   /// REST over JSON.
   rest,
 
-  /// GraphQL queries and mutations over HTTP.
+  /// GraphQL queries and mutations over HTTP; subscriptions over a
+  /// WebSocket.
   graphql,
 
-  /// Any other kind: WebSocket, SSE, functions, database, static.
+  /// Messages over a WebSocket (DAT-012).
+  webSocket,
+
+  /// Server-sent events (DAT-012).
+  sse,
+
+  /// Any other kind: functions, database, static.
   other,
+}
+
+/// The directions of a file transfer (DAT-031).
+enum TransferKind {
+  /// A file is sent.
+  upload,
+
+  /// A file is saved.
+  download,
+}
+
+/// An operation that moves a file (DAT-031): the input field [fileParam]
+/// holds the path of the file to upload, or the plain name a download is
+/// saved under.
+final class TransferSpec {
+  /// Creates the transfer.
+  const TransferSpec({
+    required this.kind,
+    required this.fileParam,
+    this.raw = false,
+    this.field = 'file',
+    this.contentType = 'application/octet-stream',
+  });
+
+  /// The direction.
+  final TransferKind kind;
+
+  /// The input field naming the file.
+  final String fileParam;
+
+  /// Whether an upload sends the file as the raw body instead of one
+  /// multipart part.
+  final bool raw;
+
+  /// The multipart field the file is sent in.
+  final String field;
+
+  /// The content type of a raw upload.
+  final String contentType;
 }
 
 /// How a source uses the response cache (DAT-010).
@@ -165,6 +212,8 @@ final class OperationSpec {
     this.input,
     this.output,
     this.select,
+    this.offlineCapable,
+    this.transfer,
   });
 
   /// Its name in its source.
@@ -193,9 +242,22 @@ final class OperationSpec {
 
   /// The selector of the output in the response.
   final String? select;
+
+  /// Whether the mutation is queued in the outbox when the network fails
+  /// (DAT-020); null follows the source.
+  final bool? offlineCapable;
+
+  /// The file transfer this operation is, or null (DAT-031).
+  final TransferSpec? transfer;
+
+  /// Whether the operation changes data on the server, in a source of
+  /// [kind]: by its method (REST) or its document (GraphQL).
+  bool mutates(DataKind kind) => kind == DataKind.graphql
+      ? query.trimLeft().startsWith('mutation')
+      : const {'POST', 'PUT', 'PATCH', 'DELETE'}.contains(method);
 }
 
-/// A REST or GraphQL data source.
+/// A data source: REST, GraphQL, WebSocket or SSE.
 final class DataSourceSpec {
   /// Creates the source.
   const DataSourceSpec({
@@ -217,6 +279,9 @@ final class DataSourceSpec {
     this.page,
     this.mocks = const MockSpec(),
     this.operations = const {},
+    this.subscription = '',
+    this.subscribeMessage,
+    this.offlineCapable = false,
   });
 
   /// Decodes a source of a bundle; [strings] is the table of the section
@@ -232,6 +297,8 @@ final class DataSourceSpec {
     final kind = switch (d.kind) {
       fbs.DataSourceKind.Rest => DataKind.rest,
       fbs.DataSourceKind.Graphql => DataKind.graphql,
+      fbs.DataSourceKind.Websocket => DataKind.webSocket,
+      fbs.DataSourceKind.Sse => DataKind.sse,
       _ => DataKind.other,
     };
     final id = d.id == null ? name : uuidString(uuidOf(d.id!));
@@ -293,6 +360,9 @@ final class DataSourceSpec {
           for (final e in _map(literal['operations']).entries)
             e.key: _operation(e.key, _map(e.value), literal['auth'] == true),
         },
+        subscription: literal['subscription'] as String? ?? '',
+        subscribeMessage: literal['subscribeMessage'],
+        offlineCapable: literal['offlineCapable'] as bool? ?? false,
       );
     } on TypeError catch (e) {
       throw PluxException(
@@ -356,6 +426,24 @@ final class DataSourceSpec {
 
   /// The operations by name.
   final Map<String, OperationSpec> operations;
+
+  /// A GraphQL source's subscription document (DAT-012), or empty.
+  final String subscription;
+
+  /// The message a WebSocket source sends after each connection
+  /// (DAT-012), or null.
+  final Object? subscribeMessage;
+
+  /// Whether the source's mutations are queued in the outbox when the
+  /// network fails (DAT-020).
+  final bool offlineCapable;
+
+  /// Whether the source is a stream `subscribe` can open: a WebSocket or
+  /// SSE source, or a GraphQL source with a subscription (DAT-012).
+  bool get isStream =>
+      kind == DataKind.webSocket ||
+      kind == DataKind.sse ||
+      (kind == DataKind.graphql && subscription.isNotEmpty);
 }
 
 Map<String, Object?> _map(Object? v) =>
@@ -424,4 +512,17 @@ OperationSpec _operation(String name, Map<String, Object?> m, bool auth) =>
       input: m['input'] as String?,
       output: m['output'] as String?,
       select: m['select'] as String?,
+      offlineCapable: m['offlineCapable'] as bool?,
+      transfer: _transfer(m['transfer']),
     );
+
+TransferSpec? _transfer(Object? v) {
+  if (v is! Map<String, Object?>) return null;
+  return TransferSpec(
+    kind: TransferKind.values.byName(v['kind']! as String),
+    fileParam: v['fileParam']! as String,
+    raw: v['body'] == 'raw',
+    field: v['field'] as String? ?? 'file',
+    contentType: v['contentType'] as String? ?? 'application/octet-stream',
+  );
+}

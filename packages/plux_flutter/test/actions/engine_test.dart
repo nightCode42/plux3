@@ -500,10 +500,12 @@ void main() {
         'setState',
         'stop',
         'submitForm',
+        'subscribe',
         'switch',
         'switchTab',
         'sync',
         'trackEvent',
+        'unsubscribe',
         'validateForm',
       ],
     );

@@ -67,6 +67,9 @@ const (
 	DataMappingInvalid         Code = 1172
 	DataPaginationInvalid      Code = 1173
 	DataSourceSecretHeader     Code = 1174
+	DataStreamInvalid          Code = 1175
+	DataOutboxInvalid          Code = 1176
+	DataTransferInvalid        Code = 1177
 	StateEntryReadOnly         Code = 1140
 	StatePatchNotObject        Code = 1141
 	StatePersistenceNotAllowed Code = 1142
@@ -185,16 +188,29 @@ const (
 
 	// Data sources (PLX-5100–5199, P5 R4).
 
-	DataDomainBlocked      Code = 5100
-	DataNetworkFailed      Code = 5101
-	DataHTTPError          Code = 5102
-	DataRequestTimeout     Code = 5103
-	DataMappingFailed      Code = 5104
-	DataSizeExceeded       Code = 5105
-	DataGraphQLError       Code = 5106
-	DataUnauthorised       Code = 5107
-	DataSourceUnavailable  Code = 5108
-	DataCacheUnavailable   Code = 5109
+	DataDomainBlocked     Code = 5100
+	DataNetworkFailed     Code = 5101
+	DataHTTPError         Code = 5102
+	DataRequestTimeout    Code = 5103
+	DataMappingFailed     Code = 5104
+	DataSizeExceeded      Code = 5105
+	DataGraphQLError      Code = 5106
+	DataUnauthorised      Code = 5107
+	DataSourceUnavailable Code = 5108
+	DataCacheUnavailable  Code = 5109
+
+	// Data sources: streams, the outbox and transfers (PLX-5110–5199, P5 R5).
+
+	DataStreamFailed          Code = 5110
+	DataStreamMessageTooLarge Code = 5111
+	DataStreamLimit           Code = 5112
+	DataOutboxFull            Code = 5120
+	DataOutboxUnavailable     Code = 5121
+	DataOutboxConflict        Code = 5122
+	DataOutboxRejected        Code = 5123
+	DataTransferTooLarge      Code = 5130
+	DataTransferFileFailed    Code = 5131
+
 	StateWriteTypeMismatch Code = 5301
 	StateWriteRefused      Code = 5302
 	StateStoreUnavailable  Code = 5303
