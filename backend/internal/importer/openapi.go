@@ -95,7 +95,20 @@ func ImportOpenAPI(file string, data []byte) Result {
 		}
 	}
 	variable := srcName + "BaseUrl"
-	config := map[string]any{"baseUrl": variable, "method": "GET", "path": "/"}
+	read := firstRead(ops, func(cfg map[string]any) bool {
+		return cfg["method"] == "GET" && cfg["output"] != nil && c.types.optionalInput(cfg["input"])
+	})
+	if read == "" {
+		diags = append(diags, plxerr.NewDiagnostic(plxerr.ImportConstructUnsupported, plxerr.Location{File: file, Path: "/paths"},
+			"no read operation to bind: a source needs a GET operation without required parameters and with a JSON response; no source is written"))
+		return finish(map[string]any{"dataSources": []any{}}, diags, file)
+	}
+	rc := ops[read].(map[string]any)
+	delete(ops, read)
+	config := map[string]any{"baseUrl": variable, "method": "GET", "path": rc["path"]}
+	if rc["auth"] == true {
+		config["auth"] = true
+	}
 	if len(ops) > 0 {
 		config["operations"] = ops
 	}
@@ -103,11 +116,12 @@ func ImportOpenAPI(file string, data []byte) Result {
 		"id":          identifier("openapi", srcName),
 		"name":        srcName,
 		"kind":        "rest",
-		"type":        "map<string,string>",
-		"mock":        map[string]any{},
+		"type":        rc["output"],
+		"mock":        mocks[read],
 		"config":      config,
 		"description": describe(doc.Info != nil, func() string { return doc.Info.Description }),
 	}
+	delete(mocks, read)
 	if source["description"] == "" {
 		delete(source, "description")
 	}
@@ -606,4 +620,15 @@ func (c *oaConv) objectFields(oc *opCtx, ref *openapi3.SchemaRef, ptr, name stri
 		fields = append(fields, field(prop, optional(t, slices.Contains(s.Required, prop)), desc, secret))
 	}
 	return fields, nil
+}
+
+// firstRead returns the first operation, in name order, that can be a
+// source's own read, or "".
+func firstRead(ops map[string]any, ok func(map[string]any) bool) string {
+	for _, name := range sortedKeys(ops) {
+		if ok(ops[name].(map[string]any)) {
+			return name
+		}
+	}
+	return ""
 }

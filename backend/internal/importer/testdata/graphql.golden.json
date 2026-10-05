@@ -10,12 +10,6 @@
             "query": "query GetUser($id: ID!) {\n\tuser(id: $id) {\n\t\t...UserParts\n\t\tfriends {\n\t\t\tid\n\t\t}\n\t}\n}\nfragment UserParts on User {\n\tid\n\tname\n\trole\n}",
             "select": "data"
           },
-          "listUsers": {
-            "input": "ListUsersInput",
-            "output": "ListUsersOutput",
-            "query": "query listUsers($first: Int, $role: Role) {\n\tusers(first: $first, role: $role) {\n\t\tid\n\t\tdisplayName: name\n\t}\n}",
-            "select": "data"
-          },
           "renameUser": {
             "input": "RenameUserInput",
             "output": "RenameUserOutput",
@@ -24,13 +18,14 @@
           }
         },
         "path": "/graphql",
-        "query": "{ __typename }"
+        "query": "query listUsers($first: Int, $role: Role) {\n\tusers(first: $first, role: $role) {\n\t\tid\n\t\tdisplayName: name\n\t}\n}",
+        "select": "data"
       },
       "id": "c9205998-c4a7-7d84-9d74-542f73315e99",
       "kind": "graphql",
-      "mock": {},
+      "mock": null,
       "name": "schema",
-      "type": "map<string,string>"
+      "type": "ListUsersOutput"
     }
   ],
   "types": [

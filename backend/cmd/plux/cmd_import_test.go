@@ -54,7 +54,7 @@ func TestImportOpenAPIReportsLeftOutOperations(t *testing.T) {
 	if code != exitOK || !strings.Contains(stderr.String(), "PLX-1261") || !strings.Contains(stderr.String(), "/paths/~1poly/get") {
 		t.Errorf("exit %d, stderr %q", code, stderr.String())
 	}
-	if !strings.Contains(stdout.String(), `"good"`) {
+	if !strings.Contains(stdout.String(), `"path": "/good"`) {
 		t.Errorf("stdout lacks the supported operation: %s", stdout.String())
 	}
 }

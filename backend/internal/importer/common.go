@@ -227,3 +227,20 @@ func field(name, typ, description string, sensitive bool) map[string]any {
 	}
 	return f
 }
+
+// optionalInput reports whether the named input type is absent or has only
+// optional fields, so an operation can run without being given any.
+func (t *typeSet) optionalInput(name any) bool {
+	n, ok := name.(string)
+	if !ok {
+		return true
+	}
+	d := t.decls[n]
+	fields, _ := d["fields"].([]any)
+	for _, f := range fields {
+		if typ, _ := f.(map[string]any)["type"].(string); !strings.HasSuffix(typ, "?") {
+			return false
+		}
+	}
+	return true
+}

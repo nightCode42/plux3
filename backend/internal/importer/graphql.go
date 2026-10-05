@@ -69,7 +69,18 @@ func ImportGraphQL(schemaSrc Source, docs []Source) Result {
 	}
 	srcName := lowerCamel(strings.TrimSuffix(path.Base(schemaSrc.File), path.Ext(schemaSrc.File)))
 	variable := srcName + "BaseUrl"
-	config := map[string]any{"baseUrl": variable, "path": "/graphql", "query": "{ __typename }"}
+	read := firstRead(ops, func(cfg map[string]any) bool {
+		q, _ := cfg["query"].(string)
+		return strings.HasPrefix(q, "query") && g.types.optionalInput(cfg["input"])
+	})
+	if read == "" {
+		diags = append(diags, plxerr.NewDiagnostic(plxerr.ImportConstructUnsupported, plxerr.Location{File: schemaSrc.File},
+			"no read operation to bind: a source needs a query without required variables; no source is written"))
+		return finish(map[string]any{"dataSources": []any{}}, diags, schemaSrc.File)
+	}
+	rc := ops[read].(map[string]any)
+	delete(ops, read)
+	config := map[string]any{"baseUrl": variable, "path": "/graphql", "query": rc["query"], "select": "data"}
 	if len(ops) > 0 {
 		config["operations"] = ops
 	}
@@ -78,8 +89,8 @@ func ImportGraphQL(schemaSrc Source, docs []Source) Result {
 			"id":     identifier("graphql", srcName),
 			"name":   srcName,
 			"kind":   "graphql",
-			"type":   "map<string,string>",
-			"mock":   map[string]any{},
+			"type":   rc["output"],
+			"mock":   nil,
 			"config": config,
 		}},
 		"types":     g.types.list(),

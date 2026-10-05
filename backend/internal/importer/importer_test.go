@@ -89,7 +89,7 @@ func TestImportOpenAPITypes_DAT_002(t *testing.T) {
 	r := ImportOpenAPI("petstore31.yaml", read(t, "petstore31.yaml"))
 	src := r.Fragment["dataSources"].([]any)[0].(map[string]any)
 	ops := src["config"].(map[string]any)["operations"].(map[string]any)
-	for _, name := range []string{"listPets", "createPet", "getPet", "deletePetsByPetId"} {
+	for _, name := range []string{"createPet", "getPet", "deletePetsByPetId"} {
 		if ops[name] == nil {
 			t.Errorf("operation %s missing from %v", name, sortedKeys(ops))
 		}
@@ -100,11 +100,13 @@ func TestImportOpenAPITypes_DAT_002(t *testing.T) {
 	if got := r.Fragment["baseUrls"].(map[string]any)["petStoreBaseUrl"]; got != "https://eu.petstore.example.com/v1" {
 		t.Errorf("base URL hint = %v", got)
 	}
-	if ops["getPet"].(map[string]any)["auth"] != nil || ops["listPets"].(map[string]any)["auth"] != true {
+	// listPets is the source's own read: its path, type and example are the source's.
+	if ops["listPets"] != nil || ops["getPet"].(map[string]any)["auth"] != nil || src["config"].(map[string]any)["auth"] != true ||
+		src["type"] != "list<Pet>" || src["config"].(map[string]any)["path"] != "/pets" || src["mock"] == nil {
 		t.Error("auth must follow the operation's security requirement")
 	}
 	raw := string(mustJSON(t, r))
-	for _, want := range []string{`"type": "string?"`, `"output": "list<Pet>"`, `"type": "date?"`, `"sensitive": true`, `"x-operationMocks"`} {
+	for _, want := range []string{`"type": "string?"`, `"type": "list<Pet>"`, `"type": "date?"`, `"sensitive": true`, `"x-operationMocks"`} {
 		if !strings.Contains(raw, want) {
 			t.Errorf("output lacks %s", want)
 		}
@@ -121,9 +123,9 @@ func TestImportOpenAPIReportsUnsupportedConstructs_DAT_002(t *testing.T) {
 			t.Errorf("diagnostic %+v is not a located unsupported construct", d)
 		}
 	}
-	ops := r.Fragment["dataSources"].([]any)[0].(map[string]any)["config"].(map[string]any)["operations"].(map[string]any)
-	if len(ops) != 1 || ops["good"] == nil {
-		t.Errorf("only the supported operation is imported, got %v", sortedKeys(ops))
+	cfg := r.Fragment["dataSources"].([]any)[0].(map[string]any)["config"].(map[string]any)
+	if cfg["path"] != "/good" || cfg["operations"] != nil {
+		t.Errorf("only the supported operation is imported, as the source's read: %v", cfg)
 	}
 	golden(t, "unsupported.golden.json", mustJSON(t, r))
 }
@@ -166,7 +168,7 @@ func TestImportGraphQLGoldens_DAT_002(t *testing.T) {
 		t.Fatal(err)
 	}
 	ops := frag["dataSources"].([]any)[0].(map[string]any)["config"].(map[string]any)["operations"].(map[string]any)
-	for _, n := range []string{"getUser", "listUsers", "renameUser"} {
+	for _, n := range []string{"getUser", "renameUser"} {
 		if ops[n] == nil {
 			t.Errorf("operation %s missing", n)
 		}
@@ -194,9 +196,22 @@ func TestImportGraphQLValidatesAgainstTheSchema_DAT_002(t *testing.T) {
 	if !strings.Contains(r.Diagnostics[0].Message, "bad.graphql:3:") {
 		t.Errorf("message does not locate the error: %s", r.Diagnostics[0].Message)
 	}
-	ops := r.Fragment["dataSources"].([]any)[0].(map[string]any)["config"].(map[string]any)["operations"].(map[string]any)
-	if len(ops) != 1 || ops["fine"] == nil {
-		t.Errorf("only the valid operation is imported, got %v", sortedKeys(ops))
+	cfg := r.Fragment["dataSources"].([]any)[0].(map[string]any)["config"].(map[string]any)
+	if q, _ := cfg["query"].(string); !strings.Contains(q, "query Fine") || cfg["operations"] != nil {
+		t.Errorf("only the valid operation is imported, as the source's read: %v", cfg)
+	}
+}
+
+// TestImportWithoutAReadOperationWritesNoSource_DAT_002 checks that a source
+// is never written with a placeholder request.
+func TestImportWithoutAReadOperationWritesNoSource_DAT_002(t *testing.T) {
+	r := ImportGraphQL(Source{"schema.graphql", read(t, "schema.graphql")}, []Source{{"ops.graphql", []byte("mutation Rename($input: RenameInput!) { renameUser(input: $input) { id } }")}})
+	if srcs := r.Fragment["dataSources"].([]any); len(srcs) != 0 || len(r.Diagnostics) != 1 || r.Diagnostics[0].Code != plxerr.ImportConstructUnsupported {
+		t.Errorf("%+v", r)
+	}
+	o := ImportOpenAPI("odd.yaml", []byte("openapi: 3.0.3\ninfo: {title: T, version: '1'}\npaths:\n  /x/{id}:\n    get:\n      parameters:\n        - {name: id, in: path, required: true, schema: {type: string}}\n      responses:\n        '200':\n          description: ok\n          content:\n            application/json:\n              schema: {type: object, properties: {a: {type: string}}}\n"))
+	if srcs := o.Fragment["dataSources"].([]any); len(srcs) != 0 || len(o.Diagnostics) != 1 {
+		t.Errorf("%+v", o)
 	}
 }
 

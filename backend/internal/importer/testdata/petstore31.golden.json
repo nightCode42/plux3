@@ -5,6 +5,7 @@
   "dataSources": [
     {
       "config": {
+        "auth": true,
         "baseUrl": "petStoreBaseUrl",
         "method": "GET",
         "operations": {
@@ -26,38 +27,30 @@
             "method": "GET",
             "output": "Pet",
             "path": "/pets/{petId}"
-          },
-          "listPets": {
-            "auth": true,
-            "input": "ListPetsInput",
-            "method": "GET",
-            "output": "list<Pet>",
-            "path": "/pets"
           }
         },
-        "path": "/"
+        "path": "/pets"
       },
       "description": "A small pet store.",
       "id": "c667a4b2-1f2f-7e70-b281-681e5b73134b",
       "kind": "rest",
-      "mock": {},
+      "mock": [
+        {
+          "id": "p1",
+          "name": "Rex",
+          "nickname": null,
+          "status": "available"
+        }
+      ],
       "name": "petStore",
-      "type": "map<string,string>",
+      "type": "list<Pet>",
       "x-operationMocks": {
         "getPet": {
           "id": "p1",
           "name": "Rex",
           "nickname": "Rexy",
           "status": "sold"
-        },
-        "listPets": [
-          {
-            "id": "p1",
-            "name": "Rex",
-            "nickname": null,
-            "status": "available"
-          }
-        ]
+        }
       }
     }
   ],

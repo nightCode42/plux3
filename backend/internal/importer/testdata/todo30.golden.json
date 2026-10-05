@@ -8,11 +8,6 @@
         "baseUrl": "todoAPIBaseUrl",
         "method": "GET",
         "operations": {
-          "listTodos": {
-            "method": "GET",
-            "output": "ListTodosOutput",
-            "path": "/todos"
-          },
           "updateTodo": {
             "input": "UpdateTodoInput",
             "method": "PUT",
@@ -20,13 +15,13 @@
             "path": "/todos/{id}"
           }
         },
-        "path": "/"
+        "path": "/todos"
       },
       "id": "cfa1a399-b387-783c-a82a-75857c7f4ced",
       "kind": "rest",
-      "mock": {},
+      "mock": null,
       "name": "todoAPI",
-      "type": "map<string,string>",
+      "type": "ListTodosOutput",
       "x-operationMocks": {
         "updateTodo": {
           "done": false,

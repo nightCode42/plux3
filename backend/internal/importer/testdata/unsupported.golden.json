@@ -7,20 +7,13 @@
       "config": {
         "baseUrl": "oddAPIBaseUrl",
         "method": "GET",
-        "operations": {
-          "good": {
-            "method": "GET",
-            "output": "GoodOutput",
-            "path": "/good"
-          }
-        },
-        "path": "/"
+        "path": "/good"
       },
       "id": "97a9a088-3abb-701d-a2f3-52daf1e3871b",
       "kind": "rest",
-      "mock": {},
+      "mock": null,
       "name": "oddAPI",
-      "type": "map<string,string>"
+      "type": "GoodOutput"
     }
   ],
   "types": [
