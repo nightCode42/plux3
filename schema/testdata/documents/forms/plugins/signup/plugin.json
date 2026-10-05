@@ -1,0 +1,19 @@
+{
+  "description": "A form with every validator kind, an asynchronous check, submit and reset.",
+  "entryPage": "01f0c450-6c00-7000-8000-000000000704",
+  "icon": {
+    "monogram": {
+      "background": "#3949AB",
+      "text": "S"
+    }
+  },
+  "id": "01f0c450-6c00-7000-8000-000000000703",
+  "key": "signup",
+  "kind": "plugin",
+  "name": "Sign-up",
+  "pages": [
+    "01f0c450-6c00-7000-8000-000000000704"
+  ],
+  "schemaVersion": "1.0.0",
+  "team": "forms"
+}

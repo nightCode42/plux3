@@ -52,6 +52,10 @@ var actionFeatures = map[string]string{
 	"trackEvent": controlFeature,
 	"sync":       controlFeature,
 	"emitEvent":  controlFeature,
+	// The form actions (STA-020).
+	"validateForm": formsFeature,
+	"submitForm":   formsFeature,
+	"resetForm":    formsFeature,
 }
 
 // requireFeature records that a bundle needs an engine feature of runtime

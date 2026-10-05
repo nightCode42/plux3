@@ -183,6 +183,7 @@ type page struct {
 	guards    []*graph
 	scope     *scope
 	triggers  []*trigger // the page's triggers (ACT-002)
+	forms     []*form    // the page's forms (STA-020)
 }
 
 // component is a component definition (SCH-030).
@@ -194,6 +195,7 @@ type component struct {
 	nodes  []*node
 	props  []*param // sorted by name
 	state  []*stateEntry
+	forms  []*form // the component's forms (STA-020)
 }
 
 // node is a node of a page or component tree.

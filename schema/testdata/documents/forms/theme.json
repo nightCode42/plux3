@@ -1,0 +1,15 @@
+{
+  "id": "01f0c450-6c00-7000-8000-000000000702",
+  "key": "forms",
+  "kind": "theme",
+  "name": "Forms",
+  "schemaVersion": "1.0.0",
+  "tokens": {
+    "color": {
+      "$type": "color",
+      "primary": {
+        "$value": "#3949AB"
+      }
+    }
+  }
+}

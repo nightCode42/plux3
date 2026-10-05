@@ -1,0 +1,95 @@
+{
+  "description": "A component with its own form.",
+  "forms": [
+    {
+      "fields": [
+        {
+          "initial": "",
+          "name": "address",
+          "type": "string",
+          "validators": [
+            {
+              "kind": "required"
+            },
+            {
+              "kind": "email"
+            }
+          ]
+        }
+      ],
+      "id": "01f0c450-6c00-7000-8000-000000000712",
+      "name": "join"
+    }
+  ],
+  "id": "01f0c450-6c00-7000-8000-000000000706",
+  "key": "newsletter",
+  "kind": "component",
+  "name": "Newsletter",
+  "root": {
+    "children": [
+      {
+        "events": {
+          "onChanged": {
+            "steps": [
+              {
+                "action": "setState",
+                "id": "write",
+                "input": {
+                  "path": "component.join.values.address",
+                  "value": {
+                    "$expr": "event"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "id": "01f0c450-6c00-7000-8000-000000000743",
+        "semantics": {
+          "label": "address"
+        },
+        "testId": "address",
+        "type": "TextFormField"
+      },
+      {
+        "id": "01f0c450-6c00-7000-8000-000000000744",
+        "props": {
+          "data": {
+            "$expr": "\"join \" + (component.join.errors.address ?? \"-\")"
+          }
+        },
+        "type": "Text"
+      },
+      {
+        "events": {
+          "onPressed": {
+            "steps": [
+              {
+                "action": "validateForm",
+                "id": "check",
+                "input": {
+                  "form": "join"
+                }
+              }
+            ]
+          }
+        },
+        "id": "01f0c450-6c00-7000-8000-000000000745",
+        "slots": {
+          "child": {
+            "id": "01f0c450-6c00-7000-8000-000000000746",
+            "props": {
+              "data": "join"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "FilledButton"
+      }
+    ],
+    "id": "01f0c450-6c00-7000-8000-000000000747",
+    "type": "Column"
+  },
+  "schemaVersion": "1.0.0",
+  "version": 1
+}
