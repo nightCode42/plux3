@@ -335,6 +335,31 @@ var registry = []Definition{
 		"Remove the header and set auth to true to send the auth delegate's token, or call the API through a Plux Function.", false,
 	},
 	{
+		CollectionVersionInvalid, "COLLECTION_VERSION_INVALID", SeverityError, "Collection version not raised with its schema",
+		"A local collection's fields, types or indexes differ from the previous release's, but its version was not raised, or its version is lower than the previous release's. Devices migrate by version, so a change under the same version would never reach them (DB-005).",
+		"Raise the collection's `version` above the previous release's, and keep it from going down.", false,
+	},
+	{
+		CollectionPlanRequired, "COLLECTION_PLAN_REQUIRED", SeverityError, "Destructive collection change without a migration plan",
+		"A change loses stored data: a field is dropped, a field is added that is not nullable, a field's type narrows, or a collection disappears from the document without being listed in `droppedCollections`. It needs an explicit plan: a `migrations` entry that drops or resets the field, or the collection's ID in `droppedCollections` (DB-005).",
+		"Declare the migration from the previous version with `drop` or `reset` naming the field, or make the new field nullable.", false,
+	},
+	{
+		CollectionPlanInvalid, "COLLECTION_PLAN_INVALID", SeverityError, "Invalid collection migration plan",
+		"A collection's migration plan can never run: it starts from a version that is not below the collection's version, two plans start from the same version, it drops a field the collection still declares, or it resets a field the collection does not declare; or a dropped collection is still declared (DB-005).",
+		"Correct the plan as the message says.", false,
+	},
+	{
+		CollectionKeyChanged, "COLLECTION_KEY_CHANGED", SeverityError, "Collection primary key changed",
+		"The primary key of a local collection differs from the previous release's. Stored records are addressed by their key, so the change cannot be migrated (DB-005).",
+		"Keep the primary key, or declare a new collection and copy the records with actions.", false,
+	},
+	{
+		CollectionDestructive, "COLLECTION_DESTRUCTIVE", SeverityWarning, "Collection migration deletes data",
+		"A declared migration drops or resets a field, or a collection is dropped: devices delete the stored values when they update. The publisher must acknowledge the warning (DB-005, SRV-051).",
+		"Acknowledge the warning if the data is no longer needed, or keep the field.", false,
+	},
+	{
 		UnknownRoute, "UNKNOWN_ROUTE", SeverityError, "Unknown route",
 		"A navigate action targets a route name that no page and no native route declares.",
 		"Correct the route name, or add the page.", false,
@@ -358,6 +383,12 @@ var registry = []Definition{
 		RedirectLoop, "REDIRECT_LOOP", SeverityError, "Redirect loop",
 		"Pages redirect to each other unconditionally from `onEnter` in a cycle, so navigation would never settle.",
 		"Break the cycle by guarding one of the redirects with a condition.", false,
+	},
+
+	{
+		CollectionKeyTypeInvalid, "COLLECTION_KEY_TYPE_INVALID", SeverityError, "Collection primary key field of an unsupported type",
+		"A primary key field of a local collection is not a string or an int, or is nullable, so records cannot be addressed by it (DB-004).",
+		"Use string or int, not nullable, for primary key fields.", false,
 	},
 
 	// Schema and validation: limits and budgets.
@@ -783,6 +814,61 @@ var registry = []Definition{
 		DataCacheUnavailable, "DATA_CACHE_UNAVAILABLE", SeverityWarning, "Response cache unavailable",
 		"The response cache could not be read or written, or its encryption key could not be obtained; the request goes to the network as with networkOnly, and nothing is stored in the clear (DAT-010, LIM-004).",
 		"Check the device's free storage and the key provider; the runtime keeps working without the cache.", false,
+	},
+	{
+		DBMigrationFailed, "DB_MIGRATION_FAILED", SeverityError, "Collection migration failed",
+		"A collection could not be taken to the release's schema: no plan covers a field that changed, or the database refused a step. The migration was rolled back and the collection stays at its previous version, which actions on it cannot use until the next release or launch (DB-005).",
+		"Publish a release whose migration plan covers the change, and check the device's free storage.", false,
+	},
+	{
+		DBUnavailable, "DB_UNAVAILABLE", SeverityError, "Local database unavailable",
+		"A plugin uses a local collection but the app has no database adapter that stores collections: add plux_db_drift or supply PluxConfig.databaseAdapter (DB-001, DB-003).",
+		"Add the plux_db_drift package to the host app and pass its adapter in PluxConfig.databaseAdapter.", false,
+	},
+	{
+		DBEncryptionRequired, "DB_ENCRYPTION_REQUIRED", SeverityError, "Encrypted database required",
+		"The app's security profile is strict or maximum, and the database adapter cannot guarantee that the database is encrypted at rest; it is refused and no collection is opened (DB-002).",
+		"Open the database with a SQLCipher key, or use a lower security profile if the data does not need it.", false,
+	},
+	{
+		DBRecordInvalid, "DB_RECORD_INVALID", SeverityError, "Record does not fit its collection",
+		"A record has a field the collection does not declare, a value of the wrong type, or misses a field that is not nullable or the primary key (DB-004, DB-006).",
+		"Give the record the collection's fields with values of their declared types.", false,
+	},
+	{
+		DBRecordNotFound, "DB_RECORD_NOT_FOUND", SeverityError, "Record not found",
+		"dbUpdate named a key that no record of the collection has (DB-006).",
+		"Use dbUpsert to create the record when it may be missing, or handle the step's error.", false,
+	},
+	{
+		DBKeyConflict, "DB_KEY_CONFLICT", SeverityError, "Record key already exists",
+		"dbInsert named a key that another record of the collection already has (DB-006).",
+		"Use dbUpsert to replace the record, or choose another key.", false,
+	},
+	{
+		DBQueryInvalid, "DB_QUERY_INVALID", SeverityError, "Invalid database query",
+		"A query sorts by a field the collection does not declare, has a negative limit or offset, or its condition cannot be evaluated (DB-006).",
+		"Sort by a declared field and give a non-negative limit and offset.", false,
+	},
+	{
+		DBLimitExceeded, "DB_LIMIT_EXCEEDED", SeverityError, "Local database over its limit",
+		"A write would exceed db.recordBytes, db.collectionRecords or db.kvBytes; nothing is written (LIM-001, LIM-004).",
+		"Store less, delete records, or raise the limit for the app.", false,
+	},
+	{
+		DBStoreFailed, "DB_STORE_FAILED", SeverityError, "Local database failed",
+		"The database or its file could not be read or written, or its key could not be obtained from secure storage (DB-001, DB-007).",
+		"Check the device's free storage and the platform's secure storage; the message names the operation, never a value.", false,
+	},
+	{
+		DBCollectionUnknown, "DB_COLLECTION_UNKNOWN", SeverityError, "Unknown or inaccessible collection",
+		"A step names a collection that the active release does not declare for the calling plugin or the app. Another plugin's private collection is never reachable (DB-004).",
+		"Declare the collection in the plugin or the app document.", false,
+	},
+	{
+		DBValueTypeMismatch, "DB_VALUE_TYPE_MISMATCH", SeverityError, "Key-value entry of another type",
+		"kvSet wrote a value whose JSON type differs from the type the first kvSet fixed for the key within the plugin (DB-009).",
+		"Write values of one type per key, or remove the key first with kvRemove.", false,
 	},
 	{
 		StateWriteTypeMismatch, "STATE_WRITE_TYPE_MISMATCH", SeverityError, "State written with a value of the wrong type",

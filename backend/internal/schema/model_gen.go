@@ -147,6 +147,10 @@ type AppDocument struct {
 	Types            []TypeDecl             `json:"types,omitempty"`
 	State            []StateEntry           `json:"state,omitempty"`
 	Collections      []Collection           `json:"collections,omitempty"`
+	// DroppedCollections: IDs of collections this document no longer declares.
+	// Their data is deleted from devices that still hold it; the publisher
+	// acknowledges the warning this raises (DB-005).
+	DroppedCollections []string `json:"droppedCollections,omitempty"`
 	// UserContext: Attributes the host provides about the signed-in user,
 	// available in PXL as `user.<name>`.
 	UserContext []Field         `json:"userContext,omitempty"`
@@ -237,6 +241,32 @@ type Collection struct {
 	Fields     []Field    `json:"fields"`
 	PrimaryKey []string   `json:"primaryKey"`
 	Indexes    [][]string `json:"indexes,omitempty"`
+	// Version: The collection's schema version, 1 when omitted. A publish that
+	// changes the fields, types or indexes raises it; devices migrate from the
+	// version they hold (DB-005).
+	Version *int64 `json:"version,omitempty"`
+	// Migrations: How a device at an older version reaches this one: one plan
+	// per version it may hold. A change that loses data needs one (DB-005).
+	Migrations []CollectionMigration `json:"migrations,omitempty"`
+	// Description: Human-readable description.
+	Description string `json:"description,omitempty"`
+}
+
+// CollectionMigration — The plan that takes a collection from version
+// `from` to the next (DB-005): fields renamed, dropped or reset.
+type CollectionMigration struct {
+	// From: The version this plan starts from.
+	From int64 `json:"from"`
+	// Rename: Fields renamed, as new name to old name; their values are kept.
+	Rename map[string]string `json:"rename,omitempty"`
+	// Drop: Fields of the older version that are removed, with their values. The
+	// publisher acknowledges the warning this raises.
+	Drop []string `json:"drop,omitempty"`
+	// Reset: Fields that are added without being nullable, or whose type
+	// narrows: every record's value starts again from the type's empty value (0,
+	// "", false, [] or {}), or null when nullable. The publisher acknowledges
+	// the warning this raises.
+	Reset []string `json:"reset,omitempty"`
 	// Description: Human-readable description.
 	Description string `json:"description,omitempty"`
 }
@@ -963,7 +993,11 @@ type PluginDocument struct {
 	Types        []TypeDecl    `json:"types,omitempty"`
 	State        []StateEntry  `json:"state,omitempty"`
 	Collections  []Collection  `json:"collections,omitempty"`
-	DataSources  []DataSource  `json:"dataSources,omitempty"`
+	// DroppedCollections: IDs of collections this document no longer declares.
+	// Their data is deleted from devices that still hold it; the publisher
+	// acknowledges the warning this raises (DB-005).
+	DroppedCollections []string     `json:"droppedCollections,omitempty"`
+	DataSources        []DataSource `json:"dataSources,omitempty"`
 	// Triggers: Triggers besides widget events and page lifecycle (ACT-002), and
 	// the owner's error handler (ACT-020). A page's runs are cancelled with the
 	// page; a plugin's and the app's run while the release is active.

@@ -77,6 +77,7 @@ An app: its plugins, theme, locales, environments, shared data and policies (SCH
 | `types` | list of [TypeDecl](#typedecl) |  |  |
 | `state` | list of [StateEntry](#stateentry) |  |  |
 | `collections` | list of [Collection](#collection) |  |  |
+| `droppedCollections` | list of string |  | IDs of collections this document no longer declares. Their data is deleted from devices that still hold it; the publisher acknowledges the warning this raises (DB-005). |
 | `userContext` | list of [Field](#field) |  | Attributes the host provides about the signed-in user, available in PXL as `user.<name>`. |
 | `hostEvents` | list of [HostEventDecl](#hosteventdecl) |  |  |
 | `telemetry` | [TelemetryPolicy](#telemetrypolicy) |  | What the runtime reports (ANL-003, ADR-0034). |
@@ -140,6 +141,20 @@ A local database collection (DB-004).
 | `fields` | list of [Field](#field) | yes |  |
 | `primaryKey` | list of string | yes |  |
 | `indexes` | list of list of string |  |  |
+| `version` | integer |  | The collection's schema version, 1 when omitted. A publish that changes the fields, types or indexes raises it; devices migrate from the version they hold (DB-005). |
+| `migrations` | list of [CollectionMigration](#collectionmigration) |  | How a device at an older version reaches this one: one plan per version it may hold. A change that loses data needs one (DB-005). |
+| `description` | string |  | Human-readable description. |
+
+### CollectionMigration
+
+The plan that takes a collection from version `from` to the next (DB-005): fields renamed, dropped or reset.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `from` | integer | yes | The version this plan starts from. |
+| `rename` | map of string |  | Fields renamed, as new name to old name; their values are kept. |
+| `drop` | list of string |  | Fields of the older version that are removed, with their values. The publisher acknowledges the warning this raises. |
+| `reset` | list of string |  | Fields that are added without being nullable, or whose type narrows: every record's value starts again from the type's empty value (0, "", false, [] or {}), or null when nullable. The publisher acknowledges the warning this raises. |
 | `description` | string |  | Human-readable description. |
 
 ### ComponentDocument
@@ -605,6 +620,7 @@ A plugin: its pages, state, collections and requested capabilities (SCH-021). Fi
 | `types` | list of [TypeDecl](#typedecl) |  |  |
 | `state` | list of [StateEntry](#stateentry) |  |  |
 | `collections` | list of [Collection](#collection) |  |  |
+| `droppedCollections` | list of string |  | IDs of collections this document no longer declares. Their data is deleted from devices that still hold it; the publisher acknowledges the warning this raises (DB-005). |
 | `dataSources` | list of [DataSource](#datasource) |  |  |
 | `triggers` | [Triggers](#triggers) |  | Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active. |
 

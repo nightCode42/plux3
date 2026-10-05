@@ -34,6 +34,11 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | `data.requestTimeout` | milliseconds | 30000 | 80% | 300000 | installation, organization, app, plugin | P5 | DAT-001 | Time one data request may take before it fails with a timeout. |
 | `data.responseSize` | bytes | 4194304 | 80% | 67108864 | installation, organization, app, plugin | P5 | DAT-001, LIM-004 | Bytes the response of one data request may have; a larger response is stopped. |
 | `data.sourcesPerPlugin` | count | 100 | 80% | 1000 | installation, organization, app, plugin | P5 | DAT-001 | Data sources a plugin, its pages and the app may declare for it together. |
+| `db.collectionRecords` | count | 100000 | 80% | 10000000 | installation, organization, app, plugin | P5 | DB-006, LIM-004 | Records one local collection may hold on the device; an insert beyond it fails with a typed error instead of growing the database. |
+| `db.collectionsPerPlugin` | count | 50 | 80% | 500 | installation, organization, app, plugin | P5 | DB-004 | Local collections a plugin may declare. |
+| `db.kvBytes` | bytes | 262144 | 80% | 16777216 | installation, organization, app, plugin | P5 | DB-009, LIM-004 | Bytes the key-value store of one plugin may hold, encoded; a write beyond it fails with a typed error. |
+| `db.queryRows` | count | 1000 | 80% | 100000 | installation, organization, app, plugin | P5 | DB-006 | Records one query or watched query returns at most, whatever its limit asks for. |
+| `db.recordBytes` | bytes | 65536 | 80% | 1048576 | installation, organization, app, plugin | P5 | DB-006, LIM-004 | Bytes one record of a local collection may take, encoded as JSON. |
 | `device.diskQuota` | bytes | 209715200 | 80% | 4294967296 | installation, organization, app | P3 | SYN-012 | Disk space the runtime may use for releases on one device. |
 | `document.fileSize` | bytes | 8388608 | 80% | 67108864 | installation, organization | P1 | SCH-006 | Size of one document file in the project layout, checked before parsing. |
 | `document.jsonDepth` | count | 512 | 80% | 4096 | installation | P1 | SCH-003 | Nesting of arrays and objects in one document, checked while parsing. |

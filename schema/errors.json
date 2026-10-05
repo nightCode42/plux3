@@ -568,6 +568,46 @@
       "fix": "Remove the header and set auth to true to send the auth delegate's token, or call the API through a Plux Function."
     },
     {
+      "code": "PLX-1190",
+      "reason": "COLLECTION_VERSION_INVALID",
+      "severity": "error",
+      "title": "Collection version not raised with its schema",
+      "cause": "A local collection's fields, types or indexes differ from the previous release's, but its version was not raised, or its version is lower than the previous release's. Devices migrate by version, so a change under the same version would never reach them (DB-005).",
+      "fix": "Raise the collection's `version` above the previous release's, and keep it from going down."
+    },
+    {
+      "code": "PLX-1191",
+      "reason": "COLLECTION_PLAN_REQUIRED",
+      "severity": "error",
+      "title": "Destructive collection change without a migration plan",
+      "cause": "A change loses stored data: a field is dropped, a field is added that is not nullable, a field's type narrows, or a collection disappears from the document without being listed in `droppedCollections`. It needs an explicit plan: a `migrations` entry that drops or resets the field, or the collection's ID in `droppedCollections` (DB-005).",
+      "fix": "Declare the migration from the previous version with `drop` or `reset` naming the field, or make the new field nullable."
+    },
+    {
+      "code": "PLX-1192",
+      "reason": "COLLECTION_PLAN_INVALID",
+      "severity": "error",
+      "title": "Invalid collection migration plan",
+      "cause": "A collection's migration plan can never run: it starts from a version that is not below the collection's version, two plans start from the same version, it drops a field the collection still declares, or it resets a field the collection does not declare; or a dropped collection is still declared (DB-005).",
+      "fix": "Correct the plan as the message says."
+    },
+    {
+      "code": "PLX-1193",
+      "reason": "COLLECTION_KEY_CHANGED",
+      "severity": "error",
+      "title": "Collection primary key changed",
+      "cause": "The primary key of a local collection differs from the previous release's. Stored records are addressed by their key, so the change cannot be migrated (DB-005).",
+      "fix": "Keep the primary key, or declare a new collection and copy the records with actions."
+    },
+    {
+      "code": "PLX-1194",
+      "reason": "COLLECTION_DESTRUCTIVE",
+      "severity": "warning",
+      "title": "Collection migration deletes data",
+      "cause": "A declared migration drops or resets a field, or a collection is dropped: devices delete the stored values when they update. The publisher must acknowledge the warning (DB-005, SRV-051).",
+      "fix": "Acknowledge the warning if the data is no longer needed, or keep the field."
+    },
+    {
       "code": "PLX-1201",
       "reason": "UNKNOWN_ROUTE",
       "severity": "error",
@@ -606,6 +646,14 @@
       "title": "Redirect loop",
       "cause": "Pages redirect to each other unconditionally from `onEnter` in a cycle, so navigation would never settle.",
       "fix": "Break the cycle by guarding one of the redirects with a condition."
+    },
+    {
+      "code": "PLX-1250",
+      "reason": "COLLECTION_KEY_TYPE_INVALID",
+      "severity": "error",
+      "title": "Collection primary key field of an unsupported type",
+      "cause": "A primary key field of a local collection is not a string or an int, or is nullable, so records cannot be addressed by it (DB-004).",
+      "fix": "Use string or int, not nullable, for primary key fields."
     },
     {
       "code": "PLX-1310",
@@ -1270,6 +1318,94 @@
       "title": "Response cache unavailable",
       "cause": "The response cache could not be read or written, or its encryption key could not be obtained; the request goes to the network as with networkOnly, and nothing is stored in the clear (DAT-010, LIM-004).",
       "fix": "Check the device's free storage and the key provider; the runtime keeps working without the cache."
+    },
+    {
+      "code": "PLX-5200",
+      "reason": "DB_MIGRATION_FAILED",
+      "severity": "error",
+      "title": "Collection migration failed",
+      "cause": "A collection could not be taken to the release's schema: no plan covers a field that changed, or the database refused a step. The migration was rolled back and the collection stays at its previous version, which actions on it cannot use until the next release or launch (DB-005).",
+      "fix": "Publish a release whose migration plan covers the change, and check the device's free storage."
+    },
+    {
+      "code": "PLX-5201",
+      "reason": "DB_UNAVAILABLE",
+      "severity": "error",
+      "title": "Local database unavailable",
+      "cause": "A plugin uses a local collection but the app has no database adapter that stores collections: add plux_db_drift or supply PluxConfig.databaseAdapter (DB-001, DB-003).",
+      "fix": "Add the plux_db_drift package to the host app and pass its adapter in PluxConfig.databaseAdapter."
+    },
+    {
+      "code": "PLX-5202",
+      "reason": "DB_ENCRYPTION_REQUIRED",
+      "severity": "error",
+      "title": "Encrypted database required",
+      "cause": "The app's security profile is strict or maximum, and the database adapter cannot guarantee that the database is encrypted at rest; it is refused and no collection is opened (DB-002).",
+      "fix": "Open the database with a SQLCipher key, or use a lower security profile if the data does not need it."
+    },
+    {
+      "code": "PLX-5203",
+      "reason": "DB_RECORD_INVALID",
+      "severity": "error",
+      "title": "Record does not fit its collection",
+      "cause": "A record has a field the collection does not declare, a value of the wrong type, or misses a field that is not nullable or the primary key (DB-004, DB-006).",
+      "fix": "Give the record the collection's fields with values of their declared types."
+    },
+    {
+      "code": "PLX-5204",
+      "reason": "DB_RECORD_NOT_FOUND",
+      "severity": "error",
+      "title": "Record not found",
+      "cause": "dbUpdate named a key that no record of the collection has (DB-006).",
+      "fix": "Use dbUpsert to create the record when it may be missing, or handle the step's error."
+    },
+    {
+      "code": "PLX-5205",
+      "reason": "DB_KEY_CONFLICT",
+      "severity": "error",
+      "title": "Record key already exists",
+      "cause": "dbInsert named a key that another record of the collection already has (DB-006).",
+      "fix": "Use dbUpsert to replace the record, or choose another key."
+    },
+    {
+      "code": "PLX-5206",
+      "reason": "DB_QUERY_INVALID",
+      "severity": "error",
+      "title": "Invalid database query",
+      "cause": "A query sorts by a field the collection does not declare, has a negative limit or offset, or its condition cannot be evaluated (DB-006).",
+      "fix": "Sort by a declared field and give a non-negative limit and offset."
+    },
+    {
+      "code": "PLX-5207",
+      "reason": "DB_LIMIT_EXCEEDED",
+      "severity": "error",
+      "title": "Local database over its limit",
+      "cause": "A write would exceed db.recordBytes, db.collectionRecords or db.kvBytes; nothing is written (LIM-001, LIM-004).",
+      "fix": "Store less, delete records, or raise the limit for the app."
+    },
+    {
+      "code": "PLX-5208",
+      "reason": "DB_STORE_FAILED",
+      "severity": "error",
+      "title": "Local database failed",
+      "cause": "The database or its file could not be read or written, or its key could not be obtained from secure storage (DB-001, DB-007).",
+      "fix": "Check the device's free storage and the platform's secure storage; the message names the operation, never a value."
+    },
+    {
+      "code": "PLX-5209",
+      "reason": "DB_COLLECTION_UNKNOWN",
+      "severity": "error",
+      "title": "Unknown or inaccessible collection",
+      "cause": "A step names a collection that the active release does not declare for the calling plugin or the app. Another plugin's private collection is never reachable (DB-004).",
+      "fix": "Declare the collection in the plugin or the app document."
+    },
+    {
+      "code": "PLX-5210",
+      "reason": "DB_VALUE_TYPE_MISMATCH",
+      "severity": "error",
+      "title": "Key-value entry of another type",
+      "cause": "kvSet wrote a value whose JSON type differs from the type the first kvSet fixed for the key within the plugin (DB-009).",
+      "fix": "Write values of one type per key, or remove the key first with kvRemove."
     },
     {
       "code": "PLX-5301",

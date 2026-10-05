@@ -153,6 +153,14 @@
         "$ref": "common.schema.json#/$defs/collection"
       }
     },
+    "droppedCollections": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/id"
+      },
+      "uniqueItems": true,
+      "description": "IDs of collections this document no longer declares. Their data is deleted from devices that still hold it; the publisher acknowledges the warning this raises (DB-005)."
+    },
     "dataSources": {
       "type": "array",
       "items": {

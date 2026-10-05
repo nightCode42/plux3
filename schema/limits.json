@@ -552,6 +552,109 @@
       "description": "Data sources a plugin, its pages and the app may declare for it together."
     },
     {
+      "key": "db.collectionRecords",
+      "unit": "count",
+      "default": 100000,
+      "max": 10000000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "DB-006",
+        "LIM-004"
+      ],
+      "description": "Records one local collection may hold on the device; an insert beyond it fails with a typed error instead of growing the database."
+    },
+    {
+      "key": "db.collectionsPerPlugin",
+      "unit": "count",
+      "default": 50,
+      "max": 500,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "DB-004"
+      ],
+      "description": "Local collections a plugin may declare."
+    },
+    {
+      "key": "db.kvBytes",
+      "unit": "bytes",
+      "default": 262144,
+      "max": 16777216,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "DB-009",
+        "LIM-004"
+      ],
+      "description": "Bytes the key-value store of one plugin may hold, encoded; a write beyond it fails with a typed error."
+    },
+    {
+      "key": "db.queryRows",
+      "unit": "count",
+      "default": 1000,
+      "max": 100000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "DB-006"
+      ],
+      "description": "Records one query or watched query returns at most, whatever its limit asks for."
+    },
+    {
+      "key": "db.recordBytes",
+      "unit": "bytes",
+      "default": 65536,
+      "max": 1048576,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "DB-006",
+        "LIM-004"
+      ],
+      "description": "Bytes one record of a local collection may take, encoded as JSON."
+    },
+    {
       "key": "device.diskQuota",
       "unit": "bytes",
       "default": 209715200,

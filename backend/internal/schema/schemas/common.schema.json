@@ -591,6 +591,19 @@
             "uniqueItems": true
           }
         },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000,
+          "description": "The collection's schema version, 1 when omitted. A publish that changes the fields, types or indexes raises it; devices migrate from the version they hold (DB-005)."
+        },
+        "migrations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/collectionMigration"
+          },
+          "description": "How a device at an older version reaches this one: one plan per version it may hold. A change that loses data needs one (DB-005)."
+        },
         "description": {
           "$ref": "#/$defs/description"
         }
@@ -600,6 +613,55 @@
       },
       "additionalProperties": false,
       "x-plux-type": "Collection"
+    },
+    "collectionMigration": {
+      "type": "object",
+      "description": "The plan that takes a collection from version `from` to the next (DB-005): fields renamed, dropped or reset.",
+      "required": [
+        "from"
+      ],
+      "properties": {
+        "from": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000,
+          "description": "The version this plan starts from."
+        },
+        "rename": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/name"
+          },
+          "propertyNames": {
+            "$ref": "#/$defs/name"
+          },
+          "description": "Fields renamed, as new name to old name; their values are kept."
+        },
+        "drop": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/name"
+          },
+          "uniqueItems": true,
+          "description": "Fields of the older version that are removed, with their values. The publisher acknowledges the warning this raises."
+        },
+        "reset": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/name"
+          },
+          "uniqueItems": true,
+          "description": "Fields that are added without being nullable, or whose type narrows: every record's value starts again from the type's empty value (0, \"\", false, [] or {}), or null when nullable. The publisher acknowledges the warning this raises."
+        },
+        "description": {
+          "$ref": "#/$defs/description"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "CollectionMigration"
     },
     "concurrency": {
       "type": "string",

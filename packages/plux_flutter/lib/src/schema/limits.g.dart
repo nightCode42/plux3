@@ -93,6 +93,19 @@ enum PluxLimit {
   dataResponseSize('data.responseSize', PluxLimitUnit.bytes, 4194304, 0, 67108864),
   /// Data sources a plugin, its pages and the app may declare for it together.
   dataSourcesPerPlugin('data.sourcesPerPlugin', PluxLimitUnit.count, 100, 0, 1000),
+  /// Records one local collection may hold on the device; an insert beyond it
+  /// fails with a typed error instead of growing the database.
+  dbCollectionRecords('db.collectionRecords', PluxLimitUnit.count, 100000, 0, 10000000),
+  /// Local collections a plugin may declare.
+  dbCollectionsPerPlugin('db.collectionsPerPlugin', PluxLimitUnit.count, 50, 0, 500),
+  /// Bytes the key-value store of one plugin may hold, encoded; a write beyond
+  /// it fails with a typed error.
+  dbKvBytes('db.kvBytes', PluxLimitUnit.bytes, 262144, 0, 16777216),
+  /// Records one query or watched query returns at most, whatever its limit
+  /// asks for.
+  dbQueryRows('db.queryRows', PluxLimitUnit.count, 1000, 0, 100000),
+  /// Bytes one record of a local collection may take, encoded as JSON.
+  dbRecordBytes('db.recordBytes', PluxLimitUnit.bytes, 65536, 0, 1048576),
   /// Disk space the runtime may use for releases on one device.
   deviceDiskQuota('device.diskQuota', PluxLimitUnit.bytes, 209715200, 0, 4294967296),
   /// Size of one document file in the project layout, checked before parsing.
