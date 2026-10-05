@@ -355,20 +355,50 @@ final class PluxDatabase {
     bool descending = false,
     int? limit,
     int offset = 0,
-  }) async* {
-    final r = await _resolve(plugin, collection);
-    final cap = _limit(r.declarations, PluxLimit.dbQueryRows);
-    final q = DbQuery(
-      filter: filter,
-      sort: [if (orderBy != null) DbSort(orderBy, descending: descending)],
-      limit: limit == null || limit > cap ? cap : limit,
-      offset: offset,
-    );
-    q.check(r.schema);
-    final tracker = _RowTracker(r);
-    await for (final rows in adapter.watch(r.schema.name, q)) {
-      yield tracker.next(rows);
+  }) {
+    StreamSubscription<List<Map<String, Object?>>>? inner;
+    var cancelled = false;
+    late final StreamController<DbRows> out;
+    Future<void> start() async {
+      try {
+        final r = await _resolve(plugin, collection);
+        final cap = _limit(r.declarations, PluxLimit.dbQueryRows);
+        final q = DbQuery(
+          filter: filter,
+          sort: [if (orderBy != null) DbSort(orderBy, descending: descending)],
+          limit: limit == null || limit > cap ? cap : limit,
+          offset: offset,
+        );
+        q.check(r.schema);
+        if (cancelled) return;
+        final tracker = _RowTracker(r);
+        inner = adapter
+            .watch(r.schema.name, q)
+            .listen(
+              (rows) {
+                try {
+                  out.add(tracker.next(rows));
+                } on Object catch (e, s) {
+                  out.addError(e, s);
+                }
+              },
+              onError: out.addError,
+              onDone: () => unawaited(out.close()),
+            );
+      } on Object catch (e, s) {
+        out.addError(e, s);
+        unawaited(out.close());
+      }
     }
+
+    out = StreamController<DbRows>(
+      onListen: () => unawaited(start()),
+      onCancel: () {
+        cancelled = true;
+        return inner?.cancel();
+      },
+    );
+    return out.stream;
   }
 
   // ── Key-value store ─────────────────────────────────────────────────────

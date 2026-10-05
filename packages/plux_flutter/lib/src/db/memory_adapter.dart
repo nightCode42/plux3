@@ -207,7 +207,8 @@ final class MemoryDatabaseAdapter implements PluxDatabaseAdapter {
       onListen: () => unawaited(_arm(w)),
       onCancel: () {
         _watches.remove(w);
-        return w.controller.close();
+        // Closing completes only when a listener sees it: not awaited.
+        unawaited(w.controller.close());
       },
     );
     w = _Watch(collection, query, c);
