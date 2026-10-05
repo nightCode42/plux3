@@ -7035,6 +7035,190 @@ class IndexObjectBuilder extends fb.ObjectBuilder {
     return fbBuilder.buffer;
   }
 }
+class FieldRename {
+  FieldRename._(this._bc, this._bcOffset);
+  factory FieldRename(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<FieldRename> reader = _FieldRenameReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  int get to => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 4, 0);
+  int get from => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 6, 0);
+
+  @override
+  String toString() {
+    return 'FieldRename{to: ${to}, from: ${from}}';
+  }
+}
+
+class _FieldRenameReader extends fb.TableReader<FieldRename> {
+  const _FieldRenameReader();
+
+  @override
+  FieldRename createObject(fb.BufferContext bc, int offset) => 
+    FieldRename._(bc, offset);
+}
+
+class FieldRenameBuilder {
+  FieldRenameBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(2);
+  }
+
+  int addTo(int? to) {
+    fbBuilder.addUint32(0, to);
+    return fbBuilder.offset;
+  }
+  int addFrom(int? from) {
+    fbBuilder.addUint32(1, from);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class FieldRenameObjectBuilder extends fb.ObjectBuilder {
+  final int? _to;
+  final int? _from;
+
+  FieldRenameObjectBuilder({
+    int? to,
+    int? from,
+  })
+      : _to = to,
+        _from = from;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    fbBuilder.startTable(2);
+    fbBuilder.addUint32(0, _to);
+    fbBuilder.addUint32(1, _from);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
+class CollectionMigration {
+  CollectionMigration._(this._bc, this._bcOffset);
+  factory CollectionMigration(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<CollectionMigration> reader = _CollectionMigrationReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  int get from => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 4, 0);
+  List<FieldRename>? get rename => const fb.ListReader<FieldRename>(FieldRename.reader).vTableGetNullable(_bc, _bcOffset, 6);
+  List<int>? get drop => const fb.ListReader<int>(fb.Uint32Reader()).vTableGetNullable(_bc, _bcOffset, 8);
+  List<int>? get reset => const fb.ListReader<int>(fb.Uint32Reader()).vTableGetNullable(_bc, _bcOffset, 10);
+
+  @override
+  String toString() {
+    return 'CollectionMigration{from: ${from}, rename: ${rename}, drop: ${drop}, reset: ${reset}}';
+  }
+}
+
+class _CollectionMigrationReader extends fb.TableReader<CollectionMigration> {
+  const _CollectionMigrationReader();
+
+  @override
+  CollectionMigration createObject(fb.BufferContext bc, int offset) => 
+    CollectionMigration._(bc, offset);
+}
+
+class CollectionMigrationBuilder {
+  CollectionMigrationBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(4);
+  }
+
+  int addFrom(int? from) {
+    fbBuilder.addUint32(0, from);
+    return fbBuilder.offset;
+  }
+  int addRenameOffset(int? offset) {
+    fbBuilder.addOffset(1, offset);
+    return fbBuilder.offset;
+  }
+  int addDropOffset(int? offset) {
+    fbBuilder.addOffset(2, offset);
+    return fbBuilder.offset;
+  }
+  int addResetOffset(int? offset) {
+    fbBuilder.addOffset(3, offset);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class CollectionMigrationObjectBuilder extends fb.ObjectBuilder {
+  final int? _from;
+  final List<FieldRenameObjectBuilder>? _rename;
+  final List<int>? _drop;
+  final List<int>? _reset;
+
+  CollectionMigrationObjectBuilder({
+    int? from,
+    List<FieldRenameObjectBuilder>? rename,
+    List<int>? drop,
+    List<int>? reset,
+  })
+      : _from = from,
+        _rename = rename,
+        _drop = drop,
+        _reset = reset;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? renameOffset = _rename == null ? null
+        : fbBuilder.writeList(_rename!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    final int? dropOffset = _drop == null ? null
+        : fbBuilder.writeListUint32(_drop!);
+    final int? resetOffset = _reset == null ? null
+        : fbBuilder.writeListUint32(_reset!);
+    fbBuilder.startTable(4);
+    fbBuilder.addUint32(0, _from);
+    fbBuilder.addOffset(1, renameOffset);
+    fbBuilder.addOffset(2, dropOffset);
+    fbBuilder.addOffset(3, resetOffset);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
 class Collection {
   Collection._(this._bc, this._bcOffset);
   factory Collection(List<int> bytes) {
@@ -7052,10 +7236,12 @@ class Collection {
   List<Param>? get fields => const fb.ListReader<Param>(Param.reader).vTableGetNullable(_bc, _bcOffset, 8);
   List<int>? get primaryKey => const fb.ListReader<int>(fb.Uint32Reader()).vTableGetNullable(_bc, _bcOffset, 10);
   List<Index>? get indexes => const fb.ListReader<Index>(Index.reader).vTableGetNullable(_bc, _bcOffset, 12);
+  int get version => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 14, 0);
+  List<CollectionMigration>? get migrations => const fb.ListReader<CollectionMigration>(CollectionMigration.reader).vTableGetNullable(_bc, _bcOffset, 16);
 
   @override
   String toString() {
-    return 'Collection{id: ${id}, key: ${key}, fields: ${fields}, primaryKey: ${primaryKey}, indexes: ${indexes}}';
+    return 'Collection{id: ${id}, key: ${key}, fields: ${fields}, primaryKey: ${primaryKey}, indexes: ${indexes}, version: ${version}, migrations: ${migrations}}';
   }
 }
 
@@ -7073,7 +7259,7 @@ class CollectionBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable(5);
+    fbBuilder.startTable(7);
   }
 
   int addId(int offset) {
@@ -7096,6 +7282,14 @@ class CollectionBuilder {
     fbBuilder.addOffset(4, offset);
     return fbBuilder.offset;
   }
+  int addVersion(int? version) {
+    fbBuilder.addUint32(5, version);
+    return fbBuilder.offset;
+  }
+  int addMigrationsOffset(int? offset) {
+    fbBuilder.addOffset(6, offset);
+    return fbBuilder.offset;
+  }
 
   int finish() {
     return fbBuilder.endTable();
@@ -7108,6 +7302,8 @@ class CollectionObjectBuilder extends fb.ObjectBuilder {
   final List<ParamObjectBuilder>? _fields;
   final List<int>? _primaryKey;
   final List<IndexObjectBuilder>? _indexes;
+  final int? _version;
+  final List<CollectionMigrationObjectBuilder>? _migrations;
 
   CollectionObjectBuilder({
     UuidObjectBuilder? id,
@@ -7115,12 +7311,16 @@ class CollectionObjectBuilder extends fb.ObjectBuilder {
     List<ParamObjectBuilder>? fields,
     List<int>? primaryKey,
     List<IndexObjectBuilder>? indexes,
+    int? version,
+    List<CollectionMigrationObjectBuilder>? migrations,
   })
       : _id = id,
         _key = key,
         _fields = fields,
         _primaryKey = primaryKey,
-        _indexes = indexes;
+        _indexes = indexes,
+        _version = version,
+        _migrations = migrations;
 
   /// Finish building, and store into the [fbBuilder].
   @override
@@ -7131,7 +7331,9 @@ class CollectionObjectBuilder extends fb.ObjectBuilder {
         : fbBuilder.writeListUint32(_primaryKey!);
     final int? indexesOffset = _indexes == null ? null
         : fbBuilder.writeList(_indexes!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
-    fbBuilder.startTable(5);
+    final int? migrationsOffset = _migrations == null ? null
+        : fbBuilder.writeList(_migrations!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    fbBuilder.startTable(7);
     if (_id != null) {
       fbBuilder.addStruct(0, _id!.finish(fbBuilder));
     }
@@ -7139,6 +7341,8 @@ class CollectionObjectBuilder extends fb.ObjectBuilder {
     fbBuilder.addOffset(2, fieldsOffset);
     fbBuilder.addOffset(3, primaryKeyOffset);
     fbBuilder.addOffset(4, indexesOffset);
+    fbBuilder.addUint32(5, _version);
+    fbBuilder.addOffset(6, migrationsOffset);
     return fbBuilder.endTable();
   }
 
@@ -7446,10 +7650,11 @@ class Schemas {
   List<NativeRouteDecl>? get nativeRoutes => const fb.ListReader<NativeRouteDecl>(NativeRouteDecl.reader).vTableGetNullable(_bc, _bcOffset, 16);
   List<NativeSlotDecl>? get nativeSlots => const fb.ListReader<NativeSlotDecl>(NativeSlotDecl.reader).vTableGetNullable(_bc, _bcOffset, 18);
   List<NativeActionDecl>? get nativeActions => const fb.ListReader<NativeActionDecl>(NativeActionDecl.reader).vTableGetNullable(_bc, _bcOffset, 20);
+  List<Uuid>? get droppedCollections => const fb.ListReader<Uuid>(Uuid.reader).vTableGetNullable(_bc, _bcOffset, 22);
 
   @override
   String toString() {
-    return 'Schemas{types: ${types}, state: ${state}, dataSources: ${dataSources}, collections: ${collections}, variables: ${variables}, userContext: ${userContext}, nativeRoutes: ${nativeRoutes}, nativeSlots: ${nativeSlots}, nativeActions: ${nativeActions}}';
+    return 'Schemas{types: ${types}, state: ${state}, dataSources: ${dataSources}, collections: ${collections}, variables: ${variables}, userContext: ${userContext}, nativeRoutes: ${nativeRoutes}, nativeSlots: ${nativeSlots}, nativeActions: ${nativeActions}, droppedCollections: ${droppedCollections}}';
   }
 }
 
@@ -7467,7 +7672,7 @@ class SchemasBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable(9);
+    fbBuilder.startTable(10);
   }
 
   int addTypesOffset(int? offset) {
@@ -7506,6 +7711,10 @@ class SchemasBuilder {
     fbBuilder.addOffset(8, offset);
     return fbBuilder.offset;
   }
+  int addDroppedCollectionsOffset(int? offset) {
+    fbBuilder.addOffset(9, offset);
+    return fbBuilder.offset;
+  }
 
   int finish() {
     return fbBuilder.endTable();
@@ -7522,6 +7731,7 @@ class SchemasObjectBuilder extends fb.ObjectBuilder {
   final List<NativeRouteDeclObjectBuilder>? _nativeRoutes;
   final List<NativeSlotDeclObjectBuilder>? _nativeSlots;
   final List<NativeActionDeclObjectBuilder>? _nativeActions;
+  final List<UuidObjectBuilder>? _droppedCollections;
 
   SchemasObjectBuilder({
     List<TypeDeclObjectBuilder>? types,
@@ -7533,6 +7743,7 @@ class SchemasObjectBuilder extends fb.ObjectBuilder {
     List<NativeRouteDeclObjectBuilder>? nativeRoutes,
     List<NativeSlotDeclObjectBuilder>? nativeSlots,
     List<NativeActionDeclObjectBuilder>? nativeActions,
+    List<UuidObjectBuilder>? droppedCollections,
   })
       : _types = types,
         _state = state,
@@ -7542,7 +7753,8 @@ class SchemasObjectBuilder extends fb.ObjectBuilder {
         _userContext = userContext,
         _nativeRoutes = nativeRoutes,
         _nativeSlots = nativeSlots,
-        _nativeActions = nativeActions;
+        _nativeActions = nativeActions,
+        _droppedCollections = droppedCollections;
 
   /// Finish building, and store into the [fbBuilder].
   @override
@@ -7565,7 +7777,9 @@ class SchemasObjectBuilder extends fb.ObjectBuilder {
         : fbBuilder.writeList(_nativeSlots!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
     final int? nativeActionsOffset = _nativeActions == null ? null
         : fbBuilder.writeList(_nativeActions!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
-    fbBuilder.startTable(9);
+    final int? droppedCollectionsOffset = _droppedCollections == null ? null
+        : fbBuilder.writeListOfStructs(_droppedCollections!);
+    fbBuilder.startTable(10);
     fbBuilder.addOffset(0, typesOffset);
     fbBuilder.addOffset(1, stateOffset);
     fbBuilder.addOffset(2, dataSourcesOffset);
@@ -7575,6 +7789,7 @@ class SchemasObjectBuilder extends fb.ObjectBuilder {
     fbBuilder.addOffset(6, nativeRoutesOffset);
     fbBuilder.addOffset(7, nativeSlotsOffset);
     fbBuilder.addOffset(8, nativeActionsOffset);
+    fbBuilder.addOffset(9, droppedCollectionsOffset);
     return fbBuilder.endTable();
   }
 

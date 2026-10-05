@@ -1,0 +1,97 @@
+{
+  "collections": [
+    {
+      "description": "Plugin-private tasks, migrated from version 1 where title was called name.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "done",
+          "type": "bool"
+        },
+        {
+          "name": "rank",
+          "type": "int"
+        },
+        {
+          "name": "note",
+          "type": "string?"
+        }
+      ],
+      "id": "01e0c450-6c00-7000-8000-000000000606",
+      "indexes": [
+        [
+          "done"
+        ],
+        [
+          "rank"
+        ]
+      ],
+      "key": "tasks",
+      "migrations": [
+        {
+          "from": 1,
+          "rename": {
+            "title": "name"
+          }
+        }
+      ],
+      "primaryKey": [
+        "id"
+      ],
+      "version": 2
+    }
+  ],
+  "dataSources": [
+    {
+      "config": {
+        "collection": "tasks",
+        "orderBy": "rank"
+      },
+      "id": "01e0c450-6c00-7000-8000-000000000607",
+      "kind": "database",
+      "mock": [],
+      "name": "tasks",
+      "type": "list<Task>"
+    },
+    {
+      "config": {
+        "collection": "tasks",
+        "filter": {
+          "field": "done",
+          "op": "eq",
+          "value": false
+        },
+        "orderBy": "rank"
+      },
+      "id": "01e0c450-6c00-7000-8000-000000000608",
+      "kind": "database",
+      "mock": [],
+      "name": "open",
+      "type": "list<Task>"
+    }
+  ],
+  "description": "Collections, database data sources and the database actions.",
+  "entryPage": "01e0c450-6c00-7000-8000-000000000610",
+  "icon": {
+    "monogram": {
+      "background": "#0B6E4F",
+      "text": "T"
+    }
+  },
+  "id": "01e0c450-6c00-7000-8000-000000000605",
+  "key": "todo",
+  "kind": "plugin",
+  "name": "Todo",
+  "pages": [
+    "01e0c450-6c00-7000-8000-000000000610"
+  ],
+  "schemaVersion": "1.0.0",
+  "team": "db"
+}

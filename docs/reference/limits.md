@@ -48,6 +48,11 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | `data.streamMessageSize` | bytes | 1048576 | 80% | 16777216 | installation, organization, app, plugin | P5 | DAT-012, LIM-004 | Bytes one stream message may have; a larger message closes the stream with a typed error. |
 | `data.streamsOpen` | count | 8 | 80% | 64 | installation, organization, app | P5 | DAT-012, LIM-004 | Streams the runtime keeps open at once; a further subscription is refused with a typed error. |
 | `data.uploadSize` | bytes | 26214400 | 80% | 1073741824 | installation, organization, app | P5 | DAT-031, LIM-004 | Bytes one upload may have; the file's size is checked before the transfer and a larger file is refused. |
+| `db.collectionRecords` | count | 100000 | 80% | 10000000 | installation, organization, app, plugin | P5 | DB-006, LIM-004 | Records one local collection may hold on the device; an insert beyond it fails with a typed error instead of growing the database. |
+| `db.collectionsPerPlugin` | count | 50 | 80% | 500 | installation, organization, app, plugin | P5 | DB-004 | Local collections a plugin may declare. |
+| `db.kvBytes` | bytes | 262144 | 80% | 16777216 | installation, organization, app, plugin | P5 | DB-009, LIM-004 | Bytes the key-value store of one plugin may hold, encoded; a write beyond it fails with a typed error. |
+| `db.queryRows` | count | 1000 | 80% | 100000 | installation, organization, app, plugin | P5 | DB-006 | Records one query or watched query returns at most, whatever its limit asks for. |
+| `db.recordBytes` | bytes | 65536 | 80% | 1048576 | installation, organization, app, plugin | P5 | DB-006, LIM-004 | Bytes one record of a local collection may take, encoded as JSON. |
 | `device.clipboardChars` | count | 10000 | 80% | 100000 | installation, organization, app | P5 | SEC-080, LIM-004 | Characters copyToClipboard may put on the clipboard in one step. |
 | `device.diskQuota` | bytes | 209715200 | 80% | 4294967296 | installation, organization, app | P3 | SYN-012 | Disk space the runtime may use for releases on one device. |
 | `device.pickCount` | count | 10 | 80% | 100 | installation, organization, app | P5 | SEC-080, LIM-004 | Files a single pickImage or pickFile step may return. |

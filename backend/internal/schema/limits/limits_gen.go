@@ -131,6 +131,21 @@ const (
 	// DataUploadSize: Bytes one upload may have; the file's size is checked
 	// before the transfer and a larger file is refused. (DAT-031, LIM-004)
 	DataUploadSize Key = "data.uploadSize"
+	// DBCollectionRecords: Records one local collection may hold on the device;
+	// an insert beyond it fails with a typed error instead of growing the
+	// database. (DB-006, LIM-004)
+	DBCollectionRecords Key = "db.collectionRecords"
+	// DBCollectionsPerPlugin: Local collections a plugin may declare. (DB-004)
+	DBCollectionsPerPlugin Key = "db.collectionsPerPlugin"
+	// DBKVBytes: Bytes the key-value store of one plugin may hold, encoded; a
+	// write beyond it fails with a typed error. (DB-009, LIM-004)
+	DBKVBytes Key = "db.kvBytes"
+	// DBQueryRows: Records one query or watched query returns at most, whatever
+	// its limit asks for. (DB-006)
+	DBQueryRows Key = "db.queryRows"
+	// DBRecordBytes: Bytes one record of a local collection may take, encoded as
+	// JSON. (DB-006, LIM-004)
+	DBRecordBytes Key = "db.recordBytes"
 	// DeviceClipboardChars: Characters copyToClipboard may put on the clipboard
 	// in one step. (SEC-080, LIM-004)
 	DeviceClipboardChars Key = "device.clipboardChars"
@@ -275,6 +290,11 @@ var registry = [...]Definition{
 	{Key: DataStreamMessageSize, Unit: UnitBytes, Default: 1048576, Warning: 0, Max: 16777216, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes one stream message may have; a larger message closes the stream with a typed error."},
 	{Key: DataStreamsOpen, Unit: UnitCount, Default: 8, Warning: 0, Max: 64, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Streams the runtime keeps open at once; a further subscription is refused with a typed error."},
 	{Key: DataUploadSize, Unit: UnitBytes, Default: 26214400, Warning: 0, Max: 1073741824, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes one upload may have; the file's size is checked before the transfer and a larger file is refused."},
+	{Key: DBCollectionRecords, Unit: UnitCount, Default: 100000, Warning: 0, Max: 10000000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Records one local collection may hold on the device; an insert beyond it fails with a typed error instead of growing the database."},
+	{Key: DBCollectionsPerPlugin, Unit: UnitCount, Default: 50, Warning: 0, Max: 500, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler, Phase: "P5", Description: "Local collections a plugin may declare."},
+	{Key: DBKVBytes, Unit: UnitBytes, Default: 262144, Warning: 0, Max: 16777216, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the key-value store of one plugin may hold, encoded; a write beyond it fails with a typed error."},
+	{Key: DBQueryRows, Unit: UnitCount, Default: 1000, Warning: 0, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Records one query or watched query returns at most, whatever its limit asks for."},
+	{Key: DBRecordBytes, Unit: UnitBytes, Default: 65536, Warning: 0, Max: 1048576, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes one record of a local collection may take, encoded as JSON."},
 	{Key: DeviceClipboardChars, Unit: UnitCount, Default: 10000, Warning: 0, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Characters copyToClipboard may put on the clipboard in one step."},
 	{Key: DeviceDiskQuota, Unit: UnitBytes, Default: 209715200, Warning: 0, Max: 4294967296, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "Disk space the runtime may use for releases on one device."},
 	{Key: DevicePickCount, Unit: UnitCount, Default: 10, Warning: 0, Max: 100, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Files a single pickImage or pickFile step may return."},

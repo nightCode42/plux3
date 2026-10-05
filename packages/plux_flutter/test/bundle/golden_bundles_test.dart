@@ -38,6 +38,8 @@ void main() {
       'animation/stage.pxb',
       'data/data.pxb',
       'data/shop.pxb',
+      'db/db.pxb',
+      'db/todo.pxb',
       'features/features.dev.pxb',
       'features/features.pxb',
       'features/tasks.dev.pxb',
@@ -73,6 +75,7 @@ void main() {
                       path.contains('/lab') ||
                       path.contains('/signup') ||
                       path.contains('/stage') ||
+                      path.contains('/todo') ||
                       path.contains('/gallery')
                   ? 1
                   : 2),
@@ -84,13 +87,15 @@ void main() {
       final meta = fbs.Meta(b.ofKind(SectionKind.meta).single.data);
       expect(meta.compilerVersion, 'dev', reason: path);
       expect(meta.schemaVersion, '1.0.0', reason: path);
-      // The data and animation projects raise their features above their
-      // minimum of 0.2.0 (ADR-0048); every other project uses what runtime 0.3.0 is the
+      // The data, db and animation projects raise their features above their
+      // minimum of 0.2.0 (ADR-0048, ADR-0049); every other project uses what runtime 0.3.0 is the
       // first to run: lifecycle handlers and R1's actions, or state writes
       // and stored state (ADR-0045, ADR-0046).
       expect(
         meta.minRuntime,
-        path.startsWith('data/') || path.startsWith('animation/')
+        path.startsWith('data/') ||
+                path.startsWith('db/') ||
+                path.startsWith('animation/')
             ? '0.2.0'
             : '0.3.0',
         reason: path,

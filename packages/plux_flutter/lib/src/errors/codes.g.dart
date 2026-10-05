@@ -214,6 +214,24 @@ enum PluxErrorCode {
   /// Invalid file transfer.
   dataTransferInvalid(1177, 'DATA_TRANSFER_INVALID', 'Invalid file transfer'),
 
+  /// Collection version not raised with its schema.
+  collectionVersionInvalid(1190, 'COLLECTION_VERSION_INVALID', 'Collection version not raised with its schema'),
+
+  /// Destructive collection change without a migration plan.
+  collectionPlanRequired(1191, 'COLLECTION_PLAN_REQUIRED', 'Destructive collection change without a migration plan'),
+
+  /// Invalid collection migration plan.
+  collectionPlanInvalid(1192, 'COLLECTION_PLAN_INVALID', 'Invalid collection migration plan'),
+
+  /// Collection primary key changed.
+  collectionKeyChanged(1193, 'COLLECTION_KEY_CHANGED', 'Collection primary key changed'),
+
+  /// Collection migration deletes data.
+  collectionDestructive(1194, 'COLLECTION_DESTRUCTIVE', 'Collection migration deletes data'),
+
+  /// Invalid database data source.
+  databaseSourceInvalid(1195, 'DATABASE_SOURCE_INVALID', 'Invalid database data source'),
+
   /// Unknown route.
   unknownRoute(1201, 'UNKNOWN_ROUTE', 'Unknown route'),
 
@@ -267,6 +285,9 @@ enum PluxErrorCode {
 
   /// FormScope names no form.
   formScopeInvalid(1240, 'FORM_SCOPE_INVALID', 'FormScope names no form'),
+
+  /// Collection primary key field of an unsupported type.
+  collectionKeyTypeInvalid(1250, 'COLLECTION_KEY_TYPE_INVALID', 'Collection primary key field of an unsupported type'),
 
   /// Page exceeds its node budget.
   pageNodeBudget(1310, 'PAGE_NODE_BUDGET', 'Page exceeds its node budget'),
@@ -555,6 +576,39 @@ enum PluxErrorCode {
 
   /// Transfer file unavailable.
   dataTransferFileFailed(5131, 'DATA_TRANSFER_FILE_FAILED', 'Transfer file unavailable'),
+
+  /// Collection migration failed.
+  dbMigrationFailed(5200, 'DB_MIGRATION_FAILED', 'Collection migration failed'),
+
+  /// Local database unavailable.
+  dbUnavailable(5201, 'DB_UNAVAILABLE', 'Local database unavailable'),
+
+  /// Encrypted database required.
+  dbEncryptionRequired(5202, 'DB_ENCRYPTION_REQUIRED', 'Encrypted database required'),
+
+  /// Record does not fit its collection.
+  dbRecordInvalid(5203, 'DB_RECORD_INVALID', 'Record does not fit its collection'),
+
+  /// Record not found.
+  dbRecordNotFound(5204, 'DB_RECORD_NOT_FOUND', 'Record not found'),
+
+  /// Record key already exists.
+  dbKeyConflict(5205, 'DB_KEY_CONFLICT', 'Record key already exists'),
+
+  /// Invalid database query.
+  dbQueryInvalid(5206, 'DB_QUERY_INVALID', 'Invalid database query'),
+
+  /// Local database over its limit.
+  dbLimitExceeded(5207, 'DB_LIMIT_EXCEEDED', 'Local database over its limit'),
+
+  /// Local database failed.
+  dbStoreFailed(5208, 'DB_STORE_FAILED', 'Local database failed'),
+
+  /// Unknown or inaccessible collection.
+  dbCollectionUnknown(5209, 'DB_COLLECTION_UNKNOWN', 'Unknown or inaccessible collection'),
+
+  /// Key-value entry of another type.
+  dbValueTypeMismatch(5210, 'DB_VALUE_TYPE_MISMATCH', 'Key-value entry of another type'),
 
   /// State written with a value of the wrong type.
   stateWriteTypeMismatch(5301, 'STATE_WRITE_TYPE_MISMATCH', 'State written with a value of the wrong type'),

@@ -35,6 +35,10 @@ import 'package:plux_flutter/src/core/plux_view.dart';
 import 'package:plux_flutter/src/core/trigger_sources.dart';
 import 'package:plux_flutter/src/data/services.dart';
 import 'package:plux_flutter/src/data/worker.dart';
+import 'package:plux_flutter/src/db/adapter.dart';
+import 'package:plux_flutter/src/db/builtin_adapter.dart';
+import 'package:plux_flutter/src/db/release_declarations.dart';
+import 'package:plux_flutter/src/db/service.dart';
 import 'package:plux_flutter/src/device/guard.dart';
 import 'package:plux_flutter/src/device/services.dart';
 import 'package:plux_flutter/src/devtools_api/diagnostics.dart';
@@ -357,6 +361,7 @@ final class PluxRuntime with WidgetsBindingObserver {
     outboxStore: _outboxStore,
     runtimeRoot: _root,
     downloadDirectory: '$_root/downloads',
+    database: database,
   );
 
   /// The offline outbox's store: encrypted under a key of this
@@ -436,6 +441,39 @@ final class PluxRuntime with WidgetsBindingObserver {
     );
   }();
 
+  /// Where plugins' collections and key-value entries live (DB-001): the
+  /// host's adapter, or the core's built-in store, whose file is sealed
+  /// under a key of this installation like the secure state store's
+  /// (ADR-0049).
+  late final PluxDatabaseAdapter _dbAdapter =
+      config.databaseAdapter ??
+      BuiltInDatabaseAdapter(
+        store: EncryptedFileStore(
+          path: '$_root/plux-db/kv.pxk',
+          secrets: _secrets,
+          keyName: 'db-kv.$_keyId',
+          label: 'plux-db/kv/$_keyId',
+          maxBytes: PluxLimit.dbKvBytes.max * 4,
+        ),
+        encrypted: true,
+        report: _report,
+      );
+
+  final Expando<ReleaseDbDeclarations> _dbDeclarations = Expando();
+
+  /// The local database (DB-001): the layer under the database actions,
+  /// `Plux.wipeData` and watched queries.
+  late final PluxDatabase database = PluxDatabase(
+    adapter: _dbAdapter,
+    report: _report,
+    declarations: () {
+      final release = active.value;
+      final r = renderer;
+      if (release == null || r is! PluxRenderer) return null;
+      return _dbDeclarations[release] ??= ReleaseDbDeclarations(release, r);
+    },
+  );
+
   /// Where `Plux.sendEvent` delivers host events (HST-013): the
   /// host-event triggers of the app, its plugins and the pages shown.
   late HostEventSink? hostEventSink = TypedHostEvents(
@@ -469,10 +507,13 @@ final class PluxRuntime with WidgetsBindingObserver {
       traces: traces,
       sync: () => unawaited(sync().then((_) {}, onError: (Object _) {})),
       logout: logout,
-      services: deviceServices(
-        packages: config.devicePackages,
-        openLink: handleDeepLink,
-      ),
+      services: {
+        ...deviceServices(
+          packages: config.devicePackages,
+          openLink: handleDeepLink,
+        ),
+        PluxDatabase: database,
+      },
       deviceGuard: _deviceGuard,
     )..ownerErrors = _ownerErrors,
   );
@@ -1042,6 +1083,8 @@ final class PluxRuntime with WidgetsBindingObserver {
     await statePersistence.flush();
     // Open streams and the outbox's replay timer stop with the runtime.
     await _dataServices.close();
+    // A host's adapter is the host's to close.
+    if (config.databaseAdapter == null) await _dbAdapter.close();
     _disposed = true;
     _healthy?.cancel();
     diagnostics.dispose();

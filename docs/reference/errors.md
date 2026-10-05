@@ -552,6 +552,54 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Declare a REST operation with a transfer of kind upload (POST, PUT or PATCH) or download (GET), and a file parameter.
 
+### PLX-1190
+
+`COLLECTION_VERSION_INVALID` · error · Collection version not raised with its schema
+
+**Cause.** A local collection's fields, types or indexes differ from the previous release's, but its version was not raised, or its version is lower than the previous release's. Devices migrate by version, so a change under the same version would never reach them (DB-005).
+
+**Fix.** Raise the collection's `version` above the previous release's, and keep it from going down.
+
+### PLX-1191
+
+`COLLECTION_PLAN_REQUIRED` · error · Destructive collection change without a migration plan
+
+**Cause.** A change loses stored data: a field is dropped, a field is added that is not nullable, a field's type narrows, or a collection disappears from the document without being listed in `droppedCollections`. It needs an explicit plan: a `migrations` entry that drops or resets the field, or the collection's ID in `droppedCollections` (DB-005).
+
+**Fix.** Declare the migration from the previous version with `drop` or `reset` naming the field, or make the new field nullable.
+
+### PLX-1192
+
+`COLLECTION_PLAN_INVALID` · error · Invalid collection migration plan
+
+**Cause.** A collection's migration plan can never run: it starts from a version that is not below the collection's version, two plans start from the same version, it drops a field the collection still declares, or it resets a field the collection does not declare; or a dropped collection is still declared (DB-005).
+
+**Fix.** Correct the plan as the message says.
+
+### PLX-1193
+
+`COLLECTION_KEY_CHANGED` · error · Collection primary key changed
+
+**Cause.** The primary key of a local collection differs from the previous release's. Stored records are addressed by their key, so the change cannot be migrated (DB-005).
+
+**Fix.** Keep the primary key, or declare a new collection and copy the records with actions.
+
+### PLX-1194
+
+`COLLECTION_DESTRUCTIVE` · warning · Collection migration deletes data
+
+**Cause.** A declared migration drops or resets a field, or a collection is dropped: devices delete the stored values when they update. The publisher must acknowledge the warning (DB-005, SRV-051).
+
+**Fix.** Acknowledge the warning if the data is no longer needed, or keep the field.
+
+### PLX-1195
+
+`DATABASE_SOURCE_INVALID` · error · Invalid database data source
+
+**Cause.** The configuration of a data source of kind database is not a query the runtime can watch: it names no collection the plugin or the app declares, a filter names a field or operator the collection cannot use or compares with a value of the wrong type, it sorts by a field that cannot be sorted, or its limit or offset is out of range (DB-006).
+
+**Fix.** Correct the configuration as the message says: collection, filter, orderBy, descending, limit and offset.
+
 ### PLX-1201
 
 `UNKNOWN_ROUTE` · error · Unknown route
@@ -695,6 +743,14 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 **Cause.** A FormScope's form is not a literal naming a form that the page or component declares, so the form root below it would have no state to read (STA-020).
 
 **Fix.** Set form to the literal name of a form declared in the page's or component's forms.
+
+### PLX-1250
+
+`COLLECTION_KEY_TYPE_INVALID` · error · Collection primary key field of an unsupported type
+
+**Cause.** A primary key field of a local collection is not a string or an int, or is nullable, so records cannot be addressed by it (DB-004).
+
+**Fix.** Use string or int, not nullable, for primary key fields.
 
 ### PLX-1310
 
@@ -1471,6 +1527,94 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 **Cause.** The file to upload does not exist or cannot be read, or the name a download is saved under is not a plain file name or cannot be written in the runtime's directory (DAT-031).
 
 **Fix.** Give an existing file, and a download a plain name without directories.
+
+### PLX-5200
+
+`DB_MIGRATION_FAILED` · error · Collection migration failed
+
+**Cause.** A collection could not be taken to the release's schema: no plan covers a field that changed, or the database refused a step. The migration was rolled back and the collection stays at its previous version, which actions on it cannot use until the next release or launch (DB-005).
+
+**Fix.** Publish a release whose migration plan covers the change, and check the device's free storage.
+
+### PLX-5201
+
+`DB_UNAVAILABLE` · error · Local database unavailable
+
+**Cause.** A plugin uses a local collection but the app has no database adapter that stores collections: add plux_db_drift or supply PluxConfig.databaseAdapter (DB-001, DB-003).
+
+**Fix.** Add the plux_db_drift package to the host app and pass its adapter in PluxConfig.databaseAdapter.
+
+### PLX-5202
+
+`DB_ENCRYPTION_REQUIRED` · error · Encrypted database required
+
+**Cause.** The app's security profile is strict or maximum, and the database adapter cannot guarantee that the database is encrypted at rest; it is refused and no collection is opened (DB-002).
+
+**Fix.** Open the database with a SQLCipher key, or use a lower security profile if the data does not need it.
+
+### PLX-5203
+
+`DB_RECORD_INVALID` · error · Record does not fit its collection
+
+**Cause.** A record has a field the collection does not declare, a value of the wrong type, or misses a field that is not nullable or the primary key (DB-004, DB-006).
+
+**Fix.** Give the record the collection's fields with values of their declared types.
+
+### PLX-5204
+
+`DB_RECORD_NOT_FOUND` · error · Record not found
+
+**Cause.** dbUpdate named a key that no record of the collection has (DB-006).
+
+**Fix.** Use dbUpsert to create the record when it may be missing, or handle the step's error.
+
+### PLX-5205
+
+`DB_KEY_CONFLICT` · error · Record key already exists
+
+**Cause.** dbInsert named a key that another record of the collection already has (DB-006).
+
+**Fix.** Use dbUpsert to replace the record, or choose another key.
+
+### PLX-5206
+
+`DB_QUERY_INVALID` · error · Invalid database query
+
+**Cause.** A query sorts by a field the collection does not declare, has a negative limit or offset, or its condition cannot be evaluated (DB-006).
+
+**Fix.** Sort by a declared field and give a non-negative limit and offset.
+
+### PLX-5207
+
+`DB_LIMIT_EXCEEDED` · error · Local database over its limit
+
+**Cause.** A write would exceed db.recordBytes, db.collectionRecords or db.kvBytes; nothing is written (LIM-001, LIM-004).
+
+**Fix.** Store less, delete records, or raise the limit for the app.
+
+### PLX-5208
+
+`DB_STORE_FAILED` · error · Local database failed
+
+**Cause.** The database or its file could not be read or written, or its key could not be obtained from secure storage (DB-001, DB-007).
+
+**Fix.** Check the device's free storage and the platform's secure storage; the message names the operation, never a value.
+
+### PLX-5209
+
+`DB_COLLECTION_UNKNOWN` · error · Unknown or inaccessible collection
+
+**Cause.** A step names a collection that the active release does not declare for the calling plugin or the app. Another plugin's private collection is never reachable (DB-004).
+
+**Fix.** Declare the collection in the plugin or the app document.
+
+### PLX-5210
+
+`DB_VALUE_TYPE_MISMATCH` · error · Key-value entry of another type
+
+**Cause.** kvSet wrote a value whose JSON type differs from the type the first kvSet fixed for the key within the plugin (DB-009).
+
+**Fix.** Write values of one type per key, or remove the key first with kvRemove.
 
 ### PLX-5301
 

@@ -232,16 +232,24 @@ abstract final class Plux {
   static void setNetworkAvailable(bool available) =>
       _rt.setNetworkAvailable(available);
 
-  /// Removes the data Plux keeps on the device for this app (HST-001):
-  /// session, persisted and secure state with the stores' keys, and every
-  /// cached data-source response; app and
-  /// plugin state start again from their defaults. Pages already shown
-  /// keep their in-memory values until they close.
-  static Future<void> wipeData() async {
+  /// Removes the data Plux keeps on the device for this app (HST-001,
+  /// DB-008): session, persisted and secure state with the stores' keys,
+  /// every cached data-source response, and the local database — the
+  /// collections' records, the key-value entries and the database's key;
+  /// app and plugin state start again from their defaults. Pages already
+  /// shown keep their in-memory values until they close. Hosts call it on
+  /// logout or when the account changes.
+  ///
+  /// With [plugin], only that plugin's local database data — its private
+  /// collections' records and its key-value entries — is removed; the
+  /// app's shared collections, state and caches stay.
+  static Future<void> wipeData({String? plugin}) async {
     final rt = _rt;
+    if (plugin != null) return rt.database.wipe(plugin: plugin);
     await rt.statePersistence.wipe();
     // Cached responses go too, so the next user never sees them.
     await rt.clearDataCache();
+    await rt.database.wipe();
     final c = container;
     c.read(appStateProvider.notifier).restart();
     final keys = [

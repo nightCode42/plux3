@@ -838,12 +838,32 @@ table Index {
   fields: [uint];
 }
 
+// A field renamed by a collection migration (DB-005): the new name and the
+// name it had.
+table FieldRename {
+  to: uint;
+  from: uint;
+}
+
+// The plan that takes a collection from schema version `from` to the next
+// (DB-005): fields renamed (values kept), dropped, or reset to the type's
+// empty value.
+table CollectionMigration {
+  from: uint;
+  rename: [FieldRename];
+  drop: [uint];
+  reset: [uint];
+}
+
 table Collection {
   id: Uuid;
   key: uint;
   fields: [Param];
   primary_key: [uint];
   indexes: [Index];
+  // The schema version, 1 for a collection that never changed (DB-005).
+  version: uint;
+  migrations: [CollectionMigration];
 }
 
 // A native route of the catalogue the app was compiled against (NAV-002,
@@ -884,6 +904,9 @@ table Schemas {
   native_routes: [NativeRouteDecl];
   native_slots: [NativeSlotDecl];
   native_actions: [NativeActionDecl];
+  // Collections the document no longer declares: devices delete their data
+  // (DB-005).
+  dropped_collections: [Uuid];
 }
 
 // ── Section assets-index ──────────────────────────────────────────────────

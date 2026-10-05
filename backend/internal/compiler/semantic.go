@@ -235,6 +235,11 @@ func (u *unit) checkSources(pl *plugin, sources []schema.DataSource, file string
 		switch {
 		case runsData(s.Kind):
 			d.config = u.checkDataSource(pl, s, file, ptr, sc)
+		case s.Kind == schema.DataSourceKindDatabase:
+			u.checkDatabaseSource(pl, s, file, ptr)
+			if len(s.Config) > 0 {
+				d.config = u.inferred(literalCtx(pl, file, ptr+"/config"), s.Config)
+			}
 		case len(s.Config) > 0:
 			d.config = u.inferred(literalCtx(pl, file, ptr+"/config"), s.Config)
 		}
@@ -274,6 +279,7 @@ func (u *unit) checkDecls() {
 		}
 	}
 	u.checkCollections(nil, app.Collections, "app.json")
+	u.checkCollectionDecl(nil, app.Collections, app.DroppedCollections, "app.json")
 	u.checkShellTabs()
 	for _, pl := range u.plugins {
 		if pl.scope != nil {
@@ -282,6 +288,7 @@ func (u *unit) checkDecls() {
 		pl.sources = u.checkSources(pl, pl.doc.DataSources, pl.file, pl.scope)
 		u.checkSourceCount(pl)
 		u.checkCollections(pl, pl.doc.Collections, pl.file)
+		u.checkCollectionDecl(pl, pl.doc.Collections, pl.doc.DroppedCollections, pl.file)
 	}
 }
 

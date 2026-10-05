@@ -155,7 +155,7 @@ enum AnimTransitionKind {
 /// An app: its plugins, theme, locales, environments, shared data and policies
 /// (SCH-020). File: `app.json`.
 final class AppDocument {
-  const AppDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.icon, required this.defaultLocale, required this.supportedLocales, required this.theme, required this.entryRoute, this.navigation, required this.plugins, this.capabilities, required this.environments, this.variables, this.dataSources, this.nativeCatalogue, required this.securityProfile, required this.sync, required this.minRuntimeVersion, this.requiredFeatures, this.flags, this.types, this.state, this.collections, this.userContext, this.hostEvents, this.telemetry, this.push, this.triggers});
+  const AppDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.icon, required this.defaultLocale, required this.supportedLocales, required this.theme, required this.entryRoute, this.navigation, required this.plugins, this.capabilities, required this.environments, this.variables, this.dataSources, this.nativeCatalogue, required this.securityProfile, required this.sync, required this.minRuntimeVersion, this.requiredFeatures, this.flags, this.types, this.state, this.collections, this.droppedCollections, this.userContext, this.hostEvents, this.telemetry, this.push, this.triggers});
 
   /// Decodes a JSON object.
   factory AppDocument.fromJson(Object json) {
@@ -187,6 +187,7 @@ final class AppDocument {
       types: m['types'] == null ? null : [for (final e in m['types']! as List<Object?>) TypeDecl.fromJson(e!)],
       state: m['state'] == null ? null : [for (final e in m['state']! as List<Object?>) StateEntry.fromJson(e!)],
       collections: m['collections'] == null ? null : [for (final e in m['collections']! as List<Object?>) Collection.fromJson(e!)],
+      droppedCollections: m['droppedCollections'] == null ? null : [for (final e in m['droppedCollections']! as List<Object?>) e! as String],
       userContext: m['userContext'] == null ? null : [for (final e in m['userContext']! as List<Object?>) Field.fromJson(e!)],
       hostEvents: m['hostEvents'] == null ? null : [for (final e in m['hostEvents']! as List<Object?>) HostEventDecl.fromJson(e!)],
       telemetry: m['telemetry'] == null ? null : TelemetryPolicy.fromJson(m['telemetry']!),
@@ -249,6 +250,10 @@ final class AppDocument {
   final List<TypeDecl>? types;
   final List<StateEntry>? state;
   final List<Collection>? collections;
+  /// IDs of collections this document no longer declares. Their data is deleted
+  /// from devices that still hold it; the publisher acknowledges the warning
+  /// this raises (DB-005).
+  final List<String>? droppedCollections;
   /// Attributes the host provides about the signed-in user, available in PXL as
   /// `user.<name>`.
   final List<Field>? userContext;
@@ -293,6 +298,7 @@ final class AppDocument {
         if (types != null) 'types': [for (final e in types!) e.toJson()],
         if (state != null) 'state': [for (final e in state!) e.toJson()],
         if (collections != null) 'collections': [for (final e in collections!) e.toJson()],
+        if (droppedCollections != null) 'droppedCollections': [for (final e in droppedCollections!) e],
         if (userContext != null) 'userContext': [for (final e in userContext!) e.toJson()],
         if (hostEvents != null) 'hostEvents': [for (final e in hostEvents!) e.toJson()],
         if (telemetry != null) 'telemetry': telemetry!.toJson(),
@@ -473,7 +479,7 @@ final class Capabilities {
 
 /// A local database collection (DB-004).
 final class Collection {
-  const Collection({required this.id, required this.key, required this.fields, required this.primaryKey, this.indexes, this.description});
+  const Collection({required this.id, required this.key, required this.fields, required this.primaryKey, this.indexes, this.version, this.migrations, this.description});
 
   /// Decodes a JSON object.
   factory Collection.fromJson(Object json) {
@@ -484,6 +490,8 @@ final class Collection {
       fields: [for (final e in m['fields']! as List<Object?>) Field.fromJson(e!)],
       primaryKey: [for (final e in m['primaryKey']! as List<Object?>) e! as String],
       indexes: m['indexes'] == null ? null : [for (final e in m['indexes']! as List<Object?>) [for (final e in e! as List<Object?>) e! as String]],
+      version: m['version'] == null ? null : (m['version']! as num).toInt(),
+      migrations: m['migrations'] == null ? null : [for (final e in m['migrations']! as List<Object?>) CollectionMigration.fromJson(e!)],
       description: m['description'] == null ? null : m['description']! as String,
     );
   }
@@ -496,6 +504,13 @@ final class Collection {
   final List<Field> fields;
   final List<String> primaryKey;
   final List<List<String>>? indexes;
+  /// The collection's schema version, 1 when omitted. A publish that changes
+  /// the fields, types or indexes raises it; devices migrate from the version
+  /// they hold (DB-005).
+  final int? version;
+  /// How a device at an older version reaches this one: one plan per version it
+  /// may hold. A change that loses data needs one (DB-005).
+  final List<CollectionMigration>? migrations;
   /// Human-readable description.
   final String? description;
 
@@ -506,6 +521,50 @@ final class Collection {
         'fields': [for (final e in fields) e.toJson()],
         'primaryKey': [for (final e in primaryKey) e],
         if (indexes != null) 'indexes': [for (final e in indexes!) [for (final e in e) e]],
+        if (version != null) 'version': version!,
+        if (migrations != null) 'migrations': [for (final e in migrations!) e.toJson()],
+        if (description != null) 'description': description!,
+      };
+}
+
+/// The plan that takes a collection from version `from` to the next (DB-005):
+/// fields renamed, dropped or reset.
+final class CollectionMigration {
+  const CollectionMigration({required this.from, this.rename, this.drop, this.reset, this.description});
+
+  /// Decodes a JSON object.
+  factory CollectionMigration.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return CollectionMigration(
+      from: (m['from']! as num).toInt(),
+      rename: m['rename'] == null ? null : {for (final e in (m['rename']! as Map<String, Object?>).entries) e.key: e.value! as String},
+      drop: m['drop'] == null ? null : [for (final e in m['drop']! as List<Object?>) e! as String],
+      reset: m['reset'] == null ? null : [for (final e in m['reset']! as List<Object?>) e! as String],
+      description: m['description'] == null ? null : m['description']! as String,
+    );
+  }
+
+  /// The version this plan starts from.
+  final int from;
+  /// Fields renamed, as new name to old name; their values are kept.
+  final Map<String, String>? rename;
+  /// Fields of the older version that are removed, with their values. The
+  /// publisher acknowledges the warning this raises.
+  final List<String>? drop;
+  /// Fields that are added without being nullable, or whose type narrows: every
+  /// record's value starts again from the type's empty value (0, "", false, []
+  /// or {}), or null when nullable. The publisher acknowledges the warning this
+  /// raises.
+  final List<String>? reset;
+  /// Human-readable description.
+  final String? description;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'from': from,
+        if (rename != null) 'rename': {for (final e in rename!.entries) e.key: e.value},
+        if (drop != null) 'drop': [for (final e in drop!) e],
+        if (reset != null) 'reset': [for (final e in reset!) e],
         if (description != null) 'description': description!,
       };
 }
@@ -2089,7 +2148,7 @@ enum Persistence {
 /// A plugin: its pages, state, collections and requested capabilities
 /// (SCH-021). File: `plugins/<key>/plugin.json`.
 final class PluginDocument {
-  const PluginDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.icon, required this.team, required this.entryPage, required this.pages, this.fallbackPage, this.capabilities, this.tags, this.types, this.state, this.collections, this.dataSources, this.triggers});
+  const PluginDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.icon, required this.team, required this.entryPage, required this.pages, this.fallbackPage, this.capabilities, this.tags, this.types, this.state, this.collections, this.droppedCollections, this.dataSources, this.triggers});
 
   /// Decodes a JSON object.
   factory PluginDocument.fromJson(Object json) {
@@ -2111,6 +2170,7 @@ final class PluginDocument {
       types: m['types'] == null ? null : [for (final e in m['types']! as List<Object?>) TypeDecl.fromJson(e!)],
       state: m['state'] == null ? null : [for (final e in m['state']! as List<Object?>) StateEntry.fromJson(e!)],
       collections: m['collections'] == null ? null : [for (final e in m['collections']! as List<Object?>) Collection.fromJson(e!)],
+      droppedCollections: m['droppedCollections'] == null ? null : [for (final e in m['droppedCollections']! as List<Object?>) e! as String],
       dataSources: m['dataSources'] == null ? null : [for (final e in m['dataSources']! as List<Object?>) DataSource.fromJson(e!)],
       triggers: m['triggers'] == null ? null : Triggers.fromJson(m['triggers']!),
     );
@@ -2144,6 +2204,10 @@ final class PluginDocument {
   final List<TypeDecl>? types;
   final List<StateEntry>? state;
   final List<Collection>? collections;
+  /// IDs of collections this document no longer declares. Their data is deleted
+  /// from devices that still hold it; the publisher acknowledges the warning
+  /// this raises (DB-005).
+  final List<String>? droppedCollections;
   final List<DataSource>? dataSources;
   /// Triggers besides widget events and page lifecycle (ACT-002), and the
   /// owner's error handler (ACT-020). A page's runs are cancelled with the
@@ -2168,6 +2232,7 @@ final class PluginDocument {
         if (types != null) 'types': [for (final e in types!) e.toJson()],
         if (state != null) 'state': [for (final e in state!) e.toJson()],
         if (collections != null) 'collections': [for (final e in collections!) e.toJson()],
+        if (droppedCollections != null) 'droppedCollections': [for (final e in droppedCollections!) e],
         if (dataSources != null) 'dataSources': [for (final e in dataSources!) e.toJson()],
         if (triggers != null) 'triggers': triggers!.toJson(),
       };

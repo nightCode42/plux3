@@ -96,6 +96,8 @@ export interface AppDocument {
   readonly types?: readonly TypeDecl[];
   readonly state?: readonly StateEntry[];
   readonly collections?: readonly Collection[];
+  /** IDs of collections this document no longer declares. Their data is deleted from devices that still hold it; the publisher acknowledges the warning this raises (DB-005). */
+  readonly droppedCollections?: readonly string[];
   /** Attributes the host provides about the signed-in user, available in PXL as `user.<name>`. */
   readonly userContext?: readonly Field[];
   readonly hostEvents?: readonly HostEventDecl[];
@@ -175,6 +177,26 @@ export interface Collection {
   readonly fields: readonly Field[];
   readonly primaryKey: readonly string[];
   readonly indexes?: readonly (readonly string[])[];
+  /** The collection's schema version, 1 when omitted. A publish that changes the fields, types or indexes raises it; devices migrate from the version they hold (DB-005). */
+  readonly version?: number;
+  /** How a device at an older version reaches this one: one plan per version it may hold. A change that loses data needs one (DB-005). */
+  readonly migrations?: readonly CollectionMigration[];
+  /** Human-readable description. */
+  readonly description?: string;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** The plan that takes a collection from version `from` to the next (DB-005): fields renamed, dropped or reset. */
+export interface CollectionMigration {
+  /** The version this plan starts from. */
+  readonly from: number;
+  /** Fields renamed, as new name to old name; their values are kept. */
+  readonly rename?: { readonly [key: string]: string };
+  /** Fields of the older version that are removed, with their values. The publisher acknowledges the warning this raises. */
+  readonly drop?: readonly string[];
+  /** Fields that are added without being nullable, or whose type narrows: every record's value starts again from the type's empty value (0, "", false, [] or {}), or null when nullable. The publisher acknowledges the warning this raises. */
+  readonly reset?: readonly string[];
   /** Human-readable description. */
   readonly description?: string;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
@@ -751,6 +773,8 @@ export interface PluginDocument {
   readonly types?: readonly TypeDecl[];
   readonly state?: readonly StateEntry[];
   readonly collections?: readonly Collection[];
+  /** IDs of collections this document no longer declares. Their data is deleted from devices that still hold it; the publisher acknowledges the warning this raises (DB-005). */
+  readonly droppedCollections?: readonly string[];
   readonly dataSources?: readonly DataSource[];
   /** Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active. */
   readonly triggers?: Triggers;

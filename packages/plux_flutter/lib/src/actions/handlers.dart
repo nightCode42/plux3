@@ -17,6 +17,7 @@ import 'package:plux_flutter/src/actions/state_handlers.dart';
 import 'package:plux_flutter/src/animation/handlers.dart';
 import 'package:plux_flutter/src/data/handlers.dart';
 import 'package:plux_flutter/src/data/services.dart';
+import 'package:plux_flutter/src/db/handlers.dart';
 import 'package:plux_flutter/src/device/guard.dart';
 import 'package:plux_flutter/src/device/handlers.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
@@ -221,25 +222,11 @@ final class StepContext {
     this.services = const {},
     this.wiredBranches = const [],
     this.device,
+    this.pluginKey = '',
   });
 
   /// This context with [state] (STA-001).
-  StepContext withState(StateAccess state) => StepContext(
-    navigator: navigator,
-    emit: emit,
-    nativeActions: nativeActions,
-    state: state,
-    flows: flows,
-    clock: clock,
-    track: track,
-    sync: sync,
-    emitEvent: emitEvent,
-    run: run,
-    data: data,
-    logout: logout,
-    services: services,
-    device: device,
-  );
+  StepContext withState(StateAccess state) => _copy(state: state);
 
   /// Navigation for the run's page.
   final RunNavigator navigator;
@@ -273,41 +260,12 @@ final class StepContext {
   final RunScope? run;
 
   /// This context for one run.
-  StepContext forRun(RunScope run) => StepContext(
-    navigator: navigator,
-    emit: emit,
-    nativeActions: nativeActions,
-    state: state,
-    flows: flows,
-    clock: clock,
-    track: track,
-    sync: sync,
-    emitEvent: emitEvent,
-    run: run,
-    data: data,
-    logout: logout,
-    services: services,
-    device: device,
-  );
+  StepContext forRun(RunScope run) => _copy(run: run);
 
   /// This context with [emitEvent] for a component's handlers.
   StepContext inComponent(
     void Function(String event, Object? payload) emitEvent,
-  ) => StepContext(
-    navigator: navigator,
-    emit: emit,
-    nativeActions: nativeActions,
-    state: state,
-    flows: flows,
-    clock: clock,
-    track: track,
-    sync: sync,
-    emitEvent: emitEvent,
-    data: data,
-    logout: logout,
-    services: services,
-    device: device,
-  );
+  ) => _copy(emitEvent: emitEvent);
 
   /// The names of the branches the running step wires to a successor. The
   /// engine sets it for a step that wires any; it is empty elsewhere. A
@@ -316,23 +274,8 @@ final class StepContext {
   final Iterable<String> wiredBranches;
 
   /// This context for a step that wires [branches].
-  StepContext forStep(Iterable<String> branches) => StepContext(
-    navigator: navigator,
-    emit: emit,
-    nativeActions: nativeActions,
-    state: state,
-    flows: flows,
-    clock: clock,
-    track: track,
-    sync: sync,
-    emitEvent: emitEvent,
-    run: run,
-    data: data,
-    logout: logout,
-    services: services,
-    device: device,
-    wiredBranches: branches,
-  );
+  StepContext forStep(Iterable<String> branches) =>
+      _copy(wiredBranches: branches);
 
   /// The data of the run's page, for `apiCall` and `refreshData`
   /// (ADR-0048); null where no data layer runs.
@@ -355,6 +298,42 @@ final class StepContext {
 
   /// The service of type [T], or null where none is installed.
   T? service<T extends Object>() => services[T] as T?;
+
+  /// The key of the plugin whose graph runs, or "" for the app's own
+  /// graphs: who a step acts as when it reaches data that belongs to a
+  /// plugin, such as its private collections (DB-004). Set by the engine,
+  /// never by a step's inputs.
+  final String pluginKey;
+
+  /// This context acting as plugin [key] ("" for the app).
+  StepContext withPlugin(String key) => _copy(pluginKey: key);
+
+  /// This context with the given fields replaced; every other field,
+  /// including those later milestones add, carries over.
+  StepContext _copy({
+    ActionState? state,
+    void Function(String event, Object? payload)? emitEvent,
+    RunScope? run,
+    Iterable<String>? wiredBranches,
+    String? pluginKey,
+  }) => StepContext(
+    navigator: navigator,
+    emit: emit,
+    nativeActions: nativeActions,
+    state: state ?? this.state,
+    flows: flows,
+    clock: clock,
+    track: track,
+    sync: sync,
+    emitEvent: emitEvent ?? this.emitEvent,
+    run: run ?? this.run,
+    data: data,
+    logout: logout,
+    services: services,
+    wiredBranches: wiredBranches ?? this.wiredBranches,
+    device: device,
+    pluginKey: pluginKey ?? this.pluginKey,
+  );
 }
 
 /// What a step produced.
@@ -452,6 +431,7 @@ final Map<String, ActionHandler> builtInHandlers = {
   ...formHandlers,
   ...deviceHandlers,
   ...animationHandlers,
+  ...dbHandlers,
 };
 
 /// A handler written as a function, for handler tables outside this

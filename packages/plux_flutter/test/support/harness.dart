@@ -11,7 +11,6 @@ import 'package:plux_flutter/plux_flutter.dart';
 import 'package:plux_flutter/src/core/runtime.dart';
 import 'package:plux_flutter/src/render/renderer.dart';
 import 'package:plux_flutter/src/state/providers.dart';
-import 'package:plux_flutter/src/store/kv_store.dart';
 import 'package:plux_flutter/src/sync/sync_engine.dart';
 
 import '../sync/fake_server.dart';
@@ -63,6 +62,7 @@ final class Harness {
     Map<String, PluxNativeSlot> nativeSlots = const {},
     Map<String, PluxNativeAction<Object?, Object?>> nativeActions = const {},
     PluxRouterAdapter? router,
+    PluxDatabaseAdapter? databaseAdapter,
   }) async {
     server.release = null;
     final baseline = await server.baseline(5, app, plugins);
@@ -93,6 +93,7 @@ final class Harness {
         nativeSlots: nativeSlots,
         nativeActions: nativeActions,
         router: router,
+        databaseAdapter: databaseAdapter,
       ),
       RuntimeOverrides(
         credentials: MemoryCredentialStore.new,

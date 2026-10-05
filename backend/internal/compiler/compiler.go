@@ -108,6 +108,10 @@ type Result struct {
 	// DeviceUses are the steps that run an action of an optional package,
 	// sorted; HostBuildLacksPackages checks host builds against them.
 	DeviceUses []DeviceUse
+	// Collections are the local collections of each bundle, by bundle key
+	// ("" for the app): publishing compares them with the previous
+	// release's (DB-005, CheckCollections).
+	Collections map[string]CollectionSet
 }
 
 // stage is one step of the pipeline (CMP-003). Checking stages run even
@@ -169,6 +173,7 @@ func Compile(fsys fs.FS, opts Options) (res *Result) {
 		res.App, res.Plugins, res.Files = u.app, u.outputs, u.files
 		res.StoredState = u.storedOf()
 		res.DeviceUses = u.sortedDeviceUses()
+		res.Collections = u.collectionsOf()
 	}
 	return res
 }

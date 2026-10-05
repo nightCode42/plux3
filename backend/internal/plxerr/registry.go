@@ -93,6 +93,15 @@ const (
 	UnknownRouteParameter      Code = 1205
 	RedirectLoop               Code = 1206
 
+	// Schema and validation: local collections (PLX-1190–1199, PLX-1250–1259, P5 R6).
+
+	CollectionVersionInvalid Code = 1190
+	CollectionPlanRequired   Code = 1191
+	CollectionPlanInvalid    Code = 1192
+	CollectionKeyChanged     Code = 1193
+	CollectionDestructive    Code = 1194
+	DatabaseSourceInvalid    Code = 1195
+
 	// Schema and validation: animation (PLX-1210–1229, P5 R7).
 
 	AnimationInvalid          Code = 1210
@@ -114,6 +123,10 @@ const (
 	// Schema and validation: form scopes (PLX-1240–1249, P5).
 
 	FormScopeInvalid Code = 1240
+
+	// Schema and validation: local collections, key types (PLX-1250–1259, P5 R6).
+
+	CollectionKeyTypeInvalid Code = 1250
 
 	// Schema and validation: limits and budgets (PLX-1300–1399).
 
@@ -239,6 +252,19 @@ const (
 	DataTransferTooLarge      Code = 5130
 	DataTransferFileFailed    Code = 5131
 
+	// Local database (PLX-5200–5299, P5 R6).
+
+	DBMigrationFailed      Code = 5200
+	DBUnavailable          Code = 5201
+	DBEncryptionRequired   Code = 5202
+	DBRecordInvalid        Code = 5203
+	DBRecordNotFound       Code = 5204
+	DBKeyConflict          Code = 5205
+	DBQueryInvalid         Code = 5206
+	DBLimitExceeded        Code = 5207
+	DBStoreFailed          Code = 5208
+	DBCollectionUnknown    Code = 5209
+	DBValueTypeMismatch    Code = 5210
 	StateWriteTypeMismatch Code = 5301
 	StateWriteRefused      Code = 5302
 	StateStoreUnavailable  Code = 5303

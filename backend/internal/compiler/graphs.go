@@ -82,6 +82,9 @@ func (u *unit) checkStep(g *graph, i int, index map[string]int32) *step {
 	if stateWrites[a.Name] {
 		u.checkStateWrite(g, a.Name, input, ptr)
 	}
+	if dbActions[a.Name] {
+		u.useRevision(dbFeature, dbRuntimes, 1, vctx{file: g.file, ptr: ptr + "/action", pl: g.plugin})
+	}
 	for _, e := range []struct {
 		name, target string
 		dst          *int32
