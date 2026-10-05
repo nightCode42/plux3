@@ -650,6 +650,7 @@ final class ComponentDocument {
     this.state,
     this.exported,
     required this.root,
+    this.forms,
   });
 
   /// Decodes a JSON object.
@@ -691,6 +692,9 @@ final class ComponentDocument {
             ],
       exported: m['exported'] == null ? null : m['exported']! as bool,
       root: Node.fromJson(m['root']!),
+      forms: m['forms'] == null
+          ? null
+          : [for (final e in m['forms']! as List<Object?>) Form.fromJson(e!)],
     );
   }
 
@@ -722,6 +726,9 @@ final class ComponentDocument {
   /// (SCH-023).
   final Node root;
 
+  /// The forms of the component (STA-020).
+  final List<Form>? forms;
+
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
     'schemaVersion': schemaVersion,
@@ -737,6 +744,7 @@ final class ComponentDocument {
     if (state != null) 'state': [for (final e in state!) e.toJson()],
     if (exported != null) 'exported': exported!,
     'root': root.toJson(),
+    if (forms != null) 'forms': [for (final e in forms!) e.toJson()],
   };
 }
 
@@ -1308,6 +1316,232 @@ enum FlagType {
   factory FlagType.fromJson(Object json) => values.firstWhere(
     (v) => v.json == json,
     orElse: () => throw FormatException('unknown FlagType', json),
+  );
+
+  /// The JSON value.
+  final String json;
+
+  /// Encodes the JSON value.
+  String toJson() => json;
+}
+
+/// A form (STA-020, ADR-0047): typed fields with their initial values and
+/// validators. Its state lives in the declaring page's or component's scope
+/// under the form's name: `values`, `errors`, `dirty`, `touched`, `status`,
+/// `valid` and `validating`.
+final class Form {
+  const Form({
+    required this.id,
+    required this.name,
+    required this.fields,
+    this.description,
+  });
+
+  /// Decodes a JSON object.
+  factory Form.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return Form(
+      id: m['id']! as String,
+      name: m['name']! as String,
+      fields: [
+        for (final e in m['fields']! as List<Object?>) FormField.fromJson(e!),
+      ],
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
+    );
+  }
+
+  /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
+  final String id;
+
+  /// Identifier used in PXL and generated code: lowerCamelCase.
+  final String name;
+  final List<FormField> fields;
+
+  /// Human-readable description.
+  final String? description;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'name': name,
+    'fields': [for (final e in fields) e.toJson()],
+    if (description != null) 'description': description!,
+  };
+}
+
+/// A field of a form: its type, initial value and validators, run in order
+/// (STA-020).
+final class FormField {
+  const FormField({
+    required this.name,
+    required this.type,
+    this.initial,
+    this.validators,
+    this.description,
+  });
+
+  /// Decodes a JSON object.
+  factory FormField.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return FormField(
+      name: m['name']! as String,
+      type: m['type']! as String,
+      initial: m.containsKey('initial') ? JsonValue(m['initial']) : null,
+      validators: m['validators'] == null
+          ? null
+          : [
+              for (final e in m['validators']! as List<Object?>)
+                FormValidator.fromJson(e!),
+            ],
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
+    );
+  }
+
+  /// Identifier used in PXL and generated code: lowerCamelCase.
+  final String name;
+
+  /// Type expression of SCH-010, e.g. `string`, `decimal?`,
+  /// `list<Transaction>`, `map<string,int>`.
+  final String type;
+
+  /// A JSON value interpreted against a declared type (defaults, mocks,
+  /// environment values).
+  final JsonValue? initial;
+  final List<FormValidator>? validators;
+
+  /// Human-readable description.
+  final String? description;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+    'name': name,
+    'type': type,
+    if (initial != null) 'initial': initial!.value,
+    if (validators != null)
+      'validators': [for (final e in validators!) e.toJson()],
+    if (description != null) 'description': description!,
+  };
+}
+
+/// A validator of a form field. Each kind takes its own options: `min` and
+/// `max` (length, range, dateRange), `pattern` (regex), `region` (phone),
+/// `maxScale` and `maxIntegerDigits` (decimalPrecision), `rule` (custom),
+/// `$graph` and `debounceMs` (async); the compiler checks them against the kind
+/// and the field's type (PLX-1160-1169).
+final class FormValidator {
+  const FormValidator({
+    required this.kind,
+    this.message,
+    this.min,
+    this.max,
+    this.pattern,
+    this.region,
+    this.maxScale,
+    this.maxIntegerDigits,
+    this.rule,
+    this.graph,
+    this.debounceMs,
+  });
+
+  /// Decodes a JSON object.
+  factory FormValidator.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return FormValidator(
+      kind: FormValidatorKind.fromJson(m['kind']!),
+      message: m['message'] == null ? null : m['message']! as String,
+      min: m.containsKey('min') ? JsonValue(m['min']) : null,
+      max: m.containsKey('max') ? JsonValue(m['max']) : null,
+      pattern: m['pattern'] == null ? null : m['pattern']! as String,
+      region: m['region'] == null ? null : m['region']! as String,
+      maxScale: m['maxScale'] == null ? null : (m['maxScale']! as num).toInt(),
+      maxIntegerDigits: m['maxIntegerDigits'] == null
+          ? null
+          : (m['maxIntegerDigits']! as num).toInt(),
+      rule: m['rule'] == null ? null : Expr.fromJson(m['rule']!),
+      graph: m['\$graph'] == null ? null : m['\$graph']! as String,
+      debounceMs: m['debounceMs'] == null
+          ? null
+          : (m['debounceMs']! as num).toInt(),
+    );
+  }
+
+  /// A built-in validator of a form field (STA-020, ADR-0047).
+  final FormValidatorKind kind;
+
+  /// The message shown when the value is invalid; the runtime's built-in
+  /// message otherwise.
+  final String? message;
+
+  /// A JSON value interpreted against a declared type (defaults, mocks,
+  /// environment values).
+  final JsonValue? min;
+
+  /// A JSON value interpreted against a declared type (defaults, mocks,
+  /// environment values).
+  final JsonValue? max;
+
+  /// A pxl.regex.v1 pattern, checked at publish (PXL-003).
+  final String? pattern;
+
+  /// The ISO 3166-1 region of numbers written without a country calling code;
+  /// the device locale's region when absent.
+  final String? region;
+
+  /// The most digits after the decimal point.
+  final int? maxScale;
+
+  /// The most digits before the decimal point.
+  final int? maxIntegerDigits;
+
+  /// PXL binding (SCH-011).
+  final Expr? rule;
+
+  /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
+  final String? graph;
+
+  /// How long the field stays unchanged before the asynchronous check runs.
+  final int? debounceMs;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+    'kind': kind.toJson(),
+    if (message != null) 'message': message!,
+    if (min != null) 'min': min!.value,
+    if (max != null) 'max': max!.value,
+    if (pattern != null) 'pattern': pattern!,
+    if (region != null) 'region': region!,
+    if (maxScale != null) 'maxScale': maxScale!,
+    if (maxIntegerDigits != null) 'maxIntegerDigits': maxIntegerDigits!,
+    if (rule != null) 'rule': rule!.toJson(),
+    if (graph != null) '\$graph': graph!,
+    if (debounceMs != null) 'debounceMs': debounceMs!,
+  };
+}
+
+/// A built-in validator of a form field (STA-020, ADR-0047).
+enum FormValidatorKind {
+  required('required'),
+  length('length'),
+  range('range'),
+  regex('regex'),
+  email('email'),
+  phone('phone'),
+  iban('iban'),
+  dateRange('dateRange'),
+  decimalPrecision('decimalPrecision'),
+  custom('custom'),
+  async('async');
+
+  const FormValidatorKind(this.json);
+
+  /// Decodes a JSON value.
+  factory FormValidatorKind.fromJson(Object json) => values.firstWhere(
+    (v) => v.json == json,
+    orElse: () => throw FormatException('unknown FormValidatorKind', json),
   );
 
   /// The JSON value.
@@ -1971,6 +2205,7 @@ final class PageDocument {
     this.routeOptions,
     this.security,
     required this.root,
+    this.forms,
   });
 
   /// Decodes a JSON object.
@@ -2016,6 +2251,9 @@ final class PageDocument {
           ? null
           : PageSecurity.fromJson(m['security']!),
       root: Node.fromJson(m['root']!),
+      forms: m['forms'] == null
+          ? null
+          : [for (final e in m['forms']! as List<Object?>) Form.fromJson(e!)],
     );
   }
 
@@ -2069,6 +2307,9 @@ final class PageDocument {
   /// (SCH-023).
   final Node root;
 
+  /// The forms of the page (STA-020).
+  final List<Form>? forms;
+
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
     'schemaVersion': schemaVersion,
@@ -2089,6 +2330,7 @@ final class PageDocument {
     if (routeOptions != null) 'routeOptions': routeOptions!.toJson(),
     if (security != null) 'security': security!.toJson(),
     'root': root.toJson(),
+    if (forms != null) 'forms': [for (final e in forms!) e.toJson()],
   };
 }
 

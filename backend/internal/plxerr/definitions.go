@@ -270,6 +270,46 @@ var registry = []Definition{
 		"Remove the migration, or give the entry a session, persisted or secure persistence and its previous type in `from`.", false,
 	},
 	{
+		FormValidatorNotApplicable, "FORM_VALIDATOR_NOT_APPLICABLE", SeverityError, "Validator that does not apply to its field",
+		"A form field declares a validator its type cannot have: length on a value that is neither text nor a list, range or decimal precision on a value that is not a number, date range on a value that is not a date or a date-time, or regex, email, phone or IBAN on a value that is not text (STA-020, ADR-0047).",
+		"Change the field's type or remove the validator; the forms reference lists the types each validator accepts.", false,
+	},
+	{
+		FormValidatorOptions, "FORM_VALIDATOR_OPTIONS", SeverityError, "Invalid validator options",
+		"A validator lacks an option its kind needs, carries one its kind does not take, or has bounds that cannot hold: a regex without a pattern, a length, range or date range without min or max, a min above its max, a decimal precision without maxScale or maxIntegerDigits, a custom validator without a rule, or an asynchronous one without a graph (STA-020).",
+		"Give the validator exactly the options of its kind, as the forms reference lists them.", false,
+	},
+	{
+		FormPatternInvalid, "FORM_PATTERN_INVALID", SeverityError, "Invalid validator pattern",
+		"A regex validator's pattern is not in the pxl.regex.v1 subset of RE2 or exceeds pxl.regexPatternLength, pxl.regexProgramSize or pxl.regexRepeat; patterns are checked at publish, so the runtime never meets an invalid one (PXL-003, ADR-0047).",
+		"Correct the pattern at the reported position; the PXL reference lists the supported syntax.", false,
+	},
+	{
+		FormPhoneRegionUnknown, "FORM_PHONE_REGION_UNKNOWN", SeverityError, "Unknown phone region",
+		"A phone validator names a region the phone table of pxl.phone.v1 does not know (STA-020, ADR-0047).",
+		"Use an ISO 3166-1 alpha-2 region with a calling code, or omit the region to use the device locale's.", false,
+	},
+	{
+		FormAsyncValidatorInvalid, "FORM_ASYNC_VALIDATOR_INVALID", SeverityError, "Invalid asynchronous validator",
+		"An asynchronous validator's graph declares inputs, or an output other than `bool` or `string?`, or the validator belongs to a component shared across plugins, which has no graphs to run (STA-020, ADR-0047).",
+		"Use a graph of the page or plugin that takes the field's value as its event and stops with true or null when the value is valid, false or a message otherwise.", false,
+	},
+	{
+		FormFieldInitialMissing, "FORM_FIELD_INITIAL_MISSING", SeverityError, "Form field without an initial value",
+		"A form field has no initial value and its type is not nullable, so the form could not start or be reset (STA-020).",
+		"Give the field an initial value, such as \"\" for text, or make its type nullable.", false,
+	},
+	{
+		FormNameConflict, "FORM_NAME_CONFLICT", SeverityError, "Form or field named twice",
+		"A form has the name of another form or of a state entry of the same page or component, whose state it would replace, or two fields of a form share a name (STA-020).",
+		"Rename the form or the field.", false,
+	},
+	{
+		FormWriteInvalid, "FORM_WRITE_INVALID", SeverityError, "Form state written that cannot be",
+		"A state action writes form state other than a field's value (`<form>.values.<field>`, with setState) or touched flag (`<form>.touched.<field>`, with setState): errors, dirty flags and the status follow from the validators, and the whole form changes only through resetForm (STA-020).",
+		"Write the field's value or touched flag with setState, or use validateForm, submitForm or resetForm.", false,
+	},
+	{
 		DataSourceConfigInvalid, "DATA_SOURCE_CONFIG_INVALID", SeverityError, "Invalid data source configuration",
 		"The configuration of a REST or GraphQL data source, or of one of its operations, is not what the data layer runs: a property is unknown or missing, the method, path or GraphQL document is malformed, the base URL names no string variable, a cache policy or TTL is invalid, or an operation's input or output type is unknown (DAT-001, DAT-003, DAT-010, ADR-0048).",
 		"Correct the configuration as the data sources reference describes; the message names the property.", false,
@@ -778,6 +818,21 @@ var registry = []Definition{
 		HostEventRefused, "HOST_EVENT_REFUSED", SeverityError, "Host event refused",
 		"Plux.sendEvent named an event the app does not declare for the host to send (direction toPlux or both), or a payload without the event's fields and types; nothing runs (HST-013).",
 		"Declare the event in the app's hostEvents with the direction toPlux or both; plux codegen generates typed senders that make this a compile error.", false,
+	},
+	{
+		FormInvalid, "FORM_INVALID", SeverityError, "Form invalid",
+		"submitForm validated a form and at least one field is invalid; the step fails with a validation error naming the fields, every field is marked touched, and the field errors are in the form's state (STA-020).",
+		"Show the form's errors, and handle the step's error with onError where the run should go on.", false,
+	},
+	{
+		FormNotInScope, "FORM_NOT_IN_SCOPE", SeverityError, "Form not in scope",
+		"A form action named a form that neither the component nor the page where the run started declares, for example from a lifecycle run that has no form state (STA-020).",
+		"Run the form action from a handler of the page or component that declares the form.", false,
+	},
+	{
+		FormAsyncValidatorFailed, "FORM_ASYNC_VALIDATOR_FAILED", SeverityWarning, "Asynchronous validator failed",
+		"An asynchronous validator's graph failed, for example because the server could not be reached; the field is shown as not checked and the form is invalid until a check succeeds (STA-020).",
+		"Handle the graph's errors with onError and return a message, or let the user retry by editing the field.", false,
 	},
 
 	// Security.

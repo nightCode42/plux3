@@ -267,6 +267,8 @@ type ComponentDocument struct {
 	// Root: A node of a page or component tree: a widget or a component instance
 	// (SCH-023).
 	Root Node `json:"root"`
+	// Forms: The forms of the component (STA-020).
+	Forms []Form `json:"forms,omitempty"`
 }
 
 // ComponentEvent — An event the component emits.
@@ -509,6 +511,99 @@ const (
 func (v FlagType) Valid() bool {
 	switch v {
 	case FlagTypeBool, FlagTypeInt, FlagTypeDouble, FlagTypeString:
+		return true
+	}
+	return false
+}
+
+// Form — A form (STA-020, ADR-0047): typed fields with their initial values
+// and validators. Its state lives in the declaring page's or component's
+// scope under the form's name: `values`, `errors`, `dirty`, `touched`,
+// `status`, `valid` and `validating`.
+type Form struct {
+	// ID: Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
+	ID string `json:"id"`
+	// Name: Identifier used in PXL and generated code: lowerCamelCase.
+	Name   string      `json:"name"`
+	Fields []FormField `json:"fields"`
+	// Description: Human-readable description.
+	Description string `json:"description,omitempty"`
+}
+
+// FormField — A field of a form: its type, initial value and validators,
+// run in order (STA-020).
+type FormField struct {
+	// Name: Identifier used in PXL and generated code: lowerCamelCase.
+	Name string `json:"name"`
+	// Type: Type expression of SCH-010, e.g. `string`, `decimal?`,
+	// `list<Transaction>`, `map<string,int>`.
+	Type string `json:"type"`
+	// Initial: A JSON value interpreted against a declared type (defaults,
+	// mocks, environment values).
+	Initial    json.RawMessage `json:"initial,omitempty"`
+	Validators []FormValidator `json:"validators,omitempty"`
+	// Description: Human-readable description.
+	Description string `json:"description,omitempty"`
+}
+
+// FormValidator — A validator of a form field. Each kind takes its own
+// options: `min` and `max` (length, range, dateRange), `pattern` (regex),
+// `region` (phone), `maxScale` and `maxIntegerDigits` (decimalPrecision),
+// `rule` (custom), `$graph` and `debounceMs` (async); the compiler checks
+// them against the kind and the field's type (PLX-1160-1169).
+type FormValidator struct {
+	// Kind: A built-in validator of a form field (STA-020, ADR-0047).
+	Kind FormValidatorKind `json:"kind"`
+	// Message: The message shown when the value is invalid; the runtime's
+	// built-in message otherwise.
+	Message string `json:"message,omitempty"`
+	// Min: A JSON value interpreted against a declared type (defaults, mocks,
+	// environment values).
+	Min json.RawMessage `json:"min,omitempty"`
+	// Max: A JSON value interpreted against a declared type (defaults, mocks,
+	// environment values).
+	Max json.RawMessage `json:"max,omitempty"`
+	// Pattern: A pxl.regex.v1 pattern, checked at publish (PXL-003).
+	Pattern string `json:"pattern,omitempty"`
+	// Region: The ISO 3166-1 region of numbers written without a country calling
+	// code; the device locale's region when absent.
+	Region string `json:"region,omitempty"`
+	// MaxScale: The most digits after the decimal point.
+	MaxScale *int64 `json:"maxScale,omitempty"`
+	// MaxIntegerDigits: The most digits before the decimal point.
+	MaxIntegerDigits *int64 `json:"maxIntegerDigits,omitempty"`
+	// Rule: PXL binding (SCH-011).
+	Rule *Expr `json:"rule,omitempty"`
+	// Graph: Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
+	Graph string `json:"$graph,omitempty"`
+	// DebounceMs: How long the field stays unchanged before the asynchronous
+	// check runs.
+	DebounceMs *int64 `json:"debounceMs,omitempty"`
+}
+
+// FormValidatorKind — A built-in validator of a form field (STA-020,
+// ADR-0047).
+type FormValidatorKind string
+
+// Values of FormValidatorKind.
+const (
+	FormValidatorKindRequired         FormValidatorKind = "required"
+	FormValidatorKindLength           FormValidatorKind = "length"
+	FormValidatorKindRange            FormValidatorKind = "range"
+	FormValidatorKindRegex            FormValidatorKind = "regex"
+	FormValidatorKindEmail            FormValidatorKind = "email"
+	FormValidatorKindPhone            FormValidatorKind = "phone"
+	FormValidatorKindIban             FormValidatorKind = "iban"
+	FormValidatorKindDateRange        FormValidatorKind = "dateRange"
+	FormValidatorKindDecimalPrecision FormValidatorKind = "decimalPrecision"
+	FormValidatorKindCustom           FormValidatorKind = "custom"
+	FormValidatorKindAsync            FormValidatorKind = "async"
+)
+
+// Valid reports whether v is one of the values of FormValidatorKind.
+func (v FormValidatorKind) Valid() bool {
+	switch v {
+	case FormValidatorKindRequired, FormValidatorKindLength, FormValidatorKindRange, FormValidatorKindRegex, FormValidatorKindEmail, FormValidatorKindPhone, FormValidatorKindIban, FormValidatorKindDateRange, FormValidatorKindDecimalPrecision, FormValidatorKindCustom, FormValidatorKindAsync:
 		return true
 	}
 	return false
@@ -761,6 +856,8 @@ type PageDocument struct {
 	// Root: A node of a page or component tree: a widget or a component instance
 	// (SCH-023).
 	Root Node `json:"root"`
+	// Forms: The forms of the page (STA-020).
+	Forms []Form `json:"forms,omitempty"`
 }
 
 // PageKind — How the page is presented (SCH-022).

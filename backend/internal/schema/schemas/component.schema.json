@@ -141,6 +141,13 @@
     },
     "root": {
       "$ref": "common.schema.json#/$defs/node"
+    },
+    "forms": {
+      "type": "array",
+      "description": "The forms of the component (STA-020).",
+      "items": {
+        "$ref": "common.schema.json#/$defs/form"
+      }
     }
   },
   "patternProperties": {
