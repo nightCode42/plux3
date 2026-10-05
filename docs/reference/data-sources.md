@@ -25,7 +25,7 @@ declares a REST or GraphQL source requires the feature `data.v1`, first in runti
 | `responseType`, `transform` | both | Together: the selected value is read as `responseType` and `transform` (PXL over `response`) returns the source's type (`PLX-1172`). |
 | `cache` | both | `policy` (`networkOnly`, `cacheFirst`, `networkFirst`, `staleWhileRevalidate`), `ttlSeconds` (required except for `networkOnly`), `key`, `encrypted` (`DAT-010`). Responses of `auth` sources are always encrypted at rest. |
 | `pagination` | both | `style` (`cursor`, `page`, `offset`), `pageSize` ≤ `data.pageSize`, `sizeParam`, `cursorParam` and `nextCursor`, `pageParam` and `firstPage`, `offsetParam`, `hasMore` (`DAT-011`, `PLX-1173`). The source's type is a list. |
-| `mocks` | both | `empty` (a value of the type) and `error` (`kind`, `status`, `message`); `success` is the source's `mock` (`DAT-080`). |
+| `mocks` | both | `empty` (a value of the type) and `error` (`kind`, `status`, `message`); `success` is the source's `mock` (`DAT-080`). Only development bundles carry mocks; release bundles carry none. |
 | `operations` | both | Named operations for `apiCall`: `method` and `path` (REST) or `query` (GraphQL), `input` (an object type), `output`, `select`, `headers`, `auth`. |
 
 ## At run time
@@ -42,4 +42,10 @@ Requests leave from the data isolate only after their host is checked against th
 from `data.requestSize`, `data.responseSize`, `data.requestTimeout`; the cache keeps within
 `data.cacheBytes` and `data.cacheEntries`. Each request records `api_call` with source,
 operation, status, duration and bytes. Mock states are selected only in tests and
-development builds, never in release builds.
+development builds, never in release builds, whose bundles carry no mocks.
+
+Encrypted cache entries are sealed under a key made for the installation and kept by the
+platform's secure storage, like the secure state store's; without one they are not cached
+(`PLX-5109`). The `logout` action and `Plux.wipeData` remove every cached response, so the
+next user never sees the previous user's; `logout` then calls the auth delegate's
+`onLogout`. A source's loads and failures fire its `onLoaded` and `onFailed` triggers.

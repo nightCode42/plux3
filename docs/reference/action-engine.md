@@ -29,8 +29,15 @@ refusing handler with the action's own.
 
 A **trigger** starts a run of one graph. In P4 the triggers are widget events, such as a
 button's `onPressed`, and route guards, which run before a page is entered
-([navigation](navigation.md#4-guards-nav-009)). Native slot events start runs from P4 R6;
-lifecycle, timers, state watchers and host events into Plux arrive in P5 (`ACT-002`).
+([navigation](navigation.md#4-guards-nav-009)). Native slot events start runs from P4 R6.
+From P5 (`ACT-002`), pages, plugins and the app also declare triggers: lifecycle (pages
+only), timers, state watchers over the state engine's change stream, app resume and pause,
+push opening, host events sent with `Plux.sendEvent`, and data-source `onLoaded` and
+`onFailed`. The app's and the plugins' triggers run from the activation of their release
+until another replaces it; a page's while it is shown. A data-source trigger hears only
+loads of its own plugin, and a page's only the source its scope names. An error no
+`onError` handled goes to the page's error handler, then the plugin's, then the app's
+(`ACT-020`); an error handler that fails passes the error on.
 
 A run executes `steps[0]` first. After each step it follows:
 
@@ -86,9 +93,15 @@ app bundle carries them, and an installation may set them:
 Time spent waiting for the user is not the engine's: while an `openDialog` or
 `openBottomSheet` step shows its page, neither the step's time nor the run's time runs.
 
-**Cancellation.** A run belongs to the page or component that started it, and is cancelled
-when that is disposed. Its pending step is abandoned and nothing after it runs. Detached runs
-arrive in P5 (`ACT-004`).
+**Cancellation.** A run belongs to the page or component instance that started it, and is
+cancelled when that is disposed: a component's runs end with the instance, even while its
+page stays. Its pending step is abandoned and nothing after it runs. A `detached` run
+outlives its owner, bounded by the run timeout (`ACT-004`).
+
+**Component events.** Inside a component, `emitEvent` emits one of its declared events
+(`SCH-030`): the instance's handler for that event runs in the page, or, for a component a
+host shows with `PluxView`, `onEvent` receives a `PluxViewEvent` with the payload in its
+JSON form.
 
 ## 5. Options this runtime ignores
 

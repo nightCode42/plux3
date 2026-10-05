@@ -53,6 +53,17 @@ released yet; this entry grows with each milestone of the phase.
   the UI isolate, versioned by type fingerprint and migrated (`PLX-5303`–`PLX-5306`); plugin
   writes to exposed app state reach `Plux.state<T>`; `Plux.sendEvent` (`PLX-5307`) and
   `Plux.wipeData`; features `state.write.v1`, `state.computed.v1`, `state.persistence.v1`.
+- Integration of R1, R2 and R4: state watchers listen to the state engine's change stream;
+  `Plux.sendEvent` reaches the host-event triggers; data-source loads and failures fire
+  `onLoaded` and `onFailed`; the app's and the plugins' triggers and error handlers run with
+  their release, and an unhandled error goes from the page to the plugin to the app;
+  `emitEvent` reaches the component instance's handler or `PluxView.onEvent`; a component's
+  runs are cancelled with it; `apiCall`'s and `patchState`'s optimistic changes roll back on
+  failure; the encrypted data cache gets a per-installation key; the `logout` action and
+  `Plux.wipeData` clear cached responses.
+- `persisted` state is kept in a plain, atomically written file (plan D6, maintainer
+  decision): encryption made saves and loads about ten times slower; `secure` state stays
+  encrypted.
 
 ## 0.2.0
 
