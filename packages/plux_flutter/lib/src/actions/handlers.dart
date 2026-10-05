@@ -16,6 +16,7 @@ import 'package:plux_flutter/src/actions/graph.dart';
 import 'package:plux_flutter/src/actions/state_handlers.dart';
 import 'package:plux_flutter/src/data/handlers.dart';
 import 'package:plux_flutter/src/data/services.dart';
+import 'package:plux_flutter/src/db/handlers.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/forms/handlers.dart';
 import 'package:plux_flutter/src/schema/registry.g.dart';
@@ -216,6 +217,7 @@ final class StepContext {
     this.data,
     this.logout,
     this.services = const {},
+    this.pluginKey = '',
   });
 
   /// This context with [state] (STA-001).
@@ -233,6 +235,7 @@ final class StepContext {
     data: data,
     logout: logout,
     services: services,
+    pluginKey: pluginKey,
   );
 
   /// Navigation for the run's page.
@@ -281,6 +284,7 @@ final class StepContext {
     data: data,
     logout: logout,
     services: services,
+    pluginKey: pluginKey,
   );
 
   /// This context with [emitEvent] for a component's handlers.
@@ -299,6 +303,7 @@ final class StepContext {
     data: data,
     logout: logout,
     services: services,
+    pluginKey: pluginKey,
   );
 
   /// The data of the run's page, for `apiCall` and `refreshData`
@@ -317,6 +322,30 @@ final class StepContext {
 
   /// The service of type [T], or null where none is installed.
   T? service<T extends Object>() => services[T] as T?;
+
+  /// The key of the plugin whose graph runs, or "" for the app's own
+  /// graphs: who a step acts as when it reaches data that belongs to a
+  /// plugin, such as its private collections (DB-004). Set by the engine,
+  /// never by a step's inputs.
+  final String pluginKey;
+
+  /// This context acting as plugin [key] ("" for the app).
+  StepContext withPlugin(String key) => StepContext(
+    navigator: navigator,
+    emit: emit,
+    nativeActions: nativeActions,
+    state: state,
+    flows: flows,
+    clock: clock,
+    track: track,
+    sync: sync,
+    emitEvent: emitEvent,
+    run: run,
+    data: data,
+    logout: logout,
+    services: services,
+    pluginKey: key,
+  );
 }
 
 /// What a step produced.
@@ -412,6 +441,7 @@ final Map<String, ActionHandler> builtInHandlers = {
   ...stateHandlers,
   ...dataHandlers,
   ...formHandlers,
+  ...dbHandlers,
 };
 
 /// A handler written as a function, for handler tables outside this

@@ -294,6 +294,14 @@ final class BundleView {
   List<fbs.DataSource> get dataSources =>
       _schemas?.dataSources ?? const <fbs.DataSource>[];
 
+  /// The local collections the bundle's schemas section declares (DB-004).
+  List<fbs.Collection> get collections =>
+      _schemas?.collections ?? const <fbs.Collection>[];
+
+  /// The collections the bundle no longer declares (DB-005).
+  List<fbs.Uuid> get droppedCollections =>
+      _schemas?.droppedCollections ?? const <fbs.Uuid>[];
+
   late final fbs.Schemas? _schemas = () {
     final s = _single(SectionKind.schemas);
     return s == null ? null : fbs.Schemas(s.data);

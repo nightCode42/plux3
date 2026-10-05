@@ -521,7 +521,9 @@ final class ActionHost {
   }) async {
     if (_ownerGone(owner)) return null;
     final buffer = traces;
-    var base = state == null ? context : context.withState(state);
+    var base = (state == null ? context : context.withState(state)).withPlugin(
+      pluginKey,
+    );
     if (emitEvent != null) base = base.inComponent(emitEvent);
     final tracer = buffer == null
         ? null

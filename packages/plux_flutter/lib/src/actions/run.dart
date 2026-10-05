@@ -520,7 +520,26 @@ final class ActionRun {
     };
     return {
       for (final e in step.inputs.entries)
-        names[e.key] ?? '${e.key}': toPxl(e.value(scope)),
+        names[e.key] ?? '${e.key}':
+            _perRecord(descriptor, names[e.key], e.value, scope) ??
+            toPxl(e.value(scope)),
+    };
+  }
+
+  /// The inputs that are conditions a handler evaluates once per record,
+  /// with the record as `record` (`dbQuery`'s `where`, DB-006): the
+  /// handler gets a function `bool Function(Object? record)`.
+  static bool Function(Object? record)? _perRecord(
+    ActionDescriptor? descriptor,
+    String? input,
+    InputReader reader,
+    Map<String, Object?> scope,
+  ) {
+    if (descriptor?.name != 'dbQuery' || input != 'where') return null;
+    return (record) {
+      final v = reader({...scope, 'record': record});
+      if (v is! bool) throw StateError('the condition is not a bool');
+      return v;
     };
   }
 

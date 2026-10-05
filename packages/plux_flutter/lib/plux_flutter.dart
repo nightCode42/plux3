@@ -29,6 +29,22 @@ export 'src/core/host_events.dart' show PluxHostEvent;
 export 'src/core/plux.dart' show Plux, PluxScope, PluxSyncTile;
 export 'src/core/plux_view.dart' show PluxView, PluxViewEvent, PluxViewSizing;
 export 'src/core/runtime.dart' show PluxStartup;
+export 'src/db/adapter.dart'
+    show DbMigrationOutcome, DbOperations, PluxDatabaseAdapter, kvTypeOf;
+export 'src/db/memory_adapter.dart' show MemoryDatabaseAdapter;
+export 'src/db/query.dart'
+    show
+        DbAnd,
+        DbCompare,
+        DbFilter,
+        DbNot,
+        DbOp,
+        DbOr,
+        DbQuery,
+        DbSort,
+        compareValues;
+export 'src/db/schema.dart'
+    show DbCollectionSchema, DbField, DbFieldKind, DbMigrationPlan, DbMigrator;
 export 'src/devtools_api/diagnostics.dart'
     show PluxDiagnostic, PluxDiagnostics, PluxPluginInfo, PluxReleaseInfo;
 export 'src/errors/plux_exception.dart' show PluxErrorCode, PluxException;

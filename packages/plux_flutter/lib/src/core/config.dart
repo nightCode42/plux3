@@ -11,6 +11,7 @@ import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:plux_flutter/src/db/adapter.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/native_catalogue/registration.dart';
 import 'package:plux_flutter/src/navigation/delegate.dart';
@@ -213,6 +214,7 @@ final class PluxConfig {
     this.nativeSlots = const {},
     this.nativeActions = const {},
     this.router,
+    this.databaseAdapter,
   }) : assert(downloadParallelism > 0, 'at least one download at a time'),
        assert(
          hostBuild.length <= 64,
@@ -347,4 +349,12 @@ final class PluxConfig {
   /// and plugins open the router's named routes as native routes
   /// ([nativeRoutes] entries of the same name win) (HST-031, ADR-0040).
   final PluxRouterAdapter? router;
+
+  /// Where plugins' collections and key-value entries are stored
+  /// (DB-001, DB-003, ADR-0049): `PluxDriftAdapter` of `plux_db_drift`, or
+  /// the host's own adapter, for example over a database the app already
+  /// has. Without one, the core's encrypted built-in store keeps the
+  /// key-value entries and a plugin that declares a collection reports
+  /// `PLX-5201`.
+  final PluxDatabaseAdapter? databaseAdapter;
 }
