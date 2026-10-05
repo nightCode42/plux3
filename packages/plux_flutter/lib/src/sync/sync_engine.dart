@@ -217,12 +217,18 @@ final class SyncEngine {
       }
       final served = {for (final b in res.bundles) b.key: b};
       final wanted = <RecordBundle>[
-        RecordBundle(key: '', version: 0, hash: hexEncode(m.appBundle.hash)),
+        RecordBundle(
+          key: '',
+          version: 0,
+          hash: hexEncode(m.appBundle.hash),
+          features: m.appBundle.requiredFeatures,
+        ),
         for (final p in m.plugins)
           RecordBundle(
             key: p.key,
             version: p.version,
             hash: hexEncode(p.bundle.hash),
+            features: p.bundle.requiredFeatures,
           ),
       ];
       final sizes = {for (final b in m.bundles) hexEncode(b.hash): b.size};

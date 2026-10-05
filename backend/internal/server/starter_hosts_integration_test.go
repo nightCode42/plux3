@@ -197,10 +197,12 @@ func androidHost(ctx context.Context, t *testing.T, hosts, device string, flows 
 		out := run(host, adb, append(args, "dev.plux.addtoapp.host.test/androidx.test.runner.AndroidJUnitRunner")...)
 		if !strings.Contains(out, "OK (1 test)") {
 			// The module's, the runtime's and the Flutter embedding's
-			// messages, the activities started and finished, and crashes.
-			log, _ := exec.CommandContext(ctx, adb, "-s", device, "logcat", "-d", "-s", "flutter:V", "AndroidRuntime:E", //nolint:gosec // G204: the SDK's adb and the device the developer named.
-				"ActivityTaskManager:I", "FlutterActivity:V", "FlutterActivityAndFragmentDelegate:V", "FlutterEngine:V", "FlutterLoader:V", "FlutterJNI:V").CombinedOutput()
-			t.Fatalf("the Android host's %s flow on %s:\n%s\nthe device log:\n%s", f.name, device, tail(out, 150), tail(string(log), 120))
+			// messages, the activities started and finished, and crashes:
+			// Java ones (AndroidRuntime) and native ones (libc's fatal
+			// signal and debuggerd's backtrace, tag DEBUG), from every buffer.
+			log, _ := exec.CommandContext(ctx, adb, "-s", device, "logcat", "-d", "-b", "main", "-b", "system", "-b", "crash", "-s", "flutter:V", "AndroidRuntime:E", //nolint:gosec // G204: the SDK's adb and the device the developer named.
+				"libc:F", "DEBUG:F", "ActivityTaskManager:I", "FlutterActivity:V", "FlutterActivityAndFragmentDelegate:V", "FlutterEngine:V", "FlutterLoader:V", "FlutterJNI:V").CombinedOutput()
+			t.Fatalf("the Android host's %s flow on %s:\n%s\nthe device log:\n%s", f.name, device, tail(out, 150), tail(string(log), 200))
 		}
 		t.Logf("the Android host's %s flow on %s:\n%s", f.name, device, tail(out, 10))
 	}

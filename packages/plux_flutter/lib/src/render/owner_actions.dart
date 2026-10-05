@@ -66,10 +66,12 @@ final class ReleaseOwners {
   void start() {
     final services = renderer.actions;
     if (services == null) return;
+    // Only bundles that may declare triggers are opened: a plugin's
+    // bundle is otherwise mapped and verified when one of its pages is
+    // first shown, not at start-up.
     final keys = {
-      '',
       for (final b in release.record.bundles)
-        if (b.key.isNotEmpty) b.key,
+        if (b.mayHaveTriggers) b.key,
     };
     for (final key in keys) {
       // A plugin, or the app, turned off by a kill switch runs nothing
