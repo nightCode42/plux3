@@ -72,6 +72,7 @@ func encode(u *unit) {
 		for _, c := range pl.components {
 			o.add(bundle.SectionComponent, uuidBytes(c.doc.ID), u.componentSection(o, c))
 		}
+		u.timelinesSection(o, pl.pages)
 		u.actionsSection(o, pl.lowered)
 		u.schemasSection(o, u.types.plugin[pl], pl.state, pl.sources, pl.doc.Collections, nil, nil)
 		u.pluginOuts = append(u.pluginOuts, o)
@@ -108,6 +109,7 @@ func encodeNode(e *valueEnc, n *node) flatbuffers.UOffsetT {
 	sem := semanticsTable(e, n.semantics)
 	overrides := overrides(e, n.overrides)
 	ta := typeArguments(e, n)
+	anim := nodeAnimationTable(e, n)
 	testID := e.strs.of(n.doc.TestID)
 	var native uint32
 	if n.widget == nil && n.target == nil {
@@ -144,6 +146,9 @@ func encodeNode(e *valueEnc, n *node) flatbuffers.UOffsetT {
 		fbs.NodeAddHints(b, byte(n.hints))
 	}
 	fbs.NodeAddTypeArguments(b, ta)
+	if anim != 0 {
+		fbs.NodeAddAnimation(b, anim)
+	}
 	return fbs.NodeEnd(b)
 }
 
@@ -251,8 +256,8 @@ var pageKinds = map[schema.PageKind]fbs.PageKind{
 // pageOptions are a page's route and security options as the page
 // section stores them: string-table indices and the assurance level.
 type pageOptions struct {
-	transition, result, assurance uint32
-	secure                        bool
+	transition, timeline, result, assurance uint32
+	secure                                  bool
 }
 
 // pageOptionsOf reads a page's transition, result type and security.
@@ -260,6 +265,7 @@ func pageOptionsOf(e *valueEnc, pg *page) pageOptions {
 	var o pageOptions
 	if ro := pg.doc.RouteOptions; ro != nil {
 		o.transition = e.strs.of(string(ro.Transition))
+		o.timeline = e.strs.of(ro.Timeline)
 	}
 	o.result = e.strs.of(pg.doc.Result)
 	if sec := pg.doc.Security; sec != nil {
@@ -308,6 +314,9 @@ func (u *unit) pageSection(o *out, pg *page) []byte {
 	addOptional(b, triggers, fbs.PageAddTriggers)
 	if opts.transition != 0 {
 		fbs.PageAddTransition(b, opts.transition)
+	}
+	if opts.timeline != 0 {
+		fbs.PageAddTransitionTimeline(b, opts.timeline)
 	}
 	fbs.PageAddGuards(b, gv)
 	fbs.PageAddSecure(b, opts.secure)

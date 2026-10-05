@@ -1,0 +1,19 @@
+{
+  "description": "Implicit, enter and exit, hero, timeline and route animation.",
+  "entryPage": "01d0c450-6c00-7000-8000-000000000110",
+  "icon": {
+    "monogram": {
+      "background": "#0B6E4F",
+      "text": "S"
+    }
+  },
+  "id": "01d0c450-6c00-7000-8000-000000000103",
+  "key": "stage",
+  "kind": "plugin",
+  "name": "Stage",
+  "pages": [
+    "01d0c450-6c00-7000-8000-000000000110"
+  ],
+  "schemaVersion": "1.0.0",
+  "team": "motion"
+}

@@ -92,6 +92,7 @@ func (u *unit) checkPage(pg *page) {
 	for _, n := range pg.nodes {
 		u.checkNode(n)
 	}
+	u.checkAnimations(pg)
 	for i, name := range []string{"onInit", "onEnter", "onResume", "onLeave", "onDispose"} {
 		if g := pg.graphs[name]; g != nil {
 			h := &handler{event: uint32(i), graph: g} //nolint:gosec // G115: five events.

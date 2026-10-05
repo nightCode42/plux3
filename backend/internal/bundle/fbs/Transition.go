@@ -41,16 +41,16 @@ func (rcv *Transition) Table() flatbuffers.Table {
 	return rcv._tab
 }
 
-func (rcv *Transition) Kind() byte {
+func (rcv *Transition) Kind() TransitionKind {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(4))
 	if o != 0 {
-		return rcv._tab.GetByte(o + rcv._tab.Pos)
+		return TransitionKind(rcv._tab.GetByte(o + rcv._tab.Pos))
 	}
 	return 0
 }
 
-func (rcv *Transition) MutateKind(n byte) bool {
-	return rcv._tab.MutateByteSlot(4, n)
+func (rcv *Transition) MutateKind(n TransitionKind) bool {
+	return rcv._tab.MutateByteSlot(4, byte(n))
 }
 
 func (rcv *Transition) DurationUs() int64 {
@@ -80,8 +80,8 @@ func (rcv *Transition) MutateCurve(n uint32) bool {
 func TransitionStart(builder *flatbuffers.Builder) {
 	builder.StartObject(3)
 }
-func TransitionAddKind(builder *flatbuffers.Builder, kind byte) {
-	builder.PrependByteSlot(0, kind, 0)
+func TransitionAddKind(builder *flatbuffers.Builder, kind TransitionKind) {
+	builder.PrependByteSlot(0, byte(kind), 0)
 }
 func TransitionAddDurationUs(builder *flatbuffers.Builder, durationUs int64) {
 	builder.PrependInt64Slot(1, durationUs, 0)

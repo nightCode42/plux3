@@ -746,11 +746,11 @@ table Timeline {
   reverse: bool;
   // The delay added per item index, for nodes in item templates.
   stagger_us: long;
-  reduce_motion: ubyte; // ReduceMotion
+  reduce_motion: ReduceMotion;
   // A route timeline moves a page in or out (NAV-010).
   route: bool;
   autoplay: bool;
-  driver: ubyte; // Driver
+  driver: Driver;
   // The node whose scrolling or dragging drives the timeline.
   driver_node: Uuid;
   // The scroll offset or drag distance, in logical pixels, that spans the
@@ -759,10 +759,20 @@ table Timeline {
   spring: Spring;
 }
 
+// How a node moves in or out (ANI-003).
+enum TransitionKind : ubyte {
+  None = 0,
+  Fade,
+  Scale,
+  SlideUp,
+  SlideDown,
+  SlideLeft,
+  SlideRight
+}
+
 // An enter or exit transition of a node (ANI-003).
 table Transition {
-  // 1 fade, 2 scale, 3 slideUp, 4 slideDown, 5 slideLeft, 6 slideRight.
-  kind: ubyte;
+  kind: TransitionKind;
   duration_us: long;
   curve: uint;
 }
@@ -775,7 +785,7 @@ table NodeAnimation {
   delay_us: long;
   // The permanent IDs of the animated props; empty animates all that can.
   props: [uint];
-  reduce_motion: ubyte; // ReduceMotion
+  reduce_motion: ReduceMotion;
   enter: Transition;
   exit: Transition;
   // The hero tag (ANI-004).

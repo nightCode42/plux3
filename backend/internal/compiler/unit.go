@@ -182,8 +182,9 @@ type page struct {
 	sources   []*dataSource
 	guards    []*graph
 	scope     *scope
-	triggers  []*trigger // the page's triggers (ACT-002)
-	forms     []*form    // the page's forms (STA-020)
+	triggers  []*trigger  // the page's triggers (ACT-002)
+	forms     []*form     // the page's forms (STA-020)
+	timelines []*timeline // the page's timelines (ANI-002)
 }
 
 // component is a component definition (SCH-030).
@@ -223,6 +224,10 @@ type node struct {
 	visible   *value
 	semantics *semantics
 	overrides []*override
+	// anim is the node's animation; animated says a timeline's track
+	// targets it (ANI-001, ANI-002).
+	anim     *nodeAnim
+	animated bool
 	// Filled by optimise and encode.
 	hints   fbs.NodeHints
 	removed bool

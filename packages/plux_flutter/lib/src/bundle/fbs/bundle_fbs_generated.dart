@@ -609,6 +609,50 @@ class _ReduceMotionReader extends fb.Reader<ReduceMotion> {
       ReduceMotion.fromValue(const fb.Uint8Reader().read(bc, offset));
 }
 
+enum TransitionKind {
+  None(0),
+  Fade(1),
+  Scale(2),
+  SlideUp(3),
+  SlideDown(4),
+  SlideLeft(5),
+  SlideRight(6);
+
+  final int value;
+  const TransitionKind(this.value);
+
+  factory TransitionKind.fromValue(int value) {
+    switch (value) {
+      case 0: return TransitionKind.None;
+      case 1: return TransitionKind.Fade;
+      case 2: return TransitionKind.Scale;
+      case 3: return TransitionKind.SlideUp;
+      case 4: return TransitionKind.SlideDown;
+      case 5: return TransitionKind.SlideLeft;
+      case 6: return TransitionKind.SlideRight;
+      default: throw StateError('Invalid value $value for bit flag enum');
+    }
+  }
+
+  static TransitionKind? _createOrNull(int? value) =>
+      value == null ? null : TransitionKind.fromValue(value);
+
+  static const int minValue = 0;
+  static const int maxValue = 6;
+  static const fb.Reader<TransitionKind> reader = _TransitionKindReader();
+}
+
+class _TransitionKindReader extends fb.Reader<TransitionKind> {
+  const _TransitionKindReader();
+
+  @override
+  int get size => 1;
+
+  @override
+  TransitionKind read(fb.BufferContext bc, int offset) =>
+      TransitionKind.fromValue(const fb.Uint8Reader().read(bc, offset));
+}
+
 class Uuid {
   Uuid._(this._bc, this._bcOffset);
 
@@ -6181,10 +6225,10 @@ class Timeline {
   bool get forever => const fb.BoolReader().vTableGet(_bc, _bcOffset, 18, false);
   bool get reverse => const fb.BoolReader().vTableGet(_bc, _bcOffset, 20, false);
   int get staggerUs => const fb.Int64Reader().vTableGet(_bc, _bcOffset, 22, 0);
-  int get reduceMotion => const fb.Uint8Reader().vTableGet(_bc, _bcOffset, 24, 0);
+  ReduceMotion get reduceMotion => ReduceMotion.fromValue(const fb.Uint8Reader().vTableGet(_bc, _bcOffset, 24, 0));
   bool get route => const fb.BoolReader().vTableGet(_bc, _bcOffset, 26, false);
   bool get autoplay => const fb.BoolReader().vTableGet(_bc, _bcOffset, 28, false);
-  int get driver => const fb.Uint8Reader().vTableGet(_bc, _bcOffset, 30, 0);
+  Driver get driver => Driver.fromValue(const fb.Uint8Reader().vTableGet(_bc, _bcOffset, 30, 0));
   Uuid? get driverNode => Uuid.reader.vTableGetNullable(_bc, _bcOffset, 32);
   double get driverExtent => const fb.Float64Reader().vTableGet(_bc, _bcOffset, 34, 0.0);
   Spring? get spring => Spring.reader.vTableGetNullable(_bc, _bcOffset, 36);
@@ -6252,8 +6296,8 @@ class TimelineBuilder {
     fbBuilder.addInt64(9, staggerUs);
     return fbBuilder.offset;
   }
-  int addReduceMotion(int? reduceMotion) {
-    fbBuilder.addUint8(10, reduceMotion);
+  int addReduceMotion(ReduceMotion? reduceMotion) {
+    fbBuilder.addUint8(10, reduceMotion?.value);
     return fbBuilder.offset;
   }
   int addRoute(bool? route) {
@@ -6264,8 +6308,8 @@ class TimelineBuilder {
     fbBuilder.addBool(12, autoplay);
     return fbBuilder.offset;
   }
-  int addDriver(int? driver) {
-    fbBuilder.addUint8(13, driver);
+  int addDriver(Driver? driver) {
+    fbBuilder.addUint8(13, driver?.value);
     return fbBuilder.offset;
   }
   int addDriverNode(int offset) {
@@ -6297,10 +6341,10 @@ class TimelineObjectBuilder extends fb.ObjectBuilder {
   final bool? _forever;
   final bool? _reverse;
   final int? _staggerUs;
-  final int? _reduceMotion;
+  final ReduceMotion? _reduceMotion;
   final bool? _route;
   final bool? _autoplay;
-  final int? _driver;
+  final Driver? _driver;
   final UuidObjectBuilder? _driverNode;
   final double? _driverExtent;
   final SpringObjectBuilder? _spring;
@@ -6316,10 +6360,10 @@ class TimelineObjectBuilder extends fb.ObjectBuilder {
     bool? forever,
     bool? reverse,
     int? staggerUs,
-    int? reduceMotion,
+    ReduceMotion? reduceMotion,
     bool? route,
     bool? autoplay,
-    int? driver,
+    Driver? driver,
     UuidObjectBuilder? driverNode,
     double? driverExtent,
     SpringObjectBuilder? spring,
@@ -6363,10 +6407,10 @@ class TimelineObjectBuilder extends fb.ObjectBuilder {
     fbBuilder.addBool(7, _forever);
     fbBuilder.addBool(8, _reverse);
     fbBuilder.addInt64(9, _staggerUs);
-    fbBuilder.addUint8(10, _reduceMotion);
+    fbBuilder.addUint8(10, _reduceMotion?.value);
     fbBuilder.addBool(11, _route);
     fbBuilder.addBool(12, _autoplay);
-    fbBuilder.addUint8(13, _driver);
+    fbBuilder.addUint8(13, _driver?.value);
     if (_driverNode != null) {
       fbBuilder.addStruct(14, _driverNode!.finish(fbBuilder));
     }
@@ -6395,7 +6439,7 @@ class Transition {
   final fb.BufferContext _bc;
   final int _bcOffset;
 
-  int get kind => const fb.Uint8Reader().vTableGet(_bc, _bcOffset, 4, 0);
+  TransitionKind get kind => TransitionKind.fromValue(const fb.Uint8Reader().vTableGet(_bc, _bcOffset, 4, 0));
   int get durationUs => const fb.Int64Reader().vTableGet(_bc, _bcOffset, 6, 0);
   int get curve => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 8, 0);
 
@@ -6422,8 +6466,8 @@ class TransitionBuilder {
     fbBuilder.startTable(3);
   }
 
-  int addKind(int? kind) {
-    fbBuilder.addUint8(0, kind);
+  int addKind(TransitionKind? kind) {
+    fbBuilder.addUint8(0, kind?.value);
     return fbBuilder.offset;
   }
   int addDurationUs(int? durationUs) {
@@ -6441,12 +6485,12 @@ class TransitionBuilder {
 }
 
 class TransitionObjectBuilder extends fb.ObjectBuilder {
-  final int? _kind;
+  final TransitionKind? _kind;
   final int? _durationUs;
   final int? _curve;
 
   TransitionObjectBuilder({
-    int? kind,
+    TransitionKind? kind,
     int? durationUs,
     int? curve,
   })
@@ -6458,7 +6502,7 @@ class TransitionObjectBuilder extends fb.ObjectBuilder {
   @override
   int finish(fb.Builder fbBuilder) {
     fbBuilder.startTable(3);
-    fbBuilder.addUint8(0, _kind);
+    fbBuilder.addUint8(0, _kind?.value);
     fbBuilder.addInt64(1, _durationUs);
     fbBuilder.addUint32(2, _curve);
     return fbBuilder.endTable();
@@ -6488,7 +6532,7 @@ class NodeAnimation {
   int get curve => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 6, 0);
   int get delayUs => const fb.Int64Reader().vTableGet(_bc, _bcOffset, 8, 0);
   List<int>? get props => const fb.ListReader<int>(fb.Uint32Reader()).vTableGetNullable(_bc, _bcOffset, 10);
-  int get reduceMotion => const fb.Uint8Reader().vTableGet(_bc, _bcOffset, 12, 0);
+  ReduceMotion get reduceMotion => ReduceMotion.fromValue(const fb.Uint8Reader().vTableGet(_bc, _bcOffset, 12, 0));
   Transition? get enter => Transition.reader.vTableGetNullable(_bc, _bcOffset, 14);
   Transition? get exit => Transition.reader.vTableGetNullable(_bc, _bcOffset, 16);
   Value? get hero => Value.reader.vTableGetNullable(_bc, _bcOffset, 18);
@@ -6532,8 +6576,8 @@ class NodeAnimationBuilder {
     fbBuilder.addOffset(3, offset);
     return fbBuilder.offset;
   }
-  int addReduceMotion(int? reduceMotion) {
-    fbBuilder.addUint8(4, reduceMotion);
+  int addReduceMotion(ReduceMotion? reduceMotion) {
+    fbBuilder.addUint8(4, reduceMotion?.value);
     return fbBuilder.offset;
   }
   int addEnterOffset(int? offset) {
@@ -6559,7 +6603,7 @@ class NodeAnimationObjectBuilder extends fb.ObjectBuilder {
   final int? _curve;
   final int? _delayUs;
   final List<int>? _props;
-  final int? _reduceMotion;
+  final ReduceMotion? _reduceMotion;
   final TransitionObjectBuilder? _enter;
   final TransitionObjectBuilder? _exit;
   final ValueObjectBuilder? _hero;
@@ -6569,7 +6613,7 @@ class NodeAnimationObjectBuilder extends fb.ObjectBuilder {
     int? curve,
     int? delayUs,
     List<int>? props,
-    int? reduceMotion,
+    ReduceMotion? reduceMotion,
     TransitionObjectBuilder? enter,
     TransitionObjectBuilder? exit,
     ValueObjectBuilder? hero,
@@ -6596,7 +6640,7 @@ class NodeAnimationObjectBuilder extends fb.ObjectBuilder {
     fbBuilder.addUint32(1, _curve);
     fbBuilder.addInt64(2, _delayUs);
     fbBuilder.addOffset(3, propsOffset);
-    fbBuilder.addUint8(4, _reduceMotion);
+    fbBuilder.addUint8(4, _reduceMotion?.value);
     fbBuilder.addOffset(5, enterOffset);
     fbBuilder.addOffset(6, exitOffset);
     fbBuilder.addOffset(7, heroOffset);

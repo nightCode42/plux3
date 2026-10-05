@@ -103,16 +103,16 @@ func (rcv *NodeAnimation) MutateProps(j int, n uint32) bool {
 	return false
 }
 
-func (rcv *NodeAnimation) ReduceMotion() byte {
+func (rcv *NodeAnimation) ReduceMotion() ReduceMotion {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(12))
 	if o != 0 {
-		return rcv._tab.GetByte(o + rcv._tab.Pos)
+		return ReduceMotion(rcv._tab.GetByte(o + rcv._tab.Pos))
 	}
 	return 0
 }
 
-func (rcv *NodeAnimation) MutateReduceMotion(n byte) bool {
-	return rcv._tab.MutateByteSlot(12, n)
+func (rcv *NodeAnimation) MutateReduceMotion(n ReduceMotion) bool {
+	return rcv._tab.MutateByteSlot(12, byte(n))
 }
 
 func (rcv *NodeAnimation) Enter(obj *Transition) *Transition {
@@ -172,8 +172,8 @@ func NodeAnimationAddProps(builder *flatbuffers.Builder, props flatbuffers.UOffs
 func NodeAnimationStartPropsVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
 	return builder.StartVector(4, numElems, 4)
 }
-func NodeAnimationAddReduceMotion(builder *flatbuffers.Builder, reduceMotion byte) {
-	builder.PrependByteSlot(4, reduceMotion, 0)
+func NodeAnimationAddReduceMotion(builder *flatbuffers.Builder, reduceMotion ReduceMotion) {
+	builder.PrependByteSlot(4, byte(reduceMotion), 0)
 }
 func NodeAnimationAddEnter(builder *flatbuffers.Builder, enter flatbuffers.UOffsetT) {
 	builder.PrependUOffsetTSlot(5, flatbuffers.UOffsetT(enter), 0)

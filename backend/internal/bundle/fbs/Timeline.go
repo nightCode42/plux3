@@ -171,16 +171,16 @@ func (rcv *Timeline) MutateStaggerUs(n int64) bool {
 	return rcv._tab.MutateInt64Slot(22, n)
 }
 
-func (rcv *Timeline) ReduceMotion() byte {
+func (rcv *Timeline) ReduceMotion() ReduceMotion {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(24))
 	if o != 0 {
-		return rcv._tab.GetByte(o + rcv._tab.Pos)
+		return ReduceMotion(rcv._tab.GetByte(o + rcv._tab.Pos))
 	}
 	return 0
 }
 
-func (rcv *Timeline) MutateReduceMotion(n byte) bool {
-	return rcv._tab.MutateByteSlot(24, n)
+func (rcv *Timeline) MutateReduceMotion(n ReduceMotion) bool {
+	return rcv._tab.MutateByteSlot(24, byte(n))
 }
 
 func (rcv *Timeline) Route() bool {
@@ -207,16 +207,16 @@ func (rcv *Timeline) MutateAutoplay(n bool) bool {
 	return rcv._tab.MutateBoolSlot(28, n)
 }
 
-func (rcv *Timeline) Driver() byte {
+func (rcv *Timeline) Driver() Driver {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(30))
 	if o != 0 {
-		return rcv._tab.GetByte(o + rcv._tab.Pos)
+		return Driver(rcv._tab.GetByte(o + rcv._tab.Pos))
 	}
 	return 0
 }
 
-func (rcv *Timeline) MutateDriver(n byte) bool {
-	return rcv._tab.MutateByteSlot(30, n)
+func (rcv *Timeline) MutateDriver(n Driver) bool {
+	return rcv._tab.MutateByteSlot(30, byte(n))
 }
 
 func (rcv *Timeline) DriverNode(obj *Uuid) *Uuid {
@@ -293,8 +293,8 @@ func TimelineAddReverse(builder *flatbuffers.Builder, reverse bool) {
 func TimelineAddStaggerUs(builder *flatbuffers.Builder, staggerUs int64) {
 	builder.PrependInt64Slot(9, staggerUs, 0)
 }
-func TimelineAddReduceMotion(builder *flatbuffers.Builder, reduceMotion byte) {
-	builder.PrependByteSlot(10, reduceMotion, 0)
+func TimelineAddReduceMotion(builder *flatbuffers.Builder, reduceMotion ReduceMotion) {
+	builder.PrependByteSlot(10, byte(reduceMotion), 0)
 }
 func TimelineAddRoute(builder *flatbuffers.Builder, route bool) {
 	builder.PrependBoolSlot(11, route, false)
@@ -302,8 +302,8 @@ func TimelineAddRoute(builder *flatbuffers.Builder, route bool) {
 func TimelineAddAutoplay(builder *flatbuffers.Builder, autoplay bool) {
 	builder.PrependBoolSlot(12, autoplay, false)
 }
-func TimelineAddDriver(builder *flatbuffers.Builder, driver byte) {
-	builder.PrependByteSlot(13, driver, 0)
+func TimelineAddDriver(builder *flatbuffers.Builder, driver Driver) {
+	builder.PrependByteSlot(13, byte(driver), 0)
 }
 func TimelineAddDriverNode(builder *flatbuffers.Builder, driverNode flatbuffers.UOffsetT) {
 	builder.PrependStructSlot(14, flatbuffers.UOffsetT(driverNode), 0)
