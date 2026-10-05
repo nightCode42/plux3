@@ -27,6 +27,19 @@ void main() {
     m.release(); // idempotent
   });
 
+  test('a view taken before release stays readable: the mapping lives as long as a view [RT-010]', () {
+    final f = File('${dir.path}/kept.pxb')
+      ..writeAsBytesSync(List<int>.generate(4096, (i) => i % 251));
+    final m = MappedFile.open(f.path);
+    // A decoded bundle object keeps a view like this one; a replaced
+    // release gives its file up while such objects may still be read.
+    final view = Uint8List.sublistView(m.bytes, 100, 200);
+    m.release();
+    expect(() => m.bytes, throwsStateError);
+    expect(view[0], 100);
+    expect(view[99], 199 % 251);
+  });
+
   test('maps an empty file as no bytes', () {
     final f = File('${dir.path}/empty')..writeAsBytesSync([]);
     final m = MappedFile.open(f.path);

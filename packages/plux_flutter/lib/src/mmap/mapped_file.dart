@@ -13,10 +13,11 @@ import 'dart:typed_data';
 import 'package:plux_flutter/src/native/plux_native.dart';
 
 /// A file mapped read-only into memory. [bytes] is a view of the mapping,
-/// never a copy. The mapping lasts until [release], or until this object is
-/// garbage-collected; a view must not be used after either.
-final class MappedFile implements Finalizable {
-  MappedFile._(this.path, this._handle, this._bytes);
+/// never a copy. The view owns the mapping: the file is unmapped by the
+/// view's finalizer once no object can reach the bytes, so a view kept by a
+/// decoded object stays valid however long that object lives (RT-010).
+final class MappedFile {
+  MappedFile._(this.path, this._bytes);
 
   /// Maps the file at [path]; throws [FileSystemException] when it cannot.
   factory MappedFile.open(String path) {
@@ -34,42 +35,40 @@ final class MappedFile implements Finalizable {
         OSError('', m.error),
       );
     }
-    final bytes = m.address == nullptr
-        ? Uint8List(0)
-        : m.address.asTypedList(m.length);
-    final file = MappedFile._(path, handle, bytes);
-    _finalizer.attach(
-      file,
-      handle.cast(),
-      detach: file,
-      externalSize: m.length,
+    if (m.address == nullptr) {
+      // An empty file maps nothing: there is no memory to keep.
+      nativeRelease(handle);
+      return MappedFile._(path, Uint8List(0));
+    }
+    return MappedFile._(
+      path,
+      m.address.asTypedList(
+        m.length,
+        finalizer: nativeReleaseAddress.cast(),
+        token: handle.cast(),
+      ),
     );
-    return file;
   }
-
-  static final _finalizer = NativeFinalizer(nativeReleaseAddress);
 
   /// The file's path.
   final String path;
 
-  Pointer<NativeMapping>? _handle;
   final Uint8List _bytes;
+  bool _released = false;
 
   /// Whether [release] has been called.
-  bool get isReleased => _handle == null;
+  bool get isReleased => _released;
 
   /// The file's bytes, a view of the mapping.
   Uint8List get bytes {
-    if (_handle == null) throw StateError('$path has been released');
+    if (_released) throw StateError('$path has been released');
     return _bytes;
   }
 
-  /// Unmaps the file. Every view obtained from [bytes] becomes invalid.
+  /// Gives the file up: [bytes] throws from now on. The mapping itself
+  /// ends when the last view obtained earlier becomes unreachable, so
+  /// objects still holding one never read unmapped memory.
   void release() {
-    final h = _handle;
-    if (h == null) return;
-    _handle = null;
-    _finalizer.detach(this);
-    nativeRelease(h);
+    _released = true;
   }
 }

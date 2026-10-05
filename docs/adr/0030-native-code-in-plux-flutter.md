@@ -139,3 +139,16 @@ from source, and every toolchain or ABI change needs a manual rebuild.
 A Dart zstd decoder would be several thousand lines of performance-critical code of our
 own, slower on the device than the C reference, and still would not give zero-copy maps;
 `RandomAccessFile` reads copy every section into the Dart heap.
+
+## Revision (2026-10-05)
+
+*A view is never used after release* did not hold. Decoded bundle objects keep views into
+the mapping, and from P5 the app's and the plugins' triggers and detached runs outlive the
+page leases of their release: after an update replaced the active release, such an object
+read the unmapped file, which crashed the add-to-app hosts' online flow (P5 batch 1, CI run
+37284811902). Leases now cover release owners and every run (`ActiveRelease.hold`), and,
+so that no remaining path can read freed memory, the view owns the mapping: the bytes are
+created with `asTypedList(finalizer:, token:)` over `plux_unmap`, `MappedFile.release`
+only gives the file up (`bytes` throws afterwards), and the file is unmapped when the last
+view becomes unreachable. The leak bound is unchanged — the garbage collector — and a
+retired release's address space is returned once nothing references it.
