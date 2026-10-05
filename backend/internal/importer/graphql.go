@@ -90,7 +90,7 @@ func ImportGraphQL(schemaSrc Source, docs []Source) Result {
 			"name":   srcName,
 			"kind":   "graphql",
 			"type":   rc["output"],
-			"mock":   nil,
+			"mock":   g.types.zeroValue(rc["output"].(string), 0),
 			"config": config,
 		}},
 		"types":     g.types.list(),

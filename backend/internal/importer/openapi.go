@@ -105,6 +105,9 @@ func ImportOpenAPI(file string, data []byte) Result {
 	}
 	rc := ops[read].(map[string]any)
 	delete(ops, read)
+	if mocks[read] == nil {
+		mocks[read] = c.types.zeroValue(rc["output"].(string), 0)
+	}
 	config := map[string]any{"baseUrl": variable, "method": "GET", "path": rc["path"]}
 	if rc["auth"] == true {
 		config["auth"] = true
