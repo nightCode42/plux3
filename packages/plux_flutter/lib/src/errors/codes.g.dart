@@ -268,6 +268,18 @@ enum PluxErrorCode {
   /// FormScope names no form.
   formScopeInvalid(1240, 'FORM_SCOPE_INVALID', 'FormScope names no form'),
 
+  /// Document cannot be imported.
+  importDocumentInvalid(1260, 'IMPORT_DOCUMENT_INVALID', 'Document cannot be imported'),
+
+  /// Construct has no Plux type.
+  importConstructUnsupported(1261, 'IMPORT_CONSTRUCT_UNSUPPORTED', 'Construct has no Plux type'),
+
+  /// Operation is invalid against its schema.
+  importOperationInvalid(1262, 'IMPORT_OPERATION_INVALID', 'Operation is invalid against its schema'),
+
+  /// Imported data sources fail validation.
+  importOutputInvalid(1263, 'IMPORT_OUTPUT_INVALID', 'Imported data sources fail validation'),
+
   /// Page exceeds its node budget.
   pageNodeBudget(1310, 'PAGE_NODE_BUDGET', 'Page exceeds its node budget'),
 

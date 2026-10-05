@@ -444,6 +444,28 @@ var registry = []Definition{
 		"Set form to the literal name of a form declared in the page's or component's forms.", false,
 	},
 
+	// Import: OpenAPI and GraphQL data sources.
+	{
+		ImportDocumentInvalid, "IMPORT_DOCUMENT_INVALID", SeverityError, "Document cannot be imported",
+		"The OpenAPI document or GraphQL schema or operations file could not be read, parsed or validated, so nothing can be imported from it (DAT-002).",
+		"Fix the reported problem in the source document and import again.", false,
+	},
+	{
+		ImportConstructUnsupported, "IMPORT_CONSTRUCT_UNSUPPORTED", SeverityWarning, "Construct has no Plux type",
+		"An operation uses a construct that no Plux type expresses, such as a polymorphic schema, a non-JSON body or a recursive type. The operation is left out of the import rather than typed loosely (DAT-002, SCH-010).",
+		"Simplify the operation in the source document, or write the data source by hand.", false,
+	},
+	{
+		ImportOperationInvalid, "IMPORT_OPERATION_INVALID", SeverityError, "Operation is invalid against its schema",
+		"A GraphQL operation does not validate against the schema, or is not a single named query or mutation, so it cannot be imported as a typed operation (DAT-002).",
+		"Correct the operation so it validates against the schema, and give it a name.", false,
+	},
+	{
+		ImportOutputInvalid, "IMPORT_OUTPUT_INVALID", SeverityError, "Imported data sources fail validation",
+		"The data sources produced by the import do not validate against the document schema, so they are not written (DAT-002, SCH-040).",
+		"Report the source document that produced the failure; the importer must not emit a document the schema rejects.", false,
+	},
+
 	// Schema and validation: limits and budgets.
 	{
 		PageNodeBudget, "PAGE_NODE_BUDGET", SeverityWarning, "Page exceeds its node budget",

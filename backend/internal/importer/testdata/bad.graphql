@@ -1,0 +1,31 @@
+query Missing {
+  user(id: "1") {
+    nope
+  }
+}
+
+query Fine {
+  users {
+    id
+  }
+}
+
+query Searching($text: String!) {
+  search(text: $text) {
+    ... on User {
+      id
+    }
+  }
+}
+
+query Joined {
+  users {
+    joined
+  }
+}
+
+query {
+  users {
+    id
+  }
+}

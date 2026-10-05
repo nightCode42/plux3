@@ -115,6 +115,13 @@ const (
 
 	FormScopeInvalid Code = 1240
 
+	// Import: OpenAPI and GraphQL data sources (PLX-1260–1269, P5 R9).
+
+	ImportDocumentInvalid      Code = 1260
+	ImportConstructUnsupported Code = 1261
+	ImportOperationInvalid     Code = 1262
+	ImportOutputInvalid        Code = 1263
+
 	// Schema and validation: limits and budgets (PLX-1300–1399).
 
 	PageNodeBudget      Code = 1310

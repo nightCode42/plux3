@@ -1,0 +1,95 @@
+{
+  "baseUrls": {
+    "todoAPIBaseUrl": "https://todo.example.com"
+  },
+  "dataSources": [
+    {
+      "config": {
+        "baseUrl": "todoAPIBaseUrl",
+        "method": "GET",
+        "operations": {
+          "listTodos": {
+            "method": "GET",
+            "output": "ListTodosOutput",
+            "path": "/todos"
+          },
+          "updateTodo": {
+            "input": "UpdateTodoInput",
+            "method": "PUT",
+            "output": "Todo",
+            "path": "/todos/{id}"
+          }
+        },
+        "path": "/"
+      },
+      "id": "cfa1a399-b387-783c-a82a-75857c7f4ced",
+      "kind": "rest",
+      "mock": {},
+      "name": "todoAPI",
+      "type": "map<string,string>",
+      "x-operationMocks": {
+        "updateTodo": {
+          "done": false,
+          "id": "1",
+          "title": "Write"
+        }
+      }
+    }
+  ],
+  "types": [
+    {
+      "fields": [
+        {
+          "name": "items",
+          "type": "list<Todo>"
+        },
+        {
+          "name": "total",
+          "type": "int"
+        }
+      ],
+      "name": "ListTodosOutput"
+    },
+    {
+      "fields": [
+        {
+          "name": "done",
+          "type": "bool?"
+        },
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "title",
+          "type": "string"
+        }
+      ],
+      "name": "Todo"
+    },
+    {
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "done",
+          "type": "bool?"
+        },
+        {
+          "name": "title",
+          "type": "string?"
+        }
+      ],
+      "name": "UpdateTodoInput"
+    }
+  ],
+  "variables": [
+    {
+      "description": "Base URL of the Todo API API.",
+      "name": "todoAPIBaseUrl",
+      "type": "string"
+    }
+  ]
+}
