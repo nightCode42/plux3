@@ -9,7 +9,7 @@ import 'package:plux_flutter/src/store/kv_store.dart';
 
 import '../support/harness.dart';
 
-/// The built-in encrypted store (plan p5 D5, D6).
+/// The built-in stores: encrypted and plain (plan p5 D5, D6).
 void main() {
   late Directory dir;
   late MemorySecretStore secrets;
@@ -113,6 +113,59 @@ void main() {
       );
     },
   );
+
+  group('the plain store of persisted state (plan p5 D6)', () {
+    PlainFileStore plain() =>
+        PlainFileStore(path: '${dir.path}/p.json', maxBytes: 1024);
+
+    test('round-trips entries in a plain file, atomically, and keeps no key in secure storage [STA-003]', () async {
+      final s = plain();
+      expect(await s.load(), isEmpty);
+      await s.save({'a': 1, 'b': 'two'});
+      await s.save({'a': 2});
+      expect(await plain().load(), {'a': 2});
+      expect(File('${dir.path}/p.json.tmp').existsSync(), isFalse);
+      expect(secrets.values, isEmpty);
+    });
+
+    test(
+      'a corrupt file is removed and reported as corrupt [STA-003]',
+      () async {
+        await plain().save({'a': 1});
+        final f = File('${dir.path}/p.json')..writeAsStringSync('{"a": 1');
+        await expectLater(
+          plain().load(),
+          throwsA(
+            isA<StoreException>().having(
+              (e) => e.failure,
+              'failure',
+              StoreFailure.corrupt,
+            ),
+          ),
+        );
+        expect(f.existsSync(), isFalse);
+        expect(await plain().load(), isEmpty);
+      },
+    );
+
+    test('entries over the limit are refused and the file is kept; wipe removes it [LIM-001] [HST-001]', () async {
+      final s = plain();
+      await s.save({'a': 1});
+      await expectLater(
+        s.save({'big': 'x' * 2000}),
+        throwsA(
+          isA<StoreException>().having(
+            (e) => e.failure,
+            'failure',
+            StoreFailure.tooLarge,
+          ),
+        ),
+      );
+      expect(await plain().load(), {'a': 1});
+      await s.wipe();
+      expect(File('${dir.path}/p.json').existsSync(), isFalse);
+    });
+  });
 }
 
 final class _FailingSecrets implements SecretStore {

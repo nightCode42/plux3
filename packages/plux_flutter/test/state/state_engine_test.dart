@@ -211,7 +211,7 @@ void main() {
   );
 
   testWidgets(
-    'persisted and secure entries survive a restart, encrypted; session entries end with the app [STA-003] [SCH-012]',
+    'persisted and secure entries survive a restart, secure ones encrypted and persisted ones plain without a key; session entries end with the app [STA-003] [SCH-012]',
     (tester) async {
       await start(tester);
       await tap(tester, 'bump');
@@ -219,20 +219,32 @@ void main() {
       await tap(tester, 'patch');
       expect(await Plux.state<String>('theme').set('dark'), isTrue);
       await tester.runAsync(() => h.runtime.statePersistence.flush());
-      final files = Directory(h.dir)
-          .listSync(recursive: true)
-          .whereType<File>()
-          .where((f) => f.path.endsWith('.pxk'))
-          .toList();
-      expect(files.map((f) => f.uri.pathSegments.last).toSet(), {
-        'persisted.pxk',
-        'secure.pxk',
-      });
-      for (final f in files) {
-        final text = latin1.decode(f.readAsBytesSync());
-        expect(text.contains('s3cr3t'), isFalse);
-        expect(text.contains('first'), isFalse);
-      }
+      final files = {
+        for (final f in Directory(
+          h.dir,
+        ).listSync(recursive: true).whereType<File>())
+          if (f.path.contains('plux-state')) f.uri.pathSegments.last: f,
+      };
+      expect(files.keys.toSet(), {'persisted.json', 'secure.pxk'});
+      final secure = latin1.decode(files['secure.pxk']!.readAsBytesSync());
+      expect(secure.contains('s3cr3t'), isFalse);
+      final persisted = files['persisted.json']!.readAsStringSync();
+      expect(
+        jsonDecode(persisted),
+        isA<Map<String, Object?>>().having(
+          (m) => m.length,
+          'entries',
+          greaterThan(0),
+        ),
+      );
+      expect(persisted.contains('s3cr3t'), isFalse);
+      // Persisted state is plain by decision (plan p5 D6).
+      expect(persisted.contains('first'), isTrue);
+      expect(
+        h.secrets.values.keys.where((k) => k.contains('persisted')),
+        isEmpty,
+        reason: 'persisted state keeps no key in secure storage',
+      );
       await restart(tester);
       expect(app()['counter'], 5);
       expect(app()['token'], 's3cr3t');
@@ -289,7 +301,7 @@ void main() {
       final f = Directory(h.dir)
           .listSync(recursive: true)
           .whereType<File>()
-          .firstWhere((f) => f.path.endsWith('persisted.pxk'));
+          .firstWhere((f) => f.path.endsWith('persisted.json'));
       final bytes = f.readAsBytesSync();
       bytes[bytes.length - 1] ^= 1;
       f.writeAsBytesSync(bytes);
@@ -315,7 +327,7 @@ void main() {
     expect(
       Directory(h.dir)
           .listSync(recursive: true)
-          .where((f) => f.path.endsWith('.pxk')),
+          .where((f) => f.path.contains('plux-state/') && f is File),
       isEmpty,
     );
   });

@@ -3,8 +3,8 @@
 
 /// Where state entries live beyond their scope instance (STA-003):
 /// `session` entries in memory until the app is closed, `persisted` and
-/// `secure` entries in two built-in stores, each encrypted under its own
-/// installation key (plan p5 D5, D6). Each stored value carries the
+/// `secure` entries in two built-in stores: `persisted` in a plain file,
+/// `secure` encrypted under its own installation key (plan p5 D5, D6). Each stored value carries the
 /// fingerprint of its entry's type, which versions it (STA-040). Writes
 /// take effect at once and are saved behind, coalesced, off the UI
 /// isolate; nothing about a value is ever logged (SCH-012).

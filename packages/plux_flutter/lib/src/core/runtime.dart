@@ -341,23 +341,33 @@ final class PluxRuntime with WidgetsBindingObserver {
     report: _report,
   );
 
+  /// The platform's secure storage, which keeps the installation keys of
+  /// the secure state store and the data cache (plan p5 D6).
+  late final SecretStore _secrets =
+      overrides.secrets?.call() ?? const PlatformSecretStore();
+
+  /// The name part of this installation's keys.
+  String get _keyId =>
+      '${_safe(config.appId)}.${_safe(config.environment)}'.toLowerCase();
+
   /// Where session, persisted and secure state lives (STA-003): two
-  /// stores under the runtime's directory, each encrypted under its own key
-  /// kept by the platform's secure storage (plan p5 D5, D6).
+  /// stores under the runtime's directory; `persisted` is a plain file,
+  /// `secure` is encrypted under its own key kept by the platform's secure
+  /// storage (plan p5 D5, D6). A store that fails keeps its values in
+  /// memory for the session.
   late final StatePersistence statePersistence = () {
-    final secrets = overrides.secrets?.call() ?? const PlatformSecretStore();
-    final id = '${_safe(config.appId)}.${_safe(config.environment)}'
-        .toLowerCase();
-    EncryptedFileStore store(String kind, PluxLimit limit) =>
-        EncryptedFileStore(
-          path: '$_root/plux-state/$kind.pxk',
-          secrets: secrets,
-          keyName: 'state-$kind.$id',
-          label: 'plux-state/$kind/$id',
-          maxBytes: limit.defaultValue,
-        );
-    final persisted = store('persisted', PluxLimit.statePersistedBytes);
-    final secure = store('secure', PluxLimit.stateSecureBytes);
+    final id = _keyId;
+    final persisted = PlainFileStore(
+      path: '$_root/plux-state/persisted.json',
+      maxBytes: PluxLimit.statePersistedBytes.defaultValue,
+    );
+    final secure = EncryptedFileStore(
+      path: '$_root/plux-state/secure.pxk',
+      secrets: _secrets,
+      keyName: 'state-secure.$id',
+      label: 'plux-state/secure/$id',
+      maxBytes: PluxLimit.stateSecureBytes.defaultValue,
+    );
     // The limits of the active app bundle (LIM-001).
     active.addListener(() {
       final limits = active.value?.limits ?? const <String, int>{};
