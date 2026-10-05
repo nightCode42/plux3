@@ -359,6 +359,46 @@ var registry = []Definition{
 		"Pages redirect to each other unconditionally from `onEnter` in a cycle, so navigation would never settle.",
 		"Break the cycle by guarding one of the redirects with a condition.", false,
 	},
+	{
+		AnimationInvalid, "ANIMATION_INVALID", SeverityError, "Invalid animation timeline",
+		"A timeline of a page is malformed: two timelines share a name, its keyframes are not in increasing time or run past the duration, a track has fewer keyframes than the limit anim.keyframesPerTrack allows or more, the duration exceeds anim.timelineDuration, or a driver names a node that does not exist (ANI-002, ANI-006).",
+		"Name each timeline once, order keyframes by time within the duration, and keep them within the anim.* limits; the message names the timeline.", false,
+	},
+	{
+		AnimationTargetInvalid, "ANIMATION_TARGET_INVALID", SeverityError, "Animation track targets nothing animatable",
+		"A track names a node the page does not have, a prop the node's widget does not declare, or a prop whose type cannot be interpolated (only numbers, decimals and colours animate) (ANI-001, ANI-002).",
+		"Target a node of the same page and a numeric or colour prop of its widget.", false,
+	},
+	{
+		AnimationValueInvalid, "ANIMATION_VALUE_INVALID", SeverityError, "Keyframe value has the wrong type",
+		"A keyframe's value is not a literal of the animated prop's type, or violates the prop's constraints (ANI-002).",
+		"Write the keyframe as a literal of the prop's type.", false,
+	},
+	{
+		TransitionInvalid, "TRANSITION_INVALID", SeverityError, "Invalid transition",
+		"A custom route transition names no route timeline of the page, a route timeline animates a prop other than opacity, scale, slideX or slideY, or names a node, or a route timeline is used as anything but a transition (NAV-010).",
+		"Declare a timeline with scope route in the page and name it in routeOptions.timeline.", false,
+	},
+	{
+		AnimationExpensive, "ANIMATION_EXPENSIVE", SeverityWarning, "Animation that re-lays out the page every frame",
+		"A timeline or an implicit animation changes a prop that affects layout (size, padding, margin, spacing, flex) of a node whose subtree is large, so every frame lays the subtree out again (ANI-008).",
+		"Animate a transform (scale, slide) or opacity instead, which the compositor handles without layout.", false,
+	},
+	{
+		AnimationOpacitySubtree, "ANIMATION_OPACITY_SUBTREE", SeverityWarning, "Opacity animated over a large subtree",
+		"A timeline or an implicit animation changes the opacity of a node whose subtree has more nodes than the limit anim.compositedSubtree, which draws the subtree into an offscreen layer every frame (ANI-008).",
+		"Fade the leaves instead, animate a smaller subtree, or use a transform.", false,
+	},
+	{
+		AnimationTooManyTimelines, "ANIMATION_TOO_MANY_TIMELINES", SeverityWarning, "Many timelines can run together",
+		"More timelines autoplay or run on a driver on one page than the limit anim.simultaneousTimelines, so they would all tick on every frame (ANI-008).",
+		"Merge timelines, stagger their start, or start them from actions only when needed.", false,
+	},
+	{
+		NodeAnimationInvalid, "NODE_ANIMATION_INVALID", SeverityError, "Invalid node animation",
+		"A node's animation names a prop its widget does not declare or that cannot be interpolated, an empty hero tag, or an enter or exit transition on the page's root (ANI-001, ANI-003, ANI-004).",
+		"Name animatable props of the widget, give the hero a non-empty tag, and put enter and exit transitions on inner nodes.", false,
+	},
 
 	// Schema and validation: limits and budgets.
 	{
@@ -688,6 +728,26 @@ var registry = []Definition{
 		HostCodeFailed, "HOST_CODE_FAILED", SeverityError, "Host code failed",
 		"A custom action's handler, a native route's parameter conversion or screen, or a native slot's builder registered by the host app threw; the step fails, or the page shows its error fallback, and nothing reaches the plugin as a crash (ACT-060, NAV-002, WGT-033).",
 		"Fix the host's handler, conversion or builder; the report names the action, route or slot and only the exception's type, never its message.", false,
+	},
+	{
+		AnimationUnknown, "ANIMATION_UNKNOWN", SeverityError, "Unknown animation",
+		"An action names a timeline the page does not own, or runs on a page without timelines (ANI-002).",
+		"Name a timeline declared in the page's animations.", false,
+	},
+	{
+		AnimationCommandInvalid, "ANIMATION_COMMAND_INVALID", SeverityError, "Invalid animation command",
+		"controlAnimation was given a command it cannot run, such as seek without a position (ANI-002).",
+		"Pass the position, in milliseconds, with seek.", false,
+	},
+	{
+		AnimationTimelineBroken, "ANIMATION_TIMELINE_BROKEN", SeverityError, "Timeline cannot play",
+		"A timeline of the bundle uses a curve, prop or value this runtime cannot play; the timeline does not run and the nodes keep their static values (ANI-002).",
+		"Rebuild the bundle with a compiler of this runtime's generation.", false,
+	},
+	{
+		AnimationAssetFailed, "ANIMATION_ASSET_FAILED", SeverityError, "Lottie or Rive asset failed",
+		"A Lottie or Rive widget could not load or play its asset: the file is missing, malformed or not what the widget expects (ANI-005).",
+		"Check the asset and its media type; the widget shows nothing in its place.", false,
 	},
 	{
 		ActionTimeout, "ACTION_TIMEOUT", SeverityError, "Action timed out",

@@ -537,6 +537,78 @@ class _ErrorKindReader extends fb.Reader<ErrorKind> {
       ErrorKind.fromValue(const fb.Uint8Reader().read(bc, offset));
 }
 
+enum Driver {
+  Time(0),
+  Scroll(1),
+  Drag(2);
+
+  final int value;
+  const Driver(this.value);
+
+  factory Driver.fromValue(int value) {
+    switch (value) {
+      case 0: return Driver.Time;
+      case 1: return Driver.Scroll;
+      case 2: return Driver.Drag;
+      default: throw StateError('Invalid value $value for bit flag enum');
+    }
+  }
+
+  static Driver? _createOrNull(int? value) =>
+      value == null ? null : Driver.fromValue(value);
+
+  static const int minValue = 0;
+  static const int maxValue = 2;
+  static const fb.Reader<Driver> reader = _DriverReader();
+}
+
+class _DriverReader extends fb.Reader<Driver> {
+  const _DriverReader();
+
+  @override
+  int get size => 1;
+
+  @override
+  Driver read(fb.BufferContext bc, int offset) =>
+      Driver.fromValue(const fb.Uint8Reader().read(bc, offset));
+}
+
+enum ReduceMotion {
+  Skip(0),
+  Shorten(1),
+  Ignore(2);
+
+  final int value;
+  const ReduceMotion(this.value);
+
+  factory ReduceMotion.fromValue(int value) {
+    switch (value) {
+      case 0: return ReduceMotion.Skip;
+      case 1: return ReduceMotion.Shorten;
+      case 2: return ReduceMotion.Ignore;
+      default: throw StateError('Invalid value $value for bit flag enum');
+    }
+  }
+
+  static ReduceMotion? _createOrNull(int? value) =>
+      value == null ? null : ReduceMotion.fromValue(value);
+
+  static const int minValue = 0;
+  static const int maxValue = 2;
+  static const fb.Reader<ReduceMotion> reader = _ReduceMotionReader();
+}
+
+class _ReduceMotionReader extends fb.Reader<ReduceMotion> {
+  const _ReduceMotionReader();
+
+  @override
+  int get size => 1;
+
+  @override
+  ReduceMotion read(fb.BufferContext bc, int offset) =>
+      ReduceMotion.fromValue(const fb.Uint8Reader().read(bc, offset));
+}
+
 class Uuid {
   Uuid._(this._bc, this._bcOffset);
 
@@ -1978,10 +2050,11 @@ class Node {
   int get hints => const fb.Uint8Reader().vTableGet(_bc, _bcOffset, 28, 0);
   List<int>? get typeArguments => const fb.ListReader<int>(fb.Uint32Reader()).vTableGetNullable(_bc, _bcOffset, 30);
   int get nativeSlot => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 32, 0);
+  NodeAnimation? get animation => NodeAnimation.reader.vTableGetNullable(_bc, _bcOffset, 34);
 
   @override
   String toString() {
-    return 'Node{id: ${id}, widget: ${widget}, component: ${component}, componentVersion: ${componentVersion}, props: ${props}, handlers: ${handlers}, children: ${children}, slots: ${slots}, visible: ${visible}, semantics: ${semantics}, testId: ${testId}, overrides: ${overrides}, hints: ${hints}, typeArguments: ${typeArguments}, nativeSlot: ${nativeSlot}}';
+    return 'Node{id: ${id}, widget: ${widget}, component: ${component}, componentVersion: ${componentVersion}, props: ${props}, handlers: ${handlers}, children: ${children}, slots: ${slots}, visible: ${visible}, semantics: ${semantics}, testId: ${testId}, overrides: ${overrides}, hints: ${hints}, typeArguments: ${typeArguments}, nativeSlot: ${nativeSlot}, animation: ${animation}}';
   }
 }
 
@@ -1999,7 +2072,7 @@ class NodeBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable(15);
+    fbBuilder.startTable(16);
   }
 
   int addId(int offset) {
@@ -2062,6 +2135,10 @@ class NodeBuilder {
     fbBuilder.addUint32(14, nativeSlot);
     return fbBuilder.offset;
   }
+  int addAnimationOffset(int? offset) {
+    fbBuilder.addOffset(15, offset);
+    return fbBuilder.offset;
+  }
 
   int finish() {
     return fbBuilder.endTable();
@@ -2084,6 +2161,7 @@ class NodeObjectBuilder extends fb.ObjectBuilder {
   final int? _hints;
   final List<int>? _typeArguments;
   final int? _nativeSlot;
+  final NodeAnimationObjectBuilder? _animation;
 
   NodeObjectBuilder({
     UuidObjectBuilder? id,
@@ -2101,6 +2179,7 @@ class NodeObjectBuilder extends fb.ObjectBuilder {
     int? hints,
     List<int>? typeArguments,
     int? nativeSlot,
+    NodeAnimationObjectBuilder? animation,
   })
       : _id = id,
         _widget = widget,
@@ -2116,7 +2195,8 @@ class NodeObjectBuilder extends fb.ObjectBuilder {
         _overrides = overrides,
         _hints = hints,
         _typeArguments = typeArguments,
-        _nativeSlot = nativeSlot;
+        _nativeSlot = nativeSlot,
+        _animation = animation;
 
   /// Finish building, and store into the [fbBuilder].
   @override
@@ -2135,7 +2215,8 @@ class NodeObjectBuilder extends fb.ObjectBuilder {
         : fbBuilder.writeList(_overrides!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
     final int? typeArgumentsOffset = _typeArguments == null ? null
         : fbBuilder.writeListUint32(_typeArguments!);
-    fbBuilder.startTable(15);
+    final int? animationOffset = _animation?.getOrCreateOffset(fbBuilder);
+    fbBuilder.startTable(16);
     if (_id != null) {
       fbBuilder.addStruct(0, _id!.finish(fbBuilder));
     }
@@ -2155,6 +2236,7 @@ class NodeObjectBuilder extends fb.ObjectBuilder {
     fbBuilder.addUint8(12, _hints);
     fbBuilder.addOffset(13, typeArgumentsOffset);
     fbBuilder.addUint32(14, _nativeSlot);
+    fbBuilder.addOffset(15, animationOffset);
     return fbBuilder.endTable();
   }
 
@@ -3646,10 +3728,11 @@ class Page {
   int get result => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 34, 0);
   List<Trigger>? get triggers => const fb.ListReader<Trigger>(Trigger.reader).vTableGetNullable(_bc, _bcOffset, 36);
   List<Form>? get forms => const fb.ListReader<Form>(Form.reader).vTableGetNullable(_bc, _bcOffset, 38);
+  int get transitionTimeline => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 40, 0);
 
   @override
   String toString() {
-    return 'Page{id: ${id}, key: ${key}, route: ${route}, kind: ${kind}, title: ${title}, params: ${params}, state: ${state}, dataSources: ${dataSources}, lifecycle: ${lifecycle}, transition: ${transition}, guards: ${guards}, secure: ${secure}, requiresAssurance: ${requiresAssurance}, nodes: ${nodes}, strings: ${strings}, result: ${result}, triggers: ${triggers}, forms: ${forms}}';
+    return 'Page{id: ${id}, key: ${key}, route: ${route}, kind: ${kind}, title: ${title}, params: ${params}, state: ${state}, dataSources: ${dataSources}, lifecycle: ${lifecycle}, transition: ${transition}, guards: ${guards}, secure: ${secure}, requiresAssurance: ${requiresAssurance}, nodes: ${nodes}, strings: ${strings}, result: ${result}, triggers: ${triggers}, forms: ${forms}, transitionTimeline: ${transitionTimeline}}';
   }
 }
 
@@ -3667,7 +3750,7 @@ class PageBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable(18);
+    fbBuilder.startTable(19);
   }
 
   int addId(int offset) {
@@ -3742,6 +3825,10 @@ class PageBuilder {
     fbBuilder.addOffset(17, offset);
     return fbBuilder.offset;
   }
+  int addTransitionTimeline(int? transitionTimeline) {
+    fbBuilder.addUint32(18, transitionTimeline);
+    return fbBuilder.offset;
+  }
 
   int finish() {
     return fbBuilder.endTable();
@@ -3767,6 +3854,7 @@ class PageObjectBuilder extends fb.ObjectBuilder {
   final int? _result;
   final List<TriggerObjectBuilder>? _triggers;
   final List<FormObjectBuilder>? _forms;
+  final int? _transitionTimeline;
 
   PageObjectBuilder({
     UuidObjectBuilder? id,
@@ -3787,6 +3875,7 @@ class PageObjectBuilder extends fb.ObjectBuilder {
     int? result,
     List<TriggerObjectBuilder>? triggers,
     List<FormObjectBuilder>? forms,
+    int? transitionTimeline,
   })
       : _id = id,
         _key = key,
@@ -3805,7 +3894,8 @@ class PageObjectBuilder extends fb.ObjectBuilder {
         _strings = strings,
         _result = result,
         _triggers = triggers,
-        _forms = forms;
+        _forms = forms,
+        _transitionTimeline = transitionTimeline;
 
   /// Finish building, and store into the [fbBuilder].
   @override
@@ -3829,7 +3919,7 @@ class PageObjectBuilder extends fb.ObjectBuilder {
         : fbBuilder.writeList(_triggers!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
     final int? formsOffset = _forms == null ? null
         : fbBuilder.writeList(_forms!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
-    fbBuilder.startTable(18);
+    fbBuilder.startTable(19);
     if (_id != null) {
       fbBuilder.addStruct(0, _id!.finish(fbBuilder));
     }
@@ -3850,6 +3940,7 @@ class PageObjectBuilder extends fb.ObjectBuilder {
     fbBuilder.addUint32(15, _result);
     fbBuilder.addOffset(16, triggersOffset);
     fbBuilder.addOffset(17, formsOffset);
+    fbBuilder.addUint32(18, _transitionTimeline);
     return fbBuilder.endTable();
   }
 
@@ -5900,10 +5991,11 @@ class Track {
 
   int get prop => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 4, 0);
   List<Keyframe>? get keyframes => const fb.ListReader<Keyframe>(Keyframe.reader).vTableGetNullable(_bc, _bcOffset, 6);
+  Uuid? get node => Uuid.reader.vTableGetNullable(_bc, _bcOffset, 8);
 
   @override
   String toString() {
-    return 'Track{prop: ${prop}, keyframes: ${keyframes}}';
+    return 'Track{prop: ${prop}, keyframes: ${keyframes}, node: ${node}}';
   }
 }
 
@@ -5921,7 +6013,7 @@ class TrackBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable(2);
+    fbBuilder.startTable(3);
   }
 
   int addProp(int? prop) {
@@ -5930,6 +6022,10 @@ class TrackBuilder {
   }
   int addKeyframesOffset(int? offset) {
     fbBuilder.addOffset(1, offset);
+    return fbBuilder.offset;
+  }
+  int addNode(int offset) {
+    fbBuilder.addStruct(2, offset);
     return fbBuilder.offset;
   }
 
@@ -5941,22 +6037,117 @@ class TrackBuilder {
 class TrackObjectBuilder extends fb.ObjectBuilder {
   final int? _prop;
   final List<KeyframeObjectBuilder>? _keyframes;
+  final UuidObjectBuilder? _node;
 
   TrackObjectBuilder({
     int? prop,
     List<KeyframeObjectBuilder>? keyframes,
+    UuidObjectBuilder? node,
   })
       : _prop = prop,
-        _keyframes = keyframes;
+        _keyframes = keyframes,
+        _node = node;
 
   /// Finish building, and store into the [fbBuilder].
   @override
   int finish(fb.Builder fbBuilder) {
     final int? keyframesOffset = _keyframes == null ? null
         : fbBuilder.writeList(_keyframes!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
-    fbBuilder.startTable(2);
+    fbBuilder.startTable(3);
     fbBuilder.addUint32(0, _prop);
     fbBuilder.addOffset(1, keyframesOffset);
+    if (_node != null) {
+      fbBuilder.addStruct(2, _node!.finish(fbBuilder));
+    }
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
+class Spring {
+  Spring._(this._bc, this._bcOffset);
+  factory Spring(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<Spring> reader = _SpringReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  double get stiffness => const fb.Float64Reader().vTableGet(_bc, _bcOffset, 4, 0.0);
+  double get damping => const fb.Float64Reader().vTableGet(_bc, _bcOffset, 6, 0.0);
+  double get mass => const fb.Float64Reader().vTableGet(_bc, _bcOffset, 8, 0.0);
+
+  @override
+  String toString() {
+    return 'Spring{stiffness: ${stiffness}, damping: ${damping}, mass: ${mass}}';
+  }
+}
+
+class _SpringReader extends fb.TableReader<Spring> {
+  const _SpringReader();
+
+  @override
+  Spring createObject(fb.BufferContext bc, int offset) => 
+    Spring._(bc, offset);
+}
+
+class SpringBuilder {
+  SpringBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(3);
+  }
+
+  int addStiffness(double? stiffness) {
+    fbBuilder.addFloat64(0, stiffness);
+    return fbBuilder.offset;
+  }
+  int addDamping(double? damping) {
+    fbBuilder.addFloat64(1, damping);
+    return fbBuilder.offset;
+  }
+  int addMass(double? mass) {
+    fbBuilder.addFloat64(2, mass);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class SpringObjectBuilder extends fb.ObjectBuilder {
+  final double? _stiffness;
+  final double? _damping;
+  final double? _mass;
+
+  SpringObjectBuilder({
+    double? stiffness,
+    double? damping,
+    double? mass,
+  })
+      : _stiffness = stiffness,
+        _damping = damping,
+        _mass = mass;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    fbBuilder.startTable(3);
+    fbBuilder.addFloat64(0, _stiffness);
+    fbBuilder.addFloat64(1, _damping);
+    fbBuilder.addFloat64(2, _mass);
     return fbBuilder.endTable();
   }
 
@@ -5984,10 +6175,23 @@ class Timeline {
   int get durationUs => const fb.Int64Reader().vTableGet(_bc, _bcOffset, 6, 0);
   int get repeat => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 8, 0);
   List<Track>? get tracks => const fb.ListReader<Track>(Track.reader).vTableGetNullable(_bc, _bcOffset, 10);
+  int get name => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 12, 0);
+  Uuid? get page => Uuid.reader.vTableGetNullable(_bc, _bcOffset, 14);
+  int get delayUs => const fb.Int64Reader().vTableGet(_bc, _bcOffset, 16, 0);
+  bool get forever => const fb.BoolReader().vTableGet(_bc, _bcOffset, 18, false);
+  bool get reverse => const fb.BoolReader().vTableGet(_bc, _bcOffset, 20, false);
+  int get staggerUs => const fb.Int64Reader().vTableGet(_bc, _bcOffset, 22, 0);
+  int get reduceMotion => const fb.Uint8Reader().vTableGet(_bc, _bcOffset, 24, 0);
+  bool get route => const fb.BoolReader().vTableGet(_bc, _bcOffset, 26, false);
+  bool get autoplay => const fb.BoolReader().vTableGet(_bc, _bcOffset, 28, false);
+  int get driver => const fb.Uint8Reader().vTableGet(_bc, _bcOffset, 30, 0);
+  Uuid? get driverNode => Uuid.reader.vTableGetNullable(_bc, _bcOffset, 32);
+  double get driverExtent => const fb.Float64Reader().vTableGet(_bc, _bcOffset, 34, 0.0);
+  Spring? get spring => Spring.reader.vTableGetNullable(_bc, _bcOffset, 36);
 
   @override
   String toString() {
-    return 'Timeline{id: ${id}, durationUs: ${durationUs}, repeat: ${repeat}, tracks: ${tracks}}';
+    return 'Timeline{id: ${id}, durationUs: ${durationUs}, repeat: ${repeat}, tracks: ${tracks}, name: ${name}, page: ${page}, delayUs: ${delayUs}, forever: ${forever}, reverse: ${reverse}, staggerUs: ${staggerUs}, reduceMotion: ${reduceMotion}, route: ${route}, autoplay: ${autoplay}, driver: ${driver}, driverNode: ${driverNode}, driverExtent: ${driverExtent}, spring: ${spring}}';
   }
 }
 
@@ -6005,7 +6209,7 @@ class TimelineBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable(4);
+    fbBuilder.startTable(17);
   }
 
   int addId(int offset) {
@@ -6024,6 +6228,58 @@ class TimelineBuilder {
     fbBuilder.addOffset(3, offset);
     return fbBuilder.offset;
   }
+  int addName(int? name) {
+    fbBuilder.addUint32(4, name);
+    return fbBuilder.offset;
+  }
+  int addPage(int offset) {
+    fbBuilder.addStruct(5, offset);
+    return fbBuilder.offset;
+  }
+  int addDelayUs(int? delayUs) {
+    fbBuilder.addInt64(6, delayUs);
+    return fbBuilder.offset;
+  }
+  int addForever(bool? forever) {
+    fbBuilder.addBool(7, forever);
+    return fbBuilder.offset;
+  }
+  int addReverse(bool? reverse) {
+    fbBuilder.addBool(8, reverse);
+    return fbBuilder.offset;
+  }
+  int addStaggerUs(int? staggerUs) {
+    fbBuilder.addInt64(9, staggerUs);
+    return fbBuilder.offset;
+  }
+  int addReduceMotion(int? reduceMotion) {
+    fbBuilder.addUint8(10, reduceMotion);
+    return fbBuilder.offset;
+  }
+  int addRoute(bool? route) {
+    fbBuilder.addBool(11, route);
+    return fbBuilder.offset;
+  }
+  int addAutoplay(bool? autoplay) {
+    fbBuilder.addBool(12, autoplay);
+    return fbBuilder.offset;
+  }
+  int addDriver(int? driver) {
+    fbBuilder.addUint8(13, driver);
+    return fbBuilder.offset;
+  }
+  int addDriverNode(int offset) {
+    fbBuilder.addStruct(14, offset);
+    return fbBuilder.offset;
+  }
+  int addDriverExtent(double? driverExtent) {
+    fbBuilder.addFloat64(15, driverExtent);
+    return fbBuilder.offset;
+  }
+  int addSpringOffset(int? offset) {
+    fbBuilder.addOffset(16, offset);
+    return fbBuilder.offset;
+  }
 
   int finish() {
     return fbBuilder.endTable();
@@ -6035,30 +6291,315 @@ class TimelineObjectBuilder extends fb.ObjectBuilder {
   final int? _durationUs;
   final int? _repeat;
   final List<TrackObjectBuilder>? _tracks;
+  final int? _name;
+  final UuidObjectBuilder? _page;
+  final int? _delayUs;
+  final bool? _forever;
+  final bool? _reverse;
+  final int? _staggerUs;
+  final int? _reduceMotion;
+  final bool? _route;
+  final bool? _autoplay;
+  final int? _driver;
+  final UuidObjectBuilder? _driverNode;
+  final double? _driverExtent;
+  final SpringObjectBuilder? _spring;
 
   TimelineObjectBuilder({
     UuidObjectBuilder? id,
     int? durationUs,
     int? repeat,
     List<TrackObjectBuilder>? tracks,
+    int? name,
+    UuidObjectBuilder? page,
+    int? delayUs,
+    bool? forever,
+    bool? reverse,
+    int? staggerUs,
+    int? reduceMotion,
+    bool? route,
+    bool? autoplay,
+    int? driver,
+    UuidObjectBuilder? driverNode,
+    double? driverExtent,
+    SpringObjectBuilder? spring,
   })
       : _id = id,
         _durationUs = durationUs,
         _repeat = repeat,
-        _tracks = tracks;
+        _tracks = tracks,
+        _name = name,
+        _page = page,
+        _delayUs = delayUs,
+        _forever = forever,
+        _reverse = reverse,
+        _staggerUs = staggerUs,
+        _reduceMotion = reduceMotion,
+        _route = route,
+        _autoplay = autoplay,
+        _driver = driver,
+        _driverNode = driverNode,
+        _driverExtent = driverExtent,
+        _spring = spring;
 
   /// Finish building, and store into the [fbBuilder].
   @override
   int finish(fb.Builder fbBuilder) {
     final int? tracksOffset = _tracks == null ? null
         : fbBuilder.writeList(_tracks!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
-    fbBuilder.startTable(4);
+    final int? springOffset = _spring?.getOrCreateOffset(fbBuilder);
+    fbBuilder.startTable(17);
     if (_id != null) {
       fbBuilder.addStruct(0, _id!.finish(fbBuilder));
     }
     fbBuilder.addInt64(1, _durationUs);
     fbBuilder.addUint32(2, _repeat);
     fbBuilder.addOffset(3, tracksOffset);
+    fbBuilder.addUint32(4, _name);
+    if (_page != null) {
+      fbBuilder.addStruct(5, _page!.finish(fbBuilder));
+    }
+    fbBuilder.addInt64(6, _delayUs);
+    fbBuilder.addBool(7, _forever);
+    fbBuilder.addBool(8, _reverse);
+    fbBuilder.addInt64(9, _staggerUs);
+    fbBuilder.addUint8(10, _reduceMotion);
+    fbBuilder.addBool(11, _route);
+    fbBuilder.addBool(12, _autoplay);
+    fbBuilder.addUint8(13, _driver);
+    if (_driverNode != null) {
+      fbBuilder.addStruct(14, _driverNode!.finish(fbBuilder));
+    }
+    fbBuilder.addFloat64(15, _driverExtent);
+    fbBuilder.addOffset(16, springOffset);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
+class Transition {
+  Transition._(this._bc, this._bcOffset);
+  factory Transition(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<Transition> reader = _TransitionReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  int get kind => const fb.Uint8Reader().vTableGet(_bc, _bcOffset, 4, 0);
+  int get durationUs => const fb.Int64Reader().vTableGet(_bc, _bcOffset, 6, 0);
+  int get curve => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 8, 0);
+
+  @override
+  String toString() {
+    return 'Transition{kind: ${kind}, durationUs: ${durationUs}, curve: ${curve}}';
+  }
+}
+
+class _TransitionReader extends fb.TableReader<Transition> {
+  const _TransitionReader();
+
+  @override
+  Transition createObject(fb.BufferContext bc, int offset) => 
+    Transition._(bc, offset);
+}
+
+class TransitionBuilder {
+  TransitionBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(3);
+  }
+
+  int addKind(int? kind) {
+    fbBuilder.addUint8(0, kind);
+    return fbBuilder.offset;
+  }
+  int addDurationUs(int? durationUs) {
+    fbBuilder.addInt64(1, durationUs);
+    return fbBuilder.offset;
+  }
+  int addCurve(int? curve) {
+    fbBuilder.addUint32(2, curve);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class TransitionObjectBuilder extends fb.ObjectBuilder {
+  final int? _kind;
+  final int? _durationUs;
+  final int? _curve;
+
+  TransitionObjectBuilder({
+    int? kind,
+    int? durationUs,
+    int? curve,
+  })
+      : _kind = kind,
+        _durationUs = durationUs,
+        _curve = curve;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    fbBuilder.startTable(3);
+    fbBuilder.addUint8(0, _kind);
+    fbBuilder.addInt64(1, _durationUs);
+    fbBuilder.addUint32(2, _curve);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
+class NodeAnimation {
+  NodeAnimation._(this._bc, this._bcOffset);
+  factory NodeAnimation(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<NodeAnimation> reader = _NodeAnimationReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  int get durationUs => const fb.Int64Reader().vTableGet(_bc, _bcOffset, 4, 0);
+  int get curve => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 6, 0);
+  int get delayUs => const fb.Int64Reader().vTableGet(_bc, _bcOffset, 8, 0);
+  List<int>? get props => const fb.ListReader<int>(fb.Uint32Reader()).vTableGetNullable(_bc, _bcOffset, 10);
+  int get reduceMotion => const fb.Uint8Reader().vTableGet(_bc, _bcOffset, 12, 0);
+  Transition? get enter => Transition.reader.vTableGetNullable(_bc, _bcOffset, 14);
+  Transition? get exit => Transition.reader.vTableGetNullable(_bc, _bcOffset, 16);
+  Value? get hero => Value.reader.vTableGetNullable(_bc, _bcOffset, 18);
+
+  @override
+  String toString() {
+    return 'NodeAnimation{durationUs: ${durationUs}, curve: ${curve}, delayUs: ${delayUs}, props: ${props}, reduceMotion: ${reduceMotion}, enter: ${enter}, exit: ${exit}, hero: ${hero}}';
+  }
+}
+
+class _NodeAnimationReader extends fb.TableReader<NodeAnimation> {
+  const _NodeAnimationReader();
+
+  @override
+  NodeAnimation createObject(fb.BufferContext bc, int offset) => 
+    NodeAnimation._(bc, offset);
+}
+
+class NodeAnimationBuilder {
+  NodeAnimationBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(8);
+  }
+
+  int addDurationUs(int? durationUs) {
+    fbBuilder.addInt64(0, durationUs);
+    return fbBuilder.offset;
+  }
+  int addCurve(int? curve) {
+    fbBuilder.addUint32(1, curve);
+    return fbBuilder.offset;
+  }
+  int addDelayUs(int? delayUs) {
+    fbBuilder.addInt64(2, delayUs);
+    return fbBuilder.offset;
+  }
+  int addPropsOffset(int? offset) {
+    fbBuilder.addOffset(3, offset);
+    return fbBuilder.offset;
+  }
+  int addReduceMotion(int? reduceMotion) {
+    fbBuilder.addUint8(4, reduceMotion);
+    return fbBuilder.offset;
+  }
+  int addEnterOffset(int? offset) {
+    fbBuilder.addOffset(5, offset);
+    return fbBuilder.offset;
+  }
+  int addExitOffset(int? offset) {
+    fbBuilder.addOffset(6, offset);
+    return fbBuilder.offset;
+  }
+  int addHeroOffset(int? offset) {
+    fbBuilder.addOffset(7, offset);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class NodeAnimationObjectBuilder extends fb.ObjectBuilder {
+  final int? _durationUs;
+  final int? _curve;
+  final int? _delayUs;
+  final List<int>? _props;
+  final int? _reduceMotion;
+  final TransitionObjectBuilder? _enter;
+  final TransitionObjectBuilder? _exit;
+  final ValueObjectBuilder? _hero;
+
+  NodeAnimationObjectBuilder({
+    int? durationUs,
+    int? curve,
+    int? delayUs,
+    List<int>? props,
+    int? reduceMotion,
+    TransitionObjectBuilder? enter,
+    TransitionObjectBuilder? exit,
+    ValueObjectBuilder? hero,
+  })
+      : _durationUs = durationUs,
+        _curve = curve,
+        _delayUs = delayUs,
+        _props = props,
+        _reduceMotion = reduceMotion,
+        _enter = enter,
+        _exit = exit,
+        _hero = hero;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? propsOffset = _props == null ? null
+        : fbBuilder.writeListUint32(_props!);
+    final int? enterOffset = _enter?.getOrCreateOffset(fbBuilder);
+    final int? exitOffset = _exit?.getOrCreateOffset(fbBuilder);
+    final int? heroOffset = _hero?.getOrCreateOffset(fbBuilder);
+    fbBuilder.startTable(8);
+    fbBuilder.addInt64(0, _durationUs);
+    fbBuilder.addUint32(1, _curve);
+    fbBuilder.addInt64(2, _delayUs);
+    fbBuilder.addOffset(3, propsOffset);
+    fbBuilder.addUint8(4, _reduceMotion);
+    fbBuilder.addOffset(5, enterOffset);
+    fbBuilder.addOffset(6, exitOffset);
+    fbBuilder.addOffset(7, heroOffset);
     return fbBuilder.endTable();
   }
 

@@ -118,6 +118,10 @@
             },
             "additionalProperties": false
           }
+        },
+        "timeline": {
+          "$ref": "common.schema.json#/$defs/name",
+          "description": "The route timeline of a custom transition (NAV-010)."
         }
       },
       "patternProperties": {
@@ -151,6 +155,12 @@
       "description": "The forms of the page (STA-020).",
       "items": {
         "$ref": "common.schema.json#/$defs/form"
+      }
+    },
+    "animations": {
+      "type": "array",
+      "items": {
+        "$ref": "common.schema.json#/$defs/timeline"
       }
     }
   },

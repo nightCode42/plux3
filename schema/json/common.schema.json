@@ -1024,6 +1024,9 @@
         },
         "responsive": {
           "$ref": "#/$defs/responsive"
+        },
+        "animation": {
+          "$ref": "#/$defs/nodeAnimation"
         }
       },
       "patternProperties": {
@@ -1146,9 +1149,10 @@
         "slideDown",
         "scale",
         "sharedAxis",
+        "custom",
         "none"
       ],
-      "description": "Page transition (NAV-010)."
+      "description": "Page transition (NAV-010). `custom` plays the route timeline that `routeOptions.timeline` names."
     },
     "templateVisibility": {
       "enum": [
@@ -1312,6 +1316,303 @@
       },
       "additionalProperties": false,
       "x-plux-type": "FormValidator"
+    },
+    "curve": {
+      "enum": [
+        "linear",
+        "easeIn",
+        "easeOut",
+        "easeInOut",
+        "fastOutSlowIn",
+        "decelerate",
+        "bounceIn",
+        "bounceOut",
+        "elasticOut",
+        "overshoot"
+      ],
+      "description": "An animation curve (ANI-001, ANI-002)."
+    },
+    "reduceMotion": {
+      "enum": [
+        "skip",
+        "shorten",
+        "ignore"
+      ],
+      "description": "What an animation does when the platform asks to reduce motion (ANI-007): `skip` jumps to the final state, `shorten` plays at a quarter of the duration, `ignore` plays as declared (for motion that carries meaning)."
+    },
+    "animTransition": {
+      "type": "object",
+      "description": "An enter or exit transition of a node (ANI-003).",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/animTransitionKind"
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "curve": {
+          "$ref": "#/$defs/curve"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "AnimTransition"
+    },
+    "nodeAnimation": {
+      "type": "object",
+      "description": "The animations of a node (ANI-001, ANI-003, ANI-004): `durationMs` animates the node's animatable props (numbers and colours) whenever their bound value changes; `enter` and `exit` play when the node is inserted or its visibility changes; `hero` is the tag of a shared-element transition.",
+      "properties": {
+        "durationMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "curve": {
+          "$ref": "#/$defs/curve"
+        },
+        "delayMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "props": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/name"
+          },
+          "description": "The props to animate; all that can be, when absent."
+        },
+        "enter": {
+          "$ref": "#/$defs/animTransition"
+        },
+        "exit": {
+          "$ref": "#/$defs/animTransition"
+        },
+        "hero": {
+          "$ref": "#/$defs/propValue",
+          "description": "The hero tag, a string."
+        },
+        "reduceMotion": {
+          "$ref": "#/$defs/reduceMotion"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "NodeAnimation"
+    },
+    "keyframe": {
+      "type": "object",
+      "description": "A value of a track at a time (ANI-002).",
+      "required": [
+        "atMs",
+        "value"
+      ],
+      "properties": {
+        "atMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "value": {
+          "$ref": "#/$defs/propValue"
+        },
+        "curve": {
+          "$ref": "#/$defs/curve",
+          "description": "The curve into this keyframe."
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "Keyframe"
+    },
+    "track": {
+      "type": "object",
+      "description": "The keyframes of one prop of one node (ANI-002); a route timeline's tracks name no node and animate `opacity`, `scale`, `slideX` or `slideY`.",
+      "required": [
+        "prop",
+        "keyframes"
+      ],
+      "properties": {
+        "node": {
+          "$ref": "#/$defs/id"
+        },
+        "prop": {
+          "$ref": "#/$defs/name"
+        },
+        "keyframes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/keyframe"
+          },
+          "minItems": 2
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "Track"
+    },
+    "spring": {
+      "type": "object",
+      "description": "A spring that moves the timeline instead of its duration (ANI-006).",
+      "properties": {
+        "stiffness": {
+          "type": "number",
+          "minimum": 0.01
+        },
+        "damping": {
+          "type": "number",
+          "minimum": 0.01
+        },
+        "mass": {
+          "type": "number",
+          "minimum": 0.01
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "Spring"
+    },
+    "timelineDriver": {
+      "type": "object",
+      "description": "Moves a timeline with the scroll offset or the drag of a node instead of time (ANI-006).",
+      "required": [
+        "kind",
+        "node",
+        "extent"
+      ],
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/timelineDriverKind"
+        },
+        "node": {
+          "$ref": "#/$defs/id"
+        },
+        "extent": {
+          "type": "number",
+          "minimum": 0.01,
+          "description": "Logical pixels of scrolling or dragging that span the timeline."
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "TimelineDriver"
+    },
+    "timeline": {
+      "type": "object",
+      "description": "An animation timeline a page owns (ANI-002): keyframes of props of its nodes, played by `startAnimation` and `controlAnimation`, on page enter, or by a driver.",
+      "required": [
+        "id",
+        "name",
+        "durationMs",
+        "tracks"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "$ref": "#/$defs/name"
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600000
+        },
+        "delayMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "repeat": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000,
+          "description": "Plays after the first."
+        },
+        "repeatForever": {
+          "type": "boolean"
+        },
+        "reverse": {
+          "type": "boolean",
+          "description": "Each repeat plays backwards."
+        },
+        "staggerMs": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The delay per item index for nodes in item templates."
+        },
+        "autoplay": {
+          "type": "boolean",
+          "description": "Plays when the page is shown."
+        },
+        "scope": {
+          "$ref": "#/$defs/timelineScope"
+        },
+        "driver": {
+          "$ref": "#/$defs/timelineDriver"
+        },
+        "spring": {
+          "$ref": "#/$defs/spring"
+        },
+        "reduceMotion": {
+          "$ref": "#/$defs/reduceMotion"
+        },
+        "tracks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/track"
+          },
+          "minItems": 1
+        },
+        "description": {
+          "$ref": "#/$defs/description"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "Timeline"
+    },
+    "animTransitionKind": {
+      "enum": [
+        "fade",
+        "scale",
+        "slideUp",
+        "slideDown",
+        "slideLeft",
+        "slideRight"
+      ],
+      "description": "How a node moves in or out (ANI-003)."
+    },
+    "timelineScope": {
+      "enum": [
+        "page",
+        "route"
+      ],
+      "description": "What a timeline animates: nodes of its page, or the page itself in a route transition (NAV-010)."
+    },
+    "timelineDriverKind": {
+      "enum": [
+        "scroll",
+        "drag"
+      ],
+      "description": "What moves a driven timeline (ANI-006)."
     }
   }
 }

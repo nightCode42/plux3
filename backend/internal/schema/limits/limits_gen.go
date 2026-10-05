@@ -25,6 +25,16 @@ const (
 	// ActionTraceSteps: Steps one action run trace records; later steps are
 	// counted but not recorded. (ACT-030)
 	ActionTraceSteps Key = "action.traceSteps"
+	// AnimCompositedSubtree: Nodes below an animated opacity or layout prop
+	// before the compiler warns of an expensive animation. (ANI-008)
+	AnimCompositedSubtree Key = "anim.compositedSubtree"
+	// AnimKeyframesPerTrack: Keyframes of one track of a timeline. (ANI-002)
+	AnimKeyframesPerTrack Key = "anim.keyframesPerTrack"
+	// AnimSimultaneousTimelines: Timelines of one page that autoplay or follow a
+	// driver before the compiler warns. (ANI-008)
+	AnimSimultaneousTimelines Key = "anim.simultaneousTimelines"
+	// AnimTimelineDuration: Duration of one timeline. (ANI-002)
+	AnimTimelineDuration Key = "anim.timelineDuration"
 	// APIPageSize: Items one page of a list call returns; a call asking for more
 	// gets this many, and one asking for none gets this many too. (SRV-004)
 	APIPageSize Key = "api.pageSize"
@@ -190,6 +200,10 @@ var registry = [...]Definition{
 	{Key: ActionStepsPerRun, Unit: UnitCount, Default: 10000, Warning: 0, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerRuntime, Phase: "P4", Description: "Steps one action run may execute."},
 	{Key: ActionTraceRuns, Unit: UnitCount, Default: 50, Warning: 0, Max: 1000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Action run traces the runtime keeps for diagnostics; the oldest are dropped first."},
 	{Key: ActionTraceSteps, Unit: UnitCount, Default: 200, Warning: 0, Max: 10000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Steps one action run trace records; later steps are counted but not recorded."},
+	{Key: AnimCompositedSubtree, Unit: UnitCount, Default: 40, Warning: 0, Max: 1000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler, Phase: "P5", Description: "Nodes below an animated opacity or layout prop before the compiler warns of an expensive animation."},
+	{Key: AnimKeyframesPerTrack, Unit: UnitCount, Default: 64, Warning: 0, Max: 1000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler, Phase: "P5", Description: "Keyframes of one track of a timeline."},
+	{Key: AnimSimultaneousTimelines, Unit: UnitCount, Default: 6, Warning: 0, Max: 100, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler, Phase: "P5", Description: "Timelines of one page that autoplay or follow a driver before the compiler warns."},
+	{Key: AnimTimelineDuration, Unit: UnitMilliseconds, Default: 60000, Warning: 0, Max: 600000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler, Phase: "P5", Description: "Duration of one timeline."},
 	{Key: APIPageSize, Unit: UnitCount, Default: 100, Warning: 0, Max: 1000, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P2", Description: "Items one page of a list call returns; a call asking for more gets this many, and one asking for none gets this many too."},
 	{Key: APIRequestSize, Unit: UnitBytes, Default: 8388608, Warning: 0, Max: 268435456, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P2", Description: "Size of one API request body, refused before a handler reads it, and of one request message once decompressed."},
 	{Key: APIRequestsPerMinute, Unit: UnitCount, Default: 600, Warning: 0, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization, EnforcedBy: EnforcerServer, Phase: "P2", Description: "API calls one authenticated principal (a user or a token) may make per minute."},

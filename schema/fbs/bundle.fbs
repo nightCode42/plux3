@@ -245,6 +245,9 @@ table Node {
   hints: ubyte; // NodeHints bits
   type_arguments: [uint];
   native_slot: uint;
+  // The node's animations: implicit, enter and exit, hero (ANI-001,
+  // ANI-003, ANI-004); null when it declares none.
+  animation: NodeAnimation;
 }
 
 // ── Section meta ──────────────────────────────────────────────────────────
@@ -444,6 +447,9 @@ table Page {
   triggers: [Trigger];
   // The page's forms (STA-020, ADR-0047).
   forms: [Form];
+  // A string-table index of the name of the route timeline of a custom
+  // transition (NAV-010); 0 when the transition is not custom.
+  transition_timeline: uint;
 }
 
 // ── Forms ─────────────────────────────────────────────────────────────────
@@ -690,21 +696,90 @@ table Locale {
 table Keyframe {
   at_us: long;
   value: Value;
-  // The permanent Curves enum value ID.
+  // The permanent Curves enum value ID: the curve into this keyframe.
   curve: uint;
 }
 
 table Track {
-  // The permanent prop ID.
+  // The permanent prop ID of the target node's widget; for a route
+  // timeline, the route prop (1 opacity, 2 scale, 3 slideX, 4 slideY).
   prop: uint;
   keyframes: [Keyframe];
+  // The node the track animates; absent in a route timeline (ANI-002).
+  node: Uuid;
+}
+
+// A spring that moves a timeline instead of a duration (ANI-006).
+table Spring {
+  stiffness: double;
+  damping: double;
+  mass: double;
+}
+
+// What drives a timeline besides time (ANI-006).
+enum Driver : ubyte {
+  Time = 0,
+  Scroll,
+  Drag
+}
+
+// How a timeline or node animation honours reduce motion (ANI-007).
+enum ReduceMotion : ubyte {
+  Skip = 0,
+  Shorten,
+  Ignore
 }
 
 table Timeline {
   id: Uuid;
   duration_us: long;
+  // Additional plays after the first.
   repeat: uint;
   tracks: [Track];
+  // A string-table index of the timeline's name, which actions use.
+  name: uint;
+  // The page that owns the timeline's controller.
+  page: Uuid;
+  delay_us: long;
+  forever: bool;
+  // Each repeat plays backwards.
+  reverse: bool;
+  // The delay added per item index, for nodes in item templates.
+  stagger_us: long;
+  reduce_motion: ubyte; // ReduceMotion
+  // A route timeline moves a page in or out (NAV-010).
+  route: bool;
+  autoplay: bool;
+  driver: ubyte; // Driver
+  // The node whose scrolling or dragging drives the timeline.
+  driver_node: Uuid;
+  // The scroll offset or drag distance, in logical pixels, that spans the
+  // timeline.
+  driver_extent: double;
+  spring: Spring;
+}
+
+// An enter or exit transition of a node (ANI-003).
+table Transition {
+  // 1 fade, 2 scale, 3 slideUp, 4 slideDown, 5 slideLeft, 6 slideRight.
+  kind: ubyte;
+  duration_us: long;
+  curve: uint;
+}
+
+// The animations of a node, declared in its document (ANI-001).
+table NodeAnimation {
+  // Implicit animation of the node's animatable props (ANI-001).
+  duration_us: long;
+  curve: uint;
+  delay_us: long;
+  // The permanent IDs of the animated props; empty animates all that can.
+  props: [uint];
+  reduce_motion: ubyte; // ReduceMotion
+  enter: Transition;
+  exit: Transition;
+  // The hero tag (ANI-004).
+  hero: Value;
 }
 
 table Timelines {

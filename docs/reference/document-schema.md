@@ -46,6 +46,22 @@ When a staged release activates (SYN-004).
 
 One of `immediate`, `atSafePoint`, `nextLaunch`.
 
+### AnimTransition
+
+An enter or exit transition of a node (ANI-003).
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `kind` | [AnimTransitionKind](#animtransitionkind) | yes | How a node moves in or out (ANI-003). |
+| `durationMs` | integer |  |  |
+| `curve` | [Curve](#curve) |  | An animation curve (ANI-001, ANI-002). |
+
+### AnimTransitionKind
+
+How a node moves in or out (ANI-003).
+
+One of `fade`, `scale`, `slideUp`, `slideDown`, `slideLeft`, `slideRight`.
+
 ### AppDocument
 
 An app: its plugins, theme, locales, environments, shared data and policies (SCH-020). File: `app.json`.
@@ -204,6 +220,12 @@ A named slot.
 | `required` | boolean |  |  |
 | `multiple` | boolean |  |  |
 | `description` | string |  | Human-readable description. |
+
+### Curve
+
+An animation curve (ANI-001, ANI-002).
+
+One of `linear`, `easeIn`, `easeOut`, `easeInOut`, `fastOutSlowIn`, `decelerate`, `bounceIn`, `bounceOut`, `elasticOut`, `overshoot`.
 
 ### DataSource
 
@@ -411,6 +433,16 @@ An uploaded image or a generated monogram (SCH-020).
 | `$asset` | string |  | Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). |
 | `monogram` | [Monogram](#monogram) |  | Generated monogram icon. |
 
+### Keyframe
+
+A value of a track at a time (ANI-002).
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `atMs` | integer | yes |  |
+| `value` | JSON value | yes | A prop value: a literal of the prop's type, or a binding (SCH-011). Literal objects and lists may contain bindings in their fields and items. |
+| `curve` | [Curve](#curve) |  | The curve into this keyframe. |
+
 ### Lifecycle
 
 Lifecycle handlers (SCH-022).
@@ -521,6 +553,22 @@ A node of a page or component tree: a widget or a component instance (SCH-023).
 | `semantics` | [Semantics](#semantics) |  | Accessibility semantics of a node (A11Y-002). |
 | `testId` | string |  | Stable identifier for tests (WGT-013). |
 | `responsive` | [Responsive](#responsive) |  | Prop overrides per window size class; `compact` is the base and overrides cascade (WGT-010). |
+| `animation` | [NodeAnimation](#nodeanimation) |  | The animations of a node (ANI-001, ANI-003, ANI-004): `durationMs` animates the node's animatable props (numbers and colours) whenever their bound value changes; `enter` and `exit` play when the node is inserted or its visibility changes; `hero` is the tag of a shared-element transition. |
+
+### NodeAnimation
+
+The animations of a node (ANI-001, ANI-003, ANI-004): `durationMs` animates the node's animatable props (numbers and colours) whenever their bound value changes; `enter` and `exit` play when the node is inserted or its visibility changes; `hero` is the tag of a shared-element transition.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `durationMs` | integer |  |  |
+| `curve` | [Curve](#curve) |  | An animation curve (ANI-001, ANI-002). |
+| `delayMs` | integer |  |  |
+| `props` | list of string |  | The props to animate; all that can be, when absent. |
+| `enter` | [AnimTransition](#animtransition) |  | An enter or exit transition of a node (ANI-003). |
+| `exit` | [AnimTransition](#animtransition) |  | An enter or exit transition of a node (ANI-003). |
+| `hero` | JSON value |  | The hero tag, a string. |
+| `reduceMotion` | [ReduceMotion](#reducemotion) |  | What an animation does when the platform asks to reduce motion (ANI-007): `skip` jumps to the final state, `shorten` plays at a quarter of the duration, `ignore` plays as declared (for motion that carries meaning). |
 
 ### PageDocument
 
@@ -546,6 +594,7 @@ A page: route, parameters, state, data, lifecycle and node tree (SCH-022). File:
 | `security` | [PageSecurity](#pagesecurity) |  | Security flags (SCH-022). |
 | `root` | [Node](#node) | yes | A node of a page or component tree: a widget or a component instance (SCH-023). |
 | `forms` | list of [Form](#form) |  | The forms of the page (STA-020). |
+| `animations` | list of [Timeline](#timeline) |  |  |
 
 ### PageKind
 
@@ -617,6 +666,12 @@ Push notifications (NAV-008, ADR-0040): whether the app uses them, so a generate
 | `enabled` | boolean | yes |  |
 | `payloadKey` | string |  | The payload key holding `{route, params}`; `plux` when absent. |
 
+### ReduceMotion
+
+What an animation does when the platform asks to reduce motion (ANI-007): `skip` jumps to the final state, `shorten` plays at a quarter of the duration, `ignore` plays as declared (for motion that carries meaning).
+
+One of `skip`, `shorten`, `ignore`.
+
 ### RequiredFeaturesPolicy
 
 What the compiler does when a release needs a newer runtime than `minRuntimeVersion`: reject the publish, or raise the release's required features with a warning (WGT-004).
@@ -658,8 +713,9 @@ Route options (SCH-022, NAV-010).
 
 | Property | Type | Required | Description |
 |---|---|---|---|
-| `transition` | [Transition](#transition) |  | Page transition (NAV-010). |
+| `transition` | [Transition](#transition) |  | Page transition (NAV-010). `custom` plays the route timeline that `routeOptions.timeline` names. |
 | `guards` | list of [RouteGuard](#routeguard) |  |  |
+| `timeline` | string |  | The route timeline of a custom transition (NAV-010). |
 
 ### SecurityProfile
 
@@ -706,6 +762,16 @@ A tab of a shell: its label, icon and the route it opens with.
 The content of a slot: one node, or a list of nodes for list slots.
 
 A [Node](#node) or a non-empty list of them.
+
+### Spring
+
+A spring that moves the timeline instead of its duration (ANI-006).
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `stiffness` | number |  |  |
+| `damping` | number |  |  |
+| `mass` | number |  |  |
 
 ### StartupMode
 
@@ -855,6 +921,50 @@ Design tokens for light and dark modes (THM-001, THM-002). File: `theme.json`.
 | `name` | string | yes |  |
 | `tokens` | JSON value | yes | A design token or a group of tokens in the W3C Design Tokens format (THM-001). Dark-mode values are given in `$extensions.dev.plux.dark`. |
 
+### Timeline
+
+An animation timeline a page owns (ANI-002): keyframes of props of its nodes, played by `startAnimation` and `controlAnimation`, on page enter, or by a driver.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `id` | string | yes | Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). |
+| `name` | string | yes | Identifier used in PXL and generated code: lowerCamelCase. |
+| `durationMs` | integer | yes |  |
+| `delayMs` | integer |  |  |
+| `repeat` | integer |  | Plays after the first. |
+| `repeatForever` | boolean |  |  |
+| `reverse` | boolean |  | Each repeat plays backwards. |
+| `staggerMs` | integer |  | The delay per item index for nodes in item templates. |
+| `autoplay` | boolean |  | Plays when the page is shown. |
+| `scope` | [TimelineScope](#timelinescope) |  | What a timeline animates: nodes of its page, or the page itself in a route transition (NAV-010). |
+| `driver` | [TimelineDriver](#timelinedriver) |  | Moves a timeline with the scroll offset or the drag of a node instead of time (ANI-006). |
+| `spring` | [Spring](#spring) |  | A spring that moves the timeline instead of its duration (ANI-006). |
+| `reduceMotion` | [ReduceMotion](#reducemotion) |  | What an animation does when the platform asks to reduce motion (ANI-007): `skip` jumps to the final state, `shorten` plays at a quarter of the duration, `ignore` plays as declared (for motion that carries meaning). |
+| `tracks` | list of [Track](#track) | yes |  |
+| `description` | string |  | Human-readable description. |
+
+### TimelineDriver
+
+Moves a timeline with the scroll offset or the drag of a node instead of time (ANI-006).
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `kind` | [TimelineDriverKind](#timelinedriverkind) | yes | What moves a driven timeline (ANI-006). |
+| `node` | string | yes | Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). |
+| `extent` | number | yes | Logical pixels of scrolling or dragging that span the timeline. |
+
+### TimelineDriverKind
+
+What moves a driven timeline (ANI-006).
+
+One of `scroll`, `drag`.
+
+### TimelineScope
+
+What a timeline animates: nodes of its page, or the page itself in a route transition (NAV-010).
+
+One of `page`, `route`.
+
 ### TimerTrigger
 
 A timer (ACT-002): it fires every intervalMs while its owner lives, or once, intervalMs after its owner starts, when repeat is false; `event` is the number of times it has fired.
@@ -867,11 +977,21 @@ A timer (ACT-002): it fires every intervalMs while its owner lives, or once, int
 | `handler` | [EventHandler](#eventhandler) | yes | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
 | `description` | string |  | Human-readable description. |
 
+### Track
+
+The keyframes of one prop of one node (ANI-002); a route timeline's tracks name no node and animate `opacity`, `scale`, `slideX` or `slideY`.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `node` | string |  | Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). |
+| `prop` | string | yes | Identifier used in PXL and generated code: lowerCamelCase. |
+| `keyframes` | list of [Keyframe](#keyframe) | yes |  |
+
 ### Transition
 
-Page transition (NAV-010).
+Page transition (NAV-010). `custom` plays the route timeline that `routeOptions.timeline` names.
 
-One of `platform`, `fade`, `slideLeft`, `slideRight`, `slideUp`, `slideDown`, `scale`, `sharedAxis`, `none`.
+One of `platform`, `fade`, `slideLeft`, `slideRight`, `slideUp`, `slideDown`, `scale`, `sharedAxis`, `custom`, `none`.
 
 ### TranslationKey
 

@@ -41,6 +41,16 @@ enum PluxLimit {
   /// Steps one action run trace records; later steps are counted but not
   /// recorded.
   actionTraceSteps('action.traceSteps', PluxLimitUnit.count, 200, 0, 10000),
+  /// Nodes below an animated opacity or layout prop before the compiler warns
+  /// of an expensive animation.
+  animCompositedSubtree('anim.compositedSubtree', PluxLimitUnit.count, 40, 0, 1000),
+  /// Keyframes of one track of a timeline.
+  animKeyframesPerTrack('anim.keyframesPerTrack', PluxLimitUnit.count, 64, 0, 1000),
+  /// Timelines of one page that autoplay or follow a driver before the compiler
+  /// warns.
+  animSimultaneousTimelines('anim.simultaneousTimelines', PluxLimitUnit.count, 6, 0, 100),
+  /// Duration of one timeline.
+  animTimelineDuration('anim.timelineDuration', PluxLimitUnit.milliseconds, 60000, 0, 600000),
   /// Items one page of a list call returns; a call asking for more gets this
   /// many, and one asking for none gets this many too.
   apiPageSize('api.pageSize', PluxLimitUnit.count, 100, 0, 1000),

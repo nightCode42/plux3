@@ -37,6 +37,20 @@ export interface ActionGraphDocument {
 /** When a staged release activates (SYN-004). */
 export type ActivationPolicy = "immediate" | "atSafePoint" | "nextLaunch";
 
+/** An enter or exit transition of a node (ANI-003). */
+export interface AnimTransition {
+  /** How a node moves in or out (ANI-003). */
+  readonly kind: AnimTransitionKind;
+  readonly durationMs?: number;
+  /** An animation curve (ANI-001, ANI-002). */
+  readonly curve?: Curve;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** How a node moves in or out (ANI-003). */
+export type AnimTransitionKind = "fade" | "scale" | "slideUp" | "slideDown" | "slideLeft" | "slideRight";
+
 /** An app: its plugins, theme, locales, environments, shared data and policies (SCH-020). File: `app.json`. */
 export interface AppDocument {
   /** Version of the document schema (SCH-000). Older documents are migrated before validation. */
@@ -229,6 +243,9 @@ export interface ComponentSlot {
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
+
+/** An animation curve (ANI-001, ANI-002). */
+export type Curve = "linear" | "easeIn" | "easeOut" | "easeInOut" | "fastOutSlowIn" | "decelerate" | "bounceIn" | "bounceOut" | "elasticOut" | "overshoot";
 
 /** A data source with its value type and design-time mock (SCH-024, DAT-080). */
 export interface DataSource {
@@ -450,6 +467,17 @@ export interface Icon {
   readonly [extension: `x-${string}`]: unknown;
 }
 
+/** A value of a track at a time (ANI-002). */
+export interface Keyframe {
+  readonly atMs: number;
+  /** A prop value: a literal of the prop's type, or a binding (SCH-011). Literal objects and lists may contain bindings in their fields and items. */
+  readonly value: JsonValue;
+  /** The curve into this keyframe. */
+  readonly curve?: Curve;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
 /** Lifecycle handlers (SCH-022). */
 export interface Lifecycle {
   /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
@@ -572,6 +600,28 @@ export interface Node {
   readonly testId?: string;
   /** Prop overrides per window size class; `compact` is the base and overrides cascade (WGT-010). */
   readonly responsive?: Responsive;
+  /** The animations of a node (ANI-001, ANI-003, ANI-004): `durationMs` animates the node's animatable props (numbers and colours) whenever their bound value changes; `enter` and `exit` play when the node is inserted or its visibility changes; `hero` is the tag of a shared-element transition. */
+  readonly animation?: NodeAnimation;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** The animations of a node (ANI-001, ANI-003, ANI-004): `durationMs` animates the node's animatable props (numbers and colours) whenever their bound value changes; `enter` and `exit` play when the node is inserted or its visibility changes; `hero` is the tag of a shared-element transition. */
+export interface NodeAnimation {
+  readonly durationMs?: number;
+  /** An animation curve (ANI-001, ANI-002). */
+  readonly curve?: Curve;
+  readonly delayMs?: number;
+  /** The props to animate; all that can be, when absent. */
+  readonly props?: readonly string[];
+  /** An enter or exit transition of a node (ANI-003). */
+  readonly enter?: AnimTransition;
+  /** An enter or exit transition of a node (ANI-003). */
+  readonly exit?: AnimTransition;
+  /** The hero tag, a string. */
+  readonly hero?: JsonValue;
+  /** What an animation does when the platform asks to reduce motion (ANI-007): `skip` jumps to the final state, `shorten` plays at a quarter of the duration, `ignore` plays as declared (for motion that carries meaning). */
+  readonly reduceMotion?: ReduceMotion;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
@@ -610,6 +660,7 @@ export interface PageDocument {
   readonly root: Node;
   /** The forms of the page (STA-020). */
   readonly forms?: readonly Form[];
+  readonly animations?: readonly Timeline[];
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
@@ -693,6 +744,9 @@ export interface PushPolicy {
   readonly [extension: `x-${string}`]: unknown;
 }
 
+/** What an animation does when the platform asks to reduce motion (ANI-007): `skip` jumps to the final state, `shorten` plays at a quarter of the duration, `ignore` plays as declared (for motion that carries meaning). */
+export type ReduceMotion = "skip" | "shorten" | "ignore";
+
 /** What the compiler does when a release needs a newer runtime than `minRuntimeVersion`: reject the publish, or raise the release's required features with a warning (WGT-004). */
 export type RequiredFeaturesPolicy = "reject" | "raise";
 
@@ -727,9 +781,11 @@ export interface RouteGuard {
 
 /** Route options (SCH-022, NAV-010). */
 export interface RouteOptions {
-  /** Page transition (NAV-010). */
+  /** Page transition (NAV-010). `custom` plays the route timeline that `routeOptions.timeline` names. */
   readonly transition?: Transition;
   readonly guards?: readonly RouteGuard[];
+  /** The route timeline of a custom transition (NAV-010). */
+  readonly timeline?: string;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
@@ -778,6 +834,15 @@ export interface ShellTab {
 
 /** The content of a slot: one node, or a list of nodes for list slots. */
 export type SlotFill = Node | readonly Node[];
+
+/** A spring that moves the timeline instead of its duration (ANI-006). */
+export interface Spring {
+  readonly stiffness?: number;
+  readonly damping?: number;
+  readonly mass?: number;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
 
 /** Start-up mode (SYN-003). */
 export type StartupMode = "useCacheThenSync" | "blockUntilSynced";
@@ -955,6 +1020,56 @@ export interface ThemeDocument {
   readonly [extension: `x-${string}`]: unknown;
 }
 
+/** An animation timeline a page owns (ANI-002): keyframes of props of its nodes, played by `startAnimation` and `controlAnimation`, on page enter, or by a driver. */
+export interface Timeline {
+  /** Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). */
+  readonly id: string;
+  /** Identifier used in PXL and generated code: lowerCamelCase. */
+  readonly name: string;
+  readonly durationMs: number;
+  readonly delayMs?: number;
+  /** Plays after the first. */
+  readonly repeat?: number;
+  readonly repeatForever?: boolean;
+  /** Each repeat plays backwards. */
+  readonly reverse?: boolean;
+  /** The delay per item index for nodes in item templates. */
+  readonly staggerMs?: number;
+  /** Plays when the page is shown. */
+  readonly autoplay?: boolean;
+  /** What a timeline animates: nodes of its page, or the page itself in a route transition (NAV-010). */
+  readonly scope?: TimelineScope;
+  /** Moves a timeline with the scroll offset or the drag of a node instead of time (ANI-006). */
+  readonly driver?: TimelineDriver;
+  /** A spring that moves the timeline instead of its duration (ANI-006). */
+  readonly spring?: Spring;
+  /** What an animation does when the platform asks to reduce motion (ANI-007): `skip` jumps to the final state, `shorten` plays at a quarter of the duration, `ignore` plays as declared (for motion that carries meaning). */
+  readonly reduceMotion?: ReduceMotion;
+  readonly tracks: readonly Track[];
+  /** Human-readable description. */
+  readonly description?: string;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** Moves a timeline with the scroll offset or the drag of a node instead of time (ANI-006). */
+export interface TimelineDriver {
+  /** What moves a driven timeline (ANI-006). */
+  readonly kind: TimelineDriverKind;
+  /** Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). */
+  readonly node: string;
+  /** Logical pixels of scrolling or dragging that span the timeline. */
+  readonly extent: number;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** What moves a driven timeline (ANI-006). */
+export type TimelineDriverKind = "scroll" | "drag";
+
+/** What a timeline animates: nodes of its page, or the page itself in a route transition (NAV-010). */
+export type TimelineScope = "page" | "route";
+
 /** A timer (ACT-002): it fires every intervalMs while its owner lives, or once, intervalMs after its owner starts, when repeat is false; `event` is the number of times it has fired. */
 export interface TimerTrigger {
   /** Identifier used in PXL and generated code: lowerCamelCase. */
@@ -970,8 +1085,19 @@ export interface TimerTrigger {
   readonly [extension: `x-${string}`]: unknown;
 }
 
-/** Page transition (NAV-010). */
-export type Transition = "platform" | "fade" | "slideLeft" | "slideRight" | "slideUp" | "slideDown" | "scale" | "sharedAxis" | "none";
+/** The keyframes of one prop of one node (ANI-002); a route timeline's tracks name no node and animate `opacity`, `scale`, `slideX` or `slideY`. */
+export interface Track {
+  /** Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). */
+  readonly node?: string;
+  /** Identifier used in PXL and generated code: lowerCamelCase. */
+  readonly prop: string;
+  readonly keyframes: readonly Keyframe[];
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** Page transition (NAV-010). `custom` plays the route timeline that `routeOptions.timeline` names. */
+export type Transition = "platform" | "fade" | "slideLeft" | "slideRight" | "slideUp" | "slideDown" | "scale" | "sharedAxis" | "custom" | "none";
 
 /** A translation key. */
 export interface TranslationKey {

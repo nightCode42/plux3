@@ -90,6 +90,17 @@ const (
 	UnknownRouteParameter      Code = 1205
 	RedirectLoop               Code = 1206
 
+	// Schema and validation: animation (PLX-1210–1229, P5 R7).
+
+	AnimationInvalid          Code = 1210
+	AnimationTargetInvalid    Code = 1211
+	AnimationValueInvalid     Code = 1212
+	TransitionInvalid         Code = 1213
+	AnimationExpensive        Code = 1214
+	AnimationOpacitySubtree   Code = 1215
+	AnimationTooManyTimelines Code = 1216
+	NodeAnimationInvalid      Code = 1217
+
 	// Schema and validation: limits and budgets (PLX-1300–1399).
 
 	PageNodeBudget      Code = 1310
@@ -169,6 +180,13 @@ const (
 	ExposedStateTypeMismatch  Code = 4203
 	UserContextInvalid        Code = 4204
 	HostCodeFailed            Code = 4205
+
+	// Runtime animation (PLX-4300–4399, P5 R7).
+
+	AnimationUnknown        Code = 4300
+	AnimationCommandInvalid Code = 4301
+	AnimationTimelineBroken Code = 4302
+	AnimationAssetFailed    Code = 4303
 
 	// Actions, data and local DB (PLX-5000–5999).
 
