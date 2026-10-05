@@ -45,12 +45,11 @@ final class PluxScreen<R> {
 abstract final class PluxScreens {
   /// The page `task-detail`.
   static PluxScreen<bool> taskDetail({required Item item}) =>
-      PluxScreen<bool>._('task-detail', {
-        'item': item.toJson(),
-      }, (j) => _nullable(j, (j) => j as bool));
+      PluxScreen<bool>._('task-detail', {'item': item.toJson()}, (j) => _nullable(j, (j) => j as bool));
 
   /// The page `tasks`.
-  static PluxScreen<void> tasks() => PluxScreen<void>._('tasks', {}, (_) {});
+  static PluxScreen<void> tasks() =>
+      PluxScreen<void>._('tasks', {}, (_) {});
 
   /// The page `tasks-unavailable`.
   static PluxScreen<void> tasksUnavailable() =>
@@ -60,19 +59,10 @@ abstract final class PluxScreens {
 /// A task was marked done.
 final class TaskCompletedEvent {
   /// Creates a value.
-  const TaskCompletedEvent({
-    this.note,
-    required this.priority,
-    required this.title,
-  });
+  const TaskCompletedEvent({this.note, required this.priority, required this.title});
 
   /// The value of JSON form [json].
-  factory TaskCompletedEvent.fromJson(Map<String, Object?> json) =>
-      TaskCompletedEvent(
-        note: _nullable(json['note'], (e) => e as String),
-        priority: Priority.fromJson(json['priority'] as String),
-        title: json['title'] as String,
-      );
+  factory TaskCompletedEvent.fromJson(Map<String, Object?> json) => TaskCompletedEvent(note: _nullable(json['note'], (e) => e as String), priority: Priority.fromJson(json['priority'] as String), title: json['title'] as String);
 
   /// The field `note`.
   final String? note;
@@ -89,8 +79,7 @@ final class TaskCompletedEvent {
 abstract final class PluxHostEvents {
   /// The `taskCompleted` events.
   static Stream<TaskCompletedEvent> get taskCompleted =>
-      plux.Plux.eventsNamed('taskCompleted')
-          .map((e) => TaskCompletedEvent.fromJson(e.payload));
+      plux.Plux.eventsNamed('taskCompleted').map((e) => TaskCompletedEvent.fromJson(e.payload));
 }
 
 /// The app's feature flags (ABT-006).
@@ -120,20 +109,10 @@ enum Filter {
 /// The type `Item`.
 final class Item {
   /// Creates a value.
-  const Item({
-    required this.done,
-    this.note,
-    required this.priority,
-    required this.title,
-  });
+  const Item({required this.done, this.note, required this.priority, required this.title});
 
   /// The value of JSON form [json].
-  factory Item.fromJson(Map<String, Object?> json) => Item(
-    done: json['done'] as bool,
-    note: _nullable(json['note'], (e) => e as String),
-    priority: Priority.fromJson(json['priority'] as String),
-    title: json['title'] as String,
-  );
+  factory Item.fromJson(Map<String, Object?> json) => Item(done: json['done'] as bool, note: _nullable(json['note'], (e) => e as String), priority: Priority.fromJson(json['priority'] as String), title: json['title'] as String);
 
   /// The field `done`.
   final bool done;
@@ -148,12 +127,7 @@ final class Item {
   final String title;
 
   /// The JSON form.
-  Map<String, Object?> toJson() => {
-    'done': done,
-    'note': note,
-    'priority': priority.json,
-    'title': title,
-  };
+  Map<String, Object?> toJson() => {'done': done, 'note': note, 'priority': priority.json, 'title': title};
 }
 
 /// The type `Priority`.
@@ -171,5 +145,4 @@ enum Priority {
   final String json;
 }
 
-R? _nullable<T extends Object, R>(T? v, R Function(T v) f) =>
-    v == null ? null : f(v);
+R? _nullable<T extends Object, R>(T? v, R Function(T v) f) => v == null ? null : f(v);
