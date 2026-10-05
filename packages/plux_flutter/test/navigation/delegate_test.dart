@@ -14,7 +14,8 @@ void main() {
     expect(PluxTransition.parse('slideLeft'), PluxTransition.slideLeft);
     expect(PluxTransition.parse('sharedAxis'), PluxTransition.sharedAxis);
     expect(PluxTransition.parse(null), PluxTransition.platform);
-    expect(PluxTransition.parse('custom'), PluxTransition.platform);
+    expect(PluxTransition.parse('custom'), PluxTransition.custom);
+    expect(PluxTransition.parse('spin'), PluxTransition.platform);
   });
 
   testWidgets('each presentation shows its route type [NAV-005]', (
