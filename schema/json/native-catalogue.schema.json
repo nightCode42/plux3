@@ -168,6 +168,16 @@
         },
         "additionalProperties": false
       }
+    },
+    "packages": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^plux_[a-z0-9_]+$",
+        "maxLength": 64
+      },
+      "uniqueItems": true,
+      "description": "The optional Plux packages the build registers, such as `plux_media`: a release that uses a device action whose package a build lacks is flagged for that build (RT-060, SEC-080)."
     }
   },
   "patternProperties": {

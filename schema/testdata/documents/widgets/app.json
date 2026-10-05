@@ -1,4 +1,9 @@
 {
+  "capabilities": {
+    "deviceApis": [
+      "haptics"
+    ]
+  },
   "defaultLocale": "en",
   "entryRoute": "layout",
   "environments": [
@@ -32,11 +37,11 @@
       "mode": "useCacheThenSync"
     }
   },
-  "theme": "01c0c450-6c00-7000-8000-000000000002",
   "telemetry": {
     "sampling": {
       "render_perf": 0.25,
       "screen_view": 0.5
     }
-  }
+  },
+  "theme": "01c0c450-6c00-7000-8000-000000000002"
 }

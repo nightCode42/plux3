@@ -44,7 +44,9 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | `data.streamMessageSize` | bytes | 1048576 | 80% | 16777216 | installation, organization, app, plugin | P5 | DAT-012, LIM-004 | Bytes one stream message may have; a larger message closes the stream with a typed error. |
 | `data.streamsOpen` | count | 8 | 80% | 64 | installation, organization, app | P5 | DAT-012, LIM-004 | Streams the runtime keeps open at once; a further subscription is refused with a typed error. |
 | `data.uploadSize` | bytes | 26214400 | 80% | 1073741824 | installation, organization, app | P5 | DAT-031, LIM-004 | Bytes one upload may have; the file's size is checked before the transfer and a larger file is refused. |
+| `device.clipboardChars` | count | 10000 | 80% | 100000 | installation, organization, app | P5 | SEC-080, LIM-004 | Characters copyToClipboard may put on the clipboard in one step. |
 | `device.diskQuota` | bytes | 209715200 | 80% | 4294967296 | installation, organization, app | P3 | SYN-012 | Disk space the runtime may use for releases on one device. |
+| `device.pickCount` | count | 10 | 80% | 100 | installation, organization, app | P5 | SEC-080, LIM-004 | Files a single pickImage or pickFile step may return. |
 | `document.fileSize` | bytes | 8388608 | 80% | 67108864 | installation, organization | P1 | SCH-006 | Size of one document file in the project layout, checked before parsing. |
 | `document.jsonDepth` | count | 512 | 80% | 4096 | installation | P1 | SCH-003 | Nesting of arrays and objects in one document, checked while parsing. |
 | `document.stringPropSize` | bytes | 65536 | 80% | 1048576 | installation, organization, app, plugin | P1 | SCH-005 | Size of one string prop value, in UTF-8 bytes. |

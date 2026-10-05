@@ -1,4 +1,17 @@
 <!-- SPDX-FileCopyrightText: 2026 Plux contributors -->
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- Shares picked files with other apps through content URIs; only
+             files under the app's cache and files directories (SEC-080). -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.plux.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/plux_file_paths" />
+        </provider>
+    </application>
 </manifest>

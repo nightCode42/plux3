@@ -743,7 +743,9 @@ func jobOf(r dbgen.PublishJob) PublishJob {
 // published draft uses against the catalogue of every host build of the
 // app (WGT-032): what a build lacks is a warning at the use's JSON path,
 // which the publisher acknowledges; that build's devices keep the newest
-// release they can run (REL-080).
+// release they can run (REL-080). The optional packages the draft's device
+// actions need are checked the same way against the packages each build's
+// catalogue records (RT-060).
 func (s *Service) hostBuildChecks(ctx context.Context, p auth.Principal, row dbgen.PublishJob, c compiled) (plxerr.Diagnostics, error) {
 	var out plxerr.Diagnostics
 	err := s.inOrg(ctx, p, func(ctx context.Context, tx pgx.Tx) error {
@@ -753,6 +755,7 @@ func (s *Service) hostBuildChecks(ctx context.Context, p auth.Principal, row dbg
 		}
 		for _, b := range builds {
 			out = append(out, compiler.HostBuildIncompatibilities(c.result, draftFiles(c.key), b.build, b.catalogue)...)
+			out = append(out, compiler.HostBuildLacksPackages(c.result, draftFiles(c.key), b.build, b.catalogue)...)
 		}
 		return nil
 	})

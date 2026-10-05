@@ -65,6 +65,7 @@ An app: its plugins, theme, locales, environments, shared data and policies (SCH
 | `entryRoute` | string | yes | App-wide unique route name (SCH-025). |
 | `navigation` | [NavigationPolicy](#navigationpolicy) |  | App-wide navigation: the page for unknown routes, deep links and tabbed shells (NAV-005, NAV-006, NAV-008, NAV-011, ADR-0040). |
 | `plugins` | list of string | yes | Keys of the app's plugins, in display order; each has a directory `plugins/<key>/`. |
+| `capabilities` | [ApprovedCapabilities](#approvedcapabilities) |  | The capabilities the app approves for its plugins (SEC-080, ADR-0051); a release is published only when every plugin requests a subset. Without `deviceApis`, no device API is approved. `networkDomains` and `functions`, when listed, narrow what plugins may declare. Native routes are approved by the host's registration, not here. |
 | `environments` | list of [Environment](#environment) | yes |  |
 | `variables` | list of [Field](#field) |  | Non-secret environment variables available in PXL as `env.<name>` (DAT-003). |
 | `dataSources` | list of [DataSource](#datasource) |  |  |
@@ -82,6 +83,16 @@ An app: its plugins, theme, locales, environments, shared data and policies (SCH
 | `telemetry` | [TelemetryPolicy](#telemetrypolicy) |  | What the runtime reports (ANL-003, ADR-0034). |
 | `push` | [PushPolicy](#pushpolicy) |  | Push notifications (NAV-008, ADR-0040): whether the app uses them, so a generated project carries the platform configuration, and the payload key under which a notification names `{route, params}` for `Plux.handlePushPayload`. |
 | `triggers` | [Triggers](#triggers) |  | Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active. |
+
+### ApprovedCapabilities
+
+The capabilities the app approves for its plugins (SEC-080, ADR-0051); a release is published only when every plugin requests a subset. Without `deviceApis`, no device API is approved. `networkDomains` and `functions`, when listed, narrow what plugins may declare. Native routes are approved by the host's registration, not here.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `deviceApis` | list of [DeviceAPI](#deviceapi) |  |  |
+| `networkDomains` | list of string |  |  |
+| `functions` | list of string |  |  |
 
 ### AssetEntry
 
@@ -467,6 +478,7 @@ The native routes, native slots and custom actions of one host app build (SCH-03
 | `routes` | list of [NativeRoute](#nativeroute) |  |  |
 | `slots` | list of [NativeSlot](#nativeslot) |  |  |
 | `actions` | list of [NativeAction](#nativeaction) |  |  |
+| `packages` | list of string |  | The optional Plux packages the build registers, such as `plux_media`: a release that uses a device action whose package a build lacks is flagged for that build (RT-060, SEC-080). |
 
 ### NativeRoute
 

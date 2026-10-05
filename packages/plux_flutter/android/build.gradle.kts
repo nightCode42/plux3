@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // The Android side of plux_flutter's platform channel (ADR-0029): storage
-// directory and Keystore-protected secrets. No third-party dependency.
+// directory, Keystore-protected secrets, the share sheet and permission
+// prompts. Its one dependency is AndroidX Core, for FileProvider.
 
 group = "dev.plux.plux_flutter"
 version = "1.0"
@@ -49,6 +50,10 @@ android {
         // RT-002: Android 7.0 and later.
         minSdk = 24
     }
+}
+
+dependencies {
+    implementation("androidx.core:core:1.13.1")
 }
 
 kotlin {

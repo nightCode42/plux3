@@ -78,6 +78,7 @@ func (u *unit) checkStep(g *graph, i int, index map[string]int32) *step {
 	}
 	out.inputs = u.checkInputs(g, &a, input, ptr)
 	u.stepFeatures(g, &a, st, ptr)
+	u.checkDeviceStep(g, a.Name, input, ptr)
 	if stateWrites[a.Name] {
 		u.checkStateWrite(g, a.Name, input, ptr)
 	}
@@ -395,6 +396,8 @@ func (u *unit) checkRef(g *graph, in registry.Input, raw json.RawMessage, c vctx
 		_, resolved = u.natives.actions[name]
 	case "hostEvent":
 		_, resolved = u.hostEvents[name]
+	case "permission":
+		resolved = slices.Contains(permissionAPIs, name)
 	case "componentEvent":
 		return u.componentEventRef(g, name, c)
 	case "tab":

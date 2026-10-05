@@ -105,6 +105,9 @@ type Result struct {
 	// each bundle, by bundle key ("" for the app): publishing compares
 	// them with the previous release's (STA-040, CheckStoredState).
 	StoredState map[string][]StoredEntry
+	// DeviceUses are the steps that run an action of an optional package,
+	// sorted; HostBuildLacksPackages checks host builds against them.
+	DeviceUses []DeviceUse
 }
 
 // stage is one step of the pipeline (CMP-003). Checking stages run even
@@ -165,6 +168,7 @@ func Compile(fsys fs.FS, opts Options) (res *Result) {
 	if !u.diags.HasErrors() {
 		res.App, res.Plugins, res.Files = u.app, u.outputs, u.files
 		res.StoredState = u.storedOf()
+		res.DeviceUses = u.sortedDeviceUses()
 	}
 	return res
 }

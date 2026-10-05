@@ -122,8 +122,12 @@ enum PluxLimit {
   /// Bytes one upload may have; the file's size is checked before the transfer
   /// and a larger file is refused.
   dataUploadSize('data.uploadSize', PluxLimitUnit.bytes, 26214400, 0, 1073741824),
+  /// Characters copyToClipboard may put on the clipboard in one step.
+  deviceClipboardChars('device.clipboardChars', PluxLimitUnit.count, 10000, 0, 100000),
   /// Disk space the runtime may use for releases on one device.
   deviceDiskQuota('device.diskQuota', PluxLimitUnit.bytes, 209715200, 0, 4294967296),
+  /// Files a single pickImage or pickFile step may return.
+  devicePickCount('device.pickCount', PluxLimitUnit.count, 10, 0, 100),
   /// Size of one document file in the project layout, checked before parsing.
   documentFileSize('document.fileSize', PluxLimitUnit.bytes, 8388608, 0, 67108864),
   /// Nesting of arrays and objects in one document, checked while parsing.

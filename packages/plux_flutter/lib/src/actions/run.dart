@@ -336,6 +336,12 @@ final class ActionRun {
       for (;;) {
         try {
           inputs = _inputs(f, step, descriptor);
+          // A device operation the plugin does not declare is blocked
+          // before it reaches the device (SEC-080).
+          final device = _ctx.device;
+          if (device != null && descriptor != null) {
+            device.guard.admit(device.plugin, descriptor.name, inputs);
+          }
           optimistic ??= _optimistic(descriptor, inputs);
           final work = handler is StructuralHandler
               ? _structural(handler.action, f, step, inputs, token)

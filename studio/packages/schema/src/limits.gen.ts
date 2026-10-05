@@ -404,6 +404,16 @@ export const limits = [
     description: "Bytes one upload may have; the file's size is checked before the transfer and a larger file is refused.",
   },
   {
+    key: "device.clipboardChars",
+    unit: "count",
+    default: 10000,
+    warning: 0,
+    max: 100000,
+    scopes: ["installation", "organization", "app"],
+    phase: "P5",
+    description: "Characters copyToClipboard may put on the clipboard in one step.",
+  },
+  {
     key: "device.diskQuota",
     unit: "bytes",
     default: 209715200,
@@ -412,6 +422,16 @@ export const limits = [
     scopes: ["installation", "organization", "app"],
     phase: "P3",
     description: "Disk space the runtime may use for releases on one device.",
+  },
+  {
+    key: "device.pickCount",
+    unit: "count",
+    default: 10,
+    warning: 0,
+    max: 100,
+    scopes: ["installation", "organization", "app"],
+    phase: "P5",
+    description: "Files a single pickImage or pickFile step may return.",
   },
   {
     key: "document.fileSize",

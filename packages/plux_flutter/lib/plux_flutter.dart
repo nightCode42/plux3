@@ -29,6 +29,17 @@ export 'src/core/host_events.dart' show PluxHostEvent;
 export 'src/core/plux.dart' show Plux, PluxScope, PluxSyncTile;
 export 'src/core/plux_view.dart' show PluxView, PluxViewEvent, PluxViewSizing;
 export 'src/core/runtime.dart' show PluxStartup;
+export 'src/device/types.dart'
+    show
+        PluxCodeScanner,
+        PluxDeviceException,
+        PluxDeviceFailure,
+        PluxDevicePackage,
+        PluxLocationProvider,
+        PluxMediaPicker,
+        PluxPickedFile,
+        PluxPosition,
+        PluxScanResult;
 export 'src/devtools_api/diagnostics.dart'
     show PluxDiagnostic, PluxDiagnostics, PluxPluginInfo, PluxReleaseInfo;
 export 'src/errors/plux_exception.dart' show PluxErrorCode, PluxException;

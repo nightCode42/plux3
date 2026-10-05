@@ -62,6 +62,8 @@ export interface AppDocument {
   readonly navigation?: NavigationPolicy;
   /** Keys of the app's plugins, in display order; each has a directory `plugins/<key>/`. */
   readonly plugins: readonly string[];
+  /** The capabilities the app approves for its plugins (SEC-080, ADR-0051); a release is published only when every plugin requests a subset. Without `deviceApis`, no device API is approved. `networkDomains` and `functions`, when listed, narrow what plugins may declare. Native routes are approved by the host's registration, not here. */
+  readonly capabilities?: ApprovedCapabilities;
   readonly environments: readonly Environment[];
   /** Non-secret environment variables available in PXL as `env.<name>` (DAT-003). */
   readonly variables?: readonly Field[];
@@ -89,6 +91,15 @@ export interface AppDocument {
   readonly push?: PushPolicy;
   /** Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active. */
   readonly triggers?: Triggers;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** The capabilities the app approves for its plugins (SEC-080, ADR-0051); a release is published only when every plugin requests a subset. Without `deviceApis`, no device API is approved. `networkDomains` and `functions`, when listed, narrow what plugins may declare. Native routes are approved by the host's registration, not here. */
+export interface ApprovedCapabilities {
+  readonly deviceApis?: readonly DeviceAPI[];
+  readonly networkDomains?: readonly string[];
+  readonly functions?: readonly string[];
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
@@ -513,6 +524,8 @@ export interface NativeCatalogueDocument {
   readonly routes?: readonly NativeRoute[];
   readonly slots?: readonly NativeSlot[];
   readonly actions?: readonly NativeAction[];
+  /** The optional Plux packages the build registers, such as `plux_media`: a release that uses a device action whose package a build lacks is flagged for that build (RT-060, SEC-080). */
+  readonly packages?: readonly string[];
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }

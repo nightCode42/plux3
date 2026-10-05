@@ -1,4 +1,9 @@
 {
+  "capabilities": {
+    "deviceApis": [
+      "haptics"
+    ]
+  },
   "collections": [
     {
       "fields": [

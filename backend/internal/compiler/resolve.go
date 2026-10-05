@@ -380,6 +380,7 @@ func (u *unit) indexPluginDecls(pl *plugin) {
 			}
 		}
 	}
+	u.checkApproved(pl)
 }
 
 // resolvePlugin resolves the references of a plugin and builds its trees.

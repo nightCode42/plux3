@@ -92,7 +92,17 @@ const (
 	RouteParameterTypeInvalid  Code = 1204
 	UnknownRouteParameter      Code = 1205
 	RedirectLoop               Code = 1206
-	FormScopeInvalid           Code = 1240
+
+	// Schema and validation: capabilities and device actions (PLX-1230–1239, P5 R8).
+
+	CapabilityNotApproved      Code = 1230
+	DeviceCapabilityUndeclared Code = 1231
+	OpenURLDomainUndeclared    Code = 1232
+	HostBuildLacksPackage      Code = 1233
+
+	// Schema and validation: form scopes (PLX-1240–1249, P5).
+
+	FormScopeInvalid Code = 1240
 
 	// Schema and validation: limits and budgets (PLX-1300–1399).
 
@@ -224,6 +234,15 @@ const (
 	FormInvalid              Code = 5350
 	FormNotInScope           Code = 5351
 	FormAsyncValidatorFailed Code = 5352
+
+	// Actions: device and feedback (PLX-5400–5499, P5 R8).
+
+	DeviceCapabilityBlocked Code = 5400
+	DevicePackageMissing    Code = 5401
+	DevicePermissionDenied  Code = 5402
+	DeviceUnavailable       Code = 5403
+	OpenURLBlocked          Code = 5404
+	ClipboardBlocked        Code = 5405
 
 	// Actions: typed host events (PLX-5500–5549, P5).
 

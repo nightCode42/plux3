@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Plux contributors -->
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<paths>
+    <cache-path name="plux_cache" path="." />
+    <files-path name="plux_files" path="." />
+</paths>

@@ -24,6 +24,7 @@ import 'package:plux_flutter/src/actions/triggers.dart';
 import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/core/app_state.dart';
 import 'package:plux_flutter/src/data/services.dart';
+import 'package:plux_flutter/src/device/guard.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/navigation/page_navigator.dart';
 import 'package:plux_flutter/src/render/page_actions.dart';
@@ -173,6 +174,14 @@ final class ReleaseOwners {
         sync: services.sync,
         data: data,
         logout: services.logout,
+        device: services.deviceGuard == null
+            ? null
+            : DeviceScope(
+                plugin: key,
+                guard: services.deviceGuard!,
+                context: () => navigator()?.currentContext,
+                overlay: () => navigator()?.currentState?.overlay,
+              ),
       ),
       limits: ActionLimits.of(release.limits),
       report: renderer.report,

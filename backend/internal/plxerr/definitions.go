@@ -374,6 +374,30 @@ var registry = []Definition{
 		"Pages redirect to each other unconditionally from `onEnter` in a cycle, so navigation would never settle.",
 		"Break the cycle by guarding one of the redirects with a condition.", false,
 	},
+
+	// Schema and validation: capabilities and device actions.
+	{
+		CapabilityNotApproved, "CAPABILITY_NOT_APPROVED", SeverityError, "Capability not approved by the app",
+		"A plugin declares a device API, network domain or function that the app document's capabilities do not approve. An app approves nothing it does not list (SEC-080, ADR-0051).",
+		"Add the capability to the app document's capabilities if the app should allow it, or remove it from the plugin's capabilities.", false,
+	},
+	{
+		DeviceCapabilityUndeclared, "DEVICE_CAPABILITY_UNDECLARED", SeverityError, "Device action without its capability",
+		"A step runs a device action, such as pickImage or getLocation, or asks requestPermission for a permission, but the plugin does not declare the device API it needs in capabilities.deviceApis, so the runtime would block it (SEC-080).",
+		"Declare the device API named in the message in the plugin's capabilities, or remove the step.", false,
+	},
+	{
+		OpenURLDomainUndeclared, "OPEN_URL_DOMAIN_UNDECLARED", SeverityError, "openUrl on an undeclared domain",
+		"An openUrl step opens an HTTPS URL on a domain the plugin does not declare in capabilities.networkDomains, or a URL that is not HTTPS and not one of the app's deep links, so the runtime would block it (SEC-080).",
+		"Declare the domain in the plugin's capabilities, or open a deep link of the app instead.", false,
+	},
+	{
+		HostBuildLacksPackage, "HOST_BUILD_LACKS_PACKAGE", SeverityWarning, "Host build lacks a Plux package",
+		"The release uses a device action whose optional package, such as plux_media, plux_scanner or plux_location, is not among the packages that the native catalogue of one of the app's host builds records. On devices of that build the step fails with a permission error (RT-060, REL-080).",
+		"Ship a host build that installs and registers the package and upload its catalogue with plux native sync, or keep the release from using the action; the publisher acknowledges the warning to publish anyway.", false,
+	},
+
+	// Schema and validation: form scopes.
 	{
 		FormScopeInvalid, "FORM_SCOPE_INVALID", SeverityError, "FormScope names no form",
 		"A FormScope's form is not a literal naming a form that the page or component declares, so the form root below it would have no state to read (STA-020).",
@@ -899,6 +923,40 @@ var registry = []Definition{
 		"An asynchronous validator's graph failed, for example because the server could not be reached; the field is shown as not checked and the form is invalid until a check succeeds (STA-020).",
 		"Handle the graph's errors with onError and return a message, or let the user retry by editing the field.", false,
 	},
+
+	// Actions: device and feedback.
+	{
+		DeviceCapabilityBlocked, "DEVICE_CAPABILITY_BLOCKED", SeverityError, "Device operation blocked",
+		"A step ran a device action whose device API the plugin does not declare, or that the host narrowed away with PluxConfig.allowedCapabilities. The step failed with a permission error and nothing reached the device (SEC-080).",
+		"Declare the device API in the plugin's capabilities and in the app's approved set, or allow it in the host's allowedCapabilities.", false,
+	},
+	{
+		DevicePackageMissing, "DEVICE_PACKAGE_MISSING", SeverityError, "Device package not installed",
+		"A step ran a device action whose optional package, such as plux_media, plux_scanner or plux_location, the host app did not register in PluxConfig.devicePackages (RT-060).",
+		"Add the package to the host app and pass it in PluxConfig.devicePackages.", false,
+	},
+	{
+		DevicePermissionDenied, "DEVICE_PERMISSION_DENIED", SeverityError, "Device permission denied",
+		"The user, or the platform's policy, denied the permission a device action needs, such as the camera or location.",
+		"Run requestPermission first and take its denied branch to explain what the feature needs; the user can grant the permission in the system settings.", false,
+	},
+	{
+		DeviceUnavailable, "DEVICE_UNAVAILABLE", SeverityError, "Device feature unavailable",
+		"The platform could not perform the device operation: the device has no such hardware, the service is switched off, or the platform call failed.",
+		"Check that the device supports the feature and that its service, such as location, is on.", false,
+	},
+	{
+		OpenURLBlocked, "OPEN_URL_BLOCKED", SeverityError, "openUrl blocked",
+		"An openUrl step named a URL that is not HTTPS on a domain the plugin declares, nor a deep link of the app, or the platform could not open it (SEC-080).",
+		"Declare the domain in the plugin's capabilities, or use a deep link of the app.", false,
+	},
+	{
+		ClipboardBlocked, "CLIPBOARD_BLOCKED", SeverityError, "Clipboard write blocked",
+		"A copyToClipboard step ran on a page marked secure, or copied more text than device.clipboardChars allows, so nothing was copied (SEC-090).",
+		"Do not copy from secure pages, or shorten the text.", false,
+	},
+
+	// Actions: typed host events.
 	{
 		HostEventPayloadInvalid, "HOST_EVENT_PAYLOAD_INVALID", SeverityError, "Host event payload invalid",
 		"The payload of Plux.sendEvent lacks a field the app's hostEvents declaration requires, has a field it does not declare, or has a value that does not fit the field's type; nothing runs (HST-013).",

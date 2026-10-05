@@ -1,5 +1,8 @@
 {
   "capabilities": {
+    "deviceApis": [
+      "haptics"
+    ],
     "networkDomains": [
       "example.com"
     ]
