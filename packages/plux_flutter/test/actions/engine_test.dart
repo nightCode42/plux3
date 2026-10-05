@@ -142,12 +142,7 @@ void main() {
 
   test('an action of a later phase fails its step with PLX-4010, which onError handles [RT-021]', () async {
     final r = await run([
-      GraphStep(
-        id: 'toast',
-        action: id('showToast'),
-        inputs: {input('showToast', 'message'): lit('hi')},
-        onError: 1,
-      ),
+      GraphStep(id: 'toast', action: id('biometricAuth'), onError: 1),
       GraphStep(
         id: 'recover',
         action: id('emitHostEvent'),
@@ -162,13 +157,13 @@ void main() {
     expect(r.outcome, RunOutcome.ok);
     final error = events.single.$2['error']! as Map;
     expect(error['kind'], 'custom');
-    expect(error['message'], contains('showToast arrives in P5'));
+    expect(error['message'], contains('biometricAuth arrives in P6'));
     expect(reports, isEmpty);
   });
 
   test('an unhandled error ends the run and is reported with its graph and step [RT-021]', () async {
     final r = await run([
-      GraphStep(id: 'toast', action: id('showToast'), next: 1),
+      GraphStep(id: 'toast', action: id('biometricAuth'), next: 1),
       GraphStep(
         id: 'never',
         action: id('emitHostEvent'),
@@ -482,22 +477,34 @@ void main() {
         'apiCall',
         'callFlow',
         'callNative',
+        'capturePhoto',
         'condition',
+        'copyToClipboard',
         'delay',
         'emitEvent',
         'emitHostEvent',
         'forEach',
+        'getLocation',
+        'haptic',
         'logout',
         'navigate',
         'openBottomSheet',
         'openDialog',
+        'openUrl',
         'parallel',
         'patchState',
+        'pickFile',
+        'pickImage',
         'pop',
         'refreshData',
+        'requestPermission',
         'resetForm',
         'resetState',
+        'scanCode',
         'setState',
+        'share',
+        'showSnackbar',
+        'showToast',
         'stop',
         'submitForm',
         'switch',

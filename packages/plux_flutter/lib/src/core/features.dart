@@ -5,7 +5,7 @@
 /// `pxl.v1`, `pxl.regex.v1` and `pxl.phone.v1` (0.3.0), `navigation.guards.v1`
 /// (route guards, ADR-0040), `data.v1` (the data layer, ADR-0048), the state
 /// engine's `state.write.v1`, `state.computed.v1` and `state.persistence.v1`,
-/// forms' `forms.v1` (ADR-0047), and
+/// forms' `forms.v1` (ADR-0047), the device actions' `device.v1`, and
 /// registry revisions — `widget.<Type>.v<n>`,
 /// `type.<Name>.v<n>`, `enum.<Name>.v<n>` — up to the revision this
 /// runtime's generated registry knows, for widgets it can build.
@@ -66,9 +66,15 @@ final class RuntimeFeatures {
   /// form action requires them.
   static const Set<String> forms = {'forms.v1'};
 
+  /// The feedback and device actions (SEC-080): a bundle running
+  /// `showSnackbar`, `haptic`, `openUrl`, `pickImage` or another of them
+  /// requires it.
+  static const Set<String> device = {'device.v1'};
+
   /// Whether [feature] is supported.
   bool supports(String feature) {
     if (forms.contains(feature) ||
+        device.contains(feature) ||
         pxl.contains(feature) ||
         navigation.contains(feature) ||
         actions.contains(feature) ||

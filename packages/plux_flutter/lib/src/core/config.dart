@@ -11,6 +11,7 @@ import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:plux_flutter/src/device/types.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/native_catalogue/registration.dart';
 import 'package:plux_flutter/src/navigation/delegate.dart';
@@ -213,6 +214,8 @@ final class PluxConfig {
     this.nativeSlots = const {},
     this.nativeActions = const {},
     this.router,
+    this.devicePackages = const [],
+    this.allowedCapabilities,
   }) : assert(downloadParallelism > 0, 'at least one download at a time'),
        assert(
          hostBuild.length <= 64,
@@ -347,4 +350,16 @@ final class PluxConfig {
   /// and plugins open the router's named routes as native routes
   /// ([nativeRoutes] entries of the same name win) (HST-031, ADR-0040).
   final PluxRouterAdapter? router;
+
+  /// The optional device packages the app installs, such as `PluxMedia()` of
+  /// `plux_media` (RT-060): their actions run only when registered here; a
+  /// plugin that uses another fails its step with `PLX-5401`. Each package
+  /// is recorded in the native catalogue by `plux native scan`.
+  final List<PluxDevicePackage> devicePackages;
+
+  /// Narrows the device APIs plugins may use to these, such as `camera` or
+  /// `location`, at run time (SEC-080): an operation outside the set is
+  /// blocked and reported with `PLX-5400`, whatever the app approved. Null
+  /// allows every device API the app approved and the plugin declares.
+  final Set<String>? allowedCapabilities;
 }

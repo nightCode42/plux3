@@ -21,6 +21,7 @@ import 'package:plux_flutter/src/actions/run.dart';
 import 'package:plux_flutter/src/actions/trace.dart';
 import 'package:plux_flutter/src/actions/triggers.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
+import 'package:plux_flutter/src/device/guard.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/navigation/router.dart';
 import 'package:plux_flutter/src/render/sections.dart';
@@ -50,7 +51,12 @@ final class ActionServices {
     this.clock = const ActionClock(),
     this.logout,
     this.services = const {},
+    this.deviceGuard,
   }) : triggers = triggers ?? TriggerHub();
+
+  /// Checks the device operations of every run against its plugin's
+  /// capabilities (SEC-080); null where the device actions are not wired.
+  final DeviceGuard? deviceGuard;
 
   /// The services handlers find by type through `StepContext.service`
   /// (the local database, the device, …); each runtime milestone adds its

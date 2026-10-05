@@ -31,6 +31,7 @@ import 'package:plux_flutter/src/data/client.dart' show DataCaller;
 import 'package:plux_flutter/src/data/services.dart';
 import 'package:plux_flutter/src/data/source.dart';
 import 'package:plux_flutter/src/data/spec.dart';
+import 'package:plux_flutter/src/device/guard.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/forms/form_state.dart';
 import 'package:plux_flutter/src/native_catalogue/registration.dart';
@@ -1047,6 +1048,17 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
         sync: services.sync,
         data: _data,
         logout: services.logout,
+        device: services.deviceGuard == null
+            ? null
+            : DeviceScope(
+                plugin: widget.page.plugin,
+                guard: services.deviceGuard!,
+                secure: _section.page?.secure ?? false,
+                context: () => mounted ? context : null,
+                overlay: () => mounted
+                    ? Overlay.maybeOf(context, rootOverlay: true)
+                    : null,
+              ),
       ),
       limits: ActionLimits.of(widget.release.limits),
       report: widget.renderer.report,

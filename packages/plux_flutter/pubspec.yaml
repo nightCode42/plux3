@@ -26,6 +26,7 @@ dependencies:
   hooks: ^2.2.0
   http: ^1.6.0
   native_toolchain_c: ^0.19.3
+  url_launcher: ^6.3.3
   vector_graphics: ^1.2.3
 
 dev_dependencies:

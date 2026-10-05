@@ -35,6 +35,8 @@ import 'package:plux_flutter/src/core/plux_view.dart';
 import 'package:plux_flutter/src/core/trigger_sources.dart';
 import 'package:plux_flutter/src/data/services.dart';
 import 'package:plux_flutter/src/data/worker.dart';
+import 'package:plux_flutter/src/device/guard.dart';
+import 'package:plux_flutter/src/device/services.dart';
 import 'package:plux_flutter/src/devtools_api/diagnostics.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/native_catalogue/host.dart';
@@ -430,7 +432,33 @@ final class PluxRuntime with WidgetsBindingObserver {
       traces: traces,
       sync: () => unawaited(sync().then((_) {}, onError: (Object _) {})),
       logout: logout,
+      services: deviceServices(
+        packages: config.devicePackages,
+        openLink: handleDeepLink,
+      ),
+      deviceGuard: _deviceGuard,
     )..ownerErrors = _ownerErrors,
+  );
+
+  /// Checks the device operations of plugin runs against the capabilities
+  /// each plugin declares in the active release, and the host's
+  /// `allowedCapabilities` (SEC-080).
+  late final DeviceGuard _deviceGuard = DeviceGuard(
+    capabilities: (plugin) {
+      try {
+        final caps = active.value?.meta(plugin).capabilities;
+        return (
+          deviceApis: caps?.deviceApis ?? const <String>[],
+          networkDomains: caps?.networkDomains ?? const <String>[],
+        );
+      } on PluxException {
+        return (deviceApis: const <String>[], networkDomains: const <String>[]);
+      }
+    },
+    deepLinks: () => active.value?.meta('').deepLinks,
+    report: _report,
+    allowed: config.allowedCapabilities,
+    limits: () => active.value?.limits ?? const <String, int>{},
   );
 
   OwnerLifetime? _owners;

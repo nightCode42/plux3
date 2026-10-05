@@ -16,6 +16,8 @@ import 'package:plux_flutter/src/actions/graph.dart';
 import 'package:plux_flutter/src/actions/state_handlers.dart';
 import 'package:plux_flutter/src/data/handlers.dart';
 import 'package:plux_flutter/src/data/services.dart';
+import 'package:plux_flutter/src/device/guard.dart';
+import 'package:plux_flutter/src/device/handlers.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/forms/handlers.dart';
 import 'package:plux_flutter/src/schema/registry.g.dart';
@@ -216,6 +218,7 @@ final class StepContext {
     this.data,
     this.logout,
     this.services = const {},
+    this.device,
   });
 
   /// This context with [state] (STA-001).
@@ -233,6 +236,7 @@ final class StepContext {
     data: data,
     logout: logout,
     services: services,
+    device: device,
   );
 
   /// Navigation for the run's page.
@@ -281,6 +285,7 @@ final class StepContext {
     data: data,
     logout: logout,
     services: services,
+    device: device,
   );
 
   /// This context with [emitEvent] for a component's handlers.
@@ -299,6 +304,7 @@ final class StepContext {
     data: data,
     logout: logout,
     services: services,
+    device: device,
   );
 
   /// The data of the run's page, for `apiCall` and `refreshData`
@@ -314,6 +320,11 @@ final class StepContext {
   /// the device, animations and other services later milestones add,
   /// without a field of their own here.
   final Map<Type, Object> services;
+
+  /// Where the run's device actions run: the plugin whose capabilities
+  /// they need, whether its page is secure and where to show messages
+  /// (SEC-080); null where no runtime provides them.
+  final DeviceScope? device;
 
   /// The service of type [T], or null where none is installed.
   T? service<T extends Object>() => services[T] as T?;
@@ -412,6 +423,7 @@ final Map<String, ActionHandler> builtInHandlers = {
   ...stateHandlers,
   ...dataHandlers,
   ...formHandlers,
+  ...deviceHandlers,
 };
 
 /// A handler written as a function, for handler tables outside this

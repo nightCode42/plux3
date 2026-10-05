@@ -8,9 +8,12 @@ import Security
 /// The platform services of the Plux runtime (ADR-0029): where the release
 /// store lives, and secrets kept in the Keychain, readable only on this
 /// device after its first unlock, so that no secret is ever written in the
-/// clear. Bundle data never crosses this channel.
+/// clear. The device actions that need the platform, the share sheet and
+/// permission prompts, run here too (SEC-080). Bundle data never crosses
+/// this channel.
 public class PluxFlutterPlugin: NSObject, FlutterPlugin {
   private static let service = "dev.plux.secrets"
+  private let device = PluxDevice()
 
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "dev.plux/runtime", binaryMessenger: registrar.messenger())
@@ -33,6 +36,10 @@ public class PluxFlutterPlugin: NSObject, FlutterPlugin {
       guard let name = Self.name(args) else { return result(Self.badName) }
       _ = SecItemDelete(query(name) as CFDictionary)
       result(nil)
+    case "share":
+      device.share(args, result: result)
+    case "permissionRequest":
+      device.requestPermission(args, result: result)
     default:
       result(FlutterMethodNotImplemented)
     }

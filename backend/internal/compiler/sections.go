@@ -1060,6 +1060,11 @@ func (u *unit) metaSection(o *out) {
 		locales = stringVector(b, app.SupportedLocales)
 		flags = u.flagTables(e, app.Flags)
 		sampling = samplingTables(b, app.Telemetry)
+		// The approved device APIs and domains: what the app's own
+		// triggers may use (SEC-080).
+		if c := app.Capabilities; c != nil {
+			capabilities = capabilitiesTable(b, &schema.Capabilities{DeviceApis: c.DeviceApis, NetworkDomains: c.NetworkDomains})
+		}
 	}
 	nameOff, keyOff := b.CreateString(name), b.CreateString(key)
 	compiler, schemaVersion, minRuntime := b.CreateString(u.opts.Version), b.CreateString(schema.CurrentVersion), b.CreateString(app.MinRuntimeVersion)
