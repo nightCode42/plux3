@@ -23,7 +23,9 @@
       },
       "id": "c9205998-c4a7-7d84-9d74-542f73315e99",
       "kind": "graphql",
-      "mock": null,
+      "mock": {
+        "users": []
+      },
       "name": "schema",
       "type": "ListUsersOutput"
     }

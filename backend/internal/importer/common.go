@@ -244,3 +244,48 @@ func (t *typeSet) optionalInput(name any) bool {
 	}
 	return true
 }
+
+// zeroValue generates the value of a type when no example exists: empty or
+// zero scalars, empty lists and maps, null for a nullable type, and objects
+// built field by field. Recursion ends in null for a nullable type and [] for
+// a list, so the result is always finite and deterministic.
+func (t *typeSet) zeroValue(typ string, depth int) any {
+	switch {
+	case strings.HasSuffix(typ, "?"):
+		return nil
+	case strings.HasPrefix(typ, "list<"):
+		return []any{}
+	case strings.HasPrefix(typ, "map<"):
+		return map[string]any{}
+	}
+	switch typ {
+	case "string":
+		return ""
+	case "int", "double":
+		return float64(0)
+	case "bool":
+		return false
+	case "decimal":
+		return "0"
+	case "date":
+		return "1970-01-01"
+	case "dateTime":
+		return "1970-01-01T00:00:00Z"
+	case "duration":
+		return "PT0S"
+	}
+	d := t.decls[typ]
+	if members, ok := d["enum"].([]any); ok && len(members) > 0 {
+		return members[0]
+	}
+	fields, ok := d["fields"].([]any)
+	if !ok || depth > 8 {
+		return nil
+	}
+	out := map[string]any{}
+	for _, f := range fields {
+		fm := f.(map[string]any)
+		out[fm["name"].(string)] = t.zeroValue(fm["type"].(string), depth+1)
+	}
+	return out
+}

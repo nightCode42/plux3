@@ -19,7 +19,10 @@
       },
       "id": "cfa1a399-b387-783c-a82a-75857c7f4ced",
       "kind": "rest",
-      "mock": null,
+      "mock": {
+        "items": [],
+        "total": 0
+      },
       "name": "todoAPI",
       "type": "ListTodosOutput",
       "x-operationMocks": {
