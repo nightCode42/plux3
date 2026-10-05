@@ -1134,7 +1134,7 @@
         "STA-003",
         "LIM-004"
       ],
-      "description": "Bytes the persisted state of one app may take in the runtime's local store, encrypted; writes beyond it stay in memory and are reported."
+      "description": "Bytes the persisted state of one app may take in the runtime's local store (plain; secure state is the encrypted one, plan p5 B6); writes beyond it stay in memory and are reported."
     },
     {
       "key": "state.secureBytes",
@@ -1154,7 +1154,7 @@
         "STA-003",
         "LIM-004"
       ],
-      "description": "Bytes the secure state of one app may take in the runtime's local store, encrypted; writes beyond it stay in memory and are reported."
+      "description": "Bytes the secure state of one app may take in the runtime's local store (plain; secure state is the encrypted one, plan p5 B6); writes beyond it stay in memory and are reported."
     },
     {
       "key": "telemetry.bufferBytes",

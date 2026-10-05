@@ -581,7 +581,7 @@ export const limits = [
     max: 16777216,
     scopes: ["installation", "organization", "app"],
     phase: "P5",
-    description: "Bytes the persisted state of one app may take in the runtime's local store, encrypted; writes beyond it stay in memory and are reported.",
+    description: "Bytes the persisted state of one app may take in the runtime's local store (plain; secure state is the encrypted one, plan p5 B6); writes beyond it stay in memory and are reported.",
   },
   {
     key: "state.secureBytes",
@@ -591,7 +591,7 @@ export const limits = [
     max: 1048576,
     scopes: ["installation", "organization", "app"],
     phase: "P5",
-    description: "Bytes the secure state of one app may take in the runtime's local store, encrypted; writes beyond it stay in memory and are reported.",
+    description: "Bytes the secure state of one app may take in the runtime's local store (plain; secure state is the encrypted one, plan p5 B6); writes beyond it stay in memory and are reported.",
   },
   {
     key: "telemetry.bufferBytes",

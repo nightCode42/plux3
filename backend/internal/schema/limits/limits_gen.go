@@ -166,12 +166,12 @@ const (
 	// decoded. (RT-013)
 	RuntimeSectionCacheEntries Key = "runtime.sectionCacheEntries"
 	// StatePersistedBytes: Bytes the persisted state of one app may take in the
-	// runtime's local store, encrypted; writes beyond it stay in memory and are
-	// reported. (STA-003, LIM-004)
+	// runtime's local store (plain; secure state is the encrypted one, plan p5
+	// B6); writes beyond it stay in memory and are reported. (STA-003, LIM-004)
 	StatePersistedBytes Key = "state.persistedBytes"
 	// StateSecureBytes: Bytes the secure state of one app may take in the
-	// runtime's local store, encrypted; writes beyond it stay in memory and are
-	// reported. (STA-003, LIM-004)
+	// runtime's local store (plain; secure state is the encrypted one, plan p5
+	// B6); writes beyond it stay in memory and are reported. (STA-003, LIM-004)
 	StateSecureBytes Key = "state.secureBytes"
 	// TelemetryBufferBytes: The size of the runtime's buffer of unsent telemetry
 	// events; the oldest are dropped first. (ANL-002)
@@ -238,8 +238,8 @@ var registry = [...]Definition{
 	{Key: RuntimeImageSize, Unit: UnitBytes, Default: 10485760, Warning: 0, Max: 104857600, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "Size of one remote image the runtime downloads; a larger one is refused."},
 	{Key: RuntimeSectionCacheBytes, Unit: UnitBytes, Default: 8388608, Warning: 0, Max: 268435456, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "Memory the runtime's cache of decoded page and component sections may hold."},
 	{Key: RuntimeSectionCacheEntries, Unit: UnitCount, Default: 64, Warning: 0, Max: 4096, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "Page and component sections the runtime keeps decoded."},
-	{Key: StatePersistedBytes, Unit: UnitBytes, Default: 1048576, Warning: 0, Max: 16777216, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the persisted state of one app may take in the runtime's local store, encrypted; writes beyond it stay in memory and are reported."},
-	{Key: StateSecureBytes, Unit: UnitBytes, Default: 65536, Warning: 0, Max: 1048576, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the secure state of one app may take in the runtime's local store, encrypted; writes beyond it stay in memory and are reported."},
+	{Key: StatePersistedBytes, Unit: UnitBytes, Default: 1048576, Warning: 0, Max: 16777216, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the persisted state of one app may take in the runtime's local store (plain; secure state is the encrypted one, plan p5 B6); writes beyond it stay in memory and are reported."},
+	{Key: StateSecureBytes, Unit: UnitBytes, Default: 65536, Warning: 0, Max: 1048576, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the secure state of one app may take in the runtime's local store (plain; secure state is the encrypted one, plan p5 B6); writes beyond it stay in memory and are reported."},
 	{Key: TelemetryBufferBytes, Unit: UnitBytes, Default: 262144, Warning: 0, Max: 4194304, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "The size of the runtime's buffer of unsent telemetry events; the oldest are dropped first."},
 	{Key: TelemetryEventsPerRequest, Unit: UnitCount, Default: 500, Warning: 0, Max: 5000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerServer, Phase: "P2", Description: "Runtime events one telemetry request may carry."},
 }

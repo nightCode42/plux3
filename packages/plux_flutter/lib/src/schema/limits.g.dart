@@ -432,8 +432,9 @@ enum PluxLimit {
     4096,
   ),
 
-  /// Bytes the persisted state of one app may take in the runtime's local
-  /// store, encrypted; writes beyond it stay in memory and are reported.
+  /// Bytes the persisted state of one app may take in the runtime's local store
+  /// (plain; secure state is the encrypted one, plan p5 B6); writes beyond it
+  /// stay in memory and are reported.
   statePersistedBytes(
     'state.persistedBytes',
     PluxLimitUnit.bytes,
@@ -442,8 +443,9 @@ enum PluxLimit {
     16777216,
   ),
 
-  /// Bytes the secure state of one app may take in the runtime's local store,
-  /// encrypted; writes beyond it stay in memory and are reported.
+  /// Bytes the secure state of one app may take in the runtime's local store
+  /// (plain; secure state is the encrypted one, plan p5 B6); writes beyond it
+  /// stay in memory and are reported.
   stateSecureBytes('state.secureBytes', PluxLimitUnit.bytes, 65536, 0, 1048576),
 
   /// The size of the runtime's buffer of unsent telemetry events; the oldest
