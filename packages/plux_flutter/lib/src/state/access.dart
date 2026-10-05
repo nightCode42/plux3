@@ -12,6 +12,7 @@ import 'package:plux_flutter/src/actions/handlers.dart' show ActionState;
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/core/app_state.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/forms/form_state.dart';
 import 'package:plux_flutter/src/render/scope.dart';
 import 'package:plux_flutter/src/state/scope_state.dart';
 
@@ -57,7 +58,7 @@ abstract interface class StateAccess implements StateChangeSource, ActionState {
 }
 
 /// [StateAccess] over the scope instances one node sees.
-final class ScopeStateAccess implements StateAccess {
+final class ScopeStateAccess implements StateAccess, FormLookup {
   /// Creates access for plugin [plugin] with the page and component
   /// instances in scope; [runModel] builds the model of a run's variables.
   ScopeStateAccess({
@@ -142,7 +143,18 @@ final class ScopeStateAccess implements StateAccess {
   @override
   void write(String path, Object? value) {
     final (s, name) = _entry(path);
+    if (s.writeForm(name, value)) return;
     s.writeEntry(name, value);
+  }
+
+  @override
+  FormController? form(String name) {
+    for (final instance in [component, page]) {
+      if (instance == null) continue;
+      final f = container.read(pageStateProvider(instance).notifier).form(name);
+      if (f != null) return f;
+    }
+    return null;
   }
 
   @override

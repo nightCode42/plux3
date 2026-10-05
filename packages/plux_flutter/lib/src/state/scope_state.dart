@@ -16,6 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/forms/form_state.dart';
 import 'package:plux_flutter/src/pxl/program.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
 import 'package:plux_flutter/src/render/sections.dart';
@@ -172,6 +173,8 @@ final class ScopeModel {
     this.report,
     this.parents = const {},
     this.extraRoots,
+    this.forms = const [],
+    this.runForm,
   }) : decls = List.unmodifiable(decls),
        byName = {for (final d in decls) d.name: d};
 
@@ -205,6 +208,12 @@ final class ScopeModel {
 
   /// Further roots computed entries may read (`params`, `props`, …).
   final Map<String, Object?> Function()? extraRoots;
+
+  /// The scope's forms (STA-020): each is an entry named after the form.
+  final List<FormDecl> forms;
+
+  /// Runs the forms' asynchronous validators; null where no engine runs.
+  final FormGraphRunner? runForm;
 
   /// The root this scope's entries are read under.
   String get root => kind.name;
@@ -298,10 +307,14 @@ mixin ScopeValues on Notifier<Map<String, Object?>> {
     final m = model;
     if (m == null) return const {};
     _deps.clear();
+    _forms.clear();
     final values = <String, Object?>{};
     for (final d in m.decls) {
       if (d.isComputed) continue;
       values[d.name] = keep.containsKey(d.name) ? keep[d.name] : _stored(m, d);
+    }
+    for (final f in m.forms) {
+      values[f.name] = FormController.initialState(f, m.evaluate);
     }
     final roots = <String>{
       for (final d in m.decls)
@@ -462,4 +475,68 @@ mixin ScopeValues on Notifier<Map<String, Object?>> {
   /// without storing it: the host's checked writes and tests.
   void set(String name, Object? value) =>
       state = _withComputed({...state, name: value});
+
+  final Map<String, FormController> _forms = {};
+
+  /// The controller of form [name] of this scope instance, or null when
+  /// the scope declares none (STA-020).
+  FormController? form(String name) {
+    final m = model;
+    if (m == null) return null;
+    final known = _forms[name];
+    if (known != null) return known;
+    for (final f in m.forms) {
+      if (f.name != name) continue;
+      return _forms[name] = FormController(
+        f,
+        FormHost(
+          read: () => state[name] as Map<String, Object?>?,
+          write: (v) {
+            if (ref.mounted) state = _withComputed({...state, name: v});
+          },
+          evaluate: m.evaluate,
+          run: m.runForm,
+          report: m.report,
+        ),
+      );
+    }
+    return null;
+  }
+
+  /// Writes a form field's value (`<form>.values.<field>`) or touched
+  /// flag (`<form>.touched.<field>`) at [path] (setState, STA-020); false
+  /// when [path] names no form of the scope. Throws
+  /// [StateWriteException] for any other part of a form, or a value of
+  /// the wrong type.
+  bool writeForm(String path, Object? value) {
+    final parts = path.split('.');
+    final form = this.form(parts.first);
+    if (form == null) return false;
+    final field = parts.length == 3 ? form.decl.field(parts[2]) : null;
+    if (field == null || (parts[1] != 'values' && parts[1] != 'touched')) {
+      throw StateWriteException(
+        PluxErrorCode.stateWriteRefused,
+        'form state $path cannot be written: only a field\'s values and touched entries can',
+      );
+    }
+    if (parts[1] == 'touched') {
+      if (value is! bool) {
+        throw StateWriteException(
+          PluxErrorCode.stateWriteTypeMismatch,
+          'form state $path is a bool',
+        );
+      }
+      form.writeTouched(field.name, touched: value);
+      return true;
+    }
+    try {
+      form.writeValue(field.name, value);
+    } on FormatException catch (e) {
+      throw StateWriteException(
+        PluxErrorCode.stateWriteTypeMismatch,
+        'form field $path is a ${field.type?.toString() ?? 'value'}: ${e.message}',
+      );
+    }
+    return true;
+  }
 }

@@ -33,6 +33,7 @@ import 'package:plux_flutter/src/data/services.dart';
 import 'package:plux_flutter/src/data/source.dart';
 import 'package:plux_flutter/src/data/spec.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/forms/form_state.dart';
 import 'package:plux_flutter/src/native_catalogue/registration.dart';
 import 'package:plux_flutter/src/navigation/guards.dart';
 import 'package:plux_flutter/src/navigation/page_navigator.dart';
@@ -233,6 +234,8 @@ final class PluxRenderer implements PageRenderer, RenderServices {
     StringTable? strings,
     Map<String, ProviderListenable<Map<String, Object?>>> parents = const {},
     Map<String, Object?> Function()? extraRoots,
+    List<fbs.Form>? forms,
+    FormGraphRunner? runForm,
   }) {
     final bundle = view(release, plugin);
     final limits = _pxlLimits(release.limits);
@@ -245,6 +248,20 @@ final class PluxRenderer implements PageRenderer, RenderServices {
     );
     final str = strings ?? bundle.string;
     final types = typesOf(release, plugin);
+    Object? lit(fbs.Value? v) {
+      try {
+        return toPxl(literal.resolve(v, str));
+      } on BindingError catch (e) {
+        report(
+          PluxException(
+            PluxErrorCode.propValueInvalid,
+            '${kind.name} state: ${e.message}',
+          ),
+        );
+        return null;
+      }
+    }
+
     return ScopeModel(
       kind: kind,
       owner: plugin,
@@ -253,20 +270,17 @@ final class PluxRenderer implements PageRenderer, RenderServices {
         bundle: bundle,
         strings: str,
         types: types,
-        literal: (v) {
-          try {
-            return toPxl(literal.resolve(v, str));
-          } on BindingError catch (e) {
-            report(
-              PluxException(
-                PluxErrorCode.propValueInvalid,
-                '${kind.name} state: ${e.message}',
-              ),
-            );
-            return null;
-          }
-        },
+        literal: lit,
       ),
+      forms: decodeForms(
+        forms,
+        bundle: bundle,
+        strings: str,
+        types: types,
+        literal: lit,
+        regex: limits.regex,
+      ),
+      runForm: runForm,
       types: types,
       evaluate: (program, roots) => ValueResolver(
         plugin: bundle,
@@ -1003,6 +1017,28 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
 
   String get _path => '${widget.page.plugin}/${widget.page.pageKey}';
 
+  /// Runs a form's asynchronous validator graph on the page's engine,
+  /// debounced with restart semantics (STA-020, ADR-0047).
+  Future<RunResult?> _runForm(
+    fbs.Uuid graph,
+    Object? value,
+    String key,
+    Duration debounce,
+  ) async {
+    final host = _actions;
+    if (host == null || host.disposed) return null;
+    final g = host.graph(graph, _plugin, _path, _resolveIn(_plugin));
+    if (g == null) return null;
+    return host.start(
+      g,
+      roots: () => _roots(),
+      key: key,
+      path: _path,
+      event: value,
+      policy: RunPolicy(ConcurrencyPolicy.debounce, debounce),
+    );
+  }
+
   /// The roots of the latest build, for data parameters and transforms and
   /// for runs that triggers start outside a build.
   Map<String, Object?> Function() _roots = () => const {};
@@ -1126,6 +1162,8 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
           'plugin': pluginStateProvider(widget.page.plugin),
         },
         extraRoots: () => {_component ? 'props' : 'params': _params},
+        forms: page?.forms ?? component?.forms,
+        runForm: _runForm,
       ),
     );
     final appLiteral = ValueResolver(

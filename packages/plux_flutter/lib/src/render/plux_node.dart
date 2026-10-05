@@ -14,6 +14,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show kToolbarHeight;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plux_flutter/src/actions/engine.dart'
+    show ConcurrencyPolicy, RunPolicy;
 import 'package:plux_flutter/src/assets/icon_fonts.dart';
 import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/bundle/container.dart';
@@ -654,6 +656,38 @@ final class NodeContextImpl implements NodeContext {
                 'plugin': pluginStateProvider(plugin),
               },
               extraRoots: () => {'props': props},
+              forms: component.forms,
+              runForm: (graph, value, key, debounce) async {
+                final host = outer.actions;
+                if (host == null || host.disposed) return null;
+                Map<String, Object?> runRoots() => {
+                  ...parentRoots(),
+                  'props': props,
+                };
+                final g = host.graph(
+                  graph,
+                  bundle,
+                  path,
+                  (v, roots) => toPxl(
+                    ValueResolver(
+                      plugin: bundle,
+                      roots: () => roots,
+                      token: outer.resolver.token,
+                      translation: outer.resolver.translation,
+                      limits: outer.resolver.limits,
+                    ).resolve(v, bundle.string),
+                  ),
+                );
+                if (g == null) return null;
+                return host.start(
+                  g,
+                  roots: runRoots,
+                  key: '$path#$key',
+                  path: path,
+                  event: value,
+                  policy: RunPolicy(ConcurrencyPolicy.debounce, debounce),
+                );
+              },
             ),
           );
         },

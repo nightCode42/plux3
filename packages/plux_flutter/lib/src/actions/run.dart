@@ -266,7 +266,9 @@ final class ActionRun {
     }
     if (vars != null) _ctx = context.withState(vars.access);
     try {
-      return await _execute();
+      final result = await _execute();
+      scope.end(succeeded: result.outcome == RunOutcome.ok);
+      return result;
     } finally {
       vars?.close();
     }

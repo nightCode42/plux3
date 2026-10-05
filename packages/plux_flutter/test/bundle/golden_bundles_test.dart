@@ -40,6 +40,8 @@ void main() {
       'features/features.pxb',
       'features/tasks.dev.pxb',
       'features/tasks.pxb',
+      'forms/forms.pxb',
+      'forms/signup.pxb',
       'loan-calculator/demo.pxb',
       'loan-calculator/loans.pxb',
       'routing/nav.pxb',
@@ -64,6 +66,7 @@ void main() {
                       path.contains('/nav') ||
                       path.contains('/shop') ||
                       path.contains('/notes') ||
+                      path.contains('/signup') ||
                       path.contains('/gallery')
                   ? 1
                   : 2),
