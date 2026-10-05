@@ -148,7 +148,7 @@ final class Outbox {
     StreamScheduler? scheduler,
     bool Function()? networkAvailable,
   }) : _now = now ?? (() => DateTime.now().millisecondsSinceEpoch),
-       _random = random ?? Random.secure(),
+       _random = random ?? Random(),
        _schedule = scheduler ?? Timer.new,
        _networkAvailable = networkAvailable ?? (() => true);
 
@@ -172,6 +172,9 @@ final class Outbox {
 
   final int Function() _now;
   final Random _random;
+
+  /// Idempotency keys are unguessable whatever the jitter source is.
+  final Random _keyRandom = Random.secure();
   final StreamScheduler _schedule;
   final bool Function() _networkAvailable;
 
@@ -188,7 +191,7 @@ final class Outbox {
 
   /// A new idempotency key: 128 random bits as a UUID-shaped string.
   String newKey() {
-    final b = [for (var i = 0; i < 16; i++) _random.nextInt(256)];
+    final b = [for (var i = 0; i < 16; i++) _keyRandom.nextInt(256)];
     b[6] = (b[6] & 0x0f) | 0x40;
     b[8] = (b[8] & 0x3f) | 0x80;
     String h(int from, int to) => b
