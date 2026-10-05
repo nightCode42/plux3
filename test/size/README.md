@@ -2,9 +2,9 @@
 
 What `plux_flutter` adds to a host app (`RT-061`, `NFR-009`,
 [ADR-0036](../../docs/adr/0036-size-budgets-per-build.md)), measured against a blank
-Flutter app: at most 4 MiB to what a device downloads from the App Bundle for each ABI, at
+Flutter app: at most 5 MiB to what a device downloads from the App Bundle for each ABI, at
 most 10 MiB to the release APK of each ABI, which stores the Dart code uncompressed, and at
-most 3 MiB to the thinned iOS IPA.
+most 5 MiB to the thinned iOS IPA.
 
 - [blank](blank) is a `MaterialApp` with a scaffold and a text.
 - [plux](plux) is the same app with the runtime: it calls `Plux.initialize` and shows a
@@ -26,7 +26,7 @@ at the highest level; language and density splits are not applied, so it is an u
 bound), and the iOS apps as the ZIP archive an IPA is (`Payload/Runner.app`, highest
 compression; an unsigned device build for arm64 is what App Store thinning delivers to one
 device). Each of the seven builds fails the job when the runtime adds more than its budget,
-or more than 10% over the overhead committed in [baseline.json](baseline.json) (`QA-007`).
+or more than 20% over the overhead committed in [baseline.json](baseline.json) (`QA-007`).
 After an intended change, `test/size/size.sh android -update` (or `ios`) rewrites the
 committed overheads. Reports are written to `build/size`: the six Android builds side by
 side in `android-compare.md`, each build's table and the files that grew most.

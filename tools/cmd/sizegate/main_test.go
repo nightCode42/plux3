@@ -56,7 +56,7 @@ func writeAPK(t *testing.T, path string, n int) {
 	}
 }
 
-// TestGateBudgetAndBaseline checks the APK budget and the 10% growth
+// TestGateBudgetAndBaseline checks the APK budget and the 20% growth
 // over the committed overhead, and -update.
 // Verifies: RT-061, QA-007.
 func TestGateBudgetAndBaseline_RT_061(t *testing.T) {
@@ -72,8 +72,8 @@ func TestGateBudgetAndBaseline_RT_061(t *testing.T) {
 		want      int
 	}{
 		{"within budget and baseline", 1000 + 2<<20, `{"android-arm64-apk": 2097152}`, exitOK},
-		{"grew 9%", 1000 + 2<<20*109/100, `{"android-arm64-apk": 2097152}`, exitOK},
-		{"grew 11%", 1000 + 2<<20*111/100, `{"android-arm64-apk": 2097152}`, exitFailed},
+		{"grew 19%", 1000 + 2<<20*119/100, `{"android-arm64-apk": 2097152}`, exitOK},
+		{"grew 21%", 1000 + 2<<20*121/100, `{"android-arm64-apk": 2097152}`, exitFailed},
 		{"over budget", 1000 + 10<<20 + 1, `{"android-arm64-apk": 10485760}`, exitFailed},
 		{"no baseline", 1000 + 2<<20, `{}`, exitFailed},
 	} {
@@ -308,18 +308,18 @@ func TestMeasuresWhatAnAppBundleDelivers_RT_061(t *testing.T) {
 	}
 }
 
-// TestBudgets checks each target's budget: 10 MiB for an APK, 4 MiB for
-// an App Bundle download, 3 MiB for an IPA.
+// TestBudgets checks each target's budget: 10 MiB for an APK, 5 MiB for
+// an App Bundle download, 5 MiB for an IPA.
 // Verifies: RT-061, NFR-009.
 func TestBudgets_RT_061(t *testing.T) {
 	t.Parallel()
 	for _, target := range targets() {
-		want := int64(3145728) // the IPA
+		want := int64(5242880) // the IPA
 		switch {
 		case strings.HasSuffix(target, "-apk"):
 			want = 10485760
 		case strings.HasSuffix(target, "-aab"):
-			want = 4194304
+			want = 5242880
 		}
 		if got := budget(target); got != want {
 			t.Errorf("%s: budget %d, want %d", target, got, want)

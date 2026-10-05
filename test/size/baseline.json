@@ -1,9 +1,9 @@
 {
-  "android-arm64-apk": 6224031,
-  "android-arm64-v8a-aab": 2672665,
-  "android-armeabi-v7a-aab": 2950310,
-  "android-armeabi-v7a-apk": 7074087,
-  "android-x86_64-aab": 2696484,
-  "android-x86_64-apk": 6387329,
-  "ios-arm64-ipa": 2568062
+  "android-arm64-apk": 6813855,
+  "android-arm64-v8a-aab": 2927576,
+  "android-armeabi-v7a-aab": 3244387,
+  "android-armeabi-v7a-apk": 7778599,
+  "android-x86_64-aab": 2958734,
+  "android-x86_64-apk": 7042689,
+  "ios-arm64-ipa": 2843334
 }

@@ -1,7 +1,7 @@
 # 0036. Size budgets per build: what a device downloads, and the APK file
 
 - **Status:** Accepted
-- **Date:** 2026-10-01
+- **Date:** 2026-10-01, revised 2026-10-02 and [2026-10-05](#revision-2026-10-05)
 - **Requirements:** `RT-061`, `NFR-009`, `QA-007`
 
 ## Context and problem
@@ -92,3 +92,23 @@ raised the Android budgets rather than trim the runtime:
 The 10% gate over `test/size/baseline.json` (`QA-007`) still catches each regression, so
 growth stays visible and reviewed even with room under the budgets. `RT-061` and `NFR-009`
 are reworded accordingly (specification 1.2.1).
+
+## Revision (2026-10-05)
+
+Phase 5's first batch (action engine completion, state engine, forms, data layer I) took the
+runtime's overhead 8 to 11% over the committed baseline in CI run 37262413120: the IPA at
+2.71 MiB (budget 3 MiB, baseline 2.45 MiB), the App Bundle downloads at 2.79 to 3.09 MiB,
+the APKs at 6.50 to 7.42 MiB. The maintainer decided (P5 plan §2.1, B7) to give the phase
+room now and to reduce size aggressively later, in the phase's performance and size
+milestone (R11):
+
+- **App Bundle download, per ABI: ≤ 5 MiB**, replacing 4 MiB.
+- **iOS IPA, arm64, thinned: ≤ 5 MiB**, replacing 3 MiB.
+- **APK, per ABI: ≤ 10 MiB** — unchanged.
+- **The size regression gate fails beyond 20%** over `test/size/baseline.json`, replacing
+  10%; the other benchmarks of `QA-007` keep 10%.
+
+The baseline is reset to that run's measurements. Known levers for R11: the bundles' limits
+table (every bundle carries all limits; plan B8), and flatc's generated `toString`s, about
+105 KB of AOT code (size journey, round 2). `RT-061`, `NFR-009` and `QA-007` are reworded
+accordingly (specification 1.3.1).

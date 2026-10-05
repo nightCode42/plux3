@@ -1,9 +1,9 @@
 # Plux — System Requirements Specification
 
 **Document ID:** `SRS-PLUX-001`
-**Version:** 1.3.0
+**Version:** 1.3.1
 **Status:** Draft — living document, revised as implementation proceeds
-**Date:** 2026-10-04
+**Date:** 2026-10-05
 **Applies to:** Plux Schema, Plux Compiler, Plux Server, Plux Functions, `plux_flutter` runtime, Plux Dev app, Plux Studio, Plux CLI, Plux AI
 
 > **Plux — Plugin Experience.** Build native Flutter screens visually, compile them into signed binary plugins, and ship them to every device in seconds — with high-assurance security, zero parse cost, and full control over who changes what.
@@ -955,7 +955,7 @@ The Studio canvas no longer uses a Flutter Web build of the runtime (ADR-0013); 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `RT-060` | P3 | MUST | Optional capabilities **MUST** ship as separate packages so apps pay only for what they use: `plux_flutter` (core), `plux_db_drift`, `plux_lottie`, `plux_rive`, `plux_maps`, `plux_charts`, `plux_media`, `plux_scanner`, `plux_location`, `plux_security` (RASP), `plux_payments`, `plux_devtools` (debug only). The on-device function interpreter **MUST** be part of an optional package (`plux_functions`) so apps that do not place functions on the device do not ship it. | WIP |
-| `RT-061` | P3 | MUST | The core package **MUST** add, per ABI (arm64-v8a, armeabi-v7a, x86_64), ≤ 4 MiB to what Google Play downloads from a release App Bundle and ≤ 10 MiB to a release APK, and ≤ 3 MiB to an iOS IPA (thinned, arm64), measured in CI against a blank Flutter app (ADR-0036). | DONE |
+| `RT-061` | P3 | MUST | The core package **MUST** add, per ABI (arm64-v8a, armeabi-v7a, x86_64), ≤ 5 MiB to what Google Play downloads from a release App Bundle and ≤ 10 MiB to a release APK, and ≤ 5 MiB to an iOS IPA (thinned, arm64), measured in CI against a blank Flutter app (ADR-0036). | DONE |
 
 ---
 
@@ -1899,7 +1899,7 @@ This section concerns how Plux itself is verified. §22.2 covers the testing too
 | `QA-004` | P1 | MUST | Fuzzing **MUST** continuously cover the compiler, the bundle container and FlatBuffers verification (Go and Dart), manifest and metadata parsing, DPoP and attestation parsing, and PXL bytecode loading. | WIP |
 | `QA-005` | P2 | MUST | Integration tests **MUST** run the server against real PostgreSQL, object storage and Valkey (Testcontainers or Compose). | DONE |
 | `QA-006` | P3 | MUST | End-to-end tests **MUST** run the example host apps on Android emulators and iOS simulators in CI (Patrol or `integration_test`), and on a real-device farm nightly including at least one low-end Android device. | WIP |
-| `QA-007` | P3 | MUST | Performance benchmarks **MUST** run in CI and fail on regressions beyond 10%: runtime (init, page build, first frame, frame times, PXL, action overhead) in profile mode on reference devices; sync (bytes and time on simulated 3G); server (k6 load tests for manifest, functions, telemetry); Studio (Lighthouse CI and canvas frame-time tests). | WIP |
+| `QA-007` | P3 | MUST | Performance benchmarks **MUST** run in CI and fail on regressions beyond 10% (20% for the runtime's size overhead, ADR-0036): runtime (init, page build, first frame, frame times, PXL, action overhead) in profile mode on reference devices; sync (bytes and time on simulated 3G); server (k6 load tests for manifest, functions, telemetry); Studio (Lighthouse CI and canvas frame-time tests). | WIP |
 | `QA-008` | P6 | MUST | Security tests **MUST** include the DPoP and attestation negative suite (`SEC-029`), bundle tampering and rollback attacks, MASTG checks (`SEC-190`), OWASP ZAP baseline scans of Studio and the API, and authorisation matrix tests for every role and permission. | SPEC |
 | `QA-009` | P3 | MUST | Failure-injection tests **MUST** cover network loss mid-download, corrupted and truncated deltas, disk full, process kill during activation, server errors and clock skew, and **MUST** prove the runtime always keeps a working release. | DONE |
 | `QA-010` | P3 | MUST | Compatibility tests **MUST** run the last three released runtime versions against the current server and new bundles, and the current runtime against bundles from the last three compiler versions. | WIP |
@@ -1952,7 +1952,7 @@ This section concerns how Plux itself is verified. §22.2 covers the testing too
 | `NFR-006` | P3 | MUST | Up-to-date check at app start | 1 manifest request, ≤ 1 KiB of request and response bodies (`304`-style answer); headers and the device-token request are not counted (ADR-0037) | DONE |
 | `NFR-007` | P3 | MUST | Sync of a typical update (3 plugins changed) on slow network | ≤ 3 s p95 | DONE |
 | `NFR-008` | P3 | MUST | Runtime memory overhead with 50 plugins installed | ≤ 30 MiB (excluding images) | WIP |
-| `NFR-009` | P3 | MUST | Core package size | ≤ 4 MiB downloaded on Android (App Bundle) and ≤ 3 MiB on iOS; ≤ 10 MiB in an Android APK (`RT-061`) | DONE |
+| `NFR-009` | P3 | MUST | Core package size | ≤ 5 MiB downloaded on Android (App Bundle) and ≤ 5 MiB on iOS; ≤ 10 MiB in an Android APK (`RT-061`) | DONE |
 | `NFR-010` | P5 | MUST | PXL typical binding evaluation | ≤ 2 µs p95 (`PXL-004`) | SPEC |
 | `NFR-011` | P5 | MUST | Action interpreter overhead | ≤ 20 µs per step p95 (`ACT-008`) | WIP |
 | `NFR-020` | P2 | MUST | Manifest endpoint throughput | ≥ 5,000 req/s per `api` replica at p99 ≤ 50 ms (cache hit) | DONE |
@@ -2943,10 +2943,10 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | Field | Value |
 |---|---|
 | Document ID | `SRS-PLUX-001` |
-| Version | 1.3.0 |
+| Version | 1.3.1 |
 | Status | Draft (living document) |
-| Date | 2026-10-04 |
-| Supersedes | 1.2.2 |
+| Date | 2026-10-05 |
+| Supersedes | 1.3.0 |
 | Change process | Amendments are made by pull request against `docs/requirements.md`. A change to a `MUST` requirement requires a corresponding ADR. The version is incremented per Semantic Versioning: a breaking change to an existing requirement is a major increment, a new requirement is a minor increment, and a clarification is a patch increment. |
 
 ### Revision history
@@ -2968,3 +2968,4 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | 1.2.1 | 2026-10-02 | `RT-061`, `NFR-009`: the Android budgets are raised — ≤ 4 MiB for the App Bundle download per ABI and ≤ 10 MiB for an APK per ABI, replacing 3 MiB and 6.5 MiB; the thinned IPA stays ≤ 3 MiB (maintainer decision; ADR-0036, Revision). |
 | 1.2.2 | 2026-10-03 | Phase 4 delivered: P4 requirement statuses updated — 23 of its `MUST`s `DONE`; `WGT-030`, `ACT-060`, `NAV-009`, `NAV-010`, `HST-010` and `HST-021` `WIP` until the phases the P4 plan names complete them (§3.2); `RT-021`, `HST-013`, `STA-030` and `NFR-011`, which P4 advances, `WIP`. The header and Document Control carry the latest revision (P4 plan, A21). |
 | 1.3.0 | 2026-10-04 | Phase 5 decisions (maintainer, 2026-10-04; P5 plan §2.1, B1–B2): Appendix D adds `emitEvent` (Component, P5), with which a component emits its declared events (ADR-0045); `RT-060` and §33 add the optional package `plux_location` for `getLocation` (ADR-0051); `DB-001` says the core's built-in store implements `PluxDatabaseAdapter` for persisted state, the key-value store, the response cache and the outbox, and collections use `plux_db_drift` or a host adapter, as §6.4's `db/` and Appendix H.2's `databaseAdapter` now say (ADR-0049); `SEC-080` names the approved capability set — the app document's optional `capabilities`, narrowed at run time by `PluxConfig.allowedCapabilities` — and leaves its governance approval to P9, with §7.1 and Appendix H.2 to match (ADR-0051); notes on `DB-003` and `DEP-060` record the deferral of the ObjectBox, Hive CE and Sembast adapters to a later phase and of the demonstration environment to P9. ADRs 0045–0052 record the P5 designs. |
+| 1.3.1 | 2026-10-05 | `RT-061`, `NFR-009`: the App Bundle download and the thinned IPA budgets rise to ≤ 5 MiB each, the APK stays ≤ 10 MiB; `QA-007`: the size gate fails on growth beyond 20% over the committed overhead, other benchmarks stay at 10% (maintainer decision, P5 plan §2.1 B7; ADR-0036, Revision 2026-10-05). |
