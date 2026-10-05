@@ -178,7 +178,9 @@ void main() {
     TraceBuffer? traces,
     void Function(ActionError)? presenter,
     bool component = false,
+    void Function() Function()? lease,
   }) => ActionHost(
+    lease: lease,
     context: StepContext(
       navigator: FakeNavigator(),
       emit: (_, _) {},
@@ -751,6 +753,48 @@ void main() {
       expect(await pick('a'), 1);
       await pick('b');
       expect(tracked.single.$1, 'other');
+    });
+
+    test('a run holds its release from start to end, even after its owner is gone, so a replaced release is not unmapped under it', () async {
+      var held = 0;
+      var taken = 0;
+      void Function() lease() {
+        held++;
+        taken++;
+        return () => held--;
+      }
+
+      final h = host(lease: lease);
+      final run = h.start(
+        graph([
+          GraphStep(
+            id: 'd',
+            action: id('delay'),
+            inputs: {input('delay', 'duration'): lit(const PxlDuration(250))},
+          ),
+        ]),
+        roots: () => const {},
+        key: 'ok',
+      );
+      // The owner goes away while the run is still in its step: the run
+      // keeps its hold until it ends.
+      h.dispose();
+      await run;
+      expect(taken, 1);
+      expect(held, 0);
+      await host(lease: lease).start(
+        graph([
+          GraphStep(
+            id: 'x',
+            action: id('callNative'),
+            inputs: {input('callNative', 'action'): lit('missing')},
+          ),
+        ]),
+        roots: () => const {},
+        key: 'native',
+      );
+      expect(taken, 2);
+      expect(held, 0);
     });
 
     test('delay waits on the clock; emitEvent reaches the component; sync starts a sync', () async {

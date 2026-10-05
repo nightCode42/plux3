@@ -283,13 +283,15 @@ func sourceNamed(sources []sourceField, name string) *sourceField {
 }
 
 // checkTriggers builds each trigger's handler with its policy, and raises
-// the triggers feature (ACT-002, ACT-003).
+// the triggers feature (ACT-002, ACT-003). The feature is always listed, as
+// a marker: the runtime opens at start-up only the bundles that list it, to
+// run their triggers, and leaves the others unmapped until a page needs them.
 func (u *unit) checkTriggers(ts []*trigger, pl *plugin) {
 	for _, tr := range ts {
 		h := &handler{graph: tr.graph}
 		u.policy(h, tr.eh, defaultPolicy(tr.kind), vctx{file: tr.file, ptr: tr.ptr, pl: pl})
 		tr.handler = h
-		u.requireFeature(triggersFeature, vctx{file: tr.file, ptr: tr.ptr, pl: pl}, false)
+		u.requireFeature(triggersFeature, vctx{file: tr.file, ptr: tr.ptr, pl: pl}, true)
 	}
 }
 

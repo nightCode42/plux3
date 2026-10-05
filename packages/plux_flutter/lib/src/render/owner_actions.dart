@@ -90,7 +90,12 @@ final class ReleaseOwners {
     for (final o in _owners.values) {
       o.actions.start();
     }
+    // Triggers decode their graphs from the mapped bundles whenever they
+    // fire, so the release stays mapped while its owners live.
+    if (_owners.isNotEmpty) _unlease = release.hold();
   }
+
+  void Function()? _unlease;
 
   /// Runs plugin [plugin]'s error handler, then the app's, for [error]
   /// (ACT-020): true when one handled it.
@@ -106,6 +111,8 @@ final class ReleaseOwners {
       o.data?.dispose();
     }
     _owners.clear();
+    _unlease?.call();
+    _unlease = null;
   }
 
   ({PageActions actions, DataScope? data}) _start(
@@ -127,6 +134,7 @@ final class ReleaseOwners {
     data = renderer.dataScope(release, key, null, roots, '');
     final navigator = navigatorKey;
     final host = ActionHost(
+      lease: release.hold,
       context: StepContext(
         navigator: PageNavigator(
           router: services.router,

@@ -318,6 +318,19 @@ final class ActiveRelease {
     if (_retired && _leases == 0) _unmap();
   }
 
+  /// Takes a lease and returns what gives it back, at most once: for an
+  /// action run, which reads its graph from the mapped bundles until it
+  /// ends (ActionHost.lease).
+  void Function() hold() {
+    acquire();
+    var held = true;
+    return () {
+      if (!held) return;
+      held = false;
+      releaseLease();
+    };
+  }
+
   /// Marks this release replaced; it unmaps when no page holds it.
   void retire() {
     _retired = true;

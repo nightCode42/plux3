@@ -206,7 +206,14 @@ final class ActionHost {
     this.errors,
     this.presenter,
     this.honoursParallel = false,
+    this.lease,
   });
+
+  /// Holds the release whose bundles a run reads, for as long as the run
+  /// lasts: called as a run starts, it returns what ends the hold. A run
+  /// may outlive its owner (detached, or finishing a cancelled step), and a
+  /// replaced release unmaps its bundles only once nothing holds it.
+  final void Function() Function()? lease;
 
   /// What handlers run with: the page's navigation, `Plux.events`, the
   /// host's custom actions, state, flows and time.
@@ -534,9 +541,13 @@ final class ActionHost {
     final startedAt = DateTime.now();
     final watch = Stopwatch()..start();
     final RunResult result;
+    // The run reads its graph's values from the mapped bundle until it
+    // ends, which may be after its owner is gone.
+    final unlease = lease?.call();
     try {
       result = await run.execute();
     } finally {
+      unlease?.call();
       _active[key]?.remove(run);
       _runs.remove(run);
       if (owner != null) _owned[owner]?.remove(run);

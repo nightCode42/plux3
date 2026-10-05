@@ -496,6 +496,7 @@ final class PluxRenderer implements PageRenderer, RenderServices {
     }
     if (roots == null) return const GuardAllows();
     final host = ActionHost(
+      lease: release.hold,
       context: StepContext(
         navigator: const _GuardNavigator(),
         emit: services.emit,
@@ -1009,6 +1010,7 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
     if (services == null) return null;
     final result = _section.page?.result ?? 0;
     return ActionHost(
+      lease: widget.release.hold,
       context: StepContext(
         navigator: PageNavigator(
           router: services.router,

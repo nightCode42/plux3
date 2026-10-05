@@ -23,7 +23,19 @@ final class JsonValue {
 /// flow callable with typed inputs (§14.1, ACT-061). File:
 /// `plugins/<plugin>/actions/<key>.graph.json`.
 final class ActionGraphDocument {
-  const ActionGraphDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, this.description, this.page, this.exported, this.inputs, this.output, this.state, required this.steps});
+  const ActionGraphDocument({
+    required this.schemaVersion,
+    required this.kind,
+    required this.id,
+    required this.key,
+    this.description,
+    this.page,
+    this.exported,
+    this.inputs,
+    this.output,
+    this.state,
+    required this.steps,
+  });
 
   /// Decodes a JSON object.
   factory ActionGraphDocument.fromJson(Object json) {
@@ -33,12 +45,21 @@ final class ActionGraphDocument {
       kind: m['kind']! as String,
       id: m['id']! as String,
       key: m['key']! as String,
-      description: m['description'] == null ? null : m['description']! as String,
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
       page: m['page'] == null ? null : m['page']! as String,
       exported: m['exported'] == null ? null : m['exported']! as bool,
-      inputs: m['inputs'] == null ? null : [for (final e in m['inputs']! as List<Object?>) Param.fromJson(e!)],
+      inputs: m['inputs'] == null
+          ? null
+          : [for (final e in m['inputs']! as List<Object?>) Param.fromJson(e!)],
       output: m['output'] == null ? null : m['output']! as String,
-      state: m['state'] == null ? null : [for (final e in m['state']! as List<Object?>) StateEntry.fromJson(e!)],
+      state: m['state'] == null
+          ? null
+          : [
+              for (final e in m['state']! as List<Object?>)
+                StateEntry.fromJson(e!),
+            ],
       steps: [for (final e in m['steps']! as List<Object?>) Step.fromJson(e!)],
     );
   }
@@ -47,21 +68,28 @@ final class ActionGraphDocument {
   /// before validation.
   final String schemaVersion;
   final String kind;
+
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String id;
+
   /// Human-readable lower-kebab slug, unique within its parent (SCH-002). Files
   /// in the Git layout are named after it.
   final String key;
+
   /// Human-readable description.
   final String? description;
+
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String? page;
+
   /// Callable from other plugins (ACT-061).
   final bool? exported;
   final List<Param>? inputs;
+
   /// Type expression of SCH-010, e.g. `string`, `decimal?`,
   /// `list<Transaction>`, `map<string,int>`.
   final String? output;
+
   /// The run's variables: state of scope `run`, read and written as
   /// `run.<name>` by the graph's steps and gone when the run ends (STA-001).
   final List<StateEntry>? state;
@@ -69,18 +97,18 @@ final class ActionGraphDocument {
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'schemaVersion': schemaVersion,
-        'kind': kind,
-        'id': id,
-        'key': key,
-        if (description != null) 'description': description!,
-        if (page != null) 'page': page!,
-        if (exported != null) 'exported': exported!,
-        if (inputs != null) 'inputs': [for (final e in inputs!) e.toJson()],
-        if (output != null) 'output': output!,
-        if (state != null) 'state': [for (final e in state!) e.toJson()],
-        'steps': [for (final e in steps) e.toJson()],
-      };
+    'schemaVersion': schemaVersion,
+    'kind': kind,
+    'id': id,
+    'key': key,
+    if (description != null) 'description': description!,
+    if (page != null) 'page': page!,
+    if (exported != null) 'exported': exported!,
+    if (inputs != null) 'inputs': [for (final e in inputs!) e.toJson()],
+    if (output != null) 'output': output!,
+    if (state != null) 'state': [for (final e in state!) e.toJson()],
+    'steps': [for (final e in steps) e.toJson()],
+  };
 }
 
 /// When a staged release activates (SYN-004).
@@ -92,8 +120,10 @@ enum ActivationPolicy {
   const ActivationPolicy(this.json);
 
   /// Decodes a JSON value.
-  factory ActivationPolicy.fromJson(Object json) =>
-      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown ActivationPolicy', json));
+  factory ActivationPolicy.fromJson(Object json) => values.firstWhere(
+    (v) => v.json == json,
+    orElse: () => throw FormatException('unknown ActivationPolicy', json),
+  );
 
   /// The JSON value.
   final String json;
@@ -105,7 +135,38 @@ enum ActivationPolicy {
 /// An app: its plugins, theme, locales, environments, shared data and policies
 /// (SCH-020). File: `app.json`.
 final class AppDocument {
-  const AppDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.icon, required this.defaultLocale, required this.supportedLocales, required this.theme, required this.entryRoute, this.navigation, required this.plugins, required this.environments, this.variables, this.dataSources, this.nativeCatalogue, required this.securityProfile, required this.sync, required this.minRuntimeVersion, this.requiredFeatures, this.flags, this.types, this.state, this.collections, this.userContext, this.hostEvents, this.telemetry, this.push, this.triggers});
+  const AppDocument({
+    required this.schemaVersion,
+    required this.kind,
+    required this.id,
+    required this.key,
+    required this.name,
+    this.description,
+    required this.icon,
+    required this.defaultLocale,
+    required this.supportedLocales,
+    required this.theme,
+    required this.entryRoute,
+    this.navigation,
+    required this.plugins,
+    required this.environments,
+    this.variables,
+    this.dataSources,
+    this.nativeCatalogue,
+    required this.securityProfile,
+    required this.sync,
+    required this.minRuntimeVersion,
+    this.requiredFeatures,
+    this.flags,
+    this.types,
+    this.state,
+    this.collections,
+    this.userContext,
+    this.hostEvents,
+    this.telemetry,
+    this.push,
+    this.triggers,
+  });
 
   /// Decodes a JSON object.
   factory AppDocument.fromJson(Object json) {
@@ -116,31 +177,88 @@ final class AppDocument {
       id: m['id']! as String,
       key: m['key']! as String,
       name: m['name']! as String,
-      description: m['description'] == null ? null : m['description']! as String,
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
       icon: Icon.fromJson(m['icon']!),
       defaultLocale: m['defaultLocale']! as String,
-      supportedLocales: [for (final e in m['supportedLocales']! as List<Object?>) e! as String],
+      supportedLocales: [
+        for (final e in m['supportedLocales']! as List<Object?>) e! as String,
+      ],
       theme: m['theme']! as String,
       entryRoute: m['entryRoute']! as String,
-      navigation: m['navigation'] == null ? null : NavigationPolicy.fromJson(m['navigation']!),
+      navigation: m['navigation'] == null
+          ? null
+          : NavigationPolicy.fromJson(m['navigation']!),
       plugins: [for (final e in m['plugins']! as List<Object?>) e! as String],
-      environments: [for (final e in m['environments']! as List<Object?>) Environment.fromJson(e!)],
-      variables: m['variables'] == null ? null : [for (final e in m['variables']! as List<Object?>) Field.fromJson(e!)],
-      dataSources: m['dataSources'] == null ? null : [for (final e in m['dataSources']! as List<Object?>) DataSource.fromJson(e!)],
-      nativeCatalogue: m['nativeCatalogue'] == null ? null : m['nativeCatalogue']! as String,
+      environments: [
+        for (final e in m['environments']! as List<Object?>)
+          Environment.fromJson(e!),
+      ],
+      variables: m['variables'] == null
+          ? null
+          : [
+              for (final e in m['variables']! as List<Object?>)
+                Field.fromJson(e!),
+            ],
+      dataSources: m['dataSources'] == null
+          ? null
+          : [
+              for (final e in m['dataSources']! as List<Object?>)
+                DataSource.fromJson(e!),
+            ],
+      nativeCatalogue: m['nativeCatalogue'] == null
+          ? null
+          : m['nativeCatalogue']! as String,
       securityProfile: SecurityProfile.fromJson(m['securityProfile']!),
       sync: SyncPolicy.fromJson(m['sync']!),
       minRuntimeVersion: m['minRuntimeVersion']! as String,
-      requiredFeatures: m['requiredFeatures'] == null ? null : RequiredFeaturesPolicy.fromJson(m['requiredFeatures']!),
-      flags: m['flags'] == null ? null : [for (final e in m['flags']! as List<Object?>) FlagDecl.fromJson(e!)],
-      types: m['types'] == null ? null : [for (final e in m['types']! as List<Object?>) TypeDecl.fromJson(e!)],
-      state: m['state'] == null ? null : [for (final e in m['state']! as List<Object?>) StateEntry.fromJson(e!)],
-      collections: m['collections'] == null ? null : [for (final e in m['collections']! as List<Object?>) Collection.fromJson(e!)],
-      userContext: m['userContext'] == null ? null : [for (final e in m['userContext']! as List<Object?>) Field.fromJson(e!)],
-      hostEvents: m['hostEvents'] == null ? null : [for (final e in m['hostEvents']! as List<Object?>) HostEventDecl.fromJson(e!)],
-      telemetry: m['telemetry'] == null ? null : TelemetryPolicy.fromJson(m['telemetry']!),
+      requiredFeatures: m['requiredFeatures'] == null
+          ? null
+          : RequiredFeaturesPolicy.fromJson(m['requiredFeatures']!),
+      flags: m['flags'] == null
+          ? null
+          : [
+              for (final e in m['flags']! as List<Object?>)
+                FlagDecl.fromJson(e!),
+            ],
+      types: m['types'] == null
+          ? null
+          : [
+              for (final e in m['types']! as List<Object?>)
+                TypeDecl.fromJson(e!),
+            ],
+      state: m['state'] == null
+          ? null
+          : [
+              for (final e in m['state']! as List<Object?>)
+                StateEntry.fromJson(e!),
+            ],
+      collections: m['collections'] == null
+          ? null
+          : [
+              for (final e in m['collections']! as List<Object?>)
+                Collection.fromJson(e!),
+            ],
+      userContext: m['userContext'] == null
+          ? null
+          : [
+              for (final e in m['userContext']! as List<Object?>)
+                Field.fromJson(e!),
+            ],
+      hostEvents: m['hostEvents'] == null
+          ? null
+          : [
+              for (final e in m['hostEvents']! as List<Object?>)
+                HostEventDecl.fromJson(e!),
+            ],
+      telemetry: m['telemetry'] == null
+          ? null
+          : TelemetryPolicy.fromJson(m['telemetry']!),
       push: m['push'] == null ? null : PushPolicy.fromJson(m['push']!),
-      triggers: m['triggers'] == null ? null : Triggers.fromJson(m['triggers']!),
+      triggers: m['triggers'] == null
+          ? null
+          : Triggers.fromJson(m['triggers']!),
     );
   }
 
@@ -148,42 +266,57 @@ final class AppDocument {
   /// before validation.
   final String schemaVersion;
   final String kind;
+
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String id;
+
   /// Human-readable lower-kebab slug, unique within its parent (SCH-002). Files
   /// in the Git layout are named after it.
   final String key;
   final String name;
+
   /// Human-readable description.
   final String? description;
+
   /// An uploaded image or a generated monogram (SCH-020).
   final Icon icon;
+
   /// BCP 47 language tag: language, optional script, optional region.
   final String defaultLocale;
   final List<String> supportedLocales;
+
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String theme;
+
   /// App-wide unique route name (SCH-025).
   final String entryRoute;
+
   /// App-wide navigation: the page for unknown routes, deep links and tabbed
   /// shells (NAV-005, NAV-006, NAV-008, NAV-011, ADR-0040).
   final NavigationPolicy? navigation;
+
   /// Keys of the app's plugins, in display order; each has a directory
   /// `plugins/<key>/`.
   final List<String> plugins;
   final List<Environment> environments;
+
   /// Non-secret environment variables available in PXL as `env.<name>`
   /// (DAT-003).
   final List<Field>? variables;
   final List<DataSource>? dataSources;
+
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String? nativeCatalogue;
+
   /// Security profile (§15.12).
   final SecurityProfile securityProfile;
+
   /// Sync policy (§10.4).
   final SyncPolicy sync;
+
   /// Semantic version major.minor.patch.
   final String minRuntimeVersion;
+
   /// What the compiler does when a release needs a newer runtime than
   /// `minRuntimeVersion`: reject the publish, or raise the release's required
   /// features with a warning (WGT-004).
@@ -192,17 +325,21 @@ final class AppDocument {
   final List<TypeDecl>? types;
   final List<StateEntry>? state;
   final List<Collection>? collections;
+
   /// Attributes the host provides about the signed-in user, available in PXL as
   /// `user.<name>`.
   final List<Field>? userContext;
   final List<HostEventDecl>? hostEvents;
+
   /// What the runtime reports (ANL-003, ADR-0034).
   final TelemetryPolicy? telemetry;
+
   /// Push notifications (NAV-008, ADR-0040): whether the app uses them, so a
   /// generated project carries the platform configuration, and the payload key
   /// under which a notification names `{route, params}` for
   /// `Plux.handlePushPayload`.
   final PushPolicy? push;
+
   /// Triggers besides widget events and page lifecycle (ACT-002), and the
   /// owner's error handler (ACT-020). A page's runs are cancelled with the
   /// page; a plugin's and the app's run while the release is active.
@@ -210,42 +347,54 @@ final class AppDocument {
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'schemaVersion': schemaVersion,
-        'kind': kind,
-        'id': id,
-        'key': key,
-        'name': name,
-        if (description != null) 'description': description!,
-        'icon': icon.toJson(),
-        'defaultLocale': defaultLocale,
-        'supportedLocales': [for (final e in supportedLocales) e],
-        'theme': theme,
-        'entryRoute': entryRoute,
-        if (navigation != null) 'navigation': navigation!.toJson(),
-        'plugins': [for (final e in plugins) e],
-        'environments': [for (final e in environments) e.toJson()],
-        if (variables != null) 'variables': [for (final e in variables!) e.toJson()],
-        if (dataSources != null) 'dataSources': [for (final e in dataSources!) e.toJson()],
-        if (nativeCatalogue != null) 'nativeCatalogue': nativeCatalogue!,
-        'securityProfile': securityProfile.toJson(),
-        'sync': sync.toJson(),
-        'minRuntimeVersion': minRuntimeVersion,
-        if (requiredFeatures != null) 'requiredFeatures': requiredFeatures!.toJson(),
-        if (flags != null) 'flags': [for (final e in flags!) e.toJson()],
-        if (types != null) 'types': [for (final e in types!) e.toJson()],
-        if (state != null) 'state': [for (final e in state!) e.toJson()],
-        if (collections != null) 'collections': [for (final e in collections!) e.toJson()],
-        if (userContext != null) 'userContext': [for (final e in userContext!) e.toJson()],
-        if (hostEvents != null) 'hostEvents': [for (final e in hostEvents!) e.toJson()],
-        if (telemetry != null) 'telemetry': telemetry!.toJson(),
-        if (push != null) 'push': push!.toJson(),
-        if (triggers != null) 'triggers': triggers!.toJson(),
-      };
+    'schemaVersion': schemaVersion,
+    'kind': kind,
+    'id': id,
+    'key': key,
+    'name': name,
+    if (description != null) 'description': description!,
+    'icon': icon.toJson(),
+    'defaultLocale': defaultLocale,
+    'supportedLocales': [for (final e in supportedLocales) e],
+    'theme': theme,
+    'entryRoute': entryRoute,
+    if (navigation != null) 'navigation': navigation!.toJson(),
+    'plugins': [for (final e in plugins) e],
+    'environments': [for (final e in environments) e.toJson()],
+    if (variables != null)
+      'variables': [for (final e in variables!) e.toJson()],
+    if (dataSources != null)
+      'dataSources': [for (final e in dataSources!) e.toJson()],
+    if (nativeCatalogue != null) 'nativeCatalogue': nativeCatalogue!,
+    'securityProfile': securityProfile.toJson(),
+    'sync': sync.toJson(),
+    'minRuntimeVersion': minRuntimeVersion,
+    if (requiredFeatures != null)
+      'requiredFeatures': requiredFeatures!.toJson(),
+    if (flags != null) 'flags': [for (final e in flags!) e.toJson()],
+    if (types != null) 'types': [for (final e in types!) e.toJson()],
+    if (state != null) 'state': [for (final e in state!) e.toJson()],
+    if (collections != null)
+      'collections': [for (final e in collections!) e.toJson()],
+    if (userContext != null)
+      'userContext': [for (final e in userContext!) e.toJson()],
+    if (hostEvents != null)
+      'hostEvents': [for (final e in hostEvents!) e.toJson()],
+    if (telemetry != null) 'telemetry': telemetry!.toJson(),
+    if (push != null) 'push': push!.toJson(),
+    if (triggers != null) 'triggers': triggers!.toJson(),
+  };
 }
 
 /// An asset file.
 final class AssetEntry {
-  const AssetEntry({required this.id, required this.key, required this.file, required this.mediaType, this.description});
+  const AssetEntry({
+    required this.id,
+    required this.key,
+    required this.file,
+    required this.mediaType,
+    this.description,
+  });
 
   /// Decodes a JSON object.
   factory AssetEntry.fromJson(Object json) {
@@ -255,36 +404,47 @@ final class AssetEntry {
       key: m['key']! as String,
       file: m['file']! as String,
       mediaType: MediaType.fromJson(m['mediaType']!),
-      description: m['description'] == null ? null : m['description']! as String,
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
     );
   }
 
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String id;
+
   /// Human-readable lower-kebab slug, unique within its parent (SCH-002). Files
   /// in the Git layout are named after it.
   final String key;
+
   /// Path under `assets/`.
   final String file;
+
   /// Media type of an asset.
   final MediaType mediaType;
+
   /// Human-readable description.
   final String? description;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'id': id,
-        'key': key,
-        'file': file,
-        'mediaType': mediaType.toJson(),
-        if (description != null) 'description': description!,
-      };
+    'id': id,
+    'key': key,
+    'file': file,
+    'mediaType': mediaType.toJson(),
+    if (description != null) 'description': description!,
+  };
 }
 
 /// The assets of an app, stored under `assets/` and referenced by identifier
 /// (§14.8). File: `assets/index.json`.
 final class AssetIndexDocument {
-  const AssetIndexDocument({required this.schemaVersion, required this.kind, required this.id, required this.assets});
+  const AssetIndexDocument({
+    required this.schemaVersion,
+    required this.kind,
+    required this.id,
+    required this.assets,
+  });
 
   /// Decodes a JSON object.
   factory AssetIndexDocument.fromJson(Object json) {
@@ -293,7 +453,9 @@ final class AssetIndexDocument {
       schemaVersion: m['schemaVersion']! as String,
       kind: m['kind']! as String,
       id: m['id']! as String,
-      assets: [for (final e in m['assets']! as List<Object?>) AssetEntry.fromJson(e!)],
+      assets: [
+        for (final e in m['assets']! as List<Object?>) AssetEntry.fromJson(e!),
+      ],
     );
   }
 
@@ -301,17 +463,18 @@ final class AssetIndexDocument {
   /// before validation.
   final String schemaVersion;
   final String kind;
+
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String id;
   final List<AssetEntry> assets;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'schemaVersion': schemaVersion,
-        'kind': kind,
-        'id': id,
-        'assets': [for (final e in assets) e.toJson()],
-      };
+    'schemaVersion': schemaVersion,
+    'kind': kind,
+    'id': id,
+    'assets': [for (final e in assets) e.toJson()],
+  };
 }
 
 /// Asset reference (SCH-011).
@@ -321,18 +484,14 @@ final class AssetRef {
   /// Decodes a JSON object.
   factory AssetRef.fromJson(Object json) {
     final m = json as Map<String, Object?>;
-    return AssetRef(
-      asset: m['\$asset']! as String,
-    );
+    return AssetRef(asset: m['\$asset']! as String);
   }
 
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String asset;
 
   /// Encodes a JSON object.
-  Map<String, Object?> toJson() => {
-        '\$asset': asset,
-      };
+  Map<String, Object?> toJson() => {'\$asset': asset};
 }
 
 enum AssuranceLevel {
@@ -344,8 +503,10 @@ enum AssuranceLevel {
   const AssuranceLevel(this.json);
 
   /// Decodes a JSON value.
-  factory AssuranceLevel.fromJson(Object json) =>
-      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown AssuranceLevel', json));
+  factory AssuranceLevel.fromJson(Object json) => values.firstWhere(
+    (v) => v.json == json,
+    orElse: () => throw FormatException('unknown AssuranceLevel', json),
+  );
 
   /// The JSON value.
   final String json;
@@ -356,16 +517,38 @@ enum AssuranceLevel {
 
 /// Capabilities the plugin requests; everything else is denied (SEC-080).
 final class Capabilities {
-  const Capabilities({this.networkDomains, this.functions, this.deviceApis, this.nativeRoutes});
+  const Capabilities({
+    this.networkDomains,
+    this.functions,
+    this.deviceApis,
+    this.nativeRoutes,
+  });
 
   /// Decodes a JSON object.
   factory Capabilities.fromJson(Object json) {
     final m = json as Map<String, Object?>;
     return Capabilities(
-      networkDomains: m['networkDomains'] == null ? null : [for (final e in m['networkDomains']! as List<Object?>) e! as String],
-      functions: m['functions'] == null ? null : [for (final e in m['functions']! as List<Object?>) FunctionGrant.fromJson(e!)],
-      deviceApis: m['deviceApis'] == null ? null : [for (final e in m['deviceApis']! as List<Object?>) DeviceAPI.fromJson(e!)],
-      nativeRoutes: m['nativeRoutes'] == null ? null : [for (final e in m['nativeRoutes']! as List<Object?>) e! as String],
+      networkDomains: m['networkDomains'] == null
+          ? null
+          : [
+              for (final e in m['networkDomains']! as List<Object?>)
+                e! as String,
+            ],
+      functions: m['functions'] == null
+          ? null
+          : [
+              for (final e in m['functions']! as List<Object?>)
+                FunctionGrant.fromJson(e!),
+            ],
+      deviceApis: m['deviceApis'] == null
+          ? null
+          : [
+              for (final e in m['deviceApis']! as List<Object?>)
+                DeviceAPI.fromJson(e!),
+            ],
+      nativeRoutes: m['nativeRoutes'] == null
+          ? null
+          : [for (final e in m['nativeRoutes']! as List<Object?>) e! as String],
     );
   }
 
@@ -376,16 +559,27 @@ final class Capabilities {
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        if (networkDomains != null) 'networkDomains': [for (final e in networkDomains!) e],
-        if (functions != null) 'functions': [for (final e in functions!) e.toJson()],
-        if (deviceApis != null) 'deviceApis': [for (final e in deviceApis!) e.toJson()],
-        if (nativeRoutes != null) 'nativeRoutes': [for (final e in nativeRoutes!) e],
-      };
+    if (networkDomains != null)
+      'networkDomains': [for (final e in networkDomains!) e],
+    if (functions != null)
+      'functions': [for (final e in functions!) e.toJson()],
+    if (deviceApis != null)
+      'deviceApis': [for (final e in deviceApis!) e.toJson()],
+    if (nativeRoutes != null)
+      'nativeRoutes': [for (final e in nativeRoutes!) e],
+  };
 }
 
 /// A local database collection (DB-004).
 final class Collection {
-  const Collection({required this.id, required this.key, required this.fields, required this.primaryKey, this.indexes, this.description});
+  const Collection({
+    required this.id,
+    required this.key,
+    required this.fields,
+    required this.primaryKey,
+    this.indexes,
+    this.description,
+  });
 
   /// Decodes a JSON object.
   factory Collection.fromJson(Object json) {
@@ -393,40 +587,71 @@ final class Collection {
     return Collection(
       id: m['id']! as String,
       key: m['key']! as String,
-      fields: [for (final e in m['fields']! as List<Object?>) Field.fromJson(e!)],
-      primaryKey: [for (final e in m['primaryKey']! as List<Object?>) e! as String],
-      indexes: m['indexes'] == null ? null : [for (final e in m['indexes']! as List<Object?>) [for (final e in e! as List<Object?>) e! as String]],
-      description: m['description'] == null ? null : m['description']! as String,
+      fields: [
+        for (final e in m['fields']! as List<Object?>) Field.fromJson(e!),
+      ],
+      primaryKey: [
+        for (final e in m['primaryKey']! as List<Object?>) e! as String,
+      ],
+      indexes: m['indexes'] == null
+          ? null
+          : [
+              for (final e in m['indexes']! as List<Object?>)
+                [for (final e in e! as List<Object?>) e! as String],
+            ],
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
     );
   }
 
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String id;
+
   /// Human-readable lower-kebab slug, unique within its parent (SCH-002). Files
   /// in the Git layout are named after it.
   final String key;
   final List<Field> fields;
   final List<String> primaryKey;
   final List<List<String>>? indexes;
+
   /// Human-readable description.
   final String? description;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'id': id,
-        'key': key,
-        'fields': [for (final e in fields) e.toJson()],
-        'primaryKey': [for (final e in primaryKey) e],
-        if (indexes != null) 'indexes': [for (final e in indexes!) [for (final e in e) e]],
-        if (description != null) 'description': description!,
-      };
+    'id': id,
+    'key': key,
+    'fields': [for (final e in fields) e.toJson()],
+    'primaryKey': [for (final e in primaryKey) e],
+    if (indexes != null)
+      'indexes': [
+        for (final e in indexes!) [for (final e in e) e],
+      ],
+    if (description != null) 'description': description!,
+  };
 }
 
 /// A reusable component with typed props, slots, events and internal state
 /// (SCH-030). File: `components/<key>.component.json` (app-shared) or
 /// `plugins/<plugin>/components/<key>.component.json`.
 final class ComponentDocument {
-  const ComponentDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.version, this.props, this.slots, this.events, this.state, this.exported, required this.root, this.forms});
+  const ComponentDocument({
+    required this.schemaVersion,
+    required this.kind,
+    required this.id,
+    required this.key,
+    required this.name,
+    this.description,
+    required this.version,
+    this.props,
+    this.slots,
+    this.events,
+    this.state,
+    this.exported,
+    required this.root,
+    this.forms,
+  });
 
   /// Decodes a JSON object.
   factory ComponentDocument.fromJson(Object json) {
@@ -437,15 +662,39 @@ final class ComponentDocument {
       id: m['id']! as String,
       key: m['key']! as String,
       name: m['name']! as String,
-      description: m['description'] == null ? null : m['description']! as String,
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
       version: (m['version']! as num).toInt(),
-      props: m['props'] == null ? null : [for (final e in m['props']! as List<Object?>) ComponentProp.fromJson(e!)],
-      slots: m['slots'] == null ? null : [for (final e in m['slots']! as List<Object?>) ComponentSlot.fromJson(e!)],
-      events: m['events'] == null ? null : [for (final e in m['events']! as List<Object?>) ComponentEvent.fromJson(e!)],
-      state: m['state'] == null ? null : [for (final e in m['state']! as List<Object?>) StateEntry.fromJson(e!)],
+      props: m['props'] == null
+          ? null
+          : [
+              for (final e in m['props']! as List<Object?>)
+                ComponentProp.fromJson(e!),
+            ],
+      slots: m['slots'] == null
+          ? null
+          : [
+              for (final e in m['slots']! as List<Object?>)
+                ComponentSlot.fromJson(e!),
+            ],
+      events: m['events'] == null
+          ? null
+          : [
+              for (final e in m['events']! as List<Object?>)
+                ComponentEvent.fromJson(e!),
+            ],
+      state: m['state'] == null
+          ? null
+          : [
+              for (final e in m['state']! as List<Object?>)
+                StateEntry.fromJson(e!),
+            ],
       exported: m['exported'] == null ? null : m['exported']! as bool,
       root: Node.fromJson(m['root']!),
-      forms: m['forms'] == null ? null : [for (final e in m['forms']! as List<Object?>) Form.fromJson(e!)],
+      forms: m['forms'] == null
+          ? null
+          : [for (final e in m['forms']! as List<Object?>) Form.fromJson(e!)],
     );
   }
 
@@ -453,12 +702,15 @@ final class ComponentDocument {
   /// before validation.
   final String schemaVersion;
   final String kind;
+
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String id;
+
   /// Human-readable lower-kebab slug, unique within its parent (SCH-002). Files
   /// in the Git layout are named after it.
   final String key;
   final String name;
+
   /// Human-readable description.
   final String? description;
   final int version;
@@ -466,31 +718,34 @@ final class ComponentDocument {
   final List<ComponentSlot>? slots;
   final List<ComponentEvent>? events;
   final List<StateEntry>? state;
+
   /// Embeddable by the host with `PluxView` (NAV-004).
   final bool? exported;
+
   /// A node of a page or component tree: a widget or a component instance
   /// (SCH-023).
   final Node root;
+
   /// The forms of the component (STA-020).
   final List<Form>? forms;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'schemaVersion': schemaVersion,
-        'kind': kind,
-        'id': id,
-        'key': key,
-        'name': name,
-        if (description != null) 'description': description!,
-        'version': version,
-        if (props != null) 'props': [for (final e in props!) e.toJson()],
-        if (slots != null) 'slots': [for (final e in slots!) e.toJson()],
-        if (events != null) 'events': [for (final e in events!) e.toJson()],
-        if (state != null) 'state': [for (final e in state!) e.toJson()],
-        if (exported != null) 'exported': exported!,
-        'root': root.toJson(),
-        if (forms != null) 'forms': [for (final e in forms!) e.toJson()],
-      };
+    'schemaVersion': schemaVersion,
+    'kind': kind,
+    'id': id,
+    'key': key,
+    'name': name,
+    if (description != null) 'description': description!,
+    'version': version,
+    if (props != null) 'props': [for (final e in props!) e.toJson()],
+    if (slots != null) 'slots': [for (final e in slots!) e.toJson()],
+    if (events != null) 'events': [for (final e in events!) e.toJson()],
+    if (state != null) 'state': [for (final e in state!) e.toJson()],
+    if (exported != null) 'exported': exported!,
+    'root': root.toJson(),
+    if (forms != null) 'forms': [for (final e in forms!) e.toJson()],
+  };
 }
 
 /// An event the component emits.
@@ -503,28 +758,38 @@ final class ComponentEvent {
     return ComponentEvent(
       name: m['name']! as String,
       payload: m['payload'] == null ? null : m['payload']! as String,
-      description: m['description'] == null ? null : m['description']! as String,
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
     );
   }
 
   final String name;
+
   /// Type expression of SCH-010, e.g. `string`, `decimal?`,
   /// `list<Transaction>`, `map<string,int>`.
   final String? payload;
+
   /// Human-readable description.
   final String? description;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'name': name,
-        if (payload != null) 'payload': payload!,
-        if (description != null) 'description': description!,
-      };
+    'name': name,
+    if (payload != null) 'payload': payload!,
+    if (description != null) 'description': description!,
+  };
 }
 
 /// A typed prop of the component.
 final class ComponentProp {
-  const ComponentProp({required this.name, required this.type, this.required, this.defaultValue, this.description});
+  const ComponentProp({
+    required this.name,
+    required this.type,
+    this.required,
+    this.defaultValue,
+    this.description,
+  });
 
   /// Decodes a JSON object.
   factory ComponentProp.fromJson(Object json) {
@@ -534,30 +799,35 @@ final class ComponentProp {
       type: m['type']! as String,
       required: m['required'] == null ? null : m['required']! as bool,
       defaultValue: m.containsKey('default') ? JsonValue(m['default']) : null,
-      description: m['description'] == null ? null : m['description']! as String,
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
     );
   }
 
   /// Identifier used in PXL and generated code: lowerCamelCase.
   final String name;
+
   /// Type expression of SCH-010, e.g. `string`, `decimal?`,
   /// `list<Transaction>`, `map<string,int>`.
   final String type;
   final bool? required;
+
   /// A JSON value interpreted against a declared type (defaults, mocks,
   /// environment values).
   final JsonValue? defaultValue;
+
   /// Human-readable description.
   final String? description;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'name': name,
-        'type': type,
-        if (required != null) 'required': required!,
-        if (defaultValue != null) 'default': defaultValue!.value,
-        if (description != null) 'description': description!,
-      };
+    'name': name,
+    'type': type,
+    if (required != null) 'required': required!,
+    if (defaultValue != null) 'default': defaultValue!.value,
+    if (description != null) 'description': description!,
+  };
 }
 
 /// A component and the version the instance was built against (SCH-030).
@@ -578,15 +848,17 @@ final class ComponentRef {
   final int version;
 
   /// Encodes a JSON object.
-  Map<String, Object?> toJson() => {
-        'id': id,
-        'version': version,
-      };
+  Map<String, Object?> toJson() => {'id': id, 'version': version};
 }
 
 /// A named slot.
 final class ComponentSlot {
-  const ComponentSlot({required this.name, this.required, this.multiple, this.description});
+  const ComponentSlot({
+    required this.name,
+    this.required,
+    this.multiple,
+    this.description,
+  });
 
   /// Decodes a JSON object.
   factory ComponentSlot.fromJson(Object json) {
@@ -595,7 +867,9 @@ final class ComponentSlot {
       name: m['name']! as String,
       required: m['required'] == null ? null : m['required']! as bool,
       multiple: m['multiple'] == null ? null : m['multiple']! as bool,
-      description: m['description'] == null ? null : m['description']! as String,
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
     );
   }
 
@@ -603,21 +877,30 @@ final class ComponentSlot {
   final String name;
   final bool? required;
   final bool? multiple;
+
   /// Human-readable description.
   final String? description;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'name': name,
-        if (required != null) 'required': required!,
-        if (multiple != null) 'multiple': multiple!,
-        if (description != null) 'description': description!,
-      };
+    'name': name,
+    if (required != null) 'required': required!,
+    if (multiple != null) 'multiple': multiple!,
+    if (description != null) 'description': description!,
+  };
 }
 
 /// A data source with its value type and design-time mock (SCH-024, DAT-080).
 final class DataSource {
-  const DataSource({required this.id, required this.name, required this.kind, required this.type, required this.mock, this.config, this.description});
+  const DataSource({
+    required this.id,
+    required this.name,
+    required this.kind,
+    required this.type,
+    required this.mock,
+    this.config,
+    this.description,
+  });
 
   /// Decodes a JSON object.
   factory DataSource.fromJson(Object json) {
@@ -629,36 +912,43 @@ final class DataSource {
       type: m['type']! as String,
       mock: m['mock'],
       config: m.containsKey('config') ? JsonValue(m['config']) : null,
-      description: m['description'] == null ? null : m['description']! as String,
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
     );
   }
 
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String id;
+
   /// Identifier used in PXL and generated code: lowerCamelCase.
   final String name;
   final DataSourceKind kind;
+
   /// Type expression of SCH-010, e.g. `string`, `decimal?`,
   /// `list<Transaction>`, `map<string,int>`.
   final String type;
+
   /// A JSON value interpreted against a declared type (defaults, mocks,
   /// environment values).
   final Object? mock;
+
   /// Kind-specific configuration, validated from P5 (DAT-001).
   final JsonValue? config;
+
   /// Human-readable description.
   final String? description;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'id': id,
-        'name': name,
-        'kind': kind.toJson(),
-        'type': type,
-        'mock': mock,
-        if (config != null) 'config': config!.value,
-        if (description != null) 'description': description!,
-      };
+    'id': id,
+    'name': name,
+    'kind': kind.toJson(),
+    'type': type,
+    'mock': mock,
+    if (config != null) 'config': config!.value,
+    if (description != null) 'description': description!,
+  };
 }
 
 enum DataSourceKind {
@@ -673,8 +963,10 @@ enum DataSourceKind {
   const DataSourceKind(this.json);
 
   /// Decodes a JSON value.
-  factory DataSourceKind.fromJson(Object json) =>
-      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown DataSourceKind', json));
+  factory DataSourceKind.fromJson(Object json) => values.firstWhere(
+    (v) => v.json == json,
+    orElse: () => throw FormatException('unknown DataSourceKind', json),
+  );
 
   /// The JSON value.
   final String json;
@@ -692,23 +984,28 @@ final class DataSourceTriggers {
   factory DataSourceTriggers.fromJson(Object json) {
     final m = json as Map<String, Object?>;
     return DataSourceTriggers(
-      onLoaded: m['onLoaded'] == null ? null : EventHandler.fromJson(m['onLoaded']!),
-      onFailed: m['onFailed'] == null ? null : EventHandler.fromJson(m['onFailed']!),
+      onLoaded: m['onLoaded'] == null
+          ? null
+          : EventHandler.fromJson(m['onLoaded']!),
+      onFailed: m['onFailed'] == null
+          ? null
+          : EventHandler.fromJson(m['onFailed']!),
     );
   }
 
   /// A trigger's handler: a reference to an action graph or an inline graph
   /// (SCH-023).
   final EventHandler? onLoaded;
+
   /// A trigger's handler: a reference to an action graph or an inline graph
   /// (SCH-023).
   final EventHandler? onFailed;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        if (onLoaded != null) 'onLoaded': onLoaded!.toJson(),
-        if (onFailed != null) 'onFailed': onFailed!.toJson(),
-      };
+    if (onLoaded != null) 'onLoaded': onLoaded!.toJson(),
+    if (onFailed != null) 'onFailed': onFailed!.toJson(),
+  };
 }
 
 /// The links the app answers (NAV-008): its hosts for `https` links and its
@@ -722,9 +1019,18 @@ final class DeepLinkPolicy {
   factory DeepLinkPolicy.fromJson(Object json) {
     final m = json as Map<String, Object?>;
     return DeepLinkPolicy(
-      hosts: m['hosts'] == null ? null : [for (final e in m['hosts']! as List<Object?>) e! as String],
-      schemes: m['schemes'] == null ? null : [for (final e in m['schemes']! as List<Object?>) e! as String],
-      routes: m['routes'] == null ? null : [for (final e in m['routes']! as List<Object?>) DeepLinkRoute.fromJson(e!)],
+      hosts: m['hosts'] == null
+          ? null
+          : [for (final e in m['hosts']! as List<Object?>) e! as String],
+      schemes: m['schemes'] == null
+          ? null
+          : [for (final e in m['schemes']! as List<Object?>) e! as String],
+      routes: m['routes'] == null
+          ? null
+          : [
+              for (final e in m['routes']! as List<Object?>)
+                DeepLinkRoute.fromJson(e!),
+            ],
     );
   }
 
@@ -734,10 +1040,10 @@ final class DeepLinkPolicy {
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        if (hosts != null) 'hosts': [for (final e in hosts!) e],
-        if (schemes != null) 'schemes': [for (final e in schemes!) e],
-        if (routes != null) 'routes': [for (final e in routes!) e.toJson()],
-      };
+    if (hosts != null) 'hosts': [for (final e in hosts!) e],
+    if (schemes != null) 'schemes': [for (final e in schemes!) e],
+    if (routes != null) 'routes': [for (final e in routes!) e.toJson()],
+  };
 }
 
 /// A path pattern mapped to a route: literal segments and `{name}` segments,
@@ -756,14 +1062,12 @@ final class DeepLinkRoute {
   }
 
   final String path;
+
   /// App-wide unique route name (SCH-025).
   final String route;
 
   /// Encodes a JSON object.
-  Map<String, Object?> toJson() => {
-        'path': path,
-        'route': route,
-      };
+  Map<String, Object?> toJson() => {'path': path, 'route': route};
 }
 
 /// A device API a plugin may request (SEC-080).
@@ -782,8 +1086,10 @@ enum DeviceAPI {
   const DeviceAPI(this.json);
 
   /// Decodes a JSON value.
-  factory DeviceAPI.fromJson(Object json) =>
-      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown DeviceAPI', json));
+  factory DeviceAPI.fromJson(Object json) => values.firstWhere(
+    (v) => v.json == json,
+    orElse: () => throw FormatException('unknown DeviceAPI', json),
+  );
 
   /// The JSON value.
   final String json;
@@ -802,7 +1108,12 @@ final class Environment {
     return Environment(
       key: m['key']! as String,
       name: m['name']! as String,
-      values: m['values'] == null ? null : {for (final e in (m['values']! as Map<String, Object?>).entries) e.key: e.value},
+      values: m['values'] == null
+          ? null
+          : {
+              for (final e in (m['values']! as Map<String, Object?>).entries)
+                e.key: e.value,
+            },
     );
   }
 
@@ -814,10 +1125,11 @@ final class Environment {
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'key': key,
-        'name': name,
-        if (values != null) 'values': {for (final e in values!.entries) e.key: e.value},
-      };
+    'key': key,
+    'name': name,
+    if (values != null)
+      'values': {for (final e in values!.entries) e.key: e.value},
+  };
 }
 
 enum ErrorKind {
@@ -833,8 +1145,10 @@ enum ErrorKind {
   const ErrorKind(this.json);
 
   /// Decodes a JSON value.
-  factory ErrorKind.fromJson(Object json) =>
-      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown ErrorKind', json));
+  factory ErrorKind.fromJson(Object json) => values.firstWhere(
+    (v) => v.json == json,
+    orElse: () => throw FormatException('unknown ErrorKind', json),
+  );
 
   /// The JSON value.
   final String json;
@@ -853,8 +1167,12 @@ final class EventHandler {
     final m = json as Map<String, Object?>;
     return EventHandler(
       graph: m['\$graph'] == null ? null : m['\$graph']! as String,
-      steps: m['steps'] == null ? null : [for (final e in m['steps']! as List<Object?>) Step.fromJson(e!)],
-      concurrency: m['concurrency'] == null ? null : m['concurrency']! as String,
+      steps: m['steps'] == null
+          ? null
+          : [for (final e in m['steps']! as List<Object?>) Step.fromJson(e!)],
+      concurrency: m['concurrency'] == null
+          ? null
+          : m['concurrency']! as String,
       detached: m['detached'] == null ? null : m['detached']! as bool,
     );
   }
@@ -862,19 +1180,21 @@ final class EventHandler {
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String? graph;
   final List<Step>? steps;
+
   /// Concurrency policy of a trigger (ACT-003): parallel, drop, restart, queue,
   /// debounce:<ms> or throttle:<ms>.
   final String? concurrency;
+
   /// Not cancelled when the owner is disposed (ACT-004).
   final bool? detached;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        if (graph != null) '\$graph': graph!,
-        if (steps != null) 'steps': [for (final e in steps!) e.toJson()],
-        if (concurrency != null) 'concurrency': concurrency!,
-        if (detached != null) 'detached': detached!,
-      };
+    if (graph != null) '\$graph': graph!,
+    if (steps != null) 'steps': [for (final e in steps!) e.toJson()],
+    if (concurrency != null) 'concurrency': concurrency!,
+    if (detached != null) 'detached': detached!,
+  };
 }
 
 /// PXL binding (SCH-011).
@@ -884,23 +1204,24 @@ final class Expr {
   /// Decodes a JSON object.
   factory Expr.fromJson(Object json) {
     final m = json as Map<String, Object?>;
-    return Expr(
-      expr: m['\$expr']! as String,
-    );
+    return Expr(expr: m['\$expr']! as String);
   }
 
   /// PXL expression (Appendix E).
   final String expr;
 
   /// Encodes a JSON object.
-  Map<String, Object?> toJson() => {
-        '\$expr': expr,
-      };
+  Map<String, Object?> toJson() => {'\$expr': expr};
 }
 
 /// A typed field.
 final class Field {
-  const Field({required this.name, required this.type, this.sensitive, this.description});
+  const Field({
+    required this.name,
+    required this.type,
+    this.sensitive,
+    this.description,
+  });
 
   /// Decodes a JSON object.
   factory Field.fromJson(Object json) {
@@ -909,33 +1230,43 @@ final class Field {
       name: m['name']! as String,
       type: m['type']! as String,
       sensitive: m['sensitive'] == null ? null : m['sensitive']! as bool,
-      description: m['description'] == null ? null : m['description']! as String,
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
     );
   }
 
   /// Identifier used in PXL and generated code: lowerCamelCase.
   final String name;
+
   /// Type expression of SCH-010, e.g. `string`, `decimal?`,
   /// `list<Transaction>`, `map<string,int>`.
   final String type;
+
   /// Excluded from logs, traces, analytics and replays; stored only encrypted
   /// (SCH-012).
   final bool? sensitive;
+
   /// Human-readable description.
   final String? description;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'name': name,
-        'type': type,
-        if (sensitive != null) 'sensitive': sensitive!,
-        if (description != null) 'description': description!,
-      };
+    'name': name,
+    'type': type,
+    if (sensitive != null) 'sensitive': sensitive!,
+    if (description != null) 'description': description!,
+  };
 }
 
 /// A typed feature flag, available in PXL as `flags.<name>` (ABT-006).
 final class FlagDecl {
-  const FlagDecl({required this.name, required this.type, required this.defaultValue, this.description});
+  const FlagDecl({
+    required this.name,
+    required this.type,
+    required this.defaultValue,
+    this.description,
+  });
 
   /// Decodes a JSON object.
   factory FlagDecl.fromJson(Object json) {
@@ -944,27 +1275,32 @@ final class FlagDecl {
       name: m['name']! as String,
       type: FlagType.fromJson(m['type']!),
       defaultValue: m['default'],
-      description: m['description'] == null ? null : m['description']! as String,
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
     );
   }
 
   /// Identifier used in PXL and generated code: lowerCamelCase.
   final String name;
+
   /// Type of a feature flag (ABT-006).
   final FlagType type;
+
   /// A JSON value interpreted against a declared type (defaults, mocks,
   /// environment values).
   final Object? defaultValue;
+
   /// Human-readable description.
   final String? description;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'name': name,
-        'type': type.toJson(),
-        'default': defaultValue,
-        if (description != null) 'description': description!,
-      };
+    'name': name,
+    'type': type.toJson(),
+    'default': defaultValue,
+    if (description != null) 'description': description!,
+  };
 }
 
 /// Type of a feature flag (ABT-006).
@@ -977,8 +1313,10 @@ enum FlagType {
   const FlagType(this.json);
 
   /// Decodes a JSON value.
-  factory FlagType.fromJson(Object json) =>
-      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown FlagType', json));
+  factory FlagType.fromJson(Object json) => values.firstWhere(
+    (v) => v.json == json,
+    orElse: () => throw FormatException('unknown FlagType', json),
+  );
 
   /// The JSON value.
   final String json;
@@ -992,7 +1330,12 @@ enum FlagType {
 /// under the form's name: `values`, `errors`, `dirty`, `touched`, `status`,
 /// `valid` and `validating`.
 final class Form {
-  const Form({required this.id, required this.name, required this.fields, this.description});
+  const Form({
+    required this.id,
+    required this.name,
+    required this.fields,
+    this.description,
+  });
 
   /// Decodes a JSON object.
   factory Form.fromJson(Object json) {
@@ -1000,32 +1343,44 @@ final class Form {
     return Form(
       id: m['id']! as String,
       name: m['name']! as String,
-      fields: [for (final e in m['fields']! as List<Object?>) FormField.fromJson(e!)],
-      description: m['description'] == null ? null : m['description']! as String,
+      fields: [
+        for (final e in m['fields']! as List<Object?>) FormField.fromJson(e!),
+      ],
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
     );
   }
 
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String id;
+
   /// Identifier used in PXL and generated code: lowerCamelCase.
   final String name;
   final List<FormField> fields;
+
   /// Human-readable description.
   final String? description;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'id': id,
-        'name': name,
-        'fields': [for (final e in fields) e.toJson()],
-        if (description != null) 'description': description!,
-      };
+    'id': id,
+    'name': name,
+    'fields': [for (final e in fields) e.toJson()],
+    if (description != null) 'description': description!,
+  };
 }
 
 /// A field of a form: its type, initial value and validators, run in order
 /// (STA-020).
 final class FormField {
-  const FormField({required this.name, required this.type, this.initial, this.validators, this.description});
+  const FormField({
+    required this.name,
+    required this.type,
+    this.initial,
+    this.validators,
+    this.description,
+  });
 
   /// Decodes a JSON object.
   factory FormField.fromJson(Object json) {
@@ -1034,31 +1389,42 @@ final class FormField {
       name: m['name']! as String,
       type: m['type']! as String,
       initial: m.containsKey('initial') ? JsonValue(m['initial']) : null,
-      validators: m['validators'] == null ? null : [for (final e in m['validators']! as List<Object?>) FormValidator.fromJson(e!)],
-      description: m['description'] == null ? null : m['description']! as String,
+      validators: m['validators'] == null
+          ? null
+          : [
+              for (final e in m['validators']! as List<Object?>)
+                FormValidator.fromJson(e!),
+            ],
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
     );
   }
 
   /// Identifier used in PXL and generated code: lowerCamelCase.
   final String name;
+
   /// Type expression of SCH-010, e.g. `string`, `decimal?`,
   /// `list<Transaction>`, `map<string,int>`.
   final String type;
+
   /// A JSON value interpreted against a declared type (defaults, mocks,
   /// environment values).
   final JsonValue? initial;
   final List<FormValidator>? validators;
+
   /// Human-readable description.
   final String? description;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'name': name,
-        'type': type,
-        if (initial != null) 'initial': initial!.value,
-        if (validators != null) 'validators': [for (final e in validators!) e.toJson()],
-        if (description != null) 'description': description!,
-      };
+    'name': name,
+    'type': type,
+    if (initial != null) 'initial': initial!.value,
+    if (validators != null)
+      'validators': [for (final e in validators!) e.toJson()],
+    if (description != null) 'description': description!,
+  };
 }
 
 /// A validator of a form field. Each kind takes its own options: `min` and
@@ -1067,7 +1433,19 @@ final class FormField {
 /// `$graph` and `debounceMs` (async); the compiler checks them against the kind
 /// and the field's type (PLX-1160-1169).
 final class FormValidator {
-  const FormValidator({required this.kind, this.message, this.min, this.max, this.pattern, this.region, this.maxScale, this.maxIntegerDigits, this.rule, this.graph, this.debounceMs});
+  const FormValidator({
+    required this.kind,
+    this.message,
+    this.min,
+    this.max,
+    this.pattern,
+    this.region,
+    this.maxScale,
+    this.maxIntegerDigits,
+    this.rule,
+    this.graph,
+    this.debounceMs,
+  });
 
   /// Decodes a JSON object.
   factory FormValidator.fromJson(Object json) {
@@ -1080,54 +1458,68 @@ final class FormValidator {
       pattern: m['pattern'] == null ? null : m['pattern']! as String,
       region: m['region'] == null ? null : m['region']! as String,
       maxScale: m['maxScale'] == null ? null : (m['maxScale']! as num).toInt(),
-      maxIntegerDigits: m['maxIntegerDigits'] == null ? null : (m['maxIntegerDigits']! as num).toInt(),
+      maxIntegerDigits: m['maxIntegerDigits'] == null
+          ? null
+          : (m['maxIntegerDigits']! as num).toInt(),
       rule: m['rule'] == null ? null : Expr.fromJson(m['rule']!),
       graph: m['\$graph'] == null ? null : m['\$graph']! as String,
-      debounceMs: m['debounceMs'] == null ? null : (m['debounceMs']! as num).toInt(),
+      debounceMs: m['debounceMs'] == null
+          ? null
+          : (m['debounceMs']! as num).toInt(),
     );
   }
 
   /// A built-in validator of a form field (STA-020, ADR-0047).
   final FormValidatorKind kind;
+
   /// The message shown when the value is invalid; the runtime's built-in
   /// message otherwise.
   final String? message;
+
   /// A JSON value interpreted against a declared type (defaults, mocks,
   /// environment values).
   final JsonValue? min;
+
   /// A JSON value interpreted against a declared type (defaults, mocks,
   /// environment values).
   final JsonValue? max;
+
   /// A pxl.regex.v1 pattern, checked at publish (PXL-003).
   final String? pattern;
+
   /// The ISO 3166-1 region of numbers written without a country calling code;
   /// the device locale's region when absent.
   final String? region;
+
   /// The most digits after the decimal point.
   final int? maxScale;
+
   /// The most digits before the decimal point.
   final int? maxIntegerDigits;
+
   /// PXL binding (SCH-011).
   final Expr? rule;
+
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String? graph;
+
   /// How long the field stays unchanged before the asynchronous check runs.
   final int? debounceMs;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'kind': kind.toJson(),
-        if (message != null) 'message': message!,
-        if (min != null) 'min': min!.value,
-        if (max != null) 'max': max!.value,
-        if (pattern != null) 'pattern': pattern!,
-        if (region != null) 'region': region!,
-        if (maxScale != null) 'maxScale': maxScale!,
-        if (maxIntegerDigits != null) 'maxIntegerDigits': maxIntegerDigits!,
-        if (rule != null) 'rule': rule!.toJson(),
-        if (graph != null) '\$graph': graph!,
-        if (debounceMs != null) 'debounceMs': debounceMs!,
-      };
+    'kind': kind.toJson(),
+    if (message != null) 'message': message!,
+    if (min != null) 'min': min!.value,
+    if (max != null) 'max': max!.value,
+    if (pattern != null) 'pattern': pattern!,
+    if (region != null) 'region': region!,
+    if (maxScale != null) 'maxScale': maxScale!,
+    if (maxIntegerDigits != null) 'maxIntegerDigits': maxIntegerDigits!,
+    if (rule != null) 'rule': rule!.toJson(),
+    if (graph != null) '\$graph': graph!,
+    if (debounceMs != null) 'debounceMs': debounceMs!,
+  };
 }
 
 /// A built-in validator of a form field (STA-020, ADR-0047).
@@ -1147,8 +1539,10 @@ enum FormValidatorKind {
   const FormValidatorKind(this.json);
 
   /// Decodes a JSON value.
-  factory FormValidatorKind.fromJson(Object json) =>
-      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown FormValidatorKind', json));
+  factory FormValidatorKind.fromJson(Object json) => values.firstWhere(
+    (v) => v.json == json,
+    orElse: () => throw FormatException('unknown FormValidatorKind', json),
+  );
 
   /// The JSON value.
   final String json;
@@ -1178,10 +1572,10 @@ final class FunctionGrant {
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'id': id,
-        'function': function,
-        if (alias != null) 'alias': alias!,
-      };
+    'id': id,
+    'function': function,
+    if (alias != null) 'alias': alias!,
+  };
 }
 
 /// The host app build the catalogue describes.
@@ -1204,45 +1598,58 @@ final class HostBuild {
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        if (appId != null) 'appId': appId!,
-        'version': version,
-        'build': build,
-      };
+    if (appId != null) 'appId': appId!,
+    'version': version,
+    'build': build,
+  };
 }
 
 /// A typed event plugins send to the host app with `emitHostEvent`; `plux
 /// codegen` generates a Dart class for it (HST-013, HST-030, ADR-0039).
 final class HostEventDecl {
-  const HostEventDecl({required this.name, this.fields, this.direction, this.description});
+  const HostEventDecl({
+    required this.name,
+    this.fields,
+    this.direction,
+    this.description,
+  });
 
   /// Decodes a JSON object.
   factory HostEventDecl.fromJson(Object json) {
     final m = json as Map<String, Object?>;
     return HostEventDecl(
       name: m['name']! as String,
-      fields: m['fields'] == null ? null : [for (final e in m['fields']! as List<Object?>) Field.fromJson(e!)],
-      direction: m['direction'] == null ? null : HostEventDirection.fromJson(m['direction']!),
-      description: m['description'] == null ? null : m['description']! as String,
+      fields: m['fields'] == null
+          ? null
+          : [for (final e in m['fields']! as List<Object?>) Field.fromJson(e!)],
+      direction: m['direction'] == null
+          ? null
+          : HostEventDirection.fromJson(m['direction']!),
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
     );
   }
 
   /// Identifier used in PXL and generated code: lowerCamelCase.
   final String name;
   final List<Field>? fields;
+
   /// Who sends a host event: plugins to the host with `emitHostEvent`
   /// (`toHost`, the default), the host into Plux with `Plux.sendEvent`
   /// (`toPlux`), or both (HST-013).
   final HostEventDirection? direction;
+
   /// Human-readable description.
   final String? description;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'name': name,
-        if (fields != null) 'fields': [for (final e in fields!) e.toJson()],
-        if (direction != null) 'direction': direction!.toJson(),
-        if (description != null) 'description': description!,
-      };
+    'name': name,
+    if (fields != null) 'fields': [for (final e in fields!) e.toJson()],
+    if (direction != null) 'direction': direction!.toJson(),
+    if (description != null) 'description': description!,
+  };
 }
 
 /// Who sends a host event: plugins to the host with `emitHostEvent` (`toHost`,
@@ -1256,8 +1663,10 @@ enum HostEventDirection {
   const HostEventDirection(this.json);
 
   /// Decodes a JSON value.
-  factory HostEventDirection.fromJson(Object json) =>
-      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown HostEventDirection', json));
+  factory HostEventDirection.fromJson(Object json) => values.firstWhere(
+    (v) => v.json == json,
+    orElse: () => throw FormatException('unknown HostEventDirection', json),
+  );
 
   /// The JSON value.
   final String json;
@@ -1275,62 +1684,83 @@ final class Icon {
     final m = json as Map<String, Object?>;
     return Icon(
       asset: m['\$asset'] == null ? null : m['\$asset']! as String,
-      monogram: m['monogram'] == null ? null : Monogram.fromJson(m['monogram']!),
+      monogram: m['monogram'] == null
+          ? null
+          : Monogram.fromJson(m['monogram']!),
     );
   }
 
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String? asset;
+
   /// Generated monogram icon.
   final Monogram? monogram;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        if (asset != null) '\$asset': asset!,
-        if (monogram != null) 'monogram': monogram!.toJson(),
-      };
+    if (asset != null) '\$asset': asset!,
+    if (monogram != null) 'monogram': monogram!.toJson(),
+  };
 }
 
 /// Lifecycle handlers (SCH-022).
 final class Lifecycle {
-  const Lifecycle({this.onInit, this.onEnter, this.onResume, this.onLeave, this.onDispose});
+  const Lifecycle({
+    this.onInit,
+    this.onEnter,
+    this.onResume,
+    this.onLeave,
+    this.onDispose,
+  });
 
   /// Decodes a JSON object.
   factory Lifecycle.fromJson(Object json) {
     final m = json as Map<String, Object?>;
     return Lifecycle(
       onInit: m['onInit'] == null ? null : EventHandler.fromJson(m['onInit']!),
-      onEnter: m['onEnter'] == null ? null : EventHandler.fromJson(m['onEnter']!),
-      onResume: m['onResume'] == null ? null : EventHandler.fromJson(m['onResume']!),
-      onLeave: m['onLeave'] == null ? null : EventHandler.fromJson(m['onLeave']!),
-      onDispose: m['onDispose'] == null ? null : EventHandler.fromJson(m['onDispose']!),
+      onEnter: m['onEnter'] == null
+          ? null
+          : EventHandler.fromJson(m['onEnter']!),
+      onResume: m['onResume'] == null
+          ? null
+          : EventHandler.fromJson(m['onResume']!),
+      onLeave: m['onLeave'] == null
+          ? null
+          : EventHandler.fromJson(m['onLeave']!),
+      onDispose: m['onDispose'] == null
+          ? null
+          : EventHandler.fromJson(m['onDispose']!),
     );
   }
 
   /// A trigger's handler: a reference to an action graph or an inline graph
   /// (SCH-023).
   final EventHandler? onInit;
+
   /// A trigger's handler: a reference to an action graph or an inline graph
   /// (SCH-023).
   final EventHandler? onEnter;
+
   /// A trigger's handler: a reference to an action graph or an inline graph
   /// (SCH-023).
   final EventHandler? onResume;
+
   /// A trigger's handler: a reference to an action graph or an inline graph
   /// (SCH-023).
   final EventHandler? onLeave;
+
   /// A trigger's handler: a reference to an action graph or an inline graph
   /// (SCH-023).
   final EventHandler? onDispose;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        if (onInit != null) 'onInit': onInit!.toJson(),
-        if (onEnter != null) 'onEnter': onEnter!.toJson(),
-        if (onResume != null) 'onResume': onResume!.toJson(),
-        if (onLeave != null) 'onLeave': onLeave!.toJson(),
-        if (onDispose != null) 'onDispose': onDispose!.toJson(),
-      };
+    if (onInit != null) 'onInit': onInit!.toJson(),
+    if (onEnter != null) 'onEnter': onEnter!.toJson(),
+    if (onResume != null) 'onResume': onResume!.toJson(),
+    if (onLeave != null) 'onLeave': onLeave!.toJson(),
+    if (onDispose != null) 'onDispose': onDispose!.toJson(),
+  };
 }
 
 /// Media type of an asset.
@@ -1348,8 +1778,10 @@ enum MediaType {
   const MediaType(this.json);
 
   /// Decodes a JSON value.
-  factory MediaType.fromJson(Object json) =>
-      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown MediaType', json));
+  factory MediaType.fromJson(Object json) => values.firstWhere(
+    (v) => v.json == json,
+    orElse: () => throw FormatException('unknown MediaType', json),
+  );
 
   /// The JSON value.
   final String json;
@@ -1372,53 +1804,70 @@ final class Monogram {
   }
 
   final String text;
+
   /// Background colour as #RRGGBB.
   final String background;
 
   /// Encodes a JSON object.
-  Map<String, Object?> toJson() => {
-        'text': text,
-        'background': background,
-      };
+  Map<String, Object?> toJson() => {'text': text, 'background': background};
 }
 
 /// A custom host action (ACT-060).
 final class NativeAction {
-  const NativeAction({required this.name, this.description, this.inputs, this.output});
+  const NativeAction({
+    required this.name,
+    this.description,
+    this.inputs,
+    this.output,
+  });
 
   /// Decodes a JSON object.
   factory NativeAction.fromJson(Object json) {
     final m = json as Map<String, Object?>;
     return NativeAction(
       name: m['name']! as String,
-      description: m['description'] == null ? null : m['description']! as String,
-      inputs: m['inputs'] == null ? null : [for (final e in m['inputs']! as List<Object?>) Param.fromJson(e!)],
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
+      inputs: m['inputs'] == null
+          ? null
+          : [for (final e in m['inputs']! as List<Object?>) Param.fromJson(e!)],
       output: m['output'] == null ? null : m['output']! as String,
     );
   }
 
   /// Identifier used in PXL and generated code: lowerCamelCase.
   final String name;
+
   /// Human-readable description.
   final String? description;
   final List<Param>? inputs;
+
   /// Type expression of SCH-010, e.g. `string`, `decimal?`,
   /// `list<Transaction>`, `map<string,int>`.
   final String? output;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'name': name,
-        if (description != null) 'description': description!,
-        if (inputs != null) 'inputs': [for (final e in inputs!) e.toJson()],
-        if (output != null) 'output': output!,
-      };
+    'name': name,
+    if (description != null) 'description': description!,
+    if (inputs != null) 'inputs': [for (final e in inputs!) e.toJson()],
+    if (output != null) 'output': output!,
+  };
 }
 
 /// The native routes, native slots and custom actions of one host app build
 /// (SCH-032). File: `native-catalogue.json`.
 final class NativeCatalogueDocument {
-  const NativeCatalogueDocument({required this.schemaVersion, required this.kind, required this.id, required this.host, this.routes, this.slots, this.actions});
+  const NativeCatalogueDocument({
+    required this.schemaVersion,
+    required this.kind,
+    required this.id,
+    required this.host,
+    this.routes,
+    this.slots,
+    this.actions,
+  });
 
   /// Decodes a JSON object.
   factory NativeCatalogueDocument.fromJson(Object json) {
@@ -1428,9 +1877,24 @@ final class NativeCatalogueDocument {
       kind: m['kind']! as String,
       id: m['id']! as String,
       host: HostBuild.fromJson(m['host']!),
-      routes: m['routes'] == null ? null : [for (final e in m['routes']! as List<Object?>) NativeRoute.fromJson(e!)],
-      slots: m['slots'] == null ? null : [for (final e in m['slots']! as List<Object?>) NativeSlot.fromJson(e!)],
-      actions: m['actions'] == null ? null : [for (final e in m['actions']! as List<Object?>) NativeAction.fromJson(e!)],
+      routes: m['routes'] == null
+          ? null
+          : [
+              for (final e in m['routes']! as List<Object?>)
+                NativeRoute.fromJson(e!),
+            ],
+      slots: m['slots'] == null
+          ? null
+          : [
+              for (final e in m['slots']! as List<Object?>)
+                NativeSlot.fromJson(e!),
+            ],
+      actions: m['actions'] == null
+          ? null
+          : [
+              for (final e in m['actions']! as List<Object?>)
+                NativeAction.fromJson(e!),
+            ],
     );
   }
 
@@ -1438,8 +1902,10 @@ final class NativeCatalogueDocument {
   /// before validation.
   final String schemaVersion;
   final String kind;
+
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String id;
+
   /// The host app build the catalogue describes.
   final HostBuild host;
   final List<NativeRoute>? routes;
@@ -1448,65 +1914,91 @@ final class NativeCatalogueDocument {
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'schemaVersion': schemaVersion,
-        'kind': kind,
-        'id': id,
-        'host': host.toJson(),
-        if (routes != null) 'routes': [for (final e in routes!) e.toJson()],
-        if (slots != null) 'slots': [for (final e in slots!) e.toJson()],
-        if (actions != null) 'actions': [for (final e in actions!) e.toJson()],
-      };
+    'schemaVersion': schemaVersion,
+    'kind': kind,
+    'id': id,
+    'host': host.toJson(),
+    if (routes != null) 'routes': [for (final e in routes!) e.toJson()],
+    if (slots != null) 'slots': [for (final e in slots!) e.toJson()],
+    if (actions != null) 'actions': [for (final e in actions!) e.toJson()],
+  };
 }
 
 /// A native route (NAV-002).
 final class NativeRoute {
-  const NativeRoute({required this.name, this.description, this.params, this.result});
+  const NativeRoute({
+    required this.name,
+    this.description,
+    this.params,
+    this.result,
+  });
 
   /// Decodes a JSON object.
   factory NativeRoute.fromJson(Object json) {
     final m = json as Map<String, Object?>;
     return NativeRoute(
       name: m['name']! as String,
-      description: m['description'] == null ? null : m['description']! as String,
-      params: m['params'] == null ? null : [for (final e in m['params']! as List<Object?>) Param.fromJson(e!)],
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
+      params: m['params'] == null
+          ? null
+          : [for (final e in m['params']! as List<Object?>) Param.fromJson(e!)],
       result: m['result'] == null ? null : m['result']! as String,
     );
   }
 
   /// App-wide unique route name (SCH-025).
   final String name;
+
   /// Human-readable description.
   final String? description;
   final List<Param>? params;
+
   /// Type expression of SCH-010, e.g. `string`, `decimal?`,
   /// `list<Transaction>`, `map<string,int>`.
   final String? result;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'name': name,
-        if (description != null) 'description': description!,
-        if (params != null) 'params': [for (final e in params!) e.toJson()],
-        if (result != null) 'result': result!,
-      };
+    'name': name,
+    if (description != null) 'description': description!,
+    if (params != null) 'params': [for (final e in params!) e.toJson()],
+    if (result != null) 'result': result!,
+  };
 }
 
 /// A native slot widget (WGT-030).
 final class NativeSlot {
-  const NativeSlot({required this.type, this.description, this.props, this.events});
+  const NativeSlot({
+    required this.type,
+    this.description,
+    this.props,
+    this.events,
+  });
 
   /// Decodes a JSON object.
   factory NativeSlot.fromJson(Object json) {
     final m = json as Map<String, Object?>;
     return NativeSlot(
       type: m['type']! as String,
-      description: m['description'] == null ? null : m['description']! as String,
-      props: m['props'] == null ? null : [for (final e in m['props']! as List<Object?>) Param.fromJson(e!)],
-      events: m['events'] == null ? null : [for (final e in m['events']! as List<Object?>) NativeSlotEvent.fromJson(e!)],
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
+      props: m['props'] == null
+          ? null
+          : [for (final e in m['props']! as List<Object?>) Param.fromJson(e!)],
+      events: m['events'] == null
+          ? null
+          : [
+              for (final e in m['events']! as List<Object?>)
+                NativeSlotEvent.fromJson(e!),
+            ],
     );
   }
 
   final String type;
+
   /// Human-readable description.
   final String? description;
   final List<Param>? props;
@@ -1514,11 +2006,11 @@ final class NativeSlot {
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'type': type,
-        if (description != null) 'description': description!,
-        if (props != null) 'props': [for (final e in props!) e.toJson()],
-        if (events != null) 'events': [for (final e in events!) e.toJson()],
-      };
+    'type': type,
+    if (description != null) 'description': description!,
+    if (props != null) 'props': [for (final e in props!) e.toJson()],
+    if (events != null) 'events': [for (final e in events!) e.toJson()],
+  };
 }
 
 /// An event the native slot emits.
@@ -1535,15 +2027,16 @@ final class NativeSlotEvent {
   }
 
   final String name;
+
   /// Type expression of SCH-010, e.g. `string`, `decimal?`,
   /// `list<Transaction>`, `map<string,int>`.
   final String? payload;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'name': name,
-        if (payload != null) 'payload': payload!,
-      };
+    'name': name,
+    if (payload != null) 'payload': payload!,
+  };
 }
 
 /// App-wide navigation: the page for unknown routes, deep links and tabbed
@@ -1556,13 +2049,18 @@ final class NavigationPolicy {
     final m = json as Map<String, Object?>;
     return NavigationPolicy(
       notFound: m['notFound'] == null ? null : m['notFound']! as String,
-      deepLinks: m['deepLinks'] == null ? null : DeepLinkPolicy.fromJson(m['deepLinks']!),
-      shells: m['shells'] == null ? null : [for (final e in m['shells']! as List<Object?>) Shell.fromJson(e!)],
+      deepLinks: m['deepLinks'] == null
+          ? null
+          : DeepLinkPolicy.fromJson(m['deepLinks']!),
+      shells: m['shells'] == null
+          ? null
+          : [for (final e in m['shells']! as List<Object?>) Shell.fromJson(e!)],
     );
   }
 
   /// App-wide unique route name (SCH-025).
   final String? notFound;
+
   /// The links the app answers (NAV-008): its hosts for `https` links and its
   /// custom schemes, and path patterns mapped to routes.
   /// `https://<host>/p/<route-name>?…` always resolves, so no pattern may
@@ -1572,16 +2070,28 @@ final class NavigationPolicy {
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        if (notFound != null) 'notFound': notFound!,
-        if (deepLinks != null) 'deepLinks': deepLinks!.toJson(),
-        if (shells != null) 'shells': [for (final e in shells!) e.toJson()],
-      };
+    if (notFound != null) 'notFound': notFound!,
+    if (deepLinks != null) 'deepLinks': deepLinks!.toJson(),
+    if (shells != null) 'shells': [for (final e in shells!) e.toJson()],
+  };
 }
 
 /// A node of a page or component tree: a widget or a component instance
 /// (SCH-023).
 final class Node {
-  const Node({required this.id, this.type, this.component, this.props, this.events, this.children, this.slots, this.visible, this.semantics, this.testId, this.responsive});
+  const Node({
+    required this.id,
+    this.type,
+    this.component,
+    this.props,
+    this.events,
+    this.children,
+    this.slots,
+    this.visible,
+    this.semantics,
+    this.testId,
+    this.responsive,
+  });
 
   /// Decodes a JSON object.
   factory Node.fromJson(Object json) {
@@ -1589,59 +2099,114 @@ final class Node {
     return Node(
       id: m['id']! as String,
       type: m['type'] == null ? null : m['type']! as String,
-      component: m['component'] == null ? null : ComponentRef.fromJson(m['component']!),
-      props: m['props'] == null ? null : {for (final e in (m['props']! as Map<String, Object?>).entries) e.key: e.value},
-      events: m['events'] == null ? null : {for (final e in (m['events']! as Map<String, Object?>).entries) e.key: EventHandler.fromJson(e.value!)},
-      children: m['children'] == null ? null : [for (final e in m['children']! as List<Object?>) Node.fromJson(e!)],
-      slots: m['slots'] == null ? null : {for (final e in (m['slots']! as Map<String, Object?>).entries) e.key: SlotFill.fromJson(e.value!)},
+      component: m['component'] == null
+          ? null
+          : ComponentRef.fromJson(m['component']!),
+      props: m['props'] == null
+          ? null
+          : {
+              for (final e in (m['props']! as Map<String, Object?>).entries)
+                e.key: e.value,
+            },
+      events: m['events'] == null
+          ? null
+          : {
+              for (final e in (m['events']! as Map<String, Object?>).entries)
+                e.key: EventHandler.fromJson(e.value!),
+            },
+      children: m['children'] == null
+          ? null
+          : [
+              for (final e in m['children']! as List<Object?>)
+                Node.fromJson(e!),
+            ],
+      slots: m['slots'] == null
+          ? null
+          : {
+              for (final e in (m['slots']! as Map<String, Object?>).entries)
+                e.key: SlotFill.fromJson(e.value!),
+            },
       visible: m.containsKey('visible') ? JsonValue(m['visible']) : null,
-      semantics: m['semantics'] == null ? null : Semantics.fromJson(m['semantics']!),
+      semantics: m['semantics'] == null
+          ? null
+          : Semantics.fromJson(m['semantics']!),
       testId: m['testId'] == null ? null : m['testId']! as String,
-      responsive: m['responsive'] == null ? null : Responsive.fromJson(m['responsive']!),
+      responsive: m['responsive'] == null
+          ? null
+          : Responsive.fromJson(m['responsive']!),
     );
   }
 
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String id;
+
   /// Widget type from the registry (WGT-001) or a native slot.
   final String? type;
+
   /// A component and the version the instance was built against (SCH-030).
   final ComponentRef? component;
+
   /// Prop values by prop name.
   final Map<String, Object?>? props;
   final Map<String, EventHandler>? events;
   final List<Node>? children;
   final Map<String, SlotFill>? slots;
+
   /// Rendered only while true (SCH-023).
   final JsonValue? visible;
+
   /// Accessibility semantics of a node (A11Y-002).
   final Semantics? semantics;
+
   /// Stable identifier for tests (WGT-013).
   final String? testId;
+
   /// Prop overrides per window size class; `compact` is the base and overrides
   /// cascade (WGT-010).
   final Responsive? responsive;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'id': id,
-        if (type != null) 'type': type!,
-        if (component != null) 'component': component!.toJson(),
-        if (props != null) 'props': {for (final e in props!.entries) e.key: e.value},
-        if (events != null) 'events': {for (final e in events!.entries) e.key: e.value.toJson()},
-        if (children != null) 'children': [for (final e in children!) e.toJson()],
-        if (slots != null) 'slots': {for (final e in slots!.entries) e.key: e.value.toJson()},
-        if (visible != null) 'visible': visible!.value,
-        if (semantics != null) 'semantics': semantics!.toJson(),
-        if (testId != null) 'testId': testId!,
-        if (responsive != null) 'responsive': responsive!.toJson(),
-      };
+    'id': id,
+    if (type != null) 'type': type!,
+    if (component != null) 'component': component!.toJson(),
+    if (props != null)
+      'props': {for (final e in props!.entries) e.key: e.value},
+    if (events != null)
+      'events': {for (final e in events!.entries) e.key: e.value.toJson()},
+    if (children != null) 'children': [for (final e in children!) e.toJson()],
+    if (slots != null)
+      'slots': {for (final e in slots!.entries) e.key: e.value.toJson()},
+    if (visible != null) 'visible': visible!.value,
+    if (semantics != null) 'semantics': semantics!.toJson(),
+    if (testId != null) 'testId': testId!,
+    if (responsive != null) 'responsive': responsive!.toJson(),
+  };
 }
 
 /// A page: route, parameters, state, data, lifecycle and node tree (SCH-022).
 /// File: `plugins/<plugin>/pages/<key>.page.json`.
 final class PageDocument {
-  const PageDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, this.route, required this.pageKind, required this.title, this.description, this.params, this.result, this.state, this.dataSources, this.lifecycle, this.triggers, this.routeOptions, this.security, required this.root, this.forms});
+  const PageDocument({
+    required this.schemaVersion,
+    required this.kind,
+    required this.id,
+    required this.key,
+    this.route,
+    required this.pageKind,
+    required this.title,
+    this.description,
+    this.params,
+    this.result,
+    this.state,
+    this.dataSources,
+    this.lifecycle,
+    this.triggers,
+    this.routeOptions,
+    this.security,
+    required this.root,
+    this.forms,
+  });
 
   /// Decodes a JSON object.
   factory PageDocument.fromJson(Object json) {
@@ -1654,17 +2219,41 @@ final class PageDocument {
       route: m['route'] == null ? null : m['route']! as String,
       pageKind: PageKind.fromJson(m['pageKind']!),
       title: m['title'],
-      description: m['description'] == null ? null : m['description']! as String,
-      params: m['params'] == null ? null : [for (final e in m['params']! as List<Object?>) Param.fromJson(e!)],
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
+      params: m['params'] == null
+          ? null
+          : [for (final e in m['params']! as List<Object?>) Param.fromJson(e!)],
       result: m['result'] == null ? null : m['result']! as String,
-      state: m['state'] == null ? null : [for (final e in m['state']! as List<Object?>) StateEntry.fromJson(e!)],
-      dataSources: m['dataSources'] == null ? null : [for (final e in m['dataSources']! as List<Object?>) DataSource.fromJson(e!)],
-      lifecycle: m['lifecycle'] == null ? null : Lifecycle.fromJson(m['lifecycle']!),
-      triggers: m['triggers'] == null ? null : Triggers.fromJson(m['triggers']!),
-      routeOptions: m['routeOptions'] == null ? null : RouteOptions.fromJson(m['routeOptions']!),
-      security: m['security'] == null ? null : PageSecurity.fromJson(m['security']!),
+      state: m['state'] == null
+          ? null
+          : [
+              for (final e in m['state']! as List<Object?>)
+                StateEntry.fromJson(e!),
+            ],
+      dataSources: m['dataSources'] == null
+          ? null
+          : [
+              for (final e in m['dataSources']! as List<Object?>)
+                DataSource.fromJson(e!),
+            ],
+      lifecycle: m['lifecycle'] == null
+          ? null
+          : Lifecycle.fromJson(m['lifecycle']!),
+      triggers: m['triggers'] == null
+          ? null
+          : Triggers.fromJson(m['triggers']!),
+      routeOptions: m['routeOptions'] == null
+          ? null
+          : RouteOptions.fromJson(m['routeOptions']!),
+      security: m['security'] == null
+          ? null
+          : PageSecurity.fromJson(m['security']!),
       root: Node.fromJson(m['root']!),
-      forms: m['forms'] == null ? null : [for (final e in m['forms']! as List<Object?>) Form.fromJson(e!)],
+      forms: m['forms'] == null
+          ? null
+          : [for (final e in m['forms']! as List<Object?>) Form.fromJson(e!)],
     );
   }
 
@@ -1672,63 +2261,77 @@ final class PageDocument {
   /// before validation.
   final String schemaVersion;
   final String kind;
+
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String id;
+
   /// Human-readable lower-kebab slug, unique within its parent (SCH-002). Files
   /// in the Git layout are named after it.
   final String key;
+
   /// App-wide unique route name (SCH-025).
   final String? route;
+
   /// How the page is presented (SCH-022).
   final PageKind pageKind;
+
   /// A prop value: a literal of the prop's type, or a binding (SCH-011).
   /// Literal objects and lists may contain bindings in their fields and items.
   final Object? title;
+
   /// Human-readable description.
   final String? description;
   final List<Param>? params;
+
   /// Type expression of SCH-010, e.g. `string`, `decimal?`,
   /// `list<Transaction>`, `map<string,int>`.
   final String? result;
   final List<StateEntry>? state;
   final List<DataSource>? dataSources;
+
   /// Lifecycle handlers (SCH-022).
   final Lifecycle? lifecycle;
+
   /// Triggers besides widget events and page lifecycle (ACT-002), and the
   /// owner's error handler (ACT-020). A page's runs are cancelled with the
   /// page; a plugin's and the app's run while the release is active.
   final Triggers? triggers;
+
   /// Route options (SCH-022, NAV-010).
   final RouteOptions? routeOptions;
+
   /// Security flags (SCH-022).
   final PageSecurity? security;
+
   /// A node of a page or component tree: a widget or a component instance
   /// (SCH-023).
   final Node root;
+
   /// The forms of the page (STA-020).
   final List<Form>? forms;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'schemaVersion': schemaVersion,
-        'kind': kind,
-        'id': id,
-        'key': key,
-        if (route != null) 'route': route!,
-        'pageKind': pageKind.toJson(),
-        'title': title,
-        if (description != null) 'description': description!,
-        if (params != null) 'params': [for (final e in params!) e.toJson()],
-        if (result != null) 'result': result!,
-        if (state != null) 'state': [for (final e in state!) e.toJson()],
-        if (dataSources != null) 'dataSources': [for (final e in dataSources!) e.toJson()],
-        if (lifecycle != null) 'lifecycle': lifecycle!.toJson(),
-        if (triggers != null) 'triggers': triggers!.toJson(),
-        if (routeOptions != null) 'routeOptions': routeOptions!.toJson(),
-        if (security != null) 'security': security!.toJson(),
-        'root': root.toJson(),
-        if (forms != null) 'forms': [for (final e in forms!) e.toJson()],
-      };
+    'schemaVersion': schemaVersion,
+    'kind': kind,
+    'id': id,
+    'key': key,
+    if (route != null) 'route': route!,
+    'pageKind': pageKind.toJson(),
+    'title': title,
+    if (description != null) 'description': description!,
+    if (params != null) 'params': [for (final e in params!) e.toJson()],
+    if (result != null) 'result': result!,
+    if (state != null) 'state': [for (final e in state!) e.toJson()],
+    if (dataSources != null)
+      'dataSources': [for (final e in dataSources!) e.toJson()],
+    if (lifecycle != null) 'lifecycle': lifecycle!.toJson(),
+    if (triggers != null) 'triggers': triggers!.toJson(),
+    if (routeOptions != null) 'routeOptions': routeOptions!.toJson(),
+    if (security != null) 'security': security!.toJson(),
+    'root': root.toJson(),
+    if (forms != null) 'forms': [for (final e in forms!) e.toJson()],
+  };
 }
 
 /// How the page is presented (SCH-022).
@@ -1741,8 +2344,10 @@ enum PageKind {
   const PageKind(this.json);
 
   /// Decodes a JSON value.
-  factory PageKind.fromJson(Object json) =>
-      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown PageKind', json));
+  factory PageKind.fromJson(Object json) => values.firstWhere(
+    (v) => v.json == json,
+    orElse: () => throw FormatException('unknown PageKind', json),
+  );
 
   /// The JSON value.
   final String json;
@@ -1760,7 +2365,9 @@ final class PageSecurity {
     final m = json as Map<String, Object?>;
     return PageSecurity(
       secure: m['secure'] == null ? null : m['secure']! as bool,
-      requiresAssurance: m['requiresAssurance'] == null ? null : AssuranceLevel.fromJson(m['requiresAssurance']!),
+      requiresAssurance: m['requiresAssurance'] == null
+          ? null
+          : AssuranceLevel.fromJson(m['requiresAssurance']!),
     );
   }
 
@@ -1770,15 +2377,25 @@ final class PageSecurity {
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        if (secure != null) 'secure': secure!,
-        if (requiresAssurance != null) 'requiresAssurance': requiresAssurance!.toJson(),
-      };
+    if (secure != null) 'secure': secure!,
+    if (requiresAssurance != null)
+      'requiresAssurance': requiresAssurance!.toJson(),
+  };
 }
 
 /// A typed parameter with an optional default and design-time mock (SCH-022,
 /// SCH-024).
 final class Param {
-  const Param({this.id, required this.name, required this.type, this.required, this.defaultValue, this.mock, this.sensitive, this.description});
+  const Param({
+    this.id,
+    required this.name,
+    required this.type,
+    this.required,
+    this.defaultValue,
+    this.mock,
+    this.sensitive,
+    this.description,
+  });
 
   /// Decodes a JSON object.
   factory Param.fromJson(Object json) {
@@ -1791,39 +2408,46 @@ final class Param {
       defaultValue: m.containsKey('default') ? JsonValue(m['default']) : null,
       mock: m.containsKey('mock') ? JsonValue(m['mock']) : null,
       sensitive: m['sensitive'] == null ? null : m['sensitive']! as bool,
-      description: m['description'] == null ? null : m['description']! as String,
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
     );
   }
 
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String? id;
+
   /// Identifier used in PXL and generated code: lowerCamelCase.
   final String name;
+
   /// Type expression of SCH-010, e.g. `string`, `decimal?`,
   /// `list<Transaction>`, `map<string,int>`.
   final String type;
   final bool? required;
+
   /// A JSON value interpreted against a declared type (defaults, mocks,
   /// environment values).
   final JsonValue? defaultValue;
+
   /// A JSON value interpreted against a declared type (defaults, mocks,
   /// environment values).
   final JsonValue? mock;
   final bool? sensitive;
+
   /// Human-readable description.
   final String? description;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        if (id != null) 'id': id!,
-        'name': name,
-        'type': type,
-        if (required != null) 'required': required!,
-        if (defaultValue != null) 'default': defaultValue!.value,
-        if (mock != null) 'mock': mock!.value,
-        if (sensitive != null) 'sensitive': sensitive!,
-        if (description != null) 'description': description!,
-      };
+    if (id != null) 'id': id!,
+    'name': name,
+    'type': type,
+    if (required != null) 'required': required!,
+    if (defaultValue != null) 'default': defaultValue!.value,
+    if (mock != null) 'mock': mock!.value,
+    if (sensitive != null) 'sensitive': sensitive!,
+    if (description != null) 'description': description!,
+  };
 }
 
 /// Where a state entry lives (STA-003).
@@ -1836,8 +2460,10 @@ enum Persistence {
   const Persistence(this.json);
 
   /// Decodes a JSON value.
-  factory Persistence.fromJson(Object json) =>
-      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown Persistence', json));
+  factory Persistence.fromJson(Object json) => values.firstWhere(
+    (v) => v.json == json,
+    orElse: () => throw FormatException('unknown Persistence', json),
+  );
 
   /// The JSON value.
   final String json;
@@ -1849,7 +2475,26 @@ enum Persistence {
 /// A plugin: its pages, state, collections and requested capabilities
 /// (SCH-021). File: `plugins/<key>/plugin.json`.
 final class PluginDocument {
-  const PluginDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.icon, required this.team, required this.entryPage, required this.pages, this.fallbackPage, this.capabilities, this.tags, this.types, this.state, this.collections, this.dataSources, this.triggers});
+  const PluginDocument({
+    required this.schemaVersion,
+    required this.kind,
+    required this.id,
+    required this.key,
+    required this.name,
+    this.description,
+    required this.icon,
+    required this.team,
+    required this.entryPage,
+    required this.pages,
+    this.fallbackPage,
+    this.capabilities,
+    this.tags,
+    this.types,
+    this.state,
+    this.collections,
+    this.dataSources,
+    this.triggers,
+  });
 
   /// Decodes a JSON object.
   factory PluginDocument.fromJson(Object json) {
@@ -1860,19 +2505,49 @@ final class PluginDocument {
       id: m['id']! as String,
       key: m['key']! as String,
       name: m['name']! as String,
-      description: m['description'] == null ? null : m['description']! as String,
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
       icon: Icon.fromJson(m['icon']!),
       team: m['team']! as String,
       entryPage: m['entryPage']! as String,
       pages: [for (final e in m['pages']! as List<Object?>) e! as String],
-      fallbackPage: m['fallbackPage'] == null ? null : m['fallbackPage']! as String,
-      capabilities: m['capabilities'] == null ? null : Capabilities.fromJson(m['capabilities']!),
-      tags: m['tags'] == null ? null : [for (final e in m['tags']! as List<Object?>) e! as String],
-      types: m['types'] == null ? null : [for (final e in m['types']! as List<Object?>) TypeDecl.fromJson(e!)],
-      state: m['state'] == null ? null : [for (final e in m['state']! as List<Object?>) StateEntry.fromJson(e!)],
-      collections: m['collections'] == null ? null : [for (final e in m['collections']! as List<Object?>) Collection.fromJson(e!)],
-      dataSources: m['dataSources'] == null ? null : [for (final e in m['dataSources']! as List<Object?>) DataSource.fromJson(e!)],
-      triggers: m['triggers'] == null ? null : Triggers.fromJson(m['triggers']!),
+      fallbackPage: m['fallbackPage'] == null
+          ? null
+          : m['fallbackPage']! as String,
+      capabilities: m['capabilities'] == null
+          ? null
+          : Capabilities.fromJson(m['capabilities']!),
+      tags: m['tags'] == null
+          ? null
+          : [for (final e in m['tags']! as List<Object?>) e! as String],
+      types: m['types'] == null
+          ? null
+          : [
+              for (final e in m['types']! as List<Object?>)
+                TypeDecl.fromJson(e!),
+            ],
+      state: m['state'] == null
+          ? null
+          : [
+              for (final e in m['state']! as List<Object?>)
+                StateEntry.fromJson(e!),
+            ],
+      collections: m['collections'] == null
+          ? null
+          : [
+              for (final e in m['collections']! as List<Object?>)
+                Collection.fromJson(e!),
+            ],
+      dataSources: m['dataSources'] == null
+          ? null
+          : [
+              for (final e in m['dataSources']! as List<Object?>)
+                DataSource.fromJson(e!),
+            ],
+      triggers: m['triggers'] == null
+          ? null
+          : Triggers.fromJson(m['triggers']!),
     );
   }
 
@@ -1880,24 +2555,33 @@ final class PluginDocument {
   /// before validation.
   final String schemaVersion;
   final String kind;
+
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String id;
+
   /// Human-readable lower-kebab slug, unique within its parent (SCH-002). Files
   /// in the Git layout are named after it.
   final String key;
   final String name;
+
   /// Human-readable description.
   final String? description;
+
   /// An uploaded image or a generated monogram (SCH-020).
   final Icon icon;
+
   /// Owning team.
   final String team;
+
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String entryPage;
+
   /// Identifiers of the plugin's pages; each has a file under `pages/`.
   final List<String> pages;
+
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String? fallbackPage;
+
   /// Capabilities the plugin requests; everything else is denied (SEC-080).
   final Capabilities? capabilities;
   final List<String>? tags;
@@ -1905,6 +2589,7 @@ final class PluginDocument {
   final List<StateEntry>? state;
   final List<Collection>? collections;
   final List<DataSource>? dataSources;
+
   /// Triggers besides widget events and page lifecycle (ACT-002), and the
   /// owner's error handler (ACT-020). A page's runs are cancelled with the
   /// page; a plugin's and the app's run while the release is active.
@@ -1912,25 +2597,27 @@ final class PluginDocument {
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'schemaVersion': schemaVersion,
-        'kind': kind,
-        'id': id,
-        'key': key,
-        'name': name,
-        if (description != null) 'description': description!,
-        'icon': icon.toJson(),
-        'team': team,
-        'entryPage': entryPage,
-        'pages': [for (final e in pages) e],
-        if (fallbackPage != null) 'fallbackPage': fallbackPage!,
-        if (capabilities != null) 'capabilities': capabilities!.toJson(),
-        if (tags != null) 'tags': [for (final e in tags!) e],
-        if (types != null) 'types': [for (final e in types!) e.toJson()],
-        if (state != null) 'state': [for (final e in state!) e.toJson()],
-        if (collections != null) 'collections': [for (final e in collections!) e.toJson()],
-        if (dataSources != null) 'dataSources': [for (final e in dataSources!) e.toJson()],
-        if (triggers != null) 'triggers': triggers!.toJson(),
-      };
+    'schemaVersion': schemaVersion,
+    'kind': kind,
+    'id': id,
+    'key': key,
+    'name': name,
+    if (description != null) 'description': description!,
+    'icon': icon.toJson(),
+    'team': team,
+    'entryPage': entryPage,
+    'pages': [for (final e in pages) e],
+    if (fallbackPage != null) 'fallbackPage': fallbackPage!,
+    if (capabilities != null) 'capabilities': capabilities!.toJson(),
+    if (tags != null) 'tags': [for (final e in tags!) e],
+    if (types != null) 'types': [for (final e in types!) e.toJson()],
+    if (state != null) 'state': [for (final e in state!) e.toJson()],
+    if (collections != null)
+      'collections': [for (final e in collections!) e.toJson()],
+    if (dataSources != null)
+      'dataSources': [for (final e in dataSources!) e.toJson()],
+    if (triggers != null) 'triggers': triggers!.toJson(),
+  };
 }
 
 /// Push notifications (NAV-008, ADR-0040): whether the app uses them, so a
@@ -1950,14 +2637,15 @@ final class PushPolicy {
   }
 
   final bool enabled;
+
   /// The payload key holding `{route, params}`; `plux` when absent.
   final String? payloadKey;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'enabled': enabled,
-        if (payloadKey != null) 'payloadKey': payloadKey!,
-      };
+    'enabled': enabled,
+    if (payloadKey != null) 'payloadKey': payloadKey!,
+  };
 }
 
 /// What the compiler does when a release needs a newer runtime than
@@ -1970,8 +2658,10 @@ enum RequiredFeaturesPolicy {
   const RequiredFeaturesPolicy(this.json);
 
   /// Decodes a JSON value.
-  factory RequiredFeaturesPolicy.fromJson(Object json) =>
-      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown RequiredFeaturesPolicy', json));
+  factory RequiredFeaturesPolicy.fromJson(Object json) => values.firstWhere(
+    (v) => v.json == json,
+    orElse: () => throw FormatException('unknown RequiredFeaturesPolicy', json),
+  );
 
   /// The JSON value.
   final String json;
@@ -1989,36 +2679,61 @@ final class Responsive {
   factory Responsive.fromJson(Object json) {
     final m = json as Map<String, Object?>;
     return Responsive(
-      medium: m['medium'] == null ? null : {for (final e in (m['medium']! as Map<String, Object?>).entries) e.key: e.value},
-      expanded: m['expanded'] == null ? null : {for (final e in (m['expanded']! as Map<String, Object?>).entries) e.key: e.value},
+      medium: m['medium'] == null
+          ? null
+          : {
+              for (final e in (m['medium']! as Map<String, Object?>).entries)
+                e.key: e.value,
+            },
+      expanded: m['expanded'] == null
+          ? null
+          : {
+              for (final e in (m['expanded']! as Map<String, Object?>).entries)
+                e.key: e.value,
+            },
     );
   }
 
   /// Prop values by prop name.
   final Map<String, Object?>? medium;
+
   /// Prop values by prop name.
   final Map<String, Object?>? expanded;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        if (medium != null) 'medium': {for (final e in medium!.entries) e.key: e.value},
-        if (expanded != null) 'expanded': {for (final e in expanded!.entries) e.key: e.value},
-      };
+    if (medium != null)
+      'medium': {for (final e in medium!.entries) e.key: e.value},
+    if (expanded != null)
+      'expanded': {for (final e in expanded!.entries) e.key: e.value},
+  };
 }
 
 /// Retry policy of a step (ACT-006).
 final class Retry {
-  const Retry({required this.count, this.backoffMs, this.maxBackoffMs, this.jitter, this.on});
+  const Retry({
+    required this.count,
+    this.backoffMs,
+    this.maxBackoffMs,
+    this.jitter,
+    this.on,
+  });
 
   /// Decodes a JSON object.
   factory Retry.fromJson(Object json) {
     final m = json as Map<String, Object?>;
     return Retry(
       count: (m['count']! as num).toInt(),
-      backoffMs: m['backoffMs'] == null ? null : (m['backoffMs']! as num).toInt(),
-      maxBackoffMs: m['maxBackoffMs'] == null ? null : (m['maxBackoffMs']! as num).toInt(),
+      backoffMs: m['backoffMs'] == null
+          ? null
+          : (m['backoffMs']! as num).toInt(),
+      maxBackoffMs: m['maxBackoffMs'] == null
+          ? null
+          : (m['maxBackoffMs']! as num).toInt(),
       jitter: m['jitter'] == null ? null : m['jitter']! as bool,
-      on: m['on'] == null ? null : [for (final e in m['on']! as List<Object?>) ErrorKind.fromJson(e!)],
+      on: m['on'] == null
+          ? null
+          : [for (final e in m['on']! as List<Object?>) ErrorKind.fromJson(e!)],
     );
   }
 
@@ -2030,12 +2745,12 @@ final class Retry {
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'count': count,
-        if (backoffMs != null) 'backoffMs': backoffMs!,
-        if (maxBackoffMs != null) 'maxBackoffMs': maxBackoffMs!,
-        if (jitter != null) 'jitter': jitter!,
-        if (on != null) 'on': [for (final e in on!) e.toJson()],
-      };
+    'count': count,
+    if (backoffMs != null) 'backoffMs': backoffMs!,
+    if (maxBackoffMs != null) 'maxBackoffMs': maxBackoffMs!,
+    if (jitter != null) 'jitter': jitter!,
+    if (on != null) 'on': [for (final e in on!) e.toJson()],
+  };
 }
 
 /// A guard graph run before entry (NAV-009).
@@ -2045,18 +2760,14 @@ final class RouteGuard {
   /// Decodes a JSON object.
   factory RouteGuard.fromJson(Object json) {
     final m = json as Map<String, Object?>;
-    return RouteGuard(
-      graph: m['\$graph']! as String,
-    );
+    return RouteGuard(graph: m['\$graph']! as String);
   }
 
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String graph;
 
   /// Encodes a JSON object.
-  Map<String, Object?> toJson() => {
-        '\$graph': graph,
-      };
+  Map<String, Object?> toJson() => {'\$graph': graph};
 }
 
 /// Route options (SCH-022, NAV-010).
@@ -2067,8 +2778,15 @@ final class RouteOptions {
   factory RouteOptions.fromJson(Object json) {
     final m = json as Map<String, Object?>;
     return RouteOptions(
-      transition: m['transition'] == null ? null : Transition.fromJson(m['transition']!),
-      guards: m['guards'] == null ? null : [for (final e in m['guards']! as List<Object?>) RouteGuard.fromJson(e!)],
+      transition: m['transition'] == null
+          ? null
+          : Transition.fromJson(m['transition']!),
+      guards: m['guards'] == null
+          ? null
+          : [
+              for (final e in m['guards']! as List<Object?>)
+                RouteGuard.fromJson(e!),
+            ],
     );
   }
 
@@ -2078,9 +2796,9 @@ final class RouteOptions {
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        if (transition != null) 'transition': transition!.toJson(),
-        if (guards != null) 'guards': [for (final e in guards!) e.toJson()],
-      };
+    if (transition != null) 'transition': transition!.toJson(),
+    if (guards != null) 'guards': [for (final e in guards!) e.toJson()],
+  };
 }
 
 /// Security profile (§15.12).
@@ -2092,8 +2810,10 @@ enum SecurityProfile {
   const SecurityProfile(this.json);
 
   /// Decodes a JSON value.
-  factory SecurityProfile.fromJson(Object json) =>
-      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown SecurityProfile', json));
+  factory SecurityProfile.fromJson(Object json) => values.firstWhere(
+    (v) => v.json == json,
+    orElse: () => throw FormatException('unknown SecurityProfile', json),
+  );
 
   /// The JSON value.
   final String json;
@@ -2104,7 +2824,15 @@ enum SecurityProfile {
 
 /// Accessibility semantics of a node (A11Y-002).
 final class Semantics {
-  const Semantics({this.label, this.hint, this.value, this.header, this.button, this.liveRegion, this.excludeSemantics});
+  const Semantics({
+    this.label,
+    this.hint,
+    this.value,
+    this.header,
+    this.button,
+    this.liveRegion,
+    this.excludeSemantics,
+  });
 
   /// Decodes a JSON object.
   factory Semantics.fromJson(Object json) {
@@ -2116,16 +2844,20 @@ final class Semantics {
       header: m['header'] == null ? null : m['header']! as bool,
       button: m['button'] == null ? null : m['button']! as bool,
       liveRegion: m['liveRegion'] == null ? null : m['liveRegion']! as bool,
-      excludeSemantics: m['excludeSemantics'] == null ? null : m['excludeSemantics']! as bool,
+      excludeSemantics: m['excludeSemantics'] == null
+          ? null
+          : m['excludeSemantics']! as bool,
     );
   }
 
   /// A prop value: a literal of the prop's type, or a binding (SCH-011).
   /// Literal objects and lists may contain bindings in their fields and items.
   final JsonValue? label;
+
   /// A prop value: a literal of the prop's type, or a binding (SCH-011).
   /// Literal objects and lists may contain bindings in their fields and items.
   final JsonValue? hint;
+
   /// A prop value: a literal of the prop's type, or a binding (SCH-011).
   /// Literal objects and lists may contain bindings in their fields and items.
   final JsonValue? value;
@@ -2136,14 +2868,14 @@ final class Semantics {
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        if (label != null) 'label': label!.value,
-        if (hint != null) 'hint': hint!.value,
-        if (value != null) 'value': value!.value,
-        if (header != null) 'header': header!,
-        if (button != null) 'button': button!,
-        if (liveRegion != null) 'liveRegion': liveRegion!,
-        if (excludeSemantics != null) 'excludeSemantics': excludeSemantics!,
-      };
+    if (label != null) 'label': label!.value,
+    if (hint != null) 'hint': hint!.value,
+    if (value != null) 'value': value!.value,
+    if (header != null) 'header': header!,
+    if (button != null) 'button': button!,
+    if (liveRegion != null) 'liveRegion': liveRegion!,
+    if (excludeSemantics != null) 'excludeSemantics': excludeSemantics!,
+  };
 }
 
 /// A tabbed shell; each tab keeps its own navigation stack, and `switchTab`
@@ -2156,7 +2888,9 @@ final class Shell {
     final m = json as Map<String, Object?>;
     return Shell(
       key: m['key']! as String,
-      tabs: [for (final e in m['tabs']! as List<Object?>) ShellTab.fromJson(e!)],
+      tabs: [
+        for (final e in m['tabs']! as List<Object?>) ShellTab.fromJson(e!),
+      ],
     );
   }
 
@@ -2167,14 +2901,19 @@ final class Shell {
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'key': key,
-        'tabs': [for (final e in tabs) e.toJson()],
-      };
+    'key': key,
+    'tabs': [for (final e in tabs) e.toJson()],
+  };
 }
 
 /// A tab of a shell: its label, icon and the route it opens with.
 final class ShellTab {
-  const ShellTab({required this.key, required this.label, required this.icon, required this.initialRoute});
+  const ShellTab({
+    required this.key,
+    required this.label,
+    required this.icon,
+    required this.initialRoute,
+  });
 
   /// Decodes a JSON object.
   factory ShellTab.fromJson(Object json) {
@@ -2190,22 +2929,25 @@ final class ShellTab {
   /// Human-readable lower-kebab slug, unique within its parent (SCH-002). Files
   /// in the Git layout are named after it.
   final String key;
+
   /// A prop value: a literal of the prop's type, or a binding (SCH-011).
   /// Literal objects and lists may contain bindings in their fields and items.
   final Object? label;
+
   /// A prop value: a literal of the prop's type, or a binding (SCH-011).
   /// Literal objects and lists may contain bindings in their fields and items.
   final Object? icon;
+
   /// App-wide unique route name (SCH-025).
   final String initialRoute;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'key': key,
-        'label': label,
-        'icon': icon,
-        'initialRoute': initialRoute,
-      };
+    'key': key,
+    'label': label,
+    'icon': icon,
+    'initialRoute': initialRoute,
+  };
 }
 
 /// The content of a slot: one node, or a list of nodes for list slots.
@@ -2222,7 +2964,8 @@ final class SlotFill {
   final List<Node>? many;
 
   /// Encodes the single value or the list.
-  Object? toJson() => many == null ? one!.toJson() : [for (final e in many!) e.toJson()];
+  Object? toJson() =>
+      many == null ? one!.toJson() : [for (final e in many!) e.toJson()];
 }
 
 /// Start-up mode (SYN-003).
@@ -2233,8 +2976,10 @@ enum StartupMode {
   const StartupMode(this.json);
 
   /// Decodes a JSON value.
-  factory StartupMode.fromJson(Object json) =>
-      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown StartupMode', json));
+  factory StartupMode.fromJson(Object json) => values.firstWhere(
+    (v) => v.json == json,
+    orElse: () => throw FormatException('unknown StartupMode', json),
+  );
 
   /// The JSON value.
   final String json;
@@ -2252,7 +2997,9 @@ final class StartupPolicy {
     final m = json as Map<String, Object?>;
     return StartupPolicy(
       mode: StartupMode.fromJson(m['mode']!),
-      timeoutMs: m['timeoutMs'] == null ? null : (m['timeoutMs']! as num).toInt(),
+      timeoutMs: m['timeoutMs'] == null
+          ? null
+          : (m['timeoutMs']! as num).toInt(),
     );
   }
 
@@ -2262,15 +3009,26 @@ final class StartupPolicy {
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'mode': mode.toJson(),
-        if (timeoutMs != null) 'timeoutMs': timeoutMs!,
-      };
+    'mode': mode.toJson(),
+    if (timeoutMs != null) 'timeoutMs': timeoutMs!,
+  };
 }
 
 /// A typed state entry with a default or a computed expression (STA-002,
 /// STA-004).
 final class StateEntry {
-  const StateEntry({required this.id, required this.name, required this.type, this.defaultValue, this.computed, this.persistence, this.sensitive, this.exposed, this.migration, this.description});
+  const StateEntry({
+    required this.id,
+    required this.name,
+    required this.type,
+    this.defaultValue,
+    this.computed,
+    this.persistence,
+    this.sensitive,
+    this.exposed,
+    this.migration,
+    this.description,
+  });
 
   /// Decodes a JSON object.
   factory StateEntry.fromJson(Object json) {
@@ -2281,53 +3039,67 @@ final class StateEntry {
       type: m['type']! as String,
       defaultValue: m.containsKey('default') ? JsonValue(m['default']) : null,
       computed: m['computed'] == null ? null : Expr.fromJson(m['computed']!),
-      persistence: m['persistence'] == null ? null : Persistence.fromJson(m['persistence']!),
+      persistence: m['persistence'] == null
+          ? null
+          : Persistence.fromJson(m['persistence']!),
       sensitive: m['sensitive'] == null ? null : m['sensitive']! as bool,
       exposed: m['exposed'] == null ? null : m['exposed']! as bool,
-      migration: m['migration'] == null ? null : StateMigration.fromJson(m['migration']!),
-      description: m['description'] == null ? null : m['description']! as String,
+      migration: m['migration'] == null
+          ? null
+          : StateMigration.fromJson(m['migration']!),
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
     );
   }
 
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String id;
+
   /// Identifier used in PXL and generated code: lowerCamelCase.
   final String name;
+
   /// Type expression of SCH-010, e.g. `string`, `decimal?`,
   /// `list<Transaction>`, `map<string,int>`.
   final String type;
+
   /// A JSON value interpreted against a declared type (defaults, mocks,
   /// environment values).
   final JsonValue? defaultValue;
+
   /// PXL binding (SCH-011).
   final Expr? computed;
+
   /// Where a state entry lives (STA-003).
   final Persistence? persistence;
   final bool? sensitive;
+
   /// Readable and writable by the host (STA-030).
   final bool? exposed;
+
   /// How a persisted state entry whose type changed since the previous release
   /// takes its stored value (STA-040): with `from`, the entry's type in the
   /// previous release, and `value`, an expression over `previous` (the stored
   /// value, of type `from`) giving the new value; or with `reset`, the declared
   /// default.
   final StateMigration? migration;
+
   /// Human-readable description.
   final String? description;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'id': id,
-        'name': name,
-        'type': type,
-        if (defaultValue != null) 'default': defaultValue!.value,
-        if (computed != null) 'computed': computed!.toJson(),
-        if (persistence != null) 'persistence': persistence!.toJson(),
-        if (sensitive != null) 'sensitive': sensitive!,
-        if (exposed != null) 'exposed': exposed!,
-        if (migration != null) 'migration': migration!.toJson(),
-        if (description != null) 'description': description!,
-      };
+    'id': id,
+    'name': name,
+    'type': type,
+    if (defaultValue != null) 'default': defaultValue!.value,
+    if (computed != null) 'computed': computed!.toJson(),
+    if (persistence != null) 'persistence': persistence!.toJson(),
+    if (sensitive != null) 'sensitive': sensitive!,
+    if (exposed != null) 'exposed': exposed!,
+    if (migration != null) 'migration': migration!.toJson(),
+    if (description != null) 'description': description!,
+  };
 }
 
 /// How a persisted state entry whose type changed since the previous release
@@ -2345,33 +3117,42 @@ final class StateMigration {
       from: m['from'] == null ? null : m['from']! as String,
       value: m['value'] == null ? null : Expr.fromJson(m['value']!),
       reset: m['reset'] == null ? null : m['reset']! as bool,
-      description: m['description'] == null ? null : m['description']! as String,
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
     );
   }
 
   /// Type expression of SCH-010, e.g. `string`, `decimal?`,
   /// `list<Transaction>`, `map<string,int>`.
   final String? from;
+
   /// PXL binding (SCH-011).
   final Expr? value;
+
   /// Start from the declared default instead of the stored value.
   final bool? reset;
+
   /// Human-readable description.
   final String? description;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        if (from != null) 'from': from!,
-        if (value != null) 'value': value!.toJson(),
-        if (reset != null) 'reset': reset!,
-        if (description != null) 'description': description!,
-      };
+    if (from != null) 'from': from!,
+    if (value != null) 'value': value!.toJson(),
+    if (reset != null) 'reset': reset!,
+    if (description != null) 'description': description!,
+  };
 }
 
 /// Runs its handler when a state entry changes (ACT-002); `event` is the new
 /// value. A debounce policy on the handler waits for the value to settle.
 final class StateWatcher {
-  const StateWatcher({required this.path, required this.handler, this.description});
+  const StateWatcher({
+    required this.path,
+    required this.handler,
+    this.description,
+  });
 
   /// Decodes a JSON object.
   factory StateWatcher.fromJson(Object json) {
@@ -2379,29 +3160,44 @@ final class StateWatcher {
     return StateWatcher(
       path: m['path']! as String,
       handler: EventHandler.fromJson(m['handler']!),
-      description: m['description'] == null ? null : m['description']! as String,
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
     );
   }
 
   /// The state entry: <scope>.<name>.
   final String path;
+
   /// A trigger's handler: a reference to an action graph or an inline graph
   /// (SCH-023).
   final EventHandler handler;
+
   /// Human-readable description.
   final String? description;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'path': path,
-        'handler': handler.toJson(),
-        if (description != null) 'description': description!,
-      };
+    'path': path,
+    'handler': handler.toJson(),
+    if (description != null) 'description': description!,
+  };
 }
 
 /// One step of an action graph; edges name other steps (§14.1).
 final class Step {
-  const Step({required this.id, required this.action, this.input, this.next, this.onSuccess, this.onError, this.branches, this.retry, this.timeoutMs, this.description});
+  const Step({
+    required this.id,
+    required this.action,
+    this.input,
+    this.next,
+    this.onSuccess,
+    this.onError,
+    this.branches,
+    this.retry,
+    this.timeoutMs,
+    this.description,
+  });
 
   /// Decodes a JSON object.
   factory Step.fromJson(Object json) {
@@ -2409,49 +3205,72 @@ final class Step {
     return Step(
       id: m['id']! as String,
       action: m['action']! as String,
-      input: m['input'] == null ? null : {for (final e in (m['input']! as Map<String, Object?>).entries) e.key: e.value},
+      input: m['input'] == null
+          ? null
+          : {
+              for (final e in (m['input']! as Map<String, Object?>).entries)
+                e.key: e.value,
+            },
       next: m['next'] == null ? null : m['next']! as String,
       onSuccess: m['onSuccess'] == null ? null : m['onSuccess']! as String,
       onError: m['onError'] == null ? null : m['onError']! as String,
-      branches: m['branches'] == null ? null : {for (final e in (m['branches']! as Map<String, Object?>).entries) e.key: e.value! as String},
+      branches: m['branches'] == null
+          ? null
+          : {
+              for (final e in (m['branches']! as Map<String, Object?>).entries)
+                e.key: e.value! as String,
+            },
       retry: m['retry'] == null ? null : Retry.fromJson(m['retry']!),
-      timeoutMs: m['timeoutMs'] == null ? null : (m['timeoutMs']! as num).toInt(),
-      description: m['description'] == null ? null : m['description']! as String,
+      timeoutMs: m['timeoutMs'] == null
+          ? null
+          : (m['timeoutMs']! as num).toInt(),
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
     );
   }
 
   /// Identifier used in PXL and generated code: lowerCamelCase.
   final String id;
+
   /// Action name from the catalogue (Appendix D).
   final String action;
+
   /// Prop values by prop name.
   final Map<String, Object?>? input;
+
   /// Identifier used in PXL and generated code: lowerCamelCase.
   final String? next;
+
   /// Identifier used in PXL and generated code: lowerCamelCase.
   final String? onSuccess;
+
   /// Identifier used in PXL and generated code: lowerCamelCase.
   final String? onError;
   final Map<String, String>? branches;
+
   /// Retry policy of a step (ACT-006).
   final Retry? retry;
   final int? timeoutMs;
+
   /// Human-readable description.
   final String? description;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'id': id,
-        'action': action,
-        if (input != null) 'input': {for (final e in input!.entries) e.key: e.value},
-        if (next != null) 'next': next!,
-        if (onSuccess != null) 'onSuccess': onSuccess!,
-        if (onError != null) 'onError': onError!,
-        if (branches != null) 'branches': {for (final e in branches!.entries) e.key: e.value},
-        if (retry != null) 'retry': retry!.toJson(),
-        if (timeoutMs != null) 'timeoutMs': timeoutMs!,
-        if (description != null) 'description': description!,
-      };
+    'id': id,
+    'action': action,
+    if (input != null)
+      'input': {for (final e in input!.entries) e.key: e.value},
+    if (next != null) 'next': next!,
+    if (onSuccess != null) 'onSuccess': onSuccess!,
+    if (onError != null) 'onError': onError!,
+    if (branches != null)
+      'branches': {for (final e in branches!.entries) e.key: e.value},
+    if (retry != null) 'retry': retry!.toJson(),
+    if (timeoutMs != null) 'timeoutMs': timeoutMs!,
+    if (description != null) 'description': description!,
+  };
 }
 
 /// Sync policy (§10.4).
@@ -2469,14 +3288,15 @@ final class SyncPolicy {
 
   /// Start-up behaviour (SYN-003).
   final StartupPolicy startup;
+
   /// When a staged release activates (SYN-004).
   final ActivationPolicy activation;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'startup': startup.toJson(),
-        'activation': activation.toJson(),
-      };
+    'startup': startup.toJson(),
+    'activation': activation.toJson(),
+  };
 }
 
 /// What the runtime reports (ANL-003, ADR-0034).
@@ -2487,7 +3307,12 @@ final class TelemetryPolicy {
   factory TelemetryPolicy.fromJson(Object json) {
     final m = json as Map<String, Object?>;
     return TelemetryPolicy(
-      sampling: m['sampling'] == null ? null : {for (final e in (m['sampling']! as Map<String, Object?>).entries) e.key: (e.value! as num).toDouble()},
+      sampling: m['sampling'] == null
+          ? null
+          : {
+              for (final e in (m['sampling']! as Map<String, Object?>).entries)
+                e.key: (e.value! as num).toDouble(),
+            },
     );
   }
 
@@ -2499,8 +3324,9 @@ final class TelemetryPolicy {
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        if (sampling != null) 'sampling': {for (final e in sampling!.entries) e.key: e.value},
-      };
+    if (sampling != null)
+      'sampling': {for (final e in sampling!.entries) e.key: e.value},
+  };
 }
 
 /// What the subtree uses.
@@ -2511,9 +3337,18 @@ final class TemplateDependencies {
   factory TemplateDependencies.fromJson(Object json) {
     final m = json as Map<String, Object?>;
     return TemplateDependencies(
-      tokens: m['tokens'] == null ? null : [for (final e in m['tokens']! as List<Object?>) e! as String],
-      assets: m['assets'] == null ? null : [for (final e in m['assets']! as List<Object?>) e! as String],
-      components: m['components'] == null ? null : [for (final e in m['components']! as List<Object?>) ComponentRef.fromJson(e!)],
+      tokens: m['tokens'] == null
+          ? null
+          : [for (final e in m['tokens']! as List<Object?>) e! as String],
+      assets: m['assets'] == null
+          ? null
+          : [for (final e in m['assets']! as List<Object?>) e! as String],
+      components: m['components'] == null
+          ? null
+          : [
+              for (final e in m['components']! as List<Object?>)
+                ComponentRef.fromJson(e!),
+            ],
     );
   }
 
@@ -2523,16 +3358,31 @@ final class TemplateDependencies {
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        if (tokens != null) 'tokens': [for (final e in tokens!) e],
-        if (assets != null) 'assets': [for (final e in assets!) e],
-        if (components != null) 'components': [for (final e in components!) e.toJson()],
-      };
+    if (tokens != null) 'tokens': [for (final e in tokens!) e],
+    if (assets != null) 'assets': [for (final e in assets!) e],
+    if (components != null)
+      'components': [for (final e in components!) e.toJson()],
+  };
 }
 
 /// A reusable subtree snapshot, copied with fresh identifiers when inserted
 /// (SCH-031). File: `templates/<key>.template.json`.
 final class TemplateDocument {
-  const TemplateDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.category, this.tags, this.thumbnail, this.parameters, required this.visibility, this.dependencies, required this.root});
+  const TemplateDocument({
+    required this.schemaVersion,
+    required this.kind,
+    required this.id,
+    required this.key,
+    required this.name,
+    this.description,
+    required this.category,
+    this.tags,
+    this.thumbnail,
+    this.parameters,
+    required this.visibility,
+    this.dependencies,
+    required this.root,
+  });
 
   /// Decodes a JSON object.
   factory TemplateDocument.fromJson(Object json) {
@@ -2543,13 +3393,26 @@ final class TemplateDocument {
       id: m['id']! as String,
       key: m['key']! as String,
       name: m['name']! as String,
-      description: m['description'] == null ? null : m['description']! as String,
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
       category: m['category']! as String,
-      tags: m['tags'] == null ? null : [for (final e in m['tags']! as List<Object?>) e! as String],
-      thumbnail: m['thumbnail'] == null ? null : AssetRef.fromJson(m['thumbnail']!),
-      parameters: m['parameters'] == null ? null : [for (final e in m['parameters']! as List<Object?>) TemplateParameter.fromJson(e!)],
+      tags: m['tags'] == null
+          ? null
+          : [for (final e in m['tags']! as List<Object?>) e! as String],
+      thumbnail: m['thumbnail'] == null
+          ? null
+          : AssetRef.fromJson(m['thumbnail']!),
+      parameters: m['parameters'] == null
+          ? null
+          : [
+              for (final e in m['parameters']! as List<Object?>)
+                TemplateParameter.fromJson(e!),
+            ],
       visibility: TemplateVisibility.fromJson(m['visibility']!),
-      dependencies: m['dependencies'] == null ? null : TemplateDependencies.fromJson(m['dependencies']!),
+      dependencies: m['dependencies'] == null
+          ? null
+          : TemplateDependencies.fromJson(m['dependencies']!),
       root: Node.fromJson(m['root']!),
     );
   }
@@ -2558,48 +3421,62 @@ final class TemplateDocument {
   /// before validation.
   final String schemaVersion;
   final String kind;
+
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String id;
+
   /// Human-readable lower-kebab slug, unique within its parent (SCH-002). Files
   /// in the Git layout are named after it.
   final String key;
   final String name;
+
   /// Human-readable description.
   final String? description;
   final String category;
   final List<String>? tags;
+
   /// Asset reference (SCH-011).
   final AssetRef? thumbnail;
   final List<TemplateParameter>? parameters;
+
   /// Who can insert the template (SCH-031).
   final TemplateVisibility visibility;
+
   /// What the subtree uses.
   final TemplateDependencies? dependencies;
+
   /// A node of a page or component tree: a widget or a component instance
   /// (SCH-023).
   final Node root;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'schemaVersion': schemaVersion,
-        'kind': kind,
-        'id': id,
-        'key': key,
-        'name': name,
-        if (description != null) 'description': description!,
-        'category': category,
-        if (tags != null) 'tags': [for (final e in tags!) e],
-        if (thumbnail != null) 'thumbnail': thumbnail!.toJson(),
-        if (parameters != null) 'parameters': [for (final e in parameters!) e.toJson()],
-        'visibility': visibility.toJson(),
-        if (dependencies != null) 'dependencies': dependencies!.toJson(),
-        'root': root.toJson(),
-      };
+    'schemaVersion': schemaVersion,
+    'kind': kind,
+    'id': id,
+    'key': key,
+    'name': name,
+    if (description != null) 'description': description!,
+    'category': category,
+    if (tags != null) 'tags': [for (final e in tags!) e],
+    if (thumbnail != null) 'thumbnail': thumbnail!.toJson(),
+    if (parameters != null)
+      'parameters': [for (final e in parameters!) e.toJson()],
+    'visibility': visibility.toJson(),
+    if (dependencies != null) 'dependencies': dependencies!.toJson(),
+    'root': root.toJson(),
+  };
 }
 
 /// An exposed parameter.
 final class TemplateParameter {
-  const TemplateParameter({required this.name, required this.type, required this.path, this.defaultValue, this.description});
+  const TemplateParameter({
+    required this.name,
+    required this.type,
+    required this.path,
+    this.defaultValue,
+    this.description,
+  });
 
   /// Decodes a JSON object.
   factory TemplateParameter.fromJson(Object json) {
@@ -2609,31 +3486,37 @@ final class TemplateParameter {
       type: m['type']! as String,
       path: m['path']! as String,
       defaultValue: m.containsKey('default') ? JsonValue(m['default']) : null,
-      description: m['description'] == null ? null : m['description']! as String,
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
     );
   }
 
   /// Identifier used in PXL and generated code: lowerCamelCase.
   final String name;
+
   /// Type expression of SCH-010, e.g. `string`, `decimal?`,
   /// `list<Transaction>`, `map<string,int>`.
   final String type;
+
   /// JSON Pointer to the value inside `root` that the parameter sets.
   final String path;
+
   /// A JSON value interpreted against a declared type (defaults, mocks,
   /// environment values).
   final JsonValue? defaultValue;
+
   /// Human-readable description.
   final String? description;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'name': name,
-        'type': type,
-        'path': path,
-        if (defaultValue != null) 'default': defaultValue!.value,
-        if (description != null) 'description': description!,
-      };
+    'name': name,
+    'type': type,
+    'path': path,
+    if (defaultValue != null) 'default': defaultValue!.value,
+    if (description != null) 'description': description!,
+  };
 }
 
 /// Who can insert the template (SCH-031).
@@ -2645,8 +3528,10 @@ enum TemplateVisibility {
   const TemplateVisibility(this.json);
 
   /// Decodes a JSON value.
-  factory TemplateVisibility.fromJson(Object json) =>
-      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown TemplateVisibility', json));
+  factory TemplateVisibility.fromJson(Object json) => values.firstWhere(
+    (v) => v.json == json,
+    orElse: () => throw FormatException('unknown TemplateVisibility', json),
+  );
 
   /// The JSON value.
   final String json;
@@ -2658,7 +3543,14 @@ enum TemplateVisibility {
 /// Design tokens for light and dark modes (THM-001, THM-002). File:
 /// `theme.json`.
 final class ThemeDocument {
-  const ThemeDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, required this.tokens});
+  const ThemeDocument({
+    required this.schemaVersion,
+    required this.kind,
+    required this.id,
+    required this.key,
+    required this.name,
+    required this.tokens,
+  });
 
   /// Decodes a JSON object.
   factory ThemeDocument.fromJson(Object json) {
@@ -2677,32 +3569,41 @@ final class ThemeDocument {
   /// before validation.
   final String schemaVersion;
   final String kind;
+
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String id;
+
   /// Human-readable lower-kebab slug, unique within its parent (SCH-002). Files
   /// in the Git layout are named after it.
   final String key;
   final String name;
+
   /// A design token or a group of tokens in the W3C Design Tokens format
   /// (THM-001). Dark-mode values are given in `$extensions.dev.plux.dark`.
   final Object? tokens;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'schemaVersion': schemaVersion,
-        'kind': kind,
-        'id': id,
-        'key': key,
-        'name': name,
-        'tokens': tokens,
-      };
+    'schemaVersion': schemaVersion,
+    'kind': kind,
+    'id': id,
+    'key': key,
+    'name': name,
+    'tokens': tokens,
+  };
 }
 
 /// A timer (ACT-002): it fires every intervalMs while its owner lives, or once,
 /// intervalMs after its owner starts, when repeat is false; `event` is the
 /// number of times it has fired.
 final class TimerTrigger {
-  const TimerTrigger({required this.name, required this.intervalMs, this.repeat, required this.handler, this.description});
+  const TimerTrigger({
+    required this.name,
+    required this.intervalMs,
+    this.repeat,
+    required this.handler,
+    this.description,
+  });
 
   /// Decodes a JSON object.
   factory TimerTrigger.fromJson(Object json) {
@@ -2712,29 +3613,34 @@ final class TimerTrigger {
       intervalMs: (m['intervalMs']! as num).toInt(),
       repeat: m['repeat'] == null ? null : m['repeat']! as bool,
       handler: EventHandler.fromJson(m['handler']!),
-      description: m['description'] == null ? null : m['description']! as String,
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
     );
   }
 
   /// Identifier used in PXL and generated code: lowerCamelCase.
   final String name;
   final int intervalMs;
+
   /// Fires every intervalMs; true when absent.
   final bool? repeat;
+
   /// A trigger's handler: a reference to an action graph or an inline graph
   /// (SCH-023).
   final EventHandler handler;
+
   /// Human-readable description.
   final String? description;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'name': name,
-        'intervalMs': intervalMs,
-        if (repeat != null) 'repeat': repeat!,
-        'handler': handler.toJson(),
-        if (description != null) 'description': description!,
-      };
+    'name': name,
+    'intervalMs': intervalMs,
+    if (repeat != null) 'repeat': repeat!,
+    'handler': handler.toJson(),
+    if (description != null) 'description': description!,
+  };
 }
 
 /// Page transition (NAV-010).
@@ -2752,8 +3658,10 @@ enum Transition {
   const Transition(this.json);
 
   /// Decodes a JSON value.
-  factory Transition.fromJson(Object json) =>
-      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown Transition', json));
+  factory Transition.fromJson(Object json) => values.firstWhere(
+    (v) => v.json == json,
+    orElse: () => throw FormatException('unknown Transition', json),
+  );
 
   /// The JSON value.
   final String json;
@@ -2764,7 +3672,13 @@ enum Transition {
 
 /// A translation key.
 final class TranslationKey {
-  const TranslationKey({required this.id, required this.key, this.description, this.maxLength, this.args});
+  const TranslationKey({
+    required this.id,
+    required this.key,
+    this.description,
+    this.maxLength,
+    this.args,
+  });
 
   /// Decodes a JSON object.
   factory TranslationKey.fromJson(Object json) {
@@ -2772,15 +3686,22 @@ final class TranslationKey {
     return TranslationKey(
       id: m['id']! as String,
       key: m['key']! as String,
-      description: m['description'] == null ? null : m['description']! as String,
-      maxLength: m['maxLength'] == null ? null : (m['maxLength']! as num).toInt(),
-      args: m['args'] == null ? null : [for (final e in m['args']! as List<Object?>) Field.fromJson(e!)],
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
+      maxLength: m['maxLength'] == null
+          ? null
+          : (m['maxLength']! as num).toInt(),
+      args: m['args'] == null
+          ? null
+          : [for (final e in m['args']! as List<Object?>) Field.fromJson(e!)],
     );
   }
 
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String id;
   final String key;
+
   /// Human-readable description.
   final String? description;
   final int? maxLength;
@@ -2788,18 +3709,23 @@ final class TranslationKey {
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'id': id,
-        'key': key,
-        if (description != null) 'description': description!,
-        if (maxLength != null) 'maxLength': maxLength!,
-        if (args != null) 'args': [for (final e in args!) e.toJson()],
-      };
+    'id': id,
+    'key': key,
+    if (description != null) 'description': description!,
+    if (maxLength != null) 'maxLength': maxLength!,
+    if (args != null) 'args': [for (final e in args!) e.toJson()],
+  };
 }
 
 /// The translation keys of an app, referenced by identifier (I18N-007). File:
 /// `translations/keys.json`.
 final class TranslationKeysDocument {
-  const TranslationKeysDocument({required this.schemaVersion, required this.kind, required this.id, required this.keys});
+  const TranslationKeysDocument({
+    required this.schemaVersion,
+    required this.kind,
+    required this.id,
+    required this.keys,
+  });
 
   /// Decodes a JSON object.
   factory TranslationKeysDocument.fromJson(Object json) {
@@ -2808,7 +3734,10 @@ final class TranslationKeysDocument {
       schemaVersion: m['schemaVersion']! as String,
       kind: m['kind']! as String,
       id: m['id']! as String,
-      keys: [for (final e in m['keys']! as List<Object?>) TranslationKey.fromJson(e!)],
+      keys: [
+        for (final e in m['keys']! as List<Object?>)
+          TranslationKey.fromJson(e!),
+      ],
     );
   }
 
@@ -2816,23 +3745,30 @@ final class TranslationKeysDocument {
   /// before validation.
   final String schemaVersion;
   final String kind;
+
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String id;
   final List<TranslationKey> keys;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'schemaVersion': schemaVersion,
-        'kind': kind,
-        'id': id,
-        'keys': [for (final e in keys) e.toJson()],
-      };
+    'schemaVersion': schemaVersion,
+    'kind': kind,
+    'id': id,
+    'keys': [for (final e in keys) e.toJson()],
+  };
 }
 
 /// The messages of one locale, by translation-key identifier, in ICU
 /// MessageFormat (I18N-001). File: `translations/<locale>.json`.
 final class TranslationsDocument {
-  const TranslationsDocument({required this.schemaVersion, required this.kind, required this.id, required this.locale, required this.messages});
+  const TranslationsDocument({
+    required this.schemaVersion,
+    required this.kind,
+    required this.id,
+    required this.locale,
+    required this.messages,
+  });
 
   /// Decodes a JSON object.
   factory TranslationsDocument.fromJson(Object json) {
@@ -2842,7 +3778,10 @@ final class TranslationsDocument {
       kind: m['kind']! as String,
       id: m['id']! as String,
       locale: m['locale']! as String,
-      messages: {for (final e in (m['messages']! as Map<String, Object?>).entries) e.key: e.value! as String},
+      messages: {
+        for (final e in (m['messages']! as Map<String, Object?>).entries)
+          e.key: e.value! as String,
+      },
     );
   }
 
@@ -2850,93 +3789,158 @@ final class TranslationsDocument {
   /// before validation.
   final String schemaVersion;
   final String kind;
+
   /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
   final String id;
+
   /// BCP 47 language tag: language, optional script, optional region.
   final String locale;
   final Map<String, String> messages;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'schemaVersion': schemaVersion,
-        'kind': kind,
-        'id': id,
-        'locale': locale,
-        'messages': {for (final e in messages.entries) e.key: e.value},
-      };
+    'schemaVersion': schemaVersion,
+    'kind': kind,
+    'id': id,
+    'locale': locale,
+    'messages': {for (final e in messages.entries) e.key: e.value},
+  };
 }
 
 /// Triggers besides widget events and page lifecycle (ACT-002), and the owner's
 /// error handler (ACT-020). A page's runs are cancelled with the page; a
 /// plugin's and the app's run while the release is active.
 final class Triggers {
-  const Triggers({this.timers, this.watch, this.onAppResume, this.onAppPause, this.onPushOpened, this.hostEvents, this.dataSources, this.onError});
+  const Triggers({
+    this.timers,
+    this.watch,
+    this.onAppResume,
+    this.onAppPause,
+    this.onPushOpened,
+    this.hostEvents,
+    this.dataSources,
+    this.onError,
+  });
 
   /// Decodes a JSON object.
   factory Triggers.fromJson(Object json) {
     final m = json as Map<String, Object?>;
     return Triggers(
-      timers: m['timers'] == null ? null : [for (final e in m['timers']! as List<Object?>) TimerTrigger.fromJson(e!)],
-      watch: m['watch'] == null ? null : [for (final e in m['watch']! as List<Object?>) StateWatcher.fromJson(e!)],
-      onAppResume: m['onAppResume'] == null ? null : EventHandler.fromJson(m['onAppResume']!),
-      onAppPause: m['onAppPause'] == null ? null : EventHandler.fromJson(m['onAppPause']!),
-      onPushOpened: m['onPushOpened'] == null ? null : EventHandler.fromJson(m['onPushOpened']!),
-      hostEvents: m['hostEvents'] == null ? null : {for (final e in (m['hostEvents']! as Map<String, Object?>).entries) e.key: EventHandler.fromJson(e.value!)},
-      dataSources: m['dataSources'] == null ? null : {for (final e in (m['dataSources']! as Map<String, Object?>).entries) e.key: DataSourceTriggers.fromJson(e.value!)},
-      onError: m['onError'] == null ? null : EventHandler.fromJson(m['onError']!),
+      timers: m['timers'] == null
+          ? null
+          : [
+              for (final e in m['timers']! as List<Object?>)
+                TimerTrigger.fromJson(e!),
+            ],
+      watch: m['watch'] == null
+          ? null
+          : [
+              for (final e in m['watch']! as List<Object?>)
+                StateWatcher.fromJson(e!),
+            ],
+      onAppResume: m['onAppResume'] == null
+          ? null
+          : EventHandler.fromJson(m['onAppResume']!),
+      onAppPause: m['onAppPause'] == null
+          ? null
+          : EventHandler.fromJson(m['onAppPause']!),
+      onPushOpened: m['onPushOpened'] == null
+          ? null
+          : EventHandler.fromJson(m['onPushOpened']!),
+      hostEvents: m['hostEvents'] == null
+          ? null
+          : {
+              for (final e
+                  in (m['hostEvents']! as Map<String, Object?>).entries)
+                e.key: EventHandler.fromJson(e.value!),
+            },
+      dataSources: m['dataSources'] == null
+          ? null
+          : {
+              for (final e
+                  in (m['dataSources']! as Map<String, Object?>).entries)
+                e.key: DataSourceTriggers.fromJson(e.value!),
+            },
+      onError: m['onError'] == null
+          ? null
+          : EventHandler.fromJson(m['onError']!),
     );
   }
 
   final List<TimerTrigger>? timers;
   final List<StateWatcher>? watch;
+
   /// A trigger's handler: a reference to an action graph or an inline graph
   /// (SCH-023).
   final EventHandler? onAppResume;
+
   /// A trigger's handler: a reference to an action graph or an inline graph
   /// (SCH-023).
   final EventHandler? onAppPause;
+
   /// A trigger's handler: a reference to an action graph or an inline graph
   /// (SCH-023).
   final EventHandler? onPushOpened;
+
   /// Handlers of host events sent into Plux, by declared host event name
   /// (HST-013); `event` is the event's payload.
   final Map<String, EventHandler>? hostEvents;
+
   /// Handlers of data-source events, by data source name.
   final Map<String, DataSourceTriggers>? dataSources;
+
   /// A trigger's handler: a reference to an action graph or an inline graph
   /// (SCH-023).
   final EventHandler? onError;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        if (timers != null) 'timers': [for (final e in timers!) e.toJson()],
-        if (watch != null) 'watch': [for (final e in watch!) e.toJson()],
-        if (onAppResume != null) 'onAppResume': onAppResume!.toJson(),
-        if (onAppPause != null) 'onAppPause': onAppPause!.toJson(),
-        if (onPushOpened != null) 'onPushOpened': onPushOpened!.toJson(),
-        if (hostEvents != null) 'hostEvents': {for (final e in hostEvents!.entries) e.key: e.value.toJson()},
-        if (dataSources != null) 'dataSources': {for (final e in dataSources!.entries) e.key: e.value.toJson()},
-        if (onError != null) 'onError': onError!.toJson(),
-      };
+    if (timers != null) 'timers': [for (final e in timers!) e.toJson()],
+    if (watch != null) 'watch': [for (final e in watch!) e.toJson()],
+    if (onAppResume != null) 'onAppResume': onAppResume!.toJson(),
+    if (onAppPause != null) 'onAppPause': onAppPause!.toJson(),
+    if (onPushOpened != null) 'onPushOpened': onPushOpened!.toJson(),
+    if (hostEvents != null)
+      'hostEvents': {
+        for (final e in hostEvents!.entries) e.key: e.value.toJson(),
+      },
+    if (dataSources != null)
+      'dataSources': {
+        for (final e in dataSources!.entries) e.key: e.value.toJson(),
+      },
+    if (onError != null) 'onError': onError!.toJson(),
+  };
 }
 
 /// A named object type or enum (SCH-010).
 final class TypeDecl {
-  const TypeDecl({required this.name, this.description, this.fields, this.enumValue});
+  const TypeDecl({
+    required this.name,
+    this.description,
+    this.fields,
+    this.enumValue,
+  });
 
   /// Decodes a JSON object.
   factory TypeDecl.fromJson(Object json) {
     final m = json as Map<String, Object?>;
     return TypeDecl(
       name: m['name']! as String,
-      description: m['description'] == null ? null : m['description']! as String,
-      fields: m['fields'] == null ? null : [for (final e in m['fields']! as List<Object?>) Field.fromJson(e!)],
-      enumValue: m['enum'] == null ? null : [for (final e in m['enum']! as List<Object?>) e! as String],
+      description: m['description'] == null
+          ? null
+          : m['description']! as String,
+      fields: m['fields'] == null
+          ? null
+          : [for (final e in m['fields']! as List<Object?>) Field.fromJson(e!)],
+      enumValue: m['enum'] == null
+          ? null
+          : [for (final e in m['enum']! as List<Object?>) e! as String],
     );
   }
 
   /// Name of a declared object or enum type: UpperCamelCase.
   final String name;
+
   /// Human-readable description.
   final String? description;
   final List<Field>? fields;
@@ -2944,9 +3948,9 @@ final class TypeDecl {
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
-        'name': name,
-        if (description != null) 'description': description!,
-        if (fields != null) 'fields': [for (final e in fields!) e.toJson()],
-        if (enumValue != null) 'enum': [for (final e in enumValue!) e],
-      };
+    'name': name,
+    if (description != null) 'description': description!,
+    if (fields != null) 'fields': [for (final e in fields!) e.toJson()],
+    if (enumValue != null) 'enum': [for (final e in enumValue!) e],
+  };
 }
