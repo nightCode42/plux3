@@ -220,6 +220,18 @@ enum PluxErrorCode {
   /// Redirect loop.
   redirectLoop(1206, 'REDIRECT_LOOP', 'Redirect loop'),
 
+  /// Capability not approved by the app.
+  capabilityNotApproved(1230, 'CAPABILITY_NOT_APPROVED', 'Capability not approved by the app'),
+
+  /// Device action without its capability.
+  deviceCapabilityUndeclared(1231, 'DEVICE_CAPABILITY_UNDECLARED', 'Device action without its capability'),
+
+  /// openUrl on an undeclared domain.
+  openUrlDomainUndeclared(1232, 'OPEN_URL_DOMAIN_UNDECLARED', 'openUrl on an undeclared domain'),
+
+  /// Host build lacks a Plux package.
+  hostBuildLacksPackage(1233, 'HOST_BUILD_LACKS_PACKAGE', 'Host build lacks a Plux package'),
+
   /// Page exceeds its node budget.
   pageNodeBudget(1310, 'PAGE_NODE_BUDGET', 'Page exceeds its node budget'),
 
@@ -498,6 +510,24 @@ enum PluxErrorCode {
 
   /// Asynchronous validator failed.
   formAsyncValidatorFailed(5352, 'FORM_ASYNC_VALIDATOR_FAILED', 'Asynchronous validator failed'),
+
+  /// Device operation blocked.
+  deviceCapabilityBlocked(5400, 'DEVICE_CAPABILITY_BLOCKED', 'Device operation blocked'),
+
+  /// Device package not installed.
+  devicePackageMissing(5401, 'DEVICE_PACKAGE_MISSING', 'Device package not installed'),
+
+  /// Device permission denied.
+  devicePermissionDenied(5402, 'DEVICE_PERMISSION_DENIED', 'Device permission denied'),
+
+  /// Device feature unavailable.
+  deviceUnavailable(5403, 'DEVICE_UNAVAILABLE', 'Device feature unavailable'),
+
+  /// openUrl blocked.
+  openUrlBlocked(5404, 'OPEN_URL_BLOCKED', 'openUrl blocked'),
+
+  /// Clipboard write blocked.
+  clipboardBlocked(5405, 'CLIPBOARD_BLOCKED', 'Clipboard write blocked'),
 
   /// Outbound request blocked.
   outboundRequestBlocked(6030, 'OUTBOUND_REQUEST_BLOCKED', 'Outbound request blocked'),

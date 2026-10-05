@@ -568,6 +568,38 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Break the cycle by guarding one of the redirects with a condition.
 
+### PLX-1230
+
+`CAPABILITY_NOT_APPROVED` · error · Capability not approved by the app
+
+**Cause.** A plugin declares a device API, network domain or function that the app document's capabilities do not approve. An app approves nothing it does not list (SEC-080, ADR-0051).
+
+**Fix.** Add the capability to the app document's capabilities if the app should allow it, or remove it from the plugin's capabilities.
+
+### PLX-1231
+
+`DEVICE_CAPABILITY_UNDECLARED` · error · Device action without its capability
+
+**Cause.** A step runs a device action, such as pickImage or getLocation, or asks requestPermission for a permission, but the plugin does not declare the device API it needs in capabilities.deviceApis, so the runtime would block it (SEC-080).
+
+**Fix.** Declare the device API named in the message in the plugin's capabilities, or remove the step.
+
+### PLX-1232
+
+`OPEN_URL_DOMAIN_UNDECLARED` · error · openUrl on an undeclared domain
+
+**Cause.** An openUrl step opens an HTTPS URL on a domain the plugin does not declare in capabilities.networkDomains, or a URL that is not HTTPS and not one of the app's deep links, so the runtime would block it (SEC-080).
+
+**Fix.** Declare the domain in the plugin's capabilities, or open a deep link of the app instead.
+
+### PLX-1233
+
+`HOST_BUILD_LACKS_PACKAGE` · warning · Host build lacks a Plux package
+
+**Cause.** The release uses a device action whose optional package, such as plux_media, plux_scanner or plux_location, is not among the packages that the native catalogue of one of the app's host builds records. On devices of that build the step fails with a permission error (RT-060, REL-080).
+
+**Fix.** Ship a host build that installs and registers the package and upload its catalogue with plux native sync, or keep the release from using the action; the publisher acknowledges the warning to publish anyway.
+
 ### PLX-1310
 
 `PAGE_NODE_BUDGET` · warning · Page exceeds its node budget
@@ -1319,6 +1351,54 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 **Cause.** An asynchronous validator's graph failed, for example because the server could not be reached; the field is shown as not checked and the form is invalid until a check succeeds (STA-020).
 
 **Fix.** Handle the graph's errors with onError and return a message, or let the user retry by editing the field.
+
+### PLX-5400
+
+`DEVICE_CAPABILITY_BLOCKED` · error · Device operation blocked
+
+**Cause.** A step ran a device action whose device API the plugin does not declare, or that the host narrowed away with PluxConfig.allowedCapabilities. The step failed with a permission error and nothing reached the device (SEC-080).
+
+**Fix.** Declare the device API in the plugin's capabilities and in the app's approved set, or allow it in the host's allowedCapabilities.
+
+### PLX-5401
+
+`DEVICE_PACKAGE_MISSING` · error · Device package not installed
+
+**Cause.** A step ran a device action whose optional package, such as plux_media, plux_scanner or plux_location, the host app did not register in PluxConfig.devicePackages (RT-060).
+
+**Fix.** Add the package to the host app and pass it in PluxConfig.devicePackages.
+
+### PLX-5402
+
+`DEVICE_PERMISSION_DENIED` · error · Device permission denied
+
+**Cause.** The user, or the platform's policy, denied the permission a device action needs, such as the camera or location.
+
+**Fix.** Run requestPermission first and take its denied branch to explain what the feature needs; the user can grant the permission in the system settings.
+
+### PLX-5403
+
+`DEVICE_UNAVAILABLE` · error · Device feature unavailable
+
+**Cause.** The platform could not perform the device operation: the device has no such hardware, the service is switched off, or the platform call failed.
+
+**Fix.** Check that the device supports the feature and that its service, such as location, is on.
+
+### PLX-5404
+
+`OPEN_URL_BLOCKED` · error · openUrl blocked
+
+**Cause.** An openUrl step named a URL that is not HTTPS on a domain the plugin declares, nor a deep link of the app, or the platform could not open it (SEC-080).
+
+**Fix.** Declare the domain in the plugin's capabilities, or use a deep link of the app.
+
+### PLX-5405
+
+`CLIPBOARD_BLOCKED` · error · Clipboard write blocked
+
+**Cause.** A copyToClipboard step ran on a page marked secure, or copied more text than device.clipboardChars allows, so nothing was copied (SEC-090).
+
+**Fix.** Do not copy from secure pages, or shorten the text.
 
 ## Security (PLX-6000–6999)
 

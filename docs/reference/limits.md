@@ -34,7 +34,9 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | `data.requestTimeout` | milliseconds | 30000 | 80% | 300000 | installation, organization, app, plugin | P5 | DAT-001 | Time one data request may take before it fails with a timeout. |
 | `data.responseSize` | bytes | 4194304 | 80% | 67108864 | installation, organization, app, plugin | P5 | DAT-001, LIM-004 | Bytes the response of one data request may have; a larger response is stopped. |
 | `data.sourcesPerPlugin` | count | 100 | 80% | 1000 | installation, organization, app, plugin | P5 | DAT-001 | Data sources a plugin, its pages and the app may declare for it together. |
+| `device.clipboardChars` | count | 10000 | 80% | 100000 | installation, organization, app | P5 | SEC-080, LIM-004 | Characters copyToClipboard may put on the clipboard in one step. |
 | `device.diskQuota` | bytes | 209715200 | 80% | 4294967296 | installation, organization, app | P3 | SYN-012 | Disk space the runtime may use for releases on one device. |
+| `device.pickCount` | count | 10 | 80% | 100 | installation, organization, app | P5 | SEC-080, LIM-004 | Files a single pickImage or pickFile step may return. |
 | `document.fileSize` | bytes | 8388608 | 80% | 67108864 | installation, organization | P1 | SCH-006 | Size of one document file in the project layout, checked before parsing. |
 | `document.jsonDepth` | count | 512 | 80% | 4096 | installation | P1 | SCH-003 | Nesting of arrays and objects in one document, checked while parsing. |
 | `document.stringPropSize` | bytes | 65536 | 80% | 1048576 | installation, organization, app, plugin | P1 | SCH-005 | Size of one string prop value, in UTF-8 bytes. |

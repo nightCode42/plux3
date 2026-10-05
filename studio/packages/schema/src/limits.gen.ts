@@ -304,6 +304,16 @@ export const limits = [
     description: "Data sources a plugin, its pages and the app may declare for it together.",
   },
   {
+    key: "device.clipboardChars",
+    unit: "count",
+    default: 10000,
+    warning: 0,
+    max: 100000,
+    scopes: ["installation", "organization", "app"],
+    phase: "P5",
+    description: "Characters copyToClipboard may put on the clipboard in one step.",
+  },
+  {
     key: "device.diskQuota",
     unit: "bytes",
     default: 209715200,
@@ -312,6 +322,16 @@ export const limits = [
     scopes: ["installation", "organization", "app"],
     phase: "P3",
     description: "Disk space the runtime may use for releases on one device.",
+  },
+  {
+    key: "device.pickCount",
+    unit: "count",
+    default: 10,
+    warning: 0,
+    max: 100,
+    scopes: ["installation", "organization", "app"],
+    phase: "P5",
+    description: "Files a single pickImage or pickFile step may return.",
   },
   {
     key: "document.fileSize",

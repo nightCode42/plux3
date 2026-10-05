@@ -552,6 +552,26 @@
       "description": "Data sources a plugin, its pages and the app may declare for it together."
     },
     {
+      "key": "device.clipboardChars",
+      "unit": "count",
+      "default": 10000,
+      "max": 100000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "SEC-080",
+        "LIM-004"
+      ],
+      "description": "Characters copyToClipboard may put on the clipboard in one step."
+    },
+    {
       "key": "device.diskQuota",
       "unit": "bytes",
       "default": 209715200,
@@ -569,6 +589,26 @@
         "SYN-012"
       ],
       "description": "Disk space the runtime may use for releases on one device."
+    },
+    {
+      "key": "device.pickCount",
+      "unit": "count",
+      "default": 10,
+      "max": 100,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "SEC-080",
+        "LIM-004"
+      ],
+      "description": "Files a single pickImage or pickFile step may return."
     },
     {
       "key": "document.fileSize",

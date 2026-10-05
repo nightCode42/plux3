@@ -105,7 +105,7 @@ enum ActivationPolicy {
 /// An app: its plugins, theme, locales, environments, shared data and policies
 /// (SCH-020). File: `app.json`.
 final class AppDocument {
-  const AppDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.icon, required this.defaultLocale, required this.supportedLocales, required this.theme, required this.entryRoute, this.navigation, required this.plugins, required this.environments, this.variables, this.dataSources, this.nativeCatalogue, required this.securityProfile, required this.sync, required this.minRuntimeVersion, this.requiredFeatures, this.flags, this.types, this.state, this.collections, this.userContext, this.hostEvents, this.telemetry, this.push, this.triggers});
+  const AppDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.icon, required this.defaultLocale, required this.supportedLocales, required this.theme, required this.entryRoute, this.navigation, required this.plugins, this.capabilities, required this.environments, this.variables, this.dataSources, this.nativeCatalogue, required this.securityProfile, required this.sync, required this.minRuntimeVersion, this.requiredFeatures, this.flags, this.types, this.state, this.collections, this.userContext, this.hostEvents, this.telemetry, this.push, this.triggers});
 
   /// Decodes a JSON object.
   factory AppDocument.fromJson(Object json) {
@@ -124,6 +124,7 @@ final class AppDocument {
       entryRoute: m['entryRoute']! as String,
       navigation: m['navigation'] == null ? null : NavigationPolicy.fromJson(m['navigation']!),
       plugins: [for (final e in m['plugins']! as List<Object?>) e! as String],
+      capabilities: m['capabilities'] == null ? null : ApprovedCapabilities.fromJson(m['capabilities']!),
       environments: [for (final e in m['environments']! as List<Object?>) Environment.fromJson(e!)],
       variables: m['variables'] == null ? null : [for (final e in m['variables']! as List<Object?>) Field.fromJson(e!)],
       dataSources: m['dataSources'] == null ? null : [for (final e in m['dataSources']! as List<Object?>) DataSource.fromJson(e!)],
@@ -171,6 +172,12 @@ final class AppDocument {
   /// Keys of the app's plugins, in display order; each has a directory
   /// `plugins/<key>/`.
   final List<String> plugins;
+  /// The capabilities the app approves for its plugins (SEC-080, ADR-0051); a
+  /// release is published only when every plugin requests a subset. Without
+  /// `deviceApis`, no device API is approved. `networkDomains` and `functions`,
+  /// when listed, narrow what plugins may declare. Native routes are approved
+  /// by the host's registration, not here.
+  final ApprovedCapabilities? capabilities;
   final List<Environment> environments;
   /// Non-secret environment variables available in PXL as `env.<name>`
   /// (DAT-003).
@@ -223,6 +230,7 @@ final class AppDocument {
         'entryRoute': entryRoute,
         if (navigation != null) 'navigation': navigation!.toJson(),
         'plugins': [for (final e in plugins) e],
+        if (capabilities != null) 'capabilities': capabilities!.toJson(),
         'environments': [for (final e in environments) e.toJson()],
         if (variables != null) 'variables': [for (final e in variables!) e.toJson()],
         if (dataSources != null) 'dataSources': [for (final e in dataSources!) e.toJson()],
@@ -240,6 +248,36 @@ final class AppDocument {
         if (telemetry != null) 'telemetry': telemetry!.toJson(),
         if (push != null) 'push': push!.toJson(),
         if (triggers != null) 'triggers': triggers!.toJson(),
+      };
+}
+
+/// The capabilities the app approves for its plugins (SEC-080, ADR-0051); a
+/// release is published only when every plugin requests a subset. Without
+/// `deviceApis`, no device API is approved. `networkDomains` and `functions`,
+/// when listed, narrow what plugins may declare. Native routes are approved by
+/// the host's registration, not here.
+final class ApprovedCapabilities {
+  const ApprovedCapabilities({this.deviceApis, this.networkDomains, this.functions});
+
+  /// Decodes a JSON object.
+  factory ApprovedCapabilities.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ApprovedCapabilities(
+      deviceApis: m['deviceApis'] == null ? null : [for (final e in m['deviceApis']! as List<Object?>) DeviceAPI.fromJson(e!)],
+      networkDomains: m['networkDomains'] == null ? null : [for (final e in m['networkDomains']! as List<Object?>) e! as String],
+      functions: m['functions'] == null ? null : [for (final e in m['functions']! as List<Object?>) e! as String],
+    );
+  }
+
+  final List<DeviceAPI>? deviceApis;
+  final List<String>? networkDomains;
+  final List<String>? functions;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (deviceApis != null) 'deviceApis': [for (final e in deviceApis!) e.toJson()],
+        if (networkDomains != null) 'networkDomains': [for (final e in networkDomains!) e],
+        if (functions != null) 'functions': [for (final e in functions!) e],
       };
 }
 
@@ -1418,7 +1456,7 @@ final class NativeAction {
 /// The native routes, native slots and custom actions of one host app build
 /// (SCH-032). File: `native-catalogue.json`.
 final class NativeCatalogueDocument {
-  const NativeCatalogueDocument({required this.schemaVersion, required this.kind, required this.id, required this.host, this.routes, this.slots, this.actions});
+  const NativeCatalogueDocument({required this.schemaVersion, required this.kind, required this.id, required this.host, this.routes, this.slots, this.actions, this.packages});
 
   /// Decodes a JSON object.
   factory NativeCatalogueDocument.fromJson(Object json) {
@@ -1431,6 +1469,7 @@ final class NativeCatalogueDocument {
       routes: m['routes'] == null ? null : [for (final e in m['routes']! as List<Object?>) NativeRoute.fromJson(e!)],
       slots: m['slots'] == null ? null : [for (final e in m['slots']! as List<Object?>) NativeSlot.fromJson(e!)],
       actions: m['actions'] == null ? null : [for (final e in m['actions']! as List<Object?>) NativeAction.fromJson(e!)],
+      packages: m['packages'] == null ? null : [for (final e in m['packages']! as List<Object?>) e! as String],
     );
   }
 
@@ -1445,6 +1484,10 @@ final class NativeCatalogueDocument {
   final List<NativeRoute>? routes;
   final List<NativeSlot>? slots;
   final List<NativeAction>? actions;
+  /// The optional Plux packages the build registers, such as `plux_media`: a
+  /// release that uses a device action whose package a build lacks is flagged
+  /// for that build (RT-060, SEC-080).
+  final List<String>? packages;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
@@ -1455,6 +1498,7 @@ final class NativeCatalogueDocument {
         if (routes != null) 'routes': [for (final e in routes!) e.toJson()],
         if (slots != null) 'slots': [for (final e in slots!) e.toJson()],
         if (actions != null) 'actions': [for (final e in actions!) e.toJson()],
+        if (packages != null) 'packages': [for (final e in packages!) e],
       };
 }
 

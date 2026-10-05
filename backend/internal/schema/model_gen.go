@@ -124,8 +124,14 @@ type AppDocument struct {
 	Navigation *NavigationPolicy `json:"navigation,omitempty"`
 	// Plugins: Keys of the app's plugins, in display order; each has a directory
 	// `plugins/<key>/`.
-	Plugins      []string      `json:"plugins"`
-	Environments []Environment `json:"environments"`
+	Plugins []string `json:"plugins"`
+	// Capabilities: The capabilities the app approves for its plugins (SEC-080,
+	// ADR-0051); a release is published only when every plugin requests a
+	// subset. Without `deviceApis`, no device API is approved. `networkDomains`
+	// and `functions`, when listed, narrow what plugins may declare. Native
+	// routes are approved by the host's registration, not here.
+	Capabilities *ApprovedCapabilities `json:"capabilities,omitempty"`
+	Environments []Environment         `json:"environments"`
 	// Variables: Non-secret environment variables available in PXL as
 	// `env.<name>` (DAT-003).
 	Variables   []Field      `json:"variables,omitempty"`
@@ -162,6 +168,17 @@ type AppDocument struct {
 	// the owner's error handler (ACT-020). A page's runs are cancelled with the
 	// page; a plugin's and the app's run while the release is active.
 	Triggers *Triggers `json:"triggers,omitempty"`
+}
+
+// ApprovedCapabilities — The capabilities the app approves for its plugins
+// (SEC-080, ADR-0051); a release is published only when every plugin requests
+// a subset. Without `deviceApis`, no device API is approved. `networkDomains`
+// and `functions`, when listed, narrow what plugins may declare. Native
+// routes are approved by the host's registration, not here.
+type ApprovedCapabilities struct {
+	DeviceApis     []DeviceAPI `json:"deviceApis,omitempty"`
+	NetworkDomains []string    `json:"networkDomains,omitempty"`
+	Functions      []string    `json:"functions,omitempty"`
 }
 
 // AssetEntry — An asset file.
@@ -746,6 +763,10 @@ type NativeCatalogueDocument struct {
 	Routes  []NativeRoute  `json:"routes,omitempty"`
 	Slots   []NativeSlot   `json:"slots,omitempty"`
 	Actions []NativeAction `json:"actions,omitempty"`
+	// Packages: The optional Plux packages the build registers, such as
+	// `plux_media`: a release that uses a device action whose package a build
+	// lacks is flagged for that build (RT-060, SEC-080).
+	Packages []string `json:"packages,omitempty"`
 }
 
 // NativeRoute — A native route (NAV-002).

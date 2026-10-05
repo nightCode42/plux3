@@ -87,9 +87,15 @@ const (
 	// DataSourcesPerPlugin: Data sources a plugin, its pages and the app may
 	// declare for it together. (DAT-001)
 	DataSourcesPerPlugin Key = "data.sourcesPerPlugin"
+	// DeviceClipboardChars: Characters copyToClipboard may put on the clipboard
+	// in one step. (SEC-080, LIM-004)
+	DeviceClipboardChars Key = "device.clipboardChars"
 	// DeviceDiskQuota: Disk space the runtime may use for releases on one
 	// device. (SYN-012)
 	DeviceDiskQuota Key = "device.diskQuota"
+	// DevicePickCount: Files a single pickImage or pickFile step may return.
+	// (SEC-080, LIM-004)
+	DevicePickCount Key = "device.pickCount"
 	// DocumentFileSize: Size of one document file in the project layout, checked
 	// before parsing. (SCH-006)
 	DocumentFileSize Key = "document.fileSize"
@@ -211,7 +217,9 @@ var registry = [...]Definition{
 	{Key: DataRequestTimeout, Unit: UnitMilliseconds, Default: 30000, Warning: 0, Max: 300000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Time one data request may take before it fails with a timeout."},
 	{Key: DataResponseSize, Unit: UnitBytes, Default: 4194304, Warning: 0, Max: 67108864, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the response of one data request may have; a larger response is stopped."},
 	{Key: DataSourcesPerPlugin, Unit: UnitCount, Default: 100, Warning: 0, Max: 1000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler, Phase: "P5", Description: "Data sources a plugin, its pages and the app may declare for it together."},
+	{Key: DeviceClipboardChars, Unit: UnitCount, Default: 10000, Warning: 0, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Characters copyToClipboard may put on the clipboard in one step."},
 	{Key: DeviceDiskQuota, Unit: UnitBytes, Default: 209715200, Warning: 0, Max: 4294967296, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "Disk space the runtime may use for releases on one device."},
+	{Key: DevicePickCount, Unit: UnitCount, Default: 10, Warning: 0, Max: 100, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Files a single pickImage or pickFile step may return."},
 	{Key: DocumentFileSize, Unit: UnitBytes, Default: 8388608, Warning: 0, Max: 67108864, Scopes: ScopeInstallation | ScopeOrganization, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Size of one document file in the project layout, checked before parsing."},
 	{Key: DocumentJSONDepth, Unit: UnitCount, Default: 512, Warning: 0, Max: 4096, Scopes: ScopeInstallation, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Nesting of arrays and objects in one document, checked while parsing."},
 	{Key: DocumentStringPropSize, Unit: UnitBytes, Default: 65536, Warning: 0, Max: 1048576, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Size of one string prop value, in UTF-8 bytes."},
