@@ -480,6 +480,7 @@ void runAdapterConformance(
             db.transaction((tx) async {
               await tx.insert(a.name, task('1'));
               await tx.insert(a.name, task('1'));
+              return null;
             }),
             PluxErrorCode.dbKeyConflict,
           );

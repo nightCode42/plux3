@@ -66,7 +66,11 @@ export 'src/navigation/delegate.dart'
 export 'src/navigation/plux_page.dart' show PluxPage;
 export 'src/navigation/router.dart' show PluxNotFoundPage;
 export 'src/navigation/shell.dart' show PluxShell, PluxShellScope, PluxShellTab;
+export 'src/platform/platform_services.dart'
+    show PlatformSecretStore, platformStorageDirectory;
 export 'src/runtime_info.dart';
+export 'src/store/kv_store.dart'
+    show SecretStore, StoreException, StoreFailure, installationKey;
 export 'src/sync/sync_event.dart'
     show
         SyncActivated,
