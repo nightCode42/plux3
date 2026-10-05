@@ -1,0 +1,25 @@
+name: plux_media
+description: >-
+  Pick images and files and take photos from Plux plugins: the pickImage,
+  capturePhoto and pickFile actions, on image_picker and file_picker.
+version: 0.1.0
+repository: https://github.com/nightCode42/plux3/tree/main/packages/plux_media
+# Not published until its release is wired (release.yml, pub.dev).
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+resolution: workspace
+
+dependencies:
+  file_picker: ^13.1.0
+  flutter:
+    sdk: flutter
+  image_picker: ^1.2.3
+  plux_flutter: ^0.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
