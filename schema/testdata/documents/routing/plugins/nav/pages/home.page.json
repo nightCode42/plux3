@@ -214,10 +214,10 @@
               "onPressed": {
                 "steps": [
                   {
-                    "action": "showToast",
+                    "action": "biometricAuth",
                     "id": "toast",
                     "input": {
-                      "message": "Hello"
+                      "reason": "Hello"
                     },
                     "onError": "recover"
                   },
@@ -251,10 +251,10 @@
               "onPressed": {
                 "steps": [
                   {
-                    "action": "showToast",
+                    "action": "biometricAuth",
                     "id": "toast",
                     "input": {
-                      "message": "Hello"
+                      "reason": "Hello"
                     }
                   }
                 ]

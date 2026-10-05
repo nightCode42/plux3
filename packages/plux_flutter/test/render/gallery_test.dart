@@ -7,6 +7,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plux_flutter/plux_flutter.dart';
 import 'package:plux_flutter/src/assets/image_providers.dart';
@@ -20,8 +21,23 @@ import '../support/harness.dart';
 void main() {
   final g = Harness.goldens;
   late Harness h;
-  setUp(() async => h = await Harness.create());
-  tearDown(() => h.close());
+  // The gallery's handlers play a haptic (SEC-080: the plugin declares it).
+  late List<String> haptics;
+  setUp(() async {
+    h = await Harness.create();
+    haptics = [];
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+          if (call.method.startsWith('HapticFeedback.'))
+            haptics.add(call.method);
+          return null;
+        });
+  });
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, null);
+    return h.close();
+  });
 
   Future<void> open(
     WidgetTester tester,
@@ -251,12 +267,14 @@ void main() {
       findsWidgets,
       reason: 'skeleton placeholders are hidden from screen readers',
     );
-    // Retry fires onRetry, whose actions arrive in P5 (PLX-4010).
+    // Retry fires onRetry, which plays a haptic.
     await tester.tap(find.text('Retry'));
     await tester.pump();
+    await tester.pump();
+    expect(haptics, isNotEmpty);
     expect(
       problems().map((e) => e.code),
-      contains(PluxErrorCode.actionsNotAvailable),
+      isNot(contains(PluxErrorCode.actionsNotAvailable)),
     );
     semantics.dispose();
   });
@@ -472,26 +490,22 @@ void main() {
       await tester.enterText(find.byType(TextField).first, 'Grace');
       await tester.pump();
       expect(find.text('Grace'), findsOneWidget);
-      expect(
-        h.errors.map((e) => e.code),
-        everyElement(PluxErrorCode.actionsNotAvailable),
-      );
-      expect(
-        h.errors,
-        isNotEmpty,
-        reason: 'each handled event reports PLX-4010',
-      );
+      await tester.pump();
+      expect(h.errors, isEmpty);
+      expect(haptics, isNotEmpty, reason: 'each handled event plays a haptic');
     },
   );
 
   testWidgets(
-    'buttons with handlers are enabled and fire no action [ADR-0031]',
+    'buttons with handlers are enabled and fire their action [ADR-0031]',
     (tester) async {
       await open(tester, 'material');
       h.errors.clear();
       await tester.tap(find.text('elevated'));
       await tester.pump();
-      expect(h.errors.single.code, PluxErrorCode.actionsNotAvailable);
+      await tester.pump();
+      expect(h.errors, isEmpty);
+      expect(haptics.single, 'HapticFeedback.vibrate');
       expect(
         tester.widget<OutlinedButton>(find.byType(OutlinedButton)).onPressed,
         isNull,
@@ -584,6 +598,7 @@ void main() {
   testWidgets('cupertino inputs keep their value locally', (tester) async {
     await open(tester, 'cupertino');
     await tester.tap(find.byType(CupertinoSwitch));
+    await tester.pump();
     await tester.pump();
     expect(
       tester.widget<CupertinoSwitch>(find.byType(CupertinoSwitch)).value,
