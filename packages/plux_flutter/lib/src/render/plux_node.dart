@@ -674,6 +674,38 @@ final class NodeContextImpl implements NodeContext {
                 'plugin': pluginStateProvider(plugin),
               },
               extraRoots: () => {'props': props},
+              forms: component.forms,
+              runForm: (graph, value, key, debounce) async {
+                final host = outer.actions;
+                if (host == null || host.disposed) return null;
+                Map<String, Object?> runRoots() => {
+                  ...parentRoots(),
+                  'props': props,
+                };
+                final g = host.graph(
+                  graph,
+                  bundle,
+                  path,
+                  (v, roots) => toPxl(
+                    ValueResolver(
+                      plugin: bundle,
+                      roots: () => roots,
+                      token: outer.resolver.token,
+                      translation: outer.resolver.translation,
+                      limits: outer.resolver.limits,
+                    ).resolve(v, bundle.string),
+                  ),
+                );
+                if (g == null) return null;
+                return host.start(
+                  g,
+                  roots: runRoots,
+                  key: '$path#$key',
+                  path: path,
+                  event: value,
+                  policy: RunPolicy(ConcurrencyPolicy.debounce, debounce),
+                );
+              },
             ),
           );
         },

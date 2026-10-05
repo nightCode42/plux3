@@ -17,6 +17,7 @@ import 'package:plux_flutter/src/actions/state_handlers.dart';
 import 'package:plux_flutter/src/data/handlers.dart';
 import 'package:plux_flutter/src/data/services.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/forms/handlers.dart';
 import 'package:plux_flutter/src/schema/registry.g.dart';
 import 'package:plux_flutter/src/state/access.dart';
 
@@ -152,6 +153,21 @@ final class RunScope {
   /// Changes rolled back when the run fails, such as a `patchState` with
   /// `optimistic` set (ACT-007).
   final OptimisticLog optimistic;
+
+  final List<void Function(bool succeeded)> _ends = [];
+
+  /// Calls [f] when the run ends, with whether it succeeded: how
+  /// `submitForm` learns the outcome of the submission it started.
+  void onEnd(void Function(bool succeeded) f) => _ends.add(f);
+
+  /// Ends the run's scope; the engine calls it once.
+  void end({required bool succeeded}) {
+    final ends = [..._ends];
+    _ends.clear();
+    for (final f in ends) {
+      f(succeeded);
+    }
+  }
 }
 
 /// A flow a `callFlow` step runs (ACT-061): its graph, and the roots its
@@ -383,6 +399,7 @@ final Map<String, ActionHandler> builtInHandlers = {
   ...controlHandlers,
   ...stateHandlers,
   ...dataHandlers,
+  ...formHandlers,
 };
 
 /// A handler written as a function, for handler tables outside this

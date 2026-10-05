@@ -464,6 +464,70 @@
       "fix": "Remove the migration, or give the entry a session, persisted or secure persistence and its previous type in `from`."
     },
     {
+      "code": "PLX-1160",
+      "reason": "FORM_VALIDATOR_NOT_APPLICABLE",
+      "severity": "error",
+      "title": "Validator that does not apply to its field",
+      "cause": "A form field declares a validator its type cannot have: length on a value that is neither text nor a list, range or decimal precision on a value that is not a number, date range on a value that is not a date or a date-time, or regex, email, phone or IBAN on a value that is not text (STA-020, ADR-0047).",
+      "fix": "Change the field's type or remove the validator; the forms reference lists the types each validator accepts."
+    },
+    {
+      "code": "PLX-1161",
+      "reason": "FORM_VALIDATOR_OPTIONS",
+      "severity": "error",
+      "title": "Invalid validator options",
+      "cause": "A validator lacks an option its kind needs, carries one its kind does not take, or has bounds that cannot hold: a regex without a pattern, a length, range or date range without min or max, a min above its max, a decimal precision without maxScale or maxIntegerDigits, a custom validator without a rule, or an asynchronous one without a graph (STA-020).",
+      "fix": "Give the validator exactly the options of its kind, as the forms reference lists them."
+    },
+    {
+      "code": "PLX-1162",
+      "reason": "FORM_PATTERN_INVALID",
+      "severity": "error",
+      "title": "Invalid validator pattern",
+      "cause": "A regex validator's pattern is not in the pxl.regex.v1 subset of RE2 or exceeds pxl.regexPatternLength, pxl.regexProgramSize or pxl.regexRepeat; patterns are checked at publish, so the runtime never meets an invalid one (PXL-003, ADR-0047).",
+      "fix": "Correct the pattern at the reported position; the PXL reference lists the supported syntax."
+    },
+    {
+      "code": "PLX-1163",
+      "reason": "FORM_PHONE_REGION_UNKNOWN",
+      "severity": "error",
+      "title": "Unknown phone region",
+      "cause": "A phone validator names a region the phone table of pxl.phone.v1 does not know (STA-020, ADR-0047).",
+      "fix": "Use an ISO 3166-1 alpha-2 region with a calling code, or omit the region to use the device locale's."
+    },
+    {
+      "code": "PLX-1164",
+      "reason": "FORM_ASYNC_VALIDATOR_INVALID",
+      "severity": "error",
+      "title": "Invalid asynchronous validator",
+      "cause": "An asynchronous validator's graph declares inputs, or an output other than `bool` or `string?`, or the validator belongs to a component shared across plugins, which has no graphs to run (STA-020, ADR-0047).",
+      "fix": "Use a graph of the page or plugin that takes the field's value as its event and stops with true or null when the value is valid, false or a message otherwise."
+    },
+    {
+      "code": "PLX-1165",
+      "reason": "FORM_FIELD_INITIAL_MISSING",
+      "severity": "error",
+      "title": "Form field without an initial value",
+      "cause": "A form field has no initial value and its type is not nullable, so the form could not start or be reset (STA-020).",
+      "fix": "Give the field an initial value, such as \"\" for text, or make its type nullable."
+    },
+    {
+      "code": "PLX-1166",
+      "reason": "FORM_NAME_CONFLICT",
+      "severity": "error",
+      "title": "Form or field named twice",
+      "cause": "A form has the name of another form or of a state entry of the same page or component, whose state it would replace, or two fields of a form share a name (STA-020).",
+      "fix": "Rename the form or the field."
+    },
+    {
+      "code": "PLX-1167",
+      "reason": "FORM_WRITE_INVALID",
+      "severity": "error",
+      "title": "Form state written that cannot be",
+      "cause": "A state action writes form state other than a field's value (`\u003cform\u003e.values.\u003cfield\u003e`, with setState) or touched flag (`\u003cform\u003e.touched.\u003cfield\u003e`, with setState): errors, dirty flags and the status follow from the validators, and the whole form changes only through resetForm (STA-020).",
+      "fix": "Write the field's value or touched flag with setState, or use validateForm, submitForm or resetForm."
+    },
+    {
       "code": "PLX-1170",
       "reason": "DATA_SOURCE_CONFIG_INVALID",
       "severity": "error",
@@ -1262,6 +1326,30 @@
       "title": "Host event refused",
       "cause": "Plux.sendEvent named an event the app does not declare for the host to send (direction toPlux or both), or a payload without the event's fields and types; nothing runs (HST-013).",
       "fix": "Declare the event in the app's hostEvents with the direction toPlux or both; plux codegen generates typed senders that make this a compile error."
+    },
+    {
+      "code": "PLX-5350",
+      "reason": "FORM_INVALID",
+      "severity": "error",
+      "title": "Form invalid",
+      "cause": "submitForm validated a form and at least one field is invalid; the step fails with a validation error naming the fields, every field is marked touched, and the field errors are in the form's state (STA-020).",
+      "fix": "Show the form's errors, and handle the step's error with onError where the run should go on."
+    },
+    {
+      "code": "PLX-5351",
+      "reason": "FORM_NOT_IN_SCOPE",
+      "severity": "error",
+      "title": "Form not in scope",
+      "cause": "A form action named a form that neither the component nor the page where the run started declares, for example from a lifecycle run that has no form state (STA-020).",
+      "fix": "Run the form action from a handler of the page or component that declares the form."
+    },
+    {
+      "code": "PLX-5352",
+      "reason": "FORM_ASYNC_VALIDATOR_FAILED",
+      "severity": "warning",
+      "title": "Asynchronous validator failed",
+      "cause": "An asynchronous validator's graph failed, for example because the server could not be reached; the field is shown as not checked and the form is invalid until a check succeeds (STA-020).",
+      "fix": "Handle the graph's errors with onError and return a message, or let the user retry by editing the field."
     },
     {
       "code": "PLX-6030",

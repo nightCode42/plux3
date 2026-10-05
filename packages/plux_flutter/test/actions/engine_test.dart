@@ -495,13 +495,16 @@ void main() {
         'patchState',
         'pop',
         'refreshData',
+        'resetForm',
         'resetState',
         'setState',
         'stop',
+        'submitForm',
         'switch',
         'switchTab',
         'sync',
         'trackEvent',
+        'validateForm',
       ],
     );
   });

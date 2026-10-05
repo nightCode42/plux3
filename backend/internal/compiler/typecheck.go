@@ -233,10 +233,11 @@ func (t *typer) pageScope(pg *page, base *scope) *scope {
 		return pg.scope
 	}
 	fields, ids := t.stateFields(pg.plugin, pg.doc.State, pg.file)
+	formFields, formTypes := t.formTypes(pg.plugin, pg.doc.Forms, pg.file)
 	s := base.with("page", "PluxPageState").with("params", "PluxPageParams").withTypes(map[string]pxl.TypeSpec{
-		"PluxPageState":  objectType(fields),
+		"PluxPageState":  objectType(append(fields, formFields...)),
 		"PluxPageParams": objectType(t.params(pg.plugin, pg.doc.Params, pg.file, "params")),
-	})
+	}).withTypes(formTypes)
 	s.ids = cloneIDs(base.ids)
 	s.ids["page"] = ids
 	sources := append(append([]sourceField(nil), base.sources...), t.sources(pg.plugin, pg.doc.DataSources, pg.file)...)
@@ -287,6 +288,7 @@ func (t *typer) page(pg *page, base *scope) {
 		t.useGraph(pg.graphs[name], "", pg.file, plxerr.Pointer("lifecycle", name))
 	}
 	t.triggers(pg.triggers, s, "app", "plugin", "page")
+	t.formHandlers(pg.plugin, pg, pg.doc.Forms, pg.file, from, s)
 	for _, g := range pg.plugin.inline {
 		if g.page == pg {
 			t.graph(g, s)
@@ -303,13 +305,15 @@ func (t *typer) component(c *component, base *scope) {
 			props = append(props, [2]string{p.Name, te.String()})
 		}
 	}
+	formFields, formTypes := t.formTypes(c.plugin, c.doc.Forms, c.file)
 	s := base.with("component", "PluxComponentState").with("props", "PluxComponentProps").withTypes(map[string]pxl.TypeSpec{
-		"PluxComponentState": objectType(stateFields), "PluxComponentProps": objectType(props),
-	})
+		"PluxComponentState": objectType(append(stateFields, formFields...)), "PluxComponentProps": objectType(props),
+	}).withTypes(formTypes)
 	s.ids = cloneIDs(base.ids)
 	s.ids["component"] = ids
 	s.sources = base.sources
 	t.computed(c.plugin, c.doc.State, c.file, s)
+	t.formHandlers(c.plugin, nil, c.doc.Forms, c.file, c.doc.ID, s)
 	t.node(c.root, s)
 	graphs := t.u.appGraphs
 	if c.plugin != nil {
@@ -673,6 +677,9 @@ func (t *typer) stepOutput(g *graph, st schema.Step) string {
 	}
 	if st.Action == "apiCall" {
 		return t.apiCallOutput(g, st)
+	}
+	if st.Action == "submitForm" {
+		return t.u.formOutput(g, st)
 	}
 	a, ok := registry.LookupAction(st.Action)
 	if !ok || a.Output == "" {

@@ -1,0 +1,685 @@
+{
+  "forms": [
+    {
+      "fields": [
+        {
+          "initial": "",
+          "name": "name",
+          "type": "string",
+          "validators": [
+            {
+              "kind": "required",
+              "message": "Enter your name"
+            },
+            {
+              "kind": "length",
+              "max": 20,
+              "min": 2
+            },
+            {
+              "kind": "regex",
+              "message": "Letters only",
+              "pattern": "^[A-Za-z ]+$"
+            },
+            {
+              "$graph": "01f0c450-6c00-7000-8000-000000000705",
+              "debounceMs": 300,
+              "kind": "async"
+            }
+          ]
+        },
+        {
+          "initial": "",
+          "name": "email",
+          "type": "string",
+          "validators": [
+            {
+              "kind": "required"
+            },
+            {
+              "kind": "email"
+            }
+          ]
+        },
+        {
+          "initial": "",
+          "name": "phone",
+          "type": "string",
+          "validators": [
+            {
+              "kind": "phone"
+            }
+          ]
+        },
+        {
+          "initial": "",
+          "name": "iban",
+          "type": "string",
+          "validators": [
+            {
+              "kind": "iban"
+            }
+          ]
+        },
+        {
+          "name": "age",
+          "type": "int?",
+          "validators": [
+            {
+              "kind": "range",
+              "max": 130,
+              "min": 18
+            }
+          ]
+        },
+        {
+          "initial": "",
+          "name": "amount",
+          "type": "string",
+          "validators": [
+            {
+              "kind": "decimalPrecision",
+              "maxIntegerDigits": 6,
+              "maxScale": 2
+            }
+          ]
+        },
+        {
+          "name": "start",
+          "type": "date?",
+          "validators": [
+            {
+              "kind": "dateRange",
+              "max": "2026-12-31",
+              "min": "2026-01-01"
+            }
+          ]
+        },
+        {
+          "initial": "",
+          "name": "confirm",
+          "type": "string",
+          "validators": [
+            {
+              "kind": "custom",
+              "message": "The addresses differ",
+              "rule": {
+                "$expr": "value == form.email"
+              }
+            }
+          ]
+        }
+      ],
+      "id": "01f0c450-6c00-7000-8000-000000000710",
+      "name": "signup"
+    }
+  ],
+  "id": "01f0c450-6c00-7000-8000-000000000704",
+  "key": "home",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01f0c450-6c00-7000-8000-000000000741",
+    "slots": {
+      "body": {
+        "children": [
+          {
+            "events": {
+              "onChanged": {
+                "steps": [
+                  {
+                    "action": "setState",
+                    "id": "write",
+                    "input": {
+                      "path": "page.signup.values.name",
+                      "value": {
+                        "$expr": "event"
+                      }
+                    }
+                  }
+                ]
+              },
+              "onEditingComplete": {
+                "steps": [
+                  {
+                    "action": "setState",
+                    "id": "touch",
+                    "input": {
+                      "path": "page.signup.touched.name",
+                      "value": true
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000720",
+            "props": {
+              "value": {
+                "$expr": "page.signup.values.name"
+              }
+            },
+            "semantics": {
+              "label": "name"
+            },
+            "testId": "name",
+            "type": "TextFormField"
+          },
+          {
+            "events": {
+              "onChanged": {
+                "steps": [
+                  {
+                    "action": "setState",
+                    "id": "write",
+                    "input": {
+                      "path": "page.signup.values.email",
+                      "value": {
+                        "$expr": "event"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000721",
+            "props": {
+              "value": {
+                "$expr": "page.signup.values.email"
+              }
+            },
+            "semantics": {
+              "label": "email"
+            },
+            "testId": "email",
+            "type": "TextFormField"
+          },
+          {
+            "events": {
+              "onChanged": {
+                "steps": [
+                  {
+                    "action": "setState",
+                    "id": "write",
+                    "input": {
+                      "path": "page.signup.values.phone",
+                      "value": {
+                        "$expr": "event"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000722",
+            "props": {
+              "value": {
+                "$expr": "page.signup.values.phone"
+              }
+            },
+            "semantics": {
+              "label": "phone"
+            },
+            "testId": "phone",
+            "type": "TextFormField"
+          },
+          {
+            "events": {
+              "onChanged": {
+                "steps": [
+                  {
+                    "action": "setState",
+                    "id": "write",
+                    "input": {
+                      "path": "page.signup.values.iban",
+                      "value": {
+                        "$expr": "event"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000723",
+            "props": {
+              "value": {
+                "$expr": "page.signup.values.iban"
+              }
+            },
+            "semantics": {
+              "label": "iban"
+            },
+            "testId": "iban",
+            "type": "TextFormField"
+          },
+          {
+            "events": {
+              "onChanged": {
+                "steps": [
+                  {
+                    "action": "setState",
+                    "id": "write",
+                    "input": {
+                      "path": "page.signup.values.amount",
+                      "value": {
+                        "$expr": "event"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000724",
+            "props": {
+              "value": {
+                "$expr": "page.signup.values.amount"
+              }
+            },
+            "semantics": {
+              "label": "amount"
+            },
+            "testId": "amount",
+            "type": "TextFormField"
+          },
+          {
+            "events": {
+              "onChanged": {
+                "steps": [
+                  {
+                    "action": "setState",
+                    "id": "write",
+                    "input": {
+                      "path": "page.signup.values.confirm",
+                      "value": {
+                        "$expr": "event"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000725",
+            "props": {
+              "value": {
+                "$expr": "page.signup.values.confirm"
+              }
+            },
+            "semantics": {
+              "label": "confirm"
+            },
+            "testId": "confirm",
+            "type": "TextFormField"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "setState",
+                    "id": "set",
+                    "input": {
+                      "path": "page.signup.values.age",
+                      "value": 17
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000726",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-000000000727",
+                "props": {
+                  "data": "age 17"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "setState",
+                    "id": "set",
+                    "input": {
+                      "path": "page.signup.values.age",
+                      "value": 30
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000728",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-000000000729",
+                "props": {
+                  "data": "age 30"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "setState",
+                    "id": "set",
+                    "input": {
+                      "path": "page.signup.values.start",
+                      "value": "2025-06-01"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-00000000072a",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-00000000072b",
+                "props": {
+                  "data": "start 2025"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "setState",
+                    "id": "set",
+                    "input": {
+                      "path": "page.signup.values.start",
+                      "value": "2026-06-01"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-00000000072c",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-00000000072d",
+                "props": {
+                  "data": "start 2026"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "id": "01f0c450-6c00-7000-8000-00000000072e",
+            "props": {
+              "data": {
+                "$expr": "\"name \" + (page.signup.errors.name ?? \"-\")"
+              }
+            },
+            "testId": "e-name",
+            "type": "Text"
+          },
+          {
+            "id": "01f0c450-6c00-7000-8000-00000000072f",
+            "props": {
+              "data": {
+                "$expr": "\"email \" + (page.signup.errors.email ?? \"-\")"
+              }
+            },
+            "testId": "e-email",
+            "type": "Text"
+          },
+          {
+            "id": "01f0c450-6c00-7000-8000-000000000730",
+            "props": {
+              "data": {
+                "$expr": "\"phone \" + (page.signup.errors.phone ?? \"-\")"
+              }
+            },
+            "testId": "e-phone",
+            "type": "Text"
+          },
+          {
+            "id": "01f0c450-6c00-7000-8000-000000000731",
+            "props": {
+              "data": {
+                "$expr": "\"iban \" + (page.signup.errors.iban ?? \"-\")"
+              }
+            },
+            "testId": "e-iban",
+            "type": "Text"
+          },
+          {
+            "id": "01f0c450-6c00-7000-8000-000000000732",
+            "props": {
+              "data": {
+                "$expr": "\"age \" + (page.signup.errors.age ?? \"-\")"
+              }
+            },
+            "testId": "e-age",
+            "type": "Text"
+          },
+          {
+            "id": "01f0c450-6c00-7000-8000-000000000733",
+            "props": {
+              "data": {
+                "$expr": "\"amount \" + (page.signup.errors.amount ?? \"-\")"
+              }
+            },
+            "testId": "e-amount",
+            "type": "Text"
+          },
+          {
+            "id": "01f0c450-6c00-7000-8000-000000000734",
+            "props": {
+              "data": {
+                "$expr": "\"start \" + (page.signup.errors.start ?? \"-\")"
+              }
+            },
+            "testId": "e-start",
+            "type": "Text"
+          },
+          {
+            "id": "01f0c450-6c00-7000-8000-000000000735",
+            "props": {
+              "data": {
+                "$expr": "\"confirm \" + (page.signup.errors.confirm ?? \"-\")"
+              }
+            },
+            "testId": "e-confirm",
+            "type": "Text"
+          },
+          {
+            "id": "01f0c450-6c00-7000-8000-000000000736",
+            "props": {
+              "data": {
+                "$expr": "\"value \" + page.signup.values.name"
+              }
+            },
+            "testId": "v-name",
+            "type": "Text"
+          },
+          {
+            "id": "01f0c450-6c00-7000-8000-000000000737",
+            "props": {
+              "data": {
+                "$expr": "\"status \" + page.signup.status + \" valid \" + string(page.signup.valid) + \" validating \" + string(page.signup.validating)"
+              }
+            },
+            "testId": "status",
+            "type": "Text"
+          },
+          {
+            "id": "01f0c450-6c00-7000-8000-000000000738",
+            "props": {
+              "data": {
+                "$expr": "\"dirty \" + string(page.signup.dirty.name) + \" touched \" + string(page.signup.touched.name)"
+              }
+            },
+            "testId": "flags",
+            "type": "Text"
+          },
+          {
+            "id": "01f0c450-6c00-7000-8000-000000000739",
+            "props": {
+              "data": {
+                "$expr": "\"message \" + page.message"
+              }
+            },
+            "testId": "message",
+            "type": "Text"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "validateForm",
+                    "branches": {
+                      "invalid": "no",
+                      "valid": "yes"
+                    },
+                    "id": "check",
+                    "input": {
+                      "form": "signup"
+                    }
+                  },
+                  {
+                    "action": "setState",
+                    "id": "yes",
+                    "input": {
+                      "path": "page.message",
+                      "value": "valid"
+                    }
+                  },
+                  {
+                    "action": "setState",
+                    "id": "no",
+                    "input": {
+                      "path": "page.message",
+                      "value": "invalid"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-00000000073a",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-00000000073b",
+                "props": {
+                  "data": "validate"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "submitForm",
+                    "id": "send",
+                    "input": {
+                      "form": "signup"
+                    },
+                    "onError": "refused",
+                    "onSuccess": "sent"
+                  },
+                  {
+                    "action": "setState",
+                    "id": "sent",
+                    "input": {
+                      "path": "page.message",
+                      "value": {
+                        "$expr": "\"sent \" + steps.send.output.name"
+                      }
+                    }
+                  },
+                  {
+                    "action": "setState",
+                    "id": "refused",
+                    "input": {
+                      "path": "page.message",
+                      "value": {
+                        "$expr": "\"refused \" + steps.send.error.message"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-00000000073c",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-00000000073d",
+                "props": {
+                  "data": "submit"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "resetForm",
+                    "id": "reset",
+                    "input": {
+                      "form": "signup"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-00000000073e",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-00000000073f",
+                "props": {
+                  "data": "reset"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "component": {
+              "id": "01f0c450-6c00-7000-8000-000000000706",
+              "version": 1
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000740"
+          }
+        ],
+        "id": "01f0c450-6c00-7000-8000-000000000742",
+        "type": "Column"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "home",
+  "schemaVersion": "1.0.0",
+  "state": [
+    {
+      "default": "",
+      "id": "01f0c450-6c00-7000-8000-000000000711",
+      "name": "message",
+      "type": "string"
+    }
+  ],
+  "title": "Sign up"
+}

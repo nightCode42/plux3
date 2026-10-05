@@ -5,7 +5,7 @@
 /// `pxl.v1`, `pxl.regex.v1` and `pxl.phone.v1` (0.3.0), `navigation.guards.v1`
 /// (route guards, ADR-0040), `data.v1` (the data layer, ADR-0048), the state
 /// engine's `state.write.v1`, `state.computed.v1` and `state.persistence.v1`,
-/// and
+/// forms' `forms.v1` (ADR-0047), and
 /// registry revisions — `widget.<Type>.v<n>`,
 /// `type.<Name>.v<n>`, `enum.<Name>.v<n>` — up to the revision this
 /// runtime's generated registry knows, for widgets it can build.
@@ -62,9 +62,14 @@ final class RuntimeFeatures {
     'state.persistence.v1',
   };
 
+  /// Forms (STA-020, ADR-0047): a bundle declaring a form or running a
+  /// form action requires them.
+  static const Set<String> forms = {'forms.v1'};
+
   /// Whether [feature] is supported.
   bool supports(String feature) {
-    if (pxl.contains(feature) ||
+    if (forms.contains(feature) ||
+        pxl.contains(feature) ||
         navigation.contains(feature) ||
         actions.contains(feature) ||
         data.contains(feature) ||

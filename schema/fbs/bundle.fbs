@@ -442,6 +442,61 @@ table Page {
   result: uint;
   // The page's triggers (ACT-002) and error handler (ACT-020).
   triggers: [Trigger];
+  // The page's forms (STA-020, ADR-0047).
+  forms: [Form];
+}
+
+// ── Forms ─────────────────────────────────────────────────────────────────
+
+// A built-in validator of a form field (STA-020, ADR-0047).
+enum ValidatorKind : ubyte {
+  Required = 0,
+  Length,
+  Range,
+  Regex,
+  Email,
+  Phone,
+  Iban,
+  DateRange,
+  DecimalPrecision,
+  Custom,
+  Async
+}
+
+// A validator: `message` is a string index, 0 for the built-in message;
+// `min` and `max` are literals of the bound's type (an int for Length, a
+// decimal for Range, the field's type for DateRange); `pattern` and
+// `region` are string indices; `max_scale` and `max_integer_digits` are
+// -1 when absent; `rule` is a program over `value` and `form` returning a
+// bool; `graph` is the action graph an Async validator runs, with the
+// field's value as its event, after `debounce_ms`.
+table FormValidator {
+  kind: ValidatorKind;
+  message: uint;
+  min: Value;
+  max: Value;
+  pattern: uint;
+  region: uint;
+  max_scale: int = -1;
+  max_integer_digits: int = -1;
+  rule: ulong;
+  graph: Uuid;
+  debounce_ms: uint;
+}
+
+// A form field; `type` is a type expression, `initial` its initial value.
+table FormField {
+  name: uint;
+  type: uint;
+  initial: Value;
+  validators: [FormValidator];
+}
+
+// A form of a page or component; its state is the scope entry `name`.
+table Form {
+  id: Uuid;
+  name: uint;
+  fields: [FormField];
 }
 
 // ── Section component ─────────────────────────────────────────────────────
@@ -476,6 +531,8 @@ table Component {
   // nodes[0] is the root.
   nodes: [Node];
   strings: [string];
+  // The component's forms (STA-020, ADR-0047).
+  forms: [Form];
 }
 
 // ── Section actions ───────────────────────────────────────────────────────

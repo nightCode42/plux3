@@ -283,6 +283,7 @@ func (u *unit) pageSection(o *out, pg *page) []byte {
 	sources := e.sources(pg.sources)
 	lifecycle := handlers(b, pg.lifecycle)
 	triggers := triggerTables(b, pg.triggers)
+	forms := e.forms(pg.forms)
 	var guards [][16]byte
 	for _, g := range pg.guards {
 		guards = append(guards, g.id)
@@ -318,6 +319,7 @@ func (u *unit) pageSection(o *out, pg *page) []byte {
 	if opts.result != 0 {
 		fbs.PageAddResult(b, opts.result)
 	}
+	addOptional(b, forms, fbs.PageAddForms)
 	data := finish(b, fbs.PageEnd(b), bundle.SectionPage)
 	if max := u.opts.Limits.Get(limits.BundlePageSectionSize); int64(len(data)) > max {
 		u.report(plxerr.LimitExceeded, pg.file, "", "the page section has %d bytes, above bundle.pageSectionSize = %d", len(data), max)
@@ -352,6 +354,7 @@ func (u *unit) componentSection(o *out, c *component) []byte {
 		eventOffs[i] = fbs.ComponentEventEnd(b)
 	}
 	events := offsetVector(b, eventOffs)
+	forms := e.forms(c.forms)
 	key := e.strs.of(c.doc.Key)
 	strs := e.strs.vector(b)
 	fbs.ComponentStart(b)
@@ -365,6 +368,7 @@ func (u *unit) componentSection(o *out, c *component) []byte {
 	fbs.ComponentAddState(b, state)
 	fbs.ComponentAddNodes(b, nodes)
 	fbs.ComponentAddStrings(b, strs)
+	addOptional(b, forms, fbs.ComponentAddForms)
 	return finish(b, fbs.ComponentEnd(b), bundle.SectionComponent)
 }
 

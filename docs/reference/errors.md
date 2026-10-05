@@ -424,6 +424,70 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Remove the migration, or give the entry a session, persisted or secure persistence and its previous type in `from`.
 
+### PLX-1160
+
+`FORM_VALIDATOR_NOT_APPLICABLE` · error · Validator that does not apply to its field
+
+**Cause.** A form field declares a validator its type cannot have: length on a value that is neither text nor a list, range or decimal precision on a value that is not a number, date range on a value that is not a date or a date-time, or regex, email, phone or IBAN on a value that is not text (STA-020, ADR-0047).
+
+**Fix.** Change the field's type or remove the validator; the forms reference lists the types each validator accepts.
+
+### PLX-1161
+
+`FORM_VALIDATOR_OPTIONS` · error · Invalid validator options
+
+**Cause.** A validator lacks an option its kind needs, carries one its kind does not take, or has bounds that cannot hold: a regex without a pattern, a length, range or date range without min or max, a min above its max, a decimal precision without maxScale or maxIntegerDigits, a custom validator without a rule, or an asynchronous one without a graph (STA-020).
+
+**Fix.** Give the validator exactly the options of its kind, as the forms reference lists them.
+
+### PLX-1162
+
+`FORM_PATTERN_INVALID` · error · Invalid validator pattern
+
+**Cause.** A regex validator's pattern is not in the pxl.regex.v1 subset of RE2 or exceeds pxl.regexPatternLength, pxl.regexProgramSize or pxl.regexRepeat; patterns are checked at publish, so the runtime never meets an invalid one (PXL-003, ADR-0047).
+
+**Fix.** Correct the pattern at the reported position; the PXL reference lists the supported syntax.
+
+### PLX-1163
+
+`FORM_PHONE_REGION_UNKNOWN` · error · Unknown phone region
+
+**Cause.** A phone validator names a region the phone table of pxl.phone.v1 does not know (STA-020, ADR-0047).
+
+**Fix.** Use an ISO 3166-1 alpha-2 region with a calling code, or omit the region to use the device locale's.
+
+### PLX-1164
+
+`FORM_ASYNC_VALIDATOR_INVALID` · error · Invalid asynchronous validator
+
+**Cause.** An asynchronous validator's graph declares inputs, or an output other than `bool` or `string?`, or the validator belongs to a component shared across plugins, which has no graphs to run (STA-020, ADR-0047).
+
+**Fix.** Use a graph of the page or plugin that takes the field's value as its event and stops with true or null when the value is valid, false or a message otherwise.
+
+### PLX-1165
+
+`FORM_FIELD_INITIAL_MISSING` · error · Form field without an initial value
+
+**Cause.** A form field has no initial value and its type is not nullable, so the form could not start or be reset (STA-020).
+
+**Fix.** Give the field an initial value, such as "" for text, or make its type nullable.
+
+### PLX-1166
+
+`FORM_NAME_CONFLICT` · error · Form or field named twice
+
+**Cause.** A form has the name of another form or of a state entry of the same page or component, whose state it would replace, or two fields of a form share a name (STA-020).
+
+**Fix.** Rename the form or the field.
+
+### PLX-1167
+
+`FORM_WRITE_INVALID` · error · Form state written that cannot be
+
+**Cause.** A state action writes form state other than a field's value (`<form>.values.<field>`, with setState) or touched flag (`<form>.touched.<field>`, with setState): errors, dirty flags and the status follow from the validators, and the whole form changes only through resetForm (STA-020).
+
+**Fix.** Write the field's value or touched flag with setState, or use validateForm, submitForm or resetForm.
+
 ### PLX-1170
 
 `DATA_SOURCE_CONFIG_INVALID` · error · Invalid data source configuration
@@ -1231,6 +1295,30 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 **Cause.** Plux.sendEvent named an event the app does not declare for the host to send (direction toPlux or both), or a payload without the event's fields and types; nothing runs (HST-013).
 
 **Fix.** Declare the event in the app's hostEvents with the direction toPlux or both; plux codegen generates typed senders that make this a compile error.
+
+### PLX-5350
+
+`FORM_INVALID` · error · Form invalid
+
+**Cause.** submitForm validated a form and at least one field is invalid; the step fails with a validation error naming the fields, every field is marked touched, and the field errors are in the form's state (STA-020).
+
+**Fix.** Show the form's errors, and handle the step's error with onError where the run should go on.
+
+### PLX-5351
+
+`FORM_NOT_IN_SCOPE` · error · Form not in scope
+
+**Cause.** A form action named a form that neither the component nor the page where the run started declares, for example from a lifecycle run that has no form state (STA-020).
+
+**Fix.** Run the form action from a handler of the page or component that declares the form.
+
+### PLX-5352
+
+`FORM_ASYNC_VALIDATOR_FAILED` · warning · Asynchronous validator failed
+
+**Cause.** An asynchronous validator's graph failed, for example because the server could not be reached; the field is shown as not checked and the form is invalid until a check succeeds (STA-020).
+
+**Fix.** Handle the graph's errors with onError and return a message, or let the user retry by editing the field.
 
 ## Security (PLX-6000–6999)
 

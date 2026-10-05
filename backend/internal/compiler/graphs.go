@@ -319,15 +319,19 @@ func statePathType(g *graph, path string) *texpr {
 	if !isRoot {
 		return nil
 	}
-	spec, ok := g.scope.synth[typ]
-	if !ok {
-		return nil
+	// A form's state is nested: <form>.values.<field> (STA-020).
+	for _, part := range strings.Split(name, ".") {
+		spec, ok := g.scope.synth[typ]
+		if !ok {
+			return nil
+		}
+		f, ok := spec.Fields[part]
+		if !ok {
+			return nil
+		}
+		typ = f
 	}
-	f, ok := spec.Fields[name]
-	if !ok {
-		return nil
-	}
-	te, _ := parseTypeExpr(f)
+	te, _ := parseTypeExpr(typ)
 	return te
 }
 
@@ -344,6 +348,9 @@ func (u *unit) checkRef(g *graph, in registry.Input, raw json.RawMessage, c vctx
 	resolved, kind, to := true, EdgeKind(""), ""
 	switch in.Ref {
 	case "state":
+		if v, isForm := u.formStatePath(g, name, c); isForm {
+			return v
+		}
 		root, entry, _ := strings.Cut(name, ".")
 		id, ok := g.scope.ids[root][entry]
 		resolved, kind, to = ok && refRoots[root], EdgeUsesState, id
@@ -380,6 +387,8 @@ func (u *unit) checkRef(g *graph, in registry.Input, raw json.RawMessage, c vctx
 		return u.componentEventRef(g, name, c)
 	case "tab":
 		resolved = u.hasTab(name)
+	case "form":
+		resolved = u.formRef(g, name)
 	}
 	if !resolved {
 		u.report(plxerr.UnresolvedReference, c.file, c.ptr, "no %s is named %q", in.Ref, name)

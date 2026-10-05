@@ -161,6 +161,7 @@ A reusable component with typed props, slots, events and internal state (SCH-030
 | `state` | list of [StateEntry](#stateentry) |  |  |
 | `exported` | boolean |  | Embeddable by the host with `PluxView` (NAV-004). |
 | `root` | [Node](#node) | yes | A node of a page or component tree: a widget or a component instance (SCH-023). |
+| `forms` | list of [Form](#form) |  | The forms of the component (STA-020). |
 
 ### ComponentEvent
 
@@ -316,6 +317,53 @@ A typed feature flag, available in PXL as `flags.<name>` (ABT-006).
 Type of a feature flag (ABT-006).
 
 One of `bool`, `int`, `double`, `string`.
+
+### Form
+
+A form (STA-020, ADR-0047): typed fields with their initial values and validators. Its state lives in the declaring page's or component's scope under the form's name: `values`, `errors`, `dirty`, `touched`, `status`, `valid` and `validating`.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `id` | string | yes | Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). |
+| `name` | string | yes | Identifier used in PXL and generated code: lowerCamelCase. |
+| `fields` | list of [FormField](#formfield) | yes |  |
+| `description` | string |  | Human-readable description. |
+
+### FormField
+
+A field of a form: its type, initial value and validators, run in order (STA-020).
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `name` | string | yes | Identifier used in PXL and generated code: lowerCamelCase. |
+| `type` | string | yes | Type expression of SCH-010, e.g. `string`, `decimal?`, `list<Transaction>`, `map<string,int>`. |
+| `initial` | JSON value |  | A JSON value interpreted against a declared type (defaults, mocks, environment values). |
+| `validators` | list of [FormValidator](#formvalidator) |  |  |
+| `description` | string |  | Human-readable description. |
+
+### FormValidator
+
+A validator of a form field. Each kind takes its own options: `min` and `max` (length, range, dateRange), `pattern` (regex), `region` (phone), `maxScale` and `maxIntegerDigits` (decimalPrecision), `rule` (custom), `$graph` and `debounceMs` (async); the compiler checks them against the kind and the field's type (PLX-1160-1169).
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `kind` | [FormValidatorKind](#formvalidatorkind) | yes | A built-in validator of a form field (STA-020, ADR-0047). |
+| `message` | string |  | The message shown when the value is invalid; the runtime's built-in message otherwise. |
+| `min` | JSON value |  | A JSON value interpreted against a declared type (defaults, mocks, environment values). |
+| `max` | JSON value |  | A JSON value interpreted against a declared type (defaults, mocks, environment values). |
+| `pattern` | string |  | A pxl.regex.v1 pattern, checked at publish (PXL-003). |
+| `region` | string |  | The ISO 3166-1 region of numbers written without a country calling code; the device locale's region when absent. |
+| `maxScale` | integer |  | The most digits after the decimal point. |
+| `maxIntegerDigits` | integer |  | The most digits before the decimal point. |
+| `rule` | [Expr](#expr) |  | PXL binding (SCH-011). |
+| `$graph` | string |  | Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). |
+| `debounceMs` | integer |  | How long the field stays unchanged before the asynchronous check runs. |
+
+### FormValidatorKind
+
+A built-in validator of a form field (STA-020, ADR-0047).
+
+One of `required`, `length`, `range`, `regex`, `email`, `phone`, `iban`, `dateRange`, `decimalPrecision`, `custom`, `async`.
 
 ### FunctionGrant
 
@@ -497,6 +545,7 @@ A page: route, parameters, state, data, lifecycle and node tree (SCH-022). File:
 | `routeOptions` | [RouteOptions](#routeoptions) |  | Route options (SCH-022, NAV-010). |
 | `security` | [PageSecurity](#pagesecurity) |  | Security flags (SCH-022). |
 | `root` | [Node](#node) | yes | A node of a page or component tree: a widget or a component instance (SCH-023). |
+| `forms` | list of [Form](#form) |  | The forms of the page (STA-020). |
 
 ### PageKind
 

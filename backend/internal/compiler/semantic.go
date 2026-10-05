@@ -85,6 +85,7 @@ func (u *unit) checkPage(pg *page) {
 	}
 	pg.state = u.checkState(pl, doc.State, file, pg.scope)
 	pg.sources = u.checkSources(pl, doc.DataSources, file, pg.scope)
+	pg.forms = u.checkForms(pl, doc.Forms, doc.State, file)
 	if len(doc.Title) > 0 {
 		pg.title = u.checkRaw(vctx{file: file, ptr: "/title", scope: pg.scope, pl: pl, code: plxerr.PropTypeMismatch, from: doc.ID}, doc.Title, &texpr{name: "string"})
 	}
@@ -130,6 +131,7 @@ func (u *unit) checkComponent(c *component) {
 		c.props = append(c.props, out)
 	}
 	c.state = u.checkState(c.plugin, c.doc.State, c.file, c.root.scope)
+	c.forms = u.checkForms(c.plugin, c.doc.Forms, c.doc.State, c.file)
 	for _, n := range c.nodes {
 		u.checkNode(n)
 	}

@@ -73,6 +73,17 @@ const (
 	StateMigrationRequired     Code = 1143
 	StateMigrationMismatch     Code = 1144
 	StateMigrationInvalid      Code = 1145
+
+	// Schema and validation: forms (PLX-1160–1169, P5 R3).
+
+	FormValidatorNotApplicable Code = 1160
+	FormValidatorOptions       Code = 1161
+	FormPatternInvalid         Code = 1162
+	FormPhoneRegionUnknown     Code = 1163
+	FormAsyncValidatorInvalid  Code = 1164
+	FormFieldInitialMissing    Code = 1165
+	FormNameConflict           Code = 1166
+	FormWriteInvalid           Code = 1167
 	UnknownRoute               Code = 1201
 	RouteParameterMissing      Code = 1203
 	RouteParameterTypeInvalid  Code = 1204
@@ -190,6 +201,12 @@ const (
 	StateMigrationFailed   Code = 5305
 	StateLimitExceeded     Code = 5306
 	HostEventRefused       Code = 5307
+
+	// Actions: forms (PLX-5350–5399, P5 R3).
+
+	FormInvalid              Code = 5350
+	FormNotInScope           Code = 5351
+	FormAsyncValidatorFailed Code = 5352
 
 	// Security (PLX-6000–6999).
 

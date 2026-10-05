@@ -516,6 +516,70 @@ class _LifecycleEventReader extends fb.Reader<LifecycleEvent> {
       LifecycleEvent.fromValue(const fb.Uint8Reader().read(bc, offset));
 }
 
+enum ValidatorKind {
+  Required(0),
+  Length(1),
+  Range(2),
+  Regex(3),
+  Email(4),
+  Phone(5),
+  Iban(6),
+  DateRange(7),
+  DecimalPrecision(8),
+  Custom(9),
+  Async(10);
+
+  final int value;
+  const ValidatorKind(this.value);
+
+  factory ValidatorKind.fromValue(int value) {
+    switch (value) {
+      case 0:
+        return ValidatorKind.Required;
+      case 1:
+        return ValidatorKind.Length;
+      case 2:
+        return ValidatorKind.Range;
+      case 3:
+        return ValidatorKind.Regex;
+      case 4:
+        return ValidatorKind.Email;
+      case 5:
+        return ValidatorKind.Phone;
+      case 6:
+        return ValidatorKind.Iban;
+      case 7:
+        return ValidatorKind.DateRange;
+      case 8:
+        return ValidatorKind.DecimalPrecision;
+      case 9:
+        return ValidatorKind.Custom;
+      case 10:
+        return ValidatorKind.Async;
+      default:
+        throw StateError('Invalid value $value for bit flag enum');
+    }
+  }
+
+  static ValidatorKind? _createOrNull(int? value) =>
+      value == null ? null : ValidatorKind.fromValue(value);
+
+  static const int minValue = 0;
+  static const int maxValue = 10;
+  static const fb.Reader<ValidatorKind> reader = _ValidatorKindReader();
+}
+
+class _ValidatorKindReader extends fb.Reader<ValidatorKind> {
+  const _ValidatorKindReader();
+
+  @override
+  int get size => 1;
+
+  @override
+  ValidatorKind read(fb.BufferContext bc, int offset) =>
+      ValidatorKind.fromValue(const fb.Uint8Reader().read(bc, offset));
+}
+
 enum ErrorKind {
   Network(0),
   Http(1),
@@ -3975,10 +4039,13 @@ class Page {
   List<Trigger>? get triggers =>
       const fb.ListReader<Trigger>(Trigger.reader)
           .vTableGetNullable(_bc, _bcOffset, 36);
+  List<Form>? get forms =>
+      const fb.ListReader<Form>(Form.reader)
+          .vTableGetNullable(_bc, _bcOffset, 38);
 
   @override
   String toString() {
-    return 'Page{id: ${id}, key: ${key}, route: ${route}, kind: ${kind}, title: ${title}, params: ${params}, state: ${state}, dataSources: ${dataSources}, lifecycle: ${lifecycle}, transition: ${transition}, guards: ${guards}, secure: ${secure}, requiresAssurance: ${requiresAssurance}, nodes: ${nodes}, strings: ${strings}, result: ${result}, triggers: ${triggers}}';
+    return 'Page{id: ${id}, key: ${key}, route: ${route}, kind: ${kind}, title: ${title}, params: ${params}, state: ${state}, dataSources: ${dataSources}, lifecycle: ${lifecycle}, transition: ${transition}, guards: ${guards}, secure: ${secure}, requiresAssurance: ${requiresAssurance}, nodes: ${nodes}, strings: ${strings}, result: ${result}, triggers: ${triggers}, forms: ${forms}}';
   }
 }
 
@@ -3995,7 +4062,7 @@ class PageBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable(17);
+    fbBuilder.startTable(18);
   }
 
   int addId(int offset) {
@@ -4083,6 +4150,11 @@ class PageBuilder {
     return fbBuilder.offset;
   }
 
+  int addFormsOffset(int? offset) {
+    fbBuilder.addOffset(17, offset);
+    return fbBuilder.offset;
+  }
+
   int finish() {
     return fbBuilder.endTable();
   }
@@ -4106,6 +4178,7 @@ class PageObjectBuilder extends fb.ObjectBuilder {
   final List<String>? _strings;
   final int? _result;
   final List<TriggerObjectBuilder>? _triggers;
+  final List<FormObjectBuilder>? _forms;
 
   PageObjectBuilder({
     UuidObjectBuilder? id,
@@ -4125,6 +4198,7 @@ class PageObjectBuilder extends fb.ObjectBuilder {
     List<String>? strings,
     int? result,
     List<TriggerObjectBuilder>? triggers,
+    List<FormObjectBuilder>? forms,
   }) : _id = id,
        _key = key,
        _route = route,
@@ -4141,7 +4215,8 @@ class PageObjectBuilder extends fb.ObjectBuilder {
        _nodes = nodes,
        _strings = strings,
        _result = result,
-       _triggers = triggers;
+       _triggers = triggers,
+       _forms = forms;
 
   /// Finish building, and store into the [fbBuilder].
   @override
@@ -4183,7 +4258,12 @@ class PageObjectBuilder extends fb.ObjectBuilder {
         : fbBuilder.writeList(
             _triggers!.map((b) => b.getOrCreateOffset(fbBuilder)).toList(),
           );
-    fbBuilder.startTable(17);
+    final int? formsOffset = _forms == null
+        ? null
+        : fbBuilder.writeList(
+            _forms!.map((b) => b.getOrCreateOffset(fbBuilder)).toList(),
+          );
+    fbBuilder.startTable(18);
     if (_id != null) {
       fbBuilder.addStruct(0, _id!.finish(fbBuilder));
     }
@@ -4203,6 +4283,394 @@ class PageObjectBuilder extends fb.ObjectBuilder {
     fbBuilder.addOffset(14, stringsOffset);
     fbBuilder.addUint32(15, _result);
     fbBuilder.addOffset(16, triggersOffset);
+    fbBuilder.addOffset(17, formsOffset);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
+
+class FormValidator {
+  FormValidator._(this._bc, this._bcOffset);
+  factory FormValidator(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<FormValidator> reader = _FormValidatorReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  ValidatorKind get kind => ValidatorKind.fromValue(
+    const fb.Uint8Reader().vTableGet(_bc, _bcOffset, 4, 0),
+  );
+  int get message => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 6, 0);
+  Value? get min => Value.reader.vTableGetNullable(_bc, _bcOffset, 8);
+  Value? get max => Value.reader.vTableGetNullable(_bc, _bcOffset, 10);
+  int get pattern => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 12, 0);
+  int get region => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 14, 0);
+  int get maxScale => const fb.Int32Reader().vTableGet(_bc, _bcOffset, 16, -1);
+  int get maxIntegerDigits =>
+      const fb.Int32Reader().vTableGet(_bc, _bcOffset, 18, -1);
+  int get rule => const fb.Uint64Reader().vTableGet(_bc, _bcOffset, 20, 0);
+  Uuid? get graph => Uuid.reader.vTableGetNullable(_bc, _bcOffset, 22);
+  int get debounceMs =>
+      const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 24, 0);
+
+  @override
+  String toString() {
+    return 'FormValidator{kind: ${kind}, message: ${message}, min: ${min}, max: ${max}, pattern: ${pattern}, region: ${region}, maxScale: ${maxScale}, maxIntegerDigits: ${maxIntegerDigits}, rule: ${rule}, graph: ${graph}, debounceMs: ${debounceMs}}';
+  }
+}
+
+class _FormValidatorReader extends fb.TableReader<FormValidator> {
+  const _FormValidatorReader();
+
+  @override
+  FormValidator createObject(fb.BufferContext bc, int offset) =>
+      FormValidator._(bc, offset);
+}
+
+class FormValidatorBuilder {
+  FormValidatorBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(11);
+  }
+
+  int addKind(ValidatorKind? kind) {
+    fbBuilder.addUint8(0, kind?.value);
+    return fbBuilder.offset;
+  }
+
+  int addMessage(int? message) {
+    fbBuilder.addUint32(1, message);
+    return fbBuilder.offset;
+  }
+
+  int addMinOffset(int? offset) {
+    fbBuilder.addOffset(2, offset);
+    return fbBuilder.offset;
+  }
+
+  int addMaxOffset(int? offset) {
+    fbBuilder.addOffset(3, offset);
+    return fbBuilder.offset;
+  }
+
+  int addPattern(int? pattern) {
+    fbBuilder.addUint32(4, pattern);
+    return fbBuilder.offset;
+  }
+
+  int addRegion(int? region) {
+    fbBuilder.addUint32(5, region);
+    return fbBuilder.offset;
+  }
+
+  int addMaxScale(int? maxScale) {
+    fbBuilder.addInt32(6, maxScale);
+    return fbBuilder.offset;
+  }
+
+  int addMaxIntegerDigits(int? maxIntegerDigits) {
+    fbBuilder.addInt32(7, maxIntegerDigits);
+    return fbBuilder.offset;
+  }
+
+  int addRule(int? rule) {
+    fbBuilder.addUint64(8, rule);
+    return fbBuilder.offset;
+  }
+
+  int addGraph(int offset) {
+    fbBuilder.addStruct(9, offset);
+    return fbBuilder.offset;
+  }
+
+  int addDebounceMs(int? debounceMs) {
+    fbBuilder.addUint32(10, debounceMs);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class FormValidatorObjectBuilder extends fb.ObjectBuilder {
+  final ValidatorKind? _kind;
+  final int? _message;
+  final ValueObjectBuilder? _min;
+  final ValueObjectBuilder? _max;
+  final int? _pattern;
+  final int? _region;
+  final int? _maxScale;
+  final int? _maxIntegerDigits;
+  final int? _rule;
+  final UuidObjectBuilder? _graph;
+  final int? _debounceMs;
+
+  FormValidatorObjectBuilder({
+    ValidatorKind? kind,
+    int? message,
+    ValueObjectBuilder? min,
+    ValueObjectBuilder? max,
+    int? pattern,
+    int? region,
+    int? maxScale,
+    int? maxIntegerDigits,
+    int? rule,
+    UuidObjectBuilder? graph,
+    int? debounceMs,
+  }) : _kind = kind,
+       _message = message,
+       _min = min,
+       _max = max,
+       _pattern = pattern,
+       _region = region,
+       _maxScale = maxScale,
+       _maxIntegerDigits = maxIntegerDigits,
+       _rule = rule,
+       _graph = graph,
+       _debounceMs = debounceMs;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? minOffset = _min?.getOrCreateOffset(fbBuilder);
+    final int? maxOffset = _max?.getOrCreateOffset(fbBuilder);
+    fbBuilder.startTable(11);
+    fbBuilder.addUint8(0, _kind?.value);
+    fbBuilder.addUint32(1, _message);
+    fbBuilder.addOffset(2, minOffset);
+    fbBuilder.addOffset(3, maxOffset);
+    fbBuilder.addUint32(4, _pattern);
+    fbBuilder.addUint32(5, _region);
+    fbBuilder.addInt32(6, _maxScale);
+    fbBuilder.addInt32(7, _maxIntegerDigits);
+    fbBuilder.addUint64(8, _rule);
+    if (_graph != null) {
+      fbBuilder.addStruct(9, _graph!.finish(fbBuilder));
+    }
+    fbBuilder.addUint32(10, _debounceMs);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
+
+class FormField {
+  FormField._(this._bc, this._bcOffset);
+  factory FormField(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<FormField> reader = _FormFieldReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  int get name => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 4, 0);
+  int get type => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 6, 0);
+  Value? get initial => Value.reader.vTableGetNullable(_bc, _bcOffset, 8);
+  List<FormValidator>? get validators =>
+      const fb.ListReader<FormValidator>(FormValidator.reader)
+          .vTableGetNullable(_bc, _bcOffset, 10);
+
+  @override
+  String toString() {
+    return 'FormField{name: ${name}, type: ${type}, initial: ${initial}, validators: ${validators}}';
+  }
+}
+
+class _FormFieldReader extends fb.TableReader<FormField> {
+  const _FormFieldReader();
+
+  @override
+  FormField createObject(fb.BufferContext bc, int offset) =>
+      FormField._(bc, offset);
+}
+
+class FormFieldBuilder {
+  FormFieldBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(4);
+  }
+
+  int addName(int? name) {
+    fbBuilder.addUint32(0, name);
+    return fbBuilder.offset;
+  }
+
+  int addType(int? type) {
+    fbBuilder.addUint32(1, type);
+    return fbBuilder.offset;
+  }
+
+  int addInitialOffset(int? offset) {
+    fbBuilder.addOffset(2, offset);
+    return fbBuilder.offset;
+  }
+
+  int addValidatorsOffset(int? offset) {
+    fbBuilder.addOffset(3, offset);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class FormFieldObjectBuilder extends fb.ObjectBuilder {
+  final int? _name;
+  final int? _type;
+  final ValueObjectBuilder? _initial;
+  final List<FormValidatorObjectBuilder>? _validators;
+
+  FormFieldObjectBuilder({
+    int? name,
+    int? type,
+    ValueObjectBuilder? initial,
+    List<FormValidatorObjectBuilder>? validators,
+  }) : _name = name,
+       _type = type,
+       _initial = initial,
+       _validators = validators;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? initialOffset = _initial?.getOrCreateOffset(fbBuilder);
+    final int? validatorsOffset = _validators == null
+        ? null
+        : fbBuilder.writeList(
+            _validators!.map((b) => b.getOrCreateOffset(fbBuilder)).toList(),
+          );
+    fbBuilder.startTable(4);
+    fbBuilder.addUint32(0, _name);
+    fbBuilder.addUint32(1, _type);
+    fbBuilder.addOffset(2, initialOffset);
+    fbBuilder.addOffset(3, validatorsOffset);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
+
+class Form {
+  Form._(this._bc, this._bcOffset);
+  factory Form(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<Form> reader = _FormReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  Uuid? get id => Uuid.reader.vTableGetNullable(_bc, _bcOffset, 4);
+  int get name => const fb.Uint32Reader().vTableGet(_bc, _bcOffset, 6, 0);
+  List<FormField>? get fields =>
+      const fb.ListReader<FormField>(FormField.reader)
+          .vTableGetNullable(_bc, _bcOffset, 8);
+
+  @override
+  String toString() {
+    return 'Form{id: ${id}, name: ${name}, fields: ${fields}}';
+  }
+}
+
+class _FormReader extends fb.TableReader<Form> {
+  const _FormReader();
+
+  @override
+  Form createObject(fb.BufferContext bc, int offset) => Form._(bc, offset);
+}
+
+class FormBuilder {
+  FormBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(3);
+  }
+
+  int addId(int offset) {
+    fbBuilder.addStruct(0, offset);
+    return fbBuilder.offset;
+  }
+
+  int addName(int? name) {
+    fbBuilder.addUint32(1, name);
+    return fbBuilder.offset;
+  }
+
+  int addFieldsOffset(int? offset) {
+    fbBuilder.addOffset(2, offset);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class FormObjectBuilder extends fb.ObjectBuilder {
+  final UuidObjectBuilder? _id;
+  final int? _name;
+  final List<FormFieldObjectBuilder>? _fields;
+
+  FormObjectBuilder({
+    UuidObjectBuilder? id,
+    int? name,
+    List<FormFieldObjectBuilder>? fields,
+  }) : _id = id,
+       _name = name,
+       _fields = fields;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? fieldsOffset = _fields == null
+        ? null
+        : fbBuilder.writeList(
+            _fields!.map((b) => b.getOrCreateOffset(fbBuilder)).toList(),
+          );
+    fbBuilder.startTable(3);
+    if (_id != null) {
+      fbBuilder.addStruct(0, _id!.finish(fbBuilder));
+    }
+    fbBuilder.addUint32(1, _name);
+    fbBuilder.addOffset(2, fieldsOffset);
     return fbBuilder.endTable();
   }
 
@@ -4417,10 +4885,13 @@ class Component {
   List<String>? get strings =>
       const fb.ListReader<String>(fb.StringReader())
           .vTableGetNullable(_bc, _bcOffset, 20);
+  List<Form>? get forms =>
+      const fb.ListReader<Form>(Form.reader)
+          .vTableGetNullable(_bc, _bcOffset, 22);
 
   @override
   String toString() {
-    return 'Component{id: ${id}, key: ${key}, version: ${version}, props: ${props}, slots: ${slots}, events: ${events}, state: ${state}, nodes: ${nodes}, strings: ${strings}}';
+    return 'Component{id: ${id}, key: ${key}, version: ${version}, props: ${props}, slots: ${slots}, events: ${events}, state: ${state}, nodes: ${nodes}, strings: ${strings}, forms: ${forms}}';
   }
 }
 
@@ -4438,7 +4909,7 @@ class ComponentBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable(9);
+    fbBuilder.startTable(10);
   }
 
   int addId(int offset) {
@@ -4486,6 +4957,11 @@ class ComponentBuilder {
     return fbBuilder.offset;
   }
 
+  int addFormsOffset(int? offset) {
+    fbBuilder.addOffset(9, offset);
+    return fbBuilder.offset;
+  }
+
   int finish() {
     return fbBuilder.endTable();
   }
@@ -4501,6 +4977,7 @@ class ComponentObjectBuilder extends fb.ObjectBuilder {
   final List<StateEntryObjectBuilder>? _state;
   final List<NodeObjectBuilder>? _nodes;
   final List<String>? _strings;
+  final List<FormObjectBuilder>? _forms;
 
   ComponentObjectBuilder({
     UuidObjectBuilder? id,
@@ -4512,6 +4989,7 @@ class ComponentObjectBuilder extends fb.ObjectBuilder {
     List<StateEntryObjectBuilder>? state,
     List<NodeObjectBuilder>? nodes,
     List<String>? strings,
+    List<FormObjectBuilder>? forms,
   }) : _id = id,
        _key = key,
        _version = version,
@@ -4520,7 +4998,8 @@ class ComponentObjectBuilder extends fb.ObjectBuilder {
        _events = events,
        _state = state,
        _nodes = nodes,
-       _strings = strings;
+       _strings = strings,
+       _forms = forms;
 
   /// Finish building, and store into the [fbBuilder].
   @override
@@ -4553,7 +5032,12 @@ class ComponentObjectBuilder extends fb.ObjectBuilder {
     final int? stringsOffset = _strings == null
         ? null
         : fbBuilder.writeList(_strings!.map(fbBuilder.writeString).toList());
-    fbBuilder.startTable(9);
+    final int? formsOffset = _forms == null
+        ? null
+        : fbBuilder.writeList(
+            _forms!.map((b) => b.getOrCreateOffset(fbBuilder)).toList(),
+          );
+    fbBuilder.startTable(10);
     if (_id != null) {
       fbBuilder.addStruct(0, _id!.finish(fbBuilder));
     }
@@ -4565,6 +5049,7 @@ class ComponentObjectBuilder extends fb.ObjectBuilder {
     fbBuilder.addOffset(6, stateOffset);
     fbBuilder.addOffset(7, nodesOffset);
     fbBuilder.addOffset(8, stringsOffset);
+    fbBuilder.addOffset(9, formsOffset);
     return fbBuilder.endTable();
   }
 

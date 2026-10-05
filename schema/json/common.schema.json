@@ -1171,6 +1171,147 @@
         "application/riv"
       ],
       "description": "Media type of an asset."
+    },
+    "form": {
+      "type": "object",
+      "description": "A form (STA-020, ADR-0047): typed fields with their initial values and validators. Its state lives in the declaring page's or component's scope under the form's name: `values`, `errors`, `dirty`, `touched`, `status`, `valid` and `validating`.",
+      "required": [
+        "id",
+        "name",
+        "fields"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "$ref": "#/$defs/name"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/formField"
+          },
+          "minItems": 1
+        },
+        "description": {
+          "$ref": "#/$defs/description"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "Form"
+    },
+    "formField": {
+      "type": "object",
+      "description": "A field of a form: its type, initial value and validators, run in order (STA-020).",
+      "required": [
+        "name",
+        "type"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/name"
+        },
+        "type": {
+          "$ref": "#/$defs/typeExpr"
+        },
+        "initial": {
+          "$ref": "#/$defs/value"
+        },
+        "validators": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/formValidator"
+          }
+        },
+        "description": {
+          "$ref": "#/$defs/description"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "FormField"
+    },
+    "formValidatorKind": {
+      "enum": [
+        "required",
+        "length",
+        "range",
+        "regex",
+        "email",
+        "phone",
+        "iban",
+        "dateRange",
+        "decimalPrecision",
+        "custom",
+        "async"
+      ],
+      "description": "A built-in validator of a form field (STA-020, ADR-0047)."
+    },
+    "formValidator": {
+      "type": "object",
+      "description": "A validator of a form field. Each kind takes its own options: `min` and `max` (length, range, dateRange), `pattern` (regex), `region` (phone), `maxScale` and `maxIntegerDigits` (decimalPrecision), `rule` (custom), `$graph` and `debounceMs` (async); the compiler checks them against the kind and the field's type (PLX-1160-1169).",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/formValidatorKind"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "description": "The message shown when the value is invalid; the runtime's built-in message otherwise."
+        },
+        "min": {
+          "$ref": "#/$defs/value"
+        },
+        "max": {
+          "$ref": "#/$defs/value"
+        },
+        "pattern": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A pxl.regex.v1 pattern, checked at publish (PXL-003)."
+        },
+        "region": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$",
+          "description": "The ISO 3166-1 region of numbers written without a country calling code; the device locale's region when absent."
+        },
+        "maxScale": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The most digits after the decimal point."
+        },
+        "maxIntegerDigits": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The most digits before the decimal point."
+        },
+        "rule": {
+          "$ref": "#/$defs/expr"
+        },
+        "$graph": {
+          "$ref": "#/$defs/id"
+        },
+        "debounceMs": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How long the field stays unchanged before the asynchronous check runs."
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "FormValidator"
     }
   }
 }

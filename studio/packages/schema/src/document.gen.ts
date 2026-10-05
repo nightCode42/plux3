@@ -177,6 +177,8 @@ export interface ComponentDocument {
   readonly exported?: boolean;
   /** A node of a page or component tree: a widget or a component instance (SCH-023). */
   readonly root: Node;
+  /** The forms of the component (STA-020). */
+  readonly forms?: readonly Form[];
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
@@ -343,6 +345,65 @@ export interface FlagDecl {
 
 /** Type of a feature flag (ABT-006). */
 export type FlagType = "bool" | "int" | "double" | "string";
+
+/** A form (STA-020, ADR-0047): typed fields with their initial values and validators. Its state lives in the declaring page's or component's scope under the form's name: `values`, `errors`, `dirty`, `touched`, `status`, `valid` and `validating`. */
+export interface Form {
+  /** Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). */
+  readonly id: string;
+  /** Identifier used in PXL and generated code: lowerCamelCase. */
+  readonly name: string;
+  readonly fields: readonly FormField[];
+  /** Human-readable description. */
+  readonly description?: string;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** A field of a form: its type, initial value and validators, run in order (STA-020). */
+export interface FormField {
+  /** Identifier used in PXL and generated code: lowerCamelCase. */
+  readonly name: string;
+  /** Type expression of SCH-010, e.g. `string`, `decimal?`, `list<Transaction>`, `map<string,int>`. */
+  readonly type: string;
+  /** A JSON value interpreted against a declared type (defaults, mocks, environment values). */
+  readonly initial?: JsonValue;
+  readonly validators?: readonly FormValidator[];
+  /** Human-readable description. */
+  readonly description?: string;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** A validator of a form field. Each kind takes its own options: `min` and `max` (length, range, dateRange), `pattern` (regex), `region` (phone), `maxScale` and `maxIntegerDigits` (decimalPrecision), `rule` (custom), `$graph` and `debounceMs` (async); the compiler checks them against the kind and the field's type (PLX-1160-1169). */
+export interface FormValidator {
+  /** A built-in validator of a form field (STA-020, ADR-0047). */
+  readonly kind: FormValidatorKind;
+  /** The message shown when the value is invalid; the runtime's built-in message otherwise. */
+  readonly message?: string;
+  /** A JSON value interpreted against a declared type (defaults, mocks, environment values). */
+  readonly min?: JsonValue;
+  /** A JSON value interpreted against a declared type (defaults, mocks, environment values). */
+  readonly max?: JsonValue;
+  /** A pxl.regex.v1 pattern, checked at publish (PXL-003). */
+  readonly pattern?: string;
+  /** The ISO 3166-1 region of numbers written without a country calling code; the device locale's region when absent. */
+  readonly region?: string;
+  /** The most digits after the decimal point. */
+  readonly maxScale?: number;
+  /** The most digits before the decimal point. */
+  readonly maxIntegerDigits?: number;
+  /** PXL binding (SCH-011). */
+  readonly rule?: Expr;
+  /** Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). */
+  readonly $graph?: string;
+  /** How long the field stays unchanged before the asynchronous check runs. */
+  readonly debounceMs?: number;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** A built-in validator of a form field (STA-020, ADR-0047). */
+export type FormValidatorKind = "required" | "length" | "range" | "regex" | "email" | "phone" | "iban" | "dateRange" | "decimalPrecision" | "custom" | "async";
 
 /** A function the plugin may call, with an optional alias (FN-006). */
 export interface FunctionGrant {
@@ -547,6 +608,8 @@ export interface PageDocument {
   readonly security?: PageSecurity;
   /** A node of a page or component tree: a widget or a component instance (SCH-023). */
   readonly root: Node;
+  /** The forms of the page (STA-020). */
+  readonly forms?: readonly Form[];
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
