@@ -156,6 +156,9 @@ func (u *unit) stepFeatures(g *graph, a *registry.Action, st schema.Step, ptr st
 	if f, ok := actionFeatures[a.Name]; ok {
 		u.requireFeature(f, c, false)
 	}
+	if _, ok := deviceActions[a.Name]; ok {
+		u.requireFeature(deviceFeature, c, false)
+	}
 	if r := st.Retry; r != nil {
 		rc := c
 		rc.ptr = ptr + "/retry"

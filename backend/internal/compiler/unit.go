@@ -43,6 +43,7 @@ type unit struct {
 	tokens      map[string]*token
 	assetIDs    map[string]*schema.AssetEntry
 	natives     natives
+	deviceUses  []DeviceUse
 	types       *universe
 	graph       *Graph
 
