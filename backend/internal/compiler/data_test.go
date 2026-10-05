@@ -103,8 +103,9 @@ func valueEntry(v *fbs.Value, strs func(uint32) string, key string) *fbs.Value {
 
 // TestDataConfigIsEncoded checks that the bundle carries each source's
 // base URL per environment, resolved from the app's variables (DAT-003),
-// its success mock beside the other mock states (DAT-080) and its
-// transform as a compiled expression (DAT-004).
+// and its transform as a compiled expression (DAT-004); and that mocks
+// ship only in development bundles, the success mock beside the other
+// mock states, never in release bundles (DAT-080).
 // Verifies: DAT-003, DAT-004, DAT-080.
 func TestDataConfigIsEncoded(t *testing.T) {
 	t.Parallel()
@@ -119,15 +120,24 @@ func TestDataConfigIsEncoded(t *testing.T) {
 	if prod := valueEntry(urls, strs, "production"); prod == nil || strs(prod.S()) != "https://api.example.com/v1" {
 		t.Error("production base URL")
 	}
-	mocks := valueEntry(cfg, strs, "mocks")
-	for _, state := range []string{"success", "empty", "error"} {
-		if mocks == nil || valueEntry(mocks, strs, state) == nil {
-			t.Errorf("mock state %s not encoded", state)
-		}
+	if valueEntry(cfg, strs, "mocks") != nil {
+		t.Error("a release bundle carries mocks")
 	}
 	count, strs := sourceConfig(t, shop, "count")
 	if tr := valueEntry(count, strs, "transform"); tr == nil || tr.Kind() != fbs.ValueKindExpr {
 		t.Error("transform not compiled")
+	}
+
+	opts := DefaultOptions()
+	opts.Mode = Development
+	dev := Compile(os.DirFS(dataDir), opts)
+	onlyRaised(t, dev)
+	cfg, strs = sourceConfig(t, readAll(t, dev)[1], "tasks")
+	mocks := valueEntry(cfg, strs, "mocks")
+	for _, state := range []string{"success", "empty", "error"} {
+		if mocks == nil || valueEntry(mocks, strs, state) == nil {
+			t.Errorf("development bundle: mock state %s not encoded", state)
+		}
 	}
 }
 

@@ -217,8 +217,8 @@ func (t *typer) compileDataSources(pl *plugin, sources []schema.DataSource, file
 
 // checkDataSource validates a REST or GraphQL source and returns its
 // configuration as the bundle carries it: the document's configuration,
-// the base URL of every environment as `baseUrls` and the source's mock
-// as `mocks.success` (DAT-003, DAT-080).
+// the base URL of every environment as `baseUrls` and, in development
+// bundles only, the source's mock as `mocks.success` (DAT-003, DAT-080).
 func (u *unit) checkDataSource(pl *plugin, s *schema.DataSource, file, ptr string, sc *scope) *value {
 	cptr := ptr + "/config"
 	p := u.dataConfigOf(s)
@@ -551,6 +551,12 @@ func (u *unit) encodeDataConfig(s *schema.DataSource, file, ptr string, sc *scop
 		return nil
 	}
 	obj["baseUrls"] = baseURLs
+	// Mocks are for tests and development builds (DAT-080): a release
+	// bundle carries none, so a release can never answer from one.
+	if u.opts.Mode != Development {
+		delete(obj, "mocks")
+		return u.infer(vctx{file: file, ptr: ptr + "/config", scope: sc, code: plxerr.DataSourceConfigInvalid}, obj)
+	}
 	if mock, ok := decodeJSON(s.Mock); ok && len(s.Mock) > 0 {
 		mocks, _ := obj["mocks"].(map[string]any)
 		if mocks == nil {
