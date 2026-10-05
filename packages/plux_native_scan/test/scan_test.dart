@@ -123,6 +123,8 @@ class OrderScreen extends StatelessWidget {
 import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 import 'package:plux_flutter/plux_flutter.dart';
+import 'package:plux_location/plux_location.dart';
+import 'package:plux_media/plux_media.dart';
 
 class ProfileParams {
   const ProfileParams({required this.userId, this.tabs = const []});
@@ -153,6 +155,7 @@ final config = PluxConfig(
     'scan': PluxNativeAction<ScanIn, Map<String, int>?>(input: ScanIn.fromJson, handler: (i) => null),
     'ping': PluxNativeAction<void, void>(input: (j) {}, handler: (_) {}),
   },
+  devicePackages: [PluxMedia(), PluxLocation()],
 );
 ''',
   'map_card.dart': '''
@@ -262,6 +265,20 @@ void main() {
     ]);
     expect(problems('lib/main.dart'), [
       startsWith('route raw takes String, which is not a class'),
+    ]);
+  });
+
+  test('packages: the device packages the build registers are recorded by name, sorted [RT-060] [CLI-006]', () {
+    expect(r.catalogue['packages'], ['plux_location', 'plux_media']);
+    expect(r.catalogue.keys.toList()..sort(), [
+      'actions',
+      'host',
+      'id',
+      'kind',
+      'packages',
+      'routes',
+      'schemaVersion',
+      'slots',
     ]);
   });
 

@@ -19,6 +19,10 @@
 /// - **Actions** come from `PluxConfig.nativeActions`, whose
 ///   `PluxNativeAction<I, O>` takes its inputs from the constructor of `I`
 ///   and its output from `O`.
+/// - **Packages** are the optional Plux packages the build registers in
+///   `PluxConfig.devicePackages`, such as `plux_media`, named by the
+///   package each entry's class comes from; publishing warns when a release
+///   uses a device action whose package a build lacks (RT-060).
 ///
 /// Dart types map to the document type system; one with no mapping is
 /// reported with its source location and never guessed. An optional
@@ -134,6 +138,7 @@ Future<ScanResult> scan({
     'routes': [for (final k in routes.keys.toList()..sort()) routes[k]],
     'slots': [for (final k in s.slots.keys.toList()..sort()) s.slots[k]],
     'actions': [for (final k in s.actions.keys.toList()..sort()) s.actions[k]],
+    if (s.packages.isNotEmpty) 'packages': s.packages.toList()..sort(),
   };
   s.problems.sort(
     (a, b) => a.file != b.file
@@ -175,6 +180,7 @@ final class _Scan {
   final Map<String, Map<String, Object?>> registered = {};
   final Map<String, Map<String, Object?>> slots = {};
   final Map<String, Map<String, Object?>> actions = {};
+  final Set<String> packages = {};
 
   late String _file;
   late LineInfo _lines;
@@ -249,6 +255,10 @@ final class _Scan {
     for (final arg
         in config.argumentList.arguments.whereType<NamedArgument>()) {
       final which = arg.name.lexeme;
+      if (which == 'devicePackages') {
+        devicePackages(arg.argumentExpression);
+        continue;
+      }
       if (which != 'nativeRoutes' && which != 'nativeActions') continue;
       final map = arg.argumentExpression;
       if (map is! SetOrMapLiteral) {
@@ -289,6 +299,32 @@ final class _Scan {
           }
         }
       }
+    }
+  }
+
+  /// Records the packages of the entries of `devicePackages: [...]`.
+  void devicePackages(Expression list) {
+    if (list is! ListLiteral) {
+      report(
+        list,
+        'devicePackages is not a list literal, so its packages cannot be read; list them in place',
+      );
+      return;
+    }
+    for (final e in list.elements) {
+      final type = e is Expression ? e.staticType : null;
+      final uri = type is InterfaceType
+          ? type.element.library.uri.toString()
+          : '';
+      final name = _pluxPackage.firstMatch(uri)?.group(1);
+      if (name == null || name == 'plux_flutter') {
+        report(
+          e,
+          'a devicePackages entry that is not a class of a Plux package cannot be recorded',
+        );
+        continue;
+      }
+      packages.add(name);
     }
   }
 
@@ -401,6 +437,8 @@ final class _Scan {
     slots[name] = {'type': name, 'props': props, 'events': events};
   }
 }
+
+final RegExp _pluxPackage = RegExp(r'^package:(plux_[a-z0-9_]+)/');
 
 final class _Visitor extends RecursiveAstVisitor<void> {
   _Visitor(this.s);
