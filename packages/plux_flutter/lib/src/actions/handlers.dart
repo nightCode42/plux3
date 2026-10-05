@@ -215,6 +215,7 @@ final class StepContext {
     this.run,
     this.data,
     this.logout,
+    this.services = const {},
   });
 
   /// This context with [state] (STA-001).
@@ -231,6 +232,7 @@ final class StepContext {
     run: run,
     data: data,
     logout: logout,
+    services: services,
   );
 
   /// Navigation for the run's page.
@@ -278,6 +280,7 @@ final class StepContext {
     run: run,
     data: data,
     logout: logout,
+    services: services,
   );
 
   /// This context with [emitEvent] for a component's handlers.
@@ -295,6 +298,7 @@ final class StepContext {
     emitEvent: emitEvent,
     data: data,
     logout: logout,
+    services: services,
   );
 
   /// The data of the run's page, for `apiCall` and `refreshData`
@@ -305,6 +309,14 @@ final class StepContext {
   /// cached responses and tells the host's auth delegate; null where no
   /// runtime runs.
   final Future<void> Function()? logout;
+
+  /// The runtime's services for handlers, by type: the local database,
+  /// the device, animations and other services later milestones add,
+  /// without a field of their own here.
+  final Map<Type, Object> services;
+
+  /// The service of type [T], or null where none is installed.
+  T? service<T extends Object>() => services[T] as T?;
 }
 
 /// What a step produced.

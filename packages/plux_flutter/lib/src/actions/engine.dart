@@ -49,7 +49,13 @@ final class ActionServices {
     this.sync,
     this.clock = const ActionClock(),
     this.logout,
+    this.services = const {},
   }) : triggers = triggers ?? TriggerHub();
+
+  /// The services handlers find by type through `StepContext.service`
+  /// (the local database, the device, …); each runtime milestone adds its
+  /// own entry.
+  final Map<Type, Object> services;
 
   /// Resolves and opens routes (ADR-0040).
   final PluxRouter router;

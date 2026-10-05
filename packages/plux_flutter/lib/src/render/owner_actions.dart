@@ -136,6 +136,7 @@ final class ReleaseOwners {
     final host = ActionHost(
       lease: release.hold,
       context: StepContext(
+        services: services.services,
         navigator: PageNavigator(
           router: services.router,
           context: () =>

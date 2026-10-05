@@ -1012,6 +1012,7 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
     return ActionHost(
       lease: widget.release.hold,
       context: StepContext(
+        services: services.services,
         navigator: PageNavigator(
           router: services.router,
           context: () => context,
