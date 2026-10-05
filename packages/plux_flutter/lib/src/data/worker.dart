@@ -15,6 +15,8 @@ import 'package:http/http.dart' as http;
 import 'package:plux_flutter/src/actions/action_error.dart';
 import 'package:plux_flutter/src/data/cache.dart';
 import 'package:plux_flutter/src/data/failure.dart';
+import 'package:plux_flutter/src/data/stream_transport.dart';
+import 'package:plux_flutter/src/data/transfer_transport.dart';
 import 'package:plux_flutter/src/data/transport.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/store/kv_store.dart';
@@ -81,6 +83,16 @@ final class _Store extends _Command {
   final int? at;
 }
 
+final class _OpenStream extends _Command {
+  const _OpenStream(super.reply, this.request);
+  final StreamRequest request;
+}
+
+final class _StartTransfer extends _Command {
+  const _StartTransfer(super.reply, this.request);
+  final TransferRequest request;
+}
+
 final class _SetKey extends _Command {
   const _SetKey(super.reply, this.key);
   final Uint8List key;
@@ -91,7 +103,8 @@ final class _Close extends _Command {
 }
 
 /// The UI isolate's handle on the data isolate.
-final class DataWorker implements DataTransport {
+final class DataWorker
+    implements DataTransport, StreamTransport, TransferTransport {
   DataWorker._(this._isolate, this._commands, this._keys);
 
   /// Starts the data isolate with the client [httpClient] creates (a
@@ -133,6 +146,68 @@ final class DataWorker implements DataTransport {
   /// The cache store of plain or encrypted entries.
   CacheStore store({required bool secure}) => _WorkerStore(this, secure);
 
+  @override
+  Future<StreamConnection> open(StreamRequest request) async {
+    final events = ReceivePort();
+    _commands.send(_OpenStream(events.sendPort, request));
+    final opened = Completer<SendPort>();
+    final frames = StreamController<StreamFrame>();
+    events.listen((Object? m) {
+      final (tag, value) = m! as (String, Object?);
+      switch (tag) {
+        case 'open':
+          opened.complete(value! as SendPort);
+        case 'frame':
+          frames.add(value! as StreamFrame);
+        case 'error':
+          if (opened.isCompleted) {
+            frames.addError(value!);
+          } else {
+            opened.completeError(value!);
+            events.close();
+          }
+        case 'done':
+          unawaited(frames.close());
+          events.close();
+      }
+    });
+    final control = await opened.future;
+    return _ProxyConnection(frames, control, events);
+  }
+
+  @override
+  TransferJob begin(TransferRequest request) {
+    final events = ReceivePort();
+    _commands.send(_StartTransfer(events.sendPort, request));
+    final progress = StreamController<TransferProgress>();
+    final result = Completer<TransferResult>();
+    SendPort? control;
+    var cancelled = false;
+    events.listen((Object? m) {
+      final (tag, value) = m! as (String, Object?);
+      switch (tag) {
+        case 'ready':
+          control = value! as SendPort;
+          if (cancelled) control!.send('cancel');
+        case 'progress':
+          progress.add(value! as TransferProgress);
+        case 'result':
+          result.complete(value! as TransferResult);
+          unawaited(progress.close());
+          events.close();
+        case 'error':
+          result.completeError(value!);
+          unawaited(progress.close());
+          events.close();
+      }
+    });
+    unawaited(result.future.then((_) {}, onError: (Object _) {}));
+    return TransferJob(progress.stream, result.future, () {
+      cancelled = true;
+      control?.send('cancel');
+    });
+  }
+
   Future<void> _ensureKey() => _keySent ??= () async {
     final keys = _keys;
     if (keys == null) {
@@ -150,6 +225,27 @@ final class DataWorker implements DataTransport {
   Future<void> close() async {
     await _call(_Close.new);
     _isolate.kill();
+  }
+}
+
+final class _ProxyConnection implements StreamConnection {
+  _ProxyConnection(this._frames, this._control, this._events);
+
+  final StreamController<StreamFrame> _frames;
+  final SendPort _control;
+  final ReceivePort _events;
+
+  @override
+  Stream<StreamFrame> get frames => _frames.stream;
+
+  @override
+  void send(Object? json) => _control.send(['send', json]);
+
+  @override
+  Future<void> close() async {
+    _control.send('close');
+    _events.close();
+    if (!_frames.isClosed) await _frames.close();
   }
 }
 
@@ -194,14 +290,26 @@ final class _WorkerStore implements CacheStore {
 
 Future<void> _main((http.Client Function(), String, SendPort) args) async {
   final (client, dir, ready) = args;
-  final transport = ClientTransport(client());
+  final http = client();
+  final transport = ClientTransport(http);
+  final streams = SocketStreamTransport(http);
+  final transfers = HttpTransferTransport(http);
   final plain = FileCacheStore('$dir/plain');
   FileCacheStore? secure;
   final port = ReceivePort();
   ready.send(port.sendPort);
   await for (final c in port.cast<_Command>()) {
+    if (c is _OpenStream) {
+      unawaited(_serveStream(c, streams));
+      continue;
+    }
+    if (c is _StartTransfer) {
+      _serveTransfer(c, transfers);
+      continue;
+    }
     Future<Object?> run() async => switch (c) {
       _Send(:final request) => transport.send(request),
+      _OpenStream() || _StartTransfer() => null,
       _SetKey(:final key) => secure = FileCacheStore('$dir/secure', key: key),
       _Close() => transport.close(),
       final _Store s => _store(
@@ -224,6 +332,72 @@ Future<void> _main((http.Client Function(), String, SendPort) args) async {
       port.close();
     }
   }
+}
+
+/// Runs one stream connection on the data isolate: the frames go to the
+/// UI isolate as they come, and its `send` and `close` come back.
+Future<void> _serveStream(_OpenStream c, StreamTransport transport) async {
+  final control = ReceivePort();
+  final StreamConnection conn;
+  try {
+    conn = await transport.open(c.request);
+  } on Object catch (e) {
+    control.close();
+    c.reply.send(('error', _sendable(e)));
+    return;
+  }
+  c.reply.send(('open', control.sendPort));
+  final sub = conn.frames.listen(
+    (f) => c.reply.send(('frame', f)),
+    onError: (Object e) => c.reply.send(('error', _sendable(e))),
+    onDone: () {
+      c.reply.send(('done', null));
+      control.close();
+    },
+  );
+  control.listen((Object? m) {
+    if (m is List<Object?> && m.first == 'send') {
+      try {
+        conn.send(m.last);
+      } on Object {
+        // The connection ended: its frames say so.
+      }
+    } else if (m == 'close') {
+      unawaited(sub.cancel());
+      unawaited(conn.close());
+      control.close();
+    }
+  });
+}
+
+/// Runs one transfer on the data isolate.
+void _serveTransfer(_StartTransfer c, TransferTransport transport) {
+  final control = ReceivePort();
+  final TransferJob job;
+  try {
+    job = transport.begin(c.request);
+  } on Object catch (e) {
+    control.close();
+    c.reply.send(('error', _sendable(e)));
+    return;
+  }
+  c.reply.send(('ready', control.sendPort));
+  control.listen((Object? m) {
+    if (m == 'cancel') job.cancel();
+  });
+  job.progress.listen((p) => c.reply.send(('progress', p)));
+  unawaited(
+    job.result.then(
+      (r) {
+        c.reply.send(('result', r));
+        control.close();
+      },
+      onError: (Object e) {
+        c.reply.send(('error', _sendable(e)));
+        control.close();
+      },
+    ),
+  );
 }
 
 Future<Object?> _store(
@@ -267,7 +441,8 @@ Object _sendable(Object e) => e is DataFailure
 
 /// A [DataWorker] started on first use, so a runtime whose pages load no
 /// data never spawns the data isolate.
-final class LazyDataWorker implements DataTransport {
+final class LazyDataWorker
+    implements DataTransport, StreamTransport, TransferTransport {
   /// Creates the handle; [start] starts the worker.
   LazyDataWorker(this._start);
 
@@ -282,6 +457,30 @@ final class LazyDataWorker implements DataTransport {
 
   /// The cache store of plain or encrypted entries.
   CacheStore store({required bool secure}) => _LazyStore(this, secure);
+
+  @override
+  Future<StreamConnection> open(StreamRequest request) async =>
+      (await _started).open(request);
+
+  @override
+  TransferJob begin(TransferRequest request) {
+    final progress = StreamController<TransferProgress>();
+    TransferJob? job;
+    var cancelled = false;
+    final result = _started
+        .then((w) {
+          job = w.begin(request);
+          if (cancelled) job!.cancel();
+          job!.progress.listen(progress.add);
+          return job!.result;
+        })
+        .whenComplete(progress.close);
+    unawaited(result.then((_) {}, onError: (Object _) {}));
+    return TransferJob(progress.stream, result, () {
+      cancelled = true;
+      job?.cancel();
+    });
+  }
 
   @override
   Future<void> close() async {

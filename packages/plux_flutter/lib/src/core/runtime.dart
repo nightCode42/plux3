@@ -347,7 +347,39 @@ final class PluxRuntime with WidgetsBindingObserver {
     record: telemetry.record,
     report: _report,
     events: DataTriggers(triggers),
+    ioEvents: DataTriggers(triggers),
+    streamTransport: _dataWorker,
+    transferTransport: _dataWorker,
+    outboxStore: _outboxStore,
+    runtimeRoot: _root,
+    downloadDirectory: '$_root/downloads',
   );
+
+  /// The offline outbox's store: encrypted under a key of this
+  /// installation kept by the platform's secure storage, like the secure
+  /// state store's (DAT-020, plan p5 D6). Its size follows the active app
+  /// bundle's `data.outboxBytes`.
+  late final EncryptedFileStore _outboxStore = () {
+    final store = EncryptedFileStore(
+      path: '$_root/data/outbox.pxk',
+      secrets: _secrets,
+      keyName: 'data-outbox.$_keyId',
+      label: 'data-outbox/$_keyId',
+      maxBytes: PluxLimit.dataOutboxBytes.defaultValue,
+    );
+    active.addListener(() {
+      store.maxBytes =
+          active.value?.limits[PluxLimit.dataOutboxBytes.key] ??
+          PluxLimit.dataOutboxBytes.defaultValue;
+    });
+    return store;
+  }();
+
+  /// The host says whether the network is available
+  /// (`Plux.setNetworkAvailable`, decision D13): streams waiting to
+  /// reconnect do so and the outbox replays when it is back.
+  void setNetworkAvailable(bool available) =>
+      _dataServices.setNetworkAvailable(available);
 
   /// Ends the user's session (HST-010, the `logout` action): removes every
   /// cached response, so the next user never sees the previous user's
@@ -930,7 +962,10 @@ final class PluxRuntime with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) triggers.appPaused();
-    if (state == AppLifecycleState.resumed) triggers.appResumed();
+    if (state == AppLifecycleState.resumed) {
+      triggers.appResumed();
+      _dataServices.appResumed();
+    }
     if (state == AppLifecycleState.paused) {
       // Reaching the background normally ends the launch healthily.
       if (_healthyScheduled) unawaited(_worker.markHealthy());

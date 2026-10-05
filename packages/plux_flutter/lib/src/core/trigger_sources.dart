@@ -12,8 +12,11 @@ import 'package:plux_flutter/src/data/source.dart';
 
 /// Feeds data-source events to the trigger hub: a load to the
 /// `dataLoaded` triggers with the value loaded, a failure to the
-/// `dataFailed` triggers with its `PluxActionError`.
-final class DataTriggers implements DataSourceEvents {
+/// `dataFailed` triggers with its `PluxActionError`; a stream's message
+/// to the `dataMessage` triggers, a transfer's progress to the
+/// `dataProgress` triggers, and the end of a queued mutation to the
+/// `outbox…` triggers (DAT-012, DAT-020, DAT-031).
+final class DataTriggers implements DataSourceEvents, DataIoEvents {
   /// Creates the bridge to [hub].
   const DataTriggers(this.hub);
 
@@ -32,6 +35,35 @@ final class DataTriggers implements DataSourceEvents {
   void failed(DataSourceEvent event) => hub.dataFailed(
     event.source,
     event.error ?? const {},
+    plugin: event.pluginKey,
+    sourceId: event.sourceId,
+  );
+
+  @override
+  void message(DataSourceEvent event) => hub.dataMessage(
+    event.source,
+    event.value,
+    plugin: event.pluginKey,
+    sourceId: event.sourceId,
+  );
+
+  @override
+  void progress(DataSourceEvent event) => hub.dataProgress(
+    event.source,
+    (event.value as Map<String, Object?>?) ?? const {},
+    plugin: event.pluginKey,
+    sourceId: event.sourceId,
+  );
+
+  @override
+  void outbox(OutboxOutcome outcome, DataSourceEvent event) => hub.outbox(
+    switch (outcome) {
+      OutboxOutcome.synced => TriggerKind.outboxSynced,
+      OutboxOutcome.failed => TriggerKind.outboxFailed,
+      OutboxOutcome.conflict => TriggerKind.outboxConflict,
+    },
+    event.source,
+    (event.value as Map<String, Object?>?) ?? const {},
     plugin: event.pluginKey,
     sourceId: event.sourceId,
   );

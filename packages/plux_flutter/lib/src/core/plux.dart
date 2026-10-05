@@ -215,6 +215,16 @@ abstract final class Plux {
     return false;
   }
 
+  /// Tells Plux whether the device has a network (decision D13: Plux
+  /// depends on no connectivity package). While it is `false`,
+  /// offline-capable mutations are queued without trying the server and
+  /// streams wait to reconnect; when it becomes `true`, the queued
+  /// mutations replay in order and the streams reconnect at once. Without
+  /// this call the outbox still replays when the app resumes, after any
+  /// request that succeeds, and on a backoff timer (DAT-020, DAT-012).
+  static void setNetworkAvailable(bool available) =>
+      _rt.setNetworkAvailable(available);
+
   /// Removes the data Plux keeps on the device for this app (HST-001):
   /// session, persisted and secure state with the stores' keys, and every
   /// cached data-source response; app and

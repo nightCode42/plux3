@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: 2026 Plux contributors
 // SPDX-License-Identifier: Apache-2.0
 
-/// The handlers of `apiCall` and `refreshData` (DAT-001, DAT-011), run on
+/// The handlers of `apiCall`, `refreshData`, `subscribe` and `unsubscribe`
+/// (DAT-001, DAT-011, DAT-012), run on
 /// the page's [DataActions] through `StepContext.data`. A failure is an
 /// [ActionError] with its kind, so `onError` handles it — and an
 /// engine-level optimistic hook (ACT-007) can roll back on it: the handler
@@ -12,6 +13,7 @@ import 'package:plux_flutter/src/actions/action_error.dart';
 import 'package:plux_flutter/src/actions/handlers.dart';
 import 'package:plux_flutter/src/data/failure.dart';
 import 'package:plux_flutter/src/data/services.dart';
+import 'package:plux_flutter/src/data/transfers.dart' show CancelToken;
 
 DataActions _data(StepContext c, String action) =>
     c.data ??
@@ -27,11 +29,17 @@ final Map<String, ActionHandler> dataHandlers = {
       throw const ActionError.validation('apiCall: operation is not a string');
     }
     final input = i['input'];
+    // A transfer stops with its run (DAT-031).
+    final cancel = CancelToken();
+    c.run?.onEnd((succeeded) {
+      if (!succeeded) cancel.cancel();
+    });
     return StepDone(
-      await _data(
-        c,
-        'apiCall',
-      ).callOperation(op, input is Map<String, Object?> ? input : const {}),
+      await _data(c, 'apiCall').callOperation(
+        op,
+        input is Map<String, Object?> ? input : const {},
+        cancel: cancel,
+      ),
     );
   }),
   'refreshData': FunctionHandler((c, i) async {
@@ -40,6 +48,26 @@ final Map<String, ActionHandler> dataHandlers = {
       throw const ActionError.validation('refreshData: source is not a string');
     }
     await _data(c, 'refreshData').refresh(source, more: i['more'] == true);
+    return const StepDone();
+  }),
+  'subscribe': FunctionHandler((c, i) async {
+    final stream = i['stream'];
+    if (stream is! String) {
+      throw const ActionError.validation('subscribe: stream is not a string');
+    }
+    final params = i['params'];
+    await _data(
+      c,
+      'subscribe',
+    ).subscribe(stream, params is Map<String, Object?> ? params : const {});
+    return const StepDone();
+  }),
+  'unsubscribe': FunctionHandler((c, i) async {
+    final stream = i['stream'];
+    if (stream is! String) {
+      throw const ActionError.validation('unsubscribe: stream is not a string');
+    }
+    await _data(c, 'unsubscribe').unsubscribe(stream);
     return const StepDone();
   }),
 };

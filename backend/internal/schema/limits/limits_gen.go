@@ -76,6 +76,13 @@ const (
 	// declared length before the transfer and counted during it, a larger one is
 	// stopped. (DAT-031, LIM-004)
 	DataDownloadSize Key = "data.downloadSize"
+	// DataOutboxBackoffMax: Longest wait between two replays of the offline
+	// outbox that left entries; the wait doubles from data.outboxBackoffMin up
+	// to it. (DAT-020)
+	DataOutboxBackoffMax Key = "data.outboxBackoffMax"
+	// DataOutboxBackoffMin: First wait before the offline outbox replays again
+	// after a replay left entries behind. (DAT-020)
+	DataOutboxBackoffMin Key = "data.outboxBackoffMin"
 	// DataOutboxBytes: Bytes the offline outbox keeps on the device, encoded; a
 	// mutation that would exceed it is refused with a typed error. (DAT-020,
 	// LIM-004)
@@ -234,6 +241,8 @@ var registry = [...]Definition{
 	{Key: DataCacheBytes, Unit: UnitBytes, Default: 16777216, Warning: 0, Max: 268435456, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the response cache of data sources keeps on the device; the least recently used entries are evicted beyond it."},
 	{Key: DataCacheEntries, Unit: UnitCount, Default: 1000, Warning: 0, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Responses the cache of data sources keeps on the device; the least recently used are evicted beyond it."},
 	{Key: DataDownloadSize, Unit: UnitBytes, Default: 52428800, Warning: 0, Max: 2147483648, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes one download may have; checked against the declared length before the transfer and counted during it, a larger one is stopped."},
+	{Key: DataOutboxBackoffMax, Unit: UnitMilliseconds, Default: 300000, Warning: 0, Max: 3600000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Longest wait between two replays of the offline outbox that left entries; the wait doubles from data.outboxBackoffMin up to it."},
+	{Key: DataOutboxBackoffMin, Unit: UnitMilliseconds, Default: 5000, Warning: 0, Max: 600000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "First wait before the offline outbox replays again after a replay left entries behind."},
 	{Key: DataOutboxBytes, Unit: UnitBytes, Default: 4194304, Warning: 0, Max: 67108864, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the offline outbox keeps on the device, encoded; a mutation that would exceed it is refused with a typed error."},
 	{Key: DataOutboxEntries, Unit: UnitCount, Default: 200, Warning: 0, Max: 10000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Mutations the offline outbox keeps on the device; a further mutation is refused with a typed error."},
 	{Key: DataPageSize, Unit: UnitCount, Default: 50, Warning: 0, Max: 1000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerRuntime, Phase: "P5", Description: "Items one page of a paginated data source may ask for."},

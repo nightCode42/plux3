@@ -85,6 +85,12 @@ enum PluxLimit {
   /// Bytes one download may have; checked against the declared length before
   /// the transfer and counted during it, a larger one is stopped.
   dataDownloadSize('data.downloadSize', PluxLimitUnit.bytes, 52428800, 0, 2147483648),
+  /// Longest wait between two replays of the offline outbox that left entries;
+  /// the wait doubles from data.outboxBackoffMin up to it.
+  dataOutboxBackoffMax('data.outboxBackoffMax', PluxLimitUnit.milliseconds, 300000, 0, 3600000),
+  /// First wait before the offline outbox replays again after a replay left
+  /// entries behind.
+  dataOutboxBackoffMin('data.outboxBackoffMin', PluxLimitUnit.milliseconds, 5000, 0, 600000),
   /// Bytes the offline outbox keeps on the device, encoded; a mutation that
   /// would exceed it is refused with a typed error.
   dataOutboxBytes('data.outboxBytes', PluxLimitUnit.bytes, 4194304, 0, 67108864),

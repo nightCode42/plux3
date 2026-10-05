@@ -6,7 +6,9 @@
 /// as `data.<name>` and run by `apiCall` and `refreshData`.
 library;
 
+import 'dart:async';
 import 'dart:collection';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:plux_flutter/src/actions/action_error.dart';
@@ -16,11 +18,18 @@ import 'package:plux_flutter/src/data/client.dart';
 import 'package:plux_flutter/src/data/failure.dart';
 import 'package:plux_flutter/src/data/mapping.dart';
 import 'package:plux_flutter/src/data/mocks.dart';
+import 'package:plux_flutter/src/data/outbox.dart';
 import 'package:plux_flutter/src/data/source.dart';
 import 'package:plux_flutter/src/data/spec.dart';
+import 'package:plux_flutter/src/data/stream_session.dart';
+import 'package:plux_flutter/src/data/stream_transport.dart';
+import 'package:plux_flutter/src/data/streams.dart';
+import 'package:plux_flutter/src/data/transfer_transport.dart';
+import 'package:plux_flutter/src/data/transfers.dart';
 import 'package:plux_flutter/src/data/transport.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
+import 'package:plux_flutter/src/store/kv_store.dart' show PluxKeyValueStore;
 
 /// The data layer's runtime services: one per runtime.
 final class DataServices implements DataContext {
@@ -36,6 +45,14 @@ final class DataServices implements DataContext {
     this.secureStore,
     this.mocks = const DataMocks(),
     this.events,
+    this.ioEvents,
+    this.streamTransport,
+    this.transferTransport,
+    this.outboxStore,
+    this.runtimeRoot = '',
+    this.downloadDirectory = '',
+    this.random,
+    this.scheduler,
     int Function()? now,
     this.allowCleartext = false,
   }) : _report = report, // ignore: prefer_initializing_formals
@@ -63,6 +80,34 @@ final class DataServices implements DataContext {
   @override
   DataSourceEvents? events;
 
+  @override
+  DataIoEvents? ioEvents;
+
+  /// Opens stream connections (the data isolate in apps); without one,
+  /// streams cannot be opened.
+  final StreamTransport? streamTransport;
+
+  /// Moves files (the data isolate in apps); without one, transfers fail.
+  final TransferTransport? transferTransport;
+
+  /// Where the offline outbox rests, encrypted; without one, offline
+  /// mutations are refused (DAT-020).
+  final PluxKeyValueStore? outboxStore;
+
+  /// The runtime's private directory: nothing is uploaded from it but
+  /// downloads.
+  final String runtimeRoot;
+
+  /// Where downloads are saved.
+  final String downloadDirectory;
+
+  /// The source of jitter of reconnection and replay waits; tests inject
+  /// one.
+  final Random? random;
+
+  /// Starts the timers of reconnection and replay; tests inject one.
+  final StreamScheduler? scheduler;
+
   /// The clock, in milliseconds.
   final int Function() now;
 
@@ -86,7 +131,147 @@ final class DataServices implements DataContext {
     record: record,
     report: _report,
     allowCleartext: allowCleartext,
+    onSuccess: () => outbox?.replaySoon(),
   );
+
+  bool _network = true;
+  final Map<String, ({DataSourceSpec spec, DataCaller caller})> _known = {};
+
+  @override
+  void register(DataSourceSpec spec, DataCaller caller) {
+    _known['${caller.pluginKey}/${spec.name}'] = (spec: spec, caller: caller);
+  }
+
+  /// The open streams, or null without a stream transport.
+  @override
+  late final DataStreams? streams = streamTransport == null
+      ? null
+      : DataStreams(
+          transport: streamTransport!,
+          client: client,
+          limits: () => _limits,
+          random: random,
+          scheduler: scheduler,
+          networkAvailable: () => _network,
+        );
+
+  /// The file transfers, or null without a transfer transport.
+  late final TransferClient? transfers = transferTransport == null
+      ? null
+      : TransferClient(
+          transport: transferTransport!,
+          client: client,
+          root: runtimeRoot,
+          downloads: downloadDirectory,
+        );
+
+  /// The offline outbox, or null without a store (DAT-020).
+  late final Outbox? outbox = outboxStore == null
+      ? null
+      : Outbox(
+          store: outboxStore!,
+          limits: () => _limits,
+          resolve: (plugin, source) => _known['$plugin/$source'],
+          send: (spec, op, caller, input, key) async {
+            var status = 0;
+            await client.call(
+              spec,
+              op,
+              caller,
+              input,
+              headers: {idempotencyHeader: key},
+              onStatus: (s) => status = s,
+            );
+            return status;
+          },
+          emit: _outboxEnded,
+          report: _report,
+          now: now,
+          random: random,
+          scheduler: scheduler,
+          networkAvailable: () => _network,
+        );
+
+  void _outboxEnded(OutboxOutcome outcome, OutboxEntry e, int status) {
+    ioEvents?.outbox(
+      outcome,
+      DataSourceEvent(
+        pluginKey: e.plugin,
+        source: e.source,
+        sourceId: _known['${e.plugin}/${e.source}']?.spec.id ?? '',
+        value: {
+          'operation': '${e.source}.${e.operation}',
+          'key': e.key,
+          'status': status,
+        },
+      ),
+    );
+  }
+
+  /// The host says whether the network is available (D13): when it is
+  /// back, streams waiting to reconnect do so now and the outbox
+  /// replays; while it is not, mutations of offline-capable operations
+  /// are queued without trying.
+  void setNetworkAvailable(bool available) {
+    final back = available && !_network;
+    _network = available;
+    if (!available) return;
+    streams?.networkBack();
+    outbox?.replaySoon(reset: back);
+  }
+
+  /// The app came to the foreground: the outbox replays.
+  void appResumed() => outbox?.replaySoon(reset: true);
+
+  /// Runs the offline-capable mutation [op] (DAT-020): sent at once with
+  /// its idempotency key unless the host says the network is down or
+  /// earlier mutations of the plugin wait; queued when the network
+  /// fails. Completes with `queued` and no JSON in that case, and fails
+  /// with a typed error when the outbox is full.
+  Future<({bool queued, Object? json})> callOffline(
+    DataSourceSpec s,
+    OperationSpec op,
+    DataCaller caller,
+    Map<String, Object?> input,
+  ) async {
+    final box = outbox;
+    if (box == null) {
+      throw const DataFailure(
+        ActionErrorKind.custom,
+        PluxErrorCode.dataOutboxUnavailable,
+        'this runtime keeps no outbox: the offline mutation was refused',
+      );
+    }
+    final key = box.newKey();
+    if (_network && !await box.hasPending(caller.pluginKey)) {
+      try {
+        final json = await client.call(
+          s,
+          op,
+          caller,
+          input,
+          headers: {idempotencyHeader: key},
+        );
+        return (queued: false, json: json);
+      } on DataFailure catch (f) {
+        final passes =
+            f.code == PluxErrorCode.dataNetworkFailed ||
+            f.code == PluxErrorCode.dataRequestTimeout;
+        if (!passes) rethrow;
+      }
+    }
+    await box.enqueue(
+      OutboxEntry(
+        key: key,
+        plugin: caller.pluginKey,
+        source: s.name,
+        operation: op.name,
+        input: {for (final e in input.entries) e.key: toJson(e.value)},
+        queuedAtMs: now(),
+      ),
+    );
+    return (queued: true, json: null);
+  }
 
   @override
   ResponseCache? cache({required bool encrypted}) {
@@ -113,6 +298,15 @@ final class DataServices implements DataContext {
         _report(f.toException(const {}));
       }
     }
+    // Queued mutations of the previous user must not be replayed for the
+    // next (DAT-020).
+    await outbox?.clear();
+  }
+
+  /// Closes the streams and stops the outbox's timer.
+  Future<void> close() async {
+    await streams?.closeAll();
+    outbox?.dispose();
   }
 
   @override
@@ -143,11 +337,22 @@ final class DataServices implements DataContext {
 abstract interface class DataActions {
   /// Runs `<source>.<operation>` with [input]; completes with the output
   /// in PXL form, or fails with an [ActionError].
-  Future<Object?> callOperation(String operation, Map<String, Object?> input);
+  Future<Object?> callOperation(
+    String operation,
+    Map<String, Object?> input, {
+    CancelToken? cancel,
+  });
 
   /// Reloads [source] bypassing its cache, or with [more] loads its next
   /// page; fails with an [ActionError].
   Future<void> refresh(String source, {required bool more});
+
+  /// Opens [stream] with [params] (DAT-012); fails with an [ActionError]
+  /// when it cannot be opened.
+  Future<void> subscribe(String stream, Map<String, Object?> params);
+
+  /// Closes [stream]; nothing happens when it is not open.
+  Future<void> unsubscribe(String stream);
 }
 
 /// The data a page sees: its sources, then its plugin's, then the app's.
@@ -186,8 +391,9 @@ final class DataScope extends ChangeNotifier implements DataActions {
   @override
   Future<Object?> callOperation(
     String operation,
-    Map<String, Object?> input,
-  ) async {
+    Map<String, Object?> input, {
+    CancelToken? cancel,
+  }) async {
     final (name, op) = switch (operation.split('.')) {
       [final s, final o] => (s, o),
       _ => ('', ''),
@@ -209,16 +415,63 @@ final class DataScope extends ChangeNotifier implements DataActions {
     }
     if (mock != null) return null;
     try {
-      final raw = await services.client.call(c.spec, spec, c.caller, input);
-      final out = spec.output;
-      if (out == null) return null;
-      return mapJson(
-        PxlType.parse(out, (n) => c.types[n]),
-        select(raw, spec.select),
-      );
+      if (spec.transfer != null) return await _transfer(c, spec, input, cancel);
+      final Object? raw;
+      if ((spec.offlineCapable ?? c.spec.offlineCapable) &&
+          spec.mutates(c.spec.kind)) {
+        final r = await services.callOffline(c.spec, spec, c.caller, input);
+        if (r.queued) return null;
+        raw = r.json;
+      } else {
+        raw = await services.client.call(c.spec, spec, c.caller, input);
+      }
+      return _output(c, spec, raw);
     } on DataFailure catch (f) {
       throw f.toActionError();
     }
+  }
+
+  Object? _output(DataSourceController c, OperationSpec spec, Object? raw) {
+    final out = spec.output;
+    if (out == null) return null;
+    return mapJson(
+      PxlType.parse(out, (n) => c.types[n]),
+      select(raw, spec.select),
+    );
+  }
+
+  Future<Object?> _transfer(
+    DataSourceController c,
+    OperationSpec spec,
+    Map<String, Object?> input,
+    CancelToken? cancel,
+  ) async {
+    final transfers = services.transfers;
+    if (transfers == null) {
+      throw DataFailure.unavailable('this runtime cannot transfer files');
+    }
+    final raw = await transfers.run(
+      c.spec,
+      spec,
+      c.caller,
+      input,
+      cancel: cancel,
+      onProgress: (p) => services.ioEvents?.progress(
+        DataSourceEvent(
+          pluginKey: c.caller.pluginKey,
+          source: c.spec.name,
+          sourceId: c.spec.id,
+          value: {
+            'operation': '${c.spec.name}.${spec.name}',
+            'sent': p.sent,
+            'total': p.total,
+          },
+        ),
+      ),
+    );
+    return spec.transfer!.kind == TransferKind.download
+        ? raw
+        : _output(c, spec, raw);
   }
 
   @override
@@ -234,6 +487,28 @@ final class DataScope extends ChangeNotifier implements DataActions {
     } on DataFailure catch (f) {
       throw f.toActionError();
     }
+  }
+
+  @override
+  Future<void> subscribe(String stream, Map<String, Object?> params) async {
+    final c = _byName[stream];
+    if (c == null || !c.spec.isStream) {
+      throw DataFailure.unavailable('no stream $stream').toActionError();
+    }
+    try {
+      await c.subscribe(roots, params);
+    } on DataFailure catch (f) {
+      throw f.toActionError();
+    }
+  }
+
+  @override
+  Future<void> unsubscribe(String stream) async {
+    final c = _byName[stream];
+    if (c == null) {
+      throw DataFailure.unavailable('no stream $stream').toActionError();
+    }
+    await c.unsubscribe();
   }
 
   @override

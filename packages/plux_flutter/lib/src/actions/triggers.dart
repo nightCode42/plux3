@@ -44,6 +44,21 @@ enum TriggerKind {
 
   /// A run's error that no `onError` handled.
   error,
+
+  /// A stream delivered a message (DAT-012).
+  dataMessage,
+
+  /// A transfer made progress (DAT-031).
+  dataProgress,
+
+  /// A queued mutation was replayed and accepted (DAT-020).
+  outboxSynced,
+
+  /// A queued mutation was replayed and refused for good (DAT-020).
+  outboxFailed,
+
+  /// A queued mutation was replayed and conflicted (DAT-020).
+  outboxConflict,
 }
 
 /// One declared trigger and the handler it runs.
@@ -294,6 +309,53 @@ final class TriggerHub {
     TriggerKind.dataFailed,
     name: source,
     payload: error,
+    source: plugin,
+    sourceId: sourceId,
+  );
+
+  /// A message of stream [source], mapped to the source's type (DAT-012).
+  void dataMessage(
+    String source,
+    Object? value, {
+    String? plugin,
+    String? sourceId,
+  }) => _all(
+    TriggerKind.dataMessage,
+    name: source,
+    payload: value,
+    source: plugin,
+    sourceId: sourceId,
+  );
+
+  /// A transfer of [source] made progress: [progress] has the operation,
+  /// the bytes `sent` and the `total` (DAT-031).
+  void dataProgress(
+    String source,
+    Map<String, Object?> progress, {
+    String? plugin,
+    String? sourceId,
+  }) => _all(
+    TriggerKind.dataProgress,
+    name: source,
+    payload: progress,
+    source: plugin,
+    sourceId: sourceId,
+  );
+
+  /// A queued mutation of [source] ended in [kind], one of
+  /// [TriggerKind.outboxSynced], [TriggerKind.outboxFailed] and
+  /// [TriggerKind.outboxConflict]; [entry] has the operation, the
+  /// idempotency key and the status (DAT-020).
+  void outbox(
+    TriggerKind kind,
+    String source,
+    Map<String, Object?> entry, {
+    String? plugin,
+    String? sourceId,
+  }) => _all(
+    kind,
+    name: source,
+    payload: entry,
     source: plugin,
     sourceId: sourceId,
   );

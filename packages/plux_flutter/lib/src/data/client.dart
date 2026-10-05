@@ -20,6 +20,9 @@ import 'package:plux_flutter/src/assets/image_providers.dart'
 import 'package:plux_flutter/src/core/config.dart' show PluxAuthDelegate;
 import 'package:plux_flutter/src/data/failure.dart';
 import 'package:plux_flutter/src/data/spec.dart';
+import 'package:plux_flutter/src/data/stream_session.dart'
+    show graphqlWsProtocol;
+import 'package:plux_flutter/src/data/stream_transport.dart';
 import 'package:plux_flutter/src/data/transport.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/pxl/types.dart' show toJson;
@@ -36,6 +39,16 @@ final class DataLimits {
     required this.pageSize,
     required this.cacheBytes,
     required this.cacheEntries,
+    required this.streamMessageSize,
+    required this.streamsOpen,
+    required this.streamBackoffMin,
+    required this.streamBackoffMax,
+    required this.outboxEntries,
+    required this.outboxBytes,
+    required this.outboxBackoffMin,
+    required this.outboxBackoffMax,
+    required this.uploadSize,
+    required this.downloadSize,
   });
 
   /// The limits of [limits], an app bundle's values by key.
@@ -48,6 +61,24 @@ final class DataLimits {
       pageSize: of(PluxLimit.dataPageSize),
       cacheBytes: of(PluxLimit.dataCacheBytes),
       cacheEntries: of(PluxLimit.dataCacheEntries),
+      streamMessageSize: of(PluxLimit.dataStreamMessageSize),
+      streamsOpen: of(PluxLimit.dataStreamsOpen),
+      streamBackoffMin: Duration(
+        milliseconds: of(PluxLimit.dataStreamBackoffMin),
+      ),
+      streamBackoffMax: Duration(
+        milliseconds: of(PluxLimit.dataStreamBackoffMax),
+      ),
+      outboxEntries: of(PluxLimit.dataOutboxEntries),
+      outboxBytes: of(PluxLimit.dataOutboxBytes),
+      outboxBackoffMin: Duration(
+        milliseconds: of(PluxLimit.dataOutboxBackoffMin),
+      ),
+      outboxBackoffMax: Duration(
+        milliseconds: of(PluxLimit.dataOutboxBackoffMax),
+      ),
+      uploadSize: of(PluxLimit.dataUploadSize),
+      downloadSize: of(PluxLimit.dataDownloadSize),
     );
   }
 
@@ -68,6 +99,36 @@ final class DataLimits {
 
   /// `data.cacheEntries`.
   final int cacheEntries;
+
+  /// `data.streamMessageSize`.
+  final int streamMessageSize;
+
+  /// `data.streamsOpen`.
+  final int streamsOpen;
+
+  /// `data.streamBackoffMin`.
+  final Duration streamBackoffMin;
+
+  /// `data.streamBackoffMax`.
+  final Duration streamBackoffMax;
+
+  /// `data.outboxEntries`.
+  final int outboxEntries;
+
+  /// `data.outboxBytes`.
+  final int outboxBytes;
+
+  /// `data.outboxBackoffMin`.
+  final Duration outboxBackoffMin;
+
+  /// `data.outboxBackoffMax`.
+  final Duration outboxBackoffMax;
+
+  /// `data.uploadSize`.
+  final int uploadSize;
+
+  /// `data.downloadSize`.
+  final int downloadSize;
 }
 
 /// The auth delegate's token, refreshed at most once at a time: requests
@@ -130,6 +191,7 @@ final class DataClient {
     required this.record,
     required this.report,
     this.allowCleartext = false,
+    this.onSuccess,
   });
 
   /// Sends requests.
@@ -152,6 +214,10 @@ final class DataClient {
 
   /// Tests against a local server allow `http`; never set in apps.
   final bool allowCleartext;
+
+  /// Called after each request that succeeded: the network works, so the
+  /// outbox may replay (DAT-020).
+  final void Function()? onSuccess;
 
   /// Loads [s] with its parameters [params] (already evaluated) and the
   /// pagination parameters [page]; completes with the response's JSON,
@@ -181,13 +247,16 @@ final class DataClient {
   }
 
   /// Runs operation [op] of [s] with [input]; completes with the selected
-  /// part of the response's JSON.
+  /// part of the response's JSON. [headers] are added to the request: the
+  /// outbox's `Idempotency-Key` (DAT-020).
   Future<Object?> call(
     DataSourceSpec s,
     OperationSpec op,
     DataCaller caller,
-    Map<String, Object?> input,
-  ) => switch (s.kind) {
+    Map<String, Object?> input, {
+    Map<String, String> headers = const {},
+    void Function(int status)? onStatus,
+  }) => switch (s.kind) {
     DataKind.graphql => _exchange(
       s,
       caller,
@@ -196,14 +265,22 @@ final class DataClient {
       s.path,
       const {},
       {'query': op.query, 'variables': _json(input)},
-      {...s.headers, ...op.headers},
+      {...s.headers, ...op.headers, ...headers},
       op.auth,
       graphql: true,
+      onStatus: onStatus,
     ),
-    _ => _rest(s, caller, op.name, op.method, op.path, input, {
-      ...s.headers,
-      ...op.headers,
-    }, op.auth),
+    _ => _rest(
+      s,
+      caller,
+      op.name,
+      op.method,
+      op.path,
+      input,
+      {...s.headers, ...op.headers, ...headers},
+      op.auth,
+      onStatus: onStatus,
+    ),
   };
 
   /// A REST request: placeholders of [path] from [values], the rest in
@@ -216,7 +293,32 @@ final class DataClient {
     String path,
     Map<String, Object?> values,
     Map<String, String> headers,
-    bool withAuth,
+    bool withAuth, {
+    void Function(int status)? onStatus,
+  }) {
+    final (filled, rest) = fillPath(s, path, values);
+    final inQuery = method == 'GET' || method == 'DELETE';
+    final query = inQuery ? queryOf(rest) : <String, List<String>>{};
+    return _exchange(
+      s,
+      caller,
+      operation,
+      method,
+      filled,
+      query,
+      inQuery || rest.isEmpty ? null : _json(rest),
+      headers,
+      withAuth,
+      onStatus: onStatus,
+    );
+  }
+
+  /// Fills the placeholders of [path] from [values]; returns the path
+  /// and the values no placeholder took.
+  static (String, Map<String, Object?>) fillPath(
+    DataSourceSpec s,
+    String path,
+    Map<String, Object?> values,
   ) {
     final rest = Map.of(values);
     final filled = path.replaceAllMapped(
@@ -233,30 +335,76 @@ final class DataClient {
         return Uri.encodeComponent('${toJson(v)}');
       },
     );
-    final inQuery = method == 'GET' || method == 'DELETE';
+    return (filled, rest);
+  }
+
+  /// [values] as the query parameters of a URL.
+  static Map<String, List<String>> queryOf(Map<String, Object?> values) {
     final query = <String, List<String>>{};
-    if (inQuery) {
-      for (final e in rest.entries) {
-        final v = toJson(e.value);
-        if (v == null) continue;
-        query[e.key] = [
-          for (final x in v is List ? v : [v])
-            x is Map || x is List ? jsonEncode(x) : '$x',
-        ];
-      }
+    for (final e in values.entries) {
+      final v = toJson(e.value);
+      if (v == null) continue;
+      query[e.key] = [
+        for (final x in v is List ? v : [v])
+          x is Map || x is List ? jsonEncode(x) : '$x',
+      ];
     }
-    return _exchange(
-      s,
-      caller,
-      operation,
-      method,
-      filled,
-      query,
-      inQuery || rest.isEmpty ? null : _json(rest),
-      headers,
-      withAuth,
+    return query;
+  }
+
+  /// The request that opens the stream of [s] for [caller]: the base URL
+  /// of the environment with the path filled from [params] and the rest
+  /// in the query, checked against the plugin's domains like any request
+  /// (DAT-030), with the auth delegate's token when the source asks for
+  /// it. WebSocket URLs use `wss` (`ws` where cleartext is allowed).
+  Future<StreamRequest> streamRequest(
+    DataSourceSpec s,
+    DataCaller caller,
+    Map<String, Object?> params, {
+    String? lastEventId,
+  }) async {
+    final limits = this.limits();
+    final base = s.baseUrls[environment];
+    if (base == null) {
+      throw DataFailure.unavailable(
+        'source ${s.name} has no base URL for environment $environment',
+      );
+    }
+    final b = Uri.parse(base);
+    final graphql = s.kind == DataKind.graphql;
+    final (path, rest) = fillPath(s, s.path, params);
+    final query = graphql ? <String, List<String>>{} : queryOf(rest);
+    final plain = b.replace(
+      path: '${b.path}$path',
+      queryParameters: query.isEmpty ? null : query,
+    );
+    checkDomain(plain, s, caller);
+    final socket = s.kind != DataKind.sse;
+    final url = socket
+        ? plain.replace(scheme: plain.scheme == 'https' ? 'wss' : 'ws')
+        : plain;
+    String? token;
+    if (s.auth) {
+      token = await auth.token();
+      if (token == null) throw unauthorised(s, 'no signed-in user');
+    }
+    return StreamRequest(
+      kind: socket ? StreamKind.webSocket : StreamKind.sse,
+      url: url,
+      headers: {
+        ...s.headers,
+        if (token != null) 'authorization': 'Bearer $token',
+      },
+      protocols: graphql ? const [graphqlWsProtocol] : const [],
+      lastEventId: lastEventId,
+      maxMessageBytes: limits.streamMessageSize,
+      connectTimeout: limits.requestTimeout,
     );
   }
+
+  /// Refreshes the auth delegate's token after a refused connection;
+  /// whether a token came back.
+  Future<bool> refreshToken() async => await auth.refresh() != null;
 
   Future<Object?> _exchange(
     DataSourceSpec s,
@@ -269,6 +417,7 @@ final class DataClient {
     Map<String, String> headers,
     bool withAuth, {
     bool graphql = false,
+    void Function(int status)? onStatus,
   }) async {
     final limits = this.limits();
     final watch = Stopwatch()..start();
@@ -286,7 +435,7 @@ final class DataClient {
         path: '${b.path}$path',
         queryParameters: query.isEmpty ? null : query,
       );
-      _checkDomain(url, s, caller);
+      checkDomain(url, s, caller);
       final encoded = body == null
           ? null
           : Uint8List.fromList(utf8.encode(jsonEncode(body)));
@@ -316,21 +465,22 @@ final class DataClient {
       String? token;
       if (withAuth) {
         token = await auth.token();
-        if (token == null) throw _unauthorised(s, 'no signed-in user');
+        if (token == null) throw unauthorised(s, 'no signed-in user');
       }
       var res = await send(token);
       if (res.status == 401 && withAuth) {
         token = await auth.refresh();
         if (token == null) {
-          throw _unauthorised(s, 'the token was not refreshed');
+          throw unauthorised(s, 'the token was not refreshed');
         }
         res = await send(token);
         if (res.status == 401) {
-          throw _unauthorised(s, 'the refreshed token was refused');
+          throw unauthorised(s, 'the refreshed token was refused');
         }
       }
       status = res.status;
       bytes = res.bytes;
+      onStatus?.call(status);
       if (status < 200 || status >= 300) {
         throw DataFailure(
           ActionErrorKind.http,
@@ -342,6 +492,7 @@ final class DataClient {
       }
       final json = graphql ? _graphqlData(s, res.json) : res.json;
       result = 'ok';
+      onSuccess?.call();
       return json;
     } finally {
       record(
@@ -363,7 +514,7 @@ final class DataClient {
 
   /// Blocks a request to a host the plugin does not declare, or over
   /// anything but HTTPS, before it leaves, and reports it (DAT-030).
-  void _checkDomain(Uri url, DataSourceSpec s, DataCaller caller) {
+  void checkDomain(Uri url, DataSourceSpec s, DataCaller caller) {
     final scheme =
         url.scheme == 'https' || allowCleartext && url.scheme == 'http';
     if (scheme && domainAllowed(url.host, caller.domains)) return;
@@ -404,7 +555,9 @@ final class DataClient {
     return data;
   }
 
-  static DataFailure _unauthorised(DataSourceSpec s, String why) => DataFailure(
+  /// The failure of a request that needs the user's token and has none
+  /// (PLX-5107).
+  static DataFailure unauthorised(DataSourceSpec s, String why) => DataFailure(
     ActionErrorKind.http,
     PluxErrorCode.dataUnauthorised,
     '${s.name} needs the user\'s token: $why',

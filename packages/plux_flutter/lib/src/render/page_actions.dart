@@ -174,12 +174,19 @@ final class PageActions {
         TriggerKind.appPause => RunTrigger.appLifecycle,
         TriggerKind.pushOpened => RunTrigger.push,
         TriggerKind.hostEvent => RunTrigger.hostEvent,
-        TriggerKind.dataLoaded || TriggerKind.dataFailed => RunTrigger.data,
+        TriggerKind.dataLoaded ||
+        TriggerKind.dataFailed ||
+        TriggerKind.dataMessage ||
+        TriggerKind.dataProgress ||
+        TriggerKind.outboxSynced ||
+        TriggerKind.outboxFailed ||
+        TriggerKind.outboxConflict => RunTrigger.data,
         TriggerKind.error => RunTrigger.error,
       },
       absent: switch (spec.kind) {
         TriggerKind.timer => ConcurrencyPolicy.drop,
-        TriggerKind.stateChange => ConcurrencyPolicy.restart,
+        TriggerKind.stateChange ||
+        TriggerKind.dataProgress => ConcurrencyPolicy.restart,
         _ => ConcurrencyPolicy.queue,
       },
       key: '$path#${spec.kind.name}:${spec.name}',
