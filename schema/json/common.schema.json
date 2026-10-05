@@ -393,6 +393,14 @@
         "secure"
       ]
     },
+    "hostEventDirection": {
+      "description": "Who sends a host event: plugins to the host with `emitHostEvent` (`toHost`, the default), the host into Plux with `Plux.sendEvent` (`toPlux`), or both (HST-013).",
+      "enum": [
+        "toHost",
+        "toPlux",
+        "both"
+      ]
+    },
     "stateEntry": {
       "type": "object",
       "description": "A typed state entry with a default or a computed expression (STA-002, STA-004).",
@@ -427,6 +435,9 @@
           "type": "boolean",
           "description": "Readable and writable by the host (STA-030)."
         },
+        "migration": {
+          "$ref": "#/$defs/stateMigration"
+        },
         "description": {
           "$ref": "#/$defs/description"
         }
@@ -448,6 +459,43 @@
         }
       ],
       "x-plux-type": "StateEntry"
+    },
+    "stateMigration": {
+      "type": "object",
+      "description": "How a persisted state entry whose type changed since the previous release takes its stored value (STA-040): with `from`, the entry's type in the previous release, and `value`, an expression over `previous` (the stored value, of type `from`) giving the new value; or with `reset`, the declared default.",
+      "properties": {
+        "from": {
+          "$ref": "#/$defs/typeExpr"
+        },
+        "value": {
+          "$ref": "#/$defs/expr"
+        },
+        "reset": {
+          "type": "boolean",
+          "description": "Start from the declared default instead of the stored value."
+        },
+        "description": {
+          "$ref": "#/$defs/description"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "required": [
+            "from",
+            "value"
+          ]
+        },
+        {
+          "required": [
+            "reset"
+          ]
+        }
+      ],
+      "x-plux-type": "StateMigration"
     },
     "dataSourceKind": {
       "enum": [

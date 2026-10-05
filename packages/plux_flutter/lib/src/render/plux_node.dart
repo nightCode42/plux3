@@ -26,11 +26,14 @@ import 'package:plux_flutter/src/pxl/types.dart';
 import 'package:plux_flutter/src/render/decoding.dart';
 import 'package:plux_flutter/src/render/generated/render.g.dart';
 import 'package:plux_flutter/src/render/node_context.dart';
-import 'package:plux_flutter/src/render/renderer.dart' show fromHost;
+import 'package:plux_flutter/src/render/renderer.dart'
+    show PluxRenderer, fromHost;
 import 'package:plux_flutter/src/render/scope.dart';
 import 'package:plux_flutter/src/render/sections.dart';
 import 'package:plux_flutter/src/render/values.dart';
 import 'package:plux_flutter/src/schema/registry.g.dart';
+import 'package:plux_flutter/src/state/access.dart';
+import 'package:plux_flutter/src/state/scope_state.dart';
 
 /// Widgets whose output must be a direct child of their parent's render
 /// object (flex and stack parent data, slivers): they are never wrapped in
@@ -143,6 +146,20 @@ final class NodeContextImpl implements NodeContext {
     final app = under('app');
     if (app.isNotEmpty) {
       _ref.watch(appStateProvider.select((s) => _Selected(app, s)));
+    }
+    final plugin = under('plugin');
+    if (plugin.isNotEmpty) {
+      _ref.watch(
+        pluginStateProvider(scope.pluginKey)
+            .select((s) => _Selected(plugin, s)),
+      );
+    }
+    final component = scope.componentState;
+    final mine = under('component');
+    if (component != null && mine.isNotEmpty) {
+      _ref.watch(
+        pageStateProvider(component).select((s) => _Selected(mine, s)),
+      );
     }
   }
 
@@ -448,6 +465,7 @@ final class NodeContextImpl implements NodeContext {
         path: _path,
         roots: s.roots,
         payload: toPxl(payload),
+        state: stateAccess(context, s),
         resolve: (v, roots) => toPxl(
           ValueResolver(
             plugin: s.plugin,
@@ -602,47 +620,77 @@ final class NodeContextImpl implements NodeContext {
           ? toPxl(resolve(given))
           : toPxl(_resolveIn(defaults, cs, declared[k].$default));
     }
-    final state = <String, Object?>{
-      for (final e in component.state ?? const <fbs.StateEntry>[])
-        if (e.computed == 0)
-          cs.string(e.name): toPxl(_resolveIn(defaults, cs, e.$default)),
-    };
-    final parentRoots = scope.roots;
-    Map<String, Object?> roots() => {
-      ...parentRoots(),
-      'props': props,
-      'component': state,
-    };
     final path = '$_path/${uuidString(id)}';
-    final inner = RenderScope(
-      release: scope.release,
-      plugin: bundle,
-      app: scope.app,
-      pluginKey: scope.pluginKey,
-      section: cs,
-      resolver: ValueResolver(
-        plugin: bundle,
-        roots: roots,
-        token: scope.resolver.token,
-        translation: scope.resolver.translation,
-        limits: scope.resolver.limits,
-      ),
-      roots: roots,
-      builders: scope.builders,
-      cache: scope.cache,
-      report: scope.report,
-      services: scope.services,
-      path: path,
-      state: scope.state,
-      fills: (scope: scope, node: node),
-      parent: scope,
-    );
+    final parentRoots = scope.roots;
     final services = scope.services;
     final plugin = scope.pluginKey;
+    final outer = scope;
     return PluxBoundary(
       path: path,
       fallback: (c, e) => services.fallback(c, e, plugin),
-      child: RenderScopeWidget(scope: inner, child: const PluxNode(0)),
+      child: _ComponentInstance(
+        key: ValueKey(path),
+        create: () {
+          final renderer = services;
+          if (renderer is! PluxRenderer) {
+            return PageInstance({
+              for (final e in component.state ?? const <fbs.StateEntry>[])
+                if (e.computed == 0)
+                  cs.string(e.name): toPxl(
+                    _resolveIn(defaults, cs, e.$default),
+                  ),
+            });
+          }
+          return PageInstance(
+            const {},
+            model: renderer.scopeModel(
+              outer.release,
+              identical(bundle, outer.app) ? '' : plugin,
+              StateScopeKind.component,
+              component.state,
+              strings: cs.string,
+              parents: {
+                'app': appStateProvider,
+                'plugin': pluginStateProvider(plugin),
+              },
+              extraRoots: () => {'props': props},
+            ),
+          );
+        },
+        build: (instance, ref) {
+          Map<String, Object?> roots() => {
+            ...parentRoots(),
+            'props': props,
+            'component': ref.read(pageStateProvider(instance)),
+          };
+          final inner = RenderScope(
+            release: outer.release,
+            plugin: bundle,
+            app: outer.app,
+            pluginKey: outer.pluginKey,
+            section: cs,
+            resolver: ValueResolver(
+              plugin: bundle,
+              roots: roots,
+              token: outer.resolver.token,
+              translation: outer.resolver.translation,
+              limits: outer.resolver.limits,
+            ),
+            roots: roots,
+            builders: outer.builders,
+            cache: outer.cache,
+            report: outer.report,
+            services: outer.services,
+            path: path,
+            state: outer.state,
+            fills: (scope: outer, node: node),
+            parent: outer,
+            actions: outer.actions,
+            componentState: instance,
+          );
+          return RenderScopeWidget(scope: inner, child: const PluxNode(0));
+        },
+      ),
     );
   }
 
@@ -862,5 +910,61 @@ final class _Slot implements PluxSlot {
       }
     }
     _node.fire(i, value);
+  }
+}
+
+/// The state a run started by a node of [scope] reads and writes
+/// (STA-001): the app's, the plugin's, the page's or component's, and its
+/// own variables.
+StateAccess? stateAccess(BuildContext context, RenderScope scope) {
+  final renderer = scope.services;
+  if (renderer is! PluxRenderer) return null;
+  final page = scope.state;
+  final component = scope.componentState;
+  return ScopeStateAccess(
+    container: ProviderScope.containerOf(context, listen: false),
+    plugin: scope.pluginKey,
+    page: identical(page, component) ? null : page,
+    component: component,
+    runModel: (entries) => renderer.scopeModel(
+      scope.release,
+      identical(scope.plugin, scope.app) ? '' : scope.pluginKey,
+      StateScopeKind.run,
+      entries,
+      parents: {
+        'app': appStateProvider,
+        'plugin': pluginStateProvider(scope.pluginKey),
+        if (page != null && !identical(page, component))
+          'page': pageStateProvider(page),
+        if (component != null) 'component': pageStateProvider(component),
+      },
+    ),
+  );
+}
+
+/// Holds a component instance's state for as long as the instance is
+/// shown (STA-001).
+final class _ComponentInstance extends ConsumerStatefulWidget {
+  const _ComponentInstance({
+    super.key,
+    required this.create,
+    required this.build,
+  });
+
+  final PageInstance Function() create;
+  final Widget Function(PageInstance instance, WidgetRef ref) build;
+
+  @override
+  ConsumerState<_ComponentInstance> createState() => _ComponentInstanceState();
+}
+
+final class _ComponentInstanceState extends ConsumerState<_ComponentInstance> {
+  late final PageInstance _instance = widget.create();
+
+  @override
+  Widget build(BuildContext context) {
+    // Keeps the instance's state alive while it is shown.
+    ref.listen(pageStateProvider(_instance), (_, _) {});
+    return widget.build(_instance, ref);
   }
 }

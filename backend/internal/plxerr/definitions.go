@@ -240,6 +240,36 @@ var registry = []Definition{
 		"Set maxBackoffMs to at least backoffMs, and remove cancelled from the error kinds it retries.", false,
 	},
 	{
+		StateEntryReadOnly, "STATE_ENTRY_READ_ONLY", SeverityError, "State entry written that cannot be",
+		"A setState, patchState or resetState step names a computed state entry, whose value is derived from other state and recomputed when it changes (STA-004).",
+		"Write the entries the computed entry reads, or declare the entry with a default instead of a computed expression.", false,
+	},
+	{
+		StatePatchNotObject, "STATE_PATCH_NOT_OBJECT", SeverityError, "State patch of a value that is not an object",
+		"A patchState step names a state entry whose type is not a declared object type, so it has no fields to merge (STA-002).",
+		"Use setState to replace the value, or declare the entry with an object type.", false,
+	},
+	{
+		StatePersistenceNotAllowed, "STATE_PERSISTENCE_NOT_ALLOWED", SeverityError, "Persistence that the entry cannot have",
+		"A computed state entry, or a run variable (an action graph's state), declares a persistence other than memory: a computed value is derived again from the state it reads, and a run variable ends with its run (STA-001, STA-003).",
+		"Remove the persistence, or persist the entries the computed value reads.", false,
+	},
+	{
+		StateMigrationRequired, "STATE_MIGRATION_REQUIRED", SeverityError, "Stored state changes type without a migration",
+		"A session, persisted or secure state entry has another type than in the previous release and declares no migration, so devices could not read the value they stored (STA-040).",
+		"Declare a migration on the entry: `from` the previous type with an expression `value` over `previous`, or `reset: true` to start from the default.", false,
+	},
+	{
+		StateMigrationMismatch, "STATE_MIGRATION_MISMATCH", SeverityError, "State migration from a type the previous release did not have",
+		"A state entry's migration declares `from` a type other than the entry's type in the previous release, so it would never run on the values devices stored (STA-040).",
+		"Set `from` to the entry's type in the previous release, or use `reset: true`.", false,
+	},
+	{
+		StateMigrationInvalid, "STATE_MIGRATION_INVALID", SeverityError, "State migration that can never run",
+		"A state entry declares a migration although it is computed or kept only in memory, or its migration says `reset: false`, or migrates `from` the type the entry already has (STA-040).",
+		"Remove the migration, or give the entry a session, persisted or secure persistence and its previous type in `from`.", false,
+	},
+	{
 		DataSourceConfigInvalid, "DATA_SOURCE_CONFIG_INVALID", SeverityError, "Invalid data source configuration",
 		"The configuration of a REST or GraphQL data source, or of one of its operations, is not what the data layer runs: a property is unknown or missing, the method, path or GraphQL document is malformed, the base URL names no string variable, a cache policy or TTL is invalid, or an operation's input or output type is unknown (DAT-001, DAT-003, DAT-010, ADR-0048).",
 		"Correct the configuration as the data sources reference describes; the message names the property.", false,
@@ -713,6 +743,41 @@ var registry = []Definition{
 		DataCacheUnavailable, "DATA_CACHE_UNAVAILABLE", SeverityWarning, "Response cache unavailable",
 		"The response cache could not be read or written, or its encryption key could not be obtained; the request goes to the network as with networkOnly, and nothing is stored in the clear (DAT-010, LIM-004).",
 		"Check the device's free storage and the key provider; the runtime keeps working without the cache.", false,
+	},
+	{
+		StateWriteTypeMismatch, "STATE_WRITE_TYPE_MISMATCH", SeverityError, "State written with a value of the wrong type",
+		"A state write received a value from outside the bundle (an API response, a custom action, the host) that does not have the entry's declared type; the step fails with a validation error and the entry keeps its value (STA-002).",
+		"Map the value to the declared type before writing it, or handle the step's error with onError.", false,
+	},
+	{
+		StateWriteRefused, "STATE_WRITE_REFUSED", SeverityError, "State write refused",
+		"A state write names a path its scope does not have or a computed entry, or patches an entry that is not an object; the step fails and nothing changes (STA-001, STA-004).",
+		"Check the path against the entries the page, component, plugin, app or run declares; the compiler reports this for literal paths (PLX-1140, PLX-1141).", false,
+	},
+	{
+		StateStoreUnavailable, "STATE_STORE_UNAVAILABLE", SeverityWarning, "State store unavailable",
+		"The runtime could not open or write its local state store, or could not obtain the store's key from the platform's secure storage; session, persisted and secure entries are kept in memory until the store works again (STA-003).",
+		"Check the device's free space and the platform's secure storage; the message names the failing operation, never a value.", false,
+	},
+	{
+		StateStoreCorrupt, "STATE_STORE_CORRUPT", SeverityError, "State store failed authentication",
+		"The local state store did not decrypt under its key: it was altered, truncated or written by another installation. It is discarded, and every stored entry starts from its default (STA-003).",
+		"Nothing to fix in the app; if it repeats, check the device for tampering with the app's storage.", false,
+	},
+	{
+		StateMigrationFailed, "STATE_MIGRATION_FAILED", SeverityWarning, "Stored state could not be migrated",
+		"A stored value had neither the entry's type nor the type its migration reads, or the migration failed; the entry starts from its default (STA-040).",
+		"Declare a migration from the previous type, and check that it handles every stored value.", false,
+	},
+	{
+		StateLimitExceeded, "STATE_LIMIT_EXCEEDED", SeverityError, "Stored state over its limit",
+		"The values to store exceed state.persistedBytes or state.secureBytes; the write takes effect in memory but is not stored, so it is lost when the app is closed (LIM-001, LIM-004).",
+		"Store less, for example by keeping large data in a local collection, or raise the limit for the app.", false,
+	},
+	{
+		HostEventRefused, "HOST_EVENT_REFUSED", SeverityError, "Host event refused",
+		"Plux.sendEvent named an event the app does not declare for the host to send (direction toPlux or both), or a payload without the event's fields and types; nothing runs (HST-013).",
+		"Declare the event in the app's hostEvents with the direction toPlux or both; plux codegen generates typed senders that make this a compile error.", false,
 	},
 
 	// Security.

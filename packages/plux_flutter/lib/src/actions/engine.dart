@@ -24,6 +24,7 @@ import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/navigation/router.dart';
 import 'package:plux_flutter/src/render/sections.dart';
+import 'package:plux_flutter/src/state/access.dart';
 
 /// Records a telemetry event, as `TelemetryRecorder.record` does.
 typedef RecordEvent = void Function(
@@ -261,6 +262,7 @@ final class ActionHost {
     ConcurrencyPolicy absent = ConcurrencyPolicy.drop,
     String? key,
     bool errorHandler = false,
+    StateAccess? state,
   }) {
     unawaited(
       fireFor(
@@ -274,6 +276,7 @@ final class ActionHost {
         absent: absent,
         key: key,
         errorHandler: errorHandler,
+        state: state,
       ),
     );
   }
@@ -292,6 +295,7 @@ final class ActionHost {
     ConcurrencyPolicy absent = ConcurrencyPolicy.drop,
     String? key,
     bool errorHandler = false,
+    StateAccess? state,
   }) async {
     if (_disposed) return null;
     final graph = this.graph(handler.graph, bundle, path, resolve);
@@ -310,6 +314,7 @@ final class ActionHost {
       ),
       detached: handler.detached,
       errorHandler: errorHandler,
+      state: state,
     );
   }
 
@@ -364,6 +369,7 @@ final class ActionHost {
     RunPolicy policy = RunPolicy.drop,
     bool detached = false,
     bool errorHandler = false,
+    StateAccess? state,
   }) async {
     if (_disposed) return null;
     Future<RunResult?> launch() => _launch(
@@ -375,6 +381,7 @@ final class ActionHost {
       trigger: trigger,
       detached: detached,
       errorHandler: errorHandler,
+      state: state,
     );
     switch (policy.kind) {
       case ConcurrencyPolicy.parallel:
@@ -452,6 +459,7 @@ final class ActionHost {
     required RunTrigger trigger,
     required bool detached,
     required bool errorHandler,
+    required StateAccess? state,
   }) async {
     final buffer = traces;
     final tracer = buffer == null
@@ -460,7 +468,7 @@ final class ActionHost {
     final run = ActionRun(
       graph: graph,
       roots: roots,
-      context: context,
+      context: state == null ? context : context.withState(state),
       limits: limits,
       event: event,
       tracer: tracer,

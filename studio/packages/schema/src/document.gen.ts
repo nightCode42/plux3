@@ -27,6 +27,8 @@ export interface ActionGraphDocument {
   readonly inputs?: readonly Param[];
   /** Type expression of SCH-010, e.g. `string`, `decimal?`, `list<Transaction>`, `map<string,int>`. */
   readonly output?: string;
+  /** The run's variables: state of scope `run`, read and written as `run.<name>` by the graph's steps and gone when the run ends (STA-001). */
+  readonly state?: readonly StateEntry[];
   readonly steps: readonly Step[];
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
@@ -366,11 +368,16 @@ export interface HostEventDecl {
   /** Identifier used in PXL and generated code: lowerCamelCase. */
   readonly name: string;
   readonly fields?: readonly Field[];
+  /** Who sends a host event: plugins to the host with `emitHostEvent` (`toHost`, the default), the host into Plux with `Plux.sendEvent` (`toPlux`), or both (HST-013). */
+  readonly direction?: HostEventDirection;
   /** Human-readable description. */
   readonly description?: string;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
+
+/** Who sends a host event: plugins to the host with `emitHostEvent` (`toHost`, the default), the host into Plux with `Plux.sendEvent` (`toPlux`), or both (HST-013). */
+export type HostEventDirection = "toHost" | "toPlux" | "both";
 
 /** An uploaded image or a generated monogram (SCH-020). */
 export interface Icon {
@@ -738,6 +745,22 @@ export interface StateEntry {
   readonly sensitive?: boolean;
   /** Readable and writable by the host (STA-030). */
   readonly exposed?: boolean;
+  /** How a persisted state entry whose type changed since the previous release takes its stored value (STA-040): with `from`, the entry's type in the previous release, and `value`, an expression over `previous` (the stored value, of type `from`) giving the new value; or with `reset`, the declared default. */
+  readonly migration?: StateMigration;
+  /** Human-readable description. */
+  readonly description?: string;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** How a persisted state entry whose type changed since the previous release takes its stored value (STA-040): with `from`, the entry's type in the previous release, and `value`, an expression over `previous` (the stored value, of type `from`) giving the new value; or with `reset`, the declared default. */
+export interface StateMigration {
+  /** Type expression of SCH-010, e.g. `string`, `decimal?`, `list<Transaction>`, `map<string,int>`. */
+  readonly from?: string;
+  /** PXL binding (SCH-011). */
+  readonly value?: Expr;
+  /** Start from the declared default instead of the stored value. */
+  readonly reset?: boolean;
   /** Human-readable description. */
   readonly description?: string;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */

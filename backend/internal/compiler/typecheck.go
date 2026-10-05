@@ -271,6 +271,7 @@ func (t *typer) computed(pl *plugin, entries []schema.StateEntry, file string, s
 		if st.Computed != nil {
 			t.compile(st.Computed.Expr, s, from, file, plxerr.Pointer("state", strconv.Itoa(i), "computed"))
 		}
+		t.compileMigration(pl, &entries[i], s, from, file, plxerr.Pointer("state", strconv.Itoa(i)))
 	}
 }
 
@@ -536,6 +537,14 @@ func (t *typer) graph(g *graph, s *scope) {
 		if te := t.u.checkTypeIn(t.u.types, g.plugin, known, g.eventType, g.file, g.ptr); te != nil {
 			s = s.with("event", te.String())
 		}
+	}
+	if g.doc != nil && len(g.doc.State) > 0 {
+		// The run's variables (STA-001).
+		vars, ids := t.stateFields(g.plugin, g.doc.State, g.file)
+		s = s.with("run", "PluxRunState").withTypes(map[string]pxl.TypeSpec{"PluxRunState": objectType(vars)})
+		s.ids = cloneIDs(s.ids)
+		s.ids["run"] = ids
+		t.computed(g.plugin, g.doc.State, g.file, s)
 	}
 	steps := map[string]pxl.TypeSpec{}
 	var fields [][2]string

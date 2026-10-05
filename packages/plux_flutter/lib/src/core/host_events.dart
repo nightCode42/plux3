@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 /// Host events (HST-013): the typed events plugins send to the host with
-/// `emitHostEvent`, declared in the app document's `hostEvents`.
+/// `emitHostEvent`, and those the host sends into Plux with
+/// `Plux.sendEvent`, declared in the app document's `hostEvents`.
 library;
 
 /// An event a plugin emitted. Listen with `Plux.events`; `plux codegen`
@@ -22,4 +23,13 @@ final class PluxHostEvent {
 
   @override
   String toString() => 'PluxHostEvent($name, $payload)';
+}
+
+/// Receives the events the host sends into Plux with `Plux.sendEvent`
+/// (HST-013); the action engine's host-event trigger implements it.
+abstract interface class HostEventSink {
+  /// Delivers [event], whose payload is in its JSON form; returns whether
+  /// the app declares the event for the host to send and its payload has
+  /// the declared fields and types. A refused event runs nothing.
+  bool deliver(PluxHostEvent event);
 }

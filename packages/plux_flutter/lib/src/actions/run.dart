@@ -22,6 +22,7 @@ import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/render/values.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
 import 'package:plux_flutter/src/schema/registry.g.dart';
+import 'package:plux_flutter/src/state/access.dart';
 
 /// The bounds of runs (ACT-005, ACT-003, ACT-030, LIM-001).
 final class ActionLimits {
@@ -242,8 +243,36 @@ final class ActionRun {
   /// runs (ACT-004).
   void cancel() => _token.cancel();
 
+  late StepContext _ctx = context;
+  RunVariables? _vars;
+
   /// Executes the run. It never throws: every failure is in the result.
+  /// The run's variables (STA-001) live until it ends.
   Future<RunResult> execute() async {
+    RunVariables? vars;
+    try {
+      final state = context.state;
+      vars = _vars = state is StateAccess ? state.openRun(graph.state) : null;
+    } on Object catch (e) {
+      return RunResult(
+        RunOutcome.failed,
+        error: ActionError(
+          ActionErrorKind.custom,
+          PluxErrorCode.stateWriteRefused,
+          'the run variables cannot be opened: $e',
+        ),
+        steps: 0,
+      );
+    }
+    if (vars != null) _ctx = context.withState(vars.access);
+    try {
+      return await _execute();
+    } finally {
+      vars?.close();
+    }
+  }
+
+  Future<RunResult> _execute() async {
     // The engine's own time: waits for the user are not counted.
     _clock.start();
     final end = graph.steps.isEmpty
@@ -307,7 +336,7 @@ final class ActionRun {
           optimistic ??= _optimistic(descriptor, inputs);
           final work = handler is StructuralHandler
               ? _structural(handler.action, f, step, inputs, token)
-              : handler.run(context, inputs);
+              : handler.run(_ctx, inputs);
           if (work is StepResult) {
             // Done synchronously: nothing to bound or cancel.
             result = work;
@@ -479,11 +508,13 @@ final class ActionRun {
       if (descriptor != null)
         for (final e in descriptor.inputs.entries) e.value: e.key,
     };
+    final vars = _vars;
     final scope = {
       ...f.roots(),
       ...f.extra,
       'event': f.event,
       'steps': f.steps,
+      if (vars != null) 'run': vars.values,
     };
     return {
       for (final e in step.inputs.entries)

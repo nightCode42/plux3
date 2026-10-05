@@ -1,0 +1,62 @@
+{
+  "description": "Adds a run variable to the app counter and counts the visit.",
+  "id": "01f0c450-6c00-7000-8000-000000000505",
+  "key": "bump",
+  "kind": "actionGraph",
+  "schemaVersion": "1.0.0",
+  "state": [
+    {
+      "default": 4,
+      "id": "01f0c450-6c00-7000-8000-00000000050d",
+      "name": "step",
+      "type": "int"
+    }
+  ],
+  "steps": [
+    {
+      "action": "setState",
+      "id": "more",
+      "input": {
+        "path": "run.step",
+        "value": {
+          "$expr": "run.step + 1"
+        }
+      },
+      "next": "add"
+    },
+    {
+      "action": "setState",
+      "id": "add",
+      "input": {
+        "path": "app.counter",
+        "value": {
+          "$expr": "app.counter + run.step"
+        }
+      },
+      "next": "visit"
+    },
+    {
+      "action": "setState",
+      "id": "visit",
+      "input": {
+        "path": "plugin.visits",
+        "value": {
+          "$expr": "plugin.visits + 1"
+        }
+      },
+      "next": "tell"
+    },
+    {
+      "action": "emitHostEvent",
+      "id": "tell",
+      "input": {
+        "event": "saved",
+        "payload": {
+          "count": {
+            "$expr": "app.counter"
+          }
+        }
+      }
+    }
+  ]
+}

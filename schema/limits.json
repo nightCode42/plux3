@@ -1117,6 +1117,46 @@
       "description": "Page and component sections the runtime keeps decoded."
     },
     {
+      "key": "state.persistedBytes",
+      "unit": "bytes",
+      "default": 1048576,
+      "max": 16777216,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "STA-003",
+        "LIM-004"
+      ],
+      "description": "Bytes the persisted state of one app may take in the runtime's local store, encrypted; writes beyond it stay in memory and are reported."
+    },
+    {
+      "key": "state.secureBytes",
+      "unit": "bytes",
+      "default": 65536,
+      "max": 1048576,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "runtime"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "STA-003",
+        "LIM-004"
+      ],
+      "description": "Bytes the secure state of one app may take in the runtime's local store, encrypted; writes beyond it stay in memory and are reported."
+    },
+    {
       "key": "telemetry.bufferBytes",
       "unit": "bytes",
       "default": 262144,

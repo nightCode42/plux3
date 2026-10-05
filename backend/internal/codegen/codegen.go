@@ -400,8 +400,9 @@ func (g *gen) components(b *bytes.Buffer) error {
 	return nil
 }
 
-// events writes a class per declared host event and PluxHostEvents, their
-// typed streams (HST-013).
+// events writes a class per declared host event and PluxHostEvents: the
+// typed streams of the events plugins send, and a typed sender for each
+// event the host sends into Plux (HST-013).
 func (g *gen) events(b *bytes.Buffer) error {
 	evs := append([]schema.HostEventDecl(nil), g.app.HostEvents...)
 	if len(evs) == 0 {
@@ -413,18 +414,37 @@ func (g *gen) events(b *bytes.Buffer) error {
 		if e.Description != "" {
 			doc = e.Description
 		}
-		if err := g.record(b, upper(e.Name)+"Event", doc, e.Fields, "", false); err != nil {
+		if err := g.record(b, upper(e.Name)+"Event", doc, e.Fields, "", toPlux(e)); err != nil {
 			return fmt.Errorf("host event %s: %w", e.Name, err)
 		}
 	}
-	b.WriteString("\n/// The typed events plugins emit with `emitHostEvent` (HST-013).\nabstract final class PluxHostEvents {\n")
-	for i, e := range evs {
+	b.WriteString("\n/// The typed host events: those plugins emit with `emitHostEvent`, and\n/// those the host sends into Plux (HST-013).\nabstract final class PluxHostEvents {\n")
+	i := 0
+	for _, e := range evs {
 		class := upper(e.Name) + "Event"
-		fmt.Fprintf(b, "%s  /// The `%s` events.\n  static Stream<%s> get %s =>\n      plux.Plux.eventsNamed('%s').map((e) => %s.fromJson(e.payload));\n",
-			sep(i), e.Name, class, member(e.Name), e.Name, class)
+		if toHost(e) {
+			fmt.Fprintf(b, "%s  /// The `%s` events.\n  static Stream<%s> get %s =>\n      plux.Plux.eventsNamed('%s').map((e) => %s.fromJson(e.payload));\n",
+				sep(i), e.Name, class, member(e.Name), e.Name, class)
+			i++
+		}
+		if toPlux(e) {
+			fmt.Fprintf(b, "%s  /// Sends a `%s` event into Plux; completes with whether it was\n  /// accepted.\n  static Future<bool> send%s(%s event) =>\n      plux.Plux.sendEvent('%s', event.toJson());\n",
+				sep(i), e.Name, upper(e.Name), class, e.Name)
+			i++
+		}
 	}
 	b.WriteString("}\n")
 	return nil
+}
+
+// toHost reports whether plugins send an event to the host.
+func toHost(e schema.HostEventDecl) bool {
+	return e.Direction != schema.HostEventDirectionToPlux
+}
+
+// toPlux reports whether the host sends an event into Plux.
+func toPlux(e schema.HostEventDecl) bool {
+	return e.Direction == schema.HostEventDirectionToPlux || e.Direction == schema.HostEventDirectionBoth
 }
 
 // state writes PluxAppState: a typed handle per exposed app state entry

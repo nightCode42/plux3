@@ -10,6 +10,7 @@ import 'package:plux_flutter/src/actions/engine.dart';
 import 'package:plux_flutter/src/actions/graph.dart';
 import 'package:plux_flutter/src/actions/handlers.dart';
 import 'package:plux_flutter/src/actions/run.dart';
+import 'package:plux_flutter/src/actions/state_handlers.dart';
 import 'package:plux_flutter/src/render/values.dart';
 import 'package:plux_flutter/src/schema/registry.g.dart';
 
@@ -464,7 +465,7 @@ void main() {
   test('the engine runs every action Appendix D tags up to P4 and the P5 ones delivered so far, and refuses the rest (ADR-0039)', () {
     for (final d in actionDescriptors) {
       final handler = handlerFor(d);
-      if (runsInThisRuntime(d)) {
+      if (runsInThisRuntime(d) || stateHandlers.containsKey(d.name)) {
         expect(handler, isNot(isA<RefusingHandler>()), reason: d.name);
         expect(int.parse(d.phase.substring(1)), lessThanOrEqualTo(5));
       } else {
@@ -490,8 +491,11 @@ void main() {
         'openBottomSheet',
         'openDialog',
         'parallel',
+        'patchState',
         'pop',
         'refreshData',
+        'resetState',
+        'setState',
         'stop',
         'switch',
         'switchTab',

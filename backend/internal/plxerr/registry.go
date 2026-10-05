@@ -67,6 +67,12 @@ const (
 	DataMappingInvalid         Code = 1172
 	DataPaginationInvalid      Code = 1173
 	DataSourceSecretHeader     Code = 1174
+	StateEntryReadOnly         Code = 1140
+	StatePatchNotObject        Code = 1141
+	StatePersistenceNotAllowed Code = 1142
+	StateMigrationRequired     Code = 1143
+	StateMigrationMismatch     Code = 1144
+	StateMigrationInvalid      Code = 1145
 	UnknownRoute               Code = 1201
 	RouteParameterMissing      Code = 1203
 	RouteParameterTypeInvalid  Code = 1204
@@ -167,16 +173,23 @@ const (
 
 	// Data sources (PLX-5100–5199, P5 R4).
 
-	DataDomainBlocked     Code = 5100
-	DataNetworkFailed     Code = 5101
-	DataHTTPError         Code = 5102
-	DataRequestTimeout    Code = 5103
-	DataMappingFailed     Code = 5104
-	DataSizeExceeded      Code = 5105
-	DataGraphQLError      Code = 5106
-	DataUnauthorised      Code = 5107
-	DataSourceUnavailable Code = 5108
-	DataCacheUnavailable  Code = 5109
+	DataDomainBlocked      Code = 5100
+	DataNetworkFailed      Code = 5101
+	DataHTTPError          Code = 5102
+	DataRequestTimeout     Code = 5103
+	DataMappingFailed      Code = 5104
+	DataSizeExceeded       Code = 5105
+	DataGraphQLError       Code = 5106
+	DataUnauthorised       Code = 5107
+	DataSourceUnavailable  Code = 5108
+	DataCacheUnavailable   Code = 5109
+	StateWriteTypeMismatch Code = 5301
+	StateWriteRefused      Code = 5302
+	StateStoreUnavailable  Code = 5303
+	StateStoreCorrupt      Code = 5304
+	StateMigrationFailed   Code = 5305
+	StateLimitExceeded     Code = 5306
+	HostEventRefused       Code = 5307
 
 	// Security (PLX-6000–6999).
 

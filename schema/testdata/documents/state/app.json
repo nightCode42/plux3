@@ -1,0 +1,113 @@
+{
+  "defaultLocale": "en",
+  "entryRoute": "home",
+  "environments": [
+    {
+      "key": "production",
+      "name": "Production"
+    }
+  ],
+  "hostEvents": [
+    {
+      "description": "The host asks the plugin to add to the counter.",
+      "direction": "toPlux",
+      "fields": [
+        {
+          "name": "by",
+          "type": "int"
+        }
+      ],
+      "name": "refresh"
+    },
+    {
+      "description": "The counter was saved.",
+      "direction": "both",
+      "fields": [
+        {
+          "name": "count",
+          "type": "int"
+        }
+      ],
+      "name": "saved"
+    },
+    {
+      "description": "The plugin was opened.",
+      "fields": [],
+      "name": "opened"
+    }
+  ],
+  "icon": {
+    "monogram": {
+      "background": "#0B6E4F",
+      "text": "ST"
+    }
+  },
+  "id": "01f0c450-6c00-7000-8000-000000000501",
+  "key": "state",
+  "kind": "app",
+  "minRuntimeVersion": "0.3.0",
+  "name": "State",
+  "plugins": [
+    "notes"
+  ],
+  "schemaVersion": "1.0.0",
+  "securityProfile": "standard",
+  "state": [
+    {
+      "default": 0,
+      "exposed": true,
+      "id": "01f0c450-6c00-7000-8000-000000000507",
+      "name": "counter",
+      "persistence": "persisted",
+      "type": "int"
+    },
+    {
+      "default": "light",
+      "exposed": true,
+      "id": "01f0c450-6c00-7000-8000-000000000508",
+      "name": "theme",
+      "persistence": "session",
+      "type": "string"
+    },
+    {
+      "default": "",
+      "id": "01f0c450-6c00-7000-8000-000000000509",
+      "name": "token",
+      "persistence": "secure",
+      "sensitive": true,
+      "type": "string"
+    },
+    {
+      "computed": {
+        "$expr": "app.counter * 2"
+      },
+      "exposed": true,
+      "id": "01f0c450-6c00-7000-8000-00000000050a",
+      "name": "doubled",
+      "type": "int"
+    },
+    {
+      "default": 0,
+      "id": "01f0c450-6c00-7000-8000-000000000530",
+      "migration": {
+        "from": "string",
+        "value": {
+          "$expr": "len(previous)"
+        }
+      },
+      "name": "level",
+      "persistence": "persisted",
+      "type": "int"
+    }
+  ],
+  "supportedLocales": [
+    "en"
+  ],
+  "sync": {
+    "activation": "atSafePoint",
+    "startup": {
+      "mode": "useCacheThenSync"
+    }
+  },
+  "theme": "01f0c450-6c00-7000-8000-000000000502"
+}

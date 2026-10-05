@@ -44,6 +44,8 @@ void main() {
       'loan-calculator/loans.pxb',
       'routing/nav.pxb',
       'routing/routing.pxb',
+      'state/notes.pxb',
+      'state/state.pxb',
       'widgets/gallery.pxb',
       'widgets/widgets.pxb',
     ]);
@@ -61,6 +63,7 @@ void main() {
                       path.contains('/loans') ||
                       path.contains('/nav') ||
                       path.contains('/shop') ||
+                      path.contains('/notes') ||
                       path.contains('/gallery')
                   ? 1
                   : 2),
@@ -72,18 +75,13 @@ void main() {
       final meta = fbs.Meta(b.ofKind(SectionKind.meta).single.data);
       expect(meta.compilerVersion, 'dev', reason: path);
       expect(meta.schemaVersion, '1.0.0', reason: path);
-      // The routing project uses what runtime 0.2.0 brings (ADR-0040),
-      // and the data project raises data.v1 above its minimum of 0.2.0
-      // (ADR-0048); the loan-calculator and features projects use
-      // lifecycle handlers and R1's actions, which runtime 0.3.0 is the
-      // first to run.
+      // The data project raises data.v1 above its minimum of 0.2.0
+      // (ADR-0048); every other project uses what runtime 0.3.0 is the
+      // first to run: lifecycle handlers and R1's actions, or state writes
+      // and stored state (ADR-0045, ADR-0046).
       expect(
         meta.minRuntime,
-        ['loan-calculator/', 'features/'].any(path.startsWith)
-            ? '0.3.0'
-            : ['routing/', 'data/'].any(path.startsWith)
-            ? '0.2.0'
-            : '0.1.0',
+        path.startsWith('data/') ? '0.2.0' : '0.3.0',
         reason: path,
       );
       expect(meta.requiredFeatures, isNotNull, reason: path);

@@ -37,6 +37,7 @@ A named action graph: page-scoped when `page` is set, otherwise a plugin flow ca
 | `exported` | boolean |  | Callable from other plugins (ACT-061). |
 | `inputs` | list of [Param](#param) |  |  |
 | `output` | string |  | Type expression of SCH-010, e.g. `string`, `decimal?`, `list<Transaction>`, `map<string,int>`. |
+| `state` | list of [StateEntry](#stateentry) |  | The run's variables: state of scope `run`, read and written as `run.<name>` by the graph's steps and gone when the run ends (STA-001). |
 | `steps` | list of [Step](#step) | yes |  |
 
 ### ActivationPolicy
@@ -344,7 +345,14 @@ A typed event plugins send to the host app with `emitHostEvent`; `plux codegen` 
 |---|---|---|---|
 | `name` | string | yes | Identifier used in PXL and generated code: lowerCamelCase. |
 | `fields` | list of [Field](#field) |  |  |
+| `direction` | [HostEventDirection](#hosteventdirection) |  | Who sends a host event: plugins to the host with `emitHostEvent` (`toHost`, the default), the host into Plux with `Plux.sendEvent` (`toPlux`), or both (HST-013). |
 | `description` | string |  | Human-readable description. |
+
+### HostEventDirection
+
+Who sends a host event: plugins to the host with `emitHostEvent` (`toHost`, the default), the host into Plux with `Plux.sendEvent` (`toPlux`), or both (HST-013).
+
+One of `toHost`, `toPlux`, `both`.
 
 ### Icon
 
@@ -679,6 +687,18 @@ A typed state entry with a default or a computed expression (STA-002, STA-004).
 | `persistence` | [Persistence](#persistence) |  | Where a state entry lives (STA-003). |
 | `sensitive` | boolean |  |  |
 | `exposed` | boolean |  | Readable and writable by the host (STA-030). |
+| `migration` | [StateMigration](#statemigration) |  | How a persisted state entry whose type changed since the previous release takes its stored value (STA-040): with `from`, the entry's type in the previous release, and `value`, an expression over `previous` (the stored value, of type `from`) giving the new value; or with `reset`, the declared default. |
+| `description` | string |  | Human-readable description. |
+
+### StateMigration
+
+How a persisted state entry whose type changed since the previous release takes its stored value (STA-040): with `from`, the entry's type in the previous release, and `value`, an expression over `previous` (the stored value, of type `from`) giving the new value; or with `reset`, the declared default.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `from` | string |  | Type expression of SCH-010, e.g. `string`, `decimal?`, `list<Transaction>`, `map<string,int>`. |
+| `value` | [Expr](#expr) |  | PXL binding (SCH-011). |
+| `reset` | boolean |  | Start from the declared default instead of the stored value. |
 | `description` | string |  | Human-readable description. |
 
 ### StateWatcher

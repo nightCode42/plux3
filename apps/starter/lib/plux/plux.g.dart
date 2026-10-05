@@ -88,7 +88,8 @@ final class PlaceSharedEvent {
   final String name;
 }
 
-/// The typed events plugins emit with `emitHostEvent` (HST-013).
+/// The typed host events: those plugins emit with `emitHostEvent`, and
+/// those the host sends into Plux (HST-013).
 abstract final class PluxHostEvents {
   /// The `placeShared` events.
   static Stream<PlaceSharedEvent> get placeShared =>

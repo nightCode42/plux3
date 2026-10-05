@@ -44,18 +44,44 @@ final class PluxScreen<R> {
 /// The app's pages by route name (NAV-003, HST-030).
 abstract final class PluxScreens {
   /// A page with a long description.
-  static PluxScreen<void> class$() =>
-      PluxScreen<void>._('class', {}, (_) {});
+  static PluxScreen<void> class$() => PluxScreen<void>._('class', {}, (_) {});
 
   /// The page `to-string`.
-  static PluxScreen<List<ShopPoint>> toString$({required ShopPoint at, int? count, Mode? mode, required Map<String, List<int>> tags, DateTime? when$}) =>
-      PluxScreen<List<ShopPoint>>._('to-string', {'at': at.toJson(), 'count': ?count, 'mode': ?_nullable(mode, (e) => e.json), 'tags': tags, 'when': ?_nullable(when$, (e) => _dateJson(e))}, (j) => _nullable(j, (j) => [for (final e0 in j as List<Object?>) ShopPoint.fromJson(e0 as Map<String, Object?>)]));
+  static PluxScreen<List<ShopPoint>> toString$({
+    required ShopPoint at,
+    int? count,
+    Mode? mode,
+    required Map<String, List<int>> tags,
+    DateTime? when$,
+  }) => PluxScreen<List<ShopPoint>>._(
+    'to-string',
+    {
+      'at': at.toJson(),
+      'count': ?count,
+      'mode': ?_nullable(mode, (e) => e.json),
+      'tags': tags,
+      'when': ?_nullable(when$, (e) => _dateJson(e)),
+    },
+    (j) => _nullable(
+      j,
+      (j) => [
+        for (final e0 in j as List<Object?>)
+          ShopPoint.fromJson(e0 as Map<String, Object?>),
+      ],
+    ),
+  );
 }
 
 /// The components plugins export, shown inline by name (NAV-004).
 abstract final class PluxComponents {
   /// The component `badge`.
-  static plux.PluxView badge({required String key$, w.Color? tint, w.Key? key, void Function(plux.PluxViewEvent event)? onEvent, plux.PluxViewSizing sizing = plux.PluxViewSizing.intrinsic}) => plux.PluxView(
+  static plux.PluxView badge({
+    required String key$,
+    w.Color? tint,
+    w.Key? key,
+    void Function(plux.PluxViewEvent event)? onEvent,
+    plux.PluxViewSizing sizing = plux.PluxViewSizing.intrinsic,
+  }) => plux.PluxView(
     'badge',
     key: key,
     inputs: {'key': key$, 'tint': ?_nullable(tint, (e) => _colorJson(e))},
@@ -79,7 +105,16 @@ final class DoneEvent {
   const DoneEvent({required this.at, this.points});
 
   /// The value of JSON form [json].
-  factory DoneEvent.fromJson(Map<String, Object?> json) => DoneEvent(at: DateTime.parse(json['at'] as String), points: _nullable(json['points'], (e) => [for (final e1 in e as List<Object?>) Point.fromJson(e1 as Map<String, Object?>)]));
+  factory DoneEvent.fromJson(Map<String, Object?> json) => DoneEvent(
+    at: DateTime.parse(json['at'] as String),
+    points: _nullable(
+      json['points'],
+      (e) => [
+        for (final e1 in e as List<Object?>)
+          Point.fromJson(e1 as Map<String, Object?>),
+      ],
+    ),
+  );
 
   /// The field `at`.
   final DateTime at;
@@ -88,11 +123,13 @@ final class DoneEvent {
   final List<Point>? points;
 }
 
-/// The typed events plugins emit with `emitHostEvent` (HST-013).
+/// The typed host events: those plugins emit with `emitHostEvent`, and
+/// those the host sends into Plux (HST-013).
 abstract final class PluxHostEvents {
   /// The `default` events.
   static Stream<DefaultEvent> get default$ =>
-      plux.Plux.eventsNamed('default').map((e) => DefaultEvent.fromJson(e.payload));
+      plux.Plux.eventsNamed('default')
+          .map((e) => DefaultEvent.fromJson(e.payload));
 
   /// The `done` events.
   static Stream<DoneEvent> get done =>
@@ -144,14 +181,22 @@ abstract final class PluxAppState {
   /// The app state entry `modes`.
   static final modes = PluxTypedState<Map<String, Mode?>>._(
     'modes',
-    (j) => {for (final e0 in (j as Map<String, Object?>).entries) e0.key: _nullable(e0.value, (e) => Mode.fromJson(e as String))},
-    (v) => {for (final e0 in v.entries) e0.key: _nullable(e0.value, (e) => e.json)},
+    (j) => {
+      for (final e0 in (j as Map<String, Object?>).entries)
+        e0.key: _nullable(e0.value, (e) => Mode.fromJson(e as String)),
+    },
+    (v) => {
+      for (final e0 in v.entries) e0.key: _nullable(e0.value, (e) => e.json),
+    },
   );
 
   /// The app state entry `path`.
   static final path = PluxTypedState<List<Point>>._(
     'path',
-    (j) => [for (final e0 in j as List<Object?>) Point.fromJson(e0 as Map<String, Object?>)],
+    (j) => [
+      for (final e0 in j as List<Object?>)
+        Point.fromJson(e0 as Map<String, Object?>),
+    ],
     (v) => [for (final e0 in v) e0.toJson()],
   );
 
@@ -226,7 +271,8 @@ final class PluxFlagsType {
   const PluxFlagsType({required this.on$});
 
   /// The value of JSON form [json].
-  factory PluxFlagsType.fromJson(Map<String, Object?> json) => PluxFlagsType(on$: json['on'] as bool);
+  factory PluxFlagsType.fromJson(Map<String, Object?> json) =>
+      PluxFlagsType(on$: json['on'] as bool);
 
   /// The field `on`.
   final bool on$;
@@ -241,7 +287,11 @@ final class Point {
   const Point({this.toJson$, required this.x, required this.y});
 
   /// The value of JSON form [json].
-  factory Point.fromJson(Map<String, Object?> json) => Point(toJson$: _nullable(json['toJson'], (e) => e as String), x: json['x'] as int, y: json['y'] as int);
+  factory Point.fromJson(Map<String, Object?> json) => Point(
+    toJson$: _nullable(json['toJson'], (e) => e as String),
+    x: json['x'] as int,
+    y: json['y'] as int,
+  );
 
   /// The field `toJson`.
   final String? toJson$;
@@ -262,7 +312,8 @@ final class ShopPoint {
   const ShopPoint({required this.lat});
 
   /// The value of JSON form [json].
-  factory ShopPoint.fromJson(Map<String, Object?> json) => ShopPoint(lat: (json['lat'] as num).toDouble());
+  factory ShopPoint.fromJson(Map<String, Object?> json) =>
+      ShopPoint(lat: (json['lat'] as num).toDouble());
 
   /// The field `lat`.
   final double lat;
@@ -271,7 +322,8 @@ final class ShopPoint {
   Map<String, Object?> toJson() => {'lat': lat};
 }
 
-R? _nullable<T extends Object, R>(T? v, R Function(T v) f) => v == null ? null : f(v);
+R? _nullable<T extends Object, R>(T? v, R Function(T v) f) =>
+    v == null ? null : f(v);
 
 String _dateJson(DateTime d) =>
     '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';

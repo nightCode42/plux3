@@ -125,6 +125,7 @@ final class ActionGraph {
     this.output,
     this.key = '',
     this.exported = false,
+    this.state = const [],
   });
 
   /// The graph's UUID, for reports and telemetry.
@@ -141,6 +142,9 @@ final class ActionGraph {
 
   /// Whether other plugins may call the flow.
   final bool exported;
+
+  /// The run's variables (STA-001).
+  final List<fbs.StateEntry> state;
 }
 
 /// Decodes [graph], whose strings are in [strings]; [resolve] evaluates an
@@ -156,6 +160,7 @@ ActionGraph decodeGraph(
     output: out == 0 ? null : strings(out),
     key: graph.key == 0 ? '' : strings(graph.key),
     exported: graph.exported,
+    state: graph.state ?? const [],
     steps: [
       for (final s in graph.steps ?? const <fbs.Step>[])
         GraphStep(

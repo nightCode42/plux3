@@ -98,7 +98,7 @@ void main() {
   );
 
   testWidgets(
-    'an exposed entry that declares persistence is kept in memory and reported once in debug builds with PLX-4010 [STA-030]',
+    'an exposed entry that declares persistence is written and kept, with nothing reported [STA-030] [STA-003]',
     (tester) async {
       await start(
         tester,
@@ -107,12 +107,8 @@ void main() {
       expect(await Plux.state<int>('visits').set(5), isTrue);
       await tester.pump();
       expect(Plux.state<int>('visits').value, 5);
-      final reported = h.errors.where(
-        (e) =>
-            e.code == PluxErrorCode.actionsNotAvailable &&
-            e.details['state'] == 'visits',
-      );
-      expect(reported, hasLength(1));
+      final reported = h.errors.where((e) => e.details['state'] == 'visits');
+      expect(reported, isEmpty);
     },
   );
 

@@ -101,6 +101,10 @@ type Result struct {
 	// Project is the loaded project, or nil when no app document was
 	// found; plux codegen reads its documents (HST-030).
 	Project *schema.Project
+	// StoredState are the session, persisted and secure state entries of
+	// each bundle, by bundle key ("" for the app): publishing compares
+	// them with the previous release's (STA-040, CheckStoredState).
+	StoredState map[string][]StoredEntry
 }
 
 // stage is one step of the pipeline (CMP-003). Checking stages run even
@@ -160,6 +164,7 @@ func Compile(fsys fs.FS, opts Options) (res *Result) {
 	}
 	if !u.diags.HasErrors() {
 		res.App, res.Plugins, res.Files = u.app, u.outputs, u.files
+		res.StoredState = u.storedOf()
 	}
 	return res
 }

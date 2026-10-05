@@ -163,6 +163,12 @@ var persistence = map[schema.Persistence]fbs.Persistence{
 
 // checkState checks state entries: defaults and computed expressions.
 func (u *unit) checkState(pl *plugin, entries []schema.StateEntry, file string, s *scope) []*stateEntry {
+	return u.checkEntries(pl, entries, file, s, false)
+}
+
+// checkEntries checks state entries; run is set for a graph's run
+// variables (STA-001).
+func (u *unit) checkEntries(pl *plugin, entries []schema.StateEntry, file string, s *scope, run bool) []*stateEntry {
 	var out []*stateEntry
 	for i, st := range entries {
 		ptr := plxerr.Pointer("state", strconv.Itoa(i))
@@ -194,6 +200,7 @@ func (u *unit) checkState(pl *plugin, entries []schema.StateEntry, file string, 
 		if e.sensitive && e.persistence == fbs.PersistencePersisted {
 			u.report(plxerr.SensitiveValueExposed, file, ptr+"/persistence", "sensitive state %q must use secure persistence, not persisted", st.Name)
 		}
+		u.checkEntryStorage(pl, &entries[i], e, te, file, ptr, run)
 		out = append(out, e)
 	}
 	return out

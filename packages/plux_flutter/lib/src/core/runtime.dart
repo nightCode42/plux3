@@ -45,8 +45,10 @@ import 'package:plux_flutter/src/render/page_renderer.dart';
 import 'package:plux_flutter/src/render/renderer.dart';
 import 'package:plux_flutter/src/runtime_info.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
+import 'package:plux_flutter/src/state/persistence.dart';
 import 'package:plux_flutter/src/state/providers.dart';
 import 'package:plux_flutter/src/store/baseline.dart';
+import 'package:plux_flutter/src/store/kv_store.dart';
 import 'package:plux_flutter/src/store/pointer.dart';
 import 'package:plux_flutter/src/store/release_store.dart';
 import 'package:plux_flutter/src/sync/api_client.dart';
@@ -85,6 +87,7 @@ final class RuntimeOverrides {
     this.healthyAfter = const Duration(seconds: 10),
     this.clock,
     this.random,
+    this.secrets,
   });
 
   /// Creates the credential store on the sync isolate.
@@ -102,6 +105,10 @@ final class RuntimeOverrides {
 
   /// Where telemetry sampling draws from; a new generator when null.
   final math.Random? random;
+
+  /// The secure storage that keeps the state stores' keys; the platform's
+  /// when null (plan p5 D6).
+  final SecretStore Function()? secrets;
 }
 
 /// The runtime.
@@ -197,6 +204,7 @@ final class PluxRuntime with WidgetsBindingObserver {
         root,
         assets,
       );
+      await rt.statePersistence.load();
       final startup = await rt._startup();
       WidgetsBinding.instance.addObserver(rt);
       rt._flushEvery = Zone.root.createPeriodicTimer(
@@ -333,12 +341,51 @@ final class PluxRuntime with WidgetsBindingObserver {
     report: _report,
   );
 
+  /// Where session, persisted and secure state lives (STA-003): two
+  /// stores under the runtime's directory, each encrypted under its own key
+  /// kept by the platform's secure storage (plan p5 D5, D6).
+  late final StatePersistence statePersistence = () {
+    final secrets = overrides.secrets?.call() ?? const PlatformSecretStore();
+    final id = '${_safe(config.appId)}.${_safe(config.environment)}'
+        .toLowerCase();
+    EncryptedFileStore store(String kind, PluxLimit limit) =>
+        EncryptedFileStore(
+          path: '$_root/plux-state/$kind.pxk',
+          secrets: secrets,
+          keyName: 'state-$kind.$id',
+          label: 'plux-state/$kind/$id',
+          maxBytes: limit.defaultValue,
+        );
+    final persisted = store('persisted', PluxLimit.statePersistedBytes);
+    final secure = store('secure', PluxLimit.stateSecureBytes);
+    // The limits of the active app bundle (LIM-001).
+    active.addListener(() {
+      final limits = active.value?.limits ?? const <String, int>{};
+      persisted.maxBytes =
+          limits[PluxLimit.statePersistedBytes.key] ??
+          PluxLimit.statePersistedBytes.defaultValue;
+      secure.maxBytes =
+          limits[PluxLimit.stateSecureBytes.key] ??
+          PluxLimit.stateSecureBytes.defaultValue;
+    });
+    return StatePersistence(
+      persisted: persisted,
+      secure: secure,
+      report: _report,
+    );
+  }();
+
+  /// Where `Plux.sendEvent` delivers host events (HST-013): the action
+  /// engine's host-event trigger connects it.
+  HostEventSink? hostEventSink;
+
   /// Turns page sections into widgets (ADR-0031).
   late PageRenderer? renderer = PluxRenderer(
     config: config,
     report: _report,
     failure: (e) => unawaited(failure(e)),
     imageCacheDirectory: '$_root/images',
+    statePersistence: statePersistence,
     assets: assets,
     verified: _verified,
     data: _dataServices,
@@ -832,6 +879,7 @@ final class PluxRuntime with WidgetsBindingObserver {
         _backgroundSince = _clock();
         unawaited(flushTelemetry());
       }
+      unawaited(statePersistence.flush());
     } else if (state == AppLifecycleState.resumed && !_inForeground) {
       final away = _clock().difference(_backgroundSince!);
       if (away >= sessionTimeout) {
@@ -862,6 +910,7 @@ final class PluxRuntime with WidgetsBindingObserver {
       const Duration(seconds: 1),
       onTimeout: () {},
     );
+    await statePersistence.flush();
     _disposed = true;
     _healthy?.cancel();
     diagnostics.dispose();

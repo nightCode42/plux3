@@ -416,6 +416,54 @@
       "fix": "Set maxBackoffMs to at least backoffMs, and remove cancelled from the error kinds it retries."
     },
     {
+      "code": "PLX-1140",
+      "reason": "STATE_ENTRY_READ_ONLY",
+      "severity": "error",
+      "title": "State entry written that cannot be",
+      "cause": "A setState, patchState or resetState step names a computed state entry, whose value is derived from other state and recomputed when it changes (STA-004).",
+      "fix": "Write the entries the computed entry reads, or declare the entry with a default instead of a computed expression."
+    },
+    {
+      "code": "PLX-1141",
+      "reason": "STATE_PATCH_NOT_OBJECT",
+      "severity": "error",
+      "title": "State patch of a value that is not an object",
+      "cause": "A patchState step names a state entry whose type is not a declared object type, so it has no fields to merge (STA-002).",
+      "fix": "Use setState to replace the value, or declare the entry with an object type."
+    },
+    {
+      "code": "PLX-1142",
+      "reason": "STATE_PERSISTENCE_NOT_ALLOWED",
+      "severity": "error",
+      "title": "Persistence that the entry cannot have",
+      "cause": "A computed state entry, or a run variable (an action graph's state), declares a persistence other than memory: a computed value is derived again from the state it reads, and a run variable ends with its run (STA-001, STA-003).",
+      "fix": "Remove the persistence, or persist the entries the computed value reads."
+    },
+    {
+      "code": "PLX-1143",
+      "reason": "STATE_MIGRATION_REQUIRED",
+      "severity": "error",
+      "title": "Stored state changes type without a migration",
+      "cause": "A session, persisted or secure state entry has another type than in the previous release and declares no migration, so devices could not read the value they stored (STA-040).",
+      "fix": "Declare a migration on the entry: `from` the previous type with an expression `value` over `previous`, or `reset: true` to start from the default."
+    },
+    {
+      "code": "PLX-1144",
+      "reason": "STATE_MIGRATION_MISMATCH",
+      "severity": "error",
+      "title": "State migration from a type the previous release did not have",
+      "cause": "A state entry's migration declares `from` a type other than the entry's type in the previous release, so it would never run on the values devices stored (STA-040).",
+      "fix": "Set `from` to the entry's type in the previous release, or use `reset: true`."
+    },
+    {
+      "code": "PLX-1145",
+      "reason": "STATE_MIGRATION_INVALID",
+      "severity": "error",
+      "title": "State migration that can never run",
+      "cause": "A state entry declares a migration although it is computed or kept only in memory, or its migration says `reset: false`, or migrates `from` the type the entry already has (STA-040).",
+      "fix": "Remove the migration, or give the entry a session, persisted or secure persistence and its previous type in `from`."
+    },
+    {
       "code": "PLX-1170",
       "reason": "DATA_SOURCE_CONFIG_INVALID",
       "severity": "error",
@@ -1158,6 +1206,62 @@
       "title": "Response cache unavailable",
       "cause": "The response cache could not be read or written, or its encryption key could not be obtained; the request goes to the network as with networkOnly, and nothing is stored in the clear (DAT-010, LIM-004).",
       "fix": "Check the device's free storage and the key provider; the runtime keeps working without the cache."
+    },
+    {
+      "code": "PLX-5301",
+      "reason": "STATE_WRITE_TYPE_MISMATCH",
+      "severity": "error",
+      "title": "State written with a value of the wrong type",
+      "cause": "A state write received a value from outside the bundle (an API response, a custom action, the host) that does not have the entry's declared type; the step fails with a validation error and the entry keeps its value (STA-002).",
+      "fix": "Map the value to the declared type before writing it, or handle the step's error with onError."
+    },
+    {
+      "code": "PLX-5302",
+      "reason": "STATE_WRITE_REFUSED",
+      "severity": "error",
+      "title": "State write refused",
+      "cause": "A state write names a path its scope does not have or a computed entry, or patches an entry that is not an object; the step fails and nothing changes (STA-001, STA-004).",
+      "fix": "Check the path against the entries the page, component, plugin, app or run declares; the compiler reports this for literal paths (PLX-1140, PLX-1141)."
+    },
+    {
+      "code": "PLX-5303",
+      "reason": "STATE_STORE_UNAVAILABLE",
+      "severity": "warning",
+      "title": "State store unavailable",
+      "cause": "The runtime could not open or write its local state store, or could not obtain the store's key from the platform's secure storage; session, persisted and secure entries are kept in memory until the store works again (STA-003).",
+      "fix": "Check the device's free space and the platform's secure storage; the message names the failing operation, never a value."
+    },
+    {
+      "code": "PLX-5304",
+      "reason": "STATE_STORE_CORRUPT",
+      "severity": "error",
+      "title": "State store failed authentication",
+      "cause": "The local state store did not decrypt under its key: it was altered, truncated or written by another installation. It is discarded, and every stored entry starts from its default (STA-003).",
+      "fix": "Nothing to fix in the app; if it repeats, check the device for tampering with the app's storage."
+    },
+    {
+      "code": "PLX-5305",
+      "reason": "STATE_MIGRATION_FAILED",
+      "severity": "warning",
+      "title": "Stored state could not be migrated",
+      "cause": "A stored value had neither the entry's type nor the type its migration reads, or the migration failed; the entry starts from its default (STA-040).",
+      "fix": "Declare a migration from the previous type, and check that it handles every stored value."
+    },
+    {
+      "code": "PLX-5306",
+      "reason": "STATE_LIMIT_EXCEEDED",
+      "severity": "error",
+      "title": "Stored state over its limit",
+      "cause": "The values to store exceed state.persistedBytes or state.secureBytes; the write takes effect in memory but is not stored, so it is lost when the app is closed (LIM-001, LIM-004).",
+      "fix": "Store less, for example by keeping large data in a local collection, or raise the limit for the app."
+    },
+    {
+      "code": "PLX-5307",
+      "reason": "HOST_EVENT_REFUSED",
+      "severity": "error",
+      "title": "Host event refused",
+      "cause": "Plux.sendEvent named an event the app does not declare for the host to send (direction toPlux or both), or a payload without the event's fields and types; nothing runs (HST-013).",
+      "fix": "Declare the event in the app's hostEvents with the direction toPlux or both; plux codegen generates typed senders that make this a compile error."
     },
     {
       "code": "PLX-6030",

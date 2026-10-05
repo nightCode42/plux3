@@ -412,6 +412,10 @@ func graphTable(e *valueEnc, g *graph) flatbuffers.UOffsetT {
 		inputs = e.params(ps)
 		exported = g.doc.Exported != nil && *g.doc.Exported
 	}
+	var state flatbuffers.UOffsetT
+	if len(g.state) > 0 {
+		state = e.state(g.state)
+	}
 	key, output := e.strs.of(g.key), e.strs.of(g.output)
 	fbs.GraphStart(b)
 	hi, lo := uuidHalves(g.id)
@@ -429,6 +433,9 @@ func graphTable(e *valueEnc, g *graph) flatbuffers.UOffsetT {
 		fbs.GraphAddOutput(b, output)
 	}
 	fbs.GraphAddSteps(b, sv)
+	if state != 0 {
+		fbs.GraphAddState(b, state)
+	}
 	return fbs.GraphEnd(b)
 }
 

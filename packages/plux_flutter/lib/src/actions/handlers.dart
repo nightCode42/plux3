@@ -13,10 +13,12 @@ import 'package:plux_flutter/src/actions/action_error.dart';
 import 'package:plux_flutter/src/actions/clock.dart';
 import 'package:plux_flutter/src/actions/control.dart';
 import 'package:plux_flutter/src/actions/graph.dart';
+import 'package:plux_flutter/src/actions/state_handlers.dart';
 import 'package:plux_flutter/src/data/handlers.dart';
 import 'package:plux_flutter/src/data/services.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/schema/registry.g.dart';
+import 'package:plux_flutter/src/state/access.dart';
 
 /// The phase this runtime belongs to: it runs every action of earlier
 /// phases, and the actions of this phase that [builtInHandlers] holds.
@@ -194,6 +196,21 @@ final class StepContext {
     this.data,
   });
 
+  /// This context with [state] (STA-001).
+  StepContext withState(StateAccess state) => StepContext(
+    navigator: navigator,
+    emit: emit,
+    nativeActions: nativeActions,
+    state: state,
+    flows: flows,
+    clock: clock,
+    track: track,
+    sync: sync,
+    emitEvent: emitEvent,
+    run: run,
+    data: data,
+  );
+
   /// Navigation for the run's page.
   final RunNavigator navigator;
 
@@ -351,6 +368,7 @@ ActionHandler actionHandler(
 final Map<String, ActionHandler> builtInHandlers = {
   ...p4Handlers,
   ...controlHandlers,
+  ...stateHandlers,
   ...dataHandlers,
 };
 

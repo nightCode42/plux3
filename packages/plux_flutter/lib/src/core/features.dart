@@ -3,7 +3,9 @@
 
 /// The features this runtime supports, for `required_features` (BND-008):
 /// `pxl.v1`, `pxl.regex.v1` and `pxl.phone.v1` (0.3.0), `navigation.guards.v1`
-/// (route guards, ADR-0040), `data.v1` (the data layer, ADR-0048), and
+/// (route guards, ADR-0040), `data.v1` (the data layer, ADR-0048), the state
+/// engine's `state.write.v1`, `state.computed.v1` and `state.persistence.v1`,
+/// and
 /// registry revisions — `widget.<Type>.v<n>`,
 /// `type.<Name>.v<n>`, `enum.<Name>.v<n>` — up to the revision this
 /// runtime's generated registry knows, for widgets it can build.
@@ -52,12 +54,21 @@ final class RuntimeFeatures {
   /// source requires it.
   static const Set<String> data = {'data.v1'};
 
+  /// The state engine's features (STA-*): writes, computed entries and
+  /// session, persisted and secure entries.
+  static const Set<String> state = {
+    'state.write.v1',
+    'state.computed.v1',
+    'state.persistence.v1',
+  };
+
   /// Whether [feature] is supported.
   bool supports(String feature) {
     if (pxl.contains(feature) ||
         navigation.contains(feature) ||
         actions.contains(feature) ||
-        data.contains(feature)) {
+        data.contains(feature) ||
+        state.contains(feature)) {
       return true;
     }
     final m = RegExp(

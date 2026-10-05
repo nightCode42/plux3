@@ -45,6 +45,14 @@ released yet; this entry grows with each milestone of the phase.
   metadata (schema/pxl/phone.md); `format.phone` moves to the `format` group (P8).
 - Form validators (`STA-020`, internal until forms land): required, length, range, regex,
   e-mail, phone by region, IBAN, date range and decimal precision.
+- State engine (P5 R2): scopes `app`, `plugin`, `page`, `component` and `run` as Riverpod
+  providers with `select`-level rebuilds; `setState`, `patchState` and `resetState` with
+  typed writes (`PLX-5301`, `PLX-5302`); computed entries evaluated only when what they
+  read changes; `session`, `persisted` and `secure` entries in a built-in store encrypted
+  with AES-256-GCM under per-installation keys kept by the platform's secure storage, off
+  the UI isolate, versioned by type fingerprint and migrated (`PLX-5303`–`PLX-5306`); plugin
+  writes to exposed app state reach `Plux.state<T>`; `Plux.sendEvent` (`PLX-5307`) and
+  `Plux.wipeData`; features `state.write.v1`, `state.computed.v1`, `state.persistence.v1`.
 
 ## 0.2.0
 

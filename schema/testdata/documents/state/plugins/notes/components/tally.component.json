@@ -1,0 +1,69 @@
+{
+  "exported": true,
+  "id": "01f0c450-6c00-7000-8000-000000000506",
+  "key": "tally",
+  "kind": "component",
+  "name": "Tally",
+  "props": [
+    {
+      "name": "label",
+      "required": true,
+      "type": "string"
+    }
+  ],
+  "root": {
+    "children": [
+      {
+        "id": "01f0c450-6c00-7000-8000-00000000050f",
+        "props": {
+          "data": {
+            "$expr": "props.label + \" \" + string(component.taps) + \" \" + string(app.counter)"
+          }
+        },
+        "testId": "tally",
+        "type": "Text"
+      },
+      {
+        "events": {
+          "onPressed": {
+            "steps": [
+              {
+                "action": "setState",
+                "id": "tap",
+                "input": {
+                  "path": "component.taps",
+                  "value": {
+                    "$expr": "component.taps + 1"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "id": "01f0c450-6c00-7000-8000-000000000510",
+        "slots": {
+          "child": {
+            "id": "01f0c450-6c00-7000-8000-000000000511",
+            "props": {
+              "data": "tap"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "FilledButton"
+      }
+    ],
+    "id": "01f0c450-6c00-7000-8000-000000000512",
+    "type": "Column"
+  },
+  "schemaVersion": "1.0.0",
+  "state": [
+    {
+      "default": 0,
+      "id": "01f0c450-6c00-7000-8000-00000000050e",
+      "name": "taps",
+      "type": "int"
+    }
+  ],
+  "version": 1
+}

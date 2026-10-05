@@ -11,6 +11,7 @@ import 'package:plux_flutter/plux_flutter.dart';
 import 'package:plux_flutter/src/core/runtime.dart';
 import 'package:plux_flutter/src/render/renderer.dart';
 import 'package:plux_flutter/src/state/providers.dart';
+import 'package:plux_flutter/src/store/kv_store.dart';
 import 'package:plux_flutter/src/sync/sync_engine.dart';
 
 import '../sync/fake_server.dart';
@@ -40,6 +41,9 @@ final class Harness {
 
   /// Problems the runtime reported.
   final List<PluxException> errors = [];
+
+  /// The secure storage of the state stores' keys, kept across restarts.
+  final MemorySecretStore secrets = MemorySecretStore();
 
   /// The golden bundles.
   static final Goldens goldens = Goldens.load();
@@ -94,6 +98,7 @@ final class Harness {
         credentials: MemoryCredentialStore.new,
         baseline: _reader(baseline),
         healthyAfter: const Duration(hours: 1),
+        secrets: () => secrets,
       ),
     );
   }
@@ -133,4 +138,19 @@ Future<void> settle(WidgetTester tester, [int rounds = 3]) async {
     );
     await tester.pump();
   }
+}
+
+/// Secure storage in memory, for tests.
+final class MemorySecretStore implements SecretStore {
+  /// The secrets, by name.
+  final Map<String, String> values = {};
+
+  @override
+  Future<String?> read(String name) async => values[name];
+
+  @override
+  Future<void> write(String name, String value) async => values[name] = value;
+
+  @override
+  Future<void> delete(String name) async => values.remove(name);
 }

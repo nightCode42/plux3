@@ -49,6 +49,9 @@ type unit struct {
 	// features are the required features raised per bundle (nil: the app
 	// bundle) by WGT-004.
 	features map[*plugin]map[string]bool
+	// stored are the session, persisted and secure state entries per
+	// bundle (nil: the app bundle), for STA-040.
+	stored map[*plugin][]StoredEntry
 	// icons are the icons used per bundle (nil: the app bundle), by set,
 	// for the bundle's icon fonts (THM-005).
 	icons map[*plugin]map[icons.Set]map[string]bool
@@ -78,7 +81,7 @@ func newUnit(opts Options) *unit {
 		opts: opts, ids: map[string]plxerr.Location{}, pages: map[string]*page{}, routes: map[string]*route{},
 		graphs: map[string]*graph{}, components: map[string]*component{}, tkeys: map[string]*schema.TranslationKey{},
 		tokens: map[string]*token{}, assetIDs: map[string]*schema.AssetEntry{}, envs: map[string]*pxl.Env{},
-		exprs: map[string]*expr{}, graph: &Graph{}, features: map[*plugin]map[string]bool{},
+		exprs: map[string]*expr{}, graph: &Graph{}, features: map[*plugin]map[string]bool{}, stored: map[*plugin][]StoredEntry{},
 		icons: map[*plugin]map[icons.Set]map[string]bool{}, files: map[[sha256.Size]byte][]byte{},
 		dataConfigs: map[string]*parsedConfig{},
 	}
@@ -288,6 +291,8 @@ type graph struct {
 	navs      []navigation
 	output    string
 	used      bool
+	// state are the run's variables (STA-001).
+	state []*stateEntry
 }
 
 // step is a lowered step.
@@ -332,6 +337,14 @@ type stateEntry struct {
 	persistence fbs.Persistence
 	sensitive   bool
 	exposed     bool
+	// fingerprint versions a stored entry's type; migrationFrom and
+	// migration, or migrationReset, say how a value of the previous
+	// type is read (STA-040).
+	fingerprint    string
+	migrationFrom  string
+	migrationType  string
+	migration      *expr
+	migrationReset bool
 }
 
 // dataSource is a data source.

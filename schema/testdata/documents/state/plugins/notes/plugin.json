@@ -1,0 +1,52 @@
+{
+  "description": "Every state scope, write and persistence.",
+  "entryPage": "01f0c450-6c00-7000-8000-000000000504",
+  "icon": {
+    "monogram": {
+      "background": "#0B6E4F",
+      "text": "N"
+    }
+  },
+  "id": "01f0c450-6c00-7000-8000-000000000503",
+  "key": "notes",
+  "kind": "plugin",
+  "name": "Notes",
+  "pages": [
+    "01f0c450-6c00-7000-8000-000000000504"
+  ],
+  "schemaVersion": "1.0.0",
+  "state": [
+    {
+      "default": 0,
+      "id": "01f0c450-6c00-7000-8000-00000000050b",
+      "name": "visits",
+      "type": "int"
+    },
+    {
+      "default": {
+        "done": false,
+        "title": "first"
+      },
+      "id": "01f0c450-6c00-7000-8000-00000000050c",
+      "name": "draft",
+      "persistence": "persisted",
+      "type": "Draft"
+    }
+  ],
+  "team": "state",
+  "types": [
+    {
+      "fields": [
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "done",
+          "type": "bool"
+        }
+      ],
+      "name": "Draft"
+    }
+  ]
+}

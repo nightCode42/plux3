@@ -294,6 +294,13 @@ func (s *Service) RunPublish(ctx context.Context, job Job) error {
 		return err
 	}
 	diags = append(slices.Clone(diags), builds...)
+	stored, err := s.storedStateChecks(ctx, system, row, c)
+	if err != nil {
+		return err
+	}
+	if stored.HasErrors() {
+		return s.fail(ctx, system, row, append(diags, stored...))
+	}
 	diags.Sort()
 	if !row.AcknowledgeWarnings && slices.ContainsFunc(diags, func(d plxerr.Diagnostic) bool { return d.Severity == plxerr.SeverityWarning }) {
 		d := plxerr.NewDiagnostic(plxerr.WarningsNotAcknowledged, plxerr.Location{}, "the publish found warnings; acknowledge them to publish")
@@ -750,6 +757,41 @@ func (s *Service) hostBuildChecks(ctx context.Context, p auth.Principal, row dbg
 		return nil
 	})
 	return out, err
+}
+
+// storedStateChecks compares the stored state of the published bundle
+// with the bundle's latest version, which is newer than any release
+// devices hold (STA-040): a session, persisted or secure entry whose type
+// changed needs a migration from the previous type or a reset. The first
+// version of a bundle needs nothing.
+func (s *Service) storedStateChecks(ctx context.Context, p auth.Principal, row dbgen.PublishJob, c compiled) (plxerr.Diagnostics, error) {
+	var prev []byte
+	if err := s.inOrg(ctx, p, func(ctx context.Context, tx pgx.Tx) error {
+		v, err := dbgen.New(tx).LatestVersion(ctx, dbgen.LatestVersionParams{AppID: row.AppID, PluginID: row.PluginID})
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil
+		}
+		if err != nil {
+			return failure(err, "version")
+		}
+		prev = v.BundleSha256
+		return nil
+	}); err != nil || prev == nil {
+		return nil, err
+	}
+	key, err := objects.Key(objects.KindBundle, hex.EncodeToString(prev))
+	if err != nil {
+		return nil, fmt.Errorf("release: %w", err)
+	}
+	data, _, err := s.o.Objects.Get(ctx, key)
+	if err != nil {
+		return nil, fmt.Errorf("release: the previous bundle: %w", err)
+	}
+	before, err := compiler.StoredState(data)
+	if err != nil {
+		return nil, fmt.Errorf("release: the previous bundle: %w", err)
+	}
+	return compiler.CheckStoredState(before, c.result.StoredState[c.key]), nil
 }
 
 // draftFiles accepts the files of the draft a publish records: a plugin's

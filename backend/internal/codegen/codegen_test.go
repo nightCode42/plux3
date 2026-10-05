@@ -52,12 +52,13 @@ func golden(t *testing.T, name string, got []byte) {
 
 // TestConformanceProjects generates the library of each conformance
 // project, twice, and compares it with its golden.
-// Verifies: HST-030.
+// Verifies: HST-030, HST-013.
 func TestConformanceProjects(t *testing.T) {
 	t.Parallel()
 	for project, file := range map[string]string{
 		"routing": "routing.g.dart", "features": "features.g.dart",
 		"loan-calculator": "loan_calculator.g.dart", "starter": "starter.g.dart",
+		"state": "state.g.dart",
 	} {
 		t.Run(project, func(t *testing.T) {
 			t.Parallel()
