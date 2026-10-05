@@ -23,6 +23,7 @@ import 'package:plux_flutter/src/data/spec.dart';
 import 'package:plux_flutter/src/data/transport.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/pxl/types.dart' show toJson;
+import 'package:plux_flutter/src/schema/limit_values.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
 
 /// The data limits in force (LIM-001): the app bundle's, else the
@@ -40,7 +41,7 @@ final class DataLimits {
 
   /// The limits of [limits], an app bundle's values by key.
   factory DataLimits.of(Map<String, int> limits) {
-    int of(PluxLimit l) => limits[l.key] ?? l.defaultValue;
+    int of(PluxLimit l) => limits.valueOf(l);
     return DataLimits(
       requestSize: of(PluxLimit.dataRequestSize),
       responseSize: of(PluxLimit.dataResponseSize),

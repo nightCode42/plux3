@@ -1141,19 +1141,23 @@ func samplingTables(b *flatbuffers.Builder, t *schema.TelemetryPolicy) flatbuffe
 	return offsetVector(b, offs)
 }
 
-// runtimeLimits writes the limits the runtime enforces, sorted by key.
+// runtimeLimits writes the runtime-enforced limits whose effective value
+// differs from the registry default, sorted by key (LIM-001). A limit the
+// bundle does not carry is the registry default: the runtime reads it from
+// its generated registry, so a bundle without an override states nothing.
 func (u *unit) runtimeLimits(b *flatbuffers.Builder) flatbuffers.UOffsetT {
 	var offs []flatbuffers.UOffsetT
 	defs := limits.Definitions()
 	slices.SortFunc(defs, func(x, y limits.Definition) int { return strings.Compare(string(x.Key), string(y.Key)) })
 	for _, d := range defs {
-		if d.EnforcedBy&limits.EnforcerRuntime == 0 {
+		v := u.opts.Limits.Get(d.Key)
+		if d.EnforcedBy&limits.EnforcerRuntime == 0 || v == d.Default {
 			continue
 		}
 		key := b.CreateString(string(d.Key))
 		fbs.LimitStart(b)
 		fbs.LimitAddKey(b, key)
-		fbs.LimitAddValue(b, u.opts.Limits.Get(d.Key))
+		fbs.LimitAddValue(b, v)
 		offs = append(offs, fbs.LimitEnd(b))
 	}
 	return offsetVector(b, offs)

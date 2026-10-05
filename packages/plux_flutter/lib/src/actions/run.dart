@@ -20,6 +20,7 @@ import 'package:plux_flutter/src/actions/handlers.dart';
 import 'package:plux_flutter/src/actions/trace.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/render/values.dart';
+import 'package:plux_flutter/src/schema/limit_values.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
 import 'package:plux_flutter/src/schema/registry.g.dart';
 import 'package:plux_flutter/src/state/access.dart';
@@ -38,7 +39,7 @@ final class ActionLimits {
 
   /// The bounds the app bundle carries, else the registry defaults.
   factory ActionLimits.of(Map<String, int> limits) {
-    int of(PluxLimit l) => limits[l.key] ?? l.defaultValue;
+    int of(PluxLimit l) => limits.valueOf(l);
     return ActionLimits(
       stepsPerRun: of(PluxLimit.actionStepsPerRun),
       stepTimeout: Duration(milliseconds: of(PluxLimit.actionStepTimeout)),

@@ -6,10 +6,10 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
-import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:plux_flutter/src/bundle/container.dart';
+import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
 import 'package:plux_flutter/src/store/directory_sync.dart';
@@ -425,27 +425,45 @@ void main() {
   );
 }
 
-/// [app] with the `device.diskQuota` its meta section carries set to
-/// [quota], the bundle re-encoded (its hash changes; the fake server signs
-/// what it serves).
+/// [app] with a `device.diskQuota` limit of [quota] in its meta section,
+/// the bundle re-encoded (its hash changes; the fake server signs what it
+/// serves). The compiler writes no limit at its default, so the section is
+/// rebuilt with the fields a sync reads plus the override.
 Uint8List withDiskQuota(Uint8List app, int quota) {
-  Uint8List le(int v) =>
-      (ByteData(8)..setInt64(0, v, Endian.little)).buffer.asUint8List();
   final b = BundleContainer.parse(app);
+  fbs.UuidObjectBuilder? uuid(fbs.Uuid? u) =>
+      u == null ? null : fbs.UuidObjectBuilder(hi: u.hi, lo: u.lo);
   final sections = [
     for (final s in b.sections)
       if (s.kind != SectionKind.meta)
         s
       else
         () {
-          final data = Uint8List.fromList(s.data);
-          final from = le(PluxLimit.deviceDiskQuota.defaultValue);
-          final at = [
-            for (var i = 0; i + 8 <= data.length; i++)
-              if (listEquals(data.sublist(i, i + 8), from)) i,
-          ];
-          expect(at, hasLength(1), reason: 'one device.diskQuota value');
-          data.setRange(at.single, at.single + 8, le(quota));
+          final m = fbs.Meta(s.data);
+          expect(m.limits ?? const <fbs.Limit>[], isEmpty);
+          final data = fbs.MetaObjectBuilder(
+            kind: m.kind,
+            id: uuid(m.id),
+            key: m.key,
+            name: m.name,
+            version: m.version,
+            compilerVersion: m.compilerVersion,
+            schemaVersion: m.schemaVersion,
+            requiredFeatures: m.requiredFeatures,
+            minRuntime: m.minRuntime,
+            limits: [
+              fbs.LimitObjectBuilder(
+                key: PluxLimit.deviceDiskQuota.key,
+                value: quota,
+              ),
+            ],
+            plugins: [
+              for (final u in m.plugins ?? const <fbs.Uuid>[]) uuid(u)!,
+            ],
+            defaultLocale: m.defaultLocale,
+            supportedLocales: m.supportedLocales,
+            entryRoute: m.entryRoute,
+          ).toBytes(String.fromCharCodes(s.data, 4, 8));
           return Section(s.kind, s.id, s.hash, data);
         }(),
   ];

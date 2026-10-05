@@ -48,6 +48,7 @@ import 'package:plux_flutter/src/render/owner_actions.dart';
 import 'package:plux_flutter/src/render/page_renderer.dart';
 import 'package:plux_flutter/src/render/renderer.dart';
 import 'package:plux_flutter/src/runtime_info.dart';
+import 'package:plux_flutter/src/schema/limit_values.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
 import 'package:plux_flutter/src/state/persistence.dart';
 import 'package:plux_flutter/src/state/providers.dart';
@@ -273,7 +274,8 @@ final class PluxRuntime with WidgetsBindingObserver {
   String lastRoute = '';
 
   /// A limit's value in the active app bundle (LIM-004), or its default.
-  int limit(PluxLimit l) => active.value?.limits[l.key] ?? l.defaultValue;
+  int limit(PluxLimit l) =>
+      (active.value?.limits ?? const <String, int>{}).valueOf(l);
 
   /// Sends the buffered telemetry now. A failure keeps the events for the
   /// next attempt and is not reported: telemetry never adds to the
@@ -390,12 +392,8 @@ final class PluxRuntime with WidgetsBindingObserver {
     // The limits of the active app bundle (LIM-001).
     active.addListener(() {
       final limits = active.value?.limits ?? const <String, int>{};
-      persisted.maxBytes =
-          limits[PluxLimit.statePersistedBytes.key] ??
-          PluxLimit.statePersistedBytes.defaultValue;
-      secure.maxBytes =
-          limits[PluxLimit.stateSecureBytes.key] ??
-          PluxLimit.stateSecureBytes.defaultValue;
+      persisted.maxBytes = limits.valueOf(PluxLimit.statePersistedBytes);
+      secure.maxBytes = limits.valueOf(PluxLimit.stateSecureBytes);
     });
     return StatePersistence(
       persisted: persisted,

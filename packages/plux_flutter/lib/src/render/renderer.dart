@@ -53,6 +53,7 @@ import 'package:plux_flutter/src/render/sections.dart';
 import 'package:plux_flutter/src/render/theme.dart';
 import 'package:plux_flutter/src/render/tokens.dart';
 import 'package:plux_flutter/src/render/values.dart';
+import 'package:plux_flutter/src/schema/limit_values.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
 import 'package:plux_flutter/src/schema/registry.g.dart';
 import 'package:plux_flutter/src/state/access.dart';
@@ -888,14 +889,10 @@ final class PluxRenderer implements PageRenderer, RenderServices {
       uri,
       cache: _imageCache ??= ImageDiskCache(
         imageCacheDirectory,
-        maxBytes:
-            limits[PluxLimit.runtimeImageDiskCacheBytes.key] ??
-            PluxLimit.runtimeImageDiskCacheBytes.defaultValue,
+        maxBytes: limits.valueOf(PluxLimit.runtimeImageDiskCacheBytes),
       ),
       client: _client ??= (config.httpClient ?? platformHttpClient)(),
-      maxBytes:
-          limits[PluxLimit.runtimeImageSize.key] ??
-          PluxLimit.runtimeImageSize.defaultValue,
+      maxBytes: limits.valueOf(PluxLimit.runtimeImageSize),
     );
   }
 
@@ -1174,12 +1171,8 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
     _container = ProviderScope.containerOf(context, listen: false);
     final limits = widget.release.limits;
     widget.renderer.cache.resize(
-      maxEntries:
-          limits['runtime.sectionCacheEntries'] ??
-          PluxLimit.runtimeSectionCacheEntries.defaultValue,
-      maxBytes:
-          limits['runtime.sectionCacheBytes'] ??
-          PluxLimit.runtimeSectionCacheBytes.defaultValue,
+      maxEntries: limits.valueOf(PluxLimit.runtimeSectionCacheEntries),
+      maxBytes: limits.valueOf(PluxLimit.runtimeSectionCacheBytes),
     );
     final literal = ValueResolver(
       plugin: _plugin,
@@ -1491,22 +1484,14 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
 }
 
 PxlLimits _pxlLimits(Map<String, int> app) => PxlLimits(
-  budget:
-      app['pxl.operationBudget'] ?? PluxLimit.pxlOperationBudget.defaultValue,
-  stringLength:
-      app['pxl.stringLength'] ?? PluxLimit.pxlStringLength.defaultValue,
-  collectionSize:
-      app['pxl.collectionSize'] ?? PluxLimit.pxlCollectionSize.defaultValue,
-  decimalDigits:
-      app['pxl.decimalDigits'] ?? PluxLimit.pxlDecimalDigits.defaultValue,
+  budget: app.valueOf(PluxLimit.pxlOperationBudget),
+  stringLength: app.valueOf(PluxLimit.pxlStringLength),
+  collectionSize: app.valueOf(PluxLimit.pxlCollectionSize),
+  decimalDigits: app.valueOf(PluxLimit.pxlDecimalDigits),
   regex: RegexLimits(
-    patternLength:
-        app['pxl.regexPatternLength'] ??
-        PluxLimit.pxlRegexPatternLength.defaultValue,
-    programSize:
-        app['pxl.regexProgramSize'] ??
-        PluxLimit.pxlRegexProgramSize.defaultValue,
-    repeat: app['pxl.regexRepeat'] ?? PluxLimit.pxlRegexRepeat.defaultValue,
+    patternLength: app.valueOf(PluxLimit.pxlRegexPatternLength),
+    programSize: app.valueOf(PluxLimit.pxlRegexProgramSize),
+    repeat: app.valueOf(PluxLimit.pxlRegexRepeat),
   ),
 );
 
