@@ -868,12 +868,27 @@
     },
     "dataSourceTriggers": {
       "type": "object",
-      "description": "Handlers of a data source's events (ACT-002): the loaded value is onLoaded's `event`, the error onFailed's.",
+      "description": "Handlers of a data source's events (ACT-002): the loaded value is onLoaded's `event`, the error onFailed's; a stream's message, mapped to the source's type, is onMessage's; a transfer's progress is onProgress's (DAT-012, DAT-031); an offline mutation's replay ends in onSynced, onSyncFailed or onConflict, whose `event` names the operation, the idempotency key and the status (DAT-020).",
       "properties": {
         "onLoaded": {
           "$ref": "#/$defs/eventHandler"
         },
         "onFailed": {
+          "$ref": "#/$defs/eventHandler"
+        },
+        "onMessage": {
+          "$ref": "#/$defs/eventHandler"
+        },
+        "onProgress": {
+          "$ref": "#/$defs/eventHandler"
+        },
+        "onSynced": {
+          "$ref": "#/$defs/eventHandler"
+        },
+        "onSyncFailed": {
+          "$ref": "#/$defs/eventHandler"
+        },
+        "onConflict": {
           "$ref": "#/$defs/eventHandler"
         }
       },

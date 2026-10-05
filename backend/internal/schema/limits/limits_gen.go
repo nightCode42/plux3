@@ -72,6 +72,17 @@ const (
 	// DataCacheEntries: Responses the cache of data sources keeps on the device;
 	// the least recently used are evicted beyond it. (DAT-010, LIM-004)
 	DataCacheEntries Key = "data.cacheEntries"
+	// DataDownloadSize: Bytes one download may have; checked against the
+	// declared length before the transfer and counted during it, a larger one is
+	// stopped. (DAT-031, LIM-004)
+	DataDownloadSize Key = "data.downloadSize"
+	// DataOutboxBytes: Bytes the offline outbox keeps on the device, encoded; a
+	// mutation that would exceed it is refused with a typed error. (DAT-020,
+	// LIM-004)
+	DataOutboxBytes Key = "data.outboxBytes"
+	// DataOutboxEntries: Mutations the offline outbox keeps on the device; a
+	// further mutation is refused with a typed error. (DAT-020, LIM-004)
+	DataOutboxEntries Key = "data.outboxEntries"
 	// DataPageSize: Items one page of a paginated data source may ask for.
 	// (DAT-011)
 	DataPageSize Key = "data.pageSize"
@@ -87,6 +98,22 @@ const (
 	// DataSourcesPerPlugin: Data sources a plugin, its pages and the app may
 	// declare for it together. (DAT-001)
 	DataSourcesPerPlugin Key = "data.sourcesPerPlugin"
+	// DataStreamBackoffMax: Longest wait between two reconnection attempts of a
+	// stream; the wait doubles from data.streamBackoffMin up to it, with jitter.
+	// (DAT-012)
+	DataStreamBackoffMax Key = "data.streamBackoffMax"
+	// DataStreamBackoffMin: First wait before a stream reconnects after its
+	// connection ended. (DAT-012)
+	DataStreamBackoffMin Key = "data.streamBackoffMin"
+	// DataStreamMessageSize: Bytes one stream message may have; a larger message
+	// closes the stream with a typed error. (DAT-012, LIM-004)
+	DataStreamMessageSize Key = "data.streamMessageSize"
+	// DataStreamsOpen: Streams the runtime keeps open at once; a further
+	// subscription is refused with a typed error. (DAT-012, LIM-004)
+	DataStreamsOpen Key = "data.streamsOpen"
+	// DataUploadSize: Bytes one upload may have; the file's size is checked
+	// before the transfer and a larger file is refused. (DAT-031, LIM-004)
+	DataUploadSize Key = "data.uploadSize"
 	// DeviceDiskQuota: Disk space the runtime may use for releases on one
 	// device. (SYN-012)
 	DeviceDiskQuota Key = "device.diskQuota"
@@ -206,11 +233,19 @@ var registry = [...]Definition{
 	{Key: BundleVerifierTables, Unit: UnitCount, Default: 1000000, Warning: 0, Max: 10000000, Scopes: ScopeInstallation, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P1", Description: "Maximum number of tables and vectors the FlatBuffers verifier visits in one section."},
 	{Key: DataCacheBytes, Unit: UnitBytes, Default: 16777216, Warning: 0, Max: 268435456, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the response cache of data sources keeps on the device; the least recently used entries are evicted beyond it."},
 	{Key: DataCacheEntries, Unit: UnitCount, Default: 1000, Warning: 0, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Responses the cache of data sources keeps on the device; the least recently used are evicted beyond it."},
+	{Key: DataDownloadSize, Unit: UnitBytes, Default: 52428800, Warning: 0, Max: 2147483648, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes one download may have; checked against the declared length before the transfer and counted during it, a larger one is stopped."},
+	{Key: DataOutboxBytes, Unit: UnitBytes, Default: 4194304, Warning: 0, Max: 67108864, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the offline outbox keeps on the device, encoded; a mutation that would exceed it is refused with a typed error."},
+	{Key: DataOutboxEntries, Unit: UnitCount, Default: 200, Warning: 0, Max: 10000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Mutations the offline outbox keeps on the device; a further mutation is refused with a typed error."},
 	{Key: DataPageSize, Unit: UnitCount, Default: 50, Warning: 0, Max: 1000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerRuntime, Phase: "P5", Description: "Items one page of a paginated data source may ask for."},
 	{Key: DataRequestSize, Unit: UnitBytes, Default: 1048576, Warning: 0, Max: 16777216, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the body of one data request may have."},
 	{Key: DataRequestTimeout, Unit: UnitMilliseconds, Default: 30000, Warning: 0, Max: 300000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Time one data request may take before it fails with a timeout."},
 	{Key: DataResponseSize, Unit: UnitBytes, Default: 4194304, Warning: 0, Max: 67108864, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the response of one data request may have; a larger response is stopped."},
 	{Key: DataSourcesPerPlugin, Unit: UnitCount, Default: 100, Warning: 0, Max: 1000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler, Phase: "P5", Description: "Data sources a plugin, its pages and the app may declare for it together."},
+	{Key: DataStreamBackoffMax, Unit: UnitMilliseconds, Default: 30000, Warning: 0, Max: 600000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Longest wait between two reconnection attempts of a stream; the wait doubles from data.streamBackoffMin up to it, with jitter."},
+	{Key: DataStreamBackoffMin, Unit: UnitMilliseconds, Default: 1000, Warning: 0, Max: 60000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "First wait before a stream reconnects after its connection ended."},
+	{Key: DataStreamMessageSize, Unit: UnitBytes, Default: 1048576, Warning: 0, Max: 16777216, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes one stream message may have; a larger message closes the stream with a typed error."},
+	{Key: DataStreamsOpen, Unit: UnitCount, Default: 8, Warning: 0, Max: 64, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Streams the runtime keeps open at once; a further subscription is refused with a typed error."},
+	{Key: DataUploadSize, Unit: UnitBytes, Default: 26214400, Warning: 0, Max: 1073741824, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes one upload may have; the file's size is checked before the transfer and a larger file is refused."},
 	{Key: DeviceDiskQuota, Unit: UnitBytes, Default: 209715200, Warning: 0, Max: 4294967296, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "Disk space the runtime may use for releases on one device."},
 	{Key: DocumentFileSize, Unit: UnitBytes, Default: 8388608, Warning: 0, Max: 67108864, Scopes: ScopeInstallation | ScopeOrganization, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Size of one document file in the project layout, checked before parsing."},
 	{Key: DocumentJSONDepth, Unit: UnitCount, Default: 512, Warning: 0, Max: 4096, Scopes: ScopeInstallation, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Nesting of arrays and objects in one document, checked while parsing."},

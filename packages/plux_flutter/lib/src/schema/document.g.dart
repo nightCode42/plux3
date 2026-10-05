@@ -684,9 +684,13 @@ enum DataSourceKind {
 }
 
 /// Handlers of a data source's events (ACT-002): the loaded value is onLoaded's
-/// `event`, the error onFailed's.
+/// `event`, the error onFailed's; a stream's message, mapped to the source's
+/// type, is onMessage's; a transfer's progress is onProgress's (DAT-012,
+/// DAT-031); an offline mutation's replay ends in onSynced, onSyncFailed or
+/// onConflict, whose `event` names the operation, the idempotency key and the
+/// status (DAT-020).
 final class DataSourceTriggers {
-  const DataSourceTriggers({this.onLoaded, this.onFailed});
+  const DataSourceTriggers({this.onLoaded, this.onFailed, this.onMessage, this.onProgress, this.onSynced, this.onSyncFailed, this.onConflict});
 
   /// Decodes a JSON object.
   factory DataSourceTriggers.fromJson(Object json) {
@@ -694,6 +698,11 @@ final class DataSourceTriggers {
     return DataSourceTriggers(
       onLoaded: m['onLoaded'] == null ? null : EventHandler.fromJson(m['onLoaded']!),
       onFailed: m['onFailed'] == null ? null : EventHandler.fromJson(m['onFailed']!),
+      onMessage: m['onMessage'] == null ? null : EventHandler.fromJson(m['onMessage']!),
+      onProgress: m['onProgress'] == null ? null : EventHandler.fromJson(m['onProgress']!),
+      onSynced: m['onSynced'] == null ? null : EventHandler.fromJson(m['onSynced']!),
+      onSyncFailed: m['onSyncFailed'] == null ? null : EventHandler.fromJson(m['onSyncFailed']!),
+      onConflict: m['onConflict'] == null ? null : EventHandler.fromJson(m['onConflict']!),
     );
   }
 
@@ -703,11 +712,31 @@ final class DataSourceTriggers {
   /// A trigger's handler: a reference to an action graph or an inline graph
   /// (SCH-023).
   final EventHandler? onFailed;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler? onMessage;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler? onProgress;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler? onSynced;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler? onSyncFailed;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler? onConflict;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
         if (onLoaded != null) 'onLoaded': onLoaded!.toJson(),
         if (onFailed != null) 'onFailed': onFailed!.toJson(),
+        if (onMessage != null) 'onMessage': onMessage!.toJson(),
+        if (onProgress != null) 'onProgress': onProgress!.toJson(),
+        if (onSynced != null) 'onSynced': onSynced!.toJson(),
+        if (onSyncFailed != null) 'onSyncFailed': onSyncFailed!.toJson(),
+        if (onConflict != null) 'onConflict': onConflict!.toJson(),
       };
 }
 

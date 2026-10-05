@@ -225,12 +225,17 @@ One of `rest`, `graphql`, `websocket`, `sse`, `function`, `database`, `static`.
 
 ### DataSourceTriggers
 
-Handlers of a data source's events (ACT-002): the loaded value is onLoaded's `event`, the error onFailed's.
+Handlers of a data source's events (ACT-002): the loaded value is onLoaded's `event`, the error onFailed's; a stream's message, mapped to the source's type, is onMessage's; a transfer's progress is onProgress's (DAT-012, DAT-031); an offline mutation's replay ends in onSynced, onSyncFailed or onConflict, whose `event` names the operation, the idempotency key and the status (DAT-020).
 
 | Property | Type | Required | Description |
 |---|---|---|---|
 | `onLoaded` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
 | `onFailed` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
+| `onMessage` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
+| `onProgress` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
+| `onSynced` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
+| `onSyncFailed` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
+| `onConflict` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
 
 ### DeepLinkPolicy
 

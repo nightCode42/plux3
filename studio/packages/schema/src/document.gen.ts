@@ -251,12 +251,22 @@ export interface DataSource {
 
 export type DataSourceKind = "rest" | "graphql" | "websocket" | "sse" | "function" | "database" | "static";
 
-/** Handlers of a data source's events (ACT-002): the loaded value is onLoaded's `event`, the error onFailed's. */
+/** Handlers of a data source's events (ACT-002): the loaded value is onLoaded's `event`, the error onFailed's; a stream's message, mapped to the source's type, is onMessage's; a transfer's progress is onProgress's (DAT-012, DAT-031); an offline mutation's replay ends in onSynced, onSyncFailed or onConflict, whose `event` names the operation, the idempotency key and the status (DAT-020). */
 export interface DataSourceTriggers {
   /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
   readonly onLoaded?: EventHandler;
   /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
   readonly onFailed?: EventHandler;
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly onMessage?: EventHandler;
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly onProgress?: EventHandler;
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly onSynced?: EventHandler;
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly onSyncFailed?: EventHandler;
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly onConflict?: EventHandler;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }

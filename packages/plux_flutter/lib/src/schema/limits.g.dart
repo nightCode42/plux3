@@ -82,6 +82,15 @@ enum PluxLimit {
   /// Responses the cache of data sources keeps on the device; the least
   /// recently used are evicted beyond it.
   dataCacheEntries('data.cacheEntries', PluxLimitUnit.count, 1000, 0, 100000),
+  /// Bytes one download may have; checked against the declared length before
+  /// the transfer and counted during it, a larger one is stopped.
+  dataDownloadSize('data.downloadSize', PluxLimitUnit.bytes, 52428800, 0, 2147483648),
+  /// Bytes the offline outbox keeps on the device, encoded; a mutation that
+  /// would exceed it is refused with a typed error.
+  dataOutboxBytes('data.outboxBytes', PluxLimitUnit.bytes, 4194304, 0, 67108864),
+  /// Mutations the offline outbox keeps on the device; a further mutation is
+  /// refused with a typed error.
+  dataOutboxEntries('data.outboxEntries', PluxLimitUnit.count, 200, 0, 10000),
   /// Items one page of a paginated data source may ask for.
   dataPageSize('data.pageSize', PluxLimitUnit.count, 50, 0, 1000),
   /// Bytes the body of one data request may have.
@@ -93,6 +102,20 @@ enum PluxLimit {
   dataResponseSize('data.responseSize', PluxLimitUnit.bytes, 4194304, 0, 67108864),
   /// Data sources a plugin, its pages and the app may declare for it together.
   dataSourcesPerPlugin('data.sourcesPerPlugin', PluxLimitUnit.count, 100, 0, 1000),
+  /// Longest wait between two reconnection attempts of a stream; the wait
+  /// doubles from data.streamBackoffMin up to it, with jitter.
+  dataStreamBackoffMax('data.streamBackoffMax', PluxLimitUnit.milliseconds, 30000, 0, 600000),
+  /// First wait before a stream reconnects after its connection ended.
+  dataStreamBackoffMin('data.streamBackoffMin', PluxLimitUnit.milliseconds, 1000, 0, 60000),
+  /// Bytes one stream message may have; a larger message closes the stream with
+  /// a typed error.
+  dataStreamMessageSize('data.streamMessageSize', PluxLimitUnit.bytes, 1048576, 0, 16777216),
+  /// Streams the runtime keeps open at once; a further subscription is refused
+  /// with a typed error.
+  dataStreamsOpen('data.streamsOpen', PluxLimitUnit.count, 8, 0, 64),
+  /// Bytes one upload may have; the file's size is checked before the transfer
+  /// and a larger file is refused.
+  dataUploadSize('data.uploadSize', PluxLimitUnit.bytes, 26214400, 0, 1073741824),
   /// Disk space the runtime may use for releases on one device.
   deviceDiskQuota('device.diskQuota', PluxLimitUnit.bytes, 209715200, 0, 4294967296),
   /// Size of one document file in the project layout, checked before parsing.

@@ -528,6 +528,30 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Remove the header and set auth to true to send the auth delegate's token, or call the API through a Plux Function.
 
+### PLX-1175
+
+`DATA_STREAM_INVALID` · error · Invalid stream configuration
+
+**Cause.** A WebSocket, SSE or GraphQL subscription source is not what the data layer runs: a property is unknown or missing, the path is malformed, a subscription document is not a subscription, or a source of another kind is configured as a stream (DAT-012, ADR-0048).
+
+**Fix.** Correct the configuration as the data sources reference describes; the message names the property.
+
+### PLX-1176
+
+`DATA_OUTBOX_INVALID` · error · Invalid offline mutation
+
+**Cause.** An operation marked offlineCapable cannot be replayed: it reads (GET, or a GraphQL query) instead of mutating, or it is also a file transfer (DAT-020).
+
+**Fix.** Mark only mutating operations offlineCapable, and treat their output as optional.
+
+### PLX-1177
+
+`DATA_TRANSFER_INVALID` · error · Invalid file transfer
+
+**Cause.** An operation's upload or download is not what the data layer runs: it is not a REST operation, its method does not fit the direction, its body mode or file parameter is unknown, or it is combined with offlineCapable (DAT-031).
+
+**Fix.** Declare a REST operation with a transfer of kind upload (POST, PUT or PATCH) or download (GET), and a file parameter.
+
 ### PLX-1201
 
 `UNKNOWN_ROUTE` · error · Unknown route
@@ -1239,6 +1263,78 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 **Cause.** The response cache could not be read or written, or its encryption key could not be obtained; the request goes to the network as with networkOnly, and nothing is stored in the clear (DAT-010, LIM-004).
 
 **Fix.** Check the device's free storage and the key provider; the runtime keeps working without the cache.
+
+### PLX-5110
+
+`DATA_STREAM_FAILED` · error · Stream failed
+
+**Cause.** A stream ended and will not reconnect: the server refused the connection for good (a client error), the stream's protocol was violated, or a GraphQL subscription reported an error. Network failures and server errors are not this error: they reconnect with backoff (DAT-012).
+
+**Fix.** Check the stream's URL, parameters and the user's access; subscribe again after correcting the cause.
+
+### PLX-5111
+
+`DATA_STREAM_MESSAGE_TOO_LARGE` · error · Stream message too large
+
+**Cause.** A message of a stream is larger than data.streamMessageSize; the stream is closed (DAT-012, LIM-004).
+
+**Fix.** Make the server send smaller messages, or raise data.streamMessageSize for the app.
+
+### PLX-5112
+
+`DATA_STREAM_LIMIT` · error · Too many open streams
+
+**Cause.** A subscription would open more streams than data.streamsOpen allows; it is refused and the open streams stay (DAT-012, LIM-004).
+
+**Fix.** Unsubscribe from a stream first, or raise data.streamsOpen for the app.
+
+### PLX-5120
+
+`DATA_OUTBOX_FULL` · error · Outbox full
+
+**Cause.** An offline mutation could not be queued because the outbox holds data.outboxEntries entries or data.outboxBytes bytes; the mutation is refused with a custom error and nothing is queued (DAT-020, LIM-004).
+
+**Fix.** Wait until connectivity returns and the outbox drains, or raise the limits for the app.
+
+### PLX-5121
+
+`DATA_OUTBOX_UNAVAILABLE` · error · Outbox unavailable
+
+**Cause.** The outbox could not be read or written, or its encryption key could not be obtained, so an offline mutation is refused rather than stored in the clear (DAT-020).
+
+**Fix.** Check the device's free storage and secure storage; the mutation can be repeated.
+
+### PLX-5122
+
+`DATA_OUTBOX_CONFLICT` · warning · Outbox replay conflict
+
+**Cause.** A queued mutation was answered 409 or 412 when it was replayed: the server's state changed meanwhile. The entry is removed and the data source's conflict event runs, so the graph can reconcile (DAT-020).
+
+**Fix.** Handle the conflict trigger of the data source: reload the data and ask the user, or apply the change again.
+
+### PLX-5123
+
+`DATA_OUTBOX_REJECTED` · warning · Outbox replay rejected
+
+**Cause.** A queued mutation was answered with a client error other than a conflict when it was replayed, so it can never succeed. The entry is removed and the data source's failure event runs (DAT-020).
+
+**Fix.** Handle the failure trigger of the data source: undo the optimistic change and tell the user.
+
+### PLX-5130
+
+`DATA_TRANSFER_TOO_LARGE` · error · Transfer too large
+
+**Cause.** An upload's file, or a download's declared or received length, is larger than data.uploadSize or data.downloadSize; the transfer is refused or stopped and a partial download is removed (DAT-031, LIM-004).
+
+**Fix.** Choose a smaller file, or raise the limit for the app.
+
+### PLX-5131
+
+`DATA_TRANSFER_FILE_FAILED` · error · Transfer file unavailable
+
+**Cause.** The file to upload does not exist or cannot be read, or the name a download is saved under is not a plain file name or cannot be written in the runtime's directory (DAT-031).
+
+**Fix.** Give an existing file, and a download a plain name without directories.
 
 ### PLX-5301
 

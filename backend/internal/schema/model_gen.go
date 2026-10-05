@@ -359,7 +359,11 @@ func (v DataSourceKind) Valid() bool {
 }
 
 // DataSourceTriggers — Handlers of a data source's events (ACT-002): the
-// loaded value is onLoaded's `event`, the error onFailed's.
+// loaded value is onLoaded's `event`, the error onFailed's; a stream's
+// message, mapped to the source's type, is onMessage's; a transfer's progress
+// is onProgress's (DAT-012, DAT-031); an offline mutation's replay ends in
+// onSynced, onSyncFailed or onConflict, whose `event` names the operation,
+// the idempotency key and the status (DAT-020).
 type DataSourceTriggers struct {
 	// OnLoaded: A trigger's handler: a reference to an action graph or an inline
 	// graph (SCH-023).
@@ -367,6 +371,21 @@ type DataSourceTriggers struct {
 	// OnFailed: A trigger's handler: a reference to an action graph or an inline
 	// graph (SCH-023).
 	OnFailed *EventHandler `json:"onFailed,omitempty"`
+	// OnMessage: A trigger's handler: a reference to an action graph or an
+	// inline graph (SCH-023).
+	OnMessage *EventHandler `json:"onMessage,omitempty"`
+	// OnProgress: A trigger's handler: a reference to an action graph or an
+	// inline graph (SCH-023).
+	OnProgress *EventHandler `json:"onProgress,omitempty"`
+	// OnSynced: A trigger's handler: a reference to an action graph or an inline
+	// graph (SCH-023).
+	OnSynced *EventHandler `json:"onSynced,omitempty"`
+	// OnSyncFailed: A trigger's handler: a reference to an action graph or an
+	// inline graph (SCH-023).
+	OnSyncFailed *EventHandler `json:"onSyncFailed,omitempty"`
+	// OnConflict: A trigger's handler: a reference to an action graph or an
+	// inline graph (SCH-023).
+	OnConflict *EventHandler `json:"onConflict,omitempty"`
 }
 
 // DeepLinkPolicy — The links the app answers (NAV-008): its hosts for

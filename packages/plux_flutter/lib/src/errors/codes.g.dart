@@ -205,6 +205,15 @@ enum PluxErrorCode {
   /// Credential in a data source header.
   dataSourceSecretHeader(1174, 'DATA_SOURCE_SECRET_HEADER', 'Credential in a data source header'),
 
+  /// Invalid stream configuration.
+  dataStreamInvalid(1175, 'DATA_STREAM_INVALID', 'Invalid stream configuration'),
+
+  /// Invalid offline mutation.
+  dataOutboxInvalid(1176, 'DATA_OUTBOX_INVALID', 'Invalid offline mutation'),
+
+  /// Invalid file transfer.
+  dataTransferInvalid(1177, 'DATA_TRANSFER_INVALID', 'Invalid file transfer'),
+
   /// Unknown route.
   unknownRoute(1201, 'UNKNOWN_ROUTE', 'Unknown route'),
 
@@ -468,6 +477,33 @@ enum PluxErrorCode {
 
   /// Response cache unavailable.
   dataCacheUnavailable(5109, 'DATA_CACHE_UNAVAILABLE', 'Response cache unavailable'),
+
+  /// Stream failed.
+  dataStreamFailed(5110, 'DATA_STREAM_FAILED', 'Stream failed'),
+
+  /// Stream message too large.
+  dataStreamMessageTooLarge(5111, 'DATA_STREAM_MESSAGE_TOO_LARGE', 'Stream message too large'),
+
+  /// Too many open streams.
+  dataStreamLimit(5112, 'DATA_STREAM_LIMIT', 'Too many open streams'),
+
+  /// Outbox full.
+  dataOutboxFull(5120, 'DATA_OUTBOX_FULL', 'Outbox full'),
+
+  /// Outbox unavailable.
+  dataOutboxUnavailable(5121, 'DATA_OUTBOX_UNAVAILABLE', 'Outbox unavailable'),
+
+  /// Outbox replay conflict.
+  dataOutboxConflict(5122, 'DATA_OUTBOX_CONFLICT', 'Outbox replay conflict'),
+
+  /// Outbox replay rejected.
+  dataOutboxRejected(5123, 'DATA_OUTBOX_REJECTED', 'Outbox replay rejected'),
+
+  /// Transfer too large.
+  dataTransferTooLarge(5130, 'DATA_TRANSFER_TOO_LARGE', 'Transfer too large'),
+
+  /// Transfer file unavailable.
+  dataTransferFileFailed(5131, 'DATA_TRANSFER_FILE_FAILED', 'Transfer file unavailable'),
 
   /// State written with a value of the wrong type.
   stateWriteTypeMismatch(5301, 'STATE_WRITE_TYPE_MISMATCH', 'State written with a value of the wrong type'),
