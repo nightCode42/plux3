@@ -51,25 +51,16 @@ abstract final class PluxScreens {
 /// The app's feature flags (ABT-006).
 abstract final class PluxFlags {
   /// Annual base rate used by the calculator.
-  static double get loanBaseRate =>
-      plux.Plux.flag<double>('loanBaseRate') ?? 0.089;
+  static double get loanBaseRate => plux.Plux.flag<double>('loanBaseRate') ?? 0.089;
 }
 
 /// The type `LoanSchedule`.
 final class LoanSchedule {
   /// Creates a value.
-  const LoanSchedule({
-    required this.monthlyPayment,
-    required this.months,
-    required this.totalInterest,
-  });
+  const LoanSchedule({required this.monthlyPayment, required this.months, required this.totalInterest});
 
   /// The value of JSON form [json].
-  factory LoanSchedule.fromJson(Map<String, Object?> json) => LoanSchedule(
-    monthlyPayment: json['monthlyPayment'] as String,
-    months: json['months'] as int,
-    totalInterest: json['totalInterest'] as String,
-  );
+  factory LoanSchedule.fromJson(Map<String, Object?> json) => LoanSchedule(monthlyPayment: json['monthlyPayment'] as String, months: json['months'] as int, totalInterest: json['totalInterest'] as String);
 
   /// The field `monthlyPayment`.
   final String monthlyPayment;
@@ -81,11 +72,7 @@ final class LoanSchedule {
   final String totalInterest;
 
   /// The JSON form.
-  Map<String, Object?> toJson() => {
-    'monthlyPayment': monthlyPayment,
-    'months': months,
-    'totalInterest': totalInterest,
-  };
+  Map<String, Object?> toJson() => {'monthlyPayment': monthlyPayment, 'months': months, 'totalInterest': totalInterest};
 }
 
 /// The type `Tier`.
