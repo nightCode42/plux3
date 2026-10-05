@@ -268,6 +268,27 @@ enum PluxErrorCode {
   /// FormScope names no form.
   formScopeInvalid(1240, 'FORM_SCOPE_INVALID', 'FormScope names no form'),
 
+  /// Scenario file does not match its schema.
+  scenarioFileInvalid(1270, 'SCENARIO_FILE_INVALID', 'Scenario file does not match its schema'),
+
+  /// Scenario file is not valid YAML or JSON.
+  scenarioSyntaxInvalid(1271, 'SCENARIO_SYNTAX_INVALID', 'Scenario file is not valid YAML or JSON'),
+
+  /// Scenario names something the project does not have.
+  scenarioReferenceUnknown(1272, 'SCENARIO_REFERENCE_UNKNOWN', 'Scenario names something the project does not have'),
+
+  /// Scenario uses something plux test cannot run yet.
+  scenarioUnsupported(1273, 'SCENARIO_UNSUPPORTED', 'Scenario uses something plux test cannot run yet'),
+
+  /// Two scenarios of a file share a name.
+  scenarioNameDuplicate(1274, 'SCENARIO_NAME_DUPLICATE', 'Two scenarios of a file share a name'),
+
+  /// The Flutter test harness could not run.
+  testHarnessFailed(1275, 'TEST_HARNESS_FAILED', 'The Flutter test harness could not run'),
+
+  /// No scenario files found.
+  scenarioFilesNone(1276, 'SCENARIO_FILES_NONE', 'No scenario files found'),
+
   /// Page exceeds its node budget.
   pageNodeBudget(1310, 'PAGE_NODE_BUDGET', 'Page exceeds its node budget'),
 

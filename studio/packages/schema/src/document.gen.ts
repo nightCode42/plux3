@@ -7,7 +7,7 @@
 export type JsonValue = null | boolean | number | string | readonly JsonValue[] | { readonly [key: string]: JsonValue };
 
 /** The `kind` of every document type (SCH-006). */
-export type DocumentKind = "actionGraph" | "app" | "assetIndex" | "component" | "nativeCatalogue" | "page" | "plugin" | "template" | "theme" | "translationKeys" | "translations";
+export type DocumentKind = "actionGraph" | "app" | "assetIndex" | "component" | "nativeCatalogue" | "page" | "plugin" | "scenarios" | "template" | "theme" | "translationKeys" | "translations";
 
 /** A named action graph: page-scoped when `page` is set, otherwise a plugin flow callable with typed inputs (§14.1, ACT-061). File: `plugins/<plugin>/actions/<key>.graph.json`. */
 export interface ActionGraphDocument {
@@ -809,6 +809,144 @@ export interface RouteOptions {
   readonly guards?: readonly RouteGuard[];
   /** The route timeline of a custom transition (NAV-010). */
   readonly timeline?: string;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** What a page or flow does, given a situation: the steps taken and what must hold afterwards (TST-001). */
+export interface Scenario {
+  /** The scenario's name in reports; unique within its file. */
+  readonly name: string;
+  readonly description?: string;
+  /** The route of the page under test, started with the `given` parameters. */
+  readonly page?: string;
+  /** The key of the plugin flow under test. */
+  readonly flow?: string;
+  /** The situation a scenario starts in. */
+  readonly given?: ScenarioGiven;
+  readonly steps?: readonly ScenarioStep[];
+  readonly expect: readonly ScenarioExpectation[];
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** A step that ran, by the action's or function's name, with the inputs it must have had; inputs not listed are not compared. */
+export interface ScenarioCall {
+  readonly name: string;
+  readonly args?: { readonly [key: string]: JsonValue };
+  /** How often it ran; at least once when absent. */
+  readonly times?: number;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+export interface ScenarioDataSource {
+  readonly state: ScenarioMockState;
+  /** A JSON value interpreted against a declared type (defaults, mocks, environment values). */
+  readonly mock?: JsonValue;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** One or more declarative test scenarios of pages or flows (TST-001). Files: `tests/**/*.scenario.yaml` or `.json`, found through `tests` in `plux.yaml`. */
+export interface ScenarioDocument {
+  /** Version of the document schema (SCH-000). Older documents are migrated before validation. */
+  readonly schemaVersion: string;
+  readonly kind: "scenarios";
+  readonly scenarios: readonly Scenario[];
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+export interface ScenarioEnterText {
+  /** A node's `testId` (WGT-013). */
+  readonly testId: string;
+  readonly text: string;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** One thing that must hold after the steps; exactly one of the keys. */
+export interface ScenarioExpectation {
+  /** A node's `testId` (WGT-013). */
+  readonly visible?: string;
+  /** A node's `testId` (WGT-013). */
+  readonly notVisible?: string;
+  readonly textEquals?: ScenarioTextEquals;
+  /** App-wide unique route name (SCH-025). */
+  readonly navigatedTo?: string;
+  /** A step that ran, by the action's or function's name, with the inputs it must have had; inputs not listed are not compared. */
+  readonly actionCalled?: ScenarioCall;
+  /** A step that ran, by the action's or function's name, with the inputs it must have had; inputs not listed are not compared. */
+  readonly functionCalled?: ScenarioCall;
+  /** Exposed app state entries and the values they hold, by name. */
+  readonly stateEquals?: { readonly [key: string]: JsonValue };
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** The situation a scenario starts in. */
+export interface ScenarioGiven {
+  /** The page's parameters, or the flow's inputs, by name, in their JSON form. */
+  readonly params?: { readonly [key: string]: JsonValue };
+  /** Exposed app state entries to set before the page opens, by name, in their JSON form. */
+  readonly state?: { readonly [key: string]: JsonValue };
+  /** The state each data source shows (DAT-080), by source name, optionally with a mock replacing its design-time mock. */
+  readonly dataSources?: { readonly [key: string]: ScenarioDataSource };
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+export type ScenarioMockState = "loading" | "empty" | "error" | "success";
+
+export interface ScenarioScroll {
+  /** The scrollable to drag. */
+  readonly testId: string;
+  /** Logical pixels to drag horizontally; 0 when absent. */
+  readonly dx?: number;
+  /** Logical pixels to drag vertically; 0 when absent. */
+  readonly dy?: number;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** One thing the user or the host does; exactly one of the keys. */
+export interface ScenarioStep {
+  /** A node's `testId` (WGT-013). */
+  readonly tap?: string;
+  readonly enterText?: ScenarioEnterText;
+  readonly scroll?: ScenarioScroll;
+  /** Pumps frames until the node is visible or the timeout passes. */
+  readonly waitFor?: ScenarioWaitFor;
+  /** Sends a host event into the app (HST-013). */
+  readonly trigger?: ScenarioTrigger;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+export interface ScenarioTextEquals {
+  /** A node's `testId` (WGT-013). */
+  readonly testId: string;
+  readonly text: string;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** Sends a host event into the app (HST-013). */
+export interface ScenarioTrigger {
+  /** Identifier used in PXL and generated code: lowerCamelCase. */
+  readonly event: string;
+  readonly payload?: { readonly [key: string]: JsonValue };
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** Pumps frames until the node is visible or the timeout passes. */
+export interface ScenarioWaitFor {
+  /** A node's `testId` (WGT-013). */
+  readonly testId: string;
+  /** How long to wait; 5000 when absent. */
+  readonly timeoutMs?: number;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }

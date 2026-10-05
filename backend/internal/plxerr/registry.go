@@ -115,6 +115,16 @@ const (
 
 	FormScopeInvalid Code = 1240
 
+	// Plux Test: scenarios and runs (PLX-1270–1279, P5 R9).
+
+	ScenarioFileInvalid      Code = 1270
+	ScenarioSyntaxInvalid    Code = 1271
+	ScenarioReferenceUnknown Code = 1272
+	ScenarioUnsupported      Code = 1273
+	ScenarioNameDuplicate    Code = 1274
+	TestHarnessFailed        Code = 1275
+	ScenarioFilesNone        Code = 1276
+
 	// Schema and validation: limits and budgets (PLX-1300–1399).
 
 	PageNodeBudget      Code = 1310

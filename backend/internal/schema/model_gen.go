@@ -22,6 +22,7 @@ const (
 	KindNativeCatalogue DocumentKind = "nativeCatalogue"
 	KindPage            DocumentKind = "page"
 	KindPlugin          DocumentKind = "plugin"
+	KindScenarios       DocumentKind = "scenarios"
 	KindTemplate        DocumentKind = "template"
 	KindTheme           DocumentKind = "theme"
 	KindTranslationKeys DocumentKind = "translationKeys"
@@ -40,6 +41,7 @@ var documentSchemas = [...]struct {
 	{KindNativeCatalogue, "native-catalogue.schema.json"},
 	{KindPage, "page.schema.json"},
 	{KindPlugin, "plugin.schema.json"},
+	{KindScenarios, "scenario.schema.json"},
 	{KindTemplate, "template.schema.json"},
 	{KindTheme, "theme.schema.json"},
 	{KindTranslationKeys, "translation-keys.schema.json"},
@@ -1193,6 +1195,162 @@ type RouteOptions struct {
 	Guards     []RouteGuard `json:"guards,omitempty"`
 	// Timeline: The route timeline of a custom transition (NAV-010).
 	Timeline string `json:"timeline,omitempty"`
+}
+
+// Scenario — What a page or flow does, given a situation: the steps taken
+// and what must hold afterwards (TST-001).
+type Scenario struct {
+	// Name: The scenario's name in reports; unique within its file.
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	// Page: The route of the page under test, started with the `given`
+	// parameters.
+	Page string `json:"page,omitempty"`
+	// Flow: The key of the plugin flow under test.
+	Flow string `json:"flow,omitempty"`
+	// Given: The situation a scenario starts in.
+	Given  *ScenarioGiven        `json:"given,omitempty"`
+	Steps  []ScenarioStep        `json:"steps,omitempty"`
+	Expect []ScenarioExpectation `json:"expect"`
+}
+
+// ScenarioCall — A step that ran, by the action's or function's name, with
+// the inputs it must have had; inputs not listed are not compared.
+type ScenarioCall struct {
+	Name string                     `json:"name"`
+	Args map[string]json.RawMessage `json:"args,omitempty"`
+	// Times: How often it ran; at least once when absent.
+	Times *int64 `json:"times,omitempty"`
+}
+
+// ScenarioDataSource — is generated from
+// scenario.schema.json#/$defs/scenarioDataSource.
+type ScenarioDataSource struct {
+	State ScenarioMockState `json:"state"`
+	// Mock: A JSON value interpreted against a declared type (defaults, mocks,
+	// environment values).
+	Mock json.RawMessage `json:"mock,omitempty"`
+}
+
+// ScenarioDocument — One or more declarative test scenarios of pages or
+// flows (TST-001). Files: `tests/**/*.scenario.yaml` or `.json`, found
+// through `tests` in `plux.yaml`.
+type ScenarioDocument struct {
+	// SchemaVersion: Version of the document schema (SCH-000). Older documents
+	// are migrated before validation.
+	SchemaVersion string     `json:"schemaVersion"`
+	Kind          string     `json:"kind"`
+	Scenarios     []Scenario `json:"scenarios"`
+}
+
+// ScenarioEnterText — is generated from
+// scenario.schema.json#/$defs/scenarioStep/properties/enterText.
+type ScenarioEnterText struct {
+	// TestID: A node's `testId` (WGT-013).
+	TestID string `json:"testId"`
+	Text   string `json:"text"`
+}
+
+// ScenarioExpectation — One thing that must hold after the steps; exactly
+// one of the keys.
+type ScenarioExpectation struct {
+	// Visible: A node's `testId` (WGT-013).
+	Visible string `json:"visible,omitempty"`
+	// NotVisible: A node's `testId` (WGT-013).
+	NotVisible string              `json:"notVisible,omitempty"`
+	TextEquals *ScenarioTextEquals `json:"textEquals,omitempty"`
+	// NavigatedTo: App-wide unique route name (SCH-025).
+	NavigatedTo string `json:"navigatedTo,omitempty"`
+	// ActionCalled: A step that ran, by the action's or function's name, with
+	// the inputs it must have had; inputs not listed are not compared.
+	ActionCalled *ScenarioCall `json:"actionCalled,omitempty"`
+	// FunctionCalled: A step that ran, by the action's or function's name, with
+	// the inputs it must have had; inputs not listed are not compared.
+	FunctionCalled *ScenarioCall `json:"functionCalled,omitempty"`
+	// StateEquals: Exposed app state entries and the values they hold, by name.
+	StateEquals map[string]json.RawMessage `json:"stateEquals,omitempty"`
+}
+
+// ScenarioGiven — The situation a scenario starts in.
+type ScenarioGiven struct {
+	// Params: The page's parameters, or the flow's inputs, by name, in their
+	// JSON form.
+	Params map[string]json.RawMessage `json:"params,omitempty"`
+	// State: Exposed app state entries to set before the page opens, by name, in
+	// their JSON form.
+	State map[string]json.RawMessage `json:"state,omitempty"`
+	// DataSources: The state each data source shows (DAT-080), by source name,
+	// optionally with a mock replacing its design-time mock.
+	DataSources map[string]ScenarioDataSource `json:"dataSources,omitempty"`
+}
+
+// ScenarioMockState — is generated from
+// scenario.schema.json#/$defs/scenarioMockState.
+type ScenarioMockState string
+
+// Values of ScenarioMockState.
+const (
+	ScenarioMockStateLoading ScenarioMockState = "loading"
+	ScenarioMockStateEmpty   ScenarioMockState = "empty"
+	ScenarioMockStateError   ScenarioMockState = "error"
+	ScenarioMockStateSuccess ScenarioMockState = "success"
+)
+
+// Valid reports whether v is one of the values of ScenarioMockState.
+func (v ScenarioMockState) Valid() bool {
+	switch v {
+	case ScenarioMockStateLoading, ScenarioMockStateEmpty, ScenarioMockStateError, ScenarioMockStateSuccess:
+		return true
+	}
+	return false
+}
+
+// ScenarioScroll — is generated from
+// scenario.schema.json#/$defs/scenarioStep/properties/scroll.
+type ScenarioScroll struct {
+	// TestID: The scrollable to drag.
+	TestID string `json:"testId"`
+	// Dx: Logical pixels to drag horizontally; 0 when absent.
+	Dx *float64 `json:"dx,omitempty"`
+	// Dy: Logical pixels to drag vertically; 0 when absent.
+	Dy *float64 `json:"dy,omitempty"`
+}
+
+// ScenarioStep — One thing the user or the host does; exactly one of the
+// keys.
+type ScenarioStep struct {
+	// Tap: A node's `testId` (WGT-013).
+	Tap       string             `json:"tap,omitempty"`
+	EnterText *ScenarioEnterText `json:"enterText,omitempty"`
+	Scroll    *ScenarioScroll    `json:"scroll,omitempty"`
+	// WaitFor: Pumps frames until the node is visible or the timeout passes.
+	WaitFor *ScenarioWaitFor `json:"waitFor,omitempty"`
+	// Trigger: Sends a host event into the app (HST-013).
+	Trigger *ScenarioTrigger `json:"trigger,omitempty"`
+}
+
+// ScenarioTextEquals — is generated from
+// scenario.schema.json#/$defs/scenarioExpectation/properties/textEquals.
+type ScenarioTextEquals struct {
+	// TestID: A node's `testId` (WGT-013).
+	TestID string `json:"testId"`
+	Text   string `json:"text"`
+}
+
+// ScenarioTrigger — Sends a host event into the app (HST-013).
+type ScenarioTrigger struct {
+	// Event: Identifier used in PXL and generated code: lowerCamelCase.
+	Event   string                     `json:"event"`
+	Payload map[string]json.RawMessage `json:"payload,omitempty"`
+}
+
+// ScenarioWaitFor — Pumps frames until the node is visible or the timeout
+// passes.
+type ScenarioWaitFor struct {
+	// TestID: A node's `testId` (WGT-013).
+	TestID string `json:"testId"`
+	// TimeoutMs: How long to wait; 5000 when absent.
+	TimeoutMs *int64 `json:"timeoutMs,omitempty"`
 }
 
 // SecurityProfile — Security profile (§15.12).

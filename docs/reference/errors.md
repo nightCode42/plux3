@@ -696,6 +696,62 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Set form to the literal name of a form declared in the page's or component's forms.
 
+### PLX-1270
+
+`SCENARIO_FILE_INVALID` · error · Scenario file does not match its schema
+
+**Cause.** A scenario file has a value the scenario schema does not allow: a missing or unknown key, a value of the wrong type, or a step or expectation with more than one key (TST-001).
+
+**Fix.** Fix the value at the reported line and column; scenario.schema.json lists the allowed keys of a scenario, its given, its steps and its expectations.
+
+### PLX-1271
+
+`SCENARIO_SYNTAX_INVALID` · error · Scenario file is not valid YAML or JSON
+
+**Cause.** A scenario file cannot be parsed, so none of its scenarios can run (TST-001).
+
+**Fix.** Fix the syntax at the reported line and column.
+
+### PLX-1272
+
+`SCENARIO_REFERENCE_UNKNOWN` · error · Scenario names something the project does not have
+
+**Cause.** A scenario's page route, exposed state entry or data source is not declared by the project, so the scenario could never run against it (TST-001).
+
+**Fix.** Use the name the project declares, or declare the page, the exposed state entry or the data source.
+
+### PLX-1273
+
+`SCENARIO_UNSUPPORTED` · error · Scenario uses something plux test cannot run yet
+
+**Cause.** The scenario tests a flow, which the runtime offers no public way to start on its own, or replaces a data source's mock value, which needs a release of its own; only pages and the declared mocks run (TST-001, ADR-0052).
+
+**Fix.** Start the scenario at the page that calls the flow and expect the flow's actions to have been called; select a data source's declared mock by its state only.
+
+### PLX-1274
+
+`SCENARIO_NAME_DUPLICATE` · error · Two scenarios of a file share a name
+
+**Cause.** Reports and the generated tests name each scenario by file and name, so a repeated name cannot be told apart (TST-002).
+
+**Fix.** Rename one of the scenarios.
+
+### PLX-1275
+
+`TEST_HARNESS_FAILED` · error · The Flutter test harness could not run
+
+**Cause.** plux test could not build or start the generated Flutter test project: the Flutter SDK is missing, its dependencies could not be resolved, or the process failed before reporting results (TST-002).
+
+**Fix.** Install Flutter, or pass its path with --flutter, and check the output above for the failing step.
+
+### PLX-1276
+
+`SCENARIO_FILES_NONE` · warning · No scenario files found
+
+**Cause.** The project's tests pattern matches no scenario file, so plux test has nothing to run (TST-002).
+
+**Fix.** Add a file such as tests/home.scenario.yaml, or set tests in plux.yaml to where the scenarios are.
+
 ### PLX-1310
 
 `PAGE_NODE_BUDGET` · warning · Page exceeds its node budget

@@ -15,6 +15,7 @@ Every Plux document is JSON validated by the JSON Schema 2020-12 files in `schem
 | `nativeCatalogue` | [NativeCatalogueDocument](#nativecataloguedocument) | `schema/json/native-catalogue.schema.json` | The native routes, native slots and custom actions of one host app build (SCH-032). File: `native-catalogue.json`. |
 | `page` | [PageDocument](#pagedocument) | `schema/json/page.schema.json` | A page: route, parameters, state, data, lifecycle and node tree (SCH-022). File: `plugins/<plugin>/pages/<key>.page.json`. |
 | `plugin` | [PluginDocument](#plugindocument) | `schema/json/plugin.schema.json` | A plugin: its pages, state, collections and requested capabilities (SCH-021). File: `plugins/<key>/plugin.json`. |
+| `scenarios` | [ScenarioDocument](#scenariodocument) | `schema/json/scenario.schema.json` | One or more declarative test scenarios of pages or flows (TST-001). Files: `tests/**/*.scenario.yaml` or `.json`, found through `tests` in `plux.yaml`. |
 | `template` | [TemplateDocument](#templatedocument) | `schema/json/template.schema.json` | A reusable subtree snapshot, copied with fresh identifiers when inserted (SCH-031). File: `templates/<key>.template.json`. |
 | `theme` | [ThemeDocument](#themedocument) | `schema/json/theme.schema.json` | Design tokens for light and dark modes (THM-001, THM-002). File: `theme.json`. |
 | `translationKeys` | [TranslationKeysDocument](#translationkeysdocument) | `schema/json/translation-keys.schema.json` | The translation keys of an app, referenced by identifier (I18N-007). File: `translations/keys.json`. |
@@ -733,6 +734,127 @@ Route options (SCH-022, NAV-010).
 | `transition` | [Transition](#transition) |  | Page transition (NAV-010). `custom` plays the route timeline that `routeOptions.timeline` names. |
 | `guards` | list of [RouteGuard](#routeguard) |  |  |
 | `timeline` | string |  | The route timeline of a custom transition (NAV-010). |
+
+### Scenario
+
+What a page or flow does, given a situation: the steps taken and what must hold afterwards (TST-001).
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `name` | string | yes | The scenario's name in reports; unique within its file. |
+| `description` | string |  |  |
+| `page` | string |  | The route of the page under test, started with the `given` parameters. |
+| `flow` | string |  | The key of the plugin flow under test. |
+| `given` | [ScenarioGiven](#scenariogiven) |  | The situation a scenario starts in. |
+| `steps` | list of [ScenarioStep](#scenariostep) |  |  |
+| `expect` | list of [ScenarioExpectation](#scenarioexpectation) | yes |  |
+
+### ScenarioCall
+
+A step that ran, by the action's or function's name, with the inputs it must have had; inputs not listed are not compared.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `name` | string | yes |  |
+| `args` | map of JSON value |  |  |
+| `times` | integer |  | How often it ran; at least once when absent. |
+
+### ScenarioDataSource
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `state` | [ScenarioMockState](#scenariomockstate) | yes |  |
+| `mock` | JSON value |  | A JSON value interpreted against a declared type (defaults, mocks, environment values). |
+
+### ScenarioDocument
+
+One or more declarative test scenarios of pages or flows (TST-001). Files: `tests/**/*.scenario.yaml` or `.json`, found through `tests` in `plux.yaml`.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `schemaVersion` | string | yes | Version of the document schema (SCH-000). Older documents are migrated before validation. |
+| `kind` | `"scenarios"` | yes |  |
+| `scenarios` | list of [Scenario](#scenario) | yes |  |
+
+### ScenarioEnterText
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `testId` | string | yes | A node's `testId` (WGT-013). |
+| `text` | string | yes |  |
+
+### ScenarioExpectation
+
+One thing that must hold after the steps; exactly one of the keys.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `visible` | string |  | A node's `testId` (WGT-013). |
+| `notVisible` | string |  | A node's `testId` (WGT-013). |
+| `textEquals` | [ScenarioTextEquals](#scenariotextequals) |  |  |
+| `navigatedTo` | string |  | App-wide unique route name (SCH-025). |
+| `actionCalled` | [ScenarioCall](#scenariocall) |  | A step that ran, by the action's or function's name, with the inputs it must have had; inputs not listed are not compared. |
+| `functionCalled` | [ScenarioCall](#scenariocall) |  | A step that ran, by the action's or function's name, with the inputs it must have had; inputs not listed are not compared. |
+| `stateEquals` | map of JSON value |  | Exposed app state entries and the values they hold, by name. |
+
+### ScenarioGiven
+
+The situation a scenario starts in.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `params` | map of JSON value |  | The page's parameters, or the flow's inputs, by name, in their JSON form. |
+| `state` | map of JSON value |  | Exposed app state entries to set before the page opens, by name, in their JSON form. |
+| `dataSources` | map of [ScenarioDataSource](#scenariodatasource) |  | The state each data source shows (DAT-080), by source name, optionally with a mock replacing its design-time mock. |
+
+### ScenarioMockState
+
+One of `loading`, `empty`, `error`, `success`.
+
+### ScenarioScroll
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `testId` | string | yes | The scrollable to drag. |
+| `dx` | number |  | Logical pixels to drag horizontally; 0 when absent. |
+| `dy` | number |  | Logical pixels to drag vertically; 0 when absent. |
+
+### ScenarioStep
+
+One thing the user or the host does; exactly one of the keys.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `tap` | string |  | A node's `testId` (WGT-013). |
+| `enterText` | [ScenarioEnterText](#scenarioentertext) |  |  |
+| `scroll` | [ScenarioScroll](#scenarioscroll) |  |  |
+| `waitFor` | [ScenarioWaitFor](#scenariowaitfor) |  | Pumps frames until the node is visible or the timeout passes. |
+| `trigger` | [ScenarioTrigger](#scenariotrigger) |  | Sends a host event into the app (HST-013). |
+
+### ScenarioTextEquals
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `testId` | string | yes | A node's `testId` (WGT-013). |
+| `text` | string | yes |  |
+
+### ScenarioTrigger
+
+Sends a host event into the app (HST-013).
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `event` | string | yes | Identifier used in PXL and generated code: lowerCamelCase. |
+| `payload` | map of JSON value |  |  |
+
+### ScenarioWaitFor
+
+Pumps frames until the node is visible or the timeout passes.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `testId` | string | yes | A node's `testId` (WGT-013). |
+| `timeoutMs` | integer |  | How long to wait; 5000 when absent. |
 
 ### SecurityProfile
 
