@@ -1,0 +1,38 @@
+{
+  "defaultLocale": "en",
+  "entryRoute": "stage",
+  "environments": [
+    {
+      "key": "production",
+      "name": "Production",
+      "values": {}
+    }
+  ],
+  "icon": {
+    "monogram": {
+      "background": "#0B6E4F",
+      "text": "MO"
+    }
+  },
+  "id": "01d0c450-6c00-7000-8000-000000000101",
+  "key": "motion",
+  "kind": "app",
+  "minRuntimeVersion": "0.2.0",
+  "name": "Motion",
+  "plugins": [
+    "stage"
+  ],
+  "requiredFeatures": "raise",
+  "schemaVersion": "1.0.0",
+  "securityProfile": "standard",
+  "supportedLocales": [
+    "en"
+  ],
+  "sync": {
+    "activation": "atSafePoint",
+    "startup": {
+      "mode": "useCacheThenSync"
+    }
+  },
+  "theme": "01d0c450-6c00-7000-8000-000000000102"
+}

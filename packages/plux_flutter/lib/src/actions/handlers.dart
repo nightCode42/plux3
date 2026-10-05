@@ -14,6 +14,7 @@ import 'package:plux_flutter/src/actions/clock.dart';
 import 'package:plux_flutter/src/actions/control.dart';
 import 'package:plux_flutter/src/actions/graph.dart';
 import 'package:plux_flutter/src/actions/state_handlers.dart';
+import 'package:plux_flutter/src/animation/handlers.dart';
 import 'package:plux_flutter/src/data/handlers.dart';
 import 'package:plux_flutter/src/data/services.dart';
 import 'package:plux_flutter/src/device/guard.dart';
@@ -450,6 +451,7 @@ final Map<String, ActionHandler> builtInHandlers = {
   ...dataHandlers,
   ...formHandlers,
   ...deviceHandlers,
+  ...animationHandlers,
 };
 
 /// A handler written as a function, for handler tables outside this

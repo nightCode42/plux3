@@ -13,6 +13,10 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | `action.stepsPerRun` | count | 10000 | 80% | 100000 | installation, organization, app, plugin | P4 | ACT-005 | Steps one action run may execute. |
 | `action.traceRuns` | count | 50 | 80% | 1000 | installation, organization, app | P5 | ACT-030 | Action run traces the runtime keeps for diagnostics; the oldest are dropped first. |
 | `action.traceSteps` | count | 200 | 80% | 10000 | installation, organization, app | P5 | ACT-030 | Steps one action run trace records; later steps are counted but not recorded. |
+| `anim.compositedSubtree` | count | 40 | 80% | 1000 | installation, organization, app, plugin | P5 | ANI-008 | Nodes below an animated opacity or layout prop before the compiler warns of an expensive animation. |
+| `anim.keyframesPerTrack` | count | 64 | 80% | 1000 | installation, organization, app, plugin | P5 | ANI-002 | Keyframes of one track of a timeline. |
+| `anim.simultaneousTimelines` | count | 6 | 80% | 100 | installation, organization, app, plugin | P5 | ANI-008 | Timelines of one page that autoplay or follow a driver before the compiler warns. |
+| `anim.timelineDuration` | milliseconds | 60000 | 80% | 600000 | installation, organization, app, plugin | P5 | ANI-002 | Duration of one timeline. |
 | `api.pageSize` | count | 100 | 80% | 1000 | installation | P2 | SRV-004 | Items one page of a list call returns; a call asking for more gets this many, and one asking for none gets this many too. |
 | `api.requestSize` | bytes | 8388608 | 80% | 268435456 | installation | P2 | SEC-104 | Size of one API request body, refused before a handler reads it, and of one request message once decompressed. |
 | `api.requestsPerMinute` | count | 600 | 80% | 100000 | installation, organization | P2 | SRV-065 | API calls one authenticated principal (a user or a token) may make per minute. |

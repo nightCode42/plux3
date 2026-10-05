@@ -172,6 +172,24 @@ final class BundleView {
     }
   }
 
+  List<fbs.Timeline>? _timelines;
+
+  /// The bundle's timelines (ANI-002), read once.
+  List<fbs.Timeline> get timelines => _timelines ??= () {
+    final s = _single(SectionKind.timelines);
+    return s == null
+        ? const <fbs.Timeline>[]
+        : fbs.Timelines(s.data).timelines ?? const <fbs.Timeline>[];
+  }();
+
+  /// The timelines the page with ID [page] owns.
+  Iterable<fbs.Timeline> timelinesOf(UuidKey page) sync* {
+    for (final t in timelines) {
+      final p = t.page;
+      if (p != null && uuidOf(p) == page) yield t;
+    }
+  }
+
   /// The PXL program with content-addressed [id], decoded once.
   Program program(int id) {
     final have = _decoded[id];

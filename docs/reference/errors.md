@@ -592,6 +592,70 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Break the cycle by guarding one of the redirects with a condition.
 
+### PLX-1210
+
+`ANIMATION_INVALID` · error · Invalid animation timeline
+
+**Cause.** A timeline of a page is malformed: two timelines share a name, its keyframes are not in increasing time or run past the duration, a track has fewer keyframes than the limit anim.keyframesPerTrack allows or more, the duration exceeds anim.timelineDuration, or a driver names a node that does not exist (ANI-002, ANI-006).
+
+**Fix.** Name each timeline once, order keyframes by time within the duration, and keep them within the anim.* limits; the message names the timeline.
+
+### PLX-1211
+
+`ANIMATION_TARGET_INVALID` · error · Animation track targets nothing animatable
+
+**Cause.** A track names a node the page does not have, a prop the node's widget does not declare, or a prop whose type cannot be interpolated (only numbers, decimals and colours animate) (ANI-001, ANI-002).
+
+**Fix.** Target a node of the same page and a numeric or colour prop of its widget.
+
+### PLX-1212
+
+`ANIMATION_VALUE_INVALID` · error · Keyframe value has the wrong type
+
+**Cause.** A keyframe's value is not a literal of the animated prop's type, or violates the prop's constraints (ANI-002).
+
+**Fix.** Write the keyframe as a literal of the prop's type.
+
+### PLX-1213
+
+`TRANSITION_INVALID` · error · Invalid transition
+
+**Cause.** A custom route transition names no route timeline of the page, a route timeline animates a prop other than opacity, scale, slideX or slideY, or names a node, or a route timeline is used as anything but a transition (NAV-010).
+
+**Fix.** Declare a timeline with scope route in the page and name it in routeOptions.timeline.
+
+### PLX-1214
+
+`ANIMATION_EXPENSIVE` · warning · Animation that re-lays out the page every frame
+
+**Cause.** A timeline or an implicit animation changes a prop that affects layout (size, padding, margin, spacing, flex) of a node whose subtree is large, so every frame lays the subtree out again (ANI-008).
+
+**Fix.** Animate a transform (scale, slide) or opacity instead, which the compositor handles without layout.
+
+### PLX-1215
+
+`ANIMATION_OPACITY_SUBTREE` · warning · Opacity animated over a large subtree
+
+**Cause.** A timeline or an implicit animation changes the opacity of a node whose subtree has more nodes than the limit anim.compositedSubtree, which draws the subtree into an offscreen layer every frame (ANI-008).
+
+**Fix.** Fade the leaves instead, animate a smaller subtree, or use a transform.
+
+### PLX-1216
+
+`ANIMATION_TOO_MANY_TIMELINES` · warning · Many timelines can run together
+
+**Cause.** More timelines autoplay or run on a driver on one page than the limit anim.simultaneousTimelines, so they would all tick on every frame (ANI-008).
+
+**Fix.** Merge timelines, stagger their start, or start them from actions only when needed.
+
+### PLX-1217
+
+`NODE_ANIMATION_INVALID` · error · Invalid node animation
+
+**Cause.** A node's animation names a prop its widget does not declare or that cannot be interpolated, an empty hero tag, or an enter or exit transition on the page's root (ANI-001, ANI-003, ANI-004).
+
+**Fix.** Name animatable props of the widget, give the hero a non-empty tag, and put enter and exit transitions on inner nodes.
+
 ### PLX-1230
 
 `CAPABILITY_NOT_APPROVED` · error · Capability not approved by the app
@@ -1149,6 +1213,38 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 **Cause.** A custom action's handler, a native route's parameter conversion or screen, or a native slot's builder registered by the host app threw; the step fails, or the page shows its error fallback, and nothing reaches the plugin as a crash (ACT-060, NAV-002, WGT-033).
 
 **Fix.** Fix the host's handler, conversion or builder; the report names the action, route or slot and only the exception's type, never its message.
+
+### PLX-4300
+
+`ANIMATION_UNKNOWN` · error · Unknown animation
+
+**Cause.** An action names a timeline the page does not own, or runs on a page without timelines (ANI-002).
+
+**Fix.** Name a timeline declared in the page's animations.
+
+### PLX-4301
+
+`ANIMATION_COMMAND_INVALID` · error · Invalid animation command
+
+**Cause.** controlAnimation was given a command it cannot run, such as seek without a position (ANI-002).
+
+**Fix.** Pass the position, in milliseconds, with seek.
+
+### PLX-4302
+
+`ANIMATION_TIMELINE_BROKEN` · error · Timeline cannot play
+
+**Cause.** A timeline of the bundle uses a curve, prop or value this runtime cannot play; the timeline does not run and the nodes keep their static values (ANI-002).
+
+**Fix.** Rebuild the bundle with a compiler of this runtime's generation.
+
+### PLX-4303
+
+`ANIMATION_ASSET_FAILED` · error · Lottie or Rive asset failed
+
+**Cause.** A Lottie or Rive widget could not load or play its asset: the file is missing, malformed or not what the widget expects (ANI-005).
+
+**Fix.** Check the asset and its media type; the widget shows nothing in its place.
 
 ## Actions, data and local database (PLX-5000–5999)
 

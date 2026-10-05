@@ -102,6 +102,56 @@ enum ActivationPolicy {
   String toJson() => json;
 }
 
+/// An enter or exit transition of a node (ANI-003).
+final class AnimTransition {
+  const AnimTransition({required this.kind, this.durationMs, this.curve});
+
+  /// Decodes a JSON object.
+  factory AnimTransition.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return AnimTransition(
+      kind: AnimTransitionKind.fromJson(m['kind']!),
+      durationMs: m['durationMs'] == null ? null : (m['durationMs']! as num).toInt(),
+      curve: m['curve'] == null ? null : Curve.fromJson(m['curve']!),
+    );
+  }
+
+  /// How a node moves in or out (ANI-003).
+  final AnimTransitionKind kind;
+  final int? durationMs;
+  /// An animation curve (ANI-001, ANI-002).
+  final Curve? curve;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'kind': kind.toJson(),
+        if (durationMs != null) 'durationMs': durationMs!,
+        if (curve != null) 'curve': curve!.toJson(),
+      };
+}
+
+/// How a node moves in or out (ANI-003).
+enum AnimTransitionKind {
+  fade('fade'),
+  scale('scale'),
+  slideUp('slideUp'),
+  slideDown('slideDown'),
+  slideLeft('slideLeft'),
+  slideRight('slideRight');
+
+  const AnimTransitionKind(this.json);
+
+  /// Decodes a JSON value.
+  factory AnimTransitionKind.fromJson(Object json) =>
+      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown AnimTransitionKind', json));
+
+  /// The JSON value.
+  final String json;
+
+  /// Encodes the JSON value.
+  String toJson() => json;
+}
+
 /// An app: its plugins, theme, locales, environments, shared data and policies
 /// (SCH-020). File: `app.json`.
 final class AppDocument {
@@ -651,6 +701,32 @@ final class ComponentSlot {
         if (multiple != null) 'multiple': multiple!,
         if (description != null) 'description': description!,
       };
+}
+
+/// An animation curve (ANI-001, ANI-002).
+enum Curve {
+  linear('linear'),
+  easeIn('easeIn'),
+  easeOut('easeOut'),
+  easeInOut('easeInOut'),
+  fastOutSlowIn('fastOutSlowIn'),
+  decelerate('decelerate'),
+  bounceIn('bounceIn'),
+  bounceOut('bounceOut'),
+  elasticOut('elasticOut'),
+  overshoot('overshoot');
+
+  const Curve(this.json);
+
+  /// Decodes a JSON value.
+  factory Curve.fromJson(Object json) =>
+      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown Curve', json));
+
+  /// The JSON value.
+  final String json;
+
+  /// Encodes the JSON value.
+  String toJson() => json;
 }
 
 /// A data source with its value type and design-time mock (SCH-024, DAT-080).
@@ -1358,6 +1434,35 @@ final class Icon {
       };
 }
 
+/// A value of a track at a time (ANI-002).
+final class Keyframe {
+  const Keyframe({required this.atMs, required this.value, this.curve});
+
+  /// Decodes a JSON object.
+  factory Keyframe.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return Keyframe(
+      atMs: (m['atMs']! as num).toInt(),
+      value: m['value'],
+      curve: m['curve'] == null ? null : Curve.fromJson(m['curve']!),
+    );
+  }
+
+  final int atMs;
+  /// A prop value: a literal of the prop's type, or a binding (SCH-011).
+  /// Literal objects and lists may contain bindings in their fields and items.
+  final Object? value;
+  /// The curve into this keyframe.
+  final Curve? curve;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'atMs': atMs,
+        'value': value,
+        if (curve != null) 'curve': curve!.toJson(),
+      };
+}
+
 /// Lifecycle handlers (SCH-022).
 final class Lifecycle {
   const Lifecycle({this.onInit, this.onEnter, this.onResume, this.onLeave, this.onDispose});
@@ -1654,7 +1759,7 @@ final class NavigationPolicy {
 /// A node of a page or component tree: a widget or a component instance
 /// (SCH-023).
 final class Node {
-  const Node({required this.id, this.type, this.component, this.props, this.events, this.children, this.slots, this.visible, this.semantics, this.testId, this.responsive});
+  const Node({required this.id, this.type, this.component, this.props, this.events, this.children, this.slots, this.visible, this.semantics, this.testId, this.responsive, this.animation});
 
   /// Decodes a JSON object.
   factory Node.fromJson(Object json) {
@@ -1671,6 +1776,7 @@ final class Node {
       semantics: m['semantics'] == null ? null : Semantics.fromJson(m['semantics']!),
       testId: m['testId'] == null ? null : m['testId']! as String,
       responsive: m['responsive'] == null ? null : Responsive.fromJson(m['responsive']!),
+      animation: m['animation'] == null ? null : NodeAnimation.fromJson(m['animation']!),
     );
   }
 
@@ -1694,6 +1800,11 @@ final class Node {
   /// Prop overrides per window size class; `compact` is the base and overrides
   /// cascade (WGT-010).
   final Responsive? responsive;
+  /// The animations of a node (ANI-001, ANI-003, ANI-004): `durationMs`
+  /// animates the node's animatable props (numbers and colours) whenever their
+  /// bound value changes; `enter` and `exit` play when the node is inserted or
+  /// its visibility changes; `hero` is the tag of a shared-element transition.
+  final NodeAnimation? animation;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
@@ -1708,13 +1819,66 @@ final class Node {
         if (semantics != null) 'semantics': semantics!.toJson(),
         if (testId != null) 'testId': testId!,
         if (responsive != null) 'responsive': responsive!.toJson(),
+        if (animation != null) 'animation': animation!.toJson(),
+      };
+}
+
+/// The animations of a node (ANI-001, ANI-003, ANI-004): `durationMs` animates
+/// the node's animatable props (numbers and colours) whenever their bound value
+/// changes; `enter` and `exit` play when the node is inserted or its visibility
+/// changes; `hero` is the tag of a shared-element transition.
+final class NodeAnimation {
+  const NodeAnimation({this.durationMs, this.curve, this.delayMs, this.props, this.enter, this.exit, this.hero, this.reduceMotion});
+
+  /// Decodes a JSON object.
+  factory NodeAnimation.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return NodeAnimation(
+      durationMs: m['durationMs'] == null ? null : (m['durationMs']! as num).toInt(),
+      curve: m['curve'] == null ? null : Curve.fromJson(m['curve']!),
+      delayMs: m['delayMs'] == null ? null : (m['delayMs']! as num).toInt(),
+      props: m['props'] == null ? null : [for (final e in m['props']! as List<Object?>) e! as String],
+      enter: m['enter'] == null ? null : AnimTransition.fromJson(m['enter']!),
+      exit: m['exit'] == null ? null : AnimTransition.fromJson(m['exit']!),
+      hero: m.containsKey('hero') ? JsonValue(m['hero']) : null,
+      reduceMotion: m['reduceMotion'] == null ? null : ReduceMotion.fromJson(m['reduceMotion']!),
+    );
+  }
+
+  final int? durationMs;
+  /// An animation curve (ANI-001, ANI-002).
+  final Curve? curve;
+  final int? delayMs;
+  /// The props to animate; all that can be, when absent.
+  final List<String>? props;
+  /// An enter or exit transition of a node (ANI-003).
+  final AnimTransition? enter;
+  /// An enter or exit transition of a node (ANI-003).
+  final AnimTransition? exit;
+  /// The hero tag, a string.
+  final JsonValue? hero;
+  /// What an animation does when the platform asks to reduce motion (ANI-007):
+  /// `skip` jumps to the final state, `shorten` plays at a quarter of the
+  /// duration, `ignore` plays as declared (for motion that carries meaning).
+  final ReduceMotion? reduceMotion;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (durationMs != null) 'durationMs': durationMs!,
+        if (curve != null) 'curve': curve!.toJson(),
+        if (delayMs != null) 'delayMs': delayMs!,
+        if (props != null) 'props': [for (final e in props!) e],
+        if (enter != null) 'enter': enter!.toJson(),
+        if (exit != null) 'exit': exit!.toJson(),
+        if (hero != null) 'hero': hero!.value,
+        if (reduceMotion != null) 'reduceMotion': reduceMotion!.toJson(),
       };
 }
 
 /// A page: route, parameters, state, data, lifecycle and node tree (SCH-022).
 /// File: `plugins/<plugin>/pages/<key>.page.json`.
 final class PageDocument {
-  const PageDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, this.route, required this.pageKind, required this.title, this.description, this.params, this.result, this.state, this.dataSources, this.lifecycle, this.triggers, this.routeOptions, this.security, required this.root, this.forms});
+  const PageDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, this.route, required this.pageKind, required this.title, this.description, this.params, this.result, this.state, this.dataSources, this.lifecycle, this.triggers, this.routeOptions, this.security, required this.root, this.forms, this.animations});
 
   /// Decodes a JSON object.
   factory PageDocument.fromJson(Object json) {
@@ -1738,6 +1902,7 @@ final class PageDocument {
       security: m['security'] == null ? null : PageSecurity.fromJson(m['security']!),
       root: Node.fromJson(m['root']!),
       forms: m['forms'] == null ? null : [for (final e in m['forms']! as List<Object?>) Form.fromJson(e!)],
+      animations: m['animations'] == null ? null : [for (final e in m['animations']! as List<Object?>) Timeline.fromJson(e!)],
     );
   }
 
@@ -1780,6 +1945,7 @@ final class PageDocument {
   final Node root;
   /// The forms of the page (STA-020).
   final List<Form>? forms;
+  final List<Timeline>? animations;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
@@ -1801,6 +1967,7 @@ final class PageDocument {
         if (security != null) 'security': security!.toJson(),
         'root': root.toJson(),
         if (forms != null) 'forms': [for (final e in forms!) e.toJson()],
+        if (animations != null) 'animations': [for (final e in animations!) e.toJson()],
       };
 }
 
@@ -2033,6 +2200,27 @@ final class PushPolicy {
       };
 }
 
+/// What an animation does when the platform asks to reduce motion (ANI-007):
+/// `skip` jumps to the final state, `shorten` plays at a quarter of the
+/// duration, `ignore` plays as declared (for motion that carries meaning).
+enum ReduceMotion {
+  skip('skip'),
+  shorten('shorten'),
+  ignore('ignore');
+
+  const ReduceMotion(this.json);
+
+  /// Decodes a JSON value.
+  factory ReduceMotion.fromJson(Object json) =>
+      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown ReduceMotion', json));
+
+  /// The JSON value.
+  final String json;
+
+  /// Encodes the JSON value.
+  String toJson() => json;
+}
+
 /// What the compiler does when a release needs a newer runtime than
 /// `minRuntimeVersion`: reject the publish, or raise the release's required
 /// features with a warning (WGT-004).
@@ -2134,7 +2322,7 @@ final class RouteGuard {
 
 /// Route options (SCH-022, NAV-010).
 final class RouteOptions {
-  const RouteOptions({this.transition, this.guards});
+  const RouteOptions({this.transition, this.guards, this.timeline});
 
   /// Decodes a JSON object.
   factory RouteOptions.fromJson(Object json) {
@@ -2142,17 +2330,22 @@ final class RouteOptions {
     return RouteOptions(
       transition: m['transition'] == null ? null : Transition.fromJson(m['transition']!),
       guards: m['guards'] == null ? null : [for (final e in m['guards']! as List<Object?>) RouteGuard.fromJson(e!)],
+      timeline: m['timeline'] == null ? null : m['timeline']! as String,
     );
   }
 
-  /// Page transition (NAV-010).
+  /// Page transition (NAV-010). `custom` plays the route timeline that
+  /// `routeOptions.timeline` names.
   final Transition? transition;
   final List<RouteGuard>? guards;
+  /// The route timeline of a custom transition (NAV-010).
+  final String? timeline;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
         if (transition != null) 'transition': transition!.toJson(),
         if (guards != null) 'guards': [for (final e in guards!) e.toJson()],
+        if (timeline != null) 'timeline': timeline!,
       };
 }
 
@@ -2296,6 +2489,32 @@ final class SlotFill {
 
   /// Encodes the single value or the list.
   Object? toJson() => many == null ? one!.toJson() : [for (final e in many!) e.toJson()];
+}
+
+/// A spring that moves the timeline instead of its duration (ANI-006).
+final class Spring {
+  const Spring({this.stiffness, this.damping, this.mass});
+
+  /// Decodes a JSON object.
+  factory Spring.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return Spring(
+      stiffness: m['stiffness'] == null ? null : (m['stiffness']! as num).toDouble(),
+      damping: m['damping'] == null ? null : (m['damping']! as num).toDouble(),
+      mass: m['mass'] == null ? null : (m['mass']! as num).toDouble(),
+    );
+  }
+
+  final double? stiffness;
+  final double? damping;
+  final double? mass;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (stiffness != null) 'stiffness': stiffness!,
+        if (damping != null) 'damping': damping!,
+        if (mass != null) 'mass': mass!,
+      };
 }
 
 /// Start-up mode (SYN-003).
@@ -2771,6 +2990,152 @@ final class ThemeDocument {
       };
 }
 
+/// An animation timeline a page owns (ANI-002): keyframes of props of its
+/// nodes, played by `startAnimation` and `controlAnimation`, on page enter, or
+/// by a driver.
+final class Timeline {
+  const Timeline({required this.id, required this.name, required this.durationMs, this.delayMs, this.repeat, this.repeatForever, this.reverse, this.staggerMs, this.autoplay, this.scope, this.driver, this.spring, this.reduceMotion, required this.tracks, this.description});
+
+  /// Decodes a JSON object.
+  factory Timeline.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return Timeline(
+      id: m['id']! as String,
+      name: m['name']! as String,
+      durationMs: (m['durationMs']! as num).toInt(),
+      delayMs: m['delayMs'] == null ? null : (m['delayMs']! as num).toInt(),
+      repeat: m['repeat'] == null ? null : (m['repeat']! as num).toInt(),
+      repeatForever: m['repeatForever'] == null ? null : m['repeatForever']! as bool,
+      reverse: m['reverse'] == null ? null : m['reverse']! as bool,
+      staggerMs: m['staggerMs'] == null ? null : (m['staggerMs']! as num).toInt(),
+      autoplay: m['autoplay'] == null ? null : m['autoplay']! as bool,
+      scope: m['scope'] == null ? null : TimelineScope.fromJson(m['scope']!),
+      driver: m['driver'] == null ? null : TimelineDriver.fromJson(m['driver']!),
+      spring: m['spring'] == null ? null : Spring.fromJson(m['spring']!),
+      reduceMotion: m['reduceMotion'] == null ? null : ReduceMotion.fromJson(m['reduceMotion']!),
+      tracks: [for (final e in m['tracks']! as List<Object?>) Track.fromJson(e!)],
+      description: m['description'] == null ? null : m['description']! as String,
+    );
+  }
+
+  /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
+  final String id;
+  /// Identifier used in PXL and generated code: lowerCamelCase.
+  final String name;
+  final int durationMs;
+  final int? delayMs;
+  /// Plays after the first.
+  final int? repeat;
+  final bool? repeatForever;
+  /// Each repeat plays backwards.
+  final bool? reverse;
+  /// The delay per item index for nodes in item templates.
+  final int? staggerMs;
+  /// Plays when the page is shown.
+  final bool? autoplay;
+  /// What a timeline animates: nodes of its page, or the page itself in a route
+  /// transition (NAV-010).
+  final TimelineScope? scope;
+  /// Moves a timeline with the scroll offset or the drag of a node instead of
+  /// time (ANI-006).
+  final TimelineDriver? driver;
+  /// A spring that moves the timeline instead of its duration (ANI-006).
+  final Spring? spring;
+  /// What an animation does when the platform asks to reduce motion (ANI-007):
+  /// `skip` jumps to the final state, `shorten` plays at a quarter of the
+  /// duration, `ignore` plays as declared (for motion that carries meaning).
+  final ReduceMotion? reduceMotion;
+  final List<Track> tracks;
+  /// Human-readable description.
+  final String? description;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'id': id,
+        'name': name,
+        'durationMs': durationMs,
+        if (delayMs != null) 'delayMs': delayMs!,
+        if (repeat != null) 'repeat': repeat!,
+        if (repeatForever != null) 'repeatForever': repeatForever!,
+        if (reverse != null) 'reverse': reverse!,
+        if (staggerMs != null) 'staggerMs': staggerMs!,
+        if (autoplay != null) 'autoplay': autoplay!,
+        if (scope != null) 'scope': scope!.toJson(),
+        if (driver != null) 'driver': driver!.toJson(),
+        if (spring != null) 'spring': spring!.toJson(),
+        if (reduceMotion != null) 'reduceMotion': reduceMotion!.toJson(),
+        'tracks': [for (final e in tracks) e.toJson()],
+        if (description != null) 'description': description!,
+      };
+}
+
+/// Moves a timeline with the scroll offset or the drag of a node instead of
+/// time (ANI-006).
+final class TimelineDriver {
+  const TimelineDriver({required this.kind, required this.node, required this.extent});
+
+  /// Decodes a JSON object.
+  factory TimelineDriver.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return TimelineDriver(
+      kind: TimelineDriverKind.fromJson(m['kind']!),
+      node: m['node']! as String,
+      extent: (m['extent']! as num).toDouble(),
+    );
+  }
+
+  /// What moves a driven timeline (ANI-006).
+  final TimelineDriverKind kind;
+  /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
+  final String node;
+  /// Logical pixels of scrolling or dragging that span the timeline.
+  final double extent;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'kind': kind.toJson(),
+        'node': node,
+        'extent': extent,
+      };
+}
+
+/// What moves a driven timeline (ANI-006).
+enum TimelineDriverKind {
+  scroll('scroll'),
+  drag('drag');
+
+  const TimelineDriverKind(this.json);
+
+  /// Decodes a JSON value.
+  factory TimelineDriverKind.fromJson(Object json) =>
+      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown TimelineDriverKind', json));
+
+  /// The JSON value.
+  final String json;
+
+  /// Encodes the JSON value.
+  String toJson() => json;
+}
+
+/// What a timeline animates: nodes of its page, or the page itself in a route
+/// transition (NAV-010).
+enum TimelineScope {
+  page('page'),
+  route('route');
+
+  const TimelineScope(this.json);
+
+  /// Decodes a JSON value.
+  factory TimelineScope.fromJson(Object json) =>
+      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown TimelineScope', json));
+
+  /// The JSON value.
+  final String json;
+
+  /// Encodes the JSON value.
+  String toJson() => json;
+}
+
 /// A timer (ACT-002): it fires every intervalMs while its owner lives, or once,
 /// intervalMs after its owner starts, when repeat is false; `event` is the
 /// number of times it has fired.
@@ -2810,7 +3175,37 @@ final class TimerTrigger {
       };
 }
 
-/// Page transition (NAV-010).
+/// The keyframes of one prop of one node (ANI-002); a route timeline's tracks
+/// name no node and animate `opacity`, `scale`, `slideX` or `slideY`.
+final class Track {
+  const Track({this.node, required this.prop, required this.keyframes});
+
+  /// Decodes a JSON object.
+  factory Track.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return Track(
+      node: m['node'] == null ? null : m['node']! as String,
+      prop: m['prop']! as String,
+      keyframes: [for (final e in m['keyframes']! as List<Object?>) Keyframe.fromJson(e!)],
+    );
+  }
+
+  /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
+  final String? node;
+  /// Identifier used in PXL and generated code: lowerCamelCase.
+  final String prop;
+  final List<Keyframe> keyframes;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (node != null) 'node': node!,
+        'prop': prop,
+        'keyframes': [for (final e in keyframes) e.toJson()],
+      };
+}
+
+/// Page transition (NAV-010). `custom` plays the route timeline that
+/// `routeOptions.timeline` names.
 enum Transition {
   platform('platform'),
   fade('fade'),
@@ -2820,6 +3215,7 @@ enum Transition {
   slideDown('slideDown'),
   scale('scale'),
   sharedAxis('sharedAxis'),
+  custom('custom'),
   none('none');
 
   const Transition(this.json);

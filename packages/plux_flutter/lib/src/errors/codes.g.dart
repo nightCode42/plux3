@@ -229,6 +229,30 @@ enum PluxErrorCode {
   /// Redirect loop.
   redirectLoop(1206, 'REDIRECT_LOOP', 'Redirect loop'),
 
+  /// Invalid animation timeline.
+  animationInvalid(1210, 'ANIMATION_INVALID', 'Invalid animation timeline'),
+
+  /// Animation track targets nothing animatable.
+  animationTargetInvalid(1211, 'ANIMATION_TARGET_INVALID', 'Animation track targets nothing animatable'),
+
+  /// Keyframe value has the wrong type.
+  animationValueInvalid(1212, 'ANIMATION_VALUE_INVALID', 'Keyframe value has the wrong type'),
+
+  /// Invalid transition.
+  transitionInvalid(1213, 'TRANSITION_INVALID', 'Invalid transition'),
+
+  /// Animation that re-lays out the page every frame.
+  animationExpensive(1214, 'ANIMATION_EXPENSIVE', 'Animation that re-lays out the page every frame'),
+
+  /// Opacity animated over a large subtree.
+  animationOpacitySubtree(1215, 'ANIMATION_OPACITY_SUBTREE', 'Opacity animated over a large subtree'),
+
+  /// Many timelines can run together.
+  animationTooManyTimelines(1216, 'ANIMATION_TOO_MANY_TIMELINES', 'Many timelines can run together'),
+
+  /// Invalid node animation.
+  nodeAnimationInvalid(1217, 'NODE_ANIMATION_INVALID', 'Invalid node animation'),
+
   /// Capability not approved by the app.
   capabilityNotApproved(1230, 'CAPABILITY_NOT_APPROVED', 'Capability not approved by the app'),
 
@@ -435,6 +459,18 @@ enum PluxErrorCode {
 
   /// Host code failed.
   hostCodeFailed(4205, 'HOST_CODE_FAILED', 'Host code failed'),
+
+  /// Unknown animation.
+  animationUnknown(4300, 'ANIMATION_UNKNOWN', 'Unknown animation'),
+
+  /// Invalid animation command.
+  animationCommandInvalid(4301, 'ANIMATION_COMMAND_INVALID', 'Invalid animation command'),
+
+  /// Timeline cannot play.
+  animationTimelineBroken(4302, 'ANIMATION_TIMELINE_BROKEN', 'Timeline cannot play'),
+
+  /// Lottie or Rive asset failed.
+  animationAssetFailed(4303, 'ANIMATION_ASSET_FAILED', 'Lottie or Rive asset failed'),
 
   /// Action timed out.
   actionTimeout(5001, 'ACTION_TIMEOUT', 'Action timed out'),

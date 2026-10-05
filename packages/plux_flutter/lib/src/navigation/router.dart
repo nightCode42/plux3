@@ -10,6 +10,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:plux_flutter/src/actions/action_error.dart';
+import 'package:plux_flutter/src/animation/timeline_spec.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
@@ -18,6 +19,7 @@ import 'package:plux_flutter/src/native_catalogue/registration.dart';
 import 'package:plux_flutter/src/navigation/delegate.dart';
 import 'package:plux_flutter/src/navigation/guards.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
+import 'package:plux_flutter/src/render/sections.dart' show BundleView;
 import 'package:plux_flutter/src/verify/bundle_verifier.dart';
 
 /// A page a name resolves to.
@@ -27,6 +29,7 @@ final class RouteTarget {
     required this.page,
     this.presentation = PluxPresentation.page,
     this.transition = PluxTransition.platform,
+    this.timeline,
     this.resultType,
   });
 
@@ -38,6 +41,9 @@ final class RouteTarget {
 
   /// Its transition.
   final PluxTransition transition;
+
+  /// The route timeline of a custom transition (NAV-010).
+  final TimelineSpec? timeline;
 
   /// The type expression of its result, or null when it returns none.
   final String? resultType;
@@ -153,12 +159,31 @@ final class PluxRouter {
           _ => PluxPresentation.page,
         },
         transition: PluxTransition.parse(at(p.transition)),
+        timeline: _routeTimeline(r, ref, at(p.transitionTimeline)),
         resultType: at(p.result),
       );
     } on PluxException {
       // The page host checks the section again and shows its fallback.
       return RouteTarget(page: ref);
     }
+  }
+
+  /// The route timeline [name] of [ref]'s plugin, or null: a custom
+  /// transition whose timeline is missing or cannot play falls back to the
+  /// platform's, reported with `PLX-4302`.
+  TimelineSpec? _routeTimeline(ActiveRelease r, PageRef ref, String? name) {
+    if (name == null) return null;
+    try {
+      final view = BundleView(r.bundle(ref.plugin), r.gate);
+      for (final t in view.timelines) {
+        if (t.route && view.string(t.name) == name) {
+          return TimelineSpec.read(t, view.string);
+        }
+      }
+    } on PluxException catch (e) {
+      report(e);
+    }
+    return null;
   }
 
   /// The route for [name] with [params]: its page, presented as
@@ -189,6 +214,7 @@ final class PluxRouter {
         arguments: params,
         presentation: presentation ?? t.presentation,
         transition: t.transition,
+        timeline: t.timeline,
         dismissible: dismissible,
         builder: (_) => page(name, params, guarded: guarded),
       );

@@ -94,6 +94,37 @@ func (v ActivationPolicy) Valid() bool {
 	return false
 }
 
+// AnimTransition — An enter or exit transition of a node (ANI-003).
+type AnimTransition struct {
+	// Kind: How a node moves in or out (ANI-003).
+	Kind       AnimTransitionKind `json:"kind"`
+	DurationMs *int64             `json:"durationMs,omitempty"`
+	// Curve: An animation curve (ANI-001, ANI-002).
+	Curve Curve `json:"curve,omitempty"`
+}
+
+// AnimTransitionKind — How a node moves in or out (ANI-003).
+type AnimTransitionKind string
+
+// Values of AnimTransitionKind.
+const (
+	AnimTransitionKindFade       AnimTransitionKind = "fade"
+	AnimTransitionKindScale      AnimTransitionKind = "scale"
+	AnimTransitionKindSlideUp    AnimTransitionKind = "slideUp"
+	AnimTransitionKindSlideDown  AnimTransitionKind = "slideDown"
+	AnimTransitionKindSlideLeft  AnimTransitionKind = "slideLeft"
+	AnimTransitionKindSlideRight AnimTransitionKind = "slideRight"
+)
+
+// Valid reports whether v is one of the values of AnimTransitionKind.
+func (v AnimTransitionKind) Valid() bool {
+	switch v {
+	case AnimTransitionKindFade, AnimTransitionKindScale, AnimTransitionKindSlideUp, AnimTransitionKindSlideDown, AnimTransitionKindSlideLeft, AnimTransitionKindSlideRight:
+		return true
+	}
+	return false
+}
+
 // AppDocument — An app: its plugins, theme, locales, environments, shared
 // data and policies (SCH-020). File: `app.json`.
 type AppDocument struct {
@@ -329,6 +360,32 @@ type ComponentSlot struct {
 	Multiple *bool  `json:"multiple,omitempty"`
 	// Description: Human-readable description.
 	Description string `json:"description,omitempty"`
+}
+
+// Curve — An animation curve (ANI-001, ANI-002).
+type Curve string
+
+// Values of Curve.
+const (
+	CurveLinear        Curve = "linear"
+	CurveEaseIn        Curve = "easeIn"
+	CurveEaseOut       Curve = "easeOut"
+	CurveEaseInOut     Curve = "easeInOut"
+	CurveFastOutSlowIn Curve = "fastOutSlowIn"
+	CurveDecelerate    Curve = "decelerate"
+	CurveBounceIn      Curve = "bounceIn"
+	CurveBounceOut     Curve = "bounceOut"
+	CurveElasticOut    Curve = "elasticOut"
+	CurveOvershoot     Curve = "overshoot"
+)
+
+// Valid reports whether v is one of the values of Curve.
+func (v Curve) Valid() bool {
+	switch v {
+	case CurveLinear, CurveEaseIn, CurveEaseOut, CurveEaseInOut, CurveFastOutSlowIn, CurveDecelerate, CurveBounceIn, CurveBounceOut, CurveElasticOut, CurveOvershoot:
+		return true
+	}
+	return false
 }
 
 // DataSource — A data source with its value type and design-time mock
@@ -705,6 +762,16 @@ type Icon struct {
 	Monogram *Monogram `json:"monogram,omitempty"`
 }
 
+// Keyframe — A value of a track at a time (ANI-002).
+type Keyframe struct {
+	AtMs int64 `json:"atMs"`
+	// Value: A prop value: a literal of the prop's type, or a binding (SCH-011).
+	// Literal objects and lists may contain bindings in their fields and items.
+	Value json.RawMessage `json:"value"`
+	// Curve: The curve into this keyframe.
+	Curve Curve `json:"curve,omitempty"`
+}
+
 // Lifecycle — Lifecycle handlers (SCH-022).
 type Lifecycle struct {
 	// OnInit: A trigger's handler: a reference to an action graph or an inline
@@ -854,6 +921,37 @@ type Node struct {
 	// Responsive: Prop overrides per window size class; `compact` is the base
 	// and overrides cascade (WGT-010).
 	Responsive *Responsive `json:"responsive,omitempty"`
+	// Animation: The animations of a node (ANI-001, ANI-003, ANI-004):
+	// `durationMs` animates the node's animatable props (numbers and colours)
+	// whenever their bound value changes; `enter` and `exit` play when the node
+	// is inserted or its visibility changes; `hero` is the tag of a
+	// shared-element transition.
+	Animation *NodeAnimation `json:"animation,omitempty"`
+}
+
+// NodeAnimation — The animations of a node (ANI-001, ANI-003, ANI-004):
+// `durationMs` animates the node's animatable props (numbers and colours)
+// whenever their bound value changes; `enter` and `exit` play when the node
+// is inserted or its visibility changes; `hero` is the tag of a
+// shared-element transition.
+type NodeAnimation struct {
+	DurationMs *int64 `json:"durationMs,omitempty"`
+	// Curve: An animation curve (ANI-001, ANI-002).
+	Curve   Curve  `json:"curve,omitempty"`
+	DelayMs *int64 `json:"delayMs,omitempty"`
+	// Props: The props to animate; all that can be, when absent.
+	Props []string `json:"props,omitempty"`
+	// Enter: An enter or exit transition of a node (ANI-003).
+	Enter *AnimTransition `json:"enter,omitempty"`
+	// Exit: An enter or exit transition of a node (ANI-003).
+	Exit *AnimTransition `json:"exit,omitempty"`
+	// Hero: The hero tag, a string.
+	Hero json.RawMessage `json:"hero,omitempty"`
+	// ReduceMotion: What an animation does when the platform asks to reduce
+	// motion (ANI-007): `skip` jumps to the final state, `shorten` plays at a
+	// quarter of the duration, `ignore` plays as declared (for motion that
+	// carries meaning).
+	ReduceMotion ReduceMotion `json:"reduceMotion,omitempty"`
 }
 
 // PageDocument — A page: route, parameters, state, data, lifecycle and node
@@ -897,7 +995,8 @@ type PageDocument struct {
 	// (SCH-023).
 	Root Node `json:"root"`
 	// Forms: The forms of the page (STA-020).
-	Forms []Form `json:"forms,omitempty"`
+	Forms      []Form     `json:"forms,omitempty"`
+	Animations []Timeline `json:"animations,omitempty"`
 }
 
 // PageKind — How the page is presented (SCH-022).
@@ -1020,6 +1119,28 @@ type PushPolicy struct {
 	PayloadKey string `json:"payloadKey,omitempty"`
 }
 
+// ReduceMotion — What an animation does when the platform asks to reduce
+// motion (ANI-007): `skip` jumps to the final state, `shorten` plays at a
+// quarter of the duration, `ignore` plays as declared (for motion that
+// carries meaning).
+type ReduceMotion string
+
+// Values of ReduceMotion.
+const (
+	ReduceMotionSkip    ReduceMotion = "skip"
+	ReduceMotionShorten ReduceMotion = "shorten"
+	ReduceMotionIgnore  ReduceMotion = "ignore"
+)
+
+// Valid reports whether v is one of the values of ReduceMotion.
+func (v ReduceMotion) Valid() bool {
+	switch v {
+	case ReduceMotionSkip, ReduceMotionShorten, ReduceMotionIgnore:
+		return true
+	}
+	return false
+}
+
 // RequiredFeaturesPolicy — What the compiler does when a release needs a
 // newer runtime than `minRuntimeVersion`: reject the publish, or raise the
 // release's required features with a warning (WGT-004).
@@ -1066,9 +1187,12 @@ type RouteGuard struct {
 
 // RouteOptions — Route options (SCH-022, NAV-010).
 type RouteOptions struct {
-	// Transition: Page transition (NAV-010).
+	// Transition: Page transition (NAV-010). `custom` plays the route timeline
+	// that `routeOptions.timeline` names.
 	Transition Transition   `json:"transition,omitempty"`
 	Guards     []RouteGuard `json:"guards,omitempty"`
+	// Timeline: The route timeline of a custom transition (NAV-010).
+	Timeline string `json:"timeline,omitempty"`
 }
 
 // SecurityProfile — Security profile (§15.12).
@@ -1156,6 +1280,14 @@ func (s *SlotFill) UnmarshalJSON(data []byte) error {
 	s.Many = nil
 	s.One = new(Node)
 	return json.Unmarshal(data, s.One)
+}
+
+// Spring — A spring that moves the timeline instead of its duration
+// (ANI-006).
+type Spring struct {
+	Stiffness *float64 `json:"stiffness,omitempty"`
+	Damping   *float64 `json:"damping,omitempty"`
+	Mass      *float64 `json:"mass,omitempty"`
 }
 
 // StartupMode — Start-up mode (SYN-003).
@@ -1372,6 +1504,92 @@ type ThemeDocument struct {
 	Tokens json.RawMessage `json:"tokens"`
 }
 
+// Timeline — An animation timeline a page owns (ANI-002): keyframes of
+// props of its nodes, played by `startAnimation` and `controlAnimation`, on
+// page enter, or by a driver.
+type Timeline struct {
+	// ID: Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
+	ID string `json:"id"`
+	// Name: Identifier used in PXL and generated code: lowerCamelCase.
+	Name       string `json:"name"`
+	DurationMs int64  `json:"durationMs"`
+	DelayMs    *int64 `json:"delayMs,omitempty"`
+	// Repeat: Plays after the first.
+	Repeat        *int64 `json:"repeat,omitempty"`
+	RepeatForever *bool  `json:"repeatForever,omitempty"`
+	// Reverse: Each repeat plays backwards.
+	Reverse *bool `json:"reverse,omitempty"`
+	// StaggerMs: The delay per item index for nodes in item templates.
+	StaggerMs *int64 `json:"staggerMs,omitempty"`
+	// Autoplay: Plays when the page is shown.
+	Autoplay *bool `json:"autoplay,omitempty"`
+	// Scope: What a timeline animates: nodes of its page, or the page itself in
+	// a route transition (NAV-010).
+	Scope TimelineScope `json:"scope,omitempty"`
+	// Driver: Moves a timeline with the scroll offset or the drag of a node
+	// instead of time (ANI-006).
+	Driver *TimelineDriver `json:"driver,omitempty"`
+	// Spring: A spring that moves the timeline instead of its duration
+	// (ANI-006).
+	Spring *Spring `json:"spring,omitempty"`
+	// ReduceMotion: What an animation does when the platform asks to reduce
+	// motion (ANI-007): `skip` jumps to the final state, `shorten` plays at a
+	// quarter of the duration, `ignore` plays as declared (for motion that
+	// carries meaning).
+	ReduceMotion ReduceMotion `json:"reduceMotion,omitempty"`
+	Tracks       []Track      `json:"tracks"`
+	// Description: Human-readable description.
+	Description string `json:"description,omitempty"`
+}
+
+// TimelineDriver — Moves a timeline with the scroll offset or the drag of a
+// node instead of time (ANI-006).
+type TimelineDriver struct {
+	// Kind: What moves a driven timeline (ANI-006).
+	Kind TimelineDriverKind `json:"kind"`
+	// Node: Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
+	Node string `json:"node"`
+	// Extent: Logical pixels of scrolling or dragging that span the timeline.
+	Extent float64 `json:"extent"`
+}
+
+// TimelineDriverKind — What moves a driven timeline (ANI-006).
+type TimelineDriverKind string
+
+// Values of TimelineDriverKind.
+const (
+	TimelineDriverKindScroll TimelineDriverKind = "scroll"
+	TimelineDriverKindDrag   TimelineDriverKind = "drag"
+)
+
+// Valid reports whether v is one of the values of TimelineDriverKind.
+func (v TimelineDriverKind) Valid() bool {
+	switch v {
+	case TimelineDriverKindScroll, TimelineDriverKindDrag:
+		return true
+	}
+	return false
+}
+
+// TimelineScope — What a timeline animates: nodes of its page, or the page
+// itself in a route transition (NAV-010).
+type TimelineScope string
+
+// Values of TimelineScope.
+const (
+	TimelineScopePage  TimelineScope = "page"
+	TimelineScopeRoute TimelineScope = "route"
+)
+
+// Valid reports whether v is one of the values of TimelineScope.
+func (v TimelineScope) Valid() bool {
+	switch v {
+	case TimelineScopePage, TimelineScopeRoute:
+		return true
+	}
+	return false
+}
+
 // TimerTrigger — A timer (ACT-002): it fires every intervalMs while its
 // owner lives, or once, intervalMs after its owner starts, when repeat is
 // false; `event` is the number of times it has fired.
@@ -1388,7 +1606,19 @@ type TimerTrigger struct {
 	Description string `json:"description,omitempty"`
 }
 
-// Transition — Page transition (NAV-010).
+// Track — The keyframes of one prop of one node (ANI-002); a route
+// timeline's tracks name no node and animate `opacity`, `scale`, `slideX` or
+// `slideY`.
+type Track struct {
+	// Node: Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
+	Node string `json:"node,omitempty"`
+	// Prop: Identifier used in PXL and generated code: lowerCamelCase.
+	Prop      string     `json:"prop"`
+	Keyframes []Keyframe `json:"keyframes"`
+}
+
+// Transition — Page transition (NAV-010). `custom` plays the route timeline
+// that `routeOptions.timeline` names.
 type Transition string
 
 // Values of Transition.
@@ -1401,13 +1631,14 @@ const (
 	TransitionSlideDown  Transition = "slideDown"
 	TransitionScale      Transition = "scale"
 	TransitionSharedAxis Transition = "sharedAxis"
+	TransitionCustom     Transition = "custom"
 	TransitionNone       Transition = "none"
 )
 
 // Valid reports whether v is one of the values of Transition.
 func (v Transition) Valid() bool {
 	switch v {
-	case TransitionPlatform, TransitionFade, TransitionSlideLeft, TransitionSlideRight, TransitionSlideUp, TransitionSlideDown, TransitionScale, TransitionSharedAxis, TransitionNone:
+	case TransitionPlatform, TransitionFade, TransitionSlideLeft, TransitionSlideRight, TransitionSlideUp, TransitionSlideDown, TransitionScale, TransitionSharedAxis, TransitionCustom, TransitionNone:
 		return true
 	}
 	return false

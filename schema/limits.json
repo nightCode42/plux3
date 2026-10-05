@@ -142,6 +142,86 @@
       "description": "Steps one action run trace records; later steps are counted but not recorded."
     },
     {
+      "key": "anim.compositedSubtree",
+      "unit": "count",
+      "default": 40,
+      "max": 1000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "ANI-008"
+      ],
+      "description": "Nodes below an animated opacity or layout prop before the compiler warns of an expensive animation."
+    },
+    {
+      "key": "anim.keyframesPerTrack",
+      "unit": "count",
+      "default": 64,
+      "max": 1000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "ANI-002"
+      ],
+      "description": "Keyframes of one track of a timeline."
+    },
+    {
+      "key": "anim.simultaneousTimelines",
+      "unit": "count",
+      "default": 6,
+      "max": 100,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "ANI-008"
+      ],
+      "description": "Timelines of one page that autoplay or follow a driver before the compiler warns."
+    },
+    {
+      "key": "anim.timelineDuration",
+      "unit": "milliseconds",
+      "default": 60000,
+      "max": 600000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app",
+        "plugin"
+      ],
+      "enforcedBy": [
+        "compiler"
+      ],
+      "phase": "P5",
+      "requirements": [
+        "ANI-002"
+      ],
+      "description": "Duration of one timeline."
+    },
+    {
       "key": "api.pageSize",
       "unit": "count",
       "default": 100,

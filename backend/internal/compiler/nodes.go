@@ -128,6 +128,7 @@ func (u *unit) checkNode(n *node) {
 		u.deprecation(sh.widget.Deprecated, sh.widget.Type, vctx{file: file, ptr: n.ptr + "/type"})
 	}
 	n.props = u.checkProps(n, sh, n.doc.Props, c, "props", true)
+	u.checkNodeAnimation(n, sh, c)
 	u.checkEvents(n, sh, c)
 	u.checkChildren(n, sh, file)
 	if len(n.doc.Visible) > 0 {

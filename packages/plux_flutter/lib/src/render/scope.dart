@@ -9,6 +9,7 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plux_flutter/src/actions/engine.dart';
+import 'package:plux_flutter/src/animation/registry.dart';
 import 'package:plux_flutter/src/assets/icon_fonts.dart';
 import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
@@ -119,6 +120,7 @@ final class RenderScope {
     this.componentState,
     this.emitEvent,
     this.formAlias,
+    this.animations,
   });
 
   /// The release rendered.
@@ -187,6 +189,10 @@ final class RenderScope {
   /// subscribes to `<formAlias>.<path>`.
   final String? formAlias;
 
+  /// The timelines of the page whose nodes this scope renders (ANI-002);
+  /// null where there are none, such as in a component.
+  final PluxAnimations? animations;
+
   /// A scope with [extra] roots, for a template item.
   RenderScope withRoots(Map<String, Object?> extra, String at) =>
       _derive(() => {...roots(), ...extra}, at, formAlias);
@@ -238,6 +244,7 @@ final class RenderScope {
     componentState: componentState,
     emitEvent: emitEvent,
     formAlias: alias,
+    animations: animations,
   );
 
   /// The scope of the nearest [RenderScopeWidget].

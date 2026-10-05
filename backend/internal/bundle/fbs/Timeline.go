@@ -98,8 +98,167 @@ func (rcv *Timeline) TracksLength() int {
 	return 0
 }
 
+func (rcv *Timeline) Name() uint32 {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(12))
+	if o != 0 {
+		return rcv._tab.GetUint32(o + rcv._tab.Pos)
+	}
+	return 0
+}
+
+func (rcv *Timeline) MutateName(n uint32) bool {
+	return rcv._tab.MutateUint32Slot(12, n)
+}
+
+func (rcv *Timeline) Page(obj *Uuid) *Uuid {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(14))
+	if o != 0 {
+		x := o + rcv._tab.Pos
+		if obj == nil {
+			obj = new(Uuid)
+		}
+		obj.Init(rcv._tab.Bytes, x)
+		return obj
+	}
+	return nil
+}
+
+func (rcv *Timeline) DelayUs() int64 {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(16))
+	if o != 0 {
+		return rcv._tab.GetInt64(o + rcv._tab.Pos)
+	}
+	return 0
+}
+
+func (rcv *Timeline) MutateDelayUs(n int64) bool {
+	return rcv._tab.MutateInt64Slot(16, n)
+}
+
+func (rcv *Timeline) Forever() bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(18))
+	if o != 0 {
+		return rcv._tab.GetBool(o + rcv._tab.Pos)
+	}
+	return false
+}
+
+func (rcv *Timeline) MutateForever(n bool) bool {
+	return rcv._tab.MutateBoolSlot(18, n)
+}
+
+func (rcv *Timeline) Reverse() bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(20))
+	if o != 0 {
+		return rcv._tab.GetBool(o + rcv._tab.Pos)
+	}
+	return false
+}
+
+func (rcv *Timeline) MutateReverse(n bool) bool {
+	return rcv._tab.MutateBoolSlot(20, n)
+}
+
+func (rcv *Timeline) StaggerUs() int64 {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(22))
+	if o != 0 {
+		return rcv._tab.GetInt64(o + rcv._tab.Pos)
+	}
+	return 0
+}
+
+func (rcv *Timeline) MutateStaggerUs(n int64) bool {
+	return rcv._tab.MutateInt64Slot(22, n)
+}
+
+func (rcv *Timeline) ReduceMotion() ReduceMotion {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(24))
+	if o != 0 {
+		return ReduceMotion(rcv._tab.GetByte(o + rcv._tab.Pos))
+	}
+	return 0
+}
+
+func (rcv *Timeline) MutateReduceMotion(n ReduceMotion) bool {
+	return rcv._tab.MutateByteSlot(24, byte(n))
+}
+
+func (rcv *Timeline) Route() bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(26))
+	if o != 0 {
+		return rcv._tab.GetBool(o + rcv._tab.Pos)
+	}
+	return false
+}
+
+func (rcv *Timeline) MutateRoute(n bool) bool {
+	return rcv._tab.MutateBoolSlot(26, n)
+}
+
+func (rcv *Timeline) Autoplay() bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(28))
+	if o != 0 {
+		return rcv._tab.GetBool(o + rcv._tab.Pos)
+	}
+	return false
+}
+
+func (rcv *Timeline) MutateAutoplay(n bool) bool {
+	return rcv._tab.MutateBoolSlot(28, n)
+}
+
+func (rcv *Timeline) Driver() Driver {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(30))
+	if o != 0 {
+		return Driver(rcv._tab.GetByte(o + rcv._tab.Pos))
+	}
+	return 0
+}
+
+func (rcv *Timeline) MutateDriver(n Driver) bool {
+	return rcv._tab.MutateByteSlot(30, byte(n))
+}
+
+func (rcv *Timeline) DriverNode(obj *Uuid) *Uuid {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(32))
+	if o != 0 {
+		x := o + rcv._tab.Pos
+		if obj == nil {
+			obj = new(Uuid)
+		}
+		obj.Init(rcv._tab.Bytes, x)
+		return obj
+	}
+	return nil
+}
+
+func (rcv *Timeline) DriverExtent() float64 {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(34))
+	if o != 0 {
+		return rcv._tab.GetFloat64(o + rcv._tab.Pos)
+	}
+	return 0.0
+}
+
+func (rcv *Timeline) MutateDriverExtent(n float64) bool {
+	return rcv._tab.MutateFloat64Slot(34, n)
+}
+
+func (rcv *Timeline) Spring(obj *Spring) *Spring {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(36))
+	if o != 0 {
+		x := rcv._tab.Indirect(o + rcv._tab.Pos)
+		if obj == nil {
+			obj = new(Spring)
+		}
+		obj.Init(rcv._tab.Bytes, x)
+		return obj
+	}
+	return nil
+}
+
 func TimelineStart(builder *flatbuffers.Builder) {
-	builder.StartObject(4)
+	builder.StartObject(17)
 }
 func TimelineAddId(builder *flatbuffers.Builder, id flatbuffers.UOffsetT) {
 	builder.PrependStructSlot(0, flatbuffers.UOffsetT(id), 0)
@@ -115,6 +274,45 @@ func TimelineAddTracks(builder *flatbuffers.Builder, tracks flatbuffers.UOffsetT
 }
 func TimelineStartTracksVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
 	return builder.StartVector(4, numElems, 4)
+}
+func TimelineAddName(builder *flatbuffers.Builder, name uint32) {
+	builder.PrependUint32Slot(4, name, 0)
+}
+func TimelineAddPage(builder *flatbuffers.Builder, page flatbuffers.UOffsetT) {
+	builder.PrependStructSlot(5, flatbuffers.UOffsetT(page), 0)
+}
+func TimelineAddDelayUs(builder *flatbuffers.Builder, delayUs int64) {
+	builder.PrependInt64Slot(6, delayUs, 0)
+}
+func TimelineAddForever(builder *flatbuffers.Builder, forever bool) {
+	builder.PrependBoolSlot(7, forever, false)
+}
+func TimelineAddReverse(builder *flatbuffers.Builder, reverse bool) {
+	builder.PrependBoolSlot(8, reverse, false)
+}
+func TimelineAddStaggerUs(builder *flatbuffers.Builder, staggerUs int64) {
+	builder.PrependInt64Slot(9, staggerUs, 0)
+}
+func TimelineAddReduceMotion(builder *flatbuffers.Builder, reduceMotion ReduceMotion) {
+	builder.PrependByteSlot(10, byte(reduceMotion), 0)
+}
+func TimelineAddRoute(builder *flatbuffers.Builder, route bool) {
+	builder.PrependBoolSlot(11, route, false)
+}
+func TimelineAddAutoplay(builder *flatbuffers.Builder, autoplay bool) {
+	builder.PrependBoolSlot(12, autoplay, false)
+}
+func TimelineAddDriver(builder *flatbuffers.Builder, driver Driver) {
+	builder.PrependByteSlot(13, byte(driver), 0)
+}
+func TimelineAddDriverNode(builder *flatbuffers.Builder, driverNode flatbuffers.UOffsetT) {
+	builder.PrependStructSlot(14, flatbuffers.UOffsetT(driverNode), 0)
+}
+func TimelineAddDriverExtent(builder *flatbuffers.Builder, driverExtent float64) {
+	builder.PrependFloat64Slot(15, driverExtent, 0.0)
+}
+func TimelineAddSpring(builder *flatbuffers.Builder, spring flatbuffers.UOffsetT) {
+	builder.PrependUOffsetTSlot(16, flatbuffers.UOffsetT(spring), 0)
 }
 func TimelineEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
 	return builder.EndObject()

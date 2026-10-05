@@ -285,8 +285,21 @@ func (rcv *Node) MutateNativeSlot(n uint32) bool {
 	return rcv._tab.MutateUint32Slot(32, n)
 }
 
+func (rcv *Node) Animation(obj *NodeAnimation) *NodeAnimation {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(34))
+	if o != 0 {
+		x := rcv._tab.Indirect(o + rcv._tab.Pos)
+		if obj == nil {
+			obj = new(NodeAnimation)
+		}
+		obj.Init(rcv._tab.Bytes, x)
+		return obj
+	}
+	return nil
+}
+
 func NodeStart(builder *flatbuffers.Builder) {
-	builder.StartObject(15)
+	builder.StartObject(16)
 }
 func NodeAddId(builder *flatbuffers.Builder, id flatbuffers.UOffsetT) {
 	builder.PrependStructSlot(0, flatbuffers.UOffsetT(id), 0)
@@ -350,6 +363,9 @@ func NodeStartTypeArgumentsVector(builder *flatbuffers.Builder, numElems int) fl
 }
 func NodeAddNativeSlot(builder *flatbuffers.Builder, nativeSlot uint32) {
 	builder.PrependUint32Slot(14, nativeSlot, 0)
+}
+func NodeAddAnimation(builder *flatbuffers.Builder, animation flatbuffers.UOffsetT) {
+	builder.PrependUOffsetTSlot(15, flatbuffers.UOffsetT(animation), 0)
 }
 func NodeEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
 	return builder.EndObject()
