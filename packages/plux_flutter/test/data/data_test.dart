@@ -22,6 +22,7 @@ import 'package:plux_flutter/src/data/transport.dart';
 import 'package:plux_flutter/src/data/worker.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
 import 'package:plux_flutter/src/schema/registry.g.dart';
+import 'package:plux_flutter/src/store/kv_store.dart';
 
 final class _Auth implements PluxAuthDelegate {
   _Auth(this.tokens);
@@ -674,6 +675,58 @@ void main() {
     expect(scope.root['tasks'], isA<Map<String, Object?>>());
     expect(scope.root['missing'], isNull);
   });
+
+  test('logout and Plux.wipeData clear the cache, so the next user never sees the previous user\'s cached responses [HST-010] [HST-001] [DAT-010]', () async {
+    final s = tasks(
+      cache: const CacheSpec(
+        policy: CachePolicy.cacheFirst,
+        ttl: Duration(hours: 1),
+      ),
+    );
+    final first = controller(s);
+    await first.load(roots);
+    expect(api.requests, hasLength(1));
+    // The same user is served from the cache.
+    await controller(s).load(roots);
+    expect(api.requests, hasLength(1));
+    // The user logs out; the next user's load goes to the network and
+    // sees the server's answer for them.
+    await services.clearCache();
+    final next = controller(s);
+    await next.load(roots);
+    expect(api.requests, hasLength(2));
+    expect(events.last.$2['cache'], isNot('hit'));
+  });
+
+  test('the encrypted cache gets its installation key from secure storage, made once; clearing makes none [DAT-010]', () async {
+    final dir = Directory.systemTemp.createTempSync('plux_worker_key');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final secrets = _Secrets();
+    LazyDataWorker start() => LazyDataWorker(
+      () => DataWorker.start(
+        httpClient: http.Client.new,
+        cacheDirectory: dir.path,
+        keys: SecretCacheKeys(secrets, 'data-cache.a'),
+      ),
+    );
+    final cleared = start();
+    await cleared.store(secure: true).clear();
+    await cleared.close();
+    expect(secrets.values, isEmpty);
+    final worker = start();
+    final store = worker.store(secure: true);
+    await store.write(cacheKey('k'), {'a': 1}, 3);
+    expect((await store.read(cacheKey('k')))!.json, {'a': 1});
+    expect(secrets.values.keys, ['data-cache.a']);
+    await worker.close();
+    final again = start();
+    addTearDown(again.close);
+    expect((await again.store(secure: true).read(cacheKey('k')))!.json, {
+      'a': 1,
+    }, reason: 'the key is read back, not made anew');
+    await again.store(secure: true).clear();
+    expect(await again.store(secure: true).read(cacheKey('k')), isNull);
+  });
 }
 
 final class _NoNavigator implements RunNavigator {
@@ -698,4 +751,17 @@ final class _NoNavigator implements RunNavigator {
 
   @override
   void switchTab(String tab) {}
+}
+
+final class _Secrets implements SecretStore {
+  final Map<String, String> values = {};
+
+  @override
+  Future<String?> read(String name) async => values[name];
+
+  @override
+  Future<void> write(String name, String value) async => values[name] = value;
+
+  @override
+  Future<void> delete(String name) async => values.remove(name);
 }

@@ -70,6 +70,7 @@ abstract final class Plux {
     _ownsContainer = config.container == null;
     container.read(pluxRuntimeProvider.notifier).set(rt);
     rt.environment = () => container.read(environmentProvider);
+    rt.connect(container);
     container
         .read(environmentProvider.notifier)
         .replace(
@@ -215,12 +216,15 @@ abstract final class Plux {
   }
 
   /// Removes the data Plux keeps on the device for this app (HST-001):
-  /// session, persisted and secure state with the stores' keys; app and
+  /// session, persisted and secure state with the stores' keys, and every
+  /// cached data-source response; app and
   /// plugin state start again from their defaults. Pages already shown
   /// keep their in-memory values until they close.
   static Future<void> wipeData() async {
     final rt = _rt;
     await rt.statePersistence.wipe();
+    // Cached responses go too, so the next user never sees them.
+    await rt.clearDataCache();
     final c = container;
     c.read(appStateProvider.notifier).restart();
     final keys = [
@@ -323,6 +327,8 @@ abstract final class Plux {
     _runtime = null;
     final c = _container;
     _container = null;
+    // The app's and the plugins' triggers stop before their container.
+    rt?.disconnect();
     // A container Plux created is disposed (a no-op when the host disposed
     // its parent first); a shared one is left without the runtime.
     if (c != null) {

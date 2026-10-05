@@ -314,23 +314,35 @@ void main() {
     },
   );
 
-  testWidgets('Plux.wipeData removes stored state and its keys [HST-001]', (
-    tester,
-  ) async {
-    await start(tester);
-    await tap(tester, 'bump');
-    await tester.runAsync(() => h.runtime.statePersistence.flush());
-    await tester.runAsync(Plux.wipeData);
-    await settle(tester);
-    expect(app()['counter'], 0);
-    expect(h.secrets.values, isEmpty);
-    expect(
-      Directory(h.dir)
+  testWidgets(
+    'Plux.wipeData removes stored state, its keys and cached responses [HST-001] [DAT-010]',
+    (tester) async {
+      await start(tester);
+      await tap(tester, 'bump');
+      await tester.runAsync(() => h.runtime.statePersistence.flush());
+      // A response the data layer cached for the user.
+      final root = Directory(h.dir)
           .listSync(recursive: true)
-          .where((f) => f.path.contains('plux-state/') && f is File),
-      isEmpty,
-    );
-  });
+          .whereType<Directory>()
+          .firstWhere((d) => d.path.endsWith('plux-state'))
+          .parent
+          .path;
+      final cached = File('$root/data/plain/${'a' * 64}')
+        ..createSync(recursive: true)
+        ..writeAsBytesSync(List.filled(12, 0));
+      await tester.runAsync(Plux.wipeData);
+      expect(cached.existsSync(), isFalse, reason: 'cached responses go too');
+      await settle(tester);
+      expect(app()['counter'], 0);
+      expect(h.secrets.values, isEmpty);
+      expect(
+        Directory(h.dir)
+            .listSync(recursive: true)
+            .where((f) => f.path.contains('plux-state/') && f is File),
+        isEmpty,
+      );
+    },
+  );
 
   testWidgets(
     'Plux.sendEvent delivers to the connected sink; without one, or refused, it is reported with PLX-5307 [HST-013]',

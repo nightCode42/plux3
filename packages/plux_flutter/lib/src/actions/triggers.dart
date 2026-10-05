@@ -126,6 +126,8 @@ final class OwnerTriggers {
     required this.fire,
     this.clock = const ActionClock(),
     this.watches = const NoStateWatches(),
+    this.plugin,
+    this.sourceOf,
   });
 
   /// The triggers.
@@ -139,6 +141,16 @@ final class OwnerTriggers {
 
   /// Where watchers subscribe.
   final StateWatchSource watches;
+
+  /// The owner's plugin: its data-source triggers hear only the loads of
+  /// its plugin's pages. Null for the app, which hears every plugin's.
+  final String? plugin;
+
+  /// The ID of the data source [name] names in the owner's scope, or
+  /// null when the owner cannot tell; a page tells, so its triggers hear
+  /// only the source its scope sees (the page's own before its plugin's
+  /// and the app's).
+  final String? Function(String name)? sourceOf;
 
   final List<Timer> _timers = [];
   final List<StateWatch> _watches = [];
@@ -174,12 +186,29 @@ final class OwnerTriggers {
     }
   }
 
-  /// Fires the triggers of [kind] named [name] with [payload].
-  void dispatch(TriggerKind kind, {String name = '', Object? payload}) {
+  /// Fires the triggers of [kind] named [name] with [payload]. A
+  /// data-source event names the [source] plugin whose page loaded it and
+  /// the source's [sourceId]; owners of other plugins, and pages whose
+  /// scope names another source so, do not hear it.
+  void dispatch(
+    TriggerKind kind, {
+    String name = '',
+    Object? payload,
+    String? source,
+    String? sourceId,
+  }) {
+    if (source != null && plugin != null && plugin != source) return;
     for (final s in specs) {
-      if (s.kind == kind && s.name == name) fire(s, payload);
+      if (s.kind != kind || s.name != name) continue;
+      final id = sourceId == null ? null : sourceOf?.call(name);
+      if (id != null && id != sourceId) continue;
+      fire(s, payload);
     }
   }
+
+  /// Whether a trigger of [kind] named [name] is declared.
+  bool declares(TriggerKind kind, String name) =>
+      specs.any((s) => s.kind == kind && s.name == name);
 
   /// Stops the timers and watchers.
   void dispose() {
@@ -204,11 +233,27 @@ final class TriggerHub {
     return () => _owners.remove(owner);
   }
 
-  void _all(TriggerKind kind, {String name = '', Object? payload}) {
+  void _all(
+    TriggerKind kind, {
+    String name = '',
+    Object? payload,
+    String? source,
+    String? sourceId,
+  }) {
     for (final o in [..._owners]) {
-      o.dispatch(kind, name: name, payload: payload);
+      o.dispatch(
+        kind,
+        name: name,
+        payload: payload,
+        source: source,
+        sourceId: sourceId,
+      );
     }
   }
+
+  /// Whether a registered owner declares a trigger of [kind] named [name].
+  bool handles(TriggerKind kind, String name) =>
+      _owners.any((o) => o.declares(kind, name));
 
   /// The app resumed.
   void appResumed() => _all(TriggerKind.appResume);
@@ -223,11 +268,33 @@ final class TriggerHub {
   void hostEvent(String name, Map<String, Object?> payload) =>
       _all(TriggerKind.hostEvent, name: name, payload: payload);
 
-  /// Data source [source] loaded [value].
-  void dataLoaded(String source, Object? value) =>
-      _all(TriggerKind.dataLoaded, name: source, payload: value);
+  /// Data source [source] loaded [value], for a page of [plugin] when
+  /// given; [sourceId] is the source's ID.
+  void dataLoaded(
+    String source,
+    Object? value, {
+    String? plugin,
+    String? sourceId,
+  }) => _all(
+    TriggerKind.dataLoaded,
+    name: source,
+    payload: value,
+    source: plugin,
+    sourceId: sourceId,
+  );
 
-  /// Data source [source] failed with [error], a `PluxActionError` value.
-  void dataFailed(String source, Map<String, Object?> error) =>
-      _all(TriggerKind.dataFailed, name: source, payload: error);
+  /// Data source [source] failed with [error], a `PluxActionError` value,
+  /// for a page of [plugin] when given; [sourceId] is the source's ID.
+  void dataFailed(
+    String source,
+    Map<String, Object?> error, {
+    String? plugin,
+    String? sourceId,
+  }) => _all(
+    TriggerKind.dataFailed,
+    name: source,
+    payload: error,
+    source: plugin,
+    sourceId: sourceId,
+  );
 }

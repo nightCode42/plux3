@@ -117,6 +117,7 @@ final class RenderScope {
     this.parent,
     this.actions,
     this.componentState,
+    this.emitEvent,
   });
 
   /// The release rendered.
@@ -174,6 +175,12 @@ final class RenderScope {
   /// which bindings under `component` read (STA-001).
   final PageInstance? componentState;
 
+  /// Emits an event of the component whose nodes this scope renders
+  /// (`emitEvent`, SCH-030): to the instance's handler, or for a
+  /// component a `PluxView` shows, to its `onEvent`. Null outside a
+  /// component.
+  final void Function(String event, Object? payload)? emitEvent;
+
   /// A scope with [extra] roots, for a template item.
   RenderScope withRoots(Map<String, Object?> extra, String at) {
     Map<String, Object?> all() => {...roots(), ...extra};
@@ -201,6 +208,7 @@ final class RenderScope {
       parent: parent,
       actions: actions,
       componentState: componentState,
+      emitEvent: emitEvent,
     );
   }
 

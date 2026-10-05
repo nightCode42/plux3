@@ -15,15 +15,18 @@ import 'package:plux_flutter/src/state/scope_state.dart';
 
 /// The handlers of the state actions, by action name.
 final Map<String, ActionHandler> stateHandlers = {
-  'setState': _StateHandler((s, i) => s.write(_path(i), i['value'])),
-  'patchState': _StateHandler((s, i) {
+  'setState': _StateHandler((s, i, _) => s.write(_path(i), i['value'])),
+  'patchState': _StateHandler((s, i, c) {
     final patch = i['patch'];
     if (patch is! Map<String, Object?>) {
       throw const ActionError.validation('patchState: patch is not an object');
     }
+    // With optimistic set, the patch is undone when the run fails
+    // (ACT-007).
+    if (i['optimistic'] == true) c.run?.optimistic.remember(_path(i));
     s.patch(_path(i), patch);
   }),
-  'resetState': _StateHandler((s, i) => s.reset(_path(i))),
+  'resetState': _StateHandler((s, i, _) => s.reset(_path(i))),
 };
 
 String _path(Map<String, Object?> i) {
@@ -36,7 +39,8 @@ String _path(Map<String, Object?> i) {
 final class _StateHandler implements ActionHandler {
   const _StateHandler(this._write);
 
-  final void Function(StateAccess s, Map<String, Object?> inputs) _write;
+  final void Function(StateAccess s, Map<String, Object?> inputs, StepContext c)
+  _write;
 
   @override
   bool get waitsForUser => false;
@@ -52,7 +56,7 @@ final class _StateHandler implements ActionHandler {
       );
     }
     try {
-      _write(s, inputs);
+      _write(s, inputs, c);
     } on StateWriteException catch (e) {
       throw ActionError(
         e.code == PluxErrorCode.stateWriteTypeMismatch

@@ -136,6 +136,10 @@ final class OptimisticLog {
     _undo.clear();
   }
 
+  /// Remembers the value at [path], which a step is about to change, so
+  /// that [rollback] restores it.
+  void remember(String path) => _undo.add((path, state.read(path)));
+
   /// Keeps every change.
   void commit() => _undo.clear();
 }
@@ -194,6 +198,7 @@ final class StepContext {
     this.emitEvent,
     this.run,
     this.data,
+    this.logout,
   });
 
   /// This context with [state] (STA-001).
@@ -209,6 +214,7 @@ final class StepContext {
     emitEvent: emitEvent,
     run: run,
     data: data,
+    logout: logout,
   );
 
   /// Navigation for the run's page.
@@ -255,6 +261,7 @@ final class StepContext {
     emitEvent: emitEvent,
     run: run,
     data: data,
+    logout: logout,
   );
 
   /// This context with [emitEvent] for a component's handlers.
@@ -271,11 +278,17 @@ final class StepContext {
     sync: sync,
     emitEvent: emitEvent,
     data: data,
+    logout: logout,
   );
 
   /// The data of the run's page, for `apiCall` and `refreshData`
   /// (ADR-0048); null where no data layer runs.
   final DataActions? data;
+
+  /// Ends the user's session (`logout`, HST-010): the runtime clears the
+  /// cached responses and tells the host's auth delegate; null where no
+  /// runtime runs.
+  final Future<void> Function()? logout;
 }
 
 /// What a step produced.
@@ -408,6 +421,18 @@ final Map<String, ActionHandler> p4Handlers = {
       );
     }
     return StepEnd(i['result']);
+  }),
+  'logout': _Handler((c, i) async {
+    final logout = c.logout;
+    if (logout == null) {
+      throw const ActionError(
+        ActionErrorKind.custom,
+        PluxErrorCode.actionsNotAvailable,
+        'logout: no runtime ends the session here',
+      );
+    }
+    await logout();
+    return const StepDone();
   }),
   'emitHostEvent': _Handler((c, i) {
     final name = i['event'];

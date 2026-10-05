@@ -14,6 +14,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show kToolbarHeight;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plux_flutter/src/actions/engine.dart';
 import 'package:plux_flutter/src/assets/icon_fonts.dart';
 import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/bundle/container.dart';
@@ -466,6 +467,9 @@ final class NodeContextImpl implements NodeContext {
         roots: s.roots,
         payload: toPxl(payload),
         state: stateAccess(context, s),
+        // Runs a component's nodes start end with its instance (ACT-004).
+        owner: s.componentState,
+        emitEvent: s.emitEvent,
         resolve: (v, roots) => toPxl(
           ValueResolver(
             plugin: s.plugin,
@@ -622,6 +626,21 @@ final class NodeContextImpl implements NodeContext {
     }
     final path = '$_path/${uuidString(id)}';
     final parentRoots = scope.roots;
+    // The instance's handlers receive the component's events (SCH-030):
+    // a declared event's index is the instance node's event ID.
+    final events = [
+      for (final e in component.events ?? const <fbs.ComponentEvent>[])
+        cs.string(e.name),
+    ];
+    void emit(String event, Object? payload) {
+      final i = events.indexOf(event);
+      if (i < 0) {
+        _bad('component ${uuidString(id)} declares no event $event');
+        return;
+      }
+      if (handles(i)) fire(i, payload);
+    }
+
     final services = scope.services;
     final plugin = scope.pluginKey;
     final outer = scope;
@@ -630,6 +649,7 @@ final class NodeContextImpl implements NodeContext {
       fallback: (c, e) => services.fallback(c, e, plugin),
       child: _ComponentInstance(
         key: ValueKey(path),
+        actions: scope.actions,
         create: () {
           final renderer = services;
           if (renderer is! PluxRenderer) {
@@ -687,6 +707,7 @@ final class NodeContextImpl implements NodeContext {
             parent: outer,
             actions: outer.actions,
             componentState: instance,
+            emitEvent: emit,
           );
           return RenderScopeWidget(scope: inner, child: const PluxNode(0));
         },
@@ -949,9 +970,13 @@ final class _ComponentInstance extends ConsumerStatefulWidget {
     super.key,
     required this.create,
     required this.build,
+    this.actions,
   });
 
   final PageInstance Function() create;
+
+  /// The engine the instance's runs start on: they end with it (ACT-004).
+  final ActionHost? actions;
   final Widget Function(PageInstance instance, WidgetRef ref) build;
 
   @override
@@ -960,6 +985,12 @@ final class _ComponentInstance extends ConsumerStatefulWidget {
 
 final class _ComponentInstanceState extends ConsumerState<_ComponentInstance> {
   late final PageInstance _instance = widget.create();
+
+  @override
+  void dispose() {
+    widget.actions?.cancelOwned(_instance);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

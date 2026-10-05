@@ -9,6 +9,7 @@ library;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 import 'package:plux_flutter/src/actions/handlers.dart' show ActionState;
+import 'package:plux_flutter/src/actions/triggers.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/core/app_state.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
@@ -25,6 +26,29 @@ abstract interface class StateChangeSource {
   /// the value equal does not call it. Returns the function that stops
   /// listening.
   void Function() listen(String path, StateListener listener);
+}
+
+/// State watchers (ACT-002) over a [StateChangeSource]: a watcher's
+/// trigger fires with the entry's new value after each change.
+final class StateChangeWatches implements StateWatchSource {
+  /// Creates the watchers over [source].
+  const StateChangeWatches(this.source);
+
+  /// The change stream.
+  final StateChangeSource source;
+
+  @override
+  StateWatch watch(String path, void Function(Object? value) onChange) =>
+      _Listening(source.listen(path, (_, next) => onChange(next)));
+}
+
+final class _Listening implements StateWatch {
+  _Listening(this._stop);
+
+  final void Function() _stop;
+
+  @override
+  void cancel() => _stop();
 }
 
 /// The variables of one action run (scope `run`).

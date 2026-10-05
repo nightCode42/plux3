@@ -1,9 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Plux contributors
 // SPDX-License-Identifier: Apache-2.0
 
-/// A page's triggers (ACT-002): its lifecycle handlers, its timers,
-/// watchers, app lifecycle, push, host and data-source triggers, and its
-/// error handler (ACT-020), run on the page's engine.
+/// The triggers of a page, a plugin or the app (ACT-002): a page's
+/// lifecycle handlers, the owner's timers, watchers, app lifecycle, push,
+/// host and data-source triggers, and its error handler (ACT-020), run on
+/// the owner's engine. An error the owner's handler does not handle goes
+/// on to the plugin's, then the app's.
 library;
 
 import 'dart:async';
@@ -25,10 +27,13 @@ typedef Resolve = Object? Function(
   Map<String, Object?> roots,
 );
 
-/// The triggers of one page instance.
+/// The triggers of one page instance, or of a plugin or the app.
 final class PageActions {
   /// Creates the triggers of [page], run on [host] over [bundle]; [roots]
-  /// and [resolve] read the page's latest roots.
+  /// and [resolve] read the page's latest roots. A plugin or the app has
+  /// no page and gives its [specs]. [plugin] is the owner's plugin, null
+  /// for the app; [sourceOf] names the data source a name means in the
+  /// owner's scope; [errorsAfter] runs the next owners' error handlers.
   PageActions({
     required this.host,
     required this.page,
@@ -39,15 +44,25 @@ final class PageActions {
     required this.hub,
     ActionClock clock = const ActionClock(),
     StateWatchSource watches = const NoStateWatches(),
+    List<TriggerSpec>? specs,
+    String? plugin,
+    String? Function(String name)? sourceOf,
+    this.errorsAfter,
   }) {
     triggers = OwnerTriggers(
-      specs: decodeTriggers(page?.triggers),
+      specs: specs ?? decodeTriggers(page?.triggers),
       fire: _trigger,
       clock: clock,
       watches: watches,
+      plugin: plugin,
+      sourceOf: sourceOf,
     );
-    host.errors = _onError;
+    host.errors = routeError;
   }
+
+  /// Runs the error handlers after the owner's own: the plugin's, then
+  /// the app's (ACT-020); null for the app.
+  final ErrorRouter? errorsAfter;
 
   /// The page's engine.
   final ActionHost host;
@@ -171,9 +186,14 @@ final class PageActions {
     );
   }
 
-  /// Runs the page's error handler for an error no `onError` handled
-  /// (ACT-020): true when it ran to its end.
-  Future<bool> _onError(ActionError error) async {
+  /// Runs the owner's error handler for an error no `onError` handled,
+  /// then the next owners' (ACT-020): true when one ran to its end.
+  Future<bool> routeError(ActionError error) async {
+    if (await _ownHandler(error)) return true;
+    return await errorsAfter?.call(error) ?? false;
+  }
+
+  Future<bool> _ownHandler(ActionError error) async {
     final spec = triggers.errorHandler;
     if (spec == null) return false;
     final r = await host.fireFor(

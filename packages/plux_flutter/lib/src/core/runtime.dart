@@ -15,6 +15,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plux_flutter/src/actions/action_error.dart';
 import 'package:plux_flutter/src/actions/engine.dart';
 import 'package:plux_flutter/src/actions/trace.dart';
 import 'package:plux_flutter/src/actions/triggers.dart';
@@ -30,6 +32,7 @@ import 'package:plux_flutter/src/core/features.dart';
 import 'package:plux_flutter/src/core/host_events.dart';
 import 'package:plux_flutter/src/core/plux.dart';
 import 'package:plux_flutter/src/core/plux_view.dart';
+import 'package:plux_flutter/src/core/trigger_sources.dart';
 import 'package:plux_flutter/src/data/services.dart';
 import 'package:plux_flutter/src/data/worker.dart';
 import 'package:plux_flutter/src/devtools_api/diagnostics.dart';
@@ -41,6 +44,7 @@ import 'package:plux_flutter/src/navigation/guards.dart';
 import 'package:plux_flutter/src/navigation/router.dart';
 import 'package:plux_flutter/src/platform/platform_services.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
+import 'package:plux_flutter/src/render/owner_actions.dart';
 import 'package:plux_flutter/src/render/page_renderer.dart';
 import 'package:plux_flutter/src/render/renderer.dart';
 import 'package:plux_flutter/src/runtime_info.dart';
@@ -326,11 +330,14 @@ final class PluxRuntime with WidgetsBindingObserver {
     () => DataWorker.start(
       httpClient: config.httpClient ?? platformHttpClient,
       cacheDirectory: '$_root/data',
+      // The encrypted cache's key, kept like the secure state store's
+      // (DAT-010, plan p5 D6).
+      keys: SecretCacheKeys(_secrets, 'data-cache.$_keyId'),
     ),
   );
 
-  /// The data layer's services (ADR-0048). The cache key provider and the
-  /// data-source events are wired by the integration of P5 R2 and R1.
+  /// The data layer's services (ADR-0048): loads and failures of data
+  /// sources become trigger events (ACT-002).
   late final DataServices _dataServices = DataServices(
     transport: _dataWorker,
     plainStore: _dataWorker.store(secure: false),
@@ -339,7 +346,19 @@ final class PluxRuntime with WidgetsBindingObserver {
     environment: config.environment,
     record: telemetry.record,
     report: _report,
+    events: DataTriggers(triggers),
   );
+
+  /// Ends the user's session (HST-010, the `logout` action): removes every
+  /// cached response, so the next user never sees the previous user's
+  /// data, then tells the host's auth delegate.
+  Future<void> logout() async {
+    await _dataServices.clearCache();
+    environment().authDelegate?.onLogout();
+  }
+
+  /// Removes every cached response (HST-001, `Plux.wipeData`).
+  Future<void> clearDataCache() => _dataServices.clearCache();
 
   /// The platform's secure storage, which keeps the installation keys of
   /// the secure state store and the data cache (plan p5 D6).
@@ -385,9 +404,9 @@ final class PluxRuntime with WidgetsBindingObserver {
     );
   }();
 
-  /// Where `Plux.sendEvent` delivers host events (HST-013): the action
-  /// engine's host-event trigger connects it.
-  HostEventSink? hostEventSink;
+  /// Where `Plux.sendEvent` delivers host events (HST-013): the
+  /// host-event triggers of the app, its plugins and the pages shown.
+  late HostEventSink? hostEventSink = HostEventTriggers(triggers);
 
   /// Turns page sections into widgets (ADR-0031).
   late PageRenderer? renderer = PluxRenderer(
@@ -410,8 +429,39 @@ final class PluxRuntime with WidgetsBindingObserver {
       triggers: triggers,
       traces: traces,
       sync: () => unawaited(sync().then((_) {}, onError: (Object _) {})),
-    ),
+      logout: logout,
+    )..ownerErrors = _ownerErrors,
   );
+
+  OwnerLifetime? _owners;
+
+  Future<bool> _ownerErrors(String plugin, ActionError error) =>
+      _owners?.current?.errors(plugin, error) ?? Future.value(false);
+
+  /// Runs the app's and the plugins' triggers and error handlers (ACT-002,
+  /// ACT-020) with the active release, reaching state through
+  /// [container]; `Plux.initialize` connects it.
+  void connect(ProviderContainer container) {
+    _owners?.dispose();
+    _owners = OwnerLifetime(active, (release) {
+      final r = renderer;
+      if (r is! PluxRenderer) return null;
+      return ReleaseOwners(
+        renderer: r,
+        release: release,
+        container: container,
+        environment: () => environment(),
+        navigatorKey: () => navigatorKey,
+      );
+    });
+  }
+
+  /// Stops the app's and the plugins' triggers, before the container
+  /// they read goes.
+  void disconnect() {
+    _owners?.dispose();
+    _owners = null;
+  }
 
   /// What Plux renders with: locale, theme, consent, the user context and
   /// the auth delegate. `Plux.initialize` connects it to its container.
@@ -910,6 +960,7 @@ final class PluxRuntime with WidgetsBindingObserver {
 
   /// Stops the sync isolate and releases every mapping.
   Future<void> dispose() async {
+    disconnect();
     WidgetsBinding.instance.removeObserver(this);
     _flushEvery?.cancel();
     if (_inForeground) _endStretch();

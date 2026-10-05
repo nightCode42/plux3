@@ -487,6 +487,7 @@ void main() {
         'emitEvent',
         'emitHostEvent',
         'forEach',
+        'logout',
         'navigate',
         'openBottomSheet',
         'openDialog',

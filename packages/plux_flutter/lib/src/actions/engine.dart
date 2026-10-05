@@ -48,6 +48,7 @@ final class ActionServices {
     this.traces,
     this.sync,
     this.clock = const ActionClock(),
+    this.logout,
   }) : triggers = triggers ?? TriggerHub();
 
   /// Resolves and opens routes (ADR-0040).
@@ -74,6 +75,18 @@ final class ActionServices {
 
   /// Time for timers, waits and the timed policies.
   final ActionClock clock;
+
+  /// Ends the user's session (`logout`, HST-010).
+  final Future<void> Function()? logout;
+
+  /// Runs plugin [plugin]'s error handler, then the app's, for an error
+  /// a page's own did not handle (ACT-020): true when one handled it. The
+  /// runtime connects it to the app's and the plugins' triggers.
+  Future<bool> Function(String plugin, ActionError error) ownerErrors =
+      _noOwnerErrors;
+
+  static Future<bool> _noOwnerErrors(String plugin, ActionError error) =>
+      Future.value(false);
 }
 
 /// What starts a run, for telemetry and traces.
@@ -236,6 +249,8 @@ final class ActionHost {
   final Map<String, int> _reserved = {};
   final Map<String, (Timer, Completer<RunResult?>)> _debounced = {};
   final Map<String, Duration> _lastStart = {};
+  final Map<Object, Set<ActionRun>> _owned = {};
+  final Expando<bool> _gone = Expando();
   final Set<String> _warned = {};
   final Map<(BundleView, UuidKey), ActionGraph> _graphs = {};
   bool _disposed = false;
@@ -263,6 +278,8 @@ final class ActionHost {
     String? key,
     bool errorHandler = false,
     StateAccess? state,
+    Object? owner,
+    void Function(String event, Object? payload)? emitEvent,
   }) {
     unawaited(
       fireFor(
@@ -277,6 +294,8 @@ final class ActionHost {
         key: key,
         errorHandler: errorHandler,
         state: state,
+        owner: owner,
+        emitEvent: emitEvent,
       ),
     );
   }
@@ -296,6 +315,8 @@ final class ActionHost {
     String? key,
     bool errorHandler = false,
     StateAccess? state,
+    Object? owner,
+    void Function(String event, Object? payload)? emitEvent,
   }) async {
     if (_disposed) return null;
     final graph = this.graph(handler.graph, bundle, path, resolve);
@@ -315,6 +336,8 @@ final class ActionHost {
       detached: handler.detached,
       errorHandler: errorHandler,
       state: state,
+      owner: owner,
+      emitEvent: emitEvent,
     );
   }
 
@@ -358,7 +381,10 @@ final class ActionHost {
   /// Starts a run of [graph] for the trigger [key] under [policy]
   /// (ACT-003); completes with its result, or null when the policy
   /// started no run. A [detached] run is not cancelled with the owner
-  /// (ACT-004). An [errorHandler] run's own failure is not routed again.
+  /// (ACT-004), nor with the component instance [owner] that started it
+  /// ([cancelOwned]). An [errorHandler] run's own failure is not routed
+  /// again. [emitEvent] emits the events of the component whose handler
+  /// runs (`emitEvent`).
   Future<RunResult?> start(
     ActionGraph graph, {
     required Map<String, Object?> Function() roots,
@@ -370,8 +396,10 @@ final class ActionHost {
     bool detached = false,
     bool errorHandler = false,
     StateAccess? state,
+    Object? owner,
+    void Function(String event, Object? payload)? emitEvent,
   }) async {
-    if (_disposed) return null;
+    if (_disposed || _ownerGone(owner)) return null;
     Future<RunResult?> launch() => _launch(
       graph,
       roots: roots,
@@ -382,6 +410,8 @@ final class ActionHost {
       detached: detached,
       errorHandler: errorHandler,
       state: state,
+      owner: owner,
+      emitEvent: emitEvent,
     );
     switch (policy.kind) {
       case ConcurrencyPolicy.parallel:
@@ -428,8 +458,21 @@ final class ActionHost {
         if (last != null && now - last < policy.interval) return null;
         _lastStart[key] = now;
     }
-    if (_disposed) return null;
+    if (_disposed || _ownerGone(owner)) return null;
     return launch();
+  }
+
+  bool _ownerGone(Object? owner) => owner != null && _gone[owner] == true;
+
+  /// Cancels the runs that component instance [owner] started and that are
+  /// not detached, as it is disposed (ACT-004); its later triggers start
+  /// nothing.
+  void cancelOwned(Object owner) {
+    _gone[owner] = true;
+    for (final r in [...?_owned[owner]]) {
+      r.cancel();
+    }
+    _owned[owner]?.clear();
   }
 
   bool _busy(String key) =>
@@ -460,21 +503,29 @@ final class ActionHost {
     required bool detached,
     required bool errorHandler,
     required StateAccess? state,
+    required Object? owner,
+    required void Function(String event, Object? payload)? emitEvent,
   }) async {
+    if (_ownerGone(owner)) return null;
     final buffer = traces;
+    var base = state == null ? context : context.withState(state);
+    if (emitEvent != null) base = base.inComponent(emitEvent);
     final tracer = buffer == null
         ? null
         : RunTracer(maxSteps: limits.traceSteps, values: buffer.values);
     final run = ActionRun(
       graph: graph,
       roots: roots,
-      context: state == null ? context : context.withState(state),
+      context: base,
       limits: limits,
       event: event,
       tracer: tracer,
     );
     (_active[key] ??= {}).add(run);
-    if (!detached) _runs.add(run);
+    if (!detached) {
+      _runs.add(run);
+      if (owner != null) (_owned[owner] ??= {}).add(run);
+    }
     final task = developer.TimelineTask()
       ..start(
         'plux.action',
@@ -488,6 +539,7 @@ final class ActionHost {
     } finally {
       _active[key]?.remove(run);
       _runs.remove(run);
+      if (owner != null) _owned[owner]?.remove(run);
       _next(key);
     }
     watch.stop();

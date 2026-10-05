@@ -31,6 +31,7 @@ final class DataSourceEvent {
     required this.pluginKey,
     required this.source,
     required this.sourceId,
+    this.value,
     this.error,
   });
 
@@ -42,6 +43,9 @@ final class DataSourceEvent {
 
   /// The source's UUID.
   final String sourceId;
+
+  /// The value loaded, in PXL form, for a loaded event.
+  final Object? value;
 
   /// The error in PXL form (`PluxActionError`), for a failed load.
   final Map<String, Object?>? error;
@@ -372,6 +376,7 @@ final class DataSourceController extends ChangeNotifier {
         pluginKey: caller.pluginKey,
         source: spec.name,
         sourceId: spec.id,
+        value: _value,
       ),
     );
   }
@@ -457,6 +462,7 @@ final class DataSourceController extends ChangeNotifier {
               pluginKey: caller.pluginKey,
               source: spec.name,
               sourceId: spec.id,
+              value: _value,
             ),
           );
         } on DataFailure catch (f) {

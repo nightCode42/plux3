@@ -17,6 +17,7 @@ import 'package:plux_flutter/src/data/cache.dart';
 import 'package:plux_flutter/src/data/failure.dart';
 import 'package:plux_flutter/src/data/transport.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/store/kv_store.dart';
 
 /// The key that encrypts cached responses of sources marked `encrypted`
 /// (DAT-010): 32 bytes, kept by the platform's secure storage (D6). The
@@ -24,6 +25,34 @@ import 'package:plux_flutter/src/errors/plux_exception.dart';
 abstract interface class DataCacheKeyProvider {
   /// The key; fails when none can be had.
   Future<Uint8List> cacheKey();
+}
+
+/// The cache key of this installation, kept in the platform's secure
+/// storage like the secure state store's key (D6): made on first use, then
+/// read back. A storage failure fails the key with `PLX-5109`, so
+/// encrypted sources are not cached.
+final class SecretCacheKeys implements DataCacheKeyProvider {
+  /// Creates the provider of key [name] in [secrets].
+  const SecretCacheKeys(this.secrets, this.name);
+
+  /// Where the key is kept.
+  final SecretStore secrets;
+
+  /// The key's name.
+  final String name;
+
+  @override
+  Future<Uint8List> cacheKey() async {
+    try {
+      return (await installationKey(secrets, name, create: true))!;
+    } on StoreException catch (e) {
+      throw DataFailure(
+        ActionErrorKind.custom,
+        PluxErrorCode.dataCacheUnavailable,
+        'the cache key: ${e.message}',
+      );
+    }
+  }
 }
 
 sealed class _Command {
@@ -131,7 +160,9 @@ final class _WorkerStore implements CacheStore {
   final bool secure;
 
   Future<Object?> _op(String op, [String? key, Object? json, int? at]) async {
-    if (secure) {
+    // Clearing removes the files and needs no key, so a logout or a wipe
+    // never makes one.
+    if (secure && op != 'clear') {
       try {
         await worker._ensureKey();
       } on Object {
@@ -174,7 +205,9 @@ Future<void> _main((http.Client Function(), String, SendPort) args) async {
       _SetKey(:final key) => secure = FileCacheStore('$dir/secure', key: key),
       _Close() => transport.close(),
       final _Store s => _store(
-        s.secure ? secure : plain,
+        s.secure
+            ? secure ?? (s.op == 'clear' ? FileCacheStore('$dir/secure') : null)
+            : plain,
         s.op,
         s.key,
         s.json,
