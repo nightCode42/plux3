@@ -216,6 +216,7 @@ final class StepContext {
     this.data,
     this.logout,
     this.services = const {},
+    this.wiredBranches = const [],
   });
 
   /// This context with [state] (STA-001).
@@ -299,6 +300,30 @@ final class StepContext {
     data: data,
     logout: logout,
     services: services,
+  );
+
+  /// The names of the branches the running step wires to a successor. The
+  /// engine sets it for a step that wires any; it is empty elsewhere. A
+  /// handler whose branch is optional reads it, `submitForm` for `invalid`
+  /// (STA-020).
+  final Iterable<String> wiredBranches;
+
+  /// This context for a step that wires [branches].
+  StepContext forStep(Iterable<String> branches) => StepContext(
+    navigator: navigator,
+    emit: emit,
+    nativeActions: nativeActions,
+    state: state,
+    flows: flows,
+    clock: clock,
+    track: track,
+    sync: sync,
+    emitEvent: emitEvent,
+    run: run,
+    data: data,
+    logout: logout,
+    services: services,
+    wiredBranches: branches,
   );
 
   /// The data of the run's page, for `apiCall` and `refreshData`

@@ -11,6 +11,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:plux_flutter/plux_flutter.dart';
 import 'package:plux_flutter/src/actions/action_error.dart';
 import 'package:plux_flutter/src/actions/clock.dart';
+import 'package:plux_flutter/src/actions/engine.dart';
+import 'package:plux_flutter/src/actions/graph.dart';
 import 'package:plux_flutter/src/actions/handlers.dart';
 import 'package:plux_flutter/src/actions/run.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
@@ -22,6 +24,7 @@ import 'package:plux_flutter/src/render/scope.dart';
 import 'package:plux_flutter/src/state/access.dart';
 import 'package:plux_flutter/src/state/scope_state.dart';
 
+import '../actions/engine_test.dart' show FakeNavigator, id, input, lit;
 import '../support/harness.dart';
 
 Uint8List _bundle(String name) =>
@@ -383,6 +386,92 @@ void main() {
         expect(reports.first.code, PluxErrorCode.formAsyncValidatorFailed);
       },
     );
+
+    test('an invalid submitForm takes the invalid branch when the step wires it, else fails [STA-020]', () async {
+      final c = StepContext(
+        navigator: const _NoNavigator(),
+        emit: (_, _) {},
+        nativeActions: const NoNativeActions(),
+        state: access(),
+        clock: const ActionClock(),
+      );
+      final wired = c.forStep(const ['invalid']);
+      final r = await formHandlers['submitForm']!.run(wired, {'form': 'f'});
+      expect((r as StepDone).branch, 'invalid');
+      expect(r.output, isNull);
+      expect(form()['status'], isNot('submitting'));
+      await expectLater(
+        Future(
+          () => formHandlers['submitForm']!.run(c.forStep(const ['other']), {
+            'form': 'f',
+          }),
+        ),
+        throwsA(
+          isA<ActionError>().having(
+            (e) => e.code,
+            'code',
+            PluxErrorCode.formInvalid,
+          ),
+        ),
+      );
+      access().write('page.f.values.code', 'good');
+      final ok = await formHandlers['submitForm']!.run(wired, {'form': 'f'});
+      expect((ok as StepDone).branch, isNull);
+      expect(ok.output, {'code': 'good', 'count': null});
+    });
+
+    test('a run follows the invalid branch of a submitForm step that wires it [STA-020]', () async {
+      var syncs = 0;
+      ActionHost host() => ActionHost(
+        context: StepContext(
+          navigator: FakeNavigator(),
+          emit: (_, _) {},
+          nativeActions: const NoNativeActions(),
+          state: access(),
+          clock: const ActionClock(),
+          sync: () => syncs++,
+        ),
+        limits: const ActionLimits(
+          stepsPerRun: 100,
+          stepTimeout: Duration(seconds: 5),
+          runTimeout: Duration(seconds: 10),
+        ),
+        report: (_) {},
+        record: (_, {fields = const {}, route = '', pluginKey = ''}) {},
+        route: 'home',
+        pluginKey: 'p',
+        debug: true,
+      );
+      ActionGraph submit(Map<String, int> branches) => ActionGraph(
+        id: 'g',
+        steps: [
+          GraphStep(
+            id: 'submit',
+            action: id('submitForm'),
+            inputs: {input('submitForm', 'form'): lit('f')},
+            branches: branches,
+          ),
+          GraphStep(id: 'after', action: id('sync')),
+        ],
+      );
+
+      final wired = await host().start(
+        submit(const {'invalid': 1}),
+        roots: () => const {},
+        key: 'wired',
+      );
+      expect(wired?.outcome, RunOutcome.ok);
+      expect(syncs, 1);
+
+      final unwired = await host().start(
+        submit(const {}),
+        roots: () => const {},
+        key: 'unwired',
+      );
+      expect(unwired?.outcome, RunOutcome.failed);
+      expect(unwired?.error?.code, PluxErrorCode.formInvalid);
+      expect(syncs, 1);
+    });
 
     test('the form actions run on the scope\'s form and fail with PLX-5351 elsewhere', () async {
       final c = StepContext(

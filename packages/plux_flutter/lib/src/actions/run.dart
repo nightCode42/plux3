@@ -339,7 +339,12 @@ final class ActionRun {
           optimistic ??= _optimistic(descriptor, inputs);
           final work = handler is StructuralHandler
               ? _structural(handler.action, f, step, inputs, token)
-              : handler.run(_ctx, inputs);
+              : handler.run(
+                  step.branches.isEmpty
+                      ? _ctx
+                      : _ctx.forStep(step.branches.keys),
+                  inputs,
+                );
           if (work is StepResult) {
             // Done synchronously: nothing to bound or cancel.
             result = work;

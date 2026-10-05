@@ -18,7 +18,12 @@ final Map<String, ActionHandler> formHandlers = {
   }),
   'submitForm': FunctionHandler((c, i) async {
     final form = _form(c, i, 'submitForm');
-    final values = await form.submit();
+    // An invalid form takes the `invalid` branch when the step wires one
+    // and fails the step otherwise (STA-020).
+    final values = await form.submit(
+      failWhenInvalid: !c.wiredBranches.contains('invalid'),
+    );
+    if (values == null) return const StepDone(null, 'invalid');
     final run = c.run;
     if (run == null) {
       form.ended(succeeded: true);

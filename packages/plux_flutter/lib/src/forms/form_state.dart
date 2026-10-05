@@ -519,10 +519,13 @@ final class FormController {
   }
 
   /// Validates the form and, when it is valid, sets `submitting` and
-  /// returns its values (submitForm); throws an [ActionError] of kind
-  /// validation (PLX-5350) naming the invalid fields otherwise.
-  Future<Map<String, Object?>> submit() async {
+  /// returns its values (submitForm). An invalid form returns null when
+  /// [failWhenInvalid] is false (the step wires its `invalid` branch) and
+  /// throws an [ActionError] of kind validation (PLX-5350) naming the
+  /// invalid fields otherwise.
+  Future<Map<String, Object?>?> submit({bool failWhenInvalid = true}) async {
     if (!await validate()) {
+      if (!failWhenInvalid) return null;
       final errors = _part('errors');
       final invalid = [
         for (final f in decl.fields)
