@@ -792,6 +792,38 @@
       "fix": "Use string or int, not nullable, for primary key fields."
     },
     {
+      "code": "PLX-1260",
+      "reason": "IMPORT_DOCUMENT_INVALID",
+      "severity": "error",
+      "title": "Document cannot be imported",
+      "cause": "The OpenAPI document or GraphQL schema or operations file could not be read, parsed or validated, so nothing can be imported from it (DAT-002).",
+      "fix": "Fix the reported problem in the source document and import again."
+    },
+    {
+      "code": "PLX-1261",
+      "reason": "IMPORT_CONSTRUCT_UNSUPPORTED",
+      "severity": "warning",
+      "title": "Construct has no Plux type",
+      "cause": "An operation uses a construct that no Plux type expresses, such as a polymorphic schema, a non-JSON body or a recursive type. The operation is left out of the import rather than typed loosely (DAT-002, SCH-010).",
+      "fix": "Simplify the operation in the source document, or write the data source by hand."
+    },
+    {
+      "code": "PLX-1262",
+      "reason": "IMPORT_OPERATION_INVALID",
+      "severity": "error",
+      "title": "Operation is invalid against its schema",
+      "cause": "A GraphQL operation does not validate against the schema, or is not a single named query or mutation, so it cannot be imported as a typed operation (DAT-002).",
+      "fix": "Correct the operation so it validates against the schema, and give it a name."
+    },
+    {
+      "code": "PLX-1263",
+      "reason": "IMPORT_OUTPUT_INVALID",
+      "severity": "error",
+      "title": "Imported data sources fail validation",
+      "cause": "The data sources produced by the import do not validate against the document schema, so they are not written (DAT-002, SCH-040).",
+      "fix": "Report the source document that produced the failure; the importer must not emit a document the schema rejects."
+    },
+    {
       "code": "PLX-1310",
       "reason": "PAGE_NODE_BUDGET",
       "severity": "warning",

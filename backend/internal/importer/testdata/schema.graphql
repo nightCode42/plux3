@@ -1,0 +1,32 @@
+type Query {
+  user(id: ID!): User
+  users(first: Int, role: Role): [User!]!
+  search(text: String!): [SearchResult!]!
+}
+
+type Mutation {
+  renameUser(input: RenameInput!): User!
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+input RenameInput {
+  id: ID!
+  name: String!
+}
+
+type User {
+  id: ID!
+  name: String!
+  email: String
+  role: Role!
+  friends: [User!]!
+  joined: DateTime
+}
+
+union SearchResult = User
+
+scalar DateTime

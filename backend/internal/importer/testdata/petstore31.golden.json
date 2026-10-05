@@ -1,0 +1,139 @@
+{
+  "baseUrls": {
+    "petStoreBaseUrl": "https://eu.petstore.example.com/v1"
+  },
+  "dataSources": [
+    {
+      "config": {
+        "auth": true,
+        "baseUrl": "petStoreBaseUrl",
+        "method": "GET",
+        "operations": {
+          "createPet": {
+            "auth": true,
+            "input": "CreatePetInput",
+            "method": "POST",
+            "output": "Pet",
+            "path": "/pets"
+          },
+          "deletePetsByPetId": {
+            "auth": true,
+            "input": "DeletePetsByPetIdInput",
+            "method": "DELETE",
+            "path": "/pets/{petId}"
+          },
+          "getPet": {
+            "input": "GetPetInput",
+            "method": "GET",
+            "output": "Pet",
+            "path": "/pets/{petId}"
+          }
+        },
+        "path": "/pets"
+      },
+      "description": "A small pet store.",
+      "id": "c667a4b2-1f2f-7e70-b281-681e5b73134b",
+      "kind": "rest",
+      "mock": [
+        {
+          "id": "p1",
+          "name": "Rex",
+          "nickname": null,
+          "status": "available"
+        }
+      ],
+      "name": "petStore",
+      "type": "list<Pet>",
+      "x-operationMocks": {
+        "getPet": {
+          "id": "p1",
+          "name": "Rex",
+          "nickname": "Rexy",
+          "status": "sold"
+        }
+      }
+    }
+  ],
+  "types": [
+    {
+      "fields": [
+        {
+          "name": "apiToken",
+          "sensitive": true,
+          "type": "string?"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ],
+      "name": "CreatePetInput"
+    },
+    {
+      "fields": [
+        {
+          "name": "petId",
+          "type": "string"
+        }
+      ],
+      "name": "DeletePetsByPetIdInput"
+    },
+    {
+      "fields": [
+        {
+          "name": "petId",
+          "type": "string"
+        }
+      ],
+      "name": "GetPetInput"
+    },
+    {
+      "fields": [
+        {
+          "name": "limit",
+          "type": "int?"
+        }
+      ],
+      "name": "ListPetsInput"
+    },
+    {
+      "fields": [
+        {
+          "name": "born",
+          "type": "date?"
+        },
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "nickname",
+          "type": "string?"
+        },
+        {
+          "name": "status",
+          "type": "PetStatus"
+        }
+      ],
+      "name": "Pet"
+    },
+    {
+      "enum": [
+        "available",
+        "sold"
+      ],
+      "name": "PetStatus"
+    }
+  ],
+  "variables": [
+    {
+      "description": "Base URL of the Pet Store API.",
+      "name": "petStoreBaseUrl",
+      "type": "string"
+    }
+  ]
+}

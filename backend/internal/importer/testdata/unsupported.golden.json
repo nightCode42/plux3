@@ -1,0 +1,37 @@
+{
+  "baseUrls": {
+    "oddAPIBaseUrl": "https://odd.example.com"
+  },
+  "dataSources": [
+    {
+      "config": {
+        "baseUrl": "oddAPIBaseUrl",
+        "method": "GET",
+        "path": "/good"
+      },
+      "id": "97a9a088-3abb-701d-a2f3-52daf1e3871b",
+      "kind": "rest",
+      "mock": null,
+      "name": "oddAPI",
+      "type": "GoodOutput"
+    }
+  ],
+  "types": [
+    {
+      "fields": [
+        {
+          "name": "value",
+          "type": "string?"
+        }
+      ],
+      "name": "GoodOutput"
+    }
+  ],
+  "variables": [
+    {
+      "description": "Base URL of the Odd API API.",
+      "name": "oddAPIBaseUrl",
+      "type": "string"
+    }
+  ]
+}

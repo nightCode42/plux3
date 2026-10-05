@@ -752,6 +752,38 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Use string or int, not nullable, for primary key fields.
 
+### PLX-1260
+
+`IMPORT_DOCUMENT_INVALID` · error · Document cannot be imported
+
+**Cause.** The OpenAPI document or GraphQL schema or operations file could not be read, parsed or validated, so nothing can be imported from it (DAT-002).
+
+**Fix.** Fix the reported problem in the source document and import again.
+
+### PLX-1261
+
+`IMPORT_CONSTRUCT_UNSUPPORTED` · warning · Construct has no Plux type
+
+**Cause.** An operation uses a construct that no Plux type expresses, such as a polymorphic schema, a non-JSON body or a recursive type. The operation is left out of the import rather than typed loosely (DAT-002, SCH-010).
+
+**Fix.** Simplify the operation in the source document, or write the data source by hand.
+
+### PLX-1262
+
+`IMPORT_OPERATION_INVALID` · error · Operation is invalid against its schema
+
+**Cause.** A GraphQL operation does not validate against the schema, or is not a single named query or mutation, so it cannot be imported as a typed operation (DAT-002).
+
+**Fix.** Correct the operation so it validates against the schema, and give it a name.
+
+### PLX-1263
+
+`IMPORT_OUTPUT_INVALID` · error · Imported data sources fail validation
+
+**Cause.** The data sources produced by the import do not validate against the document schema, so they are not written (DAT-002, SCH-040).
+
+**Fix.** Report the source document that produced the failure; the importer must not emit a document the schema rejects.
+
 ### PLX-1310
 
 `PAGE_NODE_BUDGET` · warning · Page exceeds its node budget

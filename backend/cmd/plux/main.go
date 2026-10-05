@@ -31,7 +31,8 @@ Commands:
   pull        Download a channel's release and keys as the host's baseline
   release     list | promote | rollback releases
   export      Write the server's drafts into the project
-  import      Replace the server's drafts with the project
+  import      Replace the server's drafts with the project, or import openapi | graphql
+  mock        Serve an OpenAPI document as a mock API
   keys        List an environment's public keys
   native      scan | sync the host app's native catalogue
   create      Generate the Flutter project of a no-code app
@@ -95,6 +96,6 @@ func (e env) commands() map[string]func([]string) int {
 	return map[string]func([]string) int{
 		"login": e.login, "logout": e.logout, "whoami": e.whoami, "init": e.initProject, "doctor": e.doctor,
 		"diff": e.diff, "publish": e.publish, "pull": e.pull, "release": e.release, "export": e.export,
-		"import": e.importCmd, "keys": e.keys, "native": e.native, "create": e.create, "completion": e.completion,
+		"import": e.importCmd, "mock": e.mockCmd, "keys": e.keys, "native": e.native, "create": e.create, "completion": e.completion,
 	}
 }

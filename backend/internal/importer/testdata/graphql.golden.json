@@ -1,0 +1,174 @@
+{
+  "dataSources": [
+    {
+      "config": {
+        "baseUrl": "schemaBaseUrl",
+        "operations": {
+          "getUser": {
+            "input": "GetUserInput",
+            "output": "GetUserOutput",
+            "query": "query GetUser($id: ID!) {\n\tuser(id: $id) {\n\t\t...UserParts\n\t\tfriends {\n\t\t\tid\n\t\t}\n\t}\n}\nfragment UserParts on User {\n\tid\n\tname\n\trole\n}",
+            "select": "data"
+          },
+          "renameUser": {
+            "input": "RenameUserInput",
+            "output": "RenameUserOutput",
+            "query": "mutation RenameUser($input: RenameInput!) {\n\trenameUser(input: $input) {\n\t\tid\n\t\tname\n\t}\n}",
+            "select": "data"
+          }
+        },
+        "path": "/graphql",
+        "query": "query listUsers($first: Int, $role: Role) {\n\tusers(first: $first, role: $role) {\n\t\tid\n\t\tdisplayName: name\n\t}\n}",
+        "select": "data"
+      },
+      "id": "c9205998-c4a7-7d84-9d74-542f73315e99",
+      "kind": "graphql",
+      "mock": null,
+      "name": "schema",
+      "type": "ListUsersOutput"
+    }
+  ],
+  "types": [
+    {
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        }
+      ],
+      "name": "GetUserInput"
+    },
+    {
+      "fields": [
+        {
+          "name": "user",
+          "type": "GetUserOutputUser?"
+        }
+      ],
+      "name": "GetUserOutput"
+    },
+    {
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "role",
+          "type": "Role"
+        },
+        {
+          "name": "friends",
+          "type": "list<GetUserOutputUserFriendsItem>"
+        }
+      ],
+      "name": "GetUserOutputUser"
+    },
+    {
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        }
+      ],
+      "name": "GetUserOutputUserFriendsItem"
+    },
+    {
+      "fields": [
+        {
+          "name": "first",
+          "type": "int?"
+        },
+        {
+          "name": "role",
+          "type": "Role?"
+        }
+      ],
+      "name": "ListUsersInput"
+    },
+    {
+      "fields": [
+        {
+          "name": "users",
+          "type": "list<ListUsersOutputUsersItem>"
+        }
+      ],
+      "name": "ListUsersOutput"
+    },
+    {
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "displayName",
+          "type": "string"
+        }
+      ],
+      "name": "ListUsersOutputUsersItem"
+    },
+    {
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ],
+      "name": "RenameInput"
+    },
+    {
+      "fields": [
+        {
+          "name": "input",
+          "type": "RenameInput"
+        }
+      ],
+      "name": "RenameUserInput"
+    },
+    {
+      "fields": [
+        {
+          "name": "renameUser",
+          "type": "RenameUserOutputRenameUser"
+        }
+      ],
+      "name": "RenameUserOutput"
+    },
+    {
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ],
+      "name": "RenameUserOutputRenameUser"
+    },
+    {
+      "enum": [
+        "ADMIN",
+        "MEMBER"
+      ],
+      "name": "Role"
+    }
+  ],
+  "variables": [
+    {
+      "description": "Base URL of the schema GraphQL endpoint.",
+      "name": "schemaBaseUrl",
+      "type": "string"
+    }
+  ]
+}

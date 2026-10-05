@@ -401,12 +401,16 @@ func (e env) export(args []string) int {
 	return e.emit(c.json, map[string]any{"files": len(files), "directory": dir}, fmt.Sprintf("Wrote %d files to %s.", len(files), dir))
 }
 
-// importCmd replaces the server's drafts with the local project.
+// importCmd replaces the server's drafts with the local project, or imports
+// a data-source fragment from an OpenAPI or GraphQL document (DAT-002).
 func (e env) importCmd(args []string) int {
+	if len(args) > 0 && (args[0] == "openapi" || args[0] == "graphql") {
+		return e.importSource(args[0], args[1:])
+	}
 	var c common
 	set := flag.NewFlagSet("import", flag.ContinueOnError)
 	c.register(set, true)
-	if _, code, ok := parse(set, args, e.stderr, "Usage: plux import [-C dir] [--json]\n\nReplaces the server's drafts with the local project, one snapshot per draft.", 0); !ok {
+	if _, code, ok := parse(set, args, e.stderr, importUsage, 0); !ok {
 		return code
 	}
 	if err := c.resolve(); err != nil {

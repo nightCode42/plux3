@@ -1,0 +1,28 @@
+query GetUser($id: ID!) {
+  user(id: $id) {
+    ...UserParts
+    friends {
+      id
+    }
+  }
+}
+
+query listUsers($first: Int, $role: Role) {
+  users(first: $first, role: $role) {
+    id
+    displayName: name
+  }
+}
+
+mutation RenameUser($input: RenameInput!) {
+  renameUser(input: $input) {
+    id
+    name
+  }
+}
+
+fragment UserParts on User {
+  id
+  name
+  role
+}
