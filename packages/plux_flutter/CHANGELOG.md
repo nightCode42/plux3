@@ -64,6 +64,11 @@ released yet; this entry grows with each milestone of the phase.
 - `persisted` state is kept in a plain, atomically written file (plan D6, maintainer
   decision): encryption made saves and loads about ten times slower; `secure` state stays
   encrypted.
+- Forms (P5 R3, `STA-020`, ADR-0047): pages and components declare forms of typed fields
+  whose state (`values`, `errors`, `dirty`, `touched`, `status`, `valid`, `validating`)
+  lives in their scope; eleven validator kinds, among them regex (`pxl.regex.v1`), phone by
+  region (`pxl.phone.v1`), IBAN, custom PXL rules and debounced asynchronous checks that
+  discard stale results; `validateForm`, `submitForm` and `resetForm`. Requires `forms.v1`.
 
 ## 0.2.0
 

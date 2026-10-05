@@ -10,19 +10,14 @@ library;
 enum PluxLimitUnit {
   /// Measured in bytes.
   bytes,
-
   /// Measured in count.
   count,
-
   /// Measured in microseconds.
   microseconds,
-
   /// Measured in milliseconds.
   milliseconds,
-
   /// Measured in operations.
   operations,
-
   /// Measured in codepoints.
   codepoints,
 }
@@ -30,450 +25,152 @@ enum PluxLimitUnit {
 /// Every limit, with its installation default and hard maximum.
 enum PluxLimit {
   /// Items one forEach step may iterate over.
-  actionForEachItems(
-    'action.forEachItems',
-    PluxLimitUnit.count,
-    1000,
-    0,
-    100000,
-  ),
-
+  actionForEachItems('action.forEachItems', PluxLimitUnit.count, 1000, 0, 100000),
   /// Triggers a handler with the queue policy may hold while its run is in
   /// progress; a trigger beyond it is dropped and reported.
   actionQueueLength('action.queueLength', PluxLimitUnit.count, 32, 0, 1000),
-
   /// Time one action run may take.
-  actionRunTimeout(
-    'action.runTimeout',
-    PluxLimitUnit.milliseconds,
-    120000,
-    0,
-    3600000,
-  ),
-
+  actionRunTimeout('action.runTimeout', PluxLimitUnit.milliseconds, 120000, 0, 3600000),
   /// Time one action step may take.
-  actionStepTimeout(
-    'action.stepTimeout',
-    PluxLimitUnit.milliseconds,
-    30000,
-    0,
-    600000,
-  ),
-
+  actionStepTimeout('action.stepTimeout', PluxLimitUnit.milliseconds, 30000, 0, 600000),
   /// Steps one action run may execute.
-  actionStepsPerRun(
-    'action.stepsPerRun',
-    PluxLimitUnit.count,
-    10000,
-    0,
-    100000,
-  ),
-
+  actionStepsPerRun('action.stepsPerRun', PluxLimitUnit.count, 10000, 0, 100000),
   /// Action run traces the runtime keeps for diagnostics; the oldest are
   /// dropped first.
   actionTraceRuns('action.traceRuns', PluxLimitUnit.count, 50, 0, 1000),
-
   /// Steps one action run trace records; later steps are counted but not
   /// recorded.
   actionTraceSteps('action.traceSteps', PluxLimitUnit.count, 200, 0, 10000),
-
   /// Items one page of a list call returns; a call asking for more gets this
   /// many, and one asking for none gets this many too.
   apiPageSize('api.pageSize', PluxLimitUnit.count, 100, 0, 1000),
-
   /// Size of one API request body, refused before a handler reads it, and of
   /// one request message once decompressed.
   apiRequestSize('api.requestSize', PluxLimitUnit.bytes, 8388608, 0, 268435456),
-
   /// API calls one authenticated principal (a user or a token) may make per
   /// minute.
-  apiRequestsPerMinute(
-    'api.requestsPerMinute',
-    PluxLimitUnit.count,
-    600,
-    0,
-    100000,
-  ),
-
+  apiRequestsPerMinute('api.requestsPerMinute', PluxLimitUnit.count, 600, 0, 100000),
   /// API calls one client address may make per minute, whoever is calling.
-  apiRequestsPerMinutePerAddress(
-    'api.requestsPerMinutePerAddress',
-    PluxLimitUnit.count,
-    300,
-    0,
-    100000,
-  ),
-
+  apiRequestsPerMinutePerAddress('api.requestsPerMinutePerAddress', PluxLimitUnit.count, 300, 0, 100000),
   /// API calls one registered device may make per minute.
-  apiRequestsPerMinutePerDevice(
-    'api.requestsPerMinutePerDevice',
-    PluxLimitUnit.count,
-    120,
-    0,
-    10000,
-  ),
-
+  apiRequestsPerMinutePerDevice('api.requestsPerMinutePerDevice', PluxLimitUnit.count, 120, 0, 10000),
   /// Plugins per app.
   appPlugins('app.plugins', PluxLimitUnit.count, 200, 0, 1000),
-
   /// Size of one asset file, checked at upload and again at publish.
   assetFileSize('asset.fileSize', PluxLimitUnit.bytes, 10485760, 0, 104857600),
-
   /// Pixels of one image asset, width times height, checked before it is
   /// decoded so that a small file cannot expand into a huge image.
-  assetImagePixels(
-    'asset.imagePixels',
-    PluxLimitUnit.count,
-    40000000,
-    0,
-    100000000,
-  ),
-
+  assetImagePixels('asset.imagePixels', PluxLimitUnit.count, 40000000, 0, 100000000),
   /// Failed passwords or one-time codes one account may present in fifteen
   /// minutes before sign-in is refused.
   authFailedSignIns('auth.failedSignIns', PluxLimitUnit.count, 10, 0, 1000),
-
   /// Size of the WebAssembly module of the device-placed functions of one
   /// plugin.
-  bundleDeviceFunctionModuleSize(
-    'bundle.deviceFunctionModuleSize',
-    PluxLimitUnit.bytes,
-    4194304,
-    0,
-    67108864,
-  ),
-
+  bundleDeviceFunctionModuleSize('bundle.deviceFunctionModuleSize', PluxLimitUnit.bytes, 4194304, 0, 67108864),
   /// Size of one page section in a bundle.
-  bundlePageSectionSize(
-    'bundle.pageSectionSize',
-    PluxLimitUnit.bytes,
-    1048576,
-    0,
-    16777216,
-  ),
-
+  bundlePageSectionSize('bundle.pageSectionSize', PluxLimitUnit.bytes, 1048576, 0, 16777216),
   /// Size of one plugin bundle.
-  bundlePluginSize(
-    'bundle.pluginSize',
-    PluxLimitUnit.bytes,
-    20971520,
-    0,
-    268435456,
-  ),
-
+  bundlePluginSize('bundle.pluginSize', PluxLimitUnit.bytes, 20971520, 0, 268435456),
   /// Maximum nesting of tables the FlatBuffers verifier accepts in one section.
   bundleVerifierDepth('bundle.verifierDepth', PluxLimitUnit.count, 64, 0, 256),
-
   /// Maximum number of tables and vectors the FlatBuffers verifier visits in
   /// one section.
-  bundleVerifierTables(
-    'bundle.verifierTables',
-    PluxLimitUnit.count,
-    1000000,
-    0,
-    10000000,
-  ),
-
+  bundleVerifierTables('bundle.verifierTables', PluxLimitUnit.count, 1000000, 0, 10000000),
   /// Bytes the response cache of data sources keeps on the device; the least
   /// recently used entries are evicted beyond it.
-  dataCacheBytes(
-    'data.cacheBytes',
-    PluxLimitUnit.bytes,
-    16777216,
-    0,
-    268435456,
-  ),
-
+  dataCacheBytes('data.cacheBytes', PluxLimitUnit.bytes, 16777216, 0, 268435456),
   /// Responses the cache of data sources keeps on the device; the least
   /// recently used are evicted beyond it.
   dataCacheEntries('data.cacheEntries', PluxLimitUnit.count, 1000, 0, 100000),
-
   /// Items one page of a paginated data source may ask for.
   dataPageSize('data.pageSize', PluxLimitUnit.count, 50, 0, 1000),
-
   /// Bytes the body of one data request may have.
-  dataRequestSize(
-    'data.requestSize',
-    PluxLimitUnit.bytes,
-    1048576,
-    0,
-    16777216,
-  ),
-
+  dataRequestSize('data.requestSize', PluxLimitUnit.bytes, 1048576, 0, 16777216),
   /// Time one data request may take before it fails with a timeout.
-  dataRequestTimeout(
-    'data.requestTimeout',
-    PluxLimitUnit.milliseconds,
-    30000,
-    0,
-    300000,
-  ),
-
+  dataRequestTimeout('data.requestTimeout', PluxLimitUnit.milliseconds, 30000, 0, 300000),
   /// Bytes the response of one data request may have; a larger response is
   /// stopped.
-  dataResponseSize(
-    'data.responseSize',
-    PluxLimitUnit.bytes,
-    4194304,
-    0,
-    67108864,
-  ),
-
+  dataResponseSize('data.responseSize', PluxLimitUnit.bytes, 4194304, 0, 67108864),
   /// Data sources a plugin, its pages and the app may declare for it together.
-  dataSourcesPerPlugin(
-    'data.sourcesPerPlugin',
-    PluxLimitUnit.count,
-    100,
-    0,
-    1000,
-  ),
-
+  dataSourcesPerPlugin('data.sourcesPerPlugin', PluxLimitUnit.count, 100, 0, 1000),
   /// Disk space the runtime may use for releases on one device.
-  deviceDiskQuota(
-    'device.diskQuota',
-    PluxLimitUnit.bytes,
-    209715200,
-    0,
-    4294967296,
-  ),
-
+  deviceDiskQuota('device.diskQuota', PluxLimitUnit.bytes, 209715200, 0, 4294967296),
   /// Size of one document file in the project layout, checked before parsing.
-  documentFileSize(
-    'document.fileSize',
-    PluxLimitUnit.bytes,
-    8388608,
-    0,
-    67108864,
-  ),
-
+  documentFileSize('document.fileSize', PluxLimitUnit.bytes, 8388608, 0, 67108864),
   /// Nesting of arrays and objects in one document, checked while parsing.
   documentJsonDepth('document.jsonDepth', PluxLimitUnit.count, 512, 0, 4096),
-
   /// Size of one string prop value, in UTF-8 bytes.
-  documentStringPropSize(
-    'document.stringPropSize',
-    PluxLimitUnit.bytes,
-    65536,
-    0,
-    1048576,
-  ),
-
+  documentStringPropSize('document.stringPropSize', PluxLimitUnit.bytes, 65536, 0, 1048576),
   /// Size of a response the server reads when it fetches a URL, such as an
   /// identity provider's keys.
-  httpResponseSize(
-    'http.responseSize',
-    PluxLimitUnit.bytes,
-    1048576,
-    0,
-    67108864,
-  ),
-
+  httpResponseSize('http.responseSize', PluxLimitUnit.bytes, 1048576, 0, 67108864),
   /// Animations that can run at the same time on one page.
   pageAnimations('page.animations', PluxLimitUnit.count, 30, 10, 200),
-
   /// Estimated build time of a page on the mid-tier reference device, the sum
   /// of its widgets' cost hints.
-  pageBuildCost(
-    'page.buildCost',
-    PluxLimitUnit.microseconds,
-    16000,
-    8000,
-    100000,
-  ),
-
+  pageBuildCost('page.buildCost', PluxLimitUnit.microseconds, 16000, 8000, 100000),
   /// Depth of a page's node tree.
   pageDepth('page.depth', PluxLimitUnit.count, 64, 32, 128),
-
   /// Bytes of images bundled for one page.
-  pageImageBytes(
-    'page.imageBytes',
-    PluxLimitUnit.bytes,
-    5242880,
-    1048576,
-    67108864,
-  ),
-
+  pageImageBytes('page.imageBytes', PluxLimitUnit.bytes, 5242880, 1048576, 67108864),
   /// Nodes in one page document. Above the warning threshold the compiler
   /// reports the page.
   pageNodes('page.nodes', PluxLimitUnit.count, 5000, 1000, 50000),
-
   /// Bytes of the asset files one plugin's pages and icon use, checked at
   /// publish.
-  pluginAssetBytes(
-    'plugin.assetBytes',
-    PluxLimitUnit.bytes,
-    20971520,
-    0,
-    268435456,
-  ),
-
+  pluginAssetBytes('plugin.assetBytes', PluxLimitUnit.bytes, 20971520, 0, 268435456),
   /// Pages per plugin.
   pluginPages('plugin.pages', PluxLimitUnit.count, 500, 0, 2000),
-
   /// Time a publish waits, from when it was queued, for the app's image assets
   /// to finish processing before it fails.
-  publishAssetWait(
-    'publish.assetWait',
-    PluxLimitUnit.milliseconds,
-    600000,
-    0,
-    3600000,
-  ),
-
+  publishAssetWait('publish.assetWait', PluxLimitUnit.milliseconds, 600000, 0, 3600000),
   /// Elements of a list or map produced during one PXL evaluation.
-  pxlCollectionSize(
-    'pxl.collectionSize',
-    PluxLimitUnit.count,
-    10000,
-    0,
-    1000000,
-  ),
-
+  pxlCollectionSize('pxl.collectionSize', PluxLimitUnit.count, 10000, 0, 1000000),
   /// Digits of a decimal produced during one PXL evaluation, in plain notation.
   pxlDecimalDigits('pxl.decimalDigits', PluxLimitUnit.count, 1000, 0, 10000),
-
   /// Length of one PXL expression.
-  pxlExpressionLength(
-    'pxl.expressionLength',
-    PluxLimitUnit.codepoints,
-    4096,
-    0,
-    65536,
-  ),
-
+  pxlExpressionLength('pxl.expressionLength', PluxLimitUnit.codepoints, 4096, 0, 65536),
   /// Nesting depth of one PXL expression's syntax tree.
   pxlNestingDepth('pxl.nestingDepth', PluxLimitUnit.count, 64, 0, 256),
-
   /// Operations one PXL evaluation may perform before it stops with a typed
   /// error.
-  pxlOperationBudget(
-    'pxl.operationBudget',
-    PluxLimitUnit.operations,
-    10000,
-    0,
-    1000000,
-  ),
-
+  pxlOperationBudget('pxl.operationBudget', PluxLimitUnit.operations, 10000, 0, 1000000),
   /// Length of one regular-expression pattern of pxl.regex.v1.
-  pxlRegexPatternLength(
-    'pxl.regexPatternLength',
-    PluxLimitUnit.codepoints,
-    1000,
-    0,
-    10000,
-  ),
-
+  pxlRegexPatternLength('pxl.regexPatternLength', PluxLimitUnit.codepoints, 1000, 0, 10000),
   /// Instructions of one compiled regular-expression pattern of pxl.regex.v1
   /// (schema/pxl/regex.md).
-  pxlRegexProgramSize(
-    'pxl.regexProgramSize',
-    PluxLimitUnit.count,
-    2000,
-    0,
-    20000,
-  ),
-
+  pxlRegexProgramSize('pxl.regexProgramSize', PluxLimitUnit.count, 2000, 0, 20000),
   /// The largest count of a {n,m} repetition in a regular-expression pattern of
   /// pxl.regex.v1.
   pxlRegexRepeat('pxl.regexRepeat', PluxLimitUnit.count, 100, 0, 1000),
-
   /// Length of a string produced during one PXL evaluation.
-  pxlStringLength(
-    'pxl.stringLength',
-    PluxLimitUnit.codepoints,
-    65536,
-    0,
-    1048576,
-  ),
-
+  pxlStringLength('pxl.stringLength', PluxLimitUnit.codepoints, 65536, 0, 1048576),
   /// Total size of one app release: the app bundle and every plugin bundle.
-  releaseAppSize(
-    'release.appSize',
-    PluxLimitUnit.bytes,
-    104857600,
-    0,
-    1073741824,
-  ),
-
+  releaseAppSize('release.appSize', PluxLimitUnit.bytes, 104857600, 0, 1073741824),
   /// Disk space the runtime's cache of remote images may use on one device.
-  runtimeImageDiskCacheBytes(
-    'runtime.imageDiskCacheBytes',
-    PluxLimitUnit.bytes,
-    67108864,
-    0,
-    1073741824,
-  ),
-
+  runtimeImageDiskCacheBytes('runtime.imageDiskCacheBytes', PluxLimitUnit.bytes, 67108864, 0, 1073741824),
   /// Size of one remote image the runtime downloads; a larger one is refused.
-  runtimeImageSize(
-    'runtime.imageSize',
-    PluxLimitUnit.bytes,
-    10485760,
-    0,
-    104857600,
-  ),
-
+  runtimeImageSize('runtime.imageSize', PluxLimitUnit.bytes, 10485760, 0, 104857600),
   /// Memory the runtime's cache of decoded page and component sections may
   /// hold.
-  runtimeSectionCacheBytes(
-    'runtime.sectionCacheBytes',
-    PluxLimitUnit.bytes,
-    8388608,
-    0,
-    268435456,
-  ),
-
+  runtimeSectionCacheBytes('runtime.sectionCacheBytes', PluxLimitUnit.bytes, 8388608, 0, 268435456),
   /// Page and component sections the runtime keeps decoded.
-  runtimeSectionCacheEntries(
-    'runtime.sectionCacheEntries',
-    PluxLimitUnit.count,
-    64,
-    0,
-    4096,
-  ),
-
+  runtimeSectionCacheEntries('runtime.sectionCacheEntries', PluxLimitUnit.count, 64, 0, 4096),
   /// Bytes the persisted state of one app may take in the runtime's local store
   /// (plain; secure state is the encrypted one, plan p5 B6); writes beyond it
   /// stay in memory and are reported.
-  statePersistedBytes(
-    'state.persistedBytes',
-    PluxLimitUnit.bytes,
-    1048576,
-    0,
-    16777216,
-  ),
-
+  statePersistedBytes('state.persistedBytes', PluxLimitUnit.bytes, 1048576, 0, 16777216),
   /// Bytes the secure state of one app may take in the runtime's local store
   /// (plain; secure state is the encrypted one, plan p5 B6); writes beyond it
   /// stay in memory and are reported.
   stateSecureBytes('state.secureBytes', PluxLimitUnit.bytes, 65536, 0, 1048576),
-
   /// The size of the runtime's buffer of unsent telemetry events; the oldest
   /// are dropped first.
-  telemetryBufferBytes(
-    'telemetry.bufferBytes',
-    PluxLimitUnit.bytes,
-    262144,
-    0,
-    4194304,
-  ),
-
+  telemetryBufferBytes('telemetry.bufferBytes', PluxLimitUnit.bytes, 262144, 0, 4194304),
   /// Runtime events one telemetry request may carry.
-  telemetryEventsPerRequest(
-    'telemetry.eventsPerRequest',
-    PluxLimitUnit.count,
-    500,
-    0,
-    5000,
-  );
+  telemetryEventsPerRequest('telemetry.eventsPerRequest', PluxLimitUnit.count, 500, 0, 5000);
 
-  const PluxLimit(
-    this.key,
-    this.unit,
-    this.defaultValue,
-    this.warning,
-    this.max,
-  );
+  const PluxLimit(this.key, this.unit, this.defaultValue, this.warning, this.max);
 
   /// The stable registry key.
   final String key;

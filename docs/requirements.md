@@ -999,7 +999,7 @@ A Plux screen is addressed by its **app-wide unique route name** with typed para
 | `HST-020` | P9 | MUST | The runtime **MUST** support a **mini-app mode** in which one host binary runs several Plux apps (e.g. partner mini-apps in a super-app), each with its own bundles, state, storage namespace, theme and capability grants approved by the host; one mini-app **MUST NOT** read another's state, storage or events. | SPEC |
 | `HST-030` | P4 | MUST | `plux codegen` **MUST** generate typed Dart APIs from the app document: route builders with typed parameters and results, event classes, exposed-state accessors and feature-flag accessors, so misuse is a compile error in the host app. | DONE |
 | `HST-031` | P4 | MUST | Integrating native routes, native slots and custom actions **MUST NOT** require changing existing host code beyond one registration point at startup: apps using `go_router` or `auto_route` have their existing named routes discovered automatically; other apps register routes, slot builders and actions in the `Plux.initialize` configuration; `plux native scan` derives descriptors by static analysis (`WGT-030`) and `plux native sync` uploads the catalogue for a host build. | DONE |
-| `HST-021` | P4 | MUST | **Mixed screens** **MUST** be supported in both directions: a plugin page may contain native slots (`WGT-033`), and a native screen may contain any number of `PluxView`s (`NAV-004`). Both sides share state through exposed state entries (`STA-030`), which are observable from native code as streams, so native and plugin content on one screen stay consistent. | WIP |
+| `HST-021` | P4 | MUST | **Mixed screens** **MUST** be supported in both directions: a plugin page may contain native slots (`WGT-033`), and a native screen may contain any number of `PluxView`s (`NAV-004`). Both sides share state through exposed state entries (`STA-030`), which are observable from native code as streams, so native and plugin content on one screen stay consistent. | DONE |
 | `HST-032` | P4 | MUST | `plux init` **MUST** add the dependencies, create configuration, embed the signing root public keys, wire initialisation into `main.dart` where it can do so safely (or print exact instructions), and run `plux doctor`. | DONE |
 | `HST-033` | P4 | MUST | The runtime **MUST** work inside Flutter modules embedded in native Android and iOS apps (add-to-app). | DONE |
 | `HST-034` | P10 | MUST | Time from `flutter create` to rendering a published Plux page on a device, following the quick-start guide, **MUST** be ≤ 10 minutes for a developer new to Plux (verified by recorded usability sessions, `DX-001`). | SPEC |
@@ -1014,19 +1014,19 @@ An **action graph** is a small, typed, bounded program attached to a trigger. No
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `ACT-001` | P5 | MUST | Action graphs **MUST** be directed and acyclic, typed end to end (inputs, outputs, branch conditions), and type-checked at compile time. | SPEC |
-| `ACT-002` | P5 | MUST | Triggers **MUST** include widget events (tap, long press, double tap, change, submit, focus, scroll end, refresh, swipe, drag end), page lifecycle events, state-change watchers, timers, app lifecycle (resume, pause), push-notification open, host events and data-source events (loaded, failed). | SPEC |
-| `ACT-003` | P5 | MUST | Each trigger **MUST** declare a concurrency policy — `parallel`, `drop` (ignore while running), `restart` (cancel running), `queue`, `debounce(ms)`, `throttle(ms)` — defaulting to `drop` for taps, so double taps never double-submit. | SPEC |
-| `ACT-004` | P5 | MUST | Action runs **MUST** be cancellable and **MUST** be cancelled when their owning page or component is disposed, unless marked `detached`. | SPEC |
-| `ACT-005` | P5 | MUST | Action runs **MUST** be bounded: at most 10,000 executed steps per run, `forEach` bounded by list length and a configurable cap (default 1,000), per-step timeout (default 30 s) and per-run timeout (default 120 s). There are no unbounded loops. | SPEC |
-| `ACT-006` | P5 | MUST | Steps **MUST** support retry policies (count, exponential backoff, jitter, retryable-error filter). | SPEC |
-| `ACT-007` | P5 | MUST | Mutating API and function steps **MUST** support **optimistic updates**: apply a state change immediately and roll it back automatically if the step fails. | SPEC |
+| `ACT-001` | P5 | MUST | Action graphs **MUST** be directed and acyclic, typed end to end (inputs, outputs, branch conditions), and type-checked at compile time. | DONE |
+| `ACT-002` | P5 | MUST | Triggers **MUST** include widget events (tap, long press, double tap, change, submit, focus, scroll end, refresh, swipe, drag end), page lifecycle events, state-change watchers, timers, app lifecycle (resume, pause), push-notification open, host events and data-source events (loaded, failed). | DONE |
+| `ACT-003` | P5 | MUST | Each trigger **MUST** declare a concurrency policy — `parallel`, `drop` (ignore while running), `restart` (cancel running), `queue`, `debounce(ms)`, `throttle(ms)` — defaulting to `drop` for taps, so double taps never double-submit. | DONE |
+| `ACT-004` | P5 | MUST | Action runs **MUST** be cancellable and **MUST** be cancelled when their owning page or component is disposed, unless marked `detached`. | DONE |
+| `ACT-005` | P5 | MUST | Action runs **MUST** be bounded: at most 10,000 executed steps per run, `forEach` bounded by list length and a configurable cap (default 1,000), per-step timeout (default 30 s) and per-run timeout (default 120 s). There are no unbounded loops. | DONE |
+| `ACT-006` | P5 | MUST | Steps **MUST** support retry policies (count, exponential backoff, jitter, retryable-error filter). | DONE |
+| `ACT-007` | P5 | MUST | Mutating API and function steps **MUST** support **optimistic updates**: apply a state change immediately and roll it back automatically if the step fails. | DONE |
 | `ACT-008` | P5 | MUST | Interpreter overhead **MUST** be ≤ 20 µs per step p95 on the mid-tier reference device, excluding the step's own work. | SPEC |
-| `ACT-020` | P5 | MUST | Errors **MUST** be typed (`network`, `http(status)`, `timeout`, `validation`, `function(code)`, `permission`, `cancelled`, `custom`) and routed to the step's `onError` edge, then the page, plugin and app error handlers in that order; unhandled errors show a themed, localised error message and are reported. | SPEC |
-| `ACT-030` | P5 | MUST | Every action run **MUST** produce a structured trace (run ID, trigger, steps with start/end, status, redacted inputs/outputs, errors). Traces are streamed to paired Studio sessions in development (`DEV-020`) and sampled into telemetry in production. | SPEC |
-| `ACT-031` | P5 | MUST | Values tagged `sensitive` **MUST** never appear in traces, logs or telemetry, even in development. | SPEC |
+| `ACT-020` | P5 | MUST | Errors **MUST** be typed (`network`, `http(status)`, `timeout`, `validation`, `function(code)`, `permission`, `cancelled`, `custom`) and routed to the step's `onError` edge, then the page, plugin and app error handlers in that order; unhandled errors show a themed, localised error message and are reported. | DONE |
+| `ACT-030` | P5 | MUST | Every action run **MUST** produce a structured trace (run ID, trigger, steps with start/end, status, redacted inputs/outputs, errors). Traces are streamed to paired Studio sessions in development (`DEV-020`) and sampled into telemetry in production. | WIP |
+| `ACT-031` | P5 | MUST | Values tagged `sensitive` **MUST** never appear in traces, logs or telemetry, even in development. | DONE |
 | `ACT-060` | P4 | MUST | Host apps **MUST** be able to register custom actions with typed inputs and outputs in the one-place startup registration (`HST-031`), without modifying existing code; Studio lists them in the action catalogue. | WIP |
-| `ACT-061` | P5 | MUST | Plugins **MUST** be able to declare reusable named action graphs ("flows") callable from other graphs with typed inputs and outputs, within the plugin or across plugins through declared exports. | SPEC |
+| `ACT-061` | P5 | MUST | Plugins **MUST** be able to declare reusable named action graphs ("flows") callable from other graphs with typed inputs and outputs, within the plugin or across plugins through declared exports. | DONE |
 
 ### 14.2 PXL — Plux Expression Language
 
@@ -1047,14 +1047,14 @@ PXL is a small, typed, side-effect-free expression language with CEL-like syntax
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `STA-001` | P5 | MUST | State **MUST** be scoped: `app` (shared by all plugins), `plugin`, `page` (per page instance), `component` (per instance), and `run` (variables within one action run). | SPEC |
-| `STA-002` | P5 | MUST | Every state entry **MUST** have a declared type, default value and optional validation; writes of the wrong type are compile errors, or typed runtime errors when the value comes from outside (API, host). | SPEC |
-| `STA-003` | P5 | MUST | State entries **MUST** declare persistence: `memory` (default), `session` (until app kill), `persisted` (local storage), or `secure` (encrypted, keys in Keystore/Keychain). | SPEC |
-| `STA-004` | P5 | MUST | Computed state (PXL over other state) **MUST** be supported, memoised and recomputed only when its dependencies change. | SPEC |
-| `STA-010` | P5 | MUST | State **MUST** be implemented with Riverpod providers so that each binding rebuilds only when the exact path it reads changes (`RT-012`). | SPEC |
-| `STA-020` | P5 | MUST | Forms **MUST** have first-class state: fields, values, validators, dirty/touched flags, submit status and error messages. Built-in validators **MUST** include required, length, range, regex, email, phone number by region (E.164, default region from the device locale), IBAN (with checksum), date range, decimal precision, and custom PXL; asynchronous validators via API or function **MUST** be supported with debouncing. | SPEC |
-| `STA-030` | P5 | MUST | State entries marked `exposed` **MUST** be readable, writable and observable (as streams) by the host through typed accessors (`HST-030`), so native and plugin content on the same screen stay in sync (`HST-021`). | WIP |
-| `STA-040` | P5 | MUST | Persisted state **MUST** be versioned; a release changing the type of persisted state **MUST** provide a migration expression or explicitly reset the value, validated at publish. | SPEC |
+| `STA-001` | P5 | MUST | State **MUST** be scoped: `app` (shared by all plugins), `plugin`, `page` (per page instance), `component` (per instance), and `run` (variables within one action run). | DONE |
+| `STA-002` | P5 | MUST | Every state entry **MUST** have a declared type, default value and optional validation; writes of the wrong type are compile errors, or typed runtime errors when the value comes from outside (API, host). | DONE |
+| `STA-003` | P5 | MUST | State entries **MUST** declare persistence: `memory` (default), `session` (until app kill), `persisted` (local storage), or `secure` (encrypted, keys in Keystore/Keychain). | DONE |
+| `STA-004` | P5 | MUST | Computed state (PXL over other state) **MUST** be supported, memoised and recomputed only when its dependencies change. | DONE |
+| `STA-010` | P5 | MUST | State **MUST** be implemented with Riverpod providers so that each binding rebuilds only when the exact path it reads changes (`RT-012`). | DONE |
+| `STA-020` | P5 | MUST | Forms **MUST** have first-class state: fields, values, validators, dirty/touched flags, submit status and error messages. Built-in validators **MUST** include required, length, range, regex, email, phone number by region (E.164, default region from the device locale), IBAN (with checksum), date range, decimal precision, and custom PXL; asynchronous validators via API or function **MUST** be supported with debouncing. | DONE |
+| `STA-030` | P5 | MUST | State entries marked `exposed` **MUST** be readable, writable and observable (as streams) by the host through typed accessors (`HST-030`), so native and plugin content on the same screen stay in sync (`HST-021`). | DONE |
+| `STA-040` | P5 | MUST | Persisted state **MUST** be versioned; a release changing the type of persisted state **MUST** provide a migration expression or explicitly reset the value, validated at publish. | DONE |
 
 ### 14.4 Data sources
 
@@ -1062,15 +1062,15 @@ PXL is a small, typed, side-effect-free expression language with CEL-like syntax
 |---|---|---|---|---|
 | `DAT-001` | P5 | MUST | Data source definitions **MUST** support REST (JSON), GraphQL, WebSocket, Server-Sent Events, Plux Functions, local database queries and static data. | SPEC |
 | `DAT-002` | P5 | MUST | REST data sources **MUST** be importable from OpenAPI 3.x and GraphQL data sources from a schema, producing typed operations with request and response schemas usable by PXL and Studio. | SPEC |
-| `DAT-003` | P5 | MUST | Base URLs and non-secret configuration **MUST** be per environment. Secrets (API keys) **MUST NOT** appear in bundles; calls requiring server-held secrets **MUST** go through a Plux Function or the host's auth delegate (`SEC-107`). | SPEC |
-| `DAT-004` | P5 | MUST | Responses **MUST** be mapped to typed models through declared selectors and PXL transforms; mapping failures are typed errors. | SPEC |
-| `DAT-010` | P5 | MUST | Caching policies **MUST** include `networkOnly`, `cacheFirst`, `networkFirst` and `staleWhileRevalidate`, with TTLs, cache keys and optional encrypted persistence. | SPEC |
-| `DAT-011` | P5 | MUST | Paginated sources (cursor, page, offset) **MUST** bind to lists for infinite scrolling with loading, end and error states. | SPEC |
+| `DAT-003` | P5 | MUST | Base URLs and non-secret configuration **MUST** be per environment. Secrets (API keys) **MUST NOT** appear in bundles; calls requiring server-held secrets **MUST** go through a Plux Function or the host's auth delegate (`SEC-107`). | DONE |
+| `DAT-004` | P5 | MUST | Responses **MUST** be mapped to typed models through declared selectors and PXL transforms; mapping failures are typed errors. | DONE |
+| `DAT-010` | P5 | MUST | Caching policies **MUST** include `networkOnly`, `cacheFirst`, `networkFirst` and `staleWhileRevalidate`, with TTLs, cache keys and optional encrypted persistence. | DONE |
+| `DAT-011` | P5 | MUST | Paginated sources (cursor, page, offset) **MUST** bind to lists for infinite scrolling with loading, end and error states. | DONE |
 | `DAT-012` | P5 | MUST | WebSocket and SSE sources **MUST** bind streams to state with reconnection, backoff and resubscription, for real-time use cases such as order tracking. | SPEC |
 | `DAT-020` | P5 | MUST | Mutations **MAY** be marked `offlineCapable`; such mutations **MUST** be persisted in an encrypted **outbox** when offline and replayed in order with idempotency keys when connectivity returns, with success, failure and conflict events available to action graphs. | SPEC |
-| `DAT-030` | P5 | MUST | Every outbound request **MUST** target a domain in the plugin's declared capabilities; requests to other domains **MUST** be blocked and reported (`SEC-080`). | SPEC |
+| `DAT-030` | P5 | MUST | Every outbound request **MUST** target a domain in the plugin's declared capabilities; requests to other domains **MUST** be blocked and reported (`SEC-080`). | DONE |
 | `DAT-031` | P5 | MUST | File uploads and downloads **MUST** support progress, cancellation and size limits. | SPEC |
-| `DAT-080` | P5 | MUST | Every data source **MUST** support design-time mocks (static fixtures, generated examples from schemas, or recorded responses) with selectable states (`loading`, `empty`, `error`, `success`) for Studio, the Dev app and tests. | SPEC |
+| `DAT-080` | P5 | MUST | Every data source **MUST** support design-time mocks (static fixtures, generated examples from schemas, or recorded responses) with selectable states (`loading`, `empty`, `error`, `success`) for Studio, the Dev app and tests. | WIP |
 
 ### 14.5 Local database
 
