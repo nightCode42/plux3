@@ -1040,7 +1040,7 @@ func (u *unit) metaSection(o *out) {
 	e := &valueEnc{u: u, o: o, b: b, strs: o.shared}
 	features := stringVector(b, featureList(o.features))
 	lv := u.runtimeLimits(b)
-	var pages, exported, capabilities, plugins, locales, flags, sampling flatbuffers.UOffsetT
+	var pages, exported, capabilities, plugins, locales, flags, sampling, hostEvents flatbuffers.UOffsetT
 	name, key := app.Name, app.Key
 	if o.pl != nil {
 		name, key = o.pl.doc.Name, o.pl.key
@@ -1060,6 +1060,7 @@ func (u *unit) metaSection(o *out) {
 		locales = stringVector(b, app.SupportedLocales)
 		flags = u.flagTables(e, app.Flags)
 		sampling = samplingTables(b, app.Telemetry)
+		hostEvents = hostEventTables(b, app.HostEvents)
 	}
 	nameOff, keyOff := b.CreateString(name), b.CreateString(key)
 	compiler, schemaVersion, minRuntime := b.CreateString(u.opts.Version), b.CreateString(schema.CurrentVersion), b.CreateString(app.MinRuntimeVersion)
@@ -1107,6 +1108,7 @@ func (u *unit) metaSection(o *out) {
 		}
 		fbs.MetaAddSecurityProfile(b, profile)
 		addOptional(b, sampling, fbs.MetaAddTelemetrySampling)
+		addOptional(b, hostEvents, fbs.MetaAddHostEvents)
 		addOptional(b, notFound, fbs.MetaAddNotFoundRoute)
 		addOptional(b, shells, fbs.MetaAddShells)
 		addOptional(b, links, fbs.MetaAddDeepLinks)
@@ -1139,6 +1141,50 @@ func samplingTables(b *flatbuffers.Builder, t *schema.TelemetryPolicy) flatbuffe
 		offs[i] = fbs.SamplingEnd(b)
 	}
 	return offsetVector(b, offs)
+}
+
+// hostEventTables writes the app's host events with their fields' types,
+// sorted by name, for the runtime to check `Plux.sendEvent` payloads
+// against (HST-013); 0 when the app declares none.
+func hostEventTables(b *flatbuffers.Builder, events []schema.HostEventDecl) flatbuffers.UOffsetT {
+	if len(events) == 0 {
+		return 0
+	}
+	sorted := slices.Clone(events)
+	slices.SortStableFunc(sorted, func(x, y schema.HostEventDecl) int { return strings.Compare(x.Name, y.Name) })
+	offs := make([]flatbuffers.UOffsetT, len(sorted))
+	for i, ev := range sorted {
+		fields := make([]flatbuffers.UOffsetT, len(ev.Fields))
+		for j, f := range ev.Fields {
+			typ := string(f.Type)
+			if te, err := parseTypeExpr(typ); err == nil {
+				typ = te.String()
+			}
+			name, tv := b.CreateString(f.Name), b.CreateString(typ)
+			fbs.HostEventFieldStart(b)
+			fbs.HostEventFieldAddName(b, name)
+			fbs.HostEventFieldAddType(b, tv)
+			fields[j] = fbs.HostEventFieldEnd(b)
+		}
+		name, fv := b.CreateString(ev.Name), offsetVector(b, fields)
+		fbs.HostEventStart(b)
+		fbs.HostEventAddName(b, name)
+		fbs.HostEventAddDirection(b, hostEventDirection(ev.Direction))
+		addOptional(b, fv, fbs.HostEventAddFields)
+		offs[i] = fbs.HostEventEnd(b)
+	}
+	return offsetVector(b, offs)
+}
+
+// hostEventDirection maps the document's direction; absent means toHost.
+func hostEventDirection(d schema.HostEventDirection) fbs.HostEventDirection {
+	switch d {
+	case schema.HostEventDirectionToPlux:
+		return fbs.HostEventDirectionToPlux
+	case schema.HostEventDirectionBoth:
+		return fbs.HostEventDirectionBoth
+	}
+	return fbs.HostEventDirectionToHost
 }
 
 // runtimeLimits writes the runtime-enforced limits whose effective value

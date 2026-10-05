@@ -839,6 +839,11 @@ var registry = []Definition{
 		"An asynchronous validator's graph failed, for example because the server could not be reached; the field is shown as not checked and the form is invalid until a check succeeds (STA-020).",
 		"Handle the graph's errors with onError and return a message, or let the user retry by editing the field.", false,
 	},
+	{
+		HostEventPayloadInvalid, "HOST_EVENT_PAYLOAD_INVALID", SeverityError, "Host event payload invalid",
+		"The payload of Plux.sendEvent lacks a field the app's hostEvents declaration requires, has a field it does not declare, or has a value that does not fit the field's type; nothing runs (HST-013).",
+		"Send the declared fields with values of their types; plux codegen generates typed senders that make this a compile error.", false,
+	},
 
 	// Security.
 	{

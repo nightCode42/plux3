@@ -191,8 +191,10 @@ abstract final class Plux {
   /// Sends host event [name] into Plux with [payload] in its JSON form
   /// (HST-013): the triggers that handle it run. Completes with false,
   /// reported with PLX-5307, when nothing accepts it: the app does not
-  /// declare the event for the host to send, or the payload does not have
-  /// its fields and types. `plux codegen` writes typed senders over it.
+  /// declare the event for the host to send, or no trigger handles it. A
+  /// payload without the declared fields and types is refused the same
+  /// way, reported with PLX-5500 (the app bundle's `hostEvents` give the
+  /// types). `plux codegen` writes typed senders over it.
   static Future<bool> sendEvent(
     String name, [
     Map<String, Object?> payload = const {},
@@ -200,15 +202,20 @@ abstract final class Plux {
     final rt = _rt;
     final sink = rt.hostEventSink;
     final converted = fromHost(payload) as Map<String, Object?>;
-    if (sink != null && sink.deliver(PluxHostEvent(name, converted))) {
-      return true;
+    try {
+      if (sink != null && sink.deliver(PluxHostEvent(name, converted))) {
+        return true;
+      }
+    } on PluxException catch (e) {
+      rt.reportProblem(e);
+      return false;
     }
     rt.reportProblem(
       PluxException(
         PluxErrorCode.hostEventRefused,
         sink == null
             ? 'no trigger handles host event $name'
-            : 'host event $name is not declared for the host to send, or its payload does not fit',
+            : 'host event $name is not declared for the host to send, or nothing handles it',
         details: {'event': name},
       ),
     );

@@ -209,6 +209,10 @@ const (
 	FormNotInScope           Code = 5351
 	FormAsyncValidatorFailed Code = 5352
 
+	// Actions: typed host events (PLX-5500–5549, P5).
+
+	HostEventPayloadInvalid Code = 5500
+
 	// Security (PLX-6000–6999).
 
 	OutboundRequestBlocked Code = 6030

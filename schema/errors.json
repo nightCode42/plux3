@@ -1360,6 +1360,14 @@
       "fix": "Handle the graph's errors with onError and return a message, or let the user retry by editing the field."
     },
     {
+      "code": "PLX-5500",
+      "reason": "HOST_EVENT_PAYLOAD_INVALID",
+      "severity": "error",
+      "title": "Host event payload invalid",
+      "cause": "The payload of Plux.sendEvent lacks a field the app's hostEvents declaration requires, has a field it does not declare, or has a value that does not fit the field's type; nothing runs (HST-013).",
+      "fix": "Send the declared fields with values of their types; plux codegen generates typed senders that make this a compile error."
+    },
+    {
       "code": "PLX-6030",
       "reason": "OUTBOUND_REQUEST_BLOCKED",
       "severity": "error",

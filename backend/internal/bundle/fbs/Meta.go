@@ -448,8 +448,37 @@ func (rcv *Meta) TriggersLength() int {
 	return 0
 }
 
+func (rcv *Meta) HostEvents(obj *HostEvent, j int) bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(60))
+	if o != 0 {
+		x := rcv._tab.Vector(o)
+		x += flatbuffers.UOffsetT(j) * 4
+		x = rcv._tab.Indirect(x)
+		obj.Init(rcv._tab.Bytes, x)
+		return true
+	}
+	return false
+}
+
+func (rcv *Meta) HostEventsByKey(obj *HostEvent, key string) bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(60))
+	if o != 0 {
+		x := rcv._tab.Vector(o)
+		return obj.LookupByKey(key, x, rcv._tab.Bytes)
+	}
+	return false
+}
+
+func (rcv *Meta) HostEventsLength() int {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(60))
+	if o != 0 {
+		return rcv._tab.VectorLen(o)
+	}
+	return 0
+}
+
 func MetaStart(builder *flatbuffers.Builder) {
-	builder.StartObject(28)
+	builder.StartObject(29)
 }
 func MetaAddKind(builder *flatbuffers.Builder, kind BundleKind) {
 	builder.PrependByteSlot(0, byte(kind), 0)
@@ -563,6 +592,12 @@ func MetaAddTriggers(builder *flatbuffers.Builder, triggers flatbuffers.UOffsetT
 	builder.PrependUOffsetTSlot(27, flatbuffers.UOffsetT(triggers), 0)
 }
 func MetaStartTriggersVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
+	return builder.StartVector(4, numElems, 4)
+}
+func MetaAddHostEvents(builder *flatbuffers.Builder, hostEvents flatbuffers.UOffsetT) {
+	builder.PrependUOffsetTSlot(28, flatbuffers.UOffsetT(hostEvents), 0)
+}
+func MetaStartHostEventsVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
 	return builder.StartVector(4, numElems, 4)
 }
 func MetaEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT {

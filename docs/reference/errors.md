@@ -1328,6 +1328,14 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Handle the graph's errors with onError and return a message, or let the user retry by editing the field.
 
+### PLX-5500
+
+`HOST_EVENT_PAYLOAD_INVALID` · error · Host event payload invalid
+
+**Cause.** The payload of Plux.sendEvent lacks a field the app's hostEvents declaration requires, has a field it does not declare, or has a value that does not fit the field's type; nothing runs (HST-013).
+
+**Fix.** Send the declared fields with values of their types; plux codegen generates typed senders that make this a compile error.
+
 ## Security (PLX-6000–6999)
 
 ### PLX-6030

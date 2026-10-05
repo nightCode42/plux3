@@ -361,6 +361,42 @@ class _BundleKindReader extends fb.Reader<BundleKind> {
       BundleKind.fromValue(const fb.Uint8Reader().read(bc, offset));
 }
 
+enum HostEventDirection {
+  ToHost(0),
+  ToPlux(1),
+  Both(2);
+
+  final int value;
+  const HostEventDirection(this.value);
+
+  factory HostEventDirection.fromValue(int value) {
+    switch (value) {
+      case 0: return HostEventDirection.ToHost;
+      case 1: return HostEventDirection.ToPlux;
+      case 2: return HostEventDirection.Both;
+      default: throw StateError('Invalid value $value for bit flag enum');
+    }
+  }
+
+  static HostEventDirection? _createOrNull(int? value) =>
+      value == null ? null : HostEventDirection.fromValue(value);
+
+  static const int minValue = 0;
+  static const int maxValue = 2;
+  static const fb.Reader<HostEventDirection> reader = _HostEventDirectionReader();
+}
+
+class _HostEventDirectionReader extends fb.Reader<HostEventDirection> {
+  const _HostEventDirectionReader();
+
+  @override
+  int get size => 1;
+
+  @override
+  HostEventDirection read(fb.BufferContext bc, int offset) =>
+      HostEventDirection.fromValue(const fb.Uint8Reader().read(bc, offset));
+}
+
 enum PageKind {
   Screen(0),
   Dialog(1),
@@ -3253,6 +3289,183 @@ class FlagObjectBuilder extends fb.ObjectBuilder {
     return fbBuilder.buffer;
   }
 }
+class HostEventField {
+  HostEventField._(this._bc, this._bcOffset);
+  factory HostEventField(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<HostEventField> reader = _HostEventFieldReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  String? get name => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 4);
+  String? get type => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 6);
+
+  @override
+  String toString() {
+    return 'HostEventField{name: ${name}, type: ${type}}';
+  }
+}
+
+class _HostEventFieldReader extends fb.TableReader<HostEventField> {
+  const _HostEventFieldReader();
+
+  @override
+  HostEventField createObject(fb.BufferContext bc, int offset) => 
+    HostEventField._(bc, offset);
+}
+
+class HostEventFieldBuilder {
+  HostEventFieldBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(2);
+  }
+
+  int addNameOffset(int? offset) {
+    fbBuilder.addOffset(0, offset);
+    return fbBuilder.offset;
+  }
+  int addTypeOffset(int? offset) {
+    fbBuilder.addOffset(1, offset);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class HostEventFieldObjectBuilder extends fb.ObjectBuilder {
+  final String? _name;
+  final String? _type;
+
+  HostEventFieldObjectBuilder({
+    String? name,
+    String? type,
+  })
+      : _name = name,
+        _type = type;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? nameOffset = _name == null ? null
+        : fbBuilder.writeString(_name!);
+    final int? typeOffset = _type == null ? null
+        : fbBuilder.writeString(_type!);
+    fbBuilder.startTable(2);
+    fbBuilder.addOffset(0, nameOffset);
+    fbBuilder.addOffset(1, typeOffset);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
+class HostEvent {
+  HostEvent._(this._bc, this._bcOffset);
+  factory HostEvent(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<HostEvent> reader = _HostEventReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  String? get name => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 4);
+  HostEventDirection get direction => HostEventDirection.fromValue(const fb.Uint8Reader().vTableGet(_bc, _bcOffset, 6, 0));
+  List<HostEventField>? get fields => const fb.ListReader<HostEventField>(HostEventField.reader).vTableGetNullable(_bc, _bcOffset, 8);
+
+  @override
+  String toString() {
+    return 'HostEvent{name: ${name}, direction: ${direction}, fields: ${fields}}';
+  }
+}
+
+class _HostEventReader extends fb.TableReader<HostEvent> {
+  const _HostEventReader();
+
+  @override
+  HostEvent createObject(fb.BufferContext bc, int offset) => 
+    HostEvent._(bc, offset);
+}
+
+class HostEventBuilder {
+  HostEventBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(3);
+  }
+
+  int addNameOffset(int? offset) {
+    fbBuilder.addOffset(0, offset);
+    return fbBuilder.offset;
+  }
+  int addDirection(HostEventDirection? direction) {
+    fbBuilder.addUint8(1, direction?.value);
+    return fbBuilder.offset;
+  }
+  int addFieldsOffset(int? offset) {
+    fbBuilder.addOffset(2, offset);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class HostEventObjectBuilder extends fb.ObjectBuilder {
+  final String? _name;
+  final HostEventDirection? _direction;
+  final List<HostEventFieldObjectBuilder>? _fields;
+
+  HostEventObjectBuilder({
+    String? name,
+    HostEventDirection? direction,
+    List<HostEventFieldObjectBuilder>? fields,
+  })
+      : _name = name,
+        _direction = direction,
+        _fields = fields;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? nameOffset = _name == null ? null
+        : fbBuilder.writeString(_name!);
+    final int? fieldsOffset = _fields == null ? null
+        : fbBuilder.writeList(_fields!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    fbBuilder.startTable(3);
+    fbBuilder.addOffset(0, nameOffset);
+    fbBuilder.addUint8(1, _direction?.value);
+    fbBuilder.addOffset(2, fieldsOffset);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
 class Meta {
   Meta._(this._bc, this._bcOffset);
   factory Meta(List<int> bytes) {
@@ -3293,10 +3506,11 @@ class Meta {
   Push? get push => Push.reader.vTableGetNullable(_bc, _bcOffset, 54);
   List<ComponentEntry>? get components => const fb.ListReader<ComponentEntry>(ComponentEntry.reader).vTableGetNullable(_bc, _bcOffset, 56);
   List<Trigger>? get triggers => const fb.ListReader<Trigger>(Trigger.reader).vTableGetNullable(_bc, _bcOffset, 58);
+  List<HostEvent>? get hostEvents => const fb.ListReader<HostEvent>(HostEvent.reader).vTableGetNullable(_bc, _bcOffset, 60);
 
   @override
   String toString() {
-    return 'Meta{kind: ${kind}, id: ${id}, key: ${key}, name: ${name}, version: ${version}, compilerVersion: ${compilerVersion}, schemaVersion: ${schemaVersion}, requiredFeatures: ${requiredFeatures}, minRuntime: ${minRuntime}, capabilities: ${capabilities}, limits: ${limits}, pages: ${pages}, entryPage: ${entryPage}, fallbackPage: ${fallbackPage}, plugins: ${plugins}, defaultLocale: ${defaultLocale}, supportedLocales: ${supportedLocales}, entryRoute: ${entryRoute}, flags: ${flags}, nativeCatalogue: ${nativeCatalogue}, securityProfile: ${securityProfile}, telemetrySampling: ${telemetrySampling}, notFoundRoute: ${notFoundRoute}, shells: ${shells}, deepLinks: ${deepLinks}, push: ${push}, components: ${components}, triggers: ${triggers}}';
+    return 'Meta{kind: ${kind}, id: ${id}, key: ${key}, name: ${name}, version: ${version}, compilerVersion: ${compilerVersion}, schemaVersion: ${schemaVersion}, requiredFeatures: ${requiredFeatures}, minRuntime: ${minRuntime}, capabilities: ${capabilities}, limits: ${limits}, pages: ${pages}, entryPage: ${entryPage}, fallbackPage: ${fallbackPage}, plugins: ${plugins}, defaultLocale: ${defaultLocale}, supportedLocales: ${supportedLocales}, entryRoute: ${entryRoute}, flags: ${flags}, nativeCatalogue: ${nativeCatalogue}, securityProfile: ${securityProfile}, telemetrySampling: ${telemetrySampling}, notFoundRoute: ${notFoundRoute}, shells: ${shells}, deepLinks: ${deepLinks}, push: ${push}, components: ${components}, triggers: ${triggers}, hostEvents: ${hostEvents}}';
   }
 }
 
@@ -3314,7 +3528,7 @@ class MetaBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable(28);
+    fbBuilder.startTable(29);
   }
 
   int addKind(BundleKind? kind) {
@@ -3429,6 +3643,10 @@ class MetaBuilder {
     fbBuilder.addOffset(27, offset);
     return fbBuilder.offset;
   }
+  int addHostEventsOffset(int? offset) {
+    fbBuilder.addOffset(28, offset);
+    return fbBuilder.offset;
+  }
 
   int finish() {
     return fbBuilder.endTable();
@@ -3464,6 +3682,7 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
   final PushObjectBuilder? _push;
   final List<ComponentEntryObjectBuilder>? _components;
   final List<TriggerObjectBuilder>? _triggers;
+  final List<HostEventObjectBuilder>? _hostEvents;
 
   MetaObjectBuilder({
     BundleKind? kind,
@@ -3494,6 +3713,7 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
     PushObjectBuilder? push,
     List<ComponentEntryObjectBuilder>? components,
     List<TriggerObjectBuilder>? triggers,
+    List<HostEventObjectBuilder>? hostEvents,
   })
       : _kind = kind,
         _id = id,
@@ -3522,7 +3742,8 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
         _deepLinks = deepLinks,
         _push = push,
         _components = components,
-        _triggers = triggers;
+        _triggers = triggers,
+        _hostEvents = hostEvents;
 
   /// Finish building, and store into the [fbBuilder].
   @override
@@ -3568,7 +3789,9 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
         : fbBuilder.writeList(_components!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
     final int? triggersOffset = _triggers == null ? null
         : fbBuilder.writeList(_triggers!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
-    fbBuilder.startTable(28);
+    final int? hostEventsOffset = _hostEvents == null ? null
+        : fbBuilder.writeList(_hostEvents!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    fbBuilder.startTable(29);
     fbBuilder.addUint8(0, _kind?.value);
     if (_id != null) {
       fbBuilder.addStruct(1, _id!.finish(fbBuilder));
@@ -3605,6 +3828,7 @@ class MetaObjectBuilder extends fb.ObjectBuilder {
     fbBuilder.addOffset(25, pushOffset);
     fbBuilder.addOffset(26, componentsOffset);
     fbBuilder.addOffset(27, triggersOffset);
+    fbBuilder.addOffset(28, hostEventsOffset);
     return fbBuilder.endTable();
   }
 

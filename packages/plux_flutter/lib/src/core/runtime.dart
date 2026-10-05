@@ -404,7 +404,14 @@ final class PluxRuntime with WidgetsBindingObserver {
 
   /// Where `Plux.sendEvent` delivers host events (HST-013): the
   /// host-event triggers of the app, its plugins and the pages shown.
-  late HostEventSink? hostEventSink = HostEventTriggers(triggers);
+  late HostEventSink? hostEventSink = TypedHostEvents(
+    release: () => active.value,
+    types: (r) => switch (renderer) {
+      final PluxRenderer p => p.typesOf(r, ''),
+      _ => const {},
+    },
+    next: HostEventTriggers(triggers),
+  );
 
   /// Turns page sections into widgets (ADR-0031).
   late PageRenderer? renderer = PluxRenderer(

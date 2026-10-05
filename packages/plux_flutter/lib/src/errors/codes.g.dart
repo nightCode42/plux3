@@ -502,6 +502,9 @@ enum PluxErrorCode {
   /// Asynchronous validator failed.
   formAsyncValidatorFailed(5352, 'FORM_ASYNC_VALIDATOR_FAILED', 'Asynchronous validator failed'),
 
+  /// Host event payload invalid.
+  hostEventPayloadInvalid(5500, 'HOST_EVENT_PAYLOAD_INVALID', 'Host event payload invalid'),
+
   /// Outbound request blocked.
   outboundRequestBlocked(6030, 'OUTBOUND_REQUEST_BLOCKED', 'Outbound request blocked'),
 

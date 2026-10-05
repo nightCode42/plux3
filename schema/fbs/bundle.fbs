@@ -350,6 +350,28 @@ table Flag {
   default: Value;
 }
 
+// Who sends a host event (HST-013): plugins to the host (ToHost), the host
+// into Plux (ToPlux) or both.
+enum HostEventDirection : ubyte {
+  ToHost = 0,
+  ToPlux,
+  Both
+}
+
+// A field of a host event; `type` is a type expression.
+table HostEventField {
+  name: string;
+  type: string;
+}
+
+// A host event the app document declares (HST-013). The runtime checks the
+// payload of `Plux.sendEvent` against it.
+table HostEvent {
+  name: string (key);
+  direction: HostEventDirection;
+  fields: [HostEventField];
+}
+
 table Meta {
   kind: BundleKind;
   id: Uuid;
@@ -394,6 +416,9 @@ table Meta {
   // The app's or the plugin's triggers (ACT-002) and error handler
   // (ACT-020); absent when it declares none.
   triggers: [Trigger];
+  // App bundles: the declared host events, sorted by name (HST-013);
+  // absent when the app declares none.
+  host_events: [HostEvent];
 }
 
 // ── Section page ──────────────────────────────────────────────────────────

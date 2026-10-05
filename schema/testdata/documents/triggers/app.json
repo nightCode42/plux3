@@ -18,6 +18,25 @@
         }
       ],
       "name": "ping"
+    },
+    {
+      "description": "The host reports a price; a typed payload of several kinds.",
+      "direction": "both",
+      "fields": [
+        {
+          "name": "amount",
+          "type": "decimal"
+        },
+        {
+          "name": "on",
+          "type": "date"
+        },
+        {
+          "name": "note",
+          "type": "string?"
+        }
+      ],
+      "name": "priced"
     }
   ],
   "icon": {
