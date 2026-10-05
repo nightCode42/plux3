@@ -46,6 +46,8 @@ void main() {
       'routing/routing.pxb',
       'state/notes.pxb',
       'state/state.pxb',
+      'triggers/lab.pxb',
+      'triggers/triggers.pxb',
       'widgets/gallery.pxb',
       'widgets/widgets.pxb',
     ]);
@@ -64,6 +66,7 @@ void main() {
                       path.contains('/nav') ||
                       path.contains('/shop') ||
                       path.contains('/notes') ||
+                      path.contains('/lab') ||
                       path.contains('/gallery')
                   ? 1
                   : 2),

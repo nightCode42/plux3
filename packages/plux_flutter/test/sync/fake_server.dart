@@ -41,6 +41,8 @@ final class Goldens {
         'widgets/gallery.pxb',
         'state/state.pxb',
         'state/notes.pxb',
+        'triggers/triggers.pxb',
+        'triggers/lab.pxb',
       ])
         n: read(n),
     };

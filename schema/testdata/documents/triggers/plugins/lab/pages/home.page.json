@@ -1,0 +1,168 @@
+{
+  "id": "01f0c450-6c00-7000-8000-000000000604",
+  "key": "home",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01f0c450-6c00-7000-8000-000000000616",
+    "slots": {
+      "body": {
+        "children": [
+          {
+            "id": "01f0c450-6c00-7000-8000-000000000617",
+            "props": {
+              "data": {
+                "$expr": "\"pings \" + string(app.pings) + \" seen \" + string(plugin.seen) + \" mirror \" + string(page.mirror)"
+              }
+            },
+            "type": "Text"
+          },
+          {
+            "id": "01f0c450-6c00-7000-8000-000000000618",
+            "props": {
+              "data": {
+                "$expr": "\"errors \" + string(plugin.errors) + \" \" + string(app.errors)"
+              }
+            },
+            "type": "Text"
+          },
+          {
+            "id": "01f0c450-6c00-7000-8000-000000000619",
+            "props": {
+              "data": {
+                "$expr": "\"got \" + string(page.got)"
+              }
+            },
+            "type": "Text"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "stop",
+                    "id": "fail",
+                    "input": {
+                      "error": "boom"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-00000000061a",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-00000000061b",
+                "props": {
+                  "data": "fail"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "setState",
+                    "id": "hide",
+                    "input": {
+                      "path": "page.showBadge",
+                      "value": false
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-00000000061c",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-00000000061d",
+                "props": {
+                  "data": "hide"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "component": {
+              "id": "01f0c450-6c00-7000-8000-000000000606",
+              "version": 1
+            },
+            "events": {
+              "onHit": {
+                "steps": [
+                  {
+                    "action": "setState",
+                    "id": "got",
+                    "input": {
+                      "path": "page.got",
+                      "value": {
+                        "$expr": "event"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-00000000061e",
+            "visible": {
+              "$expr": "page.showBadge"
+            }
+          }
+        ],
+        "id": "01f0c450-6c00-7000-8000-00000000061f",
+        "type": "Column"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "home",
+  "schemaVersion": "1.0.0",
+  "state": [
+    {
+      "default": 0,
+      "id": "01f0c450-6c00-7000-8000-000000000620",
+      "name": "mirror",
+      "type": "int"
+    },
+    {
+      "default": 0,
+      "id": "01f0c450-6c00-7000-8000-000000000621",
+      "name": "got",
+      "type": "int"
+    },
+    {
+      "default": true,
+      "id": "01f0c450-6c00-7000-8000-000000000622",
+      "name": "showBadge",
+      "type": "bool"
+    }
+  ],
+  "title": "Home",
+  "triggers": {
+    "watch": [
+      {
+        "handler": {
+          "steps": [
+            {
+              "action": "setState",
+              "id": "copy",
+              "input": {
+                "path": "page.mirror",
+                "value": {
+                  "$expr": "event"
+                }
+              }
+            }
+          ]
+        },
+        "path": "app.pings"
+      }
+    ]
+  }
+}
