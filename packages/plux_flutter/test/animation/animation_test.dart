@@ -70,7 +70,7 @@ void main() {
       .evaluate()
       .take(3)
       .map<Matrix4>((e) => (e.widget as Transform).transform)
-      .fold<Matrix4>(Matrix4.identity(), (a, b) => a * b);
+      .fold<Matrix4>(Matrix4.identity(), (a, b) => a.multiplied(b));
 
   Matrix4 transformOf(WidgetTester tester, String text) =>
       transformAround(tester, find.text(text));
@@ -310,6 +310,68 @@ void main() {
         isTrue,
         reason: 'at an end: $s',
       );
+    },
+  );
+
+  Future<void> openStage(WidgetTester tester, {bool reduce = false}) async {
+    tester.view
+      ..physicalSize = const Size(800, 2400)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    if (reduce) {
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          const FakeAccessibilityFeatures(disableAnimations: true);
+      addTearDown(
+        tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+      );
+    }
+    await tester.runAsync(
+      () => h.startFrom(_bundle('motion.pxb'), {'stage': _bundle('stage.pxb')}),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PluxScope(
+          child: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => Plux.open<Object?>(context, 'stage'),
+              child: const Text('Open'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await settle(tester);
+    await tester.tap(find.text('Open'));
+    await settle(tester);
+  }
+
+  Finder slide() => find.byWidgetPredicate(
+    (w) =>
+        w is FractionalTranslation &&
+        w.translation.dx > 0 &&
+        w.translation.dx < 1,
+  );
+
+  testWidgets(
+    'a route timeline moves the page in as its custom transition [NAV-010]',
+    (tester) async {
+      await openStage(tester);
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(slide(), findsWidgets, reason: 'the page is mid-slide');
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(slide(), findsNothing);
+      expect(find.text('Implicit'), findsOneWidget);
+      expect(problems(), isEmpty);
+    },
+  );
+
+  testWidgets(
+    'reduce motion shows a custom transition\'s page at once [NAV-010] [ANI-007]',
+    (tester) async {
+      await openStage(tester, reduce: true);
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(slide(), findsNothing);
+      expect(find.text('Implicit'), findsOneWidget);
     },
   );
 }

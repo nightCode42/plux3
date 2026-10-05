@@ -57,6 +57,16 @@ var layoutProps = map[string]bool{
 	"size": true, "left": true, "right": true, "top": true, "bottom": true, "gap": true,
 }
 
+// parentDataWidgets must be direct children of their parent's render
+// object, so nothing can wrap them to animate them.
+func parentDataWidgets(typ string) bool {
+	switch typ {
+	case "Expanded", "Flexible", "Spacer", "Positioned":
+		return true
+	}
+	return strings.HasPrefix(typ, "Sliver")
+}
+
 // defaultDurationMs is the duration of an enter or exit transition that
 // names none.
 const defaultDurationMs = 300
@@ -144,6 +154,10 @@ func (u *unit) checkNodeAnimation(n *node, sh *shape, c vctx) {
 		return
 	}
 	ptr := n.ptr + "/animation"
+	if n.widget != nil && parentDataWidgets(n.widget.Type) {
+		u.report(plxerr.NodeAnimationInvalid, c.file, ptr, "%s must be a direct child of its parent and cannot animate; animate its child", n.widget.Type)
+		return
+	}
 	u.useRevision(animFeature, animRuntimes, 1, vctx{file: c.file, ptr: ptr, pl: c.pl})
 	out := &nodeAnim{curve: curveOf(a.Curve), reduce: reduceOf(a.ReduceMotion)}
 	if a.DurationMs != nil {
@@ -287,8 +301,8 @@ func (u *unit) checkTrack(pg *page, t *schema.Timeline, tk *schema.Track, ptr st
 		tr.prop, typ = id, "double"
 	} else {
 		n := byID[tk.Node]
-		if tk.Node == "" || n == nil || n.widget == nil {
-			u.report(plxerr.AnimationTargetInvalid, file, ptr+"/node", "the track names no widget node of the page")
+		if tk.Node == "" || n == nil || n.widget == nil || parentDataWidgets(n.widget.Type) {
+			u.report(plxerr.AnimationTargetInvalid, file, ptr+"/node", "the track names no widget node of the page that can be wrapped")
 			return nil
 		}
 		m, ok := findMember(widgetShape(n.widget).props, tk.Prop)
