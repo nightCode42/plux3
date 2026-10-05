@@ -11,7 +11,7 @@ library;
 import 'dart:developer' as developer;
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' show kToolbarHeight;
+import 'package:flutter/material.dart' show Theme, kToolbarHeight;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plux_flutter/src/actions/engine.dart';
@@ -21,6 +21,8 @@ import 'package:plux_flutter/src/bundle/container.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/bundle/safe_read.dart';
 import 'package:plux_flutter/src/core/app_state.dart';
+import 'package:plux_flutter/src/data/services.dart' show DataRoot;
+import 'package:plux_flutter/src/db/row_identity.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/native_catalogue/registration.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
@@ -421,15 +423,52 @@ final class NodeContextImpl implements NodeContext {
   Widget item(int slot, Object? item, int index) {
     final nodes = _fill(slot)?.nodes;
     if (nodes == null || nodes.isEmpty) return const SizedBox.shrink();
+    // A record of a watched database query that did not change is the same
+    // object as before: its item is the widget it was, unless something
+    // its bindings read besides the row has changed (DB-006).
+    final memo = item == null || dbRowKeyOf(item) == null
+        ? null
+        : _ItemMemo.of(item, _itemInputs(slot, index));
+    final cached = memo?.widget;
+    if (cached != null) return cached;
     final itemScope = scope.withRoots({
       'item': toPxl(item),
       'index': index,
     }, '$_path/$index');
-    return RenderScopeWidget(
+    final built = RenderScopeWidget(
       key: ValueKey(index),
       scope: itemScope,
       child: PluxNode(nodes.first),
     );
+    memo?.widget = built;
+    return built;
+  }
+
+  /// What an item's bindings read besides its row and the state paths the
+  /// item subscribes to itself: the release, the page, the theme, the
+  /// device, the user, the flags and the data of the sources that are not
+  /// database sources. An item is reused only while all of it is the same.
+  List<Object?> _itemInputs(int slot, int index) {
+    final roots = scope.roots();
+    final data = roots['data'];
+    final device = roots['device'];
+    return [
+      scope.release,
+      scope.state,
+      scope.actions,
+      scope.section,
+      Theme.of(context),
+      MediaQuery.maybeOf(context)?.highContrast,
+      roots['user'],
+      roots['flags'],
+      data is DataRoot ? data.scope.externalRevision : data,
+      if (device is Map<String, Object?>) ...[
+        for (final e in device.entries) e.value,
+      ],
+      slot,
+      index,
+      _path,
+    ];
   }
 
   @override
@@ -1030,4 +1069,47 @@ final class _ComponentInstanceState extends ConsumerState<_ComponentInstance> {
     ref.listen(pageStateProvider(_instance), (_, _) {});
     return widget.build(_instance, ref);
   }
+}
+
+/// The widget built for one record of a watched query, with what it was
+/// built from.
+final class _ItemMemo {
+  _ItemMemo._(this.inputs);
+
+  static final Expando<_ItemMemo> _memos = Expando('plux item memos');
+
+  /// The memo of [row] for [inputs]: the earlier one if its inputs are
+  /// equal, else a new one that replaces it.
+  static _ItemMemo of(Object row, List<Object?> inputs) {
+    final old = _memos[row];
+    if (old != null && _same(old.inputs, inputs)) return old;
+    return _memos[row] = _ItemMemo._(inputs);
+  }
+
+  static bool _same(List<Object?> a, List<Object?> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (!_equal(a[i], b[i])) return false;
+    }
+    return true;
+  }
+
+  /// Equal as the item's bindings see them: roots such as `user` are new
+  /// small maps on every read, so maps are compared by their entries.
+  static bool _equal(Object? a, Object? b) {
+    if (identical(a, b) || a == b) return true;
+    if (a is! Map<Object?, Object?> || b is! Map<Object?, Object?>) {
+      return false;
+    }
+    if (a.length != b.length) return false;
+    for (final e in a.entries) {
+      if (!b.containsKey(e.key) || b[e.key] != e.value) return false;
+    }
+    return true;
+  }
+
+  final List<Object?> inputs;
+
+  /// The item's widget, once built.
+  Widget? widget;
 }

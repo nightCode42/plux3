@@ -18,6 +18,7 @@ import 'package:plux_flutter/src/data/failure.dart';
 import 'package:plux_flutter/src/data/mapping.dart' show mapJson;
 import 'package:plux_flutter/src/db/adapter.dart';
 import 'package:plux_flutter/src/db/query.dart';
+import 'package:plux_flutter/src/db/row_identity.dart';
 import 'package:plux_flutter/src/db/schema.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
@@ -579,7 +580,12 @@ final class _RowTracker {
       final entry = old != null && old.$1 == fingerprint
           ? old
           : (fingerprint, r.fromStored(row));
-      if (!identical(entry, old)) changed.add(key);
+      if (!identical(entry, old)) {
+        changed.add(key);
+        if (entry.$2 case final Map<String, Object?> record) {
+          markDbRow(record, key);
+        }
+      }
       current[key] = entry;
       out.add(entry.$2);
     }

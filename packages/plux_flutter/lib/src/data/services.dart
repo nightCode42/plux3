@@ -19,6 +19,7 @@ import 'package:plux_flutter/src/data/mocks.dart';
 import 'package:plux_flutter/src/data/source.dart';
 import 'package:plux_flutter/src/data/spec.dart';
 import 'package:plux_flutter/src/data/transport.dart';
+import 'package:plux_flutter/src/db/service.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
 
@@ -36,6 +37,7 @@ final class DataServices implements DataContext {
     this.secureStore,
     this.mocks = const DataMocks(),
     this.events,
+    this.database,
     int Function()? now,
     this.allowCleartext = false,
   }) : _report = report, // ignore: prefer_initializing_formals
@@ -62,6 +64,9 @@ final class DataServices implements DataContext {
 
   @override
   DataSourceEvents? events;
+
+  @override
+  final PluxDatabase? database;
 
   /// The clock, in milliseconds.
   final int Function() now;
@@ -164,9 +169,25 @@ final class DataScope extends ChangeNotifier implements DataActions {
       _byName[c.spec.name] = c;
     }
     for (final c in _byName.values) {
-      c.addListener(notifyListeners);
+      // A change of a database source is what a list rebuilds its changed
+      // items for; any other change counts as external to such items.
+      final VoidCallback listener = c.spec.kind == DataKind.database
+          ? notifyListeners
+          : () {
+              _external++;
+              notifyListeners();
+            };
+      _listeners[c] = listener;
+      c.addListener(listener);
     }
   }
+
+  final Map<DataSourceController, VoidCallback> _listeners = {};
+  int _external = 0;
+
+  /// How many times a source that is not a database source changed: what
+  /// items of a watched list depend on besides their own row (DB-006).
+  int get externalRevision => _external;
 
   /// The services.
   final DataServices services;
@@ -181,7 +202,7 @@ final class DataScope extends ChangeNotifier implements DataActions {
   DataSourceController? operator [](String name) => _byName[name];
 
   /// The `data` root: each source's snapshot, loading it on first read.
-  late final Map<String, Object?> root = _DataRoot(this);
+  late final DataRoot root = DataRoot._(this);
 
   @override
   Future<Object?> callOperation(
@@ -238,9 +259,8 @@ final class DataScope extends ChangeNotifier implements DataActions {
 
   @override
   void dispose() {
-    for (final c in _byName.values) {
-      c.removeListener(notifyListeners);
-    }
+    _listeners.forEach((c, l) => c.removeListener(l));
+    _listeners.clear();
     for (final c in _own) {
       c.dispose();
     }
@@ -248,9 +268,11 @@ final class DataScope extends ChangeNotifier implements DataActions {
   }
 }
 
-final class _DataRoot extends MapBase<String, Object?> {
-  _DataRoot(this.scope);
+/// The `data` root of a page: each source's snapshot, read-only.
+final class DataRoot extends MapBase<String, Object?> {
+  DataRoot._(this.scope);
 
+  /// The scope the root reads.
   final DataScope scope;
 
   @override

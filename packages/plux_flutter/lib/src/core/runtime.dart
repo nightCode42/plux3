@@ -351,6 +351,7 @@ final class PluxRuntime with WidgetsBindingObserver {
     record: telemetry.record,
     report: _report,
     events: DataTriggers(triggers),
+    database: database,
   );
 
   /// Ends the user's session (HST-010, the `logout` action): removes every

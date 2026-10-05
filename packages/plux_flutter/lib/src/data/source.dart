@@ -19,6 +19,7 @@ import 'package:plux_flutter/src/data/failure.dart';
 import 'package:plux_flutter/src/data/mapping.dart';
 import 'package:plux_flutter/src/data/mocks.dart';
 import 'package:plux_flutter/src/data/spec.dart';
+import 'package:plux_flutter/src/db/service.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
 import 'package:plux_flutter/src/render/values.dart' show BindingError;
@@ -83,6 +84,9 @@ abstract interface class DataContext {
 
   /// Records telemetry.
   DataRecord get record;
+
+  /// The local database that `database` sources watch, or null.
+  PluxDatabase? get database;
 }
 
 /// The state and loading of one source for one plugin.
@@ -152,6 +156,10 @@ final class DataSourceController extends ChangeNotifier {
       _loading = true;
       _loadingMore = false;
     });
+    if (spec.kind == DataKind.database) {
+      _watchDatabase(rethrowing);
+      return;
+    }
     try {
       if (spec.kind == DataKind.other) {
         throw DataFailure.unavailable(
@@ -165,6 +173,68 @@ final class DataSourceController extends ChangeNotifier {
     } on DataFailure catch (f) {
       if (gen == _generation) _fail(f, rethrowing);
     }
+  }
+
+  StreamSubscription<DbRows>? _watch;
+
+  /// Starts, or restarts, the watch of a database source (DB-006): every
+  /// result of the watched query replaces the value, with the rows that did
+  /// not change as the same objects. The first result counts as the load
+  /// that fires `dataLoaded`; later ones do not, so that a trigger that
+  /// writes the collection cannot loop.
+  void _watchDatabase(bool rethrowing) {
+    unawaited(_watch?.cancel());
+    final db = context.database;
+    final q = spec.database;
+    if (db == null || q == null) {
+      _fail(
+        DataFailure.unavailable(
+          'source ${spec.name} needs the local database, which this runtime '
+          'does not run',
+        ),
+        rethrowing,
+      );
+      return;
+    }
+    var first = true;
+    _watch = db
+        .watch(
+          caller.pluginKey,
+          q.collection,
+          filter: q.filter,
+          orderBy: q.orderBy,
+          descending: q.descending,
+          limit: q.limit,
+          offset: q.offset,
+        )
+        .listen(
+          (result) {
+            _set(() {
+              _value = result.rows;
+              _loading = false;
+              _error = null;
+              _hasMore = false;
+            });
+            if (!first) return;
+            first = false;
+            context.events?.loaded(
+              DataSourceEvent(
+                pluginKey: caller.pluginKey,
+                source: spec.name,
+                sourceId: spec.id,
+                value: _value,
+              ),
+            );
+          },
+          onError: (Object e) {
+            _fail(
+              e is PluxException
+                  ? DataFailure(ActionErrorKind.custom, e.code, e.message)
+                  : DataFailure.unavailable('the watched query failed'),
+              false,
+            );
+          },
+        );
   }
 
   /// Loads the next page of a paginated source and appends it (DAT-011);
@@ -480,6 +550,7 @@ final class DataSourceController extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _generation++;
+    unawaited(_watch?.cancel());
     super.dispose();
   }
 }

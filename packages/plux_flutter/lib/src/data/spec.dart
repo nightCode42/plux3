@@ -10,6 +10,7 @@ library;
 import 'package:plux_flutter/src/actions/action_error.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/data/failure.dart';
+import 'package:plux_flutter/src/db/source_spec.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/pxl/vm.dart' show PxlLimits;
 import 'package:plux_flutter/src/render/sections.dart';
@@ -26,7 +27,10 @@ enum DataKind {
   /// GraphQL queries and mutations over HTTP.
   graphql,
 
-  /// Any other kind: WebSocket, SSE, functions, database, static.
+  /// A watched query over a local collection (DB-006).
+  database,
+
+  /// Any other kind: WebSocket, SSE, functions, static.
   other,
 }
 
@@ -217,6 +221,7 @@ final class DataSourceSpec {
     this.page,
     this.mocks = const MockSpec(),
     this.operations = const {},
+    this.database,
   });
 
   /// Decodes a source of a bundle; [strings] is the table of the section
@@ -232,6 +237,7 @@ final class DataSourceSpec {
     final kind = switch (d.kind) {
       fbs.DataSourceKind.Rest => DataKind.rest,
       fbs.DataSourceKind.Graphql => DataKind.graphql,
+      fbs.DataSourceKind.Database => DataKind.database,
       _ => DataKind.other,
     };
     final id = d.id == null ? name : uuidString(uuidOf(d.id!));
@@ -293,6 +299,9 @@ final class DataSourceSpec {
           for (final e in _map(literal['operations']).entries)
             e.key: _operation(e.key, _map(e.value), literal['auth'] == true),
         },
+        database: kind == DataKind.database
+            ? DatabaseQuerySpec.fromConfig(literal)
+            : null,
       );
     } on TypeError catch (e) {
       throw PluxException(
@@ -356,6 +365,9 @@ final class DataSourceSpec {
 
   /// The operations by name.
   final Map<String, OperationSpec> operations;
+
+  /// The watched query of a database source (DB-006), else null.
+  final DatabaseQuerySpec? database;
 }
 
 Map<String, Object?> _map(Object? v) =>
