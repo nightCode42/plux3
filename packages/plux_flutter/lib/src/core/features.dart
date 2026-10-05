@@ -5,7 +5,8 @@
 /// `pxl.v1`, `pxl.regex.v1` and `pxl.phone.v1` (0.3.0), `navigation.guards.v1`
 /// (route guards, ADR-0040), `data.v1` (the data layer, ADR-0048), the state
 /// engine's `state.write.v1`, `state.computed.v1` and `state.persistence.v1`,
-/// forms' `forms.v1` (ADR-0047), and
+/// forms' `forms.v1` (ADR-0047), animation's `anim.v1`, `anim.timelines.v1`
+/// and `anim.transitions.v1` (ANI-001–ANI-006, NAV-010), and
 /// registry revisions — `widget.<Type>.v<n>`,
 /// `type.<Name>.v<n>`, `enum.<Name>.v<n>` — up to the revision this
 /// runtime's generated registry knows, for widgets it can build.
@@ -66,9 +67,18 @@ final class RuntimeFeatures {
   /// form action requires them.
   static const Set<String> forms = {'forms.v1'};
 
+  /// Animation (ANI-*): implicit, enter and exit and hero animation,
+  /// timelines, and custom route transitions.
+  static const Set<String> animation = {
+    'anim.v1',
+    'anim.timelines.v1',
+    'anim.transitions.v1',
+  };
+
   /// Whether [feature] is supported.
   bool supports(String feature) {
     if (forms.contains(feature) ||
+        animation.contains(feature) ||
         pxl.contains(feature) ||
         navigation.contains(feature) ||
         actions.contains(feature) ||

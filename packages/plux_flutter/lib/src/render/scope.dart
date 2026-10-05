@@ -9,6 +9,7 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plux_flutter/src/actions/engine.dart';
+import 'package:plux_flutter/src/animation/registry.dart';
 import 'package:plux_flutter/src/assets/icon_fonts.dart';
 import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
@@ -118,6 +119,7 @@ final class RenderScope {
     this.actions,
     this.componentState,
     this.emitEvent,
+    this.animations,
   });
 
   /// The release rendered.
@@ -181,6 +183,10 @@ final class RenderScope {
   /// component.
   final void Function(String event, Object? payload)? emitEvent;
 
+  /// The timelines of the page whose nodes this scope renders (ANI-002);
+  /// null where there are none, such as in a component.
+  final PluxAnimations? animations;
+
   /// A scope with [extra] roots, for a template item.
   RenderScope withRoots(Map<String, Object?> extra, String at) {
     Map<String, Object?> all() => {...roots(), ...extra};
@@ -209,6 +215,7 @@ final class RenderScope {
       actions: actions,
       componentState: componentState,
       emitEvent: emitEvent,
+      animations: animations,
     );
   }
 

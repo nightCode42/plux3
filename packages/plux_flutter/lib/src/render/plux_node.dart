@@ -15,6 +15,8 @@ import 'package:flutter/material.dart' show kToolbarHeight;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:plux_flutter/src/actions/engine.dart';
+import 'package:plux_flutter/src/animation/interpolate.dart';
+import 'package:plux_flutter/src/animation/motion_node.dart';
 import 'package:plux_flutter/src/assets/icon_fonts.dart';
 import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/bundle/container.dart';
@@ -67,15 +69,50 @@ final class PluxNode extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scope = RenderScope.of(context);
-    final c = NodeContextImpl(context, ref, scope, index);
-    try {
-      final w = c.build();
-      c.subscribe();
-      return w;
-    } on Object catch (e, stack) {
-      c.subscribe();
-      return c.failed(e, stack);
+    final motion = NodeMotion.of(scope.section.node(index), scope.animations);
+    if (motion != null) {
+      final at = scope.roots()['index'];
+      return MotionNode(
+        motion: motion,
+        itemIndex: at is int ? at : 0,
+        build: (ctx, r, values, force, subscribe, onSource) => _buildNode(
+          ctx,
+          r,
+          scope,
+          index,
+          animated: values,
+          force: force,
+          subscribe: subscribe,
+          onSource: onSource,
+        ),
+      );
     }
+    return _buildNode(context, ref, scope, index);
+  }
+}
+
+/// Builds node [index] of [scope]; with [animated] values in place of its
+/// props' (ANI-001), although hidden when [force] is set (ANI-003), and
+/// subscribing to the state it reads unless [subscribe] is false.
+Widget _buildNode(
+  BuildContext context,
+  WidgetRef ref,
+  RenderScope scope,
+  int index, {
+  Map<int, Object?> animated = const {},
+  bool force = false,
+  bool subscribe = true,
+  void Function(MotionSource source)? onSource,
+}) {
+  final c = NodeContextImpl(context, ref, scope, index, animated: animated);
+  try {
+    final w = c.build(force: force);
+    onSource?.call(c);
+    if (subscribe) c.subscribe();
+    return w;
+  } on Object catch (e, stack) {
+    if (subscribe) c.subscribe();
+    return c.failed(e, stack);
   }
 }
 
@@ -83,10 +120,19 @@ final class PluxNode extends ConsumerWidget {
 String nodePath(RenderScope scope, int index) => '${scope.path}/$index';
 
 /// The [NodeContext] of one build of one node.
-final class NodeContextImpl implements NodeContext {
-  /// Creates the context of node [index] in [scope].
-  NodeContextImpl(this.context, this._ref, this.scope, this.index)
-    : node = scope.section.node(index);
+final class NodeContextImpl implements NodeContext, MotionSource {
+  /// Creates the context of node [index] in [scope]; [animated] holds the
+  /// values of props that an animation sets in place of their own.
+  NodeContextImpl(
+    this.context,
+    this._ref,
+    this.scope,
+    this.index, {
+    this.animated = const {},
+  }) : node = scope.section.node(index);
+
+  /// The values animations give props, by permanent ID (ANI-001).
+  final Map<int, Object?> animated;
 
   @override
   final BuildContext context;
@@ -108,9 +154,10 @@ final class NodeContextImpl implements NodeContext {
 
   String get _path => nodePath(scope, index);
 
-  /// Builds the node's widget, wrapped in its semantics.
-  Widget build() {
-    if (!_visible(node)) return const SizedBox.shrink();
+  /// Builds the node's widget, wrapped in its semantics; hidden nodes build
+  /// nothing unless [force] is set, as while an exit transition plays.
+  Widget build({bool force = false}) {
+    if (!force && !_visible(node)) return const SizedBox.shrink();
     final w = _content();
     return node.widget != 0 && _unwrapped.contains(node.widget)
         ? w
@@ -264,13 +311,43 @@ final class NodeContextImpl implements NodeContext {
   }
 
   @override
-  Object? prop(int id) => resolve(_merged[id]);
+  Object? prop(int id) =>
+      animated.containsKey(id) ? animated[id] : resolve(_merged[id]);
+
+  @override
+  bool get isVisible => _visible(node);
+
+  @override
+  String? get heroTag {
+    final h = node.animation?.hero;
+    final v = h == null ? null : resolve(h);
+    return v is String ? v : null;
+  }
+
+  @override
+  Map<int, Object?> animatableTargets(Set<int>? only) {
+    final out = <int, Object?>{};
+    for (final e in _merged.entries) {
+      if (only != null && !only.contains(e.key)) continue;
+      Object? v;
+      try {
+        v = scope.resolver.resolve(e.value, scope.section.string);
+      } on Object {
+        continue;
+      }
+      if (only != null ? isAnimatable(v) : animatesImplicitly(v)) {
+        out[e.key] = v;
+      }
+    }
+    return out;
+  }
 
   @override
   T? decode<T>(int id, T? Function(Decoding d, Object? v) decoder) {
     final raw = _merged[id];
-    if (raw == null) return null;
-    final v = resolve(raw);
+    final over = animated[id];
+    if (raw == null && over == null) return null;
+    final v = over ?? resolve(raw);
     if (v == null) return null;
     try {
       final decoded = decoder(this, v);
@@ -363,7 +440,9 @@ final class NodeContextImpl implements NodeContext {
   /// The widgets node [i] contributes to a list of children.
   List<Widget> expand(int i) {
     final n = scope.section.node(i);
-    if (!_visible(n)) return const [];
+    // A hidden node with an exit transition stays in the list while it
+    // exits (ANI-003); the node builds nothing once the exit is done.
+    if (!_visible(n) && n.animation?.exit == null) return const [];
     NodeContextImpl sub() => NodeContextImpl(context, _ref, scope, i);
     switch (n.widget) {
       case WidgetIds.forEach:

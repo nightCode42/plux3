@@ -18,6 +18,8 @@ import 'package:plux_flutter/src/actions/engine.dart';
 import 'package:plux_flutter/src/actions/graph.dart';
 import 'package:plux_flutter/src/actions/handlers.dart';
 import 'package:plux_flutter/src/actions/run.dart';
+import 'package:plux_flutter/src/animation/registry.dart';
+import 'package:plux_flutter/src/animation/timeline_spec.dart';
 import 'package:plux_flutter/src/assets/assets.dart';
 import 'package:plux_flutter/src/assets/icon_fonts.dart';
 import 'package:plux_flutter/src/assets/image_providers.dart';
@@ -944,7 +946,33 @@ final class PluxPageView extends ConsumerStatefulWidget {
   ConsumerState<PluxPageView> createState() => _PluxPageViewState();
 }
 
-final class _PluxPageViewState extends ConsumerState<PluxPageView> {
+final class _PluxPageViewState extends ConsumerState<PluxPageView>
+    with TickerProviderStateMixin {
+  /// Whether the platform asks to reduce motion, as of the latest build
+  /// (ANI-007).
+  bool _reduceMotion = false;
+
+  /// The page's timelines (ANI-002), or null when it has none.
+  late final PluxAnimations? _animations = () {
+    final page = _section.page;
+    final id = page?.id;
+    if (id == null) return null;
+    final specs = <TimelineSpec>[];
+    for (final t in _plugin.timelinesOf(uuidOf(id))) {
+      try {
+        specs.add(TimelineSpec.read(t, _plugin.string));
+      } on PluxException catch (e) {
+        _report(e, path: _path);
+      }
+    }
+    if (specs.isEmpty) return null;
+    return PluxAnimations(
+      timelines: specs,
+      vsync: this,
+      reduceMotion: () => _reduceMotion,
+    );
+  }();
+
   late final BundleView _plugin = widget.renderer.view(
     widget.release,
     widget.page.plugin,
@@ -1012,7 +1040,7 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
     return ActionHost(
       lease: widget.release.hold,
       context: StepContext(
-        services: services.services,
+        services: {...services.services, PluxAnimations: ?_animations},
         navigator: PageNavigator(
           router: services.router,
           context: () => context,
@@ -1299,7 +1327,9 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
       if (_paramError == null) {
         // After the first frame, so the first runs read built roots.
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _pageActions?.start();
+          if (!mounted) return;
+          _animations?.autoplay();
+          _pageActions?.start();
         });
       }
       return;
@@ -1317,6 +1347,7 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
     }
     _data?.removeListener(_dataChanged);
     _data?.dispose();
+    _animations?.dispose();
     super.dispose();
   }
 
@@ -1330,6 +1361,7 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
     ref.listen(pageStateProvider(_instance), (_, _) {});
     final env = ref.watch(environmentProvider);
     final media = MediaQuery.maybeOf(context);
+    _reduceMotion = media?.disableAnimations ?? false;
     final locale =
         env.locale ??
         Localizations.maybeLocaleOf(context) ??
@@ -1429,6 +1461,7 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
       actions: _actions,
       componentState: _component ? _instance : null,
       emitEvent: _component ? _emitToHost : null,
+      animations: _animations,
     );
     final plugin = widget.page.plugin;
     Widget page = PluxBoundary(
