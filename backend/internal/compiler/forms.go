@@ -670,3 +670,18 @@ func (e *valueEnc) formValidator(v *formValidator) flatbuffers.UOffsetT {
 	}
 	return fbs.FormValidatorEnd(b)
 }
+
+// formScope is the scope below a FormScope node: `form` is the state of
+// the form its literal `form` prop names, typed as that form (STA-020). A
+// name that is no form of the page or component is reported and leaves
+// the scope as it is.
+func (t *typer) formScope(n *node, s *scope) *scope {
+	name := literalString(n.doc.Props["form"])
+	typ := formTypeName(name)
+	if _, ok := s.synth[typ]; name == "" || !ok {
+		t.u.report(plxerr.FormScopeInvalid, n.owner.file(), n.ptr+plxerr.Pointer("props", "form"),
+			"FormScope.form must be the literal name of a form the page or component declares")
+		return s
+	}
+	return s.with("form", typ)
+}

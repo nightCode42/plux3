@@ -89,6 +89,7 @@ const (
 	RouteParameterTypeInvalid  Code = 1204
 	UnknownRouteParameter      Code = 1205
 	RedirectLoop               Code = 1206
+	FormScopeInvalid           Code = 1240
 
 	// Schema and validation: limits and budgets (PLX-1300–1399).
 

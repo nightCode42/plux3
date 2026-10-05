@@ -133,9 +133,16 @@ final class NodeContextImpl implements NodeContext {
   /// (RT-012); a host's write of exposed state rebuilds every view and slot
   /// reading it in the same frame (ADR-0023).
   void subscribe() {
+    // Below a FormScope, `form.x` is the scoped form's `<alias>.x`.
+    final alias = scope.formAlias;
+    String actual(String r) =>
+        alias != null && (r == 'form' || r.startsWith('form.'))
+        ? alias + r.substring('form'.length)
+        : r;
     List<List<String>> under(String root) => [
-      for (final r in reads)
-        if (r == root || r.startsWith('$root.')) r.split('.').skip(1).toList(),
+      for (final read in reads.map(actual))
+        if (read == root || read.startsWith('$root.'))
+          read.split('.').skip(1).toList(),
     ];
     final instance = scope.state;
     final paths = under('page');
@@ -429,6 +436,17 @@ final class NodeContextImpl implements NodeContext {
       key: ValueKey(index),
       scope: itemScope,
       child: PluxNode(nodes.first),
+    );
+  }
+
+  /// The first node of [slot] rendered below the `FormScope` of the form
+  /// [name] (STA-020).
+  Widget formScope(int slot, String name) {
+    final nodes = _fill(slot)?.nodes;
+    if (nodes == null || nodes.isEmpty) return const SizedBox.shrink();
+    return RenderScopeWidget(
+      scope: scope.withForm(name, '$_path/form'),
+      child: _child(nodes.first),
     );
   }
 

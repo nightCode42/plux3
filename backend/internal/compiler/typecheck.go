@@ -347,13 +347,16 @@ func (t *typer) node(n *node, s *scope) {
 }
 
 // slotScope is the scope of a slot's nodes: item templates add `item`
-// and `index`.
+// and `index`, and a FormScope its `form`.
 func (t *typer) slotScope(n *node, sf *slotFill, s *scope) *scope {
 	if n.widget == nil {
 		return s
 	}
-	if n.widget.Type == "If" {
+	switch n.widget.Type {
+	case "If":
 		return s.narrow(t.ifGuards(n, sf.name))
+	case "FormScope":
+		return t.formScope(n, s)
 	}
 	slot, ok := n.widget.Slot(sf.name)
 	if !ok || !slot.Template {

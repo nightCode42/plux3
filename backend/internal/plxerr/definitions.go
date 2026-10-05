@@ -359,6 +359,11 @@ var registry = []Definition{
 		"Pages redirect to each other unconditionally from `onEnter` in a cycle, so navigation would never settle.",
 		"Break the cycle by guarding one of the redirects with a condition.", false,
 	},
+	{
+		FormScopeInvalid, "FORM_SCOPE_INVALID", SeverityError, "FormScope names no form",
+		"A FormScope's form is not a literal naming a form that the page or component declares, so the form root below it would have no state to read (STA-020).",
+		"Set form to the literal name of a form declared in the page's or component's forms.", false,
+	},
 
 	// Schema and validation: limits and budgets.
 	{

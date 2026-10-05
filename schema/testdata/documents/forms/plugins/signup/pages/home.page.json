@@ -538,6 +538,25 @@
             "type": "Text"
           },
           {
+            "id": "01f0c450-6c00-7000-8000-000000000750",
+            "props": {
+              "form": "signup"
+            },
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-000000000751",
+                "props": {
+                  "data": {
+                    "$expr": "\"scoped \" + form.values.name + \" error \" + (form.errors.name ?? \"none\") + \" valid \" + string(form.valid)"
+                  }
+                },
+                "testId": "scoped",
+                "type": "Text"
+              }
+            },
+            "type": "FormScope"
+          },
+          {
             "events": {
               "onPressed": {
                 "steps": [

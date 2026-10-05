@@ -55,6 +55,7 @@ Every widget type Plux documents can use, generated from the descriptors in `sch
 | [Flexible](#flexible) | 1 | layout | P3 | Controls how its child flexes along the main axis of a Row, Column or Flex. |
 | [FloatingActionButton](#floatingactionbutton) | 1 | input | P3 | A Material floating action button; `extended` shows an icon and a label. |
 | [ForEach](#foreach) | 1 | structure | P3 | Repeats its `item` template for every element of a bounded list, eagerly; use ListView for long or lazy lists. |
+| [FormScope](#formscope) | 1 | structure | P5 | Scopes a form declared on the page or component to its subtree: below it the `form` root is that form's state (`form.values.<field>`, `form.errors.<field>`, `form.valid`, `form.status`), kept up to date as the form changes. |
 | [FractionallySizedBox](#fractionallysizedbox) | 1 | layout | P3 | Sizes its child to a fraction of the available space. |
 | [GestureDetector](#gesturedetector) | 1 | interaction | P3 | Detects taps, long presses, drags and scale gestures on its child. |
 | [GridView](#gridview) | 1 | scrolling | P3 | A lazily built, scrollable grid of `item` templates over `items` (WGT-012). |
@@ -1284,6 +1285,20 @@ ID 3 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · android, ios · cost 3 µ
 | Slot | ID | Holds | Description |
 |---|---|---|---|
 | `item` | 1 | an item template, required | The template built for each item. |
+
+### FormScope
+
+Scopes a form declared on the page or component to its subtree: below it the `form` root is that form's state (`form.values.<field>`, `form.errors.<field>`, `form.valid`, `form.status`), kept up to date as the form changes.
+
+ID 103 · Layer 1 · P5 · revision 1 (runtime 0.3.0) · android, ios · cost 2 µs · role none
+
+| Prop | ID | Type | Default | Description |
+|---|---|---|---|---|
+| `form` | 1 | `string`, required | — | The name of the form to scope; a literal naming a form the page or component declares. |
+
+| Slot | ID | Holds | Description |
+|---|---|---|---|
+| `child` | 1 | one node, required | The subtree the form is scoped to. |
 
 ### FractionallySizedBox
 

@@ -17,6 +17,8 @@ import 'package:plux_flutter/src/actions/handlers.dart';
 import 'package:plux_flutter/src/actions/run.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/forms/form_state.dart';
+import 'package:plux_flutter/src/render/builders/builders.dart';
+import 'package:plux_flutter/src/schema/registry.g.dart';
 import 'package:plux_flutter/src/forms/handlers.dart';
 import 'package:plux_flutter/src/forms/validators.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
@@ -237,6 +239,29 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
     },
   );
+
+  testWidgets(
+    'below a FormScope the form root is the scoped form, live [STA-020]',
+    (tester) async {
+      await start(tester);
+      shows('scoped  error none valid false');
+      await enter(tester, name, 'A');
+      shows('scoped A error none valid false');
+      await tap(tester, 'validate');
+      shows('scoped A error At least 2 characters valid false');
+      await enter(tester, name, 'Ada');
+      shows('scoped Ada error none valid false');
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
+
+  test('FormScope\'s permanent IDs are the registry\'s [STA-020]', () {
+    final d = widgetDescriptors.singleWhere((w) => w.type == 'FormScope');
+    expect(d.id, formScopeWidgetId);
+    expect(d.props['form'], formScopeFormProp);
+    expect(d.slots['child'], formScopeChildSlot);
+    expect(manualBuilders, contains(formScopeWidgetId));
+  });
 
   testWidgets('a component keeps its own form [STA-020]', (tester) async {
     await start(tester);

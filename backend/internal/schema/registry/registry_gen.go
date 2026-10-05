@@ -1029,6 +1029,17 @@ var widgets = [...]Widget{
 		},
 	},
 	{
+		Type: "FormScope", ID: 103, Layer: 1, Phase: "P5", Revision: 1, Runtimes: []string{"0.3.0"},
+		Category: "structure", Icon: "assignment", Description: "Scopes a form declared on the page or component to its subtree: below it the `form` root is that form's state (`form.values.<field>`, `form.errors.<field>`, `form.valid`, `form.status`), kept up to date as the form changes.",
+		Platforms: PlatformAndroid | PlatformIOS, Cost: 2, Role: RoleNone, Interactive: false,
+		Props: []Prop{
+			{Name: "form", ID: 1, Type: "string", Required: true, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: "The name of the form to scope; a literal naming a form the page or component declares."},
+		},
+		Slots: []Slot{
+			{Name: "child", ID: 1, List: false, Required: true, Template: false, Revision: 1, Deprecated: nil, Description: "The subtree the form is scoped to."},
+		},
+	},
+	{
 		Type: "FractionallySizedBox", ID: 13, Layer: 1, Phase: "P3", Revision: 1, Runtimes: []string{"0.1.0"},
 		Category: "layout", Icon: "photo_size_select_large", Description: "Sizes its child to a fraction of the available space.",
 		Platforms: PlatformAndroid | PlatformIOS, Cost: 6, Role: RoleNone, Interactive: false,

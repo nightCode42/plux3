@@ -1,0 +1,43 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "FormScope",
+  "id": 103,
+  "layer": 1,
+  "phase": "P5",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.3.0"
+    }
+  ],
+  "category": "structure",
+  "icon": "assignment",
+  "description": "Scopes a form declared on the page or component to its subtree: below it the `form` root is that form's state (`form.values.<field>`, `form.errors.<field>`, `form.valid`, `form.status`), kept up to date as the form changes.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 2,
+  "accessibility": {
+    "role": "none",
+    "interactive": false
+  },
+  "props": [
+    {
+      "name": "form",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "description": "The name of the form to scope; a literal naming a form the page or component declares."
+    }
+  ],
+  "slots": [
+    {
+      "name": "child",
+      "id": 1,
+      "required": true,
+      "description": "The subtree the form is scoped to."
+    }
+  ]
+}

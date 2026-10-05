@@ -220,6 +220,9 @@ enum PluxErrorCode {
   /// Redirect loop.
   redirectLoop(1206, 'REDIRECT_LOOP', 'Redirect loop'),
 
+  /// FormScope names no form.
+  formScopeInvalid(1240, 'FORM_SCOPE_INVALID', 'FormScope names no form'),
+
   /// Page exceeds its node budget.
   pageNodeBudget(1310, 'PAGE_NODE_BUDGET', 'Page exceeds its node budget'),
 

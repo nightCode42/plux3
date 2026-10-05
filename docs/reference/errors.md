@@ -568,6 +568,14 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Break the cycle by guarding one of the redirects with a condition.
 
+### PLX-1240
+
+`FORM_SCOPE_INVALID` · error · FormScope names no form
+
+**Cause.** A FormScope's form is not a literal naming a form that the page or component declares, so the form root below it would have no state to read (STA-020).
+
+**Fix.** Set form to the literal name of a form declared in the page's or component's forms.
+
 ### PLX-1310
 
 `PAGE_NODE_BUDGET` · warning · Page exceeds its node budget

@@ -608,6 +608,14 @@
       "fix": "Break the cycle by guarding one of the redirects with a condition."
     },
     {
+      "code": "PLX-1240",
+      "reason": "FORM_SCOPE_INVALID",
+      "severity": "error",
+      "title": "FormScope names no form",
+      "cause": "A FormScope's form is not a literal naming a form that the page or component declares, so the form root below it would have no state to read (STA-020).",
+      "fix": "Set form to the literal name of a form declared in the page's or component's forms."
+    },
+    {
       "code": "PLX-1310",
       "reason": "PAGE_NODE_BUDGET",
       "severity": "warning",

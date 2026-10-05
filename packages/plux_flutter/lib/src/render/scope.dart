@@ -118,6 +118,7 @@ final class RenderScope {
     this.actions,
     this.componentState,
     this.emitEvent,
+    this.formAlias,
   });
 
   /// The release rendered.
@@ -181,36 +182,63 @@ final class RenderScope {
   /// component.
   final void Function(String event, Object? payload)? emitEvent;
 
+  /// The state path the `form` root reads below a `FormScope`, such as
+  /// `page.signup`; null outside one. A binding's read of `form.<path>`
+  /// subscribes to `<formAlias>.<path>`.
+  final String? formAlias;
+
   /// A scope with [extra] roots, for a template item.
-  RenderScope withRoots(Map<String, Object?> extra, String at) {
-    Map<String, Object?> all() => {...roots(), ...extra};
-    return RenderScope(
-      release: release,
-      plugin: plugin,
-      app: app,
-      pluginKey: pluginKey,
-      section: section,
-      resolver: ValueResolver(
-        plugin: plugin,
-        roots: all,
-        token: resolver.token,
-        translation: resolver.translation,
-        limits: resolver.limits,
-      ),
-      roots: all,
-      builders: builders,
-      cache: cache,
-      report: report,
-      services: services,
-      path: at,
-      state: state,
-      fills: fills,
-      parent: parent,
-      actions: actions,
-      componentState: componentState,
-      emitEvent: emitEvent,
-    );
+  RenderScope withRoots(Map<String, Object?> extra, String at) =>
+      _derive(() => {...roots(), ...extra}, at, formAlias);
+
+  /// The scope of a `FormScope` for the form [name] of the page or
+  /// component: the `form` root is that form's state, read afresh with
+  /// every evaluation (STA-020).
+  RenderScope withForm(String name, String at) {
+    final component = roots()['component'];
+    final root = component is Map && component.containsKey(name)
+        ? 'component'
+        : 'page';
+    Map<String, Object?> all() {
+      final base = roots();
+      final scope = base[root];
+      return {...base, 'form': scope is Map ? scope[name] : null};
+    }
+
+    return _derive(all, at, '$root.$name');
   }
+
+  RenderScope _derive(
+    Map<String, Object?> Function() all,
+    String at,
+    String? alias,
+  ) => RenderScope(
+    release: release,
+    plugin: plugin,
+    app: app,
+    pluginKey: pluginKey,
+    section: section,
+    resolver: ValueResolver(
+      plugin: plugin,
+      roots: all,
+      token: resolver.token,
+      translation: resolver.translation,
+      limits: resolver.limits,
+    ),
+    roots: all,
+    builders: builders,
+    cache: cache,
+    report: report,
+    services: services,
+    path: at,
+    state: state,
+    fills: fills,
+    parent: parent,
+    actions: actions,
+    componentState: componentState,
+    emitEvent: emitEvent,
+    formAlias: alias,
+  );
 
   /// The scope of the nearest [RenderScopeWidget].
   static RenderScope of(BuildContext context) {

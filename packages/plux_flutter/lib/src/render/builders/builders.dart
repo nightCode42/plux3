@@ -31,6 +31,7 @@ const Map<int, NodeBuilder> manualBuilders = {
   WidgetIds.responsive: _branch,
   WidgetIds.forEach: _forEach,
   WidgetIds.slot: _slot,
+  formScopeWidgetId: _formScope,
   WidgetIds.listView: _listView,
   WidgetIds.gridView: _gridView,
   WidgetIds.pageView: _pageView,
@@ -48,6 +49,26 @@ const Map<int, NodeBuilder> manualBuilders = {
 };
 
 // ── Structural primitives ──────────────────────────────────────────────────
+
+/// The permanent IDs of `FormScope` (P5, so not among the generated
+/// `WidgetIds`): the widget, its `form` prop and its `child` slot.
+const int formScopeWidgetId = 103;
+
+/// The permanent ID of `FormScope`'s `form` prop.
+const int formScopeFormProp = 1;
+
+/// The permanent ID of `FormScope`'s `child` slot.
+const int formScopeChildSlot = 1;
+
+/// `FormScope`: its child, below a scope whose `form` root is the named
+/// form's state (STA-020).
+Widget _formScope(NodeContext c) {
+  final name = c.decode(formScopeFormProp, asString);
+  if (name == null) {
+    return c.slot(formScopeChildSlot) ?? const SizedBox.shrink();
+  }
+  return (c as NodeContextImpl).formScope(formScopeChildSlot, name);
+}
 
 /// `If`, `Match` and `Responsive` outside a list of children: the chosen
 /// branch, or nothing.
