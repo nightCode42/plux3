@@ -273,6 +273,7 @@ func (u *unit) checkDecls() {
 		}
 	}
 	u.checkCollections(nil, app.Collections, "app.json")
+	u.checkCollectionDecl(nil, app.Collections, app.DroppedCollections, "app.json")
 	u.checkShellTabs()
 	for _, pl := range u.plugins {
 		if pl.scope != nil {
@@ -281,6 +282,7 @@ func (u *unit) checkDecls() {
 		pl.sources = u.checkSources(pl, pl.doc.DataSources, pl.file, pl.scope)
 		u.checkSourceCount(pl)
 		u.checkCollections(pl, pl.doc.Collections, pl.file)
+		u.checkCollectionDecl(pl, pl.doc.Collections, pl.doc.DroppedCollections, pl.file)
 	}
 }
 

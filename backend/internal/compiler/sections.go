@@ -56,7 +56,7 @@ func encode(u *unit) {
 	}
 	u.actionsSection(appOut, u.appGraphs)
 	u.localeSections(appOut)
-	u.schemasSection(appOut, u.types.app, u.appState, u.appSources, app.Collections, app.Variables, app.UserContext)
+	u.schemasSection(appOut, u.types.app, u.appState, u.appSources, app.Collections, app.DroppedCollections, app.Variables, app.UserContext)
 	u.appOut = appOut
 	for _, pl := range u.plugins {
 		o := newOut(kind(bundle.KindPlugin), pl, uuidBytes(pl.doc.ID), pl.key)
@@ -73,7 +73,7 @@ func encode(u *unit) {
 			o.add(bundle.SectionComponent, uuidBytes(c.doc.ID), u.componentSection(o, c))
 		}
 		u.actionsSection(o, pl.lowered)
-		u.schemasSection(o, u.types.plugin[pl], pl.state, pl.sources, pl.doc.Collections, nil, nil)
+		u.schemasSection(o, u.types.plugin[pl], pl.state, pl.sources, pl.doc.Collections, pl.doc.DroppedCollections, nil, nil)
 		u.pluginOuts = append(u.pluginOuts, o)
 	}
 }
@@ -536,7 +536,7 @@ func (u *unit) localeSections(o *out) {
 // schemasSection encodes declared types, state, data sources, collections,
 // variables and user context (BND-004, BND-017).
 func (u *unit) schemasSection(o *out, types map[string]pxl.TypeSpec, state []*stateEntry, sources []*dataSource,
-	cols []schema.Collection, vars, userContext []schema.Field,
+	cols []schema.Collection, dropped []string, vars, userContext []schema.Field,
 ) {
 	b := flatbuffers.NewBuilder(2048)
 	e := &valueEnc{u: u, o: o, b: b, strs: o.shared}
@@ -568,6 +568,7 @@ func (u *unit) schemasSection(o *out, types map[string]pxl.TypeSpec, state []*st
 		colOffs[i] = collectionTable(e, c)
 	}
 	cv := offsetVector(b, colOffs)
+	dropV := droppedVector(b, dropped)
 	vv := e.params(fieldParams(vars))
 	uv := e.params(fieldParams(userContext))
 	var natives nativeDecls
@@ -581,6 +582,7 @@ func (u *unit) schemasSection(o *out, types map[string]pxl.TypeSpec, state []*st
 	fbs.SchemasAddCollections(b, cv)
 	fbs.SchemasAddVariables(b, vv)
 	fbs.SchemasAddUserContext(b, uv)
+	addOptional(b, dropV, fbs.SchemasAddDroppedCollections)
 	addOptional(b, natives.routes, fbs.SchemasAddNativeRoutes)
 	addOptional(b, natives.slots, fbs.SchemasAddNativeSlots)
 	addOptional(b, natives.actions, fbs.SchemasAddNativeActions)
@@ -617,6 +619,7 @@ func collectionTable(e *valueEnc, c schema.Collection) flatbuffers.UOffsetT {
 		idxOffs[i] = fbs.IndexEnd(b)
 	}
 	iv := offsetVector(b, idxOffs)
+	mv := collectionMigrations(e, c.Migrations)
 	key := e.strs.of(c.Key)
 	fbs.CollectionStart(b)
 	hi, lo := uuidHalves(uuidBytes(c.ID))
@@ -625,7 +628,66 @@ func collectionTable(e *valueEnc, c schema.Collection) flatbuffers.UOffsetT {
 	fbs.CollectionAddFields(b, fv)
 	fbs.CollectionAddPrimaryKey(b, pkv)
 	fbs.CollectionAddIndexes(b, iv)
+	if v := collectionVersion(c); v > 1 {
+		fbs.CollectionAddVersion(b, uint32(min(v, 1<<32-1))) //nolint:gosec // G115: clamped.
+	}
+	addOptional(b, mv, fbs.CollectionAddMigrations)
 	return fbs.CollectionEnd(b)
+}
+
+// collectionMigrations writes a collection's migration plans, oldest
+// first; 0 when it has none (DB-005).
+func collectionMigrations(e *valueEnc, plans []schema.CollectionMigration) flatbuffers.UOffsetT {
+	if len(plans) == 0 {
+		return 0
+	}
+	b := e.b
+	sorted := slices.Clone(plans)
+	slices.SortFunc(sorted, func(x, y schema.CollectionMigration) int { return int(x.From - y.From) })
+	offs := make([]flatbuffers.UOffsetT, len(sorted))
+	for i, m := range sorted {
+		strs := func(names []string) flatbuffers.UOffsetT {
+			ids := make([]uint32, len(names))
+			for j, n := range names {
+				ids[j] = e.strs.of(n)
+			}
+			return u32Vector(b, ids)
+		}
+		dv, rv := strs(m.Drop), strs(m.Reset)
+		to := sortedKeys(m.Rename)
+		renames := make([]flatbuffers.UOffsetT, len(to))
+		for j, n := range to {
+			nn, old := e.strs.of(n), e.strs.of(m.Rename[n])
+			fbs.FieldRenameStart(b)
+			fbs.FieldRenameAddTo(b, nn)
+			fbs.FieldRenameAddFrom(b, old)
+			renames[j] = fbs.FieldRenameEnd(b)
+		}
+		rnv := offsetVector(b, renames)
+		fbs.CollectionMigrationStart(b)
+		fbs.CollectionMigrationAddFrom(b, uint32(max(0, min(m.From, 1<<32-1)))) //nolint:gosec // G115: clamped.
+		fbs.CollectionMigrationAddRename(b, rnv)
+		fbs.CollectionMigrationAddDrop(b, dv)
+		fbs.CollectionMigrationAddReset(b, rv)
+		offs[i] = fbs.CollectionMigrationEnd(b)
+	}
+	return offsetVector(b, offs)
+}
+
+// droppedVector writes the IDs of dropped collections, sorted; 0 when
+// there are none (DB-005).
+func droppedVector(b *flatbuffers.Builder, ids []string) flatbuffers.UOffsetT {
+	if len(ids) == 0 {
+		return 0
+	}
+	sorted := slices.Clone(ids)
+	slices.Sort(sorted)
+	fbs.SchemasStartDroppedCollectionsVector(b, len(sorted))
+	for i := len(sorted) - 1; i >= 0; i-- {
+		hi, lo := uuidHalves(uuidBytes(sorted[i]))
+		fbs.CreateUuid(b, hi, lo)
+	}
+	return b.EndVector(len(sorted))
 }
 
 // assets adds the assets-index sections — every asset to the app bundle,

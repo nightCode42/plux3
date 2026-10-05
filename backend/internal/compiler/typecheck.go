@@ -568,7 +568,11 @@ func (t *typer) graph(g *graph, s *scope) {
 	compileStep := func(i int, s *scope) {
 		s = s.narrow(entries[i])
 		for _, name := range sortedKeys(g.steps[i].Input) {
-			t.compileAll(g.steps[i].Input[name], s, from, g.file, g.ptr+plxerr.Pointer("steps", strconv.Itoa(i), "input", name))
+			is := s
+			if g.steps[i].Action == "dbQuery" && name == "where" {
+				is = t.recordScope(g, g.steps[i], s)
+			}
+			t.compileAll(g.steps[i].Input[name], is, from, g.file, g.ptr+plxerr.Pointer("steps", strconv.Itoa(i), "input", name))
 		}
 	}
 	t.loops(g, s, compileStep)

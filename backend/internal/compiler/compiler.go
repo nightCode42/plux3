@@ -105,6 +105,10 @@ type Result struct {
 	// each bundle, by bundle key ("" for the app): publishing compares
 	// them with the previous release's (STA-040, CheckStoredState).
 	StoredState map[string][]StoredEntry
+	// Collections are the local collections of each bundle, by bundle key
+	// ("" for the app): publishing compares them with the previous
+	// release's (DB-005, CheckCollections).
+	Collections map[string]CollectionSet
 }
 
 // stage is one step of the pipeline (CMP-003). Checking stages run even
@@ -165,6 +169,7 @@ func Compile(fsys fs.FS, opts Options) (res *Result) {
 	if !u.diags.HasErrors() {
 		res.App, res.Plugins, res.Files = u.app, u.outputs, u.files
 		res.StoredState = u.storedOf()
+		res.Collections = u.collectionsOf()
 	}
 	return res
 }
