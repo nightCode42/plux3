@@ -31,9 +31,12 @@ image="system-images;android-$api;google_apis;x86_64"
 avd=plux_e2e_$api
 # The test server's address (backend/internal/server/starter_e2e_integration_test.go).
 port=18094
-# The reference backend's address the reference apps reach over its own
-# reverse forward (test/refapi, backend/internal/server/reference_e2e_integration_test.go).
-refapi_port=18095
+# The reference apps' servers (Plux Bank 18097, Plux Express 18098) and their
+# reference backend (18096; test/refapi), which the device reaches over
+# reverse forwards of their own
+# (backend/internal/server/reference_e2e_integration_test.go).
+refapi_port=18096
+reference_ports="18097 18098"
 mkdir -p "$out"
 
 yes | "$tools/sdkmanager" --licenses >/dev/null || true
@@ -103,6 +106,8 @@ for s in window_animation_scale transition_animation_scale animator_duration_sca
 	"$adb" -s "$serial" shell settings put global "$s" 0
 done
 "$adb" -s "$serial" reverse "tcp:$port" "tcp:$port"
-"$adb" -s "$serial" reverse "tcp:$refapi_port" "tcp:$refapi_port"
+for p in $refapi_port $reference_ports; do
+	"$adb" -s "$serial" reverse "tcp:$p" "tcp:$p"
+done
 
 PLUX_E2E_REFAPI_ADDR=127.0.0.1:$refapi_port PLUX_E2E_DEVICE=$serial make -C "$root" --no-print-directory e2e-starter 2>&1 | tee "$out/android-$api.log"
