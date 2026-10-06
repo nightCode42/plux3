@@ -12,8 +12,8 @@
 #
 # Installs the emulator and a Google APIs x86_64 system image with the SDK's
 # own tools, boots a headless emulator (hardware acceleration needs KVM),
-# forwards the device's loopback port of the test server to this machine
-# (adb reverse), and runs the Go driver with PLUX_E2E_DEVICE, which builds
+# forwards the device's loopback ports of the test server and the reference
+# backend to this machine (adb reverse), and runs the Go driver with PLUX_E2E_DEVICE, which builds
 # the app for the emulator and runs integration_test/app_test.dart there.
 # While the emulator boots, it builds the Go driver, the app's Android
 # project and the add-to-app host, so the builds the flows start recompile
@@ -31,6 +31,9 @@ image="system-images;android-$api;google_apis;x86_64"
 avd=plux_e2e_$api
 # The test server's address (backend/internal/server/starter_e2e_integration_test.go).
 port=18094
+# The reference backend's address the reference apps reach over its own
+# reverse forward (test/refapi, backend/internal/server/reference_e2e_integration_test.go).
+refapi_port=18095
 mkdir -p "$out"
 
 yes | "$tools/sdkmanager" --licenses >/dev/null || true
@@ -100,5 +103,6 @@ for s in window_animation_scale transition_animation_scale animator_duration_sca
 	"$adb" -s "$serial" shell settings put global "$s" 0
 done
 "$adb" -s "$serial" reverse "tcp:$port" "tcp:$port"
+"$adb" -s "$serial" reverse "tcp:$refapi_port" "tcp:$refapi_port"
 
-PLUX_E2E_DEVICE=$serial make -C "$root" --no-print-directory e2e-starter 2>&1 | tee "$out/android-$api.log"
+PLUX_E2E_REFAPI_ADDR=127.0.0.1:$refapi_port PLUX_E2E_DEVICE=$serial make -C "$root" --no-print-directory e2e-starter 2>&1 | tee "$out/android-$api.log"

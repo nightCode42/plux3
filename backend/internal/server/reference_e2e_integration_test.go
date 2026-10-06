@@ -105,6 +105,10 @@ func runReferenceApp(t *testing.T, app referenceApp) {
 		ctx, cancel = context.WithTimeout(ctx, deviceTimeout(t))
 		defer cancel()
 		live = os.Stdout
+		// One result bundle per app: xcodebuild refuses a path that exists.
+		if bundle := os.Getenv("PLUX_E2E_XCRESULT"); bundle != "" {
+			t.Setenv("PLUX_E2E_XCRESULT", strings.TrimSuffix(bundle, ".xcresult")+"-"+app.dir+".xcresult")
+		}
 		steps, succeeded = deviceSteps(flutter, device, defines)
 	}
 	var out bytes.Buffer
