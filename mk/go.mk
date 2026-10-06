@@ -10,7 +10,7 @@
 
 # How long `make go-fuzz` runs each fuzz target.
 FUZZTIME      ?= 30s
-GO_MODULES    := backend tools
+GO_MODULES    := backend tools test/refapi
 # Everything `make gen` writes; `go-gen-check` fails if any of it changes.
 GEN_PATHS     := backend tools docs/reference packages studio/packages schema
 PROTO_DIR     := proto
