@@ -224,8 +224,9 @@ func (e env) ready(ctx context.Context, server string) error {
 	return nil
 }
 
-// readProject reads the project's documents: every file except plux.json
-// and hidden ones.
+// readProject reads the project's documents: every file except plux.json,
+// hidden ones and Plux Test scenarios, which plux test runs locally and the
+// server does not keep (TST-001).
 func readProject(dir string) (map[string][]byte, error) {
 	out := map[string][]byte{}
 	err := fs.WalkDir(os.DirFS(dir), ".", func(path string, d fs.DirEntry, err error) error {
@@ -238,7 +239,7 @@ func readProject(dir string) (map[string][]byte, error) {
 			}
 			return nil
 		}
-		if d.IsDir() || path == projectFile {
+		if d.IsDir() || path == projectFile || isScenario(path) {
 			return nil
 		}
 		data, err := os.ReadFile(filepath.Join(dir, path)) //nolint:gosec // G304: the user's own project.
@@ -252,6 +253,11 @@ func readProject(dir string) (map[string][]byte, error) {
 		return nil, fmt.Errorf("read the project: %w", err)
 	}
 	return out, nil
+}
+
+// isScenario reports whether path names a Plux Test scenario file.
+func isScenario(path string) bool {
+	return strings.HasSuffix(path, ".scenario.yaml") || strings.HasSuffix(path, ".scenario.json")
 }
 
 // exportDraft downloads the app's drafts in the Git layout.
