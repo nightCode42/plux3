@@ -74,9 +74,12 @@ it touched on `<form>.touched.<field>`; the compiler refuses writes to any other
 
 - `validateForm` runs every validator and records the errors; its output is whether the
   form is valid, and the run continues on its `valid` or `invalid` branch.
-- `submitForm` validates, then sets `status` to `submitting` and outputs the values; the step
-  fails with a validation error (`PLX-5350`) when the form is invalid, and `status` becomes
-  `succeeded` or `failed` when the run ends.
+- `submitForm` validates, then sets `status` to `submitting` and outputs the values, and
+  `status` becomes `succeeded` or `failed` when the run ends. An invalid form follows the
+  step's `invalid` branch, with a null output, when the step wires one; otherwise the step
+  fails with a validation error (`PLX-5350`).
+- `FormScope` scopes one of the owner's forms to its subtree: below it, `form` reads that
+  form's state (`PLX-1240` for a form the owner does not declare).
 - `resetForm` restores the initial values and clears errors, `dirty` and `touched`.
 
 A form action that names a form its scope does not declare fails with `PLX-5351`.
