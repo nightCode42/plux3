@@ -8,6 +8,8 @@ environment:
 
 workspace:
   - apps/add_to_app/plux_module
+  - apps/plux_bank
+  - apps/plux_express
   - apps/starter
   - packages/plux_auto_route
   - packages/plux_db_drift
