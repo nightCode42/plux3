@@ -22,7 +22,7 @@ func pipeConn(t *testing.T) (*wsConn, net.Conn) {
 
 // readFrom runs readMessage while the client writes raw bytes, and returns
 // what the server's side saw and the frames it sent back.
-func readFrom(t *testing.T, raw ...[]byte) (op byte, data []byte, err error, sent []byte) {
+func readFrom(t *testing.T, raw ...[]byte) (op byte, data []byte, sent []byte, err error) {
 	t.Helper()
 	c, client := pipeConn(t)
 	type result struct {
@@ -59,7 +59,7 @@ func readFrom(t *testing.T, raw ...[]byte) (op byte, data []byte, err error, sen
 	}()
 	r := <-done
 	_ = c.conn.Close()
-	return r.op, r.data, r.err, <-replies
+	return r.op, r.data, <-replies, r.err
 }
 
 func TestReadMessage(t *testing.T) {
@@ -89,7 +89,7 @@ func TestReadMessage(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			op, data, err, sent := readFrom(t, tc.frames...)
+			op, data, sent, err := readFrom(t, tc.frames...)
 			if !errors.Is(err, tc.wantErr) {
 				t.Fatalf("error %v, want %v", err, tc.wantErr)
 			}
@@ -105,7 +105,7 @@ func TestReadMessage(t *testing.T) {
 
 func TestReadMessageRefusesFragmentsOverTheLimit(t *testing.T) {
 	half := bytes.Repeat([]byte("x"), 40_000)
-	_, _, err, sent := readFrom(t,
+	_, _, sent, err := readFrom(t,
 		maskedFrame(opText, false, half), maskedFrame(opContinuation, false, half))
 	if !errors.Is(err, errWSTooBig) || !bytes.Equal(sent, []byte{0x80 | opClose, 2, 0x03, 0xF1}) {
 		t.Fatalf("error %v, sent %x", err, sent)

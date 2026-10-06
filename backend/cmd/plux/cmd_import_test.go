@@ -133,7 +133,11 @@ func TestMockServesUntilInterrupted(t *testing.T) {
 	if !strings.HasPrefix(base, "http://127.0.0.1:") {
 		t.Fatalf("the mock must listen on loopback by default: %s", line)
 	}
-	resp, err := http.Get(base + "/todos")
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, base+"/todos", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatal(err)
 	}

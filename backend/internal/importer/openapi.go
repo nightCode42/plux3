@@ -5,6 +5,7 @@ package importer
 
 import (
 	"context"
+	"errors"
 	"net/url"
 	"path"
 	"slices"
@@ -22,7 +23,7 @@ var methods = []string{"GET", "POST", "PUT", "PATCH", "DELETE"}
 
 // LoadOpenAPI parses and validates an OpenAPI 3.x document in JSON or YAML.
 // Every problem is reported as a diagnostic located in file.
-func LoadOpenAPI(file string, data []byte) (*openapi3.T, plxerr.Diagnostics) {
+func LoadOpenAPI(ctx context.Context, file string, data []byte) (*openapi3.T, plxerr.Diagnostics) {
 	bad := func(format string, args ...any) (*openapi3.T, plxerr.Diagnostics) {
 		return nil, plxerr.Diagnostics{plxerr.NewDiagnostic(plxerr.ImportDocumentInvalid, plxerr.Location{File: file}, format, args...)}
 	}
@@ -34,7 +35,7 @@ func LoadOpenAPI(file string, data []byte) (*openapi3.T, plxerr.Diagnostics) {
 	if !strings.HasPrefix(doc.OpenAPI, "3.") {
 		return bad("the document declares openapi %q; only OpenAPI 3.x can be imported", doc.OpenAPI)
 	}
-	if err := doc.Validate(context.Background()); err != nil {
+	if err := doc.Validate(ctx); err != nil {
 		return bad("%v", err)
 	}
 	return doc, nil
@@ -43,8 +44,8 @@ func LoadOpenAPI(file string, data []byte) (*openapi3.T, plxerr.Diagnostics) {
 // ImportOpenAPI reads an OpenAPI 3.x document and returns one REST data
 // source with a typed operation per path and method (DAT-002). An operation
 // that uses a construct without a Plux type is reported and left out.
-func ImportOpenAPI(file string, data []byte) Result {
-	doc, diags := LoadOpenAPI(file, data)
+func ImportOpenAPI(ctx context.Context, file string, data []byte) Result {
+	doc, diags := LoadOpenAPI(ctx, file, data)
 	if doc == nil {
 		return Result{Diagnostics: diags}
 	}
@@ -57,43 +58,8 @@ func ImportOpenAPI(file string, data []byte) Result {
 		title = strings.TrimSuffix(path.Base(file), path.Ext(file))
 	}
 	srcName := lowerCamel(title)
-	ops := map[string]any{}
-	mocks := map[string]any{}
-	if doc.Paths != nil {
-		pathKeys := sortedKeys(doc.Paths.Map())
-		for _, p := range pathKeys {
-			item := doc.Paths.Map()[p]
-			all := item.Operations()
-			for _, m := range sortedKeys(all) {
-				if !slices.Contains(methods, m) {
-					diags = append(diags, plxerr.NewDiagnostic(plxerr.ImportConstructUnsupported,
-						plxerr.Location{File: file, Path: plxerr.Pointer("paths", p, strings.ToLower(m))},
-						"%s %s: a data source operation is GET, POST, PUT, PATCH or DELETE; the operation is left out", m, p))
-				}
-			}
-			for _, m := range methods {
-				op := all[m]
-				if op == nil {
-					continue
-				}
-				ptr := plxerr.Pointer("paths", p, strings.ToLower(m))
-				name, cfg, mock, err := c.operation(p, m, item, op, ptr)
-				if err == nil && ops[name] != nil {
-					err = unsupportedAt(ptr, "the operation name %q is already used by another operation", name)
-				}
-				if err != nil {
-					diags = append(diags, plxerr.NewDiagnostic(plxerr.ImportConstructUnsupported,
-						plxerr.Location{File: file, Path: errPointer(err, ptr)},
-						"%s %s: %v; the operation is left out", m, p, err))
-					continue
-				}
-				ops[name] = cfg
-				if mock != nil {
-					mocks[name] = mock
-				}
-			}
-		}
-	}
+	ops, mocks, opDiags := c.operations()
+	diags = append(diags, opDiags...)
 	variable := srcName + "BaseUrl"
 	read := firstRead(ops, func(cfg map[string]any) bool {
 		return cfg["method"] == "GET" && cfg["output"] != nil && c.types.optionalInput(cfg["input"])
@@ -142,6 +108,57 @@ func ImportOpenAPI(file string, data []byte) Result {
 	return finish(frag, diags, file)
 }
 
+// operations converts every operation of the document's paths: the
+// configurations by name, the design-time mocks by name, and the
+// diagnostics of what was left out.
+func (c *oaConv) operations() (ops, mocks map[string]any, diags plxerr.Diagnostics) {
+	ops, mocks = map[string]any{}, map[string]any{}
+	if c.doc.Paths == nil {
+		return ops, mocks, nil
+	}
+	paths := c.doc.Paths.Map()
+	for _, p := range sortedKeys(paths) {
+		item := paths[p]
+		all := item.Operations()
+		diags = append(diags, c.unsupportedMethods(p, all)...)
+		for _, m := range methods {
+			if all[m] == nil {
+				continue
+			}
+			ptr := plxerr.Pointer("paths", p, strings.ToLower(m))
+			name, cfg, mock, err := c.operation(p, m, item, all[m], ptr)
+			if err == nil && ops[name] != nil {
+				err = unsupportedAt(ptr, "the operation name %q is already used by another operation", name)
+			}
+			if err != nil {
+				diags = append(diags, plxerr.NewDiagnostic(plxerr.ImportConstructUnsupported,
+					plxerr.Location{File: c.file, Path: errPointer(err, ptr)},
+					"%s %s: %v; the operation is left out", m, p, err))
+				continue
+			}
+			ops[name] = cfg
+			if mock != nil {
+				mocks[name] = mock
+			}
+		}
+	}
+	return ops, mocks, diags
+}
+
+// unsupportedMethods reports the operations of a path whose HTTP method a
+// data source cannot use.
+func (c *oaConv) unsupportedMethods(p string, all map[string]*openapi3.Operation) plxerr.Diagnostics {
+	var diags plxerr.Diagnostics
+	for _, m := range sortedKeys(all) {
+		if !slices.Contains(methods, m) {
+			diags = append(diags, plxerr.NewDiagnostic(plxerr.ImportConstructUnsupported,
+				plxerr.Location{File: c.file, Path: plxerr.Pointer("paths", p, strings.ToLower(m))},
+				"%s %s: a data source operation is GET, POST, PUT, PATCH or DELETE; the operation is left out", m, p))
+		}
+	}
+	return diags
+}
+
 // limit returns f() when ok, cut to the description limit of the schema.
 func describe(ok bool, f func() string) string {
 	if !ok {
@@ -156,7 +173,8 @@ func describe(ok bool, f func() string) string {
 
 // errPointer returns the pointer an unsupported error carries, or def.
 func errPointer(err error, def string) string {
-	if u, ok := err.(*unsupported); ok && u.ptr != "" {
+	var u *unsupported
+	if errors.As(err, &u) && u.ptr != "" {
 		return u.ptr
 	}
 	return def
@@ -200,7 +218,7 @@ func (c *oaConv) operation(p, method string, item *openapi3.PathItem, op *openap
 	oc := &opCtx{name: upperCamel(name), pending: map[string]map[string]any{}}
 	cfg := map[string]any{"method": method, "path": p}
 
-	fields, err := c.inputFields(oc, p, method, item, op, ptr)
+	fields, err := c.inputFields(oc, method, item, op, ptr)
 	if err != nil {
 		return "", nil, nil, err
 	}
@@ -280,7 +298,7 @@ func (c *oaConv) secured(op *openapi3.Operation) bool {
 // inputFields builds the operation's input fields from its path and query
 // parameters, or from its JSON request body (DAT-001: the parameters of a
 // call become the path, then the query of a GET or the body of a POST).
-func (c *oaConv) inputFields(oc *opCtx, p, method string, item *openapi3.PathItem, op *openapi3.Operation, ptr string) ([]map[string]any, error) {
+func (c *oaConv) inputFields(oc *opCtx, method string, item *openapi3.PathItem, op *openapi3.Operation, ptr string) ([]map[string]any, error) {
 	params := map[string]*openapi3.Parameter{}
 	for _, list := range []openapi3.Parameters{item.Parameters, op.Parameters} {
 		for _, pr := range list {
@@ -290,54 +308,83 @@ func (c *oaConv) inputFields(oc *opCtx, p, method string, item *openapi3.PathIte
 		}
 	}
 	readsQuery := method == "GET" || method == "DELETE"
-	var fields []map[string]any
-	seen := map[string]bool{}
-	add := func(f map[string]any) error {
-		n := f["name"].(string)
-		if seen[n] {
-			return unsupportedAt(ptr, "the input field %q is declared twice", n)
-		}
-		seen[n] = true
-		fields = append(fields, f)
-		return nil
-	}
+	fs := &fieldSet{ptr: ptr, seen: map[string]bool{}}
 	for _, key := range sortedKeys(params) {
-		pr := params[key]
-		switch pr.In {
-		case openapi3.ParameterInHeader, openapi3.ParameterInCookie:
-			if pr.Required && !strings.EqualFold(pr.Name, "authorization") {
-				return nil, unsupportedAt(ptr, "the required %s parameter %q cannot be sent by a data source", pr.In, pr.Name)
-			}
-			continue
-		case openapi3.ParameterInQuery:
-			if !readsQuery {
-				return nil, unsupportedAt(ptr, "the query parameter %q on a %s: a data source sends the parameters of a %s as its body", pr.Name, method, method)
-			}
-		}
-		if !nameShapeOK(pr.Name) {
-			return nil, unsupportedAt(ptr, "the parameter %q is not a valid Plux name (lowerCamelCase); a name cannot be changed without changing the request", pr.Name)
-		}
-		if pr.Schema == nil {
-			return nil, unsupportedAt(ptr, "the parameter %q has no schema", pr.Name)
-		}
-		t, err := c.typeOf(oc, pr.Schema, ptr, oc.name+upperCamel(pr.Name), nil)
+		f, err := c.parameterField(oc, params[key], method, readsQuery, ptr)
 		if err != nil {
 			return nil, err
 		}
-		required := pr.Required || pr.In == openapi3.ParameterInPath
-		if err := add(field(pr.Name, optional(t, required), pr.Description, false)); err != nil {
+		if f == nil {
+			continue
+		}
+		if err := fs.add(f); err != nil {
 			return nil, err
 		}
 	}
+	if err := c.bodyFields(oc, op, method, readsQuery, ptr, fs); err != nil {
+		return nil, err
+	}
+	return fs.fields, nil
+}
+
+// fieldSet collects the input fields of an operation and refuses a name
+// declared twice.
+type fieldSet struct {
+	ptr    string
+	seen   map[string]bool
+	fields []map[string]any
+}
+
+func (fs *fieldSet) add(f map[string]any) error {
+	n := f["name"].(string)
+	if fs.seen[n] {
+		return unsupportedAt(fs.ptr, "the input field %q is declared twice", n)
+	}
+	fs.seen[n] = true
+	fs.fields = append(fs.fields, f)
+	return nil
+}
+
+// parameterField converts a path, query, header or cookie parameter to an
+// input field; it returns nil for a header or cookie parameter that the
+// data source need not send.
+func (c *oaConv) parameterField(oc *opCtx, pr *openapi3.Parameter, method string, readsQuery bool, ptr string) (map[string]any, error) {
+	switch pr.In {
+	case openapi3.ParameterInHeader, openapi3.ParameterInCookie:
+		if pr.Required && !strings.EqualFold(pr.Name, "authorization") {
+			return nil, unsupportedAt(ptr, "the required %s parameter %q cannot be sent by a data source", pr.In, pr.Name)
+		}
+		return nil, nil
+	case openapi3.ParameterInQuery:
+		if !readsQuery {
+			return nil, unsupportedAt(ptr, "the query parameter %q on a %s: a data source sends the parameters of a %s as its body", pr.Name, method, method)
+		}
+	}
+	if !nameShapeOK(pr.Name) {
+		return nil, unsupportedAt(ptr, "the parameter %q is not a valid Plux name (lowerCamelCase); a name cannot be changed without changing the request", pr.Name)
+	}
+	if pr.Schema == nil {
+		return nil, unsupportedAt(ptr, "the parameter %q has no schema", pr.Name)
+	}
+	t, err := c.typeOf(oc, pr.Schema, ptr, oc.name+upperCamel(pr.Name), nil)
+	if err != nil {
+		return nil, err
+	}
+	required := pr.Required || pr.In == openapi3.ParameterInPath
+	return field(pr.Name, optional(t, required), pr.Description, false), nil
+}
+
+// bodyFields adds the fields of the operation's JSON request body to fs.
+func (c *oaConv) bodyFields(oc *opCtx, op *openapi3.Operation, method string, readsQuery bool, ptr string, fs *fieldSet) error {
 	if op.RequestBody == nil || op.RequestBody.Value == nil {
-		return fields, nil
+		return nil
 	}
 	if readsQuery {
-		return nil, unsupportedAt(ptr, "a %s has a request body, which a data source cannot send", method)
+		return unsupportedAt(ptr, "a %s has a request body, which a data source cannot send", method)
 	}
 	media := jsonMedia(op.RequestBody.Value.Content)
 	if media == nil || media.Schema == nil {
-		return nil, unsupportedAt(ptr, "the request body is not JSON with a schema")
+		return unsupportedAt(ptr, "the request body is not JSON with a schema")
 	}
 	bodyName, stack := oc.name+"Body", []string(nil)
 	if rn := refName(media.Schema); rn != "" {
@@ -345,14 +392,14 @@ func (c *oaConv) inputFields(oc *opCtx, p, method string, item *openapi3.PathIte
 	}
 	bodyFields, err := c.objectFields(oc, media.Schema, ptr, bodyName, stack)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	for _, f := range bodyFields {
-		if err := add(f); err != nil {
-			return nil, err
+		if err := fs.add(f); err != nil {
+			return err
 		}
 	}
-	return fields, nil
+	return nil
 }
 
 func nameShapeOK(s string) bool {
@@ -366,7 +413,7 @@ func lowerCamelStrict(s string) string {
 		return "-"
 	}
 	for _, r := range s {
-		if !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9') {
+		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') && (r < '0' || r > '9') {
 			return "-"
 		}
 	}
@@ -476,20 +523,7 @@ func (c *oaConv) typeOf(oc *opCtx, ref *openapi3.SchemaRef, ptr, ctx string, sta
 	case s.Not != nil, len(s.PatternProperties) > 0, len(s.PrefixItems) > 0, s.If != nil, s.Const != nil:
 		return "", unsupportedAt(ptr, "not, patternProperties, prefixItems, if and const have no Plux type")
 	}
-	nullable := s.Nullable
-	var kinds []string
-	if s.Type != nil {
-		for _, t := range s.Type.Slice() {
-			if t == "null" {
-				nullable = true
-				continue
-			}
-			kinds = append(kinds, t)
-		}
-	}
-	if len(kinds) == 0 && len(s.Properties) > 0 {
-		kinds = []string{"object"}
-	}
+	kinds, nullable := schemaKinds(s)
 	if len(kinds) != 1 {
 		return "", unsupportedAt(ptr, "a schema with no single type has no Plux type")
 	}
@@ -525,8 +559,27 @@ func (c *oaConv) typeOf(oc *opCtx, ref *openapi3.SchemaRef, ptr, ctx string, sta
 	return t, nil
 }
 
+// schemaKinds lists the types a schema allows apart from null, and whether
+// it allows null. A schema with properties and no type is an object.
+func schemaKinds(s *openapi3.Schema) (kinds []string, nullable bool) {
+	nullable = s.Nullable
+	if s.Type != nil {
+		for _, t := range s.Type.Slice() {
+			if t == "null" {
+				nullable = true
+				continue
+			}
+			kinds = append(kinds, t)
+		}
+	}
+	if len(kinds) == 0 && len(s.Properties) > 0 {
+		kinds = []string{"object"}
+	}
+	return kinds, nullable
+}
+
 // stringType converts a string schema: an enum, a date or a plain string.
-func (c *oaConv) stringType(oc *opCtx, s *openapi3.Schema, ptr, name string) (string, error) {
+func (*oaConv) stringType(oc *opCtx, s *openapi3.Schema, ptr, name string) (string, error) {
 	if len(s.Enum) > 0 {
 		members := make([]any, 0, len(s.Enum))
 		for _, e := range s.Enum {
@@ -557,11 +610,11 @@ func (c *oaConv) stringType(oc *opCtx, s *openapi3.Schema, ptr, name string) (st
 }
 
 func isEnumMember(s string) bool {
-	if s == "" || len(s) > maxNameLength || !(s[0] >= 'a' && s[0] <= 'z' || s[0] >= 'A' && s[0] <= 'Z') {
+	if s == "" || len(s) > maxNameLength || ((s[0] < 'a' || s[0] > 'z') && (s[0] < 'A' || s[0] > 'Z')) {
 		return false
 	}
 	for _, r := range s {
-		if !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9') {
+		if (r < 'a' || r > 'z') && (r < 'A' || r > 'Z') && (r < '0' || r > '9') {
 			return false
 		}
 	}

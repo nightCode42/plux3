@@ -355,67 +355,93 @@ func (u *unit) checkRef(g *graph, in registry.Input, raw json.RawMessage, c vctx
 		u.report(c.code, c.file, c.ptr, "input %q names a %s and is written as a literal string", in.Name, in.Ref)
 		return nil
 	}
-	resolved, kind, to := true, EdgeKind(""), ""
 	switch in.Ref {
 	case "state":
 		if v, isForm := u.formStatePath(g, name, c); isForm {
 			return v
 		}
+	case "componentEvent":
+		return u.componentEventRef(g, name, c)
+	}
+	t := u.refTarget(g, in.Ref, name, c)
+	if t.reported {
+		return nil
+	}
+	if !t.resolved {
+		u.report(plxerr.UnresolvedReference, c.file, c.ptr, "no %s is named %q", in.Ref, name)
+		return nil
+	}
+	if t.kind != "" {
+		u.graph.add(Edge{From: c.from, Kind: t.kind, To: t.to, File: c.file, Path: c.ptr})
+	}
+	return &value{kind: fbs.ValueKindString, s: name}
+}
+
+// refResolution is what a named reference points at: whether it resolved,
+// and the edge it adds to the dependency graph, if any. reported is set
+// when resolving it already reported a finding.
+type refResolution struct {
+	resolved bool
+	kind     EdgeKind
+	to       string
+	reported bool
+}
+
+// refTarget looks up the entity of the given reference kind that name
+// refers to.
+func (u *unit) refTarget(g *graph, ref, name string, c vctx) refResolution {
+	switch ref {
+	case "state":
 		root, entry, _ := strings.Cut(name, ".")
 		id, ok := g.scope.ids[root][entry]
-		resolved, kind, to = ok && refRoots[root], EdgeUsesState, id
+		return refResolution{resolved: ok && refRoots[root], kind: EdgeUsesState, to: id}
 	case "flow":
 		f, private := u.flowRef(g.plugin, name)
 		if private {
 			u.report(plxerr.FlowNotExported, c.file, c.ptr, "flow %q is not exported by its plugin", name)
-			return nil
+			return refResolution{reported: true}
 		}
-		resolved = f != nil
-		if f != nil {
-			f.used = true
-			kind, to = EdgeUsesGraph, f.doc.ID
+		if f == nil {
+			return refResolution{}
 		}
+		f.used = true
+		return refResolution{resolved: true, kind: EdgeUsesGraph, to: f.doc.ID}
 	case "dataSource":
 		id, ok := g.scope.ids["data"][name]
-		resolved, kind, to = ok, EdgeUsesDataSource, id
+		return refResolution{resolved: ok, kind: EdgeUsesDataSource, to: id}
 	case "stream":
-		src := u.streamSource(g, name)
-		resolved = src != nil
-		if src != nil {
-			kind, to = EdgeUsesDataSource, src.ID
-		}
+		return sourceResolution(u.streamSource(g, name))
 	case "operation":
 		src, _ := u.operation(g, name)
-		resolved = src != nil
-		if src != nil {
-			kind, to = EdgeUsesDataSource, src.ID
-		}
+		return sourceResolution(src)
 	case "collection":
 		id := u.collectionID(g.plugin, name)
-		resolved, kind, to = id != "", EdgeUsesCollection, id
+		return refResolution{resolved: id != "", kind: EdgeUsesCollection, to: id}
 	case "function":
-		resolved, kind, to = g.plugin != nil && g.plugin.functions[name], EdgeUsesFunction, name
+		return refResolution{resolved: g.plugin != nil && g.plugin.functions[name], kind: EdgeUsesFunction, to: name}
 	case "nativeAction":
-		_, resolved = u.natives.actions[name]
+		_, ok := u.natives.actions[name]
+		return refResolution{resolved: ok}
 	case "hostEvent":
-		_, resolved = u.hostEvents[name]
+		_, ok := u.hostEvents[name]
+		return refResolution{resolved: ok}
 	case "permission":
-		resolved = slices.Contains(permissionAPIs, name)
-	case "componentEvent":
-		return u.componentEventRef(g, name, c)
+		return refResolution{resolved: slices.Contains(permissionAPIs, name)}
 	case "tab":
-		resolved = u.hasTab(name)
+		return refResolution{resolved: u.hasTab(name)}
 	case "form":
-		resolved = u.formRef(g, name)
+		return refResolution{resolved: u.formRef(g, name)}
 	}
-	if !resolved {
-		u.report(plxerr.UnresolvedReference, c.file, c.ptr, "no %s is named %q", in.Ref, name)
-		return nil
+	return refResolution{resolved: true}
+}
+
+// sourceResolution is the resolution of a reference to a data source that
+// may not exist.
+func sourceResolution(src *schema.DataSource) refResolution {
+	if src == nil {
+		return refResolution{}
 	}
-	if kind != "" {
-		u.graph.add(Edge{From: c.from, Kind: kind, To: to, File: c.file, Path: c.ptr})
-	}
-	return &value{kind: fbs.ValueKindString, s: name}
+	return refResolution{resolved: true, kind: EdgeUsesDataSource, to: src.ID}
 }
 
 // flowByKey finds a plugin flow by key.

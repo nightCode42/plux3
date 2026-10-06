@@ -12,6 +12,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"io"
+	"math"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -59,7 +60,7 @@ func (r reply) errorCode(t *testing.T) string {
 // call sends a request and reads the whole response.
 func call(t *testing.T, srv *httptest.Server, method, path, token, body string, headers ...string) reply {
 	t.Helper()
-	req, err := http.NewRequest(method, srv.URL+path, strings.NewReader(body))
+	req, err := http.NewRequestWithContext(t.Context(), method, srv.URL+path, strings.NewReader(body))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,16 +105,17 @@ type testWS struct {
 
 // dialWS connects to path and completes the handshake; it returns the
 // handshake's response too, whose status is 101 when it worked.
-func dialWS(t *testing.T, srv *httptest.Server, path string) (*testWS, *http.Response) {
+func dialWS(t *testing.T, srv *httptest.Server, path string) (*testWS, *handshake) {
 	t.Helper()
 	pool := x509.NewCertPool()
 	pool.AddCert(srv.Certificate())
-	conn, err := tls.Dial("tcp", strings.TrimPrefix(srv.URL, "https://"), &tls.Config{RootCAs: pool, MinVersion: tls.VersionTLS12})
+	dialer := &tls.Dialer{Config: &tls.Config{RootCAs: pool, MinVersion: tls.VersionTLS12}}
+	conn, err := dialer.DialContext(t.Context(), "tcp", strings.TrimPrefix(srv.URL, "https://"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = conn.Close() })
-	req, err := http.NewRequest(http.MethodGet, srv.URL+path, nil)
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, srv.URL+path, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,7 +131,25 @@ func dialWS(t *testing.T, srv *httptest.Server, path string) (*testWS, *http.Res
 	if err != nil {
 		t.Fatal(err)
 	}
-	return &testWS{conn: conn, br: br}, res
+	_ = res.Body.Close()
+	return &testWS{conn: conn, br: br}, &handshake{StatusCode: res.StatusCode, Header: res.Header}
+}
+
+// handshake is what a WebSocket handshake answered with.
+type handshake struct {
+	StatusCode int
+	Header     http.Header
+}
+
+// frameLength is the payload length of a frame as an int; the test client
+// does not read frames longer than 2 GiB.
+func frameLength(t *testing.T, length uint64) int {
+	t.Helper()
+	if length > math.MaxInt32 {
+		t.Fatalf("a frame of %d bytes is too long for the test client", length)
+		return 0
+	}
+	return int(length)
 }
 
 // maskedFrame encodes a client frame.
@@ -195,7 +215,7 @@ func readServerFrame(t *testing.T, r io.Reader) (op byte, payload []byte) {
 		if _, err := io.ReadFull(r, b[:]); err != nil {
 			t.Fatal(err)
 		}
-		n = int(binary.BigEndian.Uint64(b[:]))
+		n = frameLength(t, binary.BigEndian.Uint64(b[:]))
 	}
 	payload = make([]byte, n)
 	if _, err := io.ReadFull(r, payload); err != nil {

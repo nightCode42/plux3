@@ -71,7 +71,7 @@ func TestBankEndpointsNeedAToken(t *testing.T) {
 				if r.status != http.StatusUnauthorized {
 					t.Fatalf("status %d, want 401", r.status)
 				}
-				if got := r.errorCode(t); got != "unauthorized" {
+				if got := r.errorCode(t); got != "unauthorised" {
 					t.Fatalf("error code %q", got)
 				}
 			})

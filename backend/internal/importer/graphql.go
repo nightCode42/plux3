@@ -40,32 +40,7 @@ func ImportGraphQL(schemaSrc Source, docs []Source) Result {
 	var diags plxerr.Diagnostics
 	ops := map[string]any{}
 	for _, src := range docs {
-		doc, err := parser.ParseQuery(&ast.Source{Name: src.File, Input: string(src.Data)})
-		if err != nil {
-			diags = append(diags, gqlDiagnostic(plxerr.ImportDocumentInvalid, src.File, err))
-			continue
-		}
-		failed := map[*ast.OperationDefinition]bool{}
-		for _, e := range validator.ValidateWithRules(sch, doc, nil) {
-			diags = append(diags, gqlDiagnostic(plxerr.ImportOperationInvalid, src.File, e))
-			for _, op := range affected(doc, e) {
-				failed[op] = true
-			}
-		}
-		for _, op := range doc.Operations {
-			if failed[op] {
-				continue
-			}
-			name, cfg, err := g.operation(src.File, doc, op)
-			if err == nil && ops[name] != nil {
-				err = gqlProblem(plxerr.ImportOperationInvalid, op, "the operation name %q is already used by another operation", name)
-			}
-			if err != nil {
-				diags = append(diags, gqlOpDiagnostic(src.File, op, err))
-				continue
-			}
-			ops[name] = cfg
-		}
+		diags = append(diags, g.document(src, ops)...)
 	}
 	srcName := lowerCamel(strings.TrimSuffix(path.Base(schemaSrc.File), path.Ext(schemaSrc.File)))
 	variable := srcName + "BaseUrl"
@@ -97,6 +72,38 @@ func ImportGraphQL(schemaSrc Source, docs []Source) Result {
 		"variables": []any{field(variable, "string", "Base URL of the "+srcName+" GraphQL endpoint.", false)},
 	}
 	return finish(frag, diags, schemaSrc.File)
+}
+
+// document validates the operations of one document against the schema and
+// adds those that convert to ops; it returns what it left out.
+func (g *gqlConv) document(src Source, ops map[string]any) plxerr.Diagnostics {
+	doc, err := parser.ParseQuery(&ast.Source{Name: src.File, Input: string(src.Data)})
+	if err != nil {
+		return plxerr.Diagnostics{gqlDiagnostic(plxerr.ImportDocumentInvalid, src.File, err)}
+	}
+	var diags plxerr.Diagnostics
+	failed := map[*ast.OperationDefinition]bool{}
+	for _, e := range validator.ValidateWithRules(g.schema, doc, nil) {
+		diags = append(diags, gqlDiagnostic(plxerr.ImportOperationInvalid, src.File, e))
+		for _, op := range affected(doc, e) {
+			failed[op] = true
+		}
+	}
+	for _, op := range doc.Operations {
+		if failed[op] {
+			continue
+		}
+		name, cfg, err := g.operation(doc, op)
+		if err == nil && ops[name] != nil {
+			err = gqlProblem(plxerr.ImportOperationInvalid, op, "the operation name %q is already used by another operation", name)
+		}
+		if err != nil {
+			diags = append(diags, gqlOpDiagnostic(src.File, op, err))
+			continue
+		}
+		ops[name] = cfg
+	}
+	return diags
 }
 
 // gqlDiagnostic converts a parser or validator error to a diagnostic. The
@@ -240,7 +247,7 @@ type gqlConv struct {
 }
 
 // operation converts one validated operation to its configuration.
-func (g *gqlConv) operation(file string, doc *ast.QueryDocument, op *ast.OperationDefinition) (string, map[string]any, error) {
+func (g *gqlConv) operation(doc *ast.QueryDocument, op *ast.OperationDefinition) (string, map[string]any, error) {
 	if op.Name == "" {
 		return "", nil, gqlProblem(plxerr.ImportOperationInvalid, op, "an operation needs a name to be called by")
 	}
@@ -407,17 +414,7 @@ func (g *gqlConv) collect(doc *ast.QueryDocument, set ast.SelectionSet, def *ast
 	for _, sel := range set {
 		switch n := sel.(type) {
 		case *ast.Field:
-			if n.Name == "__typename" {
-				continue
-			}
-			key := n.Alias
-			if key == "" {
-				key = n.Name
-			}
-			if _, ok := byKey[key]; !ok {
-				*order = append(*order, key)
-			}
-			byKey[key] = append(byKey[key], n)
+			addSelected(n, order, byKey)
 		case *ast.InlineFragment:
 			if n.TypeCondition != "" && n.TypeCondition != def.Name {
 				return fmt.Errorf("an inline fragment on %s inside %s selects a different type", n.TypeCondition, def.Name)
@@ -441,36 +438,56 @@ func (g *gqlConv) collect(doc *ast.QueryDocument, set ast.SelectionSet, def *ast
 	return nil
 }
 
+// addSelected records a selected field under its response key; the type
+// name meta field is not part of the response type.
+func addSelected(n *ast.Field, order *[]string, byKey map[string][]*ast.Field) {
+	if n.Name == "__typename" {
+		return
+	}
+	key := n.Alias
+	if key == "" {
+		key = n.Name
+	}
+	if _, ok := byKey[key]; !ok {
+		*order = append(*order, key)
+	}
+	byKey[key] = append(byKey[key], n)
+}
+
 // outputType converts the type of a selected field.
 func (g *gqlConv) outputType(oc *opCtx, doc *ast.QueryDocument, t *ast.Type, sub ast.SelectionSet, name string, stack []string) (string, error) {
 	var base string
+	var err error
 	if t.Elem != nil {
-		elem, err := g.outputType(oc, doc, t.Elem, sub, name+"Item", stack)
-		if err != nil {
-			return "", err
+		var elem string
+		if elem, err = g.outputType(oc, doc, t.Elem, sub, name+"Item", stack); err == nil {
+			base = "list<" + elem + ">"
 		}
-		base = "list<" + elem + ">"
 	} else {
-		def := g.schema.Types[t.NamedType]
-		switch {
-		case def == nil:
-			return "", fmt.Errorf("the type %s is not in the schema", t.NamedType)
-		case def.Kind == ast.Object:
-			if slices.Contains(stack, def.Name+"/"+name) || len(stack) > 32 {
-				return "", fmt.Errorf("the selection of %s is nested too deeply", def.Name)
-			}
-			if err := g.selectionObject(oc, doc, sub, def, name, append(slices.Clone(stack), def.Name+"/"+name)); err != nil {
-				return "", err
-			}
-			base = name
-		case def.Kind == ast.Interface || def.Kind == ast.Union:
-			return "", fmt.Errorf("the %s type %s has no Plux type", strings.ToLower(string(def.Kind)), def.Name)
-		default:
-			var err error
-			if base, err = g.namedType(oc, t.NamedType, nil); err != nil {
-				return "", err
-			}
-		}
+		base, err = g.namedOutputType(oc, doc, t, sub, name, stack)
+	}
+	if err != nil {
+		return "", err
 	}
 	return optional(base, t.NonNull), nil
+}
+
+// namedOutputType converts a selected field whose type is a named type.
+func (g *gqlConv) namedOutputType(oc *opCtx, doc *ast.QueryDocument, t *ast.Type, sub ast.SelectionSet, name string, stack []string) (string, error) {
+	def := g.schema.Types[t.NamedType]
+	switch {
+	case def == nil:
+		return "", fmt.Errorf("the type %s is not in the schema", t.NamedType)
+	case def.Kind == ast.Object:
+		if slices.Contains(stack, def.Name+"/"+name) || len(stack) > 32 {
+			return "", fmt.Errorf("the selection of %s is nested too deeply", def.Name)
+		}
+		if err := g.selectionObject(oc, doc, sub, def, name, append(slices.Clone(stack), def.Name+"/"+name)); err != nil {
+			return "", err
+		}
+		return name, nil
+	case def.Kind == ast.Interface || def.Kind == ast.Union:
+		return "", fmt.Errorf("the %s type %s has no Plux type", strings.ToLower(string(def.Kind)), def.Name)
+	}
+	return g.namedType(oc, t.NamedType, nil)
 }

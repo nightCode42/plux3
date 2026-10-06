@@ -162,7 +162,7 @@ func (u *unit) checkStreamAndOutbox(pl *plugin, s *schema.DataSource, c *dataCon
 
 // checkStream checks the properties a WebSocket or SSE source does not
 // have.
-func (u *unit) checkStream(s *schema.DataSource, c *dataConfig, bad func(sub, format string, args ...any)) {
+func (*unit) checkStream(s *schema.DataSource, c *dataConfig, bad func(sub, format string, args ...any)) {
 	for _, p := range []struct {
 		set  bool
 		name string

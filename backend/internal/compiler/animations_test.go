@@ -88,11 +88,11 @@ func TestTimelinesSection(t *testing.T) {
 	if byName["rows"].StaggerUs() != 100_000 {
 		t.Errorf("rows stagger = %d", byName["rows"].StaggerUs())
 	}
-	if d := byName["parallax"]; fbs.Driver(d.Driver()) != fbs.DriverScroll || d.DriverExtent() != 200 {
+	if d := byName["parallax"]; d.Driver() != fbs.DriverScroll || d.DriverExtent() != 200 {
 		t.Errorf("parallax driver = %d extent %v", d.Driver(), d.DriverExtent())
 	}
 	drag := byName["drag"]
-	if fbs.Driver(drag.Driver()) != fbs.DriverDrag || drag.Spring(nil) == nil || drag.Spring(nil).Stiffness() != 200 {
+	if drag.Driver() != fbs.DriverDrag || drag.Spring(nil) == nil || drag.Spring(nil).Stiffness() != 200 {
 		t.Errorf("drag timeline lacks its spring or driver")
 	}
 	if !byName["slideIn"].Route() {

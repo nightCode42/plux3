@@ -30,14 +30,14 @@ type started struct {
 
 // startRun runs the command as the e2e driver does and waits for the line
 // it announces itself with.
-func startRun(t *testing.T, extra ...string) *started {
+func startRun(t *testing.T) *started {
 	t.Helper()
 	caFile := filepath.Join(t.TempDir(), "ca.pem")
 	ctx, cancel := context.WithCancel(context.Background())
 	pr, pw := io.Pipe()
 	done := make(chan error, 1)
 	go func() {
-		err := run(ctx, append([]string{"-ca-out", caFile}, extra...), pw)
+		err := run(ctx, []string{"-ca-out", caFile}, pw)
 		_ = pw.Close()
 		done <- err
 	}()
@@ -52,6 +52,16 @@ func startRun(t *testing.T, extra ...string) *started {
 		t.Fatal(err)
 	}
 	return &started{url: strings.TrimSpace(strings.TrimPrefix(line, "refapi listening on ")), ca: ca, done: done, stop: cancel}
+}
+
+// get sends a GET request with the test's context.
+func get(t *testing.T, client *http.Client, url string) (*http.Response, error) {
+	t.Helper()
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, url, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return client.Do(req)
 }
 
 // trusting is a client that trusts the pem certificates and nothing else.
@@ -73,7 +83,7 @@ func TestRunAnnouncesItselfAndServesTLSToAClientTrustingOnlyItsCA(t *testing.T) 
 		t.Fatalf("announced %q", s.url)
 	}
 	client := trusting(t, s.ca)
-	res, err := client.Get(s.url + "/express/v1/products/p-001")
+	res, err := get(t, client, s.url+"/express/v1/products/p-001")
 	if err != nil {
 		t.Fatalf("a client trusting the written CA cannot connect: %v", err)
 	}
@@ -84,7 +94,7 @@ func TestRunAnnouncesItselfAndServesTLSToAClientTrustingOnlyItsCA(t *testing.T) 
 
 	// The same address through localhost and ::1's name is valid too.
 	_, port, _ := net.SplitHostPort(strings.TrimPrefix(s.url, "https://"))
-	res, err = client.Get("https://localhost:" + port + "/express/v1/products/p-001")
+	res, err = get(t, client, "https://localhost:"+port+"/express/v1/products/p-001")
 	if err == nil {
 		_ = res.Body.Close()
 	}
@@ -99,18 +109,20 @@ func TestRunAnnouncesItselfAndServesTLSToAClientTrustingOnlyItsCA(t *testing.T) 
 
 func TestRunRefusesClientsThatDoNotTrustItsCA(t *testing.T) {
 	s := startRun(t)
-	if _, err := (&http.Client{Timeout: 10 * time.Second}).Get(s.url + "/express/v1/products"); err == nil {
+	if res, err := get(t, &http.Client{Timeout: 10 * time.Second}, s.url+"/express/v1/products"); err == nil {
+		_ = res.Body.Close()
 		t.Fatal("a client with the system roots connected")
 	}
 	other, err := newAuthority(time.Now())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := trusting(t, other.certificatePEM()).Get(s.url + "/express/v1/products"); err == nil {
+	if res, err := get(t, trusting(t, other.certificatePEM()), s.url+"/express/v1/products"); err == nil {
+		_ = res.Body.Close()
 		t.Fatal("a client trusting another CA connected")
 	}
 	// Cleartext is not served at all.
-	if res, err := http.Get(strings.Replace(s.url, "https://", "http://", 1) + "/express/v1/products"); err == nil {
+	if res, err := get(t, http.DefaultClient, strings.Replace(s.url, "https://", "http://", 1)+"/express/v1/products"); err == nil {
 		defer res.Body.Close()
 		if res.StatusCode == http.StatusOK {
 			t.Fatal("the API answered over cleartext HTTP")

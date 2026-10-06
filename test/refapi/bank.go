@@ -34,7 +34,7 @@ func (a *api) authed(next http.HandlerFunc) http.HandlerFunc {
 		}
 		if !ok {
 			w.Header().Set("WWW-Authenticate", "Bearer")
-			writeError(w, http.StatusUnauthorized, "unauthorized", "sign in to continue")
+			writeError(w, http.StatusUnauthorized, "unauthorised", "sign in to continue")
 			return
 		}
 		next(w, r)

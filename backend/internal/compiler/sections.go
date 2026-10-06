@@ -1102,6 +1102,13 @@ func featureList(set map[string]bool) []string {
 	})
 }
 
+// createUUID writes the UUID in its canonical text form as a bundle UUID
+// struct.
+func createUUID(b *flatbuffers.Builder, id string) flatbuffers.UOffsetT {
+	hi, lo := uuidHalves(uuidBytes(id))
+	return fbs.CreateUuid(b, hi, lo)
+}
+
 // metaSection encodes the identity, versions, required features and
 // limits of a bundle (CMP-005, BND-008). Values in it use the bundle's
 // strings section.
@@ -1165,11 +1172,9 @@ func (u *unit) metaSection(o *out) {
 	if o.pl != nil {
 		fbs.MetaAddCapabilities(b, capabilities)
 		fbs.MetaAddPages(b, pages)
-		ehi, elo := uuidHalves(uuidBytes(o.pl.doc.EntryPage))
-		fbs.MetaAddEntryPage(b, fbs.CreateUuid(b, ehi, elo))
+		fbs.MetaAddEntryPage(b, createUUID(b, o.pl.doc.EntryPage))
 		if o.pl.doc.FallbackPage != "" {
-			fhi, flo := uuidHalves(uuidBytes(o.pl.doc.FallbackPage))
-			fbs.MetaAddFallbackPage(b, fbs.CreateUuid(b, fhi, flo))
+			fbs.MetaAddFallbackPage(b, createUUID(b, o.pl.doc.FallbackPage))
 		}
 		addOptional(b, exported, fbs.MetaAddComponents)
 	} else {
@@ -1179,8 +1184,7 @@ func (u *unit) metaSection(o *out) {
 		fbs.MetaAddEntryRoute(b, entryRoute)
 		fbs.MetaAddFlags(b, flags)
 		if app.NativeCatalogue != "" {
-			nhi, nlo := uuidHalves(uuidBytes(app.NativeCatalogue))
-			fbs.MetaAddNativeCatalogue(b, fbs.CreateUuid(b, nhi, nlo))
+			fbs.MetaAddNativeCatalogue(b, createUUID(b, app.NativeCatalogue))
 		}
 		fbs.MetaAddSecurityProfile(b, profile)
 		addOptional(b, sampling, fbs.MetaAddTelemetrySampling)
@@ -1232,7 +1236,7 @@ func hostEventTables(b *flatbuffers.Builder, events []schema.HostEventDecl) flat
 	for i, ev := range sorted {
 		fields := make([]flatbuffers.UOffsetT, len(ev.Fields))
 		for j, f := range ev.Fields {
-			typ := string(f.Type)
+			typ := f.Type
 			if te, err := parseTypeExpr(typ); err == nil {
 				typ = te.String()
 			}

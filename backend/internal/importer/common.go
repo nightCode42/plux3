@@ -44,7 +44,11 @@ func (r Result) JSON() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("importer: %w", err)
 	}
-	return jcs.Format(raw, int(limits.Defaults().Get(limits.DocumentJSONDepth)))
+	out, err := jcs.Format(raw, int(limits.Defaults().Get(limits.DocumentJSONDepth)))
+	if err != nil {
+		return nil, fmt.Errorf("importer: %w", err)
+	}
+	return out, nil
 }
 
 const maxNameLength = 64
@@ -52,7 +56,7 @@ const maxNameLength = 64
 // words splits s at every character that is not an ASCII letter or digit.
 func words(s string) []string {
 	return strings.FieldsFunc(s, func(r rune) bool {
-		return !(r < unicode.MaxASCII && (unicode.IsLetter(r) || unicode.IsDigit(r)))
+		return r >= unicode.MaxASCII || (!unicode.IsLetter(r) && !unicode.IsDigit(r))
 	})
 }
 
@@ -150,9 +154,13 @@ func sortedKeys[V any](m map[string]V) []string {
 func tree(v any) (any, error) {
 	raw, err := json.Marshal(v)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("importer: %w", err)
 	}
-	return jcs.Parse(raw, int(limits.Defaults().Get(limits.DocumentJSONDepth)))
+	t, err := jcs.Parse(raw, int(limits.Defaults().Get(limits.DocumentJSONDepth)))
+	if err != nil {
+		return nil, fmt.Errorf("importer: %w", err)
+	}
+	return t, nil
 }
 
 // skeleton is the smallest app document that the schema accepts; the
