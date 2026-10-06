@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
-	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -99,12 +98,10 @@ func runReferenceApp(t *testing.T, app referenceApp) {
 	steps := [][]string{append([]string{flutter, "test", "--reporter=expanded", "test/e2e_test.dart"}, defines...)}
 	succeeded := "All tests passed!"
 	ctx := st.ctx
-	live := io.Discard
 	if device := os.Getenv("PLUX_E2E_DEVICE"); device != "" {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, deviceTimeout(t))
 		defer cancel()
-		live = os.Stdout
 		// One result bundle per app: xcodebuild refuses a path that exists.
 		if bundle := os.Getenv("PLUX_E2E_XCRESULT"); bundle != "" {
 			t.Setenv("PLUX_E2E_XCRESULT", strings.TrimSuffix(bundle, ".xcresult")+"-"+app.dir+".xcresult")
@@ -116,14 +113,17 @@ func runReferenceApp(t *testing.T, app referenceApp) {
 	for _, step := range steps {
 		cmd := exec.CommandContext(ctx, step[0], step[1:]...) //nolint:gosec // G204: the flutter, Xcode and device the developer named.
 		cmd.Dir = dir
-		cmd.Stdout = io.MultiWriter(&out, live)
+		cmd.Stdout = &out
 		cmd.Stderr = cmd.Stdout
 		if err = cmd.Run(); err != nil {
 			break
 		}
 	}
-	t.Logf("the flows (%s):\n%s", dir, out.String())
+	// Only a failure's output is printed, and only its end: on a device the
+	// build's output runs to tens of thousands of lines, and CI keeps the
+	// last few thousand of a job's log.
 	if err != nil || !strings.Contains(out.String(), succeeded) {
+		t.Logf("the flows (%s), last %d lines:\n%s", dir, flowsTail, tail(out.String(), flowsTail))
 		t.Logf("the reference backend said:\n%s", ref.log())
 		t.Fatalf("%s's flows failed: %v", app.dir, err)
 	}
@@ -253,3 +253,6 @@ func pointAtReferenceAPI(t *testing.T, project, url string) {
 		t.Fatalf("%s names %s nowhere", project, placeholder)
 	}
 }
+
+// flowsTail is how many lines of a failed run's output the driver prints.
+const flowsTail = 300

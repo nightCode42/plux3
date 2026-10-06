@@ -332,6 +332,10 @@ and their UI tests; in outline:
    Apply it in the host's `settings.gradle.kts`, depend on `project(":flutter")`, and set
    `android.newDsl=false`, `android.builtInKotlin=false` and
    `android.uniquePackageNames=false` in `gradle.properties`, as Flutter's own templates do.
+   Plugins such as `url_launcher_android`, which the runtime uses, read
+   `flutter.compileSdkVersion`, an extension Flutter gives plugin projects only inside a
+   Flutter app: give it to them in the host's root `build.gradle.kts`, as
+   [`android_host`](../../apps/add_to_app/android_host/build.gradle.kts) does.
    Create one `FlutterEngine`, run the module's entry point, put it in
    `FlutterEngineCache`, and open pages with `FlutterActivity.withCachedEngine(id)` or a
    `FlutterFragment.withCachedEngine(id).shouldAutomaticallyHandleOnBackPressed(true)`.
