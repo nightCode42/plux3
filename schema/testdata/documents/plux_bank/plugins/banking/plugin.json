@@ -24,7 +24,6 @@
             "auth": true,
             "input": "TransferInput",
             "method": "POST",
-            "offlineCapable": true,
             "output": "TransferResult",
             "path": "/transfers"
           }

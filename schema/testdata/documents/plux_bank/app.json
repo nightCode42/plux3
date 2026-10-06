@@ -67,7 +67,8 @@
         },
         {
           "name": "password",
-          "type": "string"
+          "type": "string",
+          "sensitive": true
         }
       ],
       "name": "LoginInput"
@@ -76,7 +77,8 @@
       "fields": [
         {
           "name": "token",
-          "type": "string"
+          "type": "string",
+          "sensitive": true
         },
         {
           "name": "expiresIn",
