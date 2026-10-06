@@ -821,7 +821,10 @@ final class PluxRuntime with WidgetsBindingObserver {
   bool _healthyScheduled = false;
   Timer? _healthy;
   bool _disposed = false;
-  Future<void> _pointerChange = Future.value();
+  // Null while nothing ran: a future, even a completed one, delivers its
+  // result in a microtask of the zone that created it, so a first future made
+  // in a widget test's fake-async zone would stall a later caller's chain.
+  Future<void>? _pointerChange;
 
   /// The typed sync events (SYN-013).
   Stream<SyncEvent> get events => _events.stream;
@@ -949,7 +952,7 @@ final class PluxRuntime with WidgetsBindingObserver {
   /// Runs pointer changes one at a time: a sync that stages during startup
   /// schedules a safe point while startup activates the same release.
   Future<void> _serially(Future<void> Function() step) {
-    final next = _pointerChange.then((_) => step());
+    final next = (_pointerChange ?? Future<void>.value()).then((_) => step());
     _pointerChange = next.catchError((Object _) {});
     return next;
   }

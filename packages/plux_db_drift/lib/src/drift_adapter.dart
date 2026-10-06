@@ -166,7 +166,10 @@ final class PluxDriftAdapter implements PluxDatabaseAdapter {
   bool _encrypted = false;
   final Map<String, _Stored> _stored = {};
   final List<_Watch> _watches = [];
-  Future<void> _tail = Future.value();
+  // Null while nothing ran: a future, even a completed one, delivers its
+  // result in a microtask of the zone that created it, so a first future made
+  // in a widget test's fake-async zone would stall a later caller's chain.
+  Future<void>? _tail;
 
   @override
   bool get supportsCollections => true;
@@ -178,7 +181,7 @@ final class PluxDriftAdapter implements PluxDatabaseAdapter {
 
   Future<R> _serial<R>(FutureOr<R> Function() fn) {
     final done = Completer<R>();
-    final previous = _tail;
+    final previous = _tail ?? Future<void>.value();
     _tail = done.future.then((_) {}, onError: (Object _) {});
     unawaited(
       previous.then((_) async {

@@ -184,7 +184,10 @@ final class Outbox {
   bool _disposed = false;
   Timer? _timer;
   int _failures = 0;
-  Future<void> _tail = Future.value();
+  // Null while nothing ran: a future, even a completed one, delivers its
+  // result in a microtask of the zone that created it, so a first future made
+  // in a widget test's fake-async zone would stall a later caller's chain.
+  Future<void>? _tail;
 
   /// A new idempotency key: 128 random bits as a UUID-shaped string.
   String newKey() {
@@ -281,7 +284,9 @@ final class Outbox {
       'v': 1,
       'entries': [for (final e in _entries) e.toJson()],
     };
-    final run = _tail.then((_) => store.save(snapshot));
+    final run = (_tail ?? Future<void>.value()).then(
+      (_) => store.save(snapshot),
+    );
     _tail = run.then((_) {}, onError: (Object _) {});
     return run;
   }

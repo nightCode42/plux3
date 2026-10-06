@@ -50,6 +50,24 @@ void main() {
           encrypted: encrypted,
         );
 
+    // An adapter made inside a widget test's fake-async zone, as a page
+    // build makes the runtime's, closes from the real zone teardown runs
+    // in: its queue must not wait for a microtask of the fake zone.
+    testWidgets('closes from another zone than the one that made it', (
+      tester,
+    ) async {
+      final db = make();
+      addTearDown(() async {
+        final closed = await tester.runAsync(
+          () => db
+              .close()
+              .then((_) => true)
+              .timeout(const Duration(seconds: 5), onTimeout: () => false),
+        );
+        expect(closed, isTrue);
+      });
+    });
+
     runAdapterConformance(
       'BuiltInDatabaseAdapter (encrypted file)',
       create: () async => make(),
