@@ -40,6 +40,13 @@ void main() {
       expect(o.scenarios, {BenchScenario.startup, BenchScenario.scroll});
     });
 
+    test('accepts the list part [NFR-004]', () {
+      final o = BenchOptions.fromEnvironment(const {
+        'PLUX_BENCH_SCENARIOS': 'list',
+      });
+      expect(o.scenarios, {BenchScenario.list});
+    });
+
     test('measures every part unless told otherwise', () {
       expect(BenchOptions.fromEnvironment(const {}).scenarios, {
         ...BenchScenario.values,
@@ -60,7 +67,7 @@ void main() {
           isA<FormatException>().having(
             (e) => e.message,
             'message',
-            contains('startup, open, native, scroll'),
+            contains('startup, open, native, scroll, list'),
           ),
         ),
       );

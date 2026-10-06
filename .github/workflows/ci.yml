@@ -907,8 +907,8 @@ jobs:
             scenarios: startup
           - shard: open
             scenarios: open
-          - shard: native control and scroll
-            scenarios: native,scroll
+          - shard: native control, scroll and list
+            scenarios: native,scroll,list
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

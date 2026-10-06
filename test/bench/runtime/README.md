@@ -21,6 +21,9 @@ without a network does.
 | `native_open_first_frame_ms`, `native_page_frame_ui_ms` | the same two for the catalog page written directly in Flutter (`NativeCatalog`, the same 300 widgets): what Flutter alone costs, so Plux's share can be told apart | control |
 | `scroll_build_ms`, `scroll_raster_ms` | every frame while the 500-item feed, bound through PXL, scrolls 20,000 px in 4 s | frame times |
 | `scroll_janky_pct` | frames whose build or raster missed the display's frame budget | frame times |
+| `list_build_ms`, `list_raster_ms` | every frame while the 1,000-item list, bound through PXL, scrolls end to end at the feed's speed | `NFR-004` |
+| `list_janky_pct` | frames of that scroll whose build or raster missed the display's frame budget (≤ 1% at 60 Hz) | `NFR-004` |
+| `list_max_frame_ms` | the slowest frame of that scroll, build or raster (≤ 32 ms) | `NFR-004` |
 
 The embedded release in [assets/plux](assets/plux) is compiled from
 `backend/internal/benchproject` and signed with a benchmark-only key;
@@ -41,8 +44,8 @@ make bench-runtime-ab SCENARIOS=open    # the same, measuring one part of each r
 
 `SCENARIOS` (the app's `PLUX_BENCH_SCENARIOS`) limits every run to some of its parts:
 `startup` (initialize and memory), `open` (the catalog page), `native` (the control)
-and `scroll` (the feed), comma-separated; all of them by default. CI compares the parts
-in three parallel jobs — start-up, opening, the control with scrolling — each running both
+and `scroll` (the feed) and `list` (the 1,000-item list), comma-separated; all of them by default. CI compares the parts
+in three parallel jobs — start-up, opening, the control with scrolling and the list — each running both
 runtimes alternately on one runner with the method below, and a policy test checks that
 together they measure every part ([ADR-0043](../../../docs/adr/0043-affected-only-ci.md)).
 
