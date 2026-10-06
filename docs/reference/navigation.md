@@ -218,7 +218,12 @@ A page's `routeOptions.transition` picks how its page route moves in:
 | `none` | No animation |
 
 Predictive back needs `android:enableOnBackInvokedCallback="true"` on the host's
-`<application>`, as the starter app sets. Custom timelines arrive in P5 with animations.
+`<application>`, as the starter app sets.
+
+A custom transition (`NAV-010`, [ADR-0050](../adr/0050-animation-engine.md)) names one of
+the app's route timelines in `routeOptions.timeline`: the compiler checks that it animates
+only the opacity and transform of the incoming and outgoing page, and the route drives it
+with its own animation.
 
 ## 9. Shells and tabs
 
