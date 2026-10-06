@@ -1,0 +1,90 @@
+{
+  "id": "01d0c450-6c00-7000-8000-000000000351",
+  "key": "job-row",
+  "kind": "component",
+  "name": "Job row",
+  "props": [
+    {
+      "name": "item",
+      "required": true,
+      "type": "Job"
+    }
+  ],
+  "root": {
+    "id": "01d0c450-6c00-7000-8000-00000000304e",
+    "slots": {
+      "subtitle": {
+        "id": "01d0c450-6c00-7000-8000-00000000304b",
+        "props": {
+          "data": {
+            "$expr": "\"Job \" + props.item.id + \": \" + props.item.status"
+          }
+        },
+        "type": "Text"
+      },
+      "title": {
+        "id": "01d0c450-6c00-7000-8000-00000000304a",
+        "props": {
+          "data": {
+            "$expr": "props.item.address + \" (\" + props.item.orderId + \")\""
+          }
+        },
+        "type": "Text"
+      },
+      "trailing": {
+        "events": {
+          "onPressed": {
+            "steps": [
+              {
+                "action": "apiCall",
+                "id": "confirm",
+                "input": {
+                  "input": {
+                    "id": {
+                      "$expr": "props.item.id"
+                    },
+                    "note": "Left at the door"
+                  },
+                  "operation": "courier.confirmDelivery"
+                },
+                "onSuccess": "mark"
+              },
+              {
+                "action": "setState",
+                "id": "mark",
+                "input": {
+                  "path": "plugin.courierStatus",
+                  "value": {
+                    "$expr": "steps.confirm.output == null ? \"Queued \" + props.item.id : \"Delivered \" + props.item.id"
+                  }
+                },
+                "next": "reload"
+              },
+              {
+                "action": "refreshData",
+                "id": "reload",
+                "input": {
+                  "source": "courier"
+                }
+              }
+            ]
+          }
+        },
+        "id": "01d0c450-6c00-7000-8000-00000000304d",
+        "slots": {
+          "child": {
+            "id": "01d0c450-6c00-7000-8000-00000000304c",
+            "props": {
+              "data": "Confirm delivery"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "OutlinedButton"
+      }
+    },
+    "type": "ListTile"
+  },
+  "schemaVersion": "1.0.0",
+  "version": 1
+}

@@ -337,6 +337,7 @@ final class PluxRuntime with WidgetsBindingObserver {
   late final LazyDataWorker _dataWorker = LazyDataWorker(
     () => DataWorker.start(
       httpClient: config.httpClient ?? platformHttpClient,
+      webSocketClient: config.webSocketClient,
       cacheDirectory: '$_root/data',
       // The encrypted cache's key, kept like the secure state store's
       // (DAT-010, plan p5 D6).

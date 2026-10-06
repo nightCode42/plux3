@@ -1,0 +1,361 @@
+{
+  "id": "01d0c450-6c00-7000-8000-000000000211",
+  "key": "dashboard",
+  "kind": "page",
+  "lifecycle": {
+    "onInit": {
+      "steps": [
+        {
+          "action": "subscribe",
+          "id": "open",
+          "input": {
+            "stream": "notifications"
+          }
+        }
+      ]
+    }
+  },
+  "pageKind": "screen",
+  "root": {
+    "id": "01d0c450-6c00-7000-8000-00000000202c",
+    "slots": {
+      "appBar": {
+        "id": "01d0c450-6c00-7000-8000-00000000202b",
+        "slots": {
+          "actions": [
+            {
+              "events": {
+                "onPressed": {
+                  "steps": [
+                    {
+                      "action": "navigate",
+                      "id": "go",
+                      "input": {
+                        "route": "kyc"
+                      }
+                    }
+                  ]
+                }
+              },
+              "id": "01d0c450-6c00-7000-8000-000000002029",
+              "slots": {
+                "child": {
+                  "id": "01d0c450-6c00-7000-8000-000000002028",
+                  "props": {
+                    "data": {
+                      "$t": "01d0c450-6c00-7000-8000-00000000028a"
+                    }
+                  },
+                  "type": "Text"
+                }
+              },
+              "testId": "open-kyc",
+              "type": "TextButton"
+            }
+          ],
+          "title": {
+            "id": "01d0c450-6c00-7000-8000-00000000202a",
+            "props": {
+              "data": {
+                "$t": "01d0c450-6c00-7000-8000-00000000028b"
+              }
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "children": [
+          {
+            "id": "01d0c450-6c00-7000-8000-00000000201e",
+            "slots": {
+              "child": {
+                "id": "01d0c450-6c00-7000-8000-00000000201d",
+                "props": {
+                  "padding": {
+                    "all": 12.0
+                  }
+                },
+                "slots": {
+                  "child": {
+                    "id": "01d0c450-6c00-7000-8000-00000000201c",
+                    "props": {
+                      "data": {
+                        "$expr": "\"Transfer of \" + string(div(decimal(data.notifications.value?.amountCents ?? 0), 100d, 2)) + \" EUR sent. New balance: \" + string(div(decimal(data.notifications.value?.balanceCents ?? 0), 100d, 2)) + \" EUR\""
+                      }
+                    },
+                    "testId": "notice",
+                    "type": "Text"
+                  }
+                },
+                "type": "Padding"
+              }
+            },
+            "type": "Card",
+            "visible": {
+              "$expr": "data.notifications.value != null"
+            }
+          },
+          {
+            "id": "01d0c450-6c00-7000-8000-000000002020",
+            "props": {
+              "padding": {
+                "all": 8.0
+              }
+            },
+            "slots": {
+              "child": {
+                "id": "01d0c450-6c00-7000-8000-00000000201f",
+                "props": {
+                  "data": {
+                    "$t": "01d0c450-6c00-7000-8000-000000000287"
+                  }
+                },
+                "testId": "accounts-title",
+                "type": "Text"
+              }
+            },
+            "type": "Padding"
+          },
+          {
+            "id": "01d0c450-6c00-7000-8000-000000002017",
+            "props": {
+              "items": {
+                "$expr": "data.accounts.value ?? []"
+              }
+            },
+            "slots": {
+              "item": {
+                "id": "01d0c450-6c00-7000-8000-000000002012",
+                "slots": {
+                  "subtitle": {
+                    "id": "01d0c450-6c00-7000-8000-000000002010",
+                    "props": {
+                      "data": {
+                        "$expr": "item.iban"
+                      }
+                    },
+                    "type": "Text"
+                  },
+                  "title": {
+                    "id": "01d0c450-6c00-7000-8000-00000000200f",
+                    "props": {
+                      "data": {
+                        "$expr": "item.name"
+                      }
+                    },
+                    "type": "Text"
+                  },
+                  "trailing": {
+                    "id": "01d0c450-6c00-7000-8000-000000002011",
+                    "props": {
+                      "data": {
+                        "$expr": "string(div(decimal(item.balanceCents), 100d, 2)) + \" \" + item.currency"
+                      }
+                    },
+                    "type": "Text"
+                  }
+                },
+                "type": "ListTile"
+              }
+            },
+            "type": "ForEach"
+          },
+          {
+            "id": "01d0c450-6c00-7000-8000-000000002023",
+            "props": {
+              "padding": {
+                "all": 8.0
+              }
+            },
+            "slots": {
+              "child": {
+                "events": {
+                  "onPressed": {
+                    "steps": [
+                      {
+                        "action": "navigate",
+                        "id": "go",
+                        "input": {
+                          "params": {
+                            "balanceCents": {
+                              "$expr": "first(data.accounts.value ?? [])?.balanceCents ?? 0"
+                            }
+                          },
+                          "route": "transfer"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01d0c450-6c00-7000-8000-000000002022",
+                "slots": {
+                  "child": {
+                    "id": "01d0c450-6c00-7000-8000-000000002021",
+                    "props": {
+                      "data": {
+                        "$t": "01d0c450-6c00-7000-8000-000000000288"
+                      }
+                    },
+                    "type": "Text"
+                  }
+                },
+                "testId": "new-transfer",
+                "type": "FilledButton"
+              }
+            },
+            "type": "Padding"
+          },
+          {
+            "id": "01d0c450-6c00-7000-8000-000000002025",
+            "props": {
+              "padding": {
+                "all": 8.0
+              }
+            },
+            "slots": {
+              "child": {
+                "id": "01d0c450-6c00-7000-8000-000000002024",
+                "props": {
+                  "data": {
+                    "$t": "01d0c450-6c00-7000-8000-000000000289"
+                  }
+                },
+                "type": "Text"
+              }
+            },
+            "type": "Padding"
+          },
+          {
+            "id": "01d0c450-6c00-7000-8000-000000002026",
+            "slots": {
+              "child": {
+                "events": {
+                  "onEndReached": {
+                    "steps": [
+                      {
+                        "action": "refreshData",
+                        "id": "more",
+                        "input": {
+                          "more": true,
+                          "source": "transactions"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01d0c450-6c00-7000-8000-00000000201b",
+                "props": {
+                  "hasMore": {
+                    "$expr": "data.transactions.hasMore"
+                  },
+                  "items": {
+                    "$expr": "data.transactions.value ?? []"
+                  },
+                  "status": {
+                    "$expr": "data.transactions.status"
+                  }
+                },
+                "slots": {
+                  "empty": {
+                    "id": "01d0c450-6c00-7000-8000-000000002018",
+                    "props": {
+                      "data": {
+                        "$t": "01d0c450-6c00-7000-8000-000000000285"
+                      }
+                    },
+                    "type": "Text"
+                  },
+                  "error": {
+                    "id": "01d0c450-6c00-7000-8000-00000000201a",
+                    "props": {
+                      "data": {
+                        "$t": "01d0c450-6c00-7000-8000-000000000286"
+                      }
+                    },
+                    "type": "Text"
+                  },
+                  "item": {
+                    "id": "01d0c450-6c00-7000-8000-000000002016",
+                    "slots": {
+                      "subtitle": {
+                        "id": "01d0c450-6c00-7000-8000-000000002014",
+                        "props": {
+                          "data": {
+                            "$expr": "item.postedAt"
+                          }
+                        },
+                        "type": "Text"
+                      },
+                      "title": {
+                        "id": "01d0c450-6c00-7000-8000-000000002013",
+                        "props": {
+                          "data": {
+                            "$expr": "item.description"
+                          }
+                        },
+                        "type": "Text"
+                      },
+                      "trailing": {
+                        "id": "01d0c450-6c00-7000-8000-000000002015",
+                        "props": {
+                          "data": {
+                            "$expr": "string(div(decimal(item.amountCents), 100d, 2))"
+                          }
+                        },
+                        "type": "Text"
+                      }
+                    },
+                    "type": "ListTile"
+                  },
+                  "loading": {
+                    "id": "01d0c450-6c00-7000-8000-000000002019",
+                    "type": "CircularProgressIndicator"
+                  }
+                },
+                "testId": "transactions",
+                "type": "ListView"
+              }
+            },
+            "type": "Expanded"
+          }
+        ],
+        "id": "01d0c450-6c00-7000-8000-000000002027",
+        "props": {
+          "crossAxisAlignment": "stretch"
+        },
+        "type": "Column"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "dashboard",
+  "schemaVersion": "1.0.0",
+  "title": "Dashboard",
+  "triggers": {
+    "dataSources": {
+      "notifications": {
+        "onMessage": {
+          "steps": [
+            {
+              "action": "refreshData",
+              "id": "accounts",
+              "input": {
+                "source": "accounts"
+              },
+              "next": "tx"
+            },
+            {
+              "action": "refreshData",
+              "id": "tx",
+              "input": {
+                "source": "transactions"
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

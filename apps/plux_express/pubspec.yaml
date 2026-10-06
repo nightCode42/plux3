@@ -1,0 +1,34 @@
+name: plux_express
+description: >-
+  Plux Bank, a reference host app (DX-004): sign-in, accounts, validated
+  transfers and an identity check, published from the plux_express fixture and
+  rendered by the Plux runtime. The end-to-end tests drive it.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^1.6.0
+  plux_flutter: ^0.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  # The baseline `plux pull` writes (SYN-007); asset directories are not
+  # recursive, so each of its directories is listed.
+  assets:
+    - assets/plux/
+    - assets/plux/bundles/
+    - assets/plux/assets/

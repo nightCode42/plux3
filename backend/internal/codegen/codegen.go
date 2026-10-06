@@ -11,11 +11,14 @@
 // deterministic: every list is sorted, and nothing of the environment or
 // the clock reaches it (CMP-002).
 //
-// make gen writes the starter app's API from the starter fixture with the
-// CLI, as a host app would (go-gen-check verifies the committed file).
+// make gen writes the starter app's API from the starter fixture, and the
+// reference apps' from theirs, with the CLI, as a host app would
+// (go-gen-check verifies the committed files).
 package codegen
 
 //go:generate go run ../../cmd/plux codegen --host ../../../apps/starter ../../../schema/testdata/documents/starter
+//go:generate go run ../../cmd/plux codegen --host ../../../apps/plux_bank ../../../schema/testdata/documents/plux_bank
+//go:generate go run ../../cmd/plux codegen --host ../../../apps/plux_express ../../../schema/testdata/documents/plux_express
 
 import (
 	"bytes"

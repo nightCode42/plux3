@@ -1,0 +1,32 @@
+{
+  "id": "01d0c450-6c00-7000-8000-000000000206",
+  "kind": "translations",
+  "locale": "de",
+  "messages": {
+    "01d0c450-6c00-7000-8000-000000000280": "Willkommen zurück",
+    "01d0c450-6c00-7000-8000-000000000281": "Benutzername",
+    "01d0c450-6c00-7000-8000-000000000282": "Passwort",
+    "01d0c450-6c00-7000-8000-000000000283": "Anmelden",
+    "01d0c450-6c00-7000-8000-000000000284": "Plux Bank",
+    "01d0c450-6c00-7000-8000-000000000285": "Noch keine Umsätze.",
+    "01d0c450-6c00-7000-8000-000000000286": "Umsätze sind nicht verfügbar.",
+    "01d0c450-6c00-7000-8000-000000000287": "Konten",
+    "01d0c450-6c00-7000-8000-000000000288": "Neue Überweisung",
+    "01d0c450-6c00-7000-8000-000000000289": "Letzte Umsätze",
+    "01d0c450-6c00-7000-8000-00000000028a": "Identität prüfen",
+    "01d0c450-6c00-7000-8000-00000000028b": "Ihre Konten",
+    "01d0c450-6c00-7000-8000-00000000028c": "IBAN des Empfängers",
+    "01d0c450-6c00-7000-8000-00000000028d": "Betrag (EUR)",
+    "01d0c450-6c00-7000-8000-00000000028e": "Verwendungszweck",
+    "01d0c450-6c00-7000-8000-00000000028f": "Geld senden",
+    "01d0c450-6c00-7000-8000-000000000290": "Neue Überweisung",
+    "01d0c450-6c00-7000-8000-000000000291": "Überweisung ausgeführt",
+    "01d0c450-6c00-7000-8000-000000000292": "Überweisung fehlgeschlagen",
+    "01d0c450-6c00-7000-8000-000000000293": "Zurück zur Übersicht",
+    "01d0c450-6c00-7000-8000-000000000294": "Ergebnis",
+    "01d0c450-6c00-7000-8000-000000000295": "Fotografieren Sie Ihren Ausweis, um Ihre Identität zu prüfen.",
+    "01d0c450-6c00-7000-8000-000000000296": "Foto aufnehmen",
+    "01d0c450-6c00-7000-8000-000000000297": "Identitätsprüfung"
+  },
+  "schemaVersion": "1.0.0"
+}

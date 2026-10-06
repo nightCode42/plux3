@@ -1,0 +1,149 @@
+{
+  "id": "01d0c450-6c00-7000-8000-000000000314",
+  "key": "courier",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01d0c450-6c00-7000-8000-000000003045",
+    "slots": {
+      "appBar": {
+        "id": "01d0c450-6c00-7000-8000-000000003044",
+        "slots": {
+          "title": {
+            "id": "01d0c450-6c00-7000-8000-000000003043",
+            "props": {
+              "data": "Courier jobs"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "children": [
+          {
+            "id": "01d0c450-6c00-7000-8000-00000000303e",
+            "props": {
+              "padding": {
+                "all": 12.0
+              }
+            },
+            "slots": {
+              "child": {
+                "id": "01d0c450-6c00-7000-8000-00000000303d",
+                "props": {
+                  "data": {
+                    "$expr": "plugin.courierStatus"
+                  }
+                },
+                "testId": "courier-status",
+                "type": "Text"
+              }
+            },
+            "type": "Padding"
+          },
+          {
+            "id": "01d0c450-6c00-7000-8000-000000003040",
+            "props": {
+              "padding": {
+                "all": 12.0
+              }
+            },
+            "slots": {
+              "child": {
+                "id": "01d0c450-6c00-7000-8000-00000000303f",
+                "props": {
+                  "data": {
+                    "$expr": "plugin.courierSynced"
+                  }
+                },
+                "testId": "courier-synced",
+                "type": "Text"
+              }
+            },
+            "type": "Padding"
+          },
+          {
+            "id": "01d0c450-6c00-7000-8000-000000003041",
+            "slots": {
+              "child": {
+                "id": "01d0c450-6c00-7000-8000-00000000303c",
+                "props": {
+                  "items": {
+                    "$expr": "data.courier.value ?? []"
+                  },
+                  "status": {
+                    "$expr": "data.courier.status"
+                  }
+                },
+                "slots": {
+                  "empty": {
+                    "id": "01d0c450-6c00-7000-8000-00000000303a",
+                    "props": {
+                      "data": "No jobs."
+                    },
+                    "type": "Text"
+                  },
+                  "item": {
+                    "component": {
+                      "id": "01d0c450-6c00-7000-8000-000000000351",
+                      "version": 1
+                    },
+                    "id": "01d0c450-6c00-7000-8000-000000003039",
+                    "props": {
+                      "item": {
+                        "$expr": "item"
+                      }
+                    }
+                  },
+                  "loading": {
+                    "id": "01d0c450-6c00-7000-8000-00000000303b",
+                    "type": "CircularProgressIndicator"
+                  }
+                },
+                "testId": "jobs",
+                "type": "ListView"
+              }
+            },
+            "type": "Expanded"
+          }
+        ],
+        "id": "01d0c450-6c00-7000-8000-000000003042",
+        "props": {
+          "crossAxisAlignment": "stretch"
+        },
+        "type": "Column"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "courier",
+  "schemaVersion": "1.0.0",
+  "title": "Courier",
+  "triggers": {
+    "dataSources": {
+      "courier": {
+        "onSynced": {
+          "steps": [
+            {
+              "action": "setState",
+              "id": "note",
+              "input": {
+                "path": "plugin.courierSynced",
+                "value": "Synced"
+              },
+              "next": "reload"
+            },
+            {
+              "action": "refreshData",
+              "id": "reload",
+              "input": {
+                "source": "courier"
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
