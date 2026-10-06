@@ -4,7 +4,7 @@
 # Included by the Makefile. A change to this file runs the benchmark and
 # size jobs on a pull request (ci/affected.json, ADR-0043).
 
-.PHONY: bench-runtime bench-runtime-ab bench-sync bench-steps bench-pxl size-android size-ios
+.PHONY: bench-runtime bench-runtime-ab bench-sync bench-steps bench-pxl bench-db size-android size-ios
 
 ##@ Benchmarks and size (QA-007)
 
@@ -37,6 +37,10 @@ bench-steps: ## Measure the action engine's cost per step (NFR-011, early; print
 # Verifies: NFR-010, PXL-004.
 bench-pxl: ## Measure the evaluation of typical PXL bindings (NFR-010; prints JSON)
 	cd packages/plux_flutter && PLUX_BENCH_PXL=1 flutter test --reporter expanded test/pxl/pxl_bench_test.dart
+
+# Verifies: DB-007.
+bench-db: ## Measure the time from a write to a watched query's update (DB-007; prints JSON)
+	cd packages/plux_db_drift && PLUX_BENCH_DB=1 flutter test --reporter expanded test/watch_bench_test.dart
 
 # Verifies: RT-061, NFR-009.
 size-android: ## Check what plux_flutter adds to the release APKs and App Bundle downloads (RT-061; needs the Android SDK)
