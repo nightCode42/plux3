@@ -90,11 +90,33 @@ func TestProject(t *testing.T) {
 			changed = append(changed, p.Key)
 		}
 	}
-	if !slices.Equal(changed, []string{"catalog", "extra01", "feed"}) {
+	if !slices.Equal(changed, []string{"catalog", "feed", "list"}) {
 		t.Errorf("revision 2 changed %v", changed)
 	}
 	if got := Project(1, 1); len(got) != 2+2*Changed {
 		t.Errorf("a project of one plugin has %d files, want the minimum of %d plugins", len(got), Changed)
+	}
+}
+
+// Verifies: QA-007, NFR-004.
+// The list page holds the 1,000 items NFR-004 scrolls, bound through PXL
+// like the feed's.
+func TestListPage(t *testing.T) {
+	t.Parallel()
+	var page struct {
+		State []struct {
+			Name    string
+			Default []string
+		}
+	}
+	if err := json.Unmarshal(Project(5, 1)["plugins/list/pages/list.page.json"].Data, &page); err != nil {
+		t.Fatal(err)
+	}
+	if len(page.State) != 1 || page.State[0].Name != "items" || len(page.State[0].Default) != ListItems {
+		t.Fatalf("state = %+v, want one list of %d items", page.State, ListItems)
+	}
+	if got := page.State[0].Default[ListItems-1]; got != "Item 1000" {
+		t.Errorf("the last item is %q", got)
 	}
 }
 
