@@ -211,6 +211,7 @@
                         "input": {
                           "form": "login"
                         },
+                        "onError": "invalid",
                         "onSuccess": "call"
                       },
                       {
@@ -256,6 +257,14 @@
                           "value": {
                             "$expr": "steps.call.error.status == 401 ? \"Wrong username or password.\" : \"Sign-in failed. Try again.\""
                           }
+                        }
+                      },
+                      {
+                        "action": "setState",
+                        "id": "invalid",
+                        "input": {
+                          "path": "page.error",
+                          "value": "Enter your username and password."
                         }
                       }
                     ]

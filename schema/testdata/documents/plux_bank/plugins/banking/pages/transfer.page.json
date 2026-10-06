@@ -340,6 +340,7 @@
                             "input": {
                               "form": "transfer"
                             },
+                            "onError": "invalid",
                             "onSuccess": "send"
                           },
                           {
@@ -379,6 +380,13 @@
                                 "ok": true
                               },
                               "route": "result"
+                            }
+                          },
+                          {
+                            "action": "showSnackbar",
+                            "id": "invalid",
+                            "input": {
+                              "message": "Check the fields marked in red."
                             }
                           },
                           {
