@@ -9,7 +9,6 @@ import 'package:http/http.dart' as http;
 import 'package:plux_flutter/plux_flutter.dart';
 import 'package:plux_flutter/src/actions/action_error.dart';
 import 'package:plux_flutter/src/data/client.dart';
-import 'package:plux_flutter/src/data/outbox.dart';
 import 'package:plux_flutter/src/data/services.dart';
 import 'package:plux_flutter/src/data/source.dart';
 import 'package:plux_flutter/src/data/spec.dart';
