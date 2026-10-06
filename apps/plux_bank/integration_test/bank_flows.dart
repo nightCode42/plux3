@@ -86,6 +86,13 @@ void bankFlows({
   Future<PluxStartup> launch(WidgetTester tester, String? dir) async {
     // A flow that failed left its runtime running.
     await tester.runAsync(Plux.dispose);
+    // On a device the integration-test binding leaves text input to the
+    // platform keyboard, which can echo a field's earlier text back after
+    // enterText replaced it. The flows test the app, not the keyboard.
+    if (!tester.testTextInput.isRegistered) {
+      tester.testTextInput.register();
+      addTearDown(tester.testTextInput.unregister);
+    }
     final c = config()!;
     final host = BankHost();
     final startup = await tester.runAsync(
