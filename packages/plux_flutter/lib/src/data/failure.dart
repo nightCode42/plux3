@@ -43,8 +43,10 @@ final class DataFailure implements Exception {
   /// The HTTP status, or 0.
   final int status;
 
-  /// The failure as a step's error.
-  ActionError toActionError() => ActionError(kind, code, message);
+  /// The failure as a step's error: an `http` failure keeps the status the
+  /// server answered with, which pages read as `steps.<id>.error.status`.
+  ActionError toActionError() =>
+      ActionError(kind, code, message, status: status == 0 ? null : status);
 
   /// The failure as the runtime reports it.
   PluxException toException(Map<String, String> details) =>
