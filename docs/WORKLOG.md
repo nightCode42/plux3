@@ -10,10 +10,10 @@ Per-requirement implementation status is **not** tracked here; it lives only in 
 
 | Item | Value |
 |---|---|
-| Phase | P5 — Actions, state, data, local database and animation: plan approved 2026-10-04 ([plans/p5.md](plans/p5.md) §2.1, B1–B8); batch 1 (R0–R4) and wave A (R5–R8, leftovers) merged; R9 half merged; R10–R12 not started |
+| Phase | P5 — Actions, state, data, local database and animation: plan approved 2026-10-04 ([plans/p5.md](plans/p5.md) §2.1, B1–B8); R0–R12 delivered on `feat/phase-5` (2026-10-06); the pull request to `main` waits on the maintainer's review and the reference-device run (D3) |
 | Active branch | `feat/phase-5`, from `main` at `af54df4`; one pull request to `main` when the whole phase is done (B3) |
-| Active work | Stopped by the maintainer on 2026-10-05 mid-wave B; see the first hand-off note for the exact state and the next steps |
-| Requirement IDs | Batch 1 moved to `DONE`: `ACT-001`–`ACT-007`, `ACT-020`, `ACT-031`, `ACT-061`, `STA-001`–`STA-004`, `STA-010`, `STA-020`, `STA-030`, `STA-040`, `DAT-003`, `DAT-004`, `DAT-010`, `DAT-011`, `DAT-030`, `HST-021`; to `WIP`: `ACT-030`, `DAT-080`; `HST-013` stays `WIP` (host-event payloads are not typed on the device yet) |
+| Active work | P5 close-out: one pull request from `feat/phase-5` to `main` (B3); see the first hand-off note for what was verified and what is open |
+| Requirement IDs | Spec 1.3.2: 51 P5 and cross-phase requirements `DONE` (Document Control 1.3.2 lists them); `ACT-008`, `NFR-011`, `PXL-004`, `NFR-010`, `NFR-004`, `DB-007` `WIP` until the reference-device run; `ACT-030`, `DAT-001`, `DAT-080`, `DB-002`, `DB-003`, `SEC-080`, `TST-001`, `TST-002`, `DX-004` `WIP` until the phases plan §3.2 names; `SCH-012` stays `WIP` (plan §3.3: the maintainer confirms crash reports and session replay are out of scope) |
 
 ## Next up
 
@@ -39,12 +39,11 @@ verified and how.
 5. **R7 — mixed screens and the host API**, **R8 — codegen and init**, **R9 — `plux
    create`**, **R10 — add-to-app** and **R11 — close the phase** (done, with one exit gate
    at R11; the maintainer decided its open items, A34–A39).
-6. **P5 — Actions, state, data, local database and animation.** The plan is proposed in
-   [plans/p5.md](plans/p5.md): scope (55 `MUST`s, 4 `SHOULD`s), twenty decisions for the
-   maintainer with a recommendation each (§2), the requirement targets (§3, including the
-   cross-phase items P5 completes), the R0 spec, ADR, contract and dependency changes (§4),
-   the architecture (§5) and milestones R0–R12 (§6). Next: settle §2 with the maintainer,
-   then R0.
+6. **P5 — Actions, state, data, local database and animation** (delivered 2026-10-06, R0–R12,
+   [plans/p5.md](plans/p5.md)): batch 1 (R0–R4), wave A (R5–R8), R9 (tooling), R10
+   (reference apps), R11 (gates, benchmarks) and R12 (guides, references, threat model,
+   runbook, statuses). Next: the maintainer's review of the pull request, the
+   reference-device run (D3) and the open items of the first hand-off note.
 
 ### P4 approvals (maintainer, 2026-10-01)
 
