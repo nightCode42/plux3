@@ -1,36 +1,32 @@
 # Action Engine Reference
 
 How the runtime runs action graphs: what starts a run, how steps execute, how errors and
-bounds behave, and which actions this runtime runs. The design, and the boundary with P5,
-is [ADR-0039](../adr/0039-action-engine-core.md). The [action reference](actions.md) lists
+bounds behave, and which actions this runtime runs. The design is
+[ADR-0039](../adr/0039-action-engine-core.md), completed in P5 by
+[ADR-0045](../adr/0045-action-engine-completion.md). The [action reference](actions.md) lists
 every action with its inputs. The [document model](document-model.md#5-action-graphs) says
 how a graph is written.
 
-## 1. What runs in P4
+## 1. What runs
 
-The P4 runtime (`plux_flutter` 0.2.0) runs these actions:
-
-| Action | Does |
-|---|---|
-| `navigate` | Pushes (default), replaces, pops until or clears and pushes a route ([navigation](navigation.md)) |
-| `pop` | Pops the page, returning its typed result |
-| `openDialog`, `openBottomSheet` | Present a route; the step's output is the route's result |
-| `switchTab` | Selects a tab of the enclosing shell |
-| `callNative` | Calls a custom action the host registers in `PluxConfig.nativeActions`, its input and output checked against the native catalogue; a step named after the action is the same ([ADR-0041](../adr/0041-native-catalogue-and-host-builds.md)) |
-| `condition` | Takes the `then` or `else` branch |
-| `emitHostEvent` | Posts a typed event to `Plux.events` (`HST-013`) |
-| `stop` | Ends the run with the graph's result, or fails it with a custom error |
-
-Every other action fails its step with `PLX-4010` (`custom`). The step's `onError` can
-handle that error; otherwise the run ends and the error is reported. P5 replaces each
-refusing handler with the action's own.
+The runtime (`plux_flutter` 0.3.0) runs every action of the
+[action reference](actions.md) that is tagged P4 or P5. Navigation, dialogs, sheets, tabs,
+`callNative`, `condition`, `switch`, `stop`, `emitHostEvent` and `emitEvent` arrived in
+P4 and P5's core; P5 adds state (`setState`, `patchState`, `resetState`), forms, data
+(`apiCall`, `refreshData`, `subscribe`, `unsubscribe`), the database and key-value store,
+animation control, device and feedback actions, `forEach`, `parallel`, `delay`,
+`callFlow`, `logout`, `trackEvent` and `sync`. Device actions of an optional package run when the
+host installs it ([host app guide](../guides/host-app.md)); without it the step fails with
+`permission`. Actions of later phases (`invokeFunction`, `biometricAuth`,
+`signTransaction`, `startPayment`, `setLocale`) fail their step with
+`PLX-4010` (`custom`), which the step's `onError` can handle.
 
 ## 2. Runs
 
-A **trigger** starts a run of one graph. In P4 the triggers are widget events, such as a
-button's `onPressed`, and route guards, which run before a page is entered
-([navigation](navigation.md#4-guards-nav-009)). Native slot events start runs from P4 R6.
-From P5 (`ACT-002`), pages, plugins and the app also declare triggers: lifecycle (pages
+A **trigger** starts a run of one graph: widget events, such as a button's `onPressed`;
+route guards, which run before a page is entered
+([navigation](navigation.md#4-guards-nav-009)); native slot events; and (`ACT-002`) the
+triggers pages, plugins and the app declare: lifecycle (pages
 only), timers, state watchers over the state engine's change stream, app resume and pause,
 push opening, host events sent with `Plux.sendEvent`, and data-source `onLoaded` and
 `onFailed`. The app's and the plugins' triggers run from the activation of their release
@@ -56,9 +52,27 @@ that started the run:
 - `steps.<id>`, holding each step's `output` and `error` (`PluxActionError`: `kind` and
   `message`). A step that has not run reads as nulls.
 
-**Concurrency.** A handler runs as `drop` in P4: a trigger is ignored while the same
-handler's previous run is still in progress, so a double tap cannot navigate twice. P5 adds
-the other policies (`ACT-003`).
+**Concurrency** (`ACT-003`). A handler's policy decides what a trigger does while the
+handler's previous run is active: `parallel` starts another run, `drop` ignores the
+trigger, `restart` cancels the active run and starts, `queue` runs after it in order (its
+length a registry limit), `debounce` starts once the trigger has been quiet for its
+milliseconds, and `throttle` starts at most once per its milliseconds. Without a policy, a
+widget event and a timer `drop`, a state watcher `restart`s, and app lifecycle, push, host
+and data-source events `queue`, so a double tap never submits twice and no event is lost.
+
+**Retries** (`ACT-006`). A step's `retry` holds a count, a base and a maximum delay and the
+retryable error kinds; the wait before each attempt is random up to
+`min(maximum, base × 2ⁿ)`. With no kinds listed, `network` and `timeout` are retried; an
+`http` status only when listed. A cancelled run stops retrying.
+
+**Optimistic updates** (`ACT-007`). A mutating step may declare an `optimistic` state
+change, applied before the step runs; if the step fails, each path still holding the
+optimistic value gets its previous value back. A queued `offlineCapable` mutation keeps the
+change until the outbox reports its result.
+
+**Flows** (`ACT-061`). `callFlow` runs a plugin's named flow, or another plugin's exported
+one, as a nested frame of the run: it shares the run's bounds, cancellation and trace, and
+runs with its own plugin's state and capabilities.
 
 ## 3. Errors
 
@@ -103,16 +117,14 @@ outlives its owner, bounded by the run timeout (`ACT-004`).
 host shows with `PluxView`, `onEvent` receives a `PluxViewEvent` with the payload in its
 JSON form.
 
-## 5. Options this runtime ignores
+## 5. Traces
 
-A graph may declare options that P5 delivers. The P4 runtime runs the graph without them,
-and reports each once in debug builds with `PLX-4010`:
-
-- a concurrency policy of `restart`, `queue`, `debounce` or `throttle`: it runs as `drop`. A
-  declared `parallel` also runs as `drop`, and is not reported: the compiler encodes an
-  absent policy as `parallel`, so the two cannot be told apart until P5;
-- a step's `retry`: the step runs once (`ACT-006`);
-- `detached`: the run is cancelled with its page.
+Every run is traced (`ACT-030`) into a ring buffer bounded by `action.traceRuns` and
+`action.traceSteps`: its ID, trigger, steps with their start and end, status and errors,
+which `plux_devtools` and tests read through `Plux.diagnostics`. Input and output values
+are recorded only in debug builds and never when the compiler marked them sensitive
+(`ACT-031`, `SCH-012`); everywhere else a trace holds `‹redacted›`. Each run is also a
+timeline task in DevTools.
 
 ## 6. Telemetry
 
@@ -130,7 +142,7 @@ Inputs, outputs and payloads are never recorded.
 
 ## 7. Cost
 
-The engine's own cost per step is measured by `make bench-steps`. It is an early
-measurement of `NFR-011`, which P5 gates on the reference device
-([p4-routing.md](../benchmarks/p4-routing.md)). An action that completes synchronously runs
+The engine's own cost per step is measured by `make bench-steps` (`NFR-011`,
+[p4-routing.md](../benchmarks/p4-routing.md) and [p5-actions-data.md](../benchmarks/p5-actions-data.md));
+`ACT-008`'s target is checked on the reference device. An action that completes synchronously runs
 without timers or cancellation hooks; only a step waiting on a future gets them.
