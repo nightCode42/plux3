@@ -30,7 +30,10 @@ const catalogueFile = "plux.catalogue.json"
 // hostConfig is what plux.yaml says: the slot widget classes, and
 // optionally the host build, the app's identifier and the catalogue's.
 type hostConfig struct {
-	Slots     []string
+	Slots []string
+	// Tests is the glob that finds the project's test scenarios; empty for
+	// the default (TST-001).
+	Tests     string
 	HostBuild string
 	AppID     string
 	ID        string
@@ -180,7 +183,7 @@ func readHostConfig(dir string) (hostConfig, error) {
 	if err != nil {
 		return hostConfig{}, fmt.Errorf("read %s: %w", hostConfigFile, err)
 	}
-	return hostConfig{Slots: lists["slots"], HostBuild: top["hostBuild"], AppID: top["appId"], ID: top["catalogueId"]}, nil
+	return hostConfig{Slots: lists["slots"], HostBuild: top["hostBuild"], AppID: top["appId"], ID: top["catalogueId"], Tests: top["tests"]}, nil
 }
 
 // readYAMLSubset reads the YAML plux.yaml is written in, and the top of a

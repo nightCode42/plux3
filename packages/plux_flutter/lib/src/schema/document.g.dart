@@ -2414,6 +2414,384 @@ final class RouteOptions {
       };
 }
 
+/// What a page or flow does, given a situation: the steps taken and what must
+/// hold afterwards (TST-001).
+final class Scenario {
+  const Scenario({required this.name, this.description, this.page, this.flow, this.given, this.steps, required this.expect});
+
+  /// Decodes a JSON object.
+  factory Scenario.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return Scenario(
+      name: m['name']! as String,
+      description: m['description'] == null ? null : m['description']! as String,
+      page: m['page'] == null ? null : m['page']! as String,
+      flow: m['flow'] == null ? null : m['flow']! as String,
+      given: m['given'] == null ? null : ScenarioGiven.fromJson(m['given']!),
+      steps: m['steps'] == null ? null : [for (final e in m['steps']! as List<Object?>) ScenarioStep.fromJson(e!)],
+      expect: [for (final e in m['expect']! as List<Object?>) ScenarioExpectation.fromJson(e!)],
+    );
+  }
+
+  /// The scenario's name in reports; unique within its file.
+  final String name;
+  final String? description;
+  /// The route of the page under test, started with the `given` parameters.
+  final String? page;
+  /// The key of the plugin flow under test.
+  final String? flow;
+  /// The situation a scenario starts in.
+  final ScenarioGiven? given;
+  final List<ScenarioStep>? steps;
+  final List<ScenarioExpectation> expect;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'name': name,
+        if (description != null) 'description': description!,
+        if (page != null) 'page': page!,
+        if (flow != null) 'flow': flow!,
+        if (given != null) 'given': given!.toJson(),
+        if (steps != null) 'steps': [for (final e in steps!) e.toJson()],
+        'expect': [for (final e in expect) e.toJson()],
+      };
+}
+
+/// A step that ran, by the action's or function's name, with the inputs it must
+/// have had; inputs not listed are not compared.
+final class ScenarioCall {
+  const ScenarioCall({required this.name, this.args, this.times});
+
+  /// Decodes a JSON object.
+  factory ScenarioCall.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ScenarioCall(
+      name: m['name']! as String,
+      args: m['args'] == null ? null : {for (final e in (m['args']! as Map<String, Object?>).entries) e.key: e.value},
+      times: m['times'] == null ? null : (m['times']! as num).toInt(),
+    );
+  }
+
+  final String name;
+  final Map<String, Object?>? args;
+  /// How often it ran; at least once when absent.
+  final int? times;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'name': name,
+        if (args != null) 'args': {for (final e in args!.entries) e.key: e.value},
+        if (times != null) 'times': times!,
+      };
+}
+
+final class ScenarioDataSource {
+  const ScenarioDataSource({required this.state, this.mock});
+
+  /// Decodes a JSON object.
+  factory ScenarioDataSource.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ScenarioDataSource(
+      state: ScenarioMockState.fromJson(m['state']!),
+      mock: m.containsKey('mock') ? JsonValue(m['mock']) : null,
+    );
+  }
+
+  final ScenarioMockState state;
+  /// A JSON value interpreted against a declared type (defaults, mocks,
+  /// environment values).
+  final JsonValue? mock;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'state': state.toJson(),
+        if (mock != null) 'mock': mock!.value,
+      };
+}
+
+/// One or more declarative test scenarios of pages or flows (TST-001). Files:
+/// `tests/**/*.scenario.yaml` or `.json`, found through `tests` in `plux.yaml`.
+final class ScenarioDocument {
+  const ScenarioDocument({required this.schemaVersion, required this.kind, required this.scenarios});
+
+  /// Decodes a JSON object.
+  factory ScenarioDocument.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ScenarioDocument(
+      schemaVersion: m['schemaVersion']! as String,
+      kind: m['kind']! as String,
+      scenarios: [for (final e in m['scenarios']! as List<Object?>) Scenario.fromJson(e!)],
+    );
+  }
+
+  /// Version of the document schema (SCH-000). Older documents are migrated
+  /// before validation.
+  final String schemaVersion;
+  final String kind;
+  final List<Scenario> scenarios;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'schemaVersion': schemaVersion,
+        'kind': kind,
+        'scenarios': [for (final e in scenarios) e.toJson()],
+      };
+}
+
+final class ScenarioEnterText {
+  const ScenarioEnterText({required this.testId, required this.text});
+
+  /// Decodes a JSON object.
+  factory ScenarioEnterText.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ScenarioEnterText(
+      testId: m['testId']! as String,
+      text: m['text']! as String,
+    );
+  }
+
+  /// A node's `testId` (WGT-013).
+  final String testId;
+  final String text;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'testId': testId,
+        'text': text,
+      };
+}
+
+/// One thing that must hold after the steps; exactly one of the keys.
+final class ScenarioExpectation {
+  const ScenarioExpectation({this.visible, this.notVisible, this.textEquals, this.navigatedTo, this.actionCalled, this.functionCalled, this.stateEquals});
+
+  /// Decodes a JSON object.
+  factory ScenarioExpectation.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ScenarioExpectation(
+      visible: m['visible'] == null ? null : m['visible']! as String,
+      notVisible: m['notVisible'] == null ? null : m['notVisible']! as String,
+      textEquals: m['textEquals'] == null ? null : ScenarioTextEquals.fromJson(m['textEquals']!),
+      navigatedTo: m['navigatedTo'] == null ? null : m['navigatedTo']! as String,
+      actionCalled: m['actionCalled'] == null ? null : ScenarioCall.fromJson(m['actionCalled']!),
+      functionCalled: m['functionCalled'] == null ? null : ScenarioCall.fromJson(m['functionCalled']!),
+      stateEquals: m['stateEquals'] == null ? null : {for (final e in (m['stateEquals']! as Map<String, Object?>).entries) e.key: e.value},
+    );
+  }
+
+  /// A node's `testId` (WGT-013).
+  final String? visible;
+  /// A node's `testId` (WGT-013).
+  final String? notVisible;
+  final ScenarioTextEquals? textEquals;
+  /// App-wide unique route name (SCH-025).
+  final String? navigatedTo;
+  /// A step that ran, by the action's or function's name, with the inputs it
+  /// must have had; inputs not listed are not compared.
+  final ScenarioCall? actionCalled;
+  /// A step that ran, by the action's or function's name, with the inputs it
+  /// must have had; inputs not listed are not compared.
+  final ScenarioCall? functionCalled;
+  /// Exposed app state entries and the values they hold, by name.
+  final Map<String, Object?>? stateEquals;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (visible != null) 'visible': visible!,
+        if (notVisible != null) 'notVisible': notVisible!,
+        if (textEquals != null) 'textEquals': textEquals!.toJson(),
+        if (navigatedTo != null) 'navigatedTo': navigatedTo!,
+        if (actionCalled != null) 'actionCalled': actionCalled!.toJson(),
+        if (functionCalled != null) 'functionCalled': functionCalled!.toJson(),
+        if (stateEquals != null) 'stateEquals': {for (final e in stateEquals!.entries) e.key: e.value},
+      };
+}
+
+/// The situation a scenario starts in.
+final class ScenarioGiven {
+  const ScenarioGiven({this.params, this.state, this.dataSources});
+
+  /// Decodes a JSON object.
+  factory ScenarioGiven.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ScenarioGiven(
+      params: m['params'] == null ? null : {for (final e in (m['params']! as Map<String, Object?>).entries) e.key: e.value},
+      state: m['state'] == null ? null : {for (final e in (m['state']! as Map<String, Object?>).entries) e.key: e.value},
+      dataSources: m['dataSources'] == null ? null : {for (final e in (m['dataSources']! as Map<String, Object?>).entries) e.key: ScenarioDataSource.fromJson(e.value!)},
+    );
+  }
+
+  /// The page's parameters, or the flow's inputs, by name, in their JSON form.
+  final Map<String, Object?>? params;
+  /// Exposed app state entries to set before the page opens, by name, in their
+  /// JSON form.
+  final Map<String, Object?>? state;
+  /// The state each data source shows (DAT-080), by source name, optionally
+  /// with a mock replacing its design-time mock.
+  final Map<String, ScenarioDataSource>? dataSources;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (params != null) 'params': {for (final e in params!.entries) e.key: e.value},
+        if (state != null) 'state': {for (final e in state!.entries) e.key: e.value},
+        if (dataSources != null) 'dataSources': {for (final e in dataSources!.entries) e.key: e.value.toJson()},
+      };
+}
+
+enum ScenarioMockState {
+  loading('loading'),
+  empty('empty'),
+  error('error'),
+  success('success');
+
+  const ScenarioMockState(this.json);
+
+  /// Decodes a JSON value.
+  factory ScenarioMockState.fromJson(Object json) =>
+      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown ScenarioMockState', json));
+
+  /// The JSON value.
+  final String json;
+
+  /// Encodes the JSON value.
+  String toJson() => json;
+}
+
+final class ScenarioScroll {
+  const ScenarioScroll({required this.testId, this.dx, this.dy});
+
+  /// Decodes a JSON object.
+  factory ScenarioScroll.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ScenarioScroll(
+      testId: m['testId']! as String,
+      dx: m['dx'] == null ? null : (m['dx']! as num).toDouble(),
+      dy: m['dy'] == null ? null : (m['dy']! as num).toDouble(),
+    );
+  }
+
+  /// The scrollable to drag.
+  final String testId;
+  /// Logical pixels to drag horizontally; 0 when absent.
+  final double? dx;
+  /// Logical pixels to drag vertically; 0 when absent.
+  final double? dy;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'testId': testId,
+        if (dx != null) 'dx': dx!,
+        if (dy != null) 'dy': dy!,
+      };
+}
+
+/// One thing the user or the host does; exactly one of the keys.
+final class ScenarioStep {
+  const ScenarioStep({this.tap, this.enterText, this.scroll, this.waitFor, this.trigger});
+
+  /// Decodes a JSON object.
+  factory ScenarioStep.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ScenarioStep(
+      tap: m['tap'] == null ? null : m['tap']! as String,
+      enterText: m['enterText'] == null ? null : ScenarioEnterText.fromJson(m['enterText']!),
+      scroll: m['scroll'] == null ? null : ScenarioScroll.fromJson(m['scroll']!),
+      waitFor: m['waitFor'] == null ? null : ScenarioWaitFor.fromJson(m['waitFor']!),
+      trigger: m['trigger'] == null ? null : ScenarioTrigger.fromJson(m['trigger']!),
+    );
+  }
+
+  /// A node's `testId` (WGT-013).
+  final String? tap;
+  final ScenarioEnterText? enterText;
+  final ScenarioScroll? scroll;
+  /// Pumps frames until the node is visible or the timeout passes.
+  final ScenarioWaitFor? waitFor;
+  /// Sends a host event into the app (HST-013).
+  final ScenarioTrigger? trigger;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (tap != null) 'tap': tap!,
+        if (enterText != null) 'enterText': enterText!.toJson(),
+        if (scroll != null) 'scroll': scroll!.toJson(),
+        if (waitFor != null) 'waitFor': waitFor!.toJson(),
+        if (trigger != null) 'trigger': trigger!.toJson(),
+      };
+}
+
+final class ScenarioTextEquals {
+  const ScenarioTextEquals({required this.testId, required this.text});
+
+  /// Decodes a JSON object.
+  factory ScenarioTextEquals.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ScenarioTextEquals(
+      testId: m['testId']! as String,
+      text: m['text']! as String,
+    );
+  }
+
+  /// A node's `testId` (WGT-013).
+  final String testId;
+  final String text;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'testId': testId,
+        'text': text,
+      };
+}
+
+/// Sends a host event into the app (HST-013).
+final class ScenarioTrigger {
+  const ScenarioTrigger({required this.event, this.payload});
+
+  /// Decodes a JSON object.
+  factory ScenarioTrigger.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ScenarioTrigger(
+      event: m['event']! as String,
+      payload: m['payload'] == null ? null : {for (final e in (m['payload']! as Map<String, Object?>).entries) e.key: e.value},
+    );
+  }
+
+  /// Identifier used in PXL and generated code: lowerCamelCase.
+  final String event;
+  final Map<String, Object?>? payload;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'event': event,
+        if (payload != null) 'payload': {for (final e in payload!.entries) e.key: e.value},
+      };
+}
+
+/// Pumps frames until the node is visible or the timeout passes.
+final class ScenarioWaitFor {
+  const ScenarioWaitFor({required this.testId, this.timeoutMs});
+
+  /// Decodes a JSON object.
+  factory ScenarioWaitFor.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ScenarioWaitFor(
+      testId: m['testId']! as String,
+      timeoutMs: m['timeoutMs'] == null ? null : (m['timeoutMs']! as num).toInt(),
+    );
+  }
+
+  /// A node's `testId` (WGT-013).
+  final String testId;
+  /// How long to wait; 5000 when absent.
+  final int? timeoutMs;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'testId': testId,
+        if (timeoutMs != null) 'timeoutMs': timeoutMs!,
+      };
+}
+
 /// Security profile (§15.12).
 enum SecurityProfile {
   standard('standard'),

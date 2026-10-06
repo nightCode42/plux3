@@ -111,6 +111,7 @@
                     "type": "Text"
                   }
                 },
+                "testId": "place-profile",
                 "type": "TextButton"
               }
             ],

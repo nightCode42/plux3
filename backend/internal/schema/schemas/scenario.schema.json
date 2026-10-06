@@ -1,0 +1,351 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://plux.dev/schema/v1/scenario.schema.json",
+  "title": "Plux test scenarios document",
+  "description": "One or more declarative test scenarios of pages or flows (TST-001). Files: `tests/**/*.scenario.yaml` or `.json`, found through `tests` in `plux.yaml`.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "kind",
+    "scenarios"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schemaVersion": {
+      "$ref": "common.schema.json#/$defs/schemaVersion"
+    },
+    "kind": {
+      "const": "scenarios"
+    },
+    "scenarios": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/scenario"
+      },
+      "minItems": 1
+    }
+  },
+  "patternProperties": {
+    "^x-": true
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "scenarioTestId": {
+      "type": "string",
+      "pattern": "^[a-z][a-zA-Z0-9_-]*$",
+      "maxLength": 64,
+      "description": "A node's `testId` (WGT-013)."
+    },
+    "scenario": {
+      "type": "object",
+      "description": "What a page or flow does, given a situation: the steps taken and what must hold afterwards (TST-001).",
+      "required": [
+        "name",
+        "expect"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "The scenario's name in reports; unique within its file."
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "page": {
+          "$ref": "common.schema.json#/$defs/routeName",
+          "description": "The route of the page under test, started with the `given` parameters."
+        },
+        "flow": {
+          "$ref": "common.schema.json#/$defs/key",
+          "description": "The key of the plugin flow under test."
+        },
+        "given": {
+          "$ref": "#/$defs/scenarioGiven"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/scenarioStep"
+          }
+        },
+        "expect": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/scenarioExpectation"
+          },
+          "minItems": 1
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "page"
+          ]
+        },
+        {
+          "required": [
+            "flow"
+          ]
+        }
+      ],
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "Scenario"
+    },
+    "scenarioGiven": {
+      "type": "object",
+      "description": "The situation a scenario starts in.",
+      "properties": {
+        "params": {
+          "type": "object",
+          "description": "The page's parameters, or the flow's inputs, by name, in their JSON form.",
+          "propertyNames": {
+            "$ref": "common.schema.json#/$defs/name"
+          },
+          "additionalProperties": {
+            "$ref": "common.schema.json#/$defs/value"
+          }
+        },
+        "state": {
+          "type": "object",
+          "description": "Exposed app state entries to set before the page opens, by name, in their JSON form.",
+          "propertyNames": {
+            "$ref": "common.schema.json#/$defs/name"
+          },
+          "additionalProperties": {
+            "$ref": "common.schema.json#/$defs/value"
+          }
+        },
+        "dataSources": {
+          "type": "object",
+          "description": "The state each data source shows (DAT-080), by source name, optionally with a mock replacing its design-time mock.",
+          "propertyNames": {
+            "$ref": "common.schema.json#/$defs/name"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/scenarioDataSource"
+          }
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "ScenarioGiven"
+    },
+    "scenarioMockState": {
+      "enum": [
+        "loading",
+        "empty",
+        "error",
+        "success"
+      ]
+    },
+    "scenarioDataSource": {
+      "type": "object",
+      "required": [
+        "state"
+      ],
+      "properties": {
+        "state": {
+          "$ref": "#/$defs/scenarioMockState"
+        },
+        "mock": {
+          "$ref": "common.schema.json#/$defs/value"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "ScenarioDataSource"
+    },
+    "scenarioStep": {
+      "type": "object",
+      "description": "One thing the user or the host does; exactly one of the keys.",
+      "minProperties": 1,
+      "maxProperties": 1,
+      "properties": {
+        "tap": {
+          "$ref": "#/$defs/scenarioTestId"
+        },
+        "enterText": {
+          "type": "object",
+          "required": [
+            "testId",
+            "text"
+          ],
+          "properties": {
+            "testId": {
+              "$ref": "#/$defs/scenarioTestId"
+            },
+            "text": {
+              "type": "string",
+              "maxLength": 10000
+            }
+          },
+          "additionalProperties": false,
+          "x-plux-type": "ScenarioEnterText"
+        },
+        "scroll": {
+          "type": "object",
+          "required": [
+            "testId"
+          ],
+          "properties": {
+            "testId": {
+              "$ref": "#/$defs/scenarioTestId",
+              "description": "The scrollable to drag."
+            },
+            "dx": {
+              "type": "number",
+              "description": "Logical pixels to drag horizontally; 0 when absent."
+            },
+            "dy": {
+              "type": "number",
+              "description": "Logical pixels to drag vertically; 0 when absent."
+            }
+          },
+          "additionalProperties": false,
+          "x-plux-type": "ScenarioScroll"
+        },
+        "waitFor": {
+          "type": "object",
+          "description": "Pumps frames until the node is visible or the timeout passes.",
+          "required": [
+            "testId"
+          ],
+          "properties": {
+            "testId": {
+              "$ref": "#/$defs/scenarioTestId"
+            },
+            "timeoutMs": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 60000,
+              "description": "How long to wait; 5000 when absent."
+            }
+          },
+          "additionalProperties": false,
+          "x-plux-type": "ScenarioWaitFor"
+        },
+        "trigger": {
+          "type": "object",
+          "description": "Sends a host event into the app (HST-013).",
+          "required": [
+            "event"
+          ],
+          "properties": {
+            "event": {
+              "$ref": "common.schema.json#/$defs/name"
+            },
+            "payload": {
+              "type": "object",
+              "propertyNames": {
+                "$ref": "common.schema.json#/$defs/name"
+              },
+              "additionalProperties": {
+                "$ref": "common.schema.json#/$defs/value"
+              }
+            }
+          },
+          "additionalProperties": false,
+          "x-plux-type": "ScenarioTrigger"
+        }
+      },
+      "additionalProperties": false,
+      "x-plux-type": "ScenarioStep"
+    },
+    "scenarioExpectation": {
+      "type": "object",
+      "description": "One thing that must hold after the steps; exactly one of the keys.",
+      "minProperties": 1,
+      "maxProperties": 1,
+      "properties": {
+        "visible": {
+          "$ref": "#/$defs/scenarioTestId"
+        },
+        "notVisible": {
+          "$ref": "#/$defs/scenarioTestId"
+        },
+        "textEquals": {
+          "type": "object",
+          "required": [
+            "testId",
+            "text"
+          ],
+          "properties": {
+            "testId": {
+              "$ref": "#/$defs/scenarioTestId"
+            },
+            "text": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "x-plux-type": "ScenarioTextEquals"
+        },
+        "navigatedTo": {
+          "$ref": "common.schema.json#/$defs/routeName"
+        },
+        "actionCalled": {
+          "$ref": "#/$defs/scenarioCall"
+        },
+        "functionCalled": {
+          "$ref": "#/$defs/scenarioCall"
+        },
+        "stateEquals": {
+          "type": "object",
+          "description": "Exposed app state entries and the values they hold, by name.",
+          "minProperties": 1,
+          "propertyNames": {
+            "$ref": "common.schema.json#/$defs/name"
+          },
+          "additionalProperties": {
+            "$ref": "common.schema.json#/$defs/value"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "x-plux-type": "ScenarioExpectation"
+    },
+    "scenarioCall": {
+      "type": "object",
+      "description": "A step that ran, by the action's or function's name, with the inputs it must have had; inputs not listed are not compared.",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "args": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "common.schema.json#/$defs/name"
+          },
+          "additionalProperties": {
+            "$ref": "common.schema.json#/$defs/value"
+          }
+        },
+        "times": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "description": "How often it ran; at least once when absent."
+        }
+      },
+      "additionalProperties": false,
+      "x-plux-type": "ScenarioCall"
+    }
+  }
+}

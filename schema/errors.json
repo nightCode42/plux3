@@ -824,6 +824,62 @@
       "fix": "Report the source document that produced the failure; the importer must not emit a document the schema rejects."
     },
     {
+      "code": "PLX-1270",
+      "reason": "SCENARIO_FILE_INVALID",
+      "severity": "error",
+      "title": "Scenario file does not match its schema",
+      "cause": "A scenario file has a value the scenario schema does not allow: a missing or unknown key, a value of the wrong type, or a step or expectation with more than one key (TST-001).",
+      "fix": "Fix the value at the reported line and column; scenario.schema.json lists the allowed keys of a scenario, its given, its steps and its expectations."
+    },
+    {
+      "code": "PLX-1271",
+      "reason": "SCENARIO_SYNTAX_INVALID",
+      "severity": "error",
+      "title": "Scenario file is not valid YAML or JSON",
+      "cause": "A scenario file cannot be parsed, so none of its scenarios can run (TST-001).",
+      "fix": "Fix the syntax at the reported line and column."
+    },
+    {
+      "code": "PLX-1272",
+      "reason": "SCENARIO_REFERENCE_UNKNOWN",
+      "severity": "error",
+      "title": "Scenario names something the project does not have",
+      "cause": "A scenario's page route, exposed state entry or data source is not declared by the project, so the scenario could never run against it (TST-001).",
+      "fix": "Use the name the project declares, or declare the page, the exposed state entry or the data source."
+    },
+    {
+      "code": "PLX-1273",
+      "reason": "SCENARIO_UNSUPPORTED",
+      "severity": "error",
+      "title": "Scenario uses something plux test cannot run yet",
+      "cause": "The scenario tests a flow, which the runtime offers no public way to start on its own, or replaces a data source's mock value, which needs a release of its own; only pages and the declared mocks run (TST-001, ADR-0052).",
+      "fix": "Start the scenario at the page that calls the flow and expect the flow's actions to have been called; select a data source's declared mock by its state only."
+    },
+    {
+      "code": "PLX-1274",
+      "reason": "SCENARIO_NAME_DUPLICATE",
+      "severity": "error",
+      "title": "Two scenarios of a file share a name",
+      "cause": "Reports and the generated tests name each scenario by file and name, so a repeated name cannot be told apart (TST-002).",
+      "fix": "Rename one of the scenarios."
+    },
+    {
+      "code": "PLX-1275",
+      "reason": "TEST_HARNESS_FAILED",
+      "severity": "error",
+      "title": "The Flutter test harness could not run",
+      "cause": "plux test could not build or start the generated Flutter test project: the Flutter SDK is missing, its dependencies could not be resolved, or the process failed before reporting results (TST-002).",
+      "fix": "Install Flutter, or pass its path with --flutter, and check the output above for the failing step."
+    },
+    {
+      "code": "PLX-1276",
+      "reason": "SCENARIO_FILES_NONE",
+      "severity": "warning",
+      "title": "No scenario files found",
+      "cause": "The project's tests pattern matches no scenario file, so plux test has nothing to run (TST-002).",
+      "fix": "Add a file such as tests/home.scenario.yaml, or set tests in plux.yaml to where the scenarios are."
+    },
+    {
       "code": "PLX-1310",
       "reason": "PAGE_NODE_BUDGET",
       "severity": "warning",

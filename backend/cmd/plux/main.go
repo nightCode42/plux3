@@ -26,6 +26,7 @@ Commands:
   validate    Validate a project directory offline
   build       Compile a project directory into bundles offline
   codegen     Write a project's typed Dart API into the host app
+  test        Run the project's test scenarios headlessly with Flutter
   diff        Compare the project with the server's drafts
   publish     Upload, publish and optionally release and promote
   pull        Download a channel's release and keys as the host's baseline
@@ -68,6 +69,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 			return build(args[1:], stdout, stderr)
 		case "codegen":
 			return codegenCmd(args[1:], stdout, stderr)
+		case "test":
+			return testCmd(args[1:], stdout, stderr)
 		}
 		e := newEnv(stdout, stderr)
 		if cmd, ok := e.commands()[args[0]]; ok {
