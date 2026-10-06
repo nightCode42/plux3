@@ -8,7 +8,7 @@ SPDX-License-Identifier: Apache-2.0
 ## 0.3.0
 
 The runtime of Plux Phase 5: actions, state, data, local database and animation. Not
-released yet; this entry grows with each milestone of the phase.
+released yet.
 
 - The action engine is complete (P5 R1, plan §5.1): every concurrency policy (`parallel`,
   `drop`, `restart`, `queue`, `debounce`, `throttle`) with per-trigger defaults; detached
@@ -69,6 +69,34 @@ released yet; this entry grows with each milestone of the phase.
   lives in their scope; eleven validator kinds, among them regex (`pxl.regex.v1`), phone by
   region (`pxl.phone.v1`), IBAN, custom PXL rules and debounced asynchronous checks that
   discard stale results; `validateForm`, `submitForm` and `resetForm`. Requires `forms.v1`.
+- `FormScope` scopes a declared form to its subtree (`PLX-1240` for an unknown form);
+  `submitForm` follows its `invalid` branch when the step wires one.
+- Data layer II (P5 R5, ADR-0048): WebSocket, Server-Sent Events and GraphQL subscription
+  streams bound to state, with reconnection, capped backoff and resubscription; an encrypted
+  offline outbox for `offlineCapable` mutations, replayed in order with idempotency keys on
+  resume or reconnection, with its success, failure and conflict events; uploads and
+  downloads with progress, cancellation and size limits. Every limit is a registry entry.
+- `PluxConfig.webSocketClient` creates the `dart:io` client WebSockets connect with, for a
+  host that trusts its own certificate authority; `httpClient` does not reach WebSockets.
+- An `http` failure keeps its status for the step's error (`steps.<id>.error.status`).
+- Local database (P5 R6, ADR-0049): the `PluxDatabaseAdapter` interface; the built-in store
+  behind persisted state, the key-value store (`kvGet`, `kvSet`, `kvRemove`), the response
+  cache and the outbox; collections with `dbQuery`, `dbInsert`, `dbUpdate`, `dbUpsert` and
+  `dbDelete`, watched queries as data sources whose list items are reused by key, and
+  `PluxConfig.databaseAdapter` for `plux_db_drift` or the host's own adapter.
+- Animation (P5 R7, ADR-0050): implicit animation of bound props, enter and exit
+  transitions, Hero between Plux and native pages, timelines with keyframes, staggering and
+  `startAnimation`/`controlAnimation`, the platform's reduce-motion setting, custom route
+  transitions from timelines (`NAV-010`), and native slots for `plux_lottie` and
+  `plux_rive`.
+- Device and feedback actions (P5 R8, ADR-0051): `showSnackbar`, `showToast`, `haptic`,
+  `copyToClipboard`, `openUrl`, `share`, `requestPermission`, and through
+  `PluxConfig.devicePackages` the pickers, camera, scanner and location of `plux_media`,
+  `plux_scanner` and `plux_location`; every operation a plugin did not declare in its
+  capabilities, or the app did not approve, is blocked and reported (`SEC-080`).
+- `Plux.sendEvent` checks a payload against the host event the app declares (`PLX-5307`).
+- Start-up opens only the bundles that may declare triggers, and a bundle carries only the
+  limits it overrides.
 
 ## 0.2.0
 
