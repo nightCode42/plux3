@@ -164,7 +164,7 @@ func TestRealSchemasBuildAModel(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(m.Documents) != 11 || m.Type("Node") == nil || m.Type("SlotFill").Kind != NamedSingleOrList {
+	if len(m.Documents) != 12 || m.Type("Node") == nil || m.Type("SlotFill").Kind != NamedSingleOrList {
 		t.Errorf("unexpected model: %d documents", len(m.Documents))
 	}
 }

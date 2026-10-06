@@ -104,6 +104,14 @@ type Manifest struct {
 // skipDirs are never searched for manifests.
 var skipDirs = map[string]bool{".git": true, "node_modules": true, ".dart_tool": true, "build": true, "testdata": true}
 
+// otherCheckout reports whether dir holds a checkout of its own — a git
+// worktree (a .git file) or a nested clone (a .git directory) — such as an
+// agent's worktree below .claude/worktrees: not part of this repository.
+func otherCheckout(dir string) bool {
+	_, err := os.Lstat(filepath.Join(dir, ".git"))
+	return err == nil
+}
+
 // FindManifests lists every directory in root that Dependabot must cover:
 // Go modules, the Dart workspace root, the Bun workspace root, and GitHub
 // Actions workflows.
@@ -114,7 +122,10 @@ func FindManifests(root string) ([]Manifest, error) {
 			return err
 		}
 		if d.IsDir() {
-			if skipDirs[d.Name()] && p != root {
+			if p == root {
+				return nil
+			}
+			if skipDirs[d.Name()] || otherCheckout(p) {
 				return filepath.SkipDir
 			}
 			return nil
