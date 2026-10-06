@@ -18,8 +18,10 @@ allprojects {
 // build reads flutter.compileSdkVersion, such as url_launcher_android, does
 // not configure. Each plugin project gets the extension here, before it is
 // evaluated, as Flutter's app plugin loader would give it.
+// A plugin project is a Flutter package's android/ directory, beside its
+// pubspec.yaml; the host's :app and the module's :flutter are not.
 subprojects {
-    if (name != "app" && name != "flutter" && extensions.findByName("flutter") == null) {
+    if (projectDir.resolveSibling("pubspec.yaml").isFile && extensions.findByName("flutter") == null) {
         extensions.create("flutter", com.flutter.gradle.FlutterExtension::class.java)
     }
 }

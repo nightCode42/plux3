@@ -15,6 +15,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/nightCode42/plux3/backend/internal/storage"
+	"github.com/nightCode42/plux3/backend/internal/tenancy"
 )
 
 // referenceApp names a reference host app, its fixture and where the
@@ -138,11 +141,41 @@ func runReferenceApp(t *testing.T, app referenceApp) {
 	for _, e := range events {
 		seen[e.Name] = true
 	}
+	missing := false
 	for _, want := range []string{"session_start", "sync_result"} {
 		if !seen[want] {
+			missing = true
 			t.Errorf("no %s event reached the server: %v", want, seen)
 		}
 	}
+	if missing {
+		t.Logf("events of every environment: %v", eventsByEnvironment(t, st))
+		t.Logf("the flows (%s), last %d lines:\n%s", dir, flowsTail, tail(out.String(), flowsTail))
+	}
+}
+
+// eventsByEnvironment counts the app's events per environment key and
+// name, for a failure's report.
+func eventsByEnvironment(t *testing.T, st *stack) map[string]map[string]int {
+	t.Helper()
+	envs, err := st.svc.Tenancy.ListEnvironments(st.ctx, st.owner, st.app.ID, tenancy.Page{Size: 10})
+	if err != nil {
+		t.Logf("list environments: %v", err)
+		return nil
+	}
+	out := map[string]map[string]int{}
+	for _, e := range envs {
+		events, err := st.svc.Events.List(st.ctx, st.owner, st.app.ID, e.ID, "", time.Time{}, storage.Cursor{}, 500)
+		if err != nil {
+			t.Logf("list events of %s: %v", e.Key, err)
+			continue
+		}
+		out[e.Key] = map[string]int{}
+		for _, ev := range events {
+			out[e.Key][ev.Name]++
+		}
+	}
+	return out
 }
 
 // referenceAPI is a running reference backend.
