@@ -8,6 +8,7 @@
 library;
 
 import 'dart:async';
+import 'dart:io' show HttpClient;
 import 'dart:isolate';
 import 'dart:typed_data';
 
@@ -109,14 +110,18 @@ final class DataWorker
 
   /// Starts the data isolate with the client [httpClient] creates (a
   /// top-level or static function) and its cache under [cacheDirectory].
+  /// WebSockets connect with the `dart:io` client [webSocketClient] creates
+  /// (also top-level or static), or `dart:io`'s default when null.
   static Future<DataWorker> start({
     required http.Client Function() httpClient,
     required String cacheDirectory,
+    HttpClient Function()? webSocketClient,
     DataCacheKeyProvider? keys,
   }) async {
     final ready = ReceivePort();
     final isolate = await Isolate.spawn(_main, (
       httpClient,
+      webSocketClient,
       cacheDirectory,
       ready.sendPort,
     ), debugName: 'plux-data');
@@ -288,11 +293,13 @@ final class _WorkerStore implements CacheStore {
       (await _op('entries') as List<Object?>).cast<CacheIndexEntry>();
 }
 
-Future<void> _main((http.Client Function(), String, SendPort) args) async {
-  final (client, dir, ready) = args;
+Future<void> _main(
+  (http.Client Function(), HttpClient Function()?, String, SendPort) args,
+) async {
+  final (client, socketClient, dir, ready) = args;
   final http = client();
   final transport = ClientTransport(http);
-  final streams = SocketStreamTransport(http);
+  final streams = SocketStreamTransport(http, webSocketClient: socketClient);
   final transfers = HttpTransferTransport(http);
   final plain = FileCacheStore('$dir/plain');
   FileCacheStore? secure;

@@ -149,17 +149,24 @@ typedef WebSocketConnector = Future<WebSocket> Function(
   Map<String, dynamic>? headers,
 });
 
-Future<WebSocket> _connectWebSocket(
-  String url, {
-  Iterable<String>? protocols,
-  Map<String, dynamic>? headers,
-}) => WebSocket.connect(url, protocols: protocols, headers: headers);
-
 /// Streams over `dart:io`'s WebSocket and the HTTP client's responses.
 final class SocketStreamTransport implements StreamTransport {
-  /// Creates the transport; [client] reads SSE responses.
-  SocketStreamTransport(this.client, {WebSocketConnector? connector})
-    : _connect = connector ?? _connectWebSocket;
+  /// Creates the transport; [client] reads SSE responses. WebSockets
+  /// connect with the `dart:io` client [webSocketClient] creates, or
+  /// `dart:io`'s default when null; a [connector] replaces the connection
+  /// altogether.
+  SocketStreamTransport(
+    this.client, {
+    WebSocketConnector? connector,
+    HttpClient Function()? webSocketClient,
+  }) : _connect =
+           connector ??
+           ((url, {protocols, headers}) => WebSocket.connect(
+             url,
+             protocols: protocols,
+             headers: headers,
+             customClient: webSocketClient?.call(),
+           ));
 
   /// The HTTP client SSE responses are read with.
   final http.Client client;

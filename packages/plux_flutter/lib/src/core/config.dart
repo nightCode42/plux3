@@ -5,6 +5,7 @@
 library;
 
 import 'dart:convert';
+import 'dart:io' show HttpClient;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart' show ThemeMode;
@@ -205,6 +206,7 @@ final class PluxConfig {
     this.hostBuild = '',
     this.storageDirectory,
     this.httpClient,
+    this.webSocketClient,
     this.onError,
     this.fallbackBuilder,
     this.pluginFallbackBuilders = const {},
@@ -302,6 +304,13 @@ final class PluxConfig {
   /// client (Cronet, `URLSession`) when null. It must be a top-level or
   /// static function, since it runs on another isolate.
   final http.Client Function()? httpClient;
+
+  /// Creates the `dart:io` client WebSocket connections are made with
+  /// (for a host that trusts its own certificate authority, say); the
+  /// `dart:io` default when null. `httpClient` does not reach WebSockets.
+  /// It must be a top-level or static function, since it runs on the
+  /// data isolate.
+  final HttpClient Function()? webSocketClient;
 
   /// Called with every error the runtime reports.
   final PluxErrorHandler? onError;
