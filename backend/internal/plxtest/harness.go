@@ -193,49 +193,63 @@ func scenarioFile(f *File) ([]byte, []Case, error) {
 	fmt.Fprintf(&b, "  group(%s, () {\n", codegen.DartString(f.Path))
 	var cases []Case
 	for i, s := range f.Doc.Scenarios {
-		at := func(more ...string) string {
-			line, col := f.Locate(pointer(append([]string{"scenarios", strconv.Itoa(i)}, more...)...))
-			return fmt.Sprintf("%s:%d:%d", f.Path, line, col)
-		}
 		line, _ := f.Locate(pointer("scenarios", strconv.Itoa(i)))
 		cases = append(cases, Case{File: f.Path, Name: s.Name, Line: line})
-		fmt.Fprintf(&b, "    testWidgets(%s, (tester) async {\n", codegen.DartString(s.Name))
-		b.WriteString("      final s = await ScenarioSession.start(\n        tester,\n")
-		fmt.Fprintf(&b, "        page: %s,\n", codegen.DartString(s.Page))
-		if g := s.Given; g != nil {
-			if len(g.Params) > 0 {
-				fmt.Fprintf(&b, "        params: %s,\n", object(g.Params))
-			}
-			if len(g.State) > 0 {
-				fmt.Fprintf(&b, "        state: %s,\n", object(g.State))
-			}
-			if len(g.DataSources) > 0 {
-				b.WriteString("        dataSources: {")
-				for _, k := range sortedKeys(g.DataSources) {
-					fmt.Fprintf(&b, "%s: %s, ", codegen.DartString(k), codegen.DartString(string(g.DataSources[k].State)))
-				}
-				b.WriteString("},\n")
-			}
+		if err := writeScenario(&b, f, i, s); err != nil {
+			return nil, nil, err
 		}
-		b.WriteString("      );\n      try {\n")
-		for j, st := range s.Steps {
-			code, err := step(st, at("steps", strconv.Itoa(j)))
-			if err != nil {
-				return nil, nil, fmt.Errorf("%s: %w", at("steps", strconv.Itoa(j)), err)
-			}
-			b.WriteString("        " + code + "\n")
-		}
-		for j, e := range s.Expect {
-			code, err := expectation(e, at("expect", strconv.Itoa(j)))
-			if err != nil {
-				return nil, nil, fmt.Errorf("%s: %w", at("expect", strconv.Itoa(j)), err)
-			}
-			b.WriteString("        " + code + "\n")
-		}
-		b.WriteString("      } finally {\n        await s.finish();\n      }\n    });\n")
 	}
 	b.WriteString("  });\n}\n")
 	return b.Bytes(), cases, nil
+}
+
+// writeScenario writes the widget test of the scenario with index i.
+func writeScenario(b *bytes.Buffer, f *File, i int, s schema.Scenario) error {
+	at := func(more ...string) string {
+		line, col := f.Locate(pointer(append([]string{"scenarios", strconv.Itoa(i)}, more...)...))
+		return fmt.Sprintf("%s:%d:%d", f.Path, line, col)
+	}
+	fmt.Fprintf(b, "    testWidgets(%s, (tester) async {\n", codegen.DartString(s.Name))
+	b.WriteString("      final s = await ScenarioSession.start(\n        tester,\n")
+	fmt.Fprintf(b, "        page: %s,\n", codegen.DartString(s.Page))
+	if g := s.Given; g != nil {
+		writeGiven(b, g)
+	}
+	b.WriteString("      );\n      try {\n")
+	for j, st := range s.Steps {
+		code, err := step(st, at("steps", strconv.Itoa(j)))
+		if err != nil {
+			return fmt.Errorf("%s: %w", at("steps", strconv.Itoa(j)), err)
+		}
+		b.WriteString("        " + code + "\n")
+	}
+	for j, e := range s.Expect {
+		code, err := expectation(e, at("expect", strconv.Itoa(j)))
+		if err != nil {
+			return fmt.Errorf("%s: %w", at("expect", strconv.Itoa(j)), err)
+		}
+		b.WriteString("        " + code + "\n")
+	}
+	b.WriteString("      } finally {\n        await s.finish();\n      }\n    });\n")
+	return nil
+}
+
+// writeGiven writes the named arguments of ScenarioSession.start that
+// carry the preconditions of a scenario.
+func writeGiven(b *bytes.Buffer, g *schema.ScenarioGiven) {
+	if len(g.Params) > 0 {
+		fmt.Fprintf(b, "        params: %s,\n", object(g.Params))
+	}
+	if len(g.State) > 0 {
+		fmt.Fprintf(b, "        state: %s,\n", object(g.State))
+	}
+	if len(g.DataSources) > 0 {
+		b.WriteString("        dataSources: {")
+		for _, k := range sortedKeys(g.DataSources) {
+			fmt.Fprintf(b, "%s: %s, ", codegen.DartString(k), codegen.DartString(string(g.DataSources[k].State)))
+		}
+		b.WriteString("},\n")
+	}
 }
 
 func pointer(segs ...string) string {

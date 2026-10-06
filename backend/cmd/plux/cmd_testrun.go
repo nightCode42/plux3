@@ -133,7 +133,7 @@ func runPlan(plan *plxtest.Plan, work, flutter, junit string, stdout, stderr io.
 			_, _ = fmt.Fprintf(stdout, "      %s\n", r.Message)
 		}
 	}
-	sum := plxtest.Summarize(results)
+	sum := plxtest.Summarise(results)
 	_, _ = fmt.Fprintf(stdout, "%d scenarios, %d passed, %d failed, %d errors, %d skipped\n", sum.Total, sum.Passed, sum.Failed, sum.Errored, sum.Skipped)
 	if junit != "" {
 		xmlData, err := plxtest.JUnit(results)

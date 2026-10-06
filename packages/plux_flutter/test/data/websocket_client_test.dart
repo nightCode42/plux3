@@ -35,7 +35,7 @@ void main() {
     addTearDown(() => server.close(force: true));
     server.listen((r) async {
       final ws = await WebSocketTransformer.upgrade(r);
-      ws.listen((m) => ws.add('echo $m'));
+      ws.listen((m) => ws.add('echo $m'), onDone: ws.close);
     });
     final client = http.Client();
     addTearDown(client.close);
@@ -60,7 +60,7 @@ void main() {
       addTearDown(() => server.close(force: true));
       server.listen((r) async {
         final ws = await WebSocketTransformer.upgrade(r);
-        ws.listen((_) {});
+        ws.listen((_) {}, onDone: ws.close);
       });
       final client = http.Client();
       addTearDown(client.close);

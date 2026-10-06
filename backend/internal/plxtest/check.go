@@ -29,24 +29,30 @@ func declared(p *schema.Project) names {
 		}
 	}
 	for _, pl := range p.Plugins {
-		if pl.Doc != nil {
-			for _, d := range pl.Doc.DataSources {
-				n.sources[d.Name] = true
-			}
-		}
-		for _, pg := range pl.Pages {
-			if pg.Doc == nil {
-				continue
-			}
-			if pg.Doc.Route != "" {
-				n.routes[pg.Doc.Route] = true
-			}
-			for _, d := range pg.Doc.DataSources {
-				n.sources[d.Name] = true
-			}
-		}
+		n.addPlugin(pl)
 	}
 	return n
+}
+
+// addPlugin records the data sources of a plugin and the routes and data
+// sources of its pages.
+func (n names) addPlugin(pl schema.Plugin) {
+	if pl.Doc != nil {
+		for _, d := range pl.Doc.DataSources {
+			n.sources[d.Name] = true
+		}
+	}
+	for _, pg := range pl.Pages {
+		if pg.Doc == nil {
+			continue
+		}
+		if pg.Doc.Route != "" {
+			n.routes[pg.Doc.Route] = true
+		}
+		for _, d := range pg.Doc.DataSources {
+			n.sources[d.Name] = true
+		}
+	}
 }
 
 // Check reports what the scenarios of a file refer to that the project
@@ -56,46 +62,64 @@ func declared(p *schema.Project) names {
 // not declared, a flow, and a data source mock value, which would need a
 // release of its own.
 func Check(p *schema.Project, f *File) []Finding {
-	n := declared(p)
-	var out []Finding
-	add := func(code plxerr.Code, ptr []string, format string, args ...any) {
-		fd := Finding{Diagnostic: plxerr.NewDiagnostic(code, plxerr.Location{File: f.Path, Path: plxerr.Pointer(ptr...)}, format, args...)}
-		fd.Line, fd.Column = f.Locate(fd.Path)
-		out = append(out, fd)
-	}
+	c := &checker{n: declared(p), f: f}
 	for i, s := range f.Doc.Scenarios {
-		at := []string{"scenarios", strconv.Itoa(i)}
-		sub := func(more ...string) []string { return append(slices.Clone(at), more...) }
-		if s.Flow != "" {
-			add(plxerr.ScenarioUnsupported, sub("flow"), "scenario %q tests the flow %q; flows cannot be started on their own", s.Name, s.Flow)
-		}
-		if s.Page != "" && !n.routes[s.Page] {
-			add(plxerr.ScenarioReferenceUnknown, sub("page"), "scenario %q starts at the route %q, which no page has", s.Name, s.Page)
-		}
-		if g := s.Given; g != nil {
-			for _, k := range sortedKeys(g.State) {
-				if !n.exposed[k] {
-					add(plxerr.ScenarioReferenceUnknown, sub("given", "state", k), "app state %q is not an exposed entry of the app", k)
-				}
-			}
-			for _, k := range sortedKeys(g.DataSources) {
-				if !n.sources[k] {
-					add(plxerr.ScenarioReferenceUnknown, sub("given", "dataSources", k), "the project declares no data source %q", k)
-				}
-				if g.DataSources[k].Mock != nil {
-					add(plxerr.ScenarioUnsupported, sub("given", "dataSources", k, "mock"), "a mock value replacing the declared mock of %q is not supported; select the declared mock by its state", k)
-				}
-			}
-		}
-		for j, e := range s.Expect {
-			for _, k := range sortedKeys(e.StateEquals) {
-				if !n.exposed[k] {
-					add(plxerr.ScenarioReferenceUnknown, sub("expect", strconv.Itoa(j), "stateEquals", k), "app state %q is not an exposed entry of the app", k)
-				}
+		c.scenario(i, s)
+	}
+	return c.out
+}
+
+// checker collects the findings of one scenario file.
+type checker struct {
+	n   names
+	f   *File
+	out []Finding
+}
+
+func (c *checker) add(code plxerr.Code, ptr []string, format string, args ...any) {
+	fd := Finding{Diagnostic: plxerr.NewDiagnostic(code, plxerr.Location{File: c.f.Path, Path: plxerr.Pointer(ptr...)}, format, args...)}
+	fd.Line, fd.Column = c.f.Locate(fd.Path)
+	c.out = append(c.out, fd)
+}
+
+// scenario checks the scenario with index i.
+func (c *checker) scenario(i int, s schema.Scenario) {
+	at := []string{"scenarios", strconv.Itoa(i)}
+	sub := func(more ...string) []string { return append(slices.Clone(at), more...) }
+	if s.Flow != "" {
+		c.add(plxerr.ScenarioUnsupported, sub("flow"), "scenario %q tests the flow %q; flows cannot be started on their own", s.Name, s.Flow)
+	}
+	if s.Page != "" && !c.n.routes[s.Page] {
+		c.add(plxerr.ScenarioReferenceUnknown, sub("page"), "scenario %q starts at the route %q, which no page has", s.Name, s.Page)
+	}
+	if g := s.Given; g != nil {
+		c.given(g, sub)
+	}
+	for j, e := range s.Expect {
+		for _, k := range sortedKeys(e.StateEquals) {
+			if !c.n.exposed[k] {
+				c.add(plxerr.ScenarioReferenceUnknown, sub("expect", strconv.Itoa(j), "stateEquals", k), "app state %q is not an exposed entry of the app", k)
 			}
 		}
 	}
-	return out
+}
+
+// given checks the preconditions of a scenario; sub extends the scenario's
+// path.
+func (c *checker) given(g *schema.ScenarioGiven, sub func(more ...string) []string) {
+	for _, k := range sortedKeys(g.State) {
+		if !c.n.exposed[k] {
+			c.add(plxerr.ScenarioReferenceUnknown, sub("given", "state", k), "app state %q is not an exposed entry of the app", k)
+		}
+	}
+	for _, k := range sortedKeys(g.DataSources) {
+		if !c.n.sources[k] {
+			c.add(plxerr.ScenarioReferenceUnknown, sub("given", "dataSources", k), "the project declares no data source %q", k)
+		}
+		if g.DataSources[k].Mock != nil {
+			c.add(plxerr.ScenarioUnsupported, sub("given", "dataSources", k, "mock"), "a mock value replacing the declared mock of %q is not supported; select the declared mock by its state", k)
+		}
+	}
 }
 
 func sortedKeys[V any](m map[string]V) []string {

@@ -57,7 +57,7 @@ func TestParseReportMatchesScenariosAndExtractsTheFailingExpectation(t *testing.
 			t.Errorf("result %d = %+v, want %+v", i, got[i], w)
 		}
 	}
-	sum := Summarize(got)
+	sum := Summarise(got)
 	if sum != (Summary{Total: 4, Passed: 1, Failed: 1, Errored: 2}) || sum.OK() {
 		t.Errorf("summary = %+v", sum)
 	}
@@ -123,7 +123,7 @@ func TestJUnitHasOneTestCaseAndSuitePerScenarioAndFile(t *testing.T) {
 func TestParseReportOfAnEmptyRunMarksEverythingNotRun(t *testing.T) {
 	t.Parallel()
 	got, err := ParseReport(strings.NewReader(""), cases[:1])
-	if err != nil || got[0].Status != NotRun || Summarize(got).OK() {
+	if err != nil || got[0].Status != NotRun || Summarise(got).OK() {
 		t.Fatalf("%+v %v", got, err)
 	}
 }

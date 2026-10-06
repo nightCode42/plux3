@@ -165,7 +165,7 @@ func startReferenceAPI(t *testing.T) *referenceAPI {
 	module := filepath.Join("..", "..", "..", "test", "refapi")
 	dir := t.TempDir()
 	bin := filepath.Join(dir, "refapi")
-	build := exec.Command("go", "build", "-o", bin, ".") //nolint:gosec // G204: a path the test chose.
+	build := exec.CommandContext(t.Context(), "go", "build", "-o", bin, ".") //nolint:gosec // G204: a path the test chose.
 	build.Dir = module
 	if out, err := build.CombinedOutput(); err != nil {
 		t.Fatalf("go build test/refapi: %v\n%s", err, out)

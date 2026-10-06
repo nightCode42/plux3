@@ -48,27 +48,9 @@ func (e env) importSource(kind string, args []string) int {
 		set.Usage()
 		return exitUsage
 	}
-	var res importer.Result
-	if kind == "openapi" {
-		data, err := os.ReadFile(pos[0])
-		if err != nil {
-			return e.fail("import "+kind, err)
-		}
-		res = importer.ImportOpenAPI(pos[0], data)
-	} else {
-		schema, err := readSource(pos[0])
-		if err != nil {
-			return e.fail("import "+kind, err)
-		}
-		var docs []importer.Source
-		for _, p := range pos[1:] {
-			d, err := readSource(p)
-			if err != nil {
-				return e.fail("import "+kind, err)
-			}
-			docs = append(docs, d)
-		}
-		res = importer.ImportGraphQL(schema, docs)
+	res, err := runImport(kind, pos)
+	if err != nil {
+		return e.fail("import "+kind, err)
 	}
 	for _, d := range res.Diagnostics {
 		_, _ = fmt.Fprintln(e.stderr, d.String())
@@ -93,6 +75,27 @@ func (e env) importSource(kind string, args []string) int {
 	}
 	_, _ = fmt.Fprintf(e.stdout, "Wrote %s.\n", *out)
 	return exitOK
+}
+
+// runImport reads the source files named on the command line and imports
+// them.
+func runImport(kind string, pos []string) (importer.Result, error) {
+	schema, err := readSource(pos[0])
+	if err != nil {
+		return importer.Result{}, err
+	}
+	if kind == "openapi" {
+		return importer.ImportOpenAPI(context.Background(), schema.File, schema.Data), nil
+	}
+	var docs []importer.Source
+	for _, p := range pos[1:] {
+		d, err := readSource(p)
+		if err != nil {
+			return importer.Result{}, err
+		}
+		docs = append(docs, d)
+	}
+	return importer.ImportGraphQL(schema, docs), nil
 }
 
 // parseInterleaved parses flags that may come before, between or after the
@@ -149,7 +152,7 @@ func (e env) mockServe(ctx context.Context, args []string) int {
 	if err != nil {
 		return e.fail("mock", err)
 	}
-	m, diags := importer.NewMock(pos[0], data, *seed)
+	m, diags := importer.NewMock(ctx, pos[0], data, *seed)
 	if m == nil {
 		for _, d := range diags {
 			_, _ = fmt.Fprintln(e.stderr, d.String())
@@ -172,7 +175,7 @@ func (e env) mockServe(ctx context.Context, args []string) int {
 		return e.fail("mock", err)
 	case <-ctx.Done():
 	}
-	shutdown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	shutdown, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(shutdown); err != nil {
 		return e.fail("mock", err)
@@ -195,9 +198,9 @@ func loopback(addr string) bool {
 
 // readSource reads an input file, keeping its path as the name diagnostics use.
 func readSource(path string) (importer.Source, error) {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // the developer's own file
 	if err != nil {
-		return importer.Source{}, err
+		return importer.Source{}, fmt.Errorf("read the source: %w", err)
 	}
 	return importer.Source{File: path, Data: data}, nil
 }

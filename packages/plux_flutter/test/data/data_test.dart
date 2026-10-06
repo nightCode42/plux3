@@ -22,7 +22,6 @@ import 'package:plux_flutter/src/data/transport.dart';
 import 'package:plux_flutter/src/data/worker.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
 import 'package:plux_flutter/src/schema/registry.g.dart';
-import 'package:plux_flutter/src/store/kv_store.dart';
 
 final class _Auth implements PluxAuthDelegate {
   _Auth(this.tokens);

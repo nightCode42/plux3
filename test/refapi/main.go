@@ -22,12 +22,18 @@ import (
 )
 
 func main() {
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-	if err := run(ctx, os.Args[1:], os.Stdout); err != nil {
+	if err := runUntilSignal(); err != nil {
 		fmt.Fprintln(os.Stderr, "refapi:", err)
 		os.Exit(1)
 	}
+}
+
+// runUntilSignal runs the server until the process is interrupted or
+// terminated.
+func runUntilSignal() error {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	return run(ctx, os.Args[1:], os.Stdout)
 }
 
 // run starts the server named by args and serves until ctx ends. It prints
@@ -57,7 +63,7 @@ func run(ctx context.Context, args []string, stdout io.Writer) error {
 	if err := os.WriteFile(*caOut, ca.certificatePEM(), 0o644); err != nil { //nolint:gosec // G306: a public certificate.
 		return fmt.Errorf("writing the CA certificate: %w", err)
 	}
-	ln, err := net.Listen("tcp", *addr)
+	ln, err := new(net.ListenConfig).Listen(ctx, "tcp", *addr)
 	if err != nil {
 		return fmt.Errorf("listening on %s: %w", *addr, err)
 	}

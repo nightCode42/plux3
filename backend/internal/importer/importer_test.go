@@ -34,7 +34,7 @@ func golden(t *testing.T, name string, got []byte) {
 	t.Helper()
 	p := filepath.Join("testdata", name)
 	if *update {
-		if err := os.WriteFile(p, got, 0o644); err != nil {
+		if err := os.WriteFile(p, got, 0o600); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -45,14 +45,6 @@ func golden(t *testing.T, name string, got []byte) {
 	if !bytes.Equal(got, want) {
 		t.Errorf("%s differs from the golden file; run with -update to rewrite it\n%s", name, got)
 	}
-}
-
-func codes(ds plxerr.Diagnostics) []plxerr.Code {
-	var out []plxerr.Code
-	for _, d := range ds {
-		out = append(out, d.Code)
-	}
-	return out
 }
 
 func mustJSON(t *testing.T, r Result) []byte {
@@ -73,7 +65,7 @@ func TestImportOpenAPIGoldens_DAT_002(t *testing.T) {
 		{"todo30.json", "todo30.golden.json"},
 	} {
 		t.Run(tc.in, func(t *testing.T) {
-			r := ImportOpenAPI(tc.in, read(t, tc.in))
+			r := ImportOpenAPI(t.Context(), tc.in, read(t, tc.in))
 			if len(r.Diagnostics) != 0 {
 				t.Fatalf("diagnostics: %v", r.Diagnostics)
 			}
@@ -86,7 +78,7 @@ func TestImportOpenAPIGoldens_DAT_002(t *testing.T) {
 // goldens: one operation per path and method, the base URL as a variable,
 // nullable and password fields, and design-time mocks from examples.
 func TestImportOpenAPITypes_DAT_002(t *testing.T) {
-	r := ImportOpenAPI("petstore31.yaml", read(t, "petstore31.yaml"))
+	r := ImportOpenAPI(t.Context(), "petstore31.yaml", read(t, "petstore31.yaml"))
 	src := r.Fragment["dataSources"].([]any)[0].(map[string]any)
 	ops := src["config"].(map[string]any)["operations"].(map[string]any)
 	for _, name := range []string{"createPet", "getPet", "deletePetsByPetId"} {
@@ -114,7 +106,7 @@ func TestImportOpenAPITypes_DAT_002(t *testing.T) {
 }
 
 func TestImportOpenAPIReportsUnsupportedConstructs_DAT_002(t *testing.T) {
-	r := ImportOpenAPI("unsupported.yaml", read(t, "unsupported.yaml"))
+	r := ImportOpenAPI(t.Context(), "unsupported.yaml", read(t, "unsupported.yaml"))
 	if len(r.Diagnostics) != 4 {
 		t.Fatalf("diagnostics = %v", r.Diagnostics)
 	}
@@ -136,7 +128,7 @@ func TestImportOpenAPIRejectsInvalidDocuments_DAT_002(t *testing.T) {
 		"swagger two":    `{"swagger": "2.0", "info": {"title": "x", "version": "1"}, "paths": {}}`,
 		"no info":        `{"openapi": "3.0.0", "paths": {}}`,
 	} {
-		r := ImportOpenAPI("bad.json", []byte(in))
+		r := ImportOpenAPI(t.Context(), "bad.json", []byte(in))
 		if r.Fragment != nil || len(r.Diagnostics) != 1 || r.Diagnostics[0].Code != plxerr.ImportDocumentInvalid {
 			t.Errorf("%s: %+v", name, r)
 		}
@@ -144,9 +136,9 @@ func TestImportOpenAPIRejectsInvalidDocuments_DAT_002(t *testing.T) {
 }
 
 func TestImportIsDeterministic_DAT_002(t *testing.T) {
-	first := mustJSON(t, ImportOpenAPI("petstore31.yaml", read(t, "petstore31.yaml")))
+	first := mustJSON(t, ImportOpenAPI(t.Context(), "petstore31.yaml", read(t, "petstore31.yaml")))
 	for range 5 {
-		if got := mustJSON(t, ImportOpenAPI("petstore31.yaml", read(t, "petstore31.yaml"))); !bytes.Equal(got, first) {
+		if got := mustJSON(t, ImportOpenAPI(t.Context(), "petstore31.yaml", read(t, "petstore31.yaml"))); !bytes.Equal(got, first) {
 			t.Fatal("re-importing unchanged input changed the output")
 		}
 	}
@@ -209,7 +201,7 @@ func TestImportWithoutAReadOperationWritesNoSource_DAT_002(t *testing.T) {
 	if srcs := r.Fragment["dataSources"].([]any); len(srcs) != 0 || len(r.Diagnostics) != 1 || r.Diagnostics[0].Code != plxerr.ImportConstructUnsupported {
 		t.Errorf("%+v", r)
 	}
-	o := ImportOpenAPI("odd.yaml", []byte("openapi: 3.0.3\ninfo: {title: T, version: '1'}\npaths:\n  /x/{id}:\n    get:\n      parameters:\n        - {name: id, in: path, required: true, schema: {type: string}}\n      responses:\n        '200':\n          description: ok\n          content:\n            application/json:\n              schema: {type: object, properties: {a: {type: string}}}\n"))
+	o := ImportOpenAPI(t.Context(), "odd.yaml", []byte("openapi: 3.0.3\ninfo: {title: T, version: '1'}\npaths:\n  /x/{id}:\n    get:\n      parameters:\n        - {name: id, in: path, required: true, schema: {type: string}}\n      responses:\n        '200':\n          description: ok\n          content:\n            application/json:\n              schema: {type: object, properties: {a: {type: string}}}\n"))
 	if srcs := o.Fragment["dataSources"].([]any); len(srcs) != 0 || len(o.Diagnostics) != 1 {
 		t.Errorf("%+v", o)
 	}
@@ -224,7 +216,7 @@ func TestImportGraphQLRejectsABrokenSchema_DAT_002(t *testing.T) {
 
 func serve(t *testing.T, file string, seed uint64) *httptest.Server {
 	t.Helper()
-	m, diags := NewMock(file, read(t, file), seed)
+	m, diags := NewMock(t.Context(), file, read(t, file), seed)
 	if m == nil {
 		t.Fatal(diags)
 	}
@@ -235,7 +227,7 @@ func serve(t *testing.T, file string, seed uint64) *httptest.Server {
 
 func get(t *testing.T, method, url string) (int, string) {
 	t.Helper()
-	req, err := http.NewRequest(method, url, nil)
+	req, err := http.NewRequestWithContext(t.Context(), method, url, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -297,7 +289,7 @@ func TestMockIsDeterministicForASeed_TST_004(t *testing.T) {
 }
 
 func TestMockRejectsInvalidDocuments_TST_004(t *testing.T) {
-	if m, diags := NewMock("x.json", []byte("{"), 1); m != nil || len(diags) != 1 {
+	if m, diags := NewMock(t.Context(), "x.json", []byte("{"), 1); m != nil || len(diags) != 1 {
 		t.Errorf("%v %v", m, diags)
 	}
 }

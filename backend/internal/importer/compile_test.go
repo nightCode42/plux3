@@ -71,8 +71,8 @@ func embed(t *testing.T, r Result) fs.FS {
 func TestImportedSourcesCompile_DAT_002(t *testing.T) {
 	gql := ImportGraphQL(Source{"schema.graphql", read(t, "schema.graphql")}, []Source{{"ops.graphql", read(t, "ops.graphql")}})
 	for name, r := range map[string]Result{
-		"openapi without a read example": ImportOpenAPI("todo30.json", read(t, "todo30.json")),
-		"openapi with examples":          ImportOpenAPI("petstore31.yaml", read(t, "petstore31.yaml")),
+		"openapi without a read example": ImportOpenAPI(t.Context(), "todo30.json", read(t, "todo30.json")),
+		"openapi with examples":          ImportOpenAPI(t.Context(), "petstore31.yaml", read(t, "petstore31.yaml")),
 		"graphql without examples":       gql,
 	} {
 		t.Run(name, func(t *testing.T) {

@@ -374,7 +374,7 @@ void main() {
     );
     final left = Directory(downloads).existsSync()
         ? Directory(downloads).listSync()
-        : const [];
+        : const <FileSystemEntity>[];
     expect(left, isEmpty, reason: 'neither a file nor a .part stays');
   });
 

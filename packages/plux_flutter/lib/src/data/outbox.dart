@@ -143,12 +143,10 @@ final class Outbox {
     required this.send,
     required this.emit,
     required this.report,
-    int Function()? now,
     Random? random,
     StreamScheduler? scheduler,
     bool Function()? networkAvailable,
-  }) : _now = now ?? (() => DateTime.now().millisecondsSinceEpoch),
-       _random = random ?? Random(),
+  }) : _random = random ?? Random(),
        _schedule = scheduler ?? Timer.new,
        _networkAvailable = networkAvailable ?? (() => true);
 
@@ -170,7 +168,6 @@ final class Outbox {
   /// Reports a problem.
   final void Function(PluxException e) report;
 
-  final int Function() _now;
   final Random _random;
 
   /// Idempotency keys are unguessable whatever the jitter source is.

@@ -163,18 +163,10 @@ func (c *wsConn) readFrame() (frame, error) {
 // the peer's close along the way. A protocol violation or an oversized
 // message closes the connection with the matching code.
 func (c *wsConn) readMessage() (op byte, data []byte, err error) {
-	var buf []byte
-	var first byte
+	var m message
 	for {
-		f, err := c.readFrame()
-		switch {
-		case errors.Is(err, errWSProtocol):
-			_ = c.close(closeProtocol)
-			return 0, nil, err
-		case errors.Is(err, errWSTooBig):
-			_ = c.close(closeTooBig)
-			return 0, nil, err
-		case err != nil:
+		f, err := c.nextFrame()
+		if err != nil {
 			return 0, nil, err
 		}
 		switch f.op {
@@ -190,33 +182,61 @@ func (c *wsConn) readMessage() (op byte, data []byte, err error) {
 			}
 			_ = c.close(code)
 			return 0, nil, errWSClosed
-		case opText, opBinary:
-			if first != 0 {
-				_ = c.close(closeProtocol)
-				return 0, nil, errWSProtocol
+		case opText, opBinary, opContinuation:
+			if err := c.assemble(&m, f); err != nil {
+				return 0, nil, err
 			}
-			first, buf = f.op, append(buf[:0], f.payload...)
 			if f.fin {
-				return first, buf, nil
-			}
-		case opContinuation:
-			if first == 0 {
-				_ = c.close(closeProtocol)
-				return 0, nil, errWSProtocol
-			}
-			if len(buf)+len(f.payload) > maxWSMessage {
-				_ = c.close(closeTooBig)
-				return 0, nil, errWSTooBig
-			}
-			buf = append(buf, f.payload...)
-			if f.fin {
-				return first, buf, nil
+				return m.op, m.data, nil
 			}
 		default:
 			_ = c.close(closeProtocol)
 			return 0, nil, errWSProtocol
 		}
 	}
+}
+
+// message is a data message being assembled from its frames.
+type message struct {
+	op   byte // zero until the first frame arrived
+	data []byte
+}
+
+// nextFrame reads a frame; a protocol violation or an oversized frame
+// closes the connection with the matching code.
+func (c *wsConn) nextFrame() (frame, error) {
+	f, err := c.readFrame()
+	switch {
+	case errors.Is(err, errWSProtocol):
+		_ = c.close(closeProtocol)
+	case errors.Is(err, errWSTooBig):
+		_ = c.close(closeTooBig)
+	}
+	return f, err
+}
+
+// assemble adds a text, binary or continuation frame to m; a frame out of
+// sequence or one that makes the message too big closes the connection.
+func (c *wsConn) assemble(m *message, f frame) error {
+	switch f.op {
+	case opText, opBinary:
+		if m.op != 0 {
+			_ = c.close(closeProtocol)
+			return errWSProtocol
+		}
+		m.op, m.data = f.op, append(m.data[:0], f.payload...)
+	case opContinuation:
+		if m.op == 0 {
+			_ = c.close(closeProtocol)
+			return errWSProtocol
+		}
+		if len(m.data)+len(f.payload) > maxWSMessage {
+			_ = c.close(closeTooBig)
+			return errWSTooBig
+		}
+		m.data = append(m.data, f.payload...)
+	}
+	return nil
 }
 
 // writeText sends a text message.

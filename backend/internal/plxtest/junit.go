@@ -59,18 +59,17 @@ type event struct {
 // a scenario, such as a test file that does not compile, is attached to
 // the scenarios that never reported.
 func ParseReport(r io.Reader, cases []Case) ([]CaseResult, error) {
-	byName := map[string]int{}
-	for i, c := range cases {
-		byName[c.TestName()] = i
+	rp := &reportParser{
+		byName:  map[string]int{},
+		results: make([]CaseResult, len(cases)),
+		tests:   map[int]int{},
+		started: map[int]int64{},
+		prints:  map[int][]string{},
 	}
-	results := make([]CaseResult, len(cases))
 	for i, c := range cases {
-		results[i] = CaseResult{Case: c, Status: NotRun}
+		rp.byName[c.TestName()] = i
+		rp.results[i] = CaseResult{Case: c, Status: NotRun}
 	}
-	tests := map[int]int{} // test ID to case index
-	started := map[int]int64{}
-	var stray []string
-	prints := map[int][]string{}
 	sc := bufio.NewScanner(r)
 	sc.Buffer(make([]byte, 0, 64<<10), 16<<20)
 	for sc.Scan() {
@@ -82,62 +81,94 @@ func ParseReport(r io.Reader, cases []Case) ([]CaseResult, error) {
 		if err := json.Unmarshal([]byte(line), &e); err != nil {
 			continue
 		}
-		switch e.Type {
-		case "testStart":
-			if i, ok := byName[e.Test.Name]; ok {
-				tests[e.Test.ID] = i
-				started[e.Test.ID] = e.Time
-			}
-		case "print":
-			if _, ok := tests[e.TestID]; ok {
-				prints[e.TestID] = append(prints[e.TestID], e.Message)
-			}
-		case "error":
-			i, ok := tests[e.TestID]
-			if !ok {
-				stray = append(stray, firstLine(e.Error))
-				continue
-			}
-			if thrown, failure, found := thrownInTest(prints[e.TestID]); found {
-				e.Error, e.IsFailure = thrown, failure
-			}
-			if results[i].Status == Failed || results[i].Status == Errored {
-				continue
-			}
-			results[i].Status = Errored
-			if e.IsFailure {
-				results[i].Status = Failed
-			}
-			results[i].Message, results[i].Detail = firstLine(e.Error), strings.TrimSpace(e.Error)
-		case "testDone":
-			i, ok := tests[e.TestID]
-			if !ok {
-				continue
-			}
-			results[i].Millis = max(e.Time-started[e.TestID], 0)
-			switch {
-			case e.Skipped:
-				results[i].Status = Skipped
-			case results[i].Status == NotRun && e.Result == "success":
-				results[i].Status = Passed
-			case results[i].Status == NotRun:
-				results[i].Status = Errored
-			}
-		}
+		rp.apply(e)
 	}
 	if err := sc.Err(); err != nil {
 		return nil, fmt.Errorf("read the test report: %w", err)
 	}
-	for i := range results {
-		if results[i].Status == NotRun {
-			results[i].Message = "the scenario did not run"
-			if len(stray) > 0 {
-				results[i].Message += ": " + stray[0]
+	rp.markNotRun()
+	return rp.results, nil
+}
+
+// reportParser is the state of one reading of the JSON reporter's events.
+type reportParser struct {
+	byName  map[string]int // test name to case index
+	results []CaseResult
+	tests   map[int]int // test ID to case index
+	started map[int]int64
+	stray   []string
+	prints  map[int][]string
+}
+
+// apply folds one event into the results.
+func (rp *reportParser) apply(e event) {
+	switch e.Type {
+	case "testStart":
+		if i, ok := rp.byName[e.Test.Name]; ok {
+			rp.tests[e.Test.ID] = i
+			rp.started[e.Test.ID] = e.Time
+		}
+	case "print":
+		if _, ok := rp.tests[e.TestID]; ok {
+			rp.prints[e.TestID] = append(rp.prints[e.TestID], e.Message)
+		}
+	case "error":
+		rp.applyError(e)
+	case "testDone":
+		rp.applyDone(e)
+	}
+}
+
+// applyError records an error of a test; one outside any scenario is stray.
+func (rp *reportParser) applyError(e event) {
+	i, ok := rp.tests[e.TestID]
+	if !ok {
+		rp.stray = append(rp.stray, firstLine(e.Error))
+		return
+	}
+	if thrown, failure, found := thrownInTest(rp.prints[e.TestID]); found {
+		e.Error, e.IsFailure = thrown, failure
+	}
+	res := &rp.results[i]
+	if res.Status == Failed || res.Status == Errored {
+		return
+	}
+	res.Status = Errored
+	if e.IsFailure {
+		res.Status = Failed
+	}
+	res.Message, res.Detail = firstLine(e.Error), strings.TrimSpace(e.Error)
+}
+
+// applyDone records the end of a test.
+func (rp *reportParser) applyDone(e event) {
+	i, ok := rp.tests[e.TestID]
+	if !ok {
+		return
+	}
+	res := &rp.results[i]
+	res.Millis = max(e.Time-rp.started[e.TestID], 0)
+	switch {
+	case e.Skipped:
+		res.Status = Skipped
+	case res.Status == NotRun && e.Result == "success":
+		res.Status = Passed
+	case res.Status == NotRun:
+		res.Status = Errored
+	}
+}
+
+// markNotRun attaches the stray errors to the scenarios that never reported.
+func (rp *reportParser) markNotRun() {
+	for i := range rp.results {
+		if rp.results[i].Status == NotRun {
+			rp.results[i].Message = "the scenario did not run"
+			if len(rp.stray) > 0 {
+				rp.results[i].Message += ": " + rp.stray[0]
 			}
-			results[i].Detail = strings.Join(stray, "\n")
+			rp.results[i].Detail = strings.Join(rp.stray, "\n")
 		}
 	}
-	return results, nil
 }
 
 // thrownInTest finds what the test framework printed for the exception
@@ -175,9 +206,9 @@ type Summary struct {
 	Total, Passed, Failed, Errored, Skipped int
 }
 
-// Summarize counts the results by status; a scenario that did not run
+// Summarise counts the results by status; a scenario that did not run
 // counts as errored.
-func Summarize(results []CaseResult) Summary {
+func Summarise(results []CaseResult) Summary {
 	s := Summary{Total: len(results)}
 	for _, r := range results {
 		switch r.Status {

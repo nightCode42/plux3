@@ -4,6 +4,7 @@
 package importer
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
@@ -44,8 +45,8 @@ type Mock struct {
 }
 
 // NewMock builds a mock from an OpenAPI 3.x document.
-func NewMock(file string, data []byte, seed uint64) (*Mock, plxerr.Diagnostics) {
-	doc, diags := LoadOpenAPI(file, data)
+func NewMock(ctx context.Context, file string, data []byte, seed uint64) (*Mock, plxerr.Diagnostics) {
+	doc, diags := LoadOpenAPI(ctx, file, data)
 	if doc == nil {
 		return nil, diags
 	}
@@ -157,7 +158,7 @@ func (m *Mock) respond(w http.ResponseWriter, r mockRoute) {
 	if ex := exampleOf(r.media); ex != nil {
 		v = ex
 	} else if r.media.Schema != nil {
-		g := &generator{rng: rand.New(rand.NewPCG(m.seed, r.salt))}
+		g := &generator{rng: rand.New(rand.NewPCG(m.seed, r.salt))} //nolint:gosec // G404: reproducible mock data, not a secret.
 		v = g.value(r.media.Schema, 0)
 	}
 	body, err := json.Marshal(v)
@@ -189,35 +190,10 @@ func (g *generator) value(ref *openapi3.SchemaRef, depth int) any {
 	if len(s.Enum) > 0 {
 		return s.Enum[g.rng.IntN(len(s.Enum))]
 	}
-	if len(s.AllOf) > 0 {
-		merged := map[string]any{}
-		for _, part := range s.AllOf {
-			if obj, ok := g.value(part, depth).(map[string]any); ok {
-				for k, v := range obj {
-					merged[k] = v
-				}
-			}
-		}
-		return merged
+	if v, ok := g.composed(s, depth); ok {
+		return v
 	}
-	if len(s.OneOf) > 0 {
-		return g.value(s.OneOf[0], depth)
-	}
-	if len(s.AnyOf) > 0 {
-		return g.value(s.AnyOf[0], depth)
-	}
-	kind := "object"
-	if s.Type != nil {
-		for _, t := range s.Type.Slice() {
-			if t != "null" {
-				kind = t
-				break
-			}
-		}
-	} else if len(s.Properties) == 0 && s.Items != nil {
-		kind = "array"
-	}
-	switch kind {
+	switch schemaKind(s) {
 	case "string":
 		return g.str(s)
 	case "integer":
@@ -229,16 +205,7 @@ func (g *generator) value(ref *openapi3.SchemaRef, depth int) any {
 	case "boolean":
 		return g.rng.IntN(2) == 0
 	case "array":
-		n := int(s.MinItems)
-		if n == 0 {
-			n = 2
-		}
-		if s.MaxItems != nil && uint64(n) > *s.MaxItems {
-			n = int(*s.MaxItems)
-		}
-		if depth >= maxGenerateDepth {
-			n = int(s.MinItems)
-		}
+		n := itemCount(s, depth)
 		out := make([]any, 0, n)
 		for range n {
 			out = append(out, g.value(s.Items, depth+1))
@@ -246,6 +213,71 @@ func (g *generator) value(ref *openapi3.SchemaRef, depth int) any {
 		return out
 	}
 	return g.object(s, depth)
+}
+
+// composed generates a value for a schema built with allOf, oneOf or
+// anyOf; ok is false for any other schema.
+func (g *generator) composed(s *openapi3.Schema, depth int) (v any, ok bool) {
+	switch {
+	case len(s.AllOf) > 0:
+		merged := map[string]any{}
+		for _, part := range s.AllOf {
+			if obj, isObj := g.value(part, depth).(map[string]any); isObj {
+				for k, v := range obj {
+					merged[k] = v
+				}
+			}
+		}
+		return merged, true
+	case len(s.OneOf) > 0:
+		return g.value(s.OneOf[0], depth), true
+	case len(s.AnyOf) > 0:
+		return g.value(s.AnyOf[0], depth), true
+	}
+	return nil, false
+}
+
+// schemaKind is the first type of a schema other than null; a schema with
+// no type is an array when it has items and no properties, else an object.
+func schemaKind(s *openapi3.Schema) string {
+	if s.Type == nil {
+		if len(s.Properties) == 0 && s.Items != nil {
+			return "array"
+		}
+		return "object"
+	}
+	for _, t := range s.Type.Slice() {
+		if t != "null" {
+			return t
+		}
+	}
+	return "object"
+}
+
+// itemCount is how many items a generated array has: two, or the schema's
+// minimum when that is higher, but never more than its maximum; no items at
+// the depth limit beyond the minimum.
+func itemCount(s *openapi3.Schema, depth int) int {
+	minItems := clampInt(s.MinItems)
+	n := minItems
+	if n == 0 {
+		n = 2
+	}
+	if s.MaxItems != nil {
+		n = min(n, clampInt(*s.MaxItems))
+	}
+	if depth >= maxGenerateDepth {
+		n = minItems
+	}
+	return n
+}
+
+// clampInt converts u to an int, cut at the largest 32-bit value.
+func clampInt(u uint64) int {
+	if u > math.MaxInt32 {
+		return math.MaxInt32
+	}
+	return int(u)
 }
 
 func (g *generator) object(s *openapi3.Schema, depth int) any {

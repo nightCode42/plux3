@@ -14,6 +14,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -334,7 +335,7 @@ func fakeFlutter(t *testing.T, output string, code int) string {
 		t.Fatal(err)
 	}
 	path := filepath.Join(dir, "flutter")
-	script := "#!/bin/sh\ncat \"" + filepath.Join(dir, "out.txt") + "\"\necho \"log line\" >&2\nexit " + string(rune('0'+code)) + "\n"
+	script := "#!/bin/sh\ncat \"" + filepath.Join(dir, "out.txt") + "\"\necho \"log line\" >&2\nexit " + strconv.Itoa(code) + "\n"
 	if err := os.WriteFile(path, []byte(script), 0o700); err != nil { //nolint:gosec // an executable test double
 		t.Fatal(err)
 	}
@@ -389,7 +390,7 @@ func TestFlutterRunsTheStarterScenario(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if sum := Summarize(results); !sum.OK() || sum.Passed != 1 {
+	if sum := Summarise(results); !sum.OK() || sum.Passed != 1 {
 		t.Errorf("results = %+v", results)
 	}
 }

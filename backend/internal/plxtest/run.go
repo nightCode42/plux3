@@ -139,16 +139,6 @@ func (p *Plan) Write(dir string) error {
 	return nil
 }
 
-func mapsKeys(m map[string][]byte) func(yield func(string) bool) {
-	return func(yield func(string) bool) {
-		for k := range m {
-			if !yield(k) {
-				return
-			}
-		}
-	}
-}
-
 // Flutter runs `flutter test --reporter json` in dir with the Flutter
 // executable at path, returns the reporter's output and copies what Flutter
 // prints to its error stream to log. The Flutter SDK is the developer's own;
