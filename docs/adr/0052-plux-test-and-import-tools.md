@@ -113,6 +113,16 @@ dependency review cannot validate is put to the maintainer before `ci.yml` chang
 | `github.com/vektah/gqlparser/v2` | MIT | Parsing GraphQL schemas and operations |
 | `github.com/goccy/go-yaml` | MIT | Decoding YAML scenarios, with positions for diagnostics |
 
+The transitive modules they add (recorded at R11, 2026-10-06; `go list -deps ./cmd/plux-server`
+shows none of them in the server):
+
+| Module | Version | Licence | Required by |
+|---|---|---|---|
+| `github.com/go-openapi/jsonpointer` | v1.0.0 | Apache-2.0 | `kin-openapi` |
+| `github.com/oasdiff/yaml` | v0.1.1 | MIT | `kin-openapi` |
+| `github.com/oasdiff/yaml3` | v0.0.14 | MIT and Apache-2.0 | `kin-openapi` |
+| `github.com/agnivade/levenshtein` | v1.2.1 | MIT | `gqlparser` |
+
 **Why `goccy/go-yaml`.** It is maintained, MIT-licensed, and keeps each node's position, so
 a JSON Schema error found on the decoded data can be reported at its line in the YAML
 file. `gopkg.in/yaml.v3` (MIT and Apache-2.0) is the best-known alternative, but its
