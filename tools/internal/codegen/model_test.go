@@ -168,3 +168,13 @@ func TestRealSchemasBuildAModel(t *testing.T) {
 		t.Errorf("unexpected model: %d documents", len(m.Documents))
 	}
 }
+
+// TestTSCommentKeepsTheCommentOpen checks that a "*/" in a description,
+// such as a glob, cannot end a generated TypeScript doc comment early.
+func TestTSCommentKeepsTheCommentOpen(t *testing.T) {
+	t.Parallel()
+	got := tsComment("Files: tests/**/*.scenario.yaml")
+	if strings.Contains(got, "*/") || got != `Files: tests/**\/*.scenario.yaml` {
+		t.Errorf("tsComment = %q", got)
+	}
+}

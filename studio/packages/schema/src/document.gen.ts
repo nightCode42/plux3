@@ -872,7 +872,7 @@ export interface ScenarioDataSource {
   readonly [extension: `x-${string}`]: unknown;
 }
 
-/** One or more declarative test scenarios of pages or flows (TST-001). Files: `tests/**/*.scenario.yaml` or `.json`, found through `tests` in `plux.yaml`. */
+/** One or more declarative test scenarios of pages or flows (TST-001). Files: `tests/**\/*.scenario.yaml` or `.json`, found through `tests` in `plux.yaml`. */
 export interface ScenarioDocument {
   /** Version of the document schema (SCH-000). Older documents are migrated before validation. */
   readonly schemaVersion: string;
