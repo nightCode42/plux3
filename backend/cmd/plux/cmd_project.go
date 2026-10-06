@@ -40,12 +40,16 @@ func (e env) initProject(args []string) int {
 	set := flag.NewFlagSet("init", flag.ContinueOnError)
 	c.register(set, true)
 	envKey := set.String("env", "development", "the environment `key` publishes go to")
-	if _, code, ok := parse(set, args, e.stderr, "Usage: plux init --server url --org id --app id-or-key [-C dir] [--env key] [--json]\n\n"+
+	pkgs := set.String("packages", "", "in a Flutter app, the optional Plux `packages` to add, comma-separated")
+	projectDir := set.String("project", "", "in a Flutter app, the Plux project `dir` whose device actions name the packages to add")
+	if _, code, ok := parse(set, args, e.stderr, "Usage: plux init --server url --org id --app id-or-key [-C dir] [--env key] [--packages names] [--project dir] [--json]\n\n"+
 		"In a Plux project, writes plux.json, which names the server, organisation and app of the\n"+
 		"project; it holds no secret. In a Flutter app (a pubspec.yaml on the Flutter SDK), sets\n"+
 		"the app up as a Plux host: plux_flutter and a router adapter in pubspec.yaml, plux.yaml,\n"+
 		"lib/plux/plux_options.g.dart with the environment's root keys, and the runtime's start\n"+
 		"in lib/main.dart when main only calls runApp; then the server checks of plux doctor.\n"+
+		"The optional packages the app uses (--packages, and those the device actions of the\n"+
+		"project at --project need) are added to pubspec.yaml and registered in the configuration.\n"+
 		"Running it again changes nothing.", 0); !ok {
 		return code
 	}
@@ -54,7 +58,14 @@ func (e env) initProject(args []string) int {
 		return e.fail("init", err)
 	}
 	if host {
-		return e.initHost(c, *envKey)
+		names, err := hostPackages(*pkgs, *projectDir)
+		if err != nil {
+			return e.fail("init", err)
+		}
+		return e.initHost(c, *envKey, names)
+	}
+	if *pkgs != "" || *projectDir != "" {
+		return e.fail("init", usageError("--packages and --project apply to a Flutter app, not a Plux project"))
 	}
 	if err := c.resolve(); err != nil {
 		return e.fail("init", err)

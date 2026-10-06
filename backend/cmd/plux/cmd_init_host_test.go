@@ -5,13 +5,17 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"flag"
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
+	"github.com/nightCode42/plux3/backend/internal/codegen"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1"
 )
 
@@ -69,13 +73,13 @@ func TestInitHost(t *testing.T) { //nolint:paralleltest // the environment is pr
 		t.Fatal(err)
 	}
 	putFile(t, filepath.Join(host, "android", "app", "build.gradle.kts"), "android {\n  defaultConfig {\n    applicationId = \"dev.plux.host\"\n  }\n}\n")
-	args := []string{"init", "--server", url, "--app", "demo", "--env", "production", "-C", host}
+	args := []string{"init", "--server", url, "--app", "demo", "--env", "production", "--packages", "plux_media", "-C", host}
 	code, out, stderr := cli(t, t.TempDir(), args...)
 	if code != exitOK {
 		t.Fatalf("init: %d %s %s", code, out, stderr)
 	}
 	pubspec := read(t, filepath.Join(host, "pubspec.yaml"))
-	if !strings.Contains(pubspec, "dependencies:\n  plux_flutter: "+runtimeConstraint+"\n  plux_go_router: "+adapterConstraint+"\n  flutter:") {
+	if !strings.Contains(pubspec, "dependencies:\n  plux_flutter: "+runtimeConstraint+"\n  plux_go_router: "+adapterConstraint+"\n  plux_media: "+optionalConstraint+"\n  flutter:") {
 		t.Errorf("pubspec.yaml:\n%s", pubspec)
 	}
 	cfg, err := readHostConfig(host)
@@ -86,6 +90,7 @@ func TestInitHost(t *testing.T) { //nolint:paralleltest // the environment is pr
 	for _, want := range []string{
 		"static const appId = 'a1';", "static const endpoint = '" + url + "';", "static const environment = 'production';",
 		"keyId: 'k1'", "publicKey: Uint8List.fromList([0x01, 0x02])",
+		"devicePackages: [PluxMedia()],",
 	} {
 		if !strings.Contains(options, want) {
 			t.Errorf("the options lack %q:\n%s", want, options)
@@ -168,7 +173,11 @@ func TestInitHostCases(t *testing.T) { //nolint:paralleltest // the environment 
 func TestInitConstraints(t *testing.T) {
 	t.Parallel()
 	version := regexp.MustCompile(`(?m)^version: (\d+\.\d+)\.\d+`)
-	for pkg, constraint := range map[string]string{"plux_flutter": runtimeConstraint, "plux_go_router": adapterConstraint, "plux_auto_route": adapterConstraint} {
+	constraints := map[string]string{"plux_flutter": runtimeConstraint, "plux_go_router": adapterConstraint, "plux_auto_route": adapterConstraint}
+	for _, p := range codegen.OptionalPackages() {
+		constraints[p.Name] = optionalConstraint
+	}
+	for pkg, constraint := range constraints {
 		m := version.FindStringSubmatch(read(t, filepath.Join("..", "..", "..", "packages", pkg, "pubspec.yaml")))
 		if m == nil || !strings.HasPrefix(constraint, "^"+m[1]+".") {
 			t.Errorf("%s is %v, plux init adds %s", pkg, m, constraint)
@@ -183,7 +192,7 @@ func TestOptionsGolden(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()
 	keys := []*pluxv1.PublicKey{{KeyId: "k1", Algorithm: "ed25519", Role: "targets", PublicKey: []byte{0xab, 0x01}}}
-	if _, err := writeOptions(dir, "demo", "01e0c450-6c00-7000-8000-000000000001", "https://plux.example.com", "production", keys); err != nil {
+	if _, err := writeOptions(dir, "demo", "01e0c450-6c00-7000-8000-000000000001", "https://plux.example.com", "production", keys, nil); err != nil {
 		t.Fatal(err)
 	}
 	got := read(t, filepath.Join(dir, "lib", "plux", "plux_options.g.dart"))
@@ -194,5 +203,108 @@ func TestOptionsGolden(t *testing.T) {
 	}
 	if want, err := os.ReadFile(path); err != nil || !bytes.Equal(want, []byte(got)) { //nolint:gosec // the test's own golden
 		t.Errorf("%s differs (%v); run go test ./cmd/plux -run TestOptionsGolden -update", path, err)
+	}
+}
+
+// editJSON rewrites the JSON document at path with edit.
+func editJSON(t *testing.T, path string, edit func(doc map[string]any)) {
+	t.Helper()
+	var doc map[string]any
+	if err := json.Unmarshal([]byte(read(t, path)), &doc); err != nil {
+		t.Fatal(err)
+	}
+	edit(doc)
+	data, err := json.MarshalIndent(doc, "", "  ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	putFile(t, path, string(data))
+}
+
+// TestHostPackages checks the optional packages plux init adds: those
+// named, and those the project's device actions need, sorted once each.
+// Verifies: RT-060, HST-032.
+func TestHostPackages(t *testing.T) {
+	t.Parallel()
+	project := t.TempDir()
+	if err := os.CopyFS(project, os.DirFS(filepath.Join("..", "..", "..", "schema", "testdata", "documents", "widgets"))); err != nil {
+		t.Fatal(err)
+	}
+	editJSON(t, filepath.Join(project, "plugins", "gallery", "pages", "material.page.json"), func(doc map[string]any) {
+		var node any = doc
+		for _, k := range strings.Split("root/slots/body/slots/child/children/6/events/onPressed/steps/0", "/") {
+			switch n := node.(type) {
+			case map[string]any:
+				node = n[k]
+			case []any:
+				i, err := strconv.Atoi(k)
+				if err != nil {
+					t.Fatal(err)
+				}
+				node = n[i]
+			}
+		}
+		step, ok := node.(map[string]any)
+		if !ok {
+			t.Fatal("the gallery page has no step to edit")
+		}
+		step["action"], step["input"] = "capturePhoto", map[string]any{}
+	})
+	addCamera := func(doc map[string]any) {
+		caps, _ := doc["capabilities"].(map[string]any)
+		apis, _ := caps["deviceApis"].([]any)
+		caps["deviceApis"] = append(apis, "camera")
+	}
+	editJSON(t, filepath.Join(project, "plugins", "gallery", "plugin.json"), addCamera)
+	editJSON(t, filepath.Join(project, "app.json"), addCamera)
+
+	for _, tc := range []struct {
+		name, list, project string
+		want                []string
+		err                 string
+	}{
+		{name: "none"},
+		{name: "named", list: "plux_rive, plux_lottie,plux_rive", want: []string{"plux_lottie", "plux_rive"}},
+		{name: "unknown", list: "plux_camera", err: `unknown package "plux_camera"`},
+		{name: "project", list: "plux_media,plux_lottie", project: project, want: []string{"plux_lottie", "plux_media"}},
+		{name: "project without device actions", project: projectDir},
+		{name: "not a directory", project: filepath.Join(project, "app.json"), err: "is not a directory"},
+	} {
+		got, err := hostPackages(tc.list, tc.project)
+		if tc.err != "" {
+			if err == nil || !strings.Contains(err.Error(), tc.err) {
+				t.Errorf("%s: err %v, want %q", tc.name, err, tc.err)
+			}
+			continue
+		}
+		if err != nil || !slices.Equal(got, tc.want) {
+			t.Errorf("%s: %v %v, want %v", tc.name, got, err, tc.want)
+		}
+	}
+}
+
+// TestOptionsRegisterPackages checks that the generated configuration
+// imports and registers each optional package, with a root navigator key
+// for those that open pages of their own.
+// Verifies: HST-032.
+func TestOptionsRegisterPackages(t *testing.T) {
+	t.Parallel()
+	dir := t.TempDir()
+	if _, err := writeOptions(dir, "demo", "01e0c450-6c00-7000-8000-000000000001", "https://plux.example.com", "production", nil,
+		[]string{"plux_scanner", "plux_media", "plux_lottie", "plux_db_drift"}); err != nil {
+		t.Fatal(err)
+	}
+	got := read(t, filepath.Join(dir, "lib", "plux", "plux_options.g.dart"))
+	for _, want := range []string{
+		"import 'package:plux_db_drift/plux_db_drift.dart';\nimport 'package:plux_lottie/plux_lottie.dart';\nimport 'package:plux_media/plux_media.dart';\nimport 'package:plux_scanner/plux_scanner.dart';\n\n",
+		"static final rootNavigatorKey = GlobalKey<NavigatorState>();",
+		"        navigatorKey: navigatorKey ?? rootNavigatorKey,\n" +
+			"        devicePackages: [PluxMedia(), PluxScanner(navigatorKey: navigatorKey ?? rootNavigatorKey)],\n" +
+			"        nativeSlots: {...PluxLottie.slots},\n" +
+			"        databaseAdapter: PluxDriftAdapter(),\n      );\n}\n",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("plux_options.g.dart lacks\n%s\nin\n%s", want, got)
+		}
 	}
 }

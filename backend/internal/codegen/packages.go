@@ -25,27 +25,31 @@ type Package struct {
 	Adapter string
 }
 
-// Packages are the optional Plux packages, by name.
-var Packages = []Package{
-	{Name: "plux_db_drift", Import: "package:plux_db_drift/plux_db_drift.dart", Adapter: "PluxDriftAdapter()"},
-	{Name: "plux_location", Import: "package:plux_location/plux_location.dart", Device: "PluxLocation()"},
-	{Name: "plux_lottie", Import: "package:plux_lottie/plux_lottie.dart", Slots: "PluxLottie.slots"},
-	{Name: "plux_media", Import: "package:plux_media/plux_media.dart", Device: "PluxMedia()"},
-	{Name: "plux_rive", Import: "package:plux_rive/plux_rive.dart", Slots: "PluxRive.slots"},
-	{Name: "plux_scanner", Import: "package:plux_scanner/plux_scanner.dart", Device: "PluxScanner(navigatorKey: KEY)"},
+// OptionalPackages are the optional Plux packages, sorted by name.
+func OptionalPackages() []Package {
+	return []Package{
+		{Name: "plux_db_drift", Import: "package:plux_db_drift/plux_db_drift.dart", Adapter: "PluxDriftAdapter()"},
+		{Name: "plux_location", Import: "package:plux_location/plux_location.dart", Device: "PluxLocation()"},
+		{Name: "plux_lottie", Import: "package:plux_lottie/plux_lottie.dart", Slots: "PluxLottie.slots"},
+		{Name: "plux_media", Import: "package:plux_media/plux_media.dart", Device: "PluxMedia()"},
+		{Name: "plux_rive", Import: "package:plux_rive/plux_rive.dart", Slots: "PluxRive.slots"},
+		{Name: "plux_scanner", Import: "package:plux_scanner/plux_scanner.dart", Device: "PluxScanner(navigatorKey: KEY)"},
+	}
 }
 
 // PackageByName returns an optional package.
 func PackageByName(name string) (Package, bool) {
-	i := slices.IndexFunc(Packages, func(p Package) bool { return p.Name == name })
+	all := OptionalPackages()
+	i := slices.IndexFunc(all, func(p Package) bool { return p.Name == name })
 	if i < 0 {
 		return Package{}, false
 	}
-	return Packages[i], true
+	return all[i], true
 }
 
 // packageSpecs resolves the names of an OptionsSpec to packages, sorted by
-// name and without repeats; unknown names are ignored.
+// name and without repeats; unknown names are ignored (the CLI refuses
+// them before).
 func packageSpecs(names []string) []Package {
 	var out []Package
 	for _, n := range slices.Sorted(slices.Values(names)) {
