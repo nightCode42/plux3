@@ -23,7 +23,7 @@
 // run and measure also write their report to report.md in the output
 // directory. -scenarios limits each run to some of its parts
 // (PLUX_BENCH_SCENARIOS, comma-separated: startup, open, native,
-// scroll); CI compares the parts in parallel jobs (ADR-0043).
+// scroll, list); CI compares the parts in parallel jobs (ADR-0043).
 //
 // Exit codes: 0 no regression, 1 a regression, 2 usage, I/O or a run
 // that failed.

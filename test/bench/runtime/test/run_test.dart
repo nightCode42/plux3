@@ -51,6 +51,10 @@ void main() {
         'scroll_build_ms',
         'scroll_raster_ms',
         'scroll_janky_pct',
+        'list_build_ms',
+        'list_raster_ms',
+        'list_janky_pct',
+        'list_max_frame_ms',
       ]),
     );
     expect(result.samples['initialize_ms'], hasLength(2));
