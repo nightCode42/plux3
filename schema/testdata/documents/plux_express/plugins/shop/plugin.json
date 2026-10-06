@@ -1,0 +1,163 @@
+{
+  "capabilities": {
+    "networkDomains": [
+      "refapi.invalid"
+    ]
+  },
+  "dataSources": [
+    {
+      "config": {
+        "baseUrl": "apiBaseUrl",
+        "pagination": {
+          "cursorParam": "cursor",
+          "hasMore": "more",
+          "nextCursor": "next",
+          "pageSize": 10,
+          "sizeParam": "limit",
+          "style": "cursor"
+        },
+        "path": "/products",
+        "select": "items"
+      },
+      "id": "01d0c450-6c00-7000-8000-000000000320",
+      "kind": "rest",
+      "mock": [
+        {
+          "category": "Fruit",
+          "id": "p-001",
+          "name": "Product 01",
+          "priceCents": 199
+        }
+      ],
+      "name": "products",
+      "type": "list<Product>"
+    },
+    {
+      "config": {
+        "baseUrl": "apiBaseUrl",
+        "operations": {
+          "place": {
+            "input": "PlaceOrder",
+            "method": "POST",
+            "output": "OrderResult",
+            "path": "/orders"
+          }
+        },
+        "path": "/orders"
+      },
+      "id": "01d0c450-6c00-7000-8000-000000000321",
+      "kind": "rest",
+      "mock": {
+        "id": "ord-001",
+        "status": "placed",
+        "totalCents": 398
+      },
+      "name": "orders",
+      "type": "OrderResult"
+    },
+    {
+      "config": {
+        "baseUrl": "streamUrl",
+        "params": {
+          "orderId": ""
+        },
+        "path": "/orders/{orderId}/track"
+      },
+      "id": "01d0c450-6c00-7000-8000-000000000322",
+      "kind": "websocket",
+      "mock": {
+        "etaMinutes": 5,
+        "lat": 52.5265,
+        "lng": 13.4115,
+        "orderId": "ord-001",
+        "status": "on_the_way"
+      },
+      "name": "tracking",
+      "type": "Tracking"
+    },
+    {
+      "config": {
+        "baseUrl": "apiBaseUrl",
+        "operations": {
+          "confirmDelivery": {
+            "input": "DeliveryInput",
+            "method": "POST",
+            "offlineCapable": true,
+            "output": "Delivery",
+            "path": "/courier/jobs/{id}/deliveries"
+          }
+        },
+        "path": "/courier/jobs",
+        "select": "items"
+      },
+      "id": "01d0c450-6c00-7000-8000-000000000323",
+      "kind": "rest",
+      "mock": [
+        {
+          "address": "10 Harbour Street",
+          "id": "job-001",
+          "orderId": "ord-900",
+          "status": "assigned"
+        }
+      ],
+      "name": "courier",
+      "type": "list<Job>"
+    }
+  ],
+  "description": "The catalogue, the cart, live order tracking and the courier's deliveries.",
+  "entryPage": "01d0c450-6c00-7000-8000-000000000310",
+  "icon": {
+    "monogram": {
+      "background": "#E4572E",
+      "text": "S"
+    }
+  },
+  "id": "01d0c450-6c00-7000-8000-000000000303",
+  "key": "shop",
+  "kind": "plugin",
+  "name": "Shop",
+  "pages": [
+    "01d0c450-6c00-7000-8000-000000000310",
+    "01d0c450-6c00-7000-8000-000000000311",
+    "01d0c450-6c00-7000-8000-000000000312",
+    "01d0c450-6c00-7000-8000-000000000313",
+    "01d0c450-6c00-7000-8000-000000000314"
+  ],
+  "schemaVersion": "1.0.0",
+  "state": [
+    {
+      "default": [],
+      "id": "01d0c450-6c00-7000-8000-000000000330",
+      "name": "cartIds",
+      "persistence": "persisted",
+      "type": "list<string>"
+    },
+    {
+      "default": [],
+      "id": "01d0c450-6c00-7000-8000-000000000331",
+      "name": "cartNames",
+      "persistence": "persisted",
+      "type": "list<string>"
+    },
+    {
+      "default": [],
+      "id": "01d0c450-6c00-7000-8000-000000000332",
+      "name": "cartPrices",
+      "persistence": "persisted",
+      "type": "list<int>"
+    },
+    {
+      "default": "Idle",
+      "id": "01d0c450-6c00-7000-8000-000000000333",
+      "name": "courierStatus",
+      "type": "string"
+    },
+    {
+      "default": "Nothing synced",
+      "id": "01d0c450-6c00-7000-8000-000000000334",
+      "name": "courierSynced",
+      "type": "string"
+    }
+  ],
+  "team": "express"
+}

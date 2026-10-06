@@ -1,0 +1,212 @@
+{
+  "capabilities": {
+    "deviceApis": [
+      "camera"
+    ],
+    "networkDomains": [
+      "refapi.invalid"
+    ]
+  },
+  "defaultLocale": "en",
+  "entryRoute": "login",
+  "environments": [
+    {
+      "key": "production",
+      "name": "Production",
+      "values": {
+        "apiBaseUrl": "https://refapi.invalid/bank/v1",
+        "graphUrl": "https://refapi.invalid/bank",
+        "streamUrl": "https://refapi.invalid/bank/v1"
+      }
+    },
+    {
+      "key": "staging",
+      "name": "Staging",
+      "values": {
+        "apiBaseUrl": "https://refapi.invalid/bank/v1",
+        "graphUrl": "https://refapi.invalid/bank",
+        "streamUrl": "https://refapi.invalid/bank/v1"
+      }
+    }
+  ],
+  "icon": {
+    "monogram": {
+      "background": "#0B3D91",
+      "text": "PB"
+    }
+  },
+  "id": "01d0c450-6c00-7000-8000-000000000200",
+  "key": "bank",
+  "kind": "app",
+  "minRuntimeVersion": "0.3.0",
+  "name": "Plux Bank",
+  "nativeCatalogue": "01d0c450-6c00-7000-8000-000000000202",
+  "plugins": [
+    "banking"
+  ],
+  "requiredFeatures": "raise",
+  "schemaVersion": "1.0.0",
+  "securityProfile": "maximum",
+  "supportedLocales": [
+    "en",
+    "de"
+  ],
+  "sync": {
+    "activation": "atSafePoint",
+    "startup": {
+      "mode": "useCacheThenSync"
+    }
+  },
+  "theme": "01d0c450-6c00-7000-8000-000000000201",
+  "types": [
+    {
+      "fields": [
+        {
+          "name": "username",
+          "type": "string"
+        },
+        {
+          "name": "password",
+          "type": "string"
+        }
+      ],
+      "name": "LoginInput"
+    },
+    {
+      "fields": [
+        {
+          "name": "token",
+          "type": "string"
+        },
+        {
+          "name": "expiresIn",
+          "type": "int"
+        }
+      ],
+      "name": "LoginResult"
+    },
+    {
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "iban",
+          "type": "string"
+        },
+        {
+          "name": "balanceCents",
+          "type": "int"
+        },
+        {
+          "name": "currency",
+          "type": "string"
+        }
+      ],
+      "name": "Account"
+    },
+    {
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "amountCents",
+          "type": "int"
+        },
+        {
+          "name": "postedAt",
+          "type": "string"
+        }
+      ],
+      "name": "Transaction"
+    },
+    {
+      "fields": [
+        {
+          "name": "fromAccountId",
+          "type": "string"
+        },
+        {
+          "name": "toIban",
+          "type": "string"
+        },
+        {
+          "name": "amountCents",
+          "type": "int"
+        },
+        {
+          "name": "reference",
+          "type": "string"
+        }
+      ],
+      "name": "TransferInput"
+    },
+    {
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "status",
+          "type": "string"
+        },
+        {
+          "name": "balanceCents",
+          "type": "int"
+        }
+      ],
+      "name": "TransferResult"
+    },
+    {
+      "fields": [
+        {
+          "name": "transferId",
+          "type": "string"
+        },
+        {
+          "name": "accountId",
+          "type": "string"
+        },
+        {
+          "name": "toIban",
+          "type": "string"
+        },
+        {
+          "name": "amountCents",
+          "type": "int"
+        },
+        {
+          "name": "balanceCents",
+          "type": "int"
+        }
+      ],
+      "name": "Notification"
+    }
+  ],
+  "variables": [
+    {
+      "name": "apiBaseUrl",
+      "type": "string"
+    },
+    {
+      "name": "graphUrl",
+      "type": "string"
+    },
+    {
+      "name": "streamUrl",
+      "type": "string"
+    }
+  ]
+}

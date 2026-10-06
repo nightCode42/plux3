@@ -1,0 +1,66 @@
+{
+  "id": "01d0c450-6c00-7000-8000-000000000350",
+  "key": "product-row",
+  "kind": "component",
+  "name": "Product row",
+  "props": [
+    {
+      "name": "item",
+      "required": true,
+      "type": "Product"
+    }
+  ],
+  "root": {
+    "events": {
+      "onTap": {
+        "steps": [
+          {
+            "action": "navigate",
+            "id": "go",
+            "input": {
+              "params": {
+                "id": {
+                  "$expr": "props.item.id"
+                }
+              },
+              "route": "product"
+            }
+          }
+        ]
+      }
+    },
+    "id": "01d0c450-6c00-7000-8000-000000003049",
+    "slots": {
+      "subtitle": {
+        "id": "01d0c450-6c00-7000-8000-000000003047",
+        "props": {
+          "data": {
+            "$expr": "props.item.category"
+          }
+        },
+        "type": "Text"
+      },
+      "title": {
+        "id": "01d0c450-6c00-7000-8000-000000003046",
+        "props": {
+          "data": {
+            "$expr": "props.item.name"
+          }
+        },
+        "type": "Text"
+      },
+      "trailing": {
+        "id": "01d0c450-6c00-7000-8000-000000003048",
+        "props": {
+          "data": {
+            "$expr": "string(div(decimal(props.item.priceCents), 100d, 2)) + \" EUR\""
+          }
+        },
+        "type": "Text"
+      }
+    },
+    "type": "ListTile"
+  },
+  "schemaVersion": "1.0.0",
+  "version": 1
+}

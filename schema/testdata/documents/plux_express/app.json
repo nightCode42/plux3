@@ -1,0 +1,197 @@
+{
+  "defaultLocale": "en",
+  "entryRoute": "catalogue",
+  "environments": [
+    {
+      "key": "production",
+      "name": "Production",
+      "values": {
+        "apiBaseUrl": "https://refapi.invalid/express/v1",
+        "streamUrl": "https://refapi.invalid/express/v1"
+      }
+    },
+    {
+      "key": "staging",
+      "name": "Staging",
+      "values": {
+        "apiBaseUrl": "https://refapi.invalid/express/v1",
+        "streamUrl": "https://refapi.invalid/express/v1"
+      }
+    }
+  ],
+  "icon": {
+    "monogram": {
+      "background": "#E4572E",
+      "text": "PE"
+    }
+  },
+  "id": "01d0c450-6c00-7000-8000-000000000300",
+  "key": "express",
+  "kind": "app",
+  "minRuntimeVersion": "0.3.0",
+  "name": "Plux Express",
+  "plugins": [
+    "shop"
+  ],
+  "requiredFeatures": "raise",
+  "schemaVersion": "1.0.0",
+  "securityProfile": "standard",
+  "supportedLocales": [
+    "en"
+  ],
+  "sync": {
+    "activation": "atSafePoint",
+    "startup": {
+      "mode": "useCacheThenSync"
+    }
+  },
+  "theme": "01d0c450-6c00-7000-8000-000000000301",
+  "types": [
+    {
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "priceCents",
+          "type": "int"
+        },
+        {
+          "name": "category",
+          "type": "string"
+        }
+      ],
+      "name": "Product"
+    },
+    {
+      "fields": [
+        {
+          "name": "productId",
+          "type": "string"
+        },
+        {
+          "name": "quantity",
+          "type": "int"
+        }
+      ],
+      "name": "OrderLine"
+    },
+    {
+      "fields": [
+        {
+          "name": "items",
+          "type": "list<OrderLine>"
+        }
+      ],
+      "name": "PlaceOrder"
+    },
+    {
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "status",
+          "type": "string"
+        },
+        {
+          "name": "totalCents",
+          "type": "int"
+        }
+      ],
+      "name": "OrderResult"
+    },
+    {
+      "fields": [
+        {
+          "name": "orderId",
+          "type": "string"
+        },
+        {
+          "name": "status",
+          "type": "string"
+        },
+        {
+          "name": "lat",
+          "type": "double"
+        },
+        {
+          "name": "lng",
+          "type": "double"
+        },
+        {
+          "name": "etaMinutes",
+          "type": "int"
+        }
+      ],
+      "name": "Tracking"
+    },
+    {
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "orderId",
+          "type": "string"
+        },
+        {
+          "name": "address",
+          "type": "string"
+        },
+        {
+          "name": "status",
+          "type": "string"
+        }
+      ],
+      "name": "Job"
+    },
+    {
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "note",
+          "type": "string"
+        }
+      ],
+      "name": "DeliveryInput"
+    },
+    {
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "jobId",
+          "type": "string"
+        },
+        {
+          "name": "note",
+          "type": "string"
+        }
+      ],
+      "name": "Delivery"
+    }
+  ],
+  "variables": [
+    {
+      "name": "apiBaseUrl",
+      "type": "string"
+    },
+    {
+      "name": "streamUrl",
+      "type": "string"
+    }
+  ]
+}

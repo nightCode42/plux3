@@ -1,0 +1,173 @@
+{
+  "id": "01d0c450-6c00-7000-8000-000000000310",
+  "key": "catalogue",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01d0c450-6c00-7000-8000-00000000300e",
+    "slots": {
+      "appBar": {
+        "id": "01d0c450-6c00-7000-8000-00000000300d",
+        "slots": {
+          "actions": [
+            {
+              "events": {
+                "onPressed": {
+                  "steps": [
+                    {
+                      "action": "navigate",
+                      "id": "go",
+                      "input": {
+                        "route": "cart"
+                      }
+                    }
+                  ]
+                }
+              },
+              "id": "01d0c450-6c00-7000-8000-000000003009",
+              "slots": {
+                "child": {
+                  "id": "01d0c450-6c00-7000-8000-000000003008",
+                  "props": {
+                    "data": {
+                      "$expr": "\"Cart (\" + string(size(plugin.cartIds)) + \")\""
+                    }
+                  },
+                  "type": "Text"
+                }
+              },
+              "testId": "open-cart",
+              "type": "TextButton"
+            },
+            {
+              "events": {
+                "onPressed": {
+                  "steps": [
+                    {
+                      "action": "navigate",
+                      "id": "go",
+                      "input": {
+                        "route": "courier"
+                      }
+                    }
+                  ]
+                }
+              },
+              "id": "01d0c450-6c00-7000-8000-00000000300b",
+              "slots": {
+                "child": {
+                  "id": "01d0c450-6c00-7000-8000-00000000300a",
+                  "props": {
+                    "data": "Courier"
+                  },
+                  "type": "Text"
+                }
+              },
+              "testId": "open-courier",
+              "type": "TextButton"
+            }
+          ],
+          "title": {
+            "id": "01d0c450-6c00-7000-8000-00000000300c",
+            "props": {
+              "data": "Catalogue"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "children": [
+          {
+            "id": "01d0c450-6c00-7000-8000-000000003005",
+            "props": {
+              "data": {
+                "$expr": "\"Loaded \" + string(size(data.products.value ?? [])) + \" products\""
+              }
+            },
+            "testId": "loaded",
+            "type": "Text"
+          },
+          {
+            "id": "01d0c450-6c00-7000-8000-000000003006",
+            "slots": {
+              "child": {
+                "events": {
+                  "onEndReached": {
+                    "steps": [
+                      {
+                        "action": "refreshData",
+                        "id": "more",
+                        "input": {
+                          "more": true,
+                          "source": "products"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01d0c450-6c00-7000-8000-000000003004",
+                "props": {
+                  "hasMore": {
+                    "$expr": "data.products.hasMore"
+                  },
+                  "items": {
+                    "$expr": "data.products.value ?? []"
+                  },
+                  "status": {
+                    "$expr": "data.products.status"
+                  }
+                },
+                "slots": {
+                  "empty": {
+                    "id": "01d0c450-6c00-7000-8000-000000003001",
+                    "props": {
+                      "data": "No products."
+                    },
+                    "type": "Text"
+                  },
+                  "error": {
+                    "id": "01d0c450-6c00-7000-8000-000000003003",
+                    "props": {
+                      "data": "The catalogue is not available."
+                    },
+                    "type": "Text"
+                  },
+                  "item": {
+                    "component": {
+                      "id": "01d0c450-6c00-7000-8000-000000000350",
+                      "version": 1
+                    },
+                    "id": "01d0c450-6c00-7000-8000-000000003000",
+                    "props": {
+                      "item": {
+                        "$expr": "item"
+                      }
+                    }
+                  },
+                  "loading": {
+                    "id": "01d0c450-6c00-7000-8000-000000003002",
+                    "type": "CircularProgressIndicator"
+                  }
+                },
+                "testId": "products",
+                "type": "ListView"
+              }
+            },
+            "type": "Expanded"
+          }
+        ],
+        "id": "01d0c450-6c00-7000-8000-000000003007",
+        "props": {
+          "crossAxisAlignment": "stretch"
+        },
+        "type": "Column"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "catalogue",
+  "schemaVersion": "1.0.0",
+  "title": "Catalogue"
+}

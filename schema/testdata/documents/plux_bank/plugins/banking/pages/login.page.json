@@ -1,0 +1,303 @@
+{
+  "forms": [
+    {
+      "fields": [
+        {
+          "initial": "",
+          "name": "username",
+          "type": "string",
+          "validators": [
+            {
+              "kind": "required",
+              "message": "Enter your username"
+            }
+          ]
+        },
+        {
+          "initial": "",
+          "name": "password",
+          "type": "string",
+          "validators": [
+            {
+              "kind": "required",
+              "message": "Enter your password"
+            }
+          ]
+        }
+      ],
+      "id": "01d0c450-6c00-7000-8000-000000000230",
+      "name": "login"
+    }
+  ],
+  "id": "01d0c450-6c00-7000-8000-000000000210",
+  "key": "login",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01d0c450-6c00-7000-8000-00000000200e",
+    "slots": {
+      "appBar": {
+        "id": "01d0c450-6c00-7000-8000-00000000200d",
+        "slots": {
+          "title": {
+            "id": "01d0c450-6c00-7000-8000-00000000200c",
+            "props": {
+              "data": {
+                "$t": "01d0c450-6c00-7000-8000-000000000284"
+              }
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "id": "01d0c450-6c00-7000-8000-00000000200b",
+        "props": {
+          "padding": {
+            "all": 24.0
+          }
+        },
+        "slots": {
+          "child": {
+            "children": [
+              {
+                "id": "01d0c450-6c00-7000-8000-000000002000",
+                "props": {
+                  "data": {
+                    "$t": "01d0c450-6c00-7000-8000-000000000280"
+                  }
+                },
+                "testId": "login-title",
+                "type": "Text"
+              },
+              {
+                "id": "01d0c450-6c00-7000-8000-000000002001",
+                "props": {
+                  "height": 12.0
+                },
+                "type": "SizedBox"
+              },
+              {
+                "events": {
+                  "onChanged": {
+                    "steps": [
+                      {
+                        "action": "setState",
+                        "id": "write",
+                        "input": {
+                          "path": "page.login.values.username",
+                          "value": {
+                            "$expr": "event"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "onEditingComplete": {
+                    "steps": [
+                      {
+                        "action": "setState",
+                        "id": "touch",
+                        "input": {
+                          "path": "page.login.touched.username",
+                          "value": true
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01d0c450-6c00-7000-8000-000000002002",
+                "props": {
+                  "decoration": {
+                    "labelText": {
+                      "$t": "01d0c450-6c00-7000-8000-000000000281"
+                    }
+                  },
+                  "value": {
+                    "$expr": "page.login.values.username"
+                  }
+                },
+                "testId": "username",
+                "type": "TextFormField"
+              },
+              {
+                "id": "01d0c450-6c00-7000-8000-000000002003",
+                "props": {
+                  "height": 8.0
+                },
+                "type": "SizedBox"
+              },
+              {
+                "events": {
+                  "onChanged": {
+                    "steps": [
+                      {
+                        "action": "setState",
+                        "id": "write",
+                        "input": {
+                          "path": "page.login.values.password",
+                          "value": {
+                            "$expr": "event"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "onEditingComplete": {
+                    "steps": [
+                      {
+                        "action": "setState",
+                        "id": "touch",
+                        "input": {
+                          "path": "page.login.touched.password",
+                          "value": true
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01d0c450-6c00-7000-8000-000000002004",
+                "props": {
+                  "autocorrect": false,
+                  "decoration": {
+                    "labelText": {
+                      "$t": "01d0c450-6c00-7000-8000-000000000282"
+                    }
+                  },
+                  "enableSuggestions": false,
+                  "obscureText": true,
+                  "value": {
+                    "$expr": "page.login.values.password"
+                  }
+                },
+                "testId": "password",
+                "type": "TextFormField"
+              },
+              {
+                "id": "01d0c450-6c00-7000-8000-000000002005",
+                "props": {
+                  "height": 12.0
+                },
+                "type": "SizedBox"
+              },
+              {
+                "id": "01d0c450-6c00-7000-8000-000000002006",
+                "props": {
+                  "data": {
+                    "$expr": "page.error"
+                  }
+                },
+                "testId": "login-error",
+                "type": "Text",
+                "visible": {
+                  "$expr": "page.error != \"\""
+                }
+              },
+              {
+                "id": "01d0c450-6c00-7000-8000-000000002007",
+                "props": {
+                  "height": 12.0
+                },
+                "type": "SizedBox"
+              },
+              {
+                "events": {
+                  "onPressed": {
+                    "steps": [
+                      {
+                        "action": "submitForm",
+                        "id": "submit",
+                        "input": {
+                          "form": "login"
+                        },
+                        "onSuccess": "call"
+                      },
+                      {
+                        "action": "apiCall",
+                        "id": "call",
+                        "input": {
+                          "input": {
+                            "password": {
+                              "$expr": "steps.submit.output.password"
+                            },
+                            "username": {
+                              "$expr": "steps.submit.output.username"
+                            }
+                          },
+                          "operation": "api.login"
+                        },
+                        "onError": "failed",
+                        "onSuccess": "hand"
+                      },
+                      {
+                        "action": "bankSignIn",
+                        "id": "hand",
+                        "input": {
+                          "token": {
+                            "$expr": "steps.call.output.token"
+                          }
+                        },
+                        "next": "go"
+                      },
+                      {
+                        "action": "navigate",
+                        "id": "go",
+                        "input": {
+                          "mode": "replace",
+                          "route": "dashboard"
+                        }
+                      },
+                      {
+                        "action": "setState",
+                        "id": "failed",
+                        "input": {
+                          "path": "page.error",
+                          "value": {
+                            "$expr": "steps.call.error.status == 401 ? \"Wrong username or password.\" : \"Sign-in failed. Try again.\""
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01d0c450-6c00-7000-8000-000000002009",
+                "slots": {
+                  "child": {
+                    "id": "01d0c450-6c00-7000-8000-000000002008",
+                    "props": {
+                      "data": {
+                        "$t": "01d0c450-6c00-7000-8000-000000000283"
+                      }
+                    },
+                    "type": "Text"
+                  }
+                },
+                "testId": "sign-in",
+                "type": "FilledButton"
+              }
+            ],
+            "id": "01d0c450-6c00-7000-8000-00000000200a",
+            "props": {
+              "crossAxisAlignment": "stretch"
+            },
+            "type": "Column"
+          }
+        },
+        "type": "Padding"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "login",
+  "schemaVersion": "1.0.0",
+  "state": [
+    {
+      "default": "",
+      "id": "01d0c450-6c00-7000-8000-000000000240",
+      "name": "error",
+      "type": "string"
+    }
+  ],
+  "title": "Sign in"
+}

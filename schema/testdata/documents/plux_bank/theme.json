@@ -1,0 +1,18 @@
+{
+  "id": "01d0c450-6c00-7000-8000-000000000201",
+  "key": "bank",
+  "kind": "theme",
+  "name": "Plux Bank",
+  "schemaVersion": "1.0.0",
+  "tokens": {
+    "color": {
+      "$type": "color",
+      "primary": {
+        "$extensions": {
+          "dev.plux.dark": "#7FA8FF"
+        },
+        "$value": "#0B3D91"
+      }
+    }
+  }
+}

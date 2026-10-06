@@ -1,0 +1,26 @@
+{
+  "actions": [
+    {
+      "description": "Hands the session token to the host, which keeps it in memory for the auth delegate.",
+      "inputs": [
+        {
+          "name": "token",
+          "type": "string"
+        }
+      ],
+      "name": "bankSignIn",
+      "output": "bool"
+    }
+  ],
+  "host": {
+    "appId": "dev.plux.bank",
+    "build": 1,
+    "version": "1.0.0"
+  },
+  "id": "01d0c450-6c00-7000-8000-000000000202",
+  "kind": "nativeCatalogue",
+  "packages": [
+    "plux_media"
+  ],
+  "schemaVersion": "1.0.0"
+}

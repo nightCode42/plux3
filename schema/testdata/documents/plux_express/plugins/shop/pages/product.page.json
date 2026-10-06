@@ -1,0 +1,235 @@
+{
+  "dataSources": [
+    {
+      "config": {
+        "baseUrl": "apiBaseUrl",
+        "params": {
+          "id": {
+            "$expr": "params.id"
+          }
+        },
+        "path": "/products/{id}"
+      },
+      "id": "01d0c450-6c00-7000-8000-000000000324",
+      "kind": "rest",
+      "mock": {
+        "category": "Fruit",
+        "id": "p-001",
+        "name": "Product 01",
+        "priceCents": 199
+      },
+      "name": "product",
+      "type": "Product"
+    }
+  ],
+  "id": "01d0c450-6c00-7000-8000-000000000311",
+  "key": "product",
+  "kind": "page",
+  "pageKind": "screen",
+  "params": [
+    {
+      "mock": "p-001",
+      "name": "id",
+      "required": true,
+      "type": "string"
+    }
+  ],
+  "root": {
+    "id": "01d0c450-6c00-7000-8000-00000000301e",
+    "slots": {
+      "appBar": {
+        "id": "01d0c450-6c00-7000-8000-00000000301d",
+        "slots": {
+          "actions": [
+            {
+              "events": {
+                "onPressed": {
+                  "steps": [
+                    {
+                      "action": "navigate",
+                      "id": "go",
+                      "input": {
+                        "route": "cart"
+                      }
+                    }
+                  ]
+                }
+              },
+              "id": "01d0c450-6c00-7000-8000-000000003019",
+              "slots": {
+                "child": {
+                  "id": "01d0c450-6c00-7000-8000-000000003018",
+                  "props": {
+                    "data": {
+                      "$expr": "\"Cart (\" + string(size(plugin.cartIds)) + \")\""
+                    }
+                  },
+                  "type": "Text"
+                }
+              },
+              "testId": "open-cart",
+              "type": "TextButton"
+            },
+            {
+              "events": {
+                "onPressed": {
+                  "steps": [
+                    {
+                      "action": "navigate",
+                      "id": "go",
+                      "input": {
+                        "route": "courier"
+                      }
+                    }
+                  ]
+                }
+              },
+              "id": "01d0c450-6c00-7000-8000-00000000301b",
+              "slots": {
+                "child": {
+                  "id": "01d0c450-6c00-7000-8000-00000000301a",
+                  "props": {
+                    "data": "Courier"
+                  },
+                  "type": "Text"
+                }
+              },
+              "testId": "open-courier",
+              "type": "TextButton"
+            }
+          ],
+          "title": {
+            "id": "01d0c450-6c00-7000-8000-00000000301c",
+            "props": {
+              "data": "Product"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "id": "01d0c450-6c00-7000-8000-000000003017",
+        "props": {
+          "padding": {
+            "all": 24.0
+          }
+        },
+        "slots": {
+          "child": {
+            "children": [
+              {
+                "id": "01d0c450-6c00-7000-8000-00000000300f",
+                "props": {
+                  "data": {
+                    "$expr": "data.product.value?.name ?? \"Loading\""
+                  }
+                },
+                "testId": "product-name",
+                "type": "Text"
+              },
+              {
+                "id": "01d0c450-6c00-7000-8000-000000003010",
+                "props": {
+                  "data": {
+                    "$expr": "data.product.value?.category ?? \"\""
+                  }
+                },
+                "type": "Text"
+              },
+              {
+                "id": "01d0c450-6c00-7000-8000-000000003011",
+                "props": {
+                  "data": {
+                    "$expr": "string(div(decimal(data.product.value?.priceCents ?? 0), 100d, 2)) + \" EUR\""
+                  }
+                },
+                "testId": "product-price",
+                "type": "Text"
+              },
+              {
+                "id": "01d0c450-6c00-7000-8000-000000003012",
+                "props": {
+                  "height": 12.0
+                },
+                "type": "SizedBox"
+              },
+              {
+                "events": {
+                  "onPressed": {
+                    "steps": [
+                      {
+                        "action": "setState",
+                        "id": "ids",
+                        "input": {
+                          "path": "plugin.cartIds",
+                          "value": {
+                            "$expr": "plugin.cartIds + [params.id]"
+                          }
+                        },
+                        "next": "names"
+                      },
+                      {
+                        "action": "setState",
+                        "id": "names",
+                        "input": {
+                          "path": "plugin.cartNames",
+                          "value": {
+                            "$expr": "plugin.cartNames + [data.product.value?.name ?? params.id]"
+                          }
+                        },
+                        "next": "prices"
+                      },
+                      {
+                        "action": "setState",
+                        "id": "prices",
+                        "input": {
+                          "path": "plugin.cartPrices",
+                          "value": {
+                            "$expr": "plugin.cartPrices + [data.product.value?.priceCents ?? 0]"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01d0c450-6c00-7000-8000-000000003014",
+                "slots": {
+                  "child": {
+                    "id": "01d0c450-6c00-7000-8000-000000003013",
+                    "props": {
+                      "data": "Add to cart"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "testId": "add-to-cart",
+                "type": "FilledButton"
+              },
+              {
+                "id": "01d0c450-6c00-7000-8000-000000003015",
+                "props": {
+                  "data": {
+                    "$expr": "\"In cart: \" + string(size(plugin.cartIds))"
+                  }
+                },
+                "testId": "in-cart",
+                "type": "Text"
+              }
+            ],
+            "id": "01d0c450-6c00-7000-8000-000000003016",
+            "props": {
+              "crossAxisAlignment": "stretch"
+            },
+            "type": "Column"
+          }
+        },
+        "type": "Padding"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "product",
+  "schemaVersion": "1.0.0",
+  "title": "Product"
+}
