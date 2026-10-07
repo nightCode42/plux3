@@ -104,6 +104,9 @@ const (
 	LockTakenOver           Action = "plugin.lock.override"
 	LockReleased            Action = "plugin.lock.released"
 	LockRequested           Action = "plugin.lock.requested"
+
+	// DeviceRevoked: a device's trust was withdrawn (SEC-006).
+	DeviceRevoked Action = "device.revoked"
 )
 
 // actions is the registry, sorted, so that Registered can search it and
@@ -122,6 +125,7 @@ var actions = sorted(
 	DocumentWritten, DocumentDeleted, DocumentRestored, DocumentPurged, DraftImported, AssetUploaded, AssetDeleted,
 	VersionPublished, PublishCancelled, ReleaseCreated, ReleasePromoted, ReleaseRolledBack, ReleasesPurged, ControlChanged, NativeCatalogueUploaded,
 	SnapshotRestored, TemplateInstantiated, LockAcquired, LockTakenOver, LockReleased, LockRequested,
+	DeviceRevoked,
 )
 
 // sorted returns its arguments in order.

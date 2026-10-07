@@ -19,11 +19,13 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	"github.com/nightCode42/plux3/backend/internal/api"
+	"github.com/nightCode42/plux3/backend/internal/attest/playintegrity"
 	"github.com/nightCode42/plux3/backend/internal/audit"
 	"github.com/nightCode42/plux3/backend/internal/auth"
 	"github.com/nightCode42/plux3/backend/internal/cache"
 	"github.com/nightCode42/plux3/backend/internal/compiler/media"
 	"github.com/nightCode42/plux3/backend/internal/device"
+	"github.com/nightCode42/plux3/backend/internal/device/devicetest"
 	"github.com/nightCode42/plux3/backend/internal/document"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1/pluxv1connect"
@@ -100,6 +102,7 @@ type world struct {
 	control  pluxv1connect.ControlServiceClient
 	events   pluxv1connect.TelemetryServiceClient
 	devices  *device.Service
+	fakes    *deviceFakes
 }
 
 func newWorld(t *testing.T) *world {
@@ -142,7 +145,14 @@ func newWorld(t *testing.T) *world {
 		tenancyService.RegisterTrashKind(kind, k)
 	}
 	queue := &publishQueue{}
-	devices, err := device.NewService(device.Options{DB: db, IDs: gen})
+	fakes := &deviceFakes{key: &devicetest.KeyAttestor{}, play: &devicetest.IntegrityChecker{}, apple: &devicetest.AppAttestor{}}
+	devices, err := device.NewService(device.Options{
+		DB: db, IDs: gen, Cache: shared, Audit: log,
+		Attestors: device.Attestors{KeyAttestation: fakes.key, PlayIntegrity: fakes.play, AppAttest: fakes.apple},
+		AppTrust: func(context.Context, string) (device.TrustConfig, error) {
+			return device.TrustConfig{AndroidPackages: []string{"com.example.app"}, PlayIntegrity: &playintegrity.Keys{}, IOSAppID: "TEAMID.com.example.app"}, nil
+		},
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -229,6 +239,7 @@ func newWorld(t *testing.T) *world {
 		control:  pluxv1connect.NewControlServiceClient(srv.Client(), srv.URL),
 		events:   pluxv1connect.NewTelemetryServiceClient(srv.Client(), srv.URL),
 		devices:  devices,
+		fakes:    fakes,
 		releases: releases,
 		queue:    queue,
 	}

@@ -128,19 +128,32 @@ type Delta struct {
 }
 
 type Device struct {
-	ID                pgtype.UUID
-	OrganizationID    pgtype.UUID
-	AppID             pgtype.UUID
-	EnvironmentID     pgtype.UUID
-	Platform          string
-	OsVersion         string
-	RuntimeVersion    string
-	HostBuild         string
-	AssuranceLevel    string
-	SecretHash        []byte
-	InstalledSequence int64
-	RegisteredAt      pgtype.Timestamptz
-	LastSeenAt        pgtype.Timestamptz
+	ID                    pgtype.UUID
+	OrganizationID        pgtype.UUID
+	AppID                 pgtype.UUID
+	EnvironmentID         pgtype.UUID
+	Platform              string
+	OsVersion             string
+	RuntimeVersion        string
+	HostBuild             string
+	AssuranceLevel        string
+	SecretHash            []byte
+	InstalledSequence     int64
+	RegisteredAt          pgtype.Timestamptz
+	LastSeenAt            pgtype.Timestamptz
+	DpopJkt               *string
+	DpopPublicKey         []byte
+	KeyStorage            string
+	AttestationProvider   *string
+	AttestationVerdicts   []string
+	AttestationRiskMetric int32
+	AttestedAt            pgtype.Timestamptz
+	AppAttestKeyID        []byte
+	AppAttestPublicKey    []byte
+	AppAttestCounter      int64
+	AppAttestReceipt      []byte
+	RevokedAt             pgtype.Timestamptz
+	RevokedReason         string
 }
 
 type DeviceAuthorization struct {

@@ -12,9 +12,11 @@ package device
 
 import (
 	"context"
+	"crypto/rand"
 	"crypto/subtle"
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 	"sync"
 	"time"
@@ -22,7 +24,9 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
+	"github.com/nightCode42/plux3/backend/internal/audit"
 	"github.com/nightCode42/plux3/backend/internal/auth"
+	"github.com/nightCode42/plux3/backend/internal/cache"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/storage"
 	"github.com/nightCode42/plux3/backend/internal/storage/dbgen"
@@ -53,21 +57,44 @@ type Options struct {
 	IDs IDs
 	// Now is the clock; nil uses time.Now.
 	Now func() time.Time
+	// Random is the source of registration challenges; nil uses
+	// crypto/rand.
+	Random io.Reader
+	// Cache holds registration challenges (SEC-005). Without it, no
+	// challenge can be issued or accepted.
+	Cache cache.Cache
+	// Audit records revocations; Revoke needs it.
+	Audit *audit.Log
+	// Attestors verify attestation evidence (SEC-003). A platform
+	// without its verifier cannot register.
+	Attestors Attestors
+	// AppTrust says what each app's builds look like; nil means no app
+	// has attestation configured.
+	AppTrust AppTrust
+	// Profiles returns an environment's security profile; nil means
+	// every environment is standard.
+	Profiles Profiles
 }
 
 // Service is the domain logic of devices.
 type Service struct {
-	db     *storage.DB
-	ids    IDs
-	now    func() time.Time
-	tokens *tokenCache
+	db        *storage.DB
+	ids       IDs
+	now       func() time.Time
+	random    io.Reader
+	cache     cache.Cache
+	audit     *audit.Log
+	attestors Attestors
+	appTrust  AppTrust
+	profiles  Profiles
+	tokens    *tokenCache
 }
 
 // tokenCacheTTL bounds how long a replica trusts a token it has looked
-// up without asking the database again. Device tokens cannot be revoked
-// before they expire in P2, so the cache never serves a token past its
-// own expiry either; it spares the database one read per device call
-// (NFR-020).
+// up without asking the database again. The cache never serves a token
+// past its own expiry, and a revocation empties it on the replica that
+// handled it; the others follow within this time (SEC-006). It spares
+// the database one read per device call (NFR-020).
 const tokenCacheTTL = 30 * time.Second
 
 // maxCachedTokens bounds the cache; past it, the cache starts over.
@@ -94,6 +121,13 @@ func (c *tokenCache) get(hash string, now time.Time) (Identity, bool) {
 	return e.id, true
 }
 
+// clear forgets every token.
+func (c *tokenCache) clear() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.entries = nil
+}
+
 func (c *tokenCache) put(hash string, id Identity, until time.Time) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -112,7 +146,14 @@ func NewService(o Options) (*Service, error) {
 	if now == nil {
 		now = time.Now
 	}
-	return &Service{db: o.DB, ids: o.IDs, now: now, tokens: &tokenCache{}}, nil
+	random := o.Random
+	if random == nil {
+		random = rand.Reader
+	}
+	return &Service{
+		db: o.DB, ids: o.IDs, now: now, random: random, cache: o.Cache, audit: o.Audit,
+		attestors: o.Attestors, appTrust: o.AppTrust, profiles: o.Profiles, tokens: &tokenCache{},
+	}, nil
 }
 
 // Device is a registered installation.
@@ -122,6 +163,24 @@ type Device struct {
 	AssuranceLevel                             string
 	InstalledSequence                          int64
 	RegisteredAt, LastSeenAt                   time.Time
+	// KeyStorage is where the attestation proved the DPoP key lives.
+	KeyStorage KeyStorage
+	// DPoPJKT is the thumbprint of the device's DPoP key; empty for a
+	// device that registered with a secret.
+	DPoPJKT string
+	// Provider is the attestation behind the device; empty for a device
+	// that registered with a secret.
+	Provider Provider
+	// AttestedAt is when the server last verified the device's
+	// attestation; zero when it never did.
+	AttestedAt time.Time
+	// Verdicts are the provider verdicts the server accepted.
+	Verdicts []string
+	// RiskMetric is the provider's risk figure; zero when it has none.
+	RiskMetric int32
+	// RevokedAt is when the device was revoked; zero while it is
+	// trusted.
+	RevokedAt time.Time
 }
 
 // Identity is an authenticated device.
@@ -141,13 +200,8 @@ type Registration struct {
 // Register records a new device and returns it with its secret, which is
 // shown exactly once.
 func (s *Service) Register(ctx context.Context, r Registration) (Device, string, error) {
-	if !platforms[r.Platform] {
-		return Device{}, "", plxerr.New(plxerr.InvalidFormat, "platform %q is not one of android, ios, web, macos, windows, linux", r.Platform)
-	}
-	for _, f := range []string{r.OSVersion, r.RuntimeVersion, r.Build} {
-		if len(f) > 64 {
-			return Device{}, "", plxerr.New(plxerr.InvalidFormat, "a version or build field is longer than 64 characters")
-		}
+	if err := checkDescription(r.Platform, r.OSVersion, r.RuntimeVersion, r.Build); err != nil {
+		return Device{}, "", err
 	}
 	app, err := storage.UUID(r.AppID)
 	if err != nil {
@@ -445,7 +499,18 @@ func deviceOf(r dbgen.Device) Device {
 		Platform: r.Platform, OSVersion: r.OsVersion, RuntimeVersion: r.RuntimeVersion, Build: r.HostBuild,
 		AssuranceLevel: r.AssuranceLevel, InstalledSequence: r.InstalledSequence,
 		RegisteredAt: storage.Time(r.RegisteredAt), LastSeenAt: storage.Time(r.LastSeenAt),
+		KeyStorage: KeyStorage(r.KeyStorage), DPoPJKT: deref(r.DpopJkt), Provider: Provider(deref(r.AttestationProvider)),
+		AttestedAt: storage.Time(r.AttestedAt), Verdicts: r.AttestationVerdicts, RiskMetric: r.AttestationRiskMetric,
+		RevokedAt: storage.Time(r.RevokedAt),
 	}
+}
+
+// deref reads an optional text column; NULL becomes "".
+func deref(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }
 
 // maxUUID is the cursor's identifier, or the largest one for a first
