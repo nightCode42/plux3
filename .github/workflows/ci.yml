@@ -880,8 +880,8 @@ jobs:
       matrix:
         # Four, not five: GitHub runs at most five macOS jobs at once, and
         # the iOS size job is the fifth (run 37630248033 queued a sixth
-        # for six minutes).
-        shard: [starter, generated, hosts, reference]
+        # for six minutes). The two shortest flows share a job.
+        shard: [starter, hosts, bank, express+generated]
     env:
       PLUX_TEST_DATABASE_URL: postgres://plux:plux@127.0.0.1:5432/plux_test?sslmode=disable
       # The add-to-app host's build, kept where the cache below finds it.

@@ -228,15 +228,25 @@ Maintainer decision (2026-10-07), with a target of 13 to 15 minutes for the devi
 
 - **Shards.** Each device job is a matrix with one shard per flow, selected by
   `E2E_SHARD` (`mk/device.mk`): `starter`, `generated`, `hosts` (the add-to-app module
-  and hosts), `bank`, `express`; iOS runs `reference` (both reference apps) in place of
-  `bank` and `express`, because GitHub runs at most five macOS jobs at once and the iOS
-  size job is the fifth (run 37630248033 queued a sixth for six minutes). A first cut of three shards (run 37623043856) left the
-  iOS starter-and-generated shard at 25 minutes. Every flow still runs on every selected
+  and hosts), `bank`, `express`, or several joined by `+`. iOS runs four jobs, `starter`,
+  `hosts`, `bank` and `express+generated` (the two shortest flows), because GitHub runs at
+  most five macOS jobs at once and the iOS size job is the fifth (run 37630248033 queued a
+  sixth for six minutes; run 37633642167's `bank+express` took 24.5 minutes). A first cut
+  of three shards (run 37623043856) left the iOS starter-and-generated shard at 25
+  minutes. Every flow still runs on every selected
   platform; `make e2e-starter` without a shard runs them all, as before. While the
-  emulator or simulator boots, the server's tests and the shard's apps are built. A
+  emulator or simulator boots, the server's tests and the shard's first app are built
+  (a second app took longer than the boot it hid). A
   booted emulator whose adb shell stays silent gets adb's server restarted, which drops
   the stale connection (runs 36966274717, 37630248033); `adb reconnect` is not used, as
   it can leave two connections under one serial (run 37633642167).
+- **The add-to-app hosts start Flutter with the app.** The hosts' flows were the most
+  frequent device failure (15 jobs in 10 of the last 45 runs, both platforms: "nothing on
+  screen reads 'Welcome to Plux'", an instrumentation crash, a UI-query timeout). Each
+  host created its engine when the first Plux page opened, so that page waited for a
+  cold debug-mode engine and runtime — about 40 seconds on a busy simulator in run
+  37633642167, with the app's main thread too busy to answer XCUITest. Both hosts now
+  start the engine as the app starts, as Flutter's add-to-app guide recommends.
 - **Build caches.** On iOS one per shard: Xcode DerivedData (the add-to-app host's build
   kept there through `PLUX_E2E_DERIVED_DATA`), CocoaPods and the apps' Flutter build
   outputs, keyed on the shard, Xcode, Flutter and the hash of the lockfiles and the

@@ -15,9 +15,11 @@ import io.flutter.plugin.common.MethodChannel
 
 /**
  * The host app (HST-033). One Flutter engine runs the Plux module: it is
- * created when a native screen first opens a Plux page, and kept in
- * [FlutterEngineCache] while the process lives, so later pages open
- * without starting Flutter again. The module and the host talk on the
+ * created as the home screen starts ([warmUp]), once the settings are
+ * known, and kept in [FlutterEngineCache] while the process lives, so no
+ * page waits for Flutter to start. Created on the first page instead, the
+ * engine's start held that page back for tens of seconds on a debug build
+ * in a busy emulator, longer than the UI tests wait (CI runs 113-115). The module and the host talk on the
  * `dev.plux/host` channel (plux_module/lib/plux_module.dart).
  */
 class HostApp : Application() {
@@ -68,6 +70,14 @@ class HostApp : Application() {
                     put("rootKeys", keys.split(",").filter { it.isNotEmpty() })
                 }
             }
+    }
+
+    /**
+     * Starts the module's engine, once, after [configure]: the module asks
+     * for the settings as it starts.
+     */
+    fun warmUp() {
+        module()
     }
 
     /** Opens the Plux page at [route] full screen, in a FlutterActivity. */

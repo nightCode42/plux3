@@ -21,6 +21,7 @@ class MainActivity : Activity() {
         super.onCreate(savedInstanceState)
         val app = application as HostApp
         intent.extras?.let { app.configure(it) }
+        app.warmUp()
         val padding = (24 * resources.displayMetrics.density).toInt()
         setContentView(
             withSystemBars(

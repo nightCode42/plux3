@@ -6,9 +6,11 @@ import FlutterPluginRegistrant
 import UIKit
 
 /// The host's side of the Plux module (HST-033). One FlutterEngine runs
-/// the module: it starts when a native screen first opens a Plux page and
-/// stays warm while the app runs, so later pages open without starting
-/// Flutter again. The module and the host talk on the `dev.plux/host`
+/// the module: it starts with the app (warmUp) and stays warm while the app
+/// runs, so no page waits for Flutter to start. Started on the first page
+/// instead, the engine's start blocked that page for tens of seconds on a
+/// debug build in a busy simulator, longer than the UI tests wait (CI run
+/// 37633642167). The module and the host talk on the `dev.plux/host`
 /// channel (plux_module/lib/plux_module.dart).
 final class PluxHost {
   /// The app's one host.
@@ -42,6 +44,12 @@ final class PluxHost {
     }
     return settings
   }()
+
+  /// Starts the module's engine, once; the module then asks for the
+  /// settings and starts the runtime.
+  func warmUp() {
+    _ = engine
+  }
 
   /// The Plux page at `route`, full screen.
   func page(_ route: String) -> UIViewController {
