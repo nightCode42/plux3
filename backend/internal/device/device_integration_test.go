@@ -42,9 +42,15 @@ type fixture struct {
 	app   string
 	envs  map[string]string
 	owner auth.Principal
+	log   *audit.Log
+	ten   *tenancy.Service
 }
 
-func newFixture(t *testing.T) *fixture {
+func newFixture(t *testing.T) *fixture { return newFixtureWith(t, nil) }
+
+// newFixtureWith is newFixture with the device service's options adjusted
+// by configure, which may read the fixture's clock.
+func newFixtureWith(t *testing.T, configure func(f *fixture, o *device.Options)) *fixture {
 	t.Helper()
 	ctx := context.Background()
 	db := storagetest.Open(t)
@@ -54,7 +60,7 @@ func newFixture(t *testing.T) *fixture {
 	}
 	gen := ids{g: uuid7.NewGenerator(time.Now, rand.Reader)}
 	log := audit.NewLog(gen, nil)
-	f := &fixture{db: db, now: time.Now(), envs: map[string]string{}}
+	f := &fixture{db: db, now: time.Now(), envs: map[string]string{}, log: log}
 	authService, err := auth.NewService(auth.Options{DB: db, Audit: log, Cache: cache.NewMemory(nil), Crypter: backend, IDs: gen, VerificationURI: "https://p.example/device"})
 	if err != nil {
 		t.Fatal(err)
@@ -63,7 +69,12 @@ func newFixture(t *testing.T) *fixture {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if f.svc, err = device.NewService(device.Options{DB: db, IDs: gen, Now: func() time.Time { return f.now }}); err != nil {
+	opts := device.Options{DB: db, IDs: gen, Now: func() time.Time { return f.now }, Audit: log}
+	if configure != nil {
+		configure(f, &opts)
+	}
+	f.ten = ten
+	if f.svc, err = device.NewService(opts); err != nil {
 		t.Fatal(err)
 	}
 	admin, invitation, err := authService.Bootstrap(ctx, "admin@example.com")
