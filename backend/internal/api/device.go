@@ -93,7 +93,11 @@ func deviceOf(ctx context.Context) (device.Identity, error) {
 }
 
 // Device serves DeviceService.
-type Device struct{ h *Handlers }
+type Device struct {
+	// Unimplemented answers the P6 RPCs until their handlers land.
+	pluxv1connect.UnimplementedDeviceServiceHandler
+	h *Handlers
+}
 
 var _ pluxv1connect.DeviceServiceHandler = Device{}
 
@@ -190,7 +194,11 @@ func deviceProto(d device.Device) *pluxv1.Device {
 }
 
 // Token serves TokenService.
-type Token struct{ h *Handlers }
+type Token struct {
+	// Unimplemented answers the P6 RPCs until their handlers land.
+	pluxv1connect.UnimplementedTokenServiceHandler
+	h *Handlers
+}
 
 var _ pluxv1connect.TokenServiceHandler = Token{}
 

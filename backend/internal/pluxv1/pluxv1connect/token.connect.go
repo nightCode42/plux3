@@ -39,11 +39,26 @@ const (
 	// TokenServiceIssueDeviceTokenProcedure is the fully-qualified name of the TokenService's
 	// IssueDeviceToken RPC.
 	TokenServiceIssueDeviceTokenProcedure = "/plux.v1.TokenService/IssueDeviceToken"
+	// TokenServiceRefreshDeviceTokenProcedure is the fully-qualified name of the TokenService's
+	// RefreshDeviceToken RPC.
+	TokenServiceRefreshDeviceTokenProcedure = "/plux.v1.TokenService/RefreshDeviceToken"
+	// TokenServiceExchangeUserTokenProcedure is the fully-qualified name of the TokenService's
+	// ExchangeUserToken RPC.
+	TokenServiceExchangeUserTokenProcedure = "/plux.v1.TokenService/ExchangeUserToken"
 )
 
 // TokenServiceClient is a client for the plux.v1.TokenService service.
 type TokenServiceClient interface {
 	IssueDeviceToken(context.Context, *connect.Request[pluxv1.IssueDeviceTokenRequest]) (*connect.Response[pluxv1.IssueDeviceTokenResponse], error)
+	// RefreshDeviceToken issues a new token to an attested device (SEC-025).
+	// The proof of possession of the device key travels in the DPoP header
+	// (RFC 9449), not in the body. A request without a valid proof is
+	// answered with the "use_dpop_nonce" error and a DPoP-Nonce header
+	// to retry with (SEC-024).
+	RefreshDeviceToken(context.Context, *connect.Request[pluxv1.RefreshDeviceTokenRequest]) (*connect.Response[pluxv1.RefreshDeviceTokenResponse], error)
+	// ExchangeUserToken trades an end-user token for a short-lived token
+	// scoped to one upstream audience, following RFC 8693 (SEC-026).
+	ExchangeUserToken(context.Context, *connect.Request[pluxv1.ExchangeUserTokenRequest]) (*connect.Response[pluxv1.ExchangeUserTokenResponse], error)
 }
 
 // NewTokenServiceClient constructs a client for the plux.v1.TokenService service. By default, it
@@ -63,12 +78,26 @@ func NewTokenServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(tokenServiceMethods.ByName("IssueDeviceToken")),
 			connect.WithClientOptions(opts...),
 		),
+		refreshDeviceToken: connect.NewClient[pluxv1.RefreshDeviceTokenRequest, pluxv1.RefreshDeviceTokenResponse](
+			httpClient,
+			baseURL+TokenServiceRefreshDeviceTokenProcedure,
+			connect.WithSchema(tokenServiceMethods.ByName("RefreshDeviceToken")),
+			connect.WithClientOptions(opts...),
+		),
+		exchangeUserToken: connect.NewClient[pluxv1.ExchangeUserTokenRequest, pluxv1.ExchangeUserTokenResponse](
+			httpClient,
+			baseURL+TokenServiceExchangeUserTokenProcedure,
+			connect.WithSchema(tokenServiceMethods.ByName("ExchangeUserToken")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // tokenServiceClient implements TokenServiceClient.
 type tokenServiceClient struct {
-	issueDeviceToken *connect.Client[pluxv1.IssueDeviceTokenRequest, pluxv1.IssueDeviceTokenResponse]
+	issueDeviceToken   *connect.Client[pluxv1.IssueDeviceTokenRequest, pluxv1.IssueDeviceTokenResponse]
+	refreshDeviceToken *connect.Client[pluxv1.RefreshDeviceTokenRequest, pluxv1.RefreshDeviceTokenResponse]
+	exchangeUserToken  *connect.Client[pluxv1.ExchangeUserTokenRequest, pluxv1.ExchangeUserTokenResponse]
 }
 
 // IssueDeviceToken calls plux.v1.TokenService.IssueDeviceToken.
@@ -76,9 +105,28 @@ func (c *tokenServiceClient) IssueDeviceToken(ctx context.Context, req *connect.
 	return c.issueDeviceToken.CallUnary(ctx, req)
 }
 
+// RefreshDeviceToken calls plux.v1.TokenService.RefreshDeviceToken.
+func (c *tokenServiceClient) RefreshDeviceToken(ctx context.Context, req *connect.Request[pluxv1.RefreshDeviceTokenRequest]) (*connect.Response[pluxv1.RefreshDeviceTokenResponse], error) {
+	return c.refreshDeviceToken.CallUnary(ctx, req)
+}
+
+// ExchangeUserToken calls plux.v1.TokenService.ExchangeUserToken.
+func (c *tokenServiceClient) ExchangeUserToken(ctx context.Context, req *connect.Request[pluxv1.ExchangeUserTokenRequest]) (*connect.Response[pluxv1.ExchangeUserTokenResponse], error) {
+	return c.exchangeUserToken.CallUnary(ctx, req)
+}
+
 // TokenServiceHandler is an implementation of the plux.v1.TokenService service.
 type TokenServiceHandler interface {
 	IssueDeviceToken(context.Context, *connect.Request[pluxv1.IssueDeviceTokenRequest]) (*connect.Response[pluxv1.IssueDeviceTokenResponse], error)
+	// RefreshDeviceToken issues a new token to an attested device (SEC-025).
+	// The proof of possession of the device key travels in the DPoP header
+	// (RFC 9449), not in the body. A request without a valid proof is
+	// answered with the "use_dpop_nonce" error and a DPoP-Nonce header
+	// to retry with (SEC-024).
+	RefreshDeviceToken(context.Context, *connect.Request[pluxv1.RefreshDeviceTokenRequest]) (*connect.Response[pluxv1.RefreshDeviceTokenResponse], error)
+	// ExchangeUserToken trades an end-user token for a short-lived token
+	// scoped to one upstream audience, following RFC 8693 (SEC-026).
+	ExchangeUserToken(context.Context, *connect.Request[pluxv1.ExchangeUserTokenRequest]) (*connect.Response[pluxv1.ExchangeUserTokenResponse], error)
 }
 
 // NewTokenServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -94,10 +142,26 @@ func NewTokenServiceHandler(svc TokenServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(tokenServiceMethods.ByName("IssueDeviceToken")),
 		connect.WithHandlerOptions(opts...),
 	)
+	tokenServiceRefreshDeviceTokenHandler := connect.NewUnaryHandler(
+		TokenServiceRefreshDeviceTokenProcedure,
+		svc.RefreshDeviceToken,
+		connect.WithSchema(tokenServiceMethods.ByName("RefreshDeviceToken")),
+		connect.WithHandlerOptions(opts...),
+	)
+	tokenServiceExchangeUserTokenHandler := connect.NewUnaryHandler(
+		TokenServiceExchangeUserTokenProcedure,
+		svc.ExchangeUserToken,
+		connect.WithSchema(tokenServiceMethods.ByName("ExchangeUserToken")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/plux.v1.TokenService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case TokenServiceIssueDeviceTokenProcedure:
 			tokenServiceIssueDeviceTokenHandler.ServeHTTP(w, r)
+		case TokenServiceRefreshDeviceTokenProcedure:
+			tokenServiceRefreshDeviceTokenHandler.ServeHTTP(w, r)
+		case TokenServiceExchangeUserTokenProcedure:
+			tokenServiceExchangeUserTokenHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -109,4 +173,12 @@ type UnimplementedTokenServiceHandler struct{}
 
 func (UnimplementedTokenServiceHandler) IssueDeviceToken(context.Context, *connect.Request[pluxv1.IssueDeviceTokenRequest]) (*connect.Response[pluxv1.IssueDeviceTokenResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.TokenService.IssueDeviceToken is not implemented"))
+}
+
+func (UnimplementedTokenServiceHandler) RefreshDeviceToken(context.Context, *connect.Request[pluxv1.RefreshDeviceTokenRequest]) (*connect.Response[pluxv1.RefreshDeviceTokenResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.TokenService.RefreshDeviceToken is not implemented"))
+}
+
+func (UnimplementedTokenServiceHandler) ExchangeUserToken(context.Context, *connect.Request[pluxv1.ExchangeUserTokenRequest]) (*connect.Response[pluxv1.ExchangeUserTokenResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.TokenService.ExchangeUserToken is not implemented"))
 }

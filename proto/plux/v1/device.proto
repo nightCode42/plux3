@@ -21,6 +21,20 @@ service DeviceService {
   rpc ListDevices(ListDevicesRequest) returns (ListDevicesResponse) {}
   // ReportInstalled records the release a device activated.
   rpc ReportInstalled(ReportInstalledRequest) returns (ReportInstalledResponse) {}
+  // CreateRegistrationChallenge issues the single-use, short-lived
+  // challenge a registration binds its attestation to (SEC-005). It is
+  // anonymous: the device has no identity yet.
+  rpc CreateRegistrationChallenge(CreateRegistrationChallengeRequest) returns (CreateRegistrationChallengeResponse) {}
+  // RegisterAttestedDevice registers a device whose DPoP key and platform
+  // attestation the server verifies (SEC-001–SEC-005). From P6 the server
+  // refuses RegisterDevice; it stays declared so the contract only grows.
+  rpc RegisterAttestedDevice(RegisterAttestedDeviceRequest) returns (RegisterAttestedDeviceResponse) {}
+  // ReattestDevice replaces a device's attestation with a fresh one, bound
+  // to a new challenge (SEC-006).
+  rpc ReattestDevice(ReattestDeviceRequest) returns (ReattestDeviceResponse) {}
+  // RevokeDevice withdraws a device's trust: its tokens stop working and
+  // it can no longer refresh them. Administrators only (SEC-006).
+  rpc RevokeDevice(RevokeDeviceRequest) returns (RevokeDeviceResponse) {}
 }
 
 message Device {
@@ -36,6 +50,153 @@ message Device {
   int64 installed_sequence = 9;
   google.protobuf.Timestamp registered_at = 10;
   google.protobuf.Timestamp last_seen_at = 11;
+  // key_storage is where the device's DPoP private key lives, as the
+  // attestation proved it (SEC-002).
+  KeyStorage key_storage = 12;
+  // attestation summarises the last verified attestation (SEC-003); unset
+  // for a device registered without one.
+  AttestationSummary attestation = 13;
+  // revoked_at is when the device was revoked; unset while it is trusted
+  // (SEC-006).
+  google.protobuf.Timestamp revoked_at = 14;
+  // dpop_jkt is the RFC 7638 thumbprint of the device's DPoP public key,
+  // base64url-encoded; every token issued to the device is bound to it
+  // (SEC-020).
+  string dpop_jkt = 15;
+}
+
+// KeyStorage says where a device key is held (SEC-002).
+enum KeyStorage {
+  KEY_STORAGE_UNSPECIFIED = 0;
+  // KEY_STORAGE_SOFTWARE is a key in application-readable storage: the
+  // lowest assurance.
+  KEY_STORAGE_SOFTWARE = 1;
+  // KEY_STORAGE_TEE is an Android key in the trusted execution
+  // environment.
+  KEY_STORAGE_TEE = 2;
+  // KEY_STORAGE_STRONGBOX is an Android key in a dedicated secure
+  // element.
+  KEY_STORAGE_STRONGBOX = 3;
+  // KEY_STORAGE_SECURE_ENCLAVE is an iOS key in the Secure Enclave.
+  KEY_STORAGE_SECURE_ENCLAVE = 4;
+}
+
+// AttestationSummary is what the server keeps of a verified attestation
+// (SEC-003). It carries verdicts, never the raw evidence.
+message AttestationSummary {
+  // provider is "key_attestation", "play_integrity", "app_attest" or
+  // "development".
+  string provider = 1;
+  // verified_at is when the server last verified the evidence.
+  google.protobuf.Timestamp verified_at = 2;
+  // verdicts are the provider's verdicts the server accepted, such as
+  // "MEETS_STRONG_INTEGRITY".
+  repeated string verdicts = 3;
+  // risk_metric is the provider's risk figure, such as App Attest's
+  // receipt risk metric; zero when the provider reports none.
+  int32 risk_metric = 4;
+}
+
+// AndroidEvidence is the proof an Android device offers (SEC-003).
+message AndroidEvidence {
+  // key_attestation_chain is the X.509 certificate chain of the Android
+  // Key Attestation for the DPoP key, leaf first, DER-encoded.
+  repeated bytes key_attestation_chain = 1;
+  // play_integrity_token is the Play Integrity verdict token, bound to
+  // the challenge.
+  string play_integrity_token = 2;
+}
+
+// IosEvidence is the proof an iOS device offers (SEC-003).
+message IosEvidence {
+  // app_attest_key_id is the App Attest key identifier.
+  bytes app_attest_key_id = 1;
+  // attestation_object is the CBOR attestation object App Attest
+  // returned for the challenge.
+  bytes attestation_object = 2;
+}
+
+// DevelopmentEvidence marks a development build. The server accepts it
+// only where the environment's security configuration allows it, and
+// the device's assurance stays the lowest (SEC-004).
+message DevelopmentEvidence {
+  // build_id identifies the development build.
+  string build_id = 1;
+}
+
+// AttestationEvidence is the platform evidence for one key: exactly one
+// of the provider forms (SEC-003, SEC-004).
+message AttestationEvidence {
+  oneof evidence {
+    AndroidEvidence android = 1;
+    IosEvidence ios = 2;
+    DevelopmentEvidence development = 3;
+  }
+}
+
+message CreateRegistrationChallengeRequest {
+  string app_id = 1;
+  string environment = 2;
+}
+message CreateRegistrationChallengeResponse {
+  // challenge is random, single-use and bound to the app and environment.
+  bytes challenge = 1;
+  // expires_at is when the challenge stops being accepted.
+  google.protobuf.Timestamp expires_at = 2;
+}
+
+message RegisterAttestedDeviceRequest {
+  string app_id = 1;
+  string environment = 2;
+  string platform = 3;
+  string os_version = 4;
+  string runtime_version = 5;
+  string host_build = 6;
+  // challenge is the value CreateRegistrationChallenge returned; the
+  // attestation must be bound to it (SEC-005).
+  bytes challenge = 7;
+  // dpop_public_key_jwk is the device's DPoP public key as a JSON Web Key
+  // (RFC 7517) (SEC-001).
+  bytes dpop_public_key_jwk = 8;
+  // key_storage is where the device claims the key lives; the attestation
+  // must prove at least that (SEC-002).
+  KeyStorage key_storage = 9;
+  // evidence is the attestation of the DPoP key (SEC-003).
+  AttestationEvidence evidence = 10;
+  // key_agreement_public_key_jwk is the device's key-agreement public key
+  // for sealed payloads, as a JWK; empty when the device has none
+  // (SEC-053).
+  bytes key_agreement_public_key_jwk = 11;
+  // sca_public_key_jwk is the public key that signs transaction
+  // confirmations, as a JWK; empty when the device has none (SEC-027).
+  bytes sca_public_key_jwk = 12;
+  // sca_evidence is the attestation of the SCA key, in the same forms as
+  // evidence; set when sca_public_key_jwk is (SEC-027).
+  AttestationEvidence sca_evidence = 13;
+}
+message RegisterAttestedDeviceResponse {
+  Device device = 1;
+}
+
+message ReattestDeviceRequest {
+  string device_id = 1;
+  // challenge is a fresh challenge from CreateRegistrationChallenge.
+  bytes challenge = 2;
+  // evidence is the new attestation of the device's existing DPoP key
+  // (SEC-006).
+  AttestationEvidence evidence = 3;
+}
+message ReattestDeviceResponse {
+  Device device = 1;
+}
+
+message RevokeDeviceRequest {
+  string device_id = 1;
+  // reason is recorded in the audit log (SEC-006).
+  string reason = 2;
+}
+message RevokeDeviceResponse {
+  Device device = 1;
 }
 
 message RegisterDeviceRequest {

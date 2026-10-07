@@ -17,6 +17,15 @@ option go_package = "github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1
 // token.
 service TokenService {
   rpc IssueDeviceToken(IssueDeviceTokenRequest) returns (IssueDeviceTokenResponse) {}
+  // RefreshDeviceToken issues a new token to an attested device (SEC-025).
+  // The proof of possession of the device key travels in the DPoP header
+  // (RFC 9449), not in the body. A request without a valid proof is
+  // answered with the "use_dpop_nonce" error and a DPoP-Nonce header
+  // to retry with (SEC-024).
+  rpc RefreshDeviceToken(RefreshDeviceTokenRequest) returns (RefreshDeviceTokenResponse) {}
+  // ExchangeUserToken trades an end-user token for a short-lived token
+  // scoped to one upstream audience, following RFC 8693 (SEC-026).
+  rpc ExchangeUserToken(ExchangeUserTokenRequest) returns (ExchangeUserTokenResponse) {}
 }
 
 message IssueDeviceTokenRequest {
@@ -28,4 +37,42 @@ message IssueDeviceTokenRequest {
 message IssueDeviceTokenResponse {
   string access_token = 1;
   google.protobuf.Timestamp expires_at = 2;
+  // token_type is "DPoP": the token is bound to the device's key and is
+  // sent as `Authorization: DPoP <token>` with a proof (SEC-020).
+  string token_type = 3;
+}
+
+message RefreshDeviceTokenRequest {
+  string device_id = 1;
+  // evidence is fresh platform evidence bound to the refresh (SEC-025).
+  oneof evidence {
+    // app_attest_assertion is the App Attest assertion over the request.
+    bytes app_attest_assertion = 2;
+    // play_integrity_token is a Play Integrity verdict token.
+    string play_integrity_token = 3;
+  }
+}
+
+// RefreshDeviceTokenResponse carries the new token; it has the same
+// fields as IssueDeviceTokenResponse (SEC-025).
+message RefreshDeviceTokenResponse {
+  string access_token = 1;
+  google.protobuf.Timestamp expires_at = 2;
+  // token_type is "DPoP" (SEC-020).
+  string token_type = 3;
+}
+
+message ExchangeUserTokenRequest {
+  // subject_token is the end user's token (RFC 8693 `subject_token`).
+  string subject_token = 1;
+  // subject_token_type is the RFC 8693 token type URN of subject_token.
+  string subject_token_type = 2;
+  // audience is the upstream the new token is for (RFC 8693 `audience`).
+  string audience = 3;
+}
+message ExchangeUserTokenResponse {
+  string access_token = 1;
+  // issued_token_type is the RFC 8693 token type URN of access_token.
+  string issued_token_type = 2;
+  google.protobuf.Timestamp expires_at = 3;
 }
