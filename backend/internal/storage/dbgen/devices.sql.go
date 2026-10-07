@@ -73,6 +73,18 @@ func (q *Queries) DeleteDeviceBundles(ctx context.Context, arg DeleteDeviceBundl
 	return err
 }
 
+const deleteDeviceTokens = `-- name: DeleteDeviceTokens :execrows
+DELETE FROM device_tokens WHERE device_id = $1
+`
+
+func (q *Queries) DeleteDeviceTokens(ctx context.Context, deviceID pgtype.UUID) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteDeviceTokens, deviceID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const expireDeviceTokens = `-- name: ExpireDeviceTokens :execrows
 DELETE FROM device_tokens WHERE expires_at < $1
 `
@@ -145,7 +157,7 @@ func (q *Queries) FindAppForRegistration(ctx context.Context, arg FindAppForRegi
 }
 
 const findDeviceSecret = `-- name: FindDeviceSecret :one
-SELECT id, organization_id, secret_hash FROM devices WHERE id = $1
+SELECT id, organization_id, secret_hash FROM devices WHERE id = $1 AND revoked_at IS NULL
 `
 
 type FindDeviceSecretRow struct {
@@ -165,7 +177,7 @@ func (q *Queries) FindDeviceSecret(ctx context.Context, id pgtype.UUID) (FindDev
 const findDeviceToken = `-- name: FindDeviceToken :one
 SELECT t.id, t.organization_id, t.device_id, t.expires_at, d.app_id, d.environment_id, d.host_build
   FROM device_tokens t JOIN devices d ON d.id = t.device_id
- WHERE t.secret_hash = $1
+ WHERE t.secret_hash = $1 AND d.revoked_at IS NULL
 `
 
 type FindDeviceTokenRow struct {
@@ -191,6 +203,46 @@ func (q *Queries) FindDeviceToken(ctx context.Context, secretHash []byte) (FindD
 		&i.EnvironmentID,
 		&i.HostBuild,
 	)
+	return i, err
+}
+
+const findEnvironmentForReattestation = `-- name: FindEnvironmentForReattestation :one
+SELECT e.production FROM environments e JOIN apps a ON a.id = e.app_id
+ WHERE e.id = $1 AND a.deleted_at IS NULL
+`
+
+// Runs in the registration scope; it says whether a device's environment
+// is a production one (SEC-008).
+func (q *Queries) FindEnvironmentForReattestation(ctx context.Context, id pgtype.UUID) (bool, error) {
+	row := q.db.QueryRow(ctx, findEnvironmentForReattestation, id)
+	var production bool
+	err := row.Scan(&production)
+	return production, err
+}
+
+const findEnvironmentForRegistration = `-- name: FindEnvironmentForRegistration :one
+SELECT a.organization_id, e.id AS environment_id, e.production
+  FROM apps a JOIN environments e ON e.app_id = a.id
+ WHERE a.id = $1 AND e.key = $2 AND a.deleted_at IS NULL
+`
+
+type FindEnvironmentForRegistrationParams struct {
+	ID  pgtype.UUID
+	Key string
+}
+
+type FindEnvironmentForRegistrationRow struct {
+	OrganizationID pgtype.UUID
+	EnvironmentID  pgtype.UUID
+	Production     bool
+}
+
+// Runs in the registration scope, like FindAppForRegistration; it also
+// says whether the environment is a production one (SEC-008).
+func (q *Queries) FindEnvironmentForRegistration(ctx context.Context, arg FindEnvironmentForRegistrationParams) (FindEnvironmentForRegistrationRow, error) {
+	row := q.db.QueryRow(ctx, findEnvironmentForRegistration, arg.ID, arg.Key)
+	var i FindEnvironmentForRegistrationRow
+	err := row.Scan(&i.OrganizationID, &i.EnvironmentID, &i.Production)
 	return i, err
 }
 
@@ -241,7 +293,7 @@ func (q *Queries) GetDelta(ctx context.Context, arg GetDeltaParams) (Delta, erro
 }
 
 const getDevice = `-- name: GetDevice :one
-SELECT id, organization_id, app_id, environment_id, platform, os_version, runtime_version, host_build, assurance_level, secret_hash, installed_sequence, registered_at, last_seen_at FROM devices WHERE id = $1
+SELECT id, organization_id, app_id, environment_id, platform, os_version, runtime_version, host_build, assurance_level, secret_hash, installed_sequence, registered_at, last_seen_at, dpop_jkt, dpop_public_key, key_storage, attestation_provider, attestation_verdicts, attestation_risk_metric, attested_at, app_attest_key_id, app_attest_public_key, app_attest_counter, app_attest_receipt, revoked_at, revoked_reason FROM devices WHERE id = $1
 `
 
 func (q *Queries) GetDevice(ctx context.Context, id pgtype.UUID) (Device, error) {
@@ -261,6 +313,148 @@ func (q *Queries) GetDevice(ctx context.Context, id pgtype.UUID) (Device, error)
 		&i.InstalledSequence,
 		&i.RegisteredAt,
 		&i.LastSeenAt,
+		&i.DpopJkt,
+		&i.DpopPublicKey,
+		&i.KeyStorage,
+		&i.AttestationProvider,
+		&i.AttestationVerdicts,
+		&i.AttestationRiskMetric,
+		&i.AttestedAt,
+		&i.AppAttestKeyID,
+		&i.AppAttestPublicKey,
+		&i.AppAttestCounter,
+		&i.AppAttestReceipt,
+		&i.RevokedAt,
+		&i.RevokedReason,
+	)
+	return i, err
+}
+
+const getDeviceByJKT = `-- name: GetDeviceByJKT :one
+SELECT id, organization_id, app_id, environment_id, platform, os_version, runtime_version, host_build, assurance_level, secret_hash, installed_sequence, registered_at, last_seen_at, dpop_jkt, dpop_public_key, key_storage, attestation_provider, attestation_verdicts, attestation_risk_metric, attested_at, app_attest_key_id, app_attest_public_key, app_attest_counter, app_attest_receipt, revoked_at, revoked_reason FROM devices WHERE dpop_jkt = $1
+`
+
+// Runs in the authentication scope.
+func (q *Queries) GetDeviceByJKT(ctx context.Context, dpopJkt *string) (Device, error) {
+	row := q.db.QueryRow(ctx, getDeviceByJKT, dpopJkt)
+	var i Device
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizationID,
+		&i.AppID,
+		&i.EnvironmentID,
+		&i.Platform,
+		&i.OsVersion,
+		&i.RuntimeVersion,
+		&i.HostBuild,
+		&i.AssuranceLevel,
+		&i.SecretHash,
+		&i.InstalledSequence,
+		&i.RegisteredAt,
+		&i.LastSeenAt,
+		&i.DpopJkt,
+		&i.DpopPublicKey,
+		&i.KeyStorage,
+		&i.AttestationProvider,
+		&i.AttestationVerdicts,
+		&i.AttestationRiskMetric,
+		&i.AttestedAt,
+		&i.AppAttestKeyID,
+		&i.AppAttestPublicKey,
+		&i.AppAttestCounter,
+		&i.AppAttestReceipt,
+		&i.RevokedAt,
+		&i.RevokedReason,
+	)
+	return i, err
+}
+
+const insertAttestedDevice = `-- name: InsertAttestedDevice :one
+INSERT INTO devices (id, organization_id, app_id, environment_id, platform, os_version, runtime_version, host_build,
+                     secret_hash, assurance_level, dpop_jkt, dpop_public_key, key_storage,
+                     attestation_provider, attestation_verdicts, attestation_risk_metric, attested_at,
+                     app_attest_key_id, app_attest_public_key, app_attest_counter, app_attest_receipt)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, ''::bytea, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+RETURNING id, organization_id, app_id, environment_id, platform, os_version, runtime_version, host_build, assurance_level, secret_hash, installed_sequence, registered_at, last_seen_at, dpop_jkt, dpop_public_key, key_storage, attestation_provider, attestation_verdicts, attestation_risk_metric, attested_at, app_attest_key_id, app_attest_public_key, app_attest_counter, app_attest_receipt, revoked_at, revoked_reason
+`
+
+type InsertAttestedDeviceParams struct {
+	ID                    pgtype.UUID
+	OrganizationID        pgtype.UUID
+	AppID                 pgtype.UUID
+	EnvironmentID         pgtype.UUID
+	Platform              string
+	OsVersion             string
+	RuntimeVersion        string
+	HostBuild             string
+	AssuranceLevel        string
+	DpopJkt               *string
+	DpopPublicKey         []byte
+	KeyStorage            string
+	AttestationProvider   *string
+	AttestationVerdicts   []string
+	AttestationRiskMetric int32
+	AttestedAt            pgtype.Timestamptz
+	AppAttestKeyID        []byte
+	AppAttestPublicKey    []byte
+	AppAttestCounter      int64
+	AppAttestReceipt      []byte
+}
+
+// A device that registered with a DPoP key and verified attestation
+// (SEC-001, SEC-003). It has no secret: its secret hash is empty, which
+// no secret matches, until the column goes (DEP-030).
+func (q *Queries) InsertAttestedDevice(ctx context.Context, arg InsertAttestedDeviceParams) (Device, error) {
+	row := q.db.QueryRow(ctx, insertAttestedDevice,
+		arg.ID,
+		arg.OrganizationID,
+		arg.AppID,
+		arg.EnvironmentID,
+		arg.Platform,
+		arg.OsVersion,
+		arg.RuntimeVersion,
+		arg.HostBuild,
+		arg.AssuranceLevel,
+		arg.DpopJkt,
+		arg.DpopPublicKey,
+		arg.KeyStorage,
+		arg.AttestationProvider,
+		arg.AttestationVerdicts,
+		arg.AttestationRiskMetric,
+		arg.AttestedAt,
+		arg.AppAttestKeyID,
+		arg.AppAttestPublicKey,
+		arg.AppAttestCounter,
+		arg.AppAttestReceipt,
+	)
+	var i Device
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizationID,
+		&i.AppID,
+		&i.EnvironmentID,
+		&i.Platform,
+		&i.OsVersion,
+		&i.RuntimeVersion,
+		&i.HostBuild,
+		&i.AssuranceLevel,
+		&i.SecretHash,
+		&i.InstalledSequence,
+		&i.RegisteredAt,
+		&i.LastSeenAt,
+		&i.DpopJkt,
+		&i.DpopPublicKey,
+		&i.KeyStorage,
+		&i.AttestationProvider,
+		&i.AttestationVerdicts,
+		&i.AttestationRiskMetric,
+		&i.AttestedAt,
+		&i.AppAttestKeyID,
+		&i.AppAttestPublicKey,
+		&i.AppAttestCounter,
+		&i.AppAttestReceipt,
+		&i.RevokedAt,
+		&i.RevokedReason,
 	)
 	return i, err
 }
@@ -295,7 +489,7 @@ func (q *Queries) InsertDelta(ctx context.Context, arg InsertDeltaParams) error 
 const insertDevice = `-- name: InsertDevice :one
 INSERT INTO devices (id, organization_id, app_id, environment_id, platform, os_version, runtime_version, host_build, secret_hash)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-RETURNING id, organization_id, app_id, environment_id, platform, os_version, runtime_version, host_build, assurance_level, secret_hash, installed_sequence, registered_at, last_seen_at
+RETURNING id, organization_id, app_id, environment_id, platform, os_version, runtime_version, host_build, assurance_level, secret_hash, installed_sequence, registered_at, last_seen_at, dpop_jkt, dpop_public_key, key_storage, attestation_provider, attestation_verdicts, attestation_risk_metric, attested_at, app_attest_key_id, app_attest_public_key, app_attest_counter, app_attest_receipt, revoked_at, revoked_reason
 `
 
 type InsertDeviceParams struct {
@@ -337,6 +531,19 @@ func (q *Queries) InsertDevice(ctx context.Context, arg InsertDeviceParams) (Dev
 		&i.InstalledSequence,
 		&i.RegisteredAt,
 		&i.LastSeenAt,
+		&i.DpopJkt,
+		&i.DpopPublicKey,
+		&i.KeyStorage,
+		&i.AttestationProvider,
+		&i.AttestationVerdicts,
+		&i.AttestationRiskMetric,
+		&i.AttestedAt,
+		&i.AppAttestKeyID,
+		&i.AppAttestPublicKey,
+		&i.AppAttestCounter,
+		&i.AppAttestReceipt,
+		&i.RevokedAt,
+		&i.RevokedReason,
 	)
 	return i, err
 }
@@ -471,7 +678,7 @@ func (q *Queries) LatestManifest(ctx context.Context, channelID pgtype.UUID) (Ma
 }
 
 const listDevices = `-- name: ListDevices :many
-SELECT id, organization_id, app_id, environment_id, platform, os_version, runtime_version, host_build, assurance_level, secret_hash, installed_sequence, registered_at, last_seen_at FROM devices
+SELECT id, organization_id, app_id, environment_id, platform, os_version, runtime_version, host_build, assurance_level, secret_hash, installed_sequence, registered_at, last_seen_at, dpop_jkt, dpop_public_key, key_storage, attestation_provider, attestation_verdicts, attestation_risk_metric, attested_at, app_attest_key_id, app_attest_public_key, app_attest_counter, app_attest_receipt, revoked_at, revoked_reason FROM devices
  WHERE app_id = $1
    AND ($2::uuid IS NULL OR environment_id = $2::uuid)
    AND (registered_at, id) < ($3::timestamptz, $4::uuid)
@@ -516,6 +723,19 @@ func (q *Queries) ListDevices(ctx context.Context, arg ListDevicesParams) ([]Dev
 			&i.InstalledSequence,
 			&i.RegisteredAt,
 			&i.LastSeenAt,
+			&i.DpopJkt,
+			&i.DpopPublicKey,
+			&i.KeyStorage,
+			&i.AttestationProvider,
+			&i.AttestationVerdicts,
+			&i.AttestationRiskMetric,
+			&i.AttestedAt,
+			&i.AppAttestKeyID,
+			&i.AppAttestPublicKey,
+			&i.AppAttestCounter,
+			&i.AppAttestReceipt,
+			&i.RevokedAt,
+			&i.RevokedReason,
 		); err != nil {
 			return nil, err
 		}
@@ -725,6 +945,26 @@ func (q *Queries) RecentVersionBundles(ctx context.Context, arg RecentVersionBun
 	return items, nil
 }
 
+const revokeDevice = `-- name: RevokeDevice :execrows
+UPDATE devices SET revoked_at = $2, revoked_reason = $3 WHERE id = $1 AND revoked_at IS NULL
+`
+
+type RevokeDeviceParams struct {
+	ID            pgtype.UUID
+	RevokedAt     pgtype.Timestamptz
+	RevokedReason string
+}
+
+// Does nothing for a device that is already revoked, so the first reason
+// stands (SEC-006).
+func (q *Queries) RevokeDevice(ctx context.Context, arg RevokeDeviceParams) (int64, error) {
+	result, err := q.db.Exec(ctx, revokeDevice, arg.ID, arg.RevokedAt, arg.RevokedReason)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const setDeviceSequence = `-- name: SetDeviceSequence :exec
 UPDATE devices SET installed_sequence = $2, last_seen_at = now() WHERE id = $1
 `
@@ -746,6 +986,82 @@ UPDATE devices SET last_seen_at = now() WHERE id = $1
 func (q *Queries) TouchDevice(ctx context.Context, id pgtype.UUID) error {
 	_, err := q.db.Exec(ctx, touchDevice, id)
 	return err
+}
+
+const updateDeviceAttestation = `-- name: UpdateDeviceAttestation :one
+UPDATE devices
+   SET assurance_level = $1, key_storage = $2,
+       attestation_provider = $3, attestation_verdicts = $4::text[],
+       attestation_risk_metric = $5, attested_at = $6,
+       app_attest_key_id = COALESCE($7::bytea, app_attest_key_id),
+       app_attest_public_key = COALESCE($8::bytea, app_attest_public_key),
+       app_attest_counter = CASE WHEN $7::bytea IS NULL THEN app_attest_counter
+                                 ELSE $9::bigint END,
+       app_attest_receipt = COALESCE($10::bytea, app_attest_receipt)
+ WHERE id = $11 AND revoked_at IS NULL
+RETURNING id, organization_id, app_id, environment_id, platform, os_version, runtime_version, host_build, assurance_level, secret_hash, installed_sequence, registered_at, last_seen_at, dpop_jkt, dpop_public_key, key_storage, attestation_provider, attestation_verdicts, attestation_risk_metric, attested_at, app_attest_key_id, app_attest_public_key, app_attest_counter, app_attest_receipt, revoked_at, revoked_reason
+`
+
+type UpdateDeviceAttestationParams struct {
+	AssuranceLevel        string
+	KeyStorage            string
+	AttestationProvider   *string
+	AttestationVerdicts   []string
+	AttestationRiskMetric int32
+	AttestedAt            pgtype.Timestamptz
+	AppAttestKeyID        []byte
+	AppAttestPublicKey    []byte
+	AppAttestCounter      int64
+	AppAttestReceipt      []byte
+	ID                    pgtype.UUID
+}
+
+// Replaces what a fresh attestation proved (SEC-006). The App Attest
+// columns change only for an iOS attestation, which brings a new key.
+func (q *Queries) UpdateDeviceAttestation(ctx context.Context, arg UpdateDeviceAttestationParams) (Device, error) {
+	row := q.db.QueryRow(ctx, updateDeviceAttestation,
+		arg.AssuranceLevel,
+		arg.KeyStorage,
+		arg.AttestationProvider,
+		arg.AttestationVerdicts,
+		arg.AttestationRiskMetric,
+		arg.AttestedAt,
+		arg.AppAttestKeyID,
+		arg.AppAttestPublicKey,
+		arg.AppAttestCounter,
+		arg.AppAttestReceipt,
+		arg.ID,
+	)
+	var i Device
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizationID,
+		&i.AppID,
+		&i.EnvironmentID,
+		&i.Platform,
+		&i.OsVersion,
+		&i.RuntimeVersion,
+		&i.HostBuild,
+		&i.AssuranceLevel,
+		&i.SecretHash,
+		&i.InstalledSequence,
+		&i.RegisteredAt,
+		&i.LastSeenAt,
+		&i.DpopJkt,
+		&i.DpopPublicKey,
+		&i.KeyStorage,
+		&i.AttestationProvider,
+		&i.AttestationVerdicts,
+		&i.AttestationRiskMetric,
+		&i.AttestedAt,
+		&i.AppAttestKeyID,
+		&i.AppAttestPublicKey,
+		&i.AppAttestCounter,
+		&i.AppAttestReceipt,
+		&i.RevokedAt,
+		&i.RevokedReason,
+	)
+	return i, err
 }
 
 const updateDeviceVersions = `-- name: UpdateDeviceVersions :exec
