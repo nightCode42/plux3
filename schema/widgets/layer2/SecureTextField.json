@@ -1,0 +1,70 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "SecureTextField",
+  "id": 104,
+  "layer": 2,
+  "phase": "P6",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "category": "input",
+  "icon": "password",
+  "description": "Hardened text entry: obscured, with no suggestions, autocorrect, clipboard or keyboard learning (SEC-090).",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 120,
+  "accessibility": {
+    "role": "textField",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "value",
+      "id": 1,
+      "type": "string",
+      "description": "The text, bound two-way. Sensitive: never logged, traced or persisted (SEC-092)."
+    },
+    {
+      "name": "label",
+      "id": 2,
+      "type": "string?",
+      "description": "The field label."
+    },
+    {
+      "name": "obscure",
+      "id": 3,
+      "type": "bool",
+      "default": true,
+      "description": "Hides the characters."
+    },
+    {
+      "name": "maxLength",
+      "id": 4,
+      "type": "int",
+      "constraints": {
+        "min": 1
+      },
+      "description": "The maximum number of characters."
+    }
+  ],
+  "events": [
+    {
+      "name": "onChanged",
+      "id": 1,
+      "payload": "string",
+      "description": "Fires on every change with the text. Sensitive: never logged, traced or persisted (SEC-092)."
+    },
+    {
+      "name": "onSubmitted",
+      "id": 2,
+      "payload": "string",
+      "description": "Fires when the user submits. Sensitive: never logged, traced or persisted (SEC-092)."
+    }
+  ]
+}

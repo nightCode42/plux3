@@ -290,6 +290,49 @@
     "securityProfile": {
       "$ref": "common.schema.json#/$defs/securityProfile"
     },
+    "security": {
+      "type": "object",
+      "x-plux-type": "AppSecurity",
+      "description": "App-level security settings (SEC-181).",
+      "properties": {
+        "settings": {
+          "type": "object",
+          "x-plux-type": "AppSecuritySettings",
+          "description": "A document-tightenable subset of the security profile. May only tighten the effective profile (SEC-181); checked by the compiler and the server.",
+          "properties": {
+            "allowDirectDataSources": {
+              "type": "boolean"
+            },
+            "minAssuranceForSync": {
+              "$ref": "common.schema.json#/$defs/assuranceLevel"
+            },
+            "screenshotBlockingDefault": {
+              "type": "boolean"
+            },
+            "inactivityLock": {
+              "type": "boolean"
+            },
+            "inactivityLockTimeout": {
+              "type": "integer",
+              "minimum": 30,
+              "maximum": 3600,
+              "description": "Seconds."
+            },
+            "raspRootHookingResponse": {
+              "$ref": "common.schema.json#/$defs/raspResponse"
+            }
+          },
+          "patternProperties": {
+            "^x-": true
+          },
+          "additionalProperties": false
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false
+    },
     "sync": {
       "type": "object",
       "x-plux-type": "SyncPolicy",

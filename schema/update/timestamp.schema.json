@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://plux.dev/schema/v1/update/timestamp.schema.json",
+  "title": "Update timestamp metadata",
+  "description": "Short-lived pointer to the current snapshot, with its hash (SEC-122).",
+  "type": "object",
+  "required": [
+    "signed",
+    "signatures"
+  ],
+  "properties": {
+    "signed": {
+      "type": "object",
+      "required": [
+        "_type",
+        "version",
+        "expires",
+        "specVersion",
+        "meta"
+      ],
+      "properties": {
+        "_type": {
+          "const": "timestamp"
+        },
+        "version": {
+          "$ref": "common.schema.json#/$defs/version"
+        },
+        "expires": {
+          "$ref": "common.schema.json#/$defs/signedBase/properties/expires"
+        },
+        "specVersion": {
+          "$ref": "common.schema.json#/$defs/signedBase/properties/specVersion"
+        },
+        "meta": {
+          "type": "object",
+          "required": [
+            "snapshot.json"
+          ],
+          "properties": {
+            "snapshot.json": {
+              "type": "object",
+              "required": [
+                "version",
+                "sha256"
+              ],
+              "properties": {
+                "version": {
+                  "$ref": "common.schema.json#/$defs/version"
+                },
+                "sha256": {
+                  "$ref": "common.schema.json#/$defs/sha256"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "signatures": {
+      "$ref": "common.schema.json#/$defs/signatures"
+    }
+  },
+  "additionalProperties": false
+}

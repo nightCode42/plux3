@@ -565,6 +565,13 @@ String? nameInputBorderKind(Decoding d, Object? v) => switch (v) {
   _ => null,
 };
 
+/// The member name of a KycCaptureMode, from its permanent value ID or name.
+String? nameKycCaptureMode(Decoding d, Object? v) => switch (v) {
+  1 || 'document' => 'document',
+  2 || 'selfie' => 'selfie',
+  _ => null,
+};
+
 /// The member name of a ListStatus, from its permanent value ID or name.
 String? nameListStatus(Decoding d, Object? v) => switch (v) {
   1 || 'ready' => 'ready',
@@ -703,6 +710,13 @@ String? nameNavigationMode(Decoding d, Object? v) => switch (v) {
   2 || 'replace' => 'replace',
   3 || 'popUntil' => 'popUntil',
   4 || 'clearAndPush' => 'clearAndPush',
+  _ => null,
+};
+
+/// The member name of a OtpAlphabet, from its permanent value ID or name.
+String? nameOtpAlphabet(Decoding d, Object? v) => switch (v) {
+  1 || 'numeric' => 'numeric',
+  2 || 'alphanumeric' => 'alphanumeric',
   _ => null,
 };
 

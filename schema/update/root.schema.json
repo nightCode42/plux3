@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://plux.dev/schema/v1/update/root.schema.json",
+  "title": "Update root metadata",
+  "description": "The root of trust: the keys and the signing threshold of every role (SEC-122).",
+  "type": "object",
+  "required": [
+    "signed",
+    "signatures"
+  ],
+  "properties": {
+    "signed": {
+      "type": "object",
+      "required": [
+        "_type",
+        "version",
+        "expires",
+        "specVersion",
+        "keys",
+        "roles"
+      ],
+      "properties": {
+        "_type": {
+          "const": "root"
+        },
+        "version": {
+          "$ref": "common.schema.json#/$defs/version"
+        },
+        "expires": {
+          "$ref": "common.schema.json#/$defs/signedBase/properties/expires"
+        },
+        "specVersion": {
+          "$ref": "common.schema.json#/$defs/signedBase/properties/specVersion"
+        },
+        "keys": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "common.schema.json#/$defs/keyId"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "alg",
+              "public"
+            ],
+            "properties": {
+              "alg": {
+                "$ref": "common.schema.json#/$defs/alg"
+              },
+              "public": {
+                "$ref": "common.schema.json#/$defs/base64"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "roles": {
+          "type": "object",
+          "required": [
+            "root",
+            "targets",
+            "snapshot",
+            "timestamp"
+          ],
+          "properties": {
+            "root": {
+              "type": "object",
+              "required": [
+                "keyids",
+                "threshold"
+              ],
+              "properties": {
+                "keyids": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "common.schema.json#/$defs/keyId"
+                  },
+                  "uniqueItems": true
+                },
+                "threshold": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "additionalProperties": false
+            },
+            "targets": {
+              "type": "object",
+              "required": [
+                "keyids",
+                "threshold"
+              ],
+              "properties": {
+                "keyids": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "common.schema.json#/$defs/keyId"
+                  },
+                  "uniqueItems": true
+                },
+                "threshold": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "additionalProperties": false
+            },
+            "snapshot": {
+              "type": "object",
+              "required": [
+                "keyids",
+                "threshold"
+              ],
+              "properties": {
+                "keyids": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "common.schema.json#/$defs/keyId"
+                  },
+                  "uniqueItems": true
+                },
+                "threshold": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "additionalProperties": false
+            },
+            "timestamp": {
+              "type": "object",
+              "required": [
+                "keyids",
+                "threshold"
+              ],
+              "properties": {
+                "keyids": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "common.schema.json#/$defs/keyId"
+                  },
+                  "uniqueItems": true
+                },
+                "threshold": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "signatures": {
+      "$ref": "common.schema.json#/$defs/signatures"
+    }
+  },
+  "additionalProperties": false
+}
