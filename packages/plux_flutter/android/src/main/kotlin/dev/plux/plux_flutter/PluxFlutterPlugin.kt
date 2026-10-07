@@ -21,14 +21,15 @@ import javax.crypto.spec.GCMParameterSpec
 /**
  * The platform services of the Plux runtime (ADR-0029): where the release
  * store lives, and secrets kept encrypted under an Android Keystore key, so
- * that no secret is ever written in the clear. The device actions that need
- * the platform, the share sheet and permission prompts, run here too
- * (SEC-080). Bundle data never crosses this channel.
+ * that no secret is ever written in the clear. The device keys live in
+ * [PluxKeys] (SEC-001). The device actions that need the platform, the share
+ * sheet and permission prompts, run here too (SEC-080). Bundle data never crosses this channel.
  */
 class PluxFlutterPlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCallHandler {
     private lateinit var channel: MethodChannel
     private lateinit var context: Context
     private lateinit var device: PluxDevice
+    private lateinit var keys: PluxKeys
     private var activityBinding: ActivityPluginBinding? = null
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
@@ -51,12 +52,14 @@ class PluxFlutterPlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCall
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         context = binding.applicationContext
         device = PluxDevice(context)
+        keys = PluxKeys()
         channel = MethodChannel(binding.binaryMessenger, CHANNEL)
         channel.setMethodCallHandler(this)
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         channel.setMethodCallHandler(null)
+        keys.close()
     }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
@@ -74,6 +77,7 @@ class PluxFlutterPlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCall
                     secretFile(name(call)).delete()
                     result.success(null)
                 }
+                "keyCreate", "keyPublic", "keySign", "keyDelete" -> keys.handle(call, result)
                 "share" -> device.share(call, result)
                 "permissionRequest" -> device.requestPermission(call, result)
                 else -> result.notImplemented()
