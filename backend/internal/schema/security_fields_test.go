@@ -5,7 +5,6 @@ package schema
 
 import (
 	"testing"
-	"testing/fstest"
 
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 )
@@ -36,7 +35,7 @@ func TestAppSecuritySettingsSchema_SEC_181(t *testing.T) {
 			edit(t, fsys, "app.json", func(doc map[string]any) {
 				doc["security"] = map[string]any{"settings": tt.settings}
 			})
-			_, diags := newLoader(t).Load(fstest.MapFS(fsys))
+			_, diags := newLoader(t).Load(fsys)
 			if tt.wantCode == 0 {
 				for _, d := range diags {
 					t.Errorf("unexpected diagnostic %+v", d)

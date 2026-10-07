@@ -168,29 +168,12 @@ func (e settingEntry) checkShape() error {
 			return fmt.Errorf("a bool setting needs tighter true or false, not %q", e.Tighter)
 		}
 	case "seconds", "count":
-		if e.Tighter != "lower" && e.Tighter != "higher" {
-			return fmt.Errorf("a %s setting needs tighter lower or higher, not %q", e.Type, e.Tighter)
-		}
-		if e.Bounds == nil {
-			return fmt.Errorf("a %s setting needs bounds", e.Type)
-		}
-		if e.Bounds.Min < 0 || e.Bounds.Min > e.Bounds.Max {
-			return fmt.Errorf("bounds [%d, %d] must satisfy 0 <= min <= max", e.Bounds.Min, e.Bounds.Max)
+		if err := e.checkNumeric(); err != nil {
+			return err
 		}
 	case "enum":
-		if e.Tighter != "order" {
-			return fmt.Errorf("an enum setting needs tighter order, not %q", e.Tighter)
-		}
-		if len(e.Values) < 2 {
-			return fmt.Errorf("an enum setting needs at least two values")
-		}
-		for i, v := range e.Values {
-			if !settingEnumVal.MatchString(v) {
-				return fmt.Errorf("invalid enum value %q", v)
-			}
-			if slices.Index(e.Values, v) != i {
-				return fmt.Errorf("duplicate enum value %q", v)
-			}
+		if err := e.checkEnum(); err != nil {
+			return err
 		}
 	}
 	if e.Type != "enum" && len(e.Values) > 0 {
@@ -198,6 +181,39 @@ func (e settingEntry) checkShape() error {
 	}
 	if e.Type != "seconds" && e.Type != "count" && e.Bounds != nil {
 		return fmt.Errorf("bounds are only allowed on a seconds or count setting")
+	}
+	return nil
+}
+
+// checkNumeric checks the tighter direction and bounds of a seconds or count setting.
+func (e settingEntry) checkNumeric() error {
+	if e.Tighter != "lower" && e.Tighter != "higher" {
+		return fmt.Errorf("a %s setting needs tighter lower or higher, not %q", e.Type, e.Tighter)
+	}
+	if e.Bounds == nil {
+		return fmt.Errorf("a %s setting needs bounds", e.Type)
+	}
+	if e.Bounds.Min < 0 || e.Bounds.Min > e.Bounds.Max {
+		return fmt.Errorf("bounds [%d, %d] must satisfy 0 <= min <= max", e.Bounds.Min, e.Bounds.Max)
+	}
+	return nil
+}
+
+// checkEnum checks the tighter direction and the values of an enum setting.
+func (e settingEntry) checkEnum() error {
+	if e.Tighter != "order" {
+		return fmt.Errorf("an enum setting needs tighter order, not %q", e.Tighter)
+	}
+	if len(e.Values) < 2 {
+		return fmt.Errorf("an enum setting needs at least two values")
+	}
+	for i, v := range e.Values {
+		if !settingEnumVal.MatchString(v) {
+			return fmt.Errorf("invalid enum value %q", v)
+		}
+		if slices.Index(e.Values, v) != i {
+			return fmt.Errorf("duplicate enum value %q", v)
+		}
 	}
 	return nil
 }
