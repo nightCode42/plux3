@@ -80,7 +80,7 @@ func (s *Service) Reattest(ctx context.Context, deviceID string, challenge []byt
 		d = deviceOf(updated)
 		return nil
 	})
-	return d, err
+	return d, err //nolint:wrapcheck // InTx wraps its own failures
 }
 
 // deviceForReattestation reads a device, in the authentication scope: a

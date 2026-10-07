@@ -51,11 +51,11 @@ func (w *world) challenge(t *testing.T, app, env string) []byte {
 }
 
 // registerAttested registers anonymously with fresh challenge.
-func (w *world) registerAttested(t *testing.T, app, env, platform string, jwk []byte, claim pluxv1.KeyStorage, e *pluxv1.AttestationEvidence) (*pluxv1.RegisterAttestedDeviceResponse, error) {
+func (w *world) registerAttested(t *testing.T, app, platform string, jwk []byte, claim pluxv1.KeyStorage, e *pluxv1.AttestationEvidence) (*pluxv1.RegisterAttestedDeviceResponse, error) {
 	t.Helper()
 	res, err := w.device.RegisterAttestedDevice(context.Background(), connect.NewRequest(&pluxv1.RegisterAttestedDeviceRequest{
-		AppId: app, Environment: env, Platform: platform, OsVersion: "15", RuntimeVersion: "1.0.0", HostBuild: "42",
-		Challenge: w.challenge(t, app, env), DpopPublicKeyJwk: jwk, KeyStorage: claim, Evidence: e,
+		AppId: app, Environment: "production", Platform: platform, OsVersion: "15", RuntimeVersion: "1.0.0", HostBuild: "42",
+		Challenge: w.challenge(t, app, "production"), DpopPublicKeyJwk: jwk, KeyStorage: claim, Evidence: e,
 	}))
 	if err != nil {
 		return nil, err //nolint:wrapcheck // the test reads the Connect error
@@ -110,7 +110,7 @@ func TestAttestedDevicesOverTheAPI(t *testing.T) {
 	// Android.
 	key, jwk := devicetest.NewKey(t)
 	w.fakes.vouchAndroid(&key.PublicKey, playintegrity.LabelBasic, playintegrity.LabelDevice)
-	android, err := w.registerAttested(t, app, "production", "android", jwk, pluxv1.KeyStorage_KEY_STORAGE_TEE, androidProto())
+	android, err := w.registerAttested(t, app, "android", jwk, pluxv1.KeyStorage_KEY_STORAGE_TEE, androidProto())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,17 +126,17 @@ func TestAttestedDevicesOverTheAPI(t *testing.T) {
 	}
 
 	// The same key again, and a key the chain does not attest.
-	if _, err := w.registerAttested(t, app, "production", "android", jwk, pluxv1.KeyStorage_KEY_STORAGE_TEE, androidProto()); reasonOf(t, err) != "ATTESTATION_FAILED" {
+	if _, err := w.registerAttested(t, app, "android", jwk, pluxv1.KeyStorage_KEY_STORAGE_TEE, androidProto()); reasonOf(t, err) != "ATTESTATION_FAILED" {
 		t.Errorf("a duplicate key: %v", err)
 	}
 	_, other := devicetest.NewKey(t)
-	if _, err := w.registerAttested(t, app, "production", "android", other, pluxv1.KeyStorage_KEY_STORAGE_TEE, androidProto()); reasonOf(t, err) != "ATTESTATION_FAILED" {
+	if _, err := w.registerAttested(t, app, "android", other, pluxv1.KeyStorage_KEY_STORAGE_TEE, androidProto()); reasonOf(t, err) != "ATTESTATION_FAILED" {
 		t.Errorf("a leaf that is not the DPoP key: %v", err)
 	}
-	if _, err := w.registerAttested(t, app, "production", "android", []byte("{"), pluxv1.KeyStorage_KEY_STORAGE_TEE, androidProto()); codeOf(err) != connect.CodeInvalidArgument {
+	if _, err := w.registerAttested(t, app, "android", []byte("{"), pluxv1.KeyStorage_KEY_STORAGE_TEE, androidProto()); codeOf(err) != connect.CodeInvalidArgument {
 		t.Errorf("a malformed key: %v", err)
 	}
-	if _, err := w.registerAttested(t, app, "production", "android", other, pluxv1.KeyStorage_KEY_STORAGE_TEE, nil); reasonOf(t, err) != "ATTESTATION_FAILED" {
+	if _, err := w.registerAttested(t, app, "android", other, pluxv1.KeyStorage_KEY_STORAGE_TEE, nil); reasonOf(t, err) != "ATTESTATION_FAILED" {
 		t.Errorf("no evidence: %v", err)
 	}
 
@@ -155,7 +155,7 @@ func TestAttestedDevicesOverTheAPI(t *testing.T) {
 	if _, err := w.device.RegisterAttestedDevice(ctx, connect.NewRequest(register)); reasonOf(t, err) != "REGISTRATION_CHALLENGE_INVALID" {
 		t.Errorf("a reused challenge: %v", err)
 	}
-	if _, err := w.registerAttested(t, app, "production", "linux", other, pluxv1.KeyStorage_KEY_STORAGE_SOFTWARE, developmentProto()); reasonOf(t, err) != "DEV_PROVIDER_IN_PRODUCTION" {
+	if _, err := w.registerAttested(t, app, "linux", other, pluxv1.KeyStorage_KEY_STORAGE_SOFTWARE, developmentProto()); reasonOf(t, err) != "DEV_PROVIDER_IN_PRODUCTION" {
 		t.Errorf("the development provider in production: %v", err)
 	}
 
@@ -163,7 +163,7 @@ func TestAttestedDevicesOverTheAPI(t *testing.T) {
 	appKey, _ := devicetest.NewKey(t)
 	w.fakes.apple.Attestation = appattest.Attestation{PublicKey: &appKey.PublicKey, Receipt: []byte("receipt")}
 	_, iosJWK := devicetest.NewKey(t)
-	ios, err := w.registerAttested(t, app, "production", "ios", iosJWK, pluxv1.KeyStorage_KEY_STORAGE_SECURE_ENCLAVE, iosProto())
+	ios, err := w.registerAttested(t, app, "ios", iosJWK, pluxv1.KeyStorage_KEY_STORAGE_SECURE_ENCLAVE, iosProto())
 	if err != nil || ios.GetDevice().GetAssuranceLevel() != "AL2" || ios.GetDevice().GetAttestation().GetProvider() != "app_attest" ||
 		ios.GetDevice().GetKeyStorage() != pluxv1.KeyStorage_KEY_STORAGE_SECURE_ENCLAVE {
 		t.Errorf("an iOS device = %+v, %v", ios, err)
