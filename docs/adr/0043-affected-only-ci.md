@@ -234,8 +234,9 @@ Maintainer decision (2026-10-07), with a target of 13 to 15 minutes for the devi
   iOS starter-and-generated shard at 25 minutes. Every flow still runs on every selected
   platform; `make e2e-starter` without a shard runs them all, as before. While the
   emulator or simulator boots, the server's tests and the shard's apps are built. A
-  booted emulator whose adb shell stays silent gets its adb connection reconnected
-  (runs 36966274717, 37630248033).
+  booted emulator whose adb shell stays silent gets adb's server restarted, which drops
+  the stale connection (runs 36966274717, 37630248033); `adb reconnect` is not used, as
+  it can leave two connections under one serial (run 37633642167).
 - **Build caches.** On iOS one per shard: Xcode DerivedData (the add-to-app host's build
   kept there through `PLUX_E2E_DERIVED_DATA`), CocoaPods and the apps' Flutter build
   outputs, keyed on the shard, Xcode, Flutter and the hash of the lockfiles and the

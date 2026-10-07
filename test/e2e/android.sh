@@ -96,13 +96,15 @@ fail() {
 # forever). The emulator can report its boot complete while adb's shell
 # never answers on a stale connection (CI runs 36966274717, 37630248033:
 # listed as a device, no answer for ten minutes); 30 seconds after the
-# emulator's own report, adb reconnects to it every 30 seconds, and every
-# second time restarts its server instead.
+# emulator's own report, and every 30 seconds after that, adb's server
+# restarts, dropping every connection, and finds the emulator again.
+# adb reconnect is not used: it can leave two connections under one serial,
+# which every later "adb -s" refuses (run 37633642167).
 booted=false
 deadline=$((SECONDS + 600))
 answer=
-reconnect_at=
-reconnects=0
+restart_at=
+restarts=0
 while [ "$SECONDS" -lt "$deadline" ]; do
 	kill -0 "$emulator" 2>/dev/null || fail "the emulator exited while booting"
 	answer=$(timeout 10 "$adb" -s "$serial" shell getprop sys.boot_completed 2>&1 | tr -d '\r') || true
@@ -110,18 +112,14 @@ while [ "$SECONDS" -lt "$deadline" ]; do
 		booted=true; break
 	fi
 	if grep -q 'Boot completed' "$log"; then
-		if [ -z "$reconnect_at" ]; then
-			reconnect_at=$((SECONDS + 30))
-		elif [ "$SECONDS" -ge "$reconnect_at" ]; then
-			reconnects=$((reconnects + 1))
-			echo "adb has no answer from the booted emulator (last: ${answer:-nothing}); reconnecting ($reconnects)"
-			if [ $((reconnects % 2)) -eq 1 ]; then
-				timeout 10 "$adb" reconnect >/dev/null 2>&1 || true
-			else
-				timeout 10 "$adb" kill-server >/dev/null 2>&1 || true
-				timeout 10 "$adb" start-server >/dev/null 2>&1 || true
-			fi
-			reconnect_at=$((SECONDS + 30))
+		if [ -z "$restart_at" ]; then
+			restart_at=$((SECONDS + 30))
+		elif [ "$SECONDS" -ge "$restart_at" ]; then
+			restarts=$((restarts + 1))
+			echo "adb has no answer from the booted emulator (last: ${answer:-nothing}); restarting adb's server ($restarts)"
+			timeout 10 "$adb" kill-server >/dev/null 2>&1 || true
+			timeout 10 "$adb" start-server >/dev/null 2>&1 || true
+			restart_at=$((SECONDS + 30))
 		fi
 	fi
 	sleep 2
