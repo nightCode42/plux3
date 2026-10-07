@@ -106,7 +106,7 @@ func LoadModel(dir string) (*Model, error) {
 	var docFiles []string
 	for _, e := range entries {
 		name := e.Name()
-		if !strings.HasSuffix(name, ".schema.json") || name == "limits.schema.json" {
+		if !strings.HasSuffix(name, ".schema.json") || name == "limits.schema.json" || name == "security-settings.schema.json" {
 			continue
 		}
 		n, err := parseSchemaFile(dir, name)

@@ -1,0 +1,431 @@
+{
+  "$schema": "../json/security-settings.schema.json",
+  "$comment": "The security settings registry (SEC-182). Each setting has a default per security profile; a stricter profile never loosens a setting. Generated code: make gen.",
+  "profiles": [
+    "standard",
+    "strict",
+    "maximum"
+  ],
+  "settings": [
+    {
+      "key": "accessTokenLifetime",
+      "type": "seconds",
+      "tighter": "lower",
+      "defaults": {
+        "standard": 300,
+        "strict": 300,
+        "maximum": 300
+      },
+      "bounds": {
+        "min": 60,
+        "max": 900
+      },
+      "travelsToDevice": false,
+      "phase": "P6",
+      "requirements": [
+        "SEC-020"
+      ],
+      "description": "How long an access token stays valid."
+    },
+    {
+      "key": "allowDirectDataSources",
+      "type": "bool",
+      "tighter": "false",
+      "defaults": {
+        "standard": true,
+        "strict": true,
+        "maximum": false
+      },
+      "travelsToDevice": true,
+      "phase": "P6",
+      "requirements": [
+        "SEC-030"
+      ],
+      "description": "Whether plugins may call data sources directly from the device instead of through the server."
+    },
+    {
+      "key": "allowSoftwareKeys",
+      "type": "bool",
+      "tighter": "false",
+      "defaults": {
+        "standard": true,
+        "strict": false,
+        "maximum": false
+      },
+      "travelsToDevice": true,
+      "phase": "P6",
+      "requirements": [
+        "SEC-001"
+      ],
+      "description": "Whether a device without a hardware-backed key may register with a software key."
+    },
+    {
+      "key": "androidDeviceVerdictAL2",
+      "type": "enum",
+      "values": [
+        "MEETS_BASIC_INTEGRITY",
+        "MEETS_DEVICE_INTEGRITY"
+      ],
+      "tighter": "order",
+      "defaults": {
+        "standard": "MEETS_BASIC_INTEGRITY",
+        "strict": "MEETS_DEVICE_INTEGRITY",
+        "maximum": "MEETS_DEVICE_INTEGRITY"
+      },
+      "travelsToDevice": false,
+      "phase": "P6",
+      "requirements": [
+        "SEC-003",
+        "SEC-007"
+      ],
+      "description": "The weakest Play Integrity device verdict that qualifies an Android device for assurance level AL2."
+    },
+    {
+      "key": "androidRefreshRequiresIntegrity",
+      "type": "bool",
+      "tighter": "true",
+      "defaults": {
+        "standard": false,
+        "strict": false,
+        "maximum": false
+      },
+      "travelsToDevice": true,
+      "phase": "P6",
+      "requirements": [
+        "SEC-025"
+      ],
+      "description": "Whether refreshing an Android access token requires a fresh Play Integrity verdict."
+    },
+    {
+      "key": "attestationOutageGrace",
+      "type": "seconds",
+      "tighter": "lower",
+      "defaults": {
+        "standard": 86400,
+        "strict": 3600,
+        "maximum": 0
+      },
+      "bounds": {
+        "min": 0,
+        "max": 604800
+      },
+      "travelsToDevice": false,
+      "phase": "P6",
+      "requirements": [
+        "SEC-009"
+      ],
+      "description": "How long a device keeps its assurance level while attestation verification is unavailable, where 0 fails closed."
+    },
+    {
+      "key": "confidentialBundles",
+      "type": "enum",
+      "values": [
+        "off",
+        "optional",
+        "required"
+      ],
+      "tighter": "order",
+      "defaults": {
+        "standard": "off",
+        "strict": "optional",
+        "maximum": "required"
+      },
+      "travelsToDevice": false,
+      "phase": "P6",
+      "requirements": [
+        "SEC-053"
+      ],
+      "description": "Whether bundles are encrypted for the device: not at all, per plugin, or always."
+    },
+    {
+      "key": "defaultFunctionAssurance",
+      "type": "enum",
+      "values": [
+        "AL0",
+        "AL1",
+        "AL2",
+        "AL3"
+      ],
+      "tighter": "order",
+      "defaults": {
+        "standard": "AL1",
+        "strict": "AL2",
+        "maximum": "AL3"
+      },
+      "travelsToDevice": false,
+      "phase": "P6",
+      "requirements": [
+        "SEC-007"
+      ],
+      "description": "The assurance level a Plux Function requires when it declares none."
+    },
+    {
+      "key": "dpopIatWindow",
+      "type": "seconds",
+      "tighter": "lower",
+      "defaults": {
+        "standard": 60,
+        "strict": 60,
+        "maximum": 30
+      },
+      "bounds": {
+        "min": 5,
+        "max": 300
+      },
+      "travelsToDevice": false,
+      "phase": "P6",
+      "requirements": [
+        "SEC-022"
+      ],
+      "description": "How far a DPoP proof's issued-at time may differ from the server clock."
+    },
+    {
+      "key": "dpopIatWindowFallback",
+      "type": "seconds",
+      "tighter": "lower",
+      "defaults": {
+        "standard": 15,
+        "strict": 15,
+        "maximum": 15
+      },
+      "bounds": {
+        "min": 5,
+        "max": 60
+      },
+      "travelsToDevice": false,
+      "phase": "P6",
+      "requirements": [
+        "SEC-023"
+      ],
+      "description": "The issued-at window the server applies while it uses the in-memory replay cache fallback."
+    },
+    {
+      "key": "dpopNonceRotation",
+      "type": "seconds",
+      "tighter": "lower",
+      "defaults": {
+        "standard": 300,
+        "strict": 300,
+        "maximum": 120
+      },
+      "bounds": {
+        "min": 30,
+        "max": 300
+      },
+      "travelsToDevice": false,
+      "phase": "P6",
+      "requirements": [
+        "SEC-024"
+      ],
+      "description": "How often the server rotates the DPoP nonce it demands from devices."
+    },
+    {
+      "key": "encryptLocalStores",
+      "type": "bool",
+      "tighter": "true",
+      "defaults": {
+        "standard": false,
+        "strict": true,
+        "maximum": true
+      },
+      "travelsToDevice": true,
+      "phase": "P6",
+      "requirements": [
+        "SEC-073"
+      ],
+      "description": "Whether the device encrypts its local databases and caches at rest."
+    },
+    {
+      "key": "inactivityLock",
+      "type": "bool",
+      "tighter": "true",
+      "defaults": {
+        "standard": false,
+        "strict": true,
+        "maximum": true
+      },
+      "travelsToDevice": true,
+      "phase": "P6",
+      "requirements": [
+        "SEC-094"
+      ],
+      "description": "Whether the app locks itself after a period of inactivity."
+    },
+    {
+      "key": "inactivityLockTimeout",
+      "type": "seconds",
+      "tighter": "lower",
+      "defaults": {
+        "standard": 300,
+        "strict": 300,
+        "maximum": 120
+      },
+      "bounds": {
+        "min": 30,
+        "max": 3600
+      },
+      "travelsToDevice": true,
+      "phase": "P6",
+      "requirements": [
+        "SEC-094"
+      ],
+      "description": "How long the app may sit idle before the inactivity lock engages."
+    },
+    {
+      "key": "minAssuranceForSync",
+      "type": "enum",
+      "values": [
+        "AL0",
+        "AL1",
+        "AL2",
+        "AL3"
+      ],
+      "tighter": "order",
+      "defaults": {
+        "standard": "AL0",
+        "strict": "AL1",
+        "maximum": "AL2"
+      },
+      "travelsToDevice": true,
+      "phase": "P6",
+      "requirements": [
+        "SEC-007"
+      ],
+      "description": "The lowest assurance level a device must hold to sync plugins."
+    },
+    {
+      "key": "raspRootHookingResponse",
+      "type": "enum",
+      "values": [
+        "report",
+        "warn",
+        "degrade",
+        "block"
+      ],
+      "tighter": "order",
+      "defaults": {
+        "standard": "report",
+        "strict": "degrade",
+        "maximum": "block"
+      },
+      "travelsToDevice": true,
+      "phase": "P6",
+      "requirements": [
+        "SEC-071"
+      ],
+      "description": "How the runtime responds when it detects a rooted or hooked device."
+    },
+    {
+      "key": "reattestationInterval",
+      "type": "seconds",
+      "tighter": "lower",
+      "defaults": {
+        "standard": 86400,
+        "strict": 86400,
+        "maximum": 86400
+      },
+      "bounds": {
+        "min": 3600,
+        "max": 604800
+      },
+      "travelsToDevice": true,
+      "phase": "P6",
+      "requirements": [
+        "SEC-006"
+      ],
+      "description": "The interval after which a device must attest again to keep its assurance level."
+    },
+    {
+      "key": "registrationChallengeTtl",
+      "type": "seconds",
+      "tighter": "lower",
+      "defaults": {
+        "standard": 300,
+        "strict": 300,
+        "maximum": 120
+      },
+      "bounds": {
+        "min": 30,
+        "max": 300
+      },
+      "travelsToDevice": false,
+      "phase": "P6",
+      "requirements": [
+        "SEC-005"
+      ],
+      "description": "How long a registration challenge stays valid."
+    },
+    {
+      "key": "replayCacheFallback",
+      "type": "enum",
+      "values": [
+        "memory",
+        "failClosed"
+      ],
+      "tighter": "order",
+      "defaults": {
+        "standard": "memory",
+        "strict": "memory",
+        "maximum": "failClosed"
+      },
+      "travelsToDevice": false,
+      "phase": "P6",
+      "requirements": [
+        "SEC-023"
+      ],
+      "description": "What the server does when the shared replay cache is unavailable: keep a per-process cache or reject the request."
+    },
+    {
+      "key": "riskMetricMaxAL3",
+      "type": "count",
+      "tighter": "lower",
+      "defaults": {
+        "standard": 5,
+        "strict": 3,
+        "maximum": 1
+      },
+      "bounds": {
+        "min": 0,
+        "max": 1000
+      },
+      "travelsToDevice": false,
+      "phase": "P6",
+      "requirements": [
+        "SEC-007"
+      ],
+      "description": "The highest platform risk metric, such as recent app activity, that still qualifies a device for assurance level AL3."
+    },
+    {
+      "key": "screenshotBlockingDefault",
+      "type": "bool",
+      "tighter": "true",
+      "defaults": {
+        "standard": false,
+        "strict": false,
+        "maximum": true
+      },
+      "travelsToDevice": true,
+      "phase": "P6",
+      "requirements": [
+        "SEC-091"
+      ],
+      "description": "Whether screens block screenshots and screen recording unless a page opts out."
+    },
+    {
+      "key": "tls12Allowed",
+      "type": "bool",
+      "tighter": "false",
+      "defaults": {
+        "standard": false,
+        "strict": false,
+        "maximum": false
+      },
+      "travelsToDevice": false,
+      "phase": "P6",
+      "requirements": [
+        "SEC-040"
+      ],
+      "description": "Whether connections may negotiate TLS 1.2 instead of requiring TLS 1.3."
+    }
+  ]
+}

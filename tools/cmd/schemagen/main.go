@@ -63,7 +63,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 // schemas flatc writes, so they are generated only when bfbs names them.
 func generate(root, bfbs string) ([]codegen.File, error) {
 	steps := []func(root string) ([]codegen.File, error){
-		limitsFiles, modelFiles, registryFiles, pxlFiles, phoneFiles, codegen.NoticeFiles,
+		limitsFiles, settingsFiles, modelFiles, registryFiles, pxlFiles, phoneFiles, codegen.NoticeFiles,
 	}
 	var files []codegen.File
 	for _, step := range steps {
@@ -96,6 +96,19 @@ func limitsFiles(root string) ([]codegen.File, error) {
 	files, err := codegen.LimitsFiles(limits)
 	if err != nil {
 		return nil, fmt.Errorf("limits: %w", err)
+	}
+	return files, nil
+}
+
+// settingsFiles generates the security settings registry's files.
+func settingsFiles(root string) ([]codegen.File, error) {
+	settings, err := codegen.LoadSettings(filepath.Join(root, filepath.FromSlash(codegen.SettingsSource)))
+	if err != nil {
+		return nil, fmt.Errorf("security settings: %w", err)
+	}
+	files, err := codegen.SettingsFiles(settings)
+	if err != nil {
+		return nil, fmt.Errorf("security settings: %w", err)
 	}
 	return files, nil
 }
