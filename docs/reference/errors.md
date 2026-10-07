@@ -936,6 +936,14 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Express the logic with actions and PXL, or as a Plux Function.
 
+### PLX-1504
+
+`DIRECT_SOURCE_ASSURANCE_UNENFORCEABLE` · warning · Direct data source assurance cannot be enforced
+
+**Cause.** A data source with route `direct` declares requiresAssurance, which the server cannot enforce on a call that does not pass through it (SEC-030).
+
+**Fix.** Route the data source through the gateway, or remove requiresAssurance.
+
 ## Compiler and PXL (PLX-2000–2999)
 
 ### PLX-2001
@@ -1842,6 +1850,158 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 ## Security (PLX-6000–6999)
 
+### PLX-6001
+
+`ATTESTATION_FAILED` · error · Device attestation failed
+
+**Cause.** The platform attestation presented at registration or re-attestation did not verify against the trusted roots, the challenge or the app identity (SEC-002, SEC-003, SEC-004, SEC-005).
+
+**Fix.** Attest again on a genuine device with the official app build.
+
+### PLX-6002
+
+`ASSURANCE_INSUFFICIENT` · error · Device assurance insufficient
+
+**Cause.** The device's attested assurance level is lower than the level this call or data source requires (SEC-007).
+
+**Fix.** Use a device that reaches the required assurance level, or ask an administrator to lower the requirement.
+
+### PLX-6003
+
+`KEY_NOT_HARDWARE_BACKED` · error · Key not hardware-backed
+
+**Cause.** The device key was not generated in hardware-backed storage, which this installation requires (SEC-001).
+
+**Fix.** Register from a device with a secure element or trusted execution environment.
+
+### PLX-6004
+
+`DEV_PROVIDER_IN_PRODUCTION` · error · Development attestation provider in production
+
+**Cause.** A registration used the development attestation provider on an installation running in production mode (SEC-008).
+
+**Fix.** Register with the platform attestation provider, or run the installation in development mode.
+
+### PLX-6005
+
+`REGISTRATION_CHALLENGE_INVALID` · error · Registration challenge invalid
+
+**Cause.** The registration challenge is unknown, expired, already used or not bound to this request (SEC-005).
+
+**Fix.** Request a new challenge and register again.
+
+### PLX-6006
+
+`DEVICE_REVOKED` · error · Device revoked
+
+**Cause.** The device registration has been revoked, so no credential for it is accepted (SEC-006).
+
+**Fix.** Register the device again.
+
+### PLX-6007
+
+`REATTESTATION_REQUIRED` · error · Re-attestation required
+
+**Cause.** The device's attestation is older than the installation allows and must be renewed before the call proceeds (SEC-006).
+
+**Fix.** Attest again and repeat the call.
+
+### PLX-6008
+
+`LEGACY_REGISTRATION_REFUSED` · error · Legacy registration refused
+
+**Cause.** The device-secret registration flow from Phase 2 is no longer accepted; devices must register with hardware key attestation (B17).
+
+**Fix.** Update the app to a runtime that registers with attestation.
+
+### PLX-6009
+
+`ATTESTATION_UNAVAILABLE` · error · Attestation service unavailable
+
+**Cause.** The platform attestation service could not be reached, so the device could not be verified (SEC-009).
+
+**Fix.** Try again shortly.
+
+### PLX-6010
+
+`DPOP_PROOF_INVALID` · error · DPoP proof invalid
+
+**Cause.** The DPoP proof is malformed, wrongly signed, bound to another method or URL, or outside the accepted time window (SEC-022).
+
+**Fix.** Send a fresh proof signed by the device key for this request.
+
+### PLX-6011
+
+`DPOP_REPLAY` · error · DPoP proof replayed
+
+**Cause.** The DPoP proof identifier was already used within the replay window (SEC-022).
+
+**Fix.** Send a new proof with a fresh identifier.
+
+### PLX-6012
+
+`DPOP_NONCE_REQUIRED` · error · DPoP nonce required
+
+**Cause.** The server requires a server-issued nonce in the DPoP proof and the proof carried none or a stale one (SEC-024).
+
+**Fix.** Repeat the call with a proof that carries the nonce the server returned.
+
+### PLX-6013
+
+`TOKEN_BINDING_MISMATCH` · error · Token binding mismatch
+
+**Cause.** The access token is bound to a different device key than the one that signed the DPoP proof (SEC-020).
+
+**Fix.** Obtain a token for this device and use it with this device's key.
+
+### PLX-6014
+
+`ACCESS_TOKEN_INVALID` · error · Access token invalid
+
+**Cause.** The access token is malformed, expired, revoked or not issued by this installation (SEC-020).
+
+**Fix.** Obtain a new access token.
+
+### PLX-6015
+
+`REPLAY_CACHE_UNAVAILABLE` · error · Replay cache unavailable
+
+**Cause.** The replay cache could not be read or written, so the proof cannot be accepted safely (SEC-023).
+
+**Fix.** Try again shortly.
+
+### PLX-6016
+
+`USER_TOKEN_INVALID` · error · User token invalid
+
+**Cause.** The end-user token failed validation: its signature, issuer, audience or lifetime is wrong (SEC-026).
+
+**Fix.** Sign the user in again and use the new token.
+
+### PLX-6020
+
+`CERTIFICATE_PIN_MISMATCH` · error · Certificate pin mismatch
+
+**Cause.** The server's certificate chain matches none of the pins the app carries, so the connection was refused (SEC-041).
+
+**Fix.** Check the network for interception, or update the app if the server key was rotated.
+
+### PLX-6021
+
+`DEVELOPMENT_KEY_IN_PRODUCTION` · error · Development key in production
+
+**Cause.** A bundle or update metadata is signed with a development key, which a production installation does not trust (SEC-056).
+
+**Fix.** Sign with a production key.
+
+### PLX-6022
+
+`UPDATE_METADATA_INVALID` · error · Update metadata invalid
+
+**Cause.** The update metadata does not meet its signature threshold, carries an expired role, or has a version that is not newer than the trusted one (SEC-050).
+
+**Fix.** Publish metadata signed by enough current keys with a newer version and a valid expiry.
+
 ### PLX-6030
 
 `OUTBOUND_REQUEST_BLOCKED` · error · Outbound request blocked
@@ -1857,6 +2017,118 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 **Cause.** The installation's malware scanner found something in the uploaded file (SRV-060).
 
 **Fix.** Check the file on a trusted machine and upload a clean copy.
+
+### PLX-6040
+
+`SECURITY_CONFIG_HASH_MISMATCH` · error · Security configuration hash mismatch
+
+**Cause.** The security configuration does not hash to the value its signed manifest declares (SEC-182).
+
+**Fix.** Download the release again; if it persists, republish it.
+
+### PLX-6041
+
+`SECURITY_CONFIG_LOOSENS_PRESET` · error · Security configuration loosens its preset
+
+**Cause.** The security configuration weakens a setting below what its declared preset guarantees (SEC-181).
+
+**Fix.** Remove the override or choose a preset that allows the setting.
+
+### PLX-6042
+
+`SECURITY_CONFIG_OUT_OF_BOUNDS` · error · Security configuration out of bounds
+
+**Cause.** A value in the security configuration lies outside the bounds the registry allows (SEC-182).
+
+**Fix.** Change the value to one within the documented bounds.
+
+### PLX-6050
+
+`CONFIDENTIAL_KEY_UNAVAILABLE` · error · Confidential key unavailable
+
+**Cause.** The device may not receive the key that unlocks confidential content, because it does not meet the content's requirements (SEC-053).
+
+**Fix.** Use a device that meets the content's assurance requirements.
+
+### PLX-6060
+
+`GATEWAY_UPSTREAM_UNKNOWN` · error · Gateway upstream unknown
+
+**Cause.** The request names a gateway upstream that the app does not declare (SEC-031).
+
+**Fix.** Declare the upstream in the app, or use a declared one.
+
+### PLX-6061
+
+`GATEWAY_DESTINATION_REFUSED` · error · Gateway destination refused
+
+**Cause.** The gateway refused to forward the request, because the path, method or destination is outside what the upstream allows (SEC-031).
+
+**Fix.** Send a request the upstream declaration permits.
+
+### PLX-6062
+
+`GATEWAY_UPSTREAM_FAILED` · error · Gateway upstream failed
+
+**Cause.** The upstream did not answer in time or answered with a failure the gateway could not pass on (SEC-031).
+
+**Fix.** Try again shortly.
+
+### PLX-6063
+
+`DIRECT_DATA_SOURCE_REFUSED` · error · Direct data source refused
+
+**Cause.** A data source with the direct route is refused on this device or app, because its security configuration requires the gateway (SEC-030).
+
+**Fix.** Route the data source through the gateway.
+
+### PLX-6064
+
+`GATEWAY_RATE_LIMITED` · error · Gateway rate limited
+
+**Cause.** The device sent more gateway requests per minute than gateway.requestsPerMinutePerDevice allows (SEC-031).
+
+**Fix.** Slow down and retry after the indicated delay.
+
+### PLX-6070
+
+`SCA_SIGNATURE_INVALID` · error · Strong customer authentication signature invalid
+
+**Cause.** The signature over the strong customer authentication challenge does not verify (SEC-027).
+
+**Fix.** Confirm the action again on the device.
+
+### PLX-6071
+
+`SCA_CHALLENGE_INVALID` · error · Strong customer authentication challenge invalid
+
+**Cause.** The challenge is unknown, expired or already used (SEC-027).
+
+**Fix.** Request a new challenge and confirm again.
+
+### PLX-6072
+
+`SCA_DYNAMIC_LINKING_MISMATCH` · error · Authentication not linked to the request
+
+**Cause.** The signed challenge is not linked to the amount and payee of the request being sent (SEC-028).
+
+**Fix.** Confirm exactly the request that is sent.
+
+### PLX-6073
+
+`TRANSACTION_REQUIRES_GATEWAY` · error · Transaction requires the gateway
+
+**Cause.** A transaction-class request was sent outside the gateway, which strong customer authentication requires (SEC-032).
+
+**Fix.** Send the request through the gateway.
+
+### PLX-6100
+
+`RASP_DETECTION` · error · Runtime tampering detected
+
+**Cause.** The runtime reported a tampering signal, such as a debugger, hook or modified binary, and the installation refuses the call (SEC-071).
+
+**Fix.** Use an unmodified app on an unmodified device.
 
 ## Governance (PLX-8000–8999)
 

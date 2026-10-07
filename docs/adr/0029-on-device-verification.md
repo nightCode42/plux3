@@ -150,3 +150,7 @@ platforms are used only where a platform capability is the point: key storage.
 
 Cheaper at load, but the store is ordinary files; a tampered file would be rendered.
 Rejected by `SEC-052` and `BND-006`.
+
+## Revision (2026-10-07, P6 plan)
+
+Confidential bundles are accepted from P6: hashes cover the ciphertext and are verified before decryption, which happens into memory only (ADR-0055). Keys for encrypted stores are held in secure hardware (Keystore, Secure Enclave), as ADR-0058 describes.

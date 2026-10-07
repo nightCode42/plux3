@@ -372,3 +372,7 @@ releases.
 
 It gives full control over the stack. But apps would have to replace their router, which
 contradicts `HST-031` and `NAV-006`'s "apps using plain `Navigator` must also work".
+
+## Revision (2026-10-07, P6 plan)
+
+From P6 guards read real assurance levels from the device's access token, and app and plugin state, as the navigation reference promised (`NAV-009`, P6 plan B19 (a)).

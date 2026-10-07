@@ -152,3 +152,7 @@ created with `asTypedList(finalizer:, token:)` over `plux_unmap`, `MappedFile.re
 only gives the file up (`bytes` throws afterwards), and the file is unmapped when the last
 view becomes unreachable. The leak bound is unchanged — the garbage collector — and a
 retired release's address space is returned once nothing references it.
+
+## Revision (2026-10-07, P6 plan)
+
+Sections of confidential bundles are decrypted into memory off the UI isolate, once per launch on first use; the memory-mapped zero-copy path applies only to plain sections (ADR-0055).

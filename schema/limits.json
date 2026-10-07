@@ -489,6 +489,26 @@
       "description": "Maximum number of tables and vectors the FlatBuffers verifier visits in one section."
     },
     {
+      "key": "confidential.bundleBytes",
+      "unit": "bytes",
+      "default": 16777216,
+      "max": 268435456,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P6",
+      "requirements": [
+        "SEC-053",
+        "LIM-004"
+      ],
+      "description": "Bytes of confidential content one confidential bundle may hold."
+    },
+    {
       "key": "data.cacheBytes",
       "unit": "bytes",
       "default": 16777216,
@@ -1051,6 +1071,104 @@
       "description": "Size of one string prop value, in UTF-8 bytes."
     },
     {
+      "key": "dpop.replayCacheEntries",
+      "unit": "count",
+      "default": 1000000,
+      "max": 100000000,
+      "scopes": [
+        "installation"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P6",
+      "requirements": [
+        "SEC-023",
+        "LIM-004"
+      ],
+      "description": "Proof identifiers the DPoP replay cache holds."
+    },
+    {
+      "key": "gateway.requestBytes",
+      "unit": "bytes",
+      "default": 1048576,
+      "max": 33554432,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P6",
+      "requirements": [
+        "SEC-031",
+        "LIM-004"
+      ],
+      "description": "Bytes of request body the gateway forwards to an upstream."
+    },
+    {
+      "key": "gateway.requestsPerMinutePerDevice",
+      "unit": "count",
+      "default": 600,
+      "max": 10000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P6",
+      "requirements": [
+        "SEC-031",
+        "LIM-004"
+      ],
+      "description": "Gateway requests one device may send per minute."
+    },
+    {
+      "key": "gateway.responseBytes",
+      "unit": "bytes",
+      "default": 8388608,
+      "max": 67108864,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P6",
+      "requirements": [
+        "SEC-031",
+        "LIM-004"
+      ],
+      "description": "Bytes of upstream response body the gateway returns to a device."
+    },
+    {
+      "key": "gateway.timeout",
+      "unit": "milliseconds",
+      "default": 10000,
+      "max": 60000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P6",
+      "requirements": [
+        "SEC-031",
+        "LIM-004"
+      ],
+      "description": "Milliseconds the gateway waits for an upstream to answer."
+    },
+    {
       "key": "http.responseSize",
       "unit": "bytes",
       "default": 1048576,
@@ -1537,6 +1655,66 @@
         "RT-013"
       ],
       "description": "Page and component sections the runtime keeps decoded."
+    },
+    {
+      "key": "sca.challengeLifetime",
+      "unit": "milliseconds",
+      "default": 300000,
+      "max": 900000,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P6",
+      "requirements": [
+        "SEC-027",
+        "LIM-004"
+      ],
+      "description": "Milliseconds a strong customer authentication challenge stays valid."
+    },
+    {
+      "key": "securityConfig.bytes",
+      "unit": "bytes",
+      "default": 65536,
+      "max": 1048576,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P6",
+      "requirements": [
+        "SEC-182",
+        "LIM-004"
+      ],
+      "description": "Bytes of a security configuration, encoded."
+    },
+    {
+      "key": "securityConfig.patchBytes",
+      "unit": "bytes",
+      "default": 16384,
+      "max": 262144,
+      "scopes": [
+        "installation",
+        "organization",
+        "app"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P6",
+      "requirements": [
+        "SEC-182",
+        "LIM-004"
+      ],
+      "description": "Bytes of a security configuration patch, encoded."
     },
     {
       "key": "state.persistedBytes",

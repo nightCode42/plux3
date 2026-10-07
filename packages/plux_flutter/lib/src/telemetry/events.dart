@@ -27,6 +27,8 @@ const Map<String, TelemetryCategory> telemetryCategories = {
   'sync_result': TelemetryCategory.necessary,
   'error': TelemetryCategory.necessary,
   'rasp_detection': TelemetryCategory.necessary,
+  'attestation_result': TelemetryCategory.necessary,
+  'pin_failure': TelemetryCategory.necessary,
   'session_end': TelemetryCategory.analytics,
   'screen_view': TelemetryCategory.analytics,
   'render_perf': TelemetryCategory.analytics,

@@ -191,3 +191,12 @@ release before it reaches devices, and a release could ship features no host bui
 
 Publishing checks the plugins against the approved set, but a host build cannot narrow it,
 so every build of an app must allow everything any build allows.
+
+## Revision (2026-10-07, P6 plan)
+
+`plux_scanner` (P6 plan B21): on Android it uses ML Kit's unbundled barcode model through Google Play services (about 200 KB instead of about 2.4 MB) and requests the model's download in the background at first app open; where Play services is missing or the download fails, it falls back to ZXing-C++ through FFI (Apache-2.0, offline). iOS keeps Vision and AVFoundation. Both engines are measured on one set of codes (damaged, blurred, small, badly lit) and the results recorded here in S10. The `biometrics` capability is described as built in S8 and S10 (`biometricAuth`, `BiometricButton`, the SCA key).
+
+### Dependencies
+
+- `com.google.android.gms:play-services-mlkit-barcode-scanning` (Play terms; accepted by the maintainer as for bundled ML Kit, P5 plan B5 (4)).
+- ZXing-C++ (Apache-2.0), vendored and built by the build hook; size per ABI measured in S10.

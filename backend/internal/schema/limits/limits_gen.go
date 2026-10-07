@@ -75,6 +75,9 @@ const (
 	// BundleVerifierTables: Maximum number of tables and vectors the FlatBuffers
 	// verifier visits in one section. (BND-006, QA-004)
 	BundleVerifierTables Key = "bundle.verifierTables"
+	// ConfidentialBundleBytes: Bytes of confidential content one confidential
+	// bundle may hold. (SEC-053, LIM-004)
+	ConfidentialBundleBytes Key = "confidential.bundleBytes"
 	// DataCacheBytes: Bytes the response cache of data sources keeps on the
 	// device; the least recently used entries are evicted beyond it. (DAT-010,
 	// LIM-004)
@@ -164,6 +167,21 @@ const (
 	// DocumentStringPropSize: Size of one string prop value, in UTF-8 bytes.
 	// (SCH-005)
 	DocumentStringPropSize Key = "document.stringPropSize"
+	// DPOPReplayCacheEntries: Proof identifiers the DPoP replay cache holds.
+	// (SEC-023, LIM-004)
+	DPOPReplayCacheEntries Key = "dpop.replayCacheEntries"
+	// GatewayRequestBytes: Bytes of request body the gateway forwards to an
+	// upstream. (SEC-031, LIM-004)
+	GatewayRequestBytes Key = "gateway.requestBytes"
+	// GatewayRequestsPerMinutePerDevice: Gateway requests one device may send
+	// per minute. (SEC-031, LIM-004)
+	GatewayRequestsPerMinutePerDevice Key = "gateway.requestsPerMinutePerDevice"
+	// GatewayResponseBytes: Bytes of upstream response body the gateway returns
+	// to a device. (SEC-031, LIM-004)
+	GatewayResponseBytes Key = "gateway.responseBytes"
+	// GatewayTimeout: Milliseconds the gateway waits for an upstream to answer.
+	// (SEC-031, LIM-004)
+	GatewayTimeout Key = "gateway.timeout"
 	// HTTPResponseSize: Size of a response the server reads when it fetches a
 	// URL, such as an identity provider's keys. (SEC-104, SEC-105)
 	HTTPResponseSize Key = "http.responseSize"
@@ -230,6 +248,15 @@ const (
 	// RuntimeSectionCacheEntries: Page and component sections the runtime keeps
 	// decoded. (RT-013)
 	RuntimeSectionCacheEntries Key = "runtime.sectionCacheEntries"
+	// ScaChallengeLifetime: Milliseconds a strong customer authentication
+	// challenge stays valid. (SEC-027, LIM-004)
+	ScaChallengeLifetime Key = "sca.challengeLifetime"
+	// SecurityConfigBytes: Bytes of a security configuration, encoded. (SEC-182,
+	// LIM-004)
+	SecurityConfigBytes Key = "securityConfig.bytes"
+	// SecurityConfigPatchBytes: Bytes of a security configuration patch,
+	// encoded. (SEC-182, LIM-004)
+	SecurityConfigPatchBytes Key = "securityConfig.patchBytes"
 	// StatePersistedBytes: Bytes the persisted state of one app may take in the
 	// runtime's local store (plain; secure state is the encrypted one, plan p5
 	// B6); writes beyond it stay in memory and are reported. (STA-003, LIM-004)
@@ -273,6 +300,7 @@ var registry = [...]Definition{
 	{Key: BundlePluginSize, Unit: UnitBytes, Default: 20971520, Warning: 0, Max: 268435456, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Size of one plugin bundle."},
 	{Key: BundleVerifierDepth, Unit: UnitCount, Default: 64, Warning: 0, Max: 256, Scopes: ScopeInstallation, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P1", Description: "Maximum nesting of tables the FlatBuffers verifier accepts in one section."},
 	{Key: BundleVerifierTables, Unit: UnitCount, Default: 1000000, Warning: 0, Max: 10000000, Scopes: ScopeInstallation, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P1", Description: "Maximum number of tables and vectors the FlatBuffers verifier visits in one section."},
+	{Key: ConfidentialBundleBytes, Unit: UnitBytes, Default: 16777216, Warning: 0, Max: 268435456, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerServer, Phase: "P6", Description: "Bytes of confidential content one confidential bundle may hold."},
 	{Key: DataCacheBytes, Unit: UnitBytes, Default: 16777216, Warning: 0, Max: 268435456, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the response cache of data sources keeps on the device; the least recently used entries are evicted beyond it."},
 	{Key: DataCacheEntries, Unit: UnitCount, Default: 1000, Warning: 0, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Responses the cache of data sources keeps on the device; the least recently used are evicted beyond it."},
 	{Key: DataDownloadSize, Unit: UnitBytes, Default: 52428800, Warning: 0, Max: 2147483648, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes one download may have; checked against the declared length before the transfer and counted during it, a larger one is stopped."},
@@ -301,6 +329,11 @@ var registry = [...]Definition{
 	{Key: DocumentFileSize, Unit: UnitBytes, Default: 8388608, Warning: 0, Max: 67108864, Scopes: ScopeInstallation | ScopeOrganization, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Size of one document file in the project layout, checked before parsing."},
 	{Key: DocumentJSONDepth, Unit: UnitCount, Default: 512, Warning: 0, Max: 4096, Scopes: ScopeInstallation, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Nesting of arrays and objects in one document, checked while parsing."},
 	{Key: DocumentStringPropSize, Unit: UnitBytes, Default: 65536, Warning: 0, Max: 1048576, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Size of one string prop value, in UTF-8 bytes."},
+	{Key: DPOPReplayCacheEntries, Unit: UnitCount, Default: 1000000, Warning: 0, Max: 100000000, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P6", Description: "Proof identifiers the DPoP replay cache holds."},
+	{Key: GatewayRequestBytes, Unit: UnitBytes, Default: 1048576, Warning: 0, Max: 33554432, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerServer, Phase: "P6", Description: "Bytes of request body the gateway forwards to an upstream."},
+	{Key: GatewayRequestsPerMinutePerDevice, Unit: UnitCount, Default: 600, Warning: 0, Max: 10000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerServer, Phase: "P6", Description: "Gateway requests one device may send per minute."},
+	{Key: GatewayResponseBytes, Unit: UnitBytes, Default: 8388608, Warning: 0, Max: 67108864, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerServer, Phase: "P6", Description: "Bytes of upstream response body the gateway returns to a device."},
+	{Key: GatewayTimeout, Unit: UnitMilliseconds, Default: 10000, Warning: 0, Max: 60000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerServer, Phase: "P6", Description: "Milliseconds the gateway waits for an upstream to answer."},
 	{Key: HTTPResponseSize, Unit: UnitBytes, Default: 1048576, Warning: 0, Max: 67108864, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P2", Description: "Size of a response the server reads when it fetches a URL, such as an identity provider's keys."},
 	{Key: PageAnimations, Unit: UnitCount, Default: 30, Warning: 10, Max: 200, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Animations that can run at the same time on one page."},
 	{Key: PageBuildCost, Unit: UnitMicroseconds, Default: 16000, Warning: 8000, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Estimated build time of a page on the mid-tier reference device, the sum of its widgets' cost hints."},
@@ -324,6 +357,9 @@ var registry = [...]Definition{
 	{Key: RuntimeImageSize, Unit: UnitBytes, Default: 10485760, Warning: 0, Max: 104857600, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "Size of one remote image the runtime downloads; a larger one is refused."},
 	{Key: RuntimeSectionCacheBytes, Unit: UnitBytes, Default: 8388608, Warning: 0, Max: 268435456, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "Memory the runtime's cache of decoded page and component sections may hold."},
 	{Key: RuntimeSectionCacheEntries, Unit: UnitCount, Default: 64, Warning: 0, Max: 4096, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "Page and component sections the runtime keeps decoded."},
+	{Key: ScaChallengeLifetime, Unit: UnitMilliseconds, Default: 300000, Warning: 0, Max: 900000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerServer, Phase: "P6", Description: "Milliseconds a strong customer authentication challenge stays valid."},
+	{Key: SecurityConfigBytes, Unit: UnitBytes, Default: 65536, Warning: 0, Max: 1048576, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerServer, Phase: "P6", Description: "Bytes of a security configuration, encoded."},
+	{Key: SecurityConfigPatchBytes, Unit: UnitBytes, Default: 16384, Warning: 0, Max: 262144, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerServer, Phase: "P6", Description: "Bytes of a security configuration patch, encoded."},
 	{Key: StatePersistedBytes, Unit: UnitBytes, Default: 1048576, Warning: 0, Max: 16777216, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the persisted state of one app may take in the runtime's local store (plain; secure state is the encrypted one, plan p5 B6); writes beyond it stay in memory and are reported."},
 	{Key: StateSecureBytes, Unit: UnitBytes, Default: 65536, Warning: 0, Max: 1048576, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the secure state of one app may take in the runtime's local store (plain; secure state is the encrypted one, plan p5 B6); writes beyond it stay in memory and are reported."},
 	{Key: TelemetryBufferBytes, Unit: UnitBytes, Default: 262144, Warning: 0, Max: 4194304, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "The size of the runtime's buffer of unsent telemetry events; the oldest are dropped first."},

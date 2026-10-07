@@ -1,9 +1,9 @@
 # Plux — System Requirements Specification
 
 **Document ID:** `SRS-PLUX-001`
-**Version:** 1.3.2
+**Version:** 1.4.0
 **Status:** Draft — living document, revised as implementation proceeds
-**Date:** 2026-10-05
+**Date:** 2026-10-07
 **Applies to:** Plux Schema, Plux Compiler, Plux Server, Plux Functions, `plux_flutter` runtime, Plux Dev app, Plux Studio, Plux CLI, Plux AI
 
 > **Plux — Plugin Experience.** Build native Flutter screens visually, compile them into signed binary plugins, and ship them to every device in seconds — with high-assurance security, zero parse cost, and full control over who changes what.
@@ -1144,15 +1144,15 @@ Security is the first priority (§1.4). Plux targets **OWASP MASVS v2 level L2 p
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `SEC-001` | P6 | MUST | On first launch the runtime **MUST** generate a non-exportable P-256 key pair in secure hardware — Android Keystore backed by StrongBox where available, otherwise TEE; iOS Secure Enclave — used for DPoP proofs. The private key **MUST** never exist outside secure hardware. | SPEC |
+| `SEC-001` | P6 | MUST | On first launch the runtime **MUST** generate a non-exportable P-256 key pair in secure hardware — Android Keystore backed by StrongBox where available, otherwise TEE; iOS Secure Enclave — used for DPoP proofs. The private key **MUST** never exist outside secure hardware. Where the platform reports that no secure hardware can hold the key, the runtime **MAY** use a software key, which it **MUST** flag; the server **MUST** record the key's storage, accept a software key only where the profile's `allowSoftwareKeys` allows it (`standard` by default) and cap such a device at `AL1`, and refuse it otherwise (`PLX-6003`). Whether the DPoP key uses StrongBox is decided by measurement against `NFR-012`; if StrongBox misses it, the DPoP key **MUST** use the TEE and StrongBox holds the SCA key (`SEC-027`) where available (ADR-0012). | SPEC |
 | `SEC-002` | P6 | MUST | On Android, registration **MUST** verify the **Key Attestation** certificate chain of the DPoP key up to Google's attestation roots, checking the challenge, security level (StrongBox/TEE), verified boot state, bootloader lock, package name and signing certificate digest, and checking the attestation revocation list. | SPEC |
 | `SEC-003` | P6 | MUST | On Android, registration and token refresh **MUST** include a **Play Integrity** token (standard request) whose request hash binds the server challenge and the DPoP key thumbprint; the server **MUST** verify app integrity (`PLAY_RECOGNIZED`), device integrity verdicts and the request hash, with required verdict levels set by the security profile. | SPEC |
 | `SEC-004` | P6 | MUST | On iOS, registration **MUST** use **App Attest**: verify the attestation object to Apple's App Attest root, the nonce (hash of the server challenge and the DPoP key thumbprint), App ID and environment, and store the attested key and counter. Sensitive requests **MUST** carry an App Attest **assertion** whose counter strictly increases. | SPEC |
 | `SEC-005` | P6 | MUST | Registration **MUST** follow a challenge–response flow: single-use server challenge (TTL ≤ 5 min) → attestation evidence → verification → device record (device ID, DPoP key thumbprint `jkt`, platform, app build, attestation results, assurance level). | SPEC |
 | `SEC-006` | P6 | MUST | Devices **MUST** re-attest periodically (default every 24 h), on app update, and when risk signals appear (RASP detection, anomaly), and the server **MUST** be able to revoke a device, forcing re-registration. | SPEC |
-| `SEC-007` | P6 | MUST | Attestation results **MUST** map to an **assurance level**: `AL0` unverified; `AL1` app integrity verified; `AL2` app integrity and hardware-backed key on a device meeting basic device integrity; `AL3` AL2 plus strong device integrity (Play `MEETS_STRONG_INTEGRITY`, or App Attest with a clean risk profile) and no RASP findings. Pages (`requiresAssurance`), routes, data sources and functions **MUST** be able to require a minimum level. | SPEC |
+| `SEC-007` | P6 | MUST | Attestation results **MUST** map to an **assurance level**: `AL0` unverified; `AL1` app integrity verified; `AL2` app integrity and hardware-backed key on a device meeting the device-integrity verdict the profile requires (Android `MEETS_BASIC_INTEGRITY` under `standard`, `MEETS_DEVICE_INTEGRITY` under `strict` and `maximum`, setting `androidDeviceVerdictAL2`; iOS a verified App Attest key and a Secure Enclave DPoP key); `AL3` AL2 plus strong device integrity (Play `MEETS_STRONG_INTEGRITY`, or Apple's fraud-metric receipt for the attested key at or below `riskMetricMaxAL3`) and no RASP findings. The server computes the level; the device never claims one. Pages (`requiresAssurance`), routes, data sources and functions **MUST** be able to require a minimum level, refused with `PLX-6002` ([device-trust.md](security/device-trust.md) §1). | SPEC |
 | `SEC-008` | P6 | MUST | Debug builds, emulators and simulators **MUST** use an explicit development attestation provider that is accepted only by non-production environments; production environments **MUST** reject it. | SPEC |
-| `SEC-009` | P6 | MUST | The behaviour when an attestation provider is unavailable **MUST** be policy-driven: `failClosed` (`maximum`), or `grace(duration)` with the last known assurance level (standard). | SPEC |
+| `SEC-009` | P6 | MUST | The behaviour when an attestation provider is unavailable **MUST** be policy-driven by the setting `attestationOutageGrace`: `0` fails closed (`maximum`, `PLX-6009`); a positive duration grants a grace period with the last known assurance level — 24 h under `standard`, 1 h under `strict`. | SPEC |
 
 ### 15.3 Tokens and DPoP
 
@@ -1163,22 +1163,25 @@ Every device → server request is protected by an OAuth 2.0 access token that i
 | `SEC-020` | P6 | MUST | The server **MUST** issue short-lived access tokens (default 5 min, max 15 min) in the JWT profile of RFC 9068, signed by a server key, containing `cnf.jkt` = JWK SHA-256 thumbprint (RFC 7638) of the device's DPoP key, the device ID, app ID, environment and assurance level. | SPEC |
 | `SEC-021` | P6 | MUST | Every device request (manifest, control, functions, telemetry, token refresh, dev session) **MUST** carry a DPoP proof: a JWT with header `typ: dpop+jwt`, `alg: ES256` and the public `jwk`, and claims `htm`, `htu`, `iat`, `jti`, `ath` (hash of the access token) and `nonce` when required. | SPEC |
 | `SEC-022` | P6 | MUST | The server **MUST** reject a request unless: the proof signature verifies with the embedded key; the key's thumbprint equals the token's `cnf.jkt`; `htm` and the normalised `htu` match the request; `iat` is within the configured window (default ±60 s); `ath` matches; the nonce is valid; and `jti` has not been seen within the window. | SPEC |
-| `SEC-023` | P6 | MUST | The `jti` replay cache **MUST** be shared across all `api` replicas (Valkey) and **MUST** fail closed if unavailable under the `maximum` profile. | SPEC |
+| `SEC-023` | P6 | MUST | The `jti` replay cache **MUST** be shared across all `api` replicas (Valkey, with Sentinel failover and replicas) and **MUST** fail closed if unavailable under the `maximum` profile (`PLX-6015`). Under `standard` and `strict` each replica **MUST** fall back to its own in-memory cache with the narrower window `dpopIatWindowFallback` and raise a distinct alert; a request is never accepted unchecked (setting `replayCacheFallback`). | SPEC |
 | `SEC-024` | P6 | MUST | The server **MUST** issue DPoP nonces (`DPoP-Nonce` response header, `use_dpop_nonce` error) and rotate them at least every 5 minutes, so proofs cannot be pre-generated. | SPEC |
-| `SEC-025` | P6 | MUST | Token refresh **MUST** require a fresh DPoP proof and fresh attestation evidence (Play Integrity token or App Attest assertion); refresh does not use long-lived bearer refresh tokens. | SPEC |
+| `SEC-025` | P6 | MUST | Token refresh **MUST** require a fresh DPoP proof; refresh does not use long-lived bearer refresh tokens. On iOS every refresh **MUST** also carry an App Attest assertion. On Android the hardware-bound DPoP key is the proof of possession between re-attestations; a Play Integrity token **MUST** accompany the refresh at re-attestation (every `reattestationInterval`, default 24 h; on app update; on a risk signal; or when the server asks), and on every refresh where `androidRefreshRequiresIntegrity` is set. | SPEC |
 | `SEC-026` | P6 | MUST | End-user identity **MUST** be kept separate from device identity: when a function or data source needs the user, the host's user token is exchanged or forwarded (OAuth 2.0 Token Exchange, RFC 8693) and verified by the server against the customer's IdP JWKS; functions receive verified user claims (`FN-002`). | SPEC |
 | `SEC-027` | P6 | MUST | Strong customer authentication **MUST** be supported: a second hardware key created with user-authentication-required (Android `setUserAuthenticationRequired` with biometric/device credential; iOS `.biometryCurrentSet` access control) signs transaction payloads. Its signature proves possession and inherence in one step. | SPEC |
-| `SEC-028` | P6 | MUST | Transaction signing **MUST** implement dynamic linking: the signed payload contains the amount, currency and payee (or equivalent transaction summary) exactly as displayed, and the server **MUST** verify that the executed operation matches the signed payload. | SPEC |
+| `SEC-028` | P6 | MUST | Transaction signing **MUST** implement dynamic linking: the signed payload contains the amount, currency and payee (or equivalent transaction summary) exactly as displayed, and the Plux server — and only the Plux server — **MUST** verify the signature, the challenge and that the executed operation matches the signed payload before it forwards the operation (`SEC-032`). | SPEC |
 | `SEC-029` | P6 | MUST | A negative test suite **MUST** show rejection of: replayed proofs, reused `jti`, wrong `htu`/`htm`, stale `iat`, missing or stale nonce, token/key mismatch, expired tokens, tokens from another environment, and proofs signed by software keys when hardware keys are required. | SPEC |
+| `SEC-030` | P6 | MUST | A device request to a data source's API **MUST** travel through the Plux gateway unless the data source opts into direct calls (`route: direct`). The profile setting `allowDirectDataSources` **MUST** be able to refuse direct calls (refused under `maximum` by default, `PLX-6063`); the compiler **MUST** warn when a direct data source requires an assurance level, which the server cannot enforce on a direct call. | SPEC |
+| `SEC-031` | P6 | MUST | The gateway **MUST** forward only to upstreams registered on the server for the app and environment, refusing other destinations and private addresses unless an upstream allows them (`SEC-105`); it **MUST** authenticate to each upstream (mutual TLS, OAuth 2.0 client credentials, or a key held encrypted, `SEC-106`) and add a signed Plux assertion carrying the device, app, environment, assurance level and verified user; it **MUST NOT** log or store request or response bodies. | SPEC |
+| `SEC-032` | P6 | MUST | A call that carries a transaction signature **MUST** be accepted only through the gateway: the server verifies the signature, the challenge and the dynamic linking before it forwards (`SEC-028`), and the upstream receives the server's verified assertion, not the device's signature to check (`PLX-6073`). | SPEC |
 
 ### 15.4 Transport
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
 | `SEC-040` | P6 | MUST | All external traffic **MUST** use TLS 1.3 (TLS 1.2 with AEAD ciphers only when explicitly allowed by configuration) and HSTS. | SPEC |
-| `SEC-041` | P6 | MUST | The runtime **MUST** pin the SPKI hashes of the Plux server's certificate chain with at least two pins (one backup key not in use), deliver pin updates only through signed control metadata, and report pin failures. | SPEC |
+| `SEC-041` | P6 | MUST | The runtime **MUST** pin the SPKI hashes of the Plux server's certificate chain with at least two pins (one a backup key not in use), taken from `PluxConfig.pins` at build time and updated only through signed update metadata (`SEC-050`); a mismatch **MUST** fail closed and be reported (`PLX-6020`). | SPEC |
 | `SEC-042` | P6 | SHOULD | Customer API domains **SHOULD** support optional pinning configured in the app document. | SPEC |
-| `SEC-043` | P6 | MUST | Traffic between `api`, `worker` and `fnrunner` **MUST** use mutual TLS with certificates from an internal CA or the platform's service mesh. | SPEC |
+| `SEC-043` | P6 | MUST | Traffic between `api`, `worker` and `fnrunner` **MUST** use mutual TLS with certificates from an internal CA or the platform's service mesh, and connections to PostgreSQL and Valkey **MUST** use TLS. P6 delivers TLS 1.3 and HSTS at the edge, TLS to PostgreSQL and Valkey and mutual TLS between `api` and `worker`; `fnrunner` follows in P7. | SPEC |
 
 ### 15.5 Update integrity
 
@@ -1186,10 +1189,10 @@ The update channel follows the design of **The Update Framework (TUF)**: separat
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `SEC-050` | P6 | MUST | Update metadata **MUST** use four roles: **root** (offline; delegates and rotates the others; threshold of *m* of *n* keys), **targets** (signs bundle hashes and release contents), **snapshot** (signs the set of current metadata versions) and **timestamp** (short expiry; signs the latest snapshot, preventing freeze attacks). | SPEC |
+| `SEC-050` | P6 | MUST | Update metadata **MUST** use four roles: **root** (offline; delegates and rotates the others; threshold of *m* of *n* keys, 2 of 3 by default), **targets** (signs bundle hashes and release contents), **snapshot** (signs the set of current metadata versions) and **timestamp** (short expiry; signs the latest snapshot, preventing freeze attacks). Default expiries are `timestamp` 24 h, `snapshot` 7 days, `targets` 30 days and `root` 1 year, each a server setting. Expiry is enforced when the device syncs; an offline device keeps running its last good release. | SPEC |
 | `SEC-051` | P3 | MUST | Host apps **MUST** embed the root public keys at build time (`plux init`, `plux pull`); the runtime **MUST** accept root rotations only when signed by the previous root threshold. | WIP |
 | `SEC-052` | P3 | MUST | The runtime **MUST** verify, before loading anything: metadata signatures and expiry, the manifest's release against the metadata, every bundle and section hash, and the FlatBuffers verifier (`BND-006`). Nothing unverified is ever parsed beyond the container header. | DONE |
-| `SEC-053` | P6 | MUST | **Confidential bundles** **MUST** be supported: each release is encrypted with AES-256-GCM using a per-release content key, delivered only to devices meeting the configured assurance level, wrapped to a device-held key-agreement key (ECDH P-256 in secure hardware). On the device, bundles are stored encrypted and decrypted into memory. | SPEC |
+| `SEC-053` | P6 | MUST | **Confidential bundles** **MUST** be supported: each release is encrypted with AES-256-GCM using a per-release content key, delivered only to devices meeting the configured assurance level, wrapped to a device-held key-agreement key (ECDH P-256 in secure hardware). Hashes cover the ciphertext and are verified before decryption (`SEC-052`). Confidential releases are delivered without deltas. On the device, bundles are stored encrypted and decrypted into memory off the UI isolate, once per launch, on first use (ADR-0055). | SPEC |
 | `SEC-054` | P1 | MUST | Bundles and manifests **MUST NOT** carry native code, Dart code or scripts. The only executable content permitted is PXL bytecode, action graphs and WebAssembly modules of device-placed functions, and each **MUST** run in a sandboxed interpreter with no direct access to platform APIs — only to host capabilities the plugin declared (`FN-012`). The runtime **MUST NOT** compile downloaded code to native instructions (no JIT, no AOT on device). | WIP |
 | `SEC-055` | P3 | MUST | The runtime **MUST** refuse any manifest whose release sequence is lower than the highest sequence it has accepted for that channel (anti-rollback); rollbacks are delivered as new sequences (`REL-006`). | DONE |
 | `SEC-056` | P6 | MUST | Signing keys for development environments **MUST** differ from production keys; a production runtime **MUST** reject bundles signed with development keys. | SPEC |
@@ -1201,7 +1204,7 @@ The update channel follows the design of **The Update Framework (TUF)**: separat
 | `SEC-070` | P6 | MUST | The `plux_security` package **MUST** detect: root/jailbreak, hooking frameworks (e.g. Frida, Xposed/LSPosed, Substrate), debugger attachment, emulator/simulator, app repackaging (signature mismatch), untrusted installer source, active screen mirroring or recording, overlay (tapjacking) attempts and accessibility services with suspicious capabilities (a common vector for financial malware). | SPEC |
 | `SEC-071` | P6 | MUST | Each detection **MUST** trigger a policy-defined response — `report`, `warn` (show a message), `degrade` (disable pages or functions requiring `AL3`), or `block` (show a blocking screen) — and be reported to the server, where it lowers the device's assurance level. | SPEC |
 | `SEC-072` | P6 | MUST | Tokens, keys and secure state **MUST** be stored only in Keystore/Keychain-protected storage; nothing sensitive may be stored in plain shared preferences, files or logs. | SPEC |
-| `SEC-073` | P6 | MUST | The local database, response cache and outbox **MUST** be encrypted at rest under the `strict` and `maximum` profiles, with keys wrapped by secure hardware. | SPEC |
+| `SEC-073` | P6 | MUST | The local database, response cache, outbox, `persisted` state and key-value store **MUST** be encrypted at rest under the `strict` and `maximum` profiles (setting `encryptLocalStores`), with keys wrapped by secure hardware and unwrapped once per launch (ADR-0058). | SPEC |
 | `SEC-074` | P6 | MUST | Release builds **MUST** contain no Plux dev tooling, verbose logging or source maps; this **MUST** be enforced by compile-time constants and verified by a test inspecting a release build (`DEV-050`). | SPEC |
 | `SEC-080` | P5 | MUST | Plugins **MUST** only perform operations covered by their declared capabilities (network domains, functions, device APIs such as camera, location, contacts, biometrics, native routes); the host **MUST** approve the capability set per app, and undeclared operations **MUST** be blocked and reported. The approved set is the app document's optional `capabilities`, checked when a release is published; `PluxConfig.allowedCapabilities` lets the host narrow it further at run time. Governance approval of the set arrives with the approval engine in P9 (ADR-0051). | WIP |
 
@@ -1209,7 +1212,7 @@ The update channel follows the design of **The Update Framework (TUF)**: separat
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `SEC-090` | P6 | MUST | Secure input widgets **MUST** be provided: `SecureTextField` (no suggestions, autocorrect, clipboard or keyboard learning; obscured), `SecurePinPad` (optional randomised layout, no key-press animation leakage, haptic feedback only) and `OtpInput` (SMS User Consent API on Android, one-time-code autofill on iOS). | SPEC |
+| `SEC-090` | P6 | MUST | Secure input widgets **MUST** be provided: `SecureTextField` (no suggestions, autocorrect, clipboard or keyboard learning; obscured), `SecurePinPad` (optional randomised layout, no key-press animation leakage, haptic feedback only) and `OtpInput` (SMS User Consent API on Android, one-time-code autofill on iOS, manual entry, configurable length and alphabet, paste with a format check, and a completion event). | SPEC |
 | `SEC-091` | P6 | MUST | Pages marked `secure` **MUST** block screenshots and screen recording (Android `FLAG_SECURE`; iOS protection against capture with a covering view when capture is detected) and **MUST** be blurred in the app switcher. | SPEC |
 | `SEC-092` | P6 | MUST | Fields tagged `sensitive` **MUST** be masked in any display that is not explicitly unmasked by the user, and excluded from telemetry, traces, crash reports and session replay (`SCH-012`). | SPEC |
 | `SEC-093` | P6 | MUST | Android views on `secure` pages **MUST** filter touches when obscured by overlays. | SPEC |
@@ -1234,8 +1237,8 @@ The update channel follows the design of **The Update Framework (TUF)**: separat
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `SEC-120` | P2 | MUST | All signing and encryption keys **MUST** be accessed through a signing abstraction with backends for PKCS#11 HSMs, AWS KMS, Google Cloud KMS, Azure Key Vault and HashiCorp Vault Transit. File-based keys are allowed only in development. | WIP |
-| `SEC-121` | P6 | MUST | Root keys **MUST** be offline and used only in documented key ceremonies with an *m*-of-*n* threshold; online role keys **MUST** be rotatable without an app store release. | SPEC |
+| `SEC-120` | P2 | MUST | All signing and encryption keys **MUST** be accessed through a signing abstraction with backends for PKCS#11 HSMs (through a separate helper process), cloud HSM and KMS products reached through their PKCS#11 libraries (AWS CloudHSM, Google Cloud HSM, Azure Managed HSM), and HashiCorp Vault Transit. File-based keys are allowed only in development (ADR-0060). | WIP |
+| `SEC-121` | P6 | MUST | Root keys **MUST** be offline and used only in documented key ceremonies (`docs/runbooks/key-ceremony.md`) with an *m*-of-*n* threshold (2 of 3 by default); online role keys **MUST** be rotatable without an app store release. | SPEC |
 | `SEC-122` | P6 | MUST | Metadata **MUST** carry algorithm identifiers to allow future algorithm migration (crypto agility), including a path to post-quantum signatures. | SPEC |
 
 ### 15.10 Audit
@@ -1258,29 +1261,37 @@ The update channel follows the design of **The Update Framework (TUF)**: separat
 
 ### 15.12 Security profiles
 
-Security profiles bundle settings so that operators do not need to understand fifty switches. Each profile maps to an OWASP MASVS verification level, so the choice is easy to explain to auditors. Profiles are chosen per app and environment and can be tightened, never loosened, per plugin or page.
+Security profiles bundle settings so that operators do not need to understand fifty switches. Each profile maps to an OWASP MASVS verification level, so the choice is easy to explain to auditors. Profiles are chosen per app and environment and can be tightened, never loosened, per plugin or page — or by an operator (`SEC-182`). Every setting, its unit, bounds, preset per profile and whether it travels to the device is defined in `schema/security/settings.json`; the rows below marked with a setting key are configurable.
 
 | Setting | `standard` (MASVS L1) | `strict` (MASVS L2) | `maximum` (MASVS L2 + R) |
 |---|---|---|---|
 | DPoP on all requests | ✔ | ✔ | ✔ |
-| Minimum assurance for sync | AL0 | AL1 | AL2 |
-| Default `requiresAssurance` for functions | AL1 | AL2 | AL3 |
-| Attestation outage | grace 24 h | grace 1 h | fail closed |
+| Minimum assurance for sync (`minAssuranceForSync`) | AL0 | AL1 | AL2 |
+| Default `requiresAssurance` for functions (`defaultFunctionAssurance`) | AL1 | AL2 | AL3 |
+| Attestation outage (`attestationOutageGrace`) | grace 24 h | grace 1 h | fail closed |
 | Server certificate pinning | ✔ | ✔ | ✔ |
-| Confidential (encrypted) bundles | – | optional | ✔ |
-| Encrypted local DB, cache, outbox | optional | ✔ | ✔ |
-| RASP response for root/hooking | report | degrade | block |
-| Screenshot blocking | per page | per page | default on |
+| Confidential (encrypted) bundles (`confidentialBundles`) | – | optional | ✔ |
+| Encrypted local DB, cache, outbox, `persisted` state, key-value store (`encryptLocalStores`) | optional | ✔ | ✔ |
+| RASP response for root/hooking (`raspRootHookingResponse`) | report | degrade | block |
+| Screenshot blocking (`screenshotBlockingDefault`) | per page | per page | default on |
 | Session replay | opt-in | off | off (cannot enable) |
 | Publish approvals (production) | 1 | 2 (four-eyes) | 2 from distinct teams + compliance |
 | Accessibility errors block publish | – | ✔ | ✔ |
 | Plux tests required for release | – | optional | ✔ |
 | Device-placed functions | ✔ | ✔ | disabled by default |
+| Software DPoP keys (`allowSoftwareKeys`, `SEC-001`) | accepted, capped at AL1 | refused | refused |
+| Direct data-source calls (`allowDirectDataSources`, `SEC-030`) | allowed | allowed | refused |
+| Play Integrity verdict for AL2 (`androidDeviceVerdictAL2`) | `MEETS_BASIC_INTEGRITY` | `MEETS_DEVICE_INTEGRITY` | `MEETS_DEVICE_INTEGRITY` |
+| Play Integrity on every Android refresh (`androidRefreshRequiresIntegrity`) | – | – | – |
+| Re-attestation interval (`reattestationInterval`) | 24 h | 24 h | 24 h |
+| Replay-cache outage (`replayCacheFallback`) | in-memory, narrower window | in-memory, narrower window | fail closed |
+| Inactivity lock on secure pages (`inactivityLock`, `inactivityLockTimeout`) | – | 5 min | 2 min |
 
 | ID | Phase | Priority | Requirement | Status |
 |---|---|---|---|---|
-| `SEC-180` | P6 | MUST | The profiles above **MUST** be implemented as presets; every setting **MUST** be visible in Studio and in the effective configuration of each release. | SPEC |
+| `SEC-180` | P6 | MUST | The profiles above **MUST** be implemented as presets; every setting **MUST** be visible in the effective configuration of each release, through the API, the CLI and the release's metadata (P6), and in Studio (P11). | SPEC |
 | `SEC-181` | P6 | MUST | A plugin or page **MUST** be able to tighten, but never loosen, the app's effective security settings. | SPEC |
+| `SEC-182` | P6 | MUST | Every security setting **MUST** have a built-in default on the device and the server, generated from one source (`schema/security/settings.json`). Operators **MUST** be able to change settings per app and environment, within each setting's hard bounds and only tightening the profile's preset (`PLX-6041`). Changes **MUST** reach the device on the manifest request it already makes, as an RFC 7396 merge patch from the version it holds, bound to the signed manifest by a hash (`PLX-6040`); nothing is sent when nothing changed, and server-only settings never travel to the device (ADR-0053). | SPEC |
 
 ### 15.13 Security verification
 
@@ -1955,11 +1966,14 @@ This section concerns how Plux itself is verified. §22.2 covers the testing too
 | `NFR-009` | P3 | MUST | Core package size | ≤ 5 MiB downloaded on Android (App Bundle) and ≤ 5 MiB on iOS; ≤ 10 MiB in an Android APK (`RT-061`) | DONE |
 | `NFR-010` | P5 | MUST | PXL typical binding evaluation | ≤ 2 µs p95 (`PXL-004`) | WIP |
 | `NFR-011` | P5 | MUST | Action interpreter overhead | ≤ 20 µs per step p95 (`ACT-008`) | WIP |
+| `NFR-012` | P6 | MUST | DPoP proof creation on the device | ≤ 15 ms p95 (mid-tier) (`SEC-021`) | SPEC |
+| `NFR-013` | P6 | MUST | Decrypting a confidential bundle on the device | ≤ 10 ms per MiB p95 (mid-tier) (`SEC-053`); encrypted local stores within 10% of the plain stores in the P5 database and state benchmarks (`SEC-073`) | SPEC |
 | `NFR-020` | P2 | MUST | Manifest endpoint throughput | ≥ 5,000 req/s per `api` replica at p99 ≤ 50 ms (cache hit) | DONE |
 | `NFR-021` | P2 | MUST | Publish of a 50-page plugin with deltas | ≤ 15 s p95 (`SRV-053`) | DONE |
 | `NFR-022` | P7 | MUST | Function invocation overhead | warm ≤ 1 ms p99; first after deploy ≤ 50 ms p99 (`FN-023`) | SPEC |
 | `NFR-023` | P9 | MUST | Scale of one HA installation (with CDN) | ≥ 1,000,000 active devices, ≥ 100 apps | SPEC |
 | `NFR-024` | P9 | MUST | Kill-switch / control propagation | ≤ 60 s p95 for online devices | SPEC |
+| `NFR-025` | P6 | MUST | Gateway overhead and device-request verification at the server | gateway ≤ 5 ms p95 added per request, excluding the upstream's time, at 1,000 req/s per `api` replica (`SEC-031`); DPoP and access-token verification ≤ 1 ms p95 (`SEC-022`) | SPEC |
 | `NFR-030` | P10 | MUST | Edit → paired device | ≤ 500 ms p95 (`DEV-010`) | SPEC |
 | `NFR-031` | P11 | MUST | Studio canvas frame rate | 60 fps with 100 screens / 200 plugins (`STU-120`) | SPEC |
 | `NFR-032` | P11 | MUST | Studio property change → canvas | ≤ 50 ms p95 (`STU-121`) | SPEC |
@@ -2482,7 +2496,7 @@ Dialogs, bottom sheets and snack bars are page kinds and actions (Appendix D), n
 |---|---|---|---|
 | `SecureTextField` | Hardened text entry (`SEC-090`) | P6 | core |
 | `SecurePinPad` | PIN entry with optional randomised layout | P6 | core |
-| `OtpInput` | One-time code with platform autofill | P5 | core |
+| `OtpInput` | One-time code with platform autofill, configurable length and alphabet (`SEC-090`) | P6 | core |
 | `AmountInput` | Money entry with currency, limits, locale formatting | P5 | core |
 | `MoneyText` | Locale- and currency-correct money display | P5 | core |
 | `MaskedText` | Masked display (card, account, phone) with reveal | P5 | core |
@@ -2649,7 +2663,7 @@ Every error and diagnostic has a stable code `PLX-NNNN` (`DX-003`). Codes are gr
 | `PLX-3000`–`3999` | Release and sync | `PLX-3001` manifest signature invalid · `PLX-3002` manifest expired · `PLX-3003` rollback attempt rejected · `PLX-3010` unsupported required feature · `PLX-3011` hash mismatch after patch · `PLX-3020` automatic revert to last known good · `PLX-3030` disk quota exceeded |
 | `PLX-4000`–`4999` | Runtime rendering and navigation | `PLX-4001` build error in node · `PLX-4003` unknown widget type · `PLX-4100` unknown route · `PLX-4101` invalid route parameters · `PLX-4102` navigation refused by a guard · `PLX-4103` deep link not mapped · `PLX-4200` native route not registered · `PLX-4201` native slot not registered · `PLX-4202` custom action not registered · `PLX-4203` exposed state written with the wrong type |
 | `PLX-5000`–`5999` | Actions, data and local DB | `PLX-5001` action timeout · `PLX-5002` step limit exceeded · `PLX-5100` request to undeclared domain blocked · `PLX-5200` DB migration failed · `PLX-5300` outbox replay conflict |
-| `PLX-6000`–`6999` | Security | `PLX-6001` attestation failed · `PLX-6002` assurance level insufficient · `PLX-6010` DPoP proof invalid · `PLX-6011` DPoP replay detected · `PLX-6012` DPoP nonce required · `PLX-6020` certificate pin mismatch · `PLX-6100` RASP detection |
+| `PLX-6000`–`6999` | Security | `PLX-6001` attestation failed · `PLX-6002` assurance level insufficient · `PLX-6003` key not hardware-backed · `PLX-6004` development provider in production · `PLX-6006` device revoked · `PLX-6010` DPoP proof invalid · `PLX-6011` DPoP replay detected · `PLX-6012` DPoP nonce required · `PLX-6013` token binding mismatch · `PLX-6015` replay cache unavailable · `PLX-6020` certificate pin mismatch · `PLX-6040` security configuration hash mismatch · `PLX-6041` setting loosens the profile · `PLX-6050` confidential bundle key unavailable · `PLX-6060`–`6064` gateway refusals · `PLX-6070`–`6073` SCA failures · `PLX-6100` RASP detection |
 | `PLX-7000`–`7999` | Functions | `PLX-7001` function timeout · `PLX-7002` memory limit exceeded · `PLX-7003` capability denied · `PLX-7100` business error (carries function-defined code) |
 | `PLX-8000`–`8999` | Governance | `PLX-8001` approval required · `PLX-8002` approval invalidated by content change · `PLX-8010` change freeze active · `PLX-8020` editing lock held by another user · `PLX-8030` permission denied |
 | `PLX-9000`–`9999` | Studio, CLI and AI | `PLX-9001` AI output invalid after repair attempts · `PLX-9100` CLI configuration invalid · `PLX-9200` dev session expired |
@@ -2695,6 +2709,8 @@ Every error and diagnostic has a stable code `PLX-NNNN` (`DX-003`). Codes are gr
 | `error` | code, node path, route, fingerprint |
 | `experiment_exposure` | experiment, variant |
 | `rasp_detection` | detection type, response taken |
+| `attestation_result` | provider, result, assurance level (no device identifiers) |
+| `pin_failure` | host, pin set version |
 | `custom` (`trackEvent`) | name, declared non-sensitive properties |
 
 ---
@@ -2728,11 +2744,21 @@ auth:
     oidc: { issuer: "https://idp.acme.example", clientID: "plux-studio" }
     mfaRequiredFor: [publish, approve, keys, members]
   device:
-    accessTokenTTL: "5m"
-    dpop: { iatWindow: "60s", nonceRotation: "5m" }
+    accessTokenTTL: "5m"             # default of accessTokenLifetime (SEC-020)
+    dpop: { iatWindow: "60s", nonceRotation: "5m", replayCache: { sentinel: ["valkey-s1:26379"], fallback: "memory" } }
 attestation:
-  android: { packageNames: ["com.acme.app"], certDigests: ["…"], playIntegrity: { mode: "server" } }
+  android: { packageNames: ["com.acme.app"], certDigests: ["…"], playIntegrity: { decryptionKeyRef: "secret:pi-dec", verificationKeyRef: "secret:pi-ver" } }  # verified locally (ADR-0012)
   ios: { teamID: "ABCDE12345", bundleIDs: ["com.acme.app"], environment: "production" }
+  developmentProvider: false         # refused by production environments (SEC-008)
+securityConfig:                      # installation defaults; per app and environment via the API (SEC-182)
+  profile: "strict"                  # standard | strict | maximum
+updateMetadata:
+  rootThreshold: 2
+  expiry: { timestamp: "24h", snapshot: "168h", targets: "720h", root: "8760h" }
+gateway:
+  enabled: true                      # upstreams are registered per app and environment (SEC-031)
+sca:
+  challengeTTL: "5m"
 functions:
   defaults: { timeout: "2s", memory: "64MiB", maxHTTPCalls: 10 }
   device: { enabled: true, timeout: "500ms", memory: "32MiB" }
@@ -2783,6 +2809,7 @@ retention:
 | `themeMode` | `ThemeMode` | host | `THM-002` |
 | `locale` | `Locale?` | host | `I18N-005` |
 | `consent` | `PluxConsent` | necessary only | `SEC-161` |
+| `pins` | `List<String>` | – (at least two required from P6) | SPKI SHA-256 pins of the Plux server, one a backup key; later updated only through signed metadata (`SEC-041`) |
 | `onError` | callback | – | Host error hook |
 
 ---
@@ -2898,14 +2925,14 @@ Studio, the documentation site and the reference apps use these tokens (`STU-016
 | `HST` | 12 | `ACT` | 13 | `PXL` | 8 |
 | `STA` | 8 | `DAT` | 11 | `DB` | 9 |
 | `ANI` | 8 | `THM` | 5 | `AST` | 3 |
-| `SEC` | 68 | `FN` | 32 | `I18N` | 13 |
+| `SEC` | 72 | `FN` | 32 | `I18N` | 13 |
 | `A11Y` | 8 | `GOV` | 19 | `ABT` | 7 |
 | `OBS` | 5 | `ANL` | 9 | `DEV` | 15 |
 | `STU` | 83 | `CLI` | 8 | `TST` | 5 |
 | `DX` | 6 | `GEN` | 6 | `AI` | 16 |
 | `PAY` | 8 | `COL` | 6 | `SAAS` | 7 |
 | `DEP` | 12 | `QA` | 15 | `CI` | 9 |
-| `NFR` | 22 | `LIM` | 6 |  |  |
+| `NFR` | 25 | `LIM` | 6 |  |  |
 | | | | | **Total** | **636** |
 
 Four requirements are `WITHDRAWN` (`RT-050`, `RT-051`, `SAAS-004`, `SAAS-009`) and are kept for traceability.
@@ -2920,7 +2947,7 @@ Four requirements are `WITHDRAWN` (`RT-050`, `RT-051`, `SAAS-004`, `SAAS-009`) a
 | P3 | Runtime rendering | 67 | 2 | 0 | 69 |
 | P4 | Routing, host integration and no-code generation | 29 | 0 | 0 | 29 |
 | P5 | Actions, state, data, DB, animation | 55 | 4 | 0 | 59 |
-| P6 | Security hardening | 44 | 2 | 0 | 46 |
+| P6 | Security hardening | 51 | 2 | 0 | 53 |
 | P7 | Plux Functions | 29 | 0 | 1 | 30 |
 | P8 | Localisation and accessibility | 21 | 1 | 0 | 22 |
 | P9 | Enterprise and operations | 53 | 4 | 1 | 58 |
@@ -2930,7 +2957,7 @@ Four requirements are `WITHDRAWN` (`RT-050`, `RT-051`, `SAAS-004`, `SAAS-009`) a
 | P13 | Payments | 8 | 0 | 0 | 8 |
 | P14 | Collaboration | 4 | 2 | 0 | 6 |
 | P15 | Multi-tenant operation | 6 | 1 | 1 | 8 |
-| | **Total** | **605** | **28** | **3** | **636** |
+| | **Total** | **612** | **28** | **3** | **643** |
 
 > **Note.** These tables are indicative; the authoritative counts are those produced by the traceability report (`QA-070`), which supersedes any hand-maintained figure here.
 
@@ -2943,10 +2970,10 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | Field | Value |
 |---|---|
 | Document ID | `SRS-PLUX-001` |
-| Version | 1.3.2 |
+| Version | 1.4.0 |
 | Status | Draft (living document) |
-| Date | 2026-10-05 |
-| Supersedes | 1.3.0 |
+| Date | 2026-10-07 |
+| Supersedes | 1.3.2 |
 | Change process | Amendments are made by pull request against `docs/requirements.md`. A change to a `MUST` requirement requires a corresponding ADR. The version is incremented per Semantic Versioning: a breaking change to an existing requirement is a major increment, a new requirement is a minor increment, and a clarification is a patch increment. |
 
 ### Revision history
@@ -2970,3 +2997,4 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | 1.3.0 | 2026-10-04 | Phase 5 decisions (maintainer, 2026-10-04; P5 plan §2.1, B1–B2): Appendix D adds `emitEvent` (Component, P5), with which a component emits its declared events (ADR-0045); `RT-060` and §33 add the optional package `plux_location` for `getLocation` (ADR-0051); `DB-001` says the core's built-in store implements `PluxDatabaseAdapter` for persisted state, the key-value store, the response cache and the outbox, and collections use `plux_db_drift` or a host adapter, as §6.4's `db/` and Appendix H.2's `databaseAdapter` now say (ADR-0049); `SEC-080` names the approved capability set — the app document's optional `capabilities`, narrowed at run time by `PluxConfig.allowedCapabilities` — and leaves its governance approval to P9, with §7.1 and Appendix H.2 to match (ADR-0051); notes on `DB-003` and `DEP-060` record the deferral of the ObjectBox, Hive CE and Sembast adapters to a later phase and of the demonstration environment to P9. ADRs 0045–0052 record the P5 designs. |
 | 1.3.1 | 2026-10-05 | `RT-061`, `NFR-009`: the App Bundle download and the thinned IPA budgets rise to ≤ 5 MiB each, the APK stays ≤ 10 MiB; `QA-007`: the size gate fails on growth beyond 20% over the committed overhead, other benchmarks stay at 10% (maintainer decision, P5 plan §2.1 B7; ADR-0036, Revision 2026-10-05). |
 | 1.3.2 | 2026-10-06 | Phase 5 delivered: P5 requirement statuses updated — `ACT-001`–`ACT-007`, `ACT-020`, `ACT-031`, `ACT-061`, `STA-001`–`STA-004`, `STA-010`, `STA-020`, `STA-030`, `STA-040`, `DAT-002`–`DAT-004`, `DAT-010`–`DAT-012`, `DAT-020`, `DAT-030`, `DAT-031`, `DB-001`, `DB-004`–`DB-006`, `DB-008`, `DB-009`, `ANI-001`–`ANI-008`, `HST-013`, `TST-004` `DONE`, with the cross-phase `HST-001`, `HST-021`, `RT-021`, `NAV-010`, `WGT-012`, `WGT-021`, `LIM-004` and `RT-015`; `ACT-008`, `NFR-011`, `PXL-004`, `NFR-010`, `NFR-004` and `DB-007` `WIP` until the reference-device run, and `ACT-030`, `DAT-001`, `DAT-080`, `DB-002`, `DB-003`, `SEC-080`, `TST-001`, `TST-002` and `DX-004` `WIP` until the phases the P5 plan names complete them (§3.2). |
+| 1.4.0 | 2026-10-07 | Phase 6 decisions (maintainer, 2026-10-07; P6 plan §2.1 B1–B21 and §2.2 Q1–Q3): `SEC-001` software keys flagged, accepted only where `allowSoftwareKeys` allows and capped at `AL1`, StrongBox for the DPoP key decided by measurement; `SEC-007` the iOS mapping and the Android verdict per profile; `SEC-009` the grace per profile in the text; `SEC-023` the in-memory fallback under `standard` and `strict`; `SEC-025` the refresh evidence per platform; `SEC-028` verification only by the Plux server; new `SEC-030`–`SEC-032` (the secure gateway) and `SEC-182` (remote security configuration); `SEC-041` pins from `PluxConfig` and signed metadata; `SEC-043` the P6 and P7 parts; `SEC-050`, `SEC-121` thresholds and expiries; `SEC-053` no deltas, decryption into memory; `SEC-073` the stores covered; `SEC-090` `OtpInput`'s options, re-tagged P6 in Appendix C; `SEC-120` the backends; `SEC-180` Studio in P11; §15.12 the P6 settings; new `NFR-012`, `NFR-013`, `NFR-025`; Appendices F, G, H and K (ADR-0012, ADR-0053–ADR-0060). The header date now matches the revision history. |

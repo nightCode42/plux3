@@ -211,3 +211,7 @@ specification (`SYN-001`).
 Operating-system schedulers give no guarantee of when, or whether, a task runs; an app
 could keep an old release for days. Kept as an optional addition (`SYN-014`), not the
 mechanism.
+
+## Revision (2026-10-07, P6 plan)
+
+From P6 every sync request carries an RFC 9068 access token bound by DPoP to the device's hardware key, and the manifest request carries the device's security-configuration version (ADR-0012, ADR-0053).

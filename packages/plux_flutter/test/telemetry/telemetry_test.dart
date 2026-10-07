@@ -84,6 +84,8 @@ void main() {
           'error',
           'experiment_exposure',
           'rasp_detection',
+          'attestation_result',
+          'pin_failure',
           'custom',
         ]),
       );

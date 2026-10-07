@@ -603,6 +603,11 @@ var registry = []Definition{
 		"A document or asset carries code in a form that would run outside the PXL VM and the action interpreter (SEC-054).",
 		"Express the logic with actions and PXL, or as a Plux Function.", false,
 	},
+	{
+		DirectSourceAssuranceUnenforceable, "DIRECT_SOURCE_ASSURANCE_UNENFORCEABLE", SeverityWarning, "Direct data source assurance cannot be enforced",
+		"A data source with route `direct` declares requiresAssurance, which the server cannot enforce on a call that does not pass through it (SEC-030).",
+		"Route the data source through the gateway, or remove requiresAssurance.", false,
+	},
 
 	// Compiler and PXL.
 	{
@@ -1178,6 +1183,101 @@ var registry = []Definition{
 
 	// Security.
 	{
+		AttestationFailed, "ATTESTATION_FAILED", SeverityError, "Device attestation failed",
+		"The platform attestation presented at registration or re-attestation did not verify against the trusted roots, the challenge or the app identity (SEC-002, SEC-003, SEC-004, SEC-005).",
+		"Attest again on a genuine device with the official app build.", false,
+	},
+	{
+		AssuranceInsufficient, "ASSURANCE_INSUFFICIENT", SeverityError, "Device assurance insufficient",
+		"The device's attested assurance level is lower than the level this call or data source requires (SEC-007).",
+		"Use a device that reaches the required assurance level, or ask an administrator to lower the requirement.", false,
+	},
+	{
+		KeyNotHardwareBacked, "KEY_NOT_HARDWARE_BACKED", SeverityError, "Key not hardware-backed",
+		"The device key was not generated in hardware-backed storage, which this installation requires (SEC-001).",
+		"Register from a device with a secure element or trusted execution environment.", false,
+	},
+	{
+		DevProviderInProduction, "DEV_PROVIDER_IN_PRODUCTION", SeverityError, "Development attestation provider in production",
+		"A registration used the development attestation provider on an installation running in production mode (SEC-008).",
+		"Register with the platform attestation provider, or run the installation in development mode.", false,
+	},
+	{
+		RegistrationChallengeInvalid, "REGISTRATION_CHALLENGE_INVALID", SeverityError, "Registration challenge invalid",
+		"The registration challenge is unknown, expired, already used or not bound to this request (SEC-005).",
+		"Request a new challenge and register again.", false,
+	},
+	{
+		DeviceRevoked, "DEVICE_REVOKED", SeverityError, "Device revoked",
+		"The device registration has been revoked, so no credential for it is accepted (SEC-006).",
+		"Register the device again.", false,
+	},
+	{
+		ReattestationRequired, "REATTESTATION_REQUIRED", SeverityError, "Re-attestation required",
+		"The device's attestation is older than the installation allows and must be renewed before the call proceeds (SEC-006).",
+		"Attest again and repeat the call.", false,
+	},
+	{
+		LegacyRegistrationRefused, "LEGACY_REGISTRATION_REFUSED", SeverityError, "Legacy registration refused",
+		"The device-secret registration flow from Phase 2 is no longer accepted; devices must register with hardware key attestation (B17).",
+		"Update the app to a runtime that registers with attestation.", false,
+	},
+	{
+		AttestationUnavailable, "ATTESTATION_UNAVAILABLE", SeverityError, "Attestation service unavailable",
+		"The platform attestation service could not be reached, so the device could not be verified (SEC-009).",
+		"Try again shortly.", false,
+	},
+	{
+		DPoPProofInvalid, "DPOP_PROOF_INVALID", SeverityError, "DPoP proof invalid",
+		"The DPoP proof is malformed, wrongly signed, bound to another method or URL, or outside the accepted time window (SEC-022).",
+		"Send a fresh proof signed by the device key for this request.", false,
+	},
+	{
+		DPoPReplay, "DPOP_REPLAY", SeverityError, "DPoP proof replayed",
+		"The DPoP proof identifier was already used within the replay window (SEC-022).",
+		"Send a new proof with a fresh identifier.", false,
+	},
+	{
+		DPoPNonceRequired, "DPOP_NONCE_REQUIRED", SeverityError, "DPoP nonce required",
+		"The server requires a server-issued nonce in the DPoP proof and the proof carried none or a stale one (SEC-024).",
+		"Repeat the call with a proof that carries the nonce the server returned.", false,
+	},
+	{
+		TokenBindingMismatch, "TOKEN_BINDING_MISMATCH", SeverityError, "Token binding mismatch",
+		"The access token is bound to a different device key than the one that signed the DPoP proof (SEC-020).",
+		"Obtain a token for this device and use it with this device's key.", false,
+	},
+	{
+		AccessTokenInvalid, "ACCESS_TOKEN_INVALID", SeverityError, "Access token invalid",
+		"The access token is malformed, expired, revoked or not issued by this installation (SEC-020).",
+		"Obtain a new access token.", false,
+	},
+	{
+		ReplayCacheUnavailable, "REPLAY_CACHE_UNAVAILABLE", SeverityError, "Replay cache unavailable",
+		"The replay cache could not be read or written, so the proof cannot be accepted safely (SEC-023).",
+		"Try again shortly.", false,
+	},
+	{
+		UserTokenInvalid, "USER_TOKEN_INVALID", SeverityError, "User token invalid",
+		"The end-user token failed validation: its signature, issuer, audience or lifetime is wrong (SEC-026).",
+		"Sign the user in again and use the new token.", false,
+	},
+	{
+		CertificatePinMismatch, "CERTIFICATE_PIN_MISMATCH", SeverityError, "Certificate pin mismatch",
+		"The server's certificate chain matches none of the pins the app carries, so the connection was refused (SEC-041).",
+		"Check the network for interception, or update the app if the server key was rotated.", false,
+	},
+	{
+		DevelopmentKeyInProduction, "DEVELOPMENT_KEY_IN_PRODUCTION", SeverityError, "Development key in production",
+		"A bundle or update metadata is signed with a development key, which a production installation does not trust (SEC-056).",
+		"Sign with a production key.", false,
+	},
+	{
+		UpdateMetadataInvalid, "UPDATE_METADATA_INVALID", SeverityError, "Update metadata invalid",
+		"The update metadata does not meet its signature threshold, carries an expired role, or has a version that is not newer than the trusted one (SEC-050).",
+		"Publish metadata signed by enough current keys with a newer version and a valid expiry.", false,
+	},
+	{
 		OutboundRequestBlocked, "OUTBOUND_REQUEST_BLOCKED", SeverityError, "Outbound request blocked",
 		"A request to a user-supplied URL would have reached a private, loopback, link-local or metadata address. Those are refused unless the installation allows them explicitly (SEC-105).",
 		"Use a publicly reachable address, or ask an administrator to allow the range this installation should reach.", false,
@@ -1186,6 +1286,76 @@ var registry = []Definition{
 		AssetRejected, "ASSET_REJECTED", SeverityError, "Asset rejected by the malware scanner",
 		"The installation's malware scanner found something in the uploaded file (SRV-060).",
 		"Check the file on a trusted machine and upload a clean copy.", false,
+	},
+	{
+		SecurityConfigHashMismatch, "SECURITY_CONFIG_HASH_MISMATCH", SeverityError, "Security configuration hash mismatch",
+		"The security configuration does not hash to the value its signed manifest declares (SEC-182).",
+		"Download the release again; if it persists, republish it.", false,
+	},
+	{
+		SecurityConfigLoosensPreset, "SECURITY_CONFIG_LOOSENS_PRESET", SeverityError, "Security configuration loosens its preset",
+		"The security configuration weakens a setting below what its declared preset guarantees (SEC-181).",
+		"Remove the override or choose a preset that allows the setting.", false,
+	},
+	{
+		SecurityConfigOutOfBounds, "SECURITY_CONFIG_OUT_OF_BOUNDS", SeverityError, "Security configuration out of bounds",
+		"A value in the security configuration lies outside the bounds the registry allows (SEC-182).",
+		"Change the value to one within the documented bounds.", false,
+	},
+	{
+		ConfidentialKeyUnavailable, "CONFIDENTIAL_KEY_UNAVAILABLE", SeverityError, "Confidential key unavailable",
+		"The device may not receive the key that unlocks confidential content, because it does not meet the content's requirements (SEC-053).",
+		"Use a device that meets the content's assurance requirements.", false,
+	},
+	{
+		GatewayUpstreamUnknown, "GATEWAY_UPSTREAM_UNKNOWN", SeverityError, "Gateway upstream unknown",
+		"The request names a gateway upstream that the app does not declare (SEC-031).",
+		"Declare the upstream in the app, or use a declared one.", false,
+	},
+	{
+		GatewayDestinationRefused, "GATEWAY_DESTINATION_REFUSED", SeverityError, "Gateway destination refused",
+		"The gateway refused to forward the request, because the path, method or destination is outside what the upstream allows (SEC-031).",
+		"Send a request the upstream declaration permits.", false,
+	},
+	{
+		GatewayUpstreamFailed, "GATEWAY_UPSTREAM_FAILED", SeverityError, "Gateway upstream failed",
+		"The upstream did not answer in time or answered with a failure the gateway could not pass on (SEC-031).",
+		"Try again shortly.", false,
+	},
+	{
+		DirectDataSourceRefused, "DIRECT_DATA_SOURCE_REFUSED", SeverityError, "Direct data source refused",
+		"A data source with the direct route is refused on this device or app, because its security configuration requires the gateway (SEC-030).",
+		"Route the data source through the gateway.", false,
+	},
+	{
+		GatewayRateLimited, "GATEWAY_RATE_LIMITED", SeverityError, "Gateway rate limited",
+		"The device sent more gateway requests per minute than gateway.requestsPerMinutePerDevice allows (SEC-031).",
+		"Slow down and retry after the indicated delay.", false,
+	},
+	{
+		SCASignatureInvalid, "SCA_SIGNATURE_INVALID", SeverityError, "Strong customer authentication signature invalid",
+		"The signature over the strong customer authentication challenge does not verify (SEC-027).",
+		"Confirm the action again on the device.", false,
+	},
+	{
+		SCAChallengeInvalid, "SCA_CHALLENGE_INVALID", SeverityError, "Strong customer authentication challenge invalid",
+		"The challenge is unknown, expired or already used (SEC-027).",
+		"Request a new challenge and confirm again.", false,
+	},
+	{
+		SCADynamicLinkingMismatch, "SCA_DYNAMIC_LINKING_MISMATCH", SeverityError, "Authentication not linked to the request",
+		"The signed challenge is not linked to the amount and payee of the request being sent (SEC-028).",
+		"Confirm exactly the request that is sent.", false,
+	},
+	{
+		TransactionRequiresGateway, "TRANSACTION_REQUIRES_GATEWAY", SeverityError, "Transaction requires the gateway",
+		"A transaction-class request was sent outside the gateway, which strong customer authentication requires (SEC-032).",
+		"Send the request through the gateway.", false,
+	},
+	{
+		RASPDetection, "RASP_DETECTION", SeverityError, "Runtime tampering detected",
+		"The runtime reported a tampering signal, such as a debugger, hook or modified binary, and the installation refuses the call (SEC-071).",
+		"Use an unmodified app on an unmodified device.", false,
 	},
 
 	// Governance.

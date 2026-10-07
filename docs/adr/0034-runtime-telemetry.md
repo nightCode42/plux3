@@ -127,3 +127,7 @@ and wakes the radio on its own schedule.
 
 Simplest, but network I/O and compression on the UI isolate break L-6, and one request per
 event costs battery and data.
+
+## Revision (2026-10-07, P6 plan)
+
+From P6 telemetry uploads carry DPoP proofs like every device request, and three `necessary` events are added: `rasp_detection`, `attestation_result` and `pin_failure`, with no personal data (ADR-0012, ADR-0057).

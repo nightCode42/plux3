@@ -43,7 +43,7 @@ const (
 var names = map[string]bool{
 	"session_start": true, "session_end": true, "screen_view": true, "render_perf": true, "action_run": true,
 	"api_call": true, "function_call": true, "sync_result": true, "error": true, "experiment_exposure": true,
-	"rasp_detection": true, "custom": true,
+	"rasp_detection": true, "attestation_result": true, "pin_failure": true, "custom": true,
 }
 
 // fieldName is the form of a field name.

@@ -59,7 +59,7 @@ software key can exist. Plux settles this as follows.
    sync and run anything that requires `AL0` or `AL1`; it never reaches `AL2`, whatever
    else it proves.
 4. **Under `strict` and `maximum`, a software key is refused at registration** with
-   `PLX-6001` (reason `KEY_NOT_HARDWARE_BACKED`). The app shows the host's "device not
+   `PLX-6003` (`KEY_NOT_HARDWARE_BACKED`). The app shows the host's "device not
    supported" message; nothing syncs.
 5. **The flag is a profile setting** (`allowSoftwareKeys`), so an operator can refuse
    software keys under `standard` too. It can be tightened from `standard`'s default, never
@@ -105,7 +105,7 @@ attestation provider** (`SEC-008`):
 
 - It is a separate provider, named in the evidence, never a missing or skipped check.
 - It is accepted only by environments whose type is not `production`; a production
-  environment refuses it (`PLX-6001`, reason `DEV_PROVIDER_IN_PRODUCTION`). A test proves
+  environment refuses it (`PLX-6004`, `DEV_PROVIDER_IN_PRODUCTION`). A test proves
   the refusal.
 - A device registered with it gets `AL0`, unless the environment's settings raise it for
   testing, which a production environment cannot do.

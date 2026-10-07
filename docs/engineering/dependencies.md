@@ -42,6 +42,9 @@ Every third-party dependency is a long-term commitment: code we ship but did not
 | `github.com/getkin/kin-openapi` | `plux import openapi` and `plux mock` (`DAT-002`, `TST-004`); CLI only | MIT | [0052](../adr/0052-plux-test-and-import-tools.md) | Approved (maintainer, 2026-10-04, P5 plan B2), not yet in use; checked in its ADR before use (P5 R9) |
 | `github.com/vektah/gqlparser/v2` | `plux import graphql` (`DAT-002`); CLI only | MIT | [0052](../adr/0052-plux-test-and-import-tools.md) | Approved (maintainer, 2026-10-04, P5 plan B2), not yet in use; checked in its ADR before use (P5 R9) |
 | `github.com/goccy/go-yaml` | Plux Test scenarios in YAML, with positions for diagnostics (`TST-001`); CLI only | MIT | [0052](../adr/0052-plux-test-and-import-tools.md) | Approved (maintainer, 2026-10-04, P5 plan B2), not yet in use; checked in its ADR before use (P5 R9) |
+| `github.com/go-jose/go-jose/v4` | Access tokens and DPoP proofs (JWS), Play Integrity tokens (JWE) (`SEC-003`, `SEC-020`–`SEC-022`) | Apache-2.0 | [0012](../adr/0012-dpop-hardware-keys-and-attestation.md) | Proposed (P6 plan B18; awaiting the maintainer's approval at S0) |
+| `github.com/fxamacker/cbor/v2`, or an in-house decoder (decided in S2) | App Attest attestation objects (`SEC-004`) | MIT | [0012](../adr/0012-dpop-hardware-keys-and-attestation.md) | Proposed (P6 plan B18; awaiting the maintainer's approval at S0) |
+| `github.com/miekg/pkcs11` | The PKCS#11 helper binary only, never `plux-server` (`SEC-120`) | BSD-3-Clause | [0060](../adr/0060-signing-backends-and-audit-checkpoints.md) | Proposed (P6 plan B18; awaiting the maintainer's approval at S0) |
 
 `tools/` stays standard-library only (§3). Build tools pinned in the Makefile: `sqlc` v1.31.1 generates the query code from the migrations ([0007](../adr/0007-postgresql-and-object-storage.md)). The image codecs are C libraries compiled to WebAssembly by `backend/internal/compiler/media/codecs/build.sh` from pinned commits with clang 18 and wasi-libc; `codecs.lock` pins the modules' hashes, and their notices travel with them in `THIRD_PARTY_NOTICES.txt` ([0027](../adr/0027-asset-pipeline.md)). WebAuthn verification and the CBOR and COSE decoding it needs are written in-house on the standard library, so `go-webauthn/webauthn` is not a dependency ([0026](../adr/0026-identity-tenancy-and-access.md), Revision). HashiCorp Vault Transit is reached over its HTTP API with the standard library, so no Vault client is a dependency ([0004](../adr/0004-tuf-style-update-security.md)).
 
@@ -73,6 +76,9 @@ Valkey is reached with a small RESP client in `backend/internal/cache`, so no Re
 | `share_plus`, `permission_handler` | `share` and `requestPermission`, only if R8's size measurement chooses them over the runtime's own platform code ([ADR-0051](../adr/0051-device-actions-packages-and-capabilities.md)) | BSD-3-Clause; MIT | Approved (maintainer, 2026-10-04, P5 plan B2), not yet in use; checked in its ADR before use (P5 R8, if chosen) |
 | `image_picker` (publisher flutter.dev), `file_picker` | `pickImage`, `capturePhoto`, `pickFile` in `plux_media` only ([ADR-0051](../adr/0051-device-actions-packages-and-capabilities.md)) | BSD-3-Clause (the Android implementation's `LICENSE` is checked for code under another licence); MIT | Approved (maintainer, 2026-10-04, P5 plan B2), not yet in use; checked in its ADR before use (P5 R8) |
 | `mobile_scanner` | `scanCode` in `plux_scanner` only ([ADR-0051](../adr/0051-device-actions-packages-and-capabilities.md)) | BSD-3-Clause; on Android it uses Google's ML Kit, under Google's ML Kit terms, which the maintainer accepts or refuses before use | Approved (maintainer, 2026-10-04, P5 plan B2), not yet in use; checked in its ADR before use (P5 R8) |
+| `com.google.android.play:integrity` (Android library of `plux_flutter`) | Play Integrity standard requests (`SEC-003`) | Play terms (not open source; accepted by the maintainer, B18) | Proposed (P6 plan B18; awaiting the maintainer's approval at S0); [ADR-0012](../adr/0012-dpop-hardware-keys-and-attestation.md) |
+| `androidx.biometric` (Android library of `plux_flutter`) | SCA key unlock, `biometricAuth`, inactivity lock (`SEC-027`, `SEC-094`) | Apache-2.0 | Proposed (P6 plan B18; awaiting the maintainer's approval at S0); [ADR-0056](../adr/0056-secure-gateway-and-sca.md) |
+| `com.google.android.gms:play-services-mlkit-barcode-scanning` (Android library of `plux_scanner`) | Unbundled ML Kit barcode model (B21) | Play terms | Proposed (P6 plan B18; awaiting the maintainer's approval at S0); [ADR-0051](../adr/0051-device-actions-packages-and-capabilities.md) Revision |
 | `geolocator` | `getLocation` in `plux_location` only ([ADR-0051](../adr/0051-device-actions-packages-and-capabilities.md)) | MIT | Approved (maintainer, 2026-10-04, P5 plan B2), not yet in use; checked in its ADR before use (P5 R8) |
 | `drift`, `sqlite3` (publisher simonbinder.eu) | Collections in `plux_db_drift` only, through Drift's runtime API with no code generation ([ADR-0049](../adr/0049-local-persistence.md)) | MIT | Approved (maintainer, 2026-10-04, P5 plan B2), not yet in use; checked in its ADR before use (P5 R6) |
 | `sqlcipher_flutter_libs`, or the SQLCipher build option of the pinned `sqlite3` | SQLCipher for `plux_db_drift` (`DB-002`, [ADR-0049](../adr/0049-local-persistence.md)) | MIT; SQLCipher Community Edition under a BSD-style licence | Approved (maintainer, 2026-10-04, P5 plan B2), not yet in use; checked in its ADR before use (P5 R6) |
@@ -93,6 +99,8 @@ The P5 rows marked approved were accepted by the maintainer with the P5 plan (B2
 |---|---|---|---|
 | zstd v1.5.7 (`lib/common`, `lib/decompress`), vendored in `packages/plux_flutter/native/zstd/` | Delta patching and transport decompression on the device | BSD-3-Clause | [ADR-0030](../adr/0030-native-code-in-plux-flutter.md) |
 | Skia path operations at the revision the pinned Flutter uses, with the Flutter engine's `path_ops` wrapper, built for `plux-svgc` | Mask, clip and overdraw optimisation of SVGs at publish time | BSD-3-Clause | [ADR-0027](../adr/0027-asset-pipeline.md) Revision |
+| ZXing-C++ (version fixed in S10), vendored in `plux_scanner` | Offline barcode fallback where Play services is missing (B21) | Apache-2.0 | [ADR-0051](../adr/0051-device-actions-packages-and-capabilities.md) Revision; proposed (P6 plan B21) |
+| Platform AES-GCM (CryptoKit, Conscrypt), or a vendored audited AES-GCM if measurement requires it | Encrypted stores and confidential bundles (`SEC-053`, `SEC-073`) | system / to be recorded | [ADR-0058](../adr/0058-encryption-at-rest-native-aes-gcm.md); proposed |
 
 ### Vendored data
 
@@ -132,6 +140,7 @@ Planned for P11 (ADR-0014): React, TanStack Router and Query, shadcn/ui on Radix
 |---|---|---|
 | Go toolchain | `toolchain` in `go.mod` | Build |
 | Flutter | Makefile, CI | Build and test |
+| SoftHSM2 | CI image (P6, S5) | PKCS#11 tests of the signing helper (BSD-2-Clause; ADR-0060; proposed) |
 | Bun | `studio/package.json`, Makefile, CI | Studio runtime and tests |
 | golangci-lint, govulncheck, gitleaks, actionlint | Makefile (built with the project toolchain), CI | Lint, vulnerabilities, secrets, workflows |
 | pre-commit, zizmor, reuse, git-cliff | Makefile, CI | Hooks, workflow security, licensing, release notes |
