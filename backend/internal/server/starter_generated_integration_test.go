@@ -75,6 +75,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plux_flutter/plux_flutter.dart';
 import 'package:plux_flutter/src/core/runtime.dart' show RuntimeOverrides;
+import 'package:plux_flutter/src/security/software_keys.dart'
+    show DevelopmentAttestation, SoftwareDeviceKeys;
 import 'package:plux_flutter/src/sync/sync_engine.dart' show MemoryCredentialStore;
 
 Future<void> pumpUntil(WidgetTester tester, Finder finder) async {
@@ -97,7 +99,11 @@ void main() {
       await tester.runAsync(
         () => Plux.initializeWith(
           nativeConfig(storage: dir.path, onError: (e, _) => problems.add(e)),
-          const RuntimeOverrides(credentials: MemoryCredentialStore.new),
+          RuntimeOverrides(
+            credentials: MemoryCredentialStore.new,
+            deviceKeys: SoftwareDeviceKeys.new,
+            attestation: () => const DevelopmentAttestation('e2e'),
+          ),
         ),
       );
       await tester.pumpWidget(const App());
