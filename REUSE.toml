@@ -51,6 +51,20 @@ precedence = "override"
 SPDX-FileCopyrightText = ["2010 Google Inc.", "2016 Alliance for Open Media", "2019 Joe Drago"]
 SPDX-License-Identifier = "BSD-3-Clause AND BSD-2-Clause AND LicenseRef-WebM-Patent-Grant AND LicenseRef-AOM-Patent-License-1.0"
 
+# Public attestation roots pinned by ADR-0012, reproduced unmodified so the
+# verifiers can check device attestations; their fingerprints are tested.
+[[annotations]]
+path = "backend/internal/attest/keyattest/roots/*.pem"
+precedence = "override"
+SPDX-FileCopyrightText = "Google LLC"
+SPDX-License-Identifier = "LicenseRef-Public-Trust-Anchor"
+
+[[annotations]]
+path = "backend/internal/attest/appattest/roots/*.pem"
+precedence = "override"
+SPDX-FileCopyrightText = "Apple Inc."
+SPDX-License-Identifier = "LicenseRef-Public-Trust-Anchor"
+
 # The icon fonts the server subsets (ADR-0032 § Icons), imported verbatim
 # at the versions icons.lock pins by backend/internal/icons/fonts/import.sh.
 [[annotations]]
