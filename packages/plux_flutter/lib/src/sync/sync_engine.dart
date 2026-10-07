@@ -20,9 +20,12 @@ import 'package:plux_flutter/src/delta/delta.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/mmap/mapped_file.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
+import 'package:plux_flutter/src/security/attestation.dart';
+import 'package:plux_flutter/src/security/device_keys.dart';
 import 'package:plux_flutter/src/store/release_record.dart';
 import 'package:plux_flutter/src/store/release_store.dart';
 import 'package:plux_flutter/src/sync/api_client.dart';
+import 'package:plux_flutter/src/sync/device_auth.dart';
 import 'package:plux_flutter/src/sync/downloader.dart';
 import 'package:plux_flutter/src/sync/sync_event.dart';
 import 'package:plux_flutter/src/verify/bundle_verifier.dart';
@@ -114,8 +117,21 @@ final class SyncEngine {
     required this.api,
     required this.downloader,
     required this.credentials,
+    required this.keys,
+    required this.attestation,
     DateTime Function()? clock,
-  }) : _clock = clock ?? DateTime.now;
+  }) : _clock = clock ?? DateTime.now {
+    _auth = DeviceAuth(
+      api: api,
+      keys: keys,
+      attestation: attestation,
+      credentials: credentials,
+      appId: config.appId,
+      environment: config.environment,
+      device: config.device,
+      clock: _clock,
+    );
+  }
 
   /// The configuration.
   final SyncConfig config;
@@ -132,7 +148,14 @@ final class SyncEngine {
   /// Where the device credential is kept.
   final CredentialStore credentials;
 
+  /// The hardware-held device keys (SEC-001).
+  final DeviceKeys keys;
+
+  /// The platform's attestation services (SEC-002).
+  final Attestation attestation;
+
   final DateTime Function() _clock;
+  late final DeviceAuth _auth;
 
   /// Syncs once, reporting [SyncEvent]s to [emit]. Never throws: a failure
   /// is a [SyncResult] with [SyncOutcome.failed], and the active release
@@ -142,7 +165,8 @@ final class SyncEngine {
     final bytes = _Counter();
     try {
       emit(const SyncChecking());
-      final token = await _token();
+      _auth.beginSync();
+      final token = await _auth.token();
       final pointer = store.pointer;
       final active = pointer.active == null
           ? null
@@ -421,62 +445,13 @@ final class SyncEngine {
     return sizes.keys.toList()..sort();
   }
 
-  String? _recent;
-  DateTime? _recentAt;
-
   /// A device token for other calls between syncs, such as telemetry: the
-  /// last one this engine obtained while it is less than ten minutes old
-  /// (they live fifteen), otherwise a new one.
-  Future<String> recentToken() async {
-    final at = _recentAt;
-    final t = _recent;
-    if (t != null &&
-        at != null &&
-        _clock().difference(at) < const Duration(minutes: 10)) {
-      return t;
-    }
-    return _token();
-  }
+  /// held one while it is valid for at least thirty seconds, otherwise a
+  /// new one.
+  Future<DeviceToken> recentToken() => _auth.token();
 
-  /// Forgets the recent token, after the server refused it.
-  void forgetToken() {
-    _recent = null;
-    _recentAt = null;
-  }
-
-  /// A token for this sync, registering the device on first use.
-  Future<String> _token() async {
-    final t = await _freshToken();
-    _recent = t;
-    _recentAt = _clock();
-    return t;
-  }
-
-  Future<String> _freshToken() async {
-    var c = await credentials.read();
-    if (c == null) {
-      c = await api.register(
-        appId: config.appId,
-        environment: config.environment,
-        device: config.device,
-      );
-      await credentials.write(c);
-    }
-    try {
-      return await api.token(c);
-    } on ApiError catch (e) {
-      if (e.code != 'unauthenticated' && e.code != 'not_found') rethrow;
-      // The server no longer knows this device: register again, once.
-      await credentials.clear();
-      final fresh = await api.register(
-        appId: config.appId,
-        environment: config.environment,
-        device: config.device,
-      );
-      await credentials.write(fresh);
-      return api.token(fresh);
-    }
-  }
+  /// Forgets the held token, after the server refused it.
+  void forgetToken() => _auth.forgetToken();
 
   /// Obtains one bundle: by its delta when the plan offers one against
   /// the bundle this device holds, else — or when the rebuilt bundle is

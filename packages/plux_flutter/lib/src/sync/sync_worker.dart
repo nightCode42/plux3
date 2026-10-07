@@ -14,6 +14,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/security/attestation.dart';
+import 'package:plux_flutter/src/security/device_keys.dart';
 import 'package:plux_flutter/src/store/baseline.dart';
 import 'package:plux_flutter/src/store/directory_sync.dart';
 import 'package:plux_flutter/src/store/pointer.dart';
@@ -34,6 +36,8 @@ final class SyncWorkerConfig {
     required this.sync,
     required this.httpClient,
     required this.credentials,
+    required this.deviceKeys,
+    required this.attestation,
     this.parallelism = 4,
     this.baseline,
     this.rootIsolateToken,
@@ -54,6 +58,12 @@ final class SyncWorkerConfig {
 
   /// Creates the credential store, inside the isolate.
   final CredentialStore Function() credentials;
+
+  /// Creates the device keys, inside the isolate (SEC-001).
+  final DeviceKeys Function() deviceKeys;
+
+  /// Creates the platform attestation, inside the isolate (SEC-002).
+  final Attestation Function() attestation;
 
   /// Downloads at once (SYN-010).
   final int parallelism;
@@ -249,6 +259,8 @@ Future<void> _main((SyncWorkerConfig, SendPort) args) async {
     api: api,
     downloader: Downloader(client, parallelism: config.parallelism),
     credentials: config.credentials(),
+    keys: config.deviceKeys(),
+    attestation: config.attestation(),
   );
   final outbox = TelemetryOutbox(config.storeRoot);
   final commands = ReceivePort();

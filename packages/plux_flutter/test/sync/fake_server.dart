@@ -237,6 +237,9 @@ final class FakePluxServer {
   /// Devices registered.
   int registrations = 0;
 
+  /// Registration challenges issued.
+  int challenges = 0;
+
   /// Telemetry events received, in the order they arrived.
   final List<Map<String, Object?>> events = [];
 
@@ -348,11 +351,7 @@ final class FakePluxServer {
       final body = jsonDecode(
         utf8.decode(gzipped ? gzip.decode(raw) : raw),
       ) as Map<String, Object?>;
-      final out = await _rpc(
-        req.uri.path,
-        body,
-        req.headers.value('authorization'),
-      );
+      final out = await _rpc(req.uri.path, body, req.headers);
       res.statusCode = out.$1;
       res.headers.contentType = ContentType.json;
       final text = jsonEncode(out.$2);
@@ -412,19 +411,37 @@ final class FakePluxServer {
   Future<(int, Map<String, Object?>)> _rpc(
     String path,
     Map<String, Object?> body,
-    String? auth,
+    HttpHeaders headers,
   ) async {
+    // As the server does: a device token is a DPoP token, and a request
+    // with it carries a proof (the fake does not check the signature).
+    final auth = headers.value('authorization');
+    final authed =
+        auth != null &&
+        auth.startsWith('DPoP plux_dat_') &&
+        headers.value('dpop') != null;
     switch (path) {
-      case '/plux.v1.DeviceService/RegisterDevice':
+      case '/plux.v1.DeviceService/CreateRegistrationChallenge':
+        challenges++;
+        return (
+          200,
+          {
+            'challenge': base64.encode(List.filled(32, challenges)),
+            'expiresAt': '2100-01-01T00:00:00Z',
+          },
+        );
+      case '/plux.v1.DeviceService/RegisterAttestedDevice':
         registrations++;
         return (
           200,
           {
             'device': {'id': 'dev_$registrations'},
-            'deviceSecret': 'plux_dsec_$registrations',
           },
         );
-      case '/plux.v1.TokenService/IssueDeviceToken':
+      case '/plux.v1.TokenService/RefreshDeviceToken':
+        if (auth != null || headers.value('dpop') == null) {
+          return (401, {'code': 'unauthenticated', 'message': 'no proof'});
+        }
         if (forgetDevices) {
           forgetDevices = false;
           return (
@@ -432,11 +449,18 @@ final class FakePluxServer {
             {'code': 'unauthenticated', 'message': 'unknown device'},
           );
         }
-        return (200, {'accessToken': 'plux_dat_${body['deviceId']}'});
+        return (
+          200,
+          {
+            'accessToken': 'plux_dat_${body['deviceId']}',
+            'expiresAt': '2100-01-01T00:00:00Z',
+            'tokenType': 'DPoP',
+          },
+        );
       case '/plux.v1.DeviceService/ReportInstalled':
         return (200, <String, Object?>{});
       case '/plux.v1.TelemetryService/IngestEvents':
-        if (auth == null || !auth.startsWith('Bearer plux_dat_')) {
+        if (!authed) {
           return (401, {'code': 'unauthenticated', 'message': 'no token'});
         }
         final batch = (body['events']! as List<Object?>)
@@ -444,7 +468,7 @@ final class FakePluxServer {
         events.addAll(batch);
         return (200, {'accepted': batch.length});
       case '/plux.v1.ManifestService/GetManifest':
-        if (auth == null || !auth.startsWith('Bearer plux_dat_')) {
+        if (!authed) {
           return (401, {'code': 'unauthenticated', 'message': 'no token'});
         }
         if (release == null) {

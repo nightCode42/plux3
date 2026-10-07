@@ -12,6 +12,7 @@ import 'package:plux_flutter/src/sync/sync_worker.dart';
 import 'package:plux_flutter/src/verify/bundle_verifier.dart';
 
 import '../store/store_test_support.dart';
+import 'fake_device.dart';
 import 'fake_server.dart';
 
 bool _all(String _) => true;
@@ -32,6 +33,8 @@ void main() {
         endpoint: server.endpoint,
         httpClient: http.Client.new,
         credentials: MemoryCredentialStore.new,
+        deviceKeys: FakeDeviceKeys.new,
+        attestation: FakeAttestation.new,
         sync: SyncConfig(
           appId: FakePluxServer.app,
           environment: FakePluxServer.environment,

@@ -204,6 +204,7 @@ final class PluxConfig {
     this.container,
     this.parentContainer,
     this.hostBuild = '',
+    this.playIntegrityCloudProjectNumber,
     this.storageDirectory,
     this.httpClient,
     this.webSocketClient,
@@ -295,6 +296,11 @@ final class PluxConfig {
   /// The host app's build, reported at registration; at most 64 ASCII
   /// characters, the server's limit.
   final String hostBuild;
+
+  /// The Google Cloud project number Play Integrity standard requests are
+  /// made under (SEC-003); required on Android release builds, ignored
+  /// elsewhere.
+  final int? playIntegrityCloudProjectNumber;
 
   /// Where the release store lives; the platform's non-backed-up app
   /// storage when null.

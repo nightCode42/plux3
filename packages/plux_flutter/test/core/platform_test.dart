@@ -38,17 +38,26 @@ void main() {
   );
 
   test(
-    'the device secret is stored and read through the platform [SEC-092]',
+    'the device credential is stored and read through the platform [SEC-092]',
     () async {
       const store = PlatformCredentialStore('device.app.production');
       expect(await store.read(), isNull);
-      await store.write(const DeviceCredential('d1', 'plux_dsec_x'));
+      await store.write(const DeviceCredential('d1', 'jkt-x'));
       expect(jsonDecode(secrets['device.app.production']!), {
+        'deviceId': 'd1',
+        'jkt': 'jkt-x',
+      });
+      final back = await store.read();
+      expect((back!.deviceId, back.jkt), ('d1', 'jkt-x'));
+      secrets['device.app.production'] = jsonEncode({
         'deviceId': 'd1',
         'secret': 'plux_dsec_x',
       });
-      final back = await store.read();
-      expect((back!.deviceId, back.secret), ('d1', 'plux_dsec_x'));
+      expect(
+        await store.read(),
+        isNull,
+        reason: 'a credential with a secret and no key is from before DPoP',
+      );
       secrets['device.app.production'] = 'not json';
       expect(
         await store.read(),

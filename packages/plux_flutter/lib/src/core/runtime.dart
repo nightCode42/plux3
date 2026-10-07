@@ -56,6 +56,8 @@ import 'package:plux_flutter/src/render/renderer.dart';
 import 'package:plux_flutter/src/runtime_info.dart';
 import 'package:plux_flutter/src/schema/limit_values.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
+import 'package:plux_flutter/src/security/attestation.dart';
+import 'package:plux_flutter/src/security/device_keys.dart';
 import 'package:plux_flutter/src/state/persistence.dart';
 import 'package:plux_flutter/src/state/providers.dart';
 import 'package:plux_flutter/src/store/baseline.dart';
@@ -94,6 +96,8 @@ final class RuntimeOverrides {
   /// Creates overrides.
   const RuntimeOverrides({
     this.credentials,
+    this.deviceKeys,
+    this.attestation,
     this.baseline,
     this.healthyAfter = const Duration(seconds: 10),
     this.clock,
@@ -103,6 +107,13 @@ final class RuntimeOverrides {
 
   /// Creates the credential store on the sync isolate.
   final CredentialStore Function()? credentials;
+
+  /// Creates the device keys on the sync isolate; the platform's when null.
+  final DeviceKeys Function()? deviceKeys;
+
+  /// Creates the platform attestation on the sync isolate; the platform's
+  /// when null.
+  final Attestation Function()? attestation;
 
   /// Reads the baseline on the sync isolate.
   final BaselineReader? baseline;
@@ -183,6 +194,8 @@ final class PluxRuntime with WidgetsBindingObserver {
           endpoint: config.endpoint,
           httpClient: config.httpClient ?? platformHttpClient,
           credentials: credentials,
+          deviceKeys: overrides.deviceKeys ?? PlatformDeviceKeys.new,
+          attestation: overrides.attestation ?? _platformAttestation(config),
           parallelism: config.downloadParallelism,
           baseline: overrides.baseline,
           rootIsolateToken: RootIsolateToken.instance,
@@ -1111,6 +1124,15 @@ final class PluxRuntime with WidgetsBindingObserver {
       return const [];
     }
   }
+
+  /// The platform's attestation, created on the sync isolate. This is the
+  /// one place `PlatformAttestation` is constructed, from the app, the
+  /// environment, `playIntegrityCloudProjectNumber` and `hostBuild`.
+  static Attestation Function() _platformAttestation(PluxConfig c) =>
+      () => throw const PluxException(
+        PluxErrorCode.attestationUnavailable,
+        'no platform attestation is wired into this runtime',
+      );
 
   static CredentialStore Function() _platformCredentials(PluxConfig c) {
     final name = 'device.${_safe(c.appId)}.${_safe(c.environment)}'

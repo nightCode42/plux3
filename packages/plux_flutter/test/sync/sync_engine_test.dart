@@ -21,6 +21,7 @@ import 'package:plux_flutter/src/sync/sync_event.dart';
 import 'package:plux_flutter/src/verify/bundle_verifier.dart';
 
 import '../store/store_test_support.dart';
+import 'fake_device.dart';
 import 'fake_server.dart';
 
 void main() {
@@ -44,6 +45,7 @@ void main() {
   late http.Client client;
   late List<Duration> sleeps;
   late MemoryCredentialStore credentials;
+  late FakeDeviceKeys keys;
   var now = DateTime.utc(2026, 9, 28, 12);
 
   setUp(() async {
@@ -52,6 +54,7 @@ void main() {
     client = http.Client();
     sleeps = [];
     credentials = MemoryCredentialStore();
+    keys = FakeDeviceKeys();
     now = DateTime.utc(2026, 9, 28, 12);
   });
   tearDown(() async {
@@ -88,6 +91,8 @@ void main() {
           random: Random(1),
         ),
         credentials: credentials,
+        keys: keys,
+        attestation: FakeAttestation(),
         clock: () => now,
       );
 
@@ -127,7 +132,9 @@ void main() {
     store.activate();
     expect(checkComplete(root), 10);
     expect(server.registrations, 1);
-    expect(await credentials.read(), isNotNull);
+    final credential = await credentials.read();
+    expect(credential!.deviceId, 'dev_1');
+    expect(credential.jkt, keys.stored.values.single.publicKey.thumbprint);
   });
 
   test('an asset file that does not match its signed hash fails the sync, '
@@ -412,6 +419,8 @@ void main() {
     final (r, _) = await sync();
     expect(r.outcome, SyncOutcome.upToDate);
     expect(server.registrations, 2);
+    expect(keys.created, 2, reason: 'a new key for the new registration');
+    expect((await credentials.read())!.deviceId, 'dev_2');
   });
 
   test(
