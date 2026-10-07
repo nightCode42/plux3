@@ -110,11 +110,11 @@ func explicitTLV(number uint32, content []byte) []byte {
 func derLength(n int) []byte {
 	switch {
 	case n < 0x80:
-		return []byte{byte(n)}
+		return []byte{byte(n)} //nolint:gosec // G115: n < 0x80 on this branch
 	case n < 0x100:
 		return []byte{0x81, byte(n)}
 	default:
-		return []byte{0x82, byte(n >> 8), byte(n)}
+		return []byte{0x82, byte(n >> 8), byte(n)} //nolint:gosec // G115: test lengths stay below 0x10000
 	}
 }
 

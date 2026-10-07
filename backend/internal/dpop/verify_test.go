@@ -42,11 +42,12 @@ func b64(b []byte) string { return base64.RawURLEncoding.EncodeToString(b) }
 
 // jwkOf returns the public JWK members of a P-256 key.
 func jwkOf(pub *ecdsa.PublicKey) map[string]any {
+	point, _ := pub.Bytes()
 	return map[string]any{
 		"kty": "EC",
 		"crv": "P-256",
-		"x":   b64(pub.X.FillBytes(make([]byte, 32))),
-		"y":   b64(pub.Y.FillBytes(make([]byte, 32))),
+		"x":   b64(point[1:33]),
+		"y":   b64(point[33:]),
 	}
 }
 
@@ -202,7 +203,8 @@ func TestVerifyRejects(t *testing.T) {
 		{name: "jwk null", check: "jwk", edit: func(h, _ map[string]any) { h["jwk"] = nil }},
 		{name: "jwk private", check: "jwk", edit: func(h, _ map[string]any) {
 			j := maps.Clone(validJWK)
-			j["d"] = b64(key.D.FillBytes(make([]byte, 32)))
+			d, _ := key.Bytes()
+			j["d"] = b64(d)
 			h["jwk"] = j
 		}},
 		{name: "jwk P-384", check: "jwk", edit: func(h, _ map[string]any) {
@@ -427,7 +429,7 @@ func TestNormaliseURL(t *testing.T) {
 		{in: "https://api.example.com", want: "https://api.example.com"},
 		{in: "https://api.example.com/", want: "https://api.example.com/"},
 		{in: "https://api.example.com/a%2Fb", want: "https://api.example.com/a%2Fb"},
-		{in: "https://user:pw@api.example.com/v1", want: "https://api.example.com/v1"},
+		{in: "https://user:pw@api.example.com/v1", want: "https://api.example.com/v1"}, //nolint:gosec // G101: a test URL
 		{in: "https://[::1]:443/v1", want: "https://[::1]/v1"},
 		{in: "https://[::1]:8080/v1", want: "https://[::1]:8080/v1"},
 		{in: "/v1/token", bad: true},

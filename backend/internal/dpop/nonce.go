@@ -55,7 +55,7 @@ func (n *Nonces) epoch() uint64 {
 	if ns < 0 {
 		return 0
 	}
-	return uint64(ns / int64(n.rotation))
+	return uint64(ns / int64(n.rotation)) //nolint:gosec // G115: ns is non-negative here
 }
 
 // mac returns the truncated MAC of an epoch.

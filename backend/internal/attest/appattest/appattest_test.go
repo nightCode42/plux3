@@ -42,14 +42,14 @@ func cborBytes(v any) []byte {
 		case n < 256:
 			return []byte{major<<5 | 24, byte(n)}
 		case n < 65536:
-			return binary.BigEndian.AppendUint16([]byte{major<<5 | 25}, uint16(n))
+			return binary.BigEndian.AppendUint16([]byte{major<<5 | 25}, uint16(n)) //nolint:gosec // G115: n < 65536 on this branch
 		default:
-			return binary.BigEndian.AppendUint32([]byte{major<<5 | 26}, uint32(n))
+			return binary.BigEndian.AppendUint32([]byte{major<<5 | 26}, uint32(n)) //nolint:gosec // G115: test values stay below 2^32
 		}
 	}
 	switch x := v.(type) {
 	case int:
-		return head(0, uint64(x))
+		return head(0, uint64(x)) //nolint:gosec // G115: tests encode non-negative integers
 	case []byte:
 		return append(head(2, uint64(len(x))), x...)
 	case string:
@@ -137,7 +137,6 @@ type attestation struct {
 	counter      uint32
 	aaguid       []byte
 	credID       []byte
-	keyID        []byte
 	nonceIn      []byte
 	fmtName      string
 	dropField    string
@@ -185,7 +184,7 @@ func (a attestation) build(t *testing.T, p pki) vector {
 	authData = append(authData, 0x40)
 	authData = binary.BigEndian.AppendUint32(authData, a.counter)
 	authData = append(authData, aaguid...)
-	authData = binary.BigEndian.AppendUint16(authData, uint16(len(credID)))
+	authData = binary.BigEndian.AppendUint16(authData, uint16(len(credID))) //nolint:gosec // G115: a credential ID is 32 bytes
 	authData = append(authData, credID...)
 	authData = append(authData, 0xa0)
 

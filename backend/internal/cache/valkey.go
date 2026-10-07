@@ -99,10 +99,19 @@ func NewValkey(rawURL string) (*Valkey, error) {
 
 // dialTCP opens a TCP connection, with TLS 1.2 or later when secure.
 func dialTCP(ctx context.Context, secure bool, dialer *net.Dialer, addr string) (net.Conn, error) {
+	var (
+		c   net.Conn
+		err error
+	)
 	if secure {
-		return (&tls.Dialer{NetDialer: dialer, Config: &tls.Config{MinVersion: tls.VersionTLS12}}).DialContext(ctx, "tcp", addr)
+		c, err = (&tls.Dialer{NetDialer: dialer, Config: &tls.Config{MinVersion: tls.VersionTLS12}}).DialContext(ctx, "tcp", addr)
+	} else {
+		c, err = dialer.DialContext(ctx, "tcp", addr)
 	}
-	return dialer.DialContext(ctx, "tcp", addr)
+	if err != nil {
+		return nil, fmt.Errorf("cache: dial: %w", err)
+	}
+	return c, nil
 }
 
 // get returns a pooled connection, opening one when the pool is empty.
