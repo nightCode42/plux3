@@ -13,11 +13,10 @@ import (
 	"github.com/go-jose/go-jose/v4"
 
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
+	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 )
 
 const (
-	// maxTokenBytes bounds the token size accepted before any parsing.
-	maxTokenBytes = 16 << 10
 	// maxClockSkew is how far in the future a verdict timestamp may lie.
 	maxClockSkew = 60 * time.Second
 	// recognised is the only acceptable app recognition verdict.
@@ -43,8 +42,20 @@ type Expect struct {
 type Verifier struct {
 	// Keys are the Play Console decryption and verification keys.
 	Keys Keys
+	// MaxTokenBytes bounds the token size accepted before any parsing; zero
+	// means the registry default, attest.playIntegrityTokenBytes (LIM-001).
+	MaxTokenBytes int64
 	// Now returns the current time; it is injected for deterministic tests.
 	Now func() time.Time
+}
+
+// maxTokenBytes returns the effective token size bound.
+func (v *Verifier) maxTokenBytes() int64 {
+	if v.MaxTokenBytes > 0 {
+		return v.MaxTokenBytes
+	}
+	def, _ := limits.Lookup(limits.AttestPlayIntegrityTokenBytes)
+	return def.Default
 }
 
 // Verify decrypts the token, verifies its signature and checks the verdict
@@ -57,7 +68,7 @@ func (v *Verifier) Verify(token string, e Expect) (Verdict, error) {
 	if e.PackageName == "" || e.RequestHash == "" || e.MaxAge <= 0 {
 		return Verdict{}, fail("expectation is incomplete")
 	}
-	if len(token) > maxTokenBytes {
+	if int64(len(token)) > v.maxTokenBytes() {
 		return Verdict{}, fail("token is too large")
 	}
 	payload, err := v.open(token)

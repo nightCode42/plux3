@@ -18,6 +18,7 @@ import (
 	"github.com/go-jose/go-jose/v4"
 
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
+	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 )
 
 const (
@@ -168,7 +169,7 @@ func TestVerifyAccepts(t *testing.T) {
 
 	t.Run("jti of 64 characters", func(t *testing.T) {
 		c := goodClaims()
-		c["jti"] = strings.Repeat("j", 64)
+		c["jti"] = strings.Repeat("j", int(bound(0, limits.DPOPJtiBytes)))
 		if _, err := testVerifier().Verify(signRaw(t, key, goodHeader(key), c), testExpect()); err != nil {
 			t.Fatal(err)
 		}
@@ -245,7 +246,7 @@ func TestVerifyRejects(t *testing.T) {
 		{name: "iat huge", check: "iat", edit: func(_, c map[string]any) { c["iat"] = 1e300 }},
 		{name: "jti missing", check: "jti", edit: func(_, c map[string]any) { delete(c, "jti") }},
 		{name: "jti empty", check: "jti", edit: func(_, c map[string]any) { c["jti"] = "" }},
-		{name: "jti too long", check: "jti", edit: func(_, c map[string]any) { c["jti"] = strings.Repeat("j", 65) }},
+		{name: "jti too long", check: "jti", edit: func(_, c map[string]any) { c["jti"] = strings.Repeat("j", int(bound(0, limits.DPOPJtiBytes))+1) }},
 		{name: "ath missing", check: "ath", expect: func(e *Expect) { e.AccessToken = "tok" }},
 		{name: "ath wrong", check: "ath", expect: func(e *Expect) { e.AccessToken = "tok" }, edit: func(_, c map[string]any) { c["ath"] = athOf("other") }},
 		{name: "ath unexpected", check: "ath", edit: func(_, c map[string]any) { c["ath"] = athOf("tok") }},
@@ -297,7 +298,7 @@ func TestVerifyRejectsMalformed(t *testing.T) {
 		{"json serialisation", string(jsonForm), "format"},
 		{"payload tampered", tampered, "signature"},
 		{"signature truncated", shortSig, "signature"},
-		{"size", strings.Repeat("a", maxProofSize+1), "size"},
+		{"size", strings.Repeat("a", int(bound(0, limits.DPOPProofBytes))+1), "size"},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -310,7 +311,7 @@ func TestVerifyRejectsMalformed(t *testing.T) {
 	}
 
 	t.Run("exactly the size limit passes the size check", func(t *testing.T) {
-		_, err := testVerifier().Verify(strings.Repeat("a", maxProofSize), testExpect())
+		_, err := testVerifier().Verify(strings.Repeat("a", int(bound(0, limits.DPOPProofBytes))), testExpect())
 		if err == nil || strings.Contains(err.Error(), `"size"`) {
 			t.Fatalf("error = %v, want a failure other than size", err)
 		}
@@ -558,5 +559,40 @@ func FuzzVerify(f *testing.F) {
 	v := testVerifier()
 	f.Fuzz(func(_ *testing.T, proof string) {
 		_, _ = v.Verify(proof, testExpect())
+	})
+}
+
+// Verifies: SEC-021, LIM-001.
+func TestVerifyConfiguredBounds(t *testing.T) {
+	key := newKey(t)
+	proof := signRaw(t, key, goodHeader(key), goodClaims())
+	jtiLen := int64(len(goodClaims()["jti"].(string)))
+
+	t.Run("proof size", func(t *testing.T) {
+		v := testVerifier()
+		v.MaxProofBytes = int64(len(proof)) - 1
+		_, err := v.Verify(proof, testExpect())
+		wantCode(t, err, plxerr.DPoPProofInvalid)
+		if !strings.Contains(err.Error(), `"size"`) {
+			t.Fatalf("error = %v, want check size", err)
+		}
+		v.MaxProofBytes = int64(len(proof))
+		if _, err := v.Verify(proof, testExpect()); err != nil {
+			t.Fatalf("a proof at the configured bound: %v", err)
+		}
+	})
+
+	t.Run("jti length", func(t *testing.T) {
+		v := testVerifier()
+		v.MaxJTIBytes = jtiLen - 1
+		_, err := v.Verify(proof, testExpect())
+		wantCode(t, err, plxerr.DPoPProofInvalid)
+		if !strings.Contains(err.Error(), `"jti"`) {
+			t.Fatalf("error = %v, want check jti", err)
+		}
+		v.MaxJTIBytes = jtiLen
+		if _, err := v.Verify(proof, testExpect()); err != nil {
+			t.Fatalf("a jti at the configured bound: %v", err)
+		}
 	})
 }

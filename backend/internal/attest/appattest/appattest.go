@@ -18,11 +18,8 @@ import (
 
 	"github.com/nightCode42/plux3/backend/internal/cbor"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
+	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 )
-
-// maxInput bounds every attestation object and assertion before it is
-// parsed.
-const maxInput = 64 << 10
 
 // Layout of the authenticator data (WebAuthn §6.1, as Apple uses it).
 const (
@@ -87,6 +84,19 @@ type Verifier struct {
 	Roots *x509.CertPool
 	// Now returns the time at which certificates must be valid.
 	Now func() time.Time
+	// MaxInputBytes bounds an attestation object before it is parsed; zero
+	// means the registry default, attest.appAttestObjectBytes (LIM-001).
+	MaxInputBytes int64
+}
+
+// maxInput resolves a configured input bound: zero or less means the
+// registry default, attest.appAttestObjectBytes (LIM-001).
+func maxInput(configured int64) int64 {
+	if configured > 0 {
+		return configured
+	}
+	def, _ := limits.Lookup(limits.AttestAppAttestObjectBytes)
+	return def.Default
 }
 
 // DefaultRoots returns a pool holding the embedded Apple App Attestation
@@ -127,7 +137,7 @@ func fail(check string) error {
 // raw 32 bytes of the key identifier). appID is the team and bundle
 // identifier, "TEAMID.com.example.app".
 func (v *Verifier) VerifyAttestation(object, keyID []byte, clientDataHash [32]byte, appID string, env Environment) (Attestation, error) {
-	if len(object) == 0 || len(object) > maxInput {
+	if len(object) == 0 || int64(len(object)) > maxInput(v.MaxInputBytes) {
 		return Attestation{}, fail("the attestation object has an invalid size")
 	}
 	want, ok := env.aaguid()
@@ -310,12 +320,13 @@ func checkRPID(authData []byte, appID string) error {
 // VerifyAssertion verifies an assertion made with the attested key pub
 // and returns its counter. The counter must exceed lastCounter; the
 // caller must store the returned value with a compare-and-set so a
-// replayed assertion is refused.
-func VerifyAssertion(assertion []byte, pub *ecdsa.PublicKey, clientDataHash [32]byte, appID string, lastCounter uint32) (uint32, error) {
+// replayed assertion is refused. maxBytes bounds the assertion before it is
+// parsed; zero means the registry default, attest.appAttestObjectBytes.
+func VerifyAssertion(assertion []byte, pub *ecdsa.PublicKey, clientDataHash [32]byte, appID string, lastCounter uint32, maxBytes int64) (uint32, error) {
 	if pub == nil {
 		return 0, fail("the public key is missing")
 	}
-	if len(assertion) == 0 || len(assertion) > maxInput {
+	if len(assertion) == 0 || int64(len(assertion)) > maxInput(maxBytes) {
 		return 0, fail("the assertion has an invalid size")
 	}
 	v, used, err := cbor.Decode(assertion)
