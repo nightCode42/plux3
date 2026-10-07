@@ -58,6 +58,7 @@ import 'package:plux_flutter/src/schema/limit_values.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
 import 'package:plux_flutter/src/security/attestation.dart';
 import 'package:plux_flutter/src/security/device_keys.dart';
+import 'package:plux_flutter/src/security/platform_attestation.dart';
 import 'package:plux_flutter/src/state/persistence.dart';
 import 'package:plux_flutter/src/state/providers.dart';
 import 'package:plux_flutter/src/store/baseline.dart';
@@ -1128,11 +1129,20 @@ final class PluxRuntime with WidgetsBindingObserver {
   /// The platform's attestation, created on the sync isolate. This is the
   /// one place `PlatformAttestation` is constructed, from the app, the
   /// environment, `playIntegrityCloudProjectNumber` and `hostBuild`.
-  static Attestation Function() _platformAttestation(PluxConfig c) =>
-      () => throw const PluxException(
-        PluxErrorCode.attestationUnavailable,
-        'no platform attestation is wired into this runtime',
-      );
+  static Attestation Function() _platformAttestation(PluxConfig c) {
+    // Copied out of the config: the closure runs on the sync isolate and
+    // must not capture PluxConfig, which is not sendable.
+    final appId = c.appId;
+    final environment = c.environment;
+    final cloudProjectNumber = c.playIntegrityCloudProjectNumber;
+    final buildId = c.hostBuild;
+    return () => PlatformAttestation(
+      appId: appId,
+      environment: environment,
+      cloudProjectNumber: cloudProjectNumber,
+      buildId: buildId,
+    );
+  }
 
   static CredentialStore Function() _platformCredentials(PluxConfig c) {
     final name = 'device.${_safe(c.appId)}.${_safe(c.environment)}'
