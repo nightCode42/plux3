@@ -5,6 +5,7 @@ package device
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"time"
 
 	"github.com/nightCode42/plux3/backend/internal/attest/appattest"
@@ -31,13 +32,31 @@ type AppAttestor interface {
 	VerifyAttestation(object, keyID []byte, clientDataHash [32]byte, appID string, env appattest.Environment) (appattest.Attestation, error)
 }
 
-// Attestors bundles the verifiers a registration uses. A nil verifier
-// makes its platform unavailable: registrations that need it fail with
-// PLX-6009 rather than skipping the check.
+// AppAssertor verifies an App Attest assertion, the proof of possession
+// an iOS device adds to every token refresh (SEC-025). It returns the
+// assertion's counter; AppAssertionChecker is the production one.
+type AppAssertor interface {
+	VerifyAssertion(assertion []byte, pub *ecdsa.PublicKey, clientDataHash [32]byte, appID string, lastCounter uint32) (uint32, error)
+}
+
+// AppAssertionChecker verifies assertions with appattest.VerifyAssertion
+// and the registry's size bound.
+type AppAssertionChecker struct{}
+
+// VerifyAssertion checks an assertion made with the attested key.
+func (AppAssertionChecker) VerifyAssertion(assertion []byte, pub *ecdsa.PublicKey, clientDataHash [32]byte, appID string, lastCounter uint32) (uint32, error) {
+	return appattest.VerifyAssertion(assertion, pub, clientDataHash, appID, lastCounter, 0) //nolint:wrapcheck // a domain error
+}
+
+// Attestors bundles the verifiers a registration or a refresh uses. A nil
+// verifier makes its platform unavailable: requests that need it fail
+// with PLX-6009 rather than skipping the check.
 type Attestors struct {
 	KeyAttestation KeyAttestor
 	PlayIntegrity  IntegrityChecker
 	AppAttest      AppAttestor
+	// AppAssertions verifies the assertions of iOS refreshes.
+	AppAssertions AppAssertor
 }
 
 // PlayIntegrityChecker opens Play Integrity tokens with the keys it is

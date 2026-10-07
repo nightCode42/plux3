@@ -17,6 +17,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/auth"
 	"github.com/nightCode42/plux3/backend/internal/cache"
 	"github.com/nightCode42/plux3/backend/internal/device"
+	"github.com/nightCode42/plux3/backend/internal/device/devicetest"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/schema/uuid7"
 	"github.com/nightCode42/plux3/backend/internal/signing"
@@ -113,71 +114,64 @@ func code(err error) plxerr.Code {
 	return c
 }
 
-// Verifies: GOV-010.
-// Registration, credentials and tokens: a secret works for its own
-// device only, tokens expire, and nothing but the hash is stored.
-func TestRegistrationAndTokens(t *testing.T) {
-	t.Parallel()
-	f := newFixture(t)
-	ctx := context.Background()
-	for _, r := range []device.Registration{
-		{AppID: "nope", Environment: "production", Platform: "ios"},
-		{AppID: f.app, Environment: "production", Platform: "toaster"},
-		{AppID: f.app, Environment: "production", Platform: "ios", Build: strings.Repeat("x", 65)},
-	} {
-		if _, _, err := f.svc.Register(ctx, r); code(err) != plxerr.InvalidFormat {
-			t.Errorf("%+v: %v", r, err)
-		}
-	}
-	if _, _, err := f.svc.Register(ctx, device.Registration{AppID: f.app, Environment: "moon", Platform: "ios"}); code(err) != plxerr.ResourceNotFound {
-		t.Errorf("an unknown environment: %v", err)
-	}
-	d, secret, err := f.svc.Register(ctx, device.Registration{AppID: f.app, Environment: "production", Platform: "ios", OSVersion: "18", RuntimeVersion: "1.2.3-beta"})
-	if err != nil || !strings.HasPrefix(secret, "plux_dsec_") || d.EnvironmentID != f.envs["production"] || d.AssuranceLevel != "none" {
-		t.Fatalf("Register: %+v %v", d, err)
-	}
-	other, otherSecret, err := f.svc.Register(ctx, device.Registration{AppID: f.app, Environment: "staging", Platform: "web"})
+// registerDevelopment registers a device with development evidence in a
+// non-production environment, with the runtime version and host build
+// given.
+func (r *rig) registerDevelopment(t *testing.T, env, platform, runtime, build string) device.Device {
+	t.Helper()
+	_, jwk := devicetest.NewKey(t)
+	d, err := r.svc.RegisterAttested(context.Background(), device.AttestedRegistration{
+		AppID: r.app, Environment: env, Platform: platform, OSVersion: "18", RuntimeVersion: runtime, Build: build,
+		Challenge: r.challenge(t, env), DPoPKeyJWK: jwk, KeyStorage: device.KeyStorageSoftware, Evidence: developmentEvidence(),
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, c := range []struct{ id, secret string }{
-		{d.ID, otherSecret}, {d.ID, "plux_dsec_nope"}, {"nope", secret}, {d.ID, "nope"}, {"01a0c450-6c00-7002-8000-000000003dde", secret},
+	return d
+}
+
+// Verifies: GOV-010, SEC-001.
+// A registration describes the device within bounds, and people read the
+// devices of the apps they can read.
+func TestRegistrationAndPeopleReadDevices(t *testing.T) {
+	t.Parallel()
+	f := newRig(t)
+	ctx := context.Background()
+	_, jwk := devicetest.NewKey(t)
+	register := func(appID, env, platform, build string) error {
+		_, err := f.svc.RegisterAttested(ctx, device.AttestedRegistration{
+			AppID: appID, Environment: env, Platform: platform, Build: build, Challenge: f.challenge(t, "development"),
+			DPoPKeyJWK: jwk, KeyStorage: device.KeyStorageSoftware, Evidence: developmentEvidence(),
+		})
+		return err
+	}
+	for name, err := range map[string]error{
+		"an app that is not an identifier": register("nope", "development", "ios", ""),
+		"an unknown platform":              register(f.app, "development", "toaster", ""),
+		"a long build":                     register(f.app, "development", "ios", strings.Repeat("x", 65)),
 	} {
-		if _, err := f.svc.IssueToken(ctx, c.id, c.secret); code(err) != plxerr.AuthenticationRequired {
-			t.Errorf("IssueToken(%q): %v", c.id, err)
+		if code(err) != plxerr.InvalidFormat {
+			t.Errorf("%s: %v", name, err)
 		}
 	}
-	tok, err := f.svc.IssueToken(ctx, d.ID, secret)
-	if err != nil || !device.IsToken(tok.Value) {
-		t.Fatalf("IssueToken: %v", err)
+	if err := register(f.app, "moon", "ios", ""); code(err) != plxerr.ResourceNotFound {
+		t.Errorf("an unknown environment: %v", err)
 	}
-	id, err := f.svc.Authenticate(ctx, tok.Value)
-	if err != nil || id.DeviceID != d.ID || id.OrganizationID != f.org || id.AppID != f.app || id.EnvironmentID != f.envs["production"] {
-		t.Fatalf("Authenticate: %+v %v", id, err)
+	d := f.registerDevelopment(t, "development", "ios", "1.2.3-beta", "")
+	if d.EnvironmentID != f.envs["development"] || d.AssuranceLevel != "AL0" || d.DPoPJKT == "" {
+		t.Fatalf("RegisterAttested: %+v", d)
 	}
-	for _, bad := range []string{"nope", "plux_dat_nope", secret} {
-		if _, err := f.svc.Authenticate(ctx, bad); code(err) != plxerr.AuthenticationRequired {
-			t.Errorf("Authenticate(%q): %v", bad, err)
-		}
-	}
-	// Only hashes are stored.
+	other := f.registerDevelopment(t, "staging", "web", "", "")
+	// Only hashes of the old secrets remain, and an attested device has none.
 	if err := f.db.InTx(ctx, storage.Tenant{OrganizationID: f.org}, func(ctx context.Context, tx pgx.Tx) error {
 		var n int
-		err := tx.QueryRow(ctx, `SELECT count(*) FROM devices WHERE position($1::bytea in secret_hash) > 0`, []byte(secret)).Scan(&n)
+		err := tx.QueryRow(ctx, `SELECT count(*) FROM devices WHERE length(secret_hash) > 0`).Scan(&n)
 		if err == nil && n != 0 {
-			t.Error("a device secret is stored in the clear")
+			t.Errorf("%d attested devices hold a secret hash", n)
 		}
 		return err
 	}); err != nil {
 		t.Fatal(err)
-	}
-	// Tokens expire and are swept.
-	f.now = f.now.Add(device.TokenTTL + time.Second)
-	if _, err := f.svc.Authenticate(ctx, tok.Value); code(err) != plxerr.AuthenticationRequired {
-		t.Errorf("an expired token: %v", err)
-	}
-	if n, err := f.svc.ExpireTokens(ctx, f.org); err != nil || n != 1 {
-		t.Errorf("ExpireTokens: %d %v", n, err)
 	}
 	// People read devices of apps they can read.
 	got, err := f.svc.Get(ctx, f.owner, other.ID)
@@ -198,9 +192,9 @@ func TestRegistrationAndTokens(t *testing.T) {
 	if err != nil || len(page) != 1 || page[0].ID != d.ID {
 		t.Errorf("the second page: %+v %v", page, err)
 	}
-	prod, err := f.svc.List(ctx, f.owner, f.app, f.envs["production"], storage.Cursor{}, 10)
+	prod, err := f.svc.List(ctx, f.owner, f.app, f.envs["development"], storage.Cursor{}, 10)
 	if err != nil || len(prod) != 1 {
-		t.Errorf("List(production): %+v %v", prod, err)
+		t.Errorf("List(development): %+v %v", prod, err)
 	}
 	if _, err := f.svc.List(ctx, f.owner, f.app, "nope", storage.Cursor{}, 10); code(err) != plxerr.InvalidFormat {
 		t.Errorf("List(bad environment): %v", err)
@@ -215,27 +209,18 @@ func TestRegistrationAndTokens(t *testing.T) {
 // versions count against a release's minimum.
 func TestInstalledAndCompatibility(t *testing.T) {
 	t.Parallel()
-	f := newFixture(t)
+	f := newRig(t)
 	ctx := context.Background()
 	var ids []device.Identity
 	builds := map[string]string{"0.9.0": "1.0.0+1", "2.0": "1.0.0+2"}
 	for _, v := range []string{"0.9.0", "1.2.3-beta", "2.0", ""} {
-		d, secret, err := f.svc.Register(ctx, device.Registration{AppID: f.app, Environment: "production", Platform: "android", RuntimeVersion: v, Build: builds[v]})
-		if err != nil {
-			t.Fatal(err)
+		d := f.registerDevelopment(t, "development", "android", v, builds[v])
+		if d.Build != builds[v] {
+			t.Errorf("a device of build %q registered with build %q", builds[v], d.Build)
 		}
-		tok, err := f.svc.IssueToken(ctx, d.ID, secret)
-		if err != nil {
-			t.Fatal(err)
-		}
-		id, err := f.svc.Authenticate(ctx, tok.Value)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if id.HostBuild != builds[v] {
-			t.Errorf("the token of a device of build %q names build %q", builds[v], id.HostBuild)
-		}
-		ids = append(ids, id)
+		ids = append(ids, device.Identity{
+			DeviceID: d.ID, OrganizationID: f.org, AppID: f.app, EnvironmentID: d.EnvironmentID, HostBuild: d.Build,
+		})
 	}
 	sum := bytes.Repeat([]byte{1}, 32)
 	if err := f.svc.ReportInstalled(ctx, ids[0], 3, []device.Installed{{Key: "", SHA256: sum}, {Key: "loans", SHA256: sum}}); err != nil {

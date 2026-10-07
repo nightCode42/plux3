@@ -123,10 +123,12 @@ func (s *Service) environmentIsProduction(ctx context.Context, id pgtype.UUID) (
 	return production, nil
 }
 
-// Revoke withdraws a device's trust: its tokens are deleted and no new
-// one is issued (SEC-006). Revoking a revoked device changes nothing and
-// keeps the first reason. The revocation is audited in the same
-// transaction.
+// Revoke withdraws a device's trust: its tokens are deleted, no new one
+// is issued and every replica refuses the ones already out as soon as the
+// revocation reaches the shared cache (SEC-006). Revoking a revoked
+// device changes nothing and keeps the first reason, and publishes the
+// revocation again, so that a failed publication is mended by repeating
+// the call. The revocation is audited in the same transaction.
 func (s *Service) Revoke(ctx context.Context, p auth.Principal, deviceID, reason string) (Device, error) {
 	if s.audit == nil {
 		return Device{}, errors.New("device: revoking needs an audit log")
@@ -147,7 +149,9 @@ func (s *Service) Revoke(ctx context.Context, p auth.Principal, deviceID, reason
 	if err != nil {
 		return Device{}, err
 	}
-	s.tokens.clear()
+	if err := s.publishRevocation(ctx, d.DPoPJKT); err != nil {
+		return Device{}, err
+	}
 	return d, nil
 }
 
