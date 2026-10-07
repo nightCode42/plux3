@@ -19,6 +19,7 @@ import 'package:plux_flutter/src/store/release_store.dart';
 import 'package:plux_flutter/src/sync/sync_engine.dart';
 
 import '../support/entering.dart';
+import '../sync/fake_device.dart';
 import '../sync/fake_server.dart';
 
 /// Renders a page as its route, or throws when told to.
@@ -118,6 +119,8 @@ void main() {
       c,
       RuntimeOverrides(
         credentials: MemoryCredentialStore.new,
+        deviceKeys: FakeDeviceKeys.new,
+        attestation: FakeAttestation.new,
         baseline: _reader(files),
         healthyAfter: healthy,
       ),
@@ -191,7 +194,11 @@ void main() {
       final startup = await tester.runAsync(
         () => Plux.initializeWith(
           config(),
-          const RuntimeOverrides(credentials: MemoryCredentialStore.new),
+          const RuntimeOverrides(
+            credentials: MemoryCredentialStore.new,
+            deviceKeys: FakeDeviceKeys.new,
+            attestation: FakeAttestation.new,
+          ),
         ),
       );
       expect(startup!.sequence, 5, reason: '${startup.error} $errors');

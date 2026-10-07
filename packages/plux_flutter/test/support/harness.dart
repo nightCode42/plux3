@@ -13,6 +13,7 @@ import 'package:plux_flutter/src/render/renderer.dart';
 import 'package:plux_flutter/src/state/providers.dart';
 import 'package:plux_flutter/src/sync/sync_engine.dart';
 
+import '../sync/fake_device.dart';
 import '../sync/fake_server.dart';
 
 http.Client _client() => http.Client();
@@ -97,6 +98,8 @@ final class Harness {
       ),
       RuntimeOverrides(
         credentials: MemoryCredentialStore.new,
+        deviceKeys: FakeDeviceKeys.new,
+        attestation: FakeAttestation.new,
         baseline: _reader(baseline),
         healthyAfter: const Duration(hours: 1),
         secrets: () => secrets,

@@ -17,6 +17,7 @@ import 'package:plux_flutter/src/state/providers.dart';
 import 'package:plux_flutter/src/sync/sync_engine.dart';
 
 import '../support/entering.dart';
+import '../sync/fake_device.dart';
 import '../sync/fake_server.dart';
 
 final class _Renderer with AllowsEveryGuard implements PageRenderer {
@@ -100,6 +101,8 @@ void main() {
         ),
         RuntimeOverrides(
           credentials: MemoryCredentialStore.new,
+          deviceKeys: FakeDeviceKeys.new,
+          attestation: FakeAttestation.new,
           baseline: _reader(
             await server.baseline(5, goldens.bundles[app]!, {
               for (final MapEntry(:key, :value) in plugins.entries)

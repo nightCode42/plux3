@@ -13,6 +13,7 @@ import 'package:plux_flutter/src/telemetry/events.dart';
 import 'package:plux_flutter/src/telemetry/outbox.dart';
 import 'package:plux_flutter/src/telemetry/recorder.dart';
 
+import '../sync/fake_device.dart';
 import '../sync/fake_server.dart';
 
 /// A generator whose draws are given.
@@ -244,7 +245,7 @@ void main() {
     Future<TelemetryFlush> flush(TelemetryOutbox o, {int perRequest = 2}) =>
         o.flush(
           api: api,
-          token: () async => 'plux_dat_dev',
+          token: () async => fakeToken('plux_dat_dev'),
           appId: FakePluxServer.app,
           environment: 'production',
           perRequest: perRequest,
@@ -309,7 +310,7 @@ void main() {
       o.append([line(9)], 1 << 20);
       r = await o.flush(
         api: api,
-        token: () async => 'wrong',
+        token: () async => fakeToken('wrong'),
         appId: FakePluxServer.app,
         environment: 'production',
         perRequest: 10,

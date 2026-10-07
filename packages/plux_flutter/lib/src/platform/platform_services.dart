@@ -46,7 +46,11 @@ final class PlatformCredentialStore implements CredentialStore {
     if (v == null) return null;
     try {
       final j = jsonDecode(v) as Map<String, Object?>;
-      return DeviceCredential(j['deviceId']! as String, j['secret']! as String);
+      // A credential from before DPoP holds a secret and no key
+      // thumbprint: the device registers again.
+      final jkt = j['jkt'];
+      if (jkt is! String) return null;
+      return DeviceCredential(j['deviceId']! as String, jkt);
     } on Object {
       return null;
     }
@@ -56,7 +60,7 @@ final class PlatformCredentialStore implements CredentialStore {
   Future<void> write(DeviceCredential c) =>
       _channel.invokeMethod<void>('secretWrite', {
         'name': name,
-        'value': jsonEncode({'deviceId': c.deviceId, 'secret': c.secret}),
+        'value': jsonEncode({'deviceId': c.deviceId, 'jkt': c.jkt}),
       });
 
   @override

@@ -112,7 +112,7 @@ final class TelemetryOutbox {
   /// the rest for the next one.
   Future<TelemetryFlush> flush({
     required PluxApiClient api,
-    required Future<String> Function() token,
+    required Future<DeviceToken> Function() token,
     required String appId,
     required String environment,
     required int perRequest,
