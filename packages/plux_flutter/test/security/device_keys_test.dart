@@ -209,28 +209,28 @@ void main() {
         fail('expected a PluxException');
       }
 
-      test('PLUX_KEY_MISSING is attestationFailed', () async {
+      test('PLUX_KEY_MISSING is deviceKeyUnavailable', () async {
         final e = await failWith('PLUX_KEY_MISSING');
-        expect(e.code, PluxErrorCode.attestationFailed);
+        expect(e.code, PluxErrorCode.deviceKeyUnavailable);
         expect(e.details['platformCode'], 'PLUX_KEY_MISSING');
         expect(e.details['method'], 'keySign');
       });
 
-      test('PLUX_KEY_UNSUPPORTED is keyNotHardwareBacked', () async {
+      test('PLUX_KEY_UNSUPPORTED is deviceKeyUnavailable', () async {
         final e = await failWith('PLUX_KEY_UNSUPPORTED');
-        expect(e.code, PluxErrorCode.keyNotHardwareBacked);
+        expect(e.code, PluxErrorCode.deviceKeyUnavailable);
         expect(e.details['platformCode'], 'PLUX_KEY_UNSUPPORTED');
       });
 
-      test('PLUX_PLATFORM is attestationFailed', () async {
+      test('PLUX_PLATFORM is deviceKeyUnavailable', () async {
         final e = await failWith('PLUX_PLATFORM');
-        expect(e.code, PluxErrorCode.attestationFailed);
+        expect(e.code, PluxErrorCode.deviceKeyUnavailable);
         expect(e.details['platformCode'], 'PLUX_PLATFORM');
       });
 
       test('an unknown code fails closed and is not echoed', () async {
         final e = await failWith('SOMETHING_ELSE');
-        expect(e.code, PluxErrorCode.attestationFailed);
+        expect(e.code, PluxErrorCode.deviceKeyUnavailable);
         expect(e.details.containsKey('platformCode'), isFalse);
         expect(e.message, isNot(contains('Boom')));
       });
@@ -247,7 +247,7 @@ void main() {
         }
       });
 
-      test('a missing plugin is keyNotHardwareBacked', () async {
+      test('a missing plugin is deviceKeyUnavailable', () async {
         // No handler installed: the binding answers with MissingPluginException.
         messenger.setMockMethodCallHandler(_channel, null);
         await expectLater(
@@ -256,7 +256,7 @@ void main() {
             isA<PluxException>().having(
               (e) => e.code,
               'code',
-              PluxErrorCode.keyNotHardwareBacked,
+              PluxErrorCode.deviceKeyUnavailable,
             ),
           ),
         );
@@ -271,7 +271,7 @@ void main() {
               isA<PluxException>().having(
                 (e) => e.code,
                 'code',
-                PluxErrorCode.attestationFailed,
+                PluxErrorCode.deviceKeyUnavailable,
               ),
             ),
           );

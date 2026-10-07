@@ -178,13 +178,19 @@ String _alias(String kind, String appId, String environment) {
   return 'dev.plux.$kind.$hex';
 }
 
+/// The error codes of the platform side's contract.
+const _platformCodes = {
+  'PLUX_KEY_MISSING',
+  'PLUX_KEY_UNSUPPORTED',
+  'PLUX_PLATFORM',
+};
+
 /// [DeviceKeys] over the `dev.plux/runtime` platform channel.
 ///
-/// Platform failures become [PluxException]s: `PLUX_KEY_MISSING` and
-/// `PLUX_PLATFORM` are [PluxErrorCode.attestationFailed] (no key could be
-/// used), `PLUX_KEY_UNSUPPORTED` is [PluxErrorCode.keyNotHardwareBacked]
-/// (the platform cannot make this key). Any other failure and any malformed
-/// reply fail closed as [PluxErrorCode.attestationFailed]. Messages carry
+/// Platform failures become [PluxException]s with
+/// [PluxErrorCode.deviceKeyUnavailable] (PLX-6017): a missing or invalidated
+/// key, a key the platform cannot create, any other platform failure and any
+/// malformed reply fail closed, and the runtime registers again. Messages carry
 /// the platform's error code only, never key material.
 final class PlatformDeviceKeys implements DeviceKeys {
   /// Creates the platform-backed keys.
@@ -232,31 +238,23 @@ final class PlatformDeviceKeys implements DeviceKeys {
     try {
       return await _channel.invokeMethod<Object?>(method, args);
     } on PlatformException catch (e) {
-      throw switch (e.code) {
-        'PLUX_KEY_MISSING' => PluxException(
-          PluxErrorCode.attestationFailed,
-          'the platform has no key for the alias',
-          details: {'platformCode': e.code, 'method': method},
-        ),
-        'PLUX_KEY_UNSUPPORTED' => PluxException(
-          PluxErrorCode.keyNotHardwareBacked,
-          'the platform cannot create this key',
-          details: {'platformCode': e.code, 'method': method},
-        ),
-        'PLUX_PLATFORM' => PluxException(
-          PluxErrorCode.attestationFailed,
-          'the platform key operation failed',
-          details: {'platformCode': e.code, 'method': method},
-        ),
-        _ => PluxException(
-          PluxErrorCode.attestationFailed,
-          'the platform key operation failed with an unknown code',
-          details: {'method': method},
-        ),
-      };
+      throw PluxException(
+        PluxErrorCode.deviceKeyUnavailable,
+        switch (e.code) {
+          'PLUX_KEY_MISSING' => 'the platform has no key for the alias',
+          'PLUX_KEY_UNSUPPORTED' => 'the platform cannot create this key',
+          'PLUX_PLATFORM' => 'the platform key operation failed',
+          _ => 'the platform key operation failed with an unknown code',
+        },
+        // An unknown code is not echoed: only the contract's codes are.
+        details: {
+          if (_platformCodes.contains(e.code)) 'platformCode': e.code,
+          'method': method,
+        },
+      );
     } on MissingPluginException {
       throw PluxException(
-        PluxErrorCode.keyNotHardwareBacked,
+        PluxErrorCode.deviceKeyUnavailable,
         'the platform has no device key support',
         details: {'method': method},
       );
@@ -264,7 +262,7 @@ final class PlatformDeviceKeys implements DeviceKeys {
   }
 
   PluxException _malformed(String method) => PluxException(
-    PluxErrorCode.attestationFailed,
+    PluxErrorCode.deviceKeyUnavailable,
     'the platform answered $method with a malformed reply',
     details: {'method': method},
   );

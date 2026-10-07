@@ -1978,6 +1978,14 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Sign the user in again and use the new token.
 
+### PLX-6017
+
+`DEVICE_KEY_UNAVAILABLE` · error · Device key unavailable
+
+**Cause.** The device's key is missing, was invalidated (for example by a new biometric enrolment or a restore onto another device), or cannot be created on this platform (SEC-001).
+
+**Fix.** Nothing to do: the runtime creates a new key and registers the device again; where the platform cannot create the key, the feature that needs it is unavailable.
+
 ### PLX-6020
 
 `CERTIFICATE_PIN_MISMATCH` · error · Certificate pin mismatch

@@ -1,6 +1,6 @@
 # 0058. Encryption at rest and native AES-GCM
 
-- **Status:** Proposed (P6 plan §2.1 B15, supersedes P5's B6 for `strict` and `maximum`)
+- **Status:** Accepted (maintainer, 2026-10-07, P6 S0; P6 plan §2.1 B15, supersedes P5's B6 for `strict` and `maximum`)
 - **Date:** 2026-10-07
 - **Requirements:** `SEC-072`, `SEC-073`, `SEC-053`, `NFR-013`, `DB-002`
 

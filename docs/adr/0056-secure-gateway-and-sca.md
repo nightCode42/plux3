@@ -1,6 +1,6 @@
 # 0056. The secure gateway and strong customer authentication
 
-- **Status:** Proposed (P6 plan §2.1 B13, B17; §2.2 Q2)
+- **Status:** Accepted (maintainer, 2026-10-07, P6 S0; P6 plan §2.1 B13, B17; §2.2 Q2)
 - **Date:** 2026-10-07
 - **Requirements:** `SEC-026`–`SEC-028`, `SEC-030`–`SEC-032`, `SEC-105`, `SEC-106`, `NFR-025`
 

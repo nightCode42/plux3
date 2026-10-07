@@ -1,6 +1,6 @@
 # 0012. DPoP with hardware-backed keys plus platform attestation
 
-- **Status:** Proposed (P6 plan §2.1 B2, B4, B6–B9, B17, B18; §2.2 Q1)
+- **Status:** Accepted (maintainer, 2026-10-07, P6 S0; P6 plan §2.1 B2, B4, B6–B9, B17, B18; §2.2 Q1)
 - **Date:** 2026-10-07
 - **Requirements:** `SEC-001`–`SEC-009`, `SEC-020`–`SEC-029`, `SEC-056`, `NFR-012`, `NFR-025`
 

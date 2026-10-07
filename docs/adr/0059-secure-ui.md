@@ -1,6 +1,6 @@
 # 0059. Secure UI: secure widgets, secure pages, overlay filtering and inactivity lock
 
-- **Status:** Proposed (P6 plan §2.1 B19 (b), (e))
+- **Status:** Accepted (maintainer, 2026-10-07, P6 S0; P6 plan §2.1 B19 (b), (e))
 - **Date:** 2026-10-07
 - **Requirements:** `SEC-090`–`SEC-094`, `SCH-012`
 

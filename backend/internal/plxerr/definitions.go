@@ -1263,6 +1263,12 @@ var registry = []Definition{
 		"Sign the user in again and use the new token.", false,
 	},
 	{
+		DeviceKeyUnavailable, "DEVICE_KEY_UNAVAILABLE", SeverityError, "Device key unavailable",
+		"The device's key is missing, was invalidated (for example by a new biometric enrolment or a restore onto another device), or cannot be created on this platform (SEC-001).",
+		"Nothing to do: the runtime creates a new key and registers the device again; where the platform cannot create the key, the feature that needs it is unavailable.", false,
+	},
+
+	{
 		CertificatePinMismatch, "CERTIFICATE_PIN_MISMATCH", SeverityError, "Certificate pin mismatch",
 		"The server's certificate chain matches none of the pins the app carries, so the connection was refused (SEC-041).",
 		"Check the network for interception, or update the app if the server key was rotated.", false,

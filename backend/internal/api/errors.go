@@ -68,6 +68,7 @@ var codes = map[plxerr.Code]connect.Code{
 	plxerr.AttestationFailed:            connect.CodePermissionDenied,
 	plxerr.AssuranceInsufficient:        connect.CodePermissionDenied,
 	plxerr.KeyNotHardwareBacked:         connect.CodePermissionDenied,
+	plxerr.DeviceKeyUnavailable:         connect.CodeFailedPrecondition,
 	plxerr.DevProviderInProduction:      connect.CodePermissionDenied,
 	plxerr.RegistrationChallengeInvalid: connect.CodeInvalidArgument,
 	plxerr.DeviceRevoked:                connect.CodeUnauthenticated,

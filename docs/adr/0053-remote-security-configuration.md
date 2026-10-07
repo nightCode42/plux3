@@ -1,6 +1,6 @@
 # 0053. Remote security configuration: one settings source, versions and signed deltas
 
-- **Status:** Proposed (P6 plan §2.1 B5, B14; §2.2 Q2, Q3)
+- **Status:** Accepted (maintainer, 2026-10-07, P6 S0; P6 plan §2.1 B5, B14; §2.2 Q2, Q3)
 - **Date:** 2026-10-07
 - **Requirements:** `SEC-180`, `SEC-181`, `SEC-182`, `SEC-030`, `NFR-006`, `LIM-001`
 

@@ -1,6 +1,6 @@
 # 0054. Update metadata completed: root, targets, snapshot and timestamp
 
-- **Status:** Proposed (P6 plan §2.1 B11, B17)
+- **Status:** Accepted (maintainer, 2026-10-07, P6 S0; P6 plan §2.1 B11, B17)
 - **Date:** 2026-10-07
 - **Requirements:** `SEC-041`, `SEC-050`, `SEC-051`, `SEC-055`, `SEC-056`, `SEC-121`, `SEC-122`, `BND-000`
 

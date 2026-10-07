@@ -1,6 +1,6 @@
 # 0057. `plux_security`: runtime application self-protection
 
-- **Status:** Proposed (P6 plan §2.1 B18)
+- **Status:** Accepted (maintainer, 2026-10-07, P6 S0; P6 plan §2.1 B18)
 - **Date:** 2026-10-07
 - **Requirements:** `SEC-070`, `SEC-071`, `SEC-007`, `SEC-161`
 

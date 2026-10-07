@@ -1,6 +1,6 @@
 # 0060. Signing backends and audit checkpoints
 
-- **Status:** Proposed (P6 plan §2.1 B12, B18)
+- **Status:** Accepted (maintainer, 2026-10-07, P6 S0; P6 plan §2.1 B12, B18)
 - **Date:** 2026-10-07
 - **Requirements:** `SEC-120`, `SEC-121`, `SEC-141`, `DEP-040`
 

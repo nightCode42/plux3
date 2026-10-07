@@ -745,6 +745,9 @@ enum PluxErrorCode {
   /// User token invalid.
   userTokenInvalid(6016, 'USER_TOKEN_INVALID', 'User token invalid'),
 
+  /// Device key unavailable.
+  deviceKeyUnavailable(6017, 'DEVICE_KEY_UNAVAILABLE', 'Device key unavailable'),
+
   /// Certificate pin mismatch.
   certificatePinMismatch(6020, 'CERTIFICATE_PIN_MISMATCH', 'Certificate pin mismatch'),
 

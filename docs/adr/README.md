@@ -21,7 +21,7 @@ Files are named `NNNN-short-title.md` with a four-digit, never-reused number. Th
 | [0009](0009-pxl-typed-expression-language.md) | PXL: a typed expression language compiled to bytecode | P1 | Accepted |
 | [0010](0010-layered-widget-model.md) | Layered widget model with a descriptor registry | P1 | Accepted |
 | 0011 | Plux Functions: standard Go compiled to WebAssembly; explicit placement | P7 | Planned |
-| [0012](0012-dpop-hardware-keys-and-attestation.md) | DPoP with hardware-backed keys plus platform attestation | P6 | Proposed |
+| [0012](0012-dpop-hardware-keys-and-attestation.md) | DPoP with hardware-backed keys plus platform attestation | P6 | Accepted |
 | 0013 | Plux Canvas: TypeScript WebGL2 design surface with a conformance suite | P11 | Planned |
 | 0014 | Studio on Bun with a backend-for-frontend; React and shadcn/ui | P11 | Planned |
 | [0015](0015-single-draft-with-snapshots-and-locks.md) | Single draft with snapshots and exclusive plugin locks | P2 | Accepted |
@@ -62,13 +62,13 @@ Files are named `NNNN-short-title.md` with a four-digit, never-reused number. Th
 | [0050](0050-animation-engine.md) | Animation: Flutter's animation framework driven by the bundle, Lottie and Rive in optional packages | P5 | Accepted |
 | [0051](0051-device-actions-packages-and-capabilities.md) | Device actions, optional device packages and the capability model | P5 | Accepted |
 | [0052](0052-plux-test-and-import-tools.md) | Plux Test and the import tools: generated Flutter tests, YAML scenarios, OpenAPI and GraphQL libraries | P5 | Accepted |
-| [0053](0053-remote-security-configuration.md) | Remote security configuration: one settings source, versions and signed deltas | P6 | Proposed |
-| [0054](0054-update-metadata-roles.md) | Update metadata completed: root, targets, snapshot and timestamp | P6 | Proposed |
-| [0055](0055-confidential-bundles.md) | Confidential bundles: content keys wrapped to device keys, no deltas | P6 | Proposed |
-| [0056](0056-secure-gateway-and-sca.md) | The secure gateway and strong customer authentication | P6 | Proposed |
-| [0057](0057-plux-security-rasp.md) | `plux_security`: runtime application self-protection | P6 | Proposed |
-| [0058](0058-encryption-at-rest-native-aes-gcm.md) | Encryption at rest and native AES-GCM | P6 | Proposed |
-| [0059](0059-secure-ui.md) | Secure UI: secure widgets, secure pages, overlay filtering and inactivity lock | P6 | Proposed |
-| [0060](0060-signing-backends-and-audit-checkpoints.md) | Signing backends and audit checkpoints | P6 | Proposed |
+| [0053](0053-remote-security-configuration.md) | Remote security configuration: one settings source, versions and signed deltas | P6 | Accepted |
+| [0054](0054-update-metadata-roles.md) | Update metadata completed: root, targets, snapshot and timestamp | P6 | Accepted |
+| [0055](0055-confidential-bundles.md) | Confidential bundles: content keys wrapped to device keys, no deltas | P6 | Accepted |
+| [0056](0056-secure-gateway-and-sca.md) | The secure gateway and strong customer authentication | P6 | Accepted |
+| [0057](0057-plux-security-rasp.md) | `plux_security`: runtime application self-protection | P6 | Accepted |
+| [0058](0058-encryption-at-rest-native-aes-gcm.md) | Encryption at rest and native AES-GCM | P6 | Accepted |
+| [0059](0059-secure-ui.md) | Secure UI: secure widgets, secure pages, overlay filtering and inactivity lock | P6 | Accepted |
+| [0060](0060-signing-backends-and-audit-checkpoints.md) | Signing backends and audit checkpoints | P6 | Accepted |
 
 The decisions for planned ADRs are summarised in spec §32 and §34.1. Each is written in full before or alongside the first implementation that depends on it, and its status is updated here.

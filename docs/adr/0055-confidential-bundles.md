@@ -1,6 +1,6 @@
 # 0055. Confidential bundles: content keys wrapped to device keys, no deltas
 
-- **Status:** Proposed (P6 plan §2.1 B10)
+- **Status:** Accepted (maintainer, 2026-10-07, P6 S0; P6 plan §2.1 B10)
 - **Date:** 2026-10-07
 - **Requirements:** `SEC-053`, `SEC-052`, `NFR-013`, `REL-020`
 

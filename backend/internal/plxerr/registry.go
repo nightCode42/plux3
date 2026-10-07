@@ -328,6 +328,7 @@ const (
 	AccessTokenInvalid           Code = 6014
 	ReplayCacheUnavailable       Code = 6015
 	UserTokenInvalid             Code = 6016
+	DeviceKeyUnavailable         Code = 6017
 	CertificatePinMismatch       Code = 6020
 	DevelopmentKeyInProduction   Code = 6021
 	UpdateMetadataInvalid        Code = 6022
