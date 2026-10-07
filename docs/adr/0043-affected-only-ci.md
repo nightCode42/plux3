@@ -224,19 +224,21 @@ rewriting every build, a new toolchain to pin, and dependencies outside the allo
 P5's reference apps and generated-project test made the device jobs the slowest in CI:
 iOS 46 min, Android 26 14 min, Android 35 13 min (run 37613709956). Each flow builds a
 whole app from scratch, one after another; the flows themselves take seconds.
-Maintainer decision (2026-10-07):
+Maintainer decision (2026-10-07), with a target of 13 to 15 minutes for the device jobs:
 
-- **Shards.** Each device job is a matrix of three shards selected by `E2E_SHARD`
-  (`mk/device.mk`): `starter` (the starter app and a generated project), `hosts` (the
-  add-to-app module and hosts), `reference` (Plux Bank and Plux Express). Every flow still
-  runs on every selected platform; `make e2e-starter` without a shard runs them all, as
-  before. On Android the emulator prebuild builds only the shard's apps.
-- **Build caches per shard.** Gradle's caches and the apps' build outputs on Android;
-  Xcode DerivedData (the add-to-app host's build kept there through
-  `PLUX_E2E_DERIVED_DATA`), CocoaPods and the apps' Flutter build outputs on iOS. Keys
-  name the shard, the runner OS, the Flutter version (and Xcode's on iOS) and the hash of
-  the lockfiles and the packages' native code; a restore key on the same toolchain lets a
-  changed lockfile start from the previous build.
+- **Shards.** Each device job is a matrix with one shard per flow, selected by
+  `E2E_SHARD` (`mk/device.mk`): `starter`, `generated`, `hosts` (the add-to-app module
+  and hosts), `bank`, `express`. A first cut of three shards (run 37623043856) left the
+  iOS starter-and-generated shard at 25 minutes. Every flow still runs on every selected
+  platform; `make e2e-starter` without a shard runs them all, as before. On Android the
+  emulator prebuild builds only the shard's apps.
+- **Build caches.** On iOS one per shard: Xcode DerivedData (the add-to-app host's build
+  kept there through `PLUX_E2E_DERIVED_DATA`), CocoaPods and the apps' Flutter build
+  outputs, keyed on the shard, Xcode, Flutter and the hash of the lockfiles and the
+  packages' native code. On Android one Gradle cache for every shard, saved by the
+  starter's shard, whose build has every plugin; the Android shards are short enough
+  without build outputs, which would crowd the repository's cache quota. A restore key on
+  the same toolchain lets a changed lockfile start from the previous build.
 - **Who writes.** Every run restores; only a passing run on `main` (not a pull request,
   not another branch, Android from API 35 only) saves, so no branch can write a cache that
   `main` or another branch reads (cache poisoning), and a broken build is never saved. A

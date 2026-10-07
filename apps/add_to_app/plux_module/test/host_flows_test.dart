@@ -23,6 +23,9 @@ const _flow = String.fromEnvironment('PLUX_FLOW');
 /// open.
 final _home = find.textContaining('PluxStartup(ready');
 
+/// Longer than any route transition, in the test's fake time.
+const _transition = Duration(seconds: 1);
+
 /// The add-to-app flows on the development machine, the native hosts'
 /// UI tests in Dart (HST-033): TestAddToAppAgainstTheServer runs one flow
 /// per process, as the hosts' tests do, against the server it starts —
@@ -35,7 +38,7 @@ void main() {
       final host = await _Host.start(tester);
       await host.open('welcome');
       await host.pumpUntil(find.text('Welcome to Plux'));
-      await tester.pageBack();
+      await host.back();
       await host.pumpUntil(_home, pops: 1);
       await host.stop();
     },
@@ -47,6 +50,14 @@ void main() {
     'native screen',
     (tester) async {
       final host = await _Host.start(tester);
+      // The sync the runtime started with, joined: a failed sync shows its
+      // error, not a timeout.
+      final synced = await tester.runAsync(Plux.sync);
+      expect(
+        synced?.outcome,
+        isNot(SyncOutcome.failed),
+        reason: 'the sync failed: ${synced?.error}',
+      );
       // The newer release activates once no page is open: close and
       // reopen until it shows.
       final end = DateTime.now().add(const Duration(seconds: 60));
@@ -55,13 +66,13 @@ void main() {
         await host.pumpUntil(find.textContaining('Welcome to Plux'));
         if (find.text('Welcome to Plux, again').evaluate().isNotEmpty) break;
         if (DateTime.now().isAfter(end)) fail('the update never applied');
-        await tester.pageBack();
+        await host.back();
         await host.pumpUntil(_home);
         await tester.runAsync(
           () => Future<void>.delayed(const Duration(milliseconds: 500)),
         );
       }
-      await tester.pageBack();
+      await host.back();
       await host.pumpUntil(_home);
 
       await host.open('host-link');
@@ -136,6 +147,15 @@ final class _Host {
         ),
         (_) {},
       );
+
+  /// Closes the open page with its back button once the page's route
+  /// transition has ended: a tap during the transition misses the button
+  /// and leaves the page open, so no safe point comes (CI run 37623043856).
+  Future<void> back() async {
+    await tester.pump(_transition);
+    await tester.pageBack();
+    await tester.pump(_transition);
+  }
 
   /// Pumps until [finder] finds something, the screen has closed [pops]
   /// times and the module has opened [screens] native screens, with real

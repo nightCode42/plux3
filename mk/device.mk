@@ -8,21 +8,24 @@
 
 ##@ End to end (QA-006, QA-010)
 
-# E2E_SHARD picks the flows: starter (the starter and a generated project),
-# hosts (the add-to-app module and hosts), reference (Plux Bank and Plux
-# Express), or all. CI runs the shards as parallel jobs (ADR-0043, Revision).
+# E2E_SHARD picks one flow: starter (the starter app), generated (a project
+# plux create generates), hosts (the add-to-app module and hosts), bank
+# (Plux Bank), express (Plux Express), or all. CI runs each flow as a
+# parallel job (ADR-0043, Revision).
 E2E_SHARD ?= all
-E2E_RUN_starter := TestStarterAppAgainstTheServer|TestGeneratedAppAgainstTheServer
-E2E_RUN_hosts := TestAddToAppAgainstTheServer
-E2E_RUN_reference := TestPluxBankAgainstTheServer|TestPluxExpressAgainstTheServer
+E2E_RUN_starter := ^TestStarterAppAgainstTheServer$$
+E2E_RUN_generated := ^TestGeneratedAppAgainstTheServer$$
+E2E_RUN_hosts := ^TestAddToAppAgainstTheServer$$
+E2E_RUN_bank := ^TestPluxBankAgainstTheServer$$
+E2E_RUN_express := ^TestPluxExpressAgainstTheServer$$
 # One go test run per word; with all, the reference apps run last, so a
 # failure of theirs ends the log.
-E2E_RUNS = $(if $(filter all,$(E2E_SHARD)),$(E2E_RUN_starter)|$(E2E_RUN_hosts) $(E2E_RUN_reference),$(E2E_RUN_$(E2E_SHARD)))
+E2E_RUNS = $(if $(filter all,$(E2E_SHARD)),$(E2E_RUN_starter)|$(E2E_RUN_generated)|$(E2E_RUN_hosts) $(E2E_RUN_bank)|$(E2E_RUN_express),$(E2E_RUN_$(E2E_SHARD)))
 
 # Verifies: QA-006, HST-033, DX-004.
-e2e-starter: ## Run the starter app's end-to-end flows, a project plux create generates, the add-to-app module's and the reference apps' against a server built from source (needs PLUX_TEST_DATABASE_URL; E2E_SHARD=all|starter|hosts|reference)
+e2e-starter: ## Run the starter app's end-to-end flows, a project plux create generates, the add-to-app module's and the reference apps' against a server built from source (needs PLUX_TEST_DATABASE_URL; E2E_SHARD=all|starter|generated|hosts|bank|express)
 	@test -n "$${PLUX_TEST_DATABASE_URL:-}" || { echo "✗ set PLUX_TEST_DATABASE_URL: run 'make test-db' and export what it prints (docs/engineering/testing.md)"; exit 1; }
-	@test -n "$(E2E_RUNS)" || { echo "✗ E2E_SHARD=$(E2E_SHARD): use all, starter, hosts or reference"; exit 1; }
+	@test -n "$(E2E_RUNS)" || { echo "✗ E2E_SHARD=$(E2E_SHARD): use all, starter, generated, hosts, bank or express"; exit 1; }
 	for run in $(foreach r,$(E2E_RUNS),'$(r)'); do \
 		(cd backend && PLUX_E2E_FLUTTER="$$(command -v flutter)" $(GO) test -count=1 -timeout 60m -run "$$run" -v ./internal/server) || exit 1; \
 	done
