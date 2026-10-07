@@ -22,7 +22,8 @@ import javax.crypto.spec.GCMParameterSpec
  * The platform services of the Plux runtime (ADR-0029): where the release
  * store lives, and secrets kept encrypted under an Android Keystore key, so
  * that no secret is ever written in the clear. The device keys live in
- * [PluxKeys] (SEC-001). The device actions that need the platform, the share
+ * [PluxKeys] (SEC-001), the Play Integrity attestation in [PluxAttestation]
+ * (SEC-003). The device actions that need the platform, the share
  * sheet and permission prompts, run here too (SEC-080). Bundle data never crosses this channel.
  */
 class PluxFlutterPlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCallHandler {
@@ -30,6 +31,7 @@ class PluxFlutterPlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCall
     private lateinit var context: Context
     private lateinit var device: PluxDevice
     private lateinit var keys: PluxKeys
+    private lateinit var attestation: PluxAttestation
     private var activityBinding: ActivityPluginBinding? = null
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
@@ -53,6 +55,7 @@ class PluxFlutterPlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCall
         context = binding.applicationContext
         device = PluxDevice(context)
         keys = PluxKeys()
+        attestation = PluxAttestation(context)
         channel = MethodChannel(binding.binaryMessenger, CHANNEL)
         channel.setMethodCallHandler(this)
     }
@@ -78,6 +81,7 @@ class PluxFlutterPlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCall
                     result.success(null)
                 }
                 "keyCreate", "keyPublic", "keySign", "keyDelete" -> keys.handle(call, result)
+                "attestationSupported", "integrityToken" -> attestation.handle(call, result)
                 "share" -> device.share(call, result)
                 "permissionRequest" -> device.requestPermission(call, result)
                 else -> result.notImplemented()

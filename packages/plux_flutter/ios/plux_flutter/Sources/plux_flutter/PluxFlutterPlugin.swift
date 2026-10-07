@@ -8,13 +8,15 @@ import Security
 /// The platform services of the Plux runtime (ADR-0029): where the release
 /// store lives, and secrets kept in the Keychain, readable only on this
 /// device after its first unlock, so that no secret is ever written in the
-/// clear. The device keys (SEC-001) are served by PluxKeys. The device
-/// actions that need the platform, the share sheet and permission prompts,
-/// run here too (SEC-080). Bundle data never crosses this channel.
+/// clear. The device keys (SEC-001) are served by PluxKeys, App Attest
+/// (SEC-004) by PluxAttestation. The device actions that need the platform,
+/// the share sheet and permission prompts, run here too (SEC-080). Bundle
+/// data never crosses this channel.
 public class PluxFlutterPlugin: NSObject, FlutterPlugin {
   private static let service = "dev.plux.secrets"
   private let device = PluxDevice()
   private let keys = PluxKeys()
+  private let attestation = PluxAttestation()
 
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "dev.plux/runtime", binaryMessenger: registrar.messenger())
@@ -39,6 +41,8 @@ public class PluxFlutterPlugin: NSObject, FlutterPlugin {
       result(nil)
     case "keyCreate", "keyPublic", "keySign", "keyDelete":
       keys.handle(call.method, args, result: result)
+    case "attestationSupported", "appAttestKey", "appAttestAttest", "appAttestAssert":
+      attestation.handle(call.method, args, result: result)
     case "share":
       device.share(args, result: result)
     case "permissionRequest":

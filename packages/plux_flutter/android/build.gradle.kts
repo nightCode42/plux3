@@ -54,6 +54,8 @@ android {
 
 dependencies {
     implementation("androidx.core:core:1.13.1")
+    // Play Integrity standard requests (SEC-003, ADR-0012).
+    implementation("com.google.android.play:integrity:1.6.0")
 }
 
 kotlin {
