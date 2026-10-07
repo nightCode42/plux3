@@ -114,10 +114,15 @@ final class PluxKeys {
     var item: CFTypeRef?
     let status = SecItemCopyMatching(q as CFDictionary, &item)
     if status == errSecItemNotFound { return nil }
+    // A CoreFoundation type cannot be cast conditionally: its type ID is
+    // checked first, then the cast cannot fail.
     guard status == errSecSuccess, let found = item as? [String: Any],
-          let key = found[kSecValueRef as String] as? SecKey else {
+          let value = found[kSecValueRef as String] else {
       throw platform("keychain", Int(status))
     }
+    let ref = value as CFTypeRef
+    guard CFGetTypeID(ref) == SecKeyGetTypeID() else { throw platform("keychain", 1) }
+    let key = ref as! SecKey
     let purpose = found[kSecAttrLabel as String] as? String ?? ""
     let attrs = SecKeyCopyAttributes(key) as? [String: Any]
     let enclave = (attrs?[kSecAttrTokenID as String] as? String) == (kSecAttrTokenIDSecureEnclave as String)
