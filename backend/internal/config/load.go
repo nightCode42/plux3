@@ -57,7 +57,7 @@ func Defaults() Config {
 // knownSections are the top-level keys this phase accepts.
 var knownSections = []string{
 	"server", "database", "objectStorage", "cache", "signing", "auth",
-	"observability", "telemetry", "limits", "retention", "assets",
+	"observability", "telemetry", "limits", "retention", "assets", "attestation",
 }
 
 // futureSections are sections of Appendix H that belong to a later phase.
@@ -65,10 +65,9 @@ var knownSections = []string{
 // is told when the section starts working instead of being told it does
 // not exist.
 var futureSections = map[string]string{
-	"attestation": "P6",
-	"functions":   "P7",
-	"ai":          "P12",
-	"payments":    "P13",
+	"functions": "P7",
+	"ai":        "P12",
+	"payments":  "P13",
 }
 
 // Load reads the configuration file at path, applies the environment

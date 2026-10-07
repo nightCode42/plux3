@@ -29,9 +29,9 @@ func code(err error) plxerr.Code {
 	return c
 }
 
-// releasedApp signs an administrator in, imports the loan calculator,
-// publishes it and promotes release 1 to production.
-func (w *world) releasedApp(t *testing.T) (caller, string, map[string]string) {
+// appOnly signs an administrator in and creates an organisation and an
+// app, without importing or publishing anything.
+func (w *world) appOnly(t *testing.T) (caller, string, map[string]string) {
 	t.Helper()
 	ctx := context.Background()
 	_, invitation, err := w.auth.Bootstrap(ctx, "admin@example.com")
@@ -50,6 +50,15 @@ func (w *world) releasedApp(t *testing.T) (caller, string, map[string]string) {
 	for _, e := range must(w.app.ListEnvironments(ctx, req(admin, &pluxv1.ListEnvironmentsRequest{AppId: app})))(t).GetEnvironments() {
 		envs[e.GetKey()] = e.GetId()
 	}
+	return admin, app, envs
+}
+
+// releasedApp signs an administrator in, imports the loan calculator,
+// publishes it and promotes release 1 to production.
+func (w *world) releasedApp(t *testing.T) (caller, string, map[string]string) {
+	t.Helper()
+	ctx := context.Background()
+	admin, app, envs := w.appOnly(t)
 	stream := w.document.ImportDraft(ctx)
 	stream.RequestHeader().Set("Cookie", admin.cookie)
 	stream.RequestHeader().Set("X-CSRF-Token", admin.csrf)
@@ -96,31 +105,25 @@ func TestDevicesEndToEnd(t *testing.T) {
 	ctx := context.Background()
 	admin, app, envs := w.releasedApp(t)
 
-	if _, err := w.device.RegisterDevice(ctx, connect.NewRequest(&pluxv1.RegisterDeviceRequest{AppId: app, Environment: "nope", Platform: "ios"})); codeOf(err) != connect.CodeNotFound {
-		t.Errorf("an unknown environment: %v", err)
+	// The secret-based registration of P2 is retired (SEC-001, PLX-6008).
+	if _, err := w.device.RegisterDevice(ctx, connect.NewRequest(&pluxv1.RegisterDeviceRequest{AppId: app, Environment: "production", Platform: "android"})); codeOf(err) != connect.CodeFailedPrecondition || reasonOf(t, err) != "LEGACY_REGISTRATION_REFUSED" {
+		t.Errorf("RegisterDevice: %v", err)
 	}
-	if _, err := w.device.RegisterDevice(ctx, connect.NewRequest(&pluxv1.RegisterDeviceRequest{AppId: app, Environment: "production", Platform: "toaster"})); codeOf(err) != connect.CodeInvalidArgument {
-		t.Errorf("an unknown platform: %v", err)
+	if _, err := w.token.IssueDeviceToken(ctx, connect.NewRequest(&pluxv1.IssueDeviceTokenRequest{DeviceId: envs["production"], DeviceSecret: "plux_dsec_wrong"})); codeOf(err) != connect.CodeFailedPrecondition || reasonOf(t, err) != "LEGACY_REGISTRATION_REFUSED" { //nolint:gosec // G101: a wrong credential on purpose.
+		t.Errorf("IssueDeviceToken: %v", err)
 	}
-	reg := must(w.device.RegisterDevice(ctx, connect.NewRequest(&pluxv1.RegisterDeviceRequest{
-		AppId: app, Environment: "production", Platform: "android", OsVersion: "15", RuntimeVersion: "0.0.9", HostBuild: "42",
-	})))(t)
-	if reg.GetDeviceSecret() == "" || reg.GetDevice().GetEnvironmentId() != envs["production"] {
-		t.Fatalf("RegisterDevice = %+v", reg)
+
+	// A device registers with a key and attestation and refreshes its
+	// token with a proof (SEC-020, SEC-025).
+	dev := w.registerAndroid(t, app, "0.0.9")
+	tok := dev.refresh(t)
+	if tok.GetTokenType() != "DPoP" || time.Until(tok.GetExpiresAt().AsTime()) > 6*time.Minute || time.Until(tok.GetExpiresAt().AsTime()) < 4*time.Minute {
+		t.Errorf("the token = %+v", tok)
 	}
-	wrong := &pluxv1.IssueDeviceTokenRequest{DeviceId: reg.GetDevice().GetId(), DeviceSecret: "plux_dsec_wrong"} //nolint:gosec // G101: a wrong credential on purpose.
-	if _, err := w.token.IssueDeviceToken(ctx, connect.NewRequest(wrong)); codeOf(err) != connect.CodeUnauthenticated {
-		t.Errorf("a wrong secret: %v", err)
-	}
-	tok := must(w.token.IssueDeviceToken(ctx, connect.NewRequest(&pluxv1.IssueDeviceTokenRequest{DeviceId: reg.GetDevice().GetId(), DeviceSecret: reg.GetDeviceSecret()})))(t)
-	if time.Until(tok.GetExpiresAt().AsTime()) > 16*time.Minute {
-		t.Errorf("the token lives too long: %v", tok.GetExpiresAt())
-	}
-	dev := caller{bearer: tok.GetAccessToken()}
 
 	// A device token opens device procedures only, and device procedures
 	// need one.
-	if _, err := w.app.ListApps(ctx, req(dev, &pluxv1.ListAppsRequest{})); codeOf(err) != connect.CodePermissionDenied {
+	if _, err := w.app.ListApps(ctx, bound(t, dev, pluxv1connect.AppServiceListAppsProcedure, &pluxv1.ListAppsRequest{})); codeOf(err) != connect.CodePermissionDenied {
 		t.Errorf("a device listed apps: %v", err)
 	}
 	if _, err := w.manifest.GetManifest(ctx, req(admin, &pluxv1.GetManifestRequest{})); codeOf(err) != connect.CodeUnauthenticated {
@@ -136,22 +139,28 @@ func TestDevicesEndToEnd(t *testing.T) {
 	people := func(context.Context, api.Call, func(context.Context) error) error {
 		return errors.New("not a device call")
 	}
-	around := api.DeviceAuthentication(w.devices, limiter, 1, people)
-	call := api.Call{Procedure: pluxv1connect.ManifestServiceGetManifestProcedure, Header: http.Header{"Authorization": {"Bearer " + tok.GetAccessToken()}}, ResponseHeader: http.Header{}}
+	limited := w.deviceAuth
+	limited.Limiter, limited.PerDevice, limited.People = limiter, 1, people
+	around := api.DeviceAuthentication(limited)
+	call := func() api.Call {
+		r := bound(t, dev, pluxv1connect.ManifestServiceGetManifestProcedure, &pluxv1.GetManifestRequest{})
+		return api.Call{Procedure: pluxv1connect.ManifestServiceGetManifestProcedure, Header: r.Header(), ResponseHeader: http.Header{}}
+	}
 	var seen string
-	if err := around(ctx, call, func(ctx context.Context) error {
+	if err := around(ctx, call(), func(ctx context.Context) error {
 		d, _ := api.DeviceFrom(ctx)
 		seen = d.DeviceID
 		return nil
-	}); err != nil || seen != reg.GetDevice().GetId() {
+	}); err != nil || seen != dev.id {
 		t.Errorf("the first call: %q %v", seen, err)
 	}
-	if err := around(ctx, call, func(context.Context) error { return nil }); code(err) != plxerr.RateLimited || call.ResponseHeader.Get("Retry-After") == "" {
+	second := call()
+	if err := around(ctx, second, func(context.Context) error { return nil }); code(err) != plxerr.RateLimited || second.ResponseHeader.Get("Retry-After") == "" {
 		t.Errorf("the second call in a minute: %v", err)
 	}
 
 	// Sync: nothing installed, so every bundle is downloaded whole.
-	res, err := w.manifest.GetManifest(ctx, req(dev, &pluxv1.GetManifestRequest{}))
+	res, err := w.manifest.GetManifest(ctx, bound(t, dev, pluxv1connect.ManifestServiceGetManifestProcedure, &pluxv1.GetManifestRequest{}))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -160,7 +169,7 @@ func TestDevicesEndToEnd(t *testing.T) {
 		res.Header().Get("ETag") != res.Msg.GetEtag() || len(m.GetSignatures()) != 1 {
 		t.Fatalf("GetManifest = %+v", res.Msg)
 	}
-	keys := must(w.manifest.GetRootKeys(ctx, req(dev, &pluxv1.GetRootKeysRequest{})))(t).GetKeys()
+	keys := must(w.manifest.GetRootKeys(ctx, bound(t, dev, pluxv1connect.ManifestServiceGetRootKeysProcedure, &pluxv1.GetRootKeysRequest{})))(t).GetKeys()
 	if len(keys) != 1 || !ed25519.Verify(keys[0].GetPublicKey(), m.GetSigned(), m.GetSignatures()[0].GetSignature()) {
 		t.Fatal("the manifest does not verify with the root key")
 	}
@@ -174,22 +183,22 @@ func TestDevicesEndToEnd(t *testing.T) {
 	for _, p := range m.GetPlugins() {
 		installed = append(installed, &pluxv1.InstalledBundle{Key: p.GetKey(), Sha256: p.GetBundle().GetSha256()})
 	}
-	synced := must(w.manifest.GetManifest(ctx, req(dev, &pluxv1.GetManifestRequest{InstalledSequence: 1, Installed: installed})))(t)
+	synced := must(w.manifest.GetManifest(ctx, bound(t, dev, pluxv1connect.ManifestServiceGetManifestProcedure, &pluxv1.GetManifestRequest{InstalledSequence: 1, Installed: installed})))(t)
 	if synced.GetManifest().GetAppBundle().GetSync().GetAction() != "keep" {
 		t.Errorf("an installed bundle: %+v", synced.GetManifest().GetAppBundle().GetSync())
 	}
-	nm := must(w.manifest.GetManifest(ctx, req(dev, &pluxv1.GetManifestRequest{InstalledSequence: 1, Installed: installed, IfNoneMatch: synced.GetEtag()})))(t)
+	nm := must(w.manifest.GetManifest(ctx, bound(t, dev, pluxv1connect.ManifestServiceGetManifestProcedure, &pluxv1.GetManifestRequest{InstalledSequence: 1, Installed: installed, IfNoneMatch: synced.GetEtag()})))(t)
 	if !nm.GetNotModified() || nm.GetManifest() != nil || proto.Size(nm) > 1024 {
 		t.Errorf("not modified = %+v (%d B)", nm, proto.Size(nm))
 	}
-	must(w.device.ReportInstalled(ctx, req(dev, &pluxv1.ReportInstalledRequest{ReleaseSequence: 1})))(t)
-	if _, err := w.device.ReportInstalled(ctx, req(dev, &pluxv1.ReportInstalledRequest{DeviceId: envs["production"], ReleaseSequence: 1})); codeOf(err) != connect.CodePermissionDenied {
+	must(w.device.ReportInstalled(ctx, bound(t, dev, pluxv1connect.DeviceServiceReportInstalledProcedure, &pluxv1.ReportInstalledRequest{ReleaseSequence: 1})))(t)
+	if _, err := w.device.ReportInstalled(ctx, bound(t, dev, pluxv1connect.DeviceServiceReportInstalledProcedure, &pluxv1.ReportInstalledRequest{DeviceId: envs["production"], ReleaseSequence: 1})); codeOf(err) != connect.CodePermissionDenied {
 		t.Errorf("a report for another device: %v", err)
 	}
 
 	// Telemetry: catalogued events are stored; a sensitive field is not.
 	now := timestamppb.Now()
-	ingest := must(w.events.IngestEvents(ctx, req(dev, &pluxv1.IngestEventsRequest{Events: []*pluxv1.Event{
+	ingest := must(w.events.IngestEvents(ctx, bound(t, dev, pluxv1connect.TelemetryServiceIngestEventsProcedure, &pluxv1.IngestEventsRequest{Events: []*pluxv1.Event{
 		{Name: "sync_result", Time: now, ReleaseSequence: 1, Fields: []byte(`{"durationMs": 120, "outcome": "ok"}`)},
 		{Name: "custom", Time: now, Fields: []byte(`{"cardNumber": "4111"}`)},
 		{Name: "made_up", Time: now},
@@ -198,12 +207,12 @@ func TestDevicesEndToEnd(t *testing.T) {
 		t.Errorf("IngestEvents = %+v", ingest)
 	}
 	listed := must(w.events.ListEvents(ctx, req(admin, &pluxv1.ListEventsRequest{AppId: app, Environment: "production"})))(t)
-	if len(listed.GetEvents()) != 1 || listed.GetEvents()[0].GetDeviceId() != reg.GetDevice().GetId() {
+	if len(listed.GetEvents()) != 1 || listed.GetEvents()[0].GetDeviceId() != dev.id {
 		t.Errorf("ListEvents = %+v", listed)
 	}
 
 	// People see the device; the compatibility counts it (REL-080).
-	got := must(w.device.GetDevice(ctx, req(admin, &pluxv1.GetDeviceRequest{Id: reg.GetDevice().GetId()})))(t).GetDevice()
+	got := must(w.device.GetDevice(ctx, req(admin, &pluxv1.GetDeviceRequest{Id: dev.id})))(t).GetDevice()
 	if got.GetInstalledSequence() != 1 || got.GetPlatform() != "android" {
 		t.Errorf("GetDevice = %+v", got)
 	}
@@ -218,7 +227,7 @@ func TestDevicesEndToEnd(t *testing.T) {
 	// Switches reach the device with the next manifest.
 	must(w.control.SetControl(ctx, req(admin, &pluxv1.SetControlRequest{AppId: app, EnvironmentId: envs["production"], KillSwitchPlugins: []string{"loans"}})))(t)
 	w.runPublishes(t)
-	killed := must(w.manifest.GetManifest(ctx, req(dev, &pluxv1.GetManifestRequest{InstalledSequence: 1, Installed: installed, IfNoneMatch: synced.GetEtag()})))(t)
+	killed := must(w.manifest.GetManifest(ctx, bound(t, dev, pluxv1connect.ManifestServiceGetManifestProcedure, &pluxv1.GetManifestRequest{InstalledSequence: 1, Installed: installed, IfNoneMatch: synced.GetEtag()})))(t)
 	if killed.GetNotModified() || len(killed.GetManifest().GetControl().GetKillSwitchPlugins()) != 1 {
 		t.Errorf("the kill switch did not arrive: %+v", killed)
 	}

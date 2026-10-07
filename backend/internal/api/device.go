@@ -21,82 +21,14 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/telemetry"
 )
 
-// DeviceProcedures are the procedures a device calls with its access
-// token.
-var DeviceProcedures = map[string]bool{
-	pluxv1connect.ManifestServiceGetManifestProcedure:   true,
-	pluxv1connect.DeviceServiceReportInstalledProcedure: true,
-	pluxv1connect.TelemetryServiceIngestEventsProcedure: true,
-	pluxv1connect.ManifestServiceGetRootKeysProcedure:   true,
-}
-
-// DevicePublic are the device procedures that take no credential: each
-// authenticates by what it carries.
-var DevicePublic = map[string]bool{
-	pluxv1connect.DeviceServiceRegisterDeviceProcedure:              true,
-	pluxv1connect.TokenServiceIssueDeviceTokenProcedure:             true,
-	pluxv1connect.DeviceServiceCreateRegistrationChallengeProcedure: true,
-	pluxv1connect.DeviceServiceRegisterAttestedDeviceProcedure:      true,
-}
-
-// deviceKey carries an authenticated device in a context.
-type deviceKey struct{}
-
-// DeviceFrom returns the authenticated device, when there is one.
-func DeviceFrom(ctx context.Context) (device.Identity, bool) {
-	d, ok := ctx.Value(deviceKey{}).(device.Identity)
-	return d, ok
-}
-
-// DeviceAuthentication authenticates device calls and hands every other
-// call to people, the authentication of people and CI. A device token is
-// accepted only by device procedures, and a device is rate limited on
-// its own allowance (SRV-065). GetRootKeys accepts either kind of
-// caller: devices and `plux pull` both need the keys.
-func DeviceAuthentication(devices *device.Service, limiter RateLimiter, perDevice int64, people Around) Around {
-	return func(ctx context.Context, c Call, next func(context.Context) error) error {
-		bearer, _ := bearerToken(c.Header)
-		isDevice := device.IsToken(bearer)
-		switch {
-		case DevicePublic[c.Procedure] && bearer == "":
-			return next(ctx)
-		case isDevice && DeviceProcedures[c.Procedure]:
-			d, err := devices.Authenticate(ctx, bearer)
-			if err != nil {
-				return err //nolint:wrapcheck // a domain error
-			}
-			if limiter.Count != nil {
-				retry, err := limiter.Allow(ctx, "rate:device:"+d.DeviceID, perDevice)
-				if err != nil {
-					if retry > 0 {
-						c.ResponseHeader.Set("Retry-After", retryAfterHeader(retry))
-					}
-					return err
-				}
-			}
-			return next(context.WithValue(ctx, deviceKey{}, d))
-		case isDevice:
-			return plxerr.New(plxerr.PermissionDenied, "a device token cannot call %s", c.Procedure)
-		case DeviceProcedures[c.Procedure] && c.Procedure != pluxv1connect.ManifestServiceGetRootKeysProcedure:
-			return plxerr.New(plxerr.AuthenticationRequired, "this call needs a device token")
-		default:
-			return people(ctx, c, next)
-		}
-	}
-}
-
-// device returns the authenticated device.
-func deviceOf(ctx context.Context) (device.Identity, error) {
-	d, ok := DeviceFrom(ctx)
-	if !ok {
-		return device.Identity{}, plxerr.New(plxerr.AuthenticationRequired, "this call needs a device token")
-	}
-	return d, nil
+// legacyRegistration is what the retired secret-based calls answer.
+func legacyRegistration() error {
+	return plxerr.New(plxerr.LegacyRegistrationRefused, "registering a device with a secret is no longer supported; register with a hardware-bound DPoP key and attestation")
 }
 
 // Device serves DeviceService.
 type Device struct {
-	// Unimplemented answers ReattestDevice until its handler lands.
+	// Unimplemented answers the procedures this server does not serve.
 	pluxv1connect.UnimplementedDeviceServiceHandler
 	h *Handlers
 }
@@ -106,18 +38,10 @@ var _ pluxv1connect.DeviceServiceHandler = Device{}
 // Device returns the DeviceService handler.
 func (h *Handlers) Device() Device { return Device{h: h} }
 
-// RegisterDevice registers an installation and returns its credential
-// once (GOV-010).
-func (s Device) RegisterDevice(ctx context.Context, req *connect.Request[pluxv1.RegisterDeviceRequest]) (*connect.Response[pluxv1.RegisterDeviceResponse], error) {
-	m := req.Msg
-	d, secret, err := s.h.Devices.Register(ctx, device.Registration{
-		AppID: m.GetAppId(), Environment: m.GetEnvironment(), Platform: m.GetPlatform(),
-		OSVersion: m.GetOsVersion(), RuntimeVersion: m.GetRuntimeVersion(), Build: m.GetHostBuild(),
-	})
-	if err != nil {
-		return nil, err //nolint:wrapcheck // a domain error
-	}
-	return connect.NewResponse(&pluxv1.RegisterDeviceResponse{Device: deviceProto(d), DeviceSecret: secret}), nil
+// RegisterDevice is refused: the secret-based registration of P2 is
+// retired in favour of RegisterAttestedDevice (SEC-001, PLX-6008).
+func (Device) RegisterDevice(context.Context, *connect.Request[pluxv1.RegisterDeviceRequest]) (*connect.Response[pluxv1.RegisterDeviceResponse], error) {
+	return nil, legacyRegistration()
 }
 
 // CreateRegistrationChallenge issues the single-use challenge a
@@ -144,6 +68,25 @@ func (s Device) RegisterAttestedDevice(ctx context.Context, req *connect.Request
 		return nil, err //nolint:wrapcheck // a domain error
 	}
 	return connect.NewResponse(&pluxv1.RegisterAttestedDeviceResponse{Device: deviceProto(d)}), nil
+}
+
+// ReattestDevice replaces a device's attestation with a fresh one. The
+// device is authenticated by the DPoP proof of the call alone, and the
+// proof's key must be the one the device registered (SEC-006).
+func (s Device) ReattestDevice(ctx context.Context, req *connect.Request[pluxv1.ReattestDeviceRequest]) (*connect.Response[pluxv1.ReattestDeviceResponse], error) {
+	proof, ok := ProofFrom(ctx)
+	if !ok {
+		return nil, plxerr.New(plxerr.AuthenticationRequired, "this call needs a DPoP proof")
+	}
+	m := req.Msg
+	if err := s.h.Devices.VerifyKey(ctx, m.GetDeviceId(), proof.JKT); err != nil {
+		return nil, err //nolint:wrapcheck // a domain error
+	}
+	d, err := s.h.Devices.Reattest(ctx, m.GetDeviceId(), m.GetChallenge(), evidenceOf(m.GetEvidence()))
+	if err != nil {
+		return nil, err //nolint:wrapcheck // a domain error
+	}
+	return connect.NewResponse(&pluxv1.ReattestDeviceResponse{Device: deviceProto(d)}), nil
 }
 
 // RevokeDevice withdraws a device's trust (SEC-006).
@@ -294,7 +237,7 @@ func deviceProto(d device.Device) *pluxv1.Device {
 
 // Token serves TokenService.
 type Token struct {
-	// Unimplemented answers the P6 RPCs until their handlers land.
+	// Unimplemented answers ExchangeUserToken until its handler lands.
 	pluxv1connect.UnimplementedTokenServiceHandler
 	h *Handlers
 }
@@ -304,14 +247,28 @@ var _ pluxv1connect.TokenServiceHandler = Token{}
 // Token returns the TokenService handler.
 func (h *Handlers) Token() Token { return Token{h: h} }
 
-// IssueDeviceToken exchanges a device's credential for a short-lived
-// access token.
-func (s Token) IssueDeviceToken(ctx context.Context, req *connect.Request[pluxv1.IssueDeviceTokenRequest]) (*connect.Response[pluxv1.IssueDeviceTokenResponse], error) {
-	t, err := s.h.Devices.IssueToken(ctx, req.Msg.GetDeviceId(), req.Msg.GetDeviceSecret())
+// IssueDeviceToken is refused: a device secret no longer earns a token;
+// RefreshDeviceToken takes its place (SEC-025, PLX-6008).
+func (Token) IssueDeviceToken(context.Context, *connect.Request[pluxv1.IssueDeviceTokenRequest]) (*connect.Response[pluxv1.IssueDeviceTokenResponse], error) {
+	return nil, legacyRegistration()
+}
+
+// RefreshDeviceToken renews a device's access token. The device is
+// authenticated by the DPoP proof of the call alone (SEC-025).
+func (s Token) RefreshDeviceToken(ctx context.Context, req *connect.Request[pluxv1.RefreshDeviceTokenRequest]) (*connect.Response[pluxv1.RefreshDeviceTokenResponse], error) {
+	proof, ok := ProofFrom(ctx)
+	if !ok {
+		return nil, plxerr.New(plxerr.AuthenticationRequired, "this call needs a DPoP proof")
+	}
+	m := req.Msg
+	t, err := s.h.Devices.Refresh(ctx, device.RefreshRequest{
+		DeviceID: m.GetDeviceId(), ProofJKT: proof.JKT, Proof: proof.Raw,
+		AppAttestAssertion: m.GetAppAttestAssertion(), PlayIntegrityToken: m.GetPlayIntegrityToken(),
+	})
 	if err != nil {
 		return nil, err //nolint:wrapcheck // a domain error
 	}
-	return connect.NewResponse(&pluxv1.IssueDeviceTokenResponse{AccessToken: t.Value, ExpiresAt: ts(t.ExpiresAt)}), nil
+	return connect.NewResponse(&pluxv1.RefreshDeviceTokenResponse{AccessToken: t.Value, ExpiresAt: ts(t.ExpiresAt), TokenType: "DPoP"}), nil
 }
 
 // Manifest serves ManifestService.

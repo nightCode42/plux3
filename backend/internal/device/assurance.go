@@ -5,6 +5,7 @@ package device
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/nightCode42/plux3/backend/internal/attest/playintegrity"
 	"github.com/nightCode42/plux3/backend/internal/security/settings"
@@ -91,6 +92,14 @@ type Settings struct {
 	// AndroidDeviceVerdictAL2 is the weakest Play Integrity device
 	// verdict that qualifies for AL2 (SEC-003, SEC-007).
 	AndroidDeviceVerdictAL2 playintegrity.DeviceLabel
+	// AccessTokenLifetime is how long an access token lives (SEC-020).
+	AccessTokenLifetime time.Duration
+	// ReattestationInterval is how long an attestation stays good before
+	// the device must attest again (SEC-006).
+	ReattestationInterval time.Duration
+	// AndroidRefreshRequiresIntegrity makes every Android refresh carry a
+	// Play Integrity token (SEC-025).
+	AndroidRefreshRequiresIntegrity bool
 }
 
 // SettingsFor resolves the settings of a profile from the registry's
@@ -110,7 +119,32 @@ func SettingsFor(p settings.Profile) (Settings, error) {
 	if verdictRank(label) == 0 {
 		return Settings{}, fmt.Errorf("device: the setting %s names no device verdict", settings.AndroidDeviceVerdictAL2)
 	}
-	return Settings{Profile: p, AllowSoftwareKeys: allow.Bool(), AndroidDeviceVerdictAL2: label}, nil
+	out := Settings{Profile: p, AllowSoftwareKeys: allow.Bool(), AndroidDeviceVerdictAL2: label}
+	if err := out.resolveTokens(); err != nil {
+		return Settings{}, err
+	}
+	return out, nil
+}
+
+// resolveTokens reads the settings that govern access tokens and their
+// refresh for the profile.
+func (s *Settings) resolveTokens() error {
+	lifetime, err := profileValue(settings.AccessTokenLifetime, s.Profile)
+	if err != nil {
+		return err
+	}
+	interval, err := profileValue(settings.ReattestationInterval, s.Profile)
+	if err != nil {
+		return err
+	}
+	integrity, err := profileValue(settings.AndroidRefreshRequiresIntegrity, s.Profile)
+	if err != nil {
+		return err
+	}
+	s.AccessTokenLifetime = time.Duration(lifetime.Int()) * time.Second
+	s.ReattestationInterval = time.Duration(interval.Int()) * time.Second
+	s.AndroidRefreshRequiresIntegrity = integrity.Bool()
+	return nil
 }
 
 // profileValue reads a setting's default for a profile.

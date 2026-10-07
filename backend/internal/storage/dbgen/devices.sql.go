@@ -11,6 +11,28 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const advanceAppAttestCounter = `-- name: AdvanceAppAttestCounter :execrows
+UPDATE devices SET app_attest_counter = $1, last_seen_at = now()
+ WHERE id = $2 AND app_attest_counter = $3 AND revoked_at IS NULL
+`
+
+type AdvanceAppAttestCounterParams struct {
+	Counter  int64
+	ID       pgtype.UUID
+	Previous int64
+}
+
+// Stores the counter of a verified App Attest assertion only while the
+// stored one is still the one it was checked against, so two concurrent
+// refreshes with the same assertion cannot both succeed (SEC-025).
+func (q *Queries) AdvanceAppAttestCounter(ctx context.Context, arg AdvanceAppAttestCounterParams) (int64, error) {
+	result, err := q.db.Exec(ctx, advanceAppAttestCounter, arg.Counter, arg.ID, arg.Previous)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const countDevices = `-- name: CountDevices :one
 SELECT count(*) FROM devices WHERE organization_id = $1
 `

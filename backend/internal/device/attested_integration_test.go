@@ -23,6 +23,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/cache"
 	"github.com/nightCode42/plux3/backend/internal/device"
 	"github.com/nightCode42/plux3/backend/internal/device/devicetest"
+	"github.com/nightCode42/plux3/backend/internal/devtoken"
 	"github.com/nightCode42/plux3/backend/internal/dpop"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/security/settings"
@@ -30,6 +31,7 @@ import (
 )
 
 const (
+	tokenIssuer    = "https://plux.test"
 	androidPackage = "com.example.app"
 	iosAppID       = "TEAMID.com.example.app"
 )
@@ -38,27 +40,37 @@ const (
 // that follows the fixture's clock.
 type rig struct {
 	*fixture
-	cache    *cache.Memory
-	key      *devicetest.KeyAttestor
-	play     *devicetest.IntegrityChecker
-	apple    *devicetest.AppAttestor
-	trust    device.TrustConfig
-	profiles map[string]settings.Profile
+	cache  *cache.Memory
+	key    *devicetest.KeyAttestor
+	play   *devicetest.IntegrityChecker
+	apple  *devicetest.AppAttestor
+	assert *devicetest.AppAssertor
+	// assertWith is the assertion verifier in use; it starts as assert.
+	assertWith device.AppAssertor
+	trust      device.TrustConfig
+	profiles   map[string]settings.Profile
+	// verifier checks the tokens the service issues.
+	verifier *devtoken.Verifier
 }
 
 func newRig(t *testing.T) *rig {
 	t.Helper()
 	r := &rig{
 		key: &devicetest.KeyAttestor{}, play: &devicetest.IntegrityChecker{}, apple: &devicetest.AppAttestor{},
+		assert: &devicetest.AppAssertor{},
 		trust: device.TrustConfig{
 			AndroidPackages: []string{androidPackage}, PlayIntegrity: &playintegrity.Keys{}, IOSAppID: iosAppID,
 		},
 		profiles: map[string]settings.Profile{},
 	}
+	r.assertWith = r.assert
 	r.fixture = newFixtureWith(t, func(f *fixture, o *device.Options) {
 		r.cache = cache.NewMemory(func() time.Time { return f.now })
 		o.Cache = r.cache
-		o.Attestors = device.Attestors{KeyAttestation: r.key, PlayIntegrity: r.play, AppAttest: r.apple}
+		o.Attestors = device.Attestors{KeyAttestation: r.key, PlayIntegrity: r.play, AppAttest: r.apple, AppAssertions: r}
+		signer := devicetest.NewTokenSigner(t)
+		o.Tokens = &devtoken.Issuer{Signer: signer, Issuer: tokenIssuer, Audience: tokenIssuer, Lifetime: time.Minute, Now: func() time.Time { return f.now }}
+		r.verifier = &devtoken.Verifier{Keys: signer.TokenKeys, Issuer: tokenIssuer, Audience: tokenIssuer, Now: func() time.Time { return f.now }}
 		o.AppTrust = func(context.Context, string) (device.TrustConfig, error) { return r.trust, nil }
 		o.Profiles = func(_ context.Context, _, env string) (settings.Profile, error) {
 			if p, ok := r.profiles[env]; ok {
@@ -68,6 +80,12 @@ func newRig(t *testing.T) *rig {
 		}
 	})
 	return r
+}
+
+// VerifyAssertion delegates to the assertion verifier in use, so that a
+// test can swap it after the service was built.
+func (r *rig) VerifyAssertion(assertion []byte, pub *ecdsa.PublicKey, h [32]byte, appID string, last uint32) (uint32, error) {
+	return r.assertWith.VerifyAssertion(assertion, pub, h, appID, last)
 }
 
 func (r *rig) challenge(t *testing.T, env string) []byte {
@@ -362,9 +380,6 @@ func TestRegisterDevelopment(t *testing.T) {
 	if err != nil || d.AssuranceLevel != "AL0" || d.Provider != device.ProviderDevelopment || d.KeyStorage != device.KeyStorageSoftware {
 		t.Fatalf("a development device = %+v, %v", d, err)
 	}
-	if _, err := r.svc.IssueToken(context.Background(), d.ID, "plux_dsec_anything"); code(err) != plxerr.AuthenticationRequired {
-		t.Errorf("a secret for a device with a key: %v", err)
-	}
 	_, jwk = devicetest.NewKey(t)
 	if _, err := r.register(t, "production", "linux", jwk, device.KeyStorageSoftware, developmentEvidence()); code(err) != plxerr.DevProviderInProduction {
 		t.Errorf("the development provider in production: %v", err)
@@ -549,8 +564,7 @@ func TestReattest(t *testing.T) {
 
 // Verifies: SEC-006.
 // Revoking is audited once, keeps the first reason, needs the permission
-// to manage the app, and stops a device registered with a secret from
-// getting or using tokens.
+// to manage the app, and publishes the revoked key to the shared cache.
 func TestRevoke(t *testing.T) {
 	t.Parallel()
 	r := newRig(t)
@@ -609,26 +623,39 @@ func TestRevoke(t *testing.T) {
 		t.Errorf("audit entries = %+v", revocations)
 	}
 
-	// The secret flow stops at a revoked device.
-	old, secret, err := r.svc.Register(ctx, device.Registration{AppID: r.app, Environment: "production", Platform: "android"})
+	// The revocation reaches the shared cache, so every replica refuses the
+	// key at once, and only the revoked device's key (SEC-006).
+	if revokedKey, err := r.svc.IsRevoked(ctx, d.DPoPJKT); err != nil || !revokedKey {
+		t.Errorf("IsRevoked(the revoked key) = %v, %v", revokedKey, err)
+	}
+	_, otherJWK := devicetest.NewKey(t)
+	old, err := r.register(t, "development", "linux", otherJWK, device.KeyStorageSoftware, developmentEvidence())
 	if err != nil {
 		t.Fatal(err)
 	}
-	tok, err := r.svc.IssueToken(ctx, old.ID, secret)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := r.svc.Authenticate(ctx, tok.Value); err != nil {
-		t.Fatal(err)
+	if revokedKey, err := r.svc.IsRevoked(ctx, old.DPoPJKT); err != nil || revokedKey {
+		t.Errorf("IsRevoked(a trusted key) = %v, %v", revokedKey, err)
 	}
 	if _, err := r.svc.Revoke(ctx, r.owner, old.ID, "retired"); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := r.svc.Authenticate(ctx, tok.Value); code(err) != plxerr.AuthenticationRequired {
-		t.Errorf("a revoked device's token: %v", err)
+	if revokedKey, err := r.svc.IsRevoked(ctx, old.DPoPJKT); err != nil || !revokedKey {
+		t.Errorf("IsRevoked(a second revoked key) = %v, %v", revokedKey, err)
 	}
-	if _, err := r.svc.IssueToken(ctx, old.ID, secret); code(err) != plxerr.AuthenticationRequired {
-		t.Errorf("a revoked device's secret: %v", err)
+	// The cache is a fast path, not the record: once it is empty the
+	// database still says the key is revoked, and a cache that fails
+	// does not make a revoked device look trusted.
+	if err := r.cache.Delete(ctx, "device:revoked:"+old.DPoPJKT); err != nil {
+		t.Fatal(err)
+	}
+	if revokedKey, err := r.svc.IsRevoked(ctx, old.DPoPJKT); err != nil || revokedKey {
+		t.Errorf("IsRevoked after the cache lost the key = %v, %v", revokedKey, err)
+	}
+	if _, err := r.svc.Revoke(ctx, r.owner, old.ID, "again"); err != nil {
+		t.Fatal(err)
+	}
+	if revokedKey, err := r.svc.IsRevoked(ctx, old.DPoPJKT); err != nil || !revokedKey {
+		t.Errorf("a repeated revocation publishes again: %v, %v", revokedKey, err)
 	}
 	got, err := r.svc.Get(ctx, r.owner, old.ID)
 	if err != nil || got.RevokedAt.IsZero() {

@@ -63,10 +63,10 @@ func (i *Issuer) Issue(ctx context.Context, c Claims) (string, time.Time, error)
 	}
 	now := i.now()
 	iat := now.Unix()
-	exp := iat + int64(i.Lifetime/time.Second)
+	exp := iat + int64(i.lifetime(c)/time.Second)
 	payload, err := json.Marshal(wire{
 		Iss: i.Issuer, Aud: i.Audience, Sub: c.DeviceID, ClientID: c.AppID,
-		Env: c.Environment, AL: c.Assurance, Cnf: wireCnf{JKT: c.JKT},
+		Env: c.Environment, Org: c.OrganizationID, HB: c.HostBuild, AL: c.Assurance, Cnf: wireCnf{JKT: c.JKT},
 		IAT: iat, EXP: exp, JTI: jti,
 	})
 	if err != nil {
@@ -154,14 +154,22 @@ func (i *Issuer) validate(c Claims) error {
 		return errors.New("devtoken: the issuer needs a signer")
 	case i.Issuer == "" || i.Audience == "":
 		return errors.New("devtoken: the issuer needs an issuer and an audience")
-	case i.Lifetime < time.Second || i.Lifetime > MaxLifetime:
+	case i.lifetime(c) < time.Second || i.lifetime(c) > MaxLifetime:
 		return fmt.Errorf("devtoken: the lifetime must be between one second and %s", MaxLifetime)
-	case c.DeviceID == "" || c.AppID == "" || c.Environment == "" || c.JKT == "":
-		return errors.New("devtoken: the claims need a device, an app, an environment and a key thumbprint")
+	case c.DeviceID == "" || c.AppID == "" || c.Environment == "" || c.OrganizationID == "" || c.JKT == "":
+		return errors.New("devtoken: the claims need a device, an app, an environment, an organisation and a key thumbprint")
 	case !validAssurance(c.Assurance):
 		return errors.New("devtoken: the assurance level is not AL0 to AL3")
 	}
 	return nil
+}
+
+// lifetime is how long the token for c lives.
+func (i *Issuer) lifetime(c Claims) time.Duration {
+	if c.Lifetime > 0 {
+		return c.Lifetime
+	}
+	return i.Lifetime
 }
 
 // now reads the clock.

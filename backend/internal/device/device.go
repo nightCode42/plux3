@@ -4,21 +4,19 @@
 // Package device registers the installations of an app, issues their
 // short-lived access tokens and records what each one holds (GOV-010).
 //
-// In P2 a device proves itself with the secret it received when it
-// registered; only the secret's hash is stored. From P6 the secret is
-// replaced by a hardware-bound key with attestation (SEC-020, SEC-025),
-// and the assurance level recorded here rises above "none".
+// A device registers with a hardware-bound DPoP key and platform
+// attestation (SEC-001, SEC-003), proves possession of the key on every
+// request (SEC-021) and refreshes its token with a fresh proof
+// (SEC-025). The secret-based registration of P2 is refused (PLX-6008);
+// its tables stay until a contracting migration removes them (DEP-030).
 package device
 
 import (
 	"context"
 	"crypto/rand"
-	"crypto/subtle"
 	"errors"
 	"fmt"
 	"io"
-	"strings"
-	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -27,17 +25,16 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/audit"
 	"github.com/nightCode42/plux3/backend/internal/auth"
 	"github.com/nightCode42/plux3/backend/internal/cache"
+	"github.com/nightCode42/plux3/backend/internal/devtoken"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/storage"
 	"github.com/nightCode42/plux3/backend/internal/storage/dbgen"
 )
 
-// TokenTTL is how long a device access token lives. There is no refresh
-// token: a device asks again with its credential.
+// TokenTTL is the longest a device access token lives (SEC-020). A
+// revocation is remembered for this long, which is how long a token
+// issued before it can still be presented.
 const TokenTTL = 15 * time.Minute
-
-// secretBytes is the entropy of a device secret and a token.
-const secretBytes = 32
 
 // maxBundles bounds the bundles one report may list: one per plugin
 // plus the app bundle.
@@ -74,6 +71,9 @@ type Options struct {
 	// Profiles returns an environment's security profile; nil means
 	// every environment is standard.
 	Profiles Profiles
+	// Tokens issues access tokens (SEC-020). Without it, no token can be
+	// refreshed.
+	Tokens *devtoken.Issuer
 }
 
 // Service is the domain logic of devices.
@@ -87,54 +87,9 @@ type Service struct {
 	attestors Attestors
 	appTrust  AppTrust
 	profiles  Profiles
-	tokens    *tokenCache
-}
-
-// tokenCacheTTL bounds how long a replica trusts a token it has looked
-// up without asking the database again. The cache never serves a token
-// past its own expiry, and a revocation empties it on the replica that
-// handled it; the others follow within this time (SEC-006). It spares
-// the database one read per device call (NFR-020).
-const tokenCacheTTL = 30 * time.Second
-
-// maxCachedTokens bounds the cache; past it, the cache starts over.
-const maxCachedTokens = 100000
-
-// tokenCache maps a token's hash to its device.
-type tokenCache struct {
-	mu      sync.Mutex
-	entries map[string]cachedToken
-}
-
-type cachedToken struct {
-	id    Identity
-	until time.Time
-}
-
-func (c *tokenCache) get(hash string, now time.Time) (Identity, bool) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	e, ok := c.entries[hash]
-	if !ok || !now.Before(e.until) {
-		return Identity{}, false
-	}
-	return e.id, true
-}
-
-// clear forgets every token.
-func (c *tokenCache) clear() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.entries = nil
-}
-
-func (c *tokenCache) put(hash string, id Identity, until time.Time) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if c.entries == nil || len(c.entries) >= maxCachedTokens {
-		c.entries = map[string]cachedToken{}
-	}
-	c.entries[hash] = cachedToken{id: id, until: until}
+	tokens    *devtoken.Issuer
+	// production remembers which environments are production ones.
+	production *productionCache
 }
 
 // NewService returns the service.
@@ -152,7 +107,7 @@ func NewService(o Options) (*Service, error) {
 	}
 	return &Service{
 		db: o.DB, ids: o.IDs, now: now, random: random, cache: o.Cache, audit: o.Audit,
-		attestors: o.Attestors, appTrust: o.AppTrust, profiles: o.Profiles, tokens: &tokenCache{},
+		attestors: o.Attestors, appTrust: o.AppTrust, profiles: o.Profiles, tokens: o.Tokens, production: &productionCache{},
 	}, nil
 }
 
@@ -189,154 +144,6 @@ type Identity struct {
 	// HostBuild is the host app build the device registered or last
 	// reported, which chooses its manifest (REL-080).
 	HostBuild string
-}
-
-// Registration is what a device says about itself.
-type Registration struct {
-	AppID, Environment                         string
-	Platform, OSVersion, RuntimeVersion, Build string
-}
-
-// Register records a new device and returns it with its secret, which is
-// shown exactly once.
-func (s *Service) Register(ctx context.Context, r Registration) (Device, string, error) {
-	if err := checkDescription(r.Platform, r.OSVersion, r.RuntimeVersion, r.Build); err != nil {
-		return Device{}, "", err
-	}
-	app, err := storage.UUID(r.AppID)
-	if err != nil {
-		return Device{}, "", plxerr.New(plxerr.InvalidFormat, "the app identifier is not valid")
-	}
-	var found dbgen.FindAppForRegistrationRow
-	err = s.db.InTx(ctx, storage.Tenant{Scope: storage.ScopeRegistration}, func(ctx context.Context, tx pgx.Tx) error {
-		found, err = dbgen.New(tx).FindAppForRegistration(ctx, dbgen.FindAppForRegistrationParams{ID: app, Key: r.Environment})
-		return err //nolint:wrapcheck // translated below
-	})
-	if errors.Is(err, pgx.ErrNoRows) {
-		return Device{}, "", plxerr.New(plxerr.ResourceNotFound, "no such app or environment")
-	}
-	if err != nil {
-		return Device{}, "", fmt.Errorf("device: %w", err)
-	}
-	secret, err := auth.NewSecret(auth.PrefixDeviceSecret, secretBytes)
-	if err != nil {
-		return Device{}, "", fmt.Errorf("device: %w", err)
-	}
-	id, err := s.newID()
-	if err != nil {
-		return Device{}, "", err
-	}
-	var d Device
-	err = s.db.InTx(ctx, storage.Tenant{OrganizationID: storage.ID(found.OrganizationID)}, func(ctx context.Context, tx pgx.Tx) error {
-		row, err := dbgen.New(tx).InsertDevice(ctx, dbgen.InsertDeviceParams{
-			ID: storage.MustUUID(id), OrganizationID: found.OrganizationID, AppID: app, EnvironmentID: found.EnvironmentID,
-			Platform: r.Platform, OsVersion: r.OSVersion, RuntimeVersion: r.RuntimeVersion, HostBuild: r.Build,
-			SecretHash: secret.Hash,
-		})
-		if err != nil {
-			return fmt.Errorf("device: register: %w", err)
-		}
-		d = deviceOf(row)
-		return nil
-	})
-	if err != nil {
-		return Device{}, "", fmt.Errorf("device: %w", err)
-	}
-	return d, secret.Value, nil
-}
-
-// Token is a device access token, shown exactly once.
-type Token struct {
-	Value     string
-	ExpiresAt time.Time
-}
-
-// IssueToken exchanges a device's credential for an access token.
-// Unknown devices and wrong secrets are refused alike.
-func (s *Service) IssueToken(ctx context.Context, deviceID, secret string) (Token, error) {
-	id, err := storage.UUID(deviceID)
-	if err != nil || !strings.HasPrefix(secret, auth.PrefixDeviceSecret+"_") {
-		return Token{}, refused()
-	}
-	var row dbgen.FindDeviceSecretRow
-	err = s.db.InTx(ctx, storage.Tenant{Scope: storage.ScopeAuthentication}, func(ctx context.Context, tx pgx.Tx) error {
-		row, err = dbgen.New(tx).FindDeviceSecret(ctx, id)
-		return err //nolint:wrapcheck // translated below
-	})
-	if errors.Is(err, pgx.ErrNoRows) {
-		return Token{}, refused()
-	}
-	if err != nil {
-		return Token{}, fmt.Errorf("device: %w", err)
-	}
-	if subtle.ConstantTimeCompare(row.SecretHash, auth.HashSecret(secret)) != 1 {
-		return Token{}, refused()
-	}
-	tok, err := auth.NewSecret(auth.PrefixDeviceToken, secretBytes)
-	if err != nil {
-		return Token{}, fmt.Errorf("device: %w", err)
-	}
-	tid, err := s.newID()
-	if err != nil {
-		return Token{}, err
-	}
-	expires := s.now().Add(TokenTTL).UTC().Truncate(time.Second)
-	err = s.db.InTx(ctx, storage.Tenant{OrganizationID: storage.ID(row.OrganizationID)}, func(ctx context.Context, tx pgx.Tx) error {
-		q := dbgen.New(tx)
-		if err := q.InsertDeviceToken(ctx, dbgen.InsertDeviceTokenParams{
-			ID: storage.MustUUID(tid), OrganizationID: row.OrganizationID, DeviceID: id, SecretHash: tok.Hash,
-			ExpiresAt: storage.Timestamp(expires),
-		}); err != nil {
-			return fmt.Errorf("device: issue a token: %w", err)
-		}
-		return q.TouchDevice(ctx, id) //nolint:wrapcheck // one statement
-	})
-	if err != nil {
-		return Token{}, fmt.Errorf("device: %w", err)
-	}
-	return Token{Value: tok.Value, ExpiresAt: expires}, nil
-}
-
-// IsToken reports whether a bearer credential is a device token, so the
-// edge knows which service authenticates it.
-func IsToken(bearer string) bool { return strings.HasPrefix(bearer, auth.PrefixDeviceToken+"_") }
-
-// Authenticate resolves a device access token.
-func (s *Service) Authenticate(ctx context.Context, token string) (Identity, error) {
-	if !IsToken(token) {
-		return Identity{}, refused()
-	}
-	hash := auth.HashSecret(token)
-	now := s.now()
-	if id, ok := s.tokens.get(string(hash), now); ok {
-		return id, nil
-	}
-	var row dbgen.FindDeviceTokenRow
-	err := s.db.InTx(ctx, storage.Tenant{Scope: storage.ScopeAuthentication}, func(ctx context.Context, tx pgx.Tx) error {
-		var err error
-		row, err = dbgen.New(tx).FindDeviceToken(ctx, hash)
-		return err //nolint:wrapcheck // translated below
-	})
-	if errors.Is(err, pgx.ErrNoRows) {
-		return Identity{}, refused()
-	}
-	if err != nil {
-		return Identity{}, fmt.Errorf("device: %w", err)
-	}
-	expires := storage.Time(row.ExpiresAt)
-	if !expires.After(now) {
-		return Identity{}, refused()
-	}
-	id := Identity{
-		DeviceID: storage.ID(row.DeviceID), OrganizationID: storage.ID(row.OrganizationID),
-		AppID: storage.ID(row.AppID), EnvironmentID: storage.ID(row.EnvironmentID), HostBuild: row.HostBuild,
-	}
-	until := now.Add(tokenCacheTTL)
-	if expires.Before(until) {
-		until = expires
-	}
-	s.tokens.put(string(hash), id, until)
-	return id, nil
 }
 
 // Installed is one bundle a device holds; Key is "" for the app bundle.
@@ -487,10 +294,6 @@ func (s *Service) newID() (string, error) {
 		return "", fmt.Errorf("device: %w", err)
 	}
 	return id, nil
-}
-
-func refused() error {
-	return plxerr.New(plxerr.AuthenticationRequired, "the device credential is not valid")
 }
 
 func deviceOf(r dbgen.Device) Device {

@@ -60,6 +60,13 @@ DELETE FROM device_tokens WHERE device_id = $1;
 -- Runs in the authentication scope.
 SELECT * FROM devices WHERE dpop_jkt = $1;
 
+-- name: AdvanceAppAttestCounter :execrows
+-- Stores the counter of a verified App Attest assertion only while the
+-- stored one is still the one it was checked against, so two concurrent
+-- refreshes with the same assertion cannot both succeed (SEC-025).
+UPDATE devices SET app_attest_counter = sqlc.arg(counter), last_seen_at = now()
+ WHERE id = sqlc.arg(id) AND app_attest_counter = sqlc.arg(previous) AND revoked_at IS NULL;
+
 -- name: GetDevice :one
 SELECT * FROM devices WHERE id = $1;
 

@@ -7,8 +7,10 @@ import (
 	"context"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/nightCode42/plux3/backend/internal/cache"
+	"github.com/nightCode42/plux3/backend/internal/config"
 	"github.com/nightCode42/plux3/backend/internal/jobs"
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 	"github.com/nightCode42/plux3/backend/internal/storage/storagetest"
@@ -77,5 +79,58 @@ func TestMaintenanceSweep(t *testing.T) {
 	id, err := NewIDs().New()
 	if err != nil || len(id) != 36 {
 		t.Errorf("NewIDs = %q, %v", id, err)
+	}
+}
+
+// Verifies: SEC-020, SEC-022, SEC-024.
+// The api role is built with the trust that authenticates devices, bound
+// to the public base URL and sharing its nonce key across replicas; a
+// process without the api role has none, and the API refuses to be
+// mounted without it.
+func TestBuildServicesDeviceTrust(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	db := storagetest.Open(t)
+	dir := filepath.Join(t.TempDir(), "keys")
+	cfg := testConfig(t, base+"signing:\n  directory: \""+dir+"\"\n")
+	backend, err := BuildSigning(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	first, err := BuildServices(ctx, cfg, db, cache.NewMemory(nil), limits.Defaults(), backend, WorkDeps{Log: discard()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	trust := first.DeviceTrust
+	if trust == nil || trust.Tokens.Issuer != "https://plux.example" || trust.Tokens.Audience != "https://plux.example" ||
+		trust.Window != time.Minute || trust.FallbackWindow != 15*time.Second || trust.Proofs.Nonces != trust.Nonces {
+		t.Fatalf("DeviceTrust = %+v", trust)
+	}
+	second, err := BuildServices(ctx, cfg, db, cache.NewMemory(nil), limits.Defaults(), backend, WorkDeps{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !second.DeviceTrust.Nonces.Valid(trust.Nonces.Current()) {
+		t.Error("two replicas do not share the nonce key")
+	}
+
+	worker := testConfig(t, base+"signing:\n  directory: \""+dir+"\"\n")
+	worker.Server.Roles = []config.Role{config.RoleWorker}
+	svc, err := BuildServices(ctx, worker, db, cache.NewMemory(nil), limits.Defaults(), backend, WorkDeps{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if svc.DeviceTrust != nil {
+		t.Error("the worker role was given device trust")
+	}
+	srv, err := New(Deps{Config: cfg, Log: discard(), DB: db})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := srv.RegisterAPI(svc); err == nil {
+		t.Error("the API was mounted without device trust")
+	}
+	if err := srv.RegisterAPI(first); err != nil {
+		t.Errorf("RegisterAPI: %v", err)
 	}
 }

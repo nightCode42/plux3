@@ -28,6 +28,8 @@ type deviceFakes struct {
 	key   *devicetest.KeyAttestor
 	play  *devicetest.IntegrityChecker
 	apple *devicetest.AppAttestor
+	// assert vouches for the assertions of iOS refreshes.
+	assert *devicetest.AppAssertor
 }
 
 // vouchAndroid makes the fakes vouch for an Android key in a TEE with
@@ -90,12 +92,17 @@ func TestAttestedDevicesOverTheAPI(t *testing.T) {
 	ctx := context.Background()
 	admin, app, envs := w.releasedApp(t)
 
-	// The two registration calls take no credential; revoking does.
+	// The registration calls take no credential, the refusals of the old
+	// flow neither; revoking does.
 	people := func(context.Context, api.Call, func(context.Context) error) error { return errors.New("not public") }
-	around := api.DeviceAuthentication(w.devices, api.RateLimiter{}, 1, people)
+	auth := w.deviceAuth
+	auth.People = people
+	around := api.DeviceAuthentication(auth)
 	for procedure, public := range map[string]bool{
 		pluxv1connect.DeviceServiceCreateRegistrationChallengeProcedure: true,
 		pluxv1connect.DeviceServiceRegisterAttestedDeviceProcedure:      true,
+		pluxv1connect.DeviceServiceRegisterDeviceProcedure:              true,
+		pluxv1connect.TokenServiceIssueDeviceTokenProcedure:             true,
 		pluxv1connect.DeviceServiceRevokeDeviceProcedure:                false,
 	} {
 		err := around(ctx, api.Call{Procedure: procedure, Header: http.Header{}, ResponseHeader: http.Header{}}, func(context.Context) error { return nil })
@@ -188,8 +195,9 @@ func TestAttestedDevicesOverTheAPI(t *testing.T) {
 	if _, err := w.device.RevokeDevice(ctx, req(admin, &pluxv1.RevokeDeviceRequest{DeviceId: envs["production"]})); codeOf(err) != connect.CodeNotFound {
 		t.Errorf("revoking an unknown device: %v", err)
 	}
-	if _, err := w.device.ReattestDevice(ctx, req(admin, &pluxv1.ReattestDeviceRequest{DeviceId: d.GetId()})); codeOf(err) != connect.CodeUnimplemented {
-		t.Errorf("ReattestDevice has no handler yet: %v", err)
+	// Re-attesting is authenticated by a DPoP proof, not by a person.
+	if _, err := w.device.ReattestDevice(ctx, req(admin, &pluxv1.ReattestDeviceRequest{DeviceId: d.GetId()})); codeOf(err) != connect.CodeUnauthenticated {
+		t.Errorf("ReattestDevice without a proof: %v", err)
 	}
 }
 

@@ -30,8 +30,15 @@ type Claims struct {
 	DeviceID string
 	// AppID is the application the device runs (client_id).
 	AppID string
-	// Environment names the environment the token is valid in (env).
+	// Environment is the identifier of the environment the token is
+	// valid in (env).
 	Environment string
+	// OrganizationID is the organisation that owns the app (org), so the
+	// request path needs no lookup to scope a call.
+	OrganizationID string
+	// HostBuild is the host app build the device last reported (hb); it
+	// may be empty.
+	HostBuild string
 	// Production is true for a production environment. It selects the
 	// signing key class when issuing; Verify sets it from its argument.
 	Production bool
@@ -39,6 +46,11 @@ type Claims struct {
 	Assurance string
 	// JKT is the thumbprint of the device's DPoP key (cnf.jkt).
 	JKT string
+	// Lifetime, when more than zero, replaces the issuer's lifetime for
+	// this token: the lifetime is a security setting that differs per
+	// environment. It is bounded like the issuer's. Issue only; Verify
+	// leaves it zero.
+	Lifetime time.Duration
 	// IssuedAt, ExpiresAt and ID are set by Issue from its clock,
 	// lifetime and random source; Issue ignores what a caller puts here.
 	// Verify fills them from the token.
@@ -53,6 +65,8 @@ type wire struct {
 	Sub      string  `json:"sub"`
 	ClientID string  `json:"client_id"`
 	Env      string  `json:"env"`
+	Org      string  `json:"org"`
+	HB       string  `json:"hb,omitempty"`
 	AL       string  `json:"al"`
 	Cnf      wireCnf `json:"cnf"`
 	IAT      int64   `json:"iat"`
