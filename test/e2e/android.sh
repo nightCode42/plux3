@@ -93,17 +93,40 @@ fail() {
 
 # Booted when sys.boot_completed is 1; never waits on a dead emulator or
 # longer than ten minutes of wall time (adb wait-for-device would wait
-# forever).
+# forever). The emulator can report its boot complete while adb's shell
+# never answers on a stale connection (CI runs 36966274717, 37630248033:
+# listed as a device, no answer for ten minutes); 30 seconds after the
+# emulator's own report, adb reconnects to it every 30 seconds, and every
+# second time restarts its server instead.
 booted=false
 deadline=$((SECONDS + 600))
+answer=
+reconnect_at=
+reconnects=0
 while [ "$SECONDS" -lt "$deadline" ]; do
 	kill -0 "$emulator" 2>/dev/null || fail "the emulator exited while booting"
-	if [ "$(timeout 10 "$adb" -s "$serial" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; then
+	answer=$(timeout 10 "$adb" -s "$serial" shell getprop sys.boot_completed 2>&1 | tr -d '\r') || true
+	if [ "$answer" = 1 ]; then
 		booted=true; break
+	fi
+	if grep -q 'Boot completed' "$log"; then
+		if [ -z "$reconnect_at" ]; then
+			reconnect_at=$((SECONDS + 30))
+		elif [ "$SECONDS" -ge "$reconnect_at" ]; then
+			reconnects=$((reconnects + 1))
+			echo "adb has no answer from the booted emulator (last: ${answer:-nothing}); reconnecting ($reconnects)"
+			if [ $((reconnects % 2)) -eq 1 ]; then
+				timeout 10 "$adb" reconnect >/dev/null 2>&1 || true
+			else
+				timeout 10 "$adb" kill-server >/dev/null 2>&1 || true
+				timeout 10 "$adb" start-server >/dev/null 2>&1 || true
+			fi
+			reconnect_at=$((SECONDS + 30))
+		fi
 	fi
 	sleep 2
 done
-$booted || fail "the emulator did not boot in 10 minutes"
+$booted || fail "the emulator did not boot in 10 minutes (adb's last answer: ${answer:-nothing})"
 if ! wait "$prebuild"; then
 	echo "--- $prebuild_log (last 80 lines)"; tail -n 80 "$prebuild_log" || true
 	echo "✗ building the driver or the app failed"; exit 1
