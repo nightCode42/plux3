@@ -43,6 +43,11 @@ type Expect struct {
 	// its ath claim. Empty means no token is presented (the token
 	// endpoint) and ath must be absent.
 	AccessToken string
+	// JKT is the thumbprint the access token is bound to (its cnf.jkt).
+	// When set, the proof's key must have it, and that is checked as soon
+	// as the header parses, before the signature, the claims and the
+	// nonce (ADR-0012). Empty means no binding is expected.
+	JKT string
 	// Window is the largest accepted distance between the proof's iat and
 	// the verifier's clock, in either direction.
 	Window time.Duration
@@ -114,9 +119,10 @@ func invalid(check string) error {
 }
 
 // Verify checks a proof against what the request expects, in this order:
-// size, structure, header, signature, claims, access-token hash and nonce.
-// Every failure is DPoPProofInvalid except a missing or stale nonce, which
-// is DPoPNonceRequired. Verify does not check for replay; the caller does,
+// size, structure, header, key binding, signature, claims, access-token
+// hash and nonce. Every failure is DPoPProofInvalid except a key that is
+// not the one the token is bound to, which is TokenBindingMismatch, and a
+// missing or stale nonce, which is DPoPNonceRequired. Verify does not check for replay; the caller does,
 // with Replay.Check.
 func (v *Verifier) Verify(proof string, e Expect) (Proof, error) {
 	if int64(len(proof)) > bound(v.MaxProofBytes, limits.DPOPProofBytes) {
@@ -130,6 +136,15 @@ func (v *Verifier) Verify(proof string, e Expect) (Proof, error) {
 	if err != nil {
 		return Proof{}, err
 	}
+	jkt, err := Thumbprint(key)
+	if err != nil {
+		return Proof{}, invalid("jwk")
+	}
+	if e.JKT != "" {
+		if err := CheckBinding(e.JKT, jkt); err != nil {
+			return Proof{}, err
+		}
+	}
 	payload, err := verifySignature(proof, key)
 	if err != nil {
 		return Proof{}, err
@@ -140,10 +155,6 @@ func (v *Verifier) Verify(proof string, e Expect) (Proof, error) {
 	}
 	if v.Nonces != nil && (c.Nonce == nil || !v.Nonces.Valid(*c.Nonce)) {
 		return Proof{}, plxerr.New(plxerr.DPoPNonceRequired, "dpop proof needs a current server nonce")
-	}
-	jkt, err := Thumbprint(key)
-	if err != nil {
-		return Proof{}, invalid("jwk")
 	}
 	return Proof{JKT: jkt, JTI: c.JTI, IssuedAt: unixSeconds(*c.IAT), Key: key}, nil
 }

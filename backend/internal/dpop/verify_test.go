@@ -596,3 +596,43 @@ func TestVerifyConfiguredBounds(t *testing.T) {
 		}
 	})
 }
+
+// Verifies: SEC-021, SEC-024.
+// A proof whose key is not the one the token is bound to is refused as a
+// binding mismatch before its signature, claims or nonce are looked at
+// (ADR-0012).
+func TestVerifyChecksBindingFirst(t *testing.T) {
+	bound, other := newKey(t), newKey(t)
+	boundJKT, err := Thumbprint(&bound.PublicKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	nonces, err := NewNonces(make([]byte, 32), time.Minute, func() time.Time { return testNow })
+	if err != nil {
+		t.Fatal(err)
+	}
+	v := &Verifier{Nonces: nonces, Now: func() time.Time { return testNow }}
+	e := testExpect()
+	e.JKT = boundJKT
+
+	t.Run("a wrong key without a nonce is a binding mismatch", func(t *testing.T) {
+		_, err := v.Verify(signRaw(t, other, goodHeader(other), goodClaims()), e)
+		wantCode(t, err, plxerr.TokenBindingMismatch)
+	})
+	t.Run("a wrong key with a broken signature and claims is a binding mismatch", func(t *testing.T) {
+		c := goodClaims()
+		c["htm"] = "GET"
+		proof := signRaw(t, other, goodHeader(other), c)
+		_, err := v.Verify(proof[:len(proof)-2]+"AA", e)
+		wantCode(t, err, plxerr.TokenBindingMismatch)
+	})
+	t.Run("the bound key without a nonce reaches the nonce check", func(t *testing.T) {
+		_, err := v.Verify(signRaw(t, bound, goodHeader(bound), goodClaims()), e)
+		wantCode(t, err, plxerr.DPoPNonceRequired)
+	})
+	t.Run("without an expected binding the key is not compared", func(t *testing.T) {
+		plain := testExpect()
+		_, err := v.Verify(signRaw(t, other, goodHeader(other), goodClaims()), plain)
+		wantCode(t, err, plxerr.DPoPNonceRequired)
+	})
+}
