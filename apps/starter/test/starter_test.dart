@@ -11,6 +11,9 @@ import 'package:plux_flutter/plux_flutter.dart';
 // ignore: implementation_imports
 import 'package:plux_flutter/src/core/runtime.dart' show RuntimeOverrides;
 // ignore: implementation_imports
+import 'package:plux_flutter/src/security/software_keys.dart'
+    show DevelopmentAttestation, SoftwareDeviceKeys;
+// ignore: implementation_imports
 import 'package:plux_flutter/src/state/providers.dart' show environmentProvider;
 // ignore: implementation_imports
 import 'package:plux_flutter/src/sync/sync_engine.dart'
@@ -113,7 +116,11 @@ void main() {
     final startup = await tester.runAsync(
       () => Plux.initializeWith(
         config.toPluxConfig(host: host, storageDirectory: dir.path),
-        const RuntimeOverrides(credentials: MemoryCredentialStore.new),
+        RuntimeOverrides(
+          credentials: MemoryCredentialStore.new,
+          deviceKeys: SoftwareDeviceKeys.new,
+          attestation: () => const DevelopmentAttestation('e2e'),
+        ),
       ),
     );
     addTearDown(() => tester.runAsync(Plux.dispose));
@@ -169,7 +176,11 @@ void main() {
           storageDirectory: dir.path,
           onError: (e, _) => problems.add(e),
         ),
-        const RuntimeOverrides(credentials: MemoryCredentialStore.new),
+        RuntimeOverrides(
+          credentials: MemoryCredentialStore.new,
+          deviceKeys: SoftwareDeviceKeys.new,
+          attestation: () => const DevelopmentAttestation('e2e'),
+        ),
       ),
     );
     addTearDown(() => tester.runAsync(Plux.dispose));

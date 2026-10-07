@@ -14,6 +14,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:plux_flutter/plux_flutter.dart';
 {{DATA_MOCKS_IMPORT}}import 'package:plux_flutter/src/core/runtime.dart' show RuntimeOverrides;
+import 'package:plux_flutter/src/security/software_keys.dart'
+    show DevelopmentAttestation, SoftwareDeviceKeys;
 import 'package:plux_flutter/src/store/kv_store.dart' show SecretStore;
 import 'package:plux_flutter/src/sync/sync_engine.dart'
     show MemoryCredentialStore;
@@ -168,6 +170,8 @@ final class ScenarioSession {
         ),
         RuntimeOverrides(
           credentials: MemoryCredentialStore.new,
+          deviceKeys: SoftwareDeviceKeys.new,
+          attestation: () => const DevelopmentAttestation('plux-test'),
           baseline: _reader(files),
           healthyAfter: const Duration(hours: 1),
           secrets: _Secrets.new,
