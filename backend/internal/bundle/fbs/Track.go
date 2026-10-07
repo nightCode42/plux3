@@ -73,8 +73,21 @@ func (rcv *Track) KeyframesLength() int {
 	return 0
 }
 
+func (rcv *Track) Node(obj *Uuid) *Uuid {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(8))
+	if o != 0 {
+		x := o + rcv._tab.Pos
+		if obj == nil {
+			obj = new(Uuid)
+		}
+		obj.Init(rcv._tab.Bytes, x)
+		return obj
+	}
+	return nil
+}
+
 func TrackStart(builder *flatbuffers.Builder) {
-	builder.StartObject(2)
+	builder.StartObject(3)
 }
 func TrackAddProp(builder *flatbuffers.Builder, prop uint32) {
 	builder.PrependUint32Slot(0, prop, 0)
@@ -84,6 +97,9 @@ func TrackAddKeyframes(builder *flatbuffers.Builder, keyframes flatbuffers.UOffs
 }
 func TrackStartKeyframesVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
 	return builder.StartVector(4, numElems, 4)
+}
+func TrackAddNode(builder *flatbuffers.Builder, node flatbuffers.UOffsetT) {
+	builder.PrependStructSlot(2, flatbuffers.UOffsetT(node), 0)
 }
 func TrackEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
 	return builder.EndObject()

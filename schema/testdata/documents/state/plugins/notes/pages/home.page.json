@@ -1,0 +1,269 @@
+{
+  "id": "01f0c450-6c00-7000-8000-000000000504",
+  "key": "home",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01f0c450-6c00-7000-8000-000000000516",
+    "slots": {
+      "body": {
+        "children": [
+          {
+            "id": "01f0c450-6c00-7000-8000-000000000517",
+            "props": {
+              "data": {
+                "$expr": "\"count \" + string(page.count)"
+              }
+            },
+            "testId": "count",
+            "type": "Text"
+          },
+          {
+            "id": "01f0c450-6c00-7000-8000-000000000518",
+            "props": {
+              "data": {
+                "$expr": "\"label \" + page.label"
+              }
+            },
+            "testId": "label",
+            "type": "Text"
+          },
+          {
+            "id": "01f0c450-6c00-7000-8000-000000000519",
+            "props": {
+              "data": {
+                "$expr": "\"total \" + string(page.total)"
+              }
+            },
+            "testId": "total",
+            "type": "Text"
+          },
+          {
+            "id": "01f0c450-6c00-7000-8000-00000000051a",
+            "props": {
+              "data": {
+                "$expr": "\"app \" + string(app.counter) + \" \" + string(app.doubled)"
+              }
+            },
+            "testId": "app",
+            "type": "Text"
+          },
+          {
+            "id": "01f0c450-6c00-7000-8000-00000000051b",
+            "props": {
+              "data": {
+                "$expr": "\"visits \" + string(plugin.visits)"
+              }
+            },
+            "testId": "visits",
+            "type": "Text"
+          },
+          {
+            "id": "01f0c450-6c00-7000-8000-00000000051c",
+            "props": {
+              "data": {
+                "$expr": "\"draft \" + plugin.draft.title + \" \" + string(plugin.draft.done)"
+              }
+            },
+            "testId": "draft",
+            "type": "Text"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "setState",
+                    "id": "inc",
+                    "input": {
+                      "path": "page.count",
+                      "value": {
+                        "$expr": "page.count + 1"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-00000000051d",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-00000000051e",
+                "props": {
+                  "data": "inc"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "$graph": "01f0c450-6c00-7000-8000-000000000505"
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-00000000051f",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-000000000520",
+                "props": {
+                  "data": "bump"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "patchState",
+                    "id": "patch",
+                    "input": {
+                      "patch": {
+                        "done": true
+                      },
+                      "path": "plugin.draft"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000521",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-000000000522",
+                "props": {
+                  "data": "patch"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "resetState",
+                    "id": "reset",
+                    "input": {
+                      "path": "page.count"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000523",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-000000000524",
+                "props": {
+                  "data": "reset"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "setState",
+                    "id": "label",
+                    "input": {
+                      "path": "page.label",
+                      "value": "b"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000525",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-000000000526",
+                "props": {
+                  "data": "label"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "setState",
+                    "id": "secret",
+                    "input": {
+                      "path": "app.token",
+                      "value": "s3cr3t"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000527",
+            "slots": {
+              "child": {
+                "id": "01f0c450-6c00-7000-8000-000000000528",
+                "props": {
+                  "data": "secret"
+                },
+                "type": "Text"
+              }
+            },
+            "type": "FilledButton"
+          },
+          {
+            "component": {
+              "id": "01f0c450-6c00-7000-8000-000000000506",
+              "version": 1
+            },
+            "id": "01f0c450-6c00-7000-8000-000000000529",
+            "props": {
+              "label": "Taps"
+            }
+          }
+        ],
+        "id": "01f0c450-6c00-7000-8000-00000000052a",
+        "type": "Column"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "home",
+  "schemaVersion": "1.0.0",
+  "state": [
+    {
+      "default": 0,
+      "id": "01f0c450-6c00-7000-8000-000000000513",
+      "name": "count",
+      "type": "int"
+    },
+    {
+      "default": "a",
+      "id": "01f0c450-6c00-7000-8000-000000000514",
+      "name": "label",
+      "type": "string"
+    },
+    {
+      "computed": {
+        "$expr": "page.count + app.counter"
+      },
+      "id": "01f0c450-6c00-7000-8000-000000000515",
+      "name": "total",
+      "type": "int"
+    }
+  ],
+  "title": "Home"
+}

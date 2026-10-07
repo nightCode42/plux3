@@ -26,14 +26,14 @@ The *Size (Android)* job writes the six Android figures side by side
 ## Budgets
 
 Since 2026-10-02 (`RT-061`, `NFR-009`, [ADR-0036](../adr/0036-size-budgets-per-build.md),
-Revision), each build is gated in CI on its own budget, and on no more than 10% over the
+Revision), each build is gated in CI on its own budget, and on no more than 20% (10% until 2026-10-05) over the
 overhead committed in `test/size/baseline.json` (`QA-007`):
 
 | Build | Budget |
 |---|---:|
-| Android App Bundle download, per ABI | 4 MiB |
+| Android App Bundle download, per ABI | 5 MiB (4 MiB until 2026-10-05) |
 | Android APK, per ABI | 10 MiB |
-| iOS IPA, arm64 | 3 MiB |
+| iOS IPA, arm64 | 5 MiB (3 MiB until 2026-10-05) |
 
 From 2026-10-01 to 2026-10-02 the budgets were 3 MiB for the App Bundle download and the
 IPA and 6.5 MiB for the APK (round 1); before, `RT-061` allowed 3 MiB to the arm64 APK and

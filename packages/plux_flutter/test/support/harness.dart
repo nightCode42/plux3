@@ -41,6 +41,9 @@ final class Harness {
   /// Problems the runtime reported.
   final List<PluxException> errors = [];
 
+  /// The secure storage of the state stores' keys, kept across restarts.
+  final MemorySecretStore secrets = MemorySecretStore();
+
   /// The golden bundles.
   static final Goldens goldens = Goldens.load();
 
@@ -59,6 +62,7 @@ final class Harness {
     Map<String, PluxNativeSlot> nativeSlots = const {},
     Map<String, PluxNativeAction<Object?, Object?>> nativeActions = const {},
     PluxRouterAdapter? router,
+    PluxDatabaseAdapter? databaseAdapter,
   }) async {
     server.release = null;
     final baseline = await server.baseline(5, app, plugins);
@@ -89,11 +93,13 @@ final class Harness {
         nativeSlots: nativeSlots,
         nativeActions: nativeActions,
         router: router,
+        databaseAdapter: databaseAdapter,
       ),
       RuntimeOverrides(
         credentials: MemoryCredentialStore.new,
         baseline: _reader(baseline),
         healthyAfter: const Duration(hours: 1),
+        secrets: () => secrets,
       ),
     );
   }
@@ -133,4 +139,19 @@ Future<void> settle(WidgetTester tester, [int rounds = 3]) async {
     );
     await tester.pump();
   }
+}
+
+/// Secure storage in memory, for tests.
+final class MemorySecretStore implements SecretStore {
+  /// The secrets, by name.
+  final Map<String, String> values = {};
+
+  @override
+  Future<String?> read(String name) async => values[name];
+
+  @override
+  Future<void> write(String name, String value) async => values[name] = value;
+
+  @override
+  Future<void> delete(String name) async => values.remove(name);
 }

@@ -30,6 +30,7 @@ updates:
   - package-ecosystem: gomod
     directories:
       - "/backend"
+      - "/test/refapi"
       - "/tools"
     schedule:
       interval: weekly

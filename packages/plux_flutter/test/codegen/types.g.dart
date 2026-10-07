@@ -88,7 +88,8 @@ final class DoneEvent {
   final List<Point>? points;
 }
 
-/// The typed events plugins emit with `emitHostEvent` (HST-013).
+/// The typed host events: those plugins emit with `emitHostEvent`, and
+/// those the host sends into Plux (HST-013).
 abstract final class PluxHostEvents {
   /// The `default` events.
   static Stream<DefaultEvent> get default$ =>

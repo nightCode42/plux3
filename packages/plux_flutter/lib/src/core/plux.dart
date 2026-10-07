@@ -14,6 +14,7 @@ import 'package:plux_flutter/src/core/config.dart';
 import 'package:plux_flutter/src/core/host_events.dart';
 import 'package:plux_flutter/src/core/runtime.dart';
 import 'package:plux_flutter/src/devtools_api/diagnostics.dart';
+import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/navigation/delegate.dart';
 import 'package:plux_flutter/src/navigation/plux_page.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
@@ -69,6 +70,7 @@ abstract final class Plux {
     _ownsContainer = config.container == null;
     container.read(pluxRuntimeProvider.notifier).set(rt);
     rt.environment = () => container.read(environmentProvider);
+    rt.connect(container);
     container
         .read(environmentProvider.notifier)
         .replace(
@@ -186,6 +188,80 @@ abstract final class Plux {
   /// it (HST-030).
   static PluxState<T> state<T>(String name) => PluxState<T>(name, container);
 
+  /// Sends host event [name] into Plux with [payload] in its JSON form
+  /// (HST-013): the triggers that handle it run. Completes with false,
+  /// reported with PLX-5307, when nothing accepts it: the app does not
+  /// declare the event for the host to send, or no trigger handles it. A
+  /// payload without the declared fields and types is refused the same
+  /// way, reported with PLX-5500 (the app bundle's `hostEvents` give the
+  /// types). `plux codegen` writes typed senders over it.
+  static Future<bool> sendEvent(
+    String name, [
+    Map<String, Object?> payload = const {},
+  ]) async {
+    final rt = _rt;
+    final sink = rt.hostEventSink;
+    final converted = fromHost(payload) as Map<String, Object?>;
+    try {
+      if (sink != null && sink.deliver(PluxHostEvent(name, converted))) {
+        return true;
+      }
+    } on PluxException catch (e) {
+      rt.reportProblem(e);
+      return false;
+    }
+    rt.reportProblem(
+      PluxException(
+        PluxErrorCode.hostEventRefused,
+        sink == null
+            ? 'no trigger handles host event $name'
+            : 'host event $name is not declared for the host to send, or nothing handles it',
+        details: {'event': name},
+      ),
+    );
+    return false;
+  }
+
+  /// Tells Plux whether the device has a network (decision D13: Plux
+  /// depends on no connectivity package). While it is `false`,
+  /// offline-capable mutations are queued without trying the server and
+  /// streams wait to reconnect; when it becomes `true`, the queued
+  /// mutations replay in order and the streams reconnect at once. Without
+  /// this call the outbox still replays when the app resumes, after any
+  /// request that succeeds, and on a backoff timer (DAT-020, DAT-012).
+  static void setNetworkAvailable(bool available) =>
+      _rt.setNetworkAvailable(available);
+
+  /// Removes the data Plux keeps on the device for this app (HST-001,
+  /// DB-008): session, persisted and secure state with the stores' keys,
+  /// every cached data-source response, and the local database — the
+  /// collections' records, the key-value entries and the database's key;
+  /// app and plugin state start again from their defaults. Pages already
+  /// shown keep their in-memory values until they close. Hosts call it on
+  /// logout or when the account changes.
+  ///
+  /// With [plugin], only that plugin's local database data — its private
+  /// collections' records and its key-value entries — is removed; the
+  /// app's shared collections, state and caches stay.
+  static Future<void> wipeData({String? plugin}) async {
+    final rt = _rt;
+    if (plugin != null) return rt.database.wipe(plugin: plugin);
+    await rt.statePersistence.wipe();
+    // Cached responses go too, so the next user never sees them.
+    await rt.clearDataCache();
+    await rt.database.wipe();
+    final c = container;
+    c.read(appStateProvider.notifier).restart();
+    final keys = [
+      for (final b in rt.active.value?.record.bundles ?? const <Never>[]) b.key,
+    ];
+    for (final key in keys) {
+      if (key.isNotEmpty && c.exists(pluginStateProvider(key))) {
+        c.read(pluginStateProvider(key).notifier).restart();
+      }
+    }
+  }
+
   static void _environment(PluxEnvironment Function(PluxEnvironment) f) {
     final n = container.read(environmentProvider.notifier);
     n.replace(f(container.read(environmentProvider)));
@@ -276,6 +352,8 @@ abstract final class Plux {
     _runtime = null;
     final c = _container;
     _container = null;
+    // The app's and the plugins' triggers stop before their container.
+    rt?.disconnect();
     // A container Plux created is disposed (a no-op when the host disposed
     // its parent first); a shared one is left without the runtime.
     if (c != null) {

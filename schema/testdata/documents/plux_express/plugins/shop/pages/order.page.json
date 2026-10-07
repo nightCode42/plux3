@@ -1,0 +1,125 @@
+{
+  "id": "01d0c450-6c00-7000-8000-000000000313",
+  "key": "order",
+  "kind": "page",
+  "lifecycle": {
+    "onDispose": {
+      "steps": [
+        {
+          "action": "unsubscribe",
+          "id": "stop",
+          "input": {
+            "stream": "tracking"
+          }
+        }
+      ]
+    },
+    "onInit": {
+      "steps": [
+        {
+          "action": "subscribe",
+          "id": "track",
+          "input": {
+            "params": {
+              "orderId": {
+                "$expr": "params.orderId"
+              }
+            },
+            "stream": "tracking"
+          }
+        }
+      ]
+    }
+  },
+  "pageKind": "screen",
+  "params": [
+    {
+      "mock": "ord-001",
+      "name": "orderId",
+      "required": true,
+      "type": "string"
+    }
+  ],
+  "root": {
+    "id": "01d0c450-6c00-7000-8000-000000003038",
+    "slots": {
+      "appBar": {
+        "id": "01d0c450-6c00-7000-8000-000000003037",
+        "slots": {
+          "title": {
+            "id": "01d0c450-6c00-7000-8000-000000003036",
+            "props": {
+              "data": "Your order"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "id": "01d0c450-6c00-7000-8000-000000003035",
+        "props": {
+          "padding": {
+            "all": 24.0
+          }
+        },
+        "slots": {
+          "child": {
+            "children": [
+              {
+                "id": "01d0c450-6c00-7000-8000-000000003030",
+                "props": {
+                  "data": {
+                    "$expr": "\"Order \" + params.orderId"
+                  }
+                },
+                "testId": "order-id",
+                "type": "Text"
+              },
+              {
+                "id": "01d0c450-6c00-7000-8000-000000003031",
+                "props": {
+                  "data": {
+                    "$expr": "\"Status: \" + (data.tracking.value?.status ?? \"waiting\")"
+                  }
+                },
+                "testId": "tracking-status",
+                "type": "Text"
+              },
+              {
+                "id": "01d0c450-6c00-7000-8000-000000003032",
+                "props": {
+                  "data": {
+                    "$expr": "\"ETA: \" + string(data.tracking.value?.etaMinutes ?? 0) + \" min\""
+                  }
+                },
+                "testId": "tracking-eta",
+                "type": "Text"
+              },
+              {
+                "id": "01d0c450-6c00-7000-8000-000000003033",
+                "props": {
+                  "data": {
+                    "$expr": "\"Position: \" + string(data.tracking.value?.lat ?? 0.0) + \", \" + string(data.tracking.value?.lng ?? 0.0)"
+                  }
+                },
+                "testId": "tracking-position",
+                "type": "Text"
+              }
+            ],
+            "id": "01d0c450-6c00-7000-8000-000000003034",
+            "props": {
+              "crossAxisAlignment": "stretch"
+            },
+            "type": "Column"
+          }
+        },
+        "type": "Padding"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "order",
+  "schemaVersion": "1.0.0",
+  "title": "Order"
+}

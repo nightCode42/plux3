@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://plux.dev/schema/v1/pxl/phone.schema.json",
+  "title": "Phone validation metadata",
+  "description": "Per-territory calling codes, prefixes and number-type patterns of pxl.phone.v1, derived from libphonenumber (schema/pxl/phone.md).",
+  "type": "object",
+  "required": ["$schema", "description", "source", "territories"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "description": { "type": "string", "minLength": 1 },
+    "source": {
+      "type": "object",
+      "required": ["project", "version", "commit", "file", "sha256"],
+      "properties": {
+        "project": { "const": "libphonenumber" },
+        "version": { "type": "string", "pattern": "^v\\d+\\.\\d+\\.\\d+$" },
+        "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "file": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+      },
+      "additionalProperties": false
+    },
+    "territories": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "countryCode", "generalDesc", "types"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^([A-Z]{2}|001)$" },
+          "countryCode": { "type": "integer", "minimum": 1, "maximum": 999 },
+          "mainCountryForCode": { "type": "boolean" },
+          "leadingDigits": { "type": "string", "minLength": 1 },
+          "internationalPrefix": { "type": "string", "minLength": 1 },
+          "nationalPrefixForParsing": { "type": "string", "minLength": 1 },
+          "nationalPrefixTransformRule": { "type": "string", "pattern": "^(\\d|\\$[1-9])+$" },
+          "generalDesc": {
+            "type": "object",
+            "required": ["pattern", "lengths"],
+            "properties": {
+              "pattern": { "type": "string", "minLength": 1 },
+              "lengths": { "$ref": "#/$defs/lengths" },
+              "localOnly": { "$ref": "#/$defs/lengths" }
+            },
+            "additionalProperties": false
+          },
+          "types": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["type", "pattern", "lengths"],
+              "properties": {
+                "type": {
+                  "enum": ["fixedLine", "mobile", "tollFree", "premiumRate", "sharedCost", "personalNumber", "voip", "pager", "uan", "voicemail"]
+                },
+                "pattern": { "type": "string", "minLength": 1 },
+                "lengths": { "$ref": "#/$defs/lengths" },
+                "example": { "type": "string", "pattern": "^\\d+$" }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "lengths": {
+      "type": "array",
+      "items": { "type": "integer", "minimum": 1, "maximum": 17 }
+    }
+  }
+}

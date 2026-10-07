@@ -1029,6 +1029,17 @@ var widgets = [...]Widget{
 		},
 	},
 	{
+		Type: "FormScope", ID: 103, Layer: 1, Phase: "P5", Revision: 1, Runtimes: []string{"0.3.0"},
+		Category: "structure", Icon: "assignment", Description: "Scopes a form declared on the page or component to its subtree: below it the `form` root is that form's state (`form.values.<field>`, `form.errors.<field>`, `form.valid`, `form.status`), kept up to date as the form changes.",
+		Platforms: PlatformAndroid | PlatformIOS, Cost: 2, Role: RoleNone, Interactive: false,
+		Props: []Prop{
+			{Name: "form", ID: 1, Type: "string", Required: true, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: "The name of the form to scope; a literal naming a form the page or component declares."},
+		},
+		Slots: []Slot{
+			{Name: "child", ID: 1, List: false, Required: true, Template: false, Revision: 1, Deprecated: nil, Description: "The subtree the form is scoped to."},
+		},
+	},
+	{
 		Type: "FractionallySizedBox", ID: 13, Layer: 1, Phase: "P3", Revision: 1, Runtimes: []string{"0.1.0"},
 		Category: "layout", Icon: "photo_size_select_large", Description: "Sizes its child to a fraction of the available space.",
 		Platforms: PlatformAndroid | PlatformIOS, Cost: 6, Role: RoleNone, Interactive: false,
@@ -3485,6 +3496,14 @@ var actions = [...]Action{
 		},
 	},
 	{
+		Name: "emitEvent", ID: 56, Phase: "P5", Category: "component", Description: "Inside a component, emits one of the component's declared events with a payload of its declared type, to the instance's handler or to PluxView.onEvent.",
+		TypeParameters: []string{"E"},
+		Inputs: []Input{
+			{Name: "event", ID: 1, Type: "string", Required: true, Default: "", Ref: "componentEvent", Description: "The component event."},
+			{Name: "payload", ID: 2, Type: "E", Required: false, Default: "", Ref: "", Description: "The event payload."},
+		},
+	},
+	{
 		Name: "emitHostEvent", ID: 51, Phase: "P4", Category: "host", Description: "Sends a typed event to the host app.",
 		TypeParameters: []string{"E"},
 		Inputs: []Input{
@@ -3641,9 +3660,10 @@ var actions = [...]Action{
 		Effects: []string{"navigation"},
 	},
 	{
-		Name: "refreshData", ID: 17, Phase: "P5", Category: "data", Description: "Reloads a data source, bypassing its cache.",
+		Name: "refreshData", ID: 17, Phase: "P5", Category: "data", Description: "Reloads a data source, bypassing its cache, or loads the next page of a paginated source.",
 		Inputs: []Input{
 			{Name: "source", ID: 1, Type: "string", Required: true, Default: "", Ref: "dataSource", Description: "The data source."},
+			{Name: "more", ID: 2, Type: "bool", Required: false, Default: "false", Ref: "", Description: "Loads the next page of a paginated source instead of reloading it (DAT-011)."},
 		},
 		Effects: []string{"state", "network"},
 	},

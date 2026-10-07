@@ -1,7 +1,7 @@
 # 0008. Riverpod as the runtime state engine
 
 - **Status:** Accepted
-- **Date:** 2026-09-28
+- **Date:** 2026-09-28; revised 2026-10-04 (see [Revision](#revision-2026-10-04-the-state-engine-in-p5))
 - **Requirements:** `RT-003`, `RT-012`, `CMP-023`, `HST-001`, `STA-*` (from P5)
 
 ## Context and problem
@@ -93,6 +93,17 @@ In P3 nothing inside a plugin writes state: actions arrive in P5 (`ACT-*`) and h
 read/write of exposed state in P4/P5 (`STA-030`). The initial state of a page is the
 defaults its document declares. The runtime writes state only in tests, through an
 internal API that is not exported, so that the rebuild rule is verified now.
+
+## Revision (2026-10-04, the state engine in P5)
+
+P5 builds the write side on this design ([ADR-0046](0046-state-engine.md)): providers for
+the `plugin` and `component` scopes beside `appStateProvider` and `pageStateProvider`,
+with `run` variables kept in the run; typed writes applied per step in one notification;
+computed entries as providers watching their read sets; state watchers through
+`ProviderContainer.listen`; and persistence (`session`, `persisted`, `secure`) on the
+core's built-in store ([ADR-0049](0049-local-persistence.md)), loaded and written off the
+UI isolate. The containers, the read path from read sets and the `select` rule are
+unchanged; the *P3 scope* above no longer applies once P5's R2 lands.
 
 ## Consequences
 

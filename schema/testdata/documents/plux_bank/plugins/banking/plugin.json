@@ -1,0 +1,142 @@
+{
+  "capabilities": {
+    "deviceApis": [
+      "camera"
+    ],
+    "networkDomains": [
+      "refapi.invalid"
+    ]
+  },
+  "dataSources": [
+    {
+      "config": {
+        "auth": true,
+        "baseUrl": "apiBaseUrl",
+        "operations": {
+          "login": {
+            "auth": false,
+            "input": "LoginInput",
+            "method": "POST",
+            "output": "LoginResult",
+            "path": "/login"
+          },
+          "transfer": {
+            "auth": true,
+            "input": "TransferInput",
+            "method": "POST",
+            "output": "TransferResult",
+            "path": "/transfers"
+          }
+        },
+        "path": "/accounts",
+        "select": "items"
+      },
+      "id": "01d0c450-6c00-7000-8000-000000000220",
+      "kind": "rest",
+      "mock": [
+        {
+          "balanceCents": 250000,
+          "currency": "EUR",
+          "iban": "DE89370400440532013000",
+          "id": "acct-001",
+          "name": "Checking"
+        }
+      ],
+      "name": "api",
+      "type": "list<Account>"
+    },
+    {
+      "config": {
+        "auth": true,
+        "baseUrl": "graphUrl",
+        "path": "/graphql",
+        "query": "query Accounts { accounts { id name iban balanceCents currency } }",
+        "select": "accounts"
+      },
+      "id": "01d0c450-6c00-7000-8000-000000000221",
+      "kind": "graphql",
+      "mock": [
+        {
+          "balanceCents": 250000,
+          "currency": "EUR",
+          "iban": "DE89370400440532013000",
+          "id": "acct-001",
+          "name": "Checking"
+        }
+      ],
+      "name": "accounts",
+      "type": "list<Account>"
+    },
+    {
+      "config": {
+        "auth": true,
+        "baseUrl": "graphUrl",
+        "pagination": {
+          "cursorParam": "after",
+          "hasMore": "transactions.more",
+          "nextCursor": "transactions.next",
+          "pageSize": 5,
+          "sizeParam": "first",
+          "style": "cursor"
+        },
+        "params": {
+          "accountId": "acct-001"
+        },
+        "path": "/graphql",
+        "query": "query Transactions($accountId: String!, $first: Int!, $after: String) { transactions(accountId: $accountId, first: $first, after: $after) { items { id description amountCents postedAt } next more } }",
+        "select": "transactions.items"
+      },
+      "id": "01d0c450-6c00-7000-8000-000000000222",
+      "kind": "graphql",
+      "mock": [
+        {
+          "amountCents": -4250,
+          "description": "Groceries",
+          "id": "txn-001",
+          "postedAt": "2026-01-15T09:00:00Z"
+        }
+      ],
+      "name": "transactions",
+      "type": "list<Transaction>"
+    },
+    {
+      "config": {
+        "auth": true,
+        "baseUrl": "streamUrl",
+        "path": "/notifications"
+      },
+      "id": "01d0c450-6c00-7000-8000-000000000223",
+      "kind": "sse",
+      "mock": {
+        "accountId": "acct-001",
+        "amountCents": 1250,
+        "balanceCents": 248750,
+        "toIban": "DE44500105175407324931",
+        "transferId": "tr-0001"
+      },
+      "name": "notifications",
+      "type": "Notification"
+    }
+  ],
+  "description": "Sign in, accounts, transfers and identity checks.",
+  "entryPage": "01d0c450-6c00-7000-8000-000000000210",
+  "icon": {
+    "monogram": {
+      "background": "#0B3D91",
+      "text": "B"
+    }
+  },
+  "id": "01d0c450-6c00-7000-8000-000000000203",
+  "key": "banking",
+  "kind": "plugin",
+  "name": "Banking",
+  "pages": [
+    "01d0c450-6c00-7000-8000-000000000210",
+    "01d0c450-6c00-7000-8000-000000000211",
+    "01d0c450-6c00-7000-8000-000000000212",
+    "01d0c450-6c00-7000-8000-000000000213",
+    "01d0c450-6c00-7000-8000-000000000214"
+  ],
+  "schemaVersion": "1.0.0",
+  "team": "bank"
+}

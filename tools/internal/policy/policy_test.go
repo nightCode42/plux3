@@ -63,7 +63,8 @@ func TestProjectDependabotCoversEveryManifest_CI_007(t *testing.T) {
 	}
 }
 
-// TestFindManifestsSkipsWorkspaceMembers checks manifest discovery.
+// TestFindManifestsSkipsWorkspaceMembers checks manifest discovery,
+// which also skips other checkouts such as git worktrees.
 func TestFindManifestsSkipsWorkspaceMembers(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()
@@ -77,6 +78,8 @@ func TestFindManifestsSkipsWorkspaceMembers(t *testing.T) {
 	write(t, root, "backend/Dockerfile", "FROM scratch\n")
 	write(t, root, "deploy/compose/compose.yaml", "services: {}\n")
 	write(t, root, "deploy/compose/compose.dev.yaml", "services: {}\n")
+	write(t, root, ".claude/worktrees/agent/.git", "gitdir: /elsewhere\n")
+	write(t, root, ".claude/worktrees/agent/backend/go.mod", "module x\n")
 
 	got, err := FindManifests(root)
 	if err != nil {

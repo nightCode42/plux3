@@ -59,6 +59,7 @@ func (u *unit) lintNode(n *node) {
 // lintGraph checks a graph's literal inputs and what it sends to
 // analytics.
 func (u *unit) lintGraph(g *graph) {
+	u.redactions(g)
 	for _, s := range g.lowered {
 		for _, in := range s.inputs {
 			u.lintValue(g.file, in.ptr, in.value)
@@ -128,8 +129,7 @@ func (u *unit) budgets(pg *page) {
 		{budget{limits.PageDepth, plxerr.PageDepthBudget, "levels deep"}, int64(depth)},
 		{budget{limits.PageBuildCost, plxerr.PageBuildCostBudget, "µs of estimated build cost"}, cost},
 		{budget{limits.PageImageBytes, plxerr.PageImageBudget, "bytes of images"}, u.imageBytes(pg)},
-		// Animations come with timelines (P5); no P1 widget animates.
-		{budget{limits.PageAnimations, plxerr.PageAnimationBudget, "animations"}, 0},
+		{budget{limits.PageAnimations, plxerr.PageAnimationBudget, "animations"}, animationCount(pg)},
 	}
 	for _, x := range values {
 		limit, warn := u.opts.Limits.Get(x.b.key), u.opts.Limits.Warning(x.b.key)

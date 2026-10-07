@@ -328,6 +328,278 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Rename the custom action in the host app, for example with a prefix of its own, and run plux native scan again.
 
+### PLX-1125
+
+`FLOW_CALL_CYCLE` · error · Flows call each other in a cycle
+
+**Cause.** A callFlow step calls a flow that, through its own callFlow steps, calls the graph back. Action graphs are acyclic across flows too, so a run cannot recurse (ACT-001, ACT-061).
+
+**Fix.** Break the cycle: move the shared steps into a flow that calls neither graph.
+
+### PLX-1126
+
+`FLOW_NOT_EXPORTED` · error · Flow private to its plugin
+
+**Cause.** A callFlow step names a flow of another plugin as <plugin>/<flow>, and that flow is not exported. Only exported flows are callable across plugins (ACT-061).
+
+**Fix.** Set exported on the flow in its plugin, or call a flow of the step's own plugin by its key.
+
+### PLX-1127
+
+`INVALID_TRIGGER` · error · Invalid trigger
+
+**Cause.** A trigger names something its owner cannot see — a state entry, a host event or a data source — or two timers share a name (ACT-002).
+
+**Fix.** Name a state entry of the page, the plugin or the app, a host event the app document declares, or a data source in scope; give each timer its own name.
+
+### PLX-1128
+
+`UNDECLARED_COMPONENT_EVENT` · error · Component event not declared
+
+**Cause.** An emitEvent step names an event its component does not declare, or sends a payload to an event that declares none. A component's events are its contract with its users (SCH-030).
+
+**Fix.** Declare the event in the component's events, with the payload type the step sends, or correct its name.
+
+### PLX-1129
+
+`EMIT_EVENT_OUTSIDE_COMPONENT` · error · emitEvent outside a component
+
+**Cause.** An emitEvent step is in a graph that does not belong to a component: a page's graph or a flow has no component events to emit.
+
+**Fix.** Emit host events with emitHostEvent, or move the step into a handler of the component.
+
+### PLX-1130
+
+`INVALID_RETRY_POLICY` · error · Invalid retry policy
+
+**Cause.** A step's retry policy cannot work as written: its maxBackoffMs is below its backoffMs, or it retries cancelled errors, which end the run whatever the step declares (ACT-006).
+
+**Fix.** Set maxBackoffMs to at least backoffMs, and remove cancelled from the error kinds it retries.
+
+### PLX-1140
+
+`STATE_ENTRY_READ_ONLY` · error · State entry written that cannot be
+
+**Cause.** A setState, patchState or resetState step names a computed state entry, whose value is derived from other state and recomputed when it changes (STA-004).
+
+**Fix.** Write the entries the computed entry reads, or declare the entry with a default instead of a computed expression.
+
+### PLX-1141
+
+`STATE_PATCH_NOT_OBJECT` · error · State patch of a value that is not an object
+
+**Cause.** A patchState step names a state entry whose type is not a declared object type, so it has no fields to merge (STA-002).
+
+**Fix.** Use setState to replace the value, or declare the entry with an object type.
+
+### PLX-1142
+
+`STATE_PERSISTENCE_NOT_ALLOWED` · error · Persistence that the entry cannot have
+
+**Cause.** A computed state entry, or a run variable (an action graph's state), declares a persistence other than memory: a computed value is derived again from the state it reads, and a run variable ends with its run (STA-001, STA-003).
+
+**Fix.** Remove the persistence, or persist the entries the computed value reads.
+
+### PLX-1143
+
+`STATE_MIGRATION_REQUIRED` · error · Stored state changes type without a migration
+
+**Cause.** A session, persisted or secure state entry has another type than in the previous release and declares no migration, so devices could not read the value they stored (STA-040).
+
+**Fix.** Declare a migration on the entry: `from` the previous type with an expression `value` over `previous`, or `reset: true` to start from the default.
+
+### PLX-1144
+
+`STATE_MIGRATION_MISMATCH` · error · State migration from a type the previous release did not have
+
+**Cause.** A state entry's migration declares `from` a type other than the entry's type in the previous release, so it would never run on the values devices stored (STA-040).
+
+**Fix.** Set `from` to the entry's type in the previous release, or use `reset: true`.
+
+### PLX-1145
+
+`STATE_MIGRATION_INVALID` · error · State migration that can never run
+
+**Cause.** A state entry declares a migration although it is computed or kept only in memory, or its migration says `reset: false`, or migrates `from` the type the entry already has (STA-040).
+
+**Fix.** Remove the migration, or give the entry a session, persisted or secure persistence and its previous type in `from`.
+
+### PLX-1160
+
+`FORM_VALIDATOR_NOT_APPLICABLE` · error · Validator that does not apply to its field
+
+**Cause.** A form field declares a validator its type cannot have: length on a value that is neither text nor a list, range or decimal precision on a value that is not a number, date range on a value that is not a date or a date-time, or regex, email, phone or IBAN on a value that is not text (STA-020, ADR-0047).
+
+**Fix.** Change the field's type or remove the validator; the forms reference lists the types each validator accepts.
+
+### PLX-1161
+
+`FORM_VALIDATOR_OPTIONS` · error · Invalid validator options
+
+**Cause.** A validator lacks an option its kind needs, carries one its kind does not take, or has bounds that cannot hold: a regex without a pattern, a length, range or date range without min or max, a min above its max, a decimal precision without maxScale or maxIntegerDigits, a custom validator without a rule, or an asynchronous one without a graph (STA-020).
+
+**Fix.** Give the validator exactly the options of its kind, as the forms reference lists them.
+
+### PLX-1162
+
+`FORM_PATTERN_INVALID` · error · Invalid validator pattern
+
+**Cause.** A regex validator's pattern is not in the pxl.regex.v1 subset of RE2 or exceeds pxl.regexPatternLength, pxl.regexProgramSize or pxl.regexRepeat; patterns are checked at publish, so the runtime never meets an invalid one (PXL-003, ADR-0047).
+
+**Fix.** Correct the pattern at the reported position; the PXL reference lists the supported syntax.
+
+### PLX-1163
+
+`FORM_PHONE_REGION_UNKNOWN` · error · Unknown phone region
+
+**Cause.** A phone validator names a region the phone table of pxl.phone.v1 does not know (STA-020, ADR-0047).
+
+**Fix.** Use an ISO 3166-1 alpha-2 region with a calling code, or omit the region to use the device locale's.
+
+### PLX-1164
+
+`FORM_ASYNC_VALIDATOR_INVALID` · error · Invalid asynchronous validator
+
+**Cause.** An asynchronous validator's graph declares inputs, or an output other than `bool` or `string?`, or the validator belongs to a component shared across plugins, which has no graphs to run (STA-020, ADR-0047).
+
+**Fix.** Use a graph of the page or plugin that takes the field's value as its event and stops with true or null when the value is valid, false or a message otherwise.
+
+### PLX-1165
+
+`FORM_FIELD_INITIAL_MISSING` · error · Form field without an initial value
+
+**Cause.** A form field has no initial value and its type is not nullable, so the form could not start or be reset (STA-020).
+
+**Fix.** Give the field an initial value, such as "" for text, or make its type nullable.
+
+### PLX-1166
+
+`FORM_NAME_CONFLICT` · error · Form or field named twice
+
+**Cause.** A form has the name of another form or of a state entry of the same page or component, whose state it would replace, or two fields of a form share a name (STA-020).
+
+**Fix.** Rename the form or the field.
+
+### PLX-1167
+
+`FORM_WRITE_INVALID` · error · Form state written that cannot be
+
+**Cause.** A state action writes form state other than a field's value (`<form>.values.<field>`, with setState) or touched flag (`<form>.touched.<field>`, with setState): errors, dirty flags and the status follow from the validators, and the whole form changes only through resetForm (STA-020).
+
+**Fix.** Write the field's value or touched flag with setState, or use validateForm, submitForm or resetForm.
+
+### PLX-1170
+
+`DATA_SOURCE_CONFIG_INVALID` · error · Invalid data source configuration
+
+**Cause.** The configuration of a REST or GraphQL data source, or of one of its operations, is not what the data layer runs: a property is unknown or missing, the method, path or GraphQL document is malformed, the base URL names no string variable, a cache policy or TTL is invalid, or an operation's input or output type is unknown (DAT-001, DAT-003, DAT-010, ADR-0048).
+
+**Fix.** Correct the configuration as the data sources reference describes; the message names the property.
+
+### PLX-1171
+
+`DATA_SOURCE_DOMAIN_UNDECLARED` · error · Data source on an undeclared domain
+
+**Cause.** An environment's base URL of a data source is not an HTTPS URL on a domain the plugin declares in capabilities.networkDomains, so every request would be blocked at run time (DAT-030, SEC-080).
+
+**Fix.** Declare the domain in the plugin's capabilities, or correct the environment's base URL.
+
+### PLX-1172
+
+`DATA_MAPPING_INVALID` · error · Invalid response mapping
+
+**Cause.** A data source's selector, response type or transform cannot produce its declared type: the selector is malformed, a transform is given without a response type, or the transform's type is not the declared one (DAT-004).
+
+**Fix.** Declare the response type the selector yields and a transform that returns the source's type, or select the declared type directly.
+
+### PLX-1173
+
+`DATA_PAGINATION_INVALID` · error · Invalid pagination
+
+**Cause.** A paginated data source does not declare a list type, names a style other than cursor, page or offset, lacks the parameter or selector its style needs, or asks for pages larger than the limit data.pageSize (DAT-011).
+
+**Fix.** Declare a list type and the parameters of the style, and keep pageSize within data.pageSize.
+
+### PLX-1174
+
+`DATA_SOURCE_SECRET_HEADER` · error · Credential in a data source header
+
+**Cause.** A data source or operation sets a header that carries credentials (Authorization, Cookie, an API key or token). Secrets never appear in bundles; the auth delegate supplies the user's token and calls needing server-held secrets go through a Plux Function (DAT-003, SEC-107).
+
+**Fix.** Remove the header and set auth to true to send the auth delegate's token, or call the API through a Plux Function.
+
+### PLX-1175
+
+`DATA_STREAM_INVALID` · error · Invalid stream configuration
+
+**Cause.** A WebSocket, SSE or GraphQL subscription source is not what the data layer runs: a property is unknown or missing, the path is malformed, a subscription document is not a subscription, or a source of another kind is configured as a stream (DAT-012, ADR-0048).
+
+**Fix.** Correct the configuration as the data sources reference describes; the message names the property.
+
+### PLX-1176
+
+`DATA_OUTBOX_INVALID` · error · Invalid offline mutation
+
+**Cause.** An operation marked offlineCapable cannot be replayed: it reads (GET, or a GraphQL query) instead of mutating, or it is also a file transfer (DAT-020).
+
+**Fix.** Mark only mutating operations offlineCapable, and treat their output as optional.
+
+### PLX-1177
+
+`DATA_TRANSFER_INVALID` · error · Invalid file transfer
+
+**Cause.** An operation's upload or download is not what the data layer runs: it is not a REST operation, its method does not fit the direction, its body mode or file parameter is unknown, or it is combined with offlineCapable (DAT-031).
+
+**Fix.** Declare a REST operation with a transfer of kind upload (POST, PUT or PATCH) or download (GET), and a file parameter.
+
+### PLX-1190
+
+`COLLECTION_VERSION_INVALID` · error · Collection version not raised with its schema
+
+**Cause.** A local collection's fields, types or indexes differ from the previous release's, but its version was not raised, or its version is lower than the previous release's. Devices migrate by version, so a change under the same version would never reach them (DB-005).
+
+**Fix.** Raise the collection's `version` above the previous release's, and keep it from going down.
+
+### PLX-1191
+
+`COLLECTION_PLAN_REQUIRED` · error · Destructive collection change without a migration plan
+
+**Cause.** A change loses stored data: a field is dropped, a field is added that is not nullable, a field's type narrows, or a collection disappears from the document without being listed in `droppedCollections`. It needs an explicit plan: a `migrations` entry that drops or resets the field, or the collection's ID in `droppedCollections` (DB-005).
+
+**Fix.** Declare the migration from the previous version with `drop` or `reset` naming the field, or make the new field nullable.
+
+### PLX-1192
+
+`COLLECTION_PLAN_INVALID` · error · Invalid collection migration plan
+
+**Cause.** A collection's migration plan can never run: it starts from a version that is not below the collection's version, two plans start from the same version, it drops a field the collection still declares, or it resets a field the collection does not declare; or a dropped collection is still declared (DB-005).
+
+**Fix.** Correct the plan as the message says.
+
+### PLX-1193
+
+`COLLECTION_KEY_CHANGED` · error · Collection primary key changed
+
+**Cause.** The primary key of a local collection differs from the previous release's. Stored records are addressed by their key, so the change cannot be migrated (DB-005).
+
+**Fix.** Keep the primary key, or declare a new collection and copy the records with actions.
+
+### PLX-1194
+
+`COLLECTION_DESTRUCTIVE` · warning · Collection migration deletes data
+
+**Cause.** A declared migration drops or resets a field, or a collection is dropped: devices delete the stored values when they update. The publisher must acknowledge the warning (DB-005, SRV-051).
+
+**Fix.** Acknowledge the warning if the data is no longer needed, or keep the field.
+
+### PLX-1195
+
+`DATABASE_SOURCE_INVALID` · error · Invalid database data source
+
+**Cause.** The configuration of a data source of kind database is not a query the runtime can watch: it names no collection the plugin or the app declares, a filter names a field or operator the collection cannot use or compares with a value of the wrong type, it sorts by a field that cannot be sorted, or its limit or offset is out of range (DB-006).
+
+**Fix.** Correct the configuration as the message says: collection, filter, orderBy, descending, limit and offset.
+
 ### PLX-1201
 
 `UNKNOWN_ROUTE` · error · Unknown route
@@ -367,6 +639,206 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 **Cause.** Pages redirect to each other unconditionally from `onEnter` in a cycle, so navigation would never settle.
 
 **Fix.** Break the cycle by guarding one of the redirects with a condition.
+
+### PLX-1210
+
+`ANIMATION_INVALID` · error · Invalid animation timeline
+
+**Cause.** A timeline of a page is malformed: two timelines share a name, its keyframes are not in increasing time or run past the duration, a track has fewer keyframes than the limit anim.keyframesPerTrack allows or more, the duration exceeds anim.timelineDuration, or a driver names a node that does not exist (ANI-002, ANI-006).
+
+**Fix.** Name each timeline once, order keyframes by time within the duration, and keep them within the anim.* limits; the message names the timeline.
+
+### PLX-1211
+
+`ANIMATION_TARGET_INVALID` · error · Animation track targets nothing animatable
+
+**Cause.** A track names a node the page does not have, a prop the node's widget does not declare, or a prop whose type cannot be interpolated (only numbers, decimals and colours animate) (ANI-001, ANI-002).
+
+**Fix.** Target a node of the same page and a numeric or colour prop of its widget.
+
+### PLX-1212
+
+`ANIMATION_VALUE_INVALID` · error · Keyframe value has the wrong type
+
+**Cause.** A keyframe's value is not a literal of the animated prop's type, or violates the prop's constraints (ANI-002).
+
+**Fix.** Write the keyframe as a literal of the prop's type.
+
+### PLX-1213
+
+`TRANSITION_INVALID` · error · Invalid transition
+
+**Cause.** A custom route transition names no route timeline of the page, a route timeline animates a prop other than opacity, scale, slideX or slideY, or names a node, or a route timeline is used as anything but a transition (NAV-010).
+
+**Fix.** Declare a timeline with scope route in the page and name it in routeOptions.timeline.
+
+### PLX-1214
+
+`ANIMATION_EXPENSIVE` · warning · Animation that re-lays out the page every frame
+
+**Cause.** A timeline or an implicit animation changes a prop that affects layout (size, padding, margin, spacing, flex) of a node whose subtree is large, so every frame lays the subtree out again (ANI-008).
+
+**Fix.** Animate a transform (scale, slide) or opacity instead, which the compositor handles without layout.
+
+### PLX-1215
+
+`ANIMATION_OPACITY_SUBTREE` · warning · Opacity animated over a large subtree
+
+**Cause.** A timeline or an implicit animation changes the opacity of a node whose subtree has more nodes than the limit anim.compositedSubtree, which draws the subtree into an offscreen layer every frame (ANI-008).
+
+**Fix.** Fade the leaves instead, animate a smaller subtree, or use a transform.
+
+### PLX-1216
+
+`ANIMATION_TOO_MANY_TIMELINES` · warning · Many timelines can run together
+
+**Cause.** More timelines autoplay or run on a driver on one page than the limit anim.simultaneousTimelines, so they would all tick on every frame (ANI-008).
+
+**Fix.** Merge timelines, stagger their start, or start them from actions only when needed.
+
+### PLX-1217
+
+`NODE_ANIMATION_INVALID` · error · Invalid node animation
+
+**Cause.** A node's animation names a prop its widget does not declare or that cannot be interpolated, an empty hero tag, or an enter or exit transition on the page's root (ANI-001, ANI-003, ANI-004).
+
+**Fix.** Name animatable props of the widget, give the hero a non-empty tag, and put enter and exit transitions on inner nodes.
+
+### PLX-1230
+
+`CAPABILITY_NOT_APPROVED` · error · Capability not approved by the app
+
+**Cause.** A plugin declares a device API, network domain or function that the app document's capabilities do not approve. An app approves nothing it does not list (SEC-080, ADR-0051).
+
+**Fix.** Add the capability to the app document's capabilities if the app should allow it, or remove it from the plugin's capabilities.
+
+### PLX-1231
+
+`DEVICE_CAPABILITY_UNDECLARED` · error · Device action without its capability
+
+**Cause.** A step runs a device action, such as pickImage or getLocation, or asks requestPermission for a permission, but the plugin does not declare the device API it needs in capabilities.deviceApis, so the runtime would block it (SEC-080).
+
+**Fix.** Declare the device API named in the message in the plugin's capabilities, or remove the step.
+
+### PLX-1232
+
+`OPEN_URL_DOMAIN_UNDECLARED` · error · openUrl on an undeclared domain
+
+**Cause.** An openUrl step opens an HTTPS URL on a domain the plugin does not declare in capabilities.networkDomains, or a URL that is not HTTPS and not one of the app's deep links, so the runtime would block it (SEC-080).
+
+**Fix.** Declare the domain in the plugin's capabilities, or open a deep link of the app instead.
+
+### PLX-1233
+
+`HOST_BUILD_LACKS_PACKAGE` · warning · Host build lacks a Plux package
+
+**Cause.** The release uses a device action whose optional package, such as plux_media, plux_scanner or plux_location, is not among the packages that the native catalogue of one of the app's host builds records. On devices of that build the step fails with a permission error (RT-060, REL-080).
+
+**Fix.** Ship a host build that installs and registers the package and upload its catalogue with plux native sync, or keep the release from using the action; the publisher acknowledges the warning to publish anyway.
+
+### PLX-1240
+
+`FORM_SCOPE_INVALID` · error · FormScope names no form
+
+**Cause.** A FormScope's form is not a literal naming a form that the page or component declares, so the form root below it would have no state to read (STA-020).
+
+**Fix.** Set form to the literal name of a form declared in the page's or component's forms.
+
+### PLX-1250
+
+`COLLECTION_KEY_TYPE_INVALID` · error · Collection primary key field of an unsupported type
+
+**Cause.** A primary key field of a local collection is not a string or an int, or is nullable, so records cannot be addressed by it (DB-004).
+
+**Fix.** Use string or int, not nullable, for primary key fields.
+
+### PLX-1260
+
+`IMPORT_DOCUMENT_INVALID` · error · Document cannot be imported
+
+**Cause.** The OpenAPI document or GraphQL schema or operations file could not be read, parsed or validated, so nothing can be imported from it (DAT-002).
+
+**Fix.** Fix the reported problem in the source document and import again.
+
+### PLX-1261
+
+`IMPORT_CONSTRUCT_UNSUPPORTED` · warning · Construct has no Plux type
+
+**Cause.** An operation uses a construct that no Plux type expresses, such as a polymorphic schema, a non-JSON body or a recursive type. The operation is left out of the import rather than typed loosely (DAT-002, SCH-010).
+
+**Fix.** Simplify the operation in the source document, or write the data source by hand.
+
+### PLX-1262
+
+`IMPORT_OPERATION_INVALID` · error · Operation is invalid against its schema
+
+**Cause.** A GraphQL operation does not validate against the schema, or is not a single named query or mutation, so it cannot be imported as a typed operation (DAT-002).
+
+**Fix.** Correct the operation so it validates against the schema, and give it a name.
+
+### PLX-1263
+
+`IMPORT_OUTPUT_INVALID` · error · Imported data sources fail validation
+
+**Cause.** The data sources produced by the import do not validate against the document schema, so they are not written (DAT-002, SCH-040).
+
+**Fix.** Report the source document that produced the failure; the importer must not emit a document the schema rejects.
+
+### PLX-1270
+
+`SCENARIO_FILE_INVALID` · error · Scenario file does not match its schema
+
+**Cause.** A scenario file has a value the scenario schema does not allow: a missing or unknown key, a value of the wrong type, or a step or expectation with more than one key (TST-001).
+
+**Fix.** Fix the value at the reported line and column; scenario.schema.json lists the allowed keys of a scenario, its given, its steps and its expectations.
+
+### PLX-1271
+
+`SCENARIO_SYNTAX_INVALID` · error · Scenario file is not valid YAML or JSON
+
+**Cause.** A scenario file cannot be parsed, so none of its scenarios can run (TST-001).
+
+**Fix.** Fix the syntax at the reported line and column.
+
+### PLX-1272
+
+`SCENARIO_REFERENCE_UNKNOWN` · error · Scenario names something the project does not have
+
+**Cause.** A scenario's page route, exposed state entry or data source is not declared by the project, so the scenario could never run against it (TST-001).
+
+**Fix.** Use the name the project declares, or declare the page, the exposed state entry or the data source.
+
+### PLX-1273
+
+`SCENARIO_UNSUPPORTED` · error · Scenario uses something plux test cannot run yet
+
+**Cause.** The scenario tests a flow, which the runtime offers no public way to start on its own, or replaces a data source's mock value, which needs a release of its own; only pages and the declared mocks run (TST-001, ADR-0052).
+
+**Fix.** Start the scenario at the page that calls the flow and expect the flow's actions to have been called; select a data source's declared mock by its state only.
+
+### PLX-1274
+
+`SCENARIO_NAME_DUPLICATE` · error · Two scenarios of a file share a name
+
+**Cause.** Reports and the generated tests name each scenario by file and name, so a repeated name cannot be told apart (TST-002).
+
+**Fix.** Rename one of the scenarios.
+
+### PLX-1275
+
+`TEST_HARNESS_FAILED` · error · The Flutter test harness could not run
+
+**Cause.** plux test could not build or start the generated Flutter test project: the Flutter SDK is missing, its dependencies could not be resolved, or the process failed before reporting results (TST-002).
+
+**Fix.** Install Flutter, or pass its path with --flutter, and check the output above for the failing step.
+
+### PLX-1276
+
+`SCENARIO_FILES_NONE` · warning · No scenario files found
+
+**Cause.** The project's tests pattern matches no scenario file, so plux test has nothing to run (TST-002).
+
+**Fix.** Add a file such as tests/home.scenario.yaml, or set tests in plux.yaml to where the scenarios are.
 
 ### PLX-1310
 
@@ -593,6 +1065,38 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 **Cause.** The expression exceeds the length or nesting depth the compiler accepts.
 
 **Fix.** Split the logic into computed state entries or a Plux Function.
+
+### PLX-2020
+
+`PXL_REGEX_INVALID` · error · Invalid regular expression
+
+**Cause.** A pattern of `matches` is not in the pxl.regex.v1 subset of RE2: for example an unbalanced group, a lookaround, a backreference, a lazy quantifier or an unknown escape (schema/pxl/regex.md).
+
+**Fix.** Correct the pattern at the reported position; the PXL reference lists the supported syntax.
+
+### PLX-2021
+
+`PXL_REGEX_NOT_CONSTANT` · error · Regular expression is not a constant
+
+**Cause.** The pattern of `matches` is computed, so it cannot be compiled and checked at publish time.
+
+**Fix.** Write the pattern as a string literal.
+
+### PLX-2022
+
+`PXL_REGEX_TOO_LARGE` · error · Regular expression too large
+
+**Cause.** A pattern of `matches` exceeds the limits pxl.regexPatternLength, pxl.regexProgramSize or pxl.regexRepeat, which keep matching bounded on devices.
+
+**Fix.** Shorten the pattern or reduce its repetition counts; an installation may raise the limits within their maximums.
+
+### PLX-2023
+
+`PXL_UNKNOWN_PHONE_REGION` · error · Unknown phone region
+
+**Cause.** The region of `isPhone` is a literal that is not a two-letter region with phone metadata (schema/pxl/phone.md).
+
+**Fix.** Use an ISO 3166 region code such as "GB", or pass the region from state or `device`.
 
 ### PLX-2201
 
@@ -854,6 +1358,38 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 
 **Fix.** Fix the host's handler, conversion or builder; the report names the action, route or slot and only the exception's type, never its message.
 
+### PLX-4300
+
+`ANIMATION_UNKNOWN` · error · Unknown animation
+
+**Cause.** An action names a timeline the page does not own, or runs on a page without timelines (ANI-002).
+
+**Fix.** Name a timeline declared in the page's animations.
+
+### PLX-4301
+
+`ANIMATION_COMMAND_INVALID` · error · Invalid animation command
+
+**Cause.** controlAnimation was given a command it cannot run, such as seek without a position (ANI-002).
+
+**Fix.** Pass the position, in milliseconds, with seek.
+
+### PLX-4302
+
+`ANIMATION_TIMELINE_BROKEN` · error · Timeline cannot play
+
+**Cause.** A timeline of the bundle uses a curve, prop or value this runtime cannot play; the timeline does not run and the nodes keep their static values (ANI-002).
+
+**Fix.** Rebuild the bundle with a compiler of this runtime's generation.
+
+### PLX-4303
+
+`ANIMATION_ASSET_FAILED` · error · Lottie or Rive asset failed
+
+**Cause.** A Lottie or Rive widget could not load or play its asset: the file is missing, malformed or not what the widget expects (ANI-005).
+
+**Fix.** Check the asset and its media type; the widget shows nothing in its place.
+
 ## Actions, data and local database (PLX-5000–5999)
 
 ### PLX-5001
@@ -887,6 +1423,422 @@ This page is generated from the registry in `backend/internal/plxerr`; the machi
 **Cause.** A stop step ended the run with a custom error code, and no onError handled it (ADR-0039).
 
 **Fix.** Handle the error with an onError edge, or check why the graph stops with it; the message carries its code.
+
+### PLX-5005
+
+`ACTION_CANCELLED` · info · Action run cancelled
+
+**Cause.** A run, or a branch of a parallel step, was cancelled: its page or component was disposed, a restart policy started a newer run, or another branch of the parallel step failed (ACT-003, ACT-004). Cancellation ends the run; it is never routed to an error handler.
+
+**Fix.** Nothing to fix when the owner went away. Mark the handler detached when its run must outlive its page.
+
+### PLX-5006
+
+`ACTION_FOREACH_LIMIT_EXCEEDED` · error · forEach item limit exceeded
+
+**Cause.** A forEach step was given more items than the limit action.forEachItems allows; the step fails before its body runs (ACT-005).
+
+**Fix.** Iterate over fewer items, for example a page of them, or raise the limit within its maximum.
+
+### PLX-5007
+
+`FLOW_NOT_FOUND` · error · Flow not found
+
+**Cause.** A callFlow step names a flow the active release does not hold, or a flow of another plugin that is not exported in that plugin's active version (ACT-061).
+
+**Fix.** Publish the plugin that declares the flow, export it, or handle the error with the step's onError.
+
+### PLX-5008
+
+`ERROR_HANDLER_FAILED` · error · Error handler failed
+
+**Cause.** A page, plugin or app error handler failed while handling a run's error; its failure is reported and the original error goes on to the next handler (ACT-020).
+
+**Fix.** Fix the error handler's graph; the report names the handler's owner and its own error code.
+
+### PLX-5009
+
+`ACTION_QUEUE_FULL` · warning · Action queue full
+
+**Cause.** A handler with the queue policy was triggered while it already held as many waiting triggers as the limit action.queueLength allows; the trigger was dropped (ACT-003).
+
+**Fix.** Use the drop, restart or debounce policy for triggers that come faster than their runs finish, or raise the limit within its maximum.
+
+### PLX-5100
+
+`DATA_DOMAIN_BLOCKED` · error · Request to an undeclared domain blocked
+
+**Cause.** A data source or operation was about to send a request to a host the plugin does not declare in capabilities.networkDomains, or over a scheme other than HTTPS. The request never left the device, and the attempt is reported (DAT-030, SEC-080).
+
+**Fix.** Declare the domain in the plugin's capabilities, or correct the base URL of the environment.
+
+### PLX-5101
+
+`DATA_NETWORK_FAILED` · error · Network request failed
+
+**Cause.** A data request could not be completed: the device is offline, the connection failed or was reset. The step's error has the kind network (DAT-001).
+
+**Fix.** Handle the error with onError, show the source's error state, or retry when the network returns.
+
+### PLX-5102
+
+`DATA_HTTP_ERROR` · error · Request answered with an error status
+
+**Cause.** The server answered a data request with a status outside 2xx. The step's error has the kind http and carries the status, never the response body (DAT-001, SCH-012).
+
+**Fix.** Handle the error with onError; check the request against the API.
+
+### PLX-5103
+
+`DATA_REQUEST_TIMEOUT` · error · Data request timed out
+
+**Cause.** A data request took longer than the limit data.requestTimeout. The step's error has the kind timeout (DAT-001).
+
+**Fix.** Handle the error with onError, or ask the API owner why it is slow; an installation may raise the limit within its maximum.
+
+### PLX-5104
+
+`DATA_MAPPING_FAILED` · error · Response does not match its declared type
+
+**Cause.** A response is not JSON, its selector finds nothing, a value does not have the type the source or operation declares, or the transform failed. The step's error has the kind validation and names the path, never the value (DAT-004).
+
+**Fix.** Correct the selector, the declared types or the transform, or ask the API owner about the response.
+
+### PLX-5105
+
+`DATA_SIZE_EXCEEDED` · error · Request or response too large
+
+**Cause.** A data request's body is larger than data.requestSize, or its response larger than data.responseSize; the transfer is stopped (LIM-004).
+
+**Fix.** Request less data, for example with pagination, or raise the limit within its maximum.
+
+### PLX-5106
+
+`DATA_GRAPHQL_ERROR` · error · GraphQL request failed
+
+**Cause.** A GraphQL response carried errors and no data. The step's error has the kind http; the GraphQL messages are not reported, since they may echo user data (DAT-001, SCH-012).
+
+**Fix.** Check the GraphQL document and its variables against the schema.
+
+### PLX-5107
+
+`DATA_UNAUTHORISED` · error · Request unauthorised
+
+**Cause.** A data request that sends the auth delegate's token was answered with 401 again after one refresh, or no token was available. The step's error has the kind http (HST-010).
+
+**Fix.** Sign the user in again through the host app; check the auth delegate's refresh.
+
+### PLX-5108
+
+`DATA_SOURCE_UNAVAILABLE` · error · Data source unavailable
+
+**Cause.** A step or binding names a data source or operation this release does not declare, the source has no base URL for the current environment, or its kind is one this runtime does not load yet (DAT-001, DAT-003).
+
+**Fix.** Declare the source and a base URL for every environment, or raise the app's minimum runtime version to one that loads its kind.
+
+### PLX-5109
+
+`DATA_CACHE_UNAVAILABLE` · warning · Response cache unavailable
+
+**Cause.** The response cache could not be read or written, or its encryption key could not be obtained; the request goes to the network as with networkOnly, and nothing is stored in the clear (DAT-010, LIM-004).
+
+**Fix.** Check the device's free storage and the key provider; the runtime keeps working without the cache.
+
+### PLX-5110
+
+`DATA_STREAM_FAILED` · error · Stream failed
+
+**Cause.** A stream ended and will not reconnect: the server refused the connection for good (a client error), the stream's protocol was violated, or a GraphQL subscription reported an error. Network failures and server errors are not this error: they reconnect with backoff (DAT-012).
+
+**Fix.** Check the stream's URL, parameters and the user's access; subscribe again after correcting the cause.
+
+### PLX-5111
+
+`DATA_STREAM_MESSAGE_TOO_LARGE` · error · Stream message too large
+
+**Cause.** A message of a stream is larger than data.streamMessageSize; the stream is closed (DAT-012, LIM-004).
+
+**Fix.** Make the server send smaller messages, or raise data.streamMessageSize for the app.
+
+### PLX-5112
+
+`DATA_STREAM_LIMIT` · error · Too many open streams
+
+**Cause.** A subscription would open more streams than data.streamsOpen allows; it is refused and the open streams stay (DAT-012, LIM-004).
+
+**Fix.** Unsubscribe from a stream first, or raise data.streamsOpen for the app.
+
+### PLX-5120
+
+`DATA_OUTBOX_FULL` · error · Outbox full
+
+**Cause.** An offline mutation could not be queued because the outbox holds data.outboxEntries entries or data.outboxBytes bytes; the mutation is refused with a custom error and nothing is queued (DAT-020, LIM-004).
+
+**Fix.** Wait until connectivity returns and the outbox drains, or raise the limits for the app.
+
+### PLX-5121
+
+`DATA_OUTBOX_UNAVAILABLE` · error · Outbox unavailable
+
+**Cause.** The outbox could not be read or written, or its encryption key could not be obtained, so an offline mutation is refused rather than stored in the clear (DAT-020).
+
+**Fix.** Check the device's free storage and secure storage; the mutation can be repeated.
+
+### PLX-5122
+
+`DATA_OUTBOX_CONFLICT` · warning · Outbox replay conflict
+
+**Cause.** A queued mutation was answered 409 or 412 when it was replayed: the server's state changed meanwhile. The entry is removed and the data source's conflict event runs, so the graph can reconcile (DAT-020).
+
+**Fix.** Handle the conflict trigger of the data source: reload the data and ask the user, or apply the change again.
+
+### PLX-5123
+
+`DATA_OUTBOX_REJECTED` · warning · Outbox replay rejected
+
+**Cause.** A queued mutation was answered with a client error other than a conflict when it was replayed, so it can never succeed. The entry is removed and the data source's failure event runs (DAT-020).
+
+**Fix.** Handle the failure trigger of the data source: undo the optimistic change and tell the user.
+
+### PLX-5130
+
+`DATA_TRANSFER_TOO_LARGE` · error · Transfer too large
+
+**Cause.** An upload's file, or a download's declared or received length, is larger than data.uploadSize or data.downloadSize; the transfer is refused or stopped and a partial download is removed (DAT-031, LIM-004).
+
+**Fix.** Choose a smaller file, or raise the limit for the app.
+
+### PLX-5131
+
+`DATA_TRANSFER_FILE_FAILED` · error · Transfer file unavailable
+
+**Cause.** The file to upload does not exist or cannot be read, or the name a download is saved under is not a plain file name or cannot be written in the runtime's directory (DAT-031).
+
+**Fix.** Give an existing file, and a download a plain name without directories.
+
+### PLX-5200
+
+`DB_MIGRATION_FAILED` · error · Collection migration failed
+
+**Cause.** A collection could not be taken to the release's schema: no plan covers a field that changed, or the database refused a step. The migration was rolled back and the collection stays at its previous version, which actions on it cannot use until the next release or launch (DB-005).
+
+**Fix.** Publish a release whose migration plan covers the change, and check the device's free storage.
+
+### PLX-5201
+
+`DB_UNAVAILABLE` · error · Local database unavailable
+
+**Cause.** A plugin uses a local collection but the app has no database adapter that stores collections: add plux_db_drift or supply PluxConfig.databaseAdapter (DB-001, DB-003).
+
+**Fix.** Add the plux_db_drift package to the host app and pass its adapter in PluxConfig.databaseAdapter.
+
+### PLX-5202
+
+`DB_ENCRYPTION_REQUIRED` · error · Encrypted database required
+
+**Cause.** The app's security profile is strict or maximum, and the database adapter cannot guarantee that the database is encrypted at rest; it is refused and no collection is opened (DB-002).
+
+**Fix.** Open the database with a SQLCipher key, or use a lower security profile if the data does not need it.
+
+### PLX-5203
+
+`DB_RECORD_INVALID` · error · Record does not fit its collection
+
+**Cause.** A record has a field the collection does not declare, a value of the wrong type, or misses a field that is not nullable or the primary key (DB-004, DB-006).
+
+**Fix.** Give the record the collection's fields with values of their declared types.
+
+### PLX-5204
+
+`DB_RECORD_NOT_FOUND` · error · Record not found
+
+**Cause.** dbUpdate named a key that no record of the collection has (DB-006).
+
+**Fix.** Use dbUpsert to create the record when it may be missing, or handle the step's error.
+
+### PLX-5205
+
+`DB_KEY_CONFLICT` · error · Record key already exists
+
+**Cause.** dbInsert named a key that another record of the collection already has (DB-006).
+
+**Fix.** Use dbUpsert to replace the record, or choose another key.
+
+### PLX-5206
+
+`DB_QUERY_INVALID` · error · Invalid database query
+
+**Cause.** A query sorts by a field the collection does not declare, has a negative limit or offset, or its condition cannot be evaluated (DB-006).
+
+**Fix.** Sort by a declared field and give a non-negative limit and offset.
+
+### PLX-5207
+
+`DB_LIMIT_EXCEEDED` · error · Local database over its limit
+
+**Cause.** A write would exceed db.recordBytes, db.collectionRecords or db.kvBytes; nothing is written (LIM-001, LIM-004).
+
+**Fix.** Store less, delete records, or raise the limit for the app.
+
+### PLX-5208
+
+`DB_STORE_FAILED` · error · Local database failed
+
+**Cause.** The database or its file could not be read or written, or its key could not be obtained from secure storage (DB-001, DB-007).
+
+**Fix.** Check the device's free storage and the platform's secure storage; the message names the operation, never a value.
+
+### PLX-5209
+
+`DB_COLLECTION_UNKNOWN` · error · Unknown or inaccessible collection
+
+**Cause.** A step names a collection that the active release does not declare for the calling plugin or the app. Another plugin's private collection is never reachable (DB-004).
+
+**Fix.** Declare the collection in the plugin or the app document.
+
+### PLX-5210
+
+`DB_VALUE_TYPE_MISMATCH` · error · Key-value entry of another type
+
+**Cause.** kvSet wrote a value whose JSON type differs from the type the first kvSet fixed for the key within the plugin (DB-009).
+
+**Fix.** Write values of one type per key, or remove the key first with kvRemove.
+
+### PLX-5301
+
+`STATE_WRITE_TYPE_MISMATCH` · error · State written with a value of the wrong type
+
+**Cause.** A state write received a value from outside the bundle (an API response, a custom action, the host) that does not have the entry's declared type; the step fails with a validation error and the entry keeps its value (STA-002).
+
+**Fix.** Map the value to the declared type before writing it, or handle the step's error with onError.
+
+### PLX-5302
+
+`STATE_WRITE_REFUSED` · error · State write refused
+
+**Cause.** A state write names a path its scope does not have or a computed entry, or patches an entry that is not an object; the step fails and nothing changes (STA-001, STA-004).
+
+**Fix.** Check the path against the entries the page, component, plugin, app or run declares; the compiler reports this for literal paths (PLX-1140, PLX-1141).
+
+### PLX-5303
+
+`STATE_STORE_UNAVAILABLE` · warning · State store unavailable
+
+**Cause.** The runtime could not open or write its local state store, or could not obtain the store's key from the platform's secure storage; session, persisted and secure entries are kept in memory until the store works again (STA-003).
+
+**Fix.** Check the device's free space and the platform's secure storage; the message names the failing operation, never a value.
+
+### PLX-5304
+
+`STATE_STORE_CORRUPT` · error · State store failed authentication
+
+**Cause.** The local state store did not decrypt under its key: it was altered, truncated or written by another installation. It is discarded, and every stored entry starts from its default (STA-003).
+
+**Fix.** Nothing to fix in the app; if it repeats, check the device for tampering with the app's storage.
+
+### PLX-5305
+
+`STATE_MIGRATION_FAILED` · warning · Stored state could not be migrated
+
+**Cause.** A stored value had neither the entry's type nor the type its migration reads, or the migration failed; the entry starts from its default (STA-040).
+
+**Fix.** Declare a migration from the previous type, and check that it handles every stored value.
+
+### PLX-5306
+
+`STATE_LIMIT_EXCEEDED` · error · Stored state over its limit
+
+**Cause.** The values to store exceed state.persistedBytes or state.secureBytes; the write takes effect in memory but is not stored, so it is lost when the app is closed (LIM-001, LIM-004).
+
+**Fix.** Store less, for example by keeping large data in a local collection, or raise the limit for the app.
+
+### PLX-5307
+
+`HOST_EVENT_REFUSED` · error · Host event refused
+
+**Cause.** Plux.sendEvent named an event the app does not declare for the host to send (direction toPlux or both), or a payload without the event's fields and types; nothing runs (HST-013).
+
+**Fix.** Declare the event in the app's hostEvents with the direction toPlux or both; plux codegen generates typed senders that make this a compile error.
+
+### PLX-5350
+
+`FORM_INVALID` · error · Form invalid
+
+**Cause.** submitForm validated a form and at least one field is invalid; the step fails with a validation error naming the fields, every field is marked touched, and the field errors are in the form's state (STA-020).
+
+**Fix.** Show the form's errors, and handle the step's error with onError where the run should go on.
+
+### PLX-5351
+
+`FORM_NOT_IN_SCOPE` · error · Form not in scope
+
+**Cause.** A form action named a form that neither the component nor the page where the run started declares, for example from a lifecycle run that has no form state (STA-020).
+
+**Fix.** Run the form action from a handler of the page or component that declares the form.
+
+### PLX-5352
+
+`FORM_ASYNC_VALIDATOR_FAILED` · warning · Asynchronous validator failed
+
+**Cause.** An asynchronous validator's graph failed, for example because the server could not be reached; the field is shown as not checked and the form is invalid until a check succeeds (STA-020).
+
+**Fix.** Handle the graph's errors with onError and return a message, or let the user retry by editing the field.
+
+### PLX-5400
+
+`DEVICE_CAPABILITY_BLOCKED` · error · Device operation blocked
+
+**Cause.** A step ran a device action whose device API the plugin does not declare, or that the host narrowed away with PluxConfig.allowedCapabilities. The step failed with a permission error and nothing reached the device (SEC-080).
+
+**Fix.** Declare the device API in the plugin's capabilities and in the app's approved set, or allow it in the host's allowedCapabilities.
+
+### PLX-5401
+
+`DEVICE_PACKAGE_MISSING` · error · Device package not installed
+
+**Cause.** A step ran a device action whose optional package, such as plux_media, plux_scanner or plux_location, the host app did not register in PluxConfig.devicePackages (RT-060).
+
+**Fix.** Add the package to the host app and pass it in PluxConfig.devicePackages.
+
+### PLX-5402
+
+`DEVICE_PERMISSION_DENIED` · error · Device permission denied
+
+**Cause.** The user, or the platform's policy, denied the permission a device action needs, such as the camera or location.
+
+**Fix.** Run requestPermission first and take its denied branch to explain what the feature needs; the user can grant the permission in the system settings.
+
+### PLX-5403
+
+`DEVICE_UNAVAILABLE` · error · Device feature unavailable
+
+**Cause.** The platform could not perform the device operation: the device has no such hardware, the service is switched off, or the platform call failed.
+
+**Fix.** Check that the device supports the feature and that its service, such as location, is on.
+
+### PLX-5404
+
+`OPEN_URL_BLOCKED` · error · openUrl blocked
+
+**Cause.** An openUrl step named a URL that is not HTTPS on a domain the plugin declares, nor a deep link of the app, or the platform could not open it (SEC-080).
+
+**Fix.** Declare the domain in the plugin's capabilities, or use a deep link of the app.
+
+### PLX-5405
+
+`CLIPBOARD_BLOCKED` · error · Clipboard write blocked
+
+**Cause.** A copyToClipboard step ran on a page marked secure, or copied more text than device.clipboardChars allows, so nothing was copied (SEC-090).
+
+**Fix.** Do not copy from secure pages, or shorten the text.
+
+### PLX-5500
+
+`HOST_EVENT_PAYLOAD_INVALID` · error · Host event payload invalid
+
+**Cause.** The payload of Plux.sendEvent lacks a field the app's hostEvents declaration requires, has a field it does not declare, or has a value that does not fit the field's type; nothing runs (HST-013).
+
+**Fix.** Send the declared fields with values of their types; plux codegen generates typed senders that make this a compile error.
 
 ## Security (PLX-6000–6999)
 

@@ -132,8 +132,40 @@ func (rcv *Collection) IndexesLength() int {
 	return 0
 }
 
+func (rcv *Collection) Version() uint32 {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(14))
+	if o != 0 {
+		return rcv._tab.GetUint32(o + rcv._tab.Pos)
+	}
+	return 0
+}
+
+func (rcv *Collection) MutateVersion(n uint32) bool {
+	return rcv._tab.MutateUint32Slot(14, n)
+}
+
+func (rcv *Collection) Migrations(obj *CollectionMigration, j int) bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(16))
+	if o != 0 {
+		x := rcv._tab.Vector(o)
+		x += flatbuffers.UOffsetT(j) * 4
+		x = rcv._tab.Indirect(x)
+		obj.Init(rcv._tab.Bytes, x)
+		return true
+	}
+	return false
+}
+
+func (rcv *Collection) MigrationsLength() int {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(16))
+	if o != 0 {
+		return rcv._tab.VectorLen(o)
+	}
+	return 0
+}
+
 func CollectionStart(builder *flatbuffers.Builder) {
-	builder.StartObject(5)
+	builder.StartObject(7)
 }
 func CollectionAddId(builder *flatbuffers.Builder, id flatbuffers.UOffsetT) {
 	builder.PrependStructSlot(0, flatbuffers.UOffsetT(id), 0)
@@ -157,6 +189,15 @@ func CollectionAddIndexes(builder *flatbuffers.Builder, indexes flatbuffers.UOff
 	builder.PrependUOffsetTSlot(4, flatbuffers.UOffsetT(indexes), 0)
 }
 func CollectionStartIndexesVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
+	return builder.StartVector(4, numElems, 4)
+}
+func CollectionAddVersion(builder *flatbuffers.Builder, version uint32) {
+	builder.PrependUint32Slot(5, version, 0)
+}
+func CollectionAddMigrations(builder *flatbuffers.Builder, migrations flatbuffers.UOffsetT) {
+	builder.PrependUOffsetTSlot(6, flatbuffers.UOffsetT(migrations), 0)
+}
+func CollectionStartMigrationsVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
 	return builder.StartVector(4, numElems, 4)
 }
 func CollectionEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT {

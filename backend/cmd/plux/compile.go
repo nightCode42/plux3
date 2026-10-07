@@ -178,11 +178,11 @@ func writeFile(path string, data []byte) error {
 	_, werr := tmp.Write(data)
 	cerr := tmp.Close()
 	if err := errors.Join(werr, cerr, os.Chmod(tmp.Name(), 0o644)); err != nil { //nolint:gosec // G302: build output is meant to be read by other tools.
-		_ = os.Remove(tmp.Name())
+		_ = os.Remove(tmp.Name()) //nolint:gosec // G703: the output path is the developer's own.
 		return fmt.Errorf("write %s: %w", path, err)
 	}
-	if err := os.Rename(tmp.Name(), path); err != nil {
-		_ = os.Remove(tmp.Name())
+	if err := os.Rename(tmp.Name(), path); err != nil { //nolint:gosec // G703: the output path is the developer's own.
+		_ = os.Remove(tmp.Name()) //nolint:gosec // G703: the output path is the developer's own.
 		return fmt.Errorf("write %s: %w", path, err)
 	}
 	return nil

@@ -1,0 +1,15 @@
+{
+  "id": "01d0c450-6c00-7000-8000-000000000102",
+  "key": "motion",
+  "kind": "theme",
+  "name": "Motion",
+  "schemaVersion": "1.0.0",
+  "tokens": {
+    "color": {
+      "$type": "color",
+      "primary": {
+        "$value": "#0B6E4F"
+      }
+    }
+  }
+}

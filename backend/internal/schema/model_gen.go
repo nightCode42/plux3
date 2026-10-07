@@ -22,6 +22,7 @@ const (
 	KindNativeCatalogue DocumentKind = "nativeCatalogue"
 	KindPage            DocumentKind = "page"
 	KindPlugin          DocumentKind = "plugin"
+	KindScenarios       DocumentKind = "scenarios"
 	KindTemplate        DocumentKind = "template"
 	KindTheme           DocumentKind = "theme"
 	KindTranslationKeys DocumentKind = "translationKeys"
@@ -40,6 +41,7 @@ var documentSchemas = [...]struct {
 	{KindNativeCatalogue, "native-catalogue.schema.json"},
 	{KindPage, "page.schema.json"},
 	{KindPlugin, "plugin.schema.json"},
+	{KindScenarios, "scenario.schema.json"},
 	{KindTemplate, "template.schema.json"},
 	{KindTheme, "theme.schema.json"},
 	{KindTranslationKeys, "translation-keys.schema.json"},
@@ -69,7 +71,10 @@ type ActionGraphDocument struct {
 	// Output: Type expression of SCH-010, e.g. `string`, `decimal?`,
 	// `list<Transaction>`, `map<string,int>`.
 	Output string `json:"output,omitempty"`
-	Steps  []Step `json:"steps"`
+	// State: The run's variables: state of scope `run`, read and written as
+	// `run.<name>` by the graph's steps and gone when the run ends (STA-001).
+	State []StateEntry `json:"state,omitempty"`
+	Steps []Step       `json:"steps"`
 }
 
 // ActivationPolicy — When a staged release activates (SYN-004).
@@ -86,6 +91,37 @@ const (
 func (v ActivationPolicy) Valid() bool {
 	switch v {
 	case ActivationPolicyImmediate, ActivationPolicyAtSafePoint, ActivationPolicyNextLaunch:
+		return true
+	}
+	return false
+}
+
+// AnimTransition — An enter or exit transition of a node (ANI-003).
+type AnimTransition struct {
+	// Kind: How a node moves in or out (ANI-003).
+	Kind       AnimTransitionKind `json:"kind"`
+	DurationMs *int64             `json:"durationMs,omitempty"`
+	// Curve: An animation curve (ANI-001, ANI-002).
+	Curve Curve `json:"curve,omitempty"`
+}
+
+// AnimTransitionKind — How a node moves in or out (ANI-003).
+type AnimTransitionKind string
+
+// Values of AnimTransitionKind.
+const (
+	AnimTransitionKindFade       AnimTransitionKind = "fade"
+	AnimTransitionKindScale      AnimTransitionKind = "scale"
+	AnimTransitionKindSlideUp    AnimTransitionKind = "slideUp"
+	AnimTransitionKindSlideDown  AnimTransitionKind = "slideDown"
+	AnimTransitionKindSlideLeft  AnimTransitionKind = "slideLeft"
+	AnimTransitionKindSlideRight AnimTransitionKind = "slideRight"
+)
+
+// Valid reports whether v is one of the values of AnimTransitionKind.
+func (v AnimTransitionKind) Valid() bool {
+	switch v {
+	case AnimTransitionKindFade, AnimTransitionKindScale, AnimTransitionKindSlideUp, AnimTransitionKindSlideDown, AnimTransitionKindSlideLeft, AnimTransitionKindSlideRight:
 		return true
 	}
 	return false
@@ -121,8 +157,14 @@ type AppDocument struct {
 	Navigation *NavigationPolicy `json:"navigation,omitempty"`
 	// Plugins: Keys of the app's plugins, in display order; each has a directory
 	// `plugins/<key>/`.
-	Plugins      []string      `json:"plugins"`
-	Environments []Environment `json:"environments"`
+	Plugins []string `json:"plugins"`
+	// Capabilities: The capabilities the app approves for its plugins (SEC-080,
+	// ADR-0051); a release is published only when every plugin requests a
+	// subset. Without `deviceApis`, no device API is approved. `networkDomains`
+	// and `functions`, when listed, narrow what plugins may declare. Native
+	// routes are approved by the host's registration, not here.
+	Capabilities *ApprovedCapabilities `json:"capabilities,omitempty"`
+	Environments []Environment         `json:"environments"`
 	// Variables: Non-secret environment variables available in PXL as
 	// `env.<name>` (DAT-003).
 	Variables   []Field      `json:"variables,omitempty"`
@@ -144,6 +186,10 @@ type AppDocument struct {
 	Types            []TypeDecl             `json:"types,omitempty"`
 	State            []StateEntry           `json:"state,omitempty"`
 	Collections      []Collection           `json:"collections,omitempty"`
+	// DroppedCollections: IDs of collections this document no longer declares.
+	// Their data is deleted from devices that still hold it; the publisher
+	// acknowledges the warning this raises (DB-005).
+	DroppedCollections []string `json:"droppedCollections,omitempty"`
 	// UserContext: Attributes the host provides about the signed-in user,
 	// available in PXL as `user.<name>`.
 	UserContext []Field         `json:"userContext,omitempty"`
@@ -155,6 +201,21 @@ type AppDocument struct {
 	// key under which a notification names `{route, params}` for
 	// `Plux.handlePushPayload`.
 	Push *PushPolicy `json:"push,omitempty"`
+	// Triggers: Triggers besides widget events and page lifecycle (ACT-002), and
+	// the owner's error handler (ACT-020). A page's runs are cancelled with the
+	// page; a plugin's and the app's run while the release is active.
+	Triggers *Triggers `json:"triggers,omitempty"`
+}
+
+// ApprovedCapabilities — The capabilities the app approves for its plugins
+// (SEC-080, ADR-0051); a release is published only when every plugin requests
+// a subset. Without `deviceApis`, no device API is approved. `networkDomains`
+// and `functions`, when listed, narrow what plugins may declare. Native
+// routes are approved by the host's registration, not here.
+type ApprovedCapabilities struct {
+	DeviceApis     []DeviceAPI `json:"deviceApis,omitempty"`
+	NetworkDomains []string    `json:"networkDomains,omitempty"`
+	Functions      []string    `json:"functions,omitempty"`
 }
 
 // AssetEntry — An asset file.
@@ -230,6 +291,32 @@ type Collection struct {
 	Fields     []Field    `json:"fields"`
 	PrimaryKey []string   `json:"primaryKey"`
 	Indexes    [][]string `json:"indexes,omitempty"`
+	// Version: The collection's schema version, 1 when omitted. A publish that
+	// changes the fields, types or indexes raises it; devices migrate from the
+	// version they hold (DB-005).
+	Version *int64 `json:"version,omitempty"`
+	// Migrations: How a device at an older version reaches this one: one plan
+	// per version it may hold. A change that loses data needs one (DB-005).
+	Migrations []CollectionMigration `json:"migrations,omitempty"`
+	// Description: Human-readable description.
+	Description string `json:"description,omitempty"`
+}
+
+// CollectionMigration — The plan that takes a collection from version
+// `from` to the next (DB-005): fields renamed, dropped or reset.
+type CollectionMigration struct {
+	// From: The version this plan starts from.
+	From int64 `json:"from"`
+	// Rename: Fields renamed, as new name to old name; their values are kept.
+	Rename map[string]string `json:"rename,omitempty"`
+	// Drop: Fields of the older version that are removed, with their values. The
+	// publisher acknowledges the warning this raises.
+	Drop []string `json:"drop,omitempty"`
+	// Reset: Fields that are added without being nullable, or whose type
+	// narrows: every record's value starts again from the type's empty value (0,
+	// "", false, [] or {}), or null when nullable. The publisher acknowledges
+	// the warning this raises.
+	Reset []string `json:"reset,omitempty"`
 	// Description: Human-readable description.
 	Description string `json:"description,omitempty"`
 }
@@ -260,6 +347,8 @@ type ComponentDocument struct {
 	// Root: A node of a page or component tree: a widget or a component instance
 	// (SCH-023).
 	Root Node `json:"root"`
+	// Forms: The forms of the component (STA-020).
+	Forms []Form `json:"forms,omitempty"`
 }
 
 // ComponentEvent — An event the component emits.
@@ -305,6 +394,32 @@ type ComponentSlot struct {
 	Description string `json:"description,omitempty"`
 }
 
+// Curve — An animation curve (ANI-001, ANI-002).
+type Curve string
+
+// Values of Curve.
+const (
+	CurveLinear        Curve = "linear"
+	CurveEaseIn        Curve = "easeIn"
+	CurveEaseOut       Curve = "easeOut"
+	CurveEaseInOut     Curve = "easeInOut"
+	CurveFastOutSlowIn Curve = "fastOutSlowIn"
+	CurveDecelerate    Curve = "decelerate"
+	CurveBounceIn      Curve = "bounceIn"
+	CurveBounceOut     Curve = "bounceOut"
+	CurveElasticOut    Curve = "elasticOut"
+	CurveOvershoot     Curve = "overshoot"
+)
+
+// Valid reports whether v is one of the values of Curve.
+func (v Curve) Valid() bool {
+	switch v {
+	case CurveLinear, CurveEaseIn, CurveEaseOut, CurveEaseInOut, CurveFastOutSlowIn, CurveDecelerate, CurveBounceIn, CurveBounceOut, CurveElasticOut, CurveOvershoot:
+		return true
+	}
+	return false
+}
+
 // DataSource — A data source with its value type and design-time mock
 // (SCH-024, DAT-080).
 type DataSource struct {
@@ -347,6 +462,36 @@ func (v DataSourceKind) Valid() bool {
 		return true
 	}
 	return false
+}
+
+// DataSourceTriggers — Handlers of a data source's events (ACT-002): the
+// loaded value is onLoaded's `event`, the error onFailed's; a stream's
+// message, mapped to the source's type, is onMessage's; a transfer's progress
+// is onProgress's (DAT-012, DAT-031); an offline mutation's replay ends in
+// onSynced, onSyncFailed or onConflict, whose `event` names the operation,
+// the idempotency key and the status (DAT-020).
+type DataSourceTriggers struct {
+	// OnLoaded: A trigger's handler: a reference to an action graph or an inline
+	// graph (SCH-023).
+	OnLoaded *EventHandler `json:"onLoaded,omitempty"`
+	// OnFailed: A trigger's handler: a reference to an action graph or an inline
+	// graph (SCH-023).
+	OnFailed *EventHandler `json:"onFailed,omitempty"`
+	// OnMessage: A trigger's handler: a reference to an action graph or an
+	// inline graph (SCH-023).
+	OnMessage *EventHandler `json:"onMessage,omitempty"`
+	// OnProgress: A trigger's handler: a reference to an action graph or an
+	// inline graph (SCH-023).
+	OnProgress *EventHandler `json:"onProgress,omitempty"`
+	// OnSynced: A trigger's handler: a reference to an action graph or an inline
+	// graph (SCH-023).
+	OnSynced *EventHandler `json:"onSynced,omitempty"`
+	// OnSyncFailed: A trigger's handler: a reference to an action graph or an
+	// inline graph (SCH-023).
+	OnSyncFailed *EventHandler `json:"onSyncFailed,omitempty"`
+	// OnConflict: A trigger's handler: a reference to an action graph or an
+	// inline graph (SCH-023).
+	OnConflict *EventHandler `json:"onConflict,omitempty"`
 }
 
 // DeepLinkPolicy — The links the app answers (NAV-008): its hosts for
@@ -496,6 +641,99 @@ func (v FlagType) Valid() bool {
 	return false
 }
 
+// Form — A form (STA-020, ADR-0047): typed fields with their initial values
+// and validators. Its state lives in the declaring page's or component's
+// scope under the form's name: `values`, `errors`, `dirty`, `touched`,
+// `status`, `valid` and `validating`.
+type Form struct {
+	// ID: Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
+	ID string `json:"id"`
+	// Name: Identifier used in PXL and generated code: lowerCamelCase.
+	Name   string      `json:"name"`
+	Fields []FormField `json:"fields"`
+	// Description: Human-readable description.
+	Description string `json:"description,omitempty"`
+}
+
+// FormField — A field of a form: its type, initial value and validators,
+// run in order (STA-020).
+type FormField struct {
+	// Name: Identifier used in PXL and generated code: lowerCamelCase.
+	Name string `json:"name"`
+	// Type: Type expression of SCH-010, e.g. `string`, `decimal?`,
+	// `list<Transaction>`, `map<string,int>`.
+	Type string `json:"type"`
+	// Initial: A JSON value interpreted against a declared type (defaults,
+	// mocks, environment values).
+	Initial    json.RawMessage `json:"initial,omitempty"`
+	Validators []FormValidator `json:"validators,omitempty"`
+	// Description: Human-readable description.
+	Description string `json:"description,omitempty"`
+}
+
+// FormValidator — A validator of a form field. Each kind takes its own
+// options: `min` and `max` (length, range, dateRange), `pattern` (regex),
+// `region` (phone), `maxScale` and `maxIntegerDigits` (decimalPrecision),
+// `rule` (custom), `$graph` and `debounceMs` (async); the compiler checks
+// them against the kind and the field's type (PLX-1160-1169).
+type FormValidator struct {
+	// Kind: A built-in validator of a form field (STA-020, ADR-0047).
+	Kind FormValidatorKind `json:"kind"`
+	// Message: The message shown when the value is invalid; the runtime's
+	// built-in message otherwise.
+	Message string `json:"message,omitempty"`
+	// Min: A JSON value interpreted against a declared type (defaults, mocks,
+	// environment values).
+	Min json.RawMessage `json:"min,omitempty"`
+	// Max: A JSON value interpreted against a declared type (defaults, mocks,
+	// environment values).
+	Max json.RawMessage `json:"max,omitempty"`
+	// Pattern: A pxl.regex.v1 pattern, checked at publish (PXL-003).
+	Pattern string `json:"pattern,omitempty"`
+	// Region: The ISO 3166-1 region of numbers written without a country calling
+	// code; the device locale's region when absent.
+	Region string `json:"region,omitempty"`
+	// MaxScale: The most digits after the decimal point.
+	MaxScale *int64 `json:"maxScale,omitempty"`
+	// MaxIntegerDigits: The most digits before the decimal point.
+	MaxIntegerDigits *int64 `json:"maxIntegerDigits,omitempty"`
+	// Rule: PXL binding (SCH-011).
+	Rule *Expr `json:"rule,omitempty"`
+	// Graph: Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
+	Graph string `json:"$graph,omitempty"`
+	// DebounceMs: How long the field stays unchanged before the asynchronous
+	// check runs.
+	DebounceMs *int64 `json:"debounceMs,omitempty"`
+}
+
+// FormValidatorKind — A built-in validator of a form field (STA-020,
+// ADR-0047).
+type FormValidatorKind string
+
+// Values of FormValidatorKind.
+const (
+	FormValidatorKindRequired         FormValidatorKind = "required"
+	FormValidatorKindLength           FormValidatorKind = "length"
+	FormValidatorKindRange            FormValidatorKind = "range"
+	FormValidatorKindRegex            FormValidatorKind = "regex"
+	FormValidatorKindEmail            FormValidatorKind = "email"
+	FormValidatorKindPhone            FormValidatorKind = "phone"
+	FormValidatorKindIban             FormValidatorKind = "iban"
+	FormValidatorKindDateRange        FormValidatorKind = "dateRange"
+	FormValidatorKindDecimalPrecision FormValidatorKind = "decimalPrecision"
+	FormValidatorKindCustom           FormValidatorKind = "custom"
+	FormValidatorKindAsync            FormValidatorKind = "async"
+)
+
+// Valid reports whether v is one of the values of FormValidatorKind.
+func (v FormValidatorKind) Valid() bool {
+	switch v {
+	case FormValidatorKindRequired, FormValidatorKindLength, FormValidatorKindRange, FormValidatorKindRegex, FormValidatorKindEmail, FormValidatorKindPhone, FormValidatorKindIban, FormValidatorKindDateRange, FormValidatorKindDecimalPrecision, FormValidatorKindCustom, FormValidatorKindAsync:
+		return true
+	}
+	return false
+}
+
 // FunctionGrant — A function the plugin may call, with an optional alias
 // (FN-006).
 type FunctionGrant struct {
@@ -519,8 +757,33 @@ type HostEventDecl struct {
 	// Name: Identifier used in PXL and generated code: lowerCamelCase.
 	Name   string  `json:"name"`
 	Fields []Field `json:"fields,omitempty"`
+	// Direction: Who sends a host event: plugins to the host with
+	// `emitHostEvent` (`toHost`, the default), the host into Plux with
+	// `Plux.sendEvent` (`toPlux`), or both (HST-013).
+	Direction HostEventDirection `json:"direction,omitempty"`
 	// Description: Human-readable description.
 	Description string `json:"description,omitempty"`
+}
+
+// HostEventDirection — Who sends a host event: plugins to the host with
+// `emitHostEvent` (`toHost`, the default), the host into Plux with
+// `Plux.sendEvent` (`toPlux`), or both (HST-013).
+type HostEventDirection string
+
+// Values of HostEventDirection.
+const (
+	HostEventDirectionToHost HostEventDirection = "toHost"
+	HostEventDirectionToPlux HostEventDirection = "toPlux"
+	HostEventDirectionBoth   HostEventDirection = "both"
+)
+
+// Valid reports whether v is one of the values of HostEventDirection.
+func (v HostEventDirection) Valid() bool {
+	switch v {
+	case HostEventDirectionToHost, HostEventDirectionToPlux, HostEventDirectionBoth:
+		return true
+	}
+	return false
 }
 
 // Icon — An uploaded image or a generated monogram (SCH-020).
@@ -529,6 +792,16 @@ type Icon struct {
 	Asset string `json:"$asset,omitempty"`
 	// Monogram: Generated monogram icon.
 	Monogram *Monogram `json:"monogram,omitempty"`
+}
+
+// Keyframe — A value of a track at a time (ANI-002).
+type Keyframe struct {
+	AtMs int64 `json:"atMs"`
+	// Value: A prop value: a literal of the prop's type, or a binding (SCH-011).
+	// Literal objects and lists may contain bindings in their fields and items.
+	Value json.RawMessage `json:"value"`
+	// Curve: The curve into this keyframe.
+	Curve Curve `json:"curve,omitempty"`
 }
 
 // Lifecycle — Lifecycle handlers (SCH-022).
@@ -608,6 +881,10 @@ type NativeCatalogueDocument struct {
 	Routes  []NativeRoute  `json:"routes,omitempty"`
 	Slots   []NativeSlot   `json:"slots,omitempty"`
 	Actions []NativeAction `json:"actions,omitempty"`
+	// Packages: The optional Plux packages the build registers, such as
+	// `plux_media`: a release that uses a device action whose package a build
+	// lacks is flagged for that build (RT-060, SEC-080).
+	Packages []string `json:"packages,omitempty"`
 }
 
 // NativeRoute — A native route (NAV-002).
@@ -676,6 +953,37 @@ type Node struct {
 	// Responsive: Prop overrides per window size class; `compact` is the base
 	// and overrides cascade (WGT-010).
 	Responsive *Responsive `json:"responsive,omitempty"`
+	// Animation: The animations of a node (ANI-001, ANI-003, ANI-004):
+	// `durationMs` animates the node's animatable props (numbers and colours)
+	// whenever their bound value changes; `enter` and `exit` play when the node
+	// is inserted or its visibility changes; `hero` is the tag of a
+	// shared-element transition.
+	Animation *NodeAnimation `json:"animation,omitempty"`
+}
+
+// NodeAnimation — The animations of a node (ANI-001, ANI-003, ANI-004):
+// `durationMs` animates the node's animatable props (numbers and colours)
+// whenever their bound value changes; `enter` and `exit` play when the node
+// is inserted or its visibility changes; `hero` is the tag of a
+// shared-element transition.
+type NodeAnimation struct {
+	DurationMs *int64 `json:"durationMs,omitempty"`
+	// Curve: An animation curve (ANI-001, ANI-002).
+	Curve   Curve  `json:"curve,omitempty"`
+	DelayMs *int64 `json:"delayMs,omitempty"`
+	// Props: The props to animate; all that can be, when absent.
+	Props []string `json:"props,omitempty"`
+	// Enter: An enter or exit transition of a node (ANI-003).
+	Enter *AnimTransition `json:"enter,omitempty"`
+	// Exit: An enter or exit transition of a node (ANI-003).
+	Exit *AnimTransition `json:"exit,omitempty"`
+	// Hero: The hero tag, a string.
+	Hero json.RawMessage `json:"hero,omitempty"`
+	// ReduceMotion: What an animation does when the platform asks to reduce
+	// motion (ANI-007): `skip` jumps to the final state, `shorten` plays at a
+	// quarter of the duration, `ignore` plays as declared (for motion that
+	// carries meaning).
+	ReduceMotion ReduceMotion `json:"reduceMotion,omitempty"`
 }
 
 // PageDocument — A page: route, parameters, state, data, lifecycle and node
@@ -707,6 +1015,10 @@ type PageDocument struct {
 	DataSources []DataSource `json:"dataSources,omitempty"`
 	// Lifecycle: Lifecycle handlers (SCH-022).
 	Lifecycle *Lifecycle `json:"lifecycle,omitempty"`
+	// Triggers: Triggers besides widget events and page lifecycle (ACT-002), and
+	// the owner's error handler (ACT-020). A page's runs are cancelled with the
+	// page; a plugin's and the app's run while the release is active.
+	Triggers *Triggers `json:"triggers,omitempty"`
 	// RouteOptions: Route options (SCH-022, NAV-010).
 	RouteOptions *RouteOptions `json:"routeOptions,omitempty"`
 	// Security: Security flags (SCH-022).
@@ -714,6 +1026,9 @@ type PageDocument struct {
 	// Root: A node of a page or component tree: a widget or a component instance
 	// (SCH-023).
 	Root Node `json:"root"`
+	// Forms: The forms of the page (STA-020).
+	Forms      []Form     `json:"forms,omitempty"`
+	Animations []Timeline `json:"animations,omitempty"`
 }
 
 // PageKind — How the page is presented (SCH-022).
@@ -819,7 +1134,15 @@ type PluginDocument struct {
 	Types        []TypeDecl    `json:"types,omitempty"`
 	State        []StateEntry  `json:"state,omitempty"`
 	Collections  []Collection  `json:"collections,omitempty"`
-	DataSources  []DataSource  `json:"dataSources,omitempty"`
+	// DroppedCollections: IDs of collections this document no longer declares.
+	// Their data is deleted from devices that still hold it; the publisher
+	// acknowledges the warning this raises (DB-005).
+	DroppedCollections []string     `json:"droppedCollections,omitempty"`
+	DataSources        []DataSource `json:"dataSources,omitempty"`
+	// Triggers: Triggers besides widget events and page lifecycle (ACT-002), and
+	// the owner's error handler (ACT-020). A page's runs are cancelled with the
+	// page; a plugin's and the app's run while the release is active.
+	Triggers *Triggers `json:"triggers,omitempty"`
 }
 
 // PushPolicy — Push notifications (NAV-008, ADR-0040): whether the app uses
@@ -830,6 +1153,28 @@ type PushPolicy struct {
 	Enabled bool `json:"enabled"`
 	// PayloadKey: The payload key holding `{route, params}`; `plux` when absent.
 	PayloadKey string `json:"payloadKey,omitempty"`
+}
+
+// ReduceMotion — What an animation does when the platform asks to reduce
+// motion (ANI-007): `skip` jumps to the final state, `shorten` plays at a
+// quarter of the duration, `ignore` plays as declared (for motion that
+// carries meaning).
+type ReduceMotion string
+
+// Values of ReduceMotion.
+const (
+	ReduceMotionSkip    ReduceMotion = "skip"
+	ReduceMotionShorten ReduceMotion = "shorten"
+	ReduceMotionIgnore  ReduceMotion = "ignore"
+)
+
+// Valid reports whether v is one of the values of ReduceMotion.
+func (v ReduceMotion) Valid() bool {
+	switch v {
+	case ReduceMotionSkip, ReduceMotionShorten, ReduceMotionIgnore:
+		return true
+	}
+	return false
 }
 
 // RequiredFeaturesPolicy — What the compiler does when a release needs a
@@ -878,9 +1223,168 @@ type RouteGuard struct {
 
 // RouteOptions — Route options (SCH-022, NAV-010).
 type RouteOptions struct {
-	// Transition: Page transition (NAV-010).
+	// Transition: Page transition (NAV-010). `custom` plays the route timeline
+	// that `routeOptions.timeline` names.
 	Transition Transition   `json:"transition,omitempty"`
 	Guards     []RouteGuard `json:"guards,omitempty"`
+	// Timeline: The route timeline of a custom transition (NAV-010).
+	Timeline string `json:"timeline,omitempty"`
+}
+
+// Scenario — What a page or flow does, given a situation: the steps taken
+// and what must hold afterwards (TST-001).
+type Scenario struct {
+	// Name: The scenario's name in reports; unique within its file.
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	// Page: The route of the page under test, started with the `given`
+	// parameters.
+	Page string `json:"page,omitempty"`
+	// Flow: The key of the plugin flow under test.
+	Flow string `json:"flow,omitempty"`
+	// Given: The situation a scenario starts in.
+	Given  *ScenarioGiven        `json:"given,omitempty"`
+	Steps  []ScenarioStep        `json:"steps,omitempty"`
+	Expect []ScenarioExpectation `json:"expect"`
+}
+
+// ScenarioCall — A step that ran, by the action's or function's name, with
+// the inputs it must have had; inputs not listed are not compared.
+type ScenarioCall struct {
+	Name string                     `json:"name"`
+	Args map[string]json.RawMessage `json:"args,omitempty"`
+	// Times: How often it ran; at least once when absent.
+	Times *int64 `json:"times,omitempty"`
+}
+
+// ScenarioDataSource — is generated from
+// scenario.schema.json#/$defs/scenarioDataSource.
+type ScenarioDataSource struct {
+	State ScenarioMockState `json:"state"`
+	// Mock: A JSON value interpreted against a declared type (defaults, mocks,
+	// environment values).
+	Mock json.RawMessage `json:"mock,omitempty"`
+}
+
+// ScenarioDocument — One or more declarative test scenarios of pages or
+// flows (TST-001). Files: `tests/**/*.scenario.yaml` or `.json`, found
+// through `tests` in `plux.yaml`.
+type ScenarioDocument struct {
+	// SchemaVersion: Version of the document schema (SCH-000). Older documents
+	// are migrated before validation.
+	SchemaVersion string     `json:"schemaVersion"`
+	Kind          string     `json:"kind"`
+	Scenarios     []Scenario `json:"scenarios"`
+}
+
+// ScenarioEnterText — is generated from
+// scenario.schema.json#/$defs/scenarioStep/properties/enterText.
+type ScenarioEnterText struct {
+	// TestID: A node's `testId` (WGT-013).
+	TestID string `json:"testId"`
+	Text   string `json:"text"`
+}
+
+// ScenarioExpectation — One thing that must hold after the steps; exactly
+// one of the keys.
+type ScenarioExpectation struct {
+	// Visible: A node's `testId` (WGT-013).
+	Visible string `json:"visible,omitempty"`
+	// NotVisible: A node's `testId` (WGT-013).
+	NotVisible string              `json:"notVisible,omitempty"`
+	TextEquals *ScenarioTextEquals `json:"textEquals,omitempty"`
+	// NavigatedTo: App-wide unique route name (SCH-025).
+	NavigatedTo string `json:"navigatedTo,omitempty"`
+	// ActionCalled: A step that ran, by the action's or function's name, with
+	// the inputs it must have had; inputs not listed are not compared.
+	ActionCalled *ScenarioCall `json:"actionCalled,omitempty"`
+	// FunctionCalled: A step that ran, by the action's or function's name, with
+	// the inputs it must have had; inputs not listed are not compared.
+	FunctionCalled *ScenarioCall `json:"functionCalled,omitempty"`
+	// StateEquals: Exposed app state entries and the values they hold, by name.
+	StateEquals map[string]json.RawMessage `json:"stateEquals,omitempty"`
+}
+
+// ScenarioGiven — The situation a scenario starts in.
+type ScenarioGiven struct {
+	// Params: The page's parameters, or the flow's inputs, by name, in their
+	// JSON form.
+	Params map[string]json.RawMessage `json:"params,omitempty"`
+	// State: Exposed app state entries to set before the page opens, by name, in
+	// their JSON form.
+	State map[string]json.RawMessage `json:"state,omitempty"`
+	// DataSources: The state each data source shows (DAT-080), by source name,
+	// optionally with a mock replacing its design-time mock.
+	DataSources map[string]ScenarioDataSource `json:"dataSources,omitempty"`
+}
+
+// ScenarioMockState — is generated from
+// scenario.schema.json#/$defs/scenarioMockState.
+type ScenarioMockState string
+
+// Values of ScenarioMockState.
+const (
+	ScenarioMockStateLoading ScenarioMockState = "loading"
+	ScenarioMockStateEmpty   ScenarioMockState = "empty"
+	ScenarioMockStateError   ScenarioMockState = "error"
+	ScenarioMockStateSuccess ScenarioMockState = "success"
+)
+
+// Valid reports whether v is one of the values of ScenarioMockState.
+func (v ScenarioMockState) Valid() bool {
+	switch v {
+	case ScenarioMockStateLoading, ScenarioMockStateEmpty, ScenarioMockStateError, ScenarioMockStateSuccess:
+		return true
+	}
+	return false
+}
+
+// ScenarioScroll — is generated from
+// scenario.schema.json#/$defs/scenarioStep/properties/scroll.
+type ScenarioScroll struct {
+	// TestID: The scrollable to drag.
+	TestID string `json:"testId"`
+	// Dx: Logical pixels to drag horizontally; 0 when absent.
+	Dx *float64 `json:"dx,omitempty"`
+	// Dy: Logical pixels to drag vertically; 0 when absent.
+	Dy *float64 `json:"dy,omitempty"`
+}
+
+// ScenarioStep — One thing the user or the host does; exactly one of the
+// keys.
+type ScenarioStep struct {
+	// Tap: A node's `testId` (WGT-013).
+	Tap       string             `json:"tap,omitempty"`
+	EnterText *ScenarioEnterText `json:"enterText,omitempty"`
+	Scroll    *ScenarioScroll    `json:"scroll,omitempty"`
+	// WaitFor: Pumps frames until the node is visible or the timeout passes.
+	WaitFor *ScenarioWaitFor `json:"waitFor,omitempty"`
+	// Trigger: Sends a host event into the app (HST-013).
+	Trigger *ScenarioTrigger `json:"trigger,omitempty"`
+}
+
+// ScenarioTextEquals — is generated from
+// scenario.schema.json#/$defs/scenarioExpectation/properties/textEquals.
+type ScenarioTextEquals struct {
+	// TestID: A node's `testId` (WGT-013).
+	TestID string `json:"testId"`
+	Text   string `json:"text"`
+}
+
+// ScenarioTrigger — Sends a host event into the app (HST-013).
+type ScenarioTrigger struct {
+	// Event: Identifier used in PXL and generated code: lowerCamelCase.
+	Event   string                     `json:"event"`
+	Payload map[string]json.RawMessage `json:"payload,omitempty"`
+}
+
+// ScenarioWaitFor — Pumps frames until the node is visible or the timeout
+// passes.
+type ScenarioWaitFor struct {
+	// TestID: A node's `testId` (WGT-013).
+	TestID string `json:"testId"`
+	// TimeoutMs: How long to wait; 5000 when absent.
+	TimeoutMs *int64 `json:"timeoutMs,omitempty"`
 }
 
 // SecurityProfile — Security profile (§15.12).
@@ -970,6 +1474,14 @@ func (s *SlotFill) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, s.One)
 }
 
+// Spring — A spring that moves the timeline instead of its duration
+// (ANI-006).
+type Spring struct {
+	Stiffness *float64 `json:"stiffness,omitempty"`
+	Damping   *float64 `json:"damping,omitempty"`
+	Mass      *float64 `json:"mass,omitempty"`
+}
+
 // StartupMode — Start-up mode (SYN-003).
 type StartupMode string
 
@@ -1015,6 +1527,42 @@ type StateEntry struct {
 	Sensitive   *bool       `json:"sensitive,omitempty"`
 	// Exposed: Readable and writable by the host (STA-030).
 	Exposed *bool `json:"exposed,omitempty"`
+	// Migration: How a persisted state entry whose type changed since the
+	// previous release takes its stored value (STA-040): with `from`, the
+	// entry's type in the previous release, and `value`, an expression over
+	// `previous` (the stored value, of type `from`) giving the new value; or
+	// with `reset`, the declared default.
+	Migration *StateMigration `json:"migration,omitempty"`
+	// Description: Human-readable description.
+	Description string `json:"description,omitempty"`
+}
+
+// StateMigration — How a persisted state entry whose type changed since the
+// previous release takes its stored value (STA-040): with `from`, the entry's
+// type in the previous release, and `value`, an expression over `previous`
+// (the stored value, of type `from`) giving the new value; or with `reset`,
+// the declared default.
+type StateMigration struct {
+	// From: Type expression of SCH-010, e.g. `string`, `decimal?`,
+	// `list<Transaction>`, `map<string,int>`.
+	From string `json:"from,omitempty"`
+	// Value: PXL binding (SCH-011).
+	Value *Expr `json:"value,omitempty"`
+	// Reset: Start from the declared default instead of the stored value.
+	Reset *bool `json:"reset,omitempty"`
+	// Description: Human-readable description.
+	Description string `json:"description,omitempty"`
+}
+
+// StateWatcher — Runs its handler when a state entry changes (ACT-002);
+// `event` is the new value. A debounce policy on the handler waits for the
+// value to settle.
+type StateWatcher struct {
+	// Path: The state entry: <scope>.<name>.
+	Path string `json:"path"`
+	// Handler: A trigger's handler: a reference to an action graph or an inline
+	// graph (SCH-023).
+	Handler EventHandler `json:"handler"`
 	// Description: Human-readable description.
 	Description string `json:"description,omitempty"`
 }
@@ -1148,7 +1696,121 @@ type ThemeDocument struct {
 	Tokens json.RawMessage `json:"tokens"`
 }
 
-// Transition — Page transition (NAV-010).
+// Timeline — An animation timeline a page owns (ANI-002): keyframes of
+// props of its nodes, played by `startAnimation` and `controlAnimation`, on
+// page enter, or by a driver.
+type Timeline struct {
+	// ID: Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
+	ID string `json:"id"`
+	// Name: Identifier used in PXL and generated code: lowerCamelCase.
+	Name       string `json:"name"`
+	DurationMs int64  `json:"durationMs"`
+	DelayMs    *int64 `json:"delayMs,omitempty"`
+	// Repeat: Plays after the first.
+	Repeat        *int64 `json:"repeat,omitempty"`
+	RepeatForever *bool  `json:"repeatForever,omitempty"`
+	// Reverse: Each repeat plays backwards.
+	Reverse *bool `json:"reverse,omitempty"`
+	// StaggerMs: The delay per item index for nodes in item templates.
+	StaggerMs *int64 `json:"staggerMs,omitempty"`
+	// Autoplay: Plays when the page is shown.
+	Autoplay *bool `json:"autoplay,omitempty"`
+	// Scope: What a timeline animates: nodes of its page, or the page itself in
+	// a route transition (NAV-010).
+	Scope TimelineScope `json:"scope,omitempty"`
+	// Driver: Moves a timeline with the scroll offset or the drag of a node
+	// instead of time (ANI-006).
+	Driver *TimelineDriver `json:"driver,omitempty"`
+	// Spring: A spring that moves the timeline instead of its duration
+	// (ANI-006).
+	Spring *Spring `json:"spring,omitempty"`
+	// ReduceMotion: What an animation does when the platform asks to reduce
+	// motion (ANI-007): `skip` jumps to the final state, `shorten` plays at a
+	// quarter of the duration, `ignore` plays as declared (for motion that
+	// carries meaning).
+	ReduceMotion ReduceMotion `json:"reduceMotion,omitempty"`
+	Tracks       []Track      `json:"tracks"`
+	// Description: Human-readable description.
+	Description string `json:"description,omitempty"`
+}
+
+// TimelineDriver — Moves a timeline with the scroll offset or the drag of a
+// node instead of time (ANI-006).
+type TimelineDriver struct {
+	// Kind: What moves a driven timeline (ANI-006).
+	Kind TimelineDriverKind `json:"kind"`
+	// Node: Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
+	Node string `json:"node"`
+	// Extent: Logical pixels of scrolling or dragging that span the timeline.
+	Extent float64 `json:"extent"`
+}
+
+// TimelineDriverKind — What moves a driven timeline (ANI-006).
+type TimelineDriverKind string
+
+// Values of TimelineDriverKind.
+const (
+	TimelineDriverKindScroll TimelineDriverKind = "scroll"
+	TimelineDriverKindDrag   TimelineDriverKind = "drag"
+)
+
+// Valid reports whether v is one of the values of TimelineDriverKind.
+func (v TimelineDriverKind) Valid() bool {
+	switch v {
+	case TimelineDriverKindScroll, TimelineDriverKindDrag:
+		return true
+	}
+	return false
+}
+
+// TimelineScope — What a timeline animates: nodes of its page, or the page
+// itself in a route transition (NAV-010).
+type TimelineScope string
+
+// Values of TimelineScope.
+const (
+	TimelineScopePage  TimelineScope = "page"
+	TimelineScopeRoute TimelineScope = "route"
+)
+
+// Valid reports whether v is one of the values of TimelineScope.
+func (v TimelineScope) Valid() bool {
+	switch v {
+	case TimelineScopePage, TimelineScopeRoute:
+		return true
+	}
+	return false
+}
+
+// TimerTrigger — A timer (ACT-002): it fires every intervalMs while its
+// owner lives, or once, intervalMs after its owner starts, when repeat is
+// false; `event` is the number of times it has fired.
+type TimerTrigger struct {
+	// Name: Identifier used in PXL and generated code: lowerCamelCase.
+	Name       string `json:"name"`
+	IntervalMs int64  `json:"intervalMs"`
+	// Repeat: Fires every intervalMs; true when absent.
+	Repeat *bool `json:"repeat,omitempty"`
+	// Handler: A trigger's handler: a reference to an action graph or an inline
+	// graph (SCH-023).
+	Handler EventHandler `json:"handler"`
+	// Description: Human-readable description.
+	Description string `json:"description,omitempty"`
+}
+
+// Track — The keyframes of one prop of one node (ANI-002); a route
+// timeline's tracks name no node and animate `opacity`, `scale`, `slideX` or
+// `slideY`.
+type Track struct {
+	// Node: Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
+	Node string `json:"node,omitempty"`
+	// Prop: Identifier used in PXL and generated code: lowerCamelCase.
+	Prop      string     `json:"prop"`
+	Keyframes []Keyframe `json:"keyframes"`
+}
+
+// Transition — Page transition (NAV-010). `custom` plays the route timeline
+// that `routeOptions.timeline` names.
 type Transition string
 
 // Values of Transition.
@@ -1161,13 +1823,14 @@ const (
 	TransitionSlideDown  Transition = "slideDown"
 	TransitionScale      Transition = "scale"
 	TransitionSharedAxis Transition = "sharedAxis"
+	TransitionCustom     Transition = "custom"
 	TransitionNone       Transition = "none"
 )
 
 // Valid reports whether v is one of the values of Transition.
 func (v Transition) Valid() bool {
 	switch v {
-	case TransitionPlatform, TransitionFade, TransitionSlideLeft, TransitionSlideRight, TransitionSlideUp, TransitionSlideDown, TransitionScale, TransitionSharedAxis, TransitionNone:
+	case TransitionPlatform, TransitionFade, TransitionSlideLeft, TransitionSlideRight, TransitionSlideUp, TransitionSlideDown, TransitionScale, TransitionSharedAxis, TransitionCustom, TransitionNone:
 		return true
 	}
 	return false
@@ -1209,6 +1872,31 @@ type TranslationsDocument struct {
 	// Locale: BCP 47 language tag: language, optional script, optional region.
 	Locale   string            `json:"locale"`
 	Messages map[string]string `json:"messages"`
+}
+
+// Triggers — Triggers besides widget events and page lifecycle (ACT-002),
+// and the owner's error handler (ACT-020). A page's runs are cancelled with
+// the page; a plugin's and the app's run while the release is active.
+type Triggers struct {
+	Timers []TimerTrigger `json:"timers,omitempty"`
+	Watch  []StateWatcher `json:"watch,omitempty"`
+	// OnAppResume: A trigger's handler: a reference to an action graph or an
+	// inline graph (SCH-023).
+	OnAppResume *EventHandler `json:"onAppResume,omitempty"`
+	// OnAppPause: A trigger's handler: a reference to an action graph or an
+	// inline graph (SCH-023).
+	OnAppPause *EventHandler `json:"onAppPause,omitempty"`
+	// OnPushOpened: A trigger's handler: a reference to an action graph or an
+	// inline graph (SCH-023).
+	OnPushOpened *EventHandler `json:"onPushOpened,omitempty"`
+	// HostEvents: Handlers of host events sent into Plux, by declared host event
+	// name (HST-013); `event` is the event's payload.
+	HostEvents map[string]EventHandler `json:"hostEvents,omitempty"`
+	// DataSources: Handlers of data-source events, by data source name.
+	DataSources map[string]DataSourceTriggers `json:"dataSources,omitempty"`
+	// OnError: A trigger's handler: a reference to an action graph or an inline
+	// graph (SCH-023).
+	OnError *EventHandler `json:"onError,omitempty"`
 }
 
 // TypeDecl — A named object type or enum (SCH-010).

@@ -6,11 +6,11 @@
 
 .PHONY: gen proto sqlc sqlc-check go-check proto-check proto-lint proto-format-check proto-breaking go-fmt go-fmt-check \
 	go-lint go-tidy go-tidy-check go-gen-check registry-lock-check go-test go-test-race go-cover \
-	go-determinism go-budgets go-fuzz currencies-check go-vuln go-build go-reproducible
+	go-determinism go-budgets go-fuzz currencies-check phone-metadata go-vuln go-build go-reproducible
 
 # How long `make go-fuzz` runs each fuzz target.
 FUZZTIME      ?= 30s
-GO_MODULES    := backend tools
+GO_MODULES    := backend tools test/refapi
 # Everything `make gen` writes; `go-gen-check` fails if any of it changes.
 GEN_PATHS     := backend tools docs/reference packages studio/packages schema
 PROTO_DIR     := proto
@@ -156,6 +156,16 @@ go-fuzz: ## Run every Go fuzz target for FUZZTIME each (QA-004, CMP-052)
 currencies-check: ## Compare schema/pxl/currencies.json with ISO 4217 list one from SIX: ISO4217_XML=<list-one.xml>
 	@test -n "$(ISO4217_XML)" || { echo "✗ set ISO4217_XML to list-one.xml from https://www.six-group.com/en/products-services/financial-information/data-standards.html" >&2; exit 2; }
 	cd tools && $(GO) run ./cmd/currencycheck "$(abspath $(ISO4217_XML))" ../schema/pxl/currencies.json
+
+# libphonenumber's release and commit that schema/pxl/phone.json is derived
+# from (pxl.phone.v1, schema/pxl/phone.md); move both to update the metadata.
+LIBPHONENUMBER_VERSION := v9.0.40
+LIBPHONENUMBER_COMMIT  := 9d77a67180fc7d342bf04da469968501317bbc91
+
+phone-metadata: ## Re-derive schema/pxl/phone.json from libphonenumber at the pinned commit, then run 'make gen'
+	@tmp=$$(mktemp -d); trap 'rm -rf "$$tmp"' EXIT; \
+	curl -sSfL -o "$$tmp/PhoneNumberMetadata.xml" "https://raw.githubusercontent.com/google/libphonenumber/$(LIBPHONENUMBER_COMMIT)/resources/PhoneNumberMetadata.xml"; \
+	cd tools && $(GO) run ./cmd/phonemeta -xml "$$tmp/PhoneNumberMetadata.xml" -version $(LIBPHONENUMBER_VERSION) -commit $(LIBPHONENUMBER_COMMIT) -out ../schema/pxl/phone.json
 
 go-vuln: ## Scan Go dependencies for known vulnerabilities
 	@for m in $(GO_MODULES); do (cd $$m && "$(GOVULNCHECK)" ./...); done

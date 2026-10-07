@@ -1,0 +1,61 @@
+openapi: 3.0.3
+info:
+  title: Odd API
+  version: "1"
+servers:
+  - url: https://odd.example.com
+paths:
+  /good:
+    get:
+      operationId: good
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  value:
+                    type: string
+  /poly:
+    get:
+      operationId: poly
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: string
+                  - type: integer
+  /snake:
+    get:
+      operationId: snake
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id:
+                    type: string
+  /file:
+    get:
+      operationId: file
+      responses:
+        "200":
+          description: ok
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+  /options:
+    options:
+      responses:
+        "200":
+          description: ok

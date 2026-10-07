@@ -30,7 +30,7 @@ test -s "$list" || { echo "go-notices.sh: no modules" >&2; exit 1; }
 while read -r mod dir; do
 	name=$(printf '%s' "$mod" | tr '/' '_')
 	found=
-	for f in "$dir"/LICENSE* "$dir"/LICENCE* "$dir"/COPYING* "$dir"/NOTICE*; do
+	for f in "$dir"/LICENSE* "$dir"/LICENCE* "$dir"/License* "$dir"/Licence* "$dir"/license* "$dir"/licence* "$dir"/COPYING* "$dir"/NOTICE*; do
 		[ -f "$f" ] || continue
 		cp "$f" "$out/$name.$(basename "$f")"
 		found=1

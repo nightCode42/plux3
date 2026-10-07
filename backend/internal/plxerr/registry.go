@@ -53,11 +53,97 @@ const (
 	DeprecatedMember             Code = 1122
 	UnknownIcon                  Code = 1123
 	CustomActionNamedLikeBuiltIn Code = 1124
-	UnknownRoute                 Code = 1201
-	RouteParameterMissing        Code = 1203
-	RouteParameterTypeInvalid    Code = 1204
-	UnknownRouteParameter        Code = 1205
-	RedirectLoop                 Code = 1206
+	FlowCallCycle                Code = 1125
+	FlowNotExported              Code = 1126
+	InvalidTrigger               Code = 1127
+	UndeclaredComponentEvent     Code = 1128
+	EmitEventOutsideComponent    Code = 1129
+	InvalidRetryPolicy           Code = 1130
+
+	// Schema and validation: data sources (PLX-1170–1189, P5 R4).
+
+	DataSourceConfigInvalid    Code = 1170
+	DataSourceDomainUndeclared Code = 1171
+	DataMappingInvalid         Code = 1172
+	DataPaginationInvalid      Code = 1173
+	DataSourceSecretHeader     Code = 1174
+	DataStreamInvalid          Code = 1175
+	DataOutboxInvalid          Code = 1176
+	DataTransferInvalid        Code = 1177
+	StateEntryReadOnly         Code = 1140
+	StatePatchNotObject        Code = 1141
+	StatePersistenceNotAllowed Code = 1142
+	StateMigrationRequired     Code = 1143
+	StateMigrationMismatch     Code = 1144
+	StateMigrationInvalid      Code = 1145
+
+	// Schema and validation: forms (PLX-1160–1169, P5 R3).
+
+	FormValidatorNotApplicable Code = 1160
+	FormValidatorOptions       Code = 1161
+	FormPatternInvalid         Code = 1162
+	FormPhoneRegionUnknown     Code = 1163
+	FormAsyncValidatorInvalid  Code = 1164
+	FormFieldInitialMissing    Code = 1165
+	FormNameConflict           Code = 1166
+	FormWriteInvalid           Code = 1167
+	UnknownRoute               Code = 1201
+	RouteParameterMissing      Code = 1203
+	RouteParameterTypeInvalid  Code = 1204
+	UnknownRouteParameter      Code = 1205
+	RedirectLoop               Code = 1206
+
+	// Schema and validation: local collections (PLX-1190–1199, PLX-1250–1259, P5 R6).
+
+	CollectionVersionInvalid Code = 1190
+	CollectionPlanRequired   Code = 1191
+	CollectionPlanInvalid    Code = 1192
+	CollectionKeyChanged     Code = 1193
+	CollectionDestructive    Code = 1194
+	DatabaseSourceInvalid    Code = 1195
+
+	// Schema and validation: animation (PLX-1210–1229, P5 R7).
+
+	AnimationInvalid          Code = 1210
+	AnimationTargetInvalid    Code = 1211
+	AnimationValueInvalid     Code = 1212
+	TransitionInvalid         Code = 1213
+	AnimationExpensive        Code = 1214
+	AnimationOpacitySubtree   Code = 1215
+	AnimationTooManyTimelines Code = 1216
+	NodeAnimationInvalid      Code = 1217
+
+	// Schema and validation: capabilities and device actions (PLX-1230–1239, P5 R8).
+
+	CapabilityNotApproved      Code = 1230
+	DeviceCapabilityUndeclared Code = 1231
+	OpenURLDomainUndeclared    Code = 1232
+	HostBuildLacksPackage      Code = 1233
+
+	// Schema and validation: form scopes (PLX-1240–1249, P5).
+
+	FormScopeInvalid Code = 1240
+
+	// Schema and validation: local collections, key types (PLX-1250–1259, P5 R6).
+
+	CollectionKeyTypeInvalid Code = 1250
+
+	// Import: OpenAPI and GraphQL data sources (PLX-1260–1269, P5 R9).
+
+	ImportDocumentInvalid      Code = 1260
+	ImportConstructUnsupported Code = 1261
+	ImportOperationInvalid     Code = 1262
+	ImportOutputInvalid        Code = 1263
+
+	// Plux Test: scenarios and runs (PLX-1270–1279, P5 R9).
+
+	ScenarioFileInvalid      Code = 1270
+	ScenarioSyntaxInvalid    Code = 1271
+	ScenarioReferenceUnknown Code = 1272
+	ScenarioUnsupported      Code = 1273
+	ScenarioNameDuplicate    Code = 1274
+	TestHarnessFailed        Code = 1275
+	ScenarioFilesNone        Code = 1276
 
 	// Schema and validation: limits and budgets (PLX-1300–1399).
 
@@ -96,6 +182,10 @@ const (
 	PXLUnknownEnumMember    Code = 2014
 	PXLInvalidMacro         Code = 2015
 	PXLExpressionTooComplex Code = 2016
+	PXLRegexInvalid         Code = 2020
+	PXLRegexNotConstant     Code = 2021
+	PXLRegexTooLarge        Code = 2022
+	PXLUnknownPhoneRegion   Code = 2023
 	InternalCompilerError   Code = 2201
 	ContentIDCollision      Code = 2202
 
@@ -135,12 +225,89 @@ const (
 	UserContextInvalid        Code = 4204
 	HostCodeFailed            Code = 4205
 
+	// Runtime animation (PLX-4300–4399, P5 R7).
+
+	AnimationUnknown        Code = 4300
+	AnimationCommandInvalid Code = 4301
+	AnimationTimelineBroken Code = 4302
+	AnimationAssetFailed    Code = 4303
+
 	// Actions, data and local DB (PLX-5000–5999).
 
 	ActionTimeout           Code = 5001
 	ActionStepLimitExceeded Code = 5002
 	ActionValueInvalid      Code = 5003
 	ActionCustomError       Code = 5004
+	ActionCancelled         Code = 5005
+	ForEachLimitExceeded    Code = 5006
+	FlowNotFound            Code = 5007
+	ErrorHandlerFailed      Code = 5008
+	ActionQueueFull         Code = 5009
+
+	// Data sources (PLX-5100–5199, P5 R4).
+
+	DataDomainBlocked     Code = 5100
+	DataNetworkFailed     Code = 5101
+	DataHTTPError         Code = 5102
+	DataRequestTimeout    Code = 5103
+	DataMappingFailed     Code = 5104
+	DataSizeExceeded      Code = 5105
+	DataGraphQLError      Code = 5106
+	DataUnauthorised      Code = 5107
+	DataSourceUnavailable Code = 5108
+	DataCacheUnavailable  Code = 5109
+
+	// Data sources: streams, the outbox and transfers (PLX-5110–5199, P5 R5).
+
+	DataStreamFailed          Code = 5110
+	DataStreamMessageTooLarge Code = 5111
+	DataStreamLimit           Code = 5112
+	DataOutboxFull            Code = 5120
+	DataOutboxUnavailable     Code = 5121
+	DataOutboxConflict        Code = 5122
+	DataOutboxRejected        Code = 5123
+	DataTransferTooLarge      Code = 5130
+	DataTransferFileFailed    Code = 5131
+
+	// Local database (PLX-5200–5299, P5 R6).
+
+	DBMigrationFailed      Code = 5200
+	DBUnavailable          Code = 5201
+	DBEncryptionRequired   Code = 5202
+	DBRecordInvalid        Code = 5203
+	DBRecordNotFound       Code = 5204
+	DBKeyConflict          Code = 5205
+	DBQueryInvalid         Code = 5206
+	DBLimitExceeded        Code = 5207
+	DBStoreFailed          Code = 5208
+	DBCollectionUnknown    Code = 5209
+	DBValueTypeMismatch    Code = 5210
+	StateWriteTypeMismatch Code = 5301
+	StateWriteRefused      Code = 5302
+	StateStoreUnavailable  Code = 5303
+	StateStoreCorrupt      Code = 5304
+	StateMigrationFailed   Code = 5305
+	StateLimitExceeded     Code = 5306
+	HostEventRefused       Code = 5307
+
+	// Actions: forms (PLX-5350–5399, P5 R3).
+
+	FormInvalid              Code = 5350
+	FormNotInScope           Code = 5351
+	FormAsyncValidatorFailed Code = 5352
+
+	// Actions: device and feedback (PLX-5400–5499, P5 R8).
+
+	DeviceCapabilityBlocked Code = 5400
+	DevicePackageMissing    Code = 5401
+	DevicePermissionDenied  Code = 5402
+	DeviceUnavailable       Code = 5403
+	OpenURLBlocked          Code = 5404
+	ClipboardBlocked        Code = 5405
+
+	// Actions: typed host events (PLX-5500–5549, P5).
+
+	HostEventPayloadInvalid Code = 5500
 
 	// Security (PLX-6000–6999).
 

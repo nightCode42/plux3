@@ -7,6 +7,8 @@
 library;
 
 import 'package:plux_flutter/src/pxl/decimal.dart';
+import 'package:plux_flutter/src/pxl/phone.dart';
+import 'package:plux_flutter/src/pxl/regex.dart';
 import 'package:plux_flutter/src/pxl/tables.g.dart';
 import 'package:plux_flutter/src/pxl/values.dart';
 import 'package:plux_flutter/src/pxl/vm.dart';
@@ -30,6 +32,7 @@ final List<Builtin?> builtins = () {
     ..._dateFns(),
     ..._collectionFns(),
     ..._logicFns(),
+    ..._regexFns(),
   };
   return [
     for (final def in overloads) impl['${def.name}(${def.params.join(',')})'],
@@ -840,8 +843,8 @@ Map<String, Builtin> _logicFns() {
     'string(double)': (_, a) => es6(a[0]! as double),
     'string(bool)': (_, a) => '${a[0]}',
     'string(enum)': (_, a) => a[0],
-    'isEmail(string)': (_, a) => _isEmail(a[0]! as String),
-    'isIban(string)': (_, a) => _isIban(a[0]! as String),
+    'isEmail(string)': (_, a) => isEmailAddress(a[0]! as String),
+    'isIban(string)': (_, a) => isIbanNumber(a[0]! as String),
     'isNumeric(string)': (_, a) => Decimal.tryParse(a[0]! as String) != null,
     'luhn(string)': (_, a) => _luhn(a[0]! as String),
   };
@@ -866,7 +869,8 @@ bool _isAlnum(int c) => _isAlpha(c) || _isDigit(c);
 
 const _localSpecials = "!#\$%&'*+/=?^`{|}~.-";
 
-bool _isEmail(String s) {
+/// Whether [s] is an ASCII e-mail address, as PXL's `isEmail` checks it.
+bool isEmailAddress(String s) {
   final at = s.indexOf('@');
   if (at < 0 || s.runes.any((r) => r >= 0x80) || s.length > 254) return false;
   final local = s.substring(0, at), domain = s.substring(at + 1);
@@ -894,7 +898,9 @@ bool _isEmail(String s) {
   return tld.length >= 2 && tld.codeUnits.every(_isAlpha);
 }
 
-bool _isIban(String input) {
+/// Whether [input] is an IBAN with a correct mod-97 check, as PXL's `isIban`
+/// checks it; spaces are ignored.
+bool isIbanNumber(String input) {
   final s = _upper(input.replaceAll(' ', ''));
   if (s.runes.any((r) => r >= 0x80)) return false;
   final c = s.codeUnits;
@@ -933,3 +939,23 @@ bool _luhn(String s) {
   }
   return total % 10 == 0;
 }
+
+// ---------------------------------------------------------------------------
+// Regular expressions and phone numbers (pxl.regex.v1, pxl.phone.v1)
+
+Map<String, Builtin> _regexFns() => {
+  'matches(string,string)': (vm, a) {
+    final s = a[0]! as String;
+    final Regex re;
+    try {
+      re = Regex.compile(a[1]! as String, vm.limits.regex);
+    } on RegexError catch (e) {
+      throw _err(PxlErrorKind.invalidArgument, '$e');
+    }
+    // (n+1)·m operations: the Pike VM's bound (schema/pxl/regex.md §5).
+    vm.charge((sizeOf(s) + 1) * re.size);
+    return re.hasMatch(s);
+  },
+  'isPhone(string,string)': (_, a) =>
+      isValidPhone(a[0]! as String, a[1]! as String),
+};

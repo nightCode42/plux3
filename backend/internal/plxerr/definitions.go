@@ -210,6 +210,178 @@ var registry = []Definition{
 		"Rename the custom action in the host app, for example with a prefix of its own, and run plux native scan again.", false,
 	},
 	{
+		FlowCallCycle, "FLOW_CALL_CYCLE", SeverityError, "Flows call each other in a cycle",
+		"A callFlow step calls a flow that, through its own callFlow steps, calls the graph back. Action graphs are acyclic across flows too, so a run cannot recurse (ACT-001, ACT-061).",
+		"Break the cycle: move the shared steps into a flow that calls neither graph.", false,
+	},
+	{
+		FlowNotExported, "FLOW_NOT_EXPORTED", SeverityError, "Flow private to its plugin",
+		"A callFlow step names a flow of another plugin as <plugin>/<flow>, and that flow is not exported. Only exported flows are callable across plugins (ACT-061).",
+		"Set exported on the flow in its plugin, or call a flow of the step's own plugin by its key.", false,
+	},
+	{
+		InvalidTrigger, "INVALID_TRIGGER", SeverityError, "Invalid trigger",
+		"A trigger names something its owner cannot see — a state entry, a host event or a data source — or two timers share a name (ACT-002).",
+		"Name a state entry of the page, the plugin or the app, a host event the app document declares, or a data source in scope; give each timer its own name.", false,
+	},
+	{
+		UndeclaredComponentEvent, "UNDECLARED_COMPONENT_EVENT", SeverityError, "Component event not declared",
+		"An emitEvent step names an event its component does not declare, or sends a payload to an event that declares none. A component's events are its contract with its users (SCH-030).",
+		"Declare the event in the component's events, with the payload type the step sends, or correct its name.", false,
+	},
+	{
+		EmitEventOutsideComponent, "EMIT_EVENT_OUTSIDE_COMPONENT", SeverityError, "emitEvent outside a component",
+		"An emitEvent step is in a graph that does not belong to a component: a page's graph or a flow has no component events to emit.",
+		"Emit host events with emitHostEvent, or move the step into a handler of the component.", false,
+	},
+	{
+		InvalidRetryPolicy, "INVALID_RETRY_POLICY", SeverityError, "Invalid retry policy",
+		"A step's retry policy cannot work as written: its maxBackoffMs is below its backoffMs, or it retries cancelled errors, which end the run whatever the step declares (ACT-006).",
+		"Set maxBackoffMs to at least backoffMs, and remove cancelled from the error kinds it retries.", false,
+	},
+	{
+		StateEntryReadOnly, "STATE_ENTRY_READ_ONLY", SeverityError, "State entry written that cannot be",
+		"A setState, patchState or resetState step names a computed state entry, whose value is derived from other state and recomputed when it changes (STA-004).",
+		"Write the entries the computed entry reads, or declare the entry with a default instead of a computed expression.", false,
+	},
+	{
+		StatePatchNotObject, "STATE_PATCH_NOT_OBJECT", SeverityError, "State patch of a value that is not an object",
+		"A patchState step names a state entry whose type is not a declared object type, so it has no fields to merge (STA-002).",
+		"Use setState to replace the value, or declare the entry with an object type.", false,
+	},
+	{
+		StatePersistenceNotAllowed, "STATE_PERSISTENCE_NOT_ALLOWED", SeverityError, "Persistence that the entry cannot have",
+		"A computed state entry, or a run variable (an action graph's state), declares a persistence other than memory: a computed value is derived again from the state it reads, and a run variable ends with its run (STA-001, STA-003).",
+		"Remove the persistence, or persist the entries the computed value reads.", false,
+	},
+	{
+		StateMigrationRequired, "STATE_MIGRATION_REQUIRED", SeverityError, "Stored state changes type without a migration",
+		"A session, persisted or secure state entry has another type than in the previous release and declares no migration, so devices could not read the value they stored (STA-040).",
+		"Declare a migration on the entry: `from` the previous type with an expression `value` over `previous`, or `reset: true` to start from the default.", false,
+	},
+	{
+		StateMigrationMismatch, "STATE_MIGRATION_MISMATCH", SeverityError, "State migration from a type the previous release did not have",
+		"A state entry's migration declares `from` a type other than the entry's type in the previous release, so it would never run on the values devices stored (STA-040).",
+		"Set `from` to the entry's type in the previous release, or use `reset: true`.", false,
+	},
+	{
+		StateMigrationInvalid, "STATE_MIGRATION_INVALID", SeverityError, "State migration that can never run",
+		"A state entry declares a migration although it is computed or kept only in memory, or its migration says `reset: false`, or migrates `from` the type the entry already has (STA-040).",
+		"Remove the migration, or give the entry a session, persisted or secure persistence and its previous type in `from`.", false,
+	},
+	{
+		FormValidatorNotApplicable, "FORM_VALIDATOR_NOT_APPLICABLE", SeverityError, "Validator that does not apply to its field",
+		"A form field declares a validator its type cannot have: length on a value that is neither text nor a list, range or decimal precision on a value that is not a number, date range on a value that is not a date or a date-time, or regex, email, phone or IBAN on a value that is not text (STA-020, ADR-0047).",
+		"Change the field's type or remove the validator; the forms reference lists the types each validator accepts.", false,
+	},
+	{
+		FormValidatorOptions, "FORM_VALIDATOR_OPTIONS", SeverityError, "Invalid validator options",
+		"A validator lacks an option its kind needs, carries one its kind does not take, or has bounds that cannot hold: a regex without a pattern, a length, range or date range without min or max, a min above its max, a decimal precision without maxScale or maxIntegerDigits, a custom validator without a rule, or an asynchronous one without a graph (STA-020).",
+		"Give the validator exactly the options of its kind, as the forms reference lists them.", false,
+	},
+	{
+		FormPatternInvalid, "FORM_PATTERN_INVALID", SeverityError, "Invalid validator pattern",
+		"A regex validator's pattern is not in the pxl.regex.v1 subset of RE2 or exceeds pxl.regexPatternLength, pxl.regexProgramSize or pxl.regexRepeat; patterns are checked at publish, so the runtime never meets an invalid one (PXL-003, ADR-0047).",
+		"Correct the pattern at the reported position; the PXL reference lists the supported syntax.", false,
+	},
+	{
+		FormPhoneRegionUnknown, "FORM_PHONE_REGION_UNKNOWN", SeverityError, "Unknown phone region",
+		"A phone validator names a region the phone table of pxl.phone.v1 does not know (STA-020, ADR-0047).",
+		"Use an ISO 3166-1 alpha-2 region with a calling code, or omit the region to use the device locale's.", false,
+	},
+	{
+		FormAsyncValidatorInvalid, "FORM_ASYNC_VALIDATOR_INVALID", SeverityError, "Invalid asynchronous validator",
+		"An asynchronous validator's graph declares inputs, or an output other than `bool` or `string?`, or the validator belongs to a component shared across plugins, which has no graphs to run (STA-020, ADR-0047).",
+		"Use a graph of the page or plugin that takes the field's value as its event and stops with true or null when the value is valid, false or a message otherwise.", false,
+	},
+	{
+		FormFieldInitialMissing, "FORM_FIELD_INITIAL_MISSING", SeverityError, "Form field without an initial value",
+		"A form field has no initial value and its type is not nullable, so the form could not start or be reset (STA-020).",
+		"Give the field an initial value, such as \"\" for text, or make its type nullable.", false,
+	},
+	{
+		FormNameConflict, "FORM_NAME_CONFLICT", SeverityError, "Form or field named twice",
+		"A form has the name of another form or of a state entry of the same page or component, whose state it would replace, or two fields of a form share a name (STA-020).",
+		"Rename the form or the field.", false,
+	},
+	{
+		FormWriteInvalid, "FORM_WRITE_INVALID", SeverityError, "Form state written that cannot be",
+		"A state action writes form state other than a field's value (`<form>.values.<field>`, with setState) or touched flag (`<form>.touched.<field>`, with setState): errors, dirty flags and the status follow from the validators, and the whole form changes only through resetForm (STA-020).",
+		"Write the field's value or touched flag with setState, or use validateForm, submitForm or resetForm.", false,
+	},
+	{
+		DataSourceConfigInvalid, "DATA_SOURCE_CONFIG_INVALID", SeverityError, "Invalid data source configuration",
+		"The configuration of a REST or GraphQL data source, or of one of its operations, is not what the data layer runs: a property is unknown or missing, the method, path or GraphQL document is malformed, the base URL names no string variable, a cache policy or TTL is invalid, or an operation's input or output type is unknown (DAT-001, DAT-003, DAT-010, ADR-0048).",
+		"Correct the configuration as the data sources reference describes; the message names the property.", false,
+	},
+	{
+		DataSourceDomainUndeclared, "DATA_SOURCE_DOMAIN_UNDECLARED", SeverityError, "Data source on an undeclared domain",
+		"An environment's base URL of a data source is not an HTTPS URL on a domain the plugin declares in capabilities.networkDomains, so every request would be blocked at run time (DAT-030, SEC-080).",
+		"Declare the domain in the plugin's capabilities, or correct the environment's base URL.", false,
+	},
+	{
+		DataMappingInvalid, "DATA_MAPPING_INVALID", SeverityError, "Invalid response mapping",
+		"A data source's selector, response type or transform cannot produce its declared type: the selector is malformed, a transform is given without a response type, or the transform's type is not the declared one (DAT-004).",
+		"Declare the response type the selector yields and a transform that returns the source's type, or select the declared type directly.", false,
+	},
+	{
+		DataPaginationInvalid, "DATA_PAGINATION_INVALID", SeverityError, "Invalid pagination",
+		"A paginated data source does not declare a list type, names a style other than cursor, page or offset, lacks the parameter or selector its style needs, or asks for pages larger than the limit data.pageSize (DAT-011).",
+		"Declare a list type and the parameters of the style, and keep pageSize within data.pageSize.", false,
+	},
+	{
+		DataSourceSecretHeader, "DATA_SOURCE_SECRET_HEADER", SeverityError, "Credential in a data source header",
+		"A data source or operation sets a header that carries credentials (Authorization, Cookie, an API key or token). Secrets never appear in bundles; the auth delegate supplies the user's token and calls needing server-held secrets go through a Plux Function (DAT-003, SEC-107).",
+		"Remove the header and set auth to true to send the auth delegate's token, or call the API through a Plux Function.", false,
+	},
+	{
+		DataStreamInvalid, "DATA_STREAM_INVALID", SeverityError, "Invalid stream configuration",
+		"A WebSocket, SSE or GraphQL subscription source is not what the data layer runs: a property is unknown or missing, the path is malformed, a subscription document is not a subscription, or a source of another kind is configured as a stream (DAT-012, ADR-0048).",
+		"Correct the configuration as the data sources reference describes; the message names the property.", false,
+	},
+	{
+		DataOutboxInvalid, "DATA_OUTBOX_INVALID", SeverityError, "Invalid offline mutation",
+		"An operation marked offlineCapable cannot be replayed: it reads (GET, or a GraphQL query) instead of mutating, or it is also a file transfer (DAT-020).",
+		"Mark only mutating operations offlineCapable, and treat their output as optional.", false,
+	},
+	{
+		DataTransferInvalid, "DATA_TRANSFER_INVALID", SeverityError, "Invalid file transfer",
+		"An operation's upload or download is not what the data layer runs: it is not a REST operation, its method does not fit the direction, its body mode or file parameter is unknown, or it is combined with offlineCapable (DAT-031).",
+		"Declare a REST operation with a transfer of kind upload (POST, PUT or PATCH) or download (GET), and a file parameter.", false,
+	},
+
+	// Schema and validation: local collections.
+	{
+		CollectionVersionInvalid, "COLLECTION_VERSION_INVALID", SeverityError, "Collection version not raised with its schema",
+		"A local collection's fields, types or indexes differ from the previous release's, but its version was not raised, or its version is lower than the previous release's. Devices migrate by version, so a change under the same version would never reach them (DB-005).",
+		"Raise the collection's `version` above the previous release's, and keep it from going down.", false,
+	},
+	{
+		CollectionPlanRequired, "COLLECTION_PLAN_REQUIRED", SeverityError, "Destructive collection change without a migration plan",
+		"A change loses stored data: a field is dropped, a field is added that is not nullable, a field's type narrows, or a collection disappears from the document without being listed in `droppedCollections`. It needs an explicit plan: a `migrations` entry that drops or resets the field, or the collection's ID in `droppedCollections` (DB-005).",
+		"Declare the migration from the previous version with `drop` or `reset` naming the field, or make the new field nullable.", false,
+	},
+	{
+		CollectionPlanInvalid, "COLLECTION_PLAN_INVALID", SeverityError, "Invalid collection migration plan",
+		"A collection's migration plan can never run: it starts from a version that is not below the collection's version, two plans start from the same version, it drops a field the collection still declares, or it resets a field the collection does not declare; or a dropped collection is still declared (DB-005).",
+		"Correct the plan as the message says.", false,
+	},
+	{
+		CollectionKeyChanged, "COLLECTION_KEY_CHANGED", SeverityError, "Collection primary key changed",
+		"The primary key of a local collection differs from the previous release's. Stored records are addressed by their key, so the change cannot be migrated (DB-005).",
+		"Keep the primary key, or declare a new collection and copy the records with actions.", false,
+	},
+	{
+		CollectionDestructive, "COLLECTION_DESTRUCTIVE", SeverityWarning, "Collection migration deletes data",
+		"A declared migration drops or resets a field, or a collection is dropped: devices delete the stored values when they update. The publisher must acknowledge the warning (DB-005, SRV-051).",
+		"Acknowledge the warning if the data is no longer needed, or keep the field.", false,
+	},
+	{
+		DatabaseSourceInvalid, "DATABASE_SOURCE_INVALID", SeverityError, "Invalid database data source",
+		"The configuration of a data source of kind database is not a query the runtime can watch: it names no collection the plugin or the app declares, a filter names a field or operator the collection cannot use or compares with a value of the wrong type, it sorts by a field that cannot be sorted, or its limit or offset is out of range (DB-006).",
+		"Correct the configuration as the message says: collection, filter, orderBy, descending, limit and offset.", false,
+	},
+	{
 		UnknownRoute, "UNKNOWN_ROUTE", SeverityError, "Unknown route",
 		"A navigate action targets a route name that no page and no native route declares.",
 		"Correct the route name, or add the page.", false,
@@ -233,6 +405,139 @@ var registry = []Definition{
 		RedirectLoop, "REDIRECT_LOOP", SeverityError, "Redirect loop",
 		"Pages redirect to each other unconditionally from `onEnter` in a cycle, so navigation would never settle.",
 		"Break the cycle by guarding one of the redirects with a condition.", false,
+	},
+	{
+		AnimationInvalid, "ANIMATION_INVALID", SeverityError, "Invalid animation timeline",
+		"A timeline of a page is malformed: two timelines share a name, its keyframes are not in increasing time or run past the duration, a track has fewer keyframes than the limit anim.keyframesPerTrack allows or more, the duration exceeds anim.timelineDuration, or a driver names a node that does not exist (ANI-002, ANI-006).",
+		"Name each timeline once, order keyframes by time within the duration, and keep them within the anim.* limits; the message names the timeline.", false,
+	},
+	{
+		AnimationTargetInvalid, "ANIMATION_TARGET_INVALID", SeverityError, "Animation track targets nothing animatable",
+		"A track names a node the page does not have, a prop the node's widget does not declare, or a prop whose type cannot be interpolated (only numbers, decimals and colours animate) (ANI-001, ANI-002).",
+		"Target a node of the same page and a numeric or colour prop of its widget.", false,
+	},
+	{
+		AnimationValueInvalid, "ANIMATION_VALUE_INVALID", SeverityError, "Keyframe value has the wrong type",
+		"A keyframe's value is not a literal of the animated prop's type, or violates the prop's constraints (ANI-002).",
+		"Write the keyframe as a literal of the prop's type.", false,
+	},
+	{
+		TransitionInvalid, "TRANSITION_INVALID", SeverityError, "Invalid transition",
+		"A custom route transition names no route timeline of the page, a route timeline animates a prop other than opacity, scale, slideX or slideY, or names a node, or a route timeline is used as anything but a transition (NAV-010).",
+		"Declare a timeline with scope route in the page and name it in routeOptions.timeline.", false,
+	},
+	{
+		AnimationExpensive, "ANIMATION_EXPENSIVE", SeverityWarning, "Animation that re-lays out the page every frame",
+		"A timeline or an implicit animation changes a prop that affects layout (size, padding, margin, spacing, flex) of a node whose subtree is large, so every frame lays the subtree out again (ANI-008).",
+		"Animate a transform (scale, slide) or opacity instead, which the compositor handles without layout.", false,
+	},
+	{
+		AnimationOpacitySubtree, "ANIMATION_OPACITY_SUBTREE", SeverityWarning, "Opacity animated over a large subtree",
+		"A timeline or an implicit animation changes the opacity of a node whose subtree has more nodes than the limit anim.compositedSubtree, which draws the subtree into an offscreen layer every frame (ANI-008).",
+		"Fade the leaves instead, animate a smaller subtree, or use a transform.", false,
+	},
+	{
+		AnimationTooManyTimelines, "ANIMATION_TOO_MANY_TIMELINES", SeverityWarning, "Many timelines can run together",
+		"More timelines autoplay or run on a driver on one page than the limit anim.simultaneousTimelines, so they would all tick on every frame (ANI-008).",
+		"Merge timelines, stagger their start, or start them from actions only when needed.", false,
+	},
+	{
+		NodeAnimationInvalid, "NODE_ANIMATION_INVALID", SeverityError, "Invalid node animation",
+		"A node's animation names a prop its widget does not declare or that cannot be interpolated, an empty hero tag, or an enter or exit transition on the page's root (ANI-001, ANI-003, ANI-004).",
+		"Name animatable props of the widget, give the hero a non-empty tag, and put enter and exit transitions on inner nodes.", false,
+	},
+
+	// Schema and validation: capabilities and device actions.
+	{
+		CapabilityNotApproved, "CAPABILITY_NOT_APPROVED", SeverityError, "Capability not approved by the app",
+		"A plugin declares a device API, network domain or function that the app document's capabilities do not approve. An app approves nothing it does not list (SEC-080, ADR-0051).",
+		"Add the capability to the app document's capabilities if the app should allow it, or remove it from the plugin's capabilities.", false,
+	},
+	{
+		DeviceCapabilityUndeclared, "DEVICE_CAPABILITY_UNDECLARED", SeverityError, "Device action without its capability",
+		"A step runs a device action, such as pickImage or getLocation, or asks requestPermission for a permission, but the plugin does not declare the device API it needs in capabilities.deviceApis, so the runtime would block it (SEC-080).",
+		"Declare the device API named in the message in the plugin's capabilities, or remove the step.", false,
+	},
+	{
+		OpenURLDomainUndeclared, "OPEN_URL_DOMAIN_UNDECLARED", SeverityError, "openUrl on an undeclared domain",
+		"An openUrl step opens an HTTPS URL on a domain the plugin does not declare in capabilities.networkDomains, or a URL that is not HTTPS and not one of the app's deep links, so the runtime would block it (SEC-080).",
+		"Declare the domain in the plugin's capabilities, or open a deep link of the app instead.", false,
+	},
+	{
+		HostBuildLacksPackage, "HOST_BUILD_LACKS_PACKAGE", SeverityWarning, "Host build lacks a Plux package",
+		"The release uses a device action whose optional package, such as plux_media, plux_scanner or plux_location, is not among the packages that the native catalogue of one of the app's host builds records. On devices of that build the step fails with a permission error (RT-060, REL-080).",
+		"Ship a host build that installs and registers the package and upload its catalogue with plux native sync, or keep the release from using the action; the publisher acknowledges the warning to publish anyway.", false,
+	},
+
+	// Schema and validation: form scopes.
+	{
+		FormScopeInvalid, "FORM_SCOPE_INVALID", SeverityError, "FormScope names no form",
+		"A FormScope's form is not a literal naming a form that the page or component declares, so the form root below it would have no state to read (STA-020).",
+		"Set form to the literal name of a form declared in the page's or component's forms.", false,
+	},
+
+	{
+		CollectionKeyTypeInvalid, "COLLECTION_KEY_TYPE_INVALID", SeverityError, "Collection primary key field of an unsupported type",
+		"A primary key field of a local collection is not a string or an int, or is nullable, so records cannot be addressed by it (DB-004).",
+		"Use string or int, not nullable, for primary key fields.", false,
+	},
+
+	// Import: OpenAPI and GraphQL data sources.
+	{
+		ImportDocumentInvalid, "IMPORT_DOCUMENT_INVALID", SeverityError, "Document cannot be imported",
+		"The OpenAPI document or GraphQL schema or operations file could not be read, parsed or validated, so nothing can be imported from it (DAT-002).",
+		"Fix the reported problem in the source document and import again.", false,
+	},
+	{
+		ImportConstructUnsupported, "IMPORT_CONSTRUCT_UNSUPPORTED", SeverityWarning, "Construct has no Plux type",
+		"An operation uses a construct that no Plux type expresses, such as a polymorphic schema, a non-JSON body or a recursive type. The operation is left out of the import rather than typed loosely (DAT-002, SCH-010).",
+		"Simplify the operation in the source document, or write the data source by hand.", false,
+	},
+	{
+		ImportOperationInvalid, "IMPORT_OPERATION_INVALID", SeverityError, "Operation is invalid against its schema",
+		"A GraphQL operation does not validate against the schema, or is not a single named query or mutation, so it cannot be imported as a typed operation (DAT-002).",
+		"Correct the operation so it validates against the schema, and give it a name.", false,
+	},
+	{
+		ImportOutputInvalid, "IMPORT_OUTPUT_INVALID", SeverityError, "Imported data sources fail validation",
+		"The data sources produced by the import do not validate against the document schema, so they are not written (DAT-002, SCH-040).",
+		"Report the source document that produced the failure; the importer must not emit a document the schema rejects.", false,
+	},
+	// Plux Test: scenarios and runs.
+	{
+		ScenarioFileInvalid, "SCENARIO_FILE_INVALID", SeverityError, "Scenario file does not match its schema",
+		"A scenario file has a value the scenario schema does not allow: a missing or unknown key, a value of the wrong type, or a step or expectation with more than one key (TST-001).",
+		"Fix the value at the reported line and column; scenario.schema.json lists the allowed keys of a scenario, its given, its steps and its expectations.", false,
+	},
+	{
+		ScenarioSyntaxInvalid, "SCENARIO_SYNTAX_INVALID", SeverityError, "Scenario file is not valid YAML or JSON",
+		"A scenario file cannot be parsed, so none of its scenarios can run (TST-001).",
+		"Fix the syntax at the reported line and column.", false,
+	},
+	{
+		ScenarioReferenceUnknown, "SCENARIO_REFERENCE_UNKNOWN", SeverityError, "Scenario names something the project does not have",
+		"A scenario's page route, exposed state entry or data source is not declared by the project, so the scenario could never run against it (TST-001).",
+		"Use the name the project declares, or declare the page, the exposed state entry or the data source.", false,
+	},
+	{
+		ScenarioUnsupported, "SCENARIO_UNSUPPORTED", SeverityError, "Scenario uses something plux test cannot run yet",
+		"The scenario tests a flow, which the runtime offers no public way to start on its own, or replaces a data source's mock value, which needs a release of its own; only pages and the declared mocks run (TST-001, ADR-0052).",
+		"Start the scenario at the page that calls the flow and expect the flow's actions to have been called; select a data source's declared mock by its state only.", false,
+	},
+	{
+		ScenarioNameDuplicate, "SCENARIO_NAME_DUPLICATE", SeverityError, "Two scenarios of a file share a name",
+		"Reports and the generated tests name each scenario by file and name, so a repeated name cannot be told apart (TST-002).",
+		"Rename one of the scenarios.", false,
+	},
+	{
+		TestHarnessFailed, "TEST_HARNESS_FAILED", SeverityError, "The Flutter test harness could not run",
+		"plux test could not build or start the generated Flutter test project: the Flutter SDK is missing, its dependencies could not be resolved, or the process failed before reporting results (TST-002).",
+		"Install Flutter, or pass its path with --flutter, and check the output above for the failing step.", false,
+	},
+	{
+		ScenarioFilesNone, "SCENARIO_FILES_NONE", SeverityWarning, "No scenario files found",
+		"The project's tests pattern matches no scenario file, so plux test has nothing to run (TST-002).",
+		"Add a file such as tests/home.scenario.yaml, or set tests in plux.yaml to where the scenarios are.", false,
 	},
 
 	// Schema and validation: limits and budgets.
@@ -379,6 +684,26 @@ var registry = []Definition{
 		PXLExpressionTooComplex, "PXL_EXPRESSION_TOO_COMPLEX", SeverityError, "Expression too complex",
 		"The expression exceeds the length or nesting depth the compiler accepts.",
 		"Split the logic into computed state entries or a Plux Function.", false,
+	},
+	{
+		PXLRegexInvalid, "PXL_REGEX_INVALID", SeverityError, "Invalid regular expression",
+		"A pattern of `matches` is not in the pxl.regex.v1 subset of RE2: for example an unbalanced group, a lookaround, a backreference, a lazy quantifier or an unknown escape (schema/pxl/regex.md).",
+		"Correct the pattern at the reported position; the PXL reference lists the supported syntax.", false,
+	},
+	{
+		PXLRegexNotConstant, "PXL_REGEX_NOT_CONSTANT", SeverityError, "Regular expression is not a constant",
+		"The pattern of `matches` is computed, so it cannot be compiled and checked at publish time.",
+		"Write the pattern as a string literal.", false,
+	},
+	{
+		PXLRegexTooLarge, "PXL_REGEX_TOO_LARGE", SeverityError, "Regular expression too large",
+		"A pattern of `matches` exceeds the limits pxl.regexPatternLength, pxl.regexProgramSize or pxl.regexRepeat, which keep matching bounded on devices.",
+		"Shorten the pattern or reduce its repetition counts; an installation may raise the limits within their maximums.", false,
+	},
+	{
+		PXLUnknownPhoneRegion, "PXL_UNKNOWN_PHONE_REGION", SeverityError, "Unknown phone region",
+		"The region of `isPhone` is a literal that is not a two-letter region with phone metadata (schema/pxl/phone.md).",
+		"Use an ISO 3166 region code such as \"GB\", or pass the region from state or `device`.", false,
 	},
 	{
 		InternalCompilerError, "INTERNAL_COMPILER_ERROR", SeverityError, "Internal compiler error",
@@ -545,6 +870,26 @@ var registry = []Definition{
 		"Fix the host's handler, conversion or builder; the report names the action, route or slot and only the exception's type, never its message.", false,
 	},
 	{
+		AnimationUnknown, "ANIMATION_UNKNOWN", SeverityError, "Unknown animation",
+		"An action names a timeline the page does not own, or runs on a page without timelines (ANI-002).",
+		"Name a timeline declared in the page's animations.", false,
+	},
+	{
+		AnimationCommandInvalid, "ANIMATION_COMMAND_INVALID", SeverityError, "Invalid animation command",
+		"controlAnimation was given a command it cannot run, such as seek without a position (ANI-002).",
+		"Pass the position, in milliseconds, with seek.", false,
+	},
+	{
+		AnimationTimelineBroken, "ANIMATION_TIMELINE_BROKEN", SeverityError, "Timeline cannot play",
+		"A timeline of the bundle uses a curve, prop or value this runtime cannot play; the timeline does not run and the nodes keep their static values (ANI-002).",
+		"Rebuild the bundle with a compiler of this runtime's generation.", false,
+	},
+	{
+		AnimationAssetFailed, "ANIMATION_ASSET_FAILED", SeverityError, "Lottie or Rive asset failed",
+		"A Lottie or Rive widget could not load or play its asset: the file is missing, malformed or not what the widget expects (ANI-005).",
+		"Check the asset and its media type; the widget shows nothing in its place.", false,
+	},
+	{
 		ActionTimeout, "ACTION_TIMEOUT", SeverityError, "Action timed out",
 		"A step or its run took longer than the limits action.stepTimeout or action.runTimeout, or the step's own timeoutMs, allow; time spent waiting for the user in a dialog or bottom sheet does not count (ACT-005, ADR-0039).",
 		"Handle the error with the step's onError, or make the work shorter; an installation may raise the limits within their maximums.", false,
@@ -563,6 +908,272 @@ var registry = []Definition{
 		ActionCustomError, "ACTION_CUSTOM_ERROR", SeverityError, "Run failed with a custom error",
 		"A stop step ended the run with a custom error code, and no onError handled it (ADR-0039).",
 		"Handle the error with an onError edge, or check why the graph stops with it; the message carries its code.", false,
+	},
+	{
+		ActionCancelled, "ACTION_CANCELLED", SeverityInfo, "Action run cancelled",
+		"A run, or a branch of a parallel step, was cancelled: its page or component was disposed, a restart policy started a newer run, or another branch of the parallel step failed (ACT-003, ACT-004). Cancellation ends the run; it is never routed to an error handler.",
+		"Nothing to fix when the owner went away. Mark the handler detached when its run must outlive its page.", false,
+	},
+	{
+		ForEachLimitExceeded, "ACTION_FOREACH_LIMIT_EXCEEDED", SeverityError, "forEach item limit exceeded",
+		"A forEach step was given more items than the limit action.forEachItems allows; the step fails before its body runs (ACT-005).",
+		"Iterate over fewer items, for example a page of them, or raise the limit within its maximum.", false,
+	},
+	{
+		FlowNotFound, "FLOW_NOT_FOUND", SeverityError, "Flow not found",
+		"A callFlow step names a flow the active release does not hold, or a flow of another plugin that is not exported in that plugin's active version (ACT-061).",
+		"Publish the plugin that declares the flow, export it, or handle the error with the step's onError.", false,
+	},
+	{
+		ErrorHandlerFailed, "ERROR_HANDLER_FAILED", SeverityError, "Error handler failed",
+		"A page, plugin or app error handler failed while handling a run's error; its failure is reported and the original error goes on to the next handler (ACT-020).",
+		"Fix the error handler's graph; the report names the handler's owner and its own error code.", false,
+	},
+	{
+		ActionQueueFull, "ACTION_QUEUE_FULL", SeverityWarning, "Action queue full",
+		"A handler with the queue policy was triggered while it already held as many waiting triggers as the limit action.queueLength allows; the trigger was dropped (ACT-003).",
+		"Use the drop, restart or debounce policy for triggers that come faster than their runs finish, or raise the limit within its maximum.", false,
+	},
+	{
+		DataDomainBlocked, "DATA_DOMAIN_BLOCKED", SeverityError, "Request to an undeclared domain blocked",
+		"A data source or operation was about to send a request to a host the plugin does not declare in capabilities.networkDomains, or over a scheme other than HTTPS. The request never left the device, and the attempt is reported (DAT-030, SEC-080).",
+		"Declare the domain in the plugin's capabilities, or correct the base URL of the environment.", false,
+	},
+	{
+		DataNetworkFailed, "DATA_NETWORK_FAILED", SeverityError, "Network request failed",
+		"A data request could not be completed: the device is offline, the connection failed or was reset. The step's error has the kind network (DAT-001).",
+		"Handle the error with onError, show the source's error state, or retry when the network returns.", false,
+	},
+	{
+		DataHTTPError, "DATA_HTTP_ERROR", SeverityError, "Request answered with an error status",
+		"The server answered a data request with a status outside 2xx. The step's error has the kind http and carries the status, never the response body (DAT-001, SCH-012).",
+		"Handle the error with onError; check the request against the API.", false,
+	},
+	{
+		DataRequestTimeout, "DATA_REQUEST_TIMEOUT", SeverityError, "Data request timed out",
+		"A data request took longer than the limit data.requestTimeout. The step's error has the kind timeout (DAT-001).",
+		"Handle the error with onError, or ask the API owner why it is slow; an installation may raise the limit within its maximum.", false,
+	},
+	{
+		DataMappingFailed, "DATA_MAPPING_FAILED", SeverityError, "Response does not match its declared type",
+		"A response is not JSON, its selector finds nothing, a value does not have the type the source or operation declares, or the transform failed. The step's error has the kind validation and names the path, never the value (DAT-004).",
+		"Correct the selector, the declared types or the transform, or ask the API owner about the response.", false,
+	},
+	{
+		DataSizeExceeded, "DATA_SIZE_EXCEEDED", SeverityError, "Request or response too large",
+		"A data request's body is larger than data.requestSize, or its response larger than data.responseSize; the transfer is stopped (LIM-004).",
+		"Request less data, for example with pagination, or raise the limit within its maximum.", false,
+	},
+	{
+		DataGraphQLError, "DATA_GRAPHQL_ERROR", SeverityError, "GraphQL request failed",
+		"A GraphQL response carried errors and no data. The step's error has the kind http; the GraphQL messages are not reported, since they may echo user data (DAT-001, SCH-012).",
+		"Check the GraphQL document and its variables against the schema.", false,
+	},
+	{
+		DataUnauthorised, "DATA_UNAUTHORISED", SeverityError, "Request unauthorised",
+		"A data request that sends the auth delegate's token was answered with 401 again after one refresh, or no token was available. The step's error has the kind http (HST-010).",
+		"Sign the user in again through the host app; check the auth delegate's refresh.", false,
+	},
+	{
+		DataSourceUnavailable, "DATA_SOURCE_UNAVAILABLE", SeverityError, "Data source unavailable",
+		"A step or binding names a data source or operation this release does not declare, the source has no base URL for the current environment, or its kind is one this runtime does not load yet (DAT-001, DAT-003).",
+		"Declare the source and a base URL for every environment, or raise the app's minimum runtime version to one that loads its kind.", false,
+	},
+	{
+		DataCacheUnavailable, "DATA_CACHE_UNAVAILABLE", SeverityWarning, "Response cache unavailable",
+		"The response cache could not be read or written, or its encryption key could not be obtained; the request goes to the network as with networkOnly, and nothing is stored in the clear (DAT-010, LIM-004).",
+		"Check the device's free storage and the key provider; the runtime keeps working without the cache.", false,
+	},
+	{
+		DataStreamFailed, "DATA_STREAM_FAILED", SeverityError, "Stream failed",
+		"A stream ended and will not reconnect: the server refused the connection for good (a client error), the stream's protocol was violated, or a GraphQL subscription reported an error. Network failures and server errors are not this error: they reconnect with backoff (DAT-012).",
+		"Check the stream's URL, parameters and the user's access; subscribe again after correcting the cause.", false,
+	},
+	{
+		DataStreamMessageTooLarge, "DATA_STREAM_MESSAGE_TOO_LARGE", SeverityError, "Stream message too large",
+		"A message of a stream is larger than data.streamMessageSize; the stream is closed (DAT-012, LIM-004).",
+		"Make the server send smaller messages, or raise data.streamMessageSize for the app.", false,
+	},
+	{
+		DataStreamLimit, "DATA_STREAM_LIMIT", SeverityError, "Too many open streams",
+		"A subscription would open more streams than data.streamsOpen allows; it is refused and the open streams stay (DAT-012, LIM-004).",
+		"Unsubscribe from a stream first, or raise data.streamsOpen for the app.", false,
+	},
+	{
+		DataOutboxFull, "DATA_OUTBOX_FULL", SeverityError, "Outbox full",
+		"An offline mutation could not be queued because the outbox holds data.outboxEntries entries or data.outboxBytes bytes; the mutation is refused with a custom error and nothing is queued (DAT-020, LIM-004).",
+		"Wait until connectivity returns and the outbox drains, or raise the limits for the app.", false,
+	},
+	{
+		DataOutboxUnavailable, "DATA_OUTBOX_UNAVAILABLE", SeverityError, "Outbox unavailable",
+		"The outbox could not be read or written, or its encryption key could not be obtained, so an offline mutation is refused rather than stored in the clear (DAT-020).",
+		"Check the device's free storage and secure storage; the mutation can be repeated.", false,
+	},
+	{
+		DataOutboxConflict, "DATA_OUTBOX_CONFLICT", SeverityWarning, "Outbox replay conflict",
+		"A queued mutation was answered 409 or 412 when it was replayed: the server's state changed meanwhile. The entry is removed and the data source's conflict event runs, so the graph can reconcile (DAT-020).",
+		"Handle the conflict trigger of the data source: reload the data and ask the user, or apply the change again.", false,
+	},
+	{
+		DataOutboxRejected, "DATA_OUTBOX_REJECTED", SeverityWarning, "Outbox replay rejected",
+		"A queued mutation was answered with a client error other than a conflict when it was replayed, so it can never succeed. The entry is removed and the data source's failure event runs (DAT-020).",
+		"Handle the failure trigger of the data source: undo the optimistic change and tell the user.", false,
+	},
+	{
+		DataTransferTooLarge, "DATA_TRANSFER_TOO_LARGE", SeverityError, "Transfer too large",
+		"An upload's file, or a download's declared or received length, is larger than data.uploadSize or data.downloadSize; the transfer is refused or stopped and a partial download is removed (DAT-031, LIM-004).",
+		"Choose a smaller file, or raise the limit for the app.", false,
+	},
+	{
+		DataTransferFileFailed, "DATA_TRANSFER_FILE_FAILED", SeverityError, "Transfer file unavailable",
+		"The file to upload does not exist or cannot be read, or the name a download is saved under is not a plain file name or cannot be written in the runtime's directory (DAT-031).",
+		"Give an existing file, and a download a plain name without directories.", false,
+	},
+
+	// Local database.
+	{
+		DBMigrationFailed, "DB_MIGRATION_FAILED", SeverityError, "Collection migration failed",
+		"A collection could not be taken to the release's schema: no plan covers a field that changed, or the database refused a step. The migration was rolled back and the collection stays at its previous version, which actions on it cannot use until the next release or launch (DB-005).",
+		"Publish a release whose migration plan covers the change, and check the device's free storage.", false,
+	},
+	{
+		DBUnavailable, "DB_UNAVAILABLE", SeverityError, "Local database unavailable",
+		"A plugin uses a local collection but the app has no database adapter that stores collections: add plux_db_drift or supply PluxConfig.databaseAdapter (DB-001, DB-003).",
+		"Add the plux_db_drift package to the host app and pass its adapter in PluxConfig.databaseAdapter.", false,
+	},
+	{
+		DBEncryptionRequired, "DB_ENCRYPTION_REQUIRED", SeverityError, "Encrypted database required",
+		"The app's security profile is strict or maximum, and the database adapter cannot guarantee that the database is encrypted at rest; it is refused and no collection is opened (DB-002).",
+		"Open the database with a SQLCipher key, or use a lower security profile if the data does not need it.", false,
+	},
+	{
+		DBRecordInvalid, "DB_RECORD_INVALID", SeverityError, "Record does not fit its collection",
+		"A record has a field the collection does not declare, a value of the wrong type, or misses a field that is not nullable or the primary key (DB-004, DB-006).",
+		"Give the record the collection's fields with values of their declared types.", false,
+	},
+	{
+		DBRecordNotFound, "DB_RECORD_NOT_FOUND", SeverityError, "Record not found",
+		"dbUpdate named a key that no record of the collection has (DB-006).",
+		"Use dbUpsert to create the record when it may be missing, or handle the step's error.", false,
+	},
+	{
+		DBKeyConflict, "DB_KEY_CONFLICT", SeverityError, "Record key already exists",
+		"dbInsert named a key that another record of the collection already has (DB-006).",
+		"Use dbUpsert to replace the record, or choose another key.", false,
+	},
+	{
+		DBQueryInvalid, "DB_QUERY_INVALID", SeverityError, "Invalid database query",
+		"A query sorts by a field the collection does not declare, has a negative limit or offset, or its condition cannot be evaluated (DB-006).",
+		"Sort by a declared field and give a non-negative limit and offset.", false,
+	},
+	{
+		DBLimitExceeded, "DB_LIMIT_EXCEEDED", SeverityError, "Local database over its limit",
+		"A write would exceed db.recordBytes, db.collectionRecords or db.kvBytes; nothing is written (LIM-001, LIM-004).",
+		"Store less, delete records, or raise the limit for the app.", false,
+	},
+	{
+		DBStoreFailed, "DB_STORE_FAILED", SeverityError, "Local database failed",
+		"The database or its file could not be read or written, or its key could not be obtained from secure storage (DB-001, DB-007).",
+		"Check the device's free storage and the platform's secure storage; the message names the operation, never a value.", false,
+	},
+	{
+		DBCollectionUnknown, "DB_COLLECTION_UNKNOWN", SeverityError, "Unknown or inaccessible collection",
+		"A step names a collection that the active release does not declare for the calling plugin or the app. Another plugin's private collection is never reachable (DB-004).",
+		"Declare the collection in the plugin or the app document.", false,
+	},
+	{
+		DBValueTypeMismatch, "DB_VALUE_TYPE_MISMATCH", SeverityError, "Key-value entry of another type",
+		"kvSet wrote a value whose JSON type differs from the type the first kvSet fixed for the key within the plugin (DB-009).",
+		"Write values of one type per key, or remove the key first with kvRemove.", false,
+	},
+	{
+		StateWriteTypeMismatch, "STATE_WRITE_TYPE_MISMATCH", SeverityError, "State written with a value of the wrong type",
+		"A state write received a value from outside the bundle (an API response, a custom action, the host) that does not have the entry's declared type; the step fails with a validation error and the entry keeps its value (STA-002).",
+		"Map the value to the declared type before writing it, or handle the step's error with onError.", false,
+	},
+	{
+		StateWriteRefused, "STATE_WRITE_REFUSED", SeverityError, "State write refused",
+		"A state write names a path its scope does not have or a computed entry, or patches an entry that is not an object; the step fails and nothing changes (STA-001, STA-004).",
+		"Check the path against the entries the page, component, plugin, app or run declares; the compiler reports this for literal paths (PLX-1140, PLX-1141).", false,
+	},
+	{
+		StateStoreUnavailable, "STATE_STORE_UNAVAILABLE", SeverityWarning, "State store unavailable",
+		"The runtime could not open or write its local state store, or could not obtain the store's key from the platform's secure storage; session, persisted and secure entries are kept in memory until the store works again (STA-003).",
+		"Check the device's free space and the platform's secure storage; the message names the failing operation, never a value.", false,
+	},
+	{
+		StateStoreCorrupt, "STATE_STORE_CORRUPT", SeverityError, "State store failed authentication",
+		"The local state store did not decrypt under its key: it was altered, truncated or written by another installation. It is discarded, and every stored entry starts from its default (STA-003).",
+		"Nothing to fix in the app; if it repeats, check the device for tampering with the app's storage.", false,
+	},
+	{
+		StateMigrationFailed, "STATE_MIGRATION_FAILED", SeverityWarning, "Stored state could not be migrated",
+		"A stored value had neither the entry's type nor the type its migration reads, or the migration failed; the entry starts from its default (STA-040).",
+		"Declare a migration from the previous type, and check that it handles every stored value.", false,
+	},
+	{
+		StateLimitExceeded, "STATE_LIMIT_EXCEEDED", SeverityError, "Stored state over its limit",
+		"The values to store exceed state.persistedBytes or state.secureBytes; the write takes effect in memory but is not stored, so it is lost when the app is closed (LIM-001, LIM-004).",
+		"Store less, for example by keeping large data in a local collection, or raise the limit for the app.", false,
+	},
+	{
+		HostEventRefused, "HOST_EVENT_REFUSED", SeverityError, "Host event refused",
+		"Plux.sendEvent named an event the app does not declare for the host to send (direction toPlux or both), or a payload without the event's fields and types; nothing runs (HST-013).",
+		"Declare the event in the app's hostEvents with the direction toPlux or both; plux codegen generates typed senders that make this a compile error.", false,
+	},
+	{
+		FormInvalid, "FORM_INVALID", SeverityError, "Form invalid",
+		"submitForm validated a form and at least one field is invalid; the step fails with a validation error naming the fields, every field is marked touched, and the field errors are in the form's state (STA-020).",
+		"Show the form's errors, and handle the step's error with onError where the run should go on.", false,
+	},
+	{
+		FormNotInScope, "FORM_NOT_IN_SCOPE", SeverityError, "Form not in scope",
+		"A form action named a form that neither the component nor the page where the run started declares, for example from a lifecycle run that has no form state (STA-020).",
+		"Run the form action from a handler of the page or component that declares the form.", false,
+	},
+	{
+		FormAsyncValidatorFailed, "FORM_ASYNC_VALIDATOR_FAILED", SeverityWarning, "Asynchronous validator failed",
+		"An asynchronous validator's graph failed, for example because the server could not be reached; the field is shown as not checked and the form is invalid until a check succeeds (STA-020).",
+		"Handle the graph's errors with onError and return a message, or let the user retry by editing the field.", false,
+	},
+
+	// Actions: device and feedback.
+	{
+		DeviceCapabilityBlocked, "DEVICE_CAPABILITY_BLOCKED", SeverityError, "Device operation blocked",
+		"A step ran a device action whose device API the plugin does not declare, or that the host narrowed away with PluxConfig.allowedCapabilities. The step failed with a permission error and nothing reached the device (SEC-080).",
+		"Declare the device API in the plugin's capabilities and in the app's approved set, or allow it in the host's allowedCapabilities.", false,
+	},
+	{
+		DevicePackageMissing, "DEVICE_PACKAGE_MISSING", SeverityError, "Device package not installed",
+		"A step ran a device action whose optional package, such as plux_media, plux_scanner or plux_location, the host app did not register in PluxConfig.devicePackages (RT-060).",
+		"Add the package to the host app and pass it in PluxConfig.devicePackages.", false,
+	},
+	{
+		DevicePermissionDenied, "DEVICE_PERMISSION_DENIED", SeverityError, "Device permission denied",
+		"The user, or the platform's policy, denied the permission a device action needs, such as the camera or location.",
+		"Run requestPermission first and take its denied branch to explain what the feature needs; the user can grant the permission in the system settings.", false,
+	},
+	{
+		DeviceUnavailable, "DEVICE_UNAVAILABLE", SeverityError, "Device feature unavailable",
+		"The platform could not perform the device operation: the device has no such hardware, the service is switched off, or the platform call failed.",
+		"Check that the device supports the feature and that its service, such as location, is on.", false,
+	},
+	{
+		OpenURLBlocked, "OPEN_URL_BLOCKED", SeverityError, "openUrl blocked",
+		"An openUrl step named a URL that is not HTTPS on a domain the plugin declares, nor a deep link of the app, or the platform could not open it (SEC-080).",
+		"Declare the domain in the plugin's capabilities, or use a deep link of the app.", false,
+	},
+	{
+		ClipboardBlocked, "CLIPBOARD_BLOCKED", SeverityError, "Clipboard write blocked",
+		"A copyToClipboard step ran on a page marked secure, or copied more text than device.clipboardChars allows, so nothing was copied (SEC-090).",
+		"Do not copy from secure pages, or shorten the text.", false,
+	},
+
+	// Actions: typed host events.
+	{
+		HostEventPayloadInvalid, "HOST_EVENT_PAYLOAD_INVALID", SeverityError, "Host event payload invalid",
+		"The payload of Plux.sendEvent lacks a field the app's hostEvents declaration requires, has a field it does not declare, or has a value that does not fit the field's type; nothing runs (HST-013).",
+		"Send the declared fields with values of their types; plux codegen generates typed senders that make this a compile error.", false,
 	},
 
 	// Security.

@@ -393,6 +393,14 @@
         "secure"
       ]
     },
+    "hostEventDirection": {
+      "description": "Who sends a host event: plugins to the host with `emitHostEvent` (`toHost`, the default), the host into Plux with `Plux.sendEvent` (`toPlux`), or both (HST-013).",
+      "enum": [
+        "toHost",
+        "toPlux",
+        "both"
+      ]
+    },
     "stateEntry": {
       "type": "object",
       "description": "A typed state entry with a default or a computed expression (STA-002, STA-004).",
@@ -427,6 +435,9 @@
           "type": "boolean",
           "description": "Readable and writable by the host (STA-030)."
         },
+        "migration": {
+          "$ref": "#/$defs/stateMigration"
+        },
         "description": {
           "$ref": "#/$defs/description"
         }
@@ -448,6 +459,43 @@
         }
       ],
       "x-plux-type": "StateEntry"
+    },
+    "stateMigration": {
+      "type": "object",
+      "description": "How a persisted state entry whose type changed since the previous release takes its stored value (STA-040): with `from`, the entry's type in the previous release, and `value`, an expression over `previous` (the stored value, of type `from`) giving the new value; or with `reset`, the declared default.",
+      "properties": {
+        "from": {
+          "$ref": "#/$defs/typeExpr"
+        },
+        "value": {
+          "$ref": "#/$defs/expr"
+        },
+        "reset": {
+          "type": "boolean",
+          "description": "Start from the declared default instead of the stored value."
+        },
+        "description": {
+          "$ref": "#/$defs/description"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "required": [
+            "from",
+            "value"
+          ]
+        },
+        {
+          "required": [
+            "reset"
+          ]
+        }
+      ],
+      "x-plux-type": "StateMigration"
     },
     "dataSourceKind": {
       "enum": [
@@ -543,6 +591,19 @@
             "uniqueItems": true
           }
         },
+        "version": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000,
+          "description": "The collection's schema version, 1 when omitted. A publish that changes the fields, types or indexes raises it; devices migrate from the version they hold (DB-005)."
+        },
+        "migrations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/collectionMigration"
+          },
+          "description": "How a device at an older version reaches this one: one plan per version it may hold. A change that loses data needs one (DB-005)."
+        },
         "description": {
           "$ref": "#/$defs/description"
         }
@@ -552,6 +613,55 @@
       },
       "additionalProperties": false,
       "x-plux-type": "Collection"
+    },
+    "collectionMigration": {
+      "type": "object",
+      "description": "The plan that takes a collection from version `from` to the next (DB-005): fields renamed, dropped or reset.",
+      "required": [
+        "from"
+      ],
+      "properties": {
+        "from": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000,
+          "description": "The version this plan starts from."
+        },
+        "rename": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/name"
+          },
+          "propertyNames": {
+            "$ref": "#/$defs/name"
+          },
+          "description": "Fields renamed, as new name to old name; their values are kept."
+        },
+        "drop": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/name"
+          },
+          "uniqueItems": true,
+          "description": "Fields of the older version that are removed, with their values. The publisher acknowledges the warning this raises."
+        },
+        "reset": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/name"
+          },
+          "uniqueItems": true,
+          "description": "Fields that are added without being nullable, or whose type narrows: every record's value starts again from the type's empty value (0, \"\", false, [] or {}), or null when nullable. The publisher acknowledges the warning this raises."
+        },
+        "description": {
+          "$ref": "#/$defs/description"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "CollectionMigration"
     },
     "concurrency": {
       "type": "string",
@@ -703,6 +813,153 @@
       ],
       "x-plux-type": "EventHandler"
     },
+    "triggers": {
+      "type": "object",
+      "description": "Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active.",
+      "properties": {
+        "timers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/timerTrigger"
+          }
+        },
+        "watch": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/stateWatcher"
+          }
+        },
+        "onAppResume": {
+          "$ref": "#/$defs/eventHandler"
+        },
+        "onAppPause": {
+          "$ref": "#/$defs/eventHandler"
+        },
+        "onPushOpened": {
+          "$ref": "#/$defs/eventHandler"
+        },
+        "hostEvents": {
+          "type": "object",
+          "description": "Handlers of host events sent into Plux, by declared host event name (HST-013); `event` is the event's payload.",
+          "propertyNames": {
+            "$ref": "#/$defs/name"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/eventHandler"
+          }
+        },
+        "dataSources": {
+          "type": "object",
+          "description": "Handlers of data-source events, by data source name.",
+          "propertyNames": {
+            "$ref": "#/$defs/name"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/dataSourceTriggers"
+          }
+        },
+        "onError": {
+          "$ref": "#/$defs/eventHandler"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "Triggers"
+    },
+    "timerTrigger": {
+      "type": "object",
+      "description": "A timer (ACT-002): it fires every intervalMs while its owner lives, or once, intervalMs after its owner starts, when repeat is false; `event` is the number of times it has fired.",
+      "required": [
+        "name",
+        "intervalMs",
+        "handler"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/name"
+        },
+        "intervalMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 86400000
+        },
+        "repeat": {
+          "type": "boolean",
+          "description": "Fires every intervalMs; true when absent."
+        },
+        "handler": {
+          "$ref": "#/$defs/eventHandler"
+        },
+        "description": {
+          "$ref": "#/$defs/description"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "TimerTrigger"
+    },
+    "stateWatcher": {
+      "type": "object",
+      "description": "Runs its handler when a state entry changes (ACT-002); `event` is the new value. A debounce policy on the handler waits for the value to settle.",
+      "required": [
+        "path",
+        "handler"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^(app|plugin|page)\\.[a-z][a-zA-Z0-9]*$",
+          "description": "The state entry: <scope>.<name>."
+        },
+        "handler": {
+          "$ref": "#/$defs/eventHandler"
+        },
+        "description": {
+          "$ref": "#/$defs/description"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "StateWatcher"
+    },
+    "dataSourceTriggers": {
+      "type": "object",
+      "description": "Handlers of a data source's events (ACT-002): the loaded value is onLoaded's `event`, the error onFailed's; a stream's message, mapped to the source's type, is onMessage's; a transfer's progress is onProgress's (DAT-012, DAT-031); an offline mutation's replay ends in onSynced, onSyncFailed or onConflict, whose `event` names the operation, the idempotency key and the status (DAT-020).",
+      "properties": {
+        "onLoaded": {
+          "$ref": "#/$defs/eventHandler"
+        },
+        "onFailed": {
+          "$ref": "#/$defs/eventHandler"
+        },
+        "onMessage": {
+          "$ref": "#/$defs/eventHandler"
+        },
+        "onProgress": {
+          "$ref": "#/$defs/eventHandler"
+        },
+        "onSynced": {
+          "$ref": "#/$defs/eventHandler"
+        },
+        "onSyncFailed": {
+          "$ref": "#/$defs/eventHandler"
+        },
+        "onConflict": {
+          "$ref": "#/$defs/eventHandler"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "DataSourceTriggers"
+    },
     "semantics": {
       "type": "object",
       "description": "Accessibility semantics of a node (A11Y-002).",
@@ -844,6 +1101,9 @@
         },
         "responsive": {
           "$ref": "#/$defs/responsive"
+        },
+        "animation": {
+          "$ref": "#/$defs/nodeAnimation"
         }
       },
       "patternProperties": {
@@ -966,9 +1226,10 @@
         "slideDown",
         "scale",
         "sharedAxis",
+        "custom",
         "none"
       ],
-      "description": "Page transition (NAV-010)."
+      "description": "Page transition (NAV-010). `custom` plays the route timeline that `routeOptions.timeline` names."
     },
     "templateVisibility": {
       "enum": [
@@ -991,6 +1252,444 @@
         "application/riv"
       ],
       "description": "Media type of an asset."
+    },
+    "form": {
+      "type": "object",
+      "description": "A form (STA-020, ADR-0047): typed fields with their initial values and validators. Its state lives in the declaring page's or component's scope under the form's name: `values`, `errors`, `dirty`, `touched`, `status`, `valid` and `validating`.",
+      "required": [
+        "id",
+        "name",
+        "fields"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "$ref": "#/$defs/name"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/formField"
+          },
+          "minItems": 1
+        },
+        "description": {
+          "$ref": "#/$defs/description"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "Form"
+    },
+    "formField": {
+      "type": "object",
+      "description": "A field of a form: its type, initial value and validators, run in order (STA-020).",
+      "required": [
+        "name",
+        "type"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/name"
+        },
+        "type": {
+          "$ref": "#/$defs/typeExpr"
+        },
+        "initial": {
+          "$ref": "#/$defs/value"
+        },
+        "validators": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/formValidator"
+          }
+        },
+        "description": {
+          "$ref": "#/$defs/description"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "FormField"
+    },
+    "formValidatorKind": {
+      "enum": [
+        "required",
+        "length",
+        "range",
+        "regex",
+        "email",
+        "phone",
+        "iban",
+        "dateRange",
+        "decimalPrecision",
+        "custom",
+        "async"
+      ],
+      "description": "A built-in validator of a form field (STA-020, ADR-0047)."
+    },
+    "formValidator": {
+      "type": "object",
+      "description": "A validator of a form field. Each kind takes its own options: `min` and `max` (length, range, dateRange), `pattern` (regex), `region` (phone), `maxScale` and `maxIntegerDigits` (decimalPrecision), `rule` (custom), `$graph` and `debounceMs` (async); the compiler checks them against the kind and the field's type (PLX-1160-1169).",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/formValidatorKind"
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512,
+          "description": "The message shown when the value is invalid; the runtime's built-in message otherwise."
+        },
+        "min": {
+          "$ref": "#/$defs/value"
+        },
+        "max": {
+          "$ref": "#/$defs/value"
+        },
+        "pattern": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A pxl.regex.v1 pattern, checked at publish (PXL-003)."
+        },
+        "region": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$",
+          "description": "The ISO 3166-1 region of numbers written without a country calling code; the device locale's region when absent."
+        },
+        "maxScale": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The most digits after the decimal point."
+        },
+        "maxIntegerDigits": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The most digits before the decimal point."
+        },
+        "rule": {
+          "$ref": "#/$defs/expr"
+        },
+        "$graph": {
+          "$ref": "#/$defs/id"
+        },
+        "debounceMs": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "How long the field stays unchanged before the asynchronous check runs."
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "FormValidator"
+    },
+    "curve": {
+      "enum": [
+        "linear",
+        "easeIn",
+        "easeOut",
+        "easeInOut",
+        "fastOutSlowIn",
+        "decelerate",
+        "bounceIn",
+        "bounceOut",
+        "elasticOut",
+        "overshoot"
+      ],
+      "description": "An animation curve (ANI-001, ANI-002)."
+    },
+    "reduceMotion": {
+      "enum": [
+        "skip",
+        "shorten",
+        "ignore"
+      ],
+      "description": "What an animation does when the platform asks to reduce motion (ANI-007): `skip` jumps to the final state, `shorten` plays at a quarter of the duration, `ignore` plays as declared (for motion that carries meaning)."
+    },
+    "animTransition": {
+      "type": "object",
+      "description": "An enter or exit transition of a node (ANI-003).",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/animTransitionKind"
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "curve": {
+          "$ref": "#/$defs/curve"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "AnimTransition"
+    },
+    "nodeAnimation": {
+      "type": "object",
+      "description": "The animations of a node (ANI-001, ANI-003, ANI-004): `durationMs` animates the node's animatable props (numbers and colours) whenever their bound value changes; `enter` and `exit` play when the node is inserted or its visibility changes; `hero` is the tag of a shared-element transition.",
+      "properties": {
+        "durationMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "curve": {
+          "$ref": "#/$defs/curve"
+        },
+        "delayMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        },
+        "props": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/name"
+          },
+          "description": "The props to animate; all that can be, when absent."
+        },
+        "enter": {
+          "$ref": "#/$defs/animTransition"
+        },
+        "exit": {
+          "$ref": "#/$defs/animTransition"
+        },
+        "hero": {
+          "$ref": "#/$defs/propValue",
+          "description": "The hero tag, a string."
+        },
+        "reduceMotion": {
+          "$ref": "#/$defs/reduceMotion"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "NodeAnimation"
+    },
+    "keyframe": {
+      "type": "object",
+      "description": "A value of a track at a time (ANI-002).",
+      "required": [
+        "atMs",
+        "value"
+      ],
+      "properties": {
+        "atMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "value": {
+          "$ref": "#/$defs/propValue"
+        },
+        "curve": {
+          "$ref": "#/$defs/curve",
+          "description": "The curve into this keyframe."
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "Keyframe"
+    },
+    "track": {
+      "type": "object",
+      "description": "The keyframes of one prop of one node (ANI-002); a route timeline's tracks name no node and animate `opacity`, `scale`, `slideX` or `slideY`.",
+      "required": [
+        "prop",
+        "keyframes"
+      ],
+      "properties": {
+        "node": {
+          "$ref": "#/$defs/id"
+        },
+        "prop": {
+          "$ref": "#/$defs/name"
+        },
+        "keyframes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/keyframe"
+          },
+          "minItems": 2
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "Track"
+    },
+    "spring": {
+      "type": "object",
+      "description": "A spring that moves the timeline instead of its duration (ANI-006).",
+      "properties": {
+        "stiffness": {
+          "type": "number",
+          "minimum": 0.01
+        },
+        "damping": {
+          "type": "number",
+          "minimum": 0.01
+        },
+        "mass": {
+          "type": "number",
+          "minimum": 0.01
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "Spring"
+    },
+    "timelineDriver": {
+      "type": "object",
+      "description": "Moves a timeline with the scroll offset or the drag of a node instead of time (ANI-006).",
+      "required": [
+        "kind",
+        "node",
+        "extent"
+      ],
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/timelineDriverKind"
+        },
+        "node": {
+          "$ref": "#/$defs/id"
+        },
+        "extent": {
+          "type": "number",
+          "minimum": 0.01,
+          "description": "Logical pixels of scrolling or dragging that span the timeline."
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "TimelineDriver"
+    },
+    "timeline": {
+      "type": "object",
+      "description": "An animation timeline a page owns (ANI-002): keyframes of props of its nodes, played by `startAnimation` and `controlAnimation`, on page enter, or by a driver.",
+      "required": [
+        "id",
+        "name",
+        "durationMs",
+        "tracks"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "$ref": "#/$defs/name"
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600000
+        },
+        "delayMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "repeat": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000,
+          "description": "Plays after the first."
+        },
+        "repeatForever": {
+          "type": "boolean"
+        },
+        "reverse": {
+          "type": "boolean",
+          "description": "Each repeat plays backwards."
+        },
+        "staggerMs": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "The delay per item index for nodes in item templates."
+        },
+        "autoplay": {
+          "type": "boolean",
+          "description": "Plays when the page is shown."
+        },
+        "scope": {
+          "$ref": "#/$defs/timelineScope"
+        },
+        "driver": {
+          "$ref": "#/$defs/timelineDriver"
+        },
+        "spring": {
+          "$ref": "#/$defs/spring"
+        },
+        "reduceMotion": {
+          "$ref": "#/$defs/reduceMotion"
+        },
+        "tracks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/track"
+          },
+          "minItems": 1
+        },
+        "description": {
+          "$ref": "#/$defs/description"
+        }
+      },
+      "patternProperties": {
+        "^x-": true
+      },
+      "additionalProperties": false,
+      "x-plux-type": "Timeline"
+    },
+    "animTransitionKind": {
+      "enum": [
+        "fade",
+        "scale",
+        "slideUp",
+        "slideDown",
+        "slideLeft",
+        "slideRight"
+      ],
+      "description": "How a node moves in or out (ANI-003)."
+    },
+    "timelineScope": {
+      "enum": [
+        "page",
+        "route"
+      ],
+      "description": "What a timeline animates: nodes of its page, or the page itself in a route transition (NAV-010)."
+    },
+    "timelineDriverKind": {
+      "enum": [
+        "scroll",
+        "drag"
+      ],
+      "description": "What moves a driven timeline (ANI-006)."
     }
   }
 }

@@ -158,7 +158,7 @@ func flattenPadding(n *node) {
 	}
 	inner := n.slots[0].nodes[0]
 	if inner.widget == nil || inner.widget.Type != "Padding" || len(inner.handlers) > 0 || inner.visible != nil ||
-		inner.semantics != nil || inner.doc.TestID != "" || len(inner.overrides) > 0 || len(n.overrides) > 0 || len(inner.props) != 1 || len(n.props) != 1 {
+		inner.semantics != nil || inner.doc.TestID != "" || inner.anim != nil || inner.animated || n.anim != nil || n.animated || len(inner.overrides) > 0 || len(n.overrides) > 0 || len(inner.props) != 1 || len(n.props) != 1 {
 		return
 	}
 	a, okA := insets(n.props[0].value)
@@ -265,7 +265,7 @@ func (u *unit) equalsDefault(n *node, d registry.Prop, v *value) bool {
 // translations and handles no events, so the runtime can build it once
 // (CMP-024).
 func static(n *node) bool {
-	if len(n.handlers) > 0 || n.visible != nil || len(n.overrides) > 0 {
+	if len(n.handlers) > 0 || n.visible != nil || len(n.overrides) > 0 || n.anim != nil || n.animated {
 		return false
 	}
 	for _, p := range n.props {

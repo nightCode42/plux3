@@ -1,0 +1,359 @@
+// Written by plux test (TST-002); it is rewritten on every run, so do not edit
+// it. It starts the real Plux runtime on a release that plux test compiled and
+// signed with a key made for this run, and drives the pages the scenarios
+// name through Flutter's widget tester.
+//
+// ignore_for_file: implementation_imports, avoid_print
+
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:plux_flutter/plux_flutter.dart';
+{{DATA_MOCKS_IMPORT}}import 'package:plux_flutter/src/core/runtime.dart' show RuntimeOverrides;
+import 'package:plux_flutter/src/store/kv_store.dart' show SecretStore;
+import 'package:plux_flutter/src/sync/sync_engine.dart'
+    show MemoryCredentialStore;
+
+import 'plux_project.dart';
+
+/// The JSON value a scenario file holds.
+Object? json(String text) => jsonDecode(text);
+
+/// A client that reaches no network: scenarios run on mocks and on the
+/// embedded release.
+http.Client _offline() => _OfflineClient();
+
+final class _OfflineClient extends http.BaseClient {
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) =>
+      Future.error(const SocketException('plux test reaches no network'));
+}
+
+final class _Secrets implements SecretStore {
+  final Map<String, String> _values = {};
+
+  @override
+  Future<String?> read(String name) async => _values[name];
+
+  @override
+  Future<void> write(String name, String value) async => _values[name] = value;
+
+  @override
+  Future<void> delete(String name) async => _values.remove(name);
+}
+
+/// Records where Plux navigates, then lets the default delegate do it.
+final class _Recorder implements PluxNavigationDelegate {
+  _Recorder(this.routes);
+
+  final List<String> routes;
+  final PluxNavigationDelegate _inner = const PluxNavigatorDelegate();
+
+  @override
+  Future<T?> push<T extends Object?>(BuildContext context, PluxRouteSpec route) {
+    routes.add(route.name);
+    return _inner.push<T>(context, route);
+  }
+
+  @override
+  Future<T?> replace<T extends Object?>(
+    BuildContext context,
+    PluxRouteSpec route,
+  ) {
+    routes.add(route.name);
+    return _inner.replace<T>(context, route);
+  }
+
+  @override
+  Future<T?> clearAndPush<T extends Object?>(
+    BuildContext context,
+    PluxRouteSpec route,
+  ) {
+    routes.add(route.name);
+    return _inner.clearAndPush<T>(context, route);
+  }
+
+  @override
+  void popUntil(BuildContext context, String name) =>
+      _inner.popUntil(context, name);
+
+  @override
+  bool pop(BuildContext context, [Object? result]) =>
+      _inner.pop(context, result);
+}
+
+Map<String, Uint8List> _baseline() {
+  final root = Directory('{{BASELINE_DIR}}');
+  return {
+    for (final f in root.listSync(recursive: true).whereType<File>())
+      f.path
+          .substring(root.path.length + 1)
+          .replaceAll(Platform.pathSeparator, '/'): f.readAsBytesSync(),
+  };
+}
+
+Future<Uint8List?> Function(String) _reader(Map<String, Uint8List> files) =>
+    (path) async => files[path];
+
+/// Lets asynchronous work outside the fake-async zone finish, then pumps.
+Future<void> _settle(WidgetTester tester, [int rounds = 3]) async {
+  for (var i = 0; i < rounds; i++) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 10)),
+    );
+    await tester.pump();
+  }
+}
+
+/// One running scenario: the page on screen and what the steps did.
+final class ScenarioSession {
+  ScenarioSession._(
+    this.tester,
+    this._routes,
+    this._errors,
+    this._semantics,
+    this._dir,
+  );
+
+  /// The widget tester.
+  final WidgetTester tester;
+
+  final List<String> _routes;
+  final List<PluxException> _errors;
+  final SemanticsHandle _semantics;
+  final String _dir;
+
+  /// Starts the runtime on the test release, applies the given state and
+  /// data source states, and shows [page] with [params]. Call [finish]
+  /// when the scenario is over, whatever its outcome.
+  static Future<ScenarioSession> start(
+    WidgetTester tester, {
+    required String page,
+    Map<String, Object?> params = const {},
+    Map<String, Object?> state = const {},
+    Map<String, String> dataSources = const {},
+  }) async {
+    tester.view
+      ..physicalSize = const Size(800, 1600)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final semantics = tester.ensureSemantics();
+    final dir = Directory.systemTemp.createTempSync('plux_scenario').path;
+    final routes = <String>[];
+    final errors = <PluxException>[];
+    final navigatorKey = GlobalKey<NavigatorState>();
+    final files = _baseline();
+    final startup = await tester.runAsync(
+      () => Plux.initializeWith(
+        PluxConfig(
+          appId: pluxTestAppId,
+          endpoint: Uri.parse('http://127.0.0.1:9'),
+          rootKeys: pluxTestRootKeys,
+          storageDirectory: dir,
+          httpClient: _offline,
+          onError: (e, _) {
+            // The release is embedded and nothing reaches the network, so a
+            // failed background sync says nothing about the scenario.
+            if (e.code != PluxErrorCode.syncFailed) errors.add(e);
+          },
+          navigationDelegate: _Recorder(routes),
+          navigatorKey: navigatorKey,
+          nativeRoutes: pluxTestNativeRoutes,
+          nativeSlots: pluxTestNativeSlots,
+          nativeActions: pluxTestNativeActions,
+        ),
+        RuntimeOverrides(
+          credentials: MemoryCredentialStore.new,
+          baseline: _reader(files),
+          healthyAfter: const Duration(hours: 1),
+          secrets: _Secrets.new,
+{{DATA_MOCKS_ARG}}        ),
+      ),
+    );
+    final session = ScenarioSession._(tester, routes, errors, semantics, dir);
+    try {
+      if (startup == null || !startup.ready) {
+        throw TestFailure('the runtime has no release to show: $startup');
+      }
+      for (final MapEntry(:key, :value) in state.entries) {
+        final written = await tester.runAsync(
+          () => Plux.state<Object?>(key).set(value),
+        );
+        if (written != true) {
+          throw TestFailure(
+            'app state $key could not be set to ${jsonEncode(value)}'
+            '${session._problems()}',
+          );
+        }
+      }
+      await tester.pumpWidget(
+        MaterialApp(
+          navigatorKey: navigatorKey,
+          home: PluxScope(child: PluxView(page, inputs: params)),
+        ),
+      );
+      await _settle(tester);
+    } on Object {
+      await session.finish();
+      rethrow;
+    }
+    return session;
+  }
+
+  /// Stops the runtime and removes what the scenario stored.
+  Future<void> finish() async {
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.runAsync(Plux.dispose);
+    _semantics.dispose();
+    Directory(_dir).deleteSync(recursive: true);
+  }
+
+
+  String _problems() => _errors.isEmpty
+      ? ''
+      : '\nthe runtime reported: ${_errors.map((e) => e.toString()).join('; ')}';
+
+  Finder _node(String testId) => find.bySemanticsIdentifier(testId);
+
+  Never _fail(String at, String message) =>
+      throw TestFailure('$at: $message${_problems()}');
+
+  Future<void> _afterStep() async {
+    await tester.pumpAndSettle();
+    await _settle(tester);
+  }
+
+  /// Taps the node with [testId].
+  Future<void> tap(String testId, {required String at}) async {
+    final node = _node(testId);
+    if (node.evaluate().isEmpty) _fail(at, 'no node with testId "$testId" to tap');
+    await tester.ensureVisible(node.first);
+    await tester.tap(node.first);
+    await _afterStep();
+  }
+
+  /// Types [text] into the field with [testId].
+  Future<void> enterText(String testId, String text, {required String at}) async {
+    final node = _node(testId);
+    if (node.evaluate().isEmpty) {
+      _fail(at, 'no node with testId "$testId" to type into');
+    }
+    final field = find.descendant(of: node.first, matching: find.byType(EditableText));
+    await tester.enterText(field.evaluate().isEmpty ? node.first : field.first, text);
+    await _afterStep();
+  }
+
+  /// Drags the node with [testId] by ([dx], [dy]) logical pixels.
+  Future<void> scroll(
+    String testId,
+    double dx,
+    double dy, {
+    required String at,
+  }) async {
+    final node = _node(testId);
+    if (node.evaluate().isEmpty) _fail(at, 'no node with testId "$testId" to scroll');
+    await tester.drag(node.first, Offset(dx, dy));
+    await _afterStep();
+  }
+
+  /// Waits up to [timeoutMs] for the node with [testId] to appear.
+  Future<void> waitFor(String testId, int timeoutMs, {required String at}) async {
+    for (var waited = 0; waited <= timeoutMs; waited += 50) {
+      if (_node(testId).evaluate().isNotEmpty) return;
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    _fail(at, 'no node with testId "$testId" appeared within $timeoutMs ms');
+  }
+
+  /// Sends the host event [name] into the app.
+  Future<void> trigger(String name, Map<String, Object?> payload, {required String at}) async {
+    final accepted = await tester.runAsync(() => Plux.sendEvent(name, payload));
+    if (accepted != true) _fail(at, 'the app did not accept the host event "$name"');
+    await _afterStep();
+  }
+
+  /// The node with [testId] is on screen.
+  void visible(String testId, {required String at}) {
+    if (_node(testId).evaluate().isEmpty) _fail(at, 'expected a node with testId "$testId" on screen');
+  }
+
+  /// The node with [testId] is not on screen.
+  void notVisible(String testId, {required String at}) {
+    if (_node(testId).evaluate().isNotEmpty) _fail(at, 'expected no node with testId "$testId" on screen');
+  }
+
+  /// The text of the node with [testId] equals [text].
+  void textEquals(String testId, String text, {required String at}) {
+    final node = _node(testId);
+    if (node.evaluate().isEmpty) _fail(at, 'expected a node with testId "$testId" on screen');
+    final fields = find.descendant(of: node.first, matching: find.byType(EditableText));
+    final String actual;
+    if (fields.evaluate().isNotEmpty) {
+      actual = tester.widget<EditableText>(fields.first).controller.text;
+    } else {
+      final runs = find.descendant(of: node.first, matching: find.byType(RichText));
+      actual = runs.evaluate().map((e) => (e.widget as RichText).text.toPlainText()).join();
+    }
+    if (actual != text) {
+      _fail(at, 'expected the text of "$testId" to be ${jsonEncode(text)}, found ${jsonEncode(actual)}');
+    }
+  }
+
+  /// Plux navigated to the route [route].
+  void navigatedTo(String route, {required String at}) {
+    if (!_routes.contains(route)) {
+      _fail(at, 'expected a navigation to "$route", found ${_routes.isEmpty ? 'none' : _routes.map((r) => '"$r"').join(', ')}');
+    }
+  }
+
+  Iterable<PluxStepTrace> _steps() => Plux.diagnostics.actionTraces.value.expand((t) => t.steps);
+
+  void _called(
+    String what,
+    String name,
+    Map<String, Object?> args,
+    int? times,
+    String at,
+    bool Function(PluxStepTrace) isIt,
+    Map<String, Object?> Function(PluxStepTrace) inputsOf,
+  ) {
+    var count = 0;
+    for (final step in _steps().where(isIt)) {
+      final inputs = inputsOf(step);
+      final matches = args.entries.every((e) => inputs.containsKey(e.key) && equals(e.value).matches(inputs[e.key], <Object?, Object?>{}));
+      if (matches) count++;
+    }
+    final withArgs = args.isEmpty ? '' : ' with ${jsonEncode(args)}';
+    if (times == null && count == 0) _fail(at, 'expected $what "$name" to be called$withArgs; it was not');
+    if (times != null && count != times) _fail(at, 'expected $what "$name" to be called $times time(s)$withArgs; it was called $count');
+  }
+
+  /// A step ran the action [name] with at least [args] as its inputs.
+  void actionCalled(String name, Map<String, Object?> args, int? times, {required String at}) =>
+      _called('the action', name, args, times, at, (s) => s.action == name, (s) => s.inputs);
+
+  /// A step called the function [name] with at least [args] as its input.
+  void functionCalled(String name, Map<String, Object?> args, int? times, {required String at}) =>
+      _called(
+        'the function',
+        name,
+        args,
+        times,
+        at,
+        (s) => s.action == 'invokeFunction' && s.inputs['function'] == name,
+        (s) => s.inputs['input'] is Map ? (s.inputs['input']! as Map).cast<String, Object?>() : const {},
+      );
+
+  /// The exposed app state [name] holds [expected].
+  void stateEquals(String name, Object? expected, {required String at}) {
+    final actual = Plux.state<Object?>(name).value;
+    if (!equals(expected).matches(actual, <Object?, Object?>{})) {
+      _fail(at, 'expected app state "$name" to be ${jsonEncode(expected)}, found ${jsonEncode(actual)}');
+    }
+  }
+}

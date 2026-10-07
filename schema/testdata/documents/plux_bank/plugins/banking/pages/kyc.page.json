@@ -1,0 +1,127 @@
+{
+  "id": "01d0c450-6c00-7000-8000-000000000214",
+  "key": "kyc",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01d0c450-6c00-7000-8000-000000002059",
+    "slots": {
+      "appBar": {
+        "id": "01d0c450-6c00-7000-8000-000000002058",
+        "slots": {
+          "title": {
+            "id": "01d0c450-6c00-7000-8000-000000002057",
+            "props": {
+              "data": {
+                "$t": "01d0c450-6c00-7000-8000-000000000297"
+              }
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "id": "01d0c450-6c00-7000-8000-000000002056",
+        "props": {
+          "padding": {
+            "all": 24.0
+          }
+        },
+        "slots": {
+          "child": {
+            "children": [
+              {
+                "id": "01d0c450-6c00-7000-8000-000000002050",
+                "props": {
+                  "data": {
+                    "$t": "01d0c450-6c00-7000-8000-000000000295"
+                  }
+                },
+                "type": "Text"
+              },
+              {
+                "id": "01d0c450-6c00-7000-8000-000000002051",
+                "props": {
+                  "height": 12.0
+                },
+                "type": "SizedBox"
+              },
+              {
+                "events": {
+                  "onPressed": {
+                    "steps": [
+                      {
+                        "action": "capturePhoto",
+                        "id": "shoot",
+                        "input": {
+                          "maxDimension": 1600
+                        },
+                        "onSuccess": "store"
+                      },
+                      {
+                        "action": "setState",
+                        "id": "store",
+                        "input": {
+                          "path": "page.photoName",
+                          "value": {
+                            "$expr": "steps.shoot.output?.name ?? \"\""
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01d0c450-6c00-7000-8000-000000002053",
+                "slots": {
+                  "child": {
+                    "id": "01d0c450-6c00-7000-8000-000000002052",
+                    "props": {
+                      "data": {
+                        "$t": "01d0c450-6c00-7000-8000-000000000296"
+                      }
+                    },
+                    "type": "Text"
+                  }
+                },
+                "testId": "capture",
+                "type": "FilledButton"
+              },
+              {
+                "id": "01d0c450-6c00-7000-8000-000000002054",
+                "props": {
+                  "data": {
+                    "$expr": "\"Captured \" + page.photoName"
+                  }
+                },
+                "testId": "captured",
+                "type": "Text",
+                "visible": {
+                  "$expr": "page.photoName != \"\""
+                }
+              }
+            ],
+            "id": "01d0c450-6c00-7000-8000-000000002055",
+            "props": {
+              "crossAxisAlignment": "stretch"
+            },
+            "type": "Column"
+          }
+        },
+        "type": "Padding"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "kyc",
+  "schemaVersion": "1.0.0",
+  "state": [
+    {
+      "default": "",
+      "id": "01d0c450-6c00-7000-8000-000000000241",
+      "name": "photoName",
+      "type": "string"
+    }
+  ],
+  "title": "Identity check"
+}

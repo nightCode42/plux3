@@ -89,6 +89,37 @@ table Handler {
   detached: bool;
 }
 
+// A trigger besides widget events and page lifecycle (ACT-002), or the
+// owner's error handler (ACT-020).
+enum TriggerKind : ubyte {
+  Timer = 0,
+  StateChange,
+  AppResume,
+  AppPause,
+  PushOpened,
+  HostEvent,
+  DataLoaded,
+  DataFailed,
+  Error,
+  DataMessage,
+  DataProgress,
+  OutboxSynced,
+  OutboxFailed,
+  OutboxConflict
+}
+
+// A trigger and the handler it runs. `name` is a timer's name, a
+// watcher's state path (`page.count`), a host event's name or a data
+// source's name, and empty for the other kinds; `interval_ms` is a
+// timer's period, or its delay when it does not repeat.
+table Trigger {
+  kind: TriggerKind;
+  name: string;
+  interval_ms: uint;
+  repeat: bool;
+  handler: Handler;
+}
+
 // A declared parameter, input or field. `type` is a string-table index of
 // a type expression (SCH-010).
 table Param {
@@ -117,6 +148,18 @@ table StateEntry {
   persistence: Persistence;
   sensitive: bool;
   exposed: bool;
+  // The version of a session, persisted or secure entry's type: a
+  // fingerprint of its structure, which a stored value carries (STA-040).
+  fingerprint: uint;
+  // How a stored value of the previous release's type becomes a value of
+  // this one (STA-040): the fingerprint of that type and a program over
+  // `previous`, or a reset to the default.
+  migration_from: uint;
+  migration: ulong;
+  migration_reset: bool;
+  // The type expression of the previous release's type, which the
+  // migration reads as `previous`.
+  migration_type: uint;
 }
 
 enum DataSourceKind : ubyte {
@@ -207,6 +250,9 @@ table Node {
   hints: ubyte; // NodeHints bits
   type_arguments: [uint];
   native_slot: uint;
+  // The node's animations: implicit, enter and exit, hero (ANI-001,
+  // ANI-003, ANI-004); null when it declares none.
+  animation: NodeAnimation;
 }
 
 // ── Section meta ──────────────────────────────────────────────────────────
@@ -312,6 +358,28 @@ table Flag {
   default: Value;
 }
 
+// Who sends a host event (HST-013): plugins to the host (ToHost), the host
+// into Plux (ToPlux) or both.
+enum HostEventDirection : ubyte {
+  ToHost = 0,
+  ToPlux,
+  Both
+}
+
+// A field of a host event; `type` is a type expression.
+table HostEventField {
+  name: string;
+  type: string;
+}
+
+// A host event the app document declares (HST-013). The runtime checks the
+// payload of `Plux.sendEvent` against it.
+table HostEvent {
+  name: string (key);
+  direction: HostEventDirection;
+  fields: [HostEventField];
+}
+
 table Meta {
   kind: BundleKind;
   id: Uuid;
@@ -353,6 +421,12 @@ table Meta {
   // Plugin bundles: the exported components, sorted by key, which hosts
   // show by key (NAV-004, ADR-0023); absent when the plugin exports none.
   components: [ComponentEntry];
+  // The app's or the plugin's triggers (ACT-002) and error handler
+  // (ACT-020); absent when it declares none.
+  triggers: [Trigger];
+  // App bundles: the declared host events, sorted by name (HST-013);
+  // absent when the app declares none.
+  host_events: [HostEvent];
 }
 
 // ── Section page ──────────────────────────────────────────────────────────
@@ -399,6 +473,66 @@ table Page {
   // A string-table index of the type the page returns with pop (NAV-003);
   // 0 when it returns none.
   result: uint;
+  // The page's triggers (ACT-002) and error handler (ACT-020).
+  triggers: [Trigger];
+  // The page's forms (STA-020, ADR-0047).
+  forms: [Form];
+  // A string-table index of the name of the route timeline of a custom
+  // transition (NAV-010); 0 when the transition is not custom.
+  transition_timeline: uint;
+}
+
+// ── Forms ─────────────────────────────────────────────────────────────────
+
+// A built-in validator of a form field (STA-020, ADR-0047).
+enum ValidatorKind : ubyte {
+  Required = 0,
+  Length,
+  Range,
+  Regex,
+  Email,
+  Phone,
+  Iban,
+  DateRange,
+  DecimalPrecision,
+  Custom,
+  Async
+}
+
+// A validator: `message` is a string index, 0 for the built-in message;
+// `min` and `max` are literals of the bound's type (an int for Length, a
+// decimal for Range, the field's type for DateRange); `pattern` and
+// `region` are string indices; `max_scale` and `max_integer_digits` are
+// -1 when absent; `rule` is a program over `value` and `form` returning a
+// bool; `graph` is the action graph an Async validator runs, with the
+// field's value as its event, after `debounce_ms`.
+table FormValidator {
+  kind: ValidatorKind;
+  message: uint;
+  min: Value;
+  max: Value;
+  pattern: uint;
+  region: uint;
+  max_scale: int = -1;
+  max_integer_digits: int = -1;
+  rule: ulong;
+  graph: Uuid;
+  debounce_ms: uint;
+}
+
+// A form field; `type` is a type expression, `initial` its initial value.
+table FormField {
+  name: uint;
+  type: uint;
+  initial: Value;
+  validators: [FormValidator];
+}
+
+// A form of a page or component; its state is the scope entry `name`.
+table Form {
+  id: Uuid;
+  name: uint;
+  fields: [FormField];
 }
 
 // ── Section component ─────────────────────────────────────────────────────
@@ -433,6 +567,8 @@ table Component {
   // nodes[0] is the root.
   nodes: [Node];
   strings: [string];
+  // The component's forms (STA-020, ADR-0047).
+  forms: [Form];
 }
 
 // ── Section actions ───────────────────────────────────────────────────────
@@ -481,6 +617,9 @@ table Step {
   branches: [Branch];
   retry: Retry;
   timeout_ms: uint;
+  // The permanent IDs of the inputs that read sensitive values: a trace
+  // never records them, nor the step's output (ACT-031, SCH-012).
+  redact: [uint];
 }
 
 table Graph {
@@ -492,6 +631,8 @@ table Graph {
   output: uint;
   // steps[0] is the entry.
   steps: [Step];
+  // The run's variables, scope `run` (STA-001).
+  state: [StateEntry];
 }
 
 table Actions {
@@ -585,21 +726,100 @@ table Locale {
 table Keyframe {
   at_us: long;
   value: Value;
-  // The permanent Curves enum value ID.
+  // The permanent Curves enum value ID: the curve into this keyframe.
   curve: uint;
 }
 
 table Track {
-  // The permanent prop ID.
+  // The permanent prop ID of the target node's widget; for a route
+  // timeline, the route prop (1 opacity, 2 scale, 3 slideX, 4 slideY).
   prop: uint;
   keyframes: [Keyframe];
+  // The node the track animates; absent in a route timeline (ANI-002).
+  node: Uuid;
+}
+
+// A spring that moves a timeline instead of a duration (ANI-006).
+table Spring {
+  stiffness: double;
+  damping: double;
+  mass: double;
+}
+
+// What drives a timeline besides time (ANI-006).
+enum Driver : ubyte {
+  Time = 0,
+  Scroll,
+  Drag
+}
+
+// How a timeline or node animation honours reduce motion (ANI-007).
+enum ReduceMotion : ubyte {
+  Skip = 0,
+  Shorten,
+  Ignore
 }
 
 table Timeline {
   id: Uuid;
   duration_us: long;
+  // Additional plays after the first.
   repeat: uint;
   tracks: [Track];
+  // A string-table index of the timeline's name, which actions use.
+  name: uint;
+  // The page that owns the timeline's controller.
+  page: Uuid;
+  delay_us: long;
+  forever: bool;
+  // Each repeat plays backwards.
+  reverse: bool;
+  // The delay added per item index, for nodes in item templates.
+  stagger_us: long;
+  reduce_motion: ReduceMotion;
+  // A route timeline moves a page in or out (NAV-010).
+  route: bool;
+  autoplay: bool;
+  driver: Driver;
+  // The node whose scrolling or dragging drives the timeline.
+  driver_node: Uuid;
+  // The scroll offset or drag distance, in logical pixels, that spans the
+  // timeline.
+  driver_extent: double;
+  spring: Spring;
+}
+
+// How a node moves in or out (ANI-003).
+enum TransitionKind : ubyte {
+  None = 0,
+  Fade,
+  Scale,
+  SlideUp,
+  SlideDown,
+  SlideLeft,
+  SlideRight
+}
+
+// An enter or exit transition of a node (ANI-003).
+table Transition {
+  kind: TransitionKind;
+  duration_us: long;
+  curve: uint;
+}
+
+// The animations of a node, declared in its document (ANI-001).
+table NodeAnimation {
+  // Implicit animation of the node's animatable props (ANI-001).
+  duration_us: long;
+  curve: uint;
+  delay_us: long;
+  // The permanent IDs of the animated props; empty animates all that can.
+  props: [uint];
+  reduce_motion: ReduceMotion;
+  enter: Transition;
+  exit: Transition;
+  // The hero tag (ANI-004).
+  hero: Value;
 }
 
 table Timelines {
@@ -618,12 +838,32 @@ table Index {
   fields: [uint];
 }
 
+// A field renamed by a collection migration (DB-005): the new name and the
+// name it had.
+table FieldRename {
+  to: uint;
+  from: uint;
+}
+
+// The plan that takes a collection from schema version `from` to the next
+// (DB-005): fields renamed (values kept), dropped, or reset to the type's
+// empty value.
+table CollectionMigration {
+  from: uint;
+  rename: [FieldRename];
+  drop: [uint];
+  reset: [uint];
+}
+
 table Collection {
   id: Uuid;
   key: uint;
   fields: [Param];
   primary_key: [uint];
   indexes: [Index];
+  // The schema version, 1 for a collection that never changed (DB-005).
+  version: uint;
+  migrations: [CollectionMigration];
 }
 
 // A native route of the catalogue the app was compiled against (NAV-002,
@@ -664,6 +904,9 @@ table Schemas {
   native_routes: [NativeRouteDecl];
   native_slots: [NativeSlotDecl];
   native_actions: [NativeActionDecl];
+  // Collections the document no longer declares: devices delete their data
+  // (DB-005).
+  dropped_collections: [Uuid];
 }
 
 // ── Section assets-index ──────────────────────────────────────────────────

@@ -18,6 +18,13 @@ The runtime's design is recorded in ADRs; read the one for the area you change b
 | Router adapters (P4 R5) | `plux_go_router`, `plux_auto_route` | [ADR-0040](../docs/adr/0040-navigation-delegate-and-router-adapters.md), [dependencies.md](../docs/engineering/dependencies.md) |
 | Native routes, slots, custom actions (P4 R6) | `plux_flutter/lib/src/native_catalogue/`, `plux_native_scan` | [ADR-0041](../docs/adr/0041-native-catalogue-and-host-builds.md) |
 | Mixed screens, `PluxView`, `Plux.events`, exposed state (P4 R7) | `plux_flutter/lib/src/core/` | [ADR-0023](../docs/adr/0023-mixed-screens-slots-and-plux-view.md) |
+| Action engine completion, triggers, flows, traces (P5) | `plux_flutter/lib/src/actions/` | [ADR-0045](../docs/adr/0045-action-engine-completion.md) |
+| State writes, computed entries, persistence (P5) | `plux_flutter/lib/src/state/` | [ADR-0046](../docs/adr/0046-state-engine.md) |
+| Forms, validators, PXL `regex` and `phone` (P5) | `plux_flutter/lib/src/state/`, `pxl/` | [ADR-0047](../docs/adr/0047-forms-validators-regex-and-phone.md) |
+| Data sources, outbox, transfers (P5) | `plux_flutter/lib/src/data/` | [ADR-0048](../docs/adr/0048-data-layer.md) |
+| Local persistence, `plux_db_drift` (P5) | `plux_flutter/lib/src/db/`, `plux_db_drift` | [ADR-0049](../docs/adr/0049-local-persistence.md) |
+| Animation, `plux_lottie`, `plux_rive` (P5) | `plux_flutter/lib/src/anim/`, `plux_lottie`, `plux_rive` | [ADR-0050](../docs/adr/0050-animation-engine.md) |
+| Device actions, capabilities, `plux_media`, `plux_scanner`, `plux_location` (P5) | `plux_flutter/lib/src/actions/`, the device packages | [ADR-0051](../docs/adr/0051-device-actions-packages-and-capabilities.md) |
 
 `plux_native_scan` (P4) is a development-only tool like `plux_widget_api`: it runs in host projects through `dart run`, and no shipped package may depend on it. `plux_go_router` and `plux_auto_route` (P4) are optional adapters; their router is a dependency of the adapter alone, never of `plux_flutter`, and they use only `plux_flutter`'s public API. Their tests run the shared delegate suite of `plux_flutter/test/support/delegate_suite.dart`, which the runtime's own tests run against the default delegate, so every delegate passes the same navigation cases; the adapters reach it by a relative import, test code only.
 
@@ -32,6 +39,7 @@ The runtime's design is recorded in ADRs; read the one for the area you change b
 - Platform channels are used only for platform services — key storage, background scheduling — never for bundle data.
 - No secret is persisted in the clear: the device secret is encrypted under a platform-held key (ADR-0029); access tokens stay in memory.
 - The core package stays within its size budget (`RT-061`); heavy features belong in optional packages.
+- **Package placement** ([ADR-0051](../docs/adr/0051-device-actions-packages-and-capabilities.md)): a capability ships in an optional package (`RT-060`) when it (1) adds a third-party or native dependency, (2) needs a platform permission, or (3) adds a measurable size cost most apps would not use; otherwise it belongs in the core. The core's budgets (`RT-061`: ≤ 5 MiB per App Bundle download and ≤ 10 MiB per APK, per ABI; ≤ 5 MiB for the thinned IPA) are measured at every milestone, and an exception is recorded in an ADR (`url_launcher` for `openUrl` is one, in ADR-0051). An optional package uses only `plux_flutter`'s public API and registers with the runtime through `PluxConfig`.
 - `lib/src/schema/*.g.dart`, the verifier's layout tables and the generated widget builders are written by `make gen` from `schema/`; never edit them. Widget, prop, enum and action IDs come only from the generated registry (`BND-011`).
 - Events run their action graphs on the engine (ADR-0039). An action or option the runtime does not run fails its step with `PLX-4010`, or is reported once in debug builds; it is never partially implemented.
 

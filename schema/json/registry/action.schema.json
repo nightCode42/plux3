@@ -39,6 +39,7 @@
         "device",
         "security",
         "animation",
+        "component",
         "host",
         "plux",
         "payments"
@@ -108,7 +109,8 @@
               "tab",
               "hostEvent",
               "nativeAction",
-              "telemetryEvent"
+              "telemetryEvent",
+              "componentEvent"
             ],
             "description": "What a string input names; the compiler resolves it and Studio offers a picker."
           },

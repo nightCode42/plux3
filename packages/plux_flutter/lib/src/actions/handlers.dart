@@ -1,20 +1,33 @@
 // SPDX-FileCopyrightText: 2026 Plux contributors
 // SPDX-License-Identifier: Apache-2.0
 
-/// The action handlers of the P4 engine (ADR-0039): one per action this
+/// The action handlers of the engine (ADR-0039): one per action this
 /// runtime runs, and one that refuses every other action with `PLX-4010`,
-/// so the boundary with P5 is one table generated from Appendix D.
+/// so the boundary with later milestones is one table checked against the
+/// generated registry.
 library;
 
 import 'dart:async';
 
 import 'package:plux_flutter/src/actions/action_error.dart';
+import 'package:plux_flutter/src/actions/clock.dart';
+import 'package:plux_flutter/src/actions/control.dart';
+import 'package:plux_flutter/src/actions/graph.dart';
+import 'package:plux_flutter/src/actions/state_handlers.dart';
+import 'package:plux_flutter/src/animation/handlers.dart';
+import 'package:plux_flutter/src/data/handlers.dart';
+import 'package:plux_flutter/src/data/services.dart';
+import 'package:plux_flutter/src/db/handlers.dart';
+import 'package:plux_flutter/src/device/guard.dart';
+import 'package:plux_flutter/src/device/handlers.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/forms/handlers.dart';
 import 'package:plux_flutter/src/schema/registry.g.dart';
+import 'package:plux_flutter/src/state/access.dart';
 
-/// The phase whose actions this runtime runs: an action whose descriptor
-/// names a later phase gets the refusing handler.
-const int runtimePhase = 4;
+/// The phase this runtime belongs to: it runs every action of earlier
+/// phases, and the actions of this phase that [builtInHandlers] holds.
+const int runtimePhase = 5;
 
 /// What a run may navigate (ADR-0040). The page or component that started
 /// the run provides it; every method fails with an [ActionError].
@@ -68,6 +81,128 @@ final class NoNativeActions implements NativeActions {
   );
 }
 
+/// The state a run reads and writes by path, `page.count` or
+/// `app.visits`: what optimistic updates apply and roll back (ACT-007).
+/// The state engine provides it; writes fail with an [ActionError].
+abstract interface class ActionState {
+  /// The value at [path], or null.
+  Object? read(String path);
+
+  /// Replaces the value at [path].
+  void write(String path, Object? value);
+}
+
+/// No writable state: reads are null, writes fail.
+final class NoActionState implements ActionState {
+  /// Creates the state.
+  const NoActionState();
+
+  @override
+  Object? read(String path) => null;
+
+  @override
+  void write(String path, Object? value) => throw ActionError(
+    ActionErrorKind.custom,
+    PluxErrorCode.actionsNotAvailable,
+    'state $path cannot be written here',
+  );
+}
+
+/// Applies state changes so that they can be undone (ACT-007): an
+/// optimistic update writes now and rolls back if its step or run fails.
+final class OptimisticLog {
+  /// Creates a log over [state].
+  OptimisticLog(this.state);
+
+  /// The state written.
+  final ActionState state;
+
+  final List<(String, Object?)> _undo = [];
+
+  /// Whether nothing is to undo.
+  bool get isEmpty => _undo.isEmpty;
+
+  /// Writes [value] at [path], remembering the value it replaces.
+  void apply(String path, Object? value) {
+    _undo.add((path, state.read(path)));
+    state.write(path, value);
+  }
+
+  /// Restores every replaced value, newest first.
+  void rollback() {
+    for (final (path, old) in _undo.reversed) {
+      try {
+        state.write(path, old);
+      } on Object {
+        // A value that cannot be restored stays as it is; the step's own
+        // error is what the run reports.
+      }
+    }
+    _undo.clear();
+  }
+
+  /// Remembers the value at [path], which a step is about to change, so
+  /// that [rollback] restores it.
+  void remember(String path) => _undo.add((path, state.read(path)));
+
+  /// Keeps every change.
+  void commit() => _undo.clear();
+}
+
+/// What one run gives its handlers.
+final class RunScope {
+  /// Creates the scope of a run that writes [state].
+  RunScope(ActionState state) : optimistic = OptimisticLog(state);
+
+  /// Changes rolled back when the run fails, such as a `patchState` with
+  /// `optimistic` set (ACT-007).
+  final OptimisticLog optimistic;
+
+  final List<void Function(bool succeeded)> _ends = [];
+
+  /// Calls [f] when the run ends, with whether it succeeded: how
+  /// `submitForm` learns the outcome of the submission it started.
+  void onEnd(void Function(bool succeeded) f) => _ends.add(f);
+
+  /// Ends the run's scope; the engine calls it once.
+  void end({required bool succeeded}) {
+    final ends = [..._ends];
+    _ends.clear();
+    for (final f in ends) {
+      f(succeeded);
+    }
+  }
+}
+
+/// A flow a `callFlow` step runs (ACT-061): its graph, and the roots its
+/// steps read, `params` excepted.
+final class FlowTarget {
+  /// Creates the target.
+  const FlowTarget(this.graph, this.roots);
+
+  /// The flow's graph.
+  final ActionGraph graph;
+
+  /// The roots of the flow's plugin: `app`, `plugin`, `flags`, `user`, …
+  final Map<String, Object?> Function() roots;
+}
+
+/// Finds flows by name: `<flow>` in the caller's plugin, or
+/// `<plugin>/<flow>`, an exported flow of another plugin (ACT-061).
+abstract interface class FlowResolver {
+  /// The flow [name], or null when the active release holds none.
+  FlowTarget? flow(String name);
+}
+
+/// No flows.
+final class NoFlows implements FlowResolver {
+  /// Creates the resolver.
+  const NoFlows();
+
+  @override
+  FlowTarget? flow(String name) => null;
+}
+
 /// What a handler runs with.
 final class StepContext {
   /// Creates a context.
@@ -75,7 +210,23 @@ final class StepContext {
     required this.navigator,
     required this.emit,
     required this.nativeActions,
+    this.state = const NoActionState(),
+    this.flows = const NoFlows(),
+    this.clock = const ActionClock(),
+    this.track,
+    this.sync,
+    this.emitEvent,
+    this.run,
+    this.data,
+    this.logout,
+    this.services = const {},
+    this.wiredBranches = const [],
+    this.device,
+    this.pluginKey = '',
   });
+
+  /// This context with [state] (STA-001).
+  StepContext withState(StateAccess state) => _copy(state: state);
 
   /// Navigation for the run's page.
   final RunNavigator navigator;
@@ -85,6 +236,104 @@ final class StepContext {
 
   /// The host's custom actions.
   final NativeActions nativeActions;
+
+  /// The state optimistic updates write (ACT-007).
+  final ActionState state;
+
+  /// The flows `callFlow` runs (ACT-061).
+  final FlowResolver flows;
+
+  /// Time, for `delay`, retries and the timed policies.
+  final ActionClock clock;
+
+  /// Records a `custom` telemetry event (`trackEvent`, ANL-001).
+  final void Function(String name, Map<String, Object?> props)? track;
+
+  /// Starts a sync now (`sync`).
+  final void Function()? sync;
+
+  /// Emits an event of the component whose handler runs (`emitEvent`, D11);
+  /// null outside a component.
+  final void Function(String event, Object? payload)? emitEvent;
+
+  /// The run's own scope; null until the engine starts the run.
+  final RunScope? run;
+
+  /// This context for one run.
+  StepContext forRun(RunScope run) => _copy(run: run);
+
+  /// This context with [emitEvent] for a component's handlers.
+  StepContext inComponent(
+    void Function(String event, Object? payload) emitEvent,
+  ) => _copy(emitEvent: emitEvent);
+
+  /// The names of the branches the running step wires to a successor. The
+  /// engine sets it for a step that wires any; it is empty elsewhere. A
+  /// handler whose branch is optional reads it, `submitForm` for `invalid`
+  /// (STA-020).
+  final Iterable<String> wiredBranches;
+
+  /// This context for a step that wires [branches].
+  StepContext forStep(Iterable<String> branches) =>
+      _copy(wiredBranches: branches);
+
+  /// The data of the run's page, for `apiCall` and `refreshData`
+  /// (ADR-0048); null where no data layer runs.
+  final DataActions? data;
+
+  /// Ends the user's session (`logout`, HST-010): the runtime clears the
+  /// cached responses and tells the host's auth delegate; null where no
+  /// runtime runs.
+  final Future<void> Function()? logout;
+
+  /// The runtime's services for handlers, by type: the local database,
+  /// the device, animations and other services later milestones add,
+  /// without a field of their own here.
+  final Map<Type, Object> services;
+
+  /// Where the run's device actions run: the plugin whose capabilities
+  /// they need, whether its page is secure and where to show messages
+  /// (SEC-080); null where no runtime provides them.
+  final DeviceScope? device;
+
+  /// The service of type [T], or null where none is installed.
+  T? service<T extends Object>() => services[T] as T?;
+
+  /// The key of the plugin whose graph runs, or "" for the app's own
+  /// graphs: who a step acts as when it reaches data that belongs to a
+  /// plugin, such as its private collections (DB-004). Set by the engine,
+  /// never by a step's inputs.
+  final String pluginKey;
+
+  /// This context acting as plugin [key] ("" for the app).
+  StepContext withPlugin(String key) => _copy(pluginKey: key);
+
+  /// This context with the given fields replaced; every other field,
+  /// including those later milestones add, carries over.
+  StepContext _copy({
+    ActionState? state,
+    void Function(String event, Object? payload)? emitEvent,
+    RunScope? run,
+    Iterable<String>? wiredBranches,
+    String? pluginKey,
+  }) => StepContext(
+    navigator: navigator,
+    emit: emit,
+    nativeActions: nativeActions,
+    state: state ?? this.state,
+    flows: flows,
+    clock: clock,
+    track: track,
+    sync: sync,
+    emitEvent: emitEvent ?? this.emitEvent,
+    run: run ?? this.run,
+    data: data,
+    logout: logout,
+    services: services,
+    wiredBranches: wiredBranches ?? this.wiredBranches,
+    device: device,
+    pluginKey: pluginKey ?? this.pluginKey,
+  );
 }
 
 /// What a step produced.
@@ -166,6 +415,42 @@ final class _Handler implements ActionHandler {
       _run(c, inputs);
 }
 
+/// A handler written as a function, for the handler tables.
+ActionHandler actionHandler(
+  FutureOr<StepResult> Function(StepContext c, Map<String, Object?> i) run, {
+  bool waitsForUser = false,
+}) => _Handler(run, waitsForUser: waitsForUser);
+
+/// Every action this runtime runs, by name: P4's and those of P5 delivered
+/// so far.
+final Map<String, ActionHandler> builtInHandlers = {
+  ...p4Handlers,
+  ...controlHandlers,
+  ...stateHandlers,
+  ...dataHandlers,
+  ...formHandlers,
+  ...deviceHandlers,
+  ...animationHandlers,
+  ...dbHandlers,
+};
+
+/// A handler written as a function, for handler tables outside this
+/// library, such as the data layer's.
+final class FunctionHandler implements ActionHandler {
+  /// Creates the handler.
+  const FunctionHandler(this._run);
+
+  final FutureOr<StepResult> Function(StepContext c, Map<String, Object?> i)
+  _run;
+
+  @override
+  bool get waitsForUser => false;
+
+  @override
+  FutureOr<StepResult> run(StepContext c, Map<String, Object?> inputs) =>
+      _run(c, inputs);
+}
+
 /// The handlers of the actions P4 runs, by action name.
 final Map<String, ActionHandler> p4Handlers = {
   'condition': _Handler((c, i) {
@@ -185,6 +470,18 @@ final Map<String, ActionHandler> p4Handlers = {
       );
     }
     return StepEnd(i['result']);
+  }),
+  'logout': _Handler((c, i) async {
+    final logout = c.logout;
+    if (logout == null) {
+      throw const ActionError(
+        ActionErrorKind.custom,
+        PluxErrorCode.actionsNotAvailable,
+        'logout: no runtime ends the session here',
+      );
+    }
+    await logout();
+    return const StepDone();
   }),
   'emitHostEvent': _Handler((c, i) {
     final name = i['event'];
@@ -265,13 +562,13 @@ final Map<int, ActionDescriptor> _byId = {
 /// know.
 ActionDescriptor? actionDescriptor(int id) => _byId[id];
 
-/// The handler of an action: its P4 handler, or the refusing one.
+/// The handler of an action: its own, or the refusing one.
 ActionHandler handlerFor(ActionDescriptor d) =>
-    p4Handlers[d.name] ?? RefusingHandler(d.name, d.phase);
+    builtInHandlers[d.name] ?? RefusingHandler(d.name, d.phase);
 
-/// Whether the descriptor's phase is one this runtime runs.
+/// Whether this runtime runs the action.
 bool runsInThisRuntime(ActionDescriptor d) =>
-    (int.tryParse(d.phase.substring(1)) ?? 99) <= runtimePhase;
+    builtInHandlers.containsKey(d.name);
 
 /// The member name of a registry enum value: literals carry the permanent
 /// value ID, PXL expressions the name. Null for null or an unknown value.

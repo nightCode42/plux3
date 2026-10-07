@@ -28,26 +28,34 @@ type unit struct {
 	focus string
 
 	// Built by resolve.
-	ids        map[string]plxerr.Location       // every entity ID, for duplicates
-	plugins    []*plugin                        // sorted by key
-	pages      map[string]*page                 // by ID
-	routes     map[string]*route                // by route name (SCH-025)
-	hostEvents map[string]*schema.HostEventDecl // by name (HST-013)
-	tabValues  map[string][2]*value             // a shell tab's label and icon by pointer (NAV-006)
-	graphs     map[string]*graph                // document graphs by ID
-	components map[string]*component            // by ID
-	shared     []*component                     // app-level components, by file
-	appGraphs  []*graph                         // inline graphs of shared components
-	tkeys      map[string]*schema.TranslationKey
-	tokens     map[string]*token
-	assetIDs   map[string]*schema.AssetEntry
-	natives    natives
-	types      *universe
-	graph      *Graph
+	ids         map[string]plxerr.Location       // every entity ID, for duplicates
+	plugins     []*plugin                        // sorted by key
+	pages       map[string]*page                 // by ID
+	routes      map[string]*route                // by route name (SCH-025)
+	hostEvents  map[string]*schema.HostEventDecl // by name (HST-013)
+	tabValues   map[string][2]*value             // a shell tab's label and icon by pointer (NAV-006)
+	graphs      map[string]*graph                // document graphs by ID
+	components  map[string]*component            // by ID
+	shared      []*component                     // app-level components, by file
+	appGraphs   []*graph                         // inline graphs of shared components and app triggers
+	appTriggers []*trigger                       // the app's triggers (ACT-002)
+	tkeys       map[string]*schema.TranslationKey
+	tokens      map[string]*token
+	assetIDs    map[string]*schema.AssetEntry
+	natives     natives
+	deviceUses  []DeviceUse
+	types       *universe
+	graph       *Graph
 
 	// features are the required features raised per bundle (nil: the app
 	// bundle) by WGT-004.
 	features map[*plugin]map[string]bool
+	// stored are the session, persisted and secure state entries per
+	// bundle (nil: the app bundle), for STA-040.
+	stored map[*plugin][]StoredEntry
+	// collections are the local collections per bundle (nil: the app
+	// bundle), for DB-005.
+	collections map[*plugin]CollectionSet
 	// icons are the icons used per bundle (nil: the app bundle), by set,
 	// for the bundle's icon fonts (THM-005).
 	icons map[*plugin]map[icons.Set]map[string]bool
@@ -60,6 +68,9 @@ type unit struct {
 	appSources []*dataSource
 	envs       map[string]*pxl.Env
 	exprs      map[string]*expr // by file + "#" + pointer
+	// dataConfigs are the decoded configurations of REST and GraphQL
+	// sources, by source ID (ADR-0048).
+	dataConfigs map[string]*parsedConfig
 
 	// Encoding state and outputs.
 	appOut     *out
@@ -74,8 +85,9 @@ func newUnit(opts Options) *unit {
 		opts: opts, ids: map[string]plxerr.Location{}, pages: map[string]*page{}, routes: map[string]*route{},
 		graphs: map[string]*graph{}, components: map[string]*component{}, tkeys: map[string]*schema.TranslationKey{},
 		tokens: map[string]*token{}, assetIDs: map[string]*schema.AssetEntry{}, envs: map[string]*pxl.Env{},
-		exprs: map[string]*expr{}, graph: &Graph{}, features: map[*plugin]map[string]bool{},
+		exprs: map[string]*expr{}, graph: &Graph{}, features: map[*plugin]map[string]bool{}, stored: map[*plugin][]StoredEntry{}, collections: map[*plugin]CollectionSet{},
 		icons: map[*plugin]map[icons.Set]map[string]bool{}, files: map[[sha256.Size]byte][]byte{},
+		dataConfigs: map[string]*parsedConfig{},
 	}
 }
 
@@ -122,6 +134,7 @@ type plugin struct {
 	scope      *scope
 	state      []*stateEntry
 	sources    []*dataSource
+	triggers   []*trigger // the plugin's triggers (ACT-002)
 }
 
 // route is a route name's target: a page or a native route.
@@ -173,6 +186,9 @@ type page struct {
 	sources   []*dataSource
 	guards    []*graph
 	scope     *scope
+	triggers  []*trigger  // the page's triggers (ACT-002)
+	forms     []*form     // the page's forms (STA-020)
+	timelines []*timeline // the page's timelines (ANI-002)
 }
 
 // component is a component definition (SCH-030).
@@ -184,6 +200,7 @@ type component struct {
 	nodes  []*node
 	props  []*param // sorted by name
 	state  []*stateEntry
+	forms  []*form // the component's forms (STA-020)
 }
 
 // node is a node of a page or component tree.
@@ -211,6 +228,10 @@ type node struct {
 	visible   *value
 	semantics *semantics
 	overrides []*override
+	// anim is the node's animation; animated says a timeline's track
+	// targets it (ANI-001, ANI-002).
+	anim     *nodeAnim
+	animated bool
 	// Filled by optimise and encode.
 	hints   fbs.NodeHints
 	removed bool
@@ -265,7 +286,13 @@ type graph struct {
 	steps  []schema.Step
 	plugin *plugin
 	page   *page // page-scoped graphs
-	inline bool
+	// component is the component whose node handler runs an inline graph;
+	// emitEvent emits its events (D11).
+	component *component
+	// eventTypes declares the type `event` names when it is synthesised,
+	// such as a host event's payload (ACT-002).
+	eventTypes map[string]pxl.TypeSpec
+	inline     bool
 	// eventType is the payload type every handler running the graph agrees
 	// on; "" when they carry none.
 	eventType string
@@ -275,6 +302,8 @@ type graph struct {
 	navs      []navigation
 	output    string
 	used      bool
+	// state are the run's variables (STA-001).
+	state []*stateEntry
 }
 
 // step is a lowered step.
@@ -289,6 +318,8 @@ type step struct {
 	branches  []branch
 	retry     *schema.Retry
 	timeoutMs uint32
+	// redact lists the inputs that read sensitive values (ACT-031).
+	redact []uint32
 }
 
 // branch is a named successor.
@@ -317,6 +348,14 @@ type stateEntry struct {
 	persistence fbs.Persistence
 	sensitive   bool
 	exposed     bool
+	// fingerprint versions a stored entry's type; migrationFrom and
+	// migration, or migrationReset, say how a value of the previous
+	// type is read (STA-040).
+	fingerprint    string
+	migrationFrom  string
+	migrationType  string
+	migration      *expr
+	migrationReset bool
 }
 
 // dataSource is a data source.

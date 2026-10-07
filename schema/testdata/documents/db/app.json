@@ -1,0 +1,86 @@
+{
+  "collections": [
+    {
+      "description": "An app-shared collection every plugin may read and write.",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ],
+      "id": "01e0c450-6c00-7000-8000-000000000604",
+      "key": "labels",
+      "primaryKey": [
+        "id"
+      ],
+      "version": 1
+    }
+  ],
+  "defaultLocale": "en",
+  "entryRoute": "list",
+  "environments": [
+    {
+      "key": "production",
+      "name": "Production",
+      "values": {}
+    }
+  ],
+  "icon": {
+    "monogram": {
+      "background": "#0B6E4F",
+      "text": "DB"
+    }
+  },
+  "id": "01e0c450-6c00-7000-8000-000000000601",
+  "key": "db",
+  "kind": "app",
+  "minRuntimeVersion": "0.2.0",
+  "name": "Db",
+  "plugins": [
+    "todo"
+  ],
+  "requiredFeatures": "raise",
+  "schemaVersion": "1.0.0",
+  "securityProfile": "standard",
+  "supportedLocales": [
+    "en"
+  ],
+  "sync": {
+    "activation": "atSafePoint",
+    "startup": {
+      "mode": "useCacheThenSync"
+    }
+  },
+  "theme": "01e0c450-6c00-7000-8000-000000000602",
+  "types": [
+    {
+      "fields": [
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "title",
+          "type": "string"
+        },
+        {
+          "name": "done",
+          "type": "bool"
+        },
+        {
+          "name": "rank",
+          "type": "int"
+        },
+        {
+          "name": "note",
+          "type": "string?"
+        }
+      ],
+      "name": "Task"
+    }
+  ]
+}

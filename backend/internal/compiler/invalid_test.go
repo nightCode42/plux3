@@ -169,6 +169,12 @@ func nodeCases() []invalidCase {
 		{name: "runtime too old", edit: func(t *testing.T, m fstest.MapFS) {
 			edit(t, m, "app.json", func(doc map[string]any) { doc["minRuntimeVersion"] = "0.0.9" })
 		}, code: plxerr.RuntimeTooOld, file: calculatorPage, ptr: "/root/type"},
+		{name: "regex needs runtime 0.3.0", edit: func(t *testing.T, m fstest.MapFS) {
+			edit(t, m, "app.json", func(doc map[string]any) { doc["minRuntimeVersion"] = "0.2.0" })
+			onPage(func(t *testing.T, doc map[string]any) {
+				at(t, doc, sliderNode)["visible"] = raw(t, `{"$expr": "matches(\"ab\", \"^a\")"}`)
+			})(t, m)
+		}, code: plxerr.RuntimeTooOld, file: calculatorPage, ptr: "/" + sliderNode + "/visible/$expr"},
 		{name: "features raised", edit: func(t *testing.T, m fstest.MapFS) {
 			edit(t, m, "app.json", func(doc map[string]any) {
 				doc["minRuntimeVersion"] = "0.0.9"

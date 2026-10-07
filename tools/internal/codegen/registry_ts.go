@@ -179,7 +179,7 @@ func registryTS(r *registry.Registry) ([]byte, error) {
 		if err := enc.Encode(s.value); err != nil {
 			return nil, fmt.Errorf("codegen: registry TypeScript: %w", err)
 		}
-		fmt.Fprintf(&b, "\n/** %s */\nexport const %s = %s;\n", s.doc, s.decl, collapseJSON(bytes.TrimRight(js.Bytes(), "\n")))
+		fmt.Fprintf(&b, "\n/** %s */\nexport const %s = %s;\n", tsComment(s.doc), s.decl, collapseJSON(bytes.TrimRight(js.Bytes(), "\n")))
 	}
 	return b.Bytes(), nil
 }

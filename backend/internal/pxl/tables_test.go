@@ -19,7 +19,7 @@ func TestSourcesMatchSchemas(t *testing.T) {
 	root := filepath.Join("..", "..", "..", "schema")
 	c := jsonschema.NewCompiler()
 	c.DefaultDraft(jsonschema.Draft2020)
-	for _, name := range []string{"bytecode", "stdlib", "currencies"} {
+	for _, name := range []string{"bytecode", "stdlib", "currencies", "phone"} {
 		sch, err := c.Compile(filepath.Join(root, "json", "pxl", name+".schema.json"))
 		if err != nil {
 			t.Fatal(err)
@@ -45,12 +45,13 @@ func TestSourcesMatchSchemas(t *testing.T) {
 func TestTablesAreComplete(t *testing.T) {
 	t.Parallel()
 	inline := map[string]bool{"coalesce": true, "ifNull": true, "isNull": true, "typeOf": true}
+	implemented := map[string]bool{"core": true, "regex": true, "phone": true}
 	impl := builtins()
 	for i, def := range stdOverloads {
 		switch {
-		case def.group == "core" && !inline[def.name] && impl[i] == nil:
+		case implemented[def.group] && !inline[def.name] && impl[i] == nil:
 			t.Errorf("%s is not implemented", overloadKey(def))
-		case def.group != "core" && impl[i] != nil:
+		case !implemented[def.group] && impl[i] != nil:
 			t.Errorf("%s belongs to group %s but is implemented", overloadKey(def), def.group)
 		}
 	}

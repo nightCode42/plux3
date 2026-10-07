@@ -9,12 +9,32 @@ package limits
 const (
 	// ActionForEachItems: Items one forEach step may iterate over. (ACT-005)
 	ActionForEachItems Key = "action.forEachItems"
+	// ActionQueueLength: Triggers a handler with the queue policy may hold while
+	// its run is in progress; a trigger beyond it is dropped and reported.
+	// (ACT-003)
+	ActionQueueLength Key = "action.queueLength"
 	// ActionRunTimeout: Time one action run may take. (ACT-005)
 	ActionRunTimeout Key = "action.runTimeout"
 	// ActionStepTimeout: Time one action step may take. (ACT-005)
 	ActionStepTimeout Key = "action.stepTimeout"
 	// ActionStepsPerRun: Steps one action run may execute. (ACT-005)
 	ActionStepsPerRun Key = "action.stepsPerRun"
+	// ActionTraceRuns: Action run traces the runtime keeps for diagnostics; the
+	// oldest are dropped first. (ACT-030)
+	ActionTraceRuns Key = "action.traceRuns"
+	// ActionTraceSteps: Steps one action run trace records; later steps are
+	// counted but not recorded. (ACT-030)
+	ActionTraceSteps Key = "action.traceSteps"
+	// AnimCompositedSubtree: Nodes below an animated opacity or layout prop
+	// before the compiler warns of an expensive animation. (ANI-008)
+	AnimCompositedSubtree Key = "anim.compositedSubtree"
+	// AnimKeyframesPerTrack: Keyframes of one track of a timeline. (ANI-002)
+	AnimKeyframesPerTrack Key = "anim.keyframesPerTrack"
+	// AnimSimultaneousTimelines: Timelines of one page that autoplay or follow a
+	// driver before the compiler warns. (ANI-008)
+	AnimSimultaneousTimelines Key = "anim.simultaneousTimelines"
+	// AnimTimelineDuration: Duration of one timeline. (ANI-002)
+	AnimTimelineDuration Key = "anim.timelineDuration"
 	// APIPageSize: Items one page of a list call returns; a call asking for more
 	// gets this many, and one asking for none gets this many too. (SRV-004)
 	APIPageSize Key = "api.pageSize"
@@ -55,9 +75,86 @@ const (
 	// BundleVerifierTables: Maximum number of tables and vectors the FlatBuffers
 	// verifier visits in one section. (BND-006, QA-004)
 	BundleVerifierTables Key = "bundle.verifierTables"
+	// DataCacheBytes: Bytes the response cache of data sources keeps on the
+	// device; the least recently used entries are evicted beyond it. (DAT-010,
+	// LIM-004)
+	DataCacheBytes Key = "data.cacheBytes"
+	// DataCacheEntries: Responses the cache of data sources keeps on the device;
+	// the least recently used are evicted beyond it. (DAT-010, LIM-004)
+	DataCacheEntries Key = "data.cacheEntries"
+	// DataDownloadSize: Bytes one download may have; checked against the
+	// declared length before the transfer and counted during it, a larger one is
+	// stopped. (DAT-031, LIM-004)
+	DataDownloadSize Key = "data.downloadSize"
+	// DataOutboxBackoffMax: Longest wait between two replays of the offline
+	// outbox that left entries; the wait doubles from data.outboxBackoffMin up
+	// to it. (DAT-020)
+	DataOutboxBackoffMax Key = "data.outboxBackoffMax"
+	// DataOutboxBackoffMin: First wait before the offline outbox replays again
+	// after a replay left entries behind. (DAT-020)
+	DataOutboxBackoffMin Key = "data.outboxBackoffMin"
+	// DataOutboxBytes: Bytes the offline outbox keeps on the device, encoded; a
+	// mutation that would exceed it is refused with a typed error. (DAT-020,
+	// LIM-004)
+	DataOutboxBytes Key = "data.outboxBytes"
+	// DataOutboxEntries: Mutations the offline outbox keeps on the device; a
+	// further mutation is refused with a typed error. (DAT-020, LIM-004)
+	DataOutboxEntries Key = "data.outboxEntries"
+	// DataPageSize: Items one page of a paginated data source may ask for.
+	// (DAT-011)
+	DataPageSize Key = "data.pageSize"
+	// DataRequestSize: Bytes the body of one data request may have. (DAT-001,
+	// LIM-004)
+	DataRequestSize Key = "data.requestSize"
+	// DataRequestTimeout: Time one data request may take before it fails with a
+	// timeout. (DAT-001)
+	DataRequestTimeout Key = "data.requestTimeout"
+	// DataResponseSize: Bytes the response of one data request may have; a
+	// larger response is stopped. (DAT-001, LIM-004)
+	DataResponseSize Key = "data.responseSize"
+	// DataSourcesPerPlugin: Data sources a plugin, its pages and the app may
+	// declare for it together. (DAT-001)
+	DataSourcesPerPlugin Key = "data.sourcesPerPlugin"
+	// DataStreamBackoffMax: Longest wait between two reconnection attempts of a
+	// stream; the wait doubles from data.streamBackoffMin up to it, with jitter.
+	// (DAT-012)
+	DataStreamBackoffMax Key = "data.streamBackoffMax"
+	// DataStreamBackoffMin: First wait before a stream reconnects after its
+	// connection ended. (DAT-012)
+	DataStreamBackoffMin Key = "data.streamBackoffMin"
+	// DataStreamMessageSize: Bytes one stream message may have; a larger message
+	// closes the stream with a typed error. (DAT-012, LIM-004)
+	DataStreamMessageSize Key = "data.streamMessageSize"
+	// DataStreamsOpen: Streams the runtime keeps open at once; a further
+	// subscription is refused with a typed error. (DAT-012, LIM-004)
+	DataStreamsOpen Key = "data.streamsOpen"
+	// DataUploadSize: Bytes one upload may have; the file's size is checked
+	// before the transfer and a larger file is refused. (DAT-031, LIM-004)
+	DataUploadSize Key = "data.uploadSize"
+	// DBCollectionRecords: Records one local collection may hold on the device;
+	// an insert beyond it fails with a typed error instead of growing the
+	// database. (DB-006, LIM-004)
+	DBCollectionRecords Key = "db.collectionRecords"
+	// DBCollectionsPerPlugin: Local collections a plugin may declare. (DB-004)
+	DBCollectionsPerPlugin Key = "db.collectionsPerPlugin"
+	// DBKVBytes: Bytes the key-value store of one plugin may hold, encoded; a
+	// write beyond it fails with a typed error. (DB-009, LIM-004)
+	DBKVBytes Key = "db.kvBytes"
+	// DBQueryRows: Records one query or watched query returns at most, whatever
+	// its limit asks for. (DB-006)
+	DBQueryRows Key = "db.queryRows"
+	// DBRecordBytes: Bytes one record of a local collection may take, encoded as
+	// JSON. (DB-006, LIM-004)
+	DBRecordBytes Key = "db.recordBytes"
+	// DeviceClipboardChars: Characters copyToClipboard may put on the clipboard
+	// in one step. (SEC-080, LIM-004)
+	DeviceClipboardChars Key = "device.clipboardChars"
 	// DeviceDiskQuota: Disk space the runtime may use for releases on one
 	// device. (SYN-012)
 	DeviceDiskQuota Key = "device.diskQuota"
+	// DevicePickCount: Files a single pickImage or pickFile step may return.
+	// (SEC-080, LIM-004)
+	DevicePickCount Key = "device.pickCount"
 	// DocumentFileSize: Size of one document file in the project layout, checked
 	// before parsing. (SCH-006)
 	DocumentFileSize Key = "document.fileSize"
@@ -106,6 +203,15 @@ const (
 	// PXLOperationBudget: Operations one PXL evaluation may perform before it
 	// stops with a typed error. (PXL-001)
 	PXLOperationBudget Key = "pxl.operationBudget"
+	// PXLRegexPatternLength: Length of one regular-expression pattern of
+	// pxl.regex.v1. (PXL-001, PXL-006, LIM-001)
+	PXLRegexPatternLength Key = "pxl.regexPatternLength"
+	// PXLRegexProgramSize: Instructions of one compiled regular-expression
+	// pattern of pxl.regex.v1 (schema/pxl/regex.md). (PXL-001, PXL-006, LIM-001)
+	PXLRegexProgramSize Key = "pxl.regexProgramSize"
+	// PXLRegexRepeat: The largest count of a {n,m} repetition in a
+	// regular-expression pattern of pxl.regex.v1. (PXL-001, PXL-006, LIM-001)
+	PXLRegexRepeat Key = "pxl.regexRepeat"
 	// PXLStringLength: Length of a string produced during one PXL evaluation.
 	// (PXL-001)
 	PXLStringLength Key = "pxl.stringLength"
@@ -124,6 +230,14 @@ const (
 	// RuntimeSectionCacheEntries: Page and component sections the runtime keeps
 	// decoded. (RT-013)
 	RuntimeSectionCacheEntries Key = "runtime.sectionCacheEntries"
+	// StatePersistedBytes: Bytes the persisted state of one app may take in the
+	// runtime's local store (plain; secure state is the encrypted one, plan p5
+	// B6); writes beyond it stay in memory and are reported. (STA-003, LIM-004)
+	StatePersistedBytes Key = "state.persistedBytes"
+	// StateSecureBytes: Bytes the secure state of one app may take in the
+	// runtime's local store (plain; secure state is the encrypted one, plan p5
+	// B6); writes beyond it stay in memory and are reported. (STA-003, LIM-004)
+	StateSecureBytes Key = "state.secureBytes"
 	// TelemetryBufferBytes: The size of the runtime's buffer of unsent telemetry
 	// events; the oldest are dropped first. (ANL-002)
 	TelemetryBufferBytes Key = "telemetry.bufferBytes"
@@ -135,9 +249,16 @@ const (
 // registry holds every definition in key order. It is read-only.
 var registry = [...]Definition{
 	{Key: ActionForEachItems, Unit: UnitCount, Default: 1000, Warning: 0, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerRuntime, Phase: "P5", Description: "Items one forEach step may iterate over."},
+	{Key: ActionQueueLength, Unit: UnitCount, Default: 32, Warning: 0, Max: 1000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Triggers a handler with the queue policy may hold while its run is in progress; a trigger beyond it is dropped and reported."},
 	{Key: ActionRunTimeout, Unit: UnitMilliseconds, Default: 120000, Warning: 0, Max: 3600000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P4", Description: "Time one action run may take."},
 	{Key: ActionStepTimeout, Unit: UnitMilliseconds, Default: 30000, Warning: 0, Max: 600000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P4", Description: "Time one action step may take."},
 	{Key: ActionStepsPerRun, Unit: UnitCount, Default: 10000, Warning: 0, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerRuntime, Phase: "P4", Description: "Steps one action run may execute."},
+	{Key: ActionTraceRuns, Unit: UnitCount, Default: 50, Warning: 0, Max: 1000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Action run traces the runtime keeps for diagnostics; the oldest are dropped first."},
+	{Key: ActionTraceSteps, Unit: UnitCount, Default: 200, Warning: 0, Max: 10000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Steps one action run trace records; later steps are counted but not recorded."},
+	{Key: AnimCompositedSubtree, Unit: UnitCount, Default: 40, Warning: 0, Max: 1000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler, Phase: "P5", Description: "Nodes below an animated opacity or layout prop before the compiler warns of an expensive animation."},
+	{Key: AnimKeyframesPerTrack, Unit: UnitCount, Default: 64, Warning: 0, Max: 1000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler, Phase: "P5", Description: "Keyframes of one track of a timeline."},
+	{Key: AnimSimultaneousTimelines, Unit: UnitCount, Default: 6, Warning: 0, Max: 100, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler, Phase: "P5", Description: "Timelines of one page that autoplay or follow a driver before the compiler warns."},
+	{Key: AnimTimelineDuration, Unit: UnitMilliseconds, Default: 60000, Warning: 0, Max: 600000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler, Phase: "P5", Description: "Duration of one timeline."},
 	{Key: APIPageSize, Unit: UnitCount, Default: 100, Warning: 0, Max: 1000, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P2", Description: "Items one page of a list call returns; a call asking for more gets this many, and one asking for none gets this many too."},
 	{Key: APIRequestSize, Unit: UnitBytes, Default: 8388608, Warning: 0, Max: 268435456, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P2", Description: "Size of one API request body, refused before a handler reads it, and of one request message once decompressed."},
 	{Key: APIRequestsPerMinute, Unit: UnitCount, Default: 600, Warning: 0, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization, EnforcedBy: EnforcerServer, Phase: "P2", Description: "API calls one authenticated principal (a user or a token) may make per minute."},
@@ -152,7 +273,31 @@ var registry = [...]Definition{
 	{Key: BundlePluginSize, Unit: UnitBytes, Default: 20971520, Warning: 0, Max: 268435456, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Size of one plugin bundle."},
 	{Key: BundleVerifierDepth, Unit: UnitCount, Default: 64, Warning: 0, Max: 256, Scopes: ScopeInstallation, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P1", Description: "Maximum nesting of tables the FlatBuffers verifier accepts in one section."},
 	{Key: BundleVerifierTables, Unit: UnitCount, Default: 1000000, Warning: 0, Max: 10000000, Scopes: ScopeInstallation, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P1", Description: "Maximum number of tables and vectors the FlatBuffers verifier visits in one section."},
+	{Key: DataCacheBytes, Unit: UnitBytes, Default: 16777216, Warning: 0, Max: 268435456, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the response cache of data sources keeps on the device; the least recently used entries are evicted beyond it."},
+	{Key: DataCacheEntries, Unit: UnitCount, Default: 1000, Warning: 0, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Responses the cache of data sources keeps on the device; the least recently used are evicted beyond it."},
+	{Key: DataDownloadSize, Unit: UnitBytes, Default: 52428800, Warning: 0, Max: 2147483648, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes one download may have; checked against the declared length before the transfer and counted during it, a larger one is stopped."},
+	{Key: DataOutboxBackoffMax, Unit: UnitMilliseconds, Default: 300000, Warning: 0, Max: 3600000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Longest wait between two replays of the offline outbox that left entries; the wait doubles from data.outboxBackoffMin up to it."},
+	{Key: DataOutboxBackoffMin, Unit: UnitMilliseconds, Default: 5000, Warning: 0, Max: 600000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "First wait before the offline outbox replays again after a replay left entries behind."},
+	{Key: DataOutboxBytes, Unit: UnitBytes, Default: 4194304, Warning: 0, Max: 67108864, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the offline outbox keeps on the device, encoded; a mutation that would exceed it is refused with a typed error."},
+	{Key: DataOutboxEntries, Unit: UnitCount, Default: 200, Warning: 0, Max: 10000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Mutations the offline outbox keeps on the device; a further mutation is refused with a typed error."},
+	{Key: DataPageSize, Unit: UnitCount, Default: 50, Warning: 0, Max: 1000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerRuntime, Phase: "P5", Description: "Items one page of a paginated data source may ask for."},
+	{Key: DataRequestSize, Unit: UnitBytes, Default: 1048576, Warning: 0, Max: 16777216, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the body of one data request may have."},
+	{Key: DataRequestTimeout, Unit: UnitMilliseconds, Default: 30000, Warning: 0, Max: 300000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Time one data request may take before it fails with a timeout."},
+	{Key: DataResponseSize, Unit: UnitBytes, Default: 4194304, Warning: 0, Max: 67108864, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the response of one data request may have; a larger response is stopped."},
+	{Key: DataSourcesPerPlugin, Unit: UnitCount, Default: 100, Warning: 0, Max: 1000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler, Phase: "P5", Description: "Data sources a plugin, its pages and the app may declare for it together."},
+	{Key: DataStreamBackoffMax, Unit: UnitMilliseconds, Default: 30000, Warning: 0, Max: 600000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Longest wait between two reconnection attempts of a stream; the wait doubles from data.streamBackoffMin up to it, with jitter."},
+	{Key: DataStreamBackoffMin, Unit: UnitMilliseconds, Default: 1000, Warning: 0, Max: 60000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "First wait before a stream reconnects after its connection ended."},
+	{Key: DataStreamMessageSize, Unit: UnitBytes, Default: 1048576, Warning: 0, Max: 16777216, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes one stream message may have; a larger message closes the stream with a typed error."},
+	{Key: DataStreamsOpen, Unit: UnitCount, Default: 8, Warning: 0, Max: 64, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Streams the runtime keeps open at once; a further subscription is refused with a typed error."},
+	{Key: DataUploadSize, Unit: UnitBytes, Default: 26214400, Warning: 0, Max: 1073741824, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes one upload may have; the file's size is checked before the transfer and a larger file is refused."},
+	{Key: DBCollectionRecords, Unit: UnitCount, Default: 100000, Warning: 0, Max: 10000000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Records one local collection may hold on the device; an insert beyond it fails with a typed error instead of growing the database."},
+	{Key: DBCollectionsPerPlugin, Unit: UnitCount, Default: 50, Warning: 0, Max: 500, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler, Phase: "P5", Description: "Local collections a plugin may declare."},
+	{Key: DBKVBytes, Unit: UnitBytes, Default: 262144, Warning: 0, Max: 16777216, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the key-value store of one plugin may hold, encoded; a write beyond it fails with a typed error."},
+	{Key: DBQueryRows, Unit: UnitCount, Default: 1000, Warning: 0, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Records one query or watched query returns at most, whatever its limit asks for."},
+	{Key: DBRecordBytes, Unit: UnitBytes, Default: 65536, Warning: 0, Max: 1048576, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes one record of a local collection may take, encoded as JSON."},
+	{Key: DeviceClipboardChars, Unit: UnitCount, Default: 10000, Warning: 0, Max: 100000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Characters copyToClipboard may put on the clipboard in one step."},
 	{Key: DeviceDiskQuota, Unit: UnitBytes, Default: 209715200, Warning: 0, Max: 4294967296, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "Disk space the runtime may use for releases on one device."},
+	{Key: DevicePickCount, Unit: UnitCount, Default: 10, Warning: 0, Max: 100, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Files a single pickImage or pickFile step may return."},
 	{Key: DocumentFileSize, Unit: UnitBytes, Default: 8388608, Warning: 0, Max: 67108864, Scopes: ScopeInstallation | ScopeOrganization, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Size of one document file in the project layout, checked before parsing."},
 	{Key: DocumentJSONDepth, Unit: UnitCount, Default: 512, Warning: 0, Max: 4096, Scopes: ScopeInstallation, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Nesting of arrays and objects in one document, checked while parsing."},
 	{Key: DocumentStringPropSize, Unit: UnitBytes, Default: 65536, Warning: 0, Max: 1048576, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Size of one string prop value, in UTF-8 bytes."},
@@ -170,12 +315,17 @@ var registry = [...]Definition{
 	{Key: PXLExpressionLength, Unit: UnitCodepoints, Default: 4096, Warning: 0, Max: 65536, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Length of one PXL expression."},
 	{Key: PXLNestingDepth, Unit: UnitCount, Default: 64, Warning: 0, Max: 256, Scopes: ScopeInstallation, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Nesting depth of one PXL expression's syntax tree."},
 	{Key: PXLOperationBudget, Unit: UnitOperations, Default: 10000, Warning: 0, Max: 1000000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P1", Description: "Operations one PXL evaluation may perform before it stops with a typed error."},
+	{Key: PXLRegexPatternLength, Unit: UnitCodepoints, Default: 1000, Warning: 0, Max: 10000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P5", Description: "Length of one regular-expression pattern of pxl.regex.v1."},
+	{Key: PXLRegexProgramSize, Unit: UnitCount, Default: 2000, Warning: 0, Max: 20000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P5", Description: "Instructions of one compiled regular-expression pattern of pxl.regex.v1 (schema/pxl/regex.md)."},
+	{Key: PXLRegexRepeat, Unit: UnitCount, Default: 100, Warning: 0, Max: 1000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P5", Description: "The largest count of a {n,m} repetition in a regular-expression pattern of pxl.regex.v1."},
 	{Key: PXLStringLength, Unit: UnitCodepoints, Default: 65536, Warning: 0, Max: 1048576, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer | EnforcerRuntime, Phase: "P1", Description: "Length of a string produced during one PXL evaluation."},
 	{Key: ReleaseAppSize, Unit: UnitBytes, Default: 104857600, Warning: 0, Max: 1073741824, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Total size of one app release: the app bundle and every plugin bundle."},
 	{Key: RuntimeImageDiskCacheBytes, Unit: UnitBytes, Default: 67108864, Warning: 0, Max: 1073741824, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "Disk space the runtime's cache of remote images may use on one device."},
 	{Key: RuntimeImageSize, Unit: UnitBytes, Default: 10485760, Warning: 0, Max: 104857600, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "Size of one remote image the runtime downloads; a larger one is refused."},
 	{Key: RuntimeSectionCacheBytes, Unit: UnitBytes, Default: 8388608, Warning: 0, Max: 268435456, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "Memory the runtime's cache of decoded page and component sections may hold."},
 	{Key: RuntimeSectionCacheEntries, Unit: UnitCount, Default: 64, Warning: 0, Max: 4096, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "Page and component sections the runtime keeps decoded."},
+	{Key: StatePersistedBytes, Unit: UnitBytes, Default: 1048576, Warning: 0, Max: 16777216, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the persisted state of one app may take in the runtime's local store (plain; secure state is the encrypted one, plan p5 B6); writes beyond it stay in memory and are reported."},
+	{Key: StateSecureBytes, Unit: UnitBytes, Default: 65536, Warning: 0, Max: 1048576, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the secure state of one app may take in the runtime's local store (plain; secure state is the encrypted one, plan p5 B6); writes beyond it stay in memory and are reported."},
 	{Key: TelemetryBufferBytes, Unit: UnitBytes, Default: 262144, Warning: 0, Max: 4194304, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "The size of the runtime's buffer of unsent telemetry events; the oldest are dropped first."},
 	{Key: TelemetryEventsPerRequest, Unit: UnitCount, Default: 500, Warning: 0, Max: 5000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerServer, Phase: "P2", Description: "Runtime events one telemetry request may carry."},
 }

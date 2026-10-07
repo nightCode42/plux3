@@ -1,7 +1,7 @@
 # 0031. Rendering model: generated node builders over mapped sections
 
 - **Status:** Accepted
-- **Date:** 2026-09-28; revised 2026-09-29 (see [Revision](#revision-2026-09-29-layout-errors-and-adaptive-widgets))
+- **Date:** 2026-09-28; revised 2026-09-29 (see [Revision](#revision-2026-09-29-layout-errors-and-adaptive-widgets)); revised 2026-10-04 (see [Revision](#revision-2026-10-04-what-p3-does-not-do-done-in-p5))
 - **Requirements:** `RT-010`–`RT-016`, `RT-020`–`RT-022`, `WGT-002`, `WGT-011`–`WGT-014`, `WGT-020`, `BND-015`–`BND-017`, `CMP-023`, `CMP-024`, `NFR-002`, `NFR-003`
 
 ## Context and problem
@@ -184,6 +184,20 @@ The maintainer decided two points the P3 implementation raised.
   (`applyCupertinoTheme`, `useCupertinoCheckmarkStyle`) are covered like any other.
   Widgets with a Cupertino counterpart but no `.adaptive` constructor keep separate
   Material and Cupertino widgets. `WGT-011` is reworded to name this scope.
+
+## Revision (2026-10-04, what P3 does not do, done in P5)
+
+P5 completes what *What P3 does not do* deferred. Event handlers run on the action engine
+since P4 ([ADR-0039](0039-action-engine-core.md)) and run every catalogue action from P5
+([ADR-0045](0045-action-engine-completion.md)), with `RT-021`'s full error chain.
+Interactive widgets write their values to state and forms
+([ADR-0046](0046-state-engine.md), [ADR-0047](0047-forms-validators-regex-and-phone.md)).
+Bindings read computed entries, plugin and component state and data sources
+([ADR-0048](0048-data-layer.md)), so the loan calculator's `monthlyPayment` renders, and
+lists bind to paginated sources (`WGT-012`). Action runs appear in the timeline as
+`plux.action` (`RT-015`), and animation widgets, Lottie and Rive arrive
+([ADR-0050](0050-animation-engine.md)). The node builders, containment and laziness
+described here do not change.
 
 ## Consequences
 

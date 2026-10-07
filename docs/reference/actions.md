@@ -20,6 +20,7 @@ The built-in actions of the action catalogue (spec Appendix D), generated from t
 | [dbUpdate](#dbupdate) | localDb | P5 | Updates fields of the record with a key; fails if it does not exist. |
 | [dbUpsert](#dbupsert) | localDb | P5 | Inserts a record, or replaces the record with the same key. |
 | [delay](#delay) | control | P5 | Waits for a duration; the wait is cancelled with the run. |
+| [emitEvent](#emitevent) | component | P5 | Inside a component, emits one of the component's declared events with a payload of its declared type, to the instance's handler or to PluxView.onEvent. |
 | [emitHostEvent](#emithostevent) | host | P4 | Sends a typed event to the host app. |
 | [forEach](#foreach) | control | P5 | Runs the body branch once per item of a list, in order, bounded by the list length and the action.forEachItems limit (ACT-005). |
 | [getLocation](#getlocation) | device | P5 | Reads the device's current position once. |
@@ -38,7 +39,7 @@ The built-in actions of the action catalogue (spec Appendix D), generated from t
 | [pickFile](#pickfile) | device | P5 | Lets the user pick files. |
 | [pickImage](#pickimage) | device | P5 | Lets the user pick images from the photo library. |
 | [pop](#pop) | navigation | P4 | Pops the current page, optionally returning a typed result to the page that opened it. |
-| [refreshData](#refreshdata) | data | P5 | Reloads a data source, bypassing its cache. |
+| [refreshData](#refreshdata) | data | P5 | Reloads a data source, bypassing its cache, or loads the next page of a paginated source. |
 | [requestPermission](#requestpermission) | device | P5 | Requests a device permission the plugin declares; takes the granted or denied branch. |
 | [resetForm](#resetform) | forms | P5 | Resets every field of a form to its initial value and clears its errors. |
 | [resetState](#resetstate) | state | P5 | Resets a state entry to its declared initial value. |
@@ -267,6 +268,21 @@ ID 34 · control · P5
 | Input | ID | Type | Default | Description |
 |---|---|---|---|---|
 | `duration` | 1 | `duration`, required | — | How long to wait, in milliseconds. |
+
+### emitEvent
+
+Inside a component, emits one of the component's declared events with a payload of its declared type, to the instance's handler or to PluxView.onEvent.
+
+ID 56 · component · P5
+
+Type parameters:
+
+- `E` — The payload type the referenced component event declares.
+
+| Input | ID | Type | Default | Description |
+|---|---|---|---|---|
+| `event` | 1 | `string`, required | — | The component event. Names a componentEvent. |
+| `payload` | 2 | `E` | — | The event payload. |
 
 ### emitHostEvent
 
@@ -521,13 +537,14 @@ Type parameters:
 
 ### refreshData
 
-Reloads a data source, bypassing its cache.
+Reloads a data source, bypassing its cache, or loads the next page of a paginated source.
 
 ID 17 · data · P5 · effects: state, network
 
 | Input | ID | Type | Default | Description |
 |---|---|---|---|---|
 | `source` | 1 | `string`, required | — | The data source. Names a dataSource. |
+| `more` | 2 | `bool` | `false` | Loads the next page of a paginated source instead of reloading it (DAT-011). |
 
 ### requestPermission
 

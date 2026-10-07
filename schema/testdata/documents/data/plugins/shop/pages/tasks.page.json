@@ -1,0 +1,147 @@
+{
+  "id": "01d0c450-6c00-7000-8000-000000000010",
+  "key": "tasks",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01d0c450-6c00-7000-8000-000000000011",
+    "slots": {
+      "body": {
+        "children": [
+          {
+            "id": "01d0c450-6c00-7000-8000-000000000013",
+            "props": {
+              "data": {
+                "$expr": "\"Count \" + string(data.count.value ?? 0)"
+              }
+            },
+            "testId": "count",
+            "type": "Text"
+          },
+          {
+            "id": "01d0c450-6c00-7000-8000-000000000014",
+            "props": {
+              "data": {
+                "$expr": "\"Me \" + (data.profile.value?.name ?? \"-\")"
+              }
+            },
+            "testId": "me",
+            "type": "Text"
+          },
+          {
+            "events": {
+              "onPressed": {
+                "steps": [
+                  {
+                    "action": "apiCall",
+                    "id": "create",
+                    "input": {
+                      "input": {
+                        "title": "New"
+                      },
+                      "operation": "tasks.createTask"
+                    },
+                    "onSuccess": "reload"
+                  },
+                  {
+                    "action": "refreshData",
+                    "id": "reload",
+                    "input": {
+                      "source": "tasks"
+                    }
+                  }
+                ]
+              }
+            },
+            "id": "01d0c450-6c00-7000-8000-000000000015",
+            "slots": {
+              "child": {
+                "id": "01d0c450-6c00-7000-8000-000000000016",
+                "props": {
+                  "data": "Add"
+                },
+                "type": "Text"
+              }
+            },
+            "testId": "add",
+            "type": "FilledButton"
+          },
+          {
+            "id": "01d0c450-6c00-7000-8000-000000000017",
+            "slots": {
+              "child": {
+                "events": {
+                  "onEndReached": {
+                    "steps": [
+                      {
+                        "action": "refreshData",
+                        "id": "more",
+                        "input": {
+                          "more": true,
+                          "source": "tasks"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01d0c450-6c00-7000-8000-000000000018",
+                "props": {
+                  "hasMore": {
+                    "$expr": "data.tasks.hasMore"
+                  },
+                  "items": {
+                    "$expr": "data.tasks.value ?? []"
+                  },
+                  "status": {
+                    "$expr": "data.tasks.status"
+                  }
+                },
+                "slots": {
+                  "empty": {
+                    "id": "01d0c450-6c00-7000-8000-00000000001a",
+                    "props": {
+                      "data": "Nothing"
+                    },
+                    "type": "Text"
+                  },
+                  "error": {
+                    "id": "01d0c450-6c00-7000-8000-00000000001c",
+                    "props": {
+                      "data": "Failed"
+                    },
+                    "type": "Text"
+                  },
+                  "item": {
+                    "id": "01d0c450-6c00-7000-8000-000000000019",
+                    "props": {
+                      "data": {
+                        "$expr": "item.title"
+                      }
+                    },
+                    "type": "Text"
+                  },
+                  "loading": {
+                    "id": "01d0c450-6c00-7000-8000-00000000001b",
+                    "props": {
+                      "data": "Loading"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "testId": "list",
+                "type": "ListView"
+              }
+            },
+            "type": "Expanded"
+          }
+        ],
+        "id": "01d0c450-6c00-7000-8000-000000000012",
+        "type": "Column"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "tasks",
+  "schemaVersion": "1.0.0",
+  "title": "Tasks"
+}

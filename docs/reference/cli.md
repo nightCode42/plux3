@@ -29,7 +29,7 @@ sha256sum --check --ignore-missing SHA256SUMS
 | `plux login [--server url]` | Signs in with the OAuth 2.0 device authorization grant: prints a code and a URL, waits (`--timeout`, default 10 minutes) until someone approves the code in Studio, and stores the token (below) (`CLI-002`). |
 | `plux logout [--server url]` | Forgets the stored token for the server. |
 | `plux whoami` | Shows the signed-in user and their organisations; with `--org`, their permissions there. |
-| `plux init --server url --org id --app id-or-key [-C dir] [--env key]` | In a Plux project, or an empty directory a project export will fill: writes `plux.json`, naming the server, organisation, app and the environment publishes go to (default `development`). It holds no secret and is meant to be committed. In a Flutter app — a `pubspec.yaml` on the Flutter SDK and no `app.json` — sets the app up as a Plux host (`HST-032`, below). A directory holding both is a usage error. |
+| `plux init --server url --org id --app id-or-key [-C dir] [--env key] [--packages names] [--project dir]` | In a Plux project, or an empty directory a project export will fill: writes `plux.json`, naming the server, organisation, app and the environment publishes go to (default `development`). It holds no secret and is meant to be committed. In a Flutter app — a `pubspec.yaml` on the Flutter SDK and no `app.json` — sets the app up as a Plux host (`HST-032`, below). A directory holding both is a usage error. |
 | `plux doctor [-C dir]` | Checks, in order, the project (`plux.json`, and that it compiles), the configuration, the server's `/readyz`, the credential, the sign-in and the app. |
 | `plux validate [--json] <project-dir>` | Compiles a project in the [Git layout](document-model.md#1-project-layout) and reports every diagnostic, without a server. |
 | `plux build [--dev] [--json] -o <out-dir> <project-dir>` | Compiles the project and writes its bundles, without a server (below). |
@@ -42,6 +42,10 @@ sha256sum --check --ignore-missing SHA256SUMS
 | `plux release rollback --env key [--channel key] [--notes text] [--wait duration] <to-sequence>` | Creates a new release with the content of an earlier one, points the channel at it (`REL-006`) and waits for its signed manifest. |
 | `plux export [-C dir] [-o dir]` | Writes the server's drafts in the Git layout. |
 | `plux import [-C dir]` | Replaces the server's drafts with the local project. |
+| `plux import openapi <file> [-o out]` | Reads an OpenAPI 3.x document offline and writes a data-source fragment — `dataSources`, `types`, variables and base URLs, as canonical JSON — for `app.json` or a plugin (`DAT-002`). A construct with no Plux type is reported with its location, and its operation is left out. |
+| `plux import graphql <schema.graphql> <operations.graphql>... [-o out]` | The same from a GraphQL schema and the operations a plugin uses. |
+| `plux mock <openapi-file> [--addr 127.0.0.1:0] [--seed n]` | Serves every operation of an OpenAPI document from its examples, or from values generated from its schemas with a fixed seed, on the loopback interface unless `--addr` names another (`TST-004`). |
+| `plux test [-C dir] [--junit file] [--flutter path]` | Runs the project's test scenarios (`tests/**/*.scenario.yaml` or `.json`, or the `tests` glob of `plux.yaml`) headlessly with Flutter's test harness and the real runtime, signed with a key made for the run; `--junit` writes JUnit XML (`TST-001`, `TST-002`; [testing guide](../guides/testing.md)). Exit codes: 0 every scenario passed, 1 a scenario failed or has errors, 2 usage error. |
 | `plux keys [-C dir] [--env key]` | Lists the public keys an environment's manifests and bundles are signed with. |
 | `plux native scan [--host dir] [-o file] [--build id]` | Writes the host app's native catalogue, `plux.catalogue.json`, by static analysis, with no change to its code (`CLI-006`, [ADR-0041](../adr/0041-native-catalogue-and-host-builds.md)): it runs `dart run plux_native_scan` in the host project (`--host`, default `.`), which needs `plux_native_scan` as a dev dependency, with the slot classes `plux.yaml` lists and the host build (below). The scanner's problems, such as a type with no document type, are printed with their locations; its exit code is the command's. |
 | `plux native sync [--build id] [--host dir] [--catalogue file] [-C dir]` | Uploads the catalogue of one host build (`NativeCatalogueService`). A build's catalogue never changes: the same content again changes nothing, and other content is refused (`PLX-8032`), so a new build needs its own identifier. Needs the `release.publish` permission. |
@@ -55,12 +59,18 @@ Flags come before positional arguments. Every server command accepts `--server`,
 **Setting up a host app (`plux init` in a Flutter app).** It fetches the environment's
 root public keys (`--env`, as `plux keys`), then:
 
-1. adds `plux_flutter` to `pubspec.yaml`'s dependencies, and `plux_go_router` or
-   `plux_auto_route` when the app depends on `go_router` or `auto_route`;
+1. adds `plux_flutter` to `pubspec.yaml`'s dependencies, `plux_go_router` or
+   `plux_auto_route` when the app depends on `go_router` or `auto_route`, and the optional
+   packages the app uses: those `--packages` names (comma-separated: `plux_db_drift`,
+   `plux_location`, `plux_lottie`, `plux_media`, `plux_rive`, `plux_scanner`) and those the
+   device actions of the Plux project at `--project <dir>` need (`RT-060`);
 2. writes `plux.yaml` when the app has none, with the Android `applicationId` as `appId`
    when it finds one;
 3. writes `lib/plux/plux_options.g.dart`: `PluxOptions` with the app, server and
-   environment, the root keys embedded (`SEC-051`), and `PluxOptions.config()`;
+   environment, the root keys embedded (`SEC-051`), and `PluxOptions.config()`, which
+   registers the optional packages (`devicePackages`, `nativeSlots`, `databaseAdapter`);
+   with `plux_scanner`, which opens a page of its own, `PluxOptions.rootNavigatorKey` is
+   the navigator it uses when `config()` gets none — give it to the app's `MaterialApp`;
 4. calls `Plux.initialize(PluxOptions.config())` in `lib/main.dart` and wraps the app in
    a `PluxScope`, when `main` does nothing but `runApp(…)`; otherwise it prints the exact
    lines to add and leaves `main.dart` as it is;

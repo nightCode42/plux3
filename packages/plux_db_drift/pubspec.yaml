@@ -1,0 +1,27 @@
+name: plux_db_drift
+description: >-
+  Stores Plux collections in an encrypted SQLite database through Drift and
+  SQLCipher: the database adapter for plux_flutter, with a key per
+  installation kept in the platform's secure storage.
+version: 0.1.0
+repository: https://github.com/nightCode42/plux3/tree/main/packages/plux_db_drift
+# Not published until its release is wired (release.yml, pub.dev).
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+resolution: workspace
+
+dependencies:
+  drift: ^2.35.1
+  flutter:
+    sdk: flutter
+  plux_flutter: ^0.3.0
+  sqlcipher_flutter_libs: ^0.7.0+eol
+  sqlite3: ^3.7.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

@@ -1,0 +1,22 @@
+{
+  "openapi": "3.0.3",
+  "info": {"title": "Todo API", "version": "2"},
+  "servers": [{"url": "https://todo.example.com"}],
+  "paths": {
+    "/todos": {
+      "get": {
+        "operationId": "listTodos",
+        "responses": {"200": {"description": "ok", "content": {"application/json": {"schema": {"type": "object", "properties": {"items": {"type": "array", "items": {"$ref": "#/components/schemas/Todo"}}, "total": {"type": "integer"}}, "required": ["items", "total"]}}}}}
+      }
+    },
+    "/todos/{id}": {
+      "put": {
+        "operationId": "updateTodo",
+        "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "string"}}],
+        "requestBody": {"content": {"application/json": {"schema": {"type": "object", "properties": {"title": {"type": "string"}, "done": {"type": "boolean", "nullable": true}}}}}},
+        "responses": {"200": {"description": "ok", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Todo"}, "example": {"id": "1", "title": "Write", "done": false}}}}}
+      }
+    }
+  },
+  "components": {"schemas": {"Todo": {"type": "object", "required": ["id", "title"], "properties": {"id": {"type": "string"}, "title": {"type": "string"}, "done": {"type": "boolean"}}}}}
+}

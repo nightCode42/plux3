@@ -23,6 +23,9 @@ func (u *unit) checkGraph(g *graph) {
 	if g.scope == nil {
 		return // not type-checked: its page or plugin failed earlier
 	}
+	if g.doc != nil && len(g.doc.State) > 0 {
+		g.state = u.checkEntries(g.plugin, g.doc.State, g.file, g.scope, true)
+	}
 	index := map[string]int32{}
 	ids := u.newKeys("step")
 	for i, st := range g.steps {
@@ -74,6 +77,14 @@ func (u *unit) checkStep(g *graph, i int, index map[string]int32) *step {
 		out.timeoutMs = uint32(max(0, min(*st.TimeoutMs, 1<<32-1))) //nolint:gosec // G115: clamped.
 	}
 	out.inputs = u.checkInputs(g, &a, input, ptr)
+	u.stepFeatures(g, &a, st, ptr)
+	u.checkDeviceStep(g, a.Name, input, ptr)
+	if stateWrites[a.Name] {
+		u.checkStateWrite(g, a.Name, input, ptr)
+	}
+	if dbActions[a.Name] {
+		u.useRevision(dbFeature, dbRuntimes, 1, vctx{file: g.file, ptr: ptr + "/action", pl: g.plugin})
+	}
 	for _, e := range []struct {
 		name, target string
 		dst          *int32
@@ -120,6 +131,37 @@ func branchNames(a *registry.Action, input map[string]json.RawMessage) []string 
 
 // nativeInput rewrites the inputs of a custom action as the inputs of
 // callNative: the action's name and an object of its inputs, which
+// specialInput checks the inputs whose type an action does not declare
+// alone: route parameters, patches, event payloads, results, and a custom
+// action's or flow's inputs. handled is false for any other input.
+func (u *unit) specialInput(g *graph, action, input string, raw json.RawMessage, c vctx, bind map[string]*texpr) (v *value, handled bool) {
+	switch [2]string{action, input} {
+	case [2]string{"navigate", "params"}, [2]string{"openDialog", "params"}, [2]string{"openBottomSheet", "params"}:
+		return u.routeParams(g, raw, bind["P"], c), true
+	case [2]string{"patchState", "patch"}:
+		return u.patchValue(g, raw, c), true
+	case [2]string{"emitHostEvent", "payload"}:
+		return u.eventPayload(g, raw, c), true
+	case [2]string{"pop", "result"}:
+		if g.page != nil && g.page.doc.Result == "" {
+			u.report(plxerr.PropTypeMismatch, c.file, c.ptr, "page %q declares no result type to return", g.page.doc.Key)
+			return nil, true
+		}
+	case [2]string{"stop", "result"}:
+		if g.output == "" {
+			u.report(plxerr.PropTypeMismatch, c.file, c.ptr, "the graph declares no output to return")
+			return nil, true
+		}
+	case [2]string{"callNative", "input"}:
+		return u.nativeActionInput(g, raw, c), true
+	case [2]string{"emitEvent", "payload"}:
+		return u.componentEventPayload(g, raw, c), true
+	case [2]string{"callFlow", "input"}:
+		return u.flowInput(g, raw, c), true
+	}
+	return nil, false
+}
+
 // nativeActionInput checks against the action's declaration.
 func nativeInput(na *schema.NativeAction, input map[string]json.RawMessage) map[string]json.RawMessage {
 	name, _ := json.Marshal(na.Name)
@@ -153,6 +195,9 @@ func (u *unit) checkInputs(g *graph, a *registry.Action, input map[string]json.R
 		}
 		ic := c
 		ic.ptr = ptr + plxerr.Pointer("input", in.Name)
+		if a.Name == "apiCall" && in.Name == "input" && !u.apiCallInput(g, ic) {
+			continue
+		}
 		v := u.checkInput(g, a, in, raw, ic, bind)
 		if v != nil {
 			out = append(out, &prop{name: in.Name, id: in.ID, ptr: ic.ptr, value: v})
@@ -166,31 +211,8 @@ func (u *unit) checkInput(g *graph, a *registry.Action, in registry.Input, raw j
 	if in.Ref != "" {
 		return u.checkRef(g, in, raw, c)
 	}
-	if a.Name == "navigate" || a.Name == "openDialog" || a.Name == "openBottomSheet" {
-		if in.Name == "params" {
-			return u.routeParams(g, raw, bind["P"], c)
-		}
-	}
-	if a.Name == "emitHostEvent" && in.Name == "payload" {
-		return u.eventPayload(g, raw, c)
-	}
-	if a.Name == "pop" && in.Name == "result" && g.page != nil && g.page.doc.Result == "" {
-		u.report(plxerr.PropTypeMismatch, c.file, c.ptr, "page %q declares no result type to return", g.page.doc.Key)
-		return nil
-	}
-	if a.Name == "stop" && in.Name == "result" && g.output == "" {
-		u.report(plxerr.PropTypeMismatch, c.file, c.ptr, "the graph declares no output to return")
-		return nil
-	}
-	if a.Name == "callNative" && in.Name == "input" {
-		return u.nativeActionInput(g, raw, c)
-	}
-	if a.Name == "callFlow" && in.Name == "input" {
-		st := g.steps[stepIndex(c.ptr)]
-		if f := flowByKey(g.plugin, literalString(st.Input["flow"])); f != nil {
-			return u.namedParams(raw, f.doc.Inputs, "flow "+f.key, c)
-		}
-		return nil
+	if v, handled := u.specialInput(g, a.Name, in.Name, raw, c, bind); handled {
+		return v
 	}
 	te, err := parseTypeExpr(in.Type)
 	if err != nil {
@@ -249,6 +271,14 @@ func (u *unit) bindAction(g *graph, a *registry.Action, input map[string]json.Ra
 	if name, t := declaredBinding(g, a, input); t != nil {
 		bind[name] = t
 	}
+	if a.Name == "apiCall" {
+		// The operation declares its input type (DAT-001).
+		if _, op := u.operation(g, literalString(input["operation"])); op != nil && op.Input != "" {
+			if t, err := parseTypeExpr(op.Input); err == nil {
+				bind["I"] = t
+			}
+		}
+	}
 	return bind
 }
 
@@ -299,20 +329,24 @@ func statePathType(g *graph, path string) *texpr {
 	if !isRoot {
 		return nil
 	}
-	spec, ok := g.scope.synth[typ]
-	if !ok {
-		return nil
+	// A form's state is nested: <form>.values.<field> (STA-020).
+	for _, part := range strings.Split(name, ".") {
+		spec, ok := g.scope.synth[typ]
+		if !ok {
+			return nil
+		}
+		f, ok := spec.Fields[part]
+		if !ok {
+			return nil
+		}
+		typ = f
 	}
-	f, ok := spec.Fields[name]
-	if !ok {
-		return nil
-	}
-	te, _ := parseTypeExpr(f)
+	te, _ := parseTypeExpr(typ)
 	return te
 }
 
 // refRoots are the roots whose entries a state path may name.
-var refRoots = map[string]bool{"app": true, "plugin": true, "page": true, "component": true}
+var refRoots = map[string]bool{"app": true, "plugin": true, "page": true, "component": true, "run": true}
 
 // checkRef resolves a string input that names an entity (ADR-0010).
 func (u *unit) checkRef(g *graph, in registry.Input, raw json.RawMessage, c vctx) *value {
@@ -321,42 +355,93 @@ func (u *unit) checkRef(g *graph, in registry.Input, raw json.RawMessage, c vctx
 		u.report(c.code, c.file, c.ptr, "input %q names a %s and is written as a literal string", in.Name, in.Ref)
 		return nil
 	}
-	resolved, kind, to := true, EdgeKind(""), ""
 	switch in.Ref {
 	case "state":
-		root, entry, _ := strings.Cut(name, ".")
-		id, ok := g.scope.ids[root][entry]
-		resolved, kind, to = ok && refRoots[root], EdgeUsesState, id
-	case "flow":
-		f := flowByKey(g.plugin, name)
-		resolved = f != nil
-		if f != nil {
-			f.used = true
-			kind, to = EdgeUsesGraph, f.doc.ID
+		if v, isForm := u.formStatePath(g, name, c); isForm {
+			return v
 		}
-	case "dataSource":
-		id, ok := g.scope.ids["data"][name]
-		resolved, kind, to = ok, EdgeUsesDataSource, id
-	case "collection":
-		id := u.collectionID(g.plugin, name)
-		resolved, kind, to = id != "", EdgeUsesCollection, id
-	case "function":
-		resolved, kind, to = g.plugin != nil && g.plugin.functions[name], EdgeUsesFunction, name
-	case "nativeAction":
-		_, resolved = u.natives.actions[name]
-	case "hostEvent":
-		_, resolved = u.hostEvents[name]
-	case "tab":
-		resolved = u.hasTab(name)
+	case "componentEvent":
+		return u.componentEventRef(g, name, c)
 	}
-	if !resolved {
+	t := u.refTarget(g, in.Ref, name, c)
+	if t.reported {
+		return nil
+	}
+	if !t.resolved {
 		u.report(plxerr.UnresolvedReference, c.file, c.ptr, "no %s is named %q", in.Ref, name)
 		return nil
 	}
-	if kind != "" {
-		u.graph.add(Edge{From: c.from, Kind: kind, To: to, File: c.file, Path: c.ptr})
+	if t.kind != "" {
+		u.graph.add(Edge{From: c.from, Kind: t.kind, To: t.to, File: c.file, Path: c.ptr})
 	}
 	return &value{kind: fbs.ValueKindString, s: name}
+}
+
+// refResolution is what a named reference points at: whether it resolved,
+// and the edge it adds to the dependency graph, if any. reported is set
+// when resolving it already reported a finding.
+type refResolution struct {
+	resolved bool
+	kind     EdgeKind
+	to       string
+	reported bool
+}
+
+// refTarget looks up the entity of the given reference kind that name
+// refers to.
+func (u *unit) refTarget(g *graph, ref, name string, c vctx) refResolution {
+	switch ref {
+	case "state":
+		root, entry, _ := strings.Cut(name, ".")
+		id, ok := g.scope.ids[root][entry]
+		return refResolution{resolved: ok && refRoots[root], kind: EdgeUsesState, to: id}
+	case "flow":
+		f, private := u.flowRef(g.plugin, name)
+		if private {
+			u.report(plxerr.FlowNotExported, c.file, c.ptr, "flow %q is not exported by its plugin", name)
+			return refResolution{reported: true}
+		}
+		if f == nil {
+			return refResolution{}
+		}
+		f.used = true
+		return refResolution{resolved: true, kind: EdgeUsesGraph, to: f.doc.ID}
+	case "dataSource":
+		id, ok := g.scope.ids["data"][name]
+		return refResolution{resolved: ok, kind: EdgeUsesDataSource, to: id}
+	case "stream":
+		return sourceResolution(u.streamSource(g, name))
+	case "operation":
+		src, _ := u.operation(g, name)
+		return sourceResolution(src)
+	case "collection":
+		id := u.collectionID(g.plugin, name)
+		return refResolution{resolved: id != "", kind: EdgeUsesCollection, to: id}
+	case "function":
+		return refResolution{resolved: g.plugin != nil && g.plugin.functions[name], kind: EdgeUsesFunction, to: name}
+	case "nativeAction":
+		_, ok := u.natives.actions[name]
+		return refResolution{resolved: ok}
+	case "hostEvent":
+		_, ok := u.hostEvents[name]
+		return refResolution{resolved: ok}
+	case "permission":
+		return refResolution{resolved: slices.Contains(permissionAPIs, name)}
+	case "tab":
+		return refResolution{resolved: u.hasTab(name)}
+	case "form":
+		return refResolution{resolved: u.formRef(g, name)}
+	}
+	return refResolution{resolved: true}
+}
+
+// sourceResolution is the resolution of a reference to a data source that
+// may not exist.
+func sourceResolution(src *schema.DataSource) refResolution {
+	if src == nil {
+		return refResolution{}
+	}
+	return refResolution{resolved: true, kind: EdgeUsesDataSource, to: src.ID}
 }
 
 // flowByKey finds a plugin flow by key.

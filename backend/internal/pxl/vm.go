@@ -10,6 +10,7 @@ import (
 	"slices"
 
 	"github.com/nightCode42/plux3/backend/internal/pxl/decimal"
+	"github.com/nightCode42/plux3/backend/internal/pxl/regex"
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 )
 
@@ -23,6 +24,8 @@ type Limits struct {
 	StringLength   int64
 	CollectionSize int64
 	DecimalDigits  int64
+	// Regex bounds the patterns of pxl.regex.v1.
+	Regex regex.Limits
 }
 
 // LimitsFrom reads the PXL limits from a resolved set of the registry.
@@ -32,6 +35,11 @@ func LimitsFrom(set limits.Set) Limits {
 		StringLength:   set.Get(limits.PXLStringLength),
 		CollectionSize: set.Get(limits.PXLCollectionSize),
 		DecimalDigits:  set.Get(limits.PXLDecimalDigits),
+		Regex: regex.Limits{
+			PatternLength: set.Get(limits.PXLRegexPatternLength),
+			ProgramSize:   set.Get(limits.PXLRegexProgramSize),
+			Repeat:        set.Get(limits.PXLRegexRepeat),
+		},
 	}
 }
 

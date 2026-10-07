@@ -4,10 +4,11 @@
 // Package benchproject builds the project the P3 performance benchmarks
 // run (QA-007, docs/benchmarks/p3-runtime.md): an app whose first plugin
 // has a page of exactly [CatalogNodes] nodes (NFR-002, NFR-003), whose
-// second has a 500-item list bound through PXL for frame times, and whose
-// others are small pages, so the device holds as many plugins as a
-// benchmark asks for (NFR-008). A revision changes a text in the first
-// three plugins only: the typical update of NFR-007.
+// second has a 500-item list bound through PXL for frame times, whose
+// third has the 1,000-item list NFR-004 scrolls, and whose others are
+// small pages, so the device holds as many plugins as a benchmark asks
+// for (NFR-008). A revision changes a text in the first three plugins
+// only: the typical update of NFR-007.
 //
 // The documents are built in code rather than committed, because a
 // 300-node page and fifty plugins are data no one reviews by reading; the
@@ -33,6 +34,10 @@ const CatalogNodes = 300
 
 // FeedItems is the length of the feed page's list.
 const FeedItems = 500
+
+// ListItems is the length of the list page's list, the list size NFR-004
+// names.
+const ListItems = 1000
 
 // Changed is how many plugins a new revision changes (NFR-007).
 const Changed = 3
@@ -128,11 +133,12 @@ func catalogPage(s *ids, revision int) node {
 	}))
 }
 
-// feedPage is a lazily built list of FeedItems rows bound through PXL.
-func feedPage(s *ids, revision int) (node, []any) {
-	items := make([]any, FeedItems)
+// boundList is a page of a lazily built list of n ListTile rows whose
+// texts are bound through PXL; the items are "<label> 1" to "<label> n".
+func boundList(s *ids, title, label string, n, revision int) (node, []any) {
+	items := make([]any, n)
 	for i := range items {
-		items[i] = fmt.Sprintf("Story %d", i+1)
+		items[i] = fmt.Sprintf("%s %d", label, i+1)
 	}
 	list := s.w("ListView", map[string]any{"items": map[string]any{"$expr": "page.items"}}, map[string]node{
 		"item": s.w("ListTile", nil, map[string]node{
@@ -142,7 +148,18 @@ func feedPage(s *ids, revision int) (node, []any) {
 		}),
 	})
 	body := s.w("Column", nil, nil, s.text(revisionText(revision), nil), s.w("Expanded", nil, map[string]node{"child": list}))
-	return s.scaffold("Feed", body), items
+	return s.scaffold(title, body), items
+}
+
+// feedPage is a list of FeedItems rows bound through PXL.
+func feedPage(s *ids, revision int) (node, []any) {
+	return boundList(s, "Feed", "Story", FeedItems, revision)
+}
+
+// listPage is the feed's twin with ListItems rows, the list NFR-004
+// scrolls.
+func listPage(s *ids, revision int) (node, []any) {
+	return boundList(s, "List", "Item", ListItems, revision)
 }
 
 // smallPage is the page of every other plugin.
@@ -155,16 +172,18 @@ func smallPage(s *ids, key string, revision int) node {
 	}))
 }
 
-// PluginKey is the key of the i-th plugin (from 0): catalog, feed, then
-// extra01, extra02 and so on.
+// PluginKey is the key of the i-th plugin (from 0): catalog, feed, list,
+// then extra01, extra02 and so on.
 func PluginKey(i int) string {
 	switch i {
 	case 0:
 		return "catalog"
 	case 1:
 		return "feed"
+	case 2:
+		return "list"
 	default:
-		return fmt.Sprintf("extra%02d", i-1)
+		return fmt.Sprintf("extra%02d", i-2)
 	}
 }
 
@@ -213,8 +232,12 @@ func Project(plugins, revision int) fstest.MapFS {
 		switch i {
 		case 0:
 			page["root"] = catalogPage(s, rev)
-		case 1:
-			root, items := feedPage(s, rev)
+		case 1, 2:
+			build := feedPage
+			if i == 2 {
+				build = listPage
+			}
+			root, items := build(s, rev)
 			page["root"] = root
 			page["state"] = []map[string]any{{"id": s.id(), "name": "items", "type": "list<string>", "default": items}}
 		default:

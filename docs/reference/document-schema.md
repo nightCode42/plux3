@@ -15,6 +15,7 @@ Every Plux document is JSON validated by the JSON Schema 2020-12 files in `schem
 | `nativeCatalogue` | [NativeCatalogueDocument](#nativecataloguedocument) | `schema/json/native-catalogue.schema.json` | The native routes, native slots and custom actions of one host app build (SCH-032). File: `native-catalogue.json`. |
 | `page` | [PageDocument](#pagedocument) | `schema/json/page.schema.json` | A page: route, parameters, state, data, lifecycle and node tree (SCH-022). File: `plugins/<plugin>/pages/<key>.page.json`. |
 | `plugin` | [PluginDocument](#plugindocument) | `schema/json/plugin.schema.json` | A plugin: its pages, state, collections and requested capabilities (SCH-021). File: `plugins/<key>/plugin.json`. |
+| `scenarios` | [ScenarioDocument](#scenariodocument) | `schema/json/scenario.schema.json` | One or more declarative test scenarios of pages or flows (TST-001). Files: `tests/**/*.scenario.yaml` or `.json`, found through `tests` in `plux.yaml`. |
 | `template` | [TemplateDocument](#templatedocument) | `schema/json/template.schema.json` | A reusable subtree snapshot, copied with fresh identifiers when inserted (SCH-031). File: `templates/<key>.template.json`. |
 | `theme` | [ThemeDocument](#themedocument) | `schema/json/theme.schema.json` | Design tokens for light and dark modes (THM-001, THM-002). File: `theme.json`. |
 | `translationKeys` | [TranslationKeysDocument](#translationkeysdocument) | `schema/json/translation-keys.schema.json` | The translation keys of an app, referenced by identifier (I18N-007). File: `translations/keys.json`. |
@@ -37,6 +38,7 @@ A named action graph: page-scoped when `page` is set, otherwise a plugin flow ca
 | `exported` | boolean |  | Callable from other plugins (ACT-061). |
 | `inputs` | list of [Param](#param) |  |  |
 | `output` | string |  | Type expression of SCH-010, e.g. `string`, `decimal?`, `list<Transaction>`, `map<string,int>`. |
+| `state` | list of [StateEntry](#stateentry) |  | The run's variables: state of scope `run`, read and written as `run.<name>` by the graph's steps and gone when the run ends (STA-001). |
 | `steps` | list of [Step](#step) | yes |  |
 
 ### ActivationPolicy
@@ -44,6 +46,22 @@ A named action graph: page-scoped when `page` is set, otherwise a plugin flow ca
 When a staged release activates (SYN-004).
 
 One of `immediate`, `atSafePoint`, `nextLaunch`.
+
+### AnimTransition
+
+An enter or exit transition of a node (ANI-003).
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `kind` | [AnimTransitionKind](#animtransitionkind) | yes | How a node moves in or out (ANI-003). |
+| `durationMs` | integer |  |  |
+| `curve` | [Curve](#curve) |  | An animation curve (ANI-001, ANI-002). |
+
+### AnimTransitionKind
+
+How a node moves in or out (ANI-003).
+
+One of `fade`, `scale`, `slideUp`, `slideDown`, `slideLeft`, `slideRight`.
 
 ### AppDocument
 
@@ -64,6 +82,7 @@ An app: its plugins, theme, locales, environments, shared data and policies (SCH
 | `entryRoute` | string | yes | App-wide unique route name (SCH-025). |
 | `navigation` | [NavigationPolicy](#navigationpolicy) |  | App-wide navigation: the page for unknown routes, deep links and tabbed shells (NAV-005, NAV-006, NAV-008, NAV-011, ADR-0040). |
 | `plugins` | list of string | yes | Keys of the app's plugins, in display order; each has a directory `plugins/<key>/`. |
+| `capabilities` | [ApprovedCapabilities](#approvedcapabilities) |  | The capabilities the app approves for its plugins (SEC-080, ADR-0051); a release is published only when every plugin requests a subset. Without `deviceApis`, no device API is approved. `networkDomains` and `functions`, when listed, narrow what plugins may declare. Native routes are approved by the host's registration, not here. |
 | `environments` | list of [Environment](#environment) | yes |  |
 | `variables` | list of [Field](#field) |  | Non-secret environment variables available in PXL as `env.<name>` (DAT-003). |
 | `dataSources` | list of [DataSource](#datasource) |  |  |
@@ -76,10 +95,22 @@ An app: its plugins, theme, locales, environments, shared data and policies (SCH
 | `types` | list of [TypeDecl](#typedecl) |  |  |
 | `state` | list of [StateEntry](#stateentry) |  |  |
 | `collections` | list of [Collection](#collection) |  |  |
+| `droppedCollections` | list of string |  | IDs of collections this document no longer declares. Their data is deleted from devices that still hold it; the publisher acknowledges the warning this raises (DB-005). |
 | `userContext` | list of [Field](#field) |  | Attributes the host provides about the signed-in user, available in PXL as `user.<name>`. |
 | `hostEvents` | list of [HostEventDecl](#hosteventdecl) |  |  |
 | `telemetry` | [TelemetryPolicy](#telemetrypolicy) |  | What the runtime reports (ANL-003, ADR-0034). |
 | `push` | [PushPolicy](#pushpolicy) |  | Push notifications (NAV-008, ADR-0040): whether the app uses them, so a generated project carries the platform configuration, and the payload key under which a notification names `{route, params}` for `Plux.handlePushPayload`. |
+| `triggers` | [Triggers](#triggers) |  | Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active. |
+
+### ApprovedCapabilities
+
+The capabilities the app approves for its plugins (SEC-080, ADR-0051); a release is published only when every plugin requests a subset. Without `deviceApis`, no device API is approved. `networkDomains` and `functions`, when listed, narrow what plugins may declare. Native routes are approved by the host's registration, not here.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `deviceApis` | list of [DeviceAPI](#deviceapi) |  |  |
+| `networkDomains` | list of string |  |  |
+| `functions` | list of string |  |  |
 
 ### AssetEntry
 
@@ -138,6 +169,20 @@ A local database collection (DB-004).
 | `fields` | list of [Field](#field) | yes |  |
 | `primaryKey` | list of string | yes |  |
 | `indexes` | list of list of string |  |  |
+| `version` | integer |  | The collection's schema version, 1 when omitted. A publish that changes the fields, types or indexes raises it; devices migrate from the version they hold (DB-005). |
+| `migrations` | list of [CollectionMigration](#collectionmigration) |  | How a device at an older version reaches this one: one plan per version it may hold. A change that loses data needs one (DB-005). |
+| `description` | string |  | Human-readable description. |
+
+### CollectionMigration
+
+The plan that takes a collection from version `from` to the next (DB-005): fields renamed, dropped or reset.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `from` | integer | yes | The version this plan starts from. |
+| `rename` | map of string |  | Fields renamed, as new name to old name; their values are kept. |
+| `drop` | list of string |  | Fields of the older version that are removed, with their values. The publisher acknowledges the warning this raises. |
+| `reset` | list of string |  | Fields that are added without being nullable, or whose type narrows: every record's value starts again from the type's empty value (0, "", false, [] or {}), or null when nullable. The publisher acknowledges the warning this raises. |
 | `description` | string |  | Human-readable description. |
 
 ### ComponentDocument
@@ -159,6 +204,7 @@ A reusable component with typed props, slots, events and internal state (SCH-030
 | `state` | list of [StateEntry](#stateentry) |  |  |
 | `exported` | boolean |  | Embeddable by the host with `PluxView` (NAV-004). |
 | `root` | [Node](#node) | yes | A node of a page or component tree: a widget or a component instance (SCH-023). |
+| `forms` | list of [Form](#form) |  | The forms of the component (STA-020). |
 
 ### ComponentEvent
 
@@ -202,6 +248,12 @@ A named slot.
 | `multiple` | boolean |  |  |
 | `description` | string |  | Human-readable description. |
 
+### Curve
+
+An animation curve (ANI-001, ANI-002).
+
+One of `linear`, `easeIn`, `easeOut`, `easeInOut`, `fastOutSlowIn`, `decelerate`, `bounceIn`, `bounceOut`, `elasticOut`, `overshoot`.
+
 ### DataSource
 
 A data source with its value type and design-time mock (SCH-024, DAT-080).
@@ -219,6 +271,20 @@ A data source with its value type and design-time mock (SCH-024, DAT-080).
 ### DataSourceKind
 
 One of `rest`, `graphql`, `websocket`, `sse`, `function`, `database`, `static`.
+
+### DataSourceTriggers
+
+Handlers of a data source's events (ACT-002): the loaded value is onLoaded's `event`, the error onFailed's; a stream's message, mapped to the source's type, is onMessage's; a transfer's progress is onProgress's (DAT-012, DAT-031); an offline mutation's replay ends in onSynced, onSyncFailed or onConflict, whose `event` names the operation, the idempotency key and the status (DAT-020).
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `onLoaded` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
+| `onFailed` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
+| `onMessage` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
+| `onProgress` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
+| `onSynced` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
+| `onSyncFailed` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
+| `onConflict` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
 
 ### DeepLinkPolicy
 
@@ -306,6 +372,53 @@ Type of a feature flag (ABT-006).
 
 One of `bool`, `int`, `double`, `string`.
 
+### Form
+
+A form (STA-020, ADR-0047): typed fields with their initial values and validators. Its state lives in the declaring page's or component's scope under the form's name: `values`, `errors`, `dirty`, `touched`, `status`, `valid` and `validating`.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `id` | string | yes | Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). |
+| `name` | string | yes | Identifier used in PXL and generated code: lowerCamelCase. |
+| `fields` | list of [FormField](#formfield) | yes |  |
+| `description` | string |  | Human-readable description. |
+
+### FormField
+
+A field of a form: its type, initial value and validators, run in order (STA-020).
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `name` | string | yes | Identifier used in PXL and generated code: lowerCamelCase. |
+| `type` | string | yes | Type expression of SCH-010, e.g. `string`, `decimal?`, `list<Transaction>`, `map<string,int>`. |
+| `initial` | JSON value |  | A JSON value interpreted against a declared type (defaults, mocks, environment values). |
+| `validators` | list of [FormValidator](#formvalidator) |  |  |
+| `description` | string |  | Human-readable description. |
+
+### FormValidator
+
+A validator of a form field. Each kind takes its own options: `min` and `max` (length, range, dateRange), `pattern` (regex), `region` (phone), `maxScale` and `maxIntegerDigits` (decimalPrecision), `rule` (custom), `$graph` and `debounceMs` (async); the compiler checks them against the kind and the field's type (PLX-1160-1169).
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `kind` | [FormValidatorKind](#formvalidatorkind) | yes | A built-in validator of a form field (STA-020, ADR-0047). |
+| `message` | string |  | The message shown when the value is invalid; the runtime's built-in message otherwise. |
+| `min` | JSON value |  | A JSON value interpreted against a declared type (defaults, mocks, environment values). |
+| `max` | JSON value |  | A JSON value interpreted against a declared type (defaults, mocks, environment values). |
+| `pattern` | string |  | A pxl.regex.v1 pattern, checked at publish (PXL-003). |
+| `region` | string |  | The ISO 3166-1 region of numbers written without a country calling code; the device locale's region when absent. |
+| `maxScale` | integer |  | The most digits after the decimal point. |
+| `maxIntegerDigits` | integer |  | The most digits before the decimal point. |
+| `rule` | [Expr](#expr) |  | PXL binding (SCH-011). |
+| `$graph` | string |  | Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). |
+| `debounceMs` | integer |  | How long the field stays unchanged before the asynchronous check runs. |
+
+### FormValidatorKind
+
+A built-in validator of a form field (STA-020, ADR-0047).
+
+One of `required`, `length`, `range`, `regex`, `email`, `phone`, `iban`, `dateRange`, `decimalPrecision`, `custom`, `async`.
+
 ### FunctionGrant
 
 A function the plugin may call, with an optional alias (FN-006).
@@ -334,7 +447,14 @@ A typed event plugins send to the host app with `emitHostEvent`; `plux codegen` 
 |---|---|---|---|
 | `name` | string | yes | Identifier used in PXL and generated code: lowerCamelCase. |
 | `fields` | list of [Field](#field) |  |  |
+| `direction` | [HostEventDirection](#hosteventdirection) |  | Who sends a host event: plugins to the host with `emitHostEvent` (`toHost`, the default), the host into Plux with `Plux.sendEvent` (`toPlux`), or both (HST-013). |
 | `description` | string |  | Human-readable description. |
+
+### HostEventDirection
+
+Who sends a host event: plugins to the host with `emitHostEvent` (`toHost`, the default), the host into Plux with `Plux.sendEvent` (`toPlux`), or both (HST-013).
+
+One of `toHost`, `toPlux`, `both`.
 
 ### Icon
 
@@ -344,6 +464,16 @@ An uploaded image or a generated monogram (SCH-020).
 |---|---|---|---|
 | `$asset` | string |  | Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). |
 | `monogram` | [Monogram](#monogram) |  | Generated monogram icon. |
+
+### Keyframe
+
+A value of a track at a time (ANI-002).
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `atMs` | integer | yes |  |
+| `value` | JSON value | yes | A prop value: a literal of the prop's type, or a binding (SCH-011). Literal objects and lists may contain bindings in their fields and items. |
+| `curve` | [Curve](#curve) |  | The curve into this keyframe. |
 
 ### Lifecycle
 
@@ -396,6 +526,7 @@ The native routes, native slots and custom actions of one host app build (SCH-03
 | `routes` | list of [NativeRoute](#nativeroute) |  |  |
 | `slots` | list of [NativeSlot](#nativeslot) |  |  |
 | `actions` | list of [NativeAction](#nativeaction) |  |  |
+| `packages` | list of string |  | The optional Plux packages the build registers, such as `plux_media`: a release that uses a device action whose package a build lacks is flagged for that build (RT-060, SEC-080). |
 
 ### NativeRoute
 
@@ -455,6 +586,22 @@ A node of a page or component tree: a widget or a component instance (SCH-023).
 | `semantics` | [Semantics](#semantics) |  | Accessibility semantics of a node (A11Y-002). |
 | `testId` | string |  | Stable identifier for tests (WGT-013). |
 | `responsive` | [Responsive](#responsive) |  | Prop overrides per window size class; `compact` is the base and overrides cascade (WGT-010). |
+| `animation` | [NodeAnimation](#nodeanimation) |  | The animations of a node (ANI-001, ANI-003, ANI-004): `durationMs` animates the node's animatable props (numbers and colours) whenever their bound value changes; `enter` and `exit` play when the node is inserted or its visibility changes; `hero` is the tag of a shared-element transition. |
+
+### NodeAnimation
+
+The animations of a node (ANI-001, ANI-003, ANI-004): `durationMs` animates the node's animatable props (numbers and colours) whenever their bound value changes; `enter` and `exit` play when the node is inserted or its visibility changes; `hero` is the tag of a shared-element transition.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `durationMs` | integer |  |  |
+| `curve` | [Curve](#curve) |  | An animation curve (ANI-001, ANI-002). |
+| `delayMs` | integer |  |  |
+| `props` | list of string |  | The props to animate; all that can be, when absent. |
+| `enter` | [AnimTransition](#animtransition) |  | An enter or exit transition of a node (ANI-003). |
+| `exit` | [AnimTransition](#animtransition) |  | An enter or exit transition of a node (ANI-003). |
+| `hero` | JSON value |  | The hero tag, a string. |
+| `reduceMotion` | [ReduceMotion](#reducemotion) |  | What an animation does when the platform asks to reduce motion (ANI-007): `skip` jumps to the final state, `shorten` plays at a quarter of the duration, `ignore` plays as declared (for motion that carries meaning). |
 
 ### PageDocument
 
@@ -475,9 +622,12 @@ A page: route, parameters, state, data, lifecycle and node tree (SCH-022). File:
 | `state` | list of [StateEntry](#stateentry) |  |  |
 | `dataSources` | list of [DataSource](#datasource) |  |  |
 | `lifecycle` | [Lifecycle](#lifecycle) |  | Lifecycle handlers (SCH-022). |
+| `triggers` | [Triggers](#triggers) |  | Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active. |
 | `routeOptions` | [RouteOptions](#routeoptions) |  | Route options (SCH-022, NAV-010). |
 | `security` | [PageSecurity](#pagesecurity) |  | Security flags (SCH-022). |
 | `root` | [Node](#node) | yes | A node of a page or component tree: a widget or a component instance (SCH-023). |
+| `forms` | list of [Form](#form) |  | The forms of the page (STA-020). |
+| `animations` | list of [Timeline](#timeline) |  |  |
 
 ### PageKind
 
@@ -537,7 +687,9 @@ A plugin: its pages, state, collections and requested capabilities (SCH-021). Fi
 | `types` | list of [TypeDecl](#typedecl) |  |  |
 | `state` | list of [StateEntry](#stateentry) |  |  |
 | `collections` | list of [Collection](#collection) |  |  |
+| `droppedCollections` | list of string |  | IDs of collections this document no longer declares. Their data is deleted from devices that still hold it; the publisher acknowledges the warning this raises (DB-005). |
 | `dataSources` | list of [DataSource](#datasource) |  |  |
+| `triggers` | [Triggers](#triggers) |  | Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active. |
 
 ### PushPolicy
 
@@ -547,6 +699,12 @@ Push notifications (NAV-008, ADR-0040): whether the app uses them, so a generate
 |---|---|---|---|
 | `enabled` | boolean | yes |  |
 | `payloadKey` | string |  | The payload key holding `{route, params}`; `plux` when absent. |
+
+### ReduceMotion
+
+What an animation does when the platform asks to reduce motion (ANI-007): `skip` jumps to the final state, `shorten` plays at a quarter of the duration, `ignore` plays as declared (for motion that carries meaning).
+
+One of `skip`, `shorten`, `ignore`.
 
 ### RequiredFeaturesPolicy
 
@@ -589,8 +747,130 @@ Route options (SCH-022, NAV-010).
 
 | Property | Type | Required | Description |
 |---|---|---|---|
-| `transition` | [Transition](#transition) |  | Page transition (NAV-010). |
+| `transition` | [Transition](#transition) |  | Page transition (NAV-010). `custom` plays the route timeline that `routeOptions.timeline` names. |
 | `guards` | list of [RouteGuard](#routeguard) |  |  |
+| `timeline` | string |  | The route timeline of a custom transition (NAV-010). |
+
+### Scenario
+
+What a page or flow does, given a situation: the steps taken and what must hold afterwards (TST-001).
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `name` | string | yes | The scenario's name in reports; unique within its file. |
+| `description` | string |  |  |
+| `page` | string |  | The route of the page under test, started with the `given` parameters. |
+| `flow` | string |  | The key of the plugin flow under test. |
+| `given` | [ScenarioGiven](#scenariogiven) |  | The situation a scenario starts in. |
+| `steps` | list of [ScenarioStep](#scenariostep) |  |  |
+| `expect` | list of [ScenarioExpectation](#scenarioexpectation) | yes |  |
+
+### ScenarioCall
+
+A step that ran, by the action's or function's name, with the inputs it must have had; inputs not listed are not compared.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `name` | string | yes |  |
+| `args` | map of JSON value |  |  |
+| `times` | integer |  | How often it ran; at least once when absent. |
+
+### ScenarioDataSource
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `state` | [ScenarioMockState](#scenariomockstate) | yes |  |
+| `mock` | JSON value |  | A JSON value interpreted against a declared type (defaults, mocks, environment values). |
+
+### ScenarioDocument
+
+One or more declarative test scenarios of pages or flows (TST-001). Files: `tests/**/*.scenario.yaml` or `.json`, found through `tests` in `plux.yaml`.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `schemaVersion` | string | yes | Version of the document schema (SCH-000). Older documents are migrated before validation. |
+| `kind` | `"scenarios"` | yes |  |
+| `scenarios` | list of [Scenario](#scenario) | yes |  |
+
+### ScenarioEnterText
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `testId` | string | yes | A node's `testId` (WGT-013). |
+| `text` | string | yes |  |
+
+### ScenarioExpectation
+
+One thing that must hold after the steps; exactly one of the keys.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `visible` | string |  | A node's `testId` (WGT-013). |
+| `notVisible` | string |  | A node's `testId` (WGT-013). |
+| `textEquals` | [ScenarioTextEquals](#scenariotextequals) |  |  |
+| `navigatedTo` | string |  | App-wide unique route name (SCH-025). |
+| `actionCalled` | [ScenarioCall](#scenariocall) |  | A step that ran, by the action's or function's name, with the inputs it must have had; inputs not listed are not compared. |
+| `functionCalled` | [ScenarioCall](#scenariocall) |  | A step that ran, by the action's or function's name, with the inputs it must have had; inputs not listed are not compared. |
+| `stateEquals` | map of JSON value |  | Exposed app state entries and the values they hold, by name. |
+
+### ScenarioGiven
+
+The situation a scenario starts in.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `params` | map of JSON value |  | The page's parameters, or the flow's inputs, by name, in their JSON form. |
+| `state` | map of JSON value |  | Exposed app state entries to set before the page opens, by name, in their JSON form. |
+| `dataSources` | map of [ScenarioDataSource](#scenariodatasource) |  | The state each data source shows (DAT-080), by source name, optionally with a mock replacing its design-time mock. |
+
+### ScenarioMockState
+
+One of `loading`, `empty`, `error`, `success`.
+
+### ScenarioScroll
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `testId` | string | yes | The scrollable to drag. |
+| `dx` | number |  | Logical pixels to drag horizontally; 0 when absent. |
+| `dy` | number |  | Logical pixels to drag vertically; 0 when absent. |
+
+### ScenarioStep
+
+One thing the user or the host does; exactly one of the keys.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `tap` | string |  | A node's `testId` (WGT-013). |
+| `enterText` | [ScenarioEnterText](#scenarioentertext) |  |  |
+| `scroll` | [ScenarioScroll](#scenarioscroll) |  |  |
+| `waitFor` | [ScenarioWaitFor](#scenariowaitfor) |  | Pumps frames until the node is visible or the timeout passes. |
+| `trigger` | [ScenarioTrigger](#scenariotrigger) |  | Sends a host event into the app (HST-013). |
+
+### ScenarioTextEquals
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `testId` | string | yes | A node's `testId` (WGT-013). |
+| `text` | string | yes |  |
+
+### ScenarioTrigger
+
+Sends a host event into the app (HST-013).
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `event` | string | yes | Identifier used in PXL and generated code: lowerCamelCase. |
+| `payload` | map of JSON value |  |  |
+
+### ScenarioWaitFor
+
+Pumps frames until the node is visible or the timeout passes.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `testId` | string | yes | A node's `testId` (WGT-013). |
+| `timeoutMs` | integer |  | How long to wait; 5000 when absent. |
 
 ### SecurityProfile
 
@@ -638,6 +918,16 @@ The content of a slot: one node, or a list of nodes for list slots.
 
 A [Node](#node) or a non-empty list of them.
 
+### Spring
+
+A spring that moves the timeline instead of its duration (ANI-006).
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `stiffness` | number |  |  |
+| `damping` | number |  |  |
+| `mass` | number |  |  |
+
 ### StartupMode
 
 Start-up mode (SYN-003).
@@ -667,6 +957,28 @@ A typed state entry with a default or a computed expression (STA-002, STA-004).
 | `persistence` | [Persistence](#persistence) |  | Where a state entry lives (STA-003). |
 | `sensitive` | boolean |  |  |
 | `exposed` | boolean |  | Readable and writable by the host (STA-030). |
+| `migration` | [StateMigration](#statemigration) |  | How a persisted state entry whose type changed since the previous release takes its stored value (STA-040): with `from`, the entry's type in the previous release, and `value`, an expression over `previous` (the stored value, of type `from`) giving the new value; or with `reset`, the declared default. |
+| `description` | string |  | Human-readable description. |
+
+### StateMigration
+
+How a persisted state entry whose type changed since the previous release takes its stored value (STA-040): with `from`, the entry's type in the previous release, and `value`, an expression over `previous` (the stored value, of type `from`) giving the new value; or with `reset`, the declared default.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `from` | string |  | Type expression of SCH-010, e.g. `string`, `decimal?`, `list<Transaction>`, `map<string,int>`. |
+| `value` | [Expr](#expr) |  | PXL binding (SCH-011). |
+| `reset` | boolean |  | Start from the declared default instead of the stored value. |
+| `description` | string |  | Human-readable description. |
+
+### StateWatcher
+
+Runs its handler when a state entry changes (ACT-002); `event` is the new value. A debounce policy on the handler waits for the value to settle.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `path` | string | yes | The state entry: <scope>.<name>. |
+| `handler` | [EventHandler](#eventhandler) | yes | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
 | `description` | string |  | Human-readable description. |
 
 ### Step
@@ -764,11 +1076,77 @@ Design tokens for light and dark modes (THM-001, THM-002). File: `theme.json`.
 | `name` | string | yes |  |
 | `tokens` | JSON value | yes | A design token or a group of tokens in the W3C Design Tokens format (THM-001). Dark-mode values are given in `$extensions.dev.plux.dark`. |
 
+### Timeline
+
+An animation timeline a page owns (ANI-002): keyframes of props of its nodes, played by `startAnimation` and `controlAnimation`, on page enter, or by a driver.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `id` | string | yes | Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). |
+| `name` | string | yes | Identifier used in PXL and generated code: lowerCamelCase. |
+| `durationMs` | integer | yes |  |
+| `delayMs` | integer |  |  |
+| `repeat` | integer |  | Plays after the first. |
+| `repeatForever` | boolean |  |  |
+| `reverse` | boolean |  | Each repeat plays backwards. |
+| `staggerMs` | integer |  | The delay per item index for nodes in item templates. |
+| `autoplay` | boolean |  | Plays when the page is shown. |
+| `scope` | [TimelineScope](#timelinescope) |  | What a timeline animates: nodes of its page, or the page itself in a route transition (NAV-010). |
+| `driver` | [TimelineDriver](#timelinedriver) |  | Moves a timeline with the scroll offset or the drag of a node instead of time (ANI-006). |
+| `spring` | [Spring](#spring) |  | A spring that moves the timeline instead of its duration (ANI-006). |
+| `reduceMotion` | [ReduceMotion](#reducemotion) |  | What an animation does when the platform asks to reduce motion (ANI-007): `skip` jumps to the final state, `shorten` plays at a quarter of the duration, `ignore` plays as declared (for motion that carries meaning). |
+| `tracks` | list of [Track](#track) | yes |  |
+| `description` | string |  | Human-readable description. |
+
+### TimelineDriver
+
+Moves a timeline with the scroll offset or the drag of a node instead of time (ANI-006).
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `kind` | [TimelineDriverKind](#timelinedriverkind) | yes | What moves a driven timeline (ANI-006). |
+| `node` | string | yes | Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). |
+| `extent` | number | yes | Logical pixels of scrolling or dragging that span the timeline. |
+
+### TimelineDriverKind
+
+What moves a driven timeline (ANI-006).
+
+One of `scroll`, `drag`.
+
+### TimelineScope
+
+What a timeline animates: nodes of its page, or the page itself in a route transition (NAV-010).
+
+One of `page`, `route`.
+
+### TimerTrigger
+
+A timer (ACT-002): it fires every intervalMs while its owner lives, or once, intervalMs after its owner starts, when repeat is false; `event` is the number of times it has fired.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `name` | string | yes | Identifier used in PXL and generated code: lowerCamelCase. |
+| `intervalMs` | integer | yes |  |
+| `repeat` | boolean |  | Fires every intervalMs; true when absent. |
+| `handler` | [EventHandler](#eventhandler) | yes | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
+| `description` | string |  | Human-readable description. |
+
+### Track
+
+The keyframes of one prop of one node (ANI-002); a route timeline's tracks name no node and animate `opacity`, `scale`, `slideX` or `slideY`.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `node` | string |  | Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). |
+| `prop` | string | yes | Identifier used in PXL and generated code: lowerCamelCase. |
+| `keyframes` | list of [Keyframe](#keyframe) | yes |  |
+
 ### Transition
 
-Page transition (NAV-010).
+Page transition (NAV-010). `custom` plays the route timeline that `routeOptions.timeline` names.
 
-One of `platform`, `fade`, `slideLeft`, `slideRight`, `slideUp`, `slideDown`, `scale`, `sharedAxis`, `none`.
+One of `platform`, `fade`, `slideLeft`, `slideRight`, `slideUp`, `slideDown`, `scale`, `sharedAxis`, `custom`, `none`.
 
 ### TranslationKey
 
@@ -804,6 +1182,21 @@ The messages of one locale, by translation-key identifier, in ICU MessageFormat 
 | `id` | string | yes | Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). |
 | `locale` | string | yes | BCP 47 language tag: language, optional script, optional region. |
 | `messages` | map of string | yes |  |
+
+### Triggers
+
+Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `timers` | list of [TimerTrigger](#timertrigger) |  |  |
+| `watch` | list of [StateWatcher](#statewatcher) |  |  |
+| `onAppResume` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
+| `onAppPause` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
+| `onPushOpened` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
+| `hostEvents` | map of [EventHandler](#eventhandler) |  | Handlers of host events sent into Plux, by declared host event name (HST-013); `event` is the event's payload. |
+| `dataSources` | map of [DataSourceTriggers](#datasourcetriggers) |  | Handlers of data-source events, by data source name. |
+| `onError` | [EventHandler](#eventhandler) |  | A trigger's handler: a reference to an action graph or an inline graph (SCH-023). |
 
 ### TypeDecl
 

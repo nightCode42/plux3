@@ -13,6 +13,8 @@ import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 
+import 'package:plux_flutter/src/bundle/container.dart';
+import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/store/release_record.dart';
 import 'package:plux_flutter/src/store/release_store.dart';
@@ -82,7 +84,12 @@ Future<int?> importBaseline({
         'baseline bundle ${e['file']} is missing',
       );
     }
-    verifyBundle(data, hash, limits: limits, supportsFeature: supportsFeature);
+    final container = verifyBundle(
+      data,
+      hash,
+      limits: limits,
+      supportsFeature: supportsFeature,
+    );
     final signature = DocumentSignature(
       keyId: e['keyId'] as String? ?? '',
       algorithm: e['algorithm'] as String? ?? '',
@@ -102,6 +109,13 @@ Future<int?> importBaseline({
         key: e['plugin'] as String? ?? '',
         version: e['version'] as int? ?? 0,
         hash: hex,
+        // From the verified bundle itself: the baseline file lists none,
+        // and the record keeps them so start-up opens only bundles that may
+        // declare triggers (ACT-002).
+        features:
+            fbs.Meta(container.ofKind(SectionKind.meta).single.data)
+                .requiredFeatures ??
+            const [],
       ),
     );
   }

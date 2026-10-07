@@ -1,7 +1,7 @@
 # 0040. Navigation: plain `Navigator` by default, router adapters as packages
 
 - **Status:** Accepted (maintainer, 2026-10-02, at R1's review)
-- **Date:** 2026-10-01
+- **Date:** 2026-10-01; revised 2026-10-04 (see [Revision](#revision-2026-10-04-custom-transitions-in-p5))
 - **Requirements:** `NAV-001`–`NAV-012`, `HST-010`, `HST-011`, `HST-031`, `SCH-040`, `BND-008`
 
 ## Context and problem
@@ -328,6 +328,15 @@ that could open a deep link or a shell.
 Every completed navigation emits `screen_view` with the target route, the source route,
 and the time on screen when the user leaves (Appendix G), under analytics consent
 (ADR-0034). Parameters are never recorded.
+
+## Revision (2026-10-04, custom transitions in P5)
+
+The custom timeline transition deferred above arrives in P5
+([ADR-0050](0050-animation-engine.md)): `routeOptions.transition` gains a reference to a
+timeline, an additive member; the compiler checks that the timeline animates only the
+opacity and transform of the incoming and outgoing page; the route's page builder drives
+it with the route's animation; and reduce motion applies. `NAV-010` can then end
+`DONE`.
 
 ## Consequences
 

@@ -31,9 +31,13 @@ func semantic(u *unit) {
 		}
 		g.navs = u.navigations(g)
 	}
+	if u.inFocus("app.json") {
+		u.checkTriggers(u.appTriggers, nil)
+	}
 	for _, pl := range u.plugins {
 		u.checkPlugin(pl)
 	}
+	u.checkFlowCycles()
 	u.checkRedirects()
 	u.checkGuards()
 	u.finishGraph()
@@ -41,6 +45,9 @@ func semantic(u *unit) {
 
 // checkPlugin checks a plugin's components, pages and graphs.
 func (u *unit) checkPlugin(pl *plugin) {
+	if u.inFocus(pl.file) {
+		u.checkTriggers(pl.triggers, pl)
+	}
 	for _, c := range pl.components {
 		if u.inFocus(c.file) {
 			u.checkComponent(c)
@@ -77,23 +84,27 @@ func (u *unit) checkPage(pg *page) {
 		pg.params = append(pg.params, u.checkParam(pl, p, file, ptr, true))
 	}
 	pg.state = u.checkState(pl, doc.State, file, pg.scope)
-	pg.sources = u.checkSources(pl, doc.DataSources, file)
+	pg.sources = u.checkSources(pl, doc.DataSources, file, pg.scope)
+	pg.forms = u.checkForms(pl, doc.Forms, doc.State, file)
 	if len(doc.Title) > 0 {
 		pg.title = u.checkRaw(vctx{file: file, ptr: "/title", scope: pg.scope, pl: pl, code: plxerr.PropTypeMismatch, from: doc.ID}, doc.Title, &texpr{name: "string"})
 	}
 	for _, n := range pg.nodes {
 		u.checkNode(n)
 	}
+	u.checkAnimations(pg)
 	for i, name := range []string{"onInit", "onEnter", "onResume", "onLeave", "onDispose"} {
 		if g := pg.graphs[name]; g != nil {
 			h := &handler{event: uint32(i), graph: g} //nolint:gosec // G115: five events.
 			if eh := lifecycleHandler(doc.Lifecycle, name); eh != nil {
-				u.concurrency(h, eh.Concurrency, file, plxerr.Pointer("lifecycle", name))
-				h.detached = eh.Detached != nil && *eh.Detached
+				c := vctx{file: file, ptr: plxerr.Pointer("lifecycle", name), pl: pl}
+				u.policy(h, eh, fbs.ConcurrencyQueue, c)
+				u.requireFeature(triggersFeature, c, false)
 			}
 			pg.lifecycle = append(pg.lifecycle, h)
 		}
 	}
+	u.checkTriggers(pg.triggers, pl)
 }
 
 // lifecycleHandler returns a lifecycle event's handler.
@@ -121,6 +132,7 @@ func (u *unit) checkComponent(c *component) {
 		c.props = append(c.props, out)
 	}
 	c.state = u.checkState(c.plugin, c.doc.State, c.file, c.root.scope)
+	c.forms = u.checkForms(c.plugin, c.doc.Forms, c.doc.State, c.file)
 	for _, n := range c.nodes {
 		u.checkNode(n)
 	}
@@ -154,6 +166,12 @@ var persistence = map[schema.Persistence]fbs.Persistence{
 
 // checkState checks state entries: defaults and computed expressions.
 func (u *unit) checkState(pl *plugin, entries []schema.StateEntry, file string, s *scope) []*stateEntry {
+	return u.checkEntries(pl, entries, file, s, false)
+}
+
+// checkEntries checks state entries; run is set for a graph's run
+// variables (STA-001).
+func (u *unit) checkEntries(pl *plugin, entries []schema.StateEntry, file string, s *scope, run bool) []*stateEntry {
 	var out []*stateEntry
 	for i, st := range entries {
 		ptr := plxerr.Pointer("state", strconv.Itoa(i))
@@ -185,6 +203,7 @@ func (u *unit) checkState(pl *plugin, entries []schema.StateEntry, file string, 
 		if e.sensitive && e.persistence == fbs.PersistencePersisted {
 			u.report(plxerr.SensitiveValueExposed, file, ptr+"/persistence", "sensitive state %q must use secure persistence, not persisted", st.Name)
 		}
+		u.checkEntryStorage(pl, &entries[i], e, te, file, ptr, run)
 		out = append(out, e)
 	}
 	return out
@@ -200,9 +219,10 @@ var dataSourceKinds = map[schema.DataSourceKind]fbs.DataSourceKind{
 
 // checkSources checks data sources: the mock against the type, and the
 // configuration as a value.
-func (u *unit) checkSources(pl *plugin, sources []schema.DataSource, file string) []*dataSource {
+func (u *unit) checkSources(pl *plugin, sources []schema.DataSource, file string, sc *scope) []*dataSource {
 	var out []*dataSource
-	for i, s := range sources {
+	for i := range sources {
+		s := &sources[i]
 		ptr := plxerr.Pointer("dataSources", strconv.Itoa(i))
 		d := &dataSource{id: uuidBytes(s.ID), name: s.Name, kind: dataSourceKinds[s.Kind], typ: s.Type}
 		if te, err := parseTypeExpr(s.Type); err == nil {
@@ -212,7 +232,15 @@ func (u *unit) checkSources(pl *plugin, sources []schema.DataSource, file string
 				u.checkRaw(literalCtx(pl, file, ptr+"/mock"), s.Mock, te)
 			}
 		}
-		if len(s.Config) > 0 {
+		switch {
+		case runsData(s.Kind):
+			d.config = u.checkDataSource(pl, s, file, ptr, sc)
+		case s.Kind == schema.DataSourceKindDatabase:
+			u.checkDatabaseSource(pl, s, file, ptr)
+			if len(s.Config) > 0 {
+				d.config = u.inferred(literalCtx(pl, file, ptr+"/config"), s.Config)
+			}
+		case len(s.Config) > 0:
 			d.config = u.inferred(literalCtx(pl, file, ptr+"/config"), s.Config)
 		}
 		out = append(out, d)
@@ -228,7 +256,7 @@ func (u *unit) checkDecls() {
 	if u.appScope != nil {
 		u.appState = u.checkState(nil, app.State, "app.json", u.appScope)
 	}
-	u.appSources = u.checkSources(nil, app.DataSources, "app.json")
+	u.appSources = u.checkSources(nil, app.DataSources, "app.json", u.appScope)
 	for i, f := range app.Flags {
 		ptr := plxerr.Pointer("flags", strconv.Itoa(i))
 		u.checkRaw(literalCtx(nil, "app.json", ptr+"/default"), f.Default, &texpr{name: string(f.Type)})
@@ -251,13 +279,16 @@ func (u *unit) checkDecls() {
 		}
 	}
 	u.checkCollections(nil, app.Collections, "app.json")
+	u.checkCollectionDecl(nil, app.Collections, app.DroppedCollections, "app.json")
 	u.checkShellTabs()
 	for _, pl := range u.plugins {
 		if pl.scope != nil {
 			pl.state = u.checkState(pl, pl.doc.State, pl.file, pl.scope)
 		}
-		pl.sources = u.checkSources(pl, pl.doc.DataSources, pl.file)
+		pl.sources = u.checkSources(pl, pl.doc.DataSources, pl.file, pl.scope)
+		u.checkSourceCount(pl)
 		u.checkCollections(pl, pl.doc.Collections, pl.file)
+		u.checkCollectionDecl(pl, pl.doc.Collections, pl.doc.DroppedCollections, pl.file)
 	}
 }
 

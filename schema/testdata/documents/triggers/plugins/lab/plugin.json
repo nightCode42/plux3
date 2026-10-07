@@ -1,0 +1,76 @@
+{
+  "description": "Plugin- and app-level triggers, error handlers and component events.",
+  "entryPage": "01f0c450-6c00-7000-8000-000000000604",
+  "icon": {
+    "monogram": {
+      "background": "#0B6E4F",
+      "text": "L"
+    }
+  },
+  "id": "01f0c450-6c00-7000-8000-000000000603",
+  "key": "lab",
+  "kind": "plugin",
+  "name": "Lab",
+  "pages": [
+    "01f0c450-6c00-7000-8000-000000000604"
+  ],
+  "schemaVersion": "1.0.0",
+  "state": [
+    {
+      "default": 0,
+      "id": "01f0c450-6c00-7000-8000-00000000060b",
+      "name": "seen",
+      "type": "int"
+    },
+    {
+      "default": 0,
+      "id": "01f0c450-6c00-7000-8000-00000000060c",
+      "name": "errors",
+      "type": "int"
+    }
+  ],
+  "team": "triggers",
+  "triggers": {
+    "onError": {
+      "steps": [
+        {
+          "action": "setState",
+          "id": "count",
+          "input": {
+            "path": "plugin.errors",
+            "value": {
+              "$expr": "plugin.errors + 1"
+            }
+          },
+          "next": "pass"
+        },
+        {
+          "action": "stop",
+          "id": "pass",
+          "input": {
+            "error": "passed on to the app"
+          }
+        }
+      ]
+    },
+    "watch": [
+      {
+        "handler": {
+          "steps": [
+            {
+              "action": "setState",
+              "id": "copy",
+              "input": {
+                "path": "plugin.seen",
+                "value": {
+                  "$expr": "event"
+                }
+              }
+            }
+          ]
+        },
+        "path": "app.pings"
+      }
+    ]
+  }
+}

@@ -2,7 +2,7 @@ name: plux_flutter
 description: >-
   The Plux runtime for Flutter. Syncs signed plugin bundles with delta
   updates and renders them as native widgets.
-version: 0.2.0
+version: 0.3.0
 repository: https://github.com/nightCode42/plux3/tree/main/packages/plux_flutter
 documentation: https://nightcode42.github.io/plux3/guides/host-app/
 topics: [server-driven-ui, plugins, ui, sdui]
@@ -26,6 +26,7 @@ dependencies:
   hooks: ^2.2.0
   http: ^1.6.0
   native_toolchain_c: ^0.19.3
+  url_launcher: ^6.3.3
   vector_graphics: ^1.2.3
 
 dev_dependencies:

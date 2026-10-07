@@ -33,6 +33,7 @@ final class _TestRenderer with AllowsEveryGuard implements PageRenderer {
     Map<String, Object?> params, {
     bool routed = false,
     void Function(Object? result)? onPop,
+    void Function(String event, Object? payload)? onEvent,
   }) {
     if (fail) throw StateError('broken page');
     return Text(

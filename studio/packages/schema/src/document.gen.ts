@@ -7,7 +7,7 @@
 export type JsonValue = null | boolean | number | string | readonly JsonValue[] | { readonly [key: string]: JsonValue };
 
 /** The `kind` of every document type (SCH-006). */
-export type DocumentKind = "actionGraph" | "app" | "assetIndex" | "component" | "nativeCatalogue" | "page" | "plugin" | "template" | "theme" | "translationKeys" | "translations";
+export type DocumentKind = "actionGraph" | "app" | "assetIndex" | "component" | "nativeCatalogue" | "page" | "plugin" | "scenarios" | "template" | "theme" | "translationKeys" | "translations";
 
 /** A named action graph: page-scoped when `page` is set, otherwise a plugin flow callable with typed inputs (§14.1, ACT-061). File: `plugins/<plugin>/actions/<key>.graph.json`. */
 export interface ActionGraphDocument {
@@ -27,6 +27,8 @@ export interface ActionGraphDocument {
   readonly inputs?: readonly Param[];
   /** Type expression of SCH-010, e.g. `string`, `decimal?`, `list<Transaction>`, `map<string,int>`. */
   readonly output?: string;
+  /** The run's variables: state of scope `run`, read and written as `run.<name>` by the graph's steps and gone when the run ends (STA-001). */
+  readonly state?: readonly StateEntry[];
   readonly steps: readonly Step[];
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
@@ -34,6 +36,20 @@ export interface ActionGraphDocument {
 
 /** When a staged release activates (SYN-004). */
 export type ActivationPolicy = "immediate" | "atSafePoint" | "nextLaunch";
+
+/** An enter or exit transition of a node (ANI-003). */
+export interface AnimTransition {
+  /** How a node moves in or out (ANI-003). */
+  readonly kind: AnimTransitionKind;
+  readonly durationMs?: number;
+  /** An animation curve (ANI-001, ANI-002). */
+  readonly curve?: Curve;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** How a node moves in or out (ANI-003). */
+export type AnimTransitionKind = "fade" | "scale" | "slideUp" | "slideDown" | "slideLeft" | "slideRight";
 
 /** An app: its plugins, theme, locales, environments, shared data and policies (SCH-020). File: `app.json`. */
 export interface AppDocument {
@@ -60,6 +76,8 @@ export interface AppDocument {
   readonly navigation?: NavigationPolicy;
   /** Keys of the app's plugins, in display order; each has a directory `plugins/<key>/`. */
   readonly plugins: readonly string[];
+  /** The capabilities the app approves for its plugins (SEC-080, ADR-0051); a release is published only when every plugin requests a subset. Without `deviceApis`, no device API is approved. `networkDomains` and `functions`, when listed, narrow what plugins may declare. Native routes are approved by the host's registration, not here. */
+  readonly capabilities?: ApprovedCapabilities;
   readonly environments: readonly Environment[];
   /** Non-secret environment variables available in PXL as `env.<name>` (DAT-003). */
   readonly variables?: readonly Field[];
@@ -78,6 +96,8 @@ export interface AppDocument {
   readonly types?: readonly TypeDecl[];
   readonly state?: readonly StateEntry[];
   readonly collections?: readonly Collection[];
+  /** IDs of collections this document no longer declares. Their data is deleted from devices that still hold it; the publisher acknowledges the warning this raises (DB-005). */
+  readonly droppedCollections?: readonly string[];
   /** Attributes the host provides about the signed-in user, available in PXL as `user.<name>`. */
   readonly userContext?: readonly Field[];
   readonly hostEvents?: readonly HostEventDecl[];
@@ -85,6 +105,17 @@ export interface AppDocument {
   readonly telemetry?: TelemetryPolicy;
   /** Push notifications (NAV-008, ADR-0040): whether the app uses them, so a generated project carries the platform configuration, and the payload key under which a notification names `{route, params}` for `Plux.handlePushPayload`. */
   readonly push?: PushPolicy;
+  /** Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active. */
+  readonly triggers?: Triggers;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** The capabilities the app approves for its plugins (SEC-080, ADR-0051); a release is published only when every plugin requests a subset. Without `deviceApis`, no device API is approved. `networkDomains` and `functions`, when listed, narrow what plugins may declare. Native routes are approved by the host's registration, not here. */
+export interface ApprovedCapabilities {
+  readonly deviceApis?: readonly DeviceAPI[];
+  readonly networkDomains?: readonly string[];
+  readonly functions?: readonly string[];
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
@@ -146,6 +177,26 @@ export interface Collection {
   readonly fields: readonly Field[];
   readonly primaryKey: readonly string[];
   readonly indexes?: readonly (readonly string[])[];
+  /** The collection's schema version, 1 when omitted. A publish that changes the fields, types or indexes raises it; devices migrate from the version they hold (DB-005). */
+  readonly version?: number;
+  /** How a device at an older version reaches this one: one plan per version it may hold. A change that loses data needs one (DB-005). */
+  readonly migrations?: readonly CollectionMigration[];
+  /** Human-readable description. */
+  readonly description?: string;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** The plan that takes a collection from version `from` to the next (DB-005): fields renamed, dropped or reset. */
+export interface CollectionMigration {
+  /** The version this plan starts from. */
+  readonly from: number;
+  /** Fields renamed, as new name to old name; their values are kept. */
+  readonly rename?: { readonly [key: string]: string };
+  /** Fields of the older version that are removed, with their values. The publisher acknowledges the warning this raises. */
+  readonly drop?: readonly string[];
+  /** Fields that are added without being nullable, or whose type narrows: every record's value starts again from the type's empty value (0, "", false, [] or {}), or null when nullable. The publisher acknowledges the warning this raises. */
+  readonly reset?: readonly string[];
   /** Human-readable description. */
   readonly description?: string;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
@@ -173,6 +224,8 @@ export interface ComponentDocument {
   readonly exported?: boolean;
   /** A node of a page or component tree: a widget or a component instance (SCH-023). */
   readonly root: Node;
+  /** The forms of the component (STA-020). */
+  readonly forms?: readonly Form[];
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
@@ -224,6 +277,9 @@ export interface ComponentSlot {
   readonly [extension: `x-${string}`]: unknown;
 }
 
+/** An animation curve (ANI-001, ANI-002). */
+export type Curve = "linear" | "easeIn" | "easeOut" | "easeInOut" | "fastOutSlowIn" | "decelerate" | "bounceIn" | "bounceOut" | "elasticOut" | "overshoot";
+
 /** A data source with its value type and design-time mock (SCH-024, DAT-080). */
 export interface DataSource {
   /** Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). */
@@ -244,6 +300,26 @@ export interface DataSource {
 }
 
 export type DataSourceKind = "rest" | "graphql" | "websocket" | "sse" | "function" | "database" | "static";
+
+/** Handlers of a data source's events (ACT-002): the loaded value is onLoaded's `event`, the error onFailed's; a stream's message, mapped to the source's type, is onMessage's; a transfer's progress is onProgress's (DAT-012, DAT-031); an offline mutation's replay ends in onSynced, onSyncFailed or onConflict, whose `event` names the operation, the idempotency key and the status (DAT-020). */
+export interface DataSourceTriggers {
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly onLoaded?: EventHandler;
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly onFailed?: EventHandler;
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly onMessage?: EventHandler;
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly onProgress?: EventHandler;
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly onSynced?: EventHandler;
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly onSyncFailed?: EventHandler;
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly onConflict?: EventHandler;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
 
 /** The links the app answers (NAV-008): its hosts for `https` links and its custom schemes, and path patterns mapped to routes. `https://<host>/p/<route-name>?…` always resolves, so no pattern may start with `/p/`. */
 export interface DeepLinkPolicy {
@@ -330,6 +406,65 @@ export interface FlagDecl {
 /** Type of a feature flag (ABT-006). */
 export type FlagType = "bool" | "int" | "double" | "string";
 
+/** A form (STA-020, ADR-0047): typed fields with their initial values and validators. Its state lives in the declaring page's or component's scope under the form's name: `values`, `errors`, `dirty`, `touched`, `status`, `valid` and `validating`. */
+export interface Form {
+  /** Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). */
+  readonly id: string;
+  /** Identifier used in PXL and generated code: lowerCamelCase. */
+  readonly name: string;
+  readonly fields: readonly FormField[];
+  /** Human-readable description. */
+  readonly description?: string;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** A field of a form: its type, initial value and validators, run in order (STA-020). */
+export interface FormField {
+  /** Identifier used in PXL and generated code: lowerCamelCase. */
+  readonly name: string;
+  /** Type expression of SCH-010, e.g. `string`, `decimal?`, `list<Transaction>`, `map<string,int>`. */
+  readonly type: string;
+  /** A JSON value interpreted against a declared type (defaults, mocks, environment values). */
+  readonly initial?: JsonValue;
+  readonly validators?: readonly FormValidator[];
+  /** Human-readable description. */
+  readonly description?: string;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** A validator of a form field. Each kind takes its own options: `min` and `max` (length, range, dateRange), `pattern` (regex), `region` (phone), `maxScale` and `maxIntegerDigits` (decimalPrecision), `rule` (custom), `$graph` and `debounceMs` (async); the compiler checks them against the kind and the field's type (PLX-1160-1169). */
+export interface FormValidator {
+  /** A built-in validator of a form field (STA-020, ADR-0047). */
+  readonly kind: FormValidatorKind;
+  /** The message shown when the value is invalid; the runtime's built-in message otherwise. */
+  readonly message?: string;
+  /** A JSON value interpreted against a declared type (defaults, mocks, environment values). */
+  readonly min?: JsonValue;
+  /** A JSON value interpreted against a declared type (defaults, mocks, environment values). */
+  readonly max?: JsonValue;
+  /** A pxl.regex.v1 pattern, checked at publish (PXL-003). */
+  readonly pattern?: string;
+  /** The ISO 3166-1 region of numbers written without a country calling code; the device locale's region when absent. */
+  readonly region?: string;
+  /** The most digits after the decimal point. */
+  readonly maxScale?: number;
+  /** The most digits before the decimal point. */
+  readonly maxIntegerDigits?: number;
+  /** PXL binding (SCH-011). */
+  readonly rule?: Expr;
+  /** Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). */
+  readonly $graph?: string;
+  /** How long the field stays unchanged before the asynchronous check runs. */
+  readonly debounceMs?: number;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** A built-in validator of a form field (STA-020, ADR-0047). */
+export type FormValidatorKind = "required" | "length" | "range" | "regex" | "email" | "phone" | "iban" | "dateRange" | "decimalPrecision" | "custom" | "async";
+
 /** A function the plugin may call, with an optional alias (FN-006). */
 export interface FunctionGrant {
   /** Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). */
@@ -354,11 +489,16 @@ export interface HostEventDecl {
   /** Identifier used in PXL and generated code: lowerCamelCase. */
   readonly name: string;
   readonly fields?: readonly Field[];
+  /** Who sends a host event: plugins to the host with `emitHostEvent` (`toHost`, the default), the host into Plux with `Plux.sendEvent` (`toPlux`), or both (HST-013). */
+  readonly direction?: HostEventDirection;
   /** Human-readable description. */
   readonly description?: string;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
+
+/** Who sends a host event: plugins to the host with `emitHostEvent` (`toHost`, the default), the host into Plux with `Plux.sendEvent` (`toPlux`), or both (HST-013). */
+export type HostEventDirection = "toHost" | "toPlux" | "both";
 
 /** An uploaded image or a generated monogram (SCH-020). */
 export interface Icon {
@@ -366,6 +506,17 @@ export interface Icon {
   readonly $asset?: string;
   /** Generated monogram icon. */
   readonly monogram?: Monogram;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** A value of a track at a time (ANI-002). */
+export interface Keyframe {
+  readonly atMs: number;
+  /** A prop value: a literal of the prop's type, or a binding (SCH-011). Literal objects and lists may contain bindings in their fields and items. */
+  readonly value: JsonValue;
+  /** The curve into this keyframe. */
+  readonly curve?: Curve;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
@@ -423,6 +574,8 @@ export interface NativeCatalogueDocument {
   readonly routes?: readonly NativeRoute[];
   readonly slots?: readonly NativeSlot[];
   readonly actions?: readonly NativeAction[];
+  /** The optional Plux packages the build registers, such as `plux_media`: a release that uses a device action whose package a build lacks is flagged for that build (RT-060, SEC-080). */
+  readonly packages?: readonly string[];
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
@@ -492,6 +645,28 @@ export interface Node {
   readonly testId?: string;
   /** Prop overrides per window size class; `compact` is the base and overrides cascade (WGT-010). */
   readonly responsive?: Responsive;
+  /** The animations of a node (ANI-001, ANI-003, ANI-004): `durationMs` animates the node's animatable props (numbers and colours) whenever their bound value changes; `enter` and `exit` play when the node is inserted or its visibility changes; `hero` is the tag of a shared-element transition. */
+  readonly animation?: NodeAnimation;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** The animations of a node (ANI-001, ANI-003, ANI-004): `durationMs` animates the node's animatable props (numbers and colours) whenever their bound value changes; `enter` and `exit` play when the node is inserted or its visibility changes; `hero` is the tag of a shared-element transition. */
+export interface NodeAnimation {
+  readonly durationMs?: number;
+  /** An animation curve (ANI-001, ANI-002). */
+  readonly curve?: Curve;
+  readonly delayMs?: number;
+  /** The props to animate; all that can be, when absent. */
+  readonly props?: readonly string[];
+  /** An enter or exit transition of a node (ANI-003). */
+  readonly enter?: AnimTransition;
+  /** An enter or exit transition of a node (ANI-003). */
+  readonly exit?: AnimTransition;
+  /** The hero tag, a string. */
+  readonly hero?: JsonValue;
+  /** What an animation does when the platform asks to reduce motion (ANI-007): `skip` jumps to the final state, `shorten` plays at a quarter of the duration, `ignore` plays as declared (for motion that carries meaning). */
+  readonly reduceMotion?: ReduceMotion;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
@@ -520,12 +695,17 @@ export interface PageDocument {
   readonly dataSources?: readonly DataSource[];
   /** Lifecycle handlers (SCH-022). */
   readonly lifecycle?: Lifecycle;
+  /** Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active. */
+  readonly triggers?: Triggers;
   /** Route options (SCH-022, NAV-010). */
   readonly routeOptions?: RouteOptions;
   /** Security flags (SCH-022). */
   readonly security?: PageSecurity;
   /** A node of a page or component tree: a widget or a component instance (SCH-023). */
   readonly root: Node;
+  /** The forms of the page (STA-020). */
+  readonly forms?: readonly Form[];
+  readonly animations?: readonly Timeline[];
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
@@ -593,7 +773,11 @@ export interface PluginDocument {
   readonly types?: readonly TypeDecl[];
   readonly state?: readonly StateEntry[];
   readonly collections?: readonly Collection[];
+  /** IDs of collections this document no longer declares. Their data is deleted from devices that still hold it; the publisher acknowledges the warning this raises (DB-005). */
+  readonly droppedCollections?: readonly string[];
   readonly dataSources?: readonly DataSource[];
+  /** Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active. */
+  readonly triggers?: Triggers;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
@@ -606,6 +790,9 @@ export interface PushPolicy {
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
+
+/** What an animation does when the platform asks to reduce motion (ANI-007): `skip` jumps to the final state, `shorten` plays at a quarter of the duration, `ignore` plays as declared (for motion that carries meaning). */
+export type ReduceMotion = "skip" | "shorten" | "ignore";
 
 /** What the compiler does when a release needs a newer runtime than `minRuntimeVersion`: reject the publish, or raise the release's required features with a warning (WGT-004). */
 export type RequiredFeaturesPolicy = "reject" | "raise";
@@ -641,9 +828,149 @@ export interface RouteGuard {
 
 /** Route options (SCH-022, NAV-010). */
 export interface RouteOptions {
-  /** Page transition (NAV-010). */
+  /** Page transition (NAV-010). `custom` plays the route timeline that `routeOptions.timeline` names. */
   readonly transition?: Transition;
   readonly guards?: readonly RouteGuard[];
+  /** The route timeline of a custom transition (NAV-010). */
+  readonly timeline?: string;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** What a page or flow does, given a situation: the steps taken and what must hold afterwards (TST-001). */
+export interface Scenario {
+  /** The scenario's name in reports; unique within its file. */
+  readonly name: string;
+  readonly description?: string;
+  /** The route of the page under test, started with the `given` parameters. */
+  readonly page?: string;
+  /** The key of the plugin flow under test. */
+  readonly flow?: string;
+  /** The situation a scenario starts in. */
+  readonly given?: ScenarioGiven;
+  readonly steps?: readonly ScenarioStep[];
+  readonly expect: readonly ScenarioExpectation[];
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** A step that ran, by the action's or function's name, with the inputs it must have had; inputs not listed are not compared. */
+export interface ScenarioCall {
+  readonly name: string;
+  readonly args?: { readonly [key: string]: JsonValue };
+  /** How often it ran; at least once when absent. */
+  readonly times?: number;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+export interface ScenarioDataSource {
+  readonly state: ScenarioMockState;
+  /** A JSON value interpreted against a declared type (defaults, mocks, environment values). */
+  readonly mock?: JsonValue;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** One or more declarative test scenarios of pages or flows (TST-001). Files: `tests/**\/*.scenario.yaml` or `.json`, found through `tests` in `plux.yaml`. */
+export interface ScenarioDocument {
+  /** Version of the document schema (SCH-000). Older documents are migrated before validation. */
+  readonly schemaVersion: string;
+  readonly kind: "scenarios";
+  readonly scenarios: readonly Scenario[];
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+export interface ScenarioEnterText {
+  /** A node's `testId` (WGT-013). */
+  readonly testId: string;
+  readonly text: string;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** One thing that must hold after the steps; exactly one of the keys. */
+export interface ScenarioExpectation {
+  /** A node's `testId` (WGT-013). */
+  readonly visible?: string;
+  /** A node's `testId` (WGT-013). */
+  readonly notVisible?: string;
+  readonly textEquals?: ScenarioTextEquals;
+  /** App-wide unique route name (SCH-025). */
+  readonly navigatedTo?: string;
+  /** A step that ran, by the action's or function's name, with the inputs it must have had; inputs not listed are not compared. */
+  readonly actionCalled?: ScenarioCall;
+  /** A step that ran, by the action's or function's name, with the inputs it must have had; inputs not listed are not compared. */
+  readonly functionCalled?: ScenarioCall;
+  /** Exposed app state entries and the values they hold, by name. */
+  readonly stateEquals?: { readonly [key: string]: JsonValue };
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** The situation a scenario starts in. */
+export interface ScenarioGiven {
+  /** The page's parameters, or the flow's inputs, by name, in their JSON form. */
+  readonly params?: { readonly [key: string]: JsonValue };
+  /** Exposed app state entries to set before the page opens, by name, in their JSON form. */
+  readonly state?: { readonly [key: string]: JsonValue };
+  /** The state each data source shows (DAT-080), by source name, optionally with a mock replacing its design-time mock. */
+  readonly dataSources?: { readonly [key: string]: ScenarioDataSource };
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+export type ScenarioMockState = "loading" | "empty" | "error" | "success";
+
+export interface ScenarioScroll {
+  /** The scrollable to drag. */
+  readonly testId: string;
+  /** Logical pixels to drag horizontally; 0 when absent. */
+  readonly dx?: number;
+  /** Logical pixels to drag vertically; 0 when absent. */
+  readonly dy?: number;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** One thing the user or the host does; exactly one of the keys. */
+export interface ScenarioStep {
+  /** A node's `testId` (WGT-013). */
+  readonly tap?: string;
+  readonly enterText?: ScenarioEnterText;
+  readonly scroll?: ScenarioScroll;
+  /** Pumps frames until the node is visible or the timeout passes. */
+  readonly waitFor?: ScenarioWaitFor;
+  /** Sends a host event into the app (HST-013). */
+  readonly trigger?: ScenarioTrigger;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+export interface ScenarioTextEquals {
+  /** A node's `testId` (WGT-013). */
+  readonly testId: string;
+  readonly text: string;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** Sends a host event into the app (HST-013). */
+export interface ScenarioTrigger {
+  /** Identifier used in PXL and generated code: lowerCamelCase. */
+  readonly event: string;
+  readonly payload?: { readonly [key: string]: JsonValue };
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** Pumps frames until the node is visible or the timeout passes. */
+export interface ScenarioWaitFor {
+  /** A node's `testId` (WGT-013). */
+  readonly testId: string;
+  /** How long to wait; 5000 when absent. */
+  readonly timeoutMs?: number;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
@@ -693,6 +1020,15 @@ export interface ShellTab {
 /** The content of a slot: one node, or a list of nodes for list slots. */
 export type SlotFill = Node | readonly Node[];
 
+/** A spring that moves the timeline instead of its duration (ANI-006). */
+export interface Spring {
+  readonly stiffness?: number;
+  readonly damping?: number;
+  readonly mass?: number;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
 /** Start-up mode (SYN-003). */
 export type StartupMode = "useCacheThenSync" | "blockUntilSynced";
 
@@ -722,6 +1058,34 @@ export interface StateEntry {
   readonly sensitive?: boolean;
   /** Readable and writable by the host (STA-030). */
   readonly exposed?: boolean;
+  /** How a persisted state entry whose type changed since the previous release takes its stored value (STA-040): with `from`, the entry's type in the previous release, and `value`, an expression over `previous` (the stored value, of type `from`) giving the new value; or with `reset`, the declared default. */
+  readonly migration?: StateMigration;
+  /** Human-readable description. */
+  readonly description?: string;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** How a persisted state entry whose type changed since the previous release takes its stored value (STA-040): with `from`, the entry's type in the previous release, and `value`, an expression over `previous` (the stored value, of type `from`) giving the new value; or with `reset`, the declared default. */
+export interface StateMigration {
+  /** Type expression of SCH-010, e.g. `string`, `decimal?`, `list<Transaction>`, `map<string,int>`. */
+  readonly from?: string;
+  /** PXL binding (SCH-011). */
+  readonly value?: Expr;
+  /** Start from the declared default instead of the stored value. */
+  readonly reset?: boolean;
+  /** Human-readable description. */
+  readonly description?: string;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** Runs its handler when a state entry changes (ACT-002); `event` is the new value. A debounce policy on the handler waits for the value to settle. */
+export interface StateWatcher {
+  /** The state entry: <scope>.<name>. */
+  readonly path: string;
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly handler: EventHandler;
   /** Human-readable description. */
   readonly description?: string;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
@@ -841,8 +1205,84 @@ export interface ThemeDocument {
   readonly [extension: `x-${string}`]: unknown;
 }
 
-/** Page transition (NAV-010). */
-export type Transition = "platform" | "fade" | "slideLeft" | "slideRight" | "slideUp" | "slideDown" | "scale" | "sharedAxis" | "none";
+/** An animation timeline a page owns (ANI-002): keyframes of props of its nodes, played by `startAnimation` and `controlAnimation`, on page enter, or by a driver. */
+export interface Timeline {
+  /** Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). */
+  readonly id: string;
+  /** Identifier used in PXL and generated code: lowerCamelCase. */
+  readonly name: string;
+  readonly durationMs: number;
+  readonly delayMs?: number;
+  /** Plays after the first. */
+  readonly repeat?: number;
+  readonly repeatForever?: boolean;
+  /** Each repeat plays backwards. */
+  readonly reverse?: boolean;
+  /** The delay per item index for nodes in item templates. */
+  readonly staggerMs?: number;
+  /** Plays when the page is shown. */
+  readonly autoplay?: boolean;
+  /** What a timeline animates: nodes of its page, or the page itself in a route transition (NAV-010). */
+  readonly scope?: TimelineScope;
+  /** Moves a timeline with the scroll offset or the drag of a node instead of time (ANI-006). */
+  readonly driver?: TimelineDriver;
+  /** A spring that moves the timeline instead of its duration (ANI-006). */
+  readonly spring?: Spring;
+  /** What an animation does when the platform asks to reduce motion (ANI-007): `skip` jumps to the final state, `shorten` plays at a quarter of the duration, `ignore` plays as declared (for motion that carries meaning). */
+  readonly reduceMotion?: ReduceMotion;
+  readonly tracks: readonly Track[];
+  /** Human-readable description. */
+  readonly description?: string;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** Moves a timeline with the scroll offset or the drag of a node instead of time (ANI-006). */
+export interface TimelineDriver {
+  /** What moves a driven timeline (ANI-006). */
+  readonly kind: TimelineDriverKind;
+  /** Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). */
+  readonly node: string;
+  /** Logical pixels of scrolling or dragging that span the timeline. */
+  readonly extent: number;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** What moves a driven timeline (ANI-006). */
+export type TimelineDriverKind = "scroll" | "drag";
+
+/** What a timeline animates: nodes of its page, or the page itself in a route transition (NAV-010). */
+export type TimelineScope = "page" | "route";
+
+/** A timer (ACT-002): it fires every intervalMs while its owner lives, or once, intervalMs after its owner starts, when repeat is false; `event` is the number of times it has fired. */
+export interface TimerTrigger {
+  /** Identifier used in PXL and generated code: lowerCamelCase. */
+  readonly name: string;
+  readonly intervalMs: number;
+  /** Fires every intervalMs; true when absent. */
+  readonly repeat?: boolean;
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly handler: EventHandler;
+  /** Human-readable description. */
+  readonly description?: string;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** The keyframes of one prop of one node (ANI-002); a route timeline's tracks name no node and animate `opacity`, `scale`, `slideX` or `slideY`. */
+export interface Track {
+  /** Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). */
+  readonly node?: string;
+  /** Identifier used in PXL and generated code: lowerCamelCase. */
+  readonly prop: string;
+  readonly keyframes: readonly Keyframe[];
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** Page transition (NAV-010). `custom` plays the route timeline that `routeOptions.timeline` names. */
+export type Transition = "platform" | "fade" | "slideLeft" | "slideRight" | "slideUp" | "slideDown" | "scale" | "sharedAxis" | "custom" | "none";
 
 /** A translation key. */
 export interface TranslationKey {
@@ -879,6 +1319,26 @@ export interface TranslationsDocument {
   /** BCP 47 language tag: language, optional script, optional region. */
   readonly locale: string;
   readonly messages: { readonly [key: string]: string };
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active. */
+export interface Triggers {
+  readonly timers?: readonly TimerTrigger[];
+  readonly watch?: readonly StateWatcher[];
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly onAppResume?: EventHandler;
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly onAppPause?: EventHandler;
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly onPushOpened?: EventHandler;
+  /** Handlers of host events sent into Plux, by declared host event name (HST-013); `event` is the event's payload. */
+  readonly hostEvents?: { readonly [key: string]: EventHandler };
+  /** Handlers of data-source events, by data source name. */
+  readonly dataSources?: { readonly [key: string]: DataSourceTriggers };
+  /** A trigger's handler: a reference to an action graph or an inline graph (SCH-023). */
+  readonly onError?: EventHandler;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }

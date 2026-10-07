@@ -1,0 +1,192 @@
+{
+  "id": "01d0c450-6c00-7000-8000-000000000213",
+  "key": "result",
+  "kind": "page",
+  "pageKind": "screen",
+  "params": [
+    {
+      "mock": true,
+      "name": "ok",
+      "required": true,
+      "type": "bool"
+    },
+    {
+      "mock": 1250,
+      "name": "amountCents",
+      "required": true,
+      "type": "int"
+    },
+    {
+      "mock": 248750,
+      "name": "balanceCents",
+      "required": true,
+      "type": "int"
+    },
+    {
+      "mock": "",
+      "name": "message",
+      "required": true,
+      "type": "string"
+    }
+  ],
+  "root": {
+    "id": "01d0c450-6c00-7000-8000-00000000204f",
+    "slots": {
+      "appBar": {
+        "id": "01d0c450-6c00-7000-8000-00000000204e",
+        "slots": {
+          "title": {
+            "id": "01d0c450-6c00-7000-8000-00000000204d",
+            "props": {
+              "data": {
+                "$t": "01d0c450-6c00-7000-8000-000000000294"
+              }
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "id": "01d0c450-6c00-7000-8000-00000000204c",
+        "props": {
+          "padding": {
+            "all": 24.0
+          }
+        },
+        "slots": {
+          "child": {
+            "children": [
+              {
+                "id": "01d0c450-6c00-7000-8000-000000002047",
+                "props": {
+                  "condition": {
+                    "$expr": "params.ok"
+                  }
+                },
+                "slots": {
+                  "else": {
+                    "children": [
+                      {
+                        "id": "01d0c450-6c00-7000-8000-000000002044",
+                        "props": {
+                          "data": {
+                            "$t": "01d0c450-6c00-7000-8000-000000000292"
+                          }
+                        },
+                        "testId": "result-failed",
+                        "type": "Text"
+                      },
+                      {
+                        "id": "01d0c450-6c00-7000-8000-000000002045",
+                        "props": {
+                          "data": {
+                            "$expr": "params.message"
+                          }
+                        },
+                        "testId": "result-message",
+                        "type": "Text"
+                      }
+                    ],
+                    "id": "01d0c450-6c00-7000-8000-000000002046",
+                    "props": {
+                      "crossAxisAlignment": "stretch"
+                    },
+                    "type": "Column"
+                  },
+                  "then": {
+                    "children": [
+                      {
+                        "id": "01d0c450-6c00-7000-8000-000000002040",
+                        "props": {
+                          "data": {
+                            "$t": "01d0c450-6c00-7000-8000-000000000291"
+                          }
+                        },
+                        "testId": "result-title",
+                        "type": "Text"
+                      },
+                      {
+                        "id": "01d0c450-6c00-7000-8000-000000002041",
+                        "props": {
+                          "data": {
+                            "$expr": "\"Amount: \" + string(div(decimal(params.amountCents), 100d, 2)) + \" EUR\""
+                          }
+                        },
+                        "testId": "result-amount",
+                        "type": "Text"
+                      },
+                      {
+                        "id": "01d0c450-6c00-7000-8000-000000002042",
+                        "props": {
+                          "data": {
+                            "$expr": "\"New balance: \" + string(div(decimal(params.balanceCents), 100d, 2)) + \" EUR\""
+                          }
+                        },
+                        "testId": "result-balance",
+                        "type": "Text"
+                      }
+                    ],
+                    "id": "01d0c450-6c00-7000-8000-000000002043",
+                    "props": {
+                      "crossAxisAlignment": "stretch"
+                    },
+                    "type": "Column"
+                  }
+                },
+                "type": "If"
+              },
+              {
+                "id": "01d0c450-6c00-7000-8000-000000002048",
+                "props": {
+                  "height": 12.0
+                },
+                "type": "SizedBox"
+              },
+              {
+                "events": {
+                  "onPressed": {
+                    "steps": [
+                      {
+                        "action": "navigate",
+                        "id": "go",
+                        "input": {
+                          "mode": "popUntil",
+                          "route": "dashboard"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01d0c450-6c00-7000-8000-00000000204a",
+                "slots": {
+                  "child": {
+                    "id": "01d0c450-6c00-7000-8000-000000002049",
+                    "props": {
+                      "data": {
+                        "$t": "01d0c450-6c00-7000-8000-000000000293"
+                      }
+                    },
+                    "type": "Text"
+                  }
+                },
+                "testId": "back",
+                "type": "FilledButton"
+              }
+            ],
+            "id": "01d0c450-6c00-7000-8000-00000000204b",
+            "props": {
+              "crossAxisAlignment": "stretch"
+            },
+            "type": "Column"
+          }
+        },
+        "type": "Padding"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "result",
+  "schemaVersion": "1.0.0",
+  "title": "Result"
+}

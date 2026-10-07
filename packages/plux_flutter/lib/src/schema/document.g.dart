@@ -23,7 +23,7 @@ final class JsonValue {
 /// flow callable with typed inputs (§14.1, ACT-061). File:
 /// `plugins/<plugin>/actions/<key>.graph.json`.
 final class ActionGraphDocument {
-  const ActionGraphDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, this.description, this.page, this.exported, this.inputs, this.output, required this.steps});
+  const ActionGraphDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, this.description, this.page, this.exported, this.inputs, this.output, this.state, required this.steps});
 
   /// Decodes a JSON object.
   factory ActionGraphDocument.fromJson(Object json) {
@@ -38,6 +38,7 @@ final class ActionGraphDocument {
       exported: m['exported'] == null ? null : m['exported']! as bool,
       inputs: m['inputs'] == null ? null : [for (final e in m['inputs']! as List<Object?>) Param.fromJson(e!)],
       output: m['output'] == null ? null : m['output']! as String,
+      state: m['state'] == null ? null : [for (final e in m['state']! as List<Object?>) StateEntry.fromJson(e!)],
       steps: [for (final e in m['steps']! as List<Object?>) Step.fromJson(e!)],
     );
   }
@@ -61,6 +62,9 @@ final class ActionGraphDocument {
   /// Type expression of SCH-010, e.g. `string`, `decimal?`,
   /// `list<Transaction>`, `map<string,int>`.
   final String? output;
+  /// The run's variables: state of scope `run`, read and written as
+  /// `run.<name>` by the graph's steps and gone when the run ends (STA-001).
+  final List<StateEntry>? state;
   final List<Step> steps;
 
   /// Encodes a JSON object.
@@ -74,6 +78,7 @@ final class ActionGraphDocument {
         if (exported != null) 'exported': exported!,
         if (inputs != null) 'inputs': [for (final e in inputs!) e.toJson()],
         if (output != null) 'output': output!,
+        if (state != null) 'state': [for (final e in state!) e.toJson()],
         'steps': [for (final e in steps) e.toJson()],
       };
 }
@@ -97,10 +102,60 @@ enum ActivationPolicy {
   String toJson() => json;
 }
 
+/// An enter or exit transition of a node (ANI-003).
+final class AnimTransition {
+  const AnimTransition({required this.kind, this.durationMs, this.curve});
+
+  /// Decodes a JSON object.
+  factory AnimTransition.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return AnimTransition(
+      kind: AnimTransitionKind.fromJson(m['kind']!),
+      durationMs: m['durationMs'] == null ? null : (m['durationMs']! as num).toInt(),
+      curve: m['curve'] == null ? null : Curve.fromJson(m['curve']!),
+    );
+  }
+
+  /// How a node moves in or out (ANI-003).
+  final AnimTransitionKind kind;
+  final int? durationMs;
+  /// An animation curve (ANI-001, ANI-002).
+  final Curve? curve;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'kind': kind.toJson(),
+        if (durationMs != null) 'durationMs': durationMs!,
+        if (curve != null) 'curve': curve!.toJson(),
+      };
+}
+
+/// How a node moves in or out (ANI-003).
+enum AnimTransitionKind {
+  fade('fade'),
+  scale('scale'),
+  slideUp('slideUp'),
+  slideDown('slideDown'),
+  slideLeft('slideLeft'),
+  slideRight('slideRight');
+
+  const AnimTransitionKind(this.json);
+
+  /// Decodes a JSON value.
+  factory AnimTransitionKind.fromJson(Object json) =>
+      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown AnimTransitionKind', json));
+
+  /// The JSON value.
+  final String json;
+
+  /// Encodes the JSON value.
+  String toJson() => json;
+}
+
 /// An app: its plugins, theme, locales, environments, shared data and policies
 /// (SCH-020). File: `app.json`.
 final class AppDocument {
-  const AppDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.icon, required this.defaultLocale, required this.supportedLocales, required this.theme, required this.entryRoute, this.navigation, required this.plugins, required this.environments, this.variables, this.dataSources, this.nativeCatalogue, required this.securityProfile, required this.sync, required this.minRuntimeVersion, this.requiredFeatures, this.flags, this.types, this.state, this.collections, this.userContext, this.hostEvents, this.telemetry, this.push});
+  const AppDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.icon, required this.defaultLocale, required this.supportedLocales, required this.theme, required this.entryRoute, this.navigation, required this.plugins, this.capabilities, required this.environments, this.variables, this.dataSources, this.nativeCatalogue, required this.securityProfile, required this.sync, required this.minRuntimeVersion, this.requiredFeatures, this.flags, this.types, this.state, this.collections, this.droppedCollections, this.userContext, this.hostEvents, this.telemetry, this.push, this.triggers});
 
   /// Decodes a JSON object.
   factory AppDocument.fromJson(Object json) {
@@ -119,6 +174,7 @@ final class AppDocument {
       entryRoute: m['entryRoute']! as String,
       navigation: m['navigation'] == null ? null : NavigationPolicy.fromJson(m['navigation']!),
       plugins: [for (final e in m['plugins']! as List<Object?>) e! as String],
+      capabilities: m['capabilities'] == null ? null : ApprovedCapabilities.fromJson(m['capabilities']!),
       environments: [for (final e in m['environments']! as List<Object?>) Environment.fromJson(e!)],
       variables: m['variables'] == null ? null : [for (final e in m['variables']! as List<Object?>) Field.fromJson(e!)],
       dataSources: m['dataSources'] == null ? null : [for (final e in m['dataSources']! as List<Object?>) DataSource.fromJson(e!)],
@@ -131,10 +187,12 @@ final class AppDocument {
       types: m['types'] == null ? null : [for (final e in m['types']! as List<Object?>) TypeDecl.fromJson(e!)],
       state: m['state'] == null ? null : [for (final e in m['state']! as List<Object?>) StateEntry.fromJson(e!)],
       collections: m['collections'] == null ? null : [for (final e in m['collections']! as List<Object?>) Collection.fromJson(e!)],
+      droppedCollections: m['droppedCollections'] == null ? null : [for (final e in m['droppedCollections']! as List<Object?>) e! as String],
       userContext: m['userContext'] == null ? null : [for (final e in m['userContext']! as List<Object?>) Field.fromJson(e!)],
       hostEvents: m['hostEvents'] == null ? null : [for (final e in m['hostEvents']! as List<Object?>) HostEventDecl.fromJson(e!)],
       telemetry: m['telemetry'] == null ? null : TelemetryPolicy.fromJson(m['telemetry']!),
       push: m['push'] == null ? null : PushPolicy.fromJson(m['push']!),
+      triggers: m['triggers'] == null ? null : Triggers.fromJson(m['triggers']!),
     );
   }
 
@@ -165,6 +223,12 @@ final class AppDocument {
   /// Keys of the app's plugins, in display order; each has a directory
   /// `plugins/<key>/`.
   final List<String> plugins;
+  /// The capabilities the app approves for its plugins (SEC-080, ADR-0051); a
+  /// release is published only when every plugin requests a subset. Without
+  /// `deviceApis`, no device API is approved. `networkDomains` and `functions`,
+  /// when listed, narrow what plugins may declare. Native routes are approved
+  /// by the host's registration, not here.
+  final ApprovedCapabilities? capabilities;
   final List<Environment> environments;
   /// Non-secret environment variables available in PXL as `env.<name>`
   /// (DAT-003).
@@ -186,6 +250,10 @@ final class AppDocument {
   final List<TypeDecl>? types;
   final List<StateEntry>? state;
   final List<Collection>? collections;
+  /// IDs of collections this document no longer declares. Their data is deleted
+  /// from devices that still hold it; the publisher acknowledges the warning
+  /// this raises (DB-005).
+  final List<String>? droppedCollections;
   /// Attributes the host provides about the signed-in user, available in PXL as
   /// `user.<name>`.
   final List<Field>? userContext;
@@ -197,6 +265,10 @@ final class AppDocument {
   /// under which a notification names `{route, params}` for
   /// `Plux.handlePushPayload`.
   final PushPolicy? push;
+  /// Triggers besides widget events and page lifecycle (ACT-002), and the
+  /// owner's error handler (ACT-020). A page's runs are cancelled with the
+  /// page; a plugin's and the app's run while the release is active.
+  final Triggers? triggers;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
@@ -213,6 +285,7 @@ final class AppDocument {
         'entryRoute': entryRoute,
         if (navigation != null) 'navigation': navigation!.toJson(),
         'plugins': [for (final e in plugins) e],
+        if (capabilities != null) 'capabilities': capabilities!.toJson(),
         'environments': [for (final e in environments) e.toJson()],
         if (variables != null) 'variables': [for (final e in variables!) e.toJson()],
         if (dataSources != null) 'dataSources': [for (final e in dataSources!) e.toJson()],
@@ -225,10 +298,42 @@ final class AppDocument {
         if (types != null) 'types': [for (final e in types!) e.toJson()],
         if (state != null) 'state': [for (final e in state!) e.toJson()],
         if (collections != null) 'collections': [for (final e in collections!) e.toJson()],
+        if (droppedCollections != null) 'droppedCollections': [for (final e in droppedCollections!) e],
         if (userContext != null) 'userContext': [for (final e in userContext!) e.toJson()],
         if (hostEvents != null) 'hostEvents': [for (final e in hostEvents!) e.toJson()],
         if (telemetry != null) 'telemetry': telemetry!.toJson(),
         if (push != null) 'push': push!.toJson(),
+        if (triggers != null) 'triggers': triggers!.toJson(),
+      };
+}
+
+/// The capabilities the app approves for its plugins (SEC-080, ADR-0051); a
+/// release is published only when every plugin requests a subset. Without
+/// `deviceApis`, no device API is approved. `networkDomains` and `functions`,
+/// when listed, narrow what plugins may declare. Native routes are approved by
+/// the host's registration, not here.
+final class ApprovedCapabilities {
+  const ApprovedCapabilities({this.deviceApis, this.networkDomains, this.functions});
+
+  /// Decodes a JSON object.
+  factory ApprovedCapabilities.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ApprovedCapabilities(
+      deviceApis: m['deviceApis'] == null ? null : [for (final e in m['deviceApis']! as List<Object?>) DeviceAPI.fromJson(e!)],
+      networkDomains: m['networkDomains'] == null ? null : [for (final e in m['networkDomains']! as List<Object?>) e! as String],
+      functions: m['functions'] == null ? null : [for (final e in m['functions']! as List<Object?>) e! as String],
+    );
+  }
+
+  final List<DeviceAPI>? deviceApis;
+  final List<String>? networkDomains;
+  final List<String>? functions;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (deviceApis != null) 'deviceApis': [for (final e in deviceApis!) e.toJson()],
+        if (networkDomains != null) 'networkDomains': [for (final e in networkDomains!) e],
+        if (functions != null) 'functions': [for (final e in functions!) e],
       };
 }
 
@@ -374,7 +479,7 @@ final class Capabilities {
 
 /// A local database collection (DB-004).
 final class Collection {
-  const Collection({required this.id, required this.key, required this.fields, required this.primaryKey, this.indexes, this.description});
+  const Collection({required this.id, required this.key, required this.fields, required this.primaryKey, this.indexes, this.version, this.migrations, this.description});
 
   /// Decodes a JSON object.
   factory Collection.fromJson(Object json) {
@@ -385,6 +490,8 @@ final class Collection {
       fields: [for (final e in m['fields']! as List<Object?>) Field.fromJson(e!)],
       primaryKey: [for (final e in m['primaryKey']! as List<Object?>) e! as String],
       indexes: m['indexes'] == null ? null : [for (final e in m['indexes']! as List<Object?>) [for (final e in e! as List<Object?>) e! as String]],
+      version: m['version'] == null ? null : (m['version']! as num).toInt(),
+      migrations: m['migrations'] == null ? null : [for (final e in m['migrations']! as List<Object?>) CollectionMigration.fromJson(e!)],
       description: m['description'] == null ? null : m['description']! as String,
     );
   }
@@ -397,6 +504,13 @@ final class Collection {
   final List<Field> fields;
   final List<String> primaryKey;
   final List<List<String>>? indexes;
+  /// The collection's schema version, 1 when omitted. A publish that changes
+  /// the fields, types or indexes raises it; devices migrate from the version
+  /// they hold (DB-005).
+  final int? version;
+  /// How a device at an older version reaches this one: one plan per version it
+  /// may hold. A change that loses data needs one (DB-005).
+  final List<CollectionMigration>? migrations;
   /// Human-readable description.
   final String? description;
 
@@ -407,6 +521,50 @@ final class Collection {
         'fields': [for (final e in fields) e.toJson()],
         'primaryKey': [for (final e in primaryKey) e],
         if (indexes != null) 'indexes': [for (final e in indexes!) [for (final e in e) e]],
+        if (version != null) 'version': version!,
+        if (migrations != null) 'migrations': [for (final e in migrations!) e.toJson()],
+        if (description != null) 'description': description!,
+      };
+}
+
+/// The plan that takes a collection from version `from` to the next (DB-005):
+/// fields renamed, dropped or reset.
+final class CollectionMigration {
+  const CollectionMigration({required this.from, this.rename, this.drop, this.reset, this.description});
+
+  /// Decodes a JSON object.
+  factory CollectionMigration.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return CollectionMigration(
+      from: (m['from']! as num).toInt(),
+      rename: m['rename'] == null ? null : {for (final e in (m['rename']! as Map<String, Object?>).entries) e.key: e.value! as String},
+      drop: m['drop'] == null ? null : [for (final e in m['drop']! as List<Object?>) e! as String],
+      reset: m['reset'] == null ? null : [for (final e in m['reset']! as List<Object?>) e! as String],
+      description: m['description'] == null ? null : m['description']! as String,
+    );
+  }
+
+  /// The version this plan starts from.
+  final int from;
+  /// Fields renamed, as new name to old name; their values are kept.
+  final Map<String, String>? rename;
+  /// Fields of the older version that are removed, with their values. The
+  /// publisher acknowledges the warning this raises.
+  final List<String>? drop;
+  /// Fields that are added without being nullable, or whose type narrows: every
+  /// record's value starts again from the type's empty value (0, "", false, []
+  /// or {}), or null when nullable. The publisher acknowledges the warning this
+  /// raises.
+  final List<String>? reset;
+  /// Human-readable description.
+  final String? description;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'from': from,
+        if (rename != null) 'rename': {for (final e in rename!.entries) e.key: e.value},
+        if (drop != null) 'drop': [for (final e in drop!) e],
+        if (reset != null) 'reset': [for (final e in reset!) e],
         if (description != null) 'description': description!,
       };
 }
@@ -415,7 +573,7 @@ final class Collection {
 /// (SCH-030). File: `components/<key>.component.json` (app-shared) or
 /// `plugins/<plugin>/components/<key>.component.json`.
 final class ComponentDocument {
-  const ComponentDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.version, this.props, this.slots, this.events, this.state, this.exported, required this.root});
+  const ComponentDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.version, this.props, this.slots, this.events, this.state, this.exported, required this.root, this.forms});
 
   /// Decodes a JSON object.
   factory ComponentDocument.fromJson(Object json) {
@@ -434,6 +592,7 @@ final class ComponentDocument {
       state: m['state'] == null ? null : [for (final e in m['state']! as List<Object?>) StateEntry.fromJson(e!)],
       exported: m['exported'] == null ? null : m['exported']! as bool,
       root: Node.fromJson(m['root']!),
+      forms: m['forms'] == null ? null : [for (final e in m['forms']! as List<Object?>) Form.fromJson(e!)],
     );
   }
 
@@ -459,6 +618,8 @@ final class ComponentDocument {
   /// A node of a page or component tree: a widget or a component instance
   /// (SCH-023).
   final Node root;
+  /// The forms of the component (STA-020).
+  final List<Form>? forms;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
@@ -475,6 +636,7 @@ final class ComponentDocument {
         if (state != null) 'state': [for (final e in state!) e.toJson()],
         if (exported != null) 'exported': exported!,
         'root': root.toJson(),
+        if (forms != null) 'forms': [for (final e in forms!) e.toJson()],
       };
 }
 
@@ -600,6 +762,32 @@ final class ComponentSlot {
       };
 }
 
+/// An animation curve (ANI-001, ANI-002).
+enum Curve {
+  linear('linear'),
+  easeIn('easeIn'),
+  easeOut('easeOut'),
+  easeInOut('easeInOut'),
+  fastOutSlowIn('fastOutSlowIn'),
+  decelerate('decelerate'),
+  bounceIn('bounceIn'),
+  bounceOut('bounceOut'),
+  elasticOut('elasticOut'),
+  overshoot('overshoot');
+
+  const Curve(this.json);
+
+  /// Decodes a JSON value.
+  factory Curve.fromJson(Object json) =>
+      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown Curve', json));
+
+  /// The JSON value.
+  final String json;
+
+  /// Encodes the JSON value.
+  String toJson() => json;
+}
+
 /// A data source with its value type and design-time mock (SCH-024, DAT-080).
 final class DataSource {
   const DataSource({required this.id, required this.name, required this.kind, required this.type, required this.mock, this.config, this.description});
@@ -666,6 +854,63 @@ enum DataSourceKind {
 
   /// Encodes the JSON value.
   String toJson() => json;
+}
+
+/// Handlers of a data source's events (ACT-002): the loaded value is onLoaded's
+/// `event`, the error onFailed's; a stream's message, mapped to the source's
+/// type, is onMessage's; a transfer's progress is onProgress's (DAT-012,
+/// DAT-031); an offline mutation's replay ends in onSynced, onSyncFailed or
+/// onConflict, whose `event` names the operation, the idempotency key and the
+/// status (DAT-020).
+final class DataSourceTriggers {
+  const DataSourceTriggers({this.onLoaded, this.onFailed, this.onMessage, this.onProgress, this.onSynced, this.onSyncFailed, this.onConflict});
+
+  /// Decodes a JSON object.
+  factory DataSourceTriggers.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return DataSourceTriggers(
+      onLoaded: m['onLoaded'] == null ? null : EventHandler.fromJson(m['onLoaded']!),
+      onFailed: m['onFailed'] == null ? null : EventHandler.fromJson(m['onFailed']!),
+      onMessage: m['onMessage'] == null ? null : EventHandler.fromJson(m['onMessage']!),
+      onProgress: m['onProgress'] == null ? null : EventHandler.fromJson(m['onProgress']!),
+      onSynced: m['onSynced'] == null ? null : EventHandler.fromJson(m['onSynced']!),
+      onSyncFailed: m['onSyncFailed'] == null ? null : EventHandler.fromJson(m['onSyncFailed']!),
+      onConflict: m['onConflict'] == null ? null : EventHandler.fromJson(m['onConflict']!),
+    );
+  }
+
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler? onLoaded;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler? onFailed;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler? onMessage;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler? onProgress;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler? onSynced;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler? onSyncFailed;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler? onConflict;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (onLoaded != null) 'onLoaded': onLoaded!.toJson(),
+        if (onFailed != null) 'onFailed': onFailed!.toJson(),
+        if (onMessage != null) 'onMessage': onMessage!.toJson(),
+        if (onProgress != null) 'onProgress': onProgress!.toJson(),
+        if (onSynced != null) 'onSynced': onSynced!.toJson(),
+        if (onSyncFailed != null) 'onSyncFailed': onSyncFailed!.toJson(),
+        if (onConflict != null) 'onConflict': onConflict!.toJson(),
+      };
 }
 
 /// The links the app answers (NAV-008): its hosts for `https` links and its
@@ -944,6 +1189,176 @@ enum FlagType {
   String toJson() => json;
 }
 
+/// A form (STA-020, ADR-0047): typed fields with their initial values and
+/// validators. Its state lives in the declaring page's or component's scope
+/// under the form's name: `values`, `errors`, `dirty`, `touched`, `status`,
+/// `valid` and `validating`.
+final class Form {
+  const Form({required this.id, required this.name, required this.fields, this.description});
+
+  /// Decodes a JSON object.
+  factory Form.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return Form(
+      id: m['id']! as String,
+      name: m['name']! as String,
+      fields: [for (final e in m['fields']! as List<Object?>) FormField.fromJson(e!)],
+      description: m['description'] == null ? null : m['description']! as String,
+    );
+  }
+
+  /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
+  final String id;
+  /// Identifier used in PXL and generated code: lowerCamelCase.
+  final String name;
+  final List<FormField> fields;
+  /// Human-readable description.
+  final String? description;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'id': id,
+        'name': name,
+        'fields': [for (final e in fields) e.toJson()],
+        if (description != null) 'description': description!,
+      };
+}
+
+/// A field of a form: its type, initial value and validators, run in order
+/// (STA-020).
+final class FormField {
+  const FormField({required this.name, required this.type, this.initial, this.validators, this.description});
+
+  /// Decodes a JSON object.
+  factory FormField.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return FormField(
+      name: m['name']! as String,
+      type: m['type']! as String,
+      initial: m.containsKey('initial') ? JsonValue(m['initial']) : null,
+      validators: m['validators'] == null ? null : [for (final e in m['validators']! as List<Object?>) FormValidator.fromJson(e!)],
+      description: m['description'] == null ? null : m['description']! as String,
+    );
+  }
+
+  /// Identifier used in PXL and generated code: lowerCamelCase.
+  final String name;
+  /// Type expression of SCH-010, e.g. `string`, `decimal?`,
+  /// `list<Transaction>`, `map<string,int>`.
+  final String type;
+  /// A JSON value interpreted against a declared type (defaults, mocks,
+  /// environment values).
+  final JsonValue? initial;
+  final List<FormValidator>? validators;
+  /// Human-readable description.
+  final String? description;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'name': name,
+        'type': type,
+        if (initial != null) 'initial': initial!.value,
+        if (validators != null) 'validators': [for (final e in validators!) e.toJson()],
+        if (description != null) 'description': description!,
+      };
+}
+
+/// A validator of a form field. Each kind takes its own options: `min` and
+/// `max` (length, range, dateRange), `pattern` (regex), `region` (phone),
+/// `maxScale` and `maxIntegerDigits` (decimalPrecision), `rule` (custom),
+/// `$graph` and `debounceMs` (async); the compiler checks them against the kind
+/// and the field's type (PLX-1160-1169).
+final class FormValidator {
+  const FormValidator({required this.kind, this.message, this.min, this.max, this.pattern, this.region, this.maxScale, this.maxIntegerDigits, this.rule, this.graph, this.debounceMs});
+
+  /// Decodes a JSON object.
+  factory FormValidator.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return FormValidator(
+      kind: FormValidatorKind.fromJson(m['kind']!),
+      message: m['message'] == null ? null : m['message']! as String,
+      min: m.containsKey('min') ? JsonValue(m['min']) : null,
+      max: m.containsKey('max') ? JsonValue(m['max']) : null,
+      pattern: m['pattern'] == null ? null : m['pattern']! as String,
+      region: m['region'] == null ? null : m['region']! as String,
+      maxScale: m['maxScale'] == null ? null : (m['maxScale']! as num).toInt(),
+      maxIntegerDigits: m['maxIntegerDigits'] == null ? null : (m['maxIntegerDigits']! as num).toInt(),
+      rule: m['rule'] == null ? null : Expr.fromJson(m['rule']!),
+      graph: m['\$graph'] == null ? null : m['\$graph']! as String,
+      debounceMs: m['debounceMs'] == null ? null : (m['debounceMs']! as num).toInt(),
+    );
+  }
+
+  /// A built-in validator of a form field (STA-020, ADR-0047).
+  final FormValidatorKind kind;
+  /// The message shown when the value is invalid; the runtime's built-in
+  /// message otherwise.
+  final String? message;
+  /// A JSON value interpreted against a declared type (defaults, mocks,
+  /// environment values).
+  final JsonValue? min;
+  /// A JSON value interpreted against a declared type (defaults, mocks,
+  /// environment values).
+  final JsonValue? max;
+  /// A pxl.regex.v1 pattern, checked at publish (PXL-003).
+  final String? pattern;
+  /// The ISO 3166-1 region of numbers written without a country calling code;
+  /// the device locale's region when absent.
+  final String? region;
+  /// The most digits after the decimal point.
+  final int? maxScale;
+  /// The most digits before the decimal point.
+  final int? maxIntegerDigits;
+  /// PXL binding (SCH-011).
+  final Expr? rule;
+  /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
+  final String? graph;
+  /// How long the field stays unchanged before the asynchronous check runs.
+  final int? debounceMs;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'kind': kind.toJson(),
+        if (message != null) 'message': message!,
+        if (min != null) 'min': min!.value,
+        if (max != null) 'max': max!.value,
+        if (pattern != null) 'pattern': pattern!,
+        if (region != null) 'region': region!,
+        if (maxScale != null) 'maxScale': maxScale!,
+        if (maxIntegerDigits != null) 'maxIntegerDigits': maxIntegerDigits!,
+        if (rule != null) 'rule': rule!.toJson(),
+        if (graph != null) '\$graph': graph!,
+        if (debounceMs != null) 'debounceMs': debounceMs!,
+      };
+}
+
+/// A built-in validator of a form field (STA-020, ADR-0047).
+enum FormValidatorKind {
+  required('required'),
+  length('length'),
+  range('range'),
+  regex('regex'),
+  email('email'),
+  phone('phone'),
+  iban('iban'),
+  dateRange('dateRange'),
+  decimalPrecision('decimalPrecision'),
+  custom('custom'),
+  async('async');
+
+  const FormValidatorKind(this.json);
+
+  /// Decodes a JSON value.
+  factory FormValidatorKind.fromJson(Object json) =>
+      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown FormValidatorKind', json));
+
+  /// The JSON value.
+  final String json;
+
+  /// Encodes the JSON value.
+  String toJson() => json;
+}
+
 /// A function the plugin may call, with an optional alias (FN-006).
 final class FunctionGrant {
   const FunctionGrant({required this.id, required this.function, this.alias});
@@ -1000,7 +1415,7 @@ final class HostBuild {
 /// A typed event plugins send to the host app with `emitHostEvent`; `plux
 /// codegen` generates a Dart class for it (HST-013, HST-030, ADR-0039).
 final class HostEventDecl {
-  const HostEventDecl({required this.name, this.fields, this.description});
+  const HostEventDecl({required this.name, this.fields, this.direction, this.description});
 
   /// Decodes a JSON object.
   factory HostEventDecl.fromJson(Object json) {
@@ -1008,6 +1423,7 @@ final class HostEventDecl {
     return HostEventDecl(
       name: m['name']! as String,
       fields: m['fields'] == null ? null : [for (final e in m['fields']! as List<Object?>) Field.fromJson(e!)],
+      direction: m['direction'] == null ? null : HostEventDirection.fromJson(m['direction']!),
       description: m['description'] == null ? null : m['description']! as String,
     );
   }
@@ -1015,6 +1431,10 @@ final class HostEventDecl {
   /// Identifier used in PXL and generated code: lowerCamelCase.
   final String name;
   final List<Field>? fields;
+  /// Who sends a host event: plugins to the host with `emitHostEvent`
+  /// (`toHost`, the default), the host into Plux with `Plux.sendEvent`
+  /// (`toPlux`), or both (HST-013).
+  final HostEventDirection? direction;
   /// Human-readable description.
   final String? description;
 
@@ -1022,8 +1442,30 @@ final class HostEventDecl {
   Map<String, Object?> toJson() => {
         'name': name,
         if (fields != null) 'fields': [for (final e in fields!) e.toJson()],
+        if (direction != null) 'direction': direction!.toJson(),
         if (description != null) 'description': description!,
       };
+}
+
+/// Who sends a host event: plugins to the host with `emitHostEvent` (`toHost`,
+/// the default), the host into Plux with `Plux.sendEvent` (`toPlux`), or both
+/// (HST-013).
+enum HostEventDirection {
+  toHost('toHost'),
+  toPlux('toPlux'),
+  both('both');
+
+  const HostEventDirection(this.json);
+
+  /// Decodes a JSON value.
+  factory HostEventDirection.fromJson(Object json) =>
+      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown HostEventDirection', json));
+
+  /// The JSON value.
+  final String json;
+
+  /// Encodes the JSON value.
+  String toJson() => json;
 }
 
 /// An uploaded image or a generated monogram (SCH-020).
@@ -1048,6 +1490,35 @@ final class Icon {
   Map<String, Object?> toJson() => {
         if (asset != null) '\$asset': asset!,
         if (monogram != null) 'monogram': monogram!.toJson(),
+      };
+}
+
+/// A value of a track at a time (ANI-002).
+final class Keyframe {
+  const Keyframe({required this.atMs, required this.value, this.curve});
+
+  /// Decodes a JSON object.
+  factory Keyframe.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return Keyframe(
+      atMs: (m['atMs']! as num).toInt(),
+      value: m['value'],
+      curve: m['curve'] == null ? null : Curve.fromJson(m['curve']!),
+    );
+  }
+
+  final int atMs;
+  /// A prop value: a literal of the prop's type, or a binding (SCH-011).
+  /// Literal objects and lists may contain bindings in their fields and items.
+  final Object? value;
+  /// The curve into this keyframe.
+  final Curve? curve;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'atMs': atMs,
+        'value': value,
+        if (curve != null) 'curve': curve!.toJson(),
       };
 }
 
@@ -1178,7 +1649,7 @@ final class NativeAction {
 /// The native routes, native slots and custom actions of one host app build
 /// (SCH-032). File: `native-catalogue.json`.
 final class NativeCatalogueDocument {
-  const NativeCatalogueDocument({required this.schemaVersion, required this.kind, required this.id, required this.host, this.routes, this.slots, this.actions});
+  const NativeCatalogueDocument({required this.schemaVersion, required this.kind, required this.id, required this.host, this.routes, this.slots, this.actions, this.packages});
 
   /// Decodes a JSON object.
   factory NativeCatalogueDocument.fromJson(Object json) {
@@ -1191,6 +1662,7 @@ final class NativeCatalogueDocument {
       routes: m['routes'] == null ? null : [for (final e in m['routes']! as List<Object?>) NativeRoute.fromJson(e!)],
       slots: m['slots'] == null ? null : [for (final e in m['slots']! as List<Object?>) NativeSlot.fromJson(e!)],
       actions: m['actions'] == null ? null : [for (final e in m['actions']! as List<Object?>) NativeAction.fromJson(e!)],
+      packages: m['packages'] == null ? null : [for (final e in m['packages']! as List<Object?>) e! as String],
     );
   }
 
@@ -1205,6 +1677,10 @@ final class NativeCatalogueDocument {
   final List<NativeRoute>? routes;
   final List<NativeSlot>? slots;
   final List<NativeAction>? actions;
+  /// The optional Plux packages the build registers, such as `plux_media`: a
+  /// release that uses a device action whose package a build lacks is flagged
+  /// for that build (RT-060, SEC-080).
+  final List<String>? packages;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
@@ -1215,6 +1691,7 @@ final class NativeCatalogueDocument {
         if (routes != null) 'routes': [for (final e in routes!) e.toJson()],
         if (slots != null) 'slots': [for (final e in slots!) e.toJson()],
         if (actions != null) 'actions': [for (final e in actions!) e.toJson()],
+        if (packages != null) 'packages': [for (final e in packages!) e],
       };
 }
 
@@ -1341,7 +1818,7 @@ final class NavigationPolicy {
 /// A node of a page or component tree: a widget or a component instance
 /// (SCH-023).
 final class Node {
-  const Node({required this.id, this.type, this.component, this.props, this.events, this.children, this.slots, this.visible, this.semantics, this.testId, this.responsive});
+  const Node({required this.id, this.type, this.component, this.props, this.events, this.children, this.slots, this.visible, this.semantics, this.testId, this.responsive, this.animation});
 
   /// Decodes a JSON object.
   factory Node.fromJson(Object json) {
@@ -1358,6 +1835,7 @@ final class Node {
       semantics: m['semantics'] == null ? null : Semantics.fromJson(m['semantics']!),
       testId: m['testId'] == null ? null : m['testId']! as String,
       responsive: m['responsive'] == null ? null : Responsive.fromJson(m['responsive']!),
+      animation: m['animation'] == null ? null : NodeAnimation.fromJson(m['animation']!),
     );
   }
 
@@ -1381,6 +1859,11 @@ final class Node {
   /// Prop overrides per window size class; `compact` is the base and overrides
   /// cascade (WGT-010).
   final Responsive? responsive;
+  /// The animations of a node (ANI-001, ANI-003, ANI-004): `durationMs`
+  /// animates the node's animatable props (numbers and colours) whenever their
+  /// bound value changes; `enter` and `exit` play when the node is inserted or
+  /// its visibility changes; `hero` is the tag of a shared-element transition.
+  final NodeAnimation? animation;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
@@ -1395,13 +1878,66 @@ final class Node {
         if (semantics != null) 'semantics': semantics!.toJson(),
         if (testId != null) 'testId': testId!,
         if (responsive != null) 'responsive': responsive!.toJson(),
+        if (animation != null) 'animation': animation!.toJson(),
+      };
+}
+
+/// The animations of a node (ANI-001, ANI-003, ANI-004): `durationMs` animates
+/// the node's animatable props (numbers and colours) whenever their bound value
+/// changes; `enter` and `exit` play when the node is inserted or its visibility
+/// changes; `hero` is the tag of a shared-element transition.
+final class NodeAnimation {
+  const NodeAnimation({this.durationMs, this.curve, this.delayMs, this.props, this.enter, this.exit, this.hero, this.reduceMotion});
+
+  /// Decodes a JSON object.
+  factory NodeAnimation.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return NodeAnimation(
+      durationMs: m['durationMs'] == null ? null : (m['durationMs']! as num).toInt(),
+      curve: m['curve'] == null ? null : Curve.fromJson(m['curve']!),
+      delayMs: m['delayMs'] == null ? null : (m['delayMs']! as num).toInt(),
+      props: m['props'] == null ? null : [for (final e in m['props']! as List<Object?>) e! as String],
+      enter: m['enter'] == null ? null : AnimTransition.fromJson(m['enter']!),
+      exit: m['exit'] == null ? null : AnimTransition.fromJson(m['exit']!),
+      hero: m.containsKey('hero') ? JsonValue(m['hero']) : null,
+      reduceMotion: m['reduceMotion'] == null ? null : ReduceMotion.fromJson(m['reduceMotion']!),
+    );
+  }
+
+  final int? durationMs;
+  /// An animation curve (ANI-001, ANI-002).
+  final Curve? curve;
+  final int? delayMs;
+  /// The props to animate; all that can be, when absent.
+  final List<String>? props;
+  /// An enter or exit transition of a node (ANI-003).
+  final AnimTransition? enter;
+  /// An enter or exit transition of a node (ANI-003).
+  final AnimTransition? exit;
+  /// The hero tag, a string.
+  final JsonValue? hero;
+  /// What an animation does when the platform asks to reduce motion (ANI-007):
+  /// `skip` jumps to the final state, `shorten` plays at a quarter of the
+  /// duration, `ignore` plays as declared (for motion that carries meaning).
+  final ReduceMotion? reduceMotion;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (durationMs != null) 'durationMs': durationMs!,
+        if (curve != null) 'curve': curve!.toJson(),
+        if (delayMs != null) 'delayMs': delayMs!,
+        if (props != null) 'props': [for (final e in props!) e],
+        if (enter != null) 'enter': enter!.toJson(),
+        if (exit != null) 'exit': exit!.toJson(),
+        if (hero != null) 'hero': hero!.value,
+        if (reduceMotion != null) 'reduceMotion': reduceMotion!.toJson(),
       };
 }
 
 /// A page: route, parameters, state, data, lifecycle and node tree (SCH-022).
 /// File: `plugins/<plugin>/pages/<key>.page.json`.
 final class PageDocument {
-  const PageDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, this.route, required this.pageKind, required this.title, this.description, this.params, this.result, this.state, this.dataSources, this.lifecycle, this.routeOptions, this.security, required this.root});
+  const PageDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, this.route, required this.pageKind, required this.title, this.description, this.params, this.result, this.state, this.dataSources, this.lifecycle, this.triggers, this.routeOptions, this.security, required this.root, this.forms, this.animations});
 
   /// Decodes a JSON object.
   factory PageDocument.fromJson(Object json) {
@@ -1420,9 +1956,12 @@ final class PageDocument {
       state: m['state'] == null ? null : [for (final e in m['state']! as List<Object?>) StateEntry.fromJson(e!)],
       dataSources: m['dataSources'] == null ? null : [for (final e in m['dataSources']! as List<Object?>) DataSource.fromJson(e!)],
       lifecycle: m['lifecycle'] == null ? null : Lifecycle.fromJson(m['lifecycle']!),
+      triggers: m['triggers'] == null ? null : Triggers.fromJson(m['triggers']!),
       routeOptions: m['routeOptions'] == null ? null : RouteOptions.fromJson(m['routeOptions']!),
       security: m['security'] == null ? null : PageSecurity.fromJson(m['security']!),
       root: Node.fromJson(m['root']!),
+      forms: m['forms'] == null ? null : [for (final e in m['forms']! as List<Object?>) Form.fromJson(e!)],
+      animations: m['animations'] == null ? null : [for (final e in m['animations']! as List<Object?>) Timeline.fromJson(e!)],
     );
   }
 
@@ -1452,6 +1991,10 @@ final class PageDocument {
   final List<DataSource>? dataSources;
   /// Lifecycle handlers (SCH-022).
   final Lifecycle? lifecycle;
+  /// Triggers besides widget events and page lifecycle (ACT-002), and the
+  /// owner's error handler (ACT-020). A page's runs are cancelled with the
+  /// page; a plugin's and the app's run while the release is active.
+  final Triggers? triggers;
   /// Route options (SCH-022, NAV-010).
   final RouteOptions? routeOptions;
   /// Security flags (SCH-022).
@@ -1459,6 +2002,9 @@ final class PageDocument {
   /// A node of a page or component tree: a widget or a component instance
   /// (SCH-023).
   final Node root;
+  /// The forms of the page (STA-020).
+  final List<Form>? forms;
+  final List<Timeline>? animations;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
@@ -1475,9 +2021,12 @@ final class PageDocument {
         if (state != null) 'state': [for (final e in state!) e.toJson()],
         if (dataSources != null) 'dataSources': [for (final e in dataSources!) e.toJson()],
         if (lifecycle != null) 'lifecycle': lifecycle!.toJson(),
+        if (triggers != null) 'triggers': triggers!.toJson(),
         if (routeOptions != null) 'routeOptions': routeOptions!.toJson(),
         if (security != null) 'security': security!.toJson(),
         'root': root.toJson(),
+        if (forms != null) 'forms': [for (final e in forms!) e.toJson()],
+        if (animations != null) 'animations': [for (final e in animations!) e.toJson()],
       };
 }
 
@@ -1599,7 +2148,7 @@ enum Persistence {
 /// A plugin: its pages, state, collections and requested capabilities
 /// (SCH-021). File: `plugins/<key>/plugin.json`.
 final class PluginDocument {
-  const PluginDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.icon, required this.team, required this.entryPage, required this.pages, this.fallbackPage, this.capabilities, this.tags, this.types, this.state, this.collections, this.dataSources});
+  const PluginDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.icon, required this.team, required this.entryPage, required this.pages, this.fallbackPage, this.capabilities, this.tags, this.types, this.state, this.collections, this.droppedCollections, this.dataSources, this.triggers});
 
   /// Decodes a JSON object.
   factory PluginDocument.fromJson(Object json) {
@@ -1621,7 +2170,9 @@ final class PluginDocument {
       types: m['types'] == null ? null : [for (final e in m['types']! as List<Object?>) TypeDecl.fromJson(e!)],
       state: m['state'] == null ? null : [for (final e in m['state']! as List<Object?>) StateEntry.fromJson(e!)],
       collections: m['collections'] == null ? null : [for (final e in m['collections']! as List<Object?>) Collection.fromJson(e!)],
+      droppedCollections: m['droppedCollections'] == null ? null : [for (final e in m['droppedCollections']! as List<Object?>) e! as String],
       dataSources: m['dataSources'] == null ? null : [for (final e in m['dataSources']! as List<Object?>) DataSource.fromJson(e!)],
+      triggers: m['triggers'] == null ? null : Triggers.fromJson(m['triggers']!),
     );
   }
 
@@ -1653,7 +2204,15 @@ final class PluginDocument {
   final List<TypeDecl>? types;
   final List<StateEntry>? state;
   final List<Collection>? collections;
+  /// IDs of collections this document no longer declares. Their data is deleted
+  /// from devices that still hold it; the publisher acknowledges the warning
+  /// this raises (DB-005).
+  final List<String>? droppedCollections;
   final List<DataSource>? dataSources;
+  /// Triggers besides widget events and page lifecycle (ACT-002), and the
+  /// owner's error handler (ACT-020). A page's runs are cancelled with the
+  /// page; a plugin's and the app's run while the release is active.
+  final Triggers? triggers;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
@@ -1673,7 +2232,9 @@ final class PluginDocument {
         if (types != null) 'types': [for (final e in types!) e.toJson()],
         if (state != null) 'state': [for (final e in state!) e.toJson()],
         if (collections != null) 'collections': [for (final e in collections!) e.toJson()],
+        if (droppedCollections != null) 'droppedCollections': [for (final e in droppedCollections!) e],
         if (dataSources != null) 'dataSources': [for (final e in dataSources!) e.toJson()],
+        if (triggers != null) 'triggers': triggers!.toJson(),
       };
 }
 
@@ -1702,6 +2263,27 @@ final class PushPolicy {
         'enabled': enabled,
         if (payloadKey != null) 'payloadKey': payloadKey!,
       };
+}
+
+/// What an animation does when the platform asks to reduce motion (ANI-007):
+/// `skip` jumps to the final state, `shorten` plays at a quarter of the
+/// duration, `ignore` plays as declared (for motion that carries meaning).
+enum ReduceMotion {
+  skip('skip'),
+  shorten('shorten'),
+  ignore('ignore');
+
+  const ReduceMotion(this.json);
+
+  /// Decodes a JSON value.
+  factory ReduceMotion.fromJson(Object json) =>
+      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown ReduceMotion', json));
+
+  /// The JSON value.
+  final String json;
+
+  /// Encodes the JSON value.
+  String toJson() => json;
 }
 
 /// What the compiler does when a release needs a newer runtime than
@@ -1805,7 +2387,7 @@ final class RouteGuard {
 
 /// Route options (SCH-022, NAV-010).
 final class RouteOptions {
-  const RouteOptions({this.transition, this.guards});
+  const RouteOptions({this.transition, this.guards, this.timeline});
 
   /// Decodes a JSON object.
   factory RouteOptions.fromJson(Object json) {
@@ -1813,17 +2395,400 @@ final class RouteOptions {
     return RouteOptions(
       transition: m['transition'] == null ? null : Transition.fromJson(m['transition']!),
       guards: m['guards'] == null ? null : [for (final e in m['guards']! as List<Object?>) RouteGuard.fromJson(e!)],
+      timeline: m['timeline'] == null ? null : m['timeline']! as String,
     );
   }
 
-  /// Page transition (NAV-010).
+  /// Page transition (NAV-010). `custom` plays the route timeline that
+  /// `routeOptions.timeline` names.
   final Transition? transition;
   final List<RouteGuard>? guards;
+  /// The route timeline of a custom transition (NAV-010).
+  final String? timeline;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
         if (transition != null) 'transition': transition!.toJson(),
         if (guards != null) 'guards': [for (final e in guards!) e.toJson()],
+        if (timeline != null) 'timeline': timeline!,
+      };
+}
+
+/// What a page or flow does, given a situation: the steps taken and what must
+/// hold afterwards (TST-001).
+final class Scenario {
+  const Scenario({required this.name, this.description, this.page, this.flow, this.given, this.steps, required this.expect});
+
+  /// Decodes a JSON object.
+  factory Scenario.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return Scenario(
+      name: m['name']! as String,
+      description: m['description'] == null ? null : m['description']! as String,
+      page: m['page'] == null ? null : m['page']! as String,
+      flow: m['flow'] == null ? null : m['flow']! as String,
+      given: m['given'] == null ? null : ScenarioGiven.fromJson(m['given']!),
+      steps: m['steps'] == null ? null : [for (final e in m['steps']! as List<Object?>) ScenarioStep.fromJson(e!)],
+      expect: [for (final e in m['expect']! as List<Object?>) ScenarioExpectation.fromJson(e!)],
+    );
+  }
+
+  /// The scenario's name in reports; unique within its file.
+  final String name;
+  final String? description;
+  /// The route of the page under test, started with the `given` parameters.
+  final String? page;
+  /// The key of the plugin flow under test.
+  final String? flow;
+  /// The situation a scenario starts in.
+  final ScenarioGiven? given;
+  final List<ScenarioStep>? steps;
+  final List<ScenarioExpectation> expect;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'name': name,
+        if (description != null) 'description': description!,
+        if (page != null) 'page': page!,
+        if (flow != null) 'flow': flow!,
+        if (given != null) 'given': given!.toJson(),
+        if (steps != null) 'steps': [for (final e in steps!) e.toJson()],
+        'expect': [for (final e in expect) e.toJson()],
+      };
+}
+
+/// A step that ran, by the action's or function's name, with the inputs it must
+/// have had; inputs not listed are not compared.
+final class ScenarioCall {
+  const ScenarioCall({required this.name, this.args, this.times});
+
+  /// Decodes a JSON object.
+  factory ScenarioCall.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ScenarioCall(
+      name: m['name']! as String,
+      args: m['args'] == null ? null : {for (final e in (m['args']! as Map<String, Object?>).entries) e.key: e.value},
+      times: m['times'] == null ? null : (m['times']! as num).toInt(),
+    );
+  }
+
+  final String name;
+  final Map<String, Object?>? args;
+  /// How often it ran; at least once when absent.
+  final int? times;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'name': name,
+        if (args != null) 'args': {for (final e in args!.entries) e.key: e.value},
+        if (times != null) 'times': times!,
+      };
+}
+
+final class ScenarioDataSource {
+  const ScenarioDataSource({required this.state, this.mock});
+
+  /// Decodes a JSON object.
+  factory ScenarioDataSource.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ScenarioDataSource(
+      state: ScenarioMockState.fromJson(m['state']!),
+      mock: m.containsKey('mock') ? JsonValue(m['mock']) : null,
+    );
+  }
+
+  final ScenarioMockState state;
+  /// A JSON value interpreted against a declared type (defaults, mocks,
+  /// environment values).
+  final JsonValue? mock;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'state': state.toJson(),
+        if (mock != null) 'mock': mock!.value,
+      };
+}
+
+/// One or more declarative test scenarios of pages or flows (TST-001). Files:
+/// `tests/**/*.scenario.yaml` or `.json`, found through `tests` in `plux.yaml`.
+final class ScenarioDocument {
+  const ScenarioDocument({required this.schemaVersion, required this.kind, required this.scenarios});
+
+  /// Decodes a JSON object.
+  factory ScenarioDocument.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ScenarioDocument(
+      schemaVersion: m['schemaVersion']! as String,
+      kind: m['kind']! as String,
+      scenarios: [for (final e in m['scenarios']! as List<Object?>) Scenario.fromJson(e!)],
+    );
+  }
+
+  /// Version of the document schema (SCH-000). Older documents are migrated
+  /// before validation.
+  final String schemaVersion;
+  final String kind;
+  final List<Scenario> scenarios;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'schemaVersion': schemaVersion,
+        'kind': kind,
+        'scenarios': [for (final e in scenarios) e.toJson()],
+      };
+}
+
+final class ScenarioEnterText {
+  const ScenarioEnterText({required this.testId, required this.text});
+
+  /// Decodes a JSON object.
+  factory ScenarioEnterText.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ScenarioEnterText(
+      testId: m['testId']! as String,
+      text: m['text']! as String,
+    );
+  }
+
+  /// A node's `testId` (WGT-013).
+  final String testId;
+  final String text;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'testId': testId,
+        'text': text,
+      };
+}
+
+/// One thing that must hold after the steps; exactly one of the keys.
+final class ScenarioExpectation {
+  const ScenarioExpectation({this.visible, this.notVisible, this.textEquals, this.navigatedTo, this.actionCalled, this.functionCalled, this.stateEquals});
+
+  /// Decodes a JSON object.
+  factory ScenarioExpectation.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ScenarioExpectation(
+      visible: m['visible'] == null ? null : m['visible']! as String,
+      notVisible: m['notVisible'] == null ? null : m['notVisible']! as String,
+      textEquals: m['textEquals'] == null ? null : ScenarioTextEquals.fromJson(m['textEquals']!),
+      navigatedTo: m['navigatedTo'] == null ? null : m['navigatedTo']! as String,
+      actionCalled: m['actionCalled'] == null ? null : ScenarioCall.fromJson(m['actionCalled']!),
+      functionCalled: m['functionCalled'] == null ? null : ScenarioCall.fromJson(m['functionCalled']!),
+      stateEquals: m['stateEquals'] == null ? null : {for (final e in (m['stateEquals']! as Map<String, Object?>).entries) e.key: e.value},
+    );
+  }
+
+  /// A node's `testId` (WGT-013).
+  final String? visible;
+  /// A node's `testId` (WGT-013).
+  final String? notVisible;
+  final ScenarioTextEquals? textEquals;
+  /// App-wide unique route name (SCH-025).
+  final String? navigatedTo;
+  /// A step that ran, by the action's or function's name, with the inputs it
+  /// must have had; inputs not listed are not compared.
+  final ScenarioCall? actionCalled;
+  /// A step that ran, by the action's or function's name, with the inputs it
+  /// must have had; inputs not listed are not compared.
+  final ScenarioCall? functionCalled;
+  /// Exposed app state entries and the values they hold, by name.
+  final Map<String, Object?>? stateEquals;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (visible != null) 'visible': visible!,
+        if (notVisible != null) 'notVisible': notVisible!,
+        if (textEquals != null) 'textEquals': textEquals!.toJson(),
+        if (navigatedTo != null) 'navigatedTo': navigatedTo!,
+        if (actionCalled != null) 'actionCalled': actionCalled!.toJson(),
+        if (functionCalled != null) 'functionCalled': functionCalled!.toJson(),
+        if (stateEquals != null) 'stateEquals': {for (final e in stateEquals!.entries) e.key: e.value},
+      };
+}
+
+/// The situation a scenario starts in.
+final class ScenarioGiven {
+  const ScenarioGiven({this.params, this.state, this.dataSources});
+
+  /// Decodes a JSON object.
+  factory ScenarioGiven.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ScenarioGiven(
+      params: m['params'] == null ? null : {for (final e in (m['params']! as Map<String, Object?>).entries) e.key: e.value},
+      state: m['state'] == null ? null : {for (final e in (m['state']! as Map<String, Object?>).entries) e.key: e.value},
+      dataSources: m['dataSources'] == null ? null : {for (final e in (m['dataSources']! as Map<String, Object?>).entries) e.key: ScenarioDataSource.fromJson(e.value!)},
+    );
+  }
+
+  /// The page's parameters, or the flow's inputs, by name, in their JSON form.
+  final Map<String, Object?>? params;
+  /// Exposed app state entries to set before the page opens, by name, in their
+  /// JSON form.
+  final Map<String, Object?>? state;
+  /// The state each data source shows (DAT-080), by source name, optionally
+  /// with a mock replacing its design-time mock.
+  final Map<String, ScenarioDataSource>? dataSources;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (params != null) 'params': {for (final e in params!.entries) e.key: e.value},
+        if (state != null) 'state': {for (final e in state!.entries) e.key: e.value},
+        if (dataSources != null) 'dataSources': {for (final e in dataSources!.entries) e.key: e.value.toJson()},
+      };
+}
+
+enum ScenarioMockState {
+  loading('loading'),
+  empty('empty'),
+  error('error'),
+  success('success');
+
+  const ScenarioMockState(this.json);
+
+  /// Decodes a JSON value.
+  factory ScenarioMockState.fromJson(Object json) =>
+      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown ScenarioMockState', json));
+
+  /// The JSON value.
+  final String json;
+
+  /// Encodes the JSON value.
+  String toJson() => json;
+}
+
+final class ScenarioScroll {
+  const ScenarioScroll({required this.testId, this.dx, this.dy});
+
+  /// Decodes a JSON object.
+  factory ScenarioScroll.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ScenarioScroll(
+      testId: m['testId']! as String,
+      dx: m['dx'] == null ? null : (m['dx']! as num).toDouble(),
+      dy: m['dy'] == null ? null : (m['dy']! as num).toDouble(),
+    );
+  }
+
+  /// The scrollable to drag.
+  final String testId;
+  /// Logical pixels to drag horizontally; 0 when absent.
+  final double? dx;
+  /// Logical pixels to drag vertically; 0 when absent.
+  final double? dy;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'testId': testId,
+        if (dx != null) 'dx': dx!,
+        if (dy != null) 'dy': dy!,
+      };
+}
+
+/// One thing the user or the host does; exactly one of the keys.
+final class ScenarioStep {
+  const ScenarioStep({this.tap, this.enterText, this.scroll, this.waitFor, this.trigger});
+
+  /// Decodes a JSON object.
+  factory ScenarioStep.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ScenarioStep(
+      tap: m['tap'] == null ? null : m['tap']! as String,
+      enterText: m['enterText'] == null ? null : ScenarioEnterText.fromJson(m['enterText']!),
+      scroll: m['scroll'] == null ? null : ScenarioScroll.fromJson(m['scroll']!),
+      waitFor: m['waitFor'] == null ? null : ScenarioWaitFor.fromJson(m['waitFor']!),
+      trigger: m['trigger'] == null ? null : ScenarioTrigger.fromJson(m['trigger']!),
+    );
+  }
+
+  /// A node's `testId` (WGT-013).
+  final String? tap;
+  final ScenarioEnterText? enterText;
+  final ScenarioScroll? scroll;
+  /// Pumps frames until the node is visible or the timeout passes.
+  final ScenarioWaitFor? waitFor;
+  /// Sends a host event into the app (HST-013).
+  final ScenarioTrigger? trigger;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (tap != null) 'tap': tap!,
+        if (enterText != null) 'enterText': enterText!.toJson(),
+        if (scroll != null) 'scroll': scroll!.toJson(),
+        if (waitFor != null) 'waitFor': waitFor!.toJson(),
+        if (trigger != null) 'trigger': trigger!.toJson(),
+      };
+}
+
+final class ScenarioTextEquals {
+  const ScenarioTextEquals({required this.testId, required this.text});
+
+  /// Decodes a JSON object.
+  factory ScenarioTextEquals.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ScenarioTextEquals(
+      testId: m['testId']! as String,
+      text: m['text']! as String,
+    );
+  }
+
+  /// A node's `testId` (WGT-013).
+  final String testId;
+  final String text;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'testId': testId,
+        'text': text,
+      };
+}
+
+/// Sends a host event into the app (HST-013).
+final class ScenarioTrigger {
+  const ScenarioTrigger({required this.event, this.payload});
+
+  /// Decodes a JSON object.
+  factory ScenarioTrigger.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ScenarioTrigger(
+      event: m['event']! as String,
+      payload: m['payload'] == null ? null : {for (final e in (m['payload']! as Map<String, Object?>).entries) e.key: e.value},
+    );
+  }
+
+  /// Identifier used in PXL and generated code: lowerCamelCase.
+  final String event;
+  final Map<String, Object?>? payload;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'event': event,
+        if (payload != null) 'payload': {for (final e in payload!.entries) e.key: e.value},
+      };
+}
+
+/// Pumps frames until the node is visible or the timeout passes.
+final class ScenarioWaitFor {
+  const ScenarioWaitFor({required this.testId, this.timeoutMs});
+
+  /// Decodes a JSON object.
+  factory ScenarioWaitFor.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return ScenarioWaitFor(
+      testId: m['testId']! as String,
+      timeoutMs: m['timeoutMs'] == null ? null : (m['timeoutMs']! as num).toInt(),
+    );
+  }
+
+  /// A node's `testId` (WGT-013).
+  final String testId;
+  /// How long to wait; 5000 when absent.
+  final int? timeoutMs;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'testId': testId,
+        if (timeoutMs != null) 'timeoutMs': timeoutMs!,
       };
 }
 
@@ -1969,6 +2934,32 @@ final class SlotFill {
   Object? toJson() => many == null ? one!.toJson() : [for (final e in many!) e.toJson()];
 }
 
+/// A spring that moves the timeline instead of its duration (ANI-006).
+final class Spring {
+  const Spring({this.stiffness, this.damping, this.mass});
+
+  /// Decodes a JSON object.
+  factory Spring.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return Spring(
+      stiffness: m['stiffness'] == null ? null : (m['stiffness']! as num).toDouble(),
+      damping: m['damping'] == null ? null : (m['damping']! as num).toDouble(),
+      mass: m['mass'] == null ? null : (m['mass']! as num).toDouble(),
+    );
+  }
+
+  final double? stiffness;
+  final double? damping;
+  final double? mass;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (stiffness != null) 'stiffness': stiffness!,
+        if (damping != null) 'damping': damping!,
+        if (mass != null) 'mass': mass!,
+      };
+}
+
 /// Start-up mode (SYN-003).
 enum StartupMode {
   useCacheThenSync('useCacheThenSync'),
@@ -2014,7 +3005,7 @@ final class StartupPolicy {
 /// A typed state entry with a default or a computed expression (STA-002,
 /// STA-004).
 final class StateEntry {
-  const StateEntry({required this.id, required this.name, required this.type, this.defaultValue, this.computed, this.persistence, this.sensitive, this.exposed, this.description});
+  const StateEntry({required this.id, required this.name, required this.type, this.defaultValue, this.computed, this.persistence, this.sensitive, this.exposed, this.migration, this.description});
 
   /// Decodes a JSON object.
   factory StateEntry.fromJson(Object json) {
@@ -2028,6 +3019,7 @@ final class StateEntry {
       persistence: m['persistence'] == null ? null : Persistence.fromJson(m['persistence']!),
       sensitive: m['sensitive'] == null ? null : m['sensitive']! as bool,
       exposed: m['exposed'] == null ? null : m['exposed']! as bool,
+      migration: m['migration'] == null ? null : StateMigration.fromJson(m['migration']!),
       description: m['description'] == null ? null : m['description']! as String,
     );
   }
@@ -2049,6 +3041,12 @@ final class StateEntry {
   final bool? sensitive;
   /// Readable and writable by the host (STA-030).
   final bool? exposed;
+  /// How a persisted state entry whose type changed since the previous release
+  /// takes its stored value (STA-040): with `from`, the entry's type in the
+  /// previous release, and `value`, an expression over `previous` (the stored
+  /// value, of type `from`) giving the new value; or with `reset`, the declared
+  /// default.
+  final StateMigration? migration;
   /// Human-readable description.
   final String? description;
 
@@ -2062,6 +3060,76 @@ final class StateEntry {
         if (persistence != null) 'persistence': persistence!.toJson(),
         if (sensitive != null) 'sensitive': sensitive!,
         if (exposed != null) 'exposed': exposed!,
+        if (migration != null) 'migration': migration!.toJson(),
+        if (description != null) 'description': description!,
+      };
+}
+
+/// How a persisted state entry whose type changed since the previous release
+/// takes its stored value (STA-040): with `from`, the entry's type in the
+/// previous release, and `value`, an expression over `previous` (the stored
+/// value, of type `from`) giving the new value; or with `reset`, the declared
+/// default.
+final class StateMigration {
+  const StateMigration({this.from, this.value, this.reset, this.description});
+
+  /// Decodes a JSON object.
+  factory StateMigration.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return StateMigration(
+      from: m['from'] == null ? null : m['from']! as String,
+      value: m['value'] == null ? null : Expr.fromJson(m['value']!),
+      reset: m['reset'] == null ? null : m['reset']! as bool,
+      description: m['description'] == null ? null : m['description']! as String,
+    );
+  }
+
+  /// Type expression of SCH-010, e.g. `string`, `decimal?`,
+  /// `list<Transaction>`, `map<string,int>`.
+  final String? from;
+  /// PXL binding (SCH-011).
+  final Expr? value;
+  /// Start from the declared default instead of the stored value.
+  final bool? reset;
+  /// Human-readable description.
+  final String? description;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (from != null) 'from': from!,
+        if (value != null) 'value': value!.toJson(),
+        if (reset != null) 'reset': reset!,
+        if (description != null) 'description': description!,
+      };
+}
+
+/// Runs its handler when a state entry changes (ACT-002); `event` is the new
+/// value. A debounce policy on the handler waits for the value to settle.
+final class StateWatcher {
+  const StateWatcher({required this.path, required this.handler, this.description});
+
+  /// Decodes a JSON object.
+  factory StateWatcher.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return StateWatcher(
+      path: m['path']! as String,
+      handler: EventHandler.fromJson(m['handler']!),
+      description: m['description'] == null ? null : m['description']! as String,
+    );
+  }
+
+  /// The state entry: <scope>.<name>.
+  final String path;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler handler;
+  /// Human-readable description.
+  final String? description;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'path': path,
+        'handler': handler.toJson(),
         if (description != null) 'description': description!,
       };
 }
@@ -2365,7 +3433,222 @@ final class ThemeDocument {
       };
 }
 
-/// Page transition (NAV-010).
+/// An animation timeline a page owns (ANI-002): keyframes of props of its
+/// nodes, played by `startAnimation` and `controlAnimation`, on page enter, or
+/// by a driver.
+final class Timeline {
+  const Timeline({required this.id, required this.name, required this.durationMs, this.delayMs, this.repeat, this.repeatForever, this.reverse, this.staggerMs, this.autoplay, this.scope, this.driver, this.spring, this.reduceMotion, required this.tracks, this.description});
+
+  /// Decodes a JSON object.
+  factory Timeline.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return Timeline(
+      id: m['id']! as String,
+      name: m['name']! as String,
+      durationMs: (m['durationMs']! as num).toInt(),
+      delayMs: m['delayMs'] == null ? null : (m['delayMs']! as num).toInt(),
+      repeat: m['repeat'] == null ? null : (m['repeat']! as num).toInt(),
+      repeatForever: m['repeatForever'] == null ? null : m['repeatForever']! as bool,
+      reverse: m['reverse'] == null ? null : m['reverse']! as bool,
+      staggerMs: m['staggerMs'] == null ? null : (m['staggerMs']! as num).toInt(),
+      autoplay: m['autoplay'] == null ? null : m['autoplay']! as bool,
+      scope: m['scope'] == null ? null : TimelineScope.fromJson(m['scope']!),
+      driver: m['driver'] == null ? null : TimelineDriver.fromJson(m['driver']!),
+      spring: m['spring'] == null ? null : Spring.fromJson(m['spring']!),
+      reduceMotion: m['reduceMotion'] == null ? null : ReduceMotion.fromJson(m['reduceMotion']!),
+      tracks: [for (final e in m['tracks']! as List<Object?>) Track.fromJson(e!)],
+      description: m['description'] == null ? null : m['description']! as String,
+    );
+  }
+
+  /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
+  final String id;
+  /// Identifier used in PXL and generated code: lowerCamelCase.
+  final String name;
+  final int durationMs;
+  final int? delayMs;
+  /// Plays after the first.
+  final int? repeat;
+  final bool? repeatForever;
+  /// Each repeat plays backwards.
+  final bool? reverse;
+  /// The delay per item index for nodes in item templates.
+  final int? staggerMs;
+  /// Plays when the page is shown.
+  final bool? autoplay;
+  /// What a timeline animates: nodes of its page, or the page itself in a route
+  /// transition (NAV-010).
+  final TimelineScope? scope;
+  /// Moves a timeline with the scroll offset or the drag of a node instead of
+  /// time (ANI-006).
+  final TimelineDriver? driver;
+  /// A spring that moves the timeline instead of its duration (ANI-006).
+  final Spring? spring;
+  /// What an animation does when the platform asks to reduce motion (ANI-007):
+  /// `skip` jumps to the final state, `shorten` plays at a quarter of the
+  /// duration, `ignore` plays as declared (for motion that carries meaning).
+  final ReduceMotion? reduceMotion;
+  final List<Track> tracks;
+  /// Human-readable description.
+  final String? description;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'id': id,
+        'name': name,
+        'durationMs': durationMs,
+        if (delayMs != null) 'delayMs': delayMs!,
+        if (repeat != null) 'repeat': repeat!,
+        if (repeatForever != null) 'repeatForever': repeatForever!,
+        if (reverse != null) 'reverse': reverse!,
+        if (staggerMs != null) 'staggerMs': staggerMs!,
+        if (autoplay != null) 'autoplay': autoplay!,
+        if (scope != null) 'scope': scope!.toJson(),
+        if (driver != null) 'driver': driver!.toJson(),
+        if (spring != null) 'spring': spring!.toJson(),
+        if (reduceMotion != null) 'reduceMotion': reduceMotion!.toJson(),
+        'tracks': [for (final e in tracks) e.toJson()],
+        if (description != null) 'description': description!,
+      };
+}
+
+/// Moves a timeline with the scroll offset or the drag of a node instead of
+/// time (ANI-006).
+final class TimelineDriver {
+  const TimelineDriver({required this.kind, required this.node, required this.extent});
+
+  /// Decodes a JSON object.
+  factory TimelineDriver.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return TimelineDriver(
+      kind: TimelineDriverKind.fromJson(m['kind']!),
+      node: m['node']! as String,
+      extent: (m['extent']! as num).toDouble(),
+    );
+  }
+
+  /// What moves a driven timeline (ANI-006).
+  final TimelineDriverKind kind;
+  /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
+  final String node;
+  /// Logical pixels of scrolling or dragging that span the timeline.
+  final double extent;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'kind': kind.toJson(),
+        'node': node,
+        'extent': extent,
+      };
+}
+
+/// What moves a driven timeline (ANI-006).
+enum TimelineDriverKind {
+  scroll('scroll'),
+  drag('drag');
+
+  const TimelineDriverKind(this.json);
+
+  /// Decodes a JSON value.
+  factory TimelineDriverKind.fromJson(Object json) =>
+      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown TimelineDriverKind', json));
+
+  /// The JSON value.
+  final String json;
+
+  /// Encodes the JSON value.
+  String toJson() => json;
+}
+
+/// What a timeline animates: nodes of its page, or the page itself in a route
+/// transition (NAV-010).
+enum TimelineScope {
+  page('page'),
+  route('route');
+
+  const TimelineScope(this.json);
+
+  /// Decodes a JSON value.
+  factory TimelineScope.fromJson(Object json) =>
+      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown TimelineScope', json));
+
+  /// The JSON value.
+  final String json;
+
+  /// Encodes the JSON value.
+  String toJson() => json;
+}
+
+/// A timer (ACT-002): it fires every intervalMs while its owner lives, or once,
+/// intervalMs after its owner starts, when repeat is false; `event` is the
+/// number of times it has fired.
+final class TimerTrigger {
+  const TimerTrigger({required this.name, required this.intervalMs, this.repeat, required this.handler, this.description});
+
+  /// Decodes a JSON object.
+  factory TimerTrigger.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return TimerTrigger(
+      name: m['name']! as String,
+      intervalMs: (m['intervalMs']! as num).toInt(),
+      repeat: m['repeat'] == null ? null : m['repeat']! as bool,
+      handler: EventHandler.fromJson(m['handler']!),
+      description: m['description'] == null ? null : m['description']! as String,
+    );
+  }
+
+  /// Identifier used in PXL and generated code: lowerCamelCase.
+  final String name;
+  final int intervalMs;
+  /// Fires every intervalMs; true when absent.
+  final bool? repeat;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler handler;
+  /// Human-readable description.
+  final String? description;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'name': name,
+        'intervalMs': intervalMs,
+        if (repeat != null) 'repeat': repeat!,
+        'handler': handler.toJson(),
+        if (description != null) 'description': description!,
+      };
+}
+
+/// The keyframes of one prop of one node (ANI-002); a route timeline's tracks
+/// name no node and animate `opacity`, `scale`, `slideX` or `slideY`.
+final class Track {
+  const Track({this.node, required this.prop, required this.keyframes});
+
+  /// Decodes a JSON object.
+  factory Track.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return Track(
+      node: m['node'] == null ? null : m['node']! as String,
+      prop: m['prop']! as String,
+      keyframes: [for (final e in m['keyframes']! as List<Object?>) Keyframe.fromJson(e!)],
+    );
+  }
+
+  /// Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
+  final String? node;
+  /// Identifier used in PXL and generated code: lowerCamelCase.
+  final String prop;
+  final List<Keyframe> keyframes;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (node != null) 'node': node!,
+        'prop': prop,
+        'keyframes': [for (final e in keyframes) e.toJson()],
+      };
+}
+
+/// Page transition (NAV-010). `custom` plays the route timeline that
+/// `routeOptions.timeline` names.
 enum Transition {
   platform('platform'),
   fade('fade'),
@@ -2375,6 +3658,7 @@ enum Transition {
   slideDown('slideDown'),
   scale('scale'),
   sharedAxis('sharedAxis'),
+  custom('custom'),
   none('none');
 
   const Transition(this.json);
@@ -2491,6 +3775,60 @@ final class TranslationsDocument {
         'id': id,
         'locale': locale,
         'messages': {for (final e in messages.entries) e.key: e.value},
+      };
+}
+
+/// Triggers besides widget events and page lifecycle (ACT-002), and the owner's
+/// error handler (ACT-020). A page's runs are cancelled with the page; a
+/// plugin's and the app's run while the release is active.
+final class Triggers {
+  const Triggers({this.timers, this.watch, this.onAppResume, this.onAppPause, this.onPushOpened, this.hostEvents, this.dataSources, this.onError});
+
+  /// Decodes a JSON object.
+  factory Triggers.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return Triggers(
+      timers: m['timers'] == null ? null : [for (final e in m['timers']! as List<Object?>) TimerTrigger.fromJson(e!)],
+      watch: m['watch'] == null ? null : [for (final e in m['watch']! as List<Object?>) StateWatcher.fromJson(e!)],
+      onAppResume: m['onAppResume'] == null ? null : EventHandler.fromJson(m['onAppResume']!),
+      onAppPause: m['onAppPause'] == null ? null : EventHandler.fromJson(m['onAppPause']!),
+      onPushOpened: m['onPushOpened'] == null ? null : EventHandler.fromJson(m['onPushOpened']!),
+      hostEvents: m['hostEvents'] == null ? null : {for (final e in (m['hostEvents']! as Map<String, Object?>).entries) e.key: EventHandler.fromJson(e.value!)},
+      dataSources: m['dataSources'] == null ? null : {for (final e in (m['dataSources']! as Map<String, Object?>).entries) e.key: DataSourceTriggers.fromJson(e.value!)},
+      onError: m['onError'] == null ? null : EventHandler.fromJson(m['onError']!),
+    );
+  }
+
+  final List<TimerTrigger>? timers;
+  final List<StateWatcher>? watch;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler? onAppResume;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler? onAppPause;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler? onPushOpened;
+  /// Handlers of host events sent into Plux, by declared host event name
+  /// (HST-013); `event` is the event's payload.
+  final Map<String, EventHandler>? hostEvents;
+  /// Handlers of data-source events, by data source name.
+  final Map<String, DataSourceTriggers>? dataSources;
+  /// A trigger's handler: a reference to an action graph or an inline graph
+  /// (SCH-023).
+  final EventHandler? onError;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (timers != null) 'timers': [for (final e in timers!) e.toJson()],
+        if (watch != null) 'watch': [for (final e in watch!) e.toJson()],
+        if (onAppResume != null) 'onAppResume': onAppResume!.toJson(),
+        if (onAppPause != null) 'onAppPause': onAppPause!.toJson(),
+        if (onPushOpened != null) 'onPushOpened': onPushOpened!.toJson(),
+        if (hostEvents != null) 'hostEvents': {for (final e in hostEvents!.entries) e.key: e.value.toJson()},
+        if (dataSources != null) 'dataSources': {for (final e in dataSources!.entries) e.key: e.value.toJson()},
+        if (onError != null) 'onError': onError!.toJson(),
       };
 }
 

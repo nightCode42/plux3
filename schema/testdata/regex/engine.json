@@ -1,0 +1,1751 @@
+{
+  "description": "pxl.regex.v1 engine vectors (schema/pxl/regex.md), shared by Go (backend/internal/pxl/regex) and Dart (packages/plux_flutter/lib/src/pxl/regex.dart). Positions are code-point offsets: the whole match, then each group, -1 for a group that did not participate; find searches anywhere, prefix matches at the start, full matches the whole input. Expected results are written by the Go test with -update and checked against Go's regexp.",
+  "limits": {
+    "patternLength": 64,
+    "programSize": 300,
+    "repeat": 20
+  },
+  "cases": [
+    {
+      "pattern": "abc",
+      "size": 6,
+      "inputs": [
+        {
+          "input": "abc",
+          "find": [
+            0,
+            3
+          ],
+          "prefix": [
+            0,
+            3
+          ],
+          "full": true
+        },
+        {
+          "input": "xabcx",
+          "find": [
+            1,
+            4
+          ],
+          "prefix": null,
+          "full": false
+        },
+        {
+          "input": "ab",
+          "find": null,
+          "prefix": null,
+          "full": false
+        },
+        {
+          "input": "",
+          "find": null,
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "",
+      "size": 3,
+      "inputs": [
+        {
+          "input": "",
+          "find": [
+            0,
+            0
+          ],
+          "prefix": [
+            0,
+            0
+          ],
+          "full": true
+        },
+        {
+          "input": "abc",
+          "find": [
+            0,
+            0
+          ],
+          "prefix": [
+            0,
+            0
+          ],
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "a|b|c",
+      "size": 8,
+      "inputs": [
+        {
+          "input": "c",
+          "find": [
+            0,
+            1
+          ],
+          "prefix": [
+            0,
+            1
+          ],
+          "full": true
+        },
+        {
+          "input": "xbx",
+          "find": [
+            1,
+            2
+          ],
+          "prefix": null,
+          "full": false
+        },
+        {
+          "input": "",
+          "find": null,
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "a|ab",
+      "size": 7,
+      "inputs": [
+        {
+          "input": "ab",
+          "find": [
+            0,
+            1
+          ],
+          "prefix": [
+            0,
+            1
+          ],
+          "full": true
+        },
+        {
+          "input": "b",
+          "find": null,
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "(a|ab)(c|bcd)(d*)",
+      "size": 20,
+      "groups": 3,
+      "inputs": [
+        {
+          "input": "abcd",
+          "find": [
+            0,
+            4,
+            0,
+            1,
+            1,
+            4,
+            4,
+            4
+          ],
+          "prefix": [
+            0,
+            4,
+            0,
+            1,
+            1,
+            4,
+            4,
+            4
+          ],
+          "full": true
+        },
+        {
+          "input": "xabcdd",
+          "find": [
+            1,
+            6,
+            1,
+            2,
+            2,
+            5,
+            5,
+            6
+          ],
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "^abc$",
+      "size": 8,
+      "inputs": [
+        {
+          "input": "abc",
+          "find": [
+            0,
+            3
+          ],
+          "prefix": [
+            0,
+            3
+          ],
+          "full": true
+        },
+        {
+          "input": "abcd",
+          "find": null,
+          "prefix": null,
+          "full": false
+        },
+        {
+          "input": "xabc",
+          "find": null,
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "^",
+      "size": 4,
+      "inputs": [
+        {
+          "input": "",
+          "find": [
+            0,
+            0
+          ],
+          "prefix": [
+            0,
+            0
+          ],
+          "full": true
+        },
+        {
+          "input": "x",
+          "find": [
+            0,
+            0
+          ],
+          "prefix": [
+            0,
+            0
+          ],
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "$",
+      "size": 4,
+      "inputs": [
+        {
+          "input": "",
+          "find": [
+            0,
+            0
+          ],
+          "prefix": [
+            0,
+            0
+          ],
+          "full": true
+        },
+        {
+          "input": "x",
+          "find": [
+            1,
+            1
+          ],
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "a*",
+      "size": 5,
+      "inputs": [
+        {
+          "input": "",
+          "find": [
+            0,
+            0
+          ],
+          "prefix": [
+            0,
+            0
+          ],
+          "full": true
+        },
+        {
+          "input": "aaa",
+          "find": [
+            0,
+            3
+          ],
+          "prefix": [
+            0,
+            3
+          ],
+          "full": true
+        },
+        {
+          "input": "baaa",
+          "find": [
+            0,
+            0
+          ],
+          "prefix": [
+            0,
+            0
+          ],
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "a+",
+      "size": 5,
+      "inputs": [
+        {
+          "input": "",
+          "find": null,
+          "prefix": null,
+          "full": false
+        },
+        {
+          "input": "aaa",
+          "find": [
+            0,
+            3
+          ],
+          "prefix": [
+            0,
+            3
+          ],
+          "full": true
+        },
+        {
+          "input": "baaa",
+          "find": [
+            1,
+            4
+          ],
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "a?b",
+      "size": 6,
+      "inputs": [
+        {
+          "input": "b",
+          "find": [
+            0,
+            1
+          ],
+          "prefix": [
+            0,
+            1
+          ],
+          "full": true
+        },
+        {
+          "input": "ab",
+          "find": [
+            0,
+            2
+          ],
+          "prefix": [
+            0,
+            2
+          ],
+          "full": true
+        },
+        {
+          "input": "aab",
+          "find": [
+            1,
+            3
+          ],
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "a{3}",
+      "size": 6,
+      "inputs": [
+        {
+          "input": "aa",
+          "find": null,
+          "prefix": null,
+          "full": false
+        },
+        {
+          "input": "aaa",
+          "find": [
+            0,
+            3
+          ],
+          "prefix": [
+            0,
+            3
+          ],
+          "full": true
+        },
+        {
+          "input": "aaaa",
+          "find": [
+            0,
+            3
+          ],
+          "prefix": [
+            0,
+            3
+          ],
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "a{2,}",
+      "size": 6,
+      "inputs": [
+        {
+          "input": "a",
+          "find": null,
+          "prefix": null,
+          "full": false
+        },
+        {
+          "input": "aa",
+          "find": [
+            0,
+            2
+          ],
+          "prefix": [
+            0,
+            2
+          ],
+          "full": true
+        },
+        {
+          "input": "aaaaa",
+          "find": [
+            0,
+            5
+          ],
+          "prefix": [
+            0,
+            5
+          ],
+          "full": true
+        }
+      ]
+    },
+    {
+      "pattern": "a{2,4}",
+      "size": 9,
+      "inputs": [
+        {
+          "input": "a",
+          "find": null,
+          "prefix": null,
+          "full": false
+        },
+        {
+          "input": "aaa",
+          "find": [
+            0,
+            3
+          ],
+          "prefix": [
+            0,
+            3
+          ],
+          "full": true
+        },
+        {
+          "input": "aaaaaa",
+          "find": [
+            0,
+            4
+          ],
+          "prefix": [
+            0,
+            4
+          ],
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "a{0}b",
+      "size": 4,
+      "inputs": [
+        {
+          "input": "b",
+          "find": [
+            0,
+            1
+          ],
+          "prefix": [
+            0,
+            1
+          ],
+          "full": true
+        },
+        {
+          "input": "ab",
+          "find": [
+            1,
+            2
+          ],
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "(a){0,2}",
+      "size": 11,
+      "groups": 1,
+      "inputs": [
+        {
+          "input": "aaa",
+          "find": [
+            0,
+            2,
+            1,
+            2
+          ],
+          "prefix": [
+            0,
+            2,
+            1,
+            2
+          ],
+          "full": false
+        },
+        {
+          "input": "",
+          "find": [
+            0,
+            0,
+            -1,
+            -1
+          ],
+          "prefix": [
+            0,
+            0,
+            -1,
+            -1
+          ],
+          "full": true
+        }
+      ]
+    },
+    {
+      "pattern": "(a*)*",
+      "size": 9,
+      "groups": 1,
+      "inputs": [
+        {
+          "input": "b",
+          "find": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "prefix": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "full": false
+        },
+        {
+          "input": "aab",
+          "find": [
+            0,
+            2,
+            0,
+            2
+          ],
+          "prefix": [
+            0,
+            2,
+            0,
+            2
+          ],
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "(a*)+",
+      "size": 8,
+      "groups": 1,
+      "inputs": [
+        {
+          "input": "b",
+          "find": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "prefix": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "full": false
+        },
+        {
+          "input": "aab",
+          "find": [
+            0,
+            2,
+            0,
+            2
+          ],
+          "prefix": [
+            0,
+            2,
+            0,
+            2
+          ],
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "(|a)*",
+      "size": 9,
+      "groups": 1,
+      "inputs": [
+        {
+          "input": "aa",
+          "find": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "prefix": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "full": true
+        },
+        {
+          "input": "",
+          "find": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "prefix": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "full": true
+        }
+      ]
+    },
+    {
+      "pattern": "(|a)+",
+      "size": 8,
+      "groups": 1,
+      "inputs": [
+        {
+          "input": "aa",
+          "find": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "prefix": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "full": true
+        },
+        {
+          "input": "",
+          "find": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "prefix": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "full": true
+        }
+      ]
+    },
+    {
+      "pattern": "(a|b)*c",
+      "size": 10,
+      "groups": 1,
+      "inputs": [
+        {
+          "input": "abac",
+          "find": [
+            0,
+            4,
+            2,
+            3
+          ],
+          "prefix": [
+            0,
+            4,
+            2,
+            3
+          ],
+          "full": true
+        },
+        {
+          "input": "xxc",
+          "find": [
+            2,
+            3,
+            -1,
+            -1
+          ],
+          "prefix": null,
+          "full": false
+        },
+        {
+          "input": "ab",
+          "find": null,
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "(?:ab)+",
+      "size": 6,
+      "inputs": [
+        {
+          "input": "ababab",
+          "find": [
+            0,
+            6
+          ],
+          "prefix": [
+            0,
+            6
+          ],
+          "full": true
+        },
+        {
+          "input": "aba",
+          "find": [
+            0,
+            2
+          ],
+          "prefix": [
+            0,
+            2
+          ],
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "((a)|(b))+",
+      "size": 13,
+      "groups": 3,
+      "inputs": [
+        {
+          "input": "ab",
+          "find": [
+            0,
+            2,
+            1,
+            2,
+            0,
+            1,
+            1,
+            2
+          ],
+          "prefix": [
+            0,
+            2,
+            1,
+            2,
+            0,
+            1,
+            1,
+            2
+          ],
+          "full": true
+        },
+        {
+          "input": "ba",
+          "find": [
+            0,
+            2,
+            1,
+            2,
+            1,
+            2,
+            0,
+            1
+          ],
+          "prefix": [
+            0,
+            2,
+            1,
+            2,
+            1,
+            2,
+            0,
+            1
+          ],
+          "full": true
+        }
+      ]
+    },
+    {
+      "pattern": ".",
+      "size": 4,
+      "inputs": [
+        {
+          "input": "\n",
+          "find": null,
+          "prefix": null,
+          "full": false
+        },
+        {
+          "input": "a",
+          "find": [
+            0,
+            1
+          ],
+          "prefix": [
+            0,
+            1
+          ],
+          "full": true
+        },
+        {
+          "input": "é",
+          "find": [
+            0,
+            1
+          ],
+          "prefix": [
+            0,
+            1
+          ],
+          "full": true
+        }
+      ]
+    },
+    {
+      "pattern": "a.c",
+      "size": 6,
+      "inputs": [
+        {
+          "input": "abc",
+          "find": [
+            0,
+            3
+          ],
+          "prefix": [
+            0,
+            3
+          ],
+          "full": true
+        },
+        {
+          "input": "a\nc",
+          "find": null,
+          "prefix": null,
+          "full": false
+        },
+        {
+          "input": "a😀c",
+          "find": [
+            0,
+            3
+          ],
+          "prefix": [
+            0,
+            3
+          ],
+          "full": true
+        }
+      ]
+    },
+    {
+      "pattern": "\\d+",
+      "size": 5,
+      "inputs": [
+        {
+          "input": "abc123def",
+          "find": [
+            3,
+            6
+          ],
+          "prefix": null,
+          "full": false
+        },
+        {
+          "input": "٣",
+          "find": null,
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "\\D+",
+      "size": 5,
+      "inputs": [
+        {
+          "input": "123abc456",
+          "find": [
+            3,
+            6
+          ],
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "\\w+",
+      "size": 5,
+      "inputs": [
+        {
+          "input": "  hello_world42 !",
+          "find": [
+            2,
+            15
+          ],
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "\\W",
+      "size": 4,
+      "inputs": [
+        {
+          "input": "abc def",
+          "find": [
+            3,
+            4
+          ],
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "\\s+",
+      "size": 5,
+      "inputs": [
+        {
+          "input": "a \t\n\f\rb",
+          "find": [
+            1,
+            6
+          ],
+          "prefix": null,
+          "full": false
+        },
+        {
+          "input": "a\u000bb",
+          "find": null,
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "\\S+",
+      "size": 5,
+      "inputs": [
+        {
+          "input": " x y ",
+          "find": [
+            1,
+            2
+          ],
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "[a-c]+",
+      "size": 5,
+      "inputs": [
+        {
+          "input": "xxabcabcz",
+          "find": [
+            2,
+            8
+          ],
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "[^a-c]+",
+      "size": 5,
+      "inputs": [
+        {
+          "input": "abcxyzabc",
+          "find": [
+            3,
+            6
+          ],
+          "prefix": null,
+          "full": false
+        },
+        {
+          "input": "abc\nd",
+          "find": [
+            3,
+            5
+          ],
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "[-a]+",
+      "size": 5,
+      "inputs": [
+        {
+          "input": "--a-b",
+          "find": [
+            0,
+            4
+          ],
+          "prefix": [
+            0,
+            4
+          ],
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "[a-]+",
+      "size": 5,
+      "inputs": [
+        {
+          "input": "--a-b",
+          "find": [
+            0,
+            4
+          ],
+          "prefix": [
+            0,
+            4
+          ],
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "[\\]\\[]+",
+      "size": 5,
+      "inputs": [
+        {
+          "input": "a[]]b",
+          "find": [
+            1,
+            4
+          ],
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "[\\d\\s]+",
+      "size": 5,
+      "inputs": [
+        {
+          "input": "a1 2b",
+          "find": [
+            1,
+            4
+          ],
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "[а-я]+",
+      "size": 5,
+      "inputs": [
+        {
+          "input": "Привет мир",
+          "find": [
+            1,
+            6
+          ],
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "[\\x{1F600}-\\x{1F64F}]",
+      "size": 4,
+      "inputs": [
+        {
+          "input": "hi 😀",
+          "find": [
+            3,
+            4
+          ],
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "\\x41\\x{42}",
+      "size": 5,
+      "inputs": [
+        {
+          "input": "AB",
+          "find": [
+            0,
+            2
+          ],
+          "prefix": [
+            0,
+            2
+          ],
+          "full": true
+        },
+        {
+          "input": "xABx",
+          "find": [
+            1,
+            3
+          ],
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "\\.\\*\\+\\?\\(\\)\\{\\}\\|\\^\\$\\\\",
+      "size": 15,
+      "inputs": [
+        {
+          "input": ".*+?(){}|^$\\",
+          "find": [
+            0,
+            12
+          ],
+          "prefix": [
+            0,
+            12
+          ],
+          "full": true
+        }
+      ]
+    },
+    {
+      "pattern": "\\t\\n\\r\\f\\v",
+      "size": 8,
+      "inputs": [
+        {
+          "input": "\t\n\r\f\u000b",
+          "find": [
+            0,
+            5
+          ],
+          "prefix": [
+            0,
+            5
+          ],
+          "full": true
+        }
+      ]
+    },
+    {
+      "pattern": "é+",
+      "size": 5,
+      "inputs": [
+        {
+          "input": "ééé",
+          "find": [
+            0,
+            3
+          ],
+          "prefix": [
+            0,
+            3
+          ],
+          "full": true
+        },
+        {
+          "input": "e",
+          "find": null,
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "^[A-Z]{2}\\d{2}[A-Z0-9]{11,30}$",
+      "error": "repeat",
+      "offset": 22
+    },
+    {
+      "pattern": "^[^@\\s]+@[^@\\s]+\\.[A-Za-z]{2,}$",
+      "size": 14,
+      "inputs": [
+        {
+          "input": "user@example.com",
+          "find": [
+            0,
+            16
+          ],
+          "prefix": [
+            0,
+            16
+          ],
+          "full": true
+        },
+        {
+          "input": "user@example",
+          "find": null,
+          "prefix": null,
+          "full": false
+        },
+        {
+          "input": "a b@c.de",
+          "find": null,
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "(\\d{3})-(\\d{4})",
+      "size": 15,
+      "groups": 2,
+      "inputs": [
+        {
+          "input": "call 555-1234 now",
+          "find": [
+            5,
+            13,
+            5,
+            8,
+            9,
+            13
+          ],
+          "prefix": null,
+          "full": false
+        },
+        {
+          "input": "5551234",
+          "find": null,
+          "prefix": null,
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "([457]\\d{6})$|1",
+      "size": 15,
+      "groups": 1,
+      "inputs": [
+        {
+          "input": "4123456",
+          "find": [
+            0,
+            7,
+            0,
+            7
+          ],
+          "prefix": [
+            0,
+            7,
+            0,
+            7
+          ],
+          "full": true
+        },
+        {
+          "input": "14123456",
+          "find": [
+            0,
+            1,
+            -1,
+            -1
+          ],
+          "prefix": [
+            0,
+            1,
+            -1,
+            -1
+          ],
+          "full": false
+        },
+        {
+          "input": "1",
+          "find": [
+            0,
+            1,
+            -1,
+            -1
+          ],
+          "prefix": [
+            0,
+            1,
+            -1,
+            -1
+          ],
+          "full": true
+        }
+      ]
+    },
+    {
+      "pattern": "0?(?:(11|2(?:2[13-9]))15)?",
+      "size": 16,
+      "groups": 1,
+      "inputs": [
+        {
+          "input": "0111512345678",
+          "find": [
+            0,
+            5,
+            1,
+            3
+          ],
+          "prefix": [
+            0,
+            5,
+            1,
+            3
+          ],
+          "full": false
+        },
+        {
+          "input": "15",
+          "find": [
+            0,
+            0,
+            -1,
+            -1
+          ],
+          "prefix": [
+            0,
+            0,
+            -1,
+            -1
+          ],
+          "full": false
+        }
+      ]
+    },
+    {
+      "pattern": "(a)|b",
+      "size": 8,
+      "groups": 1,
+      "inputs": [
+        {
+          "input": "b",
+          "find": [
+            0,
+            1,
+            -1,
+            -1
+          ],
+          "prefix": [
+            0,
+            1,
+            -1,
+            -1
+          ],
+          "full": true
+        },
+        {
+          "input": "a",
+          "find": [
+            0,
+            1,
+            0,
+            1
+          ],
+          "prefix": [
+            0,
+            1,
+            0,
+            1
+          ],
+          "full": true
+        }
+      ]
+    },
+    {
+      "pattern": "x*y*z*",
+      "size": 9,
+      "inputs": [
+        {
+          "input": "",
+          "find": [
+            0,
+            0
+          ],
+          "prefix": [
+            0,
+            0
+          ],
+          "full": true
+        }
+      ]
+    },
+    {
+      "pattern": "(?:a|b|)+c",
+      "size": 9,
+      "inputs": [
+        {
+          "input": "abc",
+          "find": [
+            0,
+            3
+          ],
+          "prefix": [
+            0,
+            3
+          ],
+          "full": true
+        },
+        {
+          "input": "c",
+          "find": [
+            0,
+            1
+          ],
+          "prefix": [
+            0,
+            1
+          ],
+          "full": true
+        }
+      ]
+    },
+    {
+      "pattern": "(",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "(?",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "(?i)a",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "(?=a)",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "(?P\u003cn\u003ea)",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": ")",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "a)",
+      "error": "syntax",
+      "offset": 1
+    },
+    {
+      "pattern": "[",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "[]",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "[^]",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "[a",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "[z-a]",
+      "error": "syntax",
+      "offset": 1
+    },
+    {
+      "pattern": "[a-c-e]",
+      "error": "syntax",
+      "offset": 4
+    },
+    {
+      "pattern": "[\\d-z]",
+      "error": "syntax",
+      "offset": 3
+    },
+    {
+      "pattern": "[a-\\d]",
+      "error": "syntax",
+      "offset": 1
+    },
+    {
+      "pattern": "[[]",
+      "error": "syntax",
+      "offset": 1
+    },
+    {
+      "pattern": "*",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "+a",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "?",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "{2}",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "a{",
+      "error": "syntax",
+      "offset": 1
+    },
+    {
+      "pattern": "a{x}",
+      "error": "syntax",
+      "offset": 1
+    },
+    {
+      "pattern": "a{,3}",
+      "error": "syntax",
+      "offset": 1
+    },
+    {
+      "pattern": "a{3,2}",
+      "error": "syntax",
+      "offset": 1
+    },
+    {
+      "pattern": "a**",
+      "error": "syntax",
+      "offset": 2
+    },
+    {
+      "pattern": "a*?",
+      "error": "syntax",
+      "offset": 2
+    },
+    {
+      "pattern": "a+?",
+      "error": "syntax",
+      "offset": 2
+    },
+    {
+      "pattern": "a??",
+      "error": "syntax",
+      "offset": 2
+    },
+    {
+      "pattern": "a{2}{3}",
+      "error": "syntax",
+      "offset": 4
+    },
+    {
+      "pattern": "^*",
+      "error": "syntax",
+      "offset": 1
+    },
+    {
+      "pattern": "$+",
+      "error": "syntax",
+      "offset": 1
+    },
+    {
+      "pattern": "]",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "}",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "\\",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "\\b",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "\\p{L}",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "\\1",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "\\A",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "\\z",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "\\x",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "\\x4",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "\\x{}",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "\\x{110000}",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "\\x{D800}",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "\\x{1234567}",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "\\q",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "\\ ",
+      "error": "syntax",
+      "offset": 0
+    },
+    {
+      "pattern": "a{21}",
+      "error": "repeat",
+      "offset": 1
+    },
+    {
+      "pattern": "a{2,21}",
+      "error": "repeat",
+      "offset": 1
+    },
+    {
+      "pattern": "a{99999999999999999999}",
+      "error": "repeat",
+      "offset": 1
+    },
+    {
+      "pattern": "a{01}",
+      "error": "syntax",
+      "offset": 1
+    },
+    {
+      "pattern": "a{1,02}",
+      "error": "syntax",
+      "offset": 1
+    },
+    {
+      "pattern": "(a{20}){20}",
+      "error": "programSize",
+      "offset": 0
+    },
+    {
+      "pattern": "x{20}{1}",
+      "error": "syntax",
+      "offset": 5
+    },
+    {
+      "pattern": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "error": "patternLength",
+      "offset": 0
+    }
+  ]
+}

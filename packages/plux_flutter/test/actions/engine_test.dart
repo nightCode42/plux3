@@ -10,6 +10,7 @@ import 'package:plux_flutter/src/actions/engine.dart';
 import 'package:plux_flutter/src/actions/graph.dart';
 import 'package:plux_flutter/src/actions/handlers.dart';
 import 'package:plux_flutter/src/actions/run.dart';
+import 'package:plux_flutter/src/actions/state_handlers.dart';
 import 'package:plux_flutter/src/render/values.dart';
 import 'package:plux_flutter/src/schema/registry.g.dart';
 
@@ -141,12 +142,7 @@ void main() {
 
   test('an action of a later phase fails its step with PLX-4010, which onError handles [RT-021]', () async {
     final r = await run([
-      GraphStep(
-        id: 'toast',
-        action: id('showToast'),
-        inputs: {input('showToast', 'message'): lit('hi')},
-        onError: 1,
-      ),
+      GraphStep(id: 'toast', action: id('biometricAuth'), onError: 1),
       GraphStep(
         id: 'recover',
         action: id('emitHostEvent'),
@@ -161,13 +157,13 @@ void main() {
     expect(r.outcome, RunOutcome.ok);
     final error = events.single.$2['error']! as Map;
     expect(error['kind'], 'custom');
-    expect(error['message'], contains('showToast arrives in P5'));
+    expect(error['message'], contains('biometricAuth arrives in P6'));
     expect(reports, isEmpty);
   });
 
   test('an unhandled error ends the run and is reported with its graph and step [RT-021]', () async {
     final r = await run([
-      GraphStep(id: 'toast', action: id('showToast'), next: 1),
+      GraphStep(id: 'toast', action: id('biometricAuth'), next: 1),
       GraphStep(
         id: 'never',
         action: id('emitHostEvent'),
@@ -461,35 +457,15 @@ void main() {
     },
   );
 
-  test(
-    'options this runtime ignores are reported once in debug builds (ADR-0039)',
-    () async {
-      final h = host(debug: true);
-      for (var i = 0; i < 2; i++) {
-        await h.start(
-          const ActionGraph(
-            id: 'g',
-            steps: [GraphStep(id: 'retried', action: 30, retry: true)],
-          ),
-          roots: () => const {},
-          key: 'k',
-        );
-      }
-      final warnings = reports
-          .where((e) => e.code == PluxErrorCode.actionsNotAvailable)
-          .toList();
-      expect(warnings, hasLength(1));
-      expect(warnings.single.message, contains('retry'));
-    },
-  );
-
-  test('the engine runs exactly the actions Appendix D tags up to P4, and refuses the rest (ADR-0039)', () {
+  test('the engine runs every action Appendix D tags up to P4 and the P5 ones delivered so far, and refuses the rest (ADR-0039)', () {
     for (final d in actionDescriptors) {
       final handler = handlerFor(d);
-      if (runsInThisRuntime(d)) {
+      if (runsInThisRuntime(d) || stateHandlers.containsKey(d.name)) {
         expect(handler, isNot(isA<RefusingHandler>()), reason: d.name);
+        expect(int.parse(d.phase.substring(1)), lessThanOrEqualTo(5));
       } else {
         expect(handler, isA<RefusingHandler>(), reason: d.name);
+        expect(d.phase, isNot('P4'), reason: d.name);
       }
     }
     expect(
@@ -498,15 +474,56 @@ void main() {
           if (runsInThisRuntime(d)) d.name,
       ]..sort(),
       [
+        'apiCall',
+        'callFlow',
         'callNative',
+        'capturePhoto',
         'condition',
+        'controlAnimation',
+        'copyToClipboard',
+        'dbDelete',
+        'dbInsert',
+        'dbQuery',
+        'dbUpdate',
+        'dbUpsert',
+        'delay',
+        'emitEvent',
         'emitHostEvent',
+        'forEach',
+        'getLocation',
+        'haptic',
+        'kvGet',
+        'kvRemove',
+        'kvSet',
+        'logout',
         'navigate',
         'openBottomSheet',
         'openDialog',
+        'openUrl',
+        'parallel',
+        'patchState',
+        'pickFile',
+        'pickImage',
         'pop',
+        'refreshData',
+        'requestPermission',
+        'resetForm',
+        'resetState',
+        'scanCode',
+        'setState',
+        'share',
+        'showSnackbar',
+        'showToast',
+        'startAnimation',
         'stop',
+        'submitForm',
+        'subscribe',
+        'switch',
         'switchTab',
+        'sync',
+        'trackEvent',
+        'unsubscribe',
+        'validateForm',
       ],
     );
   });

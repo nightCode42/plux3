@@ -26,17 +26,6 @@ const int _signBit = 1 << 63;
 /// The UUID of a section ID or an `fbs.Uuid`, as two 64-bit halves.
 typedef UuidKey = (int hi, int lo);
 
-/// An app state entry: its name, type expression and default, whether
-/// the host may read and write it (ADR-0023), and whether it declares a
-/// persistence, which P5 brings.
-typedef AppStateDecl = ({
-  String name,
-  String type,
-  fbs.Value? defaultValue,
-  bool exposed,
-  bool persisted,
-});
-
 /// A declared parameter, prop or input of the native catalogue.
 typedef NativeParam = ({String name, String type, bool required});
 
@@ -183,6 +172,24 @@ final class BundleView {
     }
   }
 
+  List<fbs.Timeline>? _timelines;
+
+  /// The bundle's timelines (ANI-002), read once.
+  List<fbs.Timeline> get timelines => _timelines ??= () {
+    final s = _single(SectionKind.timelines);
+    return s == null
+        ? const <fbs.Timeline>[]
+        : fbs.Timelines(s.data).timelines ?? const <fbs.Timeline>[];
+  }();
+
+  /// The timelines the page with ID [page] owns.
+  Iterable<fbs.Timeline> timelinesOf(UuidKey page) sync* {
+    for (final t in timelines) {
+      final p = t.page;
+      if (p != null && uuidOf(p) == page) yield t;
+    }
+  }
+
   /// The PXL program with content-addressed [id], decoded once.
   Program program(int id) {
     final have = _decoded[id];
@@ -226,6 +233,16 @@ final class BundleView {
       return g == null ? -1 : _compareUuid(uuidOf(g), id);
     });
     return i < 0 ? null : list[i];
+  }
+
+  /// The flow [key]: a graph of the actions section that belongs to no
+  /// page (ACT-061), or null.
+  fbs.Graph? flow(String key) {
+    graph((0, 0));
+    for (final g in _graphs ?? const <fbs.Graph>[]) {
+      if (g.page == null && g.key != 0 && string(g.key) == key) return g;
+    }
+    return null;
   }
 
   /// The translation [key] in locale [tag], or null.
@@ -286,19 +303,22 @@ final class BundleView {
         ];
       }();
 
-  /// The app's state entries (app bundles only), in document order:
-  /// computed entries arrive with P5 and are left out (ADR-0023).
-  late final List<AppStateDecl> appState = [
-    for (final e in _schemas?.state ?? const <fbs.StateEntry>[])
-      if (e.computed == 0)
-        (
-          name: string(e.name),
-          type: string(e.type),
-          defaultValue: e.$default,
-          exposed: e.exposed,
-          persisted: e.persistence != fbs.Persistence.Memory,
-        ),
-  ];
+  /// The bundle's own state entries, in document order: the app's in an
+  /// app bundle, the plugin's in a plugin bundle (STA-001).
+  List<fbs.StateEntry> get stateEntries =>
+      _schemas?.state ?? const <fbs.StateEntry>[];
+
+  /// The data sources the bundle's schemas section declares (ADR-0048).
+  List<fbs.DataSource> get dataSources =>
+      _schemas?.dataSources ?? const <fbs.DataSource>[];
+
+  /// The local collections the bundle's schemas section declares (DB-004).
+  List<fbs.Collection> get collections =>
+      _schemas?.collections ?? const <fbs.Collection>[];
+
+  /// The collections the bundle no longer declares (DB-005).
+  List<fbs.Uuid> get droppedCollections =>
+      _schemas?.droppedCollections ?? const <fbs.Uuid>[];
 
   late final fbs.Schemas? _schemas = () {
     final s = _single(SectionKind.schemas);

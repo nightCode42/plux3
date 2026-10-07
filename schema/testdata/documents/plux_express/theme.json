@@ -1,0 +1,18 @@
+{
+  "id": "01d0c450-6c00-7000-8000-000000000301",
+  "key": "express",
+  "kind": "theme",
+  "name": "Plux Express",
+  "schemaVersion": "1.0.0",
+  "tokens": {
+    "color": {
+      "$type": "color",
+      "primary": {
+        "$extensions": {
+          "dev.plux.dark": "#FF8A65"
+        },
+        "$value": "#E4572E"
+      }
+    }
+  }
+}

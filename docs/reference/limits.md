@@ -7,9 +7,16 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | Key | Unit | Default | Warning | Maximum | Scopes | Phase | Requirements | Description |
 |---|---|---|---|---|---|---|---|---|
 | `action.forEachItems` | count | 1000 | 80% | 100000 | installation, organization, app, plugin | P5 | ACT-005 | Items one forEach step may iterate over. |
+| `action.queueLength` | count | 32 | 80% | 1000 | installation, organization, app | P5 | ACT-003 | Triggers a handler with the queue policy may hold while its run is in progress; a trigger beyond it is dropped and reported. |
 | `action.runTimeout` | milliseconds | 120000 | 80% | 3600000 | installation, organization, app, plugin | P4 | ACT-005 | Time one action run may take. |
 | `action.stepTimeout` | milliseconds | 30000 | 80% | 600000 | installation, organization, app, plugin | P4 | ACT-005 | Time one action step may take. |
 | `action.stepsPerRun` | count | 10000 | 80% | 100000 | installation, organization, app, plugin | P4 | ACT-005 | Steps one action run may execute. |
+| `action.traceRuns` | count | 50 | 80% | 1000 | installation, organization, app | P5 | ACT-030 | Action run traces the runtime keeps for diagnostics; the oldest are dropped first. |
+| `action.traceSteps` | count | 200 | 80% | 10000 | installation, organization, app | P5 | ACT-030 | Steps one action run trace records; later steps are counted but not recorded. |
+| `anim.compositedSubtree` | count | 40 | 80% | 1000 | installation, organization, app, plugin | P5 | ANI-008 | Nodes below an animated opacity or layout prop before the compiler warns of an expensive animation. |
+| `anim.keyframesPerTrack` | count | 64 | 80% | 1000 | installation, organization, app, plugin | P5 | ANI-002 | Keyframes of one track of a timeline. |
+| `anim.simultaneousTimelines` | count | 6 | 80% | 100 | installation, organization, app, plugin | P5 | ANI-008 | Timelines of one page that autoplay or follow a driver before the compiler warns. |
+| `anim.timelineDuration` | milliseconds | 60000 | 80% | 600000 | installation, organization, app, plugin | P5 | ANI-002 | Duration of one timeline. |
 | `api.pageSize` | count | 100 | 80% | 1000 | installation | P2 | SRV-004 | Items one page of a list call returns; a call asking for more gets this many, and one asking for none gets this many too. |
 | `api.requestSize` | bytes | 8388608 | 80% | 268435456 | installation | P2 | SEC-104 | Size of one API request body, refused before a handler reads it, and of one request message once decompressed. |
 | `api.requestsPerMinute` | count | 600 | 80% | 100000 | installation, organization | P2 | SRV-065 | API calls one authenticated principal (a user or a token) may make per minute. |
@@ -24,7 +31,31 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | `bundle.pluginSize` | bytes | 20971520 | 80% | 268435456 | installation, organization, app, plugin | P1 | BND-010 | Size of one plugin bundle. |
 | `bundle.verifierDepth` | count | 64 | 80% | 256 | installation | P1 | BND-006, QA-004 | Maximum nesting of tables the FlatBuffers verifier accepts in one section. |
 | `bundle.verifierTables` | count | 1000000 | 80% | 10000000 | installation | P1 | BND-006, QA-004 | Maximum number of tables and vectors the FlatBuffers verifier visits in one section. |
+| `data.cacheBytes` | bytes | 16777216 | 80% | 268435456 | installation, organization, app | P5 | DAT-010, LIM-004 | Bytes the response cache of data sources keeps on the device; the least recently used entries are evicted beyond it. |
+| `data.cacheEntries` | count | 1000 | 80% | 100000 | installation, organization, app | P5 | DAT-010, LIM-004 | Responses the cache of data sources keeps on the device; the least recently used are evicted beyond it. |
+| `data.downloadSize` | bytes | 52428800 | 80% | 2147483648 | installation, organization, app | P5 | DAT-031, LIM-004 | Bytes one download may have; checked against the declared length before the transfer and counted during it, a larger one is stopped. |
+| `data.outboxBackoffMax` | milliseconds | 300000 | 80% | 3600000 | installation, organization, app | P5 | DAT-020 | Longest wait between two replays of the offline outbox that left entries; the wait doubles from data.outboxBackoffMin up to it. |
+| `data.outboxBackoffMin` | milliseconds | 5000 | 80% | 600000 | installation, organization, app | P5 | DAT-020 | First wait before the offline outbox replays again after a replay left entries behind. |
+| `data.outboxBytes` | bytes | 4194304 | 80% | 67108864 | installation, organization, app | P5 | DAT-020, LIM-004 | Bytes the offline outbox keeps on the device, encoded; a mutation that would exceed it is refused with a typed error. |
+| `data.outboxEntries` | count | 200 | 80% | 10000 | installation, organization, app | P5 | DAT-020, LIM-004 | Mutations the offline outbox keeps on the device; a further mutation is refused with a typed error. |
+| `data.pageSize` | count | 50 | 80% | 1000 | installation, organization, app, plugin | P5 | DAT-011 | Items one page of a paginated data source may ask for. |
+| `data.requestSize` | bytes | 1048576 | 80% | 16777216 | installation, organization, app, plugin | P5 | DAT-001, LIM-004 | Bytes the body of one data request may have. |
+| `data.requestTimeout` | milliseconds | 30000 | 80% | 300000 | installation, organization, app, plugin | P5 | DAT-001 | Time one data request may take before it fails with a timeout. |
+| `data.responseSize` | bytes | 4194304 | 80% | 67108864 | installation, organization, app, plugin | P5 | DAT-001, LIM-004 | Bytes the response of one data request may have; a larger response is stopped. |
+| `data.sourcesPerPlugin` | count | 100 | 80% | 1000 | installation, organization, app, plugin | P5 | DAT-001 | Data sources a plugin, its pages and the app may declare for it together. |
+| `data.streamBackoffMax` | milliseconds | 30000 | 80% | 600000 | installation, organization, app, plugin | P5 | DAT-012 | Longest wait between two reconnection attempts of a stream; the wait doubles from data.streamBackoffMin up to it, with jitter. |
+| `data.streamBackoffMin` | milliseconds | 1000 | 80% | 60000 | installation, organization, app, plugin | P5 | DAT-012 | First wait before a stream reconnects after its connection ended. |
+| `data.streamMessageSize` | bytes | 1048576 | 80% | 16777216 | installation, organization, app, plugin | P5 | DAT-012, LIM-004 | Bytes one stream message may have; a larger message closes the stream with a typed error. |
+| `data.streamsOpen` | count | 8 | 80% | 64 | installation, organization, app | P5 | DAT-012, LIM-004 | Streams the runtime keeps open at once; a further subscription is refused with a typed error. |
+| `data.uploadSize` | bytes | 26214400 | 80% | 1073741824 | installation, organization, app | P5 | DAT-031, LIM-004 | Bytes one upload may have; the file's size is checked before the transfer and a larger file is refused. |
+| `db.collectionRecords` | count | 100000 | 80% | 10000000 | installation, organization, app, plugin | P5 | DB-006, LIM-004 | Records one local collection may hold on the device; an insert beyond it fails with a typed error instead of growing the database. |
+| `db.collectionsPerPlugin` | count | 50 | 80% | 500 | installation, organization, app, plugin | P5 | DB-004 | Local collections a plugin may declare. |
+| `db.kvBytes` | bytes | 262144 | 80% | 16777216 | installation, organization, app, plugin | P5 | DB-009, LIM-004 | Bytes the key-value store of one plugin may hold, encoded; a write beyond it fails with a typed error. |
+| `db.queryRows` | count | 1000 | 80% | 100000 | installation, organization, app, plugin | P5 | DB-006 | Records one query or watched query returns at most, whatever its limit asks for. |
+| `db.recordBytes` | bytes | 65536 | 80% | 1048576 | installation, organization, app, plugin | P5 | DB-006, LIM-004 | Bytes one record of a local collection may take, encoded as JSON. |
+| `device.clipboardChars` | count | 10000 | 80% | 100000 | installation, organization, app | P5 | SEC-080, LIM-004 | Characters copyToClipboard may put on the clipboard in one step. |
 | `device.diskQuota` | bytes | 209715200 | 80% | 4294967296 | installation, organization, app | P3 | SYN-012 | Disk space the runtime may use for releases on one device. |
+| `device.pickCount` | count | 10 | 80% | 100 | installation, organization, app | P5 | SEC-080, LIM-004 | Files a single pickImage or pickFile step may return. |
 | `document.fileSize` | bytes | 8388608 | 80% | 67108864 | installation, organization | P1 | SCH-006 | Size of one document file in the project layout, checked before parsing. |
 | `document.jsonDepth` | count | 512 | 80% | 4096 | installation | P1 | SCH-003 | Nesting of arrays and objects in one document, checked while parsing. |
 | `document.stringPropSize` | bytes | 65536 | 80% | 1048576 | installation, organization, app, plugin | P1 | SCH-005 | Size of one string prop value, in UTF-8 bytes. |
@@ -42,11 +73,16 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | `pxl.expressionLength` | codepoints | 4096 | 80% | 65536 | installation, organization, app, plugin | P1 | PXL-001 | Length of one PXL expression. |
 | `pxl.nestingDepth` | count | 64 | 80% | 256 | installation | P1 | PXL-001 | Nesting depth of one PXL expression's syntax tree. |
 | `pxl.operationBudget` | operations | 10000 | 80% | 1000000 | installation, organization, app, plugin | P1 | PXL-001 | Operations one PXL evaluation may perform before it stops with a typed error. |
+| `pxl.regexPatternLength` | codepoints | 1000 | 80% | 10000 | installation, organization, app, plugin | P5 | PXL-001, PXL-006, LIM-001 | Length of one regular-expression pattern of pxl.regex.v1. |
+| `pxl.regexProgramSize` | count | 2000 | 80% | 20000 | installation, organization, app, plugin | P5 | PXL-001, PXL-006, LIM-001 | Instructions of one compiled regular-expression pattern of pxl.regex.v1 (schema/pxl/regex.md). |
+| `pxl.regexRepeat` | count | 100 | 80% | 1000 | installation, organization, app, plugin | P5 | PXL-001, PXL-006, LIM-001 | The largest count of a {n,m} repetition in a regular-expression pattern of pxl.regex.v1. |
 | `pxl.stringLength` | codepoints | 65536 | 80% | 1048576 | installation, organization, app, plugin | P1 | PXL-001 | Length of a string produced during one PXL evaluation. |
 | `release.appSize` | bytes | 104857600 | 80% | 1073741824 | installation, organization, app | P1 | BND-010 | Total size of one app release: the app bundle and every plugin bundle. |
 | `runtime.imageDiskCacheBytes` | bytes | 67108864 | 80% | 1073741824 | installation, organization, app | P3 | RT-014, AST-002 | Disk space the runtime's cache of remote images may use on one device. |
 | `runtime.imageSize` | bytes | 10485760 | 80% | 104857600 | installation, organization, app | P3 | AST-002, SEC-104 | Size of one remote image the runtime downloads; a larger one is refused. |
 | `runtime.sectionCacheBytes` | bytes | 8388608 | 80% | 268435456 | installation, organization, app | P3 | RT-013 | Memory the runtime's cache of decoded page and component sections may hold. |
 | `runtime.sectionCacheEntries` | count | 64 | 80% | 4096 | installation, organization, app | P3 | RT-013 | Page and component sections the runtime keeps decoded. |
+| `state.persistedBytes` | bytes | 1048576 | 80% | 16777216 | installation, organization, app | P5 | STA-003, LIM-004 | Bytes the persisted state of one app may take in the runtime's local store (plain; secure state is the encrypted one, plan p5 B6); writes beyond it stay in memory and are reported. |
+| `state.secureBytes` | bytes | 65536 | 80% | 1048576 | installation, organization, app | P5 | STA-003, LIM-004 | Bytes the secure state of one app may take in the runtime's local store (plain; secure state is the encrypted one, plan p5 B6); writes beyond it stay in memory and are reported. |
 | `telemetry.bufferBytes` | bytes | 262144 | 80% | 4194304 | installation, organization, app | P3 | ANL-002 | The size of the runtime's buffer of unsent telemetry events; the oldest are dropped first. |
 | `telemetry.eventsPerRequest` | count | 500 | 80% | 5000 | installation, organization, app | P2 | SEC-104 | Runtime events one telemetry request may carry. |

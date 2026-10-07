@@ -294,6 +294,14 @@ func (s *Service) RunPublish(ctx context.Context, job Job) error {
 		return err
 	}
 	diags = append(slices.Clone(diags), builds...)
+	stored, err := s.storedStateChecks(ctx, system, row, c)
+	if err != nil {
+		return err
+	}
+	if stored.HasErrors() {
+		return s.fail(ctx, system, row, append(diags, stored...))
+	}
+	diags = append(diags, stored...)
 	diags.Sort()
 	if !row.AcknowledgeWarnings && slices.ContainsFunc(diags, func(d plxerr.Diagnostic) bool { return d.Severity == plxerr.SeverityWarning }) {
 		d := plxerr.NewDiagnostic(plxerr.WarningsNotAcknowledged, plxerr.Location{}, "the publish found warnings; acknowledge them to publish")
@@ -736,7 +744,9 @@ func jobOf(r dbgen.PublishJob) PublishJob {
 // published draft uses against the catalogue of every host build of the
 // app (WGT-032): what a build lacks is a warning at the use's JSON path,
 // which the publisher acknowledges; that build's devices keep the newest
-// release they can run (REL-080).
+// release they can run (REL-080). The optional packages the draft's device
+// actions need are checked the same way against the packages each build's
+// catalogue records (RT-060).
 func (s *Service) hostBuildChecks(ctx context.Context, p auth.Principal, row dbgen.PublishJob, c compiled) (plxerr.Diagnostics, error) {
 	var out plxerr.Diagnostics
 	err := s.inOrg(ctx, p, func(ctx context.Context, tx pgx.Tx) error {
@@ -746,10 +756,63 @@ func (s *Service) hostBuildChecks(ctx context.Context, p auth.Principal, row dbg
 		}
 		for _, b := range builds {
 			out = append(out, compiler.HostBuildIncompatibilities(c.result, draftFiles(c.key), b.build, b.catalogue)...)
+			out = append(out, compiler.HostBuildLacksPackages(c.result, draftFiles(c.key), b.build, b.catalogue)...)
 		}
 		return nil
 	})
 	return out, err
+}
+
+// storedStateChecks compares what devices store of the published bundle
+// with the bundle's latest version, which is newer than any release
+// devices hold: a session, persisted or secure state entry whose type
+// changed needs a migration from the previous type or a reset (STA-040),
+// and a changed collection needs a new version, a plan where data would
+// be lost, and a warning the publisher acknowledges (DB-005). The first
+// version of a bundle needs nothing.
+func (s *Service) storedStateChecks(ctx context.Context, p auth.Principal, row dbgen.PublishJob, c compiled) (plxerr.Diagnostics, error) {
+	data, err := s.previousBundle(ctx, p, row)
+	if err != nil || data == nil {
+		return nil, err
+	}
+	before, err := compiler.StoredState(data)
+	if err != nil {
+		return nil, fmt.Errorf("release: the previous bundle: %w", err)
+	}
+	collections, err := compiler.StoredCollections(data)
+	if err != nil {
+		return nil, fmt.Errorf("release: the previous bundle: %w", err)
+	}
+	out := compiler.CheckStoredState(before, c.result.StoredState[c.key])
+	return append(out, compiler.CheckCollections(collections, c.result.Collections[c.key])...), nil
+}
+
+// previousBundle reads the bundle's latest version, or nil for the first
+// version.
+func (s *Service) previousBundle(ctx context.Context, p auth.Principal, row dbgen.PublishJob) ([]byte, error) {
+	var prev []byte
+	if err := s.inOrg(ctx, p, func(ctx context.Context, tx pgx.Tx) error {
+		v, err := dbgen.New(tx).LatestVersion(ctx, dbgen.LatestVersionParams{AppID: row.AppID, PluginID: row.PluginID})
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil
+		}
+		if err != nil {
+			return failure(err, "version")
+		}
+		prev = v.BundleSha256
+		return nil
+	}); err != nil || prev == nil {
+		return nil, err
+	}
+	key, err := objects.Key(objects.KindBundle, hex.EncodeToString(prev))
+	if err != nil {
+		return nil, fmt.Errorf("release: %w", err)
+	}
+	data, _, err := s.o.Objects.Get(ctx, key)
+	if err != nil {
+		return nil, fmt.Errorf("release: the previous bundle: %w", err)
+	}
+	return data, nil
 }
 
 // draftFiles accepts the files of the draft a publish records: a plugin's

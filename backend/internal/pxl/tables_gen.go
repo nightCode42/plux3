@@ -489,7 +489,7 @@ var stdOverloads = [...]overloadDef{
 	{id: 127, name: "format.compact", group: "format", params: []paramDef{{"x", "int"}}, result: "string", variadic: false},
 	{id: 128, name: "format.compact", group: "format", params: []paramDef{{"x", "double"}}, result: "string", variadic: false},
 	{id: 129, name: "format.compact", group: "format", params: []paramDef{{"x", "decimal"}}, result: "string", variadic: false},
-	{id: 130, name: "format.phone", group: "phone", params: []paramDef{{"s", "string"}, {"region", "string"}}, result: "string", variadic: false},
+	{id: 130, name: "format.phone", group: "format", params: []paramDef{{"s", "string"}, {"region", "string"}}, result: "string", variadic: false},
 	{id: 131, name: "format.iban", group: "core", params: []paramDef{{"s", "string"}}, result: "string", variadic: false},
 	{id: 132, name: "t", group: "l10n", params: []paramDef{{"key", "string"}}, result: "string", variadic: false},
 	{id: 133, name: "t", group: "l10n", params: []paramDef{{"key", "string"}, {"args", "map<string,string>"}}, result: "string", variadic: false},

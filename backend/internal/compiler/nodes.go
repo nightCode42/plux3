@@ -128,6 +128,7 @@ func (u *unit) checkNode(n *node) {
 		u.deprecation(sh.widget.Deprecated, sh.widget.Type, vctx{file: file, ptr: n.ptr + "/type"})
 	}
 	n.props = u.checkProps(n, sh, n.doc.Props, c, "props", true)
+	u.checkNodeAnimation(n, sh, c)
 	u.checkEvents(n, sh, c)
 	u.checkChildren(n, sh, file)
 	if len(n.doc.Visible) > 0 {
@@ -235,8 +236,7 @@ func (u *unit) checkEvents(n *node, sh *shape, c vctx) {
 			continue
 		}
 		h := &handler{event: m.id, graph: g}
-		u.concurrency(h, eh.Concurrency, c.file, ptr)
-		h.detached = eh.Detached != nil && *eh.Detached
+		u.policy(h, &eh, fbs.ConcurrencyDrop, vctx{file: c.file, ptr: ptr, pl: c.pl})
 		n.handlers = append(n.handlers, h)
 	}
 }
@@ -245,7 +245,7 @@ func (u *unit) checkEvents(n *node, sh *shape, c vctx) {
 func (u *unit) concurrency(h *handler, policy, file, ptr string) {
 	kind, arg, _ := strings.Cut(policy, ":")
 	switch kind {
-	case "", "parallel":
+	case "parallel":
 		h.concurrency = fbs.ConcurrencyParallel
 	case "drop":
 		h.concurrency = fbs.ConcurrencyDrop

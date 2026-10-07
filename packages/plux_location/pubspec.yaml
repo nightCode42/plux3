@@ -1,0 +1,24 @@
+name: plux_location
+description: >-
+  Read the device position from Plux plugins: the getLocation action, on
+  geolocator.
+version: 0.1.0
+repository: https://github.com/nightCode42/plux3/tree/main/packages/plux_location
+# Not published until its release is wired (release.yml, pub.dev).
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  geolocator: ^14.1.1
+  plux_flutter: ^0.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

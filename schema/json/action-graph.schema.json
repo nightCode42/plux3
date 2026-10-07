@@ -46,6 +46,13 @@
     "output": {
       "$ref": "common.schema.json#/$defs/typeExpr"
     },
+    "state": {
+      "type": "array",
+      "description": "The run's variables: state of scope `run`, read and written as `run.<name>` by the graph's steps and gone when the run ends (STA-001).",
+      "items": {
+        "$ref": "common.schema.json#/$defs/stateEntry"
+      }
+    },
     "steps": {
       "type": "array",
       "items": {

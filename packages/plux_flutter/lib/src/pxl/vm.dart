@@ -9,19 +9,27 @@ library;
 import 'package:plux_flutter/src/pxl/builtins.dart';
 import 'package:plux_flutter/src/pxl/decimal.dart';
 import 'package:plux_flutter/src/pxl/program.dart';
+import 'package:plux_flutter/src/pxl/regex.dart';
 import 'package:plux_flutter/src/pxl/tables.g.dart';
 import 'package:plux_flutter/src/pxl/values.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
 
 /// Limits of one evaluation, from the limits registry (LIM-001).
 final class PxlLimits {
-  /// Creates limits.
-  const PxlLimits({
+  /// Creates limits; the regex limits default to the registry's.
+  PxlLimits({
     required this.budget,
     required this.stringLength,
     required this.collectionSize,
     required this.decimalDigits,
-  });
+    RegexLimits? regex,
+  }) : regex =
+           regex ??
+           RegexLimits(
+             patternLength: PluxLimit.pxlRegexPatternLength.defaultValue,
+             programSize: PluxLimit.pxlRegexProgramSize.defaultValue,
+             repeat: PluxLimit.pxlRegexRepeat.defaultValue,
+           );
 
   /// The registry defaults.
   PxlLimits.defaults()
@@ -43,6 +51,9 @@ final class PxlLimits {
 
   /// Digits of a produced decimal.
   final int decimalDigits;
+
+  /// Bounds of `pxl.regex.v1` patterns.
+  final RegexLimits regex;
 }
 
 /// A typed run-time error.

@@ -19,7 +19,8 @@ abstract interface class PageRenderer {
   /// whether the page owns its route, so that `pop` may pop it. An
   /// embedded page's `pop` reaches [onPop] with its result instead, when
   /// given (ADR-0023). [page] may also be an exported component, whose
-  /// props [params] are.
+  /// props [params] are; its `emitEvent` steps reach [onEvent] with the
+  /// payload in its JSON form (SCH-030).
   Widget build(
     BuildContext context,
     ActiveRelease release,
@@ -27,6 +28,7 @@ abstract interface class PageRenderer {
     Map<String, Object?> params, {
     bool routed = false,
     void Function(Object? result)? onPop,
+    void Function(String event, Object? payload)? onEvent,
   });
 
   /// Runs guard graph [guard] of [page] over the page's [params], in the

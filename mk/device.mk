@@ -12,6 +12,8 @@
 e2e-starter: ## Run the starter app's end-to-end flows, a project plux create generates and the add-to-app module's, against a server built from source (needs PLUX_TEST_DATABASE_URL)
 	@test -n "$${PLUX_TEST_DATABASE_URL:-}" || { echo "✗ set PLUX_TEST_DATABASE_URL: run 'make test-db' and export what it prints (docs/engineering/testing.md)"; exit 1; }
 	cd backend && PLUX_E2E_FLUTTER="$$(command -v flutter)" $(GO) test -count=1 -timeout 60m -run 'TestStarterAppAgainstTheServer|TestGeneratedAppAgainstTheServer|TestAddToAppAgainstTheServer' -v ./internal/server
+	# The reference apps last, so a failure of theirs ends the log (Verifies: DX-004).
+	cd backend && PLUX_E2E_FLUTTER="$$(command -v flutter)" $(GO) test -count=1 -timeout 60m -run 'TestPluxBankAgainstTheServer|TestPluxExpressAgainstTheServer' -v ./internal/server
 
 # ANDROID_API picks the emulator's system image for e2e-android.
 ANDROID_API ?= 35

@@ -195,8 +195,28 @@ func (rcv *Component) StringsLength() int {
 	return 0
 }
 
+func (rcv *Component) Forms(obj *Form, j int) bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(22))
+	if o != 0 {
+		x := rcv._tab.Vector(o)
+		x += flatbuffers.UOffsetT(j) * 4
+		x = rcv._tab.Indirect(x)
+		obj.Init(rcv._tab.Bytes, x)
+		return true
+	}
+	return false
+}
+
+func (rcv *Component) FormsLength() int {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(22))
+	if o != 0 {
+		return rcv._tab.VectorLen(o)
+	}
+	return 0
+}
+
 func ComponentStart(builder *flatbuffers.Builder) {
-	builder.StartObject(9)
+	builder.StartObject(10)
 }
 func ComponentAddId(builder *flatbuffers.Builder, id flatbuffers.UOffsetT) {
 	builder.PrependStructSlot(0, flatbuffers.UOffsetT(id), 0)
@@ -241,6 +261,12 @@ func ComponentAddStrings(builder *flatbuffers.Builder, strings flatbuffers.UOffs
 	builder.PrependUOffsetTSlot(8, flatbuffers.UOffsetT(strings), 0)
 }
 func ComponentStartStringsVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
+	return builder.StartVector(4, numElems, 4)
+}
+func ComponentAddForms(builder *flatbuffers.Builder, forms flatbuffers.UOffsetT) {
+	builder.PrependUOffsetTSlot(9, flatbuffers.UOffsetT(forms), 0)
+}
+func ComponentStartFormsVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
 	return builder.StartVector(4, numElems, 4)
 }
 func ComponentEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT {

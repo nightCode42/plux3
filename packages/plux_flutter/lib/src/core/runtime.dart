@@ -15,7 +15,11 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plux_flutter/src/actions/action_error.dart';
 import 'package:plux_flutter/src/actions/engine.dart';
+import 'package:plux_flutter/src/actions/trace.dart';
+import 'package:plux_flutter/src/actions/triggers.dart';
 import 'package:plux_flutter/src/assets/assets.dart';
 import 'package:plux_flutter/src/assets/avif_probe.dart';
 import 'package:plux_flutter/src/assets/fonts.dart';
@@ -28,6 +32,15 @@ import 'package:plux_flutter/src/core/features.dart';
 import 'package:plux_flutter/src/core/host_events.dart';
 import 'package:plux_flutter/src/core/plux.dart';
 import 'package:plux_flutter/src/core/plux_view.dart';
+import 'package:plux_flutter/src/core/trigger_sources.dart';
+import 'package:plux_flutter/src/data/services.dart';
+import 'package:plux_flutter/src/data/worker.dart';
+import 'package:plux_flutter/src/db/adapter.dart';
+import 'package:plux_flutter/src/db/builtin_adapter.dart';
+import 'package:plux_flutter/src/db/release_declarations.dart';
+import 'package:plux_flutter/src/db/service.dart';
+import 'package:plux_flutter/src/device/guard.dart';
+import 'package:plux_flutter/src/device/services.dart';
 import 'package:plux_flutter/src/devtools_api/diagnostics.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/native_catalogue/host.dart';
@@ -37,12 +50,16 @@ import 'package:plux_flutter/src/navigation/guards.dart';
 import 'package:plux_flutter/src/navigation/router.dart';
 import 'package:plux_flutter/src/platform/platform_services.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
+import 'package:plux_flutter/src/render/owner_actions.dart';
 import 'package:plux_flutter/src/render/page_renderer.dart';
 import 'package:plux_flutter/src/render/renderer.dart';
 import 'package:plux_flutter/src/runtime_info.dart';
+import 'package:plux_flutter/src/schema/limit_values.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
+import 'package:plux_flutter/src/state/persistence.dart';
 import 'package:plux_flutter/src/state/providers.dart';
 import 'package:plux_flutter/src/store/baseline.dart';
+import 'package:plux_flutter/src/store/kv_store.dart';
 import 'package:plux_flutter/src/store/pointer.dart';
 import 'package:plux_flutter/src/store/release_store.dart';
 import 'package:plux_flutter/src/sync/api_client.dart';
@@ -81,6 +98,7 @@ final class RuntimeOverrides {
     this.healthyAfter = const Duration(seconds: 10),
     this.clock,
     this.random,
+    this.secrets,
   });
 
   /// Creates the credential store on the sync isolate.
@@ -98,6 +116,10 @@ final class RuntimeOverrides {
 
   /// Where telemetry sampling draws from; a new generator when null.
   final math.Random? random;
+
+  /// The secure storage that keeps the state stores' keys; the platform's
+  /// when null (plan p5 D6).
+  final SecretStore Function()? secrets;
 }
 
 /// The runtime.
@@ -193,6 +215,7 @@ final class PluxRuntime with WidgetsBindingObserver {
         root,
         assets,
       );
+      await rt.statePersistence.load();
       final startup = await rt._startup();
       WidgetsBinding.instance.addObserver(rt);
       rt._flushEvery = Zone.root.createPeriodicTimer(
@@ -257,7 +280,8 @@ final class PluxRuntime with WidgetsBindingObserver {
   String lastRoute = '';
 
   /// A limit's value in the active app bundle (LIM-004), or its default.
-  int limit(PluxLimit l) => active.value?.limits[l.key] ?? l.defaultValue;
+  int limit(PluxLimit l) =>
+      (active.value?.limits ?? const <String, int>{}).valueOf(l);
 
   /// Sends the buffered telemetry now. A failure keeps the events for the
   /// next attempt and is not reported: telemetry never adds to the
@@ -310,14 +334,168 @@ final class PluxRuntime with WidgetsBindingObserver {
   /// The latest sync event, for status displays.
   final ValueNotifier<SyncEvent?> lastEvent = ValueNotifier(null);
 
+  late final LazyDataWorker _dataWorker = LazyDataWorker(
+    () => DataWorker.start(
+      httpClient: config.httpClient ?? platformHttpClient,
+      webSocketClient: config.webSocketClient,
+      cacheDirectory: '$_root/data',
+      // The encrypted cache's key, kept like the secure state store's
+      // (DAT-010, plan p5 D6).
+      keys: SecretCacheKeys(_secrets, 'data-cache.$_keyId'),
+    ),
+  );
+
+  /// The data layer's services (ADR-0048): loads and failures of data
+  /// sources become trigger events (ACT-002).
+  late final DataServices _dataServices = DataServices(
+    transport: _dataWorker,
+    plainStore: _dataWorker.store(secure: false),
+    secureStore: _dataWorker.store(secure: true),
+    authDelegate: () => environment().authDelegate,
+    environment: config.environment,
+    record: telemetry.record,
+    report: _report,
+    events: DataTriggers(triggers),
+    ioEvents: DataTriggers(triggers),
+    streamTransport: _dataWorker,
+    transferTransport: _dataWorker,
+    outboxStore: _outboxStore,
+    runtimeRoot: _root,
+    downloadDirectory: '$_root/downloads',
+    database: database,
+  );
+
+  /// The offline outbox's store: encrypted under a key of this
+  /// installation kept by the platform's secure storage, like the secure
+  /// state store's (DAT-020, plan p5 D6). Its size follows the active app
+  /// bundle's `data.outboxBytes`.
+  late final EncryptedFileStore _outboxStore = () {
+    final store = EncryptedFileStore(
+      path: '$_root/data/outbox.pxk',
+      secrets: _secrets,
+      keyName: 'data-outbox.$_keyId',
+      label: 'data-outbox/$_keyId',
+      maxBytes: PluxLimit.dataOutboxBytes.defaultValue,
+    );
+    active.addListener(() {
+      store.maxBytes =
+          active.value?.limits[PluxLimit.dataOutboxBytes.key] ??
+          PluxLimit.dataOutboxBytes.defaultValue;
+    });
+    return store;
+  }();
+
+  /// The host says whether the network is available
+  /// (`Plux.setNetworkAvailable`, decision D13): streams waiting to
+  /// reconnect do so and the outbox replays when it is back.
+  void setNetworkAvailable(bool available) =>
+      _dataServices.setNetworkAvailable(available);
+
+  /// Ends the user's session (HST-010, the `logout` action): removes every
+  /// cached response, so the next user never sees the previous user's
+  /// data, then tells the host's auth delegate.
+  Future<void> logout() async {
+    await _dataServices.clearCache();
+    environment().authDelegate?.onLogout();
+  }
+
+  /// Removes every cached response (HST-001, `Plux.wipeData`).
+  Future<void> clearDataCache() => _dataServices.clearCache();
+
+  /// The platform's secure storage, which keeps the installation keys of
+  /// the secure state store and the data cache (plan p5 D6).
+  late final SecretStore _secrets =
+      overrides.secrets?.call() ?? const PlatformSecretStore();
+
+  /// The name part of this installation's keys.
+  String get _keyId =>
+      '${_safe(config.appId)}.${_safe(config.environment)}'.toLowerCase();
+
+  /// Where session, persisted and secure state lives (STA-003): two
+  /// stores under the runtime's directory; `persisted` is a plain file,
+  /// `secure` is encrypted under its own key kept by the platform's secure
+  /// storage (plan p5 D5, D6). A store that fails keeps its values in
+  /// memory for the session.
+  late final StatePersistence statePersistence = () {
+    final id = _keyId;
+    final persisted = PlainFileStore(
+      path: '$_root/plux-state/persisted.json',
+      maxBytes: PluxLimit.statePersistedBytes.defaultValue,
+    );
+    final secure = EncryptedFileStore(
+      path: '$_root/plux-state/secure.pxk',
+      secrets: _secrets,
+      keyName: 'state-secure.$id',
+      label: 'plux-state/secure/$id',
+      maxBytes: PluxLimit.stateSecureBytes.defaultValue,
+    );
+    // The limits of the active app bundle (LIM-001).
+    active.addListener(() {
+      final limits = active.value?.limits ?? const <String, int>{};
+      persisted.maxBytes = limits.valueOf(PluxLimit.statePersistedBytes);
+      secure.maxBytes = limits.valueOf(PluxLimit.stateSecureBytes);
+    });
+    return StatePersistence(
+      persisted: persisted,
+      secure: secure,
+      report: _report,
+    );
+  }();
+
+  /// Where plugins' collections and key-value entries live (DB-001): the
+  /// host's adapter, or the core's built-in store, whose file is sealed
+  /// under a key of this installation like the secure state store's
+  /// (ADR-0049).
+  late final PluxDatabaseAdapter _dbAdapter =
+      config.databaseAdapter ??
+      BuiltInDatabaseAdapter(
+        store: EncryptedFileStore(
+          path: '$_root/plux-db/kv.pxk',
+          secrets: _secrets,
+          keyName: 'db-kv.$_keyId',
+          label: 'plux-db/kv/$_keyId',
+          maxBytes: PluxLimit.dbKvBytes.max * 4,
+        ),
+        encrypted: true,
+        report: _report,
+      );
+
+  final Expando<ReleaseDbDeclarations> _dbDeclarations = Expando();
+
+  /// The local database (DB-001): the layer under the database actions,
+  /// `Plux.wipeData` and watched queries.
+  late final PluxDatabase database = PluxDatabase(
+    adapter: _dbAdapter,
+    report: _report,
+    declarations: () {
+      final release = active.value;
+      final r = renderer;
+      if (release == null || r is! PluxRenderer) return null;
+      return _dbDeclarations[release] ??= ReleaseDbDeclarations(release, r);
+    },
+  );
+
+  /// Where `Plux.sendEvent` delivers host events (HST-013): the
+  /// host-event triggers of the app, its plugins and the pages shown.
+  late HostEventSink? hostEventSink = TypedHostEvents(
+    release: () => active.value,
+    types: (r) => switch (renderer) {
+      final PluxRenderer p => p.typesOf(r, ''),
+      _ => const {},
+    },
+    next: HostEventTriggers(triggers),
+  );
+
   /// Turns page sections into widgets (ADR-0031).
   late PageRenderer? renderer = PluxRenderer(
     config: config,
     report: _report,
     failure: (e) => unawaited(failure(e)),
     imageCacheDirectory: '$_root/images',
+    statePersistence: statePersistence,
     assets: assets,
     verified: _verified,
+    data: _dataServices,
     actions: ActionServices(
       router: router,
       emit: emitHostEvent,
@@ -326,8 +504,71 @@ final class PluxRuntime with WidgetsBindingObserver {
         registered: config.nativeActions,
         declarations: natives,
       ),
-    ),
+      triggers: triggers,
+      traces: traces,
+      sync: () => unawaited(sync().then((_) {}, onError: (Object _) {})),
+      logout: logout,
+      services: {
+        ...deviceServices(
+          packages: config.devicePackages,
+          openLink: handleDeepLink,
+        ),
+        PluxDatabase: database,
+      },
+      deviceGuard: _deviceGuard,
+    )..ownerErrors = _ownerErrors,
   );
+
+  /// Checks the device operations of plugin runs against the capabilities
+  /// each plugin declares in the active release, and the host's
+  /// `allowedCapabilities` (SEC-080).
+  late final DeviceGuard _deviceGuard = DeviceGuard(
+    capabilities: (plugin) {
+      try {
+        final caps = active.value?.meta(plugin).capabilities;
+        return (
+          deviceApis: caps?.deviceApis ?? const <String>[],
+          networkDomains: caps?.networkDomains ?? const <String>[],
+        );
+      } on PluxException {
+        return (deviceApis: const <String>[], networkDomains: const <String>[]);
+      }
+    },
+    deepLinks: () => active.value?.meta('').deepLinks,
+    report: _report,
+    allowed: config.allowedCapabilities,
+    limits: () => active.value?.limits ?? const <String, int>{},
+  );
+
+  OwnerLifetime? _owners;
+
+  Future<bool> _ownerErrors(String plugin, ActionError error) =>
+      _owners?.current?.errors(plugin, error) ?? Future.value(false);
+
+  /// Runs the app's and the plugins' triggers and error handlers (ACT-002,
+  /// ACT-020) with the active release, reaching state through
+  /// [container]; `Plux.initialize` connects it.
+  void connect(ProviderContainer container) {
+    _owners?.dispose();
+    _owners = OwnerLifetime(active, (release) {
+      final r = renderer;
+      if (r is! PluxRenderer) return null;
+      return ReleaseOwners(
+        renderer: r,
+        release: release,
+        container: container,
+        environment: () => environment(),
+        navigatorKey: () => navigatorKey,
+      );
+    });
+  }
+
+  /// Stops the app's and the plugins' triggers, before the container
+  /// they read goes.
+  void disconnect() {
+    _owners?.dispose();
+    _owners = null;
+  }
 
   /// What Plux renders with: locale, theme, consent, the user context and
   /// the auth delegate. `Plux.initialize` connects it to its container.
@@ -441,7 +682,9 @@ final class PluxRuntime with WidgetsBindingObserver {
       );
       return false;
     }
-    return _openTarget(r, target);
+    final opened = await _openTarget(r, target);
+    if (opened) triggers.pushOpened();
+    return opened;
   }
 
   Future<bool> _openTarget(ActiveRelease release, LinkTarget target) async {
@@ -560,6 +803,16 @@ final class PluxRuntime with WidgetsBindingObserver {
   late final RuntimeDiagnostics diagnostics = RuntimeDiagnostics(
     active,
     lastEvent,
+    traces: traces.listenable,
+  );
+
+  /// Dispatches app lifecycle, push, host and data-source events to the
+  /// triggers that handle them (ACT-002).
+  final TriggerHub triggers = TriggerHub();
+
+  /// The latest action run traces (ACT-030).
+  final TraceBuffer traces = TraceBuffer(
+    capacity: PluxLimit.actionTraceRuns.defaultValue,
   );
 
   int _mounted = 0;
@@ -568,7 +821,10 @@ final class PluxRuntime with WidgetsBindingObserver {
   bool _healthyScheduled = false;
   Timer? _healthy;
   bool _disposed = false;
-  Future<void> _pointerChange = Future.value();
+  // Null while nothing ran: a future, even a completed one, delivers its
+  // result in a microtask of the zone that created it, so a first future made
+  // in a widget test's fake-async zone would stall a later caller's chain.
+  Future<void>? _pointerChange;
 
   /// The typed sync events (SYN-013).
   Stream<SyncEvent> get events => _events.stream;
@@ -696,7 +952,7 @@ final class PluxRuntime with WidgetsBindingObserver {
   /// Runs pointer changes one at a time: a sync that stages during startup
   /// schedules a safe point while startup activates the same release.
   Future<void> _serially(Future<void> Function() step) {
-    final next = _pointerChange.then((_) => step());
+    final next = (_pointerChange ?? Future<void>.value()).then((_) => step());
     _pointerChange = next.catchError((Object _) {});
     return next;
   }
@@ -783,6 +1039,11 @@ final class PluxRuntime with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) triggers.appPaused();
+    if (state == AppLifecycleState.resumed) {
+      triggers.appResumed();
+      _dataServices.appResumed();
+    }
     if (state == AppLifecycleState.paused) {
       // Reaching the background normally ends the launch healthily.
       if (_healthyScheduled) unawaited(_worker.markHealthy());
@@ -791,6 +1052,7 @@ final class PluxRuntime with WidgetsBindingObserver {
         _backgroundSince = _clock();
         unawaited(flushTelemetry());
       }
+      unawaited(statePersistence.flush());
     } else if (state == AppLifecycleState.resumed && !_inForeground) {
       final away = _clock().difference(_backgroundSince!);
       if (away >= sessionTimeout) {
@@ -811,6 +1073,7 @@ final class PluxRuntime with WidgetsBindingObserver {
 
   /// Stops the sync isolate and releases every mapping.
   Future<void> dispose() async {
+    disconnect();
     WidgetsBinding.instance.removeObserver(this);
     _flushEvery?.cancel();
     if (_inForeground) _endStretch();
@@ -821,6 +1084,11 @@ final class PluxRuntime with WidgetsBindingObserver {
       const Duration(seconds: 1),
       onTimeout: () {},
     );
+    await statePersistence.flush();
+    // Open streams and the outbox's replay timer stop with the runtime.
+    await _dataServices.close();
+    // A host's adapter is the host's to close.
+    if (config.databaseAdapter == null) await _dbAdapter.close();
     _disposed = true;
     _healthy?.cancel();
     diagnostics.dispose();

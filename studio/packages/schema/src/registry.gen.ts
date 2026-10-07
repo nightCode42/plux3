@@ -12,7 +12,7 @@ export type Platform = "android" | "ios";
 export type AccessibilityRole = "none" | "button" | "checkbox" | "radio" | "switch" | "slider" | "textField" | "image" | "text" | "header" | "list" | "progress";
 
 /** A category of the action catalogue (Appendix D). */
-export type ActionCategory = "navigation" | "feedback" | "state" | "forms" | "data" | "localDb" | "compute" | "control" | "analytics" | "app" | "device" | "security" | "animation" | "host" | "plux" | "payments";
+export type ActionCategory = "navigation" | "feedback" | "state" | "forms" | "data" | "localDb" | "compute" | "control" | "analytics" | "app" | "device" | "security" | "animation" | "component" | "host" | "plux" | "payments";
 
 /** A kind of side effect an action has. */
 export type ActionEffect = "navigation" | "state" | "network" | "storage" | "device" | "ui" | "telemetry" | "security" | "host";
@@ -173,10 +173,10 @@ export interface ActionDescriptor {
 }
 
 /** A widget type name. */
-export type WidgetType = "ActionChip" | "Align" | "AppBar" | "AspectRatio" | "BackButton" | "Badge" | "Baseline" | "BottomAppBar" | "Card" | "Center" | "Checkbox" | "CheckboxListTile" | "Chip" | "ChoiceChip" | "CircleAvatar" | "CircularProgressIndicator" | "ClipOval" | "ClipRRect" | "CloseButton" | "ColoredBox" | "Column" | "ConstrainedBox" | "Container" | "CupertinoActivityIndicator" | "CupertinoButton" | "CupertinoListSection" | "CupertinoListTile" | "CupertinoSlider" | "CupertinoSlidingSegmentedControl" | "CupertinoSwitch" | "CupertinoTextField" | "CustomScrollView" | "DecoratedBox" | "Divider" | "DropdownMenu" | "ElevatedButton" | "EmptyState" | "ErrorState" | "Expanded" | "ExpansionTile" | "FilledButton" | "FilterChip" | "FittedBox" | "Flex" | "Flexible" | "FloatingActionButton" | "ForEach" | "FractionallySizedBox" | "GestureDetector" | "GridView" | "Icon" | "IconButton" | "If" | "Image" | "IndexedStack" | "InkWell" | "InputChip" | "LimitedBox" | "LinearProgressIndicator" | "ListTile" | "ListView" | "Match" | "OfflineBanner" | "Opacity" | "OutlinedButton" | "Padding" | "PageView" | "Positioned" | "Radio" | "RadioListTile" | "RangeSlider" | "Responsive" | "RichText" | "Row" | "SafeArea" | "Scaffold" | "Scrollbar" | "SegmentedButton" | "SelectableText" | "SingleChildScrollView" | "SizedBox" | "SkeletonLoader" | "Slider" | "SliverAppBar" | "SliverFillRemaining" | "SliverGrid" | "SliverList" | "SliverPadding" | "SliverToBoxAdapter" | "Slot" | "Spacer" | "Stack" | "Switch" | "SwitchListTile" | "Text" | "TextButton" | "TextField" | "TextFormField" | "Tooltip" | "Transform" | "VerticalDivider" | "Wrap";
+export type WidgetType = "ActionChip" | "Align" | "AppBar" | "AspectRatio" | "BackButton" | "Badge" | "Baseline" | "BottomAppBar" | "Card" | "Center" | "Checkbox" | "CheckboxListTile" | "Chip" | "ChoiceChip" | "CircleAvatar" | "CircularProgressIndicator" | "ClipOval" | "ClipRRect" | "CloseButton" | "ColoredBox" | "Column" | "ConstrainedBox" | "Container" | "CupertinoActivityIndicator" | "CupertinoButton" | "CupertinoListSection" | "CupertinoListTile" | "CupertinoSlider" | "CupertinoSlidingSegmentedControl" | "CupertinoSwitch" | "CupertinoTextField" | "CustomScrollView" | "DecoratedBox" | "Divider" | "DropdownMenu" | "ElevatedButton" | "EmptyState" | "ErrorState" | "Expanded" | "ExpansionTile" | "FilledButton" | "FilterChip" | "FittedBox" | "Flex" | "Flexible" | "FloatingActionButton" | "ForEach" | "FormScope" | "FractionallySizedBox" | "GestureDetector" | "GridView" | "Icon" | "IconButton" | "If" | "Image" | "IndexedStack" | "InkWell" | "InputChip" | "LimitedBox" | "LinearProgressIndicator" | "ListTile" | "ListView" | "Match" | "OfflineBanner" | "Opacity" | "OutlinedButton" | "Padding" | "PageView" | "Positioned" | "Radio" | "RadioListTile" | "RangeSlider" | "Responsive" | "RichText" | "Row" | "SafeArea" | "Scaffold" | "Scrollbar" | "SegmentedButton" | "SelectableText" | "SingleChildScrollView" | "SizedBox" | "SkeletonLoader" | "Slider" | "SliverAppBar" | "SliverFillRemaining" | "SliverGrid" | "SliverList" | "SliverPadding" | "SliverToBoxAdapter" | "Slot" | "Spacer" | "Stack" | "Switch" | "SwitchListTile" | "Text" | "TextButton" | "TextField" | "TextFormField" | "Tooltip" | "Transform" | "VerticalDivider" | "Wrap";
 
 /** An action name. */
-export type ActionName = "apiCall" | "biometricAuth" | "callFlow" | "callNative" | "capturePhoto" | "condition" | "controlAnimation" | "copyToClipboard" | "dbDelete" | "dbInsert" | "dbQuery" | "dbUpdate" | "dbUpsert" | "delay" | "emitHostEvent" | "forEach" | "getLocation" | "haptic" | "invokeFunction" | "kvGet" | "kvRemove" | "kvSet" | "logout" | "navigate" | "openBottomSheet" | "openDialog" | "openUrl" | "parallel" | "patchState" | "pickFile" | "pickImage" | "pop" | "refreshData" | "requestPermission" | "resetForm" | "resetState" | "scanCode" | "setLocale" | "setState" | "setThemeMode" | "share" | "showSnackbar" | "showToast" | "signTransaction" | "startAnimation" | "startPayment" | "stop" | "submitForm" | "subscribe" | "switch" | "switchTab" | "sync" | "trackEvent" | "unsubscribe" | "validateForm";
+export type ActionName = "apiCall" | "biometricAuth" | "callFlow" | "callNative" | "capturePhoto" | "condition" | "controlAnimation" | "copyToClipboard" | "dbDelete" | "dbInsert" | "dbQuery" | "dbUpdate" | "dbUpsert" | "delay" | "emitEvent" | "emitHostEvent" | "forEach" | "getLocation" | "haptic" | "invokeFunction" | "kvGet" | "kvRemove" | "kvSet" | "logout" | "navigate" | "openBottomSheet" | "openDialog" | "openUrl" | "parallel" | "patchState" | "pickFile" | "pickImage" | "pop" | "refreshData" | "requestPermission" | "resetForm" | "resetState" | "scanCode" | "setLocale" | "setState" | "setThemeMode" | "share" | "showSnackbar" | "showToast" | "signTransaction" | "startAnimation" | "startPayment" | "stop" | "submitForm" | "subscribe" | "switch" | "switchTab" | "sync" | "trackEvent" | "unsubscribe" | "validateForm";
 
 /** Every widget descriptor, sorted by type name (WGT-001). */
 export const widgets: readonly WidgetDescriptor[] = [
@@ -1704,6 +1704,28 @@ export const widgets: readonly WidgetDescriptor[] = [
     "events": [],
     "slots": [
       {"name": "item", "id": 1, "list": false, "required": true, "template": true, "revision": 1, "description": "The template built for each item."}
+    ]
+  },
+  {
+    "type": "FormScope",
+    "id": 103,
+    "layer": 1,
+    "phase": "P5",
+    "revision": 1,
+    "runtimes": ["0.3.0"],
+    "category": "structure",
+    "icon": "assignment",
+    "description": "Scopes a form declared on the page or component to its subtree: below it the `form` root is that form's state (`form.values.<field>`, `form.errors.<field>`, `form.valid`, `form.status`), kept up to date as the form changes.",
+    "platforms": ["android", "ios"],
+    "cost": 2,
+    "accessibility": {"role": "none", "interactive": false},
+    "typeParameters": [],
+    "props": [
+      {"name": "form", "id": 1, "type": "string", "required": true, "revision": 1, "bindable": true, "description": "The name of the form to scope; a literal naming a form the page or component declares."}
+    ],
+    "events": [],
+    "slots": [
+      {"name": "child", "id": 1, "list": false, "required": true, "template": false, "revision": 1, "description": "The subtree the form is scoped to."}
     ]
   },
   {
@@ -5552,6 +5574,22 @@ export const actions: readonly ActionDescriptor[] = [
     "effects": []
   },
   {
+    "name": "emitEvent",
+    "id": 56,
+    "phase": "P5",
+    "category": "component",
+    "description": "Inside a component, emits one of the component's declared events with a payload of its declared type, to the instance's handler or to PluxView.onEvent.",
+    "typeParameters": [
+      {"name": "E", "description": "The payload type the referenced component event declares."}
+    ],
+    "inputs": [
+      {"name": "event", "id": 1, "type": "string", "required": true, "ref": "componentEvent", "description": "The component event."},
+      {"name": "payload", "id": 2, "type": "E", "required": false, "description": "The event payload."}
+    ],
+    "branches": [],
+    "effects": []
+  },
+  {
     "name": "emitHostEvent",
     "id": 51,
     "phase": "P4",
@@ -5833,10 +5871,11 @@ export const actions: readonly ActionDescriptor[] = [
     "id": 17,
     "phase": "P5",
     "category": "data",
-    "description": "Reloads a data source, bypassing its cache.",
+    "description": "Reloads a data source, bypassing its cache, or loads the next page of a paginated source.",
     "typeParameters": [],
     "inputs": [
-      {"name": "source", "id": 1, "type": "string", "required": true, "ref": "dataSource", "description": "The data source."}
+      {"name": "source", "id": 1, "type": "string", "required": true, "ref": "dataSource", "description": "The data source."},
+      {"name": "more", "id": 2, "type": "bool", "required": false, "default": false, "description": "Loads the next page of a paginated source instead of reloading it (DAT-011)."}
     ],
     "branches": [],
     "effects": ["state", "network"]

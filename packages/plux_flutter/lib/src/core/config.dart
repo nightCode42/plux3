@@ -5,12 +5,15 @@
 library;
 
 import 'dart:convert';
+import 'dart:io' show HttpClient;
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
+import 'package:plux_flutter/src/db/adapter.dart';
+import 'package:plux_flutter/src/device/types.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/native_catalogue/registration.dart';
 import 'package:plux_flutter/src/navigation/delegate.dart';
@@ -203,6 +206,7 @@ final class PluxConfig {
     this.hostBuild = '',
     this.storageDirectory,
     this.httpClient,
+    this.webSocketClient,
     this.onError,
     this.fallbackBuilder,
     this.pluginFallbackBuilders = const {},
@@ -213,6 +217,9 @@ final class PluxConfig {
     this.nativeSlots = const {},
     this.nativeActions = const {},
     this.router,
+    this.devicePackages = const [],
+    this.allowedCapabilities,
+    this.databaseAdapter,
   }) : assert(downloadParallelism > 0, 'at least one download at a time'),
        assert(
          hostBuild.length <= 64,
@@ -298,6 +305,13 @@ final class PluxConfig {
   /// static function, since it runs on another isolate.
   final http.Client Function()? httpClient;
 
+  /// Creates the `dart:io` client WebSocket connections are made with
+  /// (for a host that trusts its own certificate authority, say); the
+  /// `dart:io` default when null. `httpClient` does not reach WebSockets.
+  /// It must be a top-level or static function, since it runs on the
+  /// data isolate.
+  final HttpClient Function()? webSocketClient;
+
   /// Called with every error the runtime reports.
   final PluxErrorHandler? onError;
 
@@ -347,4 +361,24 @@ final class PluxConfig {
   /// and plugins open the router's named routes as native routes
   /// ([nativeRoutes] entries of the same name win) (HST-031, ADR-0040).
   final PluxRouterAdapter? router;
+
+  /// The optional device packages the app installs, such as `PluxMedia()` of
+  /// `plux_media` (RT-060): their actions run only when registered here; a
+  /// plugin that uses another fails its step with `PLX-5401`. Each package
+  /// is recorded in the native catalogue by `plux native scan`.
+  final List<PluxDevicePackage> devicePackages;
+
+  /// Narrows the device APIs plugins may use to these, such as `camera` or
+  /// `location`, at run time (SEC-080): an operation outside the set is
+  /// blocked and reported with `PLX-5400`, whatever the app approved. Null
+  /// allows every device API the app approved and the plugin declares.
+  final Set<String>? allowedCapabilities;
+
+  /// Where plugins' collections and key-value entries are stored
+  /// (DB-001, DB-003, ADR-0049): `PluxDriftAdapter` of `plux_db_drift`, or
+  /// the host's own adapter, for example over a database the app already
+  /// has. Without one, the core's encrypted built-in store keeps the
+  /// key-value entries and a plugin that declares a collection reports
+  /// `PLX-5201`.
+  final PluxDatabaseAdapter? databaseAdapter;
 }

@@ -370,6 +370,37 @@ void main() {
       throwsA(isA<FileSystemException>()),
     );
   });
+
+  test('a record keeps each bundle\'s required features, so start-up opens only bundles that may declare triggers [ACT-002] [BND-008]', () {
+    const r = ReleaseRecord(
+      sequence: 3,
+      source: ReleaseSource.sync,
+      bundles: [
+        RecordBundle(key: '', version: 0, hash: 'aa', features: ['pxl.v1']),
+        RecordBundle(
+          key: 'shop',
+          version: 2,
+          hash: 'bb',
+          features: ['actions.triggers.v1', 'pxl.v1'],
+        ),
+        RecordBundle(key: 'old', version: 1, hash: 'cc'),
+      ],
+    );
+    final back = ReleaseRecord.decode(r.encode());
+    expect(
+      [for (final b in back.bundles) b.features],
+      [
+        ['pxl.v1'],
+        ['actions.triggers.v1', 'pxl.v1'],
+        null,
+      ],
+    );
+    // Unknown features (a record of runtime 0.2.0) keep the bundle in.
+    expect(
+      [for (final b in back.bundles) b.mayHaveTriggers],
+      [false, true, true],
+    );
+  });
 }
 
 String _put(ReleaseStore store, String content) {

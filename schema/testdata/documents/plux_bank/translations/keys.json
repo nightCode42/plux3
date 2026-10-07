@@ -1,0 +1,127 @@
+{
+  "id": "01d0c450-6c00-7000-8000-000000000204",
+  "keys": [
+    {
+      "description": "Welcome back",
+      "id": "01d0c450-6c00-7000-8000-000000000280",
+      "key": "login.title"
+    },
+    {
+      "description": "Username",
+      "id": "01d0c450-6c00-7000-8000-000000000281",
+      "key": "login.username"
+    },
+    {
+      "description": "Password",
+      "id": "01d0c450-6c00-7000-8000-000000000282",
+      "key": "login.password"
+    },
+    {
+      "description": "Sign in",
+      "id": "01d0c450-6c00-7000-8000-000000000283",
+      "key": "login.submit"
+    },
+    {
+      "description": "Plux Bank",
+      "id": "01d0c450-6c00-7000-8000-000000000284",
+      "key": "login.appbar"
+    },
+    {
+      "description": "No transactions yet.",
+      "id": "01d0c450-6c00-7000-8000-000000000285",
+      "key": "dash.no-tx"
+    },
+    {
+      "description": "Transactions are not available.",
+      "id": "01d0c450-6c00-7000-8000-000000000286",
+      "key": "dash.tx-error"
+    },
+    {
+      "description": "Accounts",
+      "id": "01d0c450-6c00-7000-8000-000000000287",
+      "key": "dash.accounts"
+    },
+    {
+      "description": "New transfer",
+      "id": "01d0c450-6c00-7000-8000-000000000288",
+      "key": "dash.transfer"
+    },
+    {
+      "description": "Recent transactions",
+      "id": "01d0c450-6c00-7000-8000-000000000289",
+      "key": "dash.recent"
+    },
+    {
+      "description": "Verify identity",
+      "id": "01d0c450-6c00-7000-8000-00000000028a",
+      "key": "dash.kyc"
+    },
+    {
+      "description": "Your accounts",
+      "id": "01d0c450-6c00-7000-8000-00000000028b",
+      "key": "dash.title"
+    },
+    {
+      "description": "Recipient IBAN",
+      "id": "01d0c450-6c00-7000-8000-00000000028c",
+      "key": "tr.iban"
+    },
+    {
+      "description": "Amount (EUR)",
+      "id": "01d0c450-6c00-7000-8000-00000000028d",
+      "key": "tr.amount"
+    },
+    {
+      "description": "Reference",
+      "id": "01d0c450-6c00-7000-8000-00000000028e",
+      "key": "tr.reference"
+    },
+    {
+      "description": "Send money",
+      "id": "01d0c450-6c00-7000-8000-00000000028f",
+      "key": "tr.submit"
+    },
+    {
+      "description": "New transfer",
+      "id": "01d0c450-6c00-7000-8000-000000000290",
+      "key": "tr.title"
+    },
+    {
+      "description": "Transfer completed",
+      "id": "01d0c450-6c00-7000-8000-000000000291",
+      "key": "res.ok"
+    },
+    {
+      "description": "Transfer failed",
+      "id": "01d0c450-6c00-7000-8000-000000000292",
+      "key": "res.failed"
+    },
+    {
+      "description": "Back to dashboard",
+      "id": "01d0c450-6c00-7000-8000-000000000293",
+      "key": "res.back"
+    },
+    {
+      "description": "Result",
+      "id": "01d0c450-6c00-7000-8000-000000000294",
+      "key": "res.title"
+    },
+    {
+      "description": "Take a photo of your ID to verify your identity.",
+      "id": "01d0c450-6c00-7000-8000-000000000295",
+      "key": "kyc.intro"
+    },
+    {
+      "description": "Take photo",
+      "id": "01d0c450-6c00-7000-8000-000000000296",
+      "key": "kyc.capture"
+    },
+    {
+      "description": "Identity check",
+      "id": "01d0c450-6c00-7000-8000-000000000297",
+      "key": "kyc.title"
+    }
+  ],
+  "kind": "translationKeys",
+  "schemaVersion": "1.0.0"
+}

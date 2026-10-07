@@ -7,6 +7,8 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import java.io.File
@@ -19,15 +21,36 @@ import javax.crypto.spec.GCMParameterSpec
 /**
  * The platform services of the Plux runtime (ADR-0029): where the release
  * store lives, and secrets kept encrypted under an Android Keystore key, so
- * that no secret is ever written in the clear. Bundle data never crosses
- * this channel.
+ * that no secret is ever written in the clear. The device actions that need
+ * the platform, the share sheet and permission prompts, run here too
+ * (SEC-080). Bundle data never crosses this channel.
  */
-class PluxFlutterPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
+class PluxFlutterPlugin : FlutterPlugin, ActivityAware, MethodChannel.MethodCallHandler {
     private lateinit var channel: MethodChannel
     private lateinit var context: Context
+    private lateinit var device: PluxDevice
+    private var activityBinding: ActivityPluginBinding? = null
+
+    override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+        activityBinding = binding
+        device.activity = binding.activity
+        binding.addRequestPermissionsResultListener(device)
+    }
+
+    override fun onDetachedFromActivityForConfigChanges() = onDetachedFromActivity()
+
+    override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) =
+        onAttachedToActivity(binding)
+
+    override fun onDetachedFromActivity() {
+        activityBinding?.removeRequestPermissionsResultListener(device)
+        activityBinding = null
+        device.activity = null
+    }
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         context = binding.applicationContext
+        device = PluxDevice(context)
         channel = MethodChannel(binding.binaryMessenger, CHANNEL)
         channel.setMethodCallHandler(this)
     }
@@ -51,6 +74,8 @@ class PluxFlutterPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
                     secretFile(name(call)).delete()
                     result.success(null)
                 }
+                "share" -> device.share(call, result)
+                "permissionRequest" -> device.requestPermission(call, result)
                 else -> result.notImplemented()
             }
         } catch (e: Exception) {

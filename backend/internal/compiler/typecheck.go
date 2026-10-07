@@ -27,6 +27,11 @@ func typecheck(u *unit) {
 	tc.appDecls()
 	u.appScope = tc.baseScope(nil)
 	tc.computed(nil, u.project.App.Doc.State, "app.json", u.appScope)
+	if u.inFocus("app.json") {
+		tc.triggers(u.appTriggers, u.appScope, "app")
+		tc.typeOwnGraphs(u.appTriggers, u.appScope)
+	}
+	tc.compileDataSources(nil, u.project.App.Doc.DataSources, "app.json", u.appScope, u.project.App.Doc.ID)
 	tc.shellTabs()
 	for _, c := range u.shared {
 		if u.inFocus(c.file) {
@@ -61,6 +66,10 @@ func (t *typer) plugin(pl *plugin) {
 	base := t.baseScope(pl)
 	pl.scope = base
 	t.computed(pl, pl.doc.State, pl.file, base)
+	if u.inFocus(pl.file) {
+		t.triggers(pl.triggers, base, "app", "plugin")
+	}
+	t.compileDataSources(pl, pl.doc.DataSources, pl.file, base, pl.doc.ID)
 	for _, c := range pl.components {
 		if u.inFocus(c.file) {
 			t.component(c, base)
@@ -81,6 +90,7 @@ func (t *typer) plugin(pl *plugin) {
 			t.graph(g, t.pageScope(g.page, base))
 		}
 	}
+	t.typeOwnGraphs(pl.triggers, base)
 }
 
 // typer holds the typecheck state.
@@ -173,7 +183,10 @@ func (t *typer) sources(pl *plugin, sources []schema.DataSource, file string) []
 	return out
 }
 
-// dataTypes builds the data root: data.<name> is {value, loading, error}.
+// dataTypes builds the data root: data.<name> is {value, loading, error,
+// hasMore, status}. hasMore says a paginated source has another page
+// (DAT-011); status is the ListStatus a list bound to the source shows
+// (WGT-012).
 func dataTypes(sources []sourceField) map[string]pxl.TypeSpec {
 	types := map[string]pxl.TypeSpec{}
 	var fields [][2]string
@@ -181,7 +194,7 @@ func dataTypes(sources []sourceField) map[string]pxl.TypeSpec {
 		name := "PluxData" + upperFirst(s.name)
 		value, _ := parseTypeExpr(s.typ)
 		value.nullable = true
-		types[name] = objectType([][2]string{{"value", value.String()}, {"loading", "bool"}, {"error", "PluxActionError?"}})
+		types[name] = objectType([][2]string{{"value", value.String()}, {"loading", "bool"}, {"error", "PluxActionError?"}, {"hasMore", "bool"}, {"status", "ListStatus"}})
 		fields = append(fields, [2]string{s.name, name})
 	}
 	types["PluxData"] = objectType(fields)
@@ -220,10 +233,11 @@ func (t *typer) pageScope(pg *page, base *scope) *scope {
 		return pg.scope
 	}
 	fields, ids := t.stateFields(pg.plugin, pg.doc.State, pg.file)
+	formFields, formTypes := t.formTypes(pg.plugin, pg.doc.Forms, pg.file)
 	s := base.with("page", "PluxPageState").with("params", "PluxPageParams").withTypes(map[string]pxl.TypeSpec{
-		"PluxPageState":  objectType(fields),
+		"PluxPageState":  objectType(append(fields, formFields...)),
 		"PluxPageParams": objectType(t.params(pg.plugin, pg.doc.Params, pg.file, "params")),
-	})
+	}).withTypes(formTypes)
 	s.ids = cloneIDs(base.ids)
 	s.ids["page"] = ids
 	sources := append(append([]sourceField(nil), base.sources...), t.sources(pg.plugin, pg.doc.DataSources, pg.file)...)
@@ -258,6 +272,7 @@ func (t *typer) computed(pl *plugin, entries []schema.StateEntry, file string, s
 		if st.Computed != nil {
 			t.compile(st.Computed.Expr, s, from, file, plxerr.Pointer("state", strconv.Itoa(i), "computed"))
 		}
+		t.compileMigration(pl, &entries[i], s, from, file, plxerr.Pointer("state", strconv.Itoa(i)))
 	}
 }
 
@@ -266,11 +281,14 @@ func (t *typer) page(pg *page, base *scope) {
 	s := t.pageScope(pg, base)
 	from := pg.doc.ID
 	t.computed(pg.plugin, pg.doc.State, pg.file, s)
+	t.compileDataSources(pg.plugin, pg.doc.DataSources, pg.file, s, from)
 	t.compileAll(pg.doc.Title, s, from, pg.file, "/title")
 	t.node(pg.root, s)
 	for _, name := range sortedKeys(pg.graphs) {
 		t.useGraph(pg.graphs[name], "", pg.file, plxerr.Pointer("lifecycle", name))
 	}
+	t.triggers(pg.triggers, s, "app", "plugin", "page")
+	t.formHandlers(pg.plugin, pg, pg.doc.Forms, pg.file, from, s)
 	for _, g := range pg.plugin.inline {
 		if g.page == pg {
 			t.graph(g, s)
@@ -287,13 +305,15 @@ func (t *typer) component(c *component, base *scope) {
 			props = append(props, [2]string{p.Name, te.String()})
 		}
 	}
+	formFields, formTypes := t.formTypes(c.plugin, c.doc.Forms, c.file)
 	s := base.with("component", "PluxComponentState").with("props", "PluxComponentProps").withTypes(map[string]pxl.TypeSpec{
-		"PluxComponentState": objectType(stateFields), "PluxComponentProps": objectType(props),
-	})
+		"PluxComponentState": objectType(append(stateFields, formFields...)), "PluxComponentProps": objectType(props),
+	}).withTypes(formTypes)
 	s.ids = cloneIDs(base.ids)
 	s.ids["component"] = ids
 	s.sources = base.sources
 	t.computed(c.plugin, c.doc.State, c.file, s)
+	t.formHandlers(c.plugin, nil, c.doc.Forms, c.file, c.doc.ID, s)
 	t.node(c.root, s)
 	graphs := t.u.appGraphs
 	if c.plugin != nil {
@@ -327,13 +347,16 @@ func (t *typer) node(n *node, s *scope) {
 }
 
 // slotScope is the scope of a slot's nodes: item templates add `item`
-// and `index`.
+// and `index`, and a FormScope its `form`.
 func (t *typer) slotScope(n *node, sf *slotFill, s *scope) *scope {
 	if n.widget == nil {
 		return s
 	}
-	if n.widget.Type == "If" {
+	switch n.widget.Type {
+	case "If":
 		return s.narrow(t.ifGuards(n, sf.name))
+	case "FormScope":
+		return t.formScope(n, s)
 	}
 	slot, ok := n.widget.Slot(sf.name)
 	if !ok || !slot.Template {
@@ -512,12 +535,23 @@ func (t *typer) flow(g *graph, base *scope) {
 // RangeSlider's RangeValues: widget payloads come from the registry, and
 // a component's declared payload was checked where it was declared.
 func (t *typer) graph(g *graph, s *scope) {
+	if g.eventTypes != nil {
+		s = s.withTypes(g.eventTypes)
+	}
 	if g.eventType != "" {
 		known := maps.Clone(t.u.types.base)
 		maps.Copy(known, s.synth)
 		if te := t.u.checkTypeIn(t.u.types, g.plugin, known, g.eventType, g.file, g.ptr); te != nil {
 			s = s.with("event", te.String())
 		}
+	}
+	if g.doc != nil && len(g.doc.State) > 0 {
+		// The run's variables (STA-001).
+		vars, ids := t.stateFields(g.plugin, g.doc.State, g.file)
+		s = s.with("run", "PluxRunState").withTypes(map[string]pxl.TypeSpec{"PluxRunState": objectType(vars)})
+		s.ids = cloneIDs(s.ids)
+		s.ids["run"] = ids
+		t.computed(g.plugin, g.doc.State, g.file, s)
 	}
 	steps := map[string]pxl.TypeSpec{}
 	var fields [][2]string
@@ -537,7 +571,11 @@ func (t *typer) graph(g *graph, s *scope) {
 	compileStep := func(i int, s *scope) {
 		s = s.narrow(entries[i])
 		for _, name := range sortedKeys(g.steps[i].Input) {
-			t.compileAll(g.steps[i].Input[name], s, from, g.file, g.ptr+plxerr.Pointer("steps", strconv.Itoa(i), "input", name))
+			is := s
+			if g.steps[i].Action == "dbQuery" && name == "where" {
+				is = t.recordScope(g, g.steps[i], s)
+			}
+			t.compileAll(g.steps[i].Input[name], is, from, g.file, g.ptr+plxerr.Pointer("steps", strconv.Itoa(i), "input", name))
 		}
 	}
 	t.loops(g, s, compileStep)
@@ -630,7 +668,7 @@ func branchTargets(st schema.Step) []string {
 // may not have run.
 func (t *typer) stepOutput(g *graph, st schema.Step) string {
 	if st.Action == "callFlow" {
-		f := flowByKey(g.plugin, literalString(st.Input["flow"]))
+		f, _ := t.u.flowRef(g.plugin, literalString(st.Input["flow"]))
 		if f == nil || f.doc.Output == "" {
 			return ""
 		}
@@ -643,6 +681,12 @@ func (t *typer) stepOutput(g *graph, st schema.Step) string {
 	}
 	if out, ok := t.customOutput(st); ok {
 		return out
+	}
+	if st.Action == "apiCall" {
+		return t.apiCallOutput(g, st)
+	}
+	if st.Action == "submitForm" {
+		return t.u.formOutput(g, st)
 	}
 	a, ok := registry.LookupAction(st.Action)
 	if !ok || a.Output == "" {
@@ -763,7 +807,21 @@ func (t *typer) compile(src string, s *scope, from, file, ptr string) {
 	e.prog, e.typ = prog, typ
 	if prog != nil {
 		t.recordReads(prog.Reads, s, from, file, ptr)
+		for _, f := range prog.Features {
+			if runtimes, ok := pxlFeatureRuntimes[f]; ok {
+				t.u.useRevision(strings.TrimSuffix(f, ".v1"), runtimes, 1, vctx{file: file, ptr: ptr + "/$expr", pl: s.plugin})
+			}
+		}
 	}
+}
+
+// pxlFeatureRuntimes lists the runtime each PXL group feature first
+// shipped in: an expression that needs one under an older
+// minRuntimeVersion is rejected or raises the plugin's required features
+// (PLX-1119, PLX-1120), as guards do (ADR-0040).
+var pxlFeatureRuntimes = map[string][]string{
+	"pxl.regex.v1": {"0.3.0"},
+	"pxl.phone.v1": {"0.3.0"},
 }
 
 // recordReads adds the state and data sources an expression reads to the

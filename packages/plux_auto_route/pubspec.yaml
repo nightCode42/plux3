@@ -18,7 +18,7 @@ dependencies:
   auto_route: ^11.2.0
   flutter:
     sdk: flutter
-  plux_flutter: ^0.2.0
+  plux_flutter: ^0.3.0
 
 dev_dependencies:
   flutter_test:

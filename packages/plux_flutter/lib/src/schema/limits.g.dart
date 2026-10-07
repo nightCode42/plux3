@@ -26,12 +26,31 @@ enum PluxLimitUnit {
 enum PluxLimit {
   /// Items one forEach step may iterate over.
   actionForEachItems('action.forEachItems', PluxLimitUnit.count, 1000, 0, 100000),
+  /// Triggers a handler with the queue policy may hold while its run is in
+  /// progress; a trigger beyond it is dropped and reported.
+  actionQueueLength('action.queueLength', PluxLimitUnit.count, 32, 0, 1000),
   /// Time one action run may take.
   actionRunTimeout('action.runTimeout', PluxLimitUnit.milliseconds, 120000, 0, 3600000),
   /// Time one action step may take.
   actionStepTimeout('action.stepTimeout', PluxLimitUnit.milliseconds, 30000, 0, 600000),
   /// Steps one action run may execute.
   actionStepsPerRun('action.stepsPerRun', PluxLimitUnit.count, 10000, 0, 100000),
+  /// Action run traces the runtime keeps for diagnostics; the oldest are
+  /// dropped first.
+  actionTraceRuns('action.traceRuns', PluxLimitUnit.count, 50, 0, 1000),
+  /// Steps one action run trace records; later steps are counted but not
+  /// recorded.
+  actionTraceSteps('action.traceSteps', PluxLimitUnit.count, 200, 0, 10000),
+  /// Nodes below an animated opacity or layout prop before the compiler warns
+  /// of an expensive animation.
+  animCompositedSubtree('anim.compositedSubtree', PluxLimitUnit.count, 40, 0, 1000),
+  /// Keyframes of one track of a timeline.
+  animKeyframesPerTrack('anim.keyframesPerTrack', PluxLimitUnit.count, 64, 0, 1000),
+  /// Timelines of one page that autoplay or follow a driver before the compiler
+  /// warns.
+  animSimultaneousTimelines('anim.simultaneousTimelines', PluxLimitUnit.count, 6, 0, 100),
+  /// Duration of one timeline.
+  animTimelineDuration('anim.timelineDuration', PluxLimitUnit.milliseconds, 60000, 0, 600000),
   /// Items one page of a list call returns; a call asking for more gets this
   /// many, and one asking for none gets this many too.
   apiPageSize('api.pageSize', PluxLimitUnit.count, 100, 0, 1000),
@@ -67,8 +86,71 @@ enum PluxLimit {
   /// Maximum number of tables and vectors the FlatBuffers verifier visits in
   /// one section.
   bundleVerifierTables('bundle.verifierTables', PluxLimitUnit.count, 1000000, 0, 10000000),
+  /// Bytes the response cache of data sources keeps on the device; the least
+  /// recently used entries are evicted beyond it.
+  dataCacheBytes('data.cacheBytes', PluxLimitUnit.bytes, 16777216, 0, 268435456),
+  /// Responses the cache of data sources keeps on the device; the least
+  /// recently used are evicted beyond it.
+  dataCacheEntries('data.cacheEntries', PluxLimitUnit.count, 1000, 0, 100000),
+  /// Bytes one download may have; checked against the declared length before
+  /// the transfer and counted during it, a larger one is stopped.
+  dataDownloadSize('data.downloadSize', PluxLimitUnit.bytes, 52428800, 0, 2147483648),
+  /// Longest wait between two replays of the offline outbox that left entries;
+  /// the wait doubles from data.outboxBackoffMin up to it.
+  dataOutboxBackoffMax('data.outboxBackoffMax', PluxLimitUnit.milliseconds, 300000, 0, 3600000),
+  /// First wait before the offline outbox replays again after a replay left
+  /// entries behind.
+  dataOutboxBackoffMin('data.outboxBackoffMin', PluxLimitUnit.milliseconds, 5000, 0, 600000),
+  /// Bytes the offline outbox keeps on the device, encoded; a mutation that
+  /// would exceed it is refused with a typed error.
+  dataOutboxBytes('data.outboxBytes', PluxLimitUnit.bytes, 4194304, 0, 67108864),
+  /// Mutations the offline outbox keeps on the device; a further mutation is
+  /// refused with a typed error.
+  dataOutboxEntries('data.outboxEntries', PluxLimitUnit.count, 200, 0, 10000),
+  /// Items one page of a paginated data source may ask for.
+  dataPageSize('data.pageSize', PluxLimitUnit.count, 50, 0, 1000),
+  /// Bytes the body of one data request may have.
+  dataRequestSize('data.requestSize', PluxLimitUnit.bytes, 1048576, 0, 16777216),
+  /// Time one data request may take before it fails with a timeout.
+  dataRequestTimeout('data.requestTimeout', PluxLimitUnit.milliseconds, 30000, 0, 300000),
+  /// Bytes the response of one data request may have; a larger response is
+  /// stopped.
+  dataResponseSize('data.responseSize', PluxLimitUnit.bytes, 4194304, 0, 67108864),
+  /// Data sources a plugin, its pages and the app may declare for it together.
+  dataSourcesPerPlugin('data.sourcesPerPlugin', PluxLimitUnit.count, 100, 0, 1000),
+  /// Longest wait between two reconnection attempts of a stream; the wait
+  /// doubles from data.streamBackoffMin up to it, with jitter.
+  dataStreamBackoffMax('data.streamBackoffMax', PluxLimitUnit.milliseconds, 30000, 0, 600000),
+  /// First wait before a stream reconnects after its connection ended.
+  dataStreamBackoffMin('data.streamBackoffMin', PluxLimitUnit.milliseconds, 1000, 0, 60000),
+  /// Bytes one stream message may have; a larger message closes the stream with
+  /// a typed error.
+  dataStreamMessageSize('data.streamMessageSize', PluxLimitUnit.bytes, 1048576, 0, 16777216),
+  /// Streams the runtime keeps open at once; a further subscription is refused
+  /// with a typed error.
+  dataStreamsOpen('data.streamsOpen', PluxLimitUnit.count, 8, 0, 64),
+  /// Bytes one upload may have; the file's size is checked before the transfer
+  /// and a larger file is refused.
+  dataUploadSize('data.uploadSize', PluxLimitUnit.bytes, 26214400, 0, 1073741824),
+  /// Records one local collection may hold on the device; an insert beyond it
+  /// fails with a typed error instead of growing the database.
+  dbCollectionRecords('db.collectionRecords', PluxLimitUnit.count, 100000, 0, 10000000),
+  /// Local collections a plugin may declare.
+  dbCollectionsPerPlugin('db.collectionsPerPlugin', PluxLimitUnit.count, 50, 0, 500),
+  /// Bytes the key-value store of one plugin may hold, encoded; a write beyond
+  /// it fails with a typed error.
+  dbKvBytes('db.kvBytes', PluxLimitUnit.bytes, 262144, 0, 16777216),
+  /// Records one query or watched query returns at most, whatever its limit
+  /// asks for.
+  dbQueryRows('db.queryRows', PluxLimitUnit.count, 1000, 0, 100000),
+  /// Bytes one record of a local collection may take, encoded as JSON.
+  dbRecordBytes('db.recordBytes', PluxLimitUnit.bytes, 65536, 0, 1048576),
+  /// Characters copyToClipboard may put on the clipboard in one step.
+  deviceClipboardChars('device.clipboardChars', PluxLimitUnit.count, 10000, 0, 100000),
   /// Disk space the runtime may use for releases on one device.
   deviceDiskQuota('device.diskQuota', PluxLimitUnit.bytes, 209715200, 0, 4294967296),
+  /// Files a single pickImage or pickFile step may return.
+  devicePickCount('device.pickCount', PluxLimitUnit.count, 10, 0, 100),
   /// Size of one document file in the project layout, checked before parsing.
   documentFileSize('document.fileSize', PluxLimitUnit.bytes, 8388608, 0, 67108864),
   /// Nesting of arrays and objects in one document, checked while parsing.
@@ -109,6 +191,14 @@ enum PluxLimit {
   /// Operations one PXL evaluation may perform before it stops with a typed
   /// error.
   pxlOperationBudget('pxl.operationBudget', PluxLimitUnit.operations, 10000, 0, 1000000),
+  /// Length of one regular-expression pattern of pxl.regex.v1.
+  pxlRegexPatternLength('pxl.regexPatternLength', PluxLimitUnit.codepoints, 1000, 0, 10000),
+  /// Instructions of one compiled regular-expression pattern of pxl.regex.v1
+  /// (schema/pxl/regex.md).
+  pxlRegexProgramSize('pxl.regexProgramSize', PluxLimitUnit.count, 2000, 0, 20000),
+  /// The largest count of a {n,m} repetition in a regular-expression pattern of
+  /// pxl.regex.v1.
+  pxlRegexRepeat('pxl.regexRepeat', PluxLimitUnit.count, 100, 0, 1000),
   /// Length of a string produced during one PXL evaluation.
   pxlStringLength('pxl.stringLength', PluxLimitUnit.codepoints, 65536, 0, 1048576),
   /// Total size of one app release: the app bundle and every plugin bundle.
@@ -122,6 +212,14 @@ enum PluxLimit {
   runtimeSectionCacheBytes('runtime.sectionCacheBytes', PluxLimitUnit.bytes, 8388608, 0, 268435456),
   /// Page and component sections the runtime keeps decoded.
   runtimeSectionCacheEntries('runtime.sectionCacheEntries', PluxLimitUnit.count, 64, 0, 4096),
+  /// Bytes the persisted state of one app may take in the runtime's local store
+  /// (plain; secure state is the encrypted one, plan p5 B6); writes beyond it
+  /// stay in memory and are reported.
+  statePersistedBytes('state.persistedBytes', PluxLimitUnit.bytes, 1048576, 0, 16777216),
+  /// Bytes the secure state of one app may take in the runtime's local store
+  /// (plain; secure state is the encrypted one, plan p5 B6); writes beyond it
+  /// stay in memory and are reported.
+  stateSecureBytes('state.secureBytes', PluxLimitUnit.bytes, 65536, 0, 1048576),
   /// The size of the runtime's buffer of unsent telemetry events; the oldest
   /// are dropped first.
   telemetryBufferBytes('telemetry.bufferBytes', PluxLimitUnit.bytes, 262144, 0, 4194304),

@@ -1,0 +1,85 @@
+{
+  "events": [
+    {
+      "name": "onHit",
+      "payload": "int"
+    }
+  ],
+  "exported": true,
+  "id": "01f0c450-6c00-7000-8000-000000000606",
+  "key": "badge",
+  "kind": "component",
+  "name": "Badge",
+  "root": {
+    "children": [
+      {
+        "events": {
+          "onPressed": {
+            "steps": [
+              {
+                "action": "emitEvent",
+                "id": "emit",
+                "input": {
+                  "event": "onHit",
+                  "payload": 7
+                }
+              }
+            ]
+          }
+        },
+        "id": "01f0c450-6c00-7000-8000-000000000610",
+        "slots": {
+          "child": {
+            "id": "01f0c450-6c00-7000-8000-000000000611",
+            "props": {
+              "data": "hit"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "FilledButton"
+      },
+      {
+        "events": {
+          "onPressed": {
+            "steps": [
+              {
+                "action": "delay",
+                "id": "wait",
+                "input": {
+                  "duration": {
+                    "$expr": "duration(60000)"
+                  }
+                },
+                "next": "late"
+              },
+              {
+                "action": "emitEvent",
+                "id": "late",
+                "input": {
+                  "event": "onHit",
+                  "payload": 99
+                }
+              }
+            ]
+          }
+        },
+        "id": "01f0c450-6c00-7000-8000-000000000612",
+        "slots": {
+          "child": {
+            "id": "01f0c450-6c00-7000-8000-000000000613",
+            "props": {
+              "data": "slow"
+            },
+            "type": "Text"
+          }
+        },
+        "type": "FilledButton"
+      }
+    ],
+    "id": "01f0c450-6c00-7000-8000-000000000614",
+    "type": "Column"
+  },
+  "schemaVersion": "1.0.0",
+  "version": 1
+}

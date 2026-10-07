@@ -130,6 +130,108 @@ enum PluxErrorCode {
   /// Custom action named like a built-in action.
   customActionNamedLikeBuiltIn(1124, 'CUSTOM_ACTION_NAMED_LIKE_BUILT_IN', 'Custom action named like a built-in action'),
 
+  /// Flows call each other in a cycle.
+  flowCallCycle(1125, 'FLOW_CALL_CYCLE', 'Flows call each other in a cycle'),
+
+  /// Flow private to its plugin.
+  flowNotExported(1126, 'FLOW_NOT_EXPORTED', 'Flow private to its plugin'),
+
+  /// Invalid trigger.
+  invalidTrigger(1127, 'INVALID_TRIGGER', 'Invalid trigger'),
+
+  /// Component event not declared.
+  undeclaredComponentEvent(1128, 'UNDECLARED_COMPONENT_EVENT', 'Component event not declared'),
+
+  /// emitEvent outside a component.
+  emitEventOutsideComponent(1129, 'EMIT_EVENT_OUTSIDE_COMPONENT', 'emitEvent outside a component'),
+
+  /// Invalid retry policy.
+  invalidRetryPolicy(1130, 'INVALID_RETRY_POLICY', 'Invalid retry policy'),
+
+  /// State entry written that cannot be.
+  stateEntryReadOnly(1140, 'STATE_ENTRY_READ_ONLY', 'State entry written that cannot be'),
+
+  /// State patch of a value that is not an object.
+  statePatchNotObject(1141, 'STATE_PATCH_NOT_OBJECT', 'State patch of a value that is not an object'),
+
+  /// Persistence that the entry cannot have.
+  statePersistenceNotAllowed(1142, 'STATE_PERSISTENCE_NOT_ALLOWED', 'Persistence that the entry cannot have'),
+
+  /// Stored state changes type without a migration.
+  stateMigrationRequired(1143, 'STATE_MIGRATION_REQUIRED', 'Stored state changes type without a migration'),
+
+  /// State migration from a type the previous release did not have.
+  stateMigrationMismatch(1144, 'STATE_MIGRATION_MISMATCH', 'State migration from a type the previous release did not have'),
+
+  /// State migration that can never run.
+  stateMigrationInvalid(1145, 'STATE_MIGRATION_INVALID', 'State migration that can never run'),
+
+  /// Validator that does not apply to its field.
+  formValidatorNotApplicable(1160, 'FORM_VALIDATOR_NOT_APPLICABLE', 'Validator that does not apply to its field'),
+
+  /// Invalid validator options.
+  formValidatorOptions(1161, 'FORM_VALIDATOR_OPTIONS', 'Invalid validator options'),
+
+  /// Invalid validator pattern.
+  formPatternInvalid(1162, 'FORM_PATTERN_INVALID', 'Invalid validator pattern'),
+
+  /// Unknown phone region.
+  formPhoneRegionUnknown(1163, 'FORM_PHONE_REGION_UNKNOWN', 'Unknown phone region'),
+
+  /// Invalid asynchronous validator.
+  formAsyncValidatorInvalid(1164, 'FORM_ASYNC_VALIDATOR_INVALID', 'Invalid asynchronous validator'),
+
+  /// Form field without an initial value.
+  formFieldInitialMissing(1165, 'FORM_FIELD_INITIAL_MISSING', 'Form field without an initial value'),
+
+  /// Form or field named twice.
+  formNameConflict(1166, 'FORM_NAME_CONFLICT', 'Form or field named twice'),
+
+  /// Form state written that cannot be.
+  formWriteInvalid(1167, 'FORM_WRITE_INVALID', 'Form state written that cannot be'),
+
+  /// Invalid data source configuration.
+  dataSourceConfigInvalid(1170, 'DATA_SOURCE_CONFIG_INVALID', 'Invalid data source configuration'),
+
+  /// Data source on an undeclared domain.
+  dataSourceDomainUndeclared(1171, 'DATA_SOURCE_DOMAIN_UNDECLARED', 'Data source on an undeclared domain'),
+
+  /// Invalid response mapping.
+  dataMappingInvalid(1172, 'DATA_MAPPING_INVALID', 'Invalid response mapping'),
+
+  /// Invalid pagination.
+  dataPaginationInvalid(1173, 'DATA_PAGINATION_INVALID', 'Invalid pagination'),
+
+  /// Credential in a data source header.
+  dataSourceSecretHeader(1174, 'DATA_SOURCE_SECRET_HEADER', 'Credential in a data source header'),
+
+  /// Invalid stream configuration.
+  dataStreamInvalid(1175, 'DATA_STREAM_INVALID', 'Invalid stream configuration'),
+
+  /// Invalid offline mutation.
+  dataOutboxInvalid(1176, 'DATA_OUTBOX_INVALID', 'Invalid offline mutation'),
+
+  /// Invalid file transfer.
+  dataTransferInvalid(1177, 'DATA_TRANSFER_INVALID', 'Invalid file transfer'),
+
+  /// Collection version not raised with its schema.
+  collectionVersionInvalid(1190, 'COLLECTION_VERSION_INVALID', 'Collection version not raised with its schema'),
+
+  /// Destructive collection change without a migration plan.
+  collectionPlanRequired(1191, 'COLLECTION_PLAN_REQUIRED', 'Destructive collection change without a migration plan'),
+
+  /// Invalid collection migration plan.
+  collectionPlanInvalid(1192, 'COLLECTION_PLAN_INVALID', 'Invalid collection migration plan'),
+
+  /// Collection primary key changed.
+  collectionKeyChanged(1193, 'COLLECTION_KEY_CHANGED', 'Collection primary key changed'),
+
+  /// Collection migration deletes data.
+  collectionDestructive(1194, 'COLLECTION_DESTRUCTIVE', 'Collection migration deletes data'),
+
+  /// Invalid database data source.
+  databaseSourceInvalid(1195, 'DATABASE_SOURCE_INVALID', 'Invalid database data source'),
+
   /// Unknown route.
   unknownRoute(1201, 'UNKNOWN_ROUTE', 'Unknown route'),
 
@@ -144,6 +246,81 @@ enum PluxErrorCode {
 
   /// Redirect loop.
   redirectLoop(1206, 'REDIRECT_LOOP', 'Redirect loop'),
+
+  /// Invalid animation timeline.
+  animationInvalid(1210, 'ANIMATION_INVALID', 'Invalid animation timeline'),
+
+  /// Animation track targets nothing animatable.
+  animationTargetInvalid(1211, 'ANIMATION_TARGET_INVALID', 'Animation track targets nothing animatable'),
+
+  /// Keyframe value has the wrong type.
+  animationValueInvalid(1212, 'ANIMATION_VALUE_INVALID', 'Keyframe value has the wrong type'),
+
+  /// Invalid transition.
+  transitionInvalid(1213, 'TRANSITION_INVALID', 'Invalid transition'),
+
+  /// Animation that re-lays out the page every frame.
+  animationExpensive(1214, 'ANIMATION_EXPENSIVE', 'Animation that re-lays out the page every frame'),
+
+  /// Opacity animated over a large subtree.
+  animationOpacitySubtree(1215, 'ANIMATION_OPACITY_SUBTREE', 'Opacity animated over a large subtree'),
+
+  /// Many timelines can run together.
+  animationTooManyTimelines(1216, 'ANIMATION_TOO_MANY_TIMELINES', 'Many timelines can run together'),
+
+  /// Invalid node animation.
+  nodeAnimationInvalid(1217, 'NODE_ANIMATION_INVALID', 'Invalid node animation'),
+
+  /// Capability not approved by the app.
+  capabilityNotApproved(1230, 'CAPABILITY_NOT_APPROVED', 'Capability not approved by the app'),
+
+  /// Device action without its capability.
+  deviceCapabilityUndeclared(1231, 'DEVICE_CAPABILITY_UNDECLARED', 'Device action without its capability'),
+
+  /// openUrl on an undeclared domain.
+  openUrlDomainUndeclared(1232, 'OPEN_URL_DOMAIN_UNDECLARED', 'openUrl on an undeclared domain'),
+
+  /// Host build lacks a Plux package.
+  hostBuildLacksPackage(1233, 'HOST_BUILD_LACKS_PACKAGE', 'Host build lacks a Plux package'),
+
+  /// FormScope names no form.
+  formScopeInvalid(1240, 'FORM_SCOPE_INVALID', 'FormScope names no form'),
+
+  /// Collection primary key field of an unsupported type.
+  collectionKeyTypeInvalid(1250, 'COLLECTION_KEY_TYPE_INVALID', 'Collection primary key field of an unsupported type'),
+
+  /// Document cannot be imported.
+  importDocumentInvalid(1260, 'IMPORT_DOCUMENT_INVALID', 'Document cannot be imported'),
+
+  /// Construct has no Plux type.
+  importConstructUnsupported(1261, 'IMPORT_CONSTRUCT_UNSUPPORTED', 'Construct has no Plux type'),
+
+  /// Operation is invalid against its schema.
+  importOperationInvalid(1262, 'IMPORT_OPERATION_INVALID', 'Operation is invalid against its schema'),
+
+  /// Imported data sources fail validation.
+  importOutputInvalid(1263, 'IMPORT_OUTPUT_INVALID', 'Imported data sources fail validation'),
+
+  /// Scenario file does not match its schema.
+  scenarioFileInvalid(1270, 'SCENARIO_FILE_INVALID', 'Scenario file does not match its schema'),
+
+  /// Scenario file is not valid YAML or JSON.
+  scenarioSyntaxInvalid(1271, 'SCENARIO_SYNTAX_INVALID', 'Scenario file is not valid YAML or JSON'),
+
+  /// Scenario names something the project does not have.
+  scenarioReferenceUnknown(1272, 'SCENARIO_REFERENCE_UNKNOWN', 'Scenario names something the project does not have'),
+
+  /// Scenario uses something plux test cannot run yet.
+  scenarioUnsupported(1273, 'SCENARIO_UNSUPPORTED', 'Scenario uses something plux test cannot run yet'),
+
+  /// Two scenarios of a file share a name.
+  scenarioNameDuplicate(1274, 'SCENARIO_NAME_DUPLICATE', 'Two scenarios of a file share a name'),
+
+  /// The Flutter test harness could not run.
+  testHarnessFailed(1275, 'TEST_HARNESS_FAILED', 'The Flutter test harness could not run'),
+
+  /// No scenario files found.
+  scenarioFilesNone(1276, 'SCENARIO_FILES_NONE', 'No scenario files found'),
 
   /// Page exceeds its node budget.
   pageNodeBudget(1310, 'PAGE_NODE_BUDGET', 'Page exceeds its node budget'),
@@ -228,6 +405,18 @@ enum PluxErrorCode {
 
   /// Expression too complex.
   pxlExpressionTooComplex(2016, 'PXL_EXPRESSION_TOO_COMPLEX', 'Expression too complex'),
+
+  /// Invalid regular expression.
+  pxlRegexInvalid(2020, 'PXL_REGEX_INVALID', 'Invalid regular expression'),
+
+  /// Regular expression is not a constant.
+  pxlRegexNotConstant(2021, 'PXL_REGEX_NOT_CONSTANT', 'Regular expression is not a constant'),
+
+  /// Regular expression too large.
+  pxlRegexTooLarge(2022, 'PXL_REGEX_TOO_LARGE', 'Regular expression too large'),
+
+  /// Unknown phone region.
+  pxlUnknownPhoneRegion(2023, 'PXL_UNKNOWN_PHONE_REGION', 'Unknown phone region'),
 
   /// Internal compiler error.
   internalCompilerError(2201, 'INTERNAL_COMPILER_ERROR', 'Internal compiler error'),
@@ -325,6 +514,18 @@ enum PluxErrorCode {
   /// Host code failed.
   hostCodeFailed(4205, 'HOST_CODE_FAILED', 'Host code failed'),
 
+  /// Unknown animation.
+  animationUnknown(4300, 'ANIMATION_UNKNOWN', 'Unknown animation'),
+
+  /// Invalid animation command.
+  animationCommandInvalid(4301, 'ANIMATION_COMMAND_INVALID', 'Invalid animation command'),
+
+  /// Timeline cannot play.
+  animationTimelineBroken(4302, 'ANIMATION_TIMELINE_BROKEN', 'Timeline cannot play'),
+
+  /// Lottie or Rive asset failed.
+  animationAssetFailed(4303, 'ANIMATION_ASSET_FAILED', 'Lottie or Rive asset failed'),
+
   /// Action timed out.
   actionTimeout(5001, 'ACTION_TIMEOUT', 'Action timed out'),
 
@@ -336,6 +537,162 @@ enum PluxErrorCode {
 
   /// Run failed with a custom error.
   actionCustomError(5004, 'ACTION_CUSTOM_ERROR', 'Run failed with a custom error'),
+
+  /// Action run cancelled.
+  actionCancelled(5005, 'ACTION_CANCELLED', 'Action run cancelled'),
+
+  /// forEach item limit exceeded.
+  actionForeachLimitExceeded(5006, 'ACTION_FOREACH_LIMIT_EXCEEDED', 'forEach item limit exceeded'),
+
+  /// Flow not found.
+  flowNotFound(5007, 'FLOW_NOT_FOUND', 'Flow not found'),
+
+  /// Error handler failed.
+  errorHandlerFailed(5008, 'ERROR_HANDLER_FAILED', 'Error handler failed'),
+
+  /// Action queue full.
+  actionQueueFull(5009, 'ACTION_QUEUE_FULL', 'Action queue full'),
+
+  /// Request to an undeclared domain blocked.
+  dataDomainBlocked(5100, 'DATA_DOMAIN_BLOCKED', 'Request to an undeclared domain blocked'),
+
+  /// Network request failed.
+  dataNetworkFailed(5101, 'DATA_NETWORK_FAILED', 'Network request failed'),
+
+  /// Request answered with an error status.
+  dataHttpError(5102, 'DATA_HTTP_ERROR', 'Request answered with an error status'),
+
+  /// Data request timed out.
+  dataRequestTimeout(5103, 'DATA_REQUEST_TIMEOUT', 'Data request timed out'),
+
+  /// Response does not match its declared type.
+  dataMappingFailed(5104, 'DATA_MAPPING_FAILED', 'Response does not match its declared type'),
+
+  /// Request or response too large.
+  dataSizeExceeded(5105, 'DATA_SIZE_EXCEEDED', 'Request or response too large'),
+
+  /// GraphQL request failed.
+  dataGraphqlError(5106, 'DATA_GRAPHQL_ERROR', 'GraphQL request failed'),
+
+  /// Request unauthorised.
+  dataUnauthorised(5107, 'DATA_UNAUTHORISED', 'Request unauthorised'),
+
+  /// Data source unavailable.
+  dataSourceUnavailable(5108, 'DATA_SOURCE_UNAVAILABLE', 'Data source unavailable'),
+
+  /// Response cache unavailable.
+  dataCacheUnavailable(5109, 'DATA_CACHE_UNAVAILABLE', 'Response cache unavailable'),
+
+  /// Stream failed.
+  dataStreamFailed(5110, 'DATA_STREAM_FAILED', 'Stream failed'),
+
+  /// Stream message too large.
+  dataStreamMessageTooLarge(5111, 'DATA_STREAM_MESSAGE_TOO_LARGE', 'Stream message too large'),
+
+  /// Too many open streams.
+  dataStreamLimit(5112, 'DATA_STREAM_LIMIT', 'Too many open streams'),
+
+  /// Outbox full.
+  dataOutboxFull(5120, 'DATA_OUTBOX_FULL', 'Outbox full'),
+
+  /// Outbox unavailable.
+  dataOutboxUnavailable(5121, 'DATA_OUTBOX_UNAVAILABLE', 'Outbox unavailable'),
+
+  /// Outbox replay conflict.
+  dataOutboxConflict(5122, 'DATA_OUTBOX_CONFLICT', 'Outbox replay conflict'),
+
+  /// Outbox replay rejected.
+  dataOutboxRejected(5123, 'DATA_OUTBOX_REJECTED', 'Outbox replay rejected'),
+
+  /// Transfer too large.
+  dataTransferTooLarge(5130, 'DATA_TRANSFER_TOO_LARGE', 'Transfer too large'),
+
+  /// Transfer file unavailable.
+  dataTransferFileFailed(5131, 'DATA_TRANSFER_FILE_FAILED', 'Transfer file unavailable'),
+
+  /// Collection migration failed.
+  dbMigrationFailed(5200, 'DB_MIGRATION_FAILED', 'Collection migration failed'),
+
+  /// Local database unavailable.
+  dbUnavailable(5201, 'DB_UNAVAILABLE', 'Local database unavailable'),
+
+  /// Encrypted database required.
+  dbEncryptionRequired(5202, 'DB_ENCRYPTION_REQUIRED', 'Encrypted database required'),
+
+  /// Record does not fit its collection.
+  dbRecordInvalid(5203, 'DB_RECORD_INVALID', 'Record does not fit its collection'),
+
+  /// Record not found.
+  dbRecordNotFound(5204, 'DB_RECORD_NOT_FOUND', 'Record not found'),
+
+  /// Record key already exists.
+  dbKeyConflict(5205, 'DB_KEY_CONFLICT', 'Record key already exists'),
+
+  /// Invalid database query.
+  dbQueryInvalid(5206, 'DB_QUERY_INVALID', 'Invalid database query'),
+
+  /// Local database over its limit.
+  dbLimitExceeded(5207, 'DB_LIMIT_EXCEEDED', 'Local database over its limit'),
+
+  /// Local database failed.
+  dbStoreFailed(5208, 'DB_STORE_FAILED', 'Local database failed'),
+
+  /// Unknown or inaccessible collection.
+  dbCollectionUnknown(5209, 'DB_COLLECTION_UNKNOWN', 'Unknown or inaccessible collection'),
+
+  /// Key-value entry of another type.
+  dbValueTypeMismatch(5210, 'DB_VALUE_TYPE_MISMATCH', 'Key-value entry of another type'),
+
+  /// State written with a value of the wrong type.
+  stateWriteTypeMismatch(5301, 'STATE_WRITE_TYPE_MISMATCH', 'State written with a value of the wrong type'),
+
+  /// State write refused.
+  stateWriteRefused(5302, 'STATE_WRITE_REFUSED', 'State write refused'),
+
+  /// State store unavailable.
+  stateStoreUnavailable(5303, 'STATE_STORE_UNAVAILABLE', 'State store unavailable'),
+
+  /// State store failed authentication.
+  stateStoreCorrupt(5304, 'STATE_STORE_CORRUPT', 'State store failed authentication'),
+
+  /// Stored state could not be migrated.
+  stateMigrationFailed(5305, 'STATE_MIGRATION_FAILED', 'Stored state could not be migrated'),
+
+  /// Stored state over its limit.
+  stateLimitExceeded(5306, 'STATE_LIMIT_EXCEEDED', 'Stored state over its limit'),
+
+  /// Host event refused.
+  hostEventRefused(5307, 'HOST_EVENT_REFUSED', 'Host event refused'),
+
+  /// Form invalid.
+  formInvalid(5350, 'FORM_INVALID', 'Form invalid'),
+
+  /// Form not in scope.
+  formNotInScope(5351, 'FORM_NOT_IN_SCOPE', 'Form not in scope'),
+
+  /// Asynchronous validator failed.
+  formAsyncValidatorFailed(5352, 'FORM_ASYNC_VALIDATOR_FAILED', 'Asynchronous validator failed'),
+
+  /// Device operation blocked.
+  deviceCapabilityBlocked(5400, 'DEVICE_CAPABILITY_BLOCKED', 'Device operation blocked'),
+
+  /// Device package not installed.
+  devicePackageMissing(5401, 'DEVICE_PACKAGE_MISSING', 'Device package not installed'),
+
+  /// Device permission denied.
+  devicePermissionDenied(5402, 'DEVICE_PERMISSION_DENIED', 'Device permission denied'),
+
+  /// Device feature unavailable.
+  deviceUnavailable(5403, 'DEVICE_UNAVAILABLE', 'Device feature unavailable'),
+
+  /// openUrl blocked.
+  openUrlBlocked(5404, 'OPEN_URL_BLOCKED', 'openUrl blocked'),
+
+  /// Clipboard write blocked.
+  clipboardBlocked(5405, 'CLIPBOARD_BLOCKED', 'Clipboard write blocked'),
+
+  /// Host event payload invalid.
+  hostEventPayloadInvalid(5500, 'HOST_EVENT_PAYLOAD_INVALID', 'Host event payload invalid'),
 
   /// Outbound request blocked.
   outboundRequestBlocked(6030, 'OUTBOUND_REQUEST_BLOCKED', 'Outbound request blocked'),

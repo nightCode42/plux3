@@ -221,8 +221,27 @@ func (rcv *Schemas) NativeActionsLength() int {
 	return 0
 }
 
+func (rcv *Schemas) DroppedCollections(obj *Uuid, j int) bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(22))
+	if o != 0 {
+		x := rcv._tab.Vector(o)
+		x += flatbuffers.UOffsetT(j) * 16
+		obj.Init(rcv._tab.Bytes, x)
+		return true
+	}
+	return false
+}
+
+func (rcv *Schemas) DroppedCollectionsLength() int {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(22))
+	if o != 0 {
+		return rcv._tab.VectorLen(o)
+	}
+	return 0
+}
+
 func SchemasStart(builder *flatbuffers.Builder) {
-	builder.StartObject(9)
+	builder.StartObject(10)
 }
 func SchemasAddTypes(builder *flatbuffers.Builder, types flatbuffers.UOffsetT) {
 	builder.PrependUOffsetTSlot(0, flatbuffers.UOffsetT(types), 0)
@@ -277,6 +296,12 @@ func SchemasAddNativeActions(builder *flatbuffers.Builder, nativeActions flatbuf
 }
 func SchemasStartNativeActionsVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
 	return builder.StartVector(4, numElems, 4)
+}
+func SchemasAddDroppedCollections(builder *flatbuffers.Builder, droppedCollections flatbuffers.UOffsetT) {
+	builder.PrependUOffsetTSlot(9, flatbuffers.UOffsetT(droppedCollections), 0)
+}
+func SchemasStartDroppedCollectionsVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
+	return builder.StartVector(16, numElems, 8)
 }
 func SchemasEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
 	return builder.EndObject()

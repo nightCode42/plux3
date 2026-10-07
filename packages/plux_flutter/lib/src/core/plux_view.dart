@@ -222,6 +222,9 @@ final class PluxView extends ConsumerWidget {
       onPop: _routed || events == null
           ? null
           : (result) => events(PluxViewEvent('pop', result)),
+      onEvent: events == null
+          ? null
+          : (name, payload) => events(PluxViewEvent(name, payload)),
       fallback: (e) => fallback(e, shown.plugin),
     );
   }
@@ -334,6 +337,7 @@ final class PluxPageHost extends StatefulWidget {
     required this.fallback,
     this.routed = false,
     this.onPop,
+    this.onEvent,
   });
 
   /// Whether the page owns its route.
@@ -341,6 +345,9 @@ final class PluxPageHost extends StatefulWidget {
 
   /// Receives an embedded page's `pop` result, or null (ADR-0023).
   final void Function(Object? result)? onPop;
+
+  /// Receives a shown component's events (SCH-030), or null.
+  final void Function(String event, Object? payload)? onEvent;
 
   /// Whether the host shows an exported component, which is no screen: no
   /// `screen_view` or `render_perf` is recorded for it.
@@ -515,6 +522,7 @@ final class _PluxPageHostState extends State<PluxPageHost> {
         widget.params,
         routed: widget.routed,
         onPop: widget.onPop,
+        onEvent: widget.onEvent,
       );
     } on Object catch (e, stack) {
       final error = e is PluxException

@@ -17,14 +17,17 @@ import (
 	"connectrpc.com/connect"
 
 	"github.com/nightCode42/plux3/backend/internal/codegen"
+	"github.com/nightCode42/plux3/backend/internal/compiler"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1"
+	"github.com/nightCode42/plux3/backend/internal/plxerr"
 )
 
 // The constraints plux init adds, in step with the runtime this CLI
 // generates code for (a test keeps them in step with the packages).
 const (
-	runtimeConstraint = "^0.2.0"
-	adapterConstraint = "^0.1.0"
+	runtimeConstraint  = "^0.3.0"
+	adapterConstraint  = "^0.1.0"
+	optionalConstraint = "^0.1.0"
 )
 
 // initCall is the runtime's start-up call, as the Dart API spells it.
@@ -62,7 +65,7 @@ type hostStep struct {
 // shape.
 // Every step leaves what it already finished unchanged, so a second run
 // changes nothing; then it runs plux doctor's server checks.
-func (e env) initHost(c common, envKey string) int {
+func (e env) initHost(c common, envKey string, pkgs []string) int {
 	if err := c.resolve(); err != nil {
 		return e.fail("init", err)
 	}
@@ -84,10 +87,10 @@ func (e env) initHost(c common, envKey string) int {
 	}
 	var steps []hostStep
 	for _, step := range []func() (hostStep, error){
-		func() (hostStep, error) { return addDependencies(c.dir) },
+		func() (hostStep, error) { return addDependencies(c.dir, pkgs) },
 		func() (hostStep, error) { return writeHostConfig(c.dir) },
 		func() (hostStep, error) {
-			return writeOptions(c.dir, app.GetKey(), app.GetId(), c.server, envKey, res.Msg.GetKeys())
+			return writeOptions(c.dir, app.GetKey(), app.GetId(), c.server, envKey, res.Msg.GetKeys(), pkgs)
 		},
 		func() (hostStep, error) { return wireMain(c.dir) },
 	} {
@@ -122,9 +125,47 @@ func (e env) initHost(c common, envKey string) int {
 	return code
 }
 
-// addDependencies adds plux_flutter to pubspec.yaml's dependencies, and
-// the router adapter of a go_router or auto_route app.
-func addDependencies(dir string) (hostStep, error) {
+// hostPackages are the optional packages plux init adds to a host app:
+// those named in list, comma-separated, and those the device actions of
+// the project in projectDir need (RT-060), sorted and without repeats. An
+// unknown name or a project with errors is refused.
+func hostPackages(list, projectDir string) ([]string, error) {
+	var out []string
+	for n := range strings.SplitSeq(list, ",") {
+		n = strings.TrimSpace(n)
+		if n == "" {
+			continue
+		}
+		if _, ok := codegen.PackageByName(n); !ok {
+			var known []string
+			for _, p := range codegen.OptionalPackages() {
+				known = append(known, p.Name)
+			}
+			return nil, usageError(fmt.Sprintf("unknown package %q: the optional packages are %s", n, strings.Join(known, ", ")))
+		}
+		out = append(out, n)
+	}
+	if projectDir != "" {
+		st, err := os.Stat(projectDir)
+		if err != nil || !st.IsDir() {
+			return nil, usageError(projectDir + " is not a directory")
+		}
+		res := compiler.Compile(os.DirFS(projectDir), options(false))
+		if i := slices.IndexFunc(res.Diagnostics, func(d plxerr.Diagnostic) bool { return d.Severity == plxerr.SeverityError }); i >= 0 {
+			return nil, fmt.Errorf("the project in %s has errors, the first %s: run plux validate %s", projectDir, res.Diagnostics[i], projectDir)
+		}
+		for _, u := range compiler.DeviceUses(res, nil) {
+			out = append(out, u.Package)
+		}
+	}
+	slices.Sort(out)
+	return slices.Compact(out), nil
+}
+
+// addDependencies adds plux_flutter to pubspec.yaml's dependencies, the
+// router adapter of a go_router or auto_route app, and the optional
+// packages pkgs.
+func addDependencies(dir string, pkgs []string) (hostStep, error) {
 	path := filepath.Join(dir, "pubspec.yaml")
 	data, err := os.ReadFile(path) //nolint:gosec // the developer's own project
 	if err != nil {
@@ -145,6 +186,11 @@ func addDependencies(dir string) (hostStep, error) {
 	for router, adapter := range map[string]string{"go_router": "plux_go_router", "auto_route": "plux_auto_route"} {
 		if has(router) && !has(adapter) {
 			add = append(add, "  "+adapter+": "+adapterConstraint)
+		}
+	}
+	for _, p := range pkgs {
+		if !has(p) {
+			add = append(add, "  "+p+": "+optionalConstraint)
 		}
 	}
 	if len(add) == 0 {
@@ -190,8 +236,8 @@ func writeHostConfig(dir string) (hostStep, error) {
 
 // writeOptions writes the generated configuration: the server, app and
 // environment, and the environment's root keys embedded (SEC-051).
-func writeOptions(dir, key, appID, server, envKey string, keys []*pluxv1.PublicKey) (hostStep, error) {
-	spec := codegen.OptionsSpec{AppKey: key, AppID: appID, Endpoint: server, Environment: envKey}
+func writeOptions(dir, key, appID, server, envKey string, keys []*pluxv1.PublicKey, pkgs []string) (hostStep, error) {
+	spec := codegen.OptionsSpec{AppKey: key, AppID: appID, Endpoint: server, Environment: envKey, Packages: pkgs}
 	for _, k := range keys {
 		spec.Keys = append(spec.Keys, codegen.RootKey{KeyID: k.GetKeyId(), Algorithm: k.GetAlgorithm(), Role: k.GetRole(), PublicKey: k.GetPublicKey()})
 	}

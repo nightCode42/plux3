@@ -65,6 +65,28 @@ Search for the `PLX-` code first; each is explained in [errors.md](../reference/
 | `PLX-5004` | A run's `stop` ended it with a custom error | The graph's own outcome; nothing is wrong in the runtime. |
 | `action_run` events with `result: failed` | Steps failing in production | The event names the graph, trigger, failing step and duration, never inputs or outputs (`ANL-001`). |
 
+## Data, state and the local database
+
+Every code below is in the [error catalogue](../reference/errors.md) with its cause and fix;
+these are the ones operators meet.
+
+| Symptom | Likely cause | Action |
+|---|---|---|
+| `PLX-5100` | A request or stream to a domain the plugin does not declare: a wrong base URL for an environment, or a new backend host | Declare the domain in the plugin's capabilities (and the app's approved set, when it lists domains), or correct the environment's base URL. |
+| `PLX-5101`, `PLX-5103`; sources show their error state | The device is offline or the backend is slow | Expected offline. Mutations marked `offlineCapable` queue and replay; reads show the source's error slot until the network returns. |
+| `PLX-5104` | The backend changed a response's shape | Correct the source's `select`, types or `transform` and publish, or fix the API. Older apps keep failing typed, never crashing. |
+| `PLX-5107` after a refresh | The host's auth delegate could not refresh the token | Check the host's `PluxAuthDelegate.refresh`; the user signs in again. |
+| `PLX-5110`; a stream reconnects forever | A WebSocket refused with `401` or `403` (dart:io does not expose the status), or the endpoint is down | Check the user's access and the stream URL; `unsubscribe` stops it. SSE stops on a `4xx`. |
+| `PLX-5120`, `PLX-5121` | The outbox is full after a long time offline, or secure storage is unavailable | The mutation is refused, not lost silently; raise `data.outboxEntries` or `data.outboxBytes` for the app if users work offline for long. |
+| `PLX-5122`, `PLX-5123` | A queued mutation conflicted or was refused when replayed | The source's `onConflict` or `onSyncFailed` handler should reload and tell the user; without one the optimistic change stays until the next load. |
+| `PLX-5200` | A collection migration failed on the device | The collection stays at its previous version and its sources fail typed; publish a release whose migration covers the stored data. |
+| `PLX-5201`, `PLX-5202` | The host app lacks `plux_db_drift`, or a `strict`/`maximum` app has no encrypting SQLite | Add the package with `plux init --packages plux_db_drift`; publishing warns about builds that lack it. |
+| `PLX-5303`, `PLX-5304`, `PLX-5208` | Device storage is full, secure storage failed, or stored data was tampered with | Values stay in memory and the app keeps working; a tampered `secure` store is discarded and reported. |
+| `PLX-5305` | Stored state of an older release could not be migrated | The value is reset to its default and reported; declare a migration from the previous type. |
+| `PLX-5307`, `PLX-5500` | The host sent an undeclared event, or a payload of the wrong shape | Regenerate the typed senders with `plux codegen` after the app document's `hostEvents` change. |
+| `PLX-5400`, `PLX-5401`, `PLX-5402` | A device action without the capability, without its package in the host, or without the user's permission | Declare and approve the capability; add the package (`plux init --packages`); take `requestPermission`'s denied branch. |
+| `PLX-5009`, `PLX-5006` | Triggers arrive faster than runs finish, or `forEach` over too many items | Use `drop`, `restart` or `debounce` for fast triggers; iterate over a page of items. |
+
 ## Native catalogue and host builds
 
 | Symptom | Likely cause | Action |

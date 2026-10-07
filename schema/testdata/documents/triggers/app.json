@@ -1,0 +1,114 @@
+{
+  "defaultLocale": "en",
+  "entryRoute": "home",
+  "environments": [
+    {
+      "key": "production",
+      "name": "Production"
+    }
+  ],
+  "hostEvents": [
+    {
+      "description": "The host pings the app.",
+      "direction": "toPlux",
+      "fields": [
+        {
+          "name": "n",
+          "type": "int"
+        }
+      ],
+      "name": "ping"
+    },
+    {
+      "description": "The host reports a price; a typed payload of several kinds.",
+      "direction": "both",
+      "fields": [
+        {
+          "name": "amount",
+          "type": "decimal"
+        },
+        {
+          "name": "on",
+          "type": "date"
+        },
+        {
+          "name": "note",
+          "type": "string?"
+        }
+      ],
+      "name": "priced"
+    }
+  ],
+  "icon": {
+    "monogram": {
+      "background": "#0B6E4F",
+      "text": "TR"
+    }
+  },
+  "id": "01f0c450-6c00-7000-8000-000000000601",
+  "key": "triggers",
+  "kind": "app",
+  "minRuntimeVersion": "0.3.0",
+  "name": "Triggers",
+  "plugins": [
+    "lab"
+  ],
+  "schemaVersion": "1.0.0",
+  "securityProfile": "standard",
+  "state": [
+    {
+      "default": 0,
+      "id": "01f0c450-6c00-7000-8000-000000000607",
+      "name": "pings",
+      "type": "int"
+    },
+    {
+      "default": 0,
+      "id": "01f0c450-6c00-7000-8000-000000000608",
+      "name": "errors",
+      "type": "int"
+    }
+  ],
+  "supportedLocales": [
+    "en"
+  ],
+  "sync": {
+    "activation": "atSafePoint",
+    "startup": {
+      "mode": "useCacheThenSync"
+    }
+  },
+  "theme": "01f0c450-6c00-7000-8000-000000000602",
+  "triggers": {
+    "hostEvents": {
+      "ping": {
+        "steps": [
+          {
+            "action": "setState",
+            "id": "count",
+            "input": {
+              "path": "app.pings",
+              "value": {
+                "$expr": "app.pings + event.n"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "onError": {
+      "steps": [
+        {
+          "action": "setState",
+          "id": "count",
+          "input": {
+            "path": "app.errors",
+            "value": {
+              "$expr": "app.errors + 1"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

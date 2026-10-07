@@ -73,7 +73,7 @@ func modelTS(m *Model) []byte {
 // writeTSType renders one named type.
 func writeTSType(b *bytes.Buffer, t *NamedType) {
 	if t.Doc != "" {
-		b.WriteString("/** " + t.Doc + " */\n")
+		b.WriteString("/** " + tsComment(t.Doc) + " */\n")
 	}
 	switch t.Kind {
 	case NamedEnum:
@@ -88,7 +88,7 @@ func writeTSType(b *bytes.Buffer, t *NamedType) {
 		fmt.Fprintf(b, "export interface %s {\n", t.Name)
 		for _, f := range t.Fields {
 			if f.Doc != "" {
-				b.WriteString("  /** " + f.Doc + " */\n")
+				b.WriteString("  /** " + tsComment(f.Doc) + " */\n")
 			}
 			typ := tsType(f.Type)
 			if f.Const != "" {
@@ -170,4 +170,10 @@ func mdType(t TypeRef) string {
 	default:
 		return fmt.Sprintf("[%s](#%s)", t.Name, strings.ToLower(t.Name))
 	}
+}
+
+// tsComment makes doc safe inside a /** */ comment: a "*/" in it, as in a
+// glob such as tests/**/*.json, would end the comment early.
+func tsComment(doc string) string {
+	return strings.ReplaceAll(doc, "*/", "*\\/")
 }

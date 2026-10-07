@@ -16,6 +16,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:plux_flutter/src/runtime_info.dart';
+import 'package:plux_flutter/src/store/kv_store.dart';
 import 'package:plux_flutter/src/sync/api_client.dart';
 import 'package:plux_flutter/src/sync/sync_engine.dart';
 
@@ -60,6 +61,28 @@ final class PlatformCredentialStore implements CredentialStore {
 
   @override
   Future<void> clear() =>
+      _channel.invokeMethod<void>('secretDelete', {'name': name});
+}
+
+/// Secrets the platform keeps encrypted under its own key (ADR-0029):
+/// the built-in store's key (plan p5 D6). Names are lower case letters,
+/// digits, `.`, `_` and `-`.
+final class PlatformSecretStore implements SecretStore {
+  /// Creates the store.
+  const PlatformSecretStore();
+
+  @override
+  Future<String?> read(String name) =>
+      _channel.invokeMethod<String>('secretRead', {'name': name});
+
+  @override
+  Future<void> write(String name, String value) => _channel.invokeMethod<void>(
+    'secretWrite',
+    {'name': name, 'value': value},
+  );
+
+  @override
+  Future<void> delete(String name) =>
       _channel.invokeMethod<void>('secretDelete', {'name': name});
 }
 

@@ -26,8 +26,24 @@ and renders it as native widgets.
   and the native catalogue.
 - [No-code apps](../../../../docs/guides/no-code-apps.md): generate, build and ship the store
   project of an app built entirely in Plux with `plux create`.
+- [Actions](../../../../docs/guides/actions.md): triggers, repeated triggers, retries,
+  optimistic updates, errors and flows.
+- [State](../../../../docs/guides/state.md): scopes, computed entries, watchers, persistence,
+  migrations and state shared with the host.
+- [Forms](../../../../docs/guides/forms.md): typed fields, validators, inputs and submitting.
+- [Data](../../../../docs/guides/data.md): REST and GraphQL sources, mutations, live streams
+  and offline work.
+- [Database](../../../../docs/guides/database.md): collections, watched queries, migrations
+  and the key-value store.
+- [Animation](../../../../docs/guides/animation.md): implicit motion, timelines, gestures,
+  page transitions, Lottie and Rive.
+- [Testing](../../../../docs/guides/testing.md): declarative scenarios with `plux test`, and
+  mocking a backend.
 - The [starter app](https://github.com/nightCode42/plux3/tree/main/apps/starter) is a complete
-  host to copy from; the ten-minute quick start arrives with Phase 10.
+  host to copy from, and the reference apps
+  [Plux Bank](https://github.com/nightCode42/plux3/tree/main/apps/plux_bank) and
+  [Plux Express](https://github.com/nightCode42/plux3/tree/main/apps/plux_express) show the
+  features of Phase 5 in two real flows; the ten-minute quick start arrives with Phase 10.
 
 ## Reference
 

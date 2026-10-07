@@ -11,26 +11,34 @@ library;
 import 'dart:developer' as developer;
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart' show kToolbarHeight;
+import 'package:flutter/material.dart' show Theme, kToolbarHeight;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:plux_flutter/src/actions/engine.dart';
+import 'package:plux_flutter/src/animation/interpolate.dart';
+import 'package:plux_flutter/src/animation/motion_node.dart';
 import 'package:plux_flutter/src/assets/icon_fonts.dart';
 import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/bundle/container.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
 import 'package:plux_flutter/src/bundle/safe_read.dart';
 import 'package:plux_flutter/src/core/app_state.dart';
+import 'package:plux_flutter/src/data/services.dart' show DataRoot;
+import 'package:plux_flutter/src/db/row_identity.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/native_catalogue/registration.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
 import 'package:plux_flutter/src/render/decoding.dart';
 import 'package:plux_flutter/src/render/generated/render.g.dart';
 import 'package:plux_flutter/src/render/node_context.dart';
-import 'package:plux_flutter/src/render/renderer.dart' show fromHost;
+import 'package:plux_flutter/src/render/renderer.dart'
+    show PluxRenderer, fromHost;
 import 'package:plux_flutter/src/render/scope.dart';
 import 'package:plux_flutter/src/render/sections.dart';
 import 'package:plux_flutter/src/render/values.dart';
 import 'package:plux_flutter/src/schema/registry.g.dart';
+import 'package:plux_flutter/src/state/access.dart';
+import 'package:plux_flutter/src/state/scope_state.dart';
 
 /// Widgets whose output must be a direct child of their parent's render
 /// object (flex and stack parent data, slivers): they are never wrapped in
@@ -63,15 +71,50 @@ final class PluxNode extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scope = RenderScope.of(context);
-    final c = NodeContextImpl(context, ref, scope, index);
-    try {
-      final w = c.build();
-      c.subscribe();
-      return w;
-    } on Object catch (e, stack) {
-      c.subscribe();
-      return c.failed(e, stack);
+    final motion = NodeMotion.of(scope.section.node(index), scope.animations);
+    if (motion != null) {
+      final at = scope.roots()['index'];
+      return MotionNode(
+        motion: motion,
+        itemIndex: at is int ? at : 0,
+        build: (ctx, r, values, force, subscribe, onSource) => _buildNode(
+          ctx,
+          r,
+          scope,
+          index,
+          animated: values,
+          force: force,
+          subscribe: subscribe,
+          onSource: onSource,
+        ),
+      );
     }
+    return _buildNode(context, ref, scope, index);
+  }
+}
+
+/// Builds node [index] of [scope]; with [animated] values in place of its
+/// props' (ANI-001), although hidden when [force] is set (ANI-003), and
+/// subscribing to the state it reads unless [subscribe] is false.
+Widget _buildNode(
+  BuildContext context,
+  WidgetRef ref,
+  RenderScope scope,
+  int index, {
+  Map<int, Object?> animated = const {},
+  bool force = false,
+  bool subscribe = true,
+  void Function(MotionSource source)? onSource,
+}) {
+  final c = NodeContextImpl(context, ref, scope, index, animated: animated);
+  try {
+    final w = c.build(force: force);
+    onSource?.call(c);
+    if (subscribe) c.subscribe();
+    return w;
+  } on Object catch (e, stack) {
+    if (subscribe) c.subscribe();
+    return c.failed(e, stack);
   }
 }
 
@@ -79,10 +122,19 @@ final class PluxNode extends ConsumerWidget {
 String nodePath(RenderScope scope, int index) => '${scope.path}/$index';
 
 /// The [NodeContext] of one build of one node.
-final class NodeContextImpl implements NodeContext {
-  /// Creates the context of node [index] in [scope].
-  NodeContextImpl(this.context, this._ref, this.scope, this.index)
-    : node = scope.section.node(index);
+final class NodeContextImpl implements NodeContext, MotionSource {
+  /// Creates the context of node [index] in [scope]; [animated] holds the
+  /// values of props that an animation sets in place of their own.
+  NodeContextImpl(
+    this.context,
+    this._ref,
+    this.scope,
+    this.index, {
+    this.animated = const {},
+  }) : node = scope.section.node(index);
+
+  /// The values animations give props, by permanent ID (ANI-001).
+  final Map<int, Object?> animated;
 
   @override
   final BuildContext context;
@@ -104,9 +156,10 @@ final class NodeContextImpl implements NodeContext {
 
   String get _path => nodePath(scope, index);
 
-  /// Builds the node's widget, wrapped in its semantics.
-  Widget build() {
-    if (!_visible(node)) return const SizedBox.shrink();
+  /// Builds the node's widget, wrapped in its semantics; hidden nodes build
+  /// nothing unless [force] is set, as while an exit transition plays.
+  Widget build({bool force = false}) {
+    if (!force && !_visible(node)) return const SizedBox.shrink();
     final w = _content();
     return node.widget != 0 && _unwrapped.contains(node.widget)
         ? w
@@ -129,9 +182,16 @@ final class NodeContextImpl implements NodeContext {
   /// (RT-012); a host's write of exposed state rebuilds every view and slot
   /// reading it in the same frame (ADR-0023).
   void subscribe() {
+    // Below a FormScope, `form.x` is the scoped form's `<alias>.x`.
+    final alias = scope.formAlias;
+    String actual(String r) =>
+        alias != null && (r == 'form' || r.startsWith('form.'))
+        ? alias + r.substring('form'.length)
+        : r;
     List<List<String>> under(String root) => [
-      for (final r in reads)
-        if (r == root || r.startsWith('$root.')) r.split('.').skip(1).toList(),
+      for (final read in reads.map(actual))
+        if (read == root || read.startsWith('$root.'))
+          read.split('.').skip(1).toList(),
     ];
     final instance = scope.state;
     final paths = under('page');
@@ -143,6 +203,20 @@ final class NodeContextImpl implements NodeContext {
     final app = under('app');
     if (app.isNotEmpty) {
       _ref.watch(appStateProvider.select((s) => _Selected(app, s)));
+    }
+    final plugin = under('plugin');
+    if (plugin.isNotEmpty) {
+      _ref.watch(
+        pluginStateProvider(scope.pluginKey)
+            .select((s) => _Selected(plugin, s)),
+      );
+    }
+    final component = scope.componentState;
+    final mine = under('component');
+    if (component != null && mine.isNotEmpty) {
+      _ref.watch(
+        pageStateProvider(component).select((s) => _Selected(mine, s)),
+      );
     }
   }
 
@@ -246,13 +320,43 @@ final class NodeContextImpl implements NodeContext {
   }
 
   @override
-  Object? prop(int id) => resolve(_merged[id]);
+  Object? prop(int id) =>
+      animated.containsKey(id) ? animated[id] : resolve(_merged[id]);
+
+  @override
+  bool get isVisible => _visible(node);
+
+  @override
+  String? get heroTag {
+    final h = node.animation?.hero;
+    final v = h == null ? null : resolve(h);
+    return v is String ? v : null;
+  }
+
+  @override
+  Map<int, Object?> animatableTargets(Set<int>? only) {
+    final out = <int, Object?>{};
+    for (final e in _merged.entries) {
+      if (only != null && !only.contains(e.key)) continue;
+      Object? v;
+      try {
+        v = scope.resolver.resolve(e.value, scope.section.string);
+      } on Object {
+        continue;
+      }
+      if (only != null ? isAnimatable(v) : animatesImplicitly(v)) {
+        out[e.key] = v;
+      }
+    }
+    return out;
+  }
 
   @override
   T? decode<T>(int id, T? Function(Decoding d, Object? v) decoder) {
     final raw = _merged[id];
-    if (raw == null) return null;
-    final v = resolve(raw);
+    final over = animated[id];
+    if (raw == null && over == null) return null;
+    final v = over ?? resolve(raw);
     if (v == null) return null;
     try {
       final decoded = decoder(this, v);
@@ -345,7 +449,9 @@ final class NodeContextImpl implements NodeContext {
   /// The widgets node [i] contributes to a list of children.
   List<Widget> expand(int i) {
     final n = scope.section.node(i);
-    if (!_visible(n)) return const [];
+    // A hidden node with an exit transition stays in the list while it
+    // exits (ANI-003); the node builds nothing once the exit is done.
+    if (!_visible(n) && n.animation?.exit == null) return const [];
     NodeContextImpl sub() => NodeContextImpl(context, _ref, scope, i);
     switch (n.widget) {
       case WidgetIds.forEach:
@@ -403,14 +509,60 @@ final class NodeContextImpl implements NodeContext {
   Widget item(int slot, Object? item, int index) {
     final nodes = _fill(slot)?.nodes;
     if (nodes == null || nodes.isEmpty) return const SizedBox.shrink();
+    // A record of a watched database query that did not change is the same
+    // object as before: its item is the widget it was, unless something
+    // its bindings read besides the row has changed (DB-006).
+    final memo = item == null || dbRowKeyOf(item) == null
+        ? null
+        : _ItemMemo.of(item, _itemInputs(slot, index));
+    final cached = memo?.widget;
+    if (cached != null) return cached;
     final itemScope = scope.withRoots({
       'item': toPxl(item),
       'index': index,
     }, '$_path/$index');
-    return RenderScopeWidget(
+    final built = RenderScopeWidget(
       key: ValueKey(index),
       scope: itemScope,
       child: PluxNode(nodes.first),
+    );
+    memo?.widget = built;
+    return built;
+  }
+
+  /// What an item's bindings may read besides its row: the release, the
+  /// page, the theme, the locale, every root of the scope (state, params,
+  /// props, outer items, the user, the flags, the device), and the data of
+  /// the sources that are not database sources. An item is reused only
+  /// while all of it is the same.
+  List<Object?> _itemInputs(int slot, int index) {
+    final roots = scope.roots();
+    final data = roots['data'];
+    return [
+      scope.release,
+      scope.state,
+      scope.actions,
+      scope.section,
+      Theme.of(context),
+      MediaQuery.maybeOf(context)?.highContrast,
+      Localizations.maybeLocaleOf(context),
+      for (final k in roots.keys.toList()..sort())
+        if (k != 'data') ...[k, roots[k]],
+      data is DataRoot ? data.scope.externalRevision : data,
+      slot,
+      index,
+      _path,
+    ];
+  }
+
+  /// The first node of [slot] rendered below the `FormScope` of the form
+  /// [name] (STA-020).
+  Widget formScope(int slot, String name) {
+    final nodes = _fill(slot)?.nodes;
+    if (nodes == null || nodes.isEmpty) return const SizedBox.shrink();
+    return RenderScopeWidget(
+      scope: scope.withForm(name, '$_path/form'),
+      child: _child(nodes.first),
     );
   }
 
@@ -448,6 +600,10 @@ final class NodeContextImpl implements NodeContext {
         path: _path,
         roots: s.roots,
         payload: toPxl(payload),
+        state: stateAccess(context, s),
+        // Runs a component's nodes start end with its instance (ACT-004).
+        owner: s.componentState,
+        emitEvent: s.emitEvent,
         resolve: (v, roots) => toPxl(
           ValueResolver(
             plugin: s.plugin,
@@ -602,47 +758,126 @@ final class NodeContextImpl implements NodeContext {
           ? toPxl(resolve(given))
           : toPxl(_resolveIn(defaults, cs, declared[k].$default));
     }
-    final state = <String, Object?>{
-      for (final e in component.state ?? const <fbs.StateEntry>[])
-        if (e.computed == 0)
-          cs.string(e.name): toPxl(_resolveIn(defaults, cs, e.$default)),
-    };
-    final parentRoots = scope.roots;
-    Map<String, Object?> roots() => {
-      ...parentRoots(),
-      'props': props,
-      'component': state,
-    };
     final path = '$_path/${uuidString(id)}';
-    final inner = RenderScope(
-      release: scope.release,
-      plugin: bundle,
-      app: scope.app,
-      pluginKey: scope.pluginKey,
-      section: cs,
-      resolver: ValueResolver(
-        plugin: bundle,
-        roots: roots,
-        token: scope.resolver.token,
-        translation: scope.resolver.translation,
-        limits: scope.resolver.limits,
-      ),
-      roots: roots,
-      builders: scope.builders,
-      cache: scope.cache,
-      report: scope.report,
-      services: scope.services,
-      path: path,
-      state: scope.state,
-      fills: (scope: scope, node: node),
-      parent: scope,
-    );
+    final parentRoots = scope.roots;
+    // The instance's handlers receive the component's events (SCH-030):
+    // a declared event's index is the instance node's event ID.
+    final events = [
+      for (final e in component.events ?? const <fbs.ComponentEvent>[])
+        cs.string(e.name),
+    ];
+    void emit(String event, Object? payload) {
+      final i = events.indexOf(event);
+      if (i < 0) {
+        _bad('component ${uuidString(id)} declares no event $event');
+        return;
+      }
+      if (handles(i)) fire(i, payload);
+    }
+
     final services = scope.services;
     final plugin = scope.pluginKey;
+    final outer = scope;
     return PluxBoundary(
       path: path,
       fallback: (c, e) => services.fallback(c, e, plugin),
-      child: RenderScopeWidget(scope: inner, child: const PluxNode(0)),
+      child: _ComponentInstance(
+        key: ValueKey(path),
+        actions: scope.actions,
+        create: () {
+          final renderer = services;
+          if (renderer is! PluxRenderer) {
+            return PageInstance({
+              for (final e in component.state ?? const <fbs.StateEntry>[])
+                if (e.computed == 0)
+                  cs.string(e.name): toPxl(
+                    _resolveIn(defaults, cs, e.$default),
+                  ),
+            });
+          }
+          return PageInstance(
+            const {},
+            model: renderer.scopeModel(
+              outer.release,
+              identical(bundle, outer.app) ? '' : plugin,
+              StateScopeKind.component,
+              component.state,
+              strings: cs.string,
+              parents: {
+                'app': appStateProvider,
+                'plugin': pluginStateProvider(plugin),
+              },
+              extraRoots: () => {'props': props},
+              forms: component.forms,
+              runForm: (graph, value, key, debounce) async {
+                final host = outer.actions;
+                if (host == null || host.disposed) return null;
+                Map<String, Object?> runRoots() => {
+                  ...parentRoots(),
+                  'props': props,
+                };
+                final g = host.graph(
+                  graph,
+                  bundle,
+                  path,
+                  (v, roots) => toPxl(
+                    ValueResolver(
+                      plugin: bundle,
+                      roots: () => roots,
+                      token: outer.resolver.token,
+                      translation: outer.resolver.translation,
+                      limits: outer.resolver.limits,
+                    ).resolve(v, bundle.string),
+                  ),
+                );
+                if (g == null) return null;
+                return host.start(
+                  g,
+                  roots: runRoots,
+                  key: '$path#$key',
+                  path: path,
+                  event: value,
+                  policy: RunPolicy(ConcurrencyPolicy.debounce, debounce),
+                );
+              },
+            ),
+          );
+        },
+        build: (instance, ref) {
+          Map<String, Object?> roots() => {
+            ...parentRoots(),
+            'props': props,
+            'component': ref.read(pageStateProvider(instance)),
+          };
+          final inner = RenderScope(
+            release: outer.release,
+            plugin: bundle,
+            app: outer.app,
+            pluginKey: outer.pluginKey,
+            section: cs,
+            resolver: ValueResolver(
+              plugin: bundle,
+              roots: roots,
+              token: outer.resolver.token,
+              translation: outer.resolver.translation,
+              limits: outer.resolver.limits,
+            ),
+            roots: roots,
+            builders: outer.builders,
+            cache: outer.cache,
+            report: outer.report,
+            services: outer.services,
+            path: path,
+            state: outer.state,
+            fills: (scope: outer, node: node),
+            parent: outer,
+            actions: outer.actions,
+            componentState: instance,
+            emitEvent: emit,
+          );
+          return RenderScopeWidget(scope: inner, child: const PluxNode(0));
+        },
+      ),
     );
   }
 
@@ -863,4 +1098,113 @@ final class _Slot implements PluxSlot {
     }
     _node.fire(i, value);
   }
+}
+
+/// The state a run started by a node of [scope] reads and writes
+/// (STA-001): the app's, the plugin's, the page's or component's, and its
+/// own variables.
+StateAccess? stateAccess(BuildContext context, RenderScope scope) {
+  final renderer = scope.services;
+  if (renderer is! PluxRenderer) return null;
+  final page = scope.state;
+  final component = scope.componentState;
+  return ScopeStateAccess(
+    container: ProviderScope.containerOf(context, listen: false),
+    plugin: scope.pluginKey,
+    page: identical(page, component) ? null : page,
+    component: component,
+    runModel: (entries) => renderer.scopeModel(
+      scope.release,
+      identical(scope.plugin, scope.app) ? '' : scope.pluginKey,
+      StateScopeKind.run,
+      entries,
+      parents: {
+        'app': appStateProvider,
+        'plugin': pluginStateProvider(scope.pluginKey),
+        if (page != null && !identical(page, component))
+          'page': pageStateProvider(page),
+        if (component != null) 'component': pageStateProvider(component),
+      },
+    ),
+  );
+}
+
+/// Holds a component instance's state for as long as the instance is
+/// shown (STA-001).
+final class _ComponentInstance extends ConsumerStatefulWidget {
+  const _ComponentInstance({
+    super.key,
+    required this.create,
+    required this.build,
+    this.actions,
+  });
+
+  final PageInstance Function() create;
+
+  /// The engine the instance's runs start on: they end with it (ACT-004).
+  final ActionHost? actions;
+  final Widget Function(PageInstance instance, WidgetRef ref) build;
+
+  @override
+  ConsumerState<_ComponentInstance> createState() => _ComponentInstanceState();
+}
+
+final class _ComponentInstanceState extends ConsumerState<_ComponentInstance> {
+  late final PageInstance _instance = widget.create();
+
+  @override
+  void dispose() {
+    widget.actions?.cancelOwned(_instance);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Keeps the instance's state alive while it is shown.
+    ref.listen(pageStateProvider(_instance), (_, _) {});
+    return widget.build(_instance, ref);
+  }
+}
+
+/// The widget built for one record of a watched query, with what it was
+/// built from.
+final class _ItemMemo {
+  _ItemMemo._(this.inputs);
+
+  static final Expando<_ItemMemo> _memos = Expando('plux item memos');
+
+  /// The memo of [row] for [inputs]: the earlier one if its inputs are
+  /// equal, else a new one that replaces it.
+  static _ItemMemo of(Object row, List<Object?> inputs) {
+    final old = _memos[row];
+    if (old != null && _same(old.inputs, inputs)) return old;
+    return _memos[row] = _ItemMemo._(inputs);
+  }
+
+  static bool _same(List<Object?> a, List<Object?> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (!_equal(a[i], b[i])) return false;
+    }
+    return true;
+  }
+
+  /// Equal as the item's bindings see them: roots such as `user` are new
+  /// small maps on every read, so maps are compared by their entries.
+  static bool _equal(Object? a, Object? b) {
+    if (identical(a, b) || a == b) return true;
+    if (a is! Map<Object?, Object?> || b is! Map<Object?, Object?>) {
+      return false;
+    }
+    if (a.length != b.length) return false;
+    for (final e in a.entries) {
+      if (!b.containsKey(e.key) || b[e.key] != e.value) return false;
+    }
+    return true;
+  }
+
+  final List<Object?> inputs;
+
+  /// The item's widget, once built.
+  Widget? widget;
 }

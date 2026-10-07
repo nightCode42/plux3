@@ -308,39 +308,64 @@ jobs:
           #   Apache-2.0    clock, cryptography, material_color_utilities,
           #                 webdriver;
           #                 plux_flutter, plux_devtools, plux_go_router,
-          #                 plux_auto_route and plux_native_scan are this
-          #                 repository's
+          #                 plux_auto_route, plux_native_scan and plux_media
+          #                 are this repository's
           #                 (REUSE.toml), not yet on pub.dev
           #   BSD-3-Clause  the Dart team packages below, go_router,
           #                 material_ui and cupertino_ui (Flutter team),
           #                 intl, golang.org/x/net,
           #                 x/sync, x/sys and x/text
-          #                 (plus the Go PATENTS grant, which adds rights)
+          #                 (plus the Go PATENTS grant, which adds rights);
+          #                 cross_file, file_selector_*,
+          #                 image_picker_platform_interface and url_launcher*
+          #                 (Flutter team), mobile_scanner, win32;
+          #                 image_picker, image_picker_android and
+          #                 image_picker_ios also carry aFileChooser's
+          #                 Apache-2.0
           #   MIT           auto_route, flutter_riverpod, node_preamble,
           #                 petitparser, riverpod, xml; yaml is BSD-3-Clause
-          #                 and MIT
+          #                 and MIT; archive, drift, sqlite3, lottie, rive,
+          #                 rive_native, geolocator*, file_picker*,
+          #                 android_file_picker, windows_file_picker;
+          #                 sqlcipher_flutter_libs, with OpenSSL's Apache-2.0
+          #   MPL-2.0       dbus, gsettings
           allow-dependencies-licenses: >-
             pkg:golang/golang.org/x/net, pkg:golang/golang.org/x/sync,
             pkg:golang/golang.org/x/sys, pkg:golang/golang.org/x/text,
-            pkg:pub/_fe_analyzer_shared, pkg:pub/analyzer, pkg:pub/auto_route,
+            pkg:pub/_fe_analyzer_shared, pkg:pub/analyzer,
+            pkg:pub/android_file_picker, pkg:pub/archive, pkg:pub/auto_route,
             pkg:pub/clock, pkg:pub/code_assets, pkg:pub/cronet_http,
-            pkg:pub/crypto, pkg:pub/cryptography, pkg:pub/cupertino_http,
-            pkg:pub/cupertino_ui, pkg:pub/flutter_riverpod,
-            pkg:pub/frontend_server_client, pkg:pub/glob, pkg:pub/go_router,
-            pkg:pub/hooks, pkg:pub/http, pkg:pub/intl, pkg:pub/io,
-            pkg:pub/jni, pkg:pub/jni_flutter, pkg:pub/listen, pkg:pub/matcher,
+            pkg:pub/cross_file, pkg:pub/crypto, pkg:pub/cryptography,
+            pkg:pub/cupertino_http, pkg:pub/cupertino_ui, pkg:pub/dbus,
+            pkg:pub/drift, pkg:pub/file_picker, pkg:pub/file_picker_darwin,
+            pkg:pub/file_picker_linux, pkg:pub/file_picker_platform_interface,
+            pkg:pub/file_picker_web, pkg:pub/file_selector_linux,
+            pkg:pub/file_selector_macos, pkg:pub/file_selector_windows,
+            pkg:pub/flutter_riverpod, pkg:pub/frontend_server_client,
+            pkg:pub/geolocator, pkg:pub/geolocator_android,
+            pkg:pub/geolocator_platform_interface, pkg:pub/geolocator_windows,
+            pkg:pub/glob, pkg:pub/go_router, pkg:pub/gsettings, pkg:pub/hooks,
+            pkg:pub/http, pkg:pub/image_picker, pkg:pub/image_picker_android,
+            pkg:pub/image_picker_ios, pkg:pub/image_picker_platform_interface,
+            pkg:pub/intl, pkg:pub/io, pkg:pub/jni, pkg:pub/jni_flutter,
+            pkg:pub/listen, pkg:pub/lottie, pkg:pub/matcher,
             pkg:pub/material_color_utilities, pkg:pub/material_ui,
-            pkg:pub/mime,
-            pkg:pub/native_toolchain_c, pkg:pub/node_preamble,
-            pkg:pub/objective_c, pkg:pub/path, pkg:pub/petitparser,
-            pkg:pub/platform, pkg:pub/plux_auto_route, pkg:pub/plux_devtools,
-            pkg:pub/plux_flutter, pkg:pub/plux_go_router,
-            pkg:pub/plux_native_scan,
-            pkg:pub/pool, pkg:pub/process, pkg:pub/pub_semver,
-            pkg:pub/record_use, pkg:pub/riverpod, pkg:pub/source_maps,
+            pkg:pub/mime, pkg:pub/mobile_scanner, pkg:pub/native_toolchain_c,
+            pkg:pub/node_preamble, pkg:pub/objective_c, pkg:pub/path,
+            pkg:pub/petitparser, pkg:pub/platform, pkg:pub/plux_auto_route,
+            pkg:pub/plux_devtools, pkg:pub/plux_flutter,
+            pkg:pub/plux_go_router, pkg:pub/plux_media,
+            pkg:pub/plux_native_scan, pkg:pub/pool, pkg:pub/process,
+            pkg:pub/pub_semver, pkg:pub/record_use, pkg:pub/rive,
+            pkg:pub/rive_native, pkg:pub/riverpod, pkg:pub/source_maps,
+            pkg:pub/sqlcipher_flutter_libs, pkg:pub/sqlite3,
             pkg:pub/stack_trace, pkg:pub/test, pkg:pub/test_api,
-            pkg:pub/test_core, pkg:pub/vector_graphics, pkg:pub/vector_math,
-            pkg:pub/webdriver, pkg:pub/xml, pkg:pub/yaml
+            pkg:pub/test_core, pkg:pub/url_launcher,
+            pkg:pub/url_launcher_android, pkg:pub/url_launcher_ios,
+            pkg:pub/url_launcher_linux, pkg:pub/url_launcher_macos,
+            pkg:pub/url_launcher_windows, pkg:pub/vector_graphics,
+            pkg:pub/vector_math, pkg:pub/webdriver, pkg:pub/win32,
+            pkg:pub/windows_file_picker, pkg:pub/xml, pkg:pub/yaml
           comment-summary-in-pr: never
 
   # ── Go ───────────────────────────────────────────────────────────────────
@@ -907,8 +932,8 @@ jobs:
             scenarios: startup
           - shard: open
             scenarios: open
-          - shard: native control and scroll
-            scenarios: native,scroll
+          - shard: native control, scroll and list
+            scenarios: native,scroll,list
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

@@ -17,7 +17,7 @@
 # predates the benchmark is not compared with. Results, logs and
 # the stores are written to $BENCH_OUT (default build/bench-runtime).
 # $BENCH_SCENARIOS limits every run to some of its parts (startup, open,
-# native, scroll; comma-separated), as CI's parallel jobs do (ADR-0043).
+# native, scroll, list; comma-separated), as CI's parallel jobs do (ADR-0043).
 set -euo pipefail
 
 root=$(git rev-parse --show-toplevel)

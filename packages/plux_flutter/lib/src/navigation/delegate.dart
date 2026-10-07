@@ -8,6 +8,8 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:plux_flutter/src/animation/route_transition.dart';
+import 'package:plux_flutter/src/animation/timeline_spec.dart';
 
 /// How a route is shown (NAV-005).
 enum PluxPresentation {
@@ -50,6 +52,9 @@ enum PluxTransition {
   /// Material's shared-axis transition along the horizontal axis.
   sharedAxis,
 
+  /// The route timeline of the page moves it (ANI-002).
+  custom,
+
   /// No animation.
   none;
 
@@ -68,6 +73,7 @@ final class PluxRouteSpec {
     required this.builder,
     this.presentation = PluxPresentation.page,
     this.transition = PluxTransition.platform,
+    this.timeline,
     this.dismissible = true,
     this.arguments,
   });
@@ -83,6 +89,9 @@ final class PluxRouteSpec {
 
   /// How it moves in.
   final PluxTransition transition;
+
+  /// The route timeline of a [PluxTransition.custom] transition.
+  final TimelineSpec? timeline;
 
   /// Whether a dialog or sheet closes when tapped outside or swiped away.
   final bool dismissible;
@@ -119,7 +128,8 @@ final class PluxRouteSpec {
       case PluxPresentation.page:
         return PluxPageRoute<T>(
           settings: settings,
-          transition: transition,
+          transition: timeline == null ? transition : PluxTransition.custom,
+          timeline: timeline,
           builder: builder,
         );
     }
@@ -136,21 +146,34 @@ final class PluxPageRoute<T> extends MaterialPageRoute<T> {
   PluxPageRoute({
     required super.builder,
     required this.transition,
+    this.timeline,
     super.settings,
   });
 
   /// The transition.
   final PluxTransition transition;
 
-  @override
-  Duration get transitionDuration => transition == PluxTransition.none
-      ? Duration.zero
-      : super.transitionDuration;
+  /// The route timeline that moves the page when [transition] is custom
+  /// (NAV-010).
+  final TimelineSpec? timeline;
 
   @override
-  Duration get reverseTransitionDuration => transition == PluxTransition.none
-      ? Duration.zero
-      : super.reverseTransitionDuration;
+  Duration get transitionDuration => switch ((transition, timeline)) {
+    (PluxTransition.none, _) => Duration.zero,
+    (PluxTransition.custom, final TimelineSpec t) => Duration(
+      microseconds: t.durationUs,
+    ),
+    _ => super.transitionDuration,
+  };
+
+  @override
+  Duration get reverseTransitionDuration => switch ((transition, timeline)) {
+    (PluxTransition.none, _) => Duration.zero,
+    (PluxTransition.custom, final TimelineSpec t) => Duration(
+      microseconds: t.durationUs,
+    ),
+    _ => super.reverseTransitionDuration,
+  };
 
   @override
   Widget buildTransitions(
@@ -215,6 +238,11 @@ final class PluxPageRoute<T> extends MaterialPageRoute<T> {
             ),
           ),
         );
+      case PluxTransition.custom:
+        final t = timeline;
+        return t == null
+            ? child
+            : buildRouteTimeline(context, t, animation, child);
       case PluxTransition.none:
         return child;
     }

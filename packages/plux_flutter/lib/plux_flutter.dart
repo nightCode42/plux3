@@ -9,6 +9,8 @@
 /// [Plux.open], and follow updates on [Plux.syncEvents].
 library;
 
+export 'src/actions/trace.dart'
+    show PluxActionTrace, PluxStepTrace, PluxTraceStatus;
 export 'src/core/app_state.dart' show PluxState;
 export 'src/core/config.dart'
     show
@@ -27,6 +29,33 @@ export 'src/core/host_events.dart' show PluxHostEvent;
 export 'src/core/plux.dart' show Plux, PluxScope, PluxSyncTile;
 export 'src/core/plux_view.dart' show PluxView, PluxViewEvent, PluxViewSizing;
 export 'src/core/runtime.dart' show PluxStartup;
+export 'src/db/adapter.dart'
+    show DbMigrationOutcome, DbOperations, PluxDatabaseAdapter, kvTypeOf;
+export 'src/db/memory_adapter.dart' show MemoryDatabaseAdapter;
+export 'src/db/query.dart'
+    show
+        DbAnd,
+        DbCompare,
+        DbFilter,
+        DbNot,
+        DbOp,
+        DbOr,
+        DbQuery,
+        DbSort,
+        compareValues;
+export 'src/db/schema.dart'
+    show DbCollectionSchema, DbField, DbFieldKind, DbMigrationPlan, DbMigrator;
+export 'src/device/types.dart'
+    show
+        PluxCodeScanner,
+        PluxDeviceException,
+        PluxDeviceFailure,
+        PluxDevicePackage,
+        PluxLocationProvider,
+        PluxMediaPicker,
+        PluxPickedFile,
+        PluxPosition,
+        PluxScanResult;
 export 'src/devtools_api/diagnostics.dart'
     show PluxDiagnostic, PluxDiagnostics, PluxPluginInfo, PluxReleaseInfo;
 export 'src/errors/plux_exception.dart' show PluxErrorCode, PluxException;
@@ -48,7 +77,11 @@ export 'src/navigation/delegate.dart'
 export 'src/navigation/plux_page.dart' show PluxPage;
 export 'src/navigation/router.dart' show PluxNotFoundPage;
 export 'src/navigation/shell.dart' show PluxShell, PluxShellScope, PluxShellTab;
+export 'src/platform/platform_services.dart'
+    show PlatformSecretStore, platformStorageDirectory;
 export 'src/runtime_info.dart';
+export 'src/store/kv_store.dart'
+    show SecretStore, StoreException, StoreFailure, installationKey;
 export 'src/sync/sync_event.dart'
     show
         SyncActivated,

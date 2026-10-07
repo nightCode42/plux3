@@ -56,7 +56,7 @@ func encode(u *unit) {
 	}
 	u.actionsSection(appOut, u.appGraphs)
 	u.localeSections(appOut)
-	u.schemasSection(appOut, u.types.app, u.appState, u.appSources, app.Collections, app.Variables, app.UserContext)
+	u.schemasSection(appOut, u.types.app, u.appState, u.appSources, app.Collections, app.DroppedCollections, app.Variables, app.UserContext)
 	u.appOut = appOut
 	for _, pl := range u.plugins {
 		o := newOut(kind(bundle.KindPlugin), pl, uuidBytes(pl.doc.ID), pl.key)
@@ -72,8 +72,9 @@ func encode(u *unit) {
 		for _, c := range pl.components {
 			o.add(bundle.SectionComponent, uuidBytes(c.doc.ID), u.componentSection(o, c))
 		}
+		u.timelinesSection(o, pl.pages)
 		u.actionsSection(o, pl.lowered)
-		u.schemasSection(o, u.types.plugin[pl], pl.state, pl.sources, pl.doc.Collections, nil, nil)
+		u.schemasSection(o, u.types.plugin[pl], pl.state, pl.sources, pl.doc.Collections, pl.doc.DroppedCollections, nil, nil)
 		u.pluginOuts = append(u.pluginOuts, o)
 	}
 }
@@ -108,6 +109,7 @@ func encodeNode(e *valueEnc, n *node) flatbuffers.UOffsetT {
 	sem := semanticsTable(e, n.semantics)
 	overrides := overrides(e, n.overrides)
 	ta := typeArguments(e, n)
+	anim := nodeAnimationTable(e, n)
 	testID := e.strs.of(n.doc.TestID)
 	var native uint32
 	if n.widget == nil && n.target == nil {
@@ -144,6 +146,9 @@ func encodeNode(e *valueEnc, n *node) flatbuffers.UOffsetT {
 		fbs.NodeAddHints(b, byte(n.hints))
 	}
 	fbs.NodeAddTypeArguments(b, ta)
+	if anim != 0 {
+		fbs.NodeAddAnimation(b, anim)
+	}
 	return fbs.NodeEnd(b)
 }
 
@@ -251,8 +256,8 @@ var pageKinds = map[schema.PageKind]fbs.PageKind{
 // pageOptions are a page's route and security options as the page
 // section stores them: string-table indices and the assurance level.
 type pageOptions struct {
-	transition, result, assurance uint32
-	secure                        bool
+	transition, timeline, result, assurance uint32
+	secure                                  bool
 }
 
 // pageOptionsOf reads a page's transition, result type and security.
@@ -260,6 +265,7 @@ func pageOptionsOf(e *valueEnc, pg *page) pageOptions {
 	var o pageOptions
 	if ro := pg.doc.RouteOptions; ro != nil {
 		o.transition = e.strs.of(string(ro.Transition))
+		o.timeline = e.strs.of(ro.Timeline)
 	}
 	o.result = e.strs.of(pg.doc.Result)
 	if sec := pg.doc.Security; sec != nil {
@@ -282,6 +288,8 @@ func (u *unit) pageSection(o *out, pg *page) []byte {
 	state := e.state(pg.state)
 	sources := e.sources(pg.sources)
 	lifecycle := handlers(b, pg.lifecycle)
+	triggers := triggerTables(b, pg.triggers)
+	forms := e.forms(pg.forms)
 	var guards [][16]byte
 	for _, g := range pg.guards {
 		guards = append(guards, g.id)
@@ -303,8 +311,12 @@ func (u *unit) pageSection(o *out, pg *page) []byte {
 	fbs.PageAddState(b, state)
 	fbs.PageAddDataSources(b, sources)
 	fbs.PageAddLifecycle(b, lifecycle)
+	addOptional(b, triggers, fbs.PageAddTriggers)
 	if opts.transition != 0 {
 		fbs.PageAddTransition(b, opts.transition)
+	}
+	if opts.timeline != 0 {
+		fbs.PageAddTransitionTimeline(b, opts.timeline)
 	}
 	fbs.PageAddGuards(b, gv)
 	fbs.PageAddSecure(b, opts.secure)
@@ -316,6 +328,7 @@ func (u *unit) pageSection(o *out, pg *page) []byte {
 	if opts.result != 0 {
 		fbs.PageAddResult(b, opts.result)
 	}
+	addOptional(b, forms, fbs.PageAddForms)
 	data := finish(b, fbs.PageEnd(b), bundle.SectionPage)
 	if max := u.opts.Limits.Get(limits.BundlePageSectionSize); int64(len(data)) > max {
 		u.report(plxerr.LimitExceeded, pg.file, "", "the page section has %d bytes, above bundle.pageSectionSize = %d", len(data), max)
@@ -350,6 +363,7 @@ func (u *unit) componentSection(o *out, c *component) []byte {
 		eventOffs[i] = fbs.ComponentEventEnd(b)
 	}
 	events := offsetVector(b, eventOffs)
+	forms := e.forms(c.forms)
 	key := e.strs.of(c.doc.Key)
 	strs := e.strs.vector(b)
 	fbs.ComponentStart(b)
@@ -363,6 +377,7 @@ func (u *unit) componentSection(o *out, c *component) []byte {
 	fbs.ComponentAddState(b, state)
 	fbs.ComponentAddNodes(b, nodes)
 	fbs.ComponentAddStrings(b, strs)
+	addOptional(b, forms, fbs.ComponentAddForms)
 	return finish(b, fbs.ComponentEnd(b), bundle.SectionComponent)
 }
 
@@ -410,6 +425,10 @@ func graphTable(e *valueEnc, g *graph) flatbuffers.UOffsetT {
 		inputs = e.params(ps)
 		exported = g.doc.Exported != nil && *g.doc.Exported
 	}
+	var state flatbuffers.UOffsetT
+	if len(g.state) > 0 {
+		state = e.state(g.state)
+	}
 	key, output := e.strs.of(g.key), e.strs.of(g.output)
 	fbs.GraphStart(b)
 	hi, lo := uuidHalves(g.id)
@@ -427,6 +446,9 @@ func graphTable(e *valueEnc, g *graph) flatbuffers.UOffsetT {
 		fbs.GraphAddOutput(b, output)
 	}
 	fbs.GraphAddSteps(b, sv)
+	if state != 0 {
+		fbs.GraphAddState(b, state)
+	}
 	return fbs.GraphEnd(b)
 }
 
@@ -462,6 +484,7 @@ func stepTable(e *valueEnc, s *step) flatbuffers.UOffsetT {
 		fbs.RetryAddOn(b, on)
 		retry = fbs.RetryEnd(b)
 	}
+	redact := redactVector(b, s.redact)
 	id := e.strs.of(s.id)
 	fbs.StepStart(b)
 	fbs.StepAddId(b, id)
@@ -477,6 +500,7 @@ func stepTable(e *valueEnc, s *step) flatbuffers.UOffsetT {
 	if s.timeoutMs != 0 {
 		fbs.StepAddTimeoutMs(b, s.timeoutMs)
 	}
+	addOptional(b, redact, fbs.StepAddRedact)
 	return fbs.StepEnd(b)
 }
 
@@ -521,7 +545,7 @@ func (u *unit) localeSections(o *out) {
 // schemasSection encodes declared types, state, data sources, collections,
 // variables and user context (BND-004, BND-017).
 func (u *unit) schemasSection(o *out, types map[string]pxl.TypeSpec, state []*stateEntry, sources []*dataSource,
-	cols []schema.Collection, vars, userContext []schema.Field,
+	cols []schema.Collection, dropped []string, vars, userContext []schema.Field,
 ) {
 	b := flatbuffers.NewBuilder(2048)
 	e := &valueEnc{u: u, o: o, b: b, strs: o.shared}
@@ -553,6 +577,7 @@ func (u *unit) schemasSection(o *out, types map[string]pxl.TypeSpec, state []*st
 		colOffs[i] = collectionTable(e, c)
 	}
 	cv := offsetVector(b, colOffs)
+	dropV := droppedVector(b, dropped)
 	vv := e.params(fieldParams(vars))
 	uv := e.params(fieldParams(userContext))
 	var natives nativeDecls
@@ -566,6 +591,7 @@ func (u *unit) schemasSection(o *out, types map[string]pxl.TypeSpec, state []*st
 	fbs.SchemasAddCollections(b, cv)
 	fbs.SchemasAddVariables(b, vv)
 	fbs.SchemasAddUserContext(b, uv)
+	addOptional(b, dropV, fbs.SchemasAddDroppedCollections)
 	addOptional(b, natives.routes, fbs.SchemasAddNativeRoutes)
 	addOptional(b, natives.slots, fbs.SchemasAddNativeSlots)
 	addOptional(b, natives.actions, fbs.SchemasAddNativeActions)
@@ -602,6 +628,7 @@ func collectionTable(e *valueEnc, c schema.Collection) flatbuffers.UOffsetT {
 		idxOffs[i] = fbs.IndexEnd(b)
 	}
 	iv := offsetVector(b, idxOffs)
+	mv := collectionMigrations(e, c.Migrations)
 	key := e.strs.of(c.Key)
 	fbs.CollectionStart(b)
 	hi, lo := uuidHalves(uuidBytes(c.ID))
@@ -610,7 +637,66 @@ func collectionTable(e *valueEnc, c schema.Collection) flatbuffers.UOffsetT {
 	fbs.CollectionAddFields(b, fv)
 	fbs.CollectionAddPrimaryKey(b, pkv)
 	fbs.CollectionAddIndexes(b, iv)
+	if v := collectionVersion(c); v > 1 {
+		fbs.CollectionAddVersion(b, uint32(min(v, 1<<32-1))) //nolint:gosec // G115: clamped.
+	}
+	addOptional(b, mv, fbs.CollectionAddMigrations)
 	return fbs.CollectionEnd(b)
+}
+
+// collectionMigrations writes a collection's migration plans, oldest
+// first; 0 when it has none (DB-005).
+func collectionMigrations(e *valueEnc, plans []schema.CollectionMigration) flatbuffers.UOffsetT {
+	if len(plans) == 0 {
+		return 0
+	}
+	b := e.b
+	sorted := slices.Clone(plans)
+	slices.SortFunc(sorted, func(x, y schema.CollectionMigration) int { return int(x.From - y.From) })
+	offs := make([]flatbuffers.UOffsetT, len(sorted))
+	for i, m := range sorted {
+		strs := func(names []string) flatbuffers.UOffsetT {
+			ids := make([]uint32, len(names))
+			for j, n := range names {
+				ids[j] = e.strs.of(n)
+			}
+			return u32Vector(b, ids)
+		}
+		dv, rv := strs(m.Drop), strs(m.Reset)
+		to := sortedKeys(m.Rename)
+		renames := make([]flatbuffers.UOffsetT, len(to))
+		for j, n := range to {
+			nn, old := e.strs.of(n), e.strs.of(m.Rename[n])
+			fbs.FieldRenameStart(b)
+			fbs.FieldRenameAddTo(b, nn)
+			fbs.FieldRenameAddFrom(b, old)
+			renames[j] = fbs.FieldRenameEnd(b)
+		}
+		rnv := offsetVector(b, renames)
+		fbs.CollectionMigrationStart(b)
+		fbs.CollectionMigrationAddFrom(b, uint32(max(0, min(m.From, 1<<32-1)))) //nolint:gosec // G115: clamped.
+		fbs.CollectionMigrationAddRename(b, rnv)
+		fbs.CollectionMigrationAddDrop(b, dv)
+		fbs.CollectionMigrationAddReset(b, rv)
+		offs[i] = fbs.CollectionMigrationEnd(b)
+	}
+	return offsetVector(b, offs)
+}
+
+// droppedVector writes the IDs of dropped collections, sorted; 0 when
+// there are none (DB-005).
+func droppedVector(b *flatbuffers.Builder, ids []string) flatbuffers.UOffsetT {
+	if len(ids) == 0 {
+		return 0
+	}
+	sorted := slices.Clone(ids)
+	slices.Sort(sorted)
+	fbs.SchemasStartDroppedCollectionsVector(b, len(sorted))
+	for i := len(sorted) - 1; i >= 0; i-- {
+		hi, lo := uuidHalves(uuidBytes(sorted[i]))
+		fbs.CreateUuid(b, hi, lo)
+	}
+	return b.EndVector(len(sorted))
 }
 
 // assets adds the assets-index sections — every asset to the app bundle,
@@ -1016,6 +1102,13 @@ func featureList(set map[string]bool) []string {
 	})
 }
 
+// createUUID writes the UUID in its canonical text form as a bundle UUID
+// struct.
+func createUUID(b *flatbuffers.Builder, id string) flatbuffers.UOffsetT {
+	hi, lo := uuidHalves(uuidBytes(id))
+	return fbs.CreateUuid(b, hi, lo)
+}
+
 // metaSection encodes the identity, versions, required features and
 // limits of a bundle (CMP-005, BND-008). Values in it use the bundle's
 // strings section.
@@ -1025,7 +1118,7 @@ func (u *unit) metaSection(o *out) {
 	e := &valueEnc{u: u, o: o, b: b, strs: o.shared}
 	features := stringVector(b, featureList(o.features))
 	lv := u.runtimeLimits(b)
-	var pages, exported, capabilities, plugins, locales, flags, sampling flatbuffers.UOffsetT
+	var pages, exported, capabilities, plugins, locales, flags, sampling, hostEvents flatbuffers.UOffsetT
 	name, key := app.Name, app.Key
 	if o.pl != nil {
 		name, key = o.pl.doc.Name, o.pl.key
@@ -1045,9 +1138,16 @@ func (u *unit) metaSection(o *out) {
 		locales = stringVector(b, app.SupportedLocales)
 		flags = u.flagTables(e, app.Flags)
 		sampling = samplingTables(b, app.Telemetry)
+		hostEvents = hostEventTables(b, app.HostEvents)
+		// The approved device APIs and domains: what the app's own
+		// triggers may use (SEC-080).
+		if c := app.Capabilities; c != nil {
+			capabilities = capabilitiesTable(b, &schema.Capabilities{DeviceApis: c.DeviceApis, NetworkDomains: c.NetworkDomains})
+		}
 	}
 	nameOff, keyOff := b.CreateString(name), b.CreateString(key)
 	compiler, schemaVersion, minRuntime := b.CreateString(u.opts.Version), b.CreateString(schema.CurrentVersion), b.CreateString(app.MinRuntimeVersion)
+	tv := triggerTables(b, u.ownTriggers(o))
 	var defLocale, entryRoute, profile, notFound, shells, links, push flatbuffers.UOffsetT
 	if o.pl == nil {
 		defLocale, entryRoute, profile = b.CreateString(app.DefaultLocale), b.CreateString(app.EntryRoute), b.CreateString(string(app.SecurityProfile))
@@ -1068,14 +1168,13 @@ func (u *unit) metaSection(o *out) {
 	fbs.MetaAddRequiredFeatures(b, features)
 	fbs.MetaAddMinRuntime(b, minRuntime)
 	fbs.MetaAddLimits(b, lv)
+	addOptional(b, tv, fbs.MetaAddTriggers)
 	if o.pl != nil {
 		fbs.MetaAddCapabilities(b, capabilities)
 		fbs.MetaAddPages(b, pages)
-		ehi, elo := uuidHalves(uuidBytes(o.pl.doc.EntryPage))
-		fbs.MetaAddEntryPage(b, fbs.CreateUuid(b, ehi, elo))
+		fbs.MetaAddEntryPage(b, createUUID(b, o.pl.doc.EntryPage))
 		if o.pl.doc.FallbackPage != "" {
-			fhi, flo := uuidHalves(uuidBytes(o.pl.doc.FallbackPage))
-			fbs.MetaAddFallbackPage(b, fbs.CreateUuid(b, fhi, flo))
+			fbs.MetaAddFallbackPage(b, createUUID(b, o.pl.doc.FallbackPage))
 		}
 		addOptional(b, exported, fbs.MetaAddComponents)
 	} else {
@@ -1085,11 +1184,11 @@ func (u *unit) metaSection(o *out) {
 		fbs.MetaAddEntryRoute(b, entryRoute)
 		fbs.MetaAddFlags(b, flags)
 		if app.NativeCatalogue != "" {
-			nhi, nlo := uuidHalves(uuidBytes(app.NativeCatalogue))
-			fbs.MetaAddNativeCatalogue(b, fbs.CreateUuid(b, nhi, nlo))
+			fbs.MetaAddNativeCatalogue(b, createUUID(b, app.NativeCatalogue))
 		}
 		fbs.MetaAddSecurityProfile(b, profile)
 		addOptional(b, sampling, fbs.MetaAddTelemetrySampling)
+		addOptional(b, hostEvents, fbs.MetaAddHostEvents)
 		addOptional(b, notFound, fbs.MetaAddNotFoundRoute)
 		addOptional(b, shells, fbs.MetaAddShells)
 		addOptional(b, links, fbs.MetaAddDeepLinks)
@@ -1124,19 +1223,67 @@ func samplingTables(b *flatbuffers.Builder, t *schema.TelemetryPolicy) flatbuffe
 	return offsetVector(b, offs)
 }
 
-// runtimeLimits writes the limits the runtime enforces, sorted by key.
+// hostEventTables writes the app's host events with their fields' types,
+// sorted by name, for the runtime to check `Plux.sendEvent` payloads
+// against (HST-013); 0 when the app declares none.
+func hostEventTables(b *flatbuffers.Builder, events []schema.HostEventDecl) flatbuffers.UOffsetT {
+	if len(events) == 0 {
+		return 0
+	}
+	sorted := slices.Clone(events)
+	slices.SortStableFunc(sorted, func(x, y schema.HostEventDecl) int { return strings.Compare(x.Name, y.Name) })
+	offs := make([]flatbuffers.UOffsetT, len(sorted))
+	for i, ev := range sorted {
+		fields := make([]flatbuffers.UOffsetT, len(ev.Fields))
+		for j, f := range ev.Fields {
+			typ := f.Type
+			if te, err := parseTypeExpr(typ); err == nil {
+				typ = te.String()
+			}
+			name, tv := b.CreateString(f.Name), b.CreateString(typ)
+			fbs.HostEventFieldStart(b)
+			fbs.HostEventFieldAddName(b, name)
+			fbs.HostEventFieldAddType(b, tv)
+			fields[j] = fbs.HostEventFieldEnd(b)
+		}
+		name, fv := b.CreateString(ev.Name), offsetVector(b, fields)
+		fbs.HostEventStart(b)
+		fbs.HostEventAddName(b, name)
+		fbs.HostEventAddDirection(b, hostEventDirection(ev.Direction))
+		addOptional(b, fv, fbs.HostEventAddFields)
+		offs[i] = fbs.HostEventEnd(b)
+	}
+	return offsetVector(b, offs)
+}
+
+// hostEventDirection maps the document's direction; absent means toHost.
+func hostEventDirection(d schema.HostEventDirection) fbs.HostEventDirection {
+	switch d {
+	case schema.HostEventDirectionToPlux:
+		return fbs.HostEventDirectionToPlux
+	case schema.HostEventDirectionBoth:
+		return fbs.HostEventDirectionBoth
+	}
+	return fbs.HostEventDirectionToHost
+}
+
+// runtimeLimits writes the runtime-enforced limits whose effective value
+// differs from the registry default, sorted by key (LIM-001). A limit the
+// bundle does not carry is the registry default: the runtime reads it from
+// its generated registry, so a bundle without an override states nothing.
 func (u *unit) runtimeLimits(b *flatbuffers.Builder) flatbuffers.UOffsetT {
 	var offs []flatbuffers.UOffsetT
 	defs := limits.Definitions()
 	slices.SortFunc(defs, func(x, y limits.Definition) int { return strings.Compare(string(x.Key), string(y.Key)) })
 	for _, d := range defs {
-		if d.EnforcedBy&limits.EnforcerRuntime == 0 {
+		v := u.opts.Limits.Get(d.Key)
+		if d.EnforcedBy&limits.EnforcerRuntime == 0 || v == d.Default {
 			continue
 		}
 		key := b.CreateString(string(d.Key))
 		fbs.LimitStart(b)
 		fbs.LimitAddKey(b, key)
-		fbs.LimitAddValue(b, u.opts.Limits.Get(d.Key))
+		fbs.LimitAddValue(b, v)
 		offs = append(offs, fbs.LimitEnd(b))
 	}
 	return offsetVector(b, offs)

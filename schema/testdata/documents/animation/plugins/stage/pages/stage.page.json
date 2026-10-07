@@ -1,0 +1,431 @@
+{
+  "animations": [
+    {
+      "autoplay": true,
+      "durationMs": 800,
+      "id": "01d0c450-6c00-7000-8000-000000000140",
+      "name": "pulse",
+      "repeatForever": true,
+      "reverse": true,
+      "tracks": [
+        {
+          "keyframes": [
+            {
+              "atMs": 0,
+              "value": 1.0
+            },
+            {
+              "atMs": 800,
+              "curve": "easeInOut",
+              "value": 0.2
+            }
+          ],
+          "node": "01d0c450-6c00-7000-8000-000000000134",
+          "prop": "opacity"
+        }
+      ]
+    },
+    {
+      "durationMs": 400,
+      "id": "01d0c450-6c00-7000-8000-000000000141",
+      "name": "intro",
+      "tracks": [
+        {
+          "keyframes": [
+            {
+              "atMs": 0,
+              "value": 0.5
+            },
+            {
+              "atMs": 200,
+              "curve": "easeOut",
+              "value": 1.2
+            },
+            {
+              "atMs": 400,
+              "value": 1.0
+            }
+          ],
+          "node": "01d0c450-6c00-7000-8000-000000000136",
+          "prop": "scale"
+        }
+      ]
+    },
+    {
+      "autoplay": true,
+      "durationMs": 300,
+      "id": "01d0c450-6c00-7000-8000-000000000142",
+      "name": "rows",
+      "staggerMs": 100,
+      "tracks": [
+        {
+          "keyframes": [
+            {
+              "atMs": 0,
+              "value": 0.0
+            },
+            {
+              "atMs": 300,
+              "curve": "easeOut",
+              "value": 1.0
+            }
+          ],
+          "node": "01d0c450-6c00-7000-8000-000000000139",
+          "prop": "opacity"
+        }
+      ]
+    },
+    {
+      "driver": {
+        "extent": 200,
+        "kind": "scroll",
+        "node": "01d0c450-6c00-7000-8000-000000000150"
+      },
+      "durationMs": 1000,
+      "id": "01d0c450-6c00-7000-8000-000000000143",
+      "name": "parallax",
+      "tracks": [
+        {
+          "keyframes": [
+            {
+              "atMs": 0,
+              "value": 0.0
+            },
+            {
+              "atMs": 1000,
+              "value": 1.0
+            }
+          ],
+          "node": "01d0c450-6c00-7000-8000-000000000136",
+          "prop": "angle"
+        }
+      ]
+    },
+    {
+      "driver": {
+        "extent": 100,
+        "kind": "drag",
+        "node": "01d0c450-6c00-7000-8000-00000000013b"
+      },
+      "durationMs": 1000,
+      "id": "01d0c450-6c00-7000-8000-000000000144",
+      "name": "drag",
+      "spring": {
+        "damping": 20,
+        "mass": 1,
+        "stiffness": 200
+      },
+      "tracks": [
+        {
+          "keyframes": [
+            {
+              "atMs": 0,
+              "value": 1.0
+            },
+            {
+              "atMs": 1000,
+              "value": 2.0
+            }
+          ],
+          "node": "01d0c450-6c00-7000-8000-00000000013b",
+          "prop": "scale"
+        }
+      ]
+    },
+    {
+      "durationMs": 300,
+      "id": "01d0c450-6c00-7000-8000-000000000145",
+      "name": "slideIn",
+      "scope": "route",
+      "tracks": [
+        {
+          "keyframes": [
+            {
+              "atMs": 0,
+              "value": 1.0
+            },
+            {
+              "atMs": 300,
+              "curve": "easeOut",
+              "value": 0.0
+            }
+          ],
+          "prop": "slideX"
+        }
+      ]
+    }
+  ],
+  "id": "01d0c450-6c00-7000-8000-000000000110",
+  "key": "stage",
+  "kind": "page",
+  "pageKind": "screen",
+  "root": {
+    "id": "01d0c450-6c00-7000-8000-000000000112",
+    "slots": {
+      "body": {
+        "id": "01d0c450-6c00-7000-8000-000000000150",
+        "slots": {
+          "child": {
+            "children": [
+              {
+                "events": {
+                  "onPressed": {
+                    "steps": [
+                      {
+                        "action": "setState",
+                        "id": "flip",
+                        "input": {
+                          "path": "page.shown",
+                          "value": {
+                            "$expr": "!page.shown"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01d0c450-6c00-7000-8000-000000000120",
+                "slots": {
+                  "child": {
+                    "id": "01d0c450-6c00-7000-8000-000000000121",
+                    "props": {
+                      "data": "Toggle"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "testId": "toggle",
+                "type": "FilledButton"
+              },
+              {
+                "events": {
+                  "onPressed": {
+                    "steps": [
+                      {
+                        "action": "startAnimation",
+                        "id": "go",
+                        "input": {
+                          "animation": "intro"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01d0c450-6c00-7000-8000-000000000122",
+                "slots": {
+                  "child": {
+                    "id": "01d0c450-6c00-7000-8000-000000000123",
+                    "props": {
+                      "data": "Play"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "testId": "play",
+                "type": "FilledButton"
+              },
+              {
+                "events": {
+                  "onPressed": {
+                    "steps": [
+                      {
+                        "action": "controlAnimation",
+                        "id": "ctl",
+                        "input": {
+                          "animation": "intro",
+                          "command": "pause"
+                        }
+                      }
+                    ]
+                  }
+                },
+                "id": "01d0c450-6c00-7000-8000-000000000124",
+                "slots": {
+                  "child": {
+                    "id": "01d0c450-6c00-7000-8000-000000000125",
+                    "props": {
+                      "data": "Pause"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "testId": "pause",
+                "type": "FilledButton"
+              },
+              {
+                "animation": {
+                  "curve": "easeOut",
+                  "durationMs": 200,
+                  "props": [
+                    "opacity"
+                  ]
+                },
+                "id": "01d0c450-6c00-7000-8000-000000000130",
+                "props": {
+                  "opacity": {
+                    "$expr": "page.shown ? 1.0 : 0.2"
+                  }
+                },
+                "slots": {
+                  "child": {
+                    "id": "01d0c450-6c00-7000-8000-000000000131",
+                    "props": {
+                      "data": "Implicit"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "testId": "implicit",
+                "type": "Opacity"
+              },
+              {
+                "animation": {
+                  "enter": {
+                    "durationMs": 200,
+                    "kind": "fade"
+                  },
+                  "exit": {
+                    "durationMs": 200,
+                    "kind": "slideDown"
+                  }
+                },
+                "id": "01d0c450-6c00-7000-8000-000000000132",
+                "props": {
+                  "data": "Presence"
+                },
+                "testId": "presence",
+                "type": "Text",
+                "visible": {
+                  "$expr": "page.shown"
+                }
+              },
+              {
+                "animation": {
+                  "hero": "banner"
+                },
+                "id": "01d0c450-6c00-7000-8000-000000000133",
+                "props": {
+                  "data": "Hero"
+                },
+                "testId": "hero",
+                "type": "Text"
+              },
+              {
+                "id": "01d0c450-6c00-7000-8000-000000000134",
+                "props": {
+                  "opacity": 1.0
+                },
+                "slots": {
+                  "child": {
+                    "id": "01d0c450-6c00-7000-8000-000000000135",
+                    "props": {
+                      "data": "Pulse"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "testId": "pulse",
+                "type": "Opacity"
+              },
+              {
+                "id": "01d0c450-6c00-7000-8000-000000000136",
+                "props": {
+                  "angle": 0.0,
+                  "offset": {
+                    "dx": 0,
+                    "dy": 0
+                  },
+                  "scale": 1.0
+                },
+                "slots": {
+                  "child": {
+                    "id": "01d0c450-6c00-7000-8000-000000000137",
+                    "props": {
+                      "data": "Intro"
+                    },
+                    "type": "Text"
+                  }
+                },
+                "testId": "intro",
+                "type": "Transform"
+              },
+              {
+                "id": "01d0c450-6c00-7000-8000-000000000138",
+                "props": {
+                  "items": {
+                    "$expr": "[\"a\", \"b\", \"c\"]"
+                  }
+                },
+                "slots": {
+                  "item": {
+                    "id": "01d0c450-6c00-7000-8000-000000000139",
+                    "props": {
+                      "opacity": 1.0
+                    },
+                    "slots": {
+                      "child": {
+                        "id": "01d0c450-6c00-7000-8000-00000000013a",
+                        "props": {
+                          "data": {
+                            "$expr": "item"
+                          }
+                        },
+                        "type": "Text"
+                      }
+                    },
+                    "type": "Opacity"
+                  }
+                },
+                "testId": "rows",
+                "type": "ForEach"
+              },
+              {
+                "id": "01d0c450-6c00-7000-8000-00000000013b",
+                "props": {
+                  "angle": 0.0,
+                  "offset": {
+                    "dx": 0,
+                    "dy": 0
+                  },
+                  "scale": 1.0
+                },
+                "slots": {
+                  "child": {
+                    "id": "01d0c450-6c00-7000-8000-00000000013c",
+                    "props": {
+                      "height": 80.0,
+                      "width": 80.0
+                    },
+                    "type": "SizedBox"
+                  }
+                },
+                "testId": "dragged",
+                "type": "Transform"
+              }
+            ],
+            "id": "01d0c450-6c00-7000-8000-000000000151",
+            "type": "Column"
+          }
+        },
+        "testId": "scroller",
+        "type": "SingleChildScrollView"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "stage",
+  "routeOptions": {
+    "timeline": "slideIn",
+    "transition": "custom"
+  },
+  "schemaVersion": "1.0.0",
+  "state": [
+    {
+      "default": true,
+      "id": "01d0c450-6c00-7000-8000-000000000111",
+      "name": "shown",
+      "type": "bool"
+    }
+  ],
+  "title": "Stage"
+}

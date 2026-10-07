@@ -1,0 +1,444 @@
+{
+  "forms": [
+    {
+      "fields": [
+        {
+          "initial": 0,
+          "name": "balanceCents",
+          "type": "int"
+        },
+        {
+          "initial": "",
+          "name": "toIban",
+          "type": "string",
+          "validators": [
+            {
+              "kind": "required",
+              "message": "Enter the recipient's IBAN"
+            },
+            {
+              "kind": "iban",
+              "message": "Enter a valid IBAN"
+            }
+          ]
+        },
+        {
+          "initial": "",
+          "name": "amount",
+          "type": "string",
+          "validators": [
+            {
+              "kind": "required",
+              "message": "Enter an amount"
+            },
+            {
+              "kind": "decimalPrecision",
+              "maxIntegerDigits": 9,
+              "maxScale": 2,
+              "message": "Use at most two decimals"
+            },
+            {
+              "kind": "custom",
+              "message": "The amount must be above zero and within your balance",
+              "rule": {
+                "$expr": "matches(value, \"^[0-9]{1,9}([.][0-9]{1,2})?$\") && int(mul(decimal(value), 100d)) > 0 && int(mul(decimal(value), 100d)) <= form.balanceCents"
+              }
+            }
+          ]
+        },
+        {
+          "initial": "",
+          "name": "reference",
+          "type": "string",
+          "validators": [
+            {
+              "kind": "length",
+              "max": 40,
+              "message": "Use at most 40 characters"
+            }
+          ]
+        }
+      ],
+      "id": "01d0c450-6c00-7000-8000-000000000231",
+      "name": "transfer"
+    }
+  ],
+  "id": "01d0c450-6c00-7000-8000-000000000212",
+  "key": "transfer",
+  "kind": "page",
+  "lifecycle": {
+    "onInit": {
+      "steps": [
+        {
+          "action": "setState",
+          "id": "seed",
+          "input": {
+            "path": "page.transfer.values.balanceCents",
+            "value": {
+              "$expr": "params.balanceCents"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "pageKind": "screen",
+  "params": [
+    {
+      "mock": 250000,
+      "name": "balanceCents",
+      "required": true,
+      "type": "int"
+    }
+  ],
+  "root": {
+    "id": "01d0c450-6c00-7000-8000-00000000203f",
+    "slots": {
+      "appBar": {
+        "id": "01d0c450-6c00-7000-8000-00000000203e",
+        "slots": {
+          "title": {
+            "id": "01d0c450-6c00-7000-8000-00000000203d",
+            "props": {
+              "data": {
+                "$t": "01d0c450-6c00-7000-8000-000000000290"
+              }
+            },
+            "type": "Text"
+          }
+        },
+        "type": "AppBar"
+      },
+      "body": {
+        "id": "01d0c450-6c00-7000-8000-00000000203c",
+        "slots": {
+          "child": {
+            "id": "01d0c450-6c00-7000-8000-00000000203b",
+            "props": {
+              "padding": {
+                "all": 16.0
+              }
+            },
+            "slots": {
+              "child": {
+                "children": [
+                  {
+                    "id": "01d0c450-6c00-7000-8000-00000000202d",
+                    "props": {
+                      "data": {
+                        "$expr": "\"Available: \" + string(div(decimal(params.balanceCents), 100d, 2)) + \" EUR\""
+                      }
+                    },
+                    "testId": "available",
+                    "type": "Text"
+                  },
+                  {
+                    "id": "01d0c450-6c00-7000-8000-00000000202e",
+                    "props": {
+                      "height": 12.0
+                    },
+                    "type": "SizedBox"
+                  },
+                  {
+                    "events": {
+                      "onChanged": {
+                        "steps": [
+                          {
+                            "action": "setState",
+                            "id": "write",
+                            "input": {
+                              "path": "page.transfer.values.toIban",
+                              "value": {
+                                "$expr": "event"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      "onEditingComplete": {
+                        "steps": [
+                          {
+                            "action": "setState",
+                            "id": "touch",
+                            "input": {
+                              "path": "page.transfer.touched.toIban",
+                              "value": true
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "id": "01d0c450-6c00-7000-8000-00000000202f",
+                    "props": {
+                      "decoration": {
+                        "labelText": {
+                          "$t": "01d0c450-6c00-7000-8000-00000000028c"
+                        }
+                      },
+                      "value": {
+                        "$expr": "page.transfer.values.toIban"
+                      }
+                    },
+                    "testId": "toIban",
+                    "type": "TextFormField"
+                  },
+                  {
+                    "id": "01d0c450-6c00-7000-8000-000000002030",
+                    "props": {
+                      "data": {
+                        "$expr": "page.transfer.errors.toIban ?? \"\""
+                      }
+                    },
+                    "testId": "iban-error",
+                    "type": "Text",
+                    "visible": {
+                      "$expr": "page.transfer.errors.toIban != null"
+                    }
+                  },
+                  {
+                    "id": "01d0c450-6c00-7000-8000-000000002031",
+                    "props": {
+                      "height": 8.0
+                    },
+                    "type": "SizedBox"
+                  },
+                  {
+                    "events": {
+                      "onChanged": {
+                        "steps": [
+                          {
+                            "action": "setState",
+                            "id": "write",
+                            "input": {
+                              "path": "page.transfer.values.amount",
+                              "value": {
+                                "$expr": "event"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      "onEditingComplete": {
+                        "steps": [
+                          {
+                            "action": "setState",
+                            "id": "touch",
+                            "input": {
+                              "path": "page.transfer.touched.amount",
+                              "value": true
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "id": "01d0c450-6c00-7000-8000-000000002032",
+                    "props": {
+                      "decoration": {
+                        "labelText": {
+                          "$t": "01d0c450-6c00-7000-8000-00000000028d"
+                        }
+                      },
+                      "keyboardType": "number",
+                      "value": {
+                        "$expr": "page.transfer.values.amount"
+                      }
+                    },
+                    "testId": "amount",
+                    "type": "TextFormField"
+                  },
+                  {
+                    "id": "01d0c450-6c00-7000-8000-000000002033",
+                    "props": {
+                      "data": {
+                        "$expr": "page.transfer.errors.amount ?? \"\""
+                      }
+                    },
+                    "testId": "amount-error",
+                    "type": "Text",
+                    "visible": {
+                      "$expr": "page.transfer.errors.amount != null"
+                    }
+                  },
+                  {
+                    "id": "01d0c450-6c00-7000-8000-000000002034",
+                    "props": {
+                      "height": 8.0
+                    },
+                    "type": "SizedBox"
+                  },
+                  {
+                    "events": {
+                      "onChanged": {
+                        "steps": [
+                          {
+                            "action": "setState",
+                            "id": "write",
+                            "input": {
+                              "path": "page.transfer.values.reference",
+                              "value": {
+                                "$expr": "event"
+                              }
+                            }
+                          }
+                        ]
+                      },
+                      "onEditingComplete": {
+                        "steps": [
+                          {
+                            "action": "setState",
+                            "id": "touch",
+                            "input": {
+                              "path": "page.transfer.touched.reference",
+                              "value": true
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "id": "01d0c450-6c00-7000-8000-000000002035",
+                    "props": {
+                      "decoration": {
+                        "labelText": {
+                          "$t": "01d0c450-6c00-7000-8000-00000000028e"
+                        }
+                      },
+                      "value": {
+                        "$expr": "page.transfer.values.reference"
+                      }
+                    },
+                    "testId": "reference",
+                    "type": "TextFormField"
+                  },
+                  {
+                    "id": "01d0c450-6c00-7000-8000-000000002036",
+                    "props": {
+                      "data": {
+                        "$expr": "page.transfer.errors.reference ?? \"\""
+                      }
+                    },
+                    "testId": "reference-error",
+                    "type": "Text",
+                    "visible": {
+                      "$expr": "page.transfer.errors.reference != null"
+                    }
+                  },
+                  {
+                    "id": "01d0c450-6c00-7000-8000-000000002037",
+                    "props": {
+                      "height": 12.0
+                    },
+                    "type": "SizedBox"
+                  },
+                  {
+                    "events": {
+                      "onPressed": {
+                        "steps": [
+                          {
+                            "action": "submitForm",
+                            "id": "submit",
+                            "input": {
+                              "form": "transfer"
+                            },
+                            "onError": "invalid",
+                            "onSuccess": "send"
+                          },
+                          {
+                            "action": "apiCall",
+                            "id": "send",
+                            "input": {
+                              "input": {
+                                "amountCents": {
+                                  "$expr": "int(mul(decimal(steps.submit.output.amount), 100d))"
+                                },
+                                "fromAccountId": "acct-001",
+                                "reference": {
+                                  "$expr": "steps.submit.output.reference"
+                                },
+                                "toIban": {
+                                  "$expr": "steps.submit.output.toIban"
+                                }
+                              },
+                              "operation": "api.transfer"
+                            },
+                            "onError": "failed",
+                            "onSuccess": "done"
+                          },
+                          {
+                            "action": "navigate",
+                            "id": "done",
+                            "input": {
+                              "mode": "replace",
+                              "params": {
+                                "amountCents": {
+                                  "$expr": "int(mul(decimal(steps.submit.output?.amount ?? \"0\"), 100d))"
+                                },
+                                "balanceCents": {
+                                  "$expr": "steps.send.output?.balanceCents ?? 0"
+                                },
+                                "message": "",
+                                "ok": true
+                              },
+                              "route": "result"
+                            }
+                          },
+                          {
+                            "action": "showSnackbar",
+                            "id": "invalid",
+                            "input": {
+                              "message": "Check the fields marked in red."
+                            }
+                          },
+                          {
+                            "action": "navigate",
+                            "id": "failed",
+                            "input": {
+                              "mode": "replace",
+                              "params": {
+                                "amountCents": 0,
+                                "balanceCents": 0,
+                                "message": {
+                                  "$expr": "steps.send.error?.message ?? \"The transfer failed.\""
+                                },
+                                "ok": false
+                              },
+                              "route": "result"
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "id": "01d0c450-6c00-7000-8000-000000002039",
+                    "slots": {
+                      "child": {
+                        "id": "01d0c450-6c00-7000-8000-000000002038",
+                        "props": {
+                          "data": {
+                            "$t": "01d0c450-6c00-7000-8000-00000000028f"
+                          }
+                        },
+                        "type": "Text"
+                      }
+                    },
+                    "testId": "send",
+                    "type": "FilledButton"
+                  }
+                ],
+                "id": "01d0c450-6c00-7000-8000-00000000203a",
+                "props": {
+                  "crossAxisAlignment": "stretch"
+                },
+                "type": "Column"
+              }
+            },
+            "type": "Padding"
+          }
+        },
+        "type": "SingleChildScrollView"
+      }
+    },
+    "type": "Scaffold"
+  },
+  "route": "transfer",
+  "schemaVersion": "1.0.0",
+  "title": "Transfer"
+}

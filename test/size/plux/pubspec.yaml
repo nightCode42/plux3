@@ -14,7 +14,7 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
-  plux_flutter: ^0.2.0
+  plux_flutter: ^0.3.0
 
 flutter:
   uses-material-design: true

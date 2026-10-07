@@ -28,6 +28,7 @@ final class _Renderer with AllowsEveryGuard implements PageRenderer {
     Map<String, Object?> params, {
     bool routed = false,
     void Function(Object? result)? onPop,
+    void Function(String event, Object? payload)? onEvent,
   }) => Text('page ${page.route}', textDirection: TextDirection.ltr);
 }
 

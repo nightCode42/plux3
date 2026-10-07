@@ -27,6 +27,7 @@ final class RecordBundle {
     required this.key,
     required this.version,
     required this.hash,
+    this.features,
   });
 
   /// The plugin key; empty for the app bundle.
@@ -38,6 +39,17 @@ final class RecordBundle {
   /// The bundle hash, lower-case hexadecimal.
   final String hash;
 
+  /// The features the signed manifest says the bundle requires (BND-008),
+  /// or null for a record written before they were kept (runtime 0.2.0)
+  /// or a bundle the manifest did not describe; null means unknown.
+  final List<String>? features;
+
+  /// Whether the bundle may declare triggers: false only when its
+  /// features are known and lack `actions.triggers` (ACT-002), so start-up
+  /// opens no bundle that cannot have any.
+  bool get mayHaveTriggers =>
+      features?.any((f) => f.startsWith('actions.triggers.')) ?? true;
+
   /// Whether this is the app bundle.
   bool get isApp => key.isEmpty;
 
@@ -45,12 +57,14 @@ final class RecordBundle {
     'key': key,
     'version': version,
     'hash': hash,
+    'features': ?features,
   };
 
   static RecordBundle _fromJson(Map<String, Object?> j) => RecordBundle(
     key: j['key']! as String,
     version: j['version']! as int,
     hash: j['hash']! as String,
+    features: (j['features'] as List<Object?>?)?.cast<String>(),
   );
 }
 

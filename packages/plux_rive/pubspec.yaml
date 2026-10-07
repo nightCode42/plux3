@@ -1,0 +1,25 @@
+name: plux_rive
+description: >-
+  A Rive animation widget for Plux pages: a native slot that plays a .riv
+  file with a state machine whose inputs follow Plux state (ANI-005,
+  WGT-021).
+version: 0.1.0
+repository: https://github.com/nightCode42/plux3/tree/main/packages/plux_rive
+# Not published until its release is wired (release.yml, pub.dev).
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+  flutter: ">=3.47.0"
+
+resolution: workspace
+
+dependencies:
+  flutter:
+    sdk: flutter
+  plux_flutter: ^0.3.0
+  rive: ^0.14.11
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter

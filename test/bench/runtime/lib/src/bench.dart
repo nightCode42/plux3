@@ -16,7 +16,8 @@
 ///    warm, and that frame's UI-thread time — build, layout and paint of
 ///    the page (NFR-002, NFR-003);
 /// 4. the build and raster times of every frame while the 500-item feed
-///    scrolls, whose rows are bound through PXL.
+///    scrolls, whose rows are bound through PXL;
+/// 5. the same for the 1,000-item list, scrolled end to end (NFR-004).
 ///
 /// The control — the catalog page written in Flutter — opens after the
 /// Plux page. [BenchOptions.scenarios] can limit a run to some of these
@@ -32,6 +33,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' show Timeline;
 import 'dart:io';
+import 'dart:math' show max;
 import 'dart:ui' show FramePhase;
 
 import 'package:flutter/material.dart';
@@ -46,12 +48,18 @@ const catalogRoute = 'catalog';
 /// The route of the page with the bound list.
 const feedRoute = 'feed';
 
+/// The route of the page with the 1,000-item list (NFR-004).
+const listRoute = 'list';
+
 /// The text at the end of the catalog page: it is on screen only when
 /// Plux rendered the page rather than a fallback.
 const catalogEnd = 'bench-end';
 
 /// The first row of the feed.
 const feedFirst = 'Story 1';
+
+/// The first row of the list.
+const listFirst = 'Item 1';
 
 /// Where the embedded release is, in the app's assets.
 const baselineDirectory = 'assets/plux';
@@ -72,6 +80,9 @@ enum BenchScenario {
 
   /// Scrolling the feed.
   scroll,
+
+  /// Scrolling the 1,000-item list end to end.
+  list,
 }
 
 /// What one run does.
@@ -373,7 +384,8 @@ final class Benchmark {
       await rootBundle.loadString('$baselineDirectory/baseline.json'),
     );
     if (!baseline.routes.contains(catalogRoute) ||
-        !baseline.routes.contains(feedRoute)) {
+        !baseline.routes.contains(feedRoute) ||
+        !baseline.routes.contains(listRoute)) {
       throw const BenchFailure('the embedded release is not the benchmark');
     }
     result.plugins = baseline.routes.length;
@@ -426,7 +438,12 @@ final class Benchmark {
         }
       }
 
-      if (parts.contains(BenchScenario.scroll)) await _scroll(result);
+      if (parts.contains(BenchScenario.scroll)) {
+        await _scroll(feedRoute, feedFirst, 'scroll', result);
+      }
+      if (parts.contains(BenchScenario.list)) {
+        await _scroll(listRoute, listFirst, 'list', result, endToEnd: true);
+      }
 
       await Plux.dispose();
     } finally {
@@ -516,19 +533,36 @@ final class Benchmark {
     await settle(binding);
   }
 
-  /// Scrolls the feed and records every frame drawn meanwhile.
-  Future<void> _scroll(BenchResult result) async {
-    await _open(feedRoute, null, null);
+  /// Scrolls the page [route], whose first row shows [first], and records
+  /// every frame drawn meanwhile as `<prefix>_build_ms`,
+  /// `<prefix>_raster_ms` and `<prefix>_janky_pct`; with [endToEnd] the
+  /// page scrolls to the end of its list at the speed of
+  /// [BenchOptions.scrollDistance] over [BenchOptions.scrollDuration], and
+  /// the slowest frame, build or raster, is `<prefix>_max_frame_ms`.
+  Future<void> _scroll(
+    String route,
+    String first,
+    String prefix,
+    BenchResult result, {
+    bool endToEnd = false,
+  }) async {
+    await _open(route, null, null);
     final root = binding.rootElement!;
-    if (!showsText(root, feedFirst)) {
-      throw const BenchFailure('the feed page did not render');
+    if (!showsText(root, first)) {
+      throw BenchFailure('the page $route did not render');
     }
     final list = findScrollable(root);
-    if (list == null) throw const BenchFailure('the feed does not scroll');
+    if (list == null) throw BenchFailure('the page $route does not scroll');
+    final distance = endToEnd
+        ? list.position.maxScrollExtent
+        : options.scrollDistance;
+    final duration = endToEnd
+        ? options.scrollDuration * (distance / options.scrollDistance)
+        : options.scrollDuration;
     final from = _now();
     await list.position.animateTo(
-      options.scrollDistance,
-      duration: options.scrollDuration,
+      distance,
+      duration: duration,
       curve: Curves.linear,
     );
     final to = _now();
@@ -540,15 +574,18 @@ final class Benchmark {
     final hz = binding.platformDispatcher.displays.firstOrNull?.refreshRate;
     final budget = 1e6 / (hz == null || hz <= 0 ? 60 : hz);
     var janky = 0;
+    var slowest = 0;
     for (final t in frames) {
       final build = t.buildDuration.inMicroseconds;
       final raster = t.rasterDuration.inMicroseconds;
       if (build > budget || raster > budget) janky++;
+      slowest = max(slowest, max(build, raster));
       result
-        ..add('scroll_build_ms', build / 1000)
-        ..add('scroll_raster_ms', raster / 1000);
+        ..add('${prefix}_build_ms', build / 1000)
+        ..add('${prefix}_raster_ms', raster / 1000);
     }
-    result.add('scroll_janky_pct', 100 * janky / frames.length);
+    result.add('${prefix}_janky_pct', 100 * janky / frames.length);
+    if (endToEnd) result.add('${prefix}_max_frame_ms', slowest / 1000);
     await _pop();
   }
 }

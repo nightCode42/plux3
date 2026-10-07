@@ -40,12 +40,16 @@ func (e env) initProject(args []string) int {
 	set := flag.NewFlagSet("init", flag.ContinueOnError)
 	c.register(set, true)
 	envKey := set.String("env", "development", "the environment `key` publishes go to")
-	if _, code, ok := parse(set, args, e.stderr, "Usage: plux init --server url --org id --app id-or-key [-C dir] [--env key] [--json]\n\n"+
+	pkgs := set.String("packages", "", "in a Flutter app, the optional Plux `packages` to add, comma-separated")
+	projectDir := set.String("project", "", "in a Flutter app, the Plux project `dir` whose device actions name the packages to add")
+	if _, code, ok := parse(set, args, e.stderr, "Usage: plux init --server url --org id --app id-or-key [-C dir] [--env key] [--packages names] [--project dir] [--json]\n\n"+
 		"In a Plux project, writes plux.json, which names the server, organisation and app of the\n"+
 		"project; it holds no secret. In a Flutter app (a pubspec.yaml on the Flutter SDK), sets\n"+
 		"the app up as a Plux host: plux_flutter and a router adapter in pubspec.yaml, plux.yaml,\n"+
 		"lib/plux/plux_options.g.dart with the environment's root keys, and the runtime's start\n"+
 		"in lib/main.dart when main only calls runApp; then the server checks of plux doctor.\n"+
+		"The optional packages the app uses (--packages, and those the device actions of the\n"+
+		"project at --project need) are added to pubspec.yaml and registered in the configuration.\n"+
 		"Running it again changes nothing.", 0); !ok {
 		return code
 	}
@@ -54,7 +58,14 @@ func (e env) initProject(args []string) int {
 		return e.fail("init", err)
 	}
 	if host {
-		return e.initHost(c, *envKey)
+		names, err := hostPackages(*pkgs, *projectDir)
+		if err != nil {
+			return e.fail("init", err)
+		}
+		return e.initHost(c, *envKey, names)
+	}
+	if *pkgs != "" || *projectDir != "" {
+		return e.fail("init", usageError("--packages and --project apply to a Flutter app, not a Plux project"))
 	}
 	if err := c.resolve(); err != nil {
 		return e.fail("init", err)
@@ -213,8 +224,9 @@ func (e env) ready(ctx context.Context, server string) error {
 	return nil
 }
 
-// readProject reads the project's documents: every file except plux.json
-// and hidden ones.
+// readProject reads the project's documents: every file except plux.json,
+// hidden ones and Plux Test scenarios, which plux test runs locally and the
+// server does not keep (TST-001).
 func readProject(dir string) (map[string][]byte, error) {
 	out := map[string][]byte{}
 	err := fs.WalkDir(os.DirFS(dir), ".", func(path string, d fs.DirEntry, err error) error {
@@ -227,7 +239,7 @@ func readProject(dir string) (map[string][]byte, error) {
 			}
 			return nil
 		}
-		if d.IsDir() || path == projectFile {
+		if d.IsDir() || path == projectFile || isScenario(path) {
 			return nil
 		}
 		data, err := os.ReadFile(filepath.Join(dir, path)) //nolint:gosec // G304: the user's own project.
@@ -241,6 +253,11 @@ func readProject(dir string) (map[string][]byte, error) {
 		return nil, fmt.Errorf("read the project: %w", err)
 	}
 	return out, nil
+}
+
+// isScenario reports whether path names a Plux Test scenario file.
+func isScenario(path string) bool {
+	return strings.HasSuffix(path, ".scenario.yaml") || strings.HasSuffix(path, ".scenario.json")
 }
 
 // exportDraft downloads the app's drafts in the Git layout.
@@ -401,12 +418,16 @@ func (e env) export(args []string) int {
 	return e.emit(c.json, map[string]any{"files": len(files), "directory": dir}, fmt.Sprintf("Wrote %d files to %s.", len(files), dir))
 }
 
-// importCmd replaces the server's drafts with the local project.
+// importCmd replaces the server's drafts with the local project, or imports
+// a data-source fragment from an OpenAPI or GraphQL document (DAT-002).
 func (e env) importCmd(args []string) int {
+	if len(args) > 0 && (args[0] == "openapi" || args[0] == "graphql") {
+		return e.importSource(args[0], args[1:])
+	}
 	var c common
 	set := flag.NewFlagSet("import", flag.ContinueOnError)
 	c.register(set, true)
-	if _, code, ok := parse(set, args, e.stderr, "Usage: plux import [-C dir] [--json]\n\nReplaces the server's drafts with the local project, one snapshot per draft.", 0); !ok {
+	if _, code, ok := parse(set, args, e.stderr, importUsage, 0); !ok {
 		return code
 	}
 	if err := c.resolve(); err != nil {

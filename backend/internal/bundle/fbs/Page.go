@@ -287,8 +287,60 @@ func (rcv *Page) MutateResult(n uint32) bool {
 	return rcv._tab.MutateUint32Slot(34, n)
 }
 
+func (rcv *Page) Triggers(obj *Trigger, j int) bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(36))
+	if o != 0 {
+		x := rcv._tab.Vector(o)
+		x += flatbuffers.UOffsetT(j) * 4
+		x = rcv._tab.Indirect(x)
+		obj.Init(rcv._tab.Bytes, x)
+		return true
+	}
+	return false
+}
+
+func (rcv *Page) TriggersLength() int {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(36))
+	if o != 0 {
+		return rcv._tab.VectorLen(o)
+	}
+	return 0
+}
+
+func (rcv *Page) Forms(obj *Form, j int) bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(38))
+	if o != 0 {
+		x := rcv._tab.Vector(o)
+		x += flatbuffers.UOffsetT(j) * 4
+		x = rcv._tab.Indirect(x)
+		obj.Init(rcv._tab.Bytes, x)
+		return true
+	}
+	return false
+}
+
+func (rcv *Page) FormsLength() int {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(38))
+	if o != 0 {
+		return rcv._tab.VectorLen(o)
+	}
+	return 0
+}
+
+func (rcv *Page) TransitionTimeline() uint32 {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(40))
+	if o != 0 {
+		return rcv._tab.GetUint32(o + rcv._tab.Pos)
+	}
+	return 0
+}
+
+func (rcv *Page) MutateTransitionTimeline(n uint32) bool {
+	return rcv._tab.MutateUint32Slot(40, n)
+}
+
 func PageStart(builder *flatbuffers.Builder) {
-	builder.StartObject(16)
+	builder.StartObject(19)
 }
 func PageAddId(builder *flatbuffers.Builder, id flatbuffers.UOffsetT) {
 	builder.PrependStructSlot(0, flatbuffers.UOffsetT(id), 0)
@@ -358,6 +410,21 @@ func PageStartStringsVector(builder *flatbuffers.Builder, numElems int) flatbuff
 }
 func PageAddResult(builder *flatbuffers.Builder, result uint32) {
 	builder.PrependUint32Slot(15, result, 0)
+}
+func PageAddTriggers(builder *flatbuffers.Builder, triggers flatbuffers.UOffsetT) {
+	builder.PrependUOffsetTSlot(16, flatbuffers.UOffsetT(triggers), 0)
+}
+func PageStartTriggersVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
+	return builder.StartVector(4, numElems, 4)
+}
+func PageAddForms(builder *flatbuffers.Builder, forms flatbuffers.UOffsetT) {
+	builder.PrependUOffsetTSlot(17, flatbuffers.UOffsetT(forms), 0)
+}
+func PageStartFormsVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
+	return builder.StartVector(4, numElems, 4)
+}
+func PageAddTransitionTimeline(builder *flatbuffers.Builder, transitionTimeline uint32) {
+	builder.PrependUint32Slot(18, transitionTimeline, 0)
 }
 func PageEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
 	return builder.EndObject()

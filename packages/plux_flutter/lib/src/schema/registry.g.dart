@@ -485,6 +485,14 @@ const List<WidgetDescriptor> widgetDescriptors = [
     slots: {'item': 1},
   ),
   WidgetDescriptor(
+    'FormScope',
+    103,
+    layer: 1,
+    revision: 1,
+    props: {'form': 1},
+    slots: {'child': 1},
+  ),
+  WidgetDescriptor(
     'FractionallySizedBox',
     13,
     layer: 1,
@@ -1691,6 +1699,12 @@ const List<ActionDescriptor> actionDescriptors = [
     inputs: {'duration': 1},
   ),
   ActionDescriptor(
+    'emitEvent',
+    56,
+    phase: 'P5',
+    inputs: {'event': 1, 'payload': 2},
+  ),
+  ActionDescriptor(
     'emitHostEvent',
     51,
     phase: 'P4',
@@ -1801,7 +1815,7 @@ const List<ActionDescriptor> actionDescriptors = [
     'refreshData',
     17,
     phase: 'P5',
-    inputs: {'source': 1},
+    inputs: {'source': 1, 'more': 2},
   ),
   ActionDescriptor(
     'requestPermission',

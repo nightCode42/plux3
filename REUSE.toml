@@ -99,11 +99,30 @@ precedence = "override"
 SPDX-FileCopyrightText = "Meta Platforms, Inc. and affiliates"
 SPDX-License-Identifier = "BSD-3-Clause"
 
-# The starter app's Android and iOS projects, as `flutter create` wrote
+# The starter and reference apps' Android and iOS projects, as `flutter create` wrote
 # them from the Flutter SDK's templates (launcher icons and launch images
 # included); files Plux changes carry their own headers.
 [[annotations]]
-path = ["apps/starter/android/**", "apps/starter/ios/**", "apps/starter/.metadata"]
+path = [
+    "apps/starter/android/**", "apps/starter/ios/**", "apps/starter/.metadata",
+    "apps/plux_bank/android/**", "apps/plux_bank/ios/**", "apps/plux_bank/.metadata",
+    "apps/plux_express/android/**", "apps/plux_express/ios/**", "apps/plux_express/.metadata",
+]
 precedence = "closest"
 SPDX-FileCopyrightText = ["2014 The Flutter Authors", "2026 Plux contributors"]
 SPDX-License-Identifier = "BSD-3-Clause"
+
+# Phone-number validation metadata (pxl.phone.v1), derived by tools/cmd/phonemeta
+# (make phone-metadata) from libphonenumber's PhoneNumberMetadata.xml at the
+# release phone.json records, and the tables and vectors generated from it.
+# Vendored data approved by the maintainer (plan p5.md §2.1 B2).
+[[annotations]]
+path = [
+    "schema/pxl/phone.json",
+    "schema/testdata/phone/examples.json",
+    "backend/internal/pxl/phone/table_gen.go",
+    "packages/plux_flutter/lib/src/pxl/phone.g.dart",
+]
+precedence = "override"
+SPDX-FileCopyrightText = ["2009 The Libphonenumber Authors", "2026 Plux contributors"]
+SPDX-License-Identifier = "Apache-2.0"

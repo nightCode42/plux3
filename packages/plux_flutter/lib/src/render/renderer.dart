@@ -11,12 +11,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show ProviderListenable;
 import 'package:http/http.dart' as http;
 import 'package:plux_flutter/src/actions/action_error.dart';
 import 'package:plux_flutter/src/actions/engine.dart';
 import 'package:plux_flutter/src/actions/graph.dart';
 import 'package:plux_flutter/src/actions/handlers.dart';
 import 'package:plux_flutter/src/actions/run.dart';
+import 'package:plux_flutter/src/animation/registry.dart';
+import 'package:plux_flutter/src/animation/timeline_spec.dart';
 import 'package:plux_flutter/src/assets/assets.dart';
 import 'package:plux_flutter/src/assets/icon_fonts.dart';
 import 'package:plux_flutter/src/assets/image_providers.dart';
@@ -26,11 +29,18 @@ import 'package:plux_flutter/src/core/active_release.dart';
 import 'package:plux_flutter/src/core/app_state.dart';
 import 'package:plux_flutter/src/core/config.dart';
 import 'package:plux_flutter/src/core/fallback.dart';
+import 'package:plux_flutter/src/data/client.dart' show DataCaller;
+import 'package:plux_flutter/src/data/services.dart';
+import 'package:plux_flutter/src/data/source.dart';
+import 'package:plux_flutter/src/data/spec.dart';
+import 'package:plux_flutter/src/device/guard.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/forms/form_state.dart';
 import 'package:plux_flutter/src/native_catalogue/registration.dart';
 import 'package:plux_flutter/src/navigation/guards.dart';
 import 'package:plux_flutter/src/navigation/page_navigator.dart';
 import 'package:plux_flutter/src/platform/platform_services.dart';
+import 'package:plux_flutter/src/pxl/regex.dart';
 import 'package:plux_flutter/src/pxl/types.dart';
 import 'package:plux_flutter/src/pxl/vm.dart';
 import 'package:plux_flutter/src/render/builders/builders.dart';
@@ -38,6 +48,7 @@ import 'package:plux_flutter/src/render/decoders.dart';
 import 'package:plux_flutter/src/render/decoding.dart';
 import 'package:plux_flutter/src/render/generated/render.g.dart';
 import 'package:plux_flutter/src/render/node_context.dart';
+import 'package:plux_flutter/src/render/page_actions.dart';
 import 'package:plux_flutter/src/render/page_renderer.dart';
 import 'package:plux_flutter/src/render/plux_node.dart';
 import 'package:plux_flutter/src/render/scope.dart';
@@ -45,9 +56,13 @@ import 'package:plux_flutter/src/render/sections.dart';
 import 'package:plux_flutter/src/render/theme.dart';
 import 'package:plux_flutter/src/render/tokens.dart';
 import 'package:plux_flutter/src/render/values.dart';
+import 'package:plux_flutter/src/schema/limit_values.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
 import 'package:plux_flutter/src/schema/registry.g.dart';
+import 'package:plux_flutter/src/state/access.dart';
+import 'package:plux_flutter/src/state/persistence.dart';
 import 'package:plux_flutter/src/state/providers.dart';
+import 'package:plux_flutter/src/state/scope_state.dart';
 import 'package:plux_flutter/src/verify/manifest.dart';
 
 /// The builders by permanent widget ID: generated ones and hand-written
@@ -68,10 +83,13 @@ final class PluxRenderer implements PageRenderer, RenderServices {
     required this.imageCacheDirectory,
     this.assets = AssetDevice.plain,
     this.actions,
+    this.data,
+    StatePersistence? statePersistence,
     VerifiedAssets? verified,
     int? cacheEntries,
     int? cacheBytes,
-  }) : _verified = verified ?? VerifiedAssets(),
+  }) : statePersistence = statePersistence ?? StatePersistence.inMemory(),
+       _verified = verified ?? VerifiedAssets(),
        cache = SectionCache(
          maxEntries:
              cacheEntries ?? PluxLimit.runtimeSectionCacheEntries.defaultValue,
@@ -101,6 +119,83 @@ final class PluxRenderer implements PageRenderer, RenderServices {
   /// events report `PLX-4010` as in P3.
   final ActionServices? actions;
 
+  /// What pages load data sources with (ADR-0048); without it, `data`
+  /// reads nothing and the data actions fail.
+  final DataServices? data;
+
+  /// The data a page of [plugin] sees (ADR-0048): its own sources from
+  /// [page] (a page section's sources and strings), its plugin's and the
+  /// app's, shared by the plugin's pages of [release].
+  DataScope? dataScope(
+    ActiveRelease release,
+    String plugin,
+    ({List<fbs.DataSource> sources, String Function(int) string})? page,
+    Map<String, Object?> Function() roots,
+    String route,
+  ) {
+    final services = data;
+    if (services == null) return null;
+    services.limits = release.limits;
+    final limits = _pxlLimits(release.limits);
+    final pl = view(release, plugin), app = view(release, '');
+    final types = typesOf(release, plugin);
+    final caller = DataCaller(
+      pluginKey: plugin,
+      domains:
+          release.meta(plugin).capabilities?.networkDomains ?? const <String>[],
+      route: route,
+    );
+    List<DataSourceSpec> decode(
+      List<fbs.DataSource> list,
+      String Function(int) string,
+      BundleView bundle,
+    ) => [
+      for (final d in list)
+        DataSourceSpec.decode(
+          d,
+          strings: string,
+          plugin: bundle,
+          limits: limits,
+        ),
+    ];
+    try {
+      final shared = [
+        for (final s in [
+          ...decode(pl.dataSources, pl.string, pl),
+          ...decode(app.dataSources, app.string, app),
+        ])
+          services.shared(release, s, caller, types),
+      ];
+      final own = [
+        if (page != null)
+          for (final s in decode(page.sources, page.string, pl))
+            DataSourceController(
+              spec: s,
+              context: services,
+              caller: caller,
+              types: types,
+            ),
+      ];
+      return DataScope(
+        services: services,
+        own: own,
+        shared: shared,
+        roots: roots,
+      );
+    } on PluxException catch (e) {
+      report(e);
+      return null;
+    } on FormatException catch (e) {
+      report(
+        PluxException(PluxErrorCode.bundleMalformed, 'data: ${e.message}'),
+      );
+      return null;
+    }
+  }
+
+  /// Where session, persisted and secure state lives (STA-003).
+  final StatePersistence statePersistence;
+
   final VerifiedAssets _verified;
   ImageDiskCache? _imageCache;
   http.Client? _client;
@@ -122,6 +217,7 @@ final class PluxRenderer implements PageRenderer, RenderServices {
     Map<String, Object?> params, {
     bool routed = false,
     void Function(Object? result)? onPop,
+    void Function(String event, Object? payload)? onEvent,
   }) => PluxPageView(
     key: ValueKey((release.sequence, page.route)),
     renderer: this,
@@ -130,39 +226,124 @@ final class PluxRenderer implements PageRenderer, RenderServices {
     params: params,
     routed: routed,
     onPop: onPop,
+    onEvent: onEvent,
   );
 
-  /// The app's state entries at their declared defaults, with their
-  /// declarations by name (ADR-0023); a default that cannot be read is
-  /// reported and starts as null.
-  ({Map<String, Object?> values, Map<String, AppStateDecl> decls}) appState(
+  /// The state the runs of plugin [plugin] ('' for the app) reach
+  /// (STA-001): the app's, the plugin's, the [page]'s or [component]'s,
+  /// and each run's own variables; its change stream feeds state-watcher
+  /// triggers (ACT-002).
+  ScopeStateAccess stateAccessFor(
+    ProviderContainer container,
     ActiveRelease release,
-  ) {
-    final app = view(release, '');
+    String plugin, {
+    PageInstance? page,
+    PageInstance? component,
+  }) => ScopeStateAccess(
+    container: container,
+    plugin: plugin,
+    page: page,
+    component: component,
+    runModel: (entries) => scopeModel(
+      release,
+      plugin,
+      StateScopeKind.run,
+      entries,
+      parents: {
+        'app': appStateProvider,
+        if (plugin.isNotEmpty) 'plugin': pluginStateProvider(plugin),
+        'page': ?(page == null ? null : pageStateProvider(page)),
+        'component': ?(component == null ? null : pageStateProvider(component)),
+      },
+    ),
+  );
+
+  /// An input resolver over [bundle] of [release], without tokens or
+  /// translations: for the runs of the app's and the plugins' triggers.
+  Resolve resolverIn(ActiveRelease release, BundleView bundle) {
+    final limits = _pxlLimits(release.limits);
+    return (v, roots) => toPxl(
+      ValueResolver(
+        plugin: bundle,
+        roots: () => roots,
+        token: (_) => null,
+        translation: (_) => null,
+        limits: limits,
+      ).resolve(v, bundle.string),
+    );
+  }
+
+  /// The state model of a scope instance of plugin [plugin] ('' for the
+  /// app) in [release] (STA-001): its [entries], decoded from [strings];
+  /// computed entries read [parents] and [extraRoots].
+  ScopeModel scopeModel(
+    ActiveRelease release,
+    String plugin,
+    StateScopeKind kind,
+    List<fbs.StateEntry>? entries, {
+    StringTable? strings,
+    Map<String, ProviderListenable<Map<String, Object?>>> parents = const {},
+    Map<String, Object?> Function()? extraRoots,
+    List<fbs.Form>? forms,
+    FormGraphRunner? runForm,
+  }) {
+    final bundle = view(release, plugin);
+    final limits = _pxlLimits(release.limits);
     final literal = ValueResolver(
-      plugin: app,
+      plugin: bundle,
       roots: () => const {},
       token: (_) => null,
       translation: (_) => null,
-      limits: _pxlLimits(release.limits),
+      limits: limits,
     );
-    final values = <String, Object?>{};
-    final decls = <String, AppStateDecl>{};
-    for (final d in app.appState) {
-      decls[d.name] = d;
+    final str = strings ?? bundle.string;
+    final types = typesOf(release, plugin);
+    Object? lit(fbs.Value? v) {
       try {
-        values[d.name] = toPxl(literal.resolve(d.defaultValue, app.string));
+        return toPxl(literal.resolve(v, str));
       } on BindingError catch (e) {
         report(
           PluxException(
             PluxErrorCode.propValueInvalid,
-            'app state ${d.name}: ${e.message}',
+            '${kind.name} state: ${e.message}',
           ),
         );
-        values[d.name] = null;
+        return null;
       }
     }
-    return (values: values, decls: decls);
+
+    return ScopeModel(
+      kind: kind,
+      owner: plugin,
+      decls: decodeState(
+        entries,
+        bundle: bundle,
+        strings: str,
+        types: types,
+        literal: lit,
+      ),
+      forms: decodeForms(
+        forms,
+        bundle: bundle,
+        strings: str,
+        types: types,
+        literal: lit,
+        regex: limits.regex,
+      ),
+      runForm: runForm,
+      types: types,
+      evaluate: (program, roots) => ValueResolver(
+        plugin: bundle,
+        roots: () => roots,
+        token: (_) => null,
+        translation: (_) => null,
+        limits: limits,
+      ).evaluate(program),
+      persistence: statePersistence,
+      report: report,
+      parents: parents,
+      extraRoots: extraRoots,
+    );
   }
 
   /// The named types the pages of plugin [plugin] may use: the app's and
@@ -319,6 +500,7 @@ final class PluxRenderer implements PageRenderer, RenderServices {
     }
     if (roots == null) return const GuardAllows();
     final host = ActionHost(
+      lease: release.hold,
       context: StepContext(
         navigator: const _GuardNavigator(),
         emit: services.emit,
@@ -710,14 +892,10 @@ final class PluxRenderer implements PageRenderer, RenderServices {
       uri,
       cache: _imageCache ??= ImageDiskCache(
         imageCacheDirectory,
-        maxBytes:
-            limits[PluxLimit.runtimeImageDiskCacheBytes.key] ??
-            PluxLimit.runtimeImageDiskCacheBytes.defaultValue,
+        maxBytes: limits.valueOf(PluxLimit.runtimeImageDiskCacheBytes),
       ),
       client: _client ??= (config.httpClient ?? platformHttpClient)(),
-      maxBytes:
-          limits[PluxLimit.runtimeImageSize.key] ??
-          PluxLimit.runtimeImageSize.defaultValue,
+      maxBytes: limits.valueOf(PluxLimit.runtimeImageSize),
     );
   }
 
@@ -737,6 +915,7 @@ final class PluxPageView extends ConsumerStatefulWidget {
     required this.params,
     this.routed = false,
     this.onPop,
+    this.onEvent,
   });
 
   /// The renderer.
@@ -757,11 +936,41 @@ final class PluxPageView extends ConsumerStatefulWidget {
   /// Receives an embedded page's `pop` result, or null (ADR-0023).
   final void Function(Object? result)? onPop;
 
+  /// Receives the events a shown component emits (SCH-030), with the
+  /// payload in its JSON form, or null.
+  final void Function(String event, Object? payload)? onEvent;
+
   @override
   ConsumerState<PluxPageView> createState() => _PluxPageViewState();
 }
 
-final class _PluxPageViewState extends ConsumerState<PluxPageView> {
+final class _PluxPageViewState extends ConsumerState<PluxPageView>
+    with TickerProviderStateMixin {
+  /// Whether the platform asks to reduce motion, as of the latest build
+  /// (ANI-007).
+  bool _reduceMotion = false;
+
+  /// The page's timelines (ANI-002), or null when it has none.
+  late final PluxAnimations? _animations = () {
+    final page = _section.page;
+    final id = page?.id;
+    if (id == null) return null;
+    final specs = <TimelineSpec>[];
+    for (final t in _plugin.timelinesOf(uuidOf(id))) {
+      try {
+        specs.add(TimelineSpec.read(t, _plugin.string));
+      } on PluxException catch (e) {
+        _report(e, path: _path);
+      }
+    }
+    if (specs.isEmpty) return null;
+    return PluxAnimations(
+      timelines: specs,
+      vsync: this,
+      reduceMotion: () => _reduceMotion,
+    );
+  }();
+
   late final BundleView _plugin = widget.renderer.view(
     widget.release,
     widget.page.plugin,
@@ -786,13 +995,50 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
   /// Why the page's parameters cannot be used (NAV-007), or null.
   PluxException? _paramError;
 
+  /// The container of the page's providers.
+  late final ProviderContainer _container;
+
+  /// The state the page's runs reach and its watchers listen to (STA-001,
+  /// ACT-002).
+  late final ScopeStateAccess _state = widget.renderer.stateAccessFor(
+    _container,
+    widget.release,
+    widget.page.plugin,
+    page: _component ? null : _instance,
+    component: _component ? _instance : null,
+  );
+
+  /// Emits an event of the component the view shows to the host's
+  /// `PluxView.onEvent` (SCH-030), in its JSON form; an event the
+  /// component does not declare is reported.
+  void _emitToHost(String event, Object? payload) {
+    final declared = [
+      for (final e
+          in _section.component?.events ?? const <fbs.ComponentEvent>[])
+        _section.string(e.name),
+    ];
+    if (!declared.contains(event)) {
+      widget.renderer.report(
+        PluxException(
+          PluxErrorCode.propValueInvalid,
+          'component ${widget.page.route} declares no event $event',
+          details: {'route': widget.page.route, 'plugin': widget.page.plugin},
+        ),
+      );
+      return;
+    }
+    widget.onEvent?.call(event, toJson(payload));
+  }
+
   /// The engine of the page's runs (ADR-0039).
   late final ActionHost? _actions = () {
     final services = widget.renderer.actions;
     if (services == null) return null;
     final result = _section.page?.result ?? 0;
     return ActionHost(
+      lease: widget.release.hold,
       context: StepContext(
+        services: {...services.services, PluxAnimations: ?_animations},
         navigator: PageNavigator(
           router: services.router,
           context: () => context,
@@ -804,16 +1050,151 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
         ),
         emit: services.emit,
         nativeActions: services.nativeActions,
+        state: _state,
+        flows: BundleFlows(
+          own: widget.page.plugin,
+          bundles: (key) {
+            try {
+              return widget.renderer.view(widget.release, key);
+            } on PluxException {
+              return null;
+            }
+          },
+          roots: () => _roots(),
+          resolve: _resolveIn,
+        ),
+        clock: services.clock,
+        track: (name, props) => services.record(
+          'custom',
+          route: widget.page.route,
+          pluginKey: widget.page.plugin,
+          fields: {'name': name, 'props': props},
+        ),
+        sync: services.sync,
+        data: _data,
+        logout: services.logout,
+        device: services.deviceGuard == null
+            ? null
+            : DeviceScope(
+                plugin: widget.page.plugin,
+                guard: services.deviceGuard!,
+                secure: _section.page?.secure ?? false,
+                context: () => mounted ? context : null,
+                overlay: () => mounted
+                    ? Overlay.maybeOf(context, rootOverlay: true)
+                    : null,
+              ),
       ),
       limits: ActionLimits.of(widget.release.limits),
       report: widget.renderer.report,
       record: services.record,
       route: widget.page.route,
       pluginKey: widget.page.plugin,
+      traces: services.traces,
+      honoursParallel:
+          widget.release
+              .meta(widget.page.plugin)
+              .requiredFeatures
+              ?.contains('actions.concurrency.v1') ??
+          false,
+      presenter: (error) {
+        if (!mounted) return;
+        ScaffoldMessenger.maybeOf(context)
+            ?.showSnackBar(SnackBar(content: Text(fallbackMessage(error))));
+      },
     );
   }();
 
+  /// The page's triggers and lifecycle (ACT-002), on [_actions].
+  late final PageActions? _pageActions = () {
+    final host = _actions;
+    final services = widget.renderer.actions;
+    if (host == null || services == null) return null;
+    return PageActions(
+      host: host,
+      page: _section.page,
+      bundle: _plugin,
+      path: _path,
+      roots: () => _roots(),
+      resolve: _resolveIn(_plugin),
+      hub: services.triggers,
+      clock: services.clock,
+      watches: StateChangeWatches(_state),
+      plugin: widget.page.plugin,
+      sourceOf: (name) => _data?[name]?.spec.id,
+      errorsAfter: (e) => services.ownerErrors(widget.page.plugin, e),
+    );
+  }();
+
+  /// The resolver of the latest build, for runs that triggers start
+  /// outside a build.
+  ValueResolver? _resolver;
+
+  /// An input resolver over [bundle], with the latest build's tokens and
+  /// translations.
+  Resolve _resolveIn(BundleView bundle) => (v, roots) {
+    final r = _resolver;
+    return toPxl(
+      ValueResolver(
+        plugin: bundle,
+        roots: () => roots,
+        token: r?.token ?? (_) => null,
+        translation: r?.translation ?? (_) => null,
+        limits: _limits,
+      ).resolve(v, bundle.string),
+    );
+  };
+
   String get _path => '${widget.page.plugin}/${widget.page.pageKey}';
+
+  /// Runs a form's asynchronous validator graph on the page's engine,
+  /// debounced with restart semantics (STA-020, ADR-0047).
+  Future<RunResult?> _runForm(
+    fbs.Uuid graph,
+    Object? value,
+    String key,
+    Duration debounce,
+  ) async {
+    final host = _actions;
+    if (host == null || host.disposed) return null;
+    final g = host.graph(graph, _plugin, _path, _resolveIn(_plugin));
+    if (g == null) return null;
+    return host.start(
+      g,
+      roots: () => _roots(),
+      key: key,
+      path: _path,
+      event: value,
+      policy: RunPolicy(ConcurrencyPolicy.debounce, debounce),
+    );
+  }
+
+  /// The roots of the latest build, for data parameters and transforms and
+  /// for runs that triggers start outside a build.
+  Map<String, Object?> Function() _roots = () => const {};
+
+  /// The page's data (ADR-0048).
+  late final DataScope? _data = () {
+    final page = _section.page;
+    final scope = widget.renderer.dataScope(
+      widget.release,
+      widget.page.plugin,
+      page == null
+          ? null
+          : (
+              sources: page.dataSources ?? const <fbs.DataSource>[],
+              string: _section.string,
+            ),
+      () => _roots(),
+      widget.page.route,
+    );
+    scope?.addListener(_dataChanged);
+    return scope;
+  }();
+
+  void _dataChanged() {
+    if (mounted) setState(() {});
+  }
 
   void _report(PluxException e, {required String path}) {
     // A failed node counts against the release's trial, which reports it.
@@ -827,14 +1208,11 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
   @override
   void initState() {
     super.initState();
+    _container = ProviderScope.containerOf(context, listen: false);
     final limits = widget.release.limits;
     widget.renderer.cache.resize(
-      maxEntries:
-          limits['runtime.sectionCacheEntries'] ??
-          PluxLimit.runtimeSectionCacheEntries.defaultValue,
-      maxBytes:
-          limits['runtime.sectionCacheBytes'] ??
-          PluxLimit.runtimeSectionCacheBytes.defaultValue,
+      maxEntries: limits.valueOf(PluxLimit.runtimeSectionCacheEntries),
+      maxBytes: limits.valueOf(PluxLimit.runtimeSectionCacheBytes),
     );
     final literal = ValueResolver(
       plugin: _plugin,
@@ -898,12 +1276,23 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
       );
       widget.renderer.report(_paramError!);
     }
-    _instance = PageInstance({
-      for (final e
-          in page?.state ?? component?.state ?? const <fbs.StateEntry>[])
-        if (e.computed == 0)
-          _section.string(e.name): read(literal, e.$default, _section.string),
-    });
+    _instance = PageInstance(
+      const {},
+      model: widget.renderer.scopeModel(
+        widget.release,
+        widget.page.plugin,
+        _component ? StateScopeKind.component : StateScopeKind.page,
+        page?.state ?? component?.state,
+        strings: _section.string,
+        parents: {
+          'app': appStateProvider,
+          'plugin': pluginStateProvider(widget.page.plugin),
+        },
+        extraRoots: () => {_component ? 'props' : 'params': _params},
+        forms: page?.forms ?? component?.forms,
+        runForm: _runForm,
+      ),
+    );
     final appLiteral = ValueResolver(
       plugin: _app,
       roots: () => const {},
@@ -932,9 +1321,38 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
   Object? _hostParam(String type, Object? value) =>
       fromJson(PxlType.parse(type, (n) => _types[n]), fromHost(value));
 
+  bool _started = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final current = ModalRoute.of(context)?.isCurrent ?? true;
+    if (!_started) {
+      _started = true;
+      if (_paramError == null) {
+        // After the first frame, so the first runs read built roots.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          _animations?.autoplay();
+          _pageActions?.start();
+        });
+      }
+      return;
+    }
+    _pageActions?.routeCurrent(current);
+  }
+
   @override
   void dispose() {
-    _actions?.dispose();
+    final page = _pageActions;
+    if (page != null) {
+      page.dispose();
+    } else {
+      _actions?.dispose();
+    }
+    _data?.removeListener(_dataChanged);
+    _data?.dispose();
+    _animations?.dispose();
     super.dispose();
   }
 
@@ -948,6 +1366,7 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
     ref.listen(pageStateProvider(_instance), (_, _) {});
     final env = ref.watch(environmentProvider);
     final media = MediaQuery.maybeOf(context);
+    _reduceMotion = media?.disableAnimations ?? false;
     final locale =
         env.locale ??
         Localizations.maybeLocaleOf(context) ??
@@ -974,12 +1393,15 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
       _component ? 'props' : 'params': _params,
       _component ? 'component' : 'page': ref.read(pageStateProvider(_instance)),
       'app': ref.read(appStateProvider),
+      'plugin': ref.read(pluginStateProvider(widget.page.plugin)),
       'device': device,
       // Read on every evaluation: user.authenticated is the host's answer
       // at that moment (ADR-0040).
       'user': widget.renderer.userRoot(widget.release, env),
       'flags': _flags,
+      'data': _data?.root ?? const <String, Object?>{},
     };
+    _roots = roots;
     final tokens = TokenReader(
       app: _app,
       dark: dark,
@@ -1019,19 +1441,21 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
       return null;
     }
 
+    final resolver = ValueResolver(
+      plugin: _plugin,
+      roots: roots,
+      token: (path) => theme.role(path) ?? tokens.read(path, appResolver),
+      translation: translation,
+      limits: _limits,
+    );
+    _resolver = resolver;
     final scope = RenderScope(
       release: widget.release,
       plugin: _plugin,
       app: _app,
       pluginKey: widget.page.plugin,
       section: _section,
-      resolver: ValueResolver(
-        plugin: _plugin,
-        roots: roots,
-        token: (path) => theme.role(path) ?? tokens.read(path, appResolver),
-        translation: translation,
-        limits: _limits,
-      ),
+      resolver: resolver,
       roots: roots,
       builders: nodeBuilders,
       cache: widget.renderer.cache,
@@ -1040,6 +1464,9 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
       path: _path,
       state: _instance,
       actions: _actions,
+      componentState: _component ? _instance : null,
+      emitEvent: _component ? _emitToHost : null,
+      animations: _animations,
     );
     final plugin = widget.page.plugin;
     Widget page = PluxBoundary(
@@ -1102,14 +1529,15 @@ final class _PluxPageViewState extends ConsumerState<PluxPageView> {
 }
 
 PxlLimits _pxlLimits(Map<String, int> app) => PxlLimits(
-  budget:
-      app['pxl.operationBudget'] ?? PluxLimit.pxlOperationBudget.defaultValue,
-  stringLength:
-      app['pxl.stringLength'] ?? PluxLimit.pxlStringLength.defaultValue,
-  collectionSize:
-      app['pxl.collectionSize'] ?? PluxLimit.pxlCollectionSize.defaultValue,
-  decimalDigits:
-      app['pxl.decimalDigits'] ?? PluxLimit.pxlDecimalDigits.defaultValue,
+  budget: app.valueOf(PluxLimit.pxlOperationBudget),
+  stringLength: app.valueOf(PluxLimit.pxlStringLength),
+  collectionSize: app.valueOf(PluxLimit.pxlCollectionSize),
+  decimalDigits: app.valueOf(PluxLimit.pxlDecimalDigits),
+  regex: RegexLimits(
+    patternLength: app.valueOf(PluxLimit.pxlRegexPatternLength),
+    programSize: app.valueOf(PluxLimit.pxlRegexProgramSize),
+    repeat: app.valueOf(PluxLimit.pxlRegexRepeat),
+  ),
 );
 
 /// PXL's `device` root (Appendix E.2) for a window [width] logical pixels
