@@ -21,6 +21,12 @@ import (
 // Valkey is the shared backend for installations with several replicas.
 // It speaks RESP2 over a small pool of connections, which is all the
 // handful of commands this cache needs (ADR-0007).
+//
+// A *+sentinel:// URL puts the client in Sentinel mode (SEC-023,
+// ADR-0012): it asks the Sentinels for the current master, follows a
+// failover to the promoted replica, and never reads from a replica,
+// because the rate-limit counters and the replay cache need the
+// master's view. See sentinel.go.
 type Valkey struct {
 	dial     func(context.Context) (net.Conn, error)
 	password string
@@ -32,18 +38,31 @@ type Valkey struct {
 	idle   []*conn
 	// maxIdle bounds the pool; extra connections are closed after use.
 	maxIdle int
+
+	// sentinel is nil for a plain server.
+	sentinel *sentinelState
 }
 
 // conn is one pooled connection with its buffered reader.
 type conn struct {
 	net.Conn
 	r *bufio.Reader
+	// gen is the master generation the connection belongs to; it is
+	// always zero for a plain server.
+	gen uint64
 }
 
 // NewValkey connects lazily to the server named by a redis:// or
-// rediss:// URL. No connection is made here, so a server starts even
-// while the cache is briefly unreachable; /readyz reports that.
+// rediss:// URL (valkey:// and valkeys:// are aliases). No connection is
+// made here, so a server starts even while the cache is briefly
+// unreachable; /readyz reports that.
+//
+// The URL scheme may carry a +sentinel suffix to select Sentinel mode;
+// see newSentinelValkey for its form.
 func NewValkey(rawURL string) (*Valkey, error) {
+	if scheme, rest, ok := strings.Cut(rawURL, "://"); ok && isSentinelScheme(scheme) {
+		return newSentinelValkey(strings.ToLower(scheme), rest)
+	}
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		return nil, errors.New("cache: the Valkey URL is not valid")
@@ -73,12 +92,17 @@ func NewValkey(rawURL string) (*Valkey, error) {
 		maxIdle: 256,
 	}
 	v.dial = func(ctx context.Context) (net.Conn, error) {
-		if secure {
-			return (&tls.Dialer{NetDialer: dialer, Config: &tls.Config{MinVersion: tls.VersionTLS12}}).DialContext(ctx, "tcp", host)
-		}
-		return dialer.DialContext(ctx, "tcp", host)
+		return dialTCP(ctx, secure, dialer, host)
 	}
 	return v, nil
+}
+
+// dialTCP opens a TCP connection, with TLS 1.2 or later when secure.
+func dialTCP(ctx context.Context, secure bool, dialer *net.Dialer, addr string) (net.Conn, error) {
+	if secure {
+		return (&tls.Dialer{NetDialer: dialer, Config: &tls.Config{MinVersion: tls.VersionTLS12}}).DialContext(ctx, "tcp", addr)
+	}
+	return dialer.DialContext(ctx, "tcp", addr)
 }
 
 // get returns a pooled connection, opening one when the pool is empty.
@@ -96,10 +120,19 @@ func (v *Valkey) get(ctx context.Context) (*conn, error) {
 	}
 	v.mu.Unlock()
 
+	if v.sentinel != nil {
+		return v.openMaster(ctx)
+	}
 	raw, err := v.dial(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("cache: connect to Valkey: %w", err)
 	}
+	return v.open(ctx, raw)
+}
+
+// open wraps a new connection and authenticates and selects the
+// database on it. It closes the connection when that fails.
+func (v *Valkey) open(ctx context.Context, raw net.Conn) (*conn, error) {
 	c := &conn{Conn: raw, r: bufio.NewReader(raw)}
 	if v.password != "" {
 		if _, err := v.do(ctx, c, "AUTH", v.password); err != nil {
@@ -124,15 +157,32 @@ func (v *Valkey) put(c *conn, broken bool) {
 	}
 	v.mu.Lock()
 	defer v.mu.Unlock()
-	if v.closed || len(v.idle) >= v.maxIdle {
+	// A connection from before a failover points at the old master.
+	stale := v.sentinel != nil && c.gen != v.sentinel.gen
+	if v.closed || stale || len(v.idle) >= v.maxIdle {
 		_ = c.Close()
 		return
 	}
 	v.idle = append(v.idle, c)
 }
 
-// call runs one command on a pooled connection.
+// call runs one command on a pooled connection. In Sentinel mode a
+// command that failed because the master changed is retried once on the
+// newly resolved master when it is idempotent; any other command returns
+// the error and the caller decides.
 func (v *Valkey) call(ctx context.Context, args ...string) (any, error) {
+	reply, err := v.callOnce(ctx, args...)
+	if err != nil && v.sentinel != nil && idempotent(args[0]) && ctx.Err() == nil {
+		var fe *failoverError
+		if errors.As(err, &fe) {
+			return v.callOnce(ctx, args...)
+		}
+	}
+	return reply, err
+}
+
+// callOnce runs one command on one pooled connection.
+func (v *Valkey) callOnce(ctx context.Context, args ...string) (any, error) {
 	c, err := v.get(ctx)
 	if err != nil {
 		return nil, err
@@ -142,7 +192,11 @@ func (v *Valkey) call(ctx context.Context, args ...string) (any, error) {
 	// state, so it is closed rather than reused. A server-side error
 	// reply does not.
 	var replyErr replyError
-	v.put(c, err != nil && !errors.As(err, &replyErr))
+	broken := err != nil && !errors.As(err, &replyErr)
+	if err != nil {
+		err = v.failover(ctx, c.gen, err)
+	}
+	v.put(c, broken)
 	return reply, err
 }
 

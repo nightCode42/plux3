@@ -20,9 +20,24 @@ import (
 // a Valkey process; CI also runs the suite against a real one (QA-005).
 type respServer struct {
 	addr string
+	ln   net.Listener
 
 	mu     sync.Mutex
 	values map[string]respValue
+	conns  map[net.Conn]struct{}
+	// seen counts the commands received, by upper-case name.
+	seen map[string]int
+	// auths lists the passwords received by AUTH.
+	auths []string
+	// password, when set, is the only password AUTH accepts.
+	password string
+	// sentinelMaster is the host:port that SENTINEL
+	// get-master-addr-by-name returns; empty means an unknown master.
+	sentinelMaster string
+	// replica makes ROLE answer "slave".
+	replica bool
+	// readonly makes every write answer -READONLY.
+	readonly bool
 }
 
 // respValue is one stored value with its expiry.
@@ -39,7 +54,13 @@ func newRESPServer(t testing.TB) *respServer {
 	if err != nil {
 		t.Fatalf("listen: %v", err)
 	}
-	s := &respServer{addr: ln.Addr().String(), values: map[string]respValue{}}
+	s := &respServer{
+		addr:   ln.Addr().String(),
+		ln:     ln,
+		values: map[string]respValue{},
+		conns:  map[net.Conn]struct{}{},
+		seen:   map[string]int{},
+	}
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
@@ -48,19 +69,70 @@ func newRESPServer(t testing.TB) *respServer {
 			if err != nil {
 				return
 			}
+			s.mu.Lock()
+			s.conns[c] = struct{}{}
+			s.mu.Unlock()
 			go s.serve(c)
 		}
 	}()
 	t.Cleanup(func() {
-		_ = ln.Close()
+		s.kill()
 		<-done
 	})
 	return s
 }
 
+// kill stops listening and closes every open connection, like a node
+// that has crashed.
+func (s *respServer) kill() {
+	_ = s.ln.Close()
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for c := range s.conns {
+		_ = c.Close()
+	}
+}
+
+// count returns how many times a command has been received.
+func (s *respServer) count(command string) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.seen[command]
+}
+
+// setSentinelMaster changes the master address that this server, acting
+// as a Sentinel, reports.
+func (s *respServer) setSentinelMaster(addr string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.sentinelMaster = addr
+}
+
+// setRole makes ROLE answer "slave" (true) or "master" (false) and, for
+// a replica, makes writes answer -READONLY.
+func (s *respServer) setRole(replica bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.replica = replica
+	s.readonly = replica
+}
+
+// setReadonly makes writes answer -READONLY while ROLE still says
+// "master", the window just after a demotion.
+func (s *respServer) setReadonly(readonly bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.readonly = readonly
+}
+
 // serve answers commands until the connection closes.
 func (s *respServer) serve(c net.Conn) {
-	defer func() { _ = c.Close() }()
+	defer func() {
+		_ = c.Close()
+		s.mu.Lock()
+		delete(s.conns, c)
+		s.mu.Unlock()
+	}()
 	r := bufio.NewReader(c)
 	for {
 		args, err := readCommand(r)
@@ -80,8 +152,26 @@ func (s *respServer) reply(args []string) []byte {
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	switch strings.ToUpper(args[0]) {
-	case "PING", "AUTH", "SELECT":
+	name := strings.ToUpper(args[0])
+	s.seen[name]++
+	if s.readonly && (name == "SET" || name == "INCR" || name == "EXPIRE" || name == "DEL") {
+		return []byte("-READONLY You can't write against a read only replica.\r\n")
+	}
+	switch name {
+	case "AUTH":
+		s.auths = append(s.auths, args[1])
+		if s.password != "" && args[1] != s.password {
+			return []byte("-WRONGPASS invalid username-password pair\r\n")
+		}
+		return []byte("+OK\r\n")
+	case "SENTINEL":
+		return s.sentinelReply()
+	case "ROLE":
+		if s.replica {
+			return []byte("*5\r\n$5\r\nslave\r\n$9\r\n127.0.0.1\r\n:6379\r\n$9\r\nconnected\r\n:0\r\n")
+		}
+		return []byte("*3\r\n$6\r\nmaster\r\n:0\r\n*0\r\n")
+	case "PING", "SELECT":
 		return []byte("+OK\r\n")
 	case "GET":
 		v, ok := s.live(args[1])
@@ -116,6 +206,15 @@ func (s *respServer) reply(args []string) []byte {
 	default:
 		return []byte("-ERR unknown command\r\n")
 	}
+}
+
+// sentinelReply answers SENTINEL get-master-addr-by-name.
+func (s *respServer) sentinelReply() []byte {
+	if s.sentinelMaster == "" {
+		return []byte("*-1\r\n")
+	}
+	host, port, _ := net.SplitHostPort(s.sentinelMaster)
+	return []byte(fmt.Sprintf("*2\r\n$%d\r\n%s\r\n$%d\r\n%s\r\n", len(host), host, len(port), port))
 }
 
 // set applies SET key value [EX n] [NX].
