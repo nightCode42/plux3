@@ -26,7 +26,9 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/compiler/media"
 	"github.com/nightCode42/plux3/backend/internal/device"
 	"github.com/nightCode42/plux3/backend/internal/device/devicetest"
+	"github.com/nightCode42/plux3/backend/internal/devtoken"
 	"github.com/nightCode42/plux3/backend/internal/document"
+	"github.com/nightCode42/plux3/backend/internal/dpop"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1/pluxv1connect"
 	"github.com/nightCode42/plux3/backend/internal/release"
@@ -103,6 +105,13 @@ type world struct {
 	events   pluxv1connect.TelemetryServiceClient
 	devices  *device.Service
 	fakes    *deviceFakes
+	// base is the URL the world is served at, which proofs are bound to.
+	base string
+	// deviceAuth is the device authentication in front of the handlers.
+	deviceAuth api.DeviceAuth
+	// issuer mints access tokens, as the device service does, for tests
+	// that need a token the service would not issue.
+	issuer *devtoken.Issuer
 }
 
 func newWorld(t *testing.T) *world {
@@ -145,10 +154,16 @@ func newWorld(t *testing.T) *world {
 		tenancyService.RegisterTrashKind(kind, k)
 	}
 	queue := &publishQueue{}
-	fakes := &deviceFakes{key: &devicetest.KeyAttestor{}, play: &devicetest.IntegrityChecker{}, apple: &devicetest.AppAttestor{}}
+	fakes := &deviceFakes{key: &devicetest.KeyAttestor{}, play: &devicetest.IntegrityChecker{}, apple: &devicetest.AppAttestor{}, assert: &devicetest.AppAssertor{}}
+	// The server is created first so that the URL proofs are bound to is known.
+	srv := httptest.NewUnstartedServer(nil)
+	t.Cleanup(srv.Close)
+	base := "http://" + srv.Listener.Addr().String()
+	tokenSigner := devicetest.NewTokenSigner(t)
+	issuer := &devtoken.Issuer{Signer: tokenSigner, Issuer: base, Audience: base, Lifetime: 5 * time.Minute}
 	devices, err := device.NewService(device.Options{
-		DB: db, IDs: gen, Cache: shared, Audit: log,
-		Attestors: device.Attestors{KeyAttestation: fakes.key, PlayIntegrity: fakes.play, AppAttest: fakes.apple},
+		DB: db, IDs: gen, Cache: shared, Audit: log, Tokens: issuer,
+		Attestors: device.Attestors{KeyAttestation: fakes.key, PlayIntegrity: fakes.play, AppAttest: fakes.apple, AppAssertions: fakes.assert},
 		AppTrust: func(context.Context, string) (device.TrustConfig, error) {
 			return device.TrustConfig{AndroidPackages: []string{"com.example.app"}, PlayIntegrity: &playintegrity.Keys{}, IOSAppID: "TEAMID.com.example.app"}, nil
 		},
@@ -190,7 +205,21 @@ func newWorld(t *testing.T) *world {
 		Idempotency: store, Pages: pages, Limiter: limiter, Limits: set,
 	}
 	people := api.Authentication(authService, api.IdentityPublic, nil, limiter, set.Get(limits.APIRequestsPerMinute))
-	authn := api.DeviceAuthentication(devices, limiter, set.Get(limits.APIRequestsPerMinutePerDevice), people)
+	nonceKey := make([]byte, 32)
+	if _, err := rand.Read(nonceKey); err != nil {
+		t.Fatal(err)
+	}
+	nonces, err := dpop.NewNonces(nonceKey, 5*time.Minute, time.Now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	deviceAuth := api.DeviceAuth{
+		Devices: devices, Tokens: &devtoken.Verifier{Keys: tokenSigner.TokenKeys, Issuer: base, Audience: base},
+		Proofs: &dpop.Verifier{Nonces: nonces}, Nonces: nonces, Replay: dpop.NewReplay(shared, dpop.FailClosed, 1000, nil, nil),
+		BaseURL: base, Window: time.Minute, FallbackWindow: 15 * time.Second,
+		Limiter: limiter, PerDevice: set.Get(limits.APIRequestsPerMinutePerDevice), People: people,
+	}
+	authn := api.DeviceAuthentication(deviceAuth)
 	opts := connect.WithInterceptors(api.Interceptors(api.Deps{Before: []api.Around{authn}})...)
 	mux := http.NewServeMux()
 	for _, r := range []func() (string, http.Handler){
@@ -216,8 +245,8 @@ func newWorld(t *testing.T) *world {
 		path, handler := r()
 		mux.Handle(path, handler)
 	}
-	srv := httptest.NewServer(mux)
-	t.Cleanup(srv.Close)
+	srv.Config.Handler = mux
+	srv.Start()
 	return &world{
 		auth:     authService,
 		assets:   assets,
@@ -240,8 +269,12 @@ func newWorld(t *testing.T) *world {
 		events:   pluxv1connect.NewTelemetryServiceClient(srv.Client(), srv.URL),
 		devices:  devices,
 		fakes:    fakes,
-		releases: releases,
-		queue:    queue,
+		base:     base,
+
+		deviceAuth: deviceAuth,
+		issuer:     issuer,
+		releases:   releases,
+		queue:      queue,
 	}
 }
 
