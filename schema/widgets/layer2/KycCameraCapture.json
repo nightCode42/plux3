@@ -1,0 +1,43 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "KycCameraCapture",
+  "id": 108,
+  "layer": 2,
+  "phase": "P6",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "category": "input",
+  "icon": "photo_camera",
+  "description": "ID document and selfie capture with framing guides and quality checks. Ships in `plux_media`.",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 400,
+  "accessibility": {
+    "role": "none",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "mode",
+      "id": 1,
+      "type": "KycCaptureMode",
+      "required": true,
+      "description": "What to capture."
+    }
+  ],
+  "events": [
+    {
+      "name": "onCaptured",
+      "id": 1,
+      "payload": "string",
+      "description": "Fires with a reference to the captured image."
+    }
+  ]
+}

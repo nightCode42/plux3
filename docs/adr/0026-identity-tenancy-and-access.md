@@ -186,3 +186,7 @@ The same decision settled `SEC-120`'s remaining backends: PKCS#11 (as a separate
 the server binary stays free of cgo for `CI-006`), AWS KMS, Google Cloud KMS and Azure Key Vault
 are all supported, arriving in P6 with the key ceremonies of `SEC-121`. P2 ships Vault Transit and
 the development file backend.
+
+## Revision (2026-10-07, P6 plan)
+
+The backends as built in P6: a PKCS#11 helper process (cgo confined to the helper) reaches HSMs and the cloud HSM products through their PKCS#11 libraries (AWS CloudHSM, Google Cloud HSM, Azure Managed HSM); Vault Transit stays; native cloud KMS SDKs are not used (ADR-0060, P6 plan B12).

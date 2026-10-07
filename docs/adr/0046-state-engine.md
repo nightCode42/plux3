@@ -117,7 +117,7 @@ outside the widget tree, and starts its graph with the trigger's concurrency pol
   expression).
 - At publish, the compiler compares each persisted or secure entry with the same entry in
   the channel's previous release. An unchanged type passes. A changed type needs either a
-  migration expression — PXL from the old type to the new, reading the old value as `old`
+  migration expression — PXL from the old type to the new, reading the old value as `previous`
   — or an explicit reset; otherwise publishing is refused. The two fields are additive in
   the state entry; R0's schema change fixes their shape.
 - On the device, a stored value whose fingerprint matches the current type is used as is;
@@ -171,3 +171,7 @@ Both are maintained and well known, but they add two platform plugins to every h
 store values in formats Plux does not control, and leave two storage systems beside the
 built-in store that the outbox and cache need anyway (D5). Wiping a plugin's data would
 span three stores.
+
+## Revision (2026-10-07, P6 plan)
+
+Corrected (P6 plan B19 (d)): the migration expression reads the old value as `previous`, as the implementation and the reference do, not `old`.

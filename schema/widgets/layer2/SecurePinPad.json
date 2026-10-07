@@ -1,0 +1,61 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "SecurePinPad",
+  "id": 105,
+  "layer": 2,
+  "phase": "P6",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "category": "input",
+  "icon": "dialpad",
+  "description": "PIN entry with an optional randomised layout and haptic-only key feedback (SEC-090).",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 150,
+  "accessibility": {
+    "role": "button",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "length",
+      "id": 1,
+      "type": "int",
+      "default": 4,
+      "constraints": {
+        "min": 4,
+        "max": 12
+      },
+      "description": "The number of digits."
+    },
+    {
+      "name": "randomizeLayout",
+      "id": 2,
+      "type": "bool",
+      "default": false,
+      "description": "Shuffles the digit positions each time the pad appears."
+    },
+    {
+      "name": "haptics",
+      "id": 3,
+      "type": "bool",
+      "default": true,
+      "description": "Haptic feedback on key press; no visual key-press animation."
+    }
+  ],
+  "events": [
+    {
+      "name": "onCompleted",
+      "id": 1,
+      "payload": "string",
+      "description": "Fires with the PIN once `length` digits are entered. Sensitive: never logged, traced or persisted (SEC-092)."
+    }
+  ]
+}

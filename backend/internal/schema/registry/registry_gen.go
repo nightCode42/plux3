@@ -146,6 +146,19 @@ var widgets = [...]Widget{
 		},
 	},
 	{
+		Type: "BiometricButton", ID: 107, Layer: 2, Phase: "P6", Revision: 1, Runtimes: []string{"0.1.0"},
+		Category: "interaction", Icon: "fingerprint", Description: "A button that triggers a biometric step-up (SEC-027).",
+		Platforms: PlatformAndroid | PlatformIOS, Cost: 80, Role: RoleButton, Interactive: true,
+		Props: []Prop{
+			{Name: "label", ID: 1, Type: "string", Required: true, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: "The button text."},
+			{Name: "reason", ID: 2, Type: "string", Required: true, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: "Why the app asks, shown by the system prompt."},
+		},
+		Events: []Event{
+			{Name: "onSuccess", ID: 1, Payload: "", Revision: 1, Deprecated: nil, Description: "Fires when the user confirms."},
+			{Name: "onFailure", ID: 2, Payload: "", Revision: 1, Deprecated: nil, Description: "Fires when the confirmation fails or is cancelled."},
+		},
+	},
+	{
 		Type: "BottomAppBar", ID: 88, Layer: 1, Phase: "P3", Revision: 1, Runtimes: []string{"0.1.0"},
 		Category: "structure", Icon: "call_to_action", Description: "A Material bottom app bar.",
 		Platforms: PlatformAndroid | PlatformIOS, Cost: 25, Role: RoleNone, Interactive: false,
@@ -1358,6 +1371,17 @@ var widgets = [...]Widget{
 		},
 	},
 	{
+		Type: "KycCameraCapture", ID: 108, Layer: 2, Phase: "P6", Revision: 1, Runtimes: []string{"0.1.0"},
+		Category: "input", Icon: "photo_camera", Description: "ID document and selfie capture with framing guides and quality checks. Ships in `plux_media`.",
+		Platforms: PlatformAndroid | PlatformIOS, Cost: 400, Role: RoleNone, Interactive: true,
+		Props: []Prop{
+			{Name: "mode", ID: 1, Type: "KycCaptureMode", Required: true, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: "What to capture."},
+		},
+		Events: []Event{
+			{Name: "onCaptured", ID: 1, Payload: "string", Revision: 1, Deprecated: nil, Description: "Fires with a reference to the captured image."},
+		},
+	},
+	{
 		Type: "LimitedBox", ID: 12, Layer: 1, Phase: "P3", Revision: 1, Runtimes: []string{"0.1.0"},
 		Category: "layout", Icon: "aspect_ratio", Description: "Limits its size only when it is unconstrained.",
 		Platforms: PlatformAndroid | PlatformIOS, Cost: 5, Role: RoleNone, Interactive: false,
@@ -1498,6 +1522,19 @@ var widgets = [...]Widget{
 		},
 		Slots: []Slot{
 			{Name: "child", ID: 1, List: false, Required: false, Template: false, Revision: 1, Deprecated: nil, Description: ""},
+		},
+	},
+	{
+		Type: "OtpInput", ID: 106, Layer: 2, Phase: "P6", Revision: 1, Runtimes: []string{"0.1.0"},
+		Category: "input", Icon: "pin", Description: "One-time code entry with platform autofill: SMS User Consent API on Android, one-time-code autofill on iOS (SEC-090).",
+		Platforms: PlatformAndroid | PlatformIOS, Cost: 140, Role: RoleTextField, Interactive: true,
+		Props: []Prop{
+			{Name: "length", ID: 1, Type: "int", Required: false, Default: "6", Constraints: Constraints{Min: Bound{Value: 4, Set: true}, Max: Bound{Value: 12, Set: true}}, Revision: 1, Deprecated: nil, Bindable: true, Description: "The number of characters."},
+			{Name: "alphabet", ID: 2, Type: "OtpAlphabet", Required: false, Default: "\"numeric\"", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: "The characters accepted."},
+			{Name: "autofill", ID: 3, Type: "bool", Required: false, Default: "true", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: "Uses the platform's one-time-code autofill."},
+		},
+		Events: []Event{
+			{Name: "onCompleted", ID: 1, Payload: "string", Revision: 1, Deprecated: nil, Description: "Fires with the code once `length` characters are entered. Sensitive: never logged, traced or persisted (SEC-092)."},
 		},
 	},
 	{
@@ -1782,6 +1819,34 @@ var widgets = [...]Widget{
 		},
 		Slots: []Slot{
 			{Name: "child", ID: 1, List: false, Required: true, Template: false, Revision: 1, Deprecated: nil, Description: ""},
+		},
+	},
+	{
+		Type: "SecurePinPad", ID: 105, Layer: 2, Phase: "P6", Revision: 1, Runtimes: []string{"0.1.0"},
+		Category: "input", Icon: "dialpad", Description: "PIN entry with an optional randomised layout and haptic-only key feedback (SEC-090).",
+		Platforms: PlatformAndroid | PlatformIOS, Cost: 150, Role: RoleButton, Interactive: true,
+		Props: []Prop{
+			{Name: "length", ID: 1, Type: "int", Required: false, Default: "4", Constraints: Constraints{Min: Bound{Value: 4, Set: true}, Max: Bound{Value: 12, Set: true}}, Revision: 1, Deprecated: nil, Bindable: true, Description: "The number of digits."},
+			{Name: "randomizeLayout", ID: 2, Type: "bool", Required: false, Default: "false", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: "Shuffles the digit positions each time the pad appears."},
+			{Name: "haptics", ID: 3, Type: "bool", Required: false, Default: "true", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: "Haptic feedback on key press; no visual key-press animation."},
+		},
+		Events: []Event{
+			{Name: "onCompleted", ID: 1, Payload: "string", Revision: 1, Deprecated: nil, Description: "Fires with the PIN once `length` digits are entered. Sensitive: never logged, traced or persisted (SEC-092)."},
+		},
+	},
+	{
+		Type: "SecureTextField", ID: 104, Layer: 2, Phase: "P6", Revision: 1, Runtimes: []string{"0.1.0"},
+		Category: "input", Icon: "password", Description: "Hardened text entry: obscured, with no suggestions, autocorrect, clipboard or keyboard learning (SEC-090).",
+		Platforms: PlatformAndroid | PlatformIOS, Cost: 120, Role: RoleTextField, Interactive: true,
+		Props: []Prop{
+			{Name: "value", ID: 1, Type: "string", Required: false, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: "The text, bound two-way. Sensitive: never logged, traced or persisted (SEC-092)."},
+			{Name: "label", ID: 2, Type: "string?", Required: false, Default: "", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: "The field label."},
+			{Name: "obscure", ID: 3, Type: "bool", Required: false, Default: "true", Constraints: Constraints{}, Revision: 1, Deprecated: nil, Bindable: true, Description: "Hides the characters."},
+			{Name: "maxLength", ID: 4, Type: "int", Required: false, Default: "", Constraints: Constraints{Min: Bound{Value: 1, Set: true}}, Revision: 1, Deprecated: nil, Bindable: true, Description: "The maximum number of characters."},
+		},
+		Events: []Event{
+			{Name: "onChanged", ID: 1, Payload: "string", Revision: 1, Deprecated: nil, Description: "Fires on every change with the text. Sensitive: never logged, traced or persisted (SEC-092)."},
+			{Name: "onSubmitted", ID: 2, Payload: "string", Revision: 1, Deprecated: nil, Description: "Fires when the user submits. Sensitive: never logged, traced or persisted (SEC-092)."},
 		},
 	},
 	{
@@ -3118,6 +3183,10 @@ var enums = [...]Enum{
 		{Name: "underline", ID: 2, Revision: 1, Deprecated: nil, Description: ""},
 		{Name: "none", ID: 3, Revision: 1, Deprecated: nil, Description: ""},
 	}},
+	{Name: "KycCaptureMode", ID: 76, Revision: 1, Runtimes: []string{"0.1.0"}, Description: "What the KYC camera captures.", Values: []EnumValue{
+		{Name: "document", ID: 1, Revision: 1, Deprecated: nil, Description: ""},
+		{Name: "selfie", ID: 2, Revision: 1, Deprecated: nil, Description: ""},
+	}},
 	{Name: "ListStatus", ID: 30, Revision: 1, Runtimes: []string{"0.1.0"}, Description: "Which state of a lazily built list is shown (WGT-012).", Values: []EnumValue{
 		{Name: "ready", ID: 1, Revision: 1, Deprecated: nil, Description: ""},
 		{Name: "loading", ID: 2, Revision: 1, Deprecated: nil, Description: ""},
@@ -3170,6 +3239,10 @@ var enums = [...]Enum{
 		{Name: "replace", ID: 2, Revision: 1, Deprecated: nil, Description: "Replace the current route."},
 		{Name: "popUntil", ID: 3, Revision: 1, Deprecated: nil, Description: "Pop routes until the named route is on top."},
 		{Name: "clearAndPush", ID: 4, Revision: 1, Deprecated: nil, Description: "Clear the stack, then push the route."},
+	}},
+	{Name: "OtpAlphabet", ID: 75, Revision: 1, Runtimes: []string{"0.1.0"}, Description: "The characters a one-time code may contain.", Values: []EnumValue{
+		{Name: "numeric", ID: 1, Revision: 1, Deprecated: nil, Description: ""},
+		{Name: "alphanumeric", ID: 2, Revision: 1, Deprecated: nil, Description: ""},
 	}},
 	{Name: "OverlayVisibilityMode", ID: 38, Revision: 1, Runtimes: []string{"0.1.0"}, Description: "Mirrors the Flutter enum OverlayVisibilityMode.", Values: []EnumValue{
 		{Name: "never", ID: 1, Revision: 1, Deprecated: nil, Description: ""},

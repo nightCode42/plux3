@@ -152,3 +152,7 @@ the anti-rollback counter and the key handling on the device. What remains for P
 unchanged: the root, snapshot and timestamp roles, thresholds, root rotation (the second
 half of `SEC-051`), development-key rejection on the device (`SEC-056`) and confidential
 bundles (`SEC-053`).
+
+## Revision (2026-10-07, P6 plan)
+
+P6 delivers the second half: the `root`, `snapshot` and `timestamp` roles, thresholds (root 2 of 3), expiries (timestamp 24 h, snapshot 7 days, targets 30 days, root 1 year), rotation, algorithm identifiers, development-key rejection and pins in signed metadata. The design is in ADR-0054.

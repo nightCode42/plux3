@@ -358,6 +358,9 @@ enum PluxErrorCode {
   /// Executable content not allowed.
   executableContent(1503, 'EXECUTABLE_CONTENT', 'Executable content not allowed'),
 
+  /// Direct data source assurance cannot be enforced.
+  directSourceAssuranceUnenforceable(1504, 'DIRECT_SOURCE_ASSURANCE_UNENFORCEABLE', 'Direct data source assurance cannot be enforced'),
+
   /// PXL syntax error.
   pxlSyntaxError(2001, 'PXL_SYNTAX_ERROR', 'PXL syntax error'),
 
@@ -694,11 +697,113 @@ enum PluxErrorCode {
   /// Host event payload invalid.
   hostEventPayloadInvalid(5500, 'HOST_EVENT_PAYLOAD_INVALID', 'Host event payload invalid'),
 
+  /// Device attestation failed.
+  attestationFailed(6001, 'ATTESTATION_FAILED', 'Device attestation failed'),
+
+  /// Device assurance insufficient.
+  assuranceInsufficient(6002, 'ASSURANCE_INSUFFICIENT', 'Device assurance insufficient'),
+
+  /// Key not hardware-backed.
+  keyNotHardwareBacked(6003, 'KEY_NOT_HARDWARE_BACKED', 'Key not hardware-backed'),
+
+  /// Development attestation provider in production.
+  devProviderInProduction(6004, 'DEV_PROVIDER_IN_PRODUCTION', 'Development attestation provider in production'),
+
+  /// Registration challenge invalid.
+  registrationChallengeInvalid(6005, 'REGISTRATION_CHALLENGE_INVALID', 'Registration challenge invalid'),
+
+  /// Device revoked.
+  deviceRevoked(6006, 'DEVICE_REVOKED', 'Device revoked'),
+
+  /// Re-attestation required.
+  reattestationRequired(6007, 'REATTESTATION_REQUIRED', 'Re-attestation required'),
+
+  /// Legacy registration refused.
+  legacyRegistrationRefused(6008, 'LEGACY_REGISTRATION_REFUSED', 'Legacy registration refused'),
+
+  /// Attestation service unavailable.
+  attestationUnavailable(6009, 'ATTESTATION_UNAVAILABLE', 'Attestation service unavailable'),
+
+  /// DPoP proof invalid.
+  dpopProofInvalid(6010, 'DPOP_PROOF_INVALID', 'DPoP proof invalid'),
+
+  /// DPoP proof replayed.
+  dpopReplay(6011, 'DPOP_REPLAY', 'DPoP proof replayed'),
+
+  /// DPoP nonce required.
+  dpopNonceRequired(6012, 'DPOP_NONCE_REQUIRED', 'DPoP nonce required'),
+
+  /// Token binding mismatch.
+  tokenBindingMismatch(6013, 'TOKEN_BINDING_MISMATCH', 'Token binding mismatch'),
+
+  /// Access token invalid.
+  accessTokenInvalid(6014, 'ACCESS_TOKEN_INVALID', 'Access token invalid'),
+
+  /// Replay cache unavailable.
+  replayCacheUnavailable(6015, 'REPLAY_CACHE_UNAVAILABLE', 'Replay cache unavailable'),
+
+  /// User token invalid.
+  userTokenInvalid(6016, 'USER_TOKEN_INVALID', 'User token invalid'),
+
+  /// Device key unavailable.
+  deviceKeyUnavailable(6017, 'DEVICE_KEY_UNAVAILABLE', 'Device key unavailable'),
+
+  /// Certificate pin mismatch.
+  certificatePinMismatch(6020, 'CERTIFICATE_PIN_MISMATCH', 'Certificate pin mismatch'),
+
+  /// Development key in production.
+  developmentKeyInProduction(6021, 'DEVELOPMENT_KEY_IN_PRODUCTION', 'Development key in production'),
+
+  /// Update metadata invalid.
+  updateMetadataInvalid(6022, 'UPDATE_METADATA_INVALID', 'Update metadata invalid'),
+
   /// Outbound request blocked.
   outboundRequestBlocked(6030, 'OUTBOUND_REQUEST_BLOCKED', 'Outbound request blocked'),
 
   /// Asset rejected by the malware scanner.
   assetRejected(6031, 'ASSET_REJECTED', 'Asset rejected by the malware scanner'),
+
+  /// Security configuration hash mismatch.
+  securityConfigHashMismatch(6040, 'SECURITY_CONFIG_HASH_MISMATCH', 'Security configuration hash mismatch'),
+
+  /// Security configuration loosens its preset.
+  securityConfigLoosensPreset(6041, 'SECURITY_CONFIG_LOOSENS_PRESET', 'Security configuration loosens its preset'),
+
+  /// Security configuration out of bounds.
+  securityConfigOutOfBounds(6042, 'SECURITY_CONFIG_OUT_OF_BOUNDS', 'Security configuration out of bounds'),
+
+  /// Confidential key unavailable.
+  confidentialKeyUnavailable(6050, 'CONFIDENTIAL_KEY_UNAVAILABLE', 'Confidential key unavailable'),
+
+  /// Gateway upstream unknown.
+  gatewayUpstreamUnknown(6060, 'GATEWAY_UPSTREAM_UNKNOWN', 'Gateway upstream unknown'),
+
+  /// Gateway destination refused.
+  gatewayDestinationRefused(6061, 'GATEWAY_DESTINATION_REFUSED', 'Gateway destination refused'),
+
+  /// Gateway upstream failed.
+  gatewayUpstreamFailed(6062, 'GATEWAY_UPSTREAM_FAILED', 'Gateway upstream failed'),
+
+  /// Direct data source refused.
+  directDataSourceRefused(6063, 'DIRECT_DATA_SOURCE_REFUSED', 'Direct data source refused'),
+
+  /// Gateway rate limited.
+  gatewayRateLimited(6064, 'GATEWAY_RATE_LIMITED', 'Gateway rate limited'),
+
+  /// Strong customer authentication signature invalid.
+  scaSignatureInvalid(6070, 'SCA_SIGNATURE_INVALID', 'Strong customer authentication signature invalid'),
+
+  /// Strong customer authentication challenge invalid.
+  scaChallengeInvalid(6071, 'SCA_CHALLENGE_INVALID', 'Strong customer authentication challenge invalid'),
+
+  /// Authentication not linked to the request.
+  scaDynamicLinkingMismatch(6072, 'SCA_DYNAMIC_LINKING_MISMATCH', 'Authentication not linked to the request'),
+
+  /// Transaction requires the gateway.
+  transactionRequiresGateway(6073, 'TRANSACTION_REQUIRES_GATEWAY', 'Transaction requires the gateway'),
+
+  /// Runtime tampering detected.
+  raspDetection(6100, 'RASP_DETECTION', 'Runtime tampering detected'),
 
   /// Second factor required.
   multiFactorRequired(8011, 'MULTI_FACTOR_REQUIRED', 'Second factor required'),

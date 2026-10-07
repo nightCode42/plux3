@@ -42,7 +42,32 @@ echo "Simulator: $type on $runtime"
 udid=$(xcrun simctl create plux-e2e "$type" "$runtime")
 trap 'xcrun simctl shutdown "$udid" >/dev/null 2>&1 || true; xcrun simctl delete "$udid" >/dev/null 2>&1 || true' EXIT
 xcrun simctl boot "$udid"
+# While the simulator boots, a few minutes on a cold runner: the server's
+# tests, and the apps of E2E_SHARD's flows (mk/device.mk) built as the flows
+# build them, so the flows' own builds, with their defines, reuse the native
+# part (ADR-0043, Revision).
+# Only the first flow's app: building a second one here took longer than
+# the boot it hides (run 37633642167).
+shard=${E2E_SHARD:-all}
+case "${shard%%+*}" in
+starter) apps=starter ;;
+bank) apps=plux_bank ;;
+express) apps=plux_express ;;
+*) apps= ;;
+esac
+prebuild_log=$out/prebuild-ios.log
+(
+	cd "$root/backend" && go test -count=1 -run '^$' ./internal/server
+	for app in $apps; do
+		(cd "$root/apps/$app" && flutter build ios --simulator --debug --target=integration_test/app_test.dart)
+	done
+) >"$prebuild_log" 2>&1 &
+prebuild=$!
 xcrun simctl bootstatus "$udid" -b >/dev/null
+if ! wait "$prebuild"; then
+	echo "--- $prebuild_log (last 80 lines)"; tail -n 80 "$prebuild_log" || true
+	echo "✗ building the server's tests or the app failed"; exit 1
+fi
 
 status=0
 xcresult=$out/ios.xcresult

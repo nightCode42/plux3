@@ -1,0 +1,93 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package plux.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1";
+
+// GatewayService lets an attested device reach an upstream API through the
+// server, which holds the upstream's credentials and applies the
+// environment's security configuration (SEC-030–SEC-032). Call is the
+// typed form for bodies that fit in one message; a request or response
+// body that must stream uses the equivalent HTTP route, because a unary
+// message is bounded by the request size limit (LIM-001).
+service GatewayService {
+  // Call forwards one request to a configured upstream and returns its
+  // response. The device never sees the upstream's credentials, and the
+  // server refuses an operation the environment has not allowed
+  // (SEC-030).
+  rpc Call(CallRequest) returns (CallResponse) {}
+}
+
+message CallRequest {
+  // upstream names a configured upstream of the device's app and
+  // environment (SEC-030).
+  string upstream = 1;
+  // operation names the allowed operation, so the server can apply its
+  // policy and require a transaction confirmation where one is set
+  // (SEC-031).
+  string operation = 2;
+  // method is the HTTP method.
+  string method = 3;
+  // path is the request path and query, relative to the upstream's base
+  // URL.
+  string path = 4;
+  // headers are the request headers the upstream may receive; the server
+  // drops any it does not allow (SEC-031).
+  map<string, string> headers = 5;
+  // body is the request body.
+  bytes body = 6;
+  // transaction_challenge_id names the challenge from
+  // ScaService.CreateTransactionChallenge that transaction_signature
+  // answers; empty for an operation that needs no confirmation
+  // (SEC-032).
+  string transaction_challenge_id = 7;
+  // transaction_signature is the signature of the device's SCA key over
+  // the challenge and the transaction summary (SEC-032).
+  bytes transaction_signature = 8;
+}
+
+message CallResponse {
+  // status is the upstream's HTTP status code.
+  int32 status = 1;
+  // headers are the response headers the server passes on.
+  map<string, string> headers = 2;
+  // body is the upstream's response body.
+  bytes body = 3;
+}
+
+// ScaService issues the challenges behind strong customer authentication:
+// the user confirms the exact transaction on the device and its SCA key
+// signs it (SEC-027).
+service ScaService {
+  // CreateTransactionChallenge returns a single-use challenge bound to one
+  // transaction summary, which the device shows the user before signing
+  // (SEC-027, SEC-028).
+  rpc CreateTransactionChallenge(CreateTransactionChallengeRequest) returns (CreateTransactionChallengeResponse) {}
+}
+
+message CreateTransactionChallengeRequest {
+  string device_id = 1;
+  // data_source names the data source or upstream the transaction is for.
+  string data_source = 2;
+  // operation names the operation to confirm.
+  string operation = 3;
+  // transaction_summary_jcs is the RFC 8785 canonical JSON of what the
+  // user confirms; the server binds the challenge to its hash, so the
+  // confirmed transaction cannot be swapped (SEC-028).
+  bytes transaction_summary_jcs = 4;
+}
+message CreateTransactionChallengeResponse {
+  // challenge_id is what CallRequest.transaction_challenge_id
+  // carries back.
+  string challenge_id = 1;
+  // challenge is random and single-use; the SCA key signs it together
+  // with the summary hash (SEC-027).
+  bytes challenge = 2;
+  // expires_at is when the challenge stops being accepted.
+  google.protobuf.Timestamp expires_at = 3;
+}

@@ -47,6 +47,18 @@ const (
 	// DeviceServiceReportInstalledProcedure is the fully-qualified name of the DeviceService's
 	// ReportInstalled RPC.
 	DeviceServiceReportInstalledProcedure = "/plux.v1.DeviceService/ReportInstalled"
+	// DeviceServiceCreateRegistrationChallengeProcedure is the fully-qualified name of the
+	// DeviceService's CreateRegistrationChallenge RPC.
+	DeviceServiceCreateRegistrationChallengeProcedure = "/plux.v1.DeviceService/CreateRegistrationChallenge"
+	// DeviceServiceRegisterAttestedDeviceProcedure is the fully-qualified name of the DeviceService's
+	// RegisterAttestedDevice RPC.
+	DeviceServiceRegisterAttestedDeviceProcedure = "/plux.v1.DeviceService/RegisterAttestedDevice"
+	// DeviceServiceReattestDeviceProcedure is the fully-qualified name of the DeviceService's
+	// ReattestDevice RPC.
+	DeviceServiceReattestDeviceProcedure = "/plux.v1.DeviceService/ReattestDevice"
+	// DeviceServiceRevokeDeviceProcedure is the fully-qualified name of the DeviceService's
+	// RevokeDevice RPC.
+	DeviceServiceRevokeDeviceProcedure = "/plux.v1.DeviceService/RevokeDevice"
 )
 
 // DeviceServiceClient is a client for the plux.v1.DeviceService service.
@@ -56,6 +68,20 @@ type DeviceServiceClient interface {
 	ListDevices(context.Context, *connect.Request[pluxv1.ListDevicesRequest]) (*connect.Response[pluxv1.ListDevicesResponse], error)
 	// ReportInstalled records the release a device activated.
 	ReportInstalled(context.Context, *connect.Request[pluxv1.ReportInstalledRequest]) (*connect.Response[pluxv1.ReportInstalledResponse], error)
+	// CreateRegistrationChallenge issues the single-use, short-lived
+	// challenge a registration binds its attestation to (SEC-005). It is
+	// anonymous: the device has no identity yet.
+	CreateRegistrationChallenge(context.Context, *connect.Request[pluxv1.CreateRegistrationChallengeRequest]) (*connect.Response[pluxv1.CreateRegistrationChallengeResponse], error)
+	// RegisterAttestedDevice registers a device whose DPoP key and platform
+	// attestation the server verifies (SEC-001–SEC-005). From P6 the server
+	// refuses RegisterDevice; it stays declared so the contract only grows.
+	RegisterAttestedDevice(context.Context, *connect.Request[pluxv1.RegisterAttestedDeviceRequest]) (*connect.Response[pluxv1.RegisterAttestedDeviceResponse], error)
+	// ReattestDevice replaces a device's attestation with a fresh one, bound
+	// to a new challenge (SEC-006).
+	ReattestDevice(context.Context, *connect.Request[pluxv1.ReattestDeviceRequest]) (*connect.Response[pluxv1.ReattestDeviceResponse], error)
+	// RevokeDevice withdraws a device's trust: its tokens stop working and
+	// it can no longer refresh them. Administrators only (SEC-006).
+	RevokeDevice(context.Context, *connect.Request[pluxv1.RevokeDeviceRequest]) (*connect.Response[pluxv1.RevokeDeviceResponse], error)
 }
 
 // NewDeviceServiceClient constructs a client for the plux.v1.DeviceService service. By default, it
@@ -93,15 +119,43 @@ func NewDeviceServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(deviceServiceMethods.ByName("ReportInstalled")),
 			connect.WithClientOptions(opts...),
 		),
+		createRegistrationChallenge: connect.NewClient[pluxv1.CreateRegistrationChallengeRequest, pluxv1.CreateRegistrationChallengeResponse](
+			httpClient,
+			baseURL+DeviceServiceCreateRegistrationChallengeProcedure,
+			connect.WithSchema(deviceServiceMethods.ByName("CreateRegistrationChallenge")),
+			connect.WithClientOptions(opts...),
+		),
+		registerAttestedDevice: connect.NewClient[pluxv1.RegisterAttestedDeviceRequest, pluxv1.RegisterAttestedDeviceResponse](
+			httpClient,
+			baseURL+DeviceServiceRegisterAttestedDeviceProcedure,
+			connect.WithSchema(deviceServiceMethods.ByName("RegisterAttestedDevice")),
+			connect.WithClientOptions(opts...),
+		),
+		reattestDevice: connect.NewClient[pluxv1.ReattestDeviceRequest, pluxv1.ReattestDeviceResponse](
+			httpClient,
+			baseURL+DeviceServiceReattestDeviceProcedure,
+			connect.WithSchema(deviceServiceMethods.ByName("ReattestDevice")),
+			connect.WithClientOptions(opts...),
+		),
+		revokeDevice: connect.NewClient[pluxv1.RevokeDeviceRequest, pluxv1.RevokeDeviceResponse](
+			httpClient,
+			baseURL+DeviceServiceRevokeDeviceProcedure,
+			connect.WithSchema(deviceServiceMethods.ByName("RevokeDevice")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // deviceServiceClient implements DeviceServiceClient.
 type deviceServiceClient struct {
-	registerDevice  *connect.Client[pluxv1.RegisterDeviceRequest, pluxv1.RegisterDeviceResponse]
-	getDevice       *connect.Client[pluxv1.GetDeviceRequest, pluxv1.GetDeviceResponse]
-	listDevices     *connect.Client[pluxv1.ListDevicesRequest, pluxv1.ListDevicesResponse]
-	reportInstalled *connect.Client[pluxv1.ReportInstalledRequest, pluxv1.ReportInstalledResponse]
+	registerDevice              *connect.Client[pluxv1.RegisterDeviceRequest, pluxv1.RegisterDeviceResponse]
+	getDevice                   *connect.Client[pluxv1.GetDeviceRequest, pluxv1.GetDeviceResponse]
+	listDevices                 *connect.Client[pluxv1.ListDevicesRequest, pluxv1.ListDevicesResponse]
+	reportInstalled             *connect.Client[pluxv1.ReportInstalledRequest, pluxv1.ReportInstalledResponse]
+	createRegistrationChallenge *connect.Client[pluxv1.CreateRegistrationChallengeRequest, pluxv1.CreateRegistrationChallengeResponse]
+	registerAttestedDevice      *connect.Client[pluxv1.RegisterAttestedDeviceRequest, pluxv1.RegisterAttestedDeviceResponse]
+	reattestDevice              *connect.Client[pluxv1.ReattestDeviceRequest, pluxv1.ReattestDeviceResponse]
+	revokeDevice                *connect.Client[pluxv1.RevokeDeviceRequest, pluxv1.RevokeDeviceResponse]
 }
 
 // RegisterDevice calls plux.v1.DeviceService.RegisterDevice.
@@ -124,6 +178,26 @@ func (c *deviceServiceClient) ReportInstalled(ctx context.Context, req *connect.
 	return c.reportInstalled.CallUnary(ctx, req)
 }
 
+// CreateRegistrationChallenge calls plux.v1.DeviceService.CreateRegistrationChallenge.
+func (c *deviceServiceClient) CreateRegistrationChallenge(ctx context.Context, req *connect.Request[pluxv1.CreateRegistrationChallengeRequest]) (*connect.Response[pluxv1.CreateRegistrationChallengeResponse], error) {
+	return c.createRegistrationChallenge.CallUnary(ctx, req)
+}
+
+// RegisterAttestedDevice calls plux.v1.DeviceService.RegisterAttestedDevice.
+func (c *deviceServiceClient) RegisterAttestedDevice(ctx context.Context, req *connect.Request[pluxv1.RegisterAttestedDeviceRequest]) (*connect.Response[pluxv1.RegisterAttestedDeviceResponse], error) {
+	return c.registerAttestedDevice.CallUnary(ctx, req)
+}
+
+// ReattestDevice calls plux.v1.DeviceService.ReattestDevice.
+func (c *deviceServiceClient) ReattestDevice(ctx context.Context, req *connect.Request[pluxv1.ReattestDeviceRequest]) (*connect.Response[pluxv1.ReattestDeviceResponse], error) {
+	return c.reattestDevice.CallUnary(ctx, req)
+}
+
+// RevokeDevice calls plux.v1.DeviceService.RevokeDevice.
+func (c *deviceServiceClient) RevokeDevice(ctx context.Context, req *connect.Request[pluxv1.RevokeDeviceRequest]) (*connect.Response[pluxv1.RevokeDeviceResponse], error) {
+	return c.revokeDevice.CallUnary(ctx, req)
+}
+
 // DeviceServiceHandler is an implementation of the plux.v1.DeviceService service.
 type DeviceServiceHandler interface {
 	RegisterDevice(context.Context, *connect.Request[pluxv1.RegisterDeviceRequest]) (*connect.Response[pluxv1.RegisterDeviceResponse], error)
@@ -131,6 +205,20 @@ type DeviceServiceHandler interface {
 	ListDevices(context.Context, *connect.Request[pluxv1.ListDevicesRequest]) (*connect.Response[pluxv1.ListDevicesResponse], error)
 	// ReportInstalled records the release a device activated.
 	ReportInstalled(context.Context, *connect.Request[pluxv1.ReportInstalledRequest]) (*connect.Response[pluxv1.ReportInstalledResponse], error)
+	// CreateRegistrationChallenge issues the single-use, short-lived
+	// challenge a registration binds its attestation to (SEC-005). It is
+	// anonymous: the device has no identity yet.
+	CreateRegistrationChallenge(context.Context, *connect.Request[pluxv1.CreateRegistrationChallengeRequest]) (*connect.Response[pluxv1.CreateRegistrationChallengeResponse], error)
+	// RegisterAttestedDevice registers a device whose DPoP key and platform
+	// attestation the server verifies (SEC-001–SEC-005). From P6 the server
+	// refuses RegisterDevice; it stays declared so the contract only grows.
+	RegisterAttestedDevice(context.Context, *connect.Request[pluxv1.RegisterAttestedDeviceRequest]) (*connect.Response[pluxv1.RegisterAttestedDeviceResponse], error)
+	// ReattestDevice replaces a device's attestation with a fresh one, bound
+	// to a new challenge (SEC-006).
+	ReattestDevice(context.Context, *connect.Request[pluxv1.ReattestDeviceRequest]) (*connect.Response[pluxv1.ReattestDeviceResponse], error)
+	// RevokeDevice withdraws a device's trust: its tokens stop working and
+	// it can no longer refresh them. Administrators only (SEC-006).
+	RevokeDevice(context.Context, *connect.Request[pluxv1.RevokeDeviceRequest]) (*connect.Response[pluxv1.RevokeDeviceResponse], error)
 }
 
 // NewDeviceServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -164,6 +252,30 @@ func NewDeviceServiceHandler(svc DeviceServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(deviceServiceMethods.ByName("ReportInstalled")),
 		connect.WithHandlerOptions(opts...),
 	)
+	deviceServiceCreateRegistrationChallengeHandler := connect.NewUnaryHandler(
+		DeviceServiceCreateRegistrationChallengeProcedure,
+		svc.CreateRegistrationChallenge,
+		connect.WithSchema(deviceServiceMethods.ByName("CreateRegistrationChallenge")),
+		connect.WithHandlerOptions(opts...),
+	)
+	deviceServiceRegisterAttestedDeviceHandler := connect.NewUnaryHandler(
+		DeviceServiceRegisterAttestedDeviceProcedure,
+		svc.RegisterAttestedDevice,
+		connect.WithSchema(deviceServiceMethods.ByName("RegisterAttestedDevice")),
+		connect.WithHandlerOptions(opts...),
+	)
+	deviceServiceReattestDeviceHandler := connect.NewUnaryHandler(
+		DeviceServiceReattestDeviceProcedure,
+		svc.ReattestDevice,
+		connect.WithSchema(deviceServiceMethods.ByName("ReattestDevice")),
+		connect.WithHandlerOptions(opts...),
+	)
+	deviceServiceRevokeDeviceHandler := connect.NewUnaryHandler(
+		DeviceServiceRevokeDeviceProcedure,
+		svc.RevokeDevice,
+		connect.WithSchema(deviceServiceMethods.ByName("RevokeDevice")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/plux.v1.DeviceService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case DeviceServiceRegisterDeviceProcedure:
@@ -174,6 +286,14 @@ func NewDeviceServiceHandler(svc DeviceServiceHandler, opts ...connect.HandlerOp
 			deviceServiceListDevicesHandler.ServeHTTP(w, r)
 		case DeviceServiceReportInstalledProcedure:
 			deviceServiceReportInstalledHandler.ServeHTTP(w, r)
+		case DeviceServiceCreateRegistrationChallengeProcedure:
+			deviceServiceCreateRegistrationChallengeHandler.ServeHTTP(w, r)
+		case DeviceServiceRegisterAttestedDeviceProcedure:
+			deviceServiceRegisterAttestedDeviceHandler.ServeHTTP(w, r)
+		case DeviceServiceReattestDeviceProcedure:
+			deviceServiceReattestDeviceHandler.ServeHTTP(w, r)
+		case DeviceServiceRevokeDeviceProcedure:
+			deviceServiceRevokeDeviceHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -197,4 +317,20 @@ func (UnimplementedDeviceServiceHandler) ListDevices(context.Context, *connect.R
 
 func (UnimplementedDeviceServiceHandler) ReportInstalled(context.Context, *connect.Request[pluxv1.ReportInstalledRequest]) (*connect.Response[pluxv1.ReportInstalledResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.DeviceService.ReportInstalled is not implemented"))
+}
+
+func (UnimplementedDeviceServiceHandler) CreateRegistrationChallenge(context.Context, *connect.Request[pluxv1.CreateRegistrationChallengeRequest]) (*connect.Response[pluxv1.CreateRegistrationChallengeResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.DeviceService.CreateRegistrationChallenge is not implemented"))
+}
+
+func (UnimplementedDeviceServiceHandler) RegisterAttestedDevice(context.Context, *connect.Request[pluxv1.RegisterAttestedDeviceRequest]) (*connect.Response[pluxv1.RegisterAttestedDeviceResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.DeviceService.RegisterAttestedDevice is not implemented"))
+}
+
+func (UnimplementedDeviceServiceHandler) ReattestDevice(context.Context, *connect.Request[pluxv1.ReattestDeviceRequest]) (*connect.Response[pluxv1.ReattestDeviceResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.DeviceService.ReattestDevice is not implemented"))
+}
+
+func (UnimplementedDeviceServiceHandler) RevokeDevice(context.Context, *connect.Request[pluxv1.RevokeDeviceRequest]) (*connect.Response[pluxv1.RevokeDeviceResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("plux.v1.DeviceService.RevokeDevice is not implemented"))
 }

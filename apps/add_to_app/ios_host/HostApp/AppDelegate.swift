@@ -9,6 +9,16 @@ import UIKit
 final class AppDelegate: UIResponder, UIApplicationDelegate {
   func application(
     _ application: UIApplication,
+    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+  ) -> Bool {
+    // The module's engine starts with the app, as Flutter's add-to-app
+    // guide recommends, so the first Plux page opens at once.
+    PluxHost.shared.warmUp()
+    return true
+  }
+
+  func application(
+    _ application: UIApplication,
     configurationForConnecting connectingSceneSession: UISceneSession,
     options: UIScene.ConnectionOptions
   ) -> UISceneConfiguration {

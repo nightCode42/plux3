@@ -31,6 +31,7 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | `bundle.pluginSize` | bytes | 20971520 | 80% | 268435456 | installation, organization, app, plugin | P1 | BND-010 | Size of one plugin bundle. |
 | `bundle.verifierDepth` | count | 64 | 80% | 256 | installation | P1 | BND-006, QA-004 | Maximum nesting of tables the FlatBuffers verifier accepts in one section. |
 | `bundle.verifierTables` | count | 1000000 | 80% | 10000000 | installation | P1 | BND-006, QA-004 | Maximum number of tables and vectors the FlatBuffers verifier visits in one section. |
+| `confidential.bundleBytes` | bytes | 16777216 | 80% | 268435456 | installation, organization, app | P6 | SEC-053, LIM-004 | Bytes of confidential content one confidential bundle may hold. |
 | `data.cacheBytes` | bytes | 16777216 | 80% | 268435456 | installation, organization, app | P5 | DAT-010, LIM-004 | Bytes the response cache of data sources keeps on the device; the least recently used entries are evicted beyond it. |
 | `data.cacheEntries` | count | 1000 | 80% | 100000 | installation, organization, app | P5 | DAT-010, LIM-004 | Responses the cache of data sources keeps on the device; the least recently used are evicted beyond it. |
 | `data.downloadSize` | bytes | 52428800 | 80% | 2147483648 | installation, organization, app | P5 | DAT-031, LIM-004 | Bytes one download may have; checked against the declared length before the transfer and counted during it, a larger one is stopped. |
@@ -59,6 +60,11 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | `document.fileSize` | bytes | 8388608 | 80% | 67108864 | installation, organization | P1 | SCH-006 | Size of one document file in the project layout, checked before parsing. |
 | `document.jsonDepth` | count | 512 | 80% | 4096 | installation | P1 | SCH-003 | Nesting of arrays and objects in one document, checked while parsing. |
 | `document.stringPropSize` | bytes | 65536 | 80% | 1048576 | installation, organization, app, plugin | P1 | SCH-005 | Size of one string prop value, in UTF-8 bytes. |
+| `dpop.replayCacheEntries` | count | 1000000 | 80% | 100000000 | installation | P6 | SEC-023, LIM-004 | Proof identifiers the DPoP replay cache holds. |
+| `gateway.requestBytes` | bytes | 1048576 | 80% | 33554432 | installation, organization, app | P6 | SEC-031, LIM-004 | Bytes of request body the gateway forwards to an upstream. |
+| `gateway.requestsPerMinutePerDevice` | count | 600 | 80% | 10000 | installation, organization, app | P6 | SEC-031, LIM-004 | Gateway requests one device may send per minute. |
+| `gateway.responseBytes` | bytes | 8388608 | 80% | 67108864 | installation, organization, app | P6 | SEC-031, LIM-004 | Bytes of upstream response body the gateway returns to a device. |
+| `gateway.timeout` | milliseconds | 10000 | 80% | 60000 | installation, organization, app | P6 | SEC-031, LIM-004 | Milliseconds the gateway waits for an upstream to answer. |
 | `http.responseSize` | bytes | 1048576 | 80% | 67108864 | installation | P2 | SEC-104, SEC-105 | Size of a response the server reads when it fetches a URL, such as an identity provider's keys. |
 | `page.animations` | count | 30 | 10 | 200 | installation, organization, app, plugin | P1 | CMP-040 | Animations that can run at the same time on one page. |
 | `page.buildCost` | microseconds | 16000 | 8000 | 100000 | installation, organization, app, plugin | P1 | CMP-040 | Estimated build time of a page on the mid-tier reference device, the sum of its widgets' cost hints. |
@@ -82,6 +88,9 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | `runtime.imageSize` | bytes | 10485760 | 80% | 104857600 | installation, organization, app | P3 | AST-002, SEC-104 | Size of one remote image the runtime downloads; a larger one is refused. |
 | `runtime.sectionCacheBytes` | bytes | 8388608 | 80% | 268435456 | installation, organization, app | P3 | RT-013 | Memory the runtime's cache of decoded page and component sections may hold. |
 | `runtime.sectionCacheEntries` | count | 64 | 80% | 4096 | installation, organization, app | P3 | RT-013 | Page and component sections the runtime keeps decoded. |
+| `sca.challengeLifetime` | milliseconds | 300000 | 80% | 900000 | installation, organization, app | P6 | SEC-027, LIM-004 | Milliseconds a strong customer authentication challenge stays valid. |
+| `securityConfig.bytes` | bytes | 65536 | 80% | 1048576 | installation, organization, app | P6 | SEC-182, LIM-004 | Bytes of a security configuration, encoded. |
+| `securityConfig.patchBytes` | bytes | 16384 | 80% | 262144 | installation, organization, app | P6 | SEC-182, LIM-004 | Bytes of a security configuration patch, encoded. |
 | `state.persistedBytes` | bytes | 1048576 | 80% | 16777216 | installation, organization, app | P5 | STA-003, LIM-004 | Bytes the persisted state of one app may take in the runtime's local store (plain; secure state is the encrypted one, plan p5 B6); writes beyond it stay in memory and are reported. |
 | `state.secureBytes` | bytes | 65536 | 80% | 1048576 | installation, organization, app | P5 | STA-003, LIM-004 | Bytes the secure state of one app may take in the runtime's local store (plain; secure state is the encrypted one, plan p5 B6); writes beyond it stay in memory and are reported. |
 | `telemetry.bufferBytes` | bytes | 262144 | 80% | 4194304 | installation, organization, app | P3 | ANL-002 | The size of the runtime's buffer of unsent telemetry events; the oldest are dropped first. |

@@ -15,6 +15,7 @@ Every widget type Plux documents can use, generated from the descriptors in `sch
 | [BackButton](#backbutton) | 1 | input | P3 | A back-arrow button that pops the current route. |
 | [Badge](#badge) | 1 | display | P3 | A small label, typically a count, on top of its child. |
 | [Baseline](#baseline) | 1 | layout | P3 | Positions its child according to the child's baseline. |
+| [BiometricButton](#biometricbutton) | 2 | interaction | P6 | A button that triggers a biometric step-up (SEC-027). |
 | [BottomAppBar](#bottomappbar) | 1 | structure | P3 | A Material bottom app bar. |
 | [Card](#card) | 1 | display | P3 | A Material card: a panel with slightly rounded corners and an elevation shadow. |
 | [Center](#center) | 1 | layout | P3 | Centres its child within itself. |
@@ -66,6 +67,7 @@ Every widget type Plux documents can use, generated from the descriptors in `sch
 | [IndexedStack](#indexedstack) | 1 | layout | P3 | Shows the child at `index` from a stack of children. |
 | [InkWell](#inkwell) | 1 | interaction | P3 | A rectangular area that responds to touch with a Material ink splash. |
 | [InputChip](#inputchip) | 1 | display | P3 | A chip representing a complex piece of information, such as a contact. |
+| [KycCameraCapture](#kyccameracapture) | 2 | input | P6 | ID document and selfie capture with framing guides and quality checks. Ships in `plux_media`. |
 | [LimitedBox](#limitedbox) | 1 | layout | P3 | Limits its size only when it is unconstrained. |
 | [LinearProgressIndicator](#linearprogressindicator) | 1 | display | P3 | A linear progress indicator, determinate or indeterminate. |
 | [ListTile](#listtile) | 1 | display | P3 | A fixed-height row with leading and trailing content and one to three lines of text. |
@@ -73,6 +75,7 @@ Every widget type Plux documents can use, generated from the descriptors in `sch
 | [Match](#match) | 1 | structure | P3 | Renders the branch whose case equals `value`, or `otherwise`. `cases[i]` selects `branches[i]`. |
 | [OfflineBanner](#offlinebanner) | 2 | feedback | P3 | A banner shown while the device is offline. |
 | [Opacity](#opacity) | 1 | layout | P3 | Makes its child partially transparent. |
+| [OtpInput](#otpinput) | 2 | input | P6 | One-time code entry with platform autofill: SMS User Consent API on Android, one-time-code autofill on iOS (SEC-090). |
 | [OutlinedButton](#outlinedbutton) | 1 | input | P3 | A Material outlined button. |
 | [Padding](#padding) | 1 | layout | P3 | Insets its child by the given padding. |
 | [PageView](#pageview) | 1 | scrolling | P3 | Pages through `item` templates over `items`, one page at a time (WGT-012). |
@@ -86,6 +89,8 @@ Every widget type Plux documents can use, generated from the descriptors in `sch
 | [SafeArea](#safearea) | 1 | layout | P3 | Insets its child to avoid system intrusions such as the status bar and notch. |
 | [Scaffold](#scaffold) | 1 | structure | P3 | The basic Material page structure: app bar, body, floating action button, bottom bar. |
 | [Scrollbar](#scrollbar) | 1 | scrolling | P3 | Shows a Material scrollbar for its scrollable child. |
+| [SecurePinPad](#securepinpad) | 2 | input | P6 | PIN entry with an optional randomised layout and haptic-only key feedback (SEC-090). |
+| [SecureTextField](#securetextfield) | 2 | input | P6 | Hardened text entry: obscured, with no suggestions, autocorrect, clipboard or keyboard learning (SEC-090). |
 | [SegmentedButton](#segmentedbutton) | 1 | input | P3 | Selects one or more options from a small set of segments. |
 | [SelectableText](#selectabletext) | 1 | display | P3 | Text the user can select and copy. |
 | [SingleChildScrollView](#singlechildscrollview) | 1 | scrolling | P3 | Makes a single child scrollable. |
@@ -271,6 +276,22 @@ ID 16 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `Baseline` · an
 | Slot | ID | Holds | Description |
 |---|---|---|---|
 | `child` | 1 | one node |  |
+
+### BiometricButton
+
+A button that triggers a biometric step-up (SEC-027).
+
+ID 107 · Layer 2 · P6 · revision 1 (runtime 0.1.0) · android, ios · cost 80 µs · role button · interactive
+
+| Prop | ID | Type | Default | Description |
+|---|---|---|---|---|
+| `label` | 1 | `string`, required | — | The button text. |
+| `reason` | 2 | `string`, required | — | Why the app asks, shown by the system prompt. |
+
+| Event | ID | Payload | Description |
+|---|---|---|---|
+| `onSuccess` | 1 | — | Fires when the user confirms. |
+| `onFailure` | 2 | — | Fires when the confirmation fails or is cancelled. |
 
 ### BottomAppBar
 
@@ -1651,6 +1672,20 @@ ID 58 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `InputChip` · a
 | `label` | 2 | one node, required |  |
 | `deleteIcon` | 3 | one node |  |
 
+### KycCameraCapture
+
+ID document and selfie capture with framing guides and quality checks. Ships in `plux_media`.
+
+ID 108 · Layer 2 · P6 · revision 1 (runtime 0.1.0) · android, ios · cost 400 µs · role none · interactive
+
+| Prop | ID | Type | Default | Description |
+|---|---|---|---|---|
+| `mode` | 1 | `KycCaptureMode`, required | — | What to capture. |
+
+| Event | ID | Payload | Description |
+|---|---|---|---|
+| `onCaptured` | 1 | `string` | Fires with a reference to the captured image. |
+
 ### LimitedBox
 
 Limits its size only when it is unconstrained.
@@ -1813,6 +1848,22 @@ ID 22 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `Opacity` · and
 | Slot | ID | Holds | Description |
 |---|---|---|---|
 | `child` | 1 | one node |  |
+
+### OtpInput
+
+One-time code entry with platform autofill: SMS User Consent API on Android, one-time-code autofill on iOS (SEC-090).
+
+ID 106 · Layer 2 · P6 · revision 1 (runtime 0.1.0) · android, ios · cost 140 µs · role textField · interactive
+
+| Prop | ID | Type | Default | Description |
+|---|---|---|---|---|
+| `length` | 1 | `int` | `6` | The number of characters. Must be at least 4 and at most 12. |
+| `alphabet` | 2 | `OtpAlphabet` | `"numeric"` | The characters accepted. |
+| `autofill` | 3 | `bool` | `true` | Uses the platform's one-time-code autofill. |
+
+| Event | ID | Payload | Description |
+|---|---|---|---|
+| `onCompleted` | 1 | `string` | Fires with the code once `length` characters are entered. Sensitive: never logged, traced or persisted (SEC-092). |
 
 ### OutlinedButton
 
@@ -2137,6 +2188,40 @@ ID 45 · Layer 1 · P3 · revision 1 (runtime 0.1.0) · Flutter `Scrollbar` · a
 | Slot | ID | Holds | Description |
 |---|---|---|---|
 | `child` | 1 | one node, required |  |
+
+### SecurePinPad
+
+PIN entry with an optional randomised layout and haptic-only key feedback (SEC-090).
+
+ID 105 · Layer 2 · P6 · revision 1 (runtime 0.1.0) · android, ios · cost 150 µs · role button · interactive
+
+| Prop | ID | Type | Default | Description |
+|---|---|---|---|---|
+| `length` | 1 | `int` | `4` | The number of digits. Must be at least 4 and at most 12. |
+| `randomizeLayout` | 2 | `bool` | `false` | Shuffles the digit positions each time the pad appears. |
+| `haptics` | 3 | `bool` | `true` | Haptic feedback on key press; no visual key-press animation. |
+
+| Event | ID | Payload | Description |
+|---|---|---|---|
+| `onCompleted` | 1 | `string` | Fires with the PIN once `length` digits are entered. Sensitive: never logged, traced or persisted (SEC-092). |
+
+### SecureTextField
+
+Hardened text entry: obscured, with no suggestions, autocorrect, clipboard or keyboard learning (SEC-090).
+
+ID 104 · Layer 2 · P6 · revision 1 (runtime 0.1.0) · android, ios · cost 120 µs · role textField · interactive
+
+| Prop | ID | Type | Default | Description |
+|---|---|---|---|---|
+| `value` | 1 | `string` | — | The text, bound two-way. Sensitive: never logged, traced or persisted (SEC-092). |
+| `label` | 2 | `string?` | — | The field label. |
+| `obscure` | 3 | `bool` | `true` | Hides the characters. |
+| `maxLength` | 4 | `int` | — | The maximum number of characters. Must be at least 1. |
+
+| Event | ID | Payload | Description |
+|---|---|---|---|
+| `onChanged` | 1 | `string` | Fires on every change with the text. Sensitive: never logged, traced or persisted (SEC-092). |
+| `onSubmitted` | 2 | `string` | Fires when the user submits. Sensitive: never logged, traced or persisted (SEC-092). |
 
 ### SegmentedButton
 
@@ -3904,6 +3989,17 @@ ID 29 · revision 1
 | `underline` | 2 |  |
 | `none` | 3 |  |
 
+### KycCaptureMode
+
+What the KYC camera captures.
+
+ID 76 · revision 1
+
+| Value | ID | Description |
+|---|---|---|
+| `document` | 1 |  |
+| `selfie` | 2 |  |
+
 ### ListStatus
 
 Which state of a lazily built list is shown (WGT-012).
@@ -4026,6 +4122,17 @@ ID 68 · revision 1
 | `replace` | 2 | Replace the current route. |
 | `popUntil` | 3 | Pop routes until the named route is on top. |
 | `clearAndPush` | 4 | Clear the stack, then push the route. |
+
+### OtpAlphabet
+
+The characters a one-time code may contain.
+
+ID 75 · revision 1
+
+| Value | ID | Description |
+|---|---|---|
+| `numeric` | 1 |  |
+| `alphanumeric` | 2 |  |
 
 ### OverlayVisibilityMode
 

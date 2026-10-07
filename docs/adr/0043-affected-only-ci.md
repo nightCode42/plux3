@@ -218,3 +218,53 @@ locally by `make check-changed`.
 
 Bazel or Nx would compute affected targets from a full build graph, at the cost of
 rewriting every build, a new toolchain to pin, and dependencies outside the allowlist.
+
+## Revision (2026-10-07, P6: device end-to-end shards and build caches)
+
+P5's reference apps and generated-project test made the device jobs the slowest in CI:
+iOS 46 min, Android 26 14 min, Android 35 13 min (run 37613709956). Each flow builds a
+whole app from scratch, one after another; the flows themselves take seconds.
+Maintainer decision (2026-10-07), with a target of 13 to 15 minutes for the device jobs:
+
+- **Shards.** Each device job is a matrix with one shard per flow, selected by
+  `E2E_SHARD` (`mk/device.mk`): `starter`, `generated`, `hosts` (the add-to-app module
+  and hosts), `bank`, `express`, or several joined by `+`. iOS runs four jobs, `starter`,
+  `hosts`, `bank` and `express+generated` (the two shortest flows), because GitHub runs at
+  most five macOS jobs at once and the iOS size job is the fifth (run 37630248033 queued a
+  sixth for six minutes; run 37633642167's `bank+express` took 24.5 minutes). A first cut
+  of three shards (run 37623043856) left the iOS starter-and-generated shard at 25
+  minutes. Every flow still runs on every selected
+  platform; `make e2e-starter` without a shard runs them all, as before. While the
+  emulator or simulator boots, the server's tests and the shard's first app are built
+  (a second app took longer than the boot it hid). A
+  booted emulator whose adb shell stays silent gets adb's server restarted, which drops
+  the stale connection (runs 36966274717, 37630248033); `adb reconnect` is not used, as
+  it can leave two connections under one serial (run 37633642167).
+- **The add-to-app hosts start Flutter with the app.** The hosts' flows were the most
+  frequent device failure (15 jobs in 10 of the last 45 runs, both platforms: "nothing on
+  screen reads 'Welcome to Plux'", an instrumentation crash, a UI-query timeout). Each
+  host created its engine when the first Plux page opened, so that page waited for a
+  cold debug-mode engine and runtime — about 40 seconds on a busy simulator in run
+  37633642167, with the app's main thread too busy to answer XCUITest. Both hosts now
+  start the engine as the app starts, as Flutter's add-to-app guide recommends.
+- **Build caches.** On iOS one per shard: Xcode DerivedData (the add-to-app host's build
+  kept there through `PLUX_E2E_DERIVED_DATA`), CocoaPods and the apps' Flutter build
+  outputs, keyed on the shard, Xcode, Flutter and the hash of the lockfiles and the
+  packages' native code. On Android one Gradle cache for every shard, saved by the
+  starter's shard, whose build has every plugin; the Android shards are short enough
+  without build outputs, which would crowd the repository's cache quota. A restore key on
+  the same toolchain lets a changed lockfile start from the previous build.
+- **Who writes.** Every run restores; a passing push, scheduled or manual run saves
+  (Android from API 35 only); a pull request never saves. GitHub scopes a cache to the
+  branch that saved it: `main`'s caches reach every branch, a branch's reach only that
+  branch, so no branch or pull request can write a cache `main` reads (cache poisoning),
+  and a broken build is never saved. First cut: only `main` saved, which left every
+  branch run cold (runs 147–150: iOS jobs of 15 to 25 minutes, nearly all of it
+  building); the maintainer chose branch-scoped saves (2026-10-07).
+- **Downloads.** Ten emulator jobs at once overloaded the shared sources (run 37644772933:
+  Maven Central answered 429 Too Many Requests, and an emulator archive arrived broken).
+  The Gradle cache falls back to `main`'s cache from before the shards, the emulator and
+  its system image are cached per API level, and the SDK install retries after 15 and 45
+  seconds. A
+  miss is a clean build, as before. Incremental builds are Xcode's and Gradle's own, which
+  track inputs by content.

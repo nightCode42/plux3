@@ -1,0 +1,61 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "OtpInput",
+  "id": 106,
+  "layer": 2,
+  "phase": "P6",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "category": "input",
+  "icon": "pin",
+  "description": "One-time code entry with platform autofill: SMS User Consent API on Android, one-time-code autofill on iOS (SEC-090).",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 140,
+  "accessibility": {
+    "role": "textField",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "length",
+      "id": 1,
+      "type": "int",
+      "default": 6,
+      "constraints": {
+        "min": 4,
+        "max": 12
+      },
+      "description": "The number of characters."
+    },
+    {
+      "name": "alphabet",
+      "id": 2,
+      "type": "OtpAlphabet",
+      "default": "numeric",
+      "description": "The characters accepted."
+    },
+    {
+      "name": "autofill",
+      "id": 3,
+      "type": "bool",
+      "default": true,
+      "description": "Uses the platform's one-time-code autofill."
+    }
+  ],
+  "events": [
+    {
+      "name": "onCompleted",
+      "id": 1,
+      "payload": "string",
+      "description": "Fires with the code once `length` characters are entered. Sensitive: never logged, traced or persisted (SEC-092)."
+    }
+  ]
+}

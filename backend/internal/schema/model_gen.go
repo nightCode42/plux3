@@ -174,6 +174,8 @@ type AppDocument struct {
 	NativeCatalogue string `json:"nativeCatalogue,omitempty"`
 	// SecurityProfile: Security profile (§15.12).
 	SecurityProfile SecurityProfile `json:"securityProfile"`
+	// Security: App-level security settings (SEC-181).
+	Security *AppSecurity `json:"security,omitempty"`
 	// Sync: Sync policy (§10.4).
 	Sync SyncPolicy `json:"sync"`
 	// MinRuntimeVersion: Semantic version major.minor.patch.
@@ -205,6 +207,29 @@ type AppDocument struct {
 	// the owner's error handler (ACT-020). A page's runs are cancelled with the
 	// page; a plugin's and the app's run while the release is active.
 	Triggers *Triggers `json:"triggers,omitempty"`
+}
+
+// AppSecurity — App-level security settings (SEC-181).
+type AppSecurity struct {
+	// Settings: A document-tightenable subset of the security profile. May only
+	// tighten the effective profile (SEC-181); checked by the compiler and the
+	// server.
+	Settings *AppSecuritySettings `json:"settings,omitempty"`
+}
+
+// AppSecuritySettings — A document-tightenable subset of the security
+// profile. May only tighten the effective profile (SEC-181); checked by the
+// compiler and the server.
+type AppSecuritySettings struct {
+	AllowDirectDataSources    *bool          `json:"allowDirectDataSources,omitempty"`
+	MinAssuranceForSync       AssuranceLevel `json:"minAssuranceForSync,omitempty"`
+	ScreenshotBlockingDefault *bool          `json:"screenshotBlockingDefault,omitempty"`
+	InactivityLock            *bool          `json:"inactivityLock,omitempty"`
+	// InactivityLockTimeout: Seconds.
+	InactivityLockTimeout *int64 `json:"inactivityLockTimeout,omitempty"`
+	// RaspRootHookingResponse: How the runtime answers a rooted or hooked device
+	// (SEC-181).
+	RaspRootHookingResponse RaspResponse `json:"raspRootHookingResponse,omitempty"`
 }
 
 // ApprovedCapabilities — The capabilities the app approves for its plugins
@@ -436,6 +461,15 @@ type DataSource struct {
 	Mock json.RawMessage `json:"mock"`
 	// Config: Kind-specific configuration, validated from P5 (DAT-001).
 	Config json.RawMessage `json:"config,omitempty"`
+	// Route: Absent means `plux`. How the runtime reaches the source: through
+	// the Plux gateway (`plux`) or straight to the origin (`direct`). Direct is
+	// an opt-in; a security profile may refuse it (SEC-030).
+	Route DataSourceRoute `json:"route,omitempty"`
+	// Transaction: JSON Pointers into the operation's input naming the fields
+	// that are signed for SCA dynamic linking (SEC-028). Requires route `plux`;
+	// the compiler enforces that.
+	Transaction       *DataSourceTransaction `json:"transaction,omitempty"`
+	RequiresAssurance AssuranceLevel         `json:"requiresAssurance,omitempty"`
 	// Description: Human-readable description.
 	Description string `json:"description,omitempty"`
 }
@@ -462,6 +496,41 @@ func (v DataSourceKind) Valid() bool {
 		return true
 	}
 	return false
+}
+
+// DataSourceRoute — Absent means `plux`. How the runtime reaches the
+// source: through the Plux gateway (`plux`) or straight to the origin
+// (`direct`). Direct is an opt-in; a security profile may refuse it
+// (SEC-030).
+type DataSourceRoute string
+
+// Values of DataSourceRoute.
+const (
+	DataSourceRoutePlux   DataSourceRoute = "plux"
+	DataSourceRouteDirect DataSourceRoute = "direct"
+)
+
+// Valid reports whether v is one of the values of DataSourceRoute.
+func (v DataSourceRoute) Valid() bool {
+	switch v {
+	case DataSourceRoutePlux, DataSourceRouteDirect:
+		return true
+	}
+	return false
+}
+
+// DataSourceTransaction — JSON Pointers into the operation's input naming
+// the fields that are signed for SCA dynamic linking (SEC-028). Requires
+// route `plux`; the compiler enforces that.
+type DataSourceTransaction struct {
+	// Amount: Pointer to the amount.
+	Amount string `json:"amount"`
+	// Currency: Pointer to the currency.
+	Currency string `json:"currency"`
+	// Payee: Pointer to the payee.
+	Payee string `json:"payee"`
+	// Summary: Pointer to a human-readable summary.
+	Summary string `json:"summary,omitempty"`
 }
 
 // DataSourceTriggers — Handlers of a data source's events (ACT-002): the
@@ -667,6 +736,9 @@ type FormField struct {
 	// mocks, environment values).
 	Initial    json.RawMessage `json:"initial,omitempty"`
 	Validators []FormValidator `json:"validators,omitempty"`
+	// Sensitive: Absent means false. The value is sensitive: never logged,
+	// traced, persisted or sent to analytics (SCH-012, SEC-092).
+	Sensitive *bool `json:"sensitive,omitempty"`
 	// Description: Human-readable description.
 	Description string `json:"description,omitempty"`
 }
@@ -738,9 +810,10 @@ func (v FormValidatorKind) Valid() bool {
 // (FN-006).
 type FunctionGrant struct {
 	// ID: Immutable UUIDv7 identifier in canonical lower-case form (SCH-002).
-	ID       string `json:"id"`
-	Function string `json:"function"`
-	Alias    string `json:"alias,omitempty"`
+	ID                string         `json:"id"`
+	Function          string         `json:"function"`
+	Alias             string         `json:"alias,omitempty"`
+	RequiresAssurance AssuranceLevel `json:"requiresAssurance,omitempty"`
 }
 
 // HostBuild — The host app build the catalogue describes.
@@ -1153,6 +1226,27 @@ type PushPolicy struct {
 	Enabled bool `json:"enabled"`
 	// PayloadKey: The payload key holding `{route, params}`; `plux` when absent.
 	PayloadKey string `json:"payloadKey,omitempty"`
+}
+
+// RaspResponse — How the runtime answers a rooted or hooked device
+// (SEC-181).
+type RaspResponse string
+
+// Values of RaspResponse.
+const (
+	RaspResponseReport  RaspResponse = "report"
+	RaspResponseWarn    RaspResponse = "warn"
+	RaspResponseDegrade RaspResponse = "degrade"
+	RaspResponseBlock   RaspResponse = "block"
+)
+
+// Valid reports whether v is one of the values of RaspResponse.
+func (v RaspResponse) Valid() bool {
+	switch v {
+	case RaspResponseReport, RaspResponseWarn, RaspResponseDegrade, RaspResponseBlock:
+		return true
+	}
+	return false
 }
 
 // ReduceMotion — What an animation does when the platform asks to reduce

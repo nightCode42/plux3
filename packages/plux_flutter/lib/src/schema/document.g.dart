@@ -155,7 +155,7 @@ enum AnimTransitionKind {
 /// An app: its plugins, theme, locales, environments, shared data and policies
 /// (SCH-020). File: `app.json`.
 final class AppDocument {
-  const AppDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.icon, required this.defaultLocale, required this.supportedLocales, required this.theme, required this.entryRoute, this.navigation, required this.plugins, this.capabilities, required this.environments, this.variables, this.dataSources, this.nativeCatalogue, required this.securityProfile, required this.sync, required this.minRuntimeVersion, this.requiredFeatures, this.flags, this.types, this.state, this.collections, this.droppedCollections, this.userContext, this.hostEvents, this.telemetry, this.push, this.triggers});
+  const AppDocument({required this.schemaVersion, required this.kind, required this.id, required this.key, required this.name, this.description, required this.icon, required this.defaultLocale, required this.supportedLocales, required this.theme, required this.entryRoute, this.navigation, required this.plugins, this.capabilities, required this.environments, this.variables, this.dataSources, this.nativeCatalogue, required this.securityProfile, this.security, required this.sync, required this.minRuntimeVersion, this.requiredFeatures, this.flags, this.types, this.state, this.collections, this.droppedCollections, this.userContext, this.hostEvents, this.telemetry, this.push, this.triggers});
 
   /// Decodes a JSON object.
   factory AppDocument.fromJson(Object json) {
@@ -180,6 +180,7 @@ final class AppDocument {
       dataSources: m['dataSources'] == null ? null : [for (final e in m['dataSources']! as List<Object?>) DataSource.fromJson(e!)],
       nativeCatalogue: m['nativeCatalogue'] == null ? null : m['nativeCatalogue']! as String,
       securityProfile: SecurityProfile.fromJson(m['securityProfile']!),
+      security: m['security'] == null ? null : AppSecurity.fromJson(m['security']!),
       sync: SyncPolicy.fromJson(m['sync']!),
       minRuntimeVersion: m['minRuntimeVersion']! as String,
       requiredFeatures: m['requiredFeatures'] == null ? null : RequiredFeaturesPolicy.fromJson(m['requiredFeatures']!),
@@ -238,6 +239,8 @@ final class AppDocument {
   final String? nativeCatalogue;
   /// Security profile (§15.12).
   final SecurityProfile securityProfile;
+  /// App-level security settings (SEC-181).
+  final AppSecurity? security;
   /// Sync policy (§10.4).
   final SyncPolicy sync;
   /// Semantic version major.minor.patch.
@@ -291,6 +294,7 @@ final class AppDocument {
         if (dataSources != null) 'dataSources': [for (final e in dataSources!) e.toJson()],
         if (nativeCatalogue != null) 'nativeCatalogue': nativeCatalogue!,
         'securityProfile': securityProfile.toJson(),
+        if (security != null) 'security': security!.toJson(),
         'sync': sync.toJson(),
         'minRuntimeVersion': minRuntimeVersion,
         if (requiredFeatures != null) 'requiredFeatures': requiredFeatures!.toJson(),
@@ -304,6 +308,66 @@ final class AppDocument {
         if (telemetry != null) 'telemetry': telemetry!.toJson(),
         if (push != null) 'push': push!.toJson(),
         if (triggers != null) 'triggers': triggers!.toJson(),
+      };
+}
+
+/// App-level security settings (SEC-181).
+final class AppSecurity {
+  const AppSecurity({this.settings});
+
+  /// Decodes a JSON object.
+  factory AppSecurity.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return AppSecurity(
+      settings: m['settings'] == null ? null : AppSecuritySettings.fromJson(m['settings']!),
+    );
+  }
+
+  /// A document-tightenable subset of the security profile. May only tighten
+  /// the effective profile (SEC-181); checked by the compiler and the server.
+  final AppSecuritySettings? settings;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (settings != null) 'settings': settings!.toJson(),
+      };
+}
+
+/// A document-tightenable subset of the security profile. May only tighten the
+/// effective profile (SEC-181); checked by the compiler and the server.
+final class AppSecuritySettings {
+  const AppSecuritySettings({this.allowDirectDataSources, this.minAssuranceForSync, this.screenshotBlockingDefault, this.inactivityLock, this.inactivityLockTimeout, this.raspRootHookingResponse});
+
+  /// Decodes a JSON object.
+  factory AppSecuritySettings.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return AppSecuritySettings(
+      allowDirectDataSources: m['allowDirectDataSources'] == null ? null : m['allowDirectDataSources']! as bool,
+      minAssuranceForSync: m['minAssuranceForSync'] == null ? null : AssuranceLevel.fromJson(m['minAssuranceForSync']!),
+      screenshotBlockingDefault: m['screenshotBlockingDefault'] == null ? null : m['screenshotBlockingDefault']! as bool,
+      inactivityLock: m['inactivityLock'] == null ? null : m['inactivityLock']! as bool,
+      inactivityLockTimeout: m['inactivityLockTimeout'] == null ? null : (m['inactivityLockTimeout']! as num).toInt(),
+      raspRootHookingResponse: m['raspRootHookingResponse'] == null ? null : RaspResponse.fromJson(m['raspRootHookingResponse']!),
+    );
+  }
+
+  final bool? allowDirectDataSources;
+  final AssuranceLevel? minAssuranceForSync;
+  final bool? screenshotBlockingDefault;
+  final bool? inactivityLock;
+  /// Seconds.
+  final int? inactivityLockTimeout;
+  /// How the runtime answers a rooted or hooked device (SEC-181).
+  final RaspResponse? raspRootHookingResponse;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        if (allowDirectDataSources != null) 'allowDirectDataSources': allowDirectDataSources!,
+        if (minAssuranceForSync != null) 'minAssuranceForSync': minAssuranceForSync!.toJson(),
+        if (screenshotBlockingDefault != null) 'screenshotBlockingDefault': screenshotBlockingDefault!,
+        if (inactivityLock != null) 'inactivityLock': inactivityLock!,
+        if (inactivityLockTimeout != null) 'inactivityLockTimeout': inactivityLockTimeout!,
+        if (raspRootHookingResponse != null) 'raspRootHookingResponse': raspRootHookingResponse!.toJson(),
       };
 }
 
@@ -790,7 +854,7 @@ enum Curve {
 
 /// A data source with its value type and design-time mock (SCH-024, DAT-080).
 final class DataSource {
-  const DataSource({required this.id, required this.name, required this.kind, required this.type, required this.mock, this.config, this.description});
+  const DataSource({required this.id, required this.name, required this.kind, required this.type, required this.mock, this.config, this.route, this.transaction, this.requiresAssurance, this.description});
 
   /// Decodes a JSON object.
   factory DataSource.fromJson(Object json) {
@@ -802,6 +866,9 @@ final class DataSource {
       type: m['type']! as String,
       mock: m['mock'],
       config: m.containsKey('config') ? JsonValue(m['config']) : null,
+      route: m['route'] == null ? null : DataSourceRoute.fromJson(m['route']!),
+      transaction: m['transaction'] == null ? null : DataSourceTransaction.fromJson(m['transaction']!),
+      requiresAssurance: m['requiresAssurance'] == null ? null : AssuranceLevel.fromJson(m['requiresAssurance']!),
       description: m['description'] == null ? null : m['description']! as String,
     );
   }
@@ -819,6 +886,15 @@ final class DataSource {
   final Object? mock;
   /// Kind-specific configuration, validated from P5 (DAT-001).
   final JsonValue? config;
+  /// Absent means `plux`. How the runtime reaches the source: through the Plux
+  /// gateway (`plux`) or straight to the origin (`direct`). Direct is an
+  /// opt-in; a security profile may refuse it (SEC-030).
+  final DataSourceRoute? route;
+  /// JSON Pointers into the operation's input naming the fields that are signed
+  /// for SCA dynamic linking (SEC-028). Requires route `plux`; the compiler
+  /// enforces that.
+  final DataSourceTransaction? transaction;
+  final AssuranceLevel? requiresAssurance;
   /// Human-readable description.
   final String? description;
 
@@ -830,6 +906,9 @@ final class DataSource {
         'type': type,
         'mock': mock,
         if (config != null) 'config': config!.value,
+        if (route != null) 'route': route!.toJson(),
+        if (transaction != null) 'transaction': transaction!.toJson(),
+        if (requiresAssurance != null) 'requiresAssurance': requiresAssurance!.toJson(),
         if (description != null) 'description': description!,
       };
 }
@@ -854,6 +933,61 @@ enum DataSourceKind {
 
   /// Encodes the JSON value.
   String toJson() => json;
+}
+
+/// Absent means `plux`. How the runtime reaches the source: through the Plux
+/// gateway (`plux`) or straight to the origin (`direct`). Direct is an opt-in;
+/// a security profile may refuse it (SEC-030).
+enum DataSourceRoute {
+  plux('plux'),
+  direct('direct');
+
+  const DataSourceRoute(this.json);
+
+  /// Decodes a JSON value.
+  factory DataSourceRoute.fromJson(Object json) =>
+      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown DataSourceRoute', json));
+
+  /// The JSON value.
+  final String json;
+
+  /// Encodes the JSON value.
+  String toJson() => json;
+}
+
+/// JSON Pointers into the operation's input naming the fields that are signed
+/// for SCA dynamic linking (SEC-028). Requires route `plux`; the compiler
+/// enforces that.
+final class DataSourceTransaction {
+  const DataSourceTransaction({required this.amount, required this.currency, required this.payee, this.summary});
+
+  /// Decodes a JSON object.
+  factory DataSourceTransaction.fromJson(Object json) {
+    final m = json as Map<String, Object?>;
+    return DataSourceTransaction(
+      amount: m['amount']! as String,
+      currency: m['currency']! as String,
+      payee: m['payee']! as String,
+      summary: m['summary'] == null ? null : m['summary']! as String,
+    );
+  }
+
+  /// Pointer to the amount.
+  final String amount;
+  /// Pointer to the currency.
+  final String currency;
+  /// Pointer to the payee.
+  final String payee;
+  /// Pointer to a human-readable summary.
+  final String? summary;
+
+  /// Encodes a JSON object.
+  Map<String, Object?> toJson() => {
+        'amount': amount,
+        'currency': currency,
+        'payee': payee,
+        if (summary != null) 'summary': summary!,
+      };
 }
 
 /// Handlers of a data source's events (ACT-002): the loaded value is onLoaded's
@@ -1227,7 +1361,7 @@ final class Form {
 /// A field of a form: its type, initial value and validators, run in order
 /// (STA-020).
 final class FormField {
-  const FormField({required this.name, required this.type, this.initial, this.validators, this.description});
+  const FormField({required this.name, required this.type, this.initial, this.validators, this.sensitive, this.description});
 
   /// Decodes a JSON object.
   factory FormField.fromJson(Object json) {
@@ -1237,6 +1371,7 @@ final class FormField {
       type: m['type']! as String,
       initial: m.containsKey('initial') ? JsonValue(m['initial']) : null,
       validators: m['validators'] == null ? null : [for (final e in m['validators']! as List<Object?>) FormValidator.fromJson(e!)],
+      sensitive: m['sensitive'] == null ? null : m['sensitive']! as bool,
       description: m['description'] == null ? null : m['description']! as String,
     );
   }
@@ -1250,6 +1385,9 @@ final class FormField {
   /// environment values).
   final JsonValue? initial;
   final List<FormValidator>? validators;
+  /// Absent means false. The value is sensitive: never logged, traced,
+  /// persisted or sent to analytics (SCH-012, SEC-092).
+  final bool? sensitive;
   /// Human-readable description.
   final String? description;
 
@@ -1259,6 +1397,7 @@ final class FormField {
         'type': type,
         if (initial != null) 'initial': initial!.value,
         if (validators != null) 'validators': [for (final e in validators!) e.toJson()],
+        if (sensitive != null) 'sensitive': sensitive!,
         if (description != null) 'description': description!,
       };
 }
@@ -1361,7 +1500,7 @@ enum FormValidatorKind {
 
 /// A function the plugin may call, with an optional alias (FN-006).
 final class FunctionGrant {
-  const FunctionGrant({required this.id, required this.function, this.alias});
+  const FunctionGrant({required this.id, required this.function, this.alias, this.requiresAssurance});
 
   /// Decodes a JSON object.
   factory FunctionGrant.fromJson(Object json) {
@@ -1370,6 +1509,7 @@ final class FunctionGrant {
       id: m['id']! as String,
       function: m['function']! as String,
       alias: m['alias'] == null ? null : m['alias']! as String,
+      requiresAssurance: m['requiresAssurance'] == null ? null : AssuranceLevel.fromJson(m['requiresAssurance']!),
     );
   }
 
@@ -1377,12 +1517,14 @@ final class FunctionGrant {
   final String id;
   final String function;
   final String? alias;
+  final AssuranceLevel? requiresAssurance;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
         'id': id,
         'function': function,
         if (alias != null) 'alias': alias!,
+        if (requiresAssurance != null) 'requiresAssurance': requiresAssurance!.toJson(),
       };
 }
 
@@ -2263,6 +2405,26 @@ final class PushPolicy {
         'enabled': enabled,
         if (payloadKey != null) 'payloadKey': payloadKey!,
       };
+}
+
+/// How the runtime answers a rooted or hooked device (SEC-181).
+enum RaspResponse {
+  report('report'),
+  warn('warn'),
+  degrade('degrade'),
+  block('block');
+
+  const RaspResponse(this.json);
+
+  /// Decodes a JSON value.
+  factory RaspResponse.fromJson(Object json) =>
+      values.firstWhere((v) => v.json == json, orElse: () => throw FormatException('unknown RaspResponse', json));
+
+  /// The JSON value.
+  final String json;
+
+  /// Encodes the JSON value.
+  String toJson() => json;
 }
 
 /// What an animation does when the platform asks to reduce motion (ANI-007):

@@ -46,6 +46,29 @@ message Manifest {
   // signatures sign `signed`. There may be several, so that keys can be
   // rotated and thresholds applied (ADR-0004).
   repeated Signature signatures = 12;
+  // config is the security configuration this release requires; it is
+  // part of the signed document (SEC-182).
+  SecurityConfigRef config = 13;
+  // metadata names the update-metadata versions the manifest belongs to,
+  // for rollback and freeze checks; part of the signed document
+  // (SEC-050).
+  UpdateMetadataRef metadata = 14;
+}
+
+// SecurityConfigRef pins one version of the effective security
+// configuration (SEC-182).
+message SecurityConfigRef {
+  int64 version = 1;
+  // sha256 is the hash of the canonical configuration at that version.
+  bytes sha256 = 2;
+}
+
+// UpdateMetadataRef names the TUF-style metadata versions a manifest was
+// signed under (SEC-050, ADR-0004).
+message UpdateMetadataRef {
+  int64 root_version = 1;
+  int64 snapshot_version = 2;
+  int64 timestamp_version = 3;
 }
 
 // Signature is one signature over a signed document (ADR-0004).
@@ -127,6 +150,9 @@ message GetManifestRequest {
   // per installed bundle, sorted by key, the app bundle's key empty. A
   // device that sends it with if_none_match sends no installed list.
   bytes installed_digest = 7;
+  // config_version is the security configuration version the device
+  // holds, zero for none (SEC-182).
+  int64 config_version = 8;
 }
 
 message GetManifestResponse {
@@ -138,6 +164,14 @@ message GetManifestResponse {
   // found the manifest changed: manifest is unset, and the device asks
   // again with installed, from which the server plans its deltas.
   bool installed_required = 4;
+  // config_patch is an RFC 7396 merge patch, as JSON, from the
+  // configuration version the device sent to the one the manifest names.
+  // It is outside the signed part: the device verifies the patched
+  // result against the manifest's config hash (SEC-182).
+  bytes config_patch = 5;
+  // config_full_required is true when no patch can be given, so the
+  // device fetches the whole configuration (SEC-182).
+  bool config_full_required = 6;
 }
 
 message GetRootKeysRequest {

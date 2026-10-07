@@ -41,9 +41,19 @@ mkdir -p "$out"
 
 yes | "$tools/sdkmanager" --licenses >/dev/null || true
 # A download that arrives broken ("Error on ZipFile unknown archive", CI
-# run 36743012409) is fetched once more before the job gives up.
-"$tools/sdkmanager" --install emulator platform-tools "$image" >"$out/sdkmanager.log" ||
-	"$tools/sdkmanager" --install emulator platform-tools "$image" >>"$out/sdkmanager.log"
+# runs 36743012409 and 37644772933, where ten emulator jobs downloaded the
+# same packages at once) is fetched again after 15 and 45 seconds before
+# the job gives up. CI restores the packages from its cache first, so a
+# download is the exception.
+: >"$out/sdkmanager.log"
+for wait in 0 15 45; do
+	sleep "$wait"
+	if "$tools/sdkmanager" --install emulator platform-tools "$image" >>"$out/sdkmanager.log" 2>&1; then
+		installed=true; break
+	fi
+	installed=false
+done
+$installed || { tail -n 20 "$out/sdkmanager.log"; echo "✗ the Android SDK packages did not install"; exit 1; }
 # One AVD home for avdmanager and the emulator, whatever the runner sets.
 export ANDROID_AVD_HOME=${ANDROID_AVD_HOME:-$HOME/.android/avd}
 mkdir -p "$ANDROID_AVD_HOME"
@@ -65,15 +75,21 @@ serial=emulator-5554
 trap '"$adb" -s "$serial" emu kill >/dev/null 2>&1 || kill "$emulator" 2>/dev/null || true' EXIT
 
 prebuild_log=$out/prebuild-$api.log
+# Only what E2E_SHARD's flows build (mk/device.mk).
+shard=${E2E_SHARD:-all}
 (
 	cd "$root/backend" && go test -count=1 -run '^$' ./internal/server
-	cd "$root/apps/starter" && flutter build apk --debug
-	# The add-to-app host with the Gradle wrapper flutter pub get writes
-	# into the module (TestAddToAppAgainstTheServer builds it again, with
-	# the baseline it pulls).
-	cd "$root/apps/add_to_app/plux_module" && flutter pub get
-	cd "$root/apps/add_to_app/android_host" && ../plux_module/.android/gradlew --no-daemon --console=plain \
-		-Ptarget-platform=android-x64 :app:assembleDebug :app:assembleDebugAndroidTest
+	if [ "$shard" = all ] || [ "$shard" = starter ]; then
+		cd "$root/apps/starter" && flutter build apk --debug
+	fi
+	if [ "$shard" = all ] || [ "$shard" = hosts ]; then
+		# The add-to-app host with the Gradle wrapper flutter pub get writes
+		# into the module (TestAddToAppAgainstTheServer builds it again, with
+		# the baseline it pulls).
+		cd "$root/apps/add_to_app/plux_module" && flutter pub get
+		cd "$root/apps/add_to_app/android_host" && ../plux_module/.android/gradlew --no-daemon --console=plain \
+			-Ptarget-platform=android-x64 :app:assembleDebug :app:assembleDebugAndroidTest
+	fi
 ) >"$prebuild_log" 2>&1 &
 prebuild=$!
 
@@ -87,17 +103,38 @@ fail() {
 
 # Booted when sys.boot_completed is 1; never waits on a dead emulator or
 # longer than ten minutes of wall time (adb wait-for-device would wait
-# forever).
+# forever). The emulator can report its boot complete while adb's shell
+# never answers on a stale connection (CI runs 36966274717, 37630248033:
+# listed as a device, no answer for ten minutes); 30 seconds after the
+# emulator's own report, and every 30 seconds after that, adb's server
+# restarts, dropping every connection, and finds the emulator again.
+# adb reconnect is not used: it can leave two connections under one serial,
+# which every later "adb -s" refuses (run 37633642167).
 booted=false
 deadline=$((SECONDS + 600))
+answer=
+restart_at=
+restarts=0
 while [ "$SECONDS" -lt "$deadline" ]; do
 	kill -0 "$emulator" 2>/dev/null || fail "the emulator exited while booting"
-	if [ "$(timeout 10 "$adb" -s "$serial" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; then
+	answer=$(timeout 10 "$adb" -s "$serial" shell getprop sys.boot_completed 2>&1 | tr -d '\r') || true
+	if [ "$answer" = 1 ]; then
 		booted=true; break
+	fi
+	if grep -q 'Boot completed' "$log"; then
+		if [ -z "$restart_at" ]; then
+			restart_at=$((SECONDS + 30))
+		elif [ "$SECONDS" -ge "$restart_at" ]; then
+			restarts=$((restarts + 1))
+			echo "adb has no answer from the booted emulator (last: ${answer:-nothing}); restarting adb's server ($restarts)"
+			timeout 10 "$adb" kill-server >/dev/null 2>&1 || true
+			timeout 10 "$adb" start-server >/dev/null 2>&1 || true
+			restart_at=$((SECONDS + 30))
+		fi
 	fi
 	sleep 2
 done
-$booted || fail "the emulator did not boot in 10 minutes"
+$booted || fail "the emulator did not boot in 10 minutes (adb's last answer: ${answer:-nothing})"
 if ! wait "$prebuild"; then
 	echo "--- $prebuild_log (last 80 lines)"; tail -n 80 "$prebuild_log" || true
 	echo "✗ building the driver or the app failed"; exit 1
@@ -110,4 +147,4 @@ for p in $refapi_port $reference_ports; do
 	"$adb" -s "$serial" reverse "tcp:$p" "tcp:$p"
 done
 
-PLUX_E2E_REFAPI_ADDR=127.0.0.1:$refapi_port PLUX_E2E_DEVICE=$serial make -C "$root" --no-print-directory e2e-starter 2>&1 | tee "$out/android-$api.log"
+PLUX_E2E_REFAPI_ADDR=127.0.0.1:$refapi_port PLUX_E2E_DEVICE=$serial make -C "$root" --no-print-directory e2e-starter 2>&1 | tee "$out/android-$api-$shard.log"

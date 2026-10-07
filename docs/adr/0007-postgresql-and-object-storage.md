@@ -135,3 +135,7 @@ PostgreSQL normalises it (key order, duplicate keys, number text), so the stored
 no longer be hashed or signed as written, and snapshots share identical content only when
 it is addressed by hash. Nothing queries inside documents; the metadata queries need lives
 in relational columns. The maintainer chose to reword `SRV-020` to match (spec 1.1.6).
+
+## Revision (2026-10-07, P6 plan)
+
+The DPoP replay cache (`SEC-023`) uses Valkey with Sentinel failover and replicas through the in-house client; each `api` replica watches its health. Under `standard` and `strict` an unavailable Valkey falls back to a bounded in-memory cache with a narrower window and a distinct alert; under `maximum` device requests fail closed (ADR-0012, P6 plan B9).

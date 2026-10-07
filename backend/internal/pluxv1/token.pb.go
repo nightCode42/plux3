@@ -79,9 +79,12 @@ func (x *IssueDeviceTokenRequest) GetDeviceSecret() string {
 }
 
 type IssueDeviceTokenResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AccessToken   string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
-	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	AccessToken string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
+	ExpiresAt   *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	// token_type is "DPoP": the token is bound to the device's key and is
+	// sent as `Authorization: DPoP <token>` with a proof (SEC-020).
+	TokenType     string `protobuf:"bytes,3,opt,name=token_type,json=tokenType,proto3" json:"token_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -130,6 +133,294 @@ func (x *IssueDeviceTokenResponse) GetExpiresAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *IssueDeviceTokenResponse) GetTokenType() string {
+	if x != nil {
+		return x.TokenType
+	}
+	return ""
+}
+
+type RefreshDeviceTokenRequest struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	// evidence is fresh platform evidence bound to the refresh (SEC-025).
+	//
+	// Types that are valid to be assigned to Evidence:
+	//
+	//	*RefreshDeviceTokenRequest_AppAttestAssertion
+	//	*RefreshDeviceTokenRequest_PlayIntegrityToken
+	Evidence      isRefreshDeviceTokenRequest_Evidence `protobuf_oneof:"evidence"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RefreshDeviceTokenRequest) Reset() {
+	*x = RefreshDeviceTokenRequest{}
+	mi := &file_plux_v1_token_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RefreshDeviceTokenRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RefreshDeviceTokenRequest) ProtoMessage() {}
+
+func (x *RefreshDeviceTokenRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_token_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RefreshDeviceTokenRequest.ProtoReflect.Descriptor instead.
+func (*RefreshDeviceTokenRequest) Descriptor() ([]byte, []int) {
+	return file_plux_v1_token_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *RefreshDeviceTokenRequest) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
+}
+
+func (x *RefreshDeviceTokenRequest) GetEvidence() isRefreshDeviceTokenRequest_Evidence {
+	if x != nil {
+		return x.Evidence
+	}
+	return nil
+}
+
+func (x *RefreshDeviceTokenRequest) GetAppAttestAssertion() []byte {
+	if x != nil {
+		if x, ok := x.Evidence.(*RefreshDeviceTokenRequest_AppAttestAssertion); ok {
+			return x.AppAttestAssertion
+		}
+	}
+	return nil
+}
+
+func (x *RefreshDeviceTokenRequest) GetPlayIntegrityToken() string {
+	if x != nil {
+		if x, ok := x.Evidence.(*RefreshDeviceTokenRequest_PlayIntegrityToken); ok {
+			return x.PlayIntegrityToken
+		}
+	}
+	return ""
+}
+
+type isRefreshDeviceTokenRequest_Evidence interface {
+	isRefreshDeviceTokenRequest_Evidence()
+}
+
+type RefreshDeviceTokenRequest_AppAttestAssertion struct {
+	// app_attest_assertion is the App Attest assertion over the request.
+	AppAttestAssertion []byte `protobuf:"bytes,2,opt,name=app_attest_assertion,json=appAttestAssertion,proto3,oneof"`
+}
+
+type RefreshDeviceTokenRequest_PlayIntegrityToken struct {
+	// play_integrity_token is a Play Integrity verdict token.
+	PlayIntegrityToken string `protobuf:"bytes,3,opt,name=play_integrity_token,json=playIntegrityToken,proto3,oneof"`
+}
+
+func (*RefreshDeviceTokenRequest_AppAttestAssertion) isRefreshDeviceTokenRequest_Evidence() {}
+
+func (*RefreshDeviceTokenRequest_PlayIntegrityToken) isRefreshDeviceTokenRequest_Evidence() {}
+
+// RefreshDeviceTokenResponse carries the new token; it has the same
+// fields as IssueDeviceTokenResponse (SEC-025).
+type RefreshDeviceTokenResponse struct {
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	AccessToken string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
+	ExpiresAt   *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	// token_type is "DPoP" (SEC-020).
+	TokenType     string `protobuf:"bytes,3,opt,name=token_type,json=tokenType,proto3" json:"token_type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RefreshDeviceTokenResponse) Reset() {
+	*x = RefreshDeviceTokenResponse{}
+	mi := &file_plux_v1_token_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RefreshDeviceTokenResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RefreshDeviceTokenResponse) ProtoMessage() {}
+
+func (x *RefreshDeviceTokenResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_token_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RefreshDeviceTokenResponse.ProtoReflect.Descriptor instead.
+func (*RefreshDeviceTokenResponse) Descriptor() ([]byte, []int) {
+	return file_plux_v1_token_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *RefreshDeviceTokenResponse) GetAccessToken() string {
+	if x != nil {
+		return x.AccessToken
+	}
+	return ""
+}
+
+func (x *RefreshDeviceTokenResponse) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
+func (x *RefreshDeviceTokenResponse) GetTokenType() string {
+	if x != nil {
+		return x.TokenType
+	}
+	return ""
+}
+
+type ExchangeUserTokenRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// subject_token is the end user's token (RFC 8693 `subject_token`).
+	SubjectToken string `protobuf:"bytes,1,opt,name=subject_token,json=subjectToken,proto3" json:"subject_token,omitempty"`
+	// subject_token_type is the RFC 8693 token type URN of subject_token.
+	SubjectTokenType string `protobuf:"bytes,2,opt,name=subject_token_type,json=subjectTokenType,proto3" json:"subject_token_type,omitempty"`
+	// audience is the upstream the new token is for (RFC 8693 `audience`).
+	Audience      string `protobuf:"bytes,3,opt,name=audience,proto3" json:"audience,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExchangeUserTokenRequest) Reset() {
+	*x = ExchangeUserTokenRequest{}
+	mi := &file_plux_v1_token_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExchangeUserTokenRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExchangeUserTokenRequest) ProtoMessage() {}
+
+func (x *ExchangeUserTokenRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_token_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExchangeUserTokenRequest.ProtoReflect.Descriptor instead.
+func (*ExchangeUserTokenRequest) Descriptor() ([]byte, []int) {
+	return file_plux_v1_token_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ExchangeUserTokenRequest) GetSubjectToken() string {
+	if x != nil {
+		return x.SubjectToken
+	}
+	return ""
+}
+
+func (x *ExchangeUserTokenRequest) GetSubjectTokenType() string {
+	if x != nil {
+		return x.SubjectTokenType
+	}
+	return ""
+}
+
+func (x *ExchangeUserTokenRequest) GetAudience() string {
+	if x != nil {
+		return x.Audience
+	}
+	return ""
+}
+
+type ExchangeUserTokenResponse struct {
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	AccessToken string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
+	// issued_token_type is the RFC 8693 token type URN of access_token.
+	IssuedTokenType string                 `protobuf:"bytes,2,opt,name=issued_token_type,json=issuedTokenType,proto3" json:"issued_token_type,omitempty"`
+	ExpiresAt       *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *ExchangeUserTokenResponse) Reset() {
+	*x = ExchangeUserTokenResponse{}
+	mi := &file_plux_v1_token_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExchangeUserTokenResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExchangeUserTokenResponse) ProtoMessage() {}
+
+func (x *ExchangeUserTokenResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_token_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExchangeUserTokenResponse.ProtoReflect.Descriptor instead.
+func (*ExchangeUserTokenResponse) Descriptor() ([]byte, []int) {
+	return file_plux_v1_token_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ExchangeUserTokenResponse) GetAccessToken() string {
+	if x != nil {
+		return x.AccessToken
+	}
+	return ""
+}
+
+func (x *ExchangeUserTokenResponse) GetIssuedTokenType() string {
+	if x != nil {
+		return x.IssuedTokenType
+	}
+	return ""
+}
+
+func (x *ExchangeUserTokenResponse) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
 var File_plux_v1_token_proto protoreflect.FileDescriptor
 
 const file_plux_v1_token_proto_rawDesc = "" +
@@ -137,13 +428,38 @@ const file_plux_v1_token_proto_rawDesc = "" +
 	"\x13plux/v1/token.proto\x12\aplux.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"[\n" +
 	"\x17IssueDeviceTokenRequest\x12\x1b\n" +
 	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12#\n" +
-	"\rdevice_secret\x18\x02 \x01(\tR\fdeviceSecret\"x\n" +
+	"\rdevice_secret\x18\x02 \x01(\tR\fdeviceSecret\"\x97\x01\n" +
 	"\x18IssueDeviceTokenResponse\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x129\n" +
 	"\n" +
-	"expires_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt2i\n" +
+	"expires_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12\x1d\n" +
+	"\n" +
+	"token_type\x18\x03 \x01(\tR\ttokenType\"\xac\x01\n" +
+	"\x19RefreshDeviceTokenRequest\x12\x1b\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x122\n" +
+	"\x14app_attest_assertion\x18\x02 \x01(\fH\x00R\x12appAttestAssertion\x122\n" +
+	"\x14play_integrity_token\x18\x03 \x01(\tH\x00R\x12playIntegrityTokenB\n" +
+	"\n" +
+	"\bevidence\"\x99\x01\n" +
+	"\x1aRefreshDeviceTokenResponse\x12!\n" +
+	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x129\n" +
+	"\n" +
+	"expires_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12\x1d\n" +
+	"\n" +
+	"token_type\x18\x03 \x01(\tR\ttokenType\"\x89\x01\n" +
+	"\x18ExchangeUserTokenRequest\x12#\n" +
+	"\rsubject_token\x18\x01 \x01(\tR\fsubjectToken\x12,\n" +
+	"\x12subject_token_type\x18\x02 \x01(\tR\x10subjectTokenType\x12\x1a\n" +
+	"\baudience\x18\x03 \x01(\tR\baudience\"\xa5\x01\n" +
+	"\x19ExchangeUserTokenResponse\x12!\n" +
+	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12*\n" +
+	"\x11issued_token_type\x18\x02 \x01(\tR\x0fissuedTokenType\x129\n" +
+	"\n" +
+	"expires_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt2\xa8\x02\n" +
 	"\fTokenService\x12Y\n" +
-	"\x10IssueDeviceToken\x12 .plux.v1.IssueDeviceTokenRequest\x1a!.plux.v1.IssueDeviceTokenResponse\"\x00B=Z;github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1b\x06proto3"
+	"\x10IssueDeviceToken\x12 .plux.v1.IssueDeviceTokenRequest\x1a!.plux.v1.IssueDeviceTokenResponse\"\x00\x12_\n" +
+	"\x12RefreshDeviceToken\x12\".plux.v1.RefreshDeviceTokenRequest\x1a#.plux.v1.RefreshDeviceTokenResponse\"\x00\x12\\\n" +
+	"\x11ExchangeUserToken\x12!.plux.v1.ExchangeUserTokenRequest\x1a\".plux.v1.ExchangeUserTokenResponse\"\x00B=Z;github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1b\x06proto3"
 
 var (
 	file_plux_v1_token_proto_rawDescOnce sync.Once
@@ -157,21 +473,31 @@ func file_plux_v1_token_proto_rawDescGZIP() []byte {
 	return file_plux_v1_token_proto_rawDescData
 }
 
-var file_plux_v1_token_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_plux_v1_token_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_plux_v1_token_proto_goTypes = []any{
-	(*IssueDeviceTokenRequest)(nil),  // 0: plux.v1.IssueDeviceTokenRequest
-	(*IssueDeviceTokenResponse)(nil), // 1: plux.v1.IssueDeviceTokenResponse
-	(*timestamppb.Timestamp)(nil),    // 2: google.protobuf.Timestamp
+	(*IssueDeviceTokenRequest)(nil),    // 0: plux.v1.IssueDeviceTokenRequest
+	(*IssueDeviceTokenResponse)(nil),   // 1: plux.v1.IssueDeviceTokenResponse
+	(*RefreshDeviceTokenRequest)(nil),  // 2: plux.v1.RefreshDeviceTokenRequest
+	(*RefreshDeviceTokenResponse)(nil), // 3: plux.v1.RefreshDeviceTokenResponse
+	(*ExchangeUserTokenRequest)(nil),   // 4: plux.v1.ExchangeUserTokenRequest
+	(*ExchangeUserTokenResponse)(nil),  // 5: plux.v1.ExchangeUserTokenResponse
+	(*timestamppb.Timestamp)(nil),      // 6: google.protobuf.Timestamp
 }
 var file_plux_v1_token_proto_depIdxs = []int32{
-	2, // 0: plux.v1.IssueDeviceTokenResponse.expires_at:type_name -> google.protobuf.Timestamp
-	0, // 1: plux.v1.TokenService.IssueDeviceToken:input_type -> plux.v1.IssueDeviceTokenRequest
-	1, // 2: plux.v1.TokenService.IssueDeviceToken:output_type -> plux.v1.IssueDeviceTokenResponse
-	2, // [2:3] is the sub-list for method output_type
-	1, // [1:2] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	6, // 0: plux.v1.IssueDeviceTokenResponse.expires_at:type_name -> google.protobuf.Timestamp
+	6, // 1: plux.v1.RefreshDeviceTokenResponse.expires_at:type_name -> google.protobuf.Timestamp
+	6, // 2: plux.v1.ExchangeUserTokenResponse.expires_at:type_name -> google.protobuf.Timestamp
+	0, // 3: plux.v1.TokenService.IssueDeviceToken:input_type -> plux.v1.IssueDeviceTokenRequest
+	2, // 4: plux.v1.TokenService.RefreshDeviceToken:input_type -> plux.v1.RefreshDeviceTokenRequest
+	4, // 5: plux.v1.TokenService.ExchangeUserToken:input_type -> plux.v1.ExchangeUserTokenRequest
+	1, // 6: plux.v1.TokenService.IssueDeviceToken:output_type -> plux.v1.IssueDeviceTokenResponse
+	3, // 7: plux.v1.TokenService.RefreshDeviceToken:output_type -> plux.v1.RefreshDeviceTokenResponse
+	5, // 8: plux.v1.TokenService.ExchangeUserToken:output_type -> plux.v1.ExchangeUserTokenResponse
+	6, // [6:9] is the sub-list for method output_type
+	3, // [3:6] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_plux_v1_token_proto_init() }
@@ -179,13 +505,17 @@ func file_plux_v1_token_proto_init() {
 	if File_plux_v1_token_proto != nil {
 		return
 	}
+	file_plux_v1_token_proto_msgTypes[2].OneofWrappers = []any{
+		(*RefreshDeviceTokenRequest_AppAttestAssertion)(nil),
+		(*RefreshDeviceTokenRequest_PlayIntegrityToken)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_plux_v1_token_proto_rawDesc), len(file_plux_v1_token_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

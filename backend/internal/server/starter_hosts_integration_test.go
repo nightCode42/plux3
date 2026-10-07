@@ -212,7 +212,8 @@ func androidHost(ctx context.Context, t *testing.T, hosts, device string, flows 
 // its XCUITests once, and runs each flow in an xcodebuild run of its own;
 // each test launches the app anew. The runtime's settings reach the tests
 // as TEST_RUNNER_PLUX_* variables, and PLUX_E2E_XCRESULT, when set, names
-// the result bundles.
+// the result bundles. PLUX_E2E_DERIVED_DATA, when set, keeps Xcode's build
+// there, so CI can restore it between runs; otherwise it is the test's own.
 func iosHost(ctx context.Context, t *testing.T, host, device string, flows []hostFlow, settings map[string]string) {
 	t.Helper()
 	run := func(name string, args ...string) {
@@ -224,9 +225,13 @@ func iosHost(ctx context.Context, t *testing.T, host, device string, flows []hos
 		}
 	}
 	run("pod", "install")
+	derived := os.Getenv("PLUX_E2E_DERIVED_DATA")
+	if derived == "" {
+		derived = filepath.Join(t.TempDir(), "derived")
+	}
 	xcodebuild := []string{
 		"-workspace", "HostApp.xcworkspace", "-scheme", "HostApp", "-configuration", "Debug",
-		"-destination", "platform=iOS Simulator,id=" + device, "-derivedDataPath", filepath.Join(t.TempDir(), "derived"),
+		"-destination", "platform=iOS Simulator,id=" + device, "-derivedDataPath", derived,
 	}
 	run("xcodebuild", append([]string{"build-for-testing"}, xcodebuild...)...)
 	// A new install: the offline flow starts without the runtime's state.

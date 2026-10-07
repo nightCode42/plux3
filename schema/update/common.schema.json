@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://plux.dev/schema/v1/update/common.schema.json",
+  "title": "Update metadata, common definitions",
+  "description": "Definitions shared by the root, snapshot and timestamp metadata (TUF style, SEC-122).",
+  "$defs": {
+    "keyId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$",
+      "description": "The key identifier: lower-case hexadecimal."
+    },
+    "alg": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$",
+      "description": "A signature algorithm name. Known: `ES256`, `Ed25519`. The field is an open string so post-quantum algorithms can be added later without a schema change (SEC-122); verifiers reject algorithms they do not know."
+    },
+    "base64": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9+/]+={0,2}$",
+      "minLength": 1
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "signature": {
+      "type": "object",
+      "required": [
+        "keyid",
+        "alg",
+        "sig"
+      ],
+      "properties": {
+        "keyid": {
+          "$ref": "#/$defs/keyId"
+        },
+        "alg": {
+          "$ref": "#/$defs/alg"
+        },
+        "sig": {
+          "$ref": "#/$defs/base64"
+        }
+      },
+      "additionalProperties": false
+    },
+    "signatures": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/signature"
+      }
+    },
+    "signedBase": {
+      "type": "object",
+      "description": "Properties every `signed` object carries.",
+      "required": [
+        "_type",
+        "version",
+        "expires",
+        "specVersion"
+      ],
+      "properties": {
+        "version": {
+          "$ref": "#/$defs/version"
+        },
+        "expires": {
+          "type": "string",
+          "format": "date-time",
+          "description": "RFC 3339 timestamp."
+        },
+        "specVersion": {
+          "type": "string",
+          "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+        }
+      }
+    }
+  }
+}

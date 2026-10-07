@@ -1,0 +1,256 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://plux.dev/schema/security-settings.schema.json",
+  "title": "Plux security settings registry",
+  "description": "The single registry of security settings and their per-profile defaults (SEC-182).",
+  "type": "object",
+  "required": [
+    "profiles",
+    "settings"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "$comment": {
+      "type": "string"
+    },
+    "profiles": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "const": "standard"
+        },
+        {
+          "const": "strict"
+        },
+        {
+          "const": "maximum"
+        }
+      ],
+      "minItems": 3,
+      "maxItems": 3,
+      "description": "The security profiles, from loosest to tightest."
+    },
+    "settings": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/setting"
+      }
+    }
+  },
+  "$defs": {
+    "setting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "type",
+        "tighter",
+        "defaults",
+        "travelsToDevice",
+        "phase",
+        "requirements",
+        "description"
+      ],
+      "properties": {
+        "key": {
+          "type": "string",
+          "pattern": "^[a-z][a-zA-Z0-9]*$",
+          "description": "Stable key in lowerCamelCase."
+        },
+        "type": {
+          "enum": [
+            "bool",
+            "seconds",
+            "count",
+            "enum"
+          ]
+        },
+        "values": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_]*$"
+          },
+          "description": "The values of an enum setting, ordered from loosest to tightest."
+        },
+        "tighter": {
+          "enum": [
+            "true",
+            "false",
+            "lower",
+            "higher",
+            "order"
+          ],
+          "description": "Which direction is tighter: the tighter boolean, the lower or higher number, or the later value in the order."
+        },
+        "defaults": {
+          "$ref": "#/$defs/defaults"
+        },
+        "bounds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "min",
+            "max"
+          ],
+          "properties": {
+            "min": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "max": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "description": "Inclusive range of a seconds or count setting."
+        },
+        "travelsToDevice": {
+          "type": "boolean",
+          "description": "Whether the setting is delivered to the device in the signed configuration."
+        },
+        "phase": {
+          "type": "string",
+          "pattern": "^P([0-9]|1[0-5])$"
+        },
+        "requirements": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z0-9]+-[0-9]{3}$"
+          }
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "enum"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "values"
+            ],
+            "properties": {
+              "tighter": {
+                "const": "order"
+              }
+            },
+            "not": {
+              "required": [
+                "bounds"
+              ]
+            }
+          },
+          "else": {
+            "not": {
+              "required": [
+                "values"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "bool"
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "properties": {
+              "tighter": {
+                "enum": [
+                  "true",
+                  "false"
+                ]
+              }
+            },
+            "not": {
+              "required": [
+                "bounds"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "seconds",
+                  "count"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ]
+          },
+          "then": {
+            "required": [
+              "bounds"
+            ],
+            "properties": {
+              "tighter": {
+                "enum": [
+                  "lower",
+                  "higher"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "defaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "standard",
+        "strict",
+        "maximum"
+      ],
+      "properties": {
+        "standard": {
+          "$ref": "#/$defs/value"
+        },
+        "strict": {
+          "$ref": "#/$defs/value"
+        },
+        "maximum": {
+          "$ref": "#/$defs/value"
+        }
+      },
+      "description": "The value each security profile sets."
+    },
+    "value": {
+      "type": [
+        "boolean",
+        "integer",
+        "string"
+      ]
+    }
+  }
+}

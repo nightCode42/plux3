@@ -88,6 +88,7 @@ An app: its plugins, theme, locales, environments, shared data and policies (SCH
 | `dataSources` | list of [DataSource](#datasource) |  |  |
 | `nativeCatalogue` | string |  | Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). |
 | `securityProfile` | [SecurityProfile](#securityprofile) | yes | Security profile (§15.12). |
+| `security` | [AppSecurity](#appsecurity) |  | App-level security settings (SEC-181). |
 | `sync` | [SyncPolicy](#syncpolicy) | yes | Sync policy (§10.4). |
 | `minRuntimeVersion` | string | yes | Semantic version major.minor.patch. |
 | `requiredFeatures` | [RequiredFeaturesPolicy](#requiredfeaturespolicy) |  | What the compiler does when a release needs a newer runtime than `minRuntimeVersion`: reject the publish, or raise the release's required features with a warning (WGT-004). |
@@ -101,6 +102,27 @@ An app: its plugins, theme, locales, environments, shared data and policies (SCH
 | `telemetry` | [TelemetryPolicy](#telemetrypolicy) |  | What the runtime reports (ANL-003, ADR-0034). |
 | `push` | [PushPolicy](#pushpolicy) |  | Push notifications (NAV-008, ADR-0040): whether the app uses them, so a generated project carries the platform configuration, and the payload key under which a notification names `{route, params}` for `Plux.handlePushPayload`. |
 | `triggers` | [Triggers](#triggers) |  | Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active. |
+
+### AppSecurity
+
+App-level security settings (SEC-181).
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `settings` | [AppSecuritySettings](#appsecuritysettings) |  | A document-tightenable subset of the security profile. May only tighten the effective profile (SEC-181); checked by the compiler and the server. |
+
+### AppSecuritySettings
+
+A document-tightenable subset of the security profile. May only tighten the effective profile (SEC-181); checked by the compiler and the server.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `allowDirectDataSources` | boolean |  |  |
+| `minAssuranceForSync` | [AssuranceLevel](#assurancelevel) |  |  |
+| `screenshotBlockingDefault` | boolean |  |  |
+| `inactivityLock` | boolean |  |  |
+| `inactivityLockTimeout` | integer |  | Seconds. |
+| `raspRootHookingResponse` | [RaspResponse](#raspresponse) |  | How the runtime answers a rooted or hooked device (SEC-181). |
 
 ### ApprovedCapabilities
 
@@ -266,11 +288,31 @@ A data source with its value type and design-time mock (SCH-024, DAT-080).
 | `type` | string | yes | Type expression of SCH-010, e.g. `string`, `decimal?`, `list<Transaction>`, `map<string,int>`. |
 | `mock` | JSON value | yes | A JSON value interpreted against a declared type (defaults, mocks, environment values). |
 | `config` | JSON value |  | Kind-specific configuration, validated from P5 (DAT-001). |
+| `route` | [DataSourceRoute](#datasourceroute) |  | Absent means `plux`. How the runtime reaches the source: through the Plux gateway (`plux`) or straight to the origin (`direct`). Direct is an opt-in; a security profile may refuse it (SEC-030). |
+| `transaction` | [DataSourceTransaction](#datasourcetransaction) |  | JSON Pointers into the operation's input naming the fields that are signed for SCA dynamic linking (SEC-028). Requires route `plux`; the compiler enforces that. |
+| `requiresAssurance` | [AssuranceLevel](#assurancelevel) |  |  |
 | `description` | string |  | Human-readable description. |
 
 ### DataSourceKind
 
 One of `rest`, `graphql`, `websocket`, `sse`, `function`, `database`, `static`.
+
+### DataSourceRoute
+
+Absent means `plux`. How the runtime reaches the source: through the Plux gateway (`plux`) or straight to the origin (`direct`). Direct is an opt-in; a security profile may refuse it (SEC-030).
+
+One of `plux`, `direct`.
+
+### DataSourceTransaction
+
+JSON Pointers into the operation's input naming the fields that are signed for SCA dynamic linking (SEC-028). Requires route `plux`; the compiler enforces that.
+
+| Property | Type | Required | Description |
+|---|---|---|---|
+| `amount` | string | yes | Pointer to the amount. |
+| `currency` | string | yes | Pointer to the currency. |
+| `payee` | string | yes | Pointer to the payee. |
+| `summary` | string |  | Pointer to a human-readable summary. |
 
 ### DataSourceTriggers
 
@@ -393,6 +435,7 @@ A field of a form: its type, initial value and validators, run in order (STA-020
 | `type` | string | yes | Type expression of SCH-010, e.g. `string`, `decimal?`, `list<Transaction>`, `map<string,int>`. |
 | `initial` | JSON value |  | A JSON value interpreted against a declared type (defaults, mocks, environment values). |
 | `validators` | list of [FormValidator](#formvalidator) |  |  |
+| `sensitive` | boolean |  | Absent means false. The value is sensitive: never logged, traced, persisted or sent to analytics (SCH-012, SEC-092). |
 | `description` | string |  | Human-readable description. |
 
 ### FormValidator
@@ -428,6 +471,7 @@ A function the plugin may call, with an optional alias (FN-006).
 | `id` | string | yes | Immutable UUIDv7 identifier in canonical lower-case form (SCH-002). |
 | `function` | string | yes |  |
 | `alias` | string |  |  |
+| `requiresAssurance` | [AssuranceLevel](#assurancelevel) |  |  |
 
 ### HostBuild
 
@@ -699,6 +743,12 @@ Push notifications (NAV-008, ADR-0040): whether the app uses them, so a generate
 |---|---|---|---|
 | `enabled` | boolean | yes |  |
 | `payloadKey` | string |  | The payload key holding `{route, params}`; `plux` when absent. |
+
+### RaspResponse
+
+How the runtime answers a rooted or hooked device (SEC-181).
+
+One of `report`, `warn`, `degrade`, `block`.
 
 ### ReduceMotion
 

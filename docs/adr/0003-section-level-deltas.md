@@ -150,3 +150,7 @@ it would add on both sides for no measured gain.
   It is larger than the 39 bytes measured in N1 because the app bundle's `meta` section
   changes too and is shipped as a patch. The benchmark on the reference deployment is in
   `docs/benchmarks/p2-backend.md`.
+
+## Revision (2026-10-07, P6 plan)
+
+Confidential releases (`SEC-053`, ADR-0055) are delivered without deltas: ciphertext does not diff, so a changed confidential bundle downloads whole. Plain releases keep section-level deltas unchanged. Encrypted deltas may follow as an optimisation with their own ADR (P6 plan B10).

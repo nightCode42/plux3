@@ -86,6 +86,8 @@ enum PluxLimit {
   /// Maximum number of tables and vectors the FlatBuffers verifier visits in
   /// one section.
   bundleVerifierTables('bundle.verifierTables', PluxLimitUnit.count, 1000000, 0, 10000000),
+  /// Bytes of confidential content one confidential bundle may hold.
+  confidentialBundleBytes('confidential.bundleBytes', PluxLimitUnit.bytes, 16777216, 0, 268435456),
   /// Bytes the response cache of data sources keeps on the device; the least
   /// recently used entries are evicted beyond it.
   dataCacheBytes('data.cacheBytes', PluxLimitUnit.bytes, 16777216, 0, 268435456),
@@ -157,6 +159,16 @@ enum PluxLimit {
   documentJsonDepth('document.jsonDepth', PluxLimitUnit.count, 512, 0, 4096),
   /// Size of one string prop value, in UTF-8 bytes.
   documentStringPropSize('document.stringPropSize', PluxLimitUnit.bytes, 65536, 0, 1048576),
+  /// Proof identifiers the DPoP replay cache holds.
+  dpopReplayCacheEntries('dpop.replayCacheEntries', PluxLimitUnit.count, 1000000, 0, 100000000),
+  /// Bytes of request body the gateway forwards to an upstream.
+  gatewayRequestBytes('gateway.requestBytes', PluxLimitUnit.bytes, 1048576, 0, 33554432),
+  /// Gateway requests one device may send per minute.
+  gatewayRequestsPerMinutePerDevice('gateway.requestsPerMinutePerDevice', PluxLimitUnit.count, 600, 0, 10000),
+  /// Bytes of upstream response body the gateway returns to a device.
+  gatewayResponseBytes('gateway.responseBytes', PluxLimitUnit.bytes, 8388608, 0, 67108864),
+  /// Milliseconds the gateway waits for an upstream to answer.
+  gatewayTimeout('gateway.timeout', PluxLimitUnit.milliseconds, 10000, 0, 60000),
   /// Size of a response the server reads when it fetches a URL, such as an
   /// identity provider's keys.
   httpResponseSize('http.responseSize', PluxLimitUnit.bytes, 1048576, 0, 67108864),
@@ -212,6 +224,12 @@ enum PluxLimit {
   runtimeSectionCacheBytes('runtime.sectionCacheBytes', PluxLimitUnit.bytes, 8388608, 0, 268435456),
   /// Page and component sections the runtime keeps decoded.
   runtimeSectionCacheEntries('runtime.sectionCacheEntries', PluxLimitUnit.count, 64, 0, 4096),
+  /// Milliseconds a strong customer authentication challenge stays valid.
+  scaChallengeLifetime('sca.challengeLifetime', PluxLimitUnit.milliseconds, 300000, 0, 900000),
+  /// Bytes of a security configuration, encoded.
+  securityConfigBytes('securityConfig.bytes', PluxLimitUnit.bytes, 65536, 0, 1048576),
+  /// Bytes of a security configuration patch, encoded.
+  securityConfigPatchBytes('securityConfig.patchBytes', PluxLimitUnit.bytes, 16384, 0, 262144),
   /// Bytes the persisted state of one app may take in the runtime's local store
   /// (plain; secure state is the encrypted one, plan p5 B6); writes beyond it
   /// stay in memory and are reported.

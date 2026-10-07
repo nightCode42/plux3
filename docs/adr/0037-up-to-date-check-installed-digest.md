@@ -75,3 +75,7 @@ As decided.
 Saves the list on changed manifests too, but makes the answer depend on server-side state
 the device cannot see, which breaks when a download fails or a device restores a backup;
 the digest keeps the device the source of truth.
+
+## Revision (2026-10-07, P6 plan)
+
+The up-to-date check also carries the security-configuration version the device holds (`config_version`); when it is current, nothing more is sent, so `NFR-006`'s budget holds (ADR-0053).

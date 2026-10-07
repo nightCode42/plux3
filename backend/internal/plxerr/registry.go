@@ -158,11 +158,12 @@ const (
 	// Schema and validation: accessibility, security and store policy
 	// (PLX-1400–1599).
 
-	AccessibleNameMissing Code = 1401
-	SecretLikeValue       Code = 1500
-	SensitiveValueExposed Code = 1501
-	InsecureURL           Code = 1502
-	ExecutableContent     Code = 1503
+	AccessibleNameMissing              Code = 1401
+	SecretLikeValue                    Code = 1500
+	SensitiveValueExposed              Code = 1501
+	InsecureURL                        Code = 1502
+	ExecutableContent                  Code = 1503
+	DirectSourceAssuranceUnenforceable Code = 1504
 
 	// Compiler and PXL (PLX-2000–2999).
 
@@ -311,8 +312,42 @@ const (
 
 	// Security (PLX-6000–6999).
 
-	OutboundRequestBlocked Code = 6030
-	AssetRejected          Code = 6031
+	AttestationFailed            Code = 6001
+	AssuranceInsufficient        Code = 6002
+	KeyNotHardwareBacked         Code = 6003
+	DevProviderInProduction      Code = 6004
+	RegistrationChallengeInvalid Code = 6005
+	DeviceRevoked                Code = 6006
+	ReattestationRequired        Code = 6007
+	LegacyRegistrationRefused    Code = 6008
+	AttestationUnavailable       Code = 6009
+	DPoPProofInvalid             Code = 6010
+	DPoPReplay                   Code = 6011
+	DPoPNonceRequired            Code = 6012
+	TokenBindingMismatch         Code = 6013
+	AccessTokenInvalid           Code = 6014
+	ReplayCacheUnavailable       Code = 6015
+	UserTokenInvalid             Code = 6016
+	DeviceKeyUnavailable         Code = 6017
+	CertificatePinMismatch       Code = 6020
+	DevelopmentKeyInProduction   Code = 6021
+	UpdateMetadataInvalid        Code = 6022
+	OutboundRequestBlocked       Code = 6030
+	AssetRejected                Code = 6031
+	SecurityConfigHashMismatch   Code = 6040
+	SecurityConfigLoosensPreset  Code = 6041
+	SecurityConfigOutOfBounds    Code = 6042
+	ConfidentialKeyUnavailable   Code = 6050
+	GatewayUpstreamUnknown       Code = 6060
+	GatewayDestinationRefused    Code = 6061
+	GatewayUpstreamFailed        Code = 6062
+	DirectDataSourceRefused      Code = 6063
+	GatewayRateLimited           Code = 6064
+	SCASignatureInvalid          Code = 6070
+	SCAChallengeInvalid          Code = 6071
+	SCADynamicLinkingMismatch    Code = 6072
+	TransactionRequiresGateway   Code = 6073
+	RASPDetection                Code = 6100
 
 	// Governance (PLX-8000–8999).
 

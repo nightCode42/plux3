@@ -25,6 +25,7 @@
   "everything": [
     "Makefile",
     "ci/affected.json",
+    "ci/apt-install.sh",
     "tools/cmd/affected/**",
     "tools/internal/affected/**"
   ],

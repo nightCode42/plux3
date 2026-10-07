@@ -200,3 +200,7 @@ optional package mandatory in practice.
 SQLite with SQLCipher adds several megabytes per ABI. The core has about half a megabyte
 left under the IPA budget (size journey, round 3), and most apps would not use the
 database.
+
+## Revision (2026-10-07, P6 plan)
+
+Key wrapping per profile is revised by ADR-0058: under `strict` and `maximum` every local store — database, response cache, outbox, `persisted` state and key-value store — is encrypted with keys wrapped by secure hardware and unwrapped once per launch. P5's B6 (plain `persisted` under every profile) is superseded for those profiles.
