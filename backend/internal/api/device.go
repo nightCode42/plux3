@@ -33,8 +33,10 @@ var DeviceProcedures = map[string]bool{
 // DevicePublic are the device procedures that take no credential: each
 // authenticates by what it carries.
 var DevicePublic = map[string]bool{
-	pluxv1connect.DeviceServiceRegisterDeviceProcedure:  true,
-	pluxv1connect.TokenServiceIssueDeviceTokenProcedure: true,
+	pluxv1connect.DeviceServiceRegisterDeviceProcedure:              true,
+	pluxv1connect.TokenServiceIssueDeviceTokenProcedure:             true,
+	pluxv1connect.DeviceServiceCreateRegistrationChallengeProcedure: true,
+	pluxv1connect.DeviceServiceRegisterAttestedDeviceProcedure:      true,
 }
 
 // deviceKey carries an authenticated device in a context.
@@ -94,7 +96,7 @@ func deviceOf(ctx context.Context) (device.Identity, error) {
 
 // Device serves DeviceService.
 type Device struct {
-	// Unimplemented answers the P6 RPCs until their handlers land.
+	// Unimplemented answers ReattestDevice until its handler lands.
 	pluxv1connect.UnimplementedDeviceServiceHandler
 	h *Handlers
 }
@@ -116,6 +118,47 @@ func (s Device) RegisterDevice(ctx context.Context, req *connect.Request[pluxv1.
 		return nil, err //nolint:wrapcheck // a domain error
 	}
 	return connect.NewResponse(&pluxv1.RegisterDeviceResponse{Device: deviceProto(d), DeviceSecret: secret}), nil
+}
+
+// CreateRegistrationChallenge issues the single-use challenge a
+// registration binds its attestation to (SEC-005).
+func (s Device) CreateRegistrationChallenge(ctx context.Context, req *connect.Request[pluxv1.CreateRegistrationChallengeRequest]) (*connect.Response[pluxv1.CreateRegistrationChallengeResponse], error) {
+	challenge, expires, err := s.h.Devices.CreateChallenge(ctx, req.Msg.GetAppId(), req.Msg.GetEnvironment())
+	if err != nil {
+		return nil, err //nolint:wrapcheck // a domain error
+	}
+	return connect.NewResponse(&pluxv1.CreateRegistrationChallengeResponse{Challenge: challenge, ExpiresAt: ts(expires)}), nil
+}
+
+// RegisterAttestedDevice registers a device that proves a DPoP key with
+// platform attestation (SEC-001–SEC-008).
+func (s Device) RegisterAttestedDevice(ctx context.Context, req *connect.Request[pluxv1.RegisterAttestedDeviceRequest]) (*connect.Response[pluxv1.RegisterAttestedDeviceResponse], error) {
+	m := req.Msg
+	d, err := s.h.Devices.RegisterAttested(ctx, device.AttestedRegistration{
+		AppID: m.GetAppId(), Environment: m.GetEnvironment(), Platform: m.GetPlatform(),
+		OSVersion: m.GetOsVersion(), RuntimeVersion: m.GetRuntimeVersion(), Build: m.GetHostBuild(),
+		Challenge: m.GetChallenge(), DPoPKeyJWK: m.GetDpopPublicKeyJwk(), KeyStorage: keyStorageOf(m.GetKeyStorage()),
+		Evidence: evidenceOf(m.GetEvidence()),
+	})
+	if err != nil {
+		return nil, err //nolint:wrapcheck // a domain error
+	}
+	return connect.NewResponse(&pluxv1.RegisterAttestedDeviceResponse{Device: deviceProto(d)}), nil
+}
+
+// RevokeDevice withdraws a device's trust (SEC-006).
+func (s Device) RevokeDevice(ctx context.Context, req *connect.Request[pluxv1.RevokeDeviceRequest]) (*connect.Response[pluxv1.RevokeDeviceResponse], error) {
+	return mutate(ctx, s.h, req, func(ctx context.Context) (*pluxv1.RevokeDeviceResponse, error) {
+		p, err := s.h.principal(ctx, req.Header(), "")
+		if err != nil {
+			return nil, err
+		}
+		d, err := s.h.Devices.Revoke(ctx, p, req.Msg.GetDeviceId(), req.Msg.GetReason())
+		if err != nil {
+			return nil, err //nolint:wrapcheck // a domain error
+		}
+		return &pluxv1.RevokeDeviceResponse{Device: deviceProto(d)}, nil
+	})
 }
 
 // GetDevice returns one device.
@@ -185,12 +228,68 @@ func (s Device) ReportInstalled(ctx context.Context, req *connect.Request[pluxv1
 	return connect.NewResponse(&pluxv1.ReportInstalledResponse{}), nil
 }
 
+// evidenceOf maps the evidence of a request.
+func evidenceOf(e *pluxv1.AttestationEvidence) device.Evidence {
+	var out device.Evidence
+	if a := e.GetAndroid(); a != nil {
+		out.Android = &device.AndroidEvidence{KeyAttestationChain: a.GetKeyAttestationChain(), PlayIntegrityToken: a.GetPlayIntegrityToken()}
+	}
+	if i := e.GetIos(); i != nil {
+		out.IOS = &device.IOSEvidence{KeyID: i.GetAppAttestKeyId(), AttestationObject: i.GetAttestationObject()}
+	}
+	if d := e.GetDevelopment(); d != nil {
+		out.Development = &device.DevelopmentEvidence{BuildID: d.GetBuildId()}
+	}
+	return out
+}
+
+// keyStorages pairs the wire and the domain values of a key storage.
+var keyStorages = []struct {
+	wire   pluxv1.KeyStorage
+	domain device.KeyStorage
+}{
+	{pluxv1.KeyStorage_KEY_STORAGE_SOFTWARE, device.KeyStorageSoftware},
+	{pluxv1.KeyStorage_KEY_STORAGE_TEE, device.KeyStorageTEE},
+	{pluxv1.KeyStorage_KEY_STORAGE_STRONGBOX, device.KeyStorageStrongBox},
+	{pluxv1.KeyStorage_KEY_STORAGE_SECURE_ENCLAVE, device.KeyStorageSecureEnclave},
+}
+
+// keyStorageOf maps a claimed key storage.
+func keyStorageOf(k pluxv1.KeyStorage) device.KeyStorage {
+	for _, p := range keyStorages {
+		if p.wire == k {
+			return p.domain
+		}
+	}
+	return device.KeyStorageUnspecified
+}
+
+// keyStorageProto maps a recorded key storage.
+func keyStorageProto(k device.KeyStorage) pluxv1.KeyStorage {
+	for _, p := range keyStorages {
+		if p.domain == k {
+			return p.wire
+		}
+	}
+	return pluxv1.KeyStorage_KEY_STORAGE_UNSPECIFIED
+}
+
 func deviceProto(d device.Device) *pluxv1.Device {
-	return &pluxv1.Device{
+	out := &pluxv1.Device{
 		Id: d.ID, AppId: d.AppID, EnvironmentId: d.EnvironmentID, Platform: d.Platform, OsVersion: d.OSVersion,
 		RuntimeVersion: d.RuntimeVersion, HostBuild: d.Build, AssuranceLevel: d.AssuranceLevel,
 		InstalledSequence: d.InstalledSequence, RegisteredAt: ts(d.RegisteredAt), LastSeenAt: ts(d.LastSeenAt),
+		KeyStorage: keyStorageProto(d.KeyStorage), DpopJkt: d.DPoPJKT,
 	}
+	if !d.AttestedAt.IsZero() {
+		out.Attestation = &pluxv1.AttestationSummary{
+			Provider: string(d.Provider), VerifiedAt: ts(d.AttestedAt), Verdicts: d.Verdicts, RiskMetric: d.RiskMetric,
+		}
+	}
+	if !d.RevokedAt.IsZero() {
+		out.RevokedAt = ts(d.RevokedAt)
+	}
+	return out
 }
 
 // Token serves TokenService.
