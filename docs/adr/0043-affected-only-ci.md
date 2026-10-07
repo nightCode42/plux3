@@ -254,8 +254,12 @@ Maintainer decision (2026-10-07), with a target of 13 to 15 minutes for the devi
   starter's shard, whose build has every plugin; the Android shards are short enough
   without build outputs, which would crowd the repository's cache quota. A restore key on
   the same toolchain lets a changed lockfile start from the previous build.
-- **Who writes.** Every run restores; only a passing run on `main` (not a pull request,
-  not another branch, Android from API 35 only) saves, so no branch can write a cache that
-  `main` or another branch reads (cache poisoning), and a broken build is never saved. A
+- **Who writes.** Every run restores; a passing push, scheduled or manual run saves
+  (Android from API 35 only); a pull request never saves. GitHub scopes a cache to the
+  branch that saved it: `main`'s caches reach every branch, a branch's reach only that
+  branch, so no branch or pull request can write a cache `main` reads (cache poisoning),
+  and a broken build is never saved. First cut: only `main` saved, which left every
+  branch run cold (runs 147–150: iOS jobs of 15 to 25 minutes, nearly all of it
+  building); the maintainer chose branch-scoped saves (2026-10-07). A
   miss is a clean build, as before. Incremental builds are Xcode's and Gradle's own, which
   track inputs by content.

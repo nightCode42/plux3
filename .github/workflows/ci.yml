@@ -773,9 +773,11 @@ jobs:
   # tools, and Xcode's simctl. Each flow runs as its own job (E2E_SHARD,
   # mk/device.mk): the starter, a generated project, the add-to-app hosts,
   # Plux Bank and Plux Express. Build caches are restored on every run and
-  # saved only by a passing run on main, keyed on the toolchain and the
-  # lockfiles, so a branch can never write a cache main or another branch
-  # reads (ADR-0043, Revision).
+  # saved by a passing push, scheduled or manual run, keyed on the
+  # toolchain and the lockfiles. GitHub scopes a cache to the branch that
+  # saved it: main's caches reach every branch, a branch's reach only that
+  # branch, and pull requests never save, so no branch or pull request can
+  # write a cache main reads (maintainer, 2026-10-07; ADR-0043, Revision).
   e2e-android:
     name: Device end-to-end (Android ${{ matrix.api }}, ${{ matrix.shard }})
     needs: changes
@@ -850,10 +852,11 @@ jobs:
           API: ${{ matrix.api }}
           E2E_SHARD: ${{ matrix.shard }}
         run: make e2e-android ANDROID_API="$API"
-      # Saved only by a passing run on main, by the shard whose build has
-      # the most dependencies (the starter, with every plugin).
+      # Saved by a passing run that is not a pull request (branch-scoped,
+      # above), by the shard whose build has the most dependencies (the
+      # starter, with every plugin).
       - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && matrix.api == 35 && matrix.shard == 'starter' && steps.gradle.outputs.cache-hit != 'true'
+        if: github.event_name != 'pull_request' && matrix.api == 35 && matrix.shard == 'starter' && steps.gradle.outputs.cache-hit != 'true'
         with:
           path: |
             ~/.gradle/caches
@@ -939,9 +942,10 @@ jobs:
         env:
           E2E_SHARD: ${{ matrix.shard }}
         run: make e2e-ios
-      # Saved only by a passing run on main.
+      # Saved by a passing run that is not a pull request (branch-scoped,
+      # above).
       - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && steps.xcode-cache.outputs.cache-hit != 'true'
+        if: github.event_name != 'pull_request' && steps.xcode-cache.outputs.cache-hit != 'true'
         with:
           path: |
             ~/Library/Developer/Xcode/DerivedData
