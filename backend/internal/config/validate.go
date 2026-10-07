@@ -4,8 +4,11 @@
 package config
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"maps"
 	"net/netip"
 	"net/url"
 	"path/filepath"
@@ -59,6 +62,7 @@ func (c *Config) Validate() error {
 	c.validateLimits(&p)
 	c.validateRetention(&p)
 	c.validateAssets(&p)
+	c.validateAttestation(&p)
 	return errors.Join(p.errs...)
 }
 
@@ -371,5 +375,32 @@ func (c *Config) validateAssets(p *problems) {
 	case u.Scheme == "unix" && u.Path != "":
 	default:
 		p.addf("assets.malwareScanner", "must be tcp://host:port or unix:///path")
+	}
+}
+
+// appIDPattern is the canonical text form of an app identifier.
+var appIDPattern = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
+
+// validateAttestation checks the per-app attestation trust. The Play
+// Console keys are decoded where they are used; here they only have to
+// come as a pair.
+func (c *Config) validateAttestation(p *problems) {
+	for _, id := range slices.Sorted(maps.Keys(c.Attestation.Apps)) {
+		a := c.Attestation.Apps[id]
+		path := "attestation.apps[" + id + "]"
+		if !appIDPattern.MatchString(id) {
+			p.addf(path, "the key must be an app identifier (a UUID)")
+		}
+		for i, d := range a.AndroidCertDigests {
+			if raw, err := hex.DecodeString(d); err != nil || len(raw) != sha256.Size {
+				p.addf(path+".androidCertDigests["+strconv.Itoa(i)+"]", "must be the hex SHA-256 digest of a certificate")
+			}
+		}
+		if (a.PlayIntegrityDecryptionKey == "") != (a.PlayIntegrityVerificationKey == "") {
+			p.addf(path+".playIntegrityDecryptionKey", "and playIntegrityVerificationKey must be set together")
+		}
+		if a.PlayIntegrityDecryptionKey != "" && len(a.AndroidPackages) == 0 {
+			p.addf(path+".androidPackages", "must name the app's packages when Play Integrity is configured")
+		}
 	}
 }

@@ -33,6 +33,37 @@ type Config struct {
 	Limits        map[string]string `json:"limits"`
 	Retention     Retention         `json:"retention"`
 	Assets        Assets            `json:"assets"`
+	Attestation   Attestation       `json:"attestation"`
+}
+
+// Attestation says what the server trusts about the builds of each app
+// (SEC-003). It is the interim source of that trust: the remote security
+// configuration replaces it, and an app it does not list has no
+// attestation configured, so Android and iOS evidence is refused as
+// unavailable while development evidence still works outside production
+// (SEC-008).
+type Attestation struct {
+	// Apps maps an app identifier (a UUID) to its builds.
+	Apps map[string]AppAttestation `json:"apps"`
+}
+
+// AppAttestation is what the server trusts about one app's builds.
+type AppAttestation struct {
+	// AndroidPackages are the application identifiers the app ships as.
+	AndroidPackages []string `json:"androidPackages"`
+	// AndroidCertDigests are the hex SHA-256 digests of the app's signing
+	// certificates; empty skips the certificate check.
+	AndroidCertDigests []string `json:"androidCertDigests"`
+	// PlayIntegrityDecryptionKey and PlayIntegrityVerificationKey are the
+	// app's Play Console keys, in standard base64; both or neither.
+	PlayIntegrityDecryptionKey   Secret `json:"playIntegrityDecryptionKey"`
+	PlayIntegrityVerificationKey Secret `json:"playIntegrityVerificationKey"`
+	// IOSAppID is the team and bundle identifier, "TEAMID.com.example.app";
+	// empty means App Attest is not configured.
+	IOSAppID string `json:"iosAppID"`
+	// AppAttestProduction selects App Attest's production environment
+	// rather than its sandbox.
+	AppAttestProduction bool `json:"appAttestProduction"`
 }
 
 // Assets configures the handling of uploaded asset files (SRV-060).

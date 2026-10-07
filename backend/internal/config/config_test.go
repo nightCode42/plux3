@@ -143,8 +143,22 @@ func TestValidateReportsEveryProblem(t *testing.T) {
 		{"no audit retention", minimal + "retention:\n  auditYears: 0\n", "retention.auditYears"},
 		{"bad duration", withServer("  shutdownGrace: soon\n"), "invalid duration"},
 		{"negative duration", withServer("  shutdownGrace: -1s\n"), "must not be negative"},
+		{"an app key that is not an identifier", minimal + "attestation:\n  apps:\n    demo:\n      iosAppID: \"T.com.example\"\n", "attestation.apps[demo]"},
+		{"a certificate digest that is not SHA-256", minimal + "attestation:\n  apps:\n    0190a1b2-0000-7000-8000-000000000001:\n      androidCertDigests: [\"abcd\"]\n", "androidCertDigests[0]"},
+		{"half the Play Integrity keys", minimal + "attestation:\n  apps:\n    0190a1b2-0000-7000-8000-000000000001:\n      androidPackages: [com.example]\n      playIntegrityDecryptionKey: k\n", "set together"},
+		{"Play Integrity without packages", minimal + "attestation:\n  apps:\n    0190a1b2-0000-7000-8000-000000000001:\n      playIntegrityDecryptionKey: k\n      playIntegrityVerificationKey: v\n", "androidPackages"},
 		{"bad trusted proxy", withServer("  trustedProxies: [\"10.0.0.0/8\", \"proxy\"]\n"), "trustedProxies[1]"},
 	})
+}
+
+// Verifies: SEC-003.
+func TestAttestationAppsParse(t *testing.T) {
+	t.Parallel()
+	c := parse(t, minimal+"attestation:\n  apps:\n    0190a1b2-0000-7000-8000-000000000001:\n      androidPackages: [com.example.app]\n      androidCertDigests: [\""+strings.Repeat("ab", 32)+"\"]\n      iosAppID: \"TEAMID.com.example.app\"\n      appAttestProduction: true\n")
+	a := c.Attestation.Apps["0190a1b2-0000-7000-8000-000000000001"]
+	if len(a.AndroidPackages) != 1 || a.IOSAppID != "TEAMID.com.example.app" || !a.AppAttestProduction {
+		t.Errorf("apps = %+v", c.Attestation.Apps)
+	}
 }
 
 // Verifies: LIM-001, LIM-002.
