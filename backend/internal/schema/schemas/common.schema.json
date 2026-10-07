@@ -508,6 +508,13 @@
         "static"
       ]
     },
+    "dataSourceRoute": {
+      "enum": [
+        "plux",
+        "direct"
+      ],
+      "description": "Absent means `plux`. How the runtime reaches the source: through the Plux gateway (`plux`) or straight to the origin (`direct`). Direct is an opt-in; a security profile may refuse it (SEC-030)."
+    },
     "dataSource": {
       "type": "object",
       "description": "A data source with its value type and design-time mock (SCH-024, DAT-080).",
@@ -538,6 +545,48 @@
           "description": "Kind-specific configuration, validated from P5 (DAT-001).",
           "type": "object",
           "x-plux-raw": true
+        },
+        "route": {
+          "$ref": "#/$defs/dataSourceRoute"
+        },
+        "transaction": {
+          "type": "object",
+          "x-plux-type": "DataSourceTransaction",
+          "description": "JSON Pointers into the operation's input naming the fields that are signed for SCA dynamic linking (SEC-028). Requires route `plux`; the compiler enforces that.",
+          "required": [
+            "amount",
+            "currency",
+            "payee"
+          ],
+          "properties": {
+            "amount": {
+              "type": "string",
+              "pattern": "^(/([^/~]|~[01])*)*$",
+              "description": "Pointer to the amount."
+            },
+            "currency": {
+              "type": "string",
+              "pattern": "^(/([^/~]|~[01])*)*$",
+              "description": "Pointer to the currency."
+            },
+            "payee": {
+              "type": "string",
+              "pattern": "^(/([^/~]|~[01])*)*$",
+              "description": "Pointer to the payee."
+            },
+            "summary": {
+              "type": "string",
+              "pattern": "^(/([^/~]|~[01])*)*$",
+              "description": "Pointer to a human-readable summary."
+            }
+          },
+          "patternProperties": {
+            "^x-": true
+          },
+          "additionalProperties": false
+        },
+        "requiresAssurance": {
+          "$ref": "#/$defs/assuranceLevel"
         },
         "description": {
           "$ref": "#/$defs/description"
@@ -1170,6 +1219,15 @@
       ],
       "description": "Security profile (§15.12)."
     },
+    "raspResponse": {
+      "enum": [
+        "report",
+        "warn",
+        "degrade",
+        "block"
+      ],
+      "description": "How the runtime answers a rooted or hooked device (SEC-181)."
+    },
     "startupMode": {
       "enum": [
         "useCacheThenSync",
@@ -1307,6 +1365,10 @@
           "items": {
             "$ref": "#/$defs/formValidator"
           }
+        },
+        "sensitive": {
+          "type": "boolean",
+          "description": "Absent means false. The value is sensitive: never logged, traced, persisted or sent to analytics (SCH-012, SEC-092)."
         },
         "description": {
           "$ref": "#/$defs/description"

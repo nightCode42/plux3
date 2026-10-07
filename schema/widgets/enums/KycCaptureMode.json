@@ -1,0 +1,23 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "KycCaptureMode",
+  "id": 76,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "What the KYC camera captures.",
+  "values": [
+    {
+      "name": "document",
+      "id": 1
+    },
+    {
+      "name": "selfie",
+      "id": 2
+    }
+  ]
+}

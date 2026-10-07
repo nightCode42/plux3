@@ -173,7 +173,7 @@ export interface ActionDescriptor {
 }
 
 /** A widget type name. */
-export type WidgetType = "ActionChip" | "Align" | "AppBar" | "AspectRatio" | "BackButton" | "Badge" | "Baseline" | "BottomAppBar" | "Card" | "Center" | "Checkbox" | "CheckboxListTile" | "Chip" | "ChoiceChip" | "CircleAvatar" | "CircularProgressIndicator" | "ClipOval" | "ClipRRect" | "CloseButton" | "ColoredBox" | "Column" | "ConstrainedBox" | "Container" | "CupertinoActivityIndicator" | "CupertinoButton" | "CupertinoListSection" | "CupertinoListTile" | "CupertinoSlider" | "CupertinoSlidingSegmentedControl" | "CupertinoSwitch" | "CupertinoTextField" | "CustomScrollView" | "DecoratedBox" | "Divider" | "DropdownMenu" | "ElevatedButton" | "EmptyState" | "ErrorState" | "Expanded" | "ExpansionTile" | "FilledButton" | "FilterChip" | "FittedBox" | "Flex" | "Flexible" | "FloatingActionButton" | "ForEach" | "FormScope" | "FractionallySizedBox" | "GestureDetector" | "GridView" | "Icon" | "IconButton" | "If" | "Image" | "IndexedStack" | "InkWell" | "InputChip" | "LimitedBox" | "LinearProgressIndicator" | "ListTile" | "ListView" | "Match" | "OfflineBanner" | "Opacity" | "OutlinedButton" | "Padding" | "PageView" | "Positioned" | "Radio" | "RadioListTile" | "RangeSlider" | "Responsive" | "RichText" | "Row" | "SafeArea" | "Scaffold" | "Scrollbar" | "SegmentedButton" | "SelectableText" | "SingleChildScrollView" | "SizedBox" | "SkeletonLoader" | "Slider" | "SliverAppBar" | "SliverFillRemaining" | "SliverGrid" | "SliverList" | "SliverPadding" | "SliverToBoxAdapter" | "Slot" | "Spacer" | "Stack" | "Switch" | "SwitchListTile" | "Text" | "TextButton" | "TextField" | "TextFormField" | "Tooltip" | "Transform" | "VerticalDivider" | "Wrap";
+export type WidgetType = "ActionChip" | "Align" | "AppBar" | "AspectRatio" | "BackButton" | "Badge" | "Baseline" | "BiometricButton" | "BottomAppBar" | "Card" | "Center" | "Checkbox" | "CheckboxListTile" | "Chip" | "ChoiceChip" | "CircleAvatar" | "CircularProgressIndicator" | "ClipOval" | "ClipRRect" | "CloseButton" | "ColoredBox" | "Column" | "ConstrainedBox" | "Container" | "CupertinoActivityIndicator" | "CupertinoButton" | "CupertinoListSection" | "CupertinoListTile" | "CupertinoSlider" | "CupertinoSlidingSegmentedControl" | "CupertinoSwitch" | "CupertinoTextField" | "CustomScrollView" | "DecoratedBox" | "Divider" | "DropdownMenu" | "ElevatedButton" | "EmptyState" | "ErrorState" | "Expanded" | "ExpansionTile" | "FilledButton" | "FilterChip" | "FittedBox" | "Flex" | "Flexible" | "FloatingActionButton" | "ForEach" | "FormScope" | "FractionallySizedBox" | "GestureDetector" | "GridView" | "Icon" | "IconButton" | "If" | "Image" | "IndexedStack" | "InkWell" | "InputChip" | "KycCameraCapture" | "LimitedBox" | "LinearProgressIndicator" | "ListTile" | "ListView" | "Match" | "OfflineBanner" | "Opacity" | "OtpInput" | "OutlinedButton" | "Padding" | "PageView" | "Positioned" | "Radio" | "RadioListTile" | "RangeSlider" | "Responsive" | "RichText" | "Row" | "SafeArea" | "Scaffold" | "Scrollbar" | "SecurePinPad" | "SecureTextField" | "SegmentedButton" | "SelectableText" | "SingleChildScrollView" | "SizedBox" | "SkeletonLoader" | "Slider" | "SliverAppBar" | "SliverFillRemaining" | "SliverGrid" | "SliverList" | "SliverPadding" | "SliverToBoxAdapter" | "Slot" | "Spacer" | "Stack" | "Switch" | "SwitchListTile" | "Text" | "TextButton" | "TextField" | "TextFormField" | "Tooltip" | "Transform" | "VerticalDivider" | "Wrap";
 
 /** An action name. */
 export type ActionName = "apiCall" | "biometricAuth" | "callFlow" | "callNative" | "capturePhoto" | "condition" | "controlAnimation" | "copyToClipboard" | "dbDelete" | "dbInsert" | "dbQuery" | "dbUpdate" | "dbUpsert" | "delay" | "emitEvent" | "emitHostEvent" | "forEach" | "getLocation" | "haptic" | "invokeFunction" | "kvGet" | "kvRemove" | "kvSet" | "logout" | "navigate" | "openBottomSheet" | "openDialog" | "openUrl" | "parallel" | "patchState" | "pickFile" | "pickImage" | "pop" | "refreshData" | "requestPermission" | "resetForm" | "resetState" | "scanCode" | "setLocale" | "setState" | "setThemeMode" | "share" | "showSnackbar" | "showToast" | "signTransaction" | "startAnimation" | "startPayment" | "stop" | "submitForm" | "subscribe" | "switch" | "switchTab" | "sync" | "trackEvent" | "unsubscribe" | "validateForm";
@@ -393,6 +393,30 @@ export const widgets: readonly WidgetDescriptor[] = [
     "slots": [
       {"name": "child", "id": 1, "list": false, "required": false, "template": false, "revision": 1}
     ]
+  },
+  {
+    "type": "BiometricButton",
+    "id": 107,
+    "layer": 2,
+    "phase": "P6",
+    "revision": 1,
+    "runtimes": ["0.1.0"],
+    "category": "interaction",
+    "icon": "fingerprint",
+    "description": "A button that triggers a biometric step-up (SEC-027).",
+    "platforms": ["android", "ios"],
+    "cost": 80,
+    "accessibility": {"role": "button", "interactive": true},
+    "typeParameters": [],
+    "props": [
+      {"name": "label", "id": 1, "type": "string", "required": true, "revision": 1, "bindable": true, "description": "The button text."},
+      {"name": "reason", "id": 2, "type": "string", "required": true, "revision": 1, "bindable": true, "description": "Why the app asks, shown by the system prompt."}
+    ],
+    "events": [
+      {"name": "onSuccess", "id": 1, "revision": 1, "description": "Fires when the user confirms."},
+      {"name": "onFailure", "id": 2, "revision": 1, "description": "Fires when the confirmation fails or is cancelled."}
+    ],
+    "slots": []
   },
   {
     "type": "BottomAppBar",
@@ -2153,6 +2177,28 @@ export const widgets: readonly WidgetDescriptor[] = [
     ]
   },
   {
+    "type": "KycCameraCapture",
+    "id": 108,
+    "layer": 2,
+    "phase": "P6",
+    "revision": 1,
+    "runtimes": ["0.1.0"],
+    "category": "input",
+    "icon": "photo_camera",
+    "description": "ID document and selfie capture with framing guides and quality checks. Ships in `plux_media`.",
+    "platforms": ["android", "ios"],
+    "cost": 400,
+    "accessibility": {"role": "none", "interactive": true},
+    "typeParameters": [],
+    "props": [
+      {"name": "mode", "id": 1, "type": "KycCaptureMode", "required": true, "revision": 1, "bindable": true, "description": "What to capture."}
+    ],
+    "events": [
+      {"name": "onCaptured", "id": 1, "payload": "string", "revision": 1, "description": "Fires with a reference to the captured image."}
+    ],
+    "slots": []
+  },
+  {
     "type": "LimitedBox",
     "id": 12,
     "layer": 1,
@@ -2370,6 +2416,30 @@ export const widgets: readonly WidgetDescriptor[] = [
     "slots": [
       {"name": "child", "id": 1, "list": false, "required": false, "template": false, "revision": 1}
     ]
+  },
+  {
+    "type": "OtpInput",
+    "id": 106,
+    "layer": 2,
+    "phase": "P6",
+    "revision": 1,
+    "runtimes": ["0.1.0"],
+    "category": "input",
+    "icon": "pin",
+    "description": "One-time code entry with platform autofill: SMS User Consent API on Android, one-time-code autofill on iOS (SEC-090).",
+    "platforms": ["android", "ios"],
+    "cost": 140,
+    "accessibility": {"role": "textField", "interactive": true},
+    "typeParameters": [],
+    "props": [
+      {"name": "length", "id": 1, "type": "int", "required": false, "default": 6, "constraints": {"min": 4, "max": 12}, "revision": 1, "bindable": true, "description": "The number of characters."},
+      {"name": "alphabet", "id": 2, "type": "OtpAlphabet", "required": false, "default": "numeric", "revision": 1, "bindable": true, "description": "The characters accepted."},
+      {"name": "autofill", "id": 3, "type": "bool", "required": false, "default": true, "revision": 1, "bindable": true, "description": "Uses the platform's one-time-code autofill."}
+    ],
+    "events": [
+      {"name": "onCompleted", "id": 1, "payload": "string", "revision": 1, "description": "Fires with the code once `length` characters are entered. Sensitive: never logged, traced or persisted (SEC-092)."}
+    ],
+    "slots": []
   },
   {
     "type": "OutlinedButton",
@@ -2795,6 +2865,56 @@ export const widgets: readonly WidgetDescriptor[] = [
     "slots": [
       {"name": "child", "id": 1, "list": false, "required": true, "template": false, "revision": 1}
     ]
+  },
+  {
+    "type": "SecurePinPad",
+    "id": 105,
+    "layer": 2,
+    "phase": "P6",
+    "revision": 1,
+    "runtimes": ["0.1.0"],
+    "category": "input",
+    "icon": "dialpad",
+    "description": "PIN entry with an optional randomised layout and haptic-only key feedback (SEC-090).",
+    "platforms": ["android", "ios"],
+    "cost": 150,
+    "accessibility": {"role": "button", "interactive": true},
+    "typeParameters": [],
+    "props": [
+      {"name": "length", "id": 1, "type": "int", "required": false, "default": 4, "constraints": {"min": 4, "max": 12}, "revision": 1, "bindable": true, "description": "The number of digits."},
+      {"name": "randomizeLayout", "id": 2, "type": "bool", "required": false, "default": false, "revision": 1, "bindable": true, "description": "Shuffles the digit positions each time the pad appears."},
+      {"name": "haptics", "id": 3, "type": "bool", "required": false, "default": true, "revision": 1, "bindable": true, "description": "Haptic feedback on key press; no visual key-press animation."}
+    ],
+    "events": [
+      {"name": "onCompleted", "id": 1, "payload": "string", "revision": 1, "description": "Fires with the PIN once `length` digits are entered. Sensitive: never logged, traced or persisted (SEC-092)."}
+    ],
+    "slots": []
+  },
+  {
+    "type": "SecureTextField",
+    "id": 104,
+    "layer": 2,
+    "phase": "P6",
+    "revision": 1,
+    "runtimes": ["0.1.0"],
+    "category": "input",
+    "icon": "password",
+    "description": "Hardened text entry: obscured, with no suggestions, autocorrect, clipboard or keyboard learning (SEC-090).",
+    "platforms": ["android", "ios"],
+    "cost": 120,
+    "accessibility": {"role": "textField", "interactive": true},
+    "typeParameters": [],
+    "props": [
+      {"name": "value", "id": 1, "type": "string", "required": false, "revision": 1, "bindable": true, "description": "The text, bound two-way. Sensitive: never logged, traced or persisted (SEC-092)."},
+      {"name": "label", "id": 2, "type": "string?", "required": false, "revision": 1, "bindable": true, "description": "The field label."},
+      {"name": "obscure", "id": 3, "type": "bool", "required": false, "default": true, "revision": 1, "bindable": true, "description": "Hides the characters."},
+      {"name": "maxLength", "id": 4, "type": "int", "required": false, "constraints": {"min": 1}, "revision": 1, "bindable": true, "description": "The maximum number of characters."}
+    ],
+    "events": [
+      {"name": "onChanged", "id": 1, "payload": "string", "revision": 1, "description": "Fires on every change with the text. Sensitive: never logged, traced or persisted (SEC-092)."},
+      {"name": "onSubmitted", "id": 2, "payload": "string", "revision": 1, "description": "Fires when the user submits. Sensitive: never logged, traced or persisted (SEC-092)."}
+    ],
+    "slots": []
   },
   {
     "type": "SegmentedButton",
@@ -4815,6 +4935,17 @@ export const enums: readonly EnumDescriptor[] = [
     ]
   },
   {
+    "name": "KycCaptureMode",
+    "id": 76,
+    "revision": 1,
+    "runtimes": ["0.1.0"],
+    "description": "What the KYC camera captures.",
+    "values": [
+      {"name": "document", "id": 1, "revision": 1},
+      {"name": "selfie", "id": 2, "revision": 1}
+    ]
+  },
+  {
     "name": "ListStatus",
     "id": 30,
     "revision": 1,
@@ -4935,6 +5066,17 @@ export const enums: readonly EnumDescriptor[] = [
       {"name": "replace", "id": 2, "revision": 1, "description": "Replace the current route."},
       {"name": "popUntil", "id": 3, "revision": 1, "description": "Pop routes until the named route is on top."},
       {"name": "clearAndPush", "id": 4, "revision": 1, "description": "Clear the stack, then push the route."}
+    ]
+  },
+  {
+    "name": "OtpAlphabet",
+    "id": 75,
+    "revision": 1,
+    "runtimes": ["0.1.0"],
+    "description": "The characters a one-time code may contain.",
+    "values": [
+      {"name": "numeric", "id": 1, "revision": 1},
+      {"name": "alphanumeric", "id": 2, "revision": 1}
     ]
   },
   {

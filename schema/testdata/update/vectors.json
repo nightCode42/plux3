@@ -1,0 +1,1085 @@
+{
+  "$comment": "Update metadata vectors (SEC-122): each document must validate against, or be rejected by, the JSON Schema of its kind in schema/update/. Verified by backend/internal/schema.",
+  "root": {
+    "valid": [
+      {
+        "name": "valid",
+        "document": {
+          "signed": {
+            "_type": "root",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "keys": {
+              "00000000000000000000000000000001": {
+                "alg": "Ed25519",
+                "public": "Zm9vYmFy"
+              },
+              "00000000000000000000000000000002": {
+                "alg": "ES256",
+                "public": "Zm9vYmFy"
+              }
+            },
+            "roles": {
+              "root": {
+                "keyids": [
+                  "00000000000000000000000000000001"
+                ],
+                "threshold": 1
+              },
+              "targets": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "snapshot": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "timestamp": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000001",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "open-algorithm-name",
+        "document": {
+          "signed": {
+            "_type": "root",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "keys": {
+              "00000000000000000000000000000001": {
+                "alg": "ML-DSA-65",
+                "public": "Zm9vYmFy"
+              },
+              "00000000000000000000000000000002": {
+                "alg": "ES256",
+                "public": "Zm9vYmFy"
+              }
+            },
+            "roles": {
+              "root": {
+                "keyids": [
+                  "00000000000000000000000000000001"
+                ],
+                "threshold": 1
+              },
+              "targets": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "snapshot": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "timestamp": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000001",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      }
+    ],
+    "invalid": [
+      {
+        "name": "version-zero",
+        "document": {
+          "signed": {
+            "_type": "root",
+            "version": 0,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "keys": {
+              "00000000000000000000000000000001": {
+                "alg": "Ed25519",
+                "public": "Zm9vYmFy"
+              },
+              "00000000000000000000000000000002": {
+                "alg": "ES256",
+                "public": "Zm9vYmFy"
+              }
+            },
+            "roles": {
+              "root": {
+                "keyids": [
+                  "00000000000000000000000000000001"
+                ],
+                "threshold": 1
+              },
+              "targets": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "snapshot": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "timestamp": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000001",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "expires-not-rfc3339",
+        "document": {
+          "signed": {
+            "_type": "root",
+            "version": 1,
+            "expires": "tomorrow",
+            "specVersion": "1.0.0",
+            "keys": {
+              "00000000000000000000000000000001": {
+                "alg": "Ed25519",
+                "public": "Zm9vYmFy"
+              },
+              "00000000000000000000000000000002": {
+                "alg": "ES256",
+                "public": "Zm9vYmFy"
+              }
+            },
+            "roles": {
+              "root": {
+                "keyids": [
+                  "00000000000000000000000000000001"
+                ],
+                "threshold": 1
+              },
+              "targets": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "snapshot": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "timestamp": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000001",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "wrong-type",
+        "document": {
+          "signed": {
+            "_type": "targets",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "keys": {
+              "00000000000000000000000000000001": {
+                "alg": "Ed25519",
+                "public": "Zm9vYmFy"
+              },
+              "00000000000000000000000000000002": {
+                "alg": "ES256",
+                "public": "Zm9vYmFy"
+              }
+            },
+            "roles": {
+              "root": {
+                "keyids": [
+                  "00000000000000000000000000000001"
+                ],
+                "threshold": 1
+              },
+              "targets": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "snapshot": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "timestamp": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000001",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "missing-spec-version",
+        "document": {
+          "signed": {
+            "_type": "root",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "keys": {
+              "00000000000000000000000000000001": {
+                "alg": "Ed25519",
+                "public": "Zm9vYmFy"
+              },
+              "00000000000000000000000000000002": {
+                "alg": "ES256",
+                "public": "Zm9vYmFy"
+              }
+            },
+            "roles": {
+              "root": {
+                "keyids": [
+                  "00000000000000000000000000000001"
+                ],
+                "threshold": 1
+              },
+              "targets": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "snapshot": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "timestamp": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000001",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "signature-without-sig",
+        "document": {
+          "signed": {
+            "_type": "root",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "keys": {
+              "00000000000000000000000000000001": {
+                "alg": "Ed25519",
+                "public": "Zm9vYmFy"
+              },
+              "00000000000000000000000000000002": {
+                "alg": "ES256",
+                "public": "Zm9vYmFy"
+              }
+            },
+            "roles": {
+              "root": {
+                "keyids": [
+                  "00000000000000000000000000000001"
+                ],
+                "threshold": 1
+              },
+              "targets": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "snapshot": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "timestamp": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000001",
+              "alg": "Ed25519"
+            }
+          ]
+        }
+      },
+      {
+        "name": "unknown-property",
+        "document": {
+          "signed": {
+            "_type": "root",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "keys": {
+              "00000000000000000000000000000001": {
+                "alg": "Ed25519",
+                "public": "Zm9vYmFy"
+              },
+              "00000000000000000000000000000002": {
+                "alg": "ES256",
+                "public": "Zm9vYmFy"
+              }
+            },
+            "roles": {
+              "root": {
+                "keyids": [
+                  "00000000000000000000000000000001"
+                ],
+                "threshold": 1
+              },
+              "targets": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "snapshot": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "timestamp": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              }
+            },
+            "extra": 1
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000001",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "missing-signatures",
+        "document": {
+          "signed": {
+            "_type": "root",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "keys": {
+              "00000000000000000000000000000001": {
+                "alg": "Ed25519",
+                "public": "Zm9vYmFy"
+              },
+              "00000000000000000000000000000002": {
+                "alg": "ES256",
+                "public": "Zm9vYmFy"
+              }
+            },
+            "roles": {
+              "root": {
+                "keyids": [
+                  "00000000000000000000000000000001"
+                ],
+                "threshold": 1
+              },
+              "targets": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "snapshot": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "timestamp": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "zero-threshold",
+        "document": {
+          "signed": {
+            "_type": "root",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "keys": {
+              "00000000000000000000000000000001": {
+                "alg": "Ed25519",
+                "public": "Zm9vYmFy"
+              },
+              "00000000000000000000000000000002": {
+                "alg": "ES256",
+                "public": "Zm9vYmFy"
+              }
+            },
+            "roles": {
+              "root": {
+                "keyids": [
+                  "00000000000000000000000000000001"
+                ],
+                "threshold": 0
+              },
+              "targets": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "snapshot": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "timestamp": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000001",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "missing-role",
+        "document": {
+          "signed": {
+            "_type": "root",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "keys": {
+              "00000000000000000000000000000001": {
+                "alg": "Ed25519",
+                "public": "Zm9vYmFy"
+              },
+              "00000000000000000000000000000002": {
+                "alg": "ES256",
+                "public": "Zm9vYmFy"
+              }
+            },
+            "roles": {
+              "root": {
+                "keyids": [
+                  "00000000000000000000000000000001"
+                ],
+                "threshold": 1
+              },
+              "targets": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "snapshot": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000001",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "bad-key-id",
+        "document": {
+          "signed": {
+            "_type": "root",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "keys": {
+              "00000000000000000000000000000001": {
+                "alg": "Ed25519",
+                "public": "Zm9vYmFy"
+              },
+              "00000000000000000000000000000002": {
+                "alg": "ES256",
+                "public": "Zm9vYmFy"
+              },
+              "XYZ": {
+                "alg": "Ed25519",
+                "public": "Zm9v"
+              }
+            },
+            "roles": {
+              "root": {
+                "keyids": [
+                  "00000000000000000000000000000001"
+                ],
+                "threshold": 1
+              },
+              "targets": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "snapshot": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "timestamp": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000001",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "snapshot": {
+    "valid": [
+      {
+        "name": "valid",
+        "document": {
+          "signed": {
+            "_type": "snapshot",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "meta": {
+              "targets.json": {
+                "version": 3
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000002",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      }
+    ],
+    "invalid": [
+      {
+        "name": "version-zero",
+        "document": {
+          "signed": {
+            "_type": "snapshot",
+            "version": 0,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "meta": {
+              "targets.json": {
+                "version": 3
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000002",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "expires-not-rfc3339",
+        "document": {
+          "signed": {
+            "_type": "snapshot",
+            "version": 1,
+            "expires": "tomorrow",
+            "specVersion": "1.0.0",
+            "meta": {
+              "targets.json": {
+                "version": 3
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000002",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "wrong-type",
+        "document": {
+          "signed": {
+            "_type": "targets",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "meta": {
+              "targets.json": {
+                "version": 3
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000002",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "missing-spec-version",
+        "document": {
+          "signed": {
+            "_type": "snapshot",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "meta": {
+              "targets.json": {
+                "version": 3
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000002",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "signature-without-sig",
+        "document": {
+          "signed": {
+            "_type": "snapshot",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "meta": {
+              "targets.json": {
+                "version": 3
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000002",
+              "alg": "Ed25519"
+            }
+          ]
+        }
+      },
+      {
+        "name": "unknown-property",
+        "document": {
+          "signed": {
+            "_type": "snapshot",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "meta": {
+              "targets.json": {
+                "version": 3
+              }
+            },
+            "extra": 1
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000002",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "missing-signatures",
+        "document": {
+          "signed": {
+            "_type": "snapshot",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "meta": {
+              "targets.json": {
+                "version": 3
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "missing-targets-meta",
+        "document": {
+          "signed": {
+            "_type": "snapshot",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "meta": {}
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000002",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "timestamp": {
+    "valid": [
+      {
+        "name": "valid",
+        "document": {
+          "signed": {
+            "_type": "timestamp",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "meta": {
+              "snapshot.json": {
+                "version": 3,
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000002",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      }
+    ],
+    "invalid": [
+      {
+        "name": "version-zero",
+        "document": {
+          "signed": {
+            "_type": "timestamp",
+            "version": 0,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "meta": {
+              "snapshot.json": {
+                "version": 3,
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000002",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "expires-not-rfc3339",
+        "document": {
+          "signed": {
+            "_type": "timestamp",
+            "version": 1,
+            "expires": "tomorrow",
+            "specVersion": "1.0.0",
+            "meta": {
+              "snapshot.json": {
+                "version": 3,
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000002",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "wrong-type",
+        "document": {
+          "signed": {
+            "_type": "targets",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "meta": {
+              "snapshot.json": {
+                "version": 3,
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000002",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "missing-spec-version",
+        "document": {
+          "signed": {
+            "_type": "timestamp",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "meta": {
+              "snapshot.json": {
+                "version": 3,
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000002",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "signature-without-sig",
+        "document": {
+          "signed": {
+            "_type": "timestamp",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "meta": {
+              "snapshot.json": {
+                "version": 3,
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000002",
+              "alg": "Ed25519"
+            }
+          ]
+        }
+      },
+      {
+        "name": "unknown-property",
+        "document": {
+          "signed": {
+            "_type": "timestamp",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "meta": {
+              "snapshot.json": {
+                "version": 3,
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            },
+            "extra": 1
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000002",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "missing-signatures",
+        "document": {
+          "signed": {
+            "_type": "timestamp",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "meta": {
+              "snapshot.json": {
+                "version": 3,
+                "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "missing-hash",
+        "document": {
+          "signed": {
+            "_type": "timestamp",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "meta": {
+              "snapshot.json": {
+                "version": 3
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000002",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "bad-hash",
+        "document": {
+          "signed": {
+            "_type": "timestamp",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "meta": {
+              "snapshot.json": {
+                "version": 3,
+                "sha256": "xyz"
+              }
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000002",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

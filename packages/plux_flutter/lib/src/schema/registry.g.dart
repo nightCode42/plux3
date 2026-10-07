@@ -155,6 +155,14 @@ const List<WidgetDescriptor> widgetDescriptors = [
     slots: {'child': 1},
   ),
   WidgetDescriptor(
+    'BiometricButton',
+    107,
+    layer: 2,
+    revision: 1,
+    props: {'label': 1, 'reason': 2},
+    events: {'onSuccess': 1, 'onFailure': 2},
+  ),
+  WidgetDescriptor(
     'BottomAppBar',
     88,
     layer: 1,
@@ -576,6 +584,14 @@ const List<WidgetDescriptor> widgetDescriptors = [
     slots: {'avatar': 1, 'label': 2, 'deleteIcon': 3},
   ),
   WidgetDescriptor(
+    'KycCameraCapture',
+    108,
+    layer: 2,
+    revision: 1,
+    props: {'mode': 1},
+    events: {'onCaptured': 1},
+  ),
+  WidgetDescriptor(
     'LimitedBox',
     12,
     layer: 1,
@@ -630,6 +646,14 @@ const List<WidgetDescriptor> widgetDescriptors = [
     revision: 1,
     props: {'opacity': 1, 'alwaysIncludeSemantics': 2},
     slots: {'child': 1},
+  ),
+  WidgetDescriptor(
+    'OtpInput',
+    106,
+    layer: 2,
+    revision: 1,
+    props: {'length': 1, 'alphabet': 2, 'autofill': 3},
+    events: {'onCompleted': 1},
   ),
   WidgetDescriptor(
     'OutlinedButton',
@@ -735,6 +759,22 @@ const List<WidgetDescriptor> widgetDescriptors = [
     revision: 1,
     props: {'thumbVisibility': 1, 'trackVisibility': 2, 'thickness': 3, 'radius': 4, 'interactive': 5, 'scrollbarOrientation': 6},
     slots: {'child': 1},
+  ),
+  WidgetDescriptor(
+    'SecurePinPad',
+    105,
+    layer: 2,
+    revision: 1,
+    props: {'length': 1, 'randomizeLayout': 2, 'haptics': 3},
+    events: {'onCompleted': 1},
+  ),
+  WidgetDescriptor(
+    'SecureTextField',
+    104,
+    layer: 2,
+    revision: 1,
+    props: {'value': 1, 'label': 2, 'obscure': 3, 'maxLength': 4},
+    events: {'onChanged': 1, 'onSubmitted': 2},
   ),
   WidgetDescriptor(
     'SegmentedButton',
@@ -1365,6 +1405,12 @@ const List<EnumDescriptor> enumDescriptors = [
     values: {'outline': 1, 'underline': 2, 'none': 3},
   ),
   EnumDescriptor(
+    'KycCaptureMode',
+    76,
+    revision: 1,
+    values: {'document': 1, 'selfie': 2},
+  ),
+  EnumDescriptor(
     'ListStatus',
     30,
     revision: 1,
@@ -1423,6 +1469,12 @@ const List<EnumDescriptor> enumDescriptors = [
     68,
     revision: 1,
     values: {'push': 1, 'replace': 2, 'popUntil': 3, 'clearAndPush': 4},
+  ),
+  EnumDescriptor(
+    'OtpAlphabet',
+    75,
+    revision: 1,
+    values: {'numeric': 1, 'alphanumeric': 2},
   ),
   EnumDescriptor(
     'OverlayVisibilityMode',

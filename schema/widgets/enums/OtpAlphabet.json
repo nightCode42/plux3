@@ -1,0 +1,23 @@
+{
+  "$schema": "../../json/registry/enum.schema.json",
+  "name": "OtpAlphabet",
+  "id": 75,
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "description": "The characters a one-time code may contain.",
+  "values": [
+    {
+      "name": "numeric",
+      "id": 1
+    },
+    {
+      "name": "alphanumeric",
+      "id": 2
+    }
+  ]
+}

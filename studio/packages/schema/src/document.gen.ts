@@ -86,6 +86,8 @@ export interface AppDocument {
   readonly nativeCatalogue?: string;
   /** Security profile (§15.12). */
   readonly securityProfile: SecurityProfile;
+  /** App-level security settings (SEC-181). */
+  readonly security?: AppSecurity;
   /** Sync policy (§10.4). */
   readonly sync: SyncPolicy;
   /** Semantic version major.minor.patch. */
@@ -107,6 +109,28 @@ export interface AppDocument {
   readonly push?: PushPolicy;
   /** Triggers besides widget events and page lifecycle (ACT-002), and the owner's error handler (ACT-020). A page's runs are cancelled with the page; a plugin's and the app's run while the release is active. */
   readonly triggers?: Triggers;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** App-level security settings (SEC-181). */
+export interface AppSecurity {
+  /** A document-tightenable subset of the security profile. May only tighten the effective profile (SEC-181); checked by the compiler and the server. */
+  readonly settings?: AppSecuritySettings;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
+
+/** A document-tightenable subset of the security profile. May only tighten the effective profile (SEC-181); checked by the compiler and the server. */
+export interface AppSecuritySettings {
+  readonly allowDirectDataSources?: boolean;
+  readonly minAssuranceForSync?: AssuranceLevel;
+  readonly screenshotBlockingDefault?: boolean;
+  readonly inactivityLock?: boolean;
+  /** Seconds. */
+  readonly inactivityLockTimeout?: number;
+  /** How the runtime answers a rooted or hooked device (SEC-181). */
+  readonly raspRootHookingResponse?: RaspResponse;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
@@ -293,6 +317,11 @@ export interface DataSource {
   readonly mock: JsonValue;
   /** Kind-specific configuration, validated from P5 (DAT-001). */
   readonly config?: JsonValue;
+  /** Absent means `plux`. How the runtime reaches the source: through the Plux gateway (`plux`) or straight to the origin (`direct`). Direct is an opt-in; a security profile may refuse it (SEC-030). */
+  readonly route?: DataSourceRoute;
+  /** JSON Pointers into the operation's input naming the fields that are signed for SCA dynamic linking (SEC-028). Requires route `plux`; the compiler enforces that. */
+  readonly transaction?: DataSourceTransaction;
+  readonly requiresAssurance?: AssuranceLevel;
   /** Human-readable description. */
   readonly description?: string;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
@@ -300,6 +329,23 @@ export interface DataSource {
 }
 
 export type DataSourceKind = "rest" | "graphql" | "websocket" | "sse" | "function" | "database" | "static";
+
+/** Absent means `plux`. How the runtime reaches the source: through the Plux gateway (`plux`) or straight to the origin (`direct`). Direct is an opt-in; a security profile may refuse it (SEC-030). */
+export type DataSourceRoute = "plux" | "direct";
+
+/** JSON Pointers into the operation's input naming the fields that are signed for SCA dynamic linking (SEC-028). Requires route `plux`; the compiler enforces that. */
+export interface DataSourceTransaction {
+  /** Pointer to the amount. */
+  readonly amount: string;
+  /** Pointer to the currency. */
+  readonly currency: string;
+  /** Pointer to the payee. */
+  readonly payee: string;
+  /** Pointer to a human-readable summary. */
+  readonly summary?: string;
+  /** Extension properties are preserved and ignored by the compiler (SCH-004). */
+  readonly [extension: `x-${string}`]: unknown;
+}
 
 /** Handlers of a data source's events (ACT-002): the loaded value is onLoaded's `event`, the error onFailed's; a stream's message, mapped to the source's type, is onMessage's; a transfer's progress is onProgress's (DAT-012, DAT-031); an offline mutation's replay ends in onSynced, onSyncFailed or onConflict, whose `event` names the operation, the idempotency key and the status (DAT-020). */
 export interface DataSourceTriggers {
@@ -428,6 +474,8 @@ export interface FormField {
   /** A JSON value interpreted against a declared type (defaults, mocks, environment values). */
   readonly initial?: JsonValue;
   readonly validators?: readonly FormValidator[];
+  /** Absent means false. The value is sensitive: never logged, traced, persisted or sent to analytics (SCH-012, SEC-092). */
+  readonly sensitive?: boolean;
   /** Human-readable description. */
   readonly description?: string;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
@@ -471,6 +519,7 @@ export interface FunctionGrant {
   readonly id: string;
   readonly function: string;
   readonly alias?: string;
+  readonly requiresAssurance?: AssuranceLevel;
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
@@ -790,6 +839,9 @@ export interface PushPolicy {
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;
 }
+
+/** How the runtime answers a rooted or hooked device (SEC-181). */
+export type RaspResponse = "report" | "warn" | "degrade" | "block";
 
 /** What an animation does when the platform asks to reduce motion (ANI-007): `skip` jumps to the final state, `shorten` plays at a quarter of the duration, `ignore` plays as declared (for motion that carries meaning). */
 export type ReduceMotion = "skip" | "shorten" | "ignore";

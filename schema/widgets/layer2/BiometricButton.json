@@ -1,0 +1,54 @@
+{
+  "$schema": "../../json/registry/widget-descriptor.schema.json",
+  "type": "BiometricButton",
+  "id": 107,
+  "layer": 2,
+  "phase": "P6",
+  "revision": 1,
+  "revisions": [
+    {
+      "revision": 1,
+      "runtime": "0.1.0"
+    }
+  ],
+  "category": "interaction",
+  "icon": "fingerprint",
+  "description": "A button that triggers a biometric step-up (SEC-027).",
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "cost": 80,
+  "accessibility": {
+    "role": "button",
+    "interactive": true
+  },
+  "props": [
+    {
+      "name": "label",
+      "id": 1,
+      "type": "string",
+      "required": true,
+      "description": "The button text."
+    },
+    {
+      "name": "reason",
+      "id": 2,
+      "type": "string",
+      "required": true,
+      "description": "Why the app asks, shown by the system prompt."
+    }
+  ],
+  "events": [
+    {
+      "name": "onSuccess",
+      "id": 1,
+      "description": "Fires when the user confirms."
+    },
+    {
+      "name": "onFailure",
+      "id": 2,
+      "description": "Fires when the confirmation fails or is cancelled."
+    }
+  ]
+}
