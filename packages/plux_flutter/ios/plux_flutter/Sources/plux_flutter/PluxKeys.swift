@@ -202,15 +202,15 @@ final class PluxKeys {
     let b = [UInt8](der)
     // SEQUENCE header: the tag and a short-form length covering the rest.
     guard b.count >= 8, b[0] == 0x30, b[1] < 0x80, Int(b[1]) == b.count - 2 else { return nil }
-    guard let (r, next) = integer(b, at: 2), let (s, end) = integer(b, at: next), end == b.count else {
+    guard let r = integer(b, at: 2), let s = integer(b, at: r.next), s.next == b.count else {
       return nil
     }
-    return Data(r + s)
+    return Data(r.value + s.value)
   }
 
   /// Reads the INTEGER at `at`: its value left-padded to 32 bytes, and the
   /// offset after it.
-  private static func integer(_ b: [UInt8], at: Int) -> ([UInt8], Int)? {
+  private static func integer(_ b: [UInt8], at: Int) -> (value: [UInt8], next: Int)? {
     guard at + 2 <= b.count, b[at] == 0x02, b[at + 1] >= 1, b[at + 1] < 0x80 else { return nil }
     let length = Int(b[at + 1])
     let start = at + 2
