@@ -65,7 +65,7 @@ func (f *fixture) verdict() map[string]any {
 			"timestampMillis":    strconv.FormatInt(testNow.Add(-5*time.Second).UnixMilli(), 10),
 		},
 		"appIntegrity": map[string]any{
-			"appRecognitionVerdict":   "PLAY_RECOGNIZED",
+			"appRecognitionVerdict":   "PLAY_RECOGNIZED", //nolint:misspell // Google's verdict value
 			"packageName":             testPackage,
 			"certificateSha256Digest": []string{base64.RawURLEncoding.EncodeToString(f.certDig)},
 			"versionCode":             "42",
@@ -267,7 +267,7 @@ func TestVerifyRejects(t *testing.T) {
 		}},
 		{name: "unrecognised app", token: func(f *fixture) string {
 			p := f.verdict()
-			set(p, "appIntegrity", "appRecognitionVerdict", "UNRECOGNIZED_VERSION")
+			set(p, "appIntegrity", "appRecognitionVerdict", "UNRECOGNIZED_VERSION") //nolint:misspell // Google's verdict value
 			return f.token(p)
 		}},
 		{name: "certificate digest mismatch", token: func(f *fixture) string {

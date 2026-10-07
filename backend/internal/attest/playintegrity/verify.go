@@ -21,7 +21,7 @@ const (
 	// maxClockSkew is how far in the future a verdict timestamp may lie.
 	maxClockSkew = 60 * time.Second
 	// recognised is the only acceptable app recognition verdict.
-	recognised = "PLAY_RECOGNIZED"
+	recognised = "PLAY_RECOGNIZED" //nolint:misspell // Google's verdict value
 )
 
 // Expect states what a verdict must match to be accepted.

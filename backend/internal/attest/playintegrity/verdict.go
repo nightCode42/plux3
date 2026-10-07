@@ -5,6 +5,7 @@ package playintegrity
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 )
@@ -84,12 +85,12 @@ func (f *flexInt64) UnmarshalJSON(b []byte) error {
 	s := string(b)
 	if len(b) > 0 && b[0] == '"' {
 		if err := json.Unmarshal(b, &s); err != nil {
-			return err
+			return fmt.Errorf("playintegrity: integer string: %w", err)
 		}
 	}
 	n, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		return err
+		return fmt.Errorf("playintegrity: integer: %w", err)
 	}
 	*f = flexInt64(n)
 	return nil
