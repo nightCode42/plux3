@@ -11,8 +11,8 @@ the Go driver (`TestStarterAppAgainstTheServer`) starts, publishes the
 | Where | Command | Runs |
 |---|---|---|
 | This machine, under `flutter test` | `make e2e-starter` | every change, in the *Starter app end-to-end* job |
-| Android emulator, API 26 and 35 | `make e2e-android ANDROID_API=<level>` | CI job *Device end-to-end (Android)* |
-| iOS simulator: the newest iPhone and runtime | `make e2e-ios` (`E2E_IOS_MAJOR=18` for another) | CI job *Device end-to-end (iOS)* |
+| Android emulator, API 26 and 35 | `make e2e-android ANDROID_API=<level>` (`E2E_SHARD=starter`, `hosts` or `reference` for one shard) | CI jobs *Device end-to-end (Android <level>, <shard>)* |
+| iOS simulator: the newest iPhone and runtime | `make e2e-ios` (`E2E_IOS_MAJOR=18` for another; `E2E_SHARD` as above) | CI jobs *Device end-to-end (iOS, <shard>)* |
 
 Beside them, `TestGeneratedAppAgainstTheServer` generates the starter fixture's project
 with `plux create` and proves it (`GEN-002`, `GEN-005`, `GEN-006`;

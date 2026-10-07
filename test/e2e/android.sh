@@ -65,15 +65,21 @@ serial=emulator-5554
 trap '"$adb" -s "$serial" emu kill >/dev/null 2>&1 || kill "$emulator" 2>/dev/null || true' EXIT
 
 prebuild_log=$out/prebuild-$api.log
+# Only what E2E_SHARD's flows build (mk/device.mk).
+shard=${E2E_SHARD:-all}
 (
 	cd "$root/backend" && go test -count=1 -run '^$' ./internal/server
-	cd "$root/apps/starter" && flutter build apk --debug
-	# The add-to-app host with the Gradle wrapper flutter pub get writes
-	# into the module (TestAddToAppAgainstTheServer builds it again, with
-	# the baseline it pulls).
-	cd "$root/apps/add_to_app/plux_module" && flutter pub get
-	cd "$root/apps/add_to_app/android_host" && ../plux_module/.android/gradlew --no-daemon --console=plain \
-		-Ptarget-platform=android-x64 :app:assembleDebug :app:assembleDebugAndroidTest
+	if [ "$shard" = all ] || [ "$shard" = starter ]; then
+		cd "$root/apps/starter" && flutter build apk --debug
+	fi
+	if [ "$shard" = all ] || [ "$shard" = hosts ]; then
+		# The add-to-app host with the Gradle wrapper flutter pub get writes
+		# into the module (TestAddToAppAgainstTheServer builds it again, with
+		# the baseline it pulls).
+		cd "$root/apps/add_to_app/plux_module" && flutter pub get
+		cd "$root/apps/add_to_app/android_host" && ../plux_module/.android/gradlew --no-daemon --console=plain \
+			-Ptarget-platform=android-x64 :app:assembleDebug :app:assembleDebugAndroidTest
+	fi
 ) >"$prebuild_log" 2>&1 &
 prebuild=$!
 
@@ -110,4 +116,4 @@ for p in $refapi_port $reference_ports; do
 	"$adb" -s "$serial" reverse "tcp:$p" "tcp:$p"
 done
 
-PLUX_E2E_REFAPI_ADDR=127.0.0.1:$refapi_port PLUX_E2E_DEVICE=$serial make -C "$root" --no-print-directory e2e-starter 2>&1 | tee "$out/android-$api.log"
+PLUX_E2E_REFAPI_ADDR=127.0.0.1:$refapi_port PLUX_E2E_DEVICE=$serial make -C "$root" --no-print-directory e2e-starter 2>&1 | tee "$out/android-$api-$shard.log"
