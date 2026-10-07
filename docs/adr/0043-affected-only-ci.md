@@ -228,10 +228,14 @@ Maintainer decision (2026-10-07), with a target of 13 to 15 minutes for the devi
 
 - **Shards.** Each device job is a matrix with one shard per flow, selected by
   `E2E_SHARD` (`mk/device.mk`): `starter`, `generated`, `hosts` (the add-to-app module
-  and hosts), `bank`, `express`. A first cut of three shards (run 37623043856) left the
+  and hosts), `bank`, `express`; iOS runs `reference` (both reference apps) in place of
+  `bank` and `express`, because GitHub runs at most five macOS jobs at once and the iOS
+  size job is the fifth (run 37630248033 queued a sixth for six minutes). A first cut of three shards (run 37623043856) left the
   iOS starter-and-generated shard at 25 minutes. Every flow still runs on every selected
-  platform; `make e2e-starter` without a shard runs them all, as before. On Android the
-  emulator prebuild builds only the shard's apps.
+  platform; `make e2e-starter` without a shard runs them all, as before. While the
+  emulator or simulator boots, the server's tests and the shard's apps are built. A
+  booted emulator whose adb shell stays silent gets its adb connection reconnected
+  (runs 36966274717, 37630248033).
 - **Build caches.** On iOS one per shard: Xcode DerivedData (the add-to-app host's build
   kept there through `PLUX_E2E_DERIVED_DATA`), CocoaPods and the apps' Flutter build
   outputs, keyed on the shard, Xcode, Flutter and the hash of the lockfiles and the
