@@ -652,8 +652,7 @@ jobs:
           persist-credentials: false
       - name: Install the pinned toolchain
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends clang-18 lld-18 llvm-18 libclang-rt-18-dev-wasm32 \
+          ci/apt-install.sh clang-18 lld-18 llvm-18 libclang-rt-18-dev-wasm32 \
             wasi-libc=0.0~git20230113.4362b18-3 cmake ninja-build
           sudo ln -sf /usr/bin/clang-18 /usr/local/bin/clang
           sudo ln -sf /usr/bin/clang++-18 /usr/local/bin/clang++
@@ -1038,8 +1037,7 @@ jobs:
       - name: Install the Linux desktop toolchain and a virtual display
         run: |
           mkdir -p ~/apt-archives/partial
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends -o Dir::Cache::Archives="$HOME/apt-archives" \
+          ci/apt-install.sh -o Dir::Cache::Archives="$HOME/apt-archives" \
             clang cmake ninja-build pkg-config libgtk-3-dev xvfb
           sudo chown -R "$(id -u):$(id -g)" ~/apt-archives
       - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
