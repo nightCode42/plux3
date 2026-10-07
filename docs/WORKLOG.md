@@ -10,9 +10,9 @@ Per-requirement implementation status is **not** tracked here; it lives only in 
 
 | Item | Value |
 |---|---|
-| Phase | P6 — Security hardening: S0 done 2026-10-07 (Q1–Q3 answered, plan §2.2–§2.3), S0 approved; device-CI sharding added; S1 next |
-| Active branch | P6 is developed on `feat/phase-6`, from `main`, merged by one pull request at the phase exit (B1); the plan itself is on `docs/p6-plan` |
-| Active work | S0 review by the maintainer: spec 1.4.0, ADR-0012 and ADRs 0053–0060 (Proposed), contracts, settings registry, dependency rows (Proposed). Then S1 → S2 → S3 to checkpoint 1 (B1) |
+| Phase | P6 — Security hardening: S0, S1 and the device-CI work merged to `main` by PR #17 (2026-10-07); S2 (registration, attestation) and S3 (tokens, DPoP) in progress to checkpoint 1 |
+| Active branch | `feat/p6-s2-device-trust`, from `main` after PR #17 (plan §2.4 revises B1: one branch per milestone pair, checkpoints unchanged) |
+| Active work | S2/S3: verifiers (Key Attestation, Play Integrity, App Attest), DPoP, Sentinel, limits and the token key merged; registration service, runtime registration with DPoP, and native attestation in agents; next the DPoP middleware, refresh and removal of the device-secret flow, then the negative suite and checkpoint 1 |
 | Requirement IDs | Spec 1.3.2: 51 P5 and cross-phase requirements `DONE` (Document Control 1.3.2 lists them); `ACT-008`, `NFR-011`, `PXL-004`, `NFR-010`, `NFR-004`, `DB-007` `WIP` until the reference-device run; `ACT-030`, `DAT-001`, `DAT-080`, `DB-002`, `DB-003`, `SEC-080`, `TST-001`, `TST-002`, `DX-004` `WIP` until the phases plan §3.2 names; `SCH-012` stays `WIP` (plan §3.3: the maintainer confirms crash reports and session replay are out of scope) |
 
 ## Next up
