@@ -175,9 +175,9 @@ func (i *Issuer) now() time.Time {
 // newID returns a fresh token identifier: sixteen random bytes in
 // unpadded base64url.
 func (i *Issuer) newID() (string, error) {
-	src := io.Reader(rand.Reader)
-	if i.Random != nil {
-		src = i.Random
+	src := i.Random
+	if src == nil {
+		src = rand.Reader
 	}
 	buf := make([]byte, jtiBytes)
 	if _, err := io.ReadFull(src, buf); err != nil {
