@@ -14,12 +14,10 @@ import (
 	"time"
 
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
+	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 )
 
-const (
-	minChainLength = 2
-	maxChainLength = 10
-)
+const minChainLength = 2
 
 // attestationOID identifies the Android key attestation extension.
 var attestationOID = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 11129, 2, 1, 17}
@@ -84,6 +82,18 @@ type Verifier struct {
 	Revocations *Revocations
 	// Now returns the time at which certificate validity is judged.
 	Now func() time.Time
+	// MaxChain is the most certificates a chain may hold; zero means the
+	// registry default, attest.keyAttestationChainCerts (LIM-001).
+	MaxChain int64
+}
+
+// maxChain returns the effective chain length bound.
+func (v *Verifier) maxChain() int64 {
+	if v.MaxChain > 0 {
+		return v.MaxChain
+	}
+	def, _ := limits.Lookup(limits.AttestKeyAttestationChainCerts)
+	return def.Default
 }
 
 // NewVerifier returns a Verifier. roots and now are required; revocations
@@ -105,7 +115,7 @@ func (v *Verifier) Verify(chain [][]byte, challenge []byte, p Policy) (Result, e
 	if v == nil || v.Roots == nil || v.Now == nil {
 		return Result{}, plxerr.New(plxerr.AttestationFailed, "verifier is not configured")
 	}
-	if len(chain) < minChainLength || len(chain) > maxChainLength {
+	if len(chain) < minChainLength || int64(len(chain)) > v.maxChain() {
 		return Result{}, plxerr.New(plxerr.AttestationFailed, "certificate chain length is not accepted")
 	}
 	certs, err := parseChain(chain)

@@ -369,6 +369,57 @@
       "description": "Pixels of one image asset, width times height, checked before it is decoded so that a small file cannot expand into a huge image."
     },
     {
+      "key": "attest.appAttestObjectBytes",
+      "unit": "bytes",
+      "default": 65536,
+      "max": 262144,
+      "scopes": [
+        "installation"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P6",
+      "requirements": [
+        "SEC-004"
+      ],
+      "description": "Size of an App Attest attestation object or assertion."
+    },
+    {
+      "key": "attest.keyAttestationChainCerts",
+      "unit": "count",
+      "default": 10,
+      "max": 16,
+      "scopes": [
+        "installation"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P6",
+      "requirements": [
+        "SEC-002"
+      ],
+      "description": "Certificates an Android Key Attestation chain may hold."
+    },
+    {
+      "key": "attest.playIntegrityTokenBytes",
+      "unit": "bytes",
+      "default": 16384,
+      "max": 65536,
+      "scopes": [
+        "installation"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P6",
+      "requirements": [
+        "SEC-003"
+      ],
+      "description": "Size of a Play Integrity token the server accepts."
+    },
+    {
       "key": "auth.failedSignIns",
       "unit": "count",
       "default": 10,
@@ -1069,6 +1120,40 @@
         "SCH-005"
       ],
       "description": "Size of one string prop value, in UTF-8 bytes."
+    },
+    {
+      "key": "dpop.jtiBytes",
+      "unit": "bytes",
+      "default": 64,
+      "max": 256,
+      "scopes": [
+        "installation"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P6",
+      "requirements": [
+        "SEC-021"
+      ],
+      "description": "Length of a DPoP proof identifier."
+    },
+    {
+      "key": "dpop.proofBytes",
+      "unit": "bytes",
+      "default": 8192,
+      "max": 32768,
+      "scopes": [
+        "installation"
+      ],
+      "enforcedBy": [
+        "server"
+      ],
+      "phase": "P6",
+      "requirements": [
+        "SEC-021"
+      ],
+      "description": "Size of a DPoP proof."
     },
     {
       "key": "dpop.replayCacheEntries",

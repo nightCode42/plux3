@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
+	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 )
 
 const testAppID = "TEAM123456.com.example.plux"
@@ -355,7 +356,7 @@ func TestVerifyAttestationInput(t *testing.T) {
 	}{
 		{name: "expired root", ver: expiredRoot.verifier(), object: ex.object, keyID: ex.keyID},
 		{name: "empty", ver: p.verifier(), object: nil, keyID: good.keyID},
-		{name: "oversized", ver: p.verifier(), object: make([]byte, maxInput+1), keyID: good.keyID},
+		{name: "oversized", ver: p.verifier(), object: make([]byte, defaultInputBytes()+1), keyID: good.keyID},
 		{name: "not CBOR", ver: p.verifier(), object: []byte{0xff}, keyID: good.keyID},
 		{name: "not a map", ver: p.verifier(), object: cborBytes([]any{1}), keyID: good.keyID},
 		{name: "trailing bytes", ver: p.verifier(), object: append(bytes.Clone(good.object), 0), keyID: good.keyID},
@@ -498,7 +499,7 @@ func TestVerifyAssertion(t *testing.T) {
 		{name: "counter equal", in: func() []byte { return assertion{counter: 5}.build(t, key, hash) }, last: 5},
 		{name: "counter lower", in: func() []byte { return assertion{counter: 3}.build(t, key, hash) }, last: 5},
 		{name: "empty", in: func() []byte { return nil }},
-		{name: "oversized", in: func() []byte { return make([]byte, maxInput+1) }},
+		{name: "oversized", in: func() []byte { return make([]byte, defaultInputBytes()+1) }},
 		{name: "not CBOR", in: func() []byte { return []byte{0xff} }},
 		{name: "not a map", in: func() []byte { return cborBytes([]any{}) }},
 		{name: "no signature", in: func() []byte { return cborBytes(map[string]any{"authenticatorData": make([]byte, 37)}) }},
@@ -513,7 +514,7 @@ func TestVerifyAssertion(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			got, err := VerifyAssertion(tc.in(), &key.PublicKey, hash, testAppID, tc.last)
+			got, err := VerifyAssertion(tc.in(), &key.PublicKey, hash, testAppID, tc.last, 0)
 			if tc.ok {
 				if err != nil || got != tc.want {
 					t.Fatalf("VerifyAssertion = %d, %v", got, err)
@@ -525,7 +526,7 @@ func TestVerifyAssertion(t *testing.T) {
 			}
 		})
 	}
-	if _, err := VerifyAssertion(assertion{counter: 5}.build(t, key, hash), nil, hash, testAppID, 0); !isAttestationFailed(err) {
+	if _, err := VerifyAssertion(assertion{counter: 5}.build(t, key, hash), nil, hash, testAppID, 0, 0); !isAttestationFailed(err) {
 		t.Errorf("nil key: %v", err)
 	}
 }
@@ -555,6 +556,38 @@ func FuzzVerifyAssertion(f *testing.F) {
 	f.Add([]byte{0xa0})
 	f.Add(cborBytes(map[string]any{"signature": []byte{1, 2}, "authenticatorData": make([]byte, 40)}))
 	f.Fuzz(func(_ *testing.T, data []byte) {
-		_, _ = VerifyAssertion(data, &key.PublicKey, [32]byte{}, testAppID, 0)
+		_, _ = VerifyAssertion(data, &key.PublicKey, [32]byte{}, testAppID, 0, 0)
 	})
+}
+
+// defaultInputBytes is the registry default for the input size bound.
+func defaultInputBytes() int {
+	def, _ := limits.Lookup(limits.AttestAppAttestObjectBytes)
+	return int(def.Default)
+}
+
+// Verifies: SEC-004, LIM-001.
+func TestInputSizeBound(t *testing.T) {
+	t.Parallel()
+	p := newPKI(t, testNotAfter)
+	att := attestation{}.build(t, p)
+	v := p.verifier()
+	v.MaxInputBytes = int64(len(att.object)) - 1
+	if _, err := v.VerifyAttestation(att.object, att.keyID, att.hash, testAppID, Development); !isAttestationFailed(err) {
+		t.Errorf("attestation over the configured bound: %v", err)
+	}
+	v.MaxInputBytes = int64(len(att.object))
+	if _, err := v.VerifyAttestation(att.object, att.keyID, att.hash, testAppID, Development); err != nil {
+		t.Errorf("attestation at the configured bound: %v", err)
+	}
+
+	key := newKey(t)
+	hash := [32]byte{1}
+	in := assertion{counter: 5}.build(t, key, hash)
+	if _, err := VerifyAssertion(in, &key.PublicKey, hash, testAppID, 4, int64(len(in))-1); !isAttestationFailed(err) {
+		t.Errorf("assertion over the configured bound: %v", err)
+	}
+	if got, err := VerifyAssertion(in, &key.PublicKey, hash, testAppID, 4, int64(len(in))); err != nil || got != 5 {
+		t.Errorf("assertion at the configured bound = %d, %v", got, err)
+	}
 }

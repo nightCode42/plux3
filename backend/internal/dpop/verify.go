@@ -20,13 +20,10 @@ import (
 	"github.com/go-jose/go-jose/v4"
 
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
+	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 )
 
 const (
-	// maxProofSize is the longest proof accepted, in bytes.
-	maxProofSize = 8 << 10
-	// maxJTILen is the longest proof identifier accepted, in bytes.
-	maxJTILen = 64
 	// proofType is the required typ header value (RFC 9449 §4.2).
 	proofType = "dpop+jwt"
 	// maxIAT bounds the iat claim so its conversion cannot overflow.
@@ -71,6 +68,21 @@ type Verifier struct {
 	Nonces *Nonces
 	// Now is the clock; nil means time.Now.
 	Now func() time.Time
+	// MaxProofBytes is the longest proof accepted; zero means the registry
+	// default, dpop.proofBytes (LIM-001).
+	MaxProofBytes int64
+	// MaxJTIBytes is the longest proof identifier accepted; zero means the
+	// registry default, dpop.jtiBytes (LIM-001).
+	MaxJTIBytes int64
+}
+
+// bound resolves a configured bound: zero or less means the registry default.
+func bound(configured int64, k limits.Key) int64 {
+	if configured > 0 {
+		return configured
+	}
+	def, _ := limits.Lookup(k)
+	return def.Default
 }
 
 // header is the part of a proof's protected header that is checked. Fields
@@ -107,7 +119,7 @@ func invalid(check string) error {
 // is DPoPNonceRequired. Verify does not check for replay; the caller does,
 // with Replay.Check.
 func (v *Verifier) Verify(proof string, e Expect) (Proof, error) {
-	if len(proof) > maxProofSize {
+	if int64(len(proof)) > bound(v.MaxProofBytes, limits.DPOPProofBytes) {
 		return Proof{}, invalid("size")
 	}
 	parts := strings.Split(proof, ".")
@@ -210,7 +222,7 @@ func (v *Verifier) checkClaims(payload []byte, e Expect) (claims, error) {
 	if c.IAT == nil || math.Abs(*c.IAT) > maxIAT || !v.within(*c.IAT, e.Window) {
 		return claims{}, invalid("iat")
 	}
-	if c.JTI == "" || len(c.JTI) > maxJTILen {
+	if c.JTI == "" || int64(len(c.JTI)) > bound(v.MaxJTIBytes, limits.DPOPJtiBytes) {
 		return claims{}, invalid("jti")
 	}
 	if !athMatches(c.ATH, e.AccessToken) {

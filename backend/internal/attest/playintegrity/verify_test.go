@@ -21,6 +21,7 @@ import (
 	"github.com/go-jose/go-jose/v4"
 
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
+	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 )
 
 const testPackage = "com.example.plux"
@@ -229,7 +230,7 @@ func TestVerifyRejects(t *testing.T) {
 		}},
 		{name: "JSON serialisation", token: func(*fixture) string { return `{"protected":"e30"}` }},
 		{name: "empty token", token: func(*fixture) string { return "" }},
-		{name: "oversized token", token: func(*fixture) string { return strings.Repeat("A", maxTokenBytes+1) }},
+		{name: "oversized token", token: func(*fixture) string { return strings.Repeat("A", int(defaultTokenBytes())+1) }},
 		{name: "request package", token: func(f *fixture) string {
 			p := f.verdict()
 			set(p, "requestDetails", "requestPackageName", "com.evil")
@@ -512,4 +513,28 @@ func FuzzVerify(f *testing.F) {
 	f.Fuzz(func(_ *testing.T, token string) {
 		_, _ = v.Verify(token, e)
 	})
+}
+
+// defaultTokenBytes is the registry default for the token size bound.
+func defaultTokenBytes() int64 {
+	def, _ := limits.Lookup(limits.AttestPlayIntegrityTokenBytes)
+	return def.Default
+}
+
+// Verifies: SEC-003, LIM-001.
+func TestVerifyTokenSizeBound(t *testing.T) {
+	f := newFixture(t)
+	token := f.token(f.verdict())
+	v := f.verifier()
+	v.MaxTokenBytes = int64(len(token)) - 1
+	_, err := v.Verify(token, f.expect())
+	requireAttestationFailed(t, err)
+	if err == nil || !strings.Contains(err.Error(), "too large") {
+		t.Fatalf("err = %v, want the size check", err)
+	}
+
+	v.MaxTokenBytes = int64(len(token))
+	if _, err := v.Verify(token, f.expect()); err != nil {
+		t.Errorf("a token at the configured bound: %v", err)
+	}
 }

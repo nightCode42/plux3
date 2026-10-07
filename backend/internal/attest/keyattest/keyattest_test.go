@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
+	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 )
 
 func TestVerifyValid(t *testing.T) {
@@ -281,5 +282,27 @@ func TestNewVerifier(t *testing.T) {
 	v, err := NewVerifier(pool, nil, clock)
 	if err != nil || v.Roots != pool || !v.Now().Equal(testNow) {
 		t.Errorf("NewVerifier = %+v, %v", v, err)
+	}
+}
+
+// Verifies: SEC-002, LIM-001.
+func TestVerifyChainLengthBound(t *testing.T) {
+	p := newPKI(t, nil)
+	chain := p.chain(p.leaf(elliptic.P256(), encodeKD(validSpec())))
+
+	def, _ := limits.Lookup(limits.AttestKeyAttestationChainCerts)
+	tooLong := make([][]byte, def.Default+1)
+	if _, err := p.verifier(nil).Verify(tooLong, testChallenge, testPolicy()); err == nil {
+		t.Error("a chain beyond the registry default was accepted")
+	}
+
+	v := p.verifier(nil)
+	v.MaxChain = int64(len(chain)) - 1
+	_, err := v.Verify(chain, testChallenge, testPolicy())
+	wantCode(t, err, plxerr.AttestationFailed)
+
+	v.MaxChain = int64(len(chain))
+	if _, err := v.Verify(chain, testChallenge, testPolicy()); err != nil {
+		t.Errorf("a chain at the configured bound: %v", err)
 	}
 }
