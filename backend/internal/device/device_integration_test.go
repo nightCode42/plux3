@@ -47,9 +47,7 @@ type fixture struct {
 	ten   *tenancy.Service
 }
 
-func newFixture(t *testing.T) *fixture { return newFixtureWith(t, nil) }
-
-// newFixtureWith is newFixture with the device service's options adjusted
+// newFixtureWith builds a fixture with the device service's options adjusted
 // by configure, which may read the fixture's clock.
 func newFixtureWith(t *testing.T, configure func(f *fixture, o *device.Options)) *fixture {
 	t.Helper()
@@ -139,8 +137,12 @@ func TestRegistrationAndPeopleReadDevices(t *testing.T) {
 	ctx := context.Background()
 	_, jwk := devicetest.NewKey(t)
 	register := func(appID, env, platform, build string) error {
-		_, err := f.svc.RegisterAttested(ctx, device.AttestedRegistration{
-			AppID: appID, Environment: env, Platform: platform, Build: build, Challenge: f.challenge(t, "development"),
+		challenge, _, err := f.svc.CreateChallenge(ctx, f.app, "development")
+		if err != nil {
+			t.Fatal(err)
+		}
+		_, err = f.svc.RegisterAttested(ctx, device.AttestedRegistration{
+			AppID: appID, Environment: env, Platform: platform, Build: build, Challenge: challenge,
 			DPoPKeyJWK: jwk, KeyStorage: device.KeyStorageSoftware, Evidence: developmentEvidence(),
 		})
 		return err

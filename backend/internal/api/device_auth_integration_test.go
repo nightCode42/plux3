@@ -126,7 +126,7 @@ func TestDeviceAuthenticationMiddleware(t *testing.T) {
 	const (
 		useNonce     = `DPoP error="use_dpop_nonce"`
 		invalidProof = `DPoP error="invalid_dpop_proof"`
-		invalidToken = `DPoP error="invalid_token"`
+		invalidToken = `DPoP error="invalid_token"` //nolint:gosec // G101: a WWW-Authenticate challenge, not a credential
 	)
 	for _, tc := range []struct {
 		name      string

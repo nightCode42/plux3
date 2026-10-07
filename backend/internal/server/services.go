@@ -319,22 +319,42 @@ func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shar
 	if err != nil {
 		return nil, fmt.Errorf("server: %w", err)
 	}
-	var releases *release.Service
-	if work.Objects != nil {
-		if releases, err = release.NewService(release.Options{
-			DB: db, Audit: log, Tenancy: tenancyService, Documents: docs, Objects: work.Objects, IDs: gen,
-			Jobs: publishQueue{work.Queue}, Signer: work.Signer, ProductionSigning: work.ProductionSigning, Limits: set,
-			Devices: devices, PublicBaseURL: cfg.Server.PublicBaseURL,
-			CompilerVersion: buildinfo.Get().Version, DevelopmentDays: cfg.Retention.DevelopmentReleaseDays,
-		}); err != nil {
-			return nil, fmt.Errorf("server: %w", err)
-		}
-		tenancyService.RegisterUsage(releases.Usage)
+	releases, err := buildReleases(cfg, db, set, work, releaseDeps{ids: gen, audit: log, tenancy: tenancyService, documents: docs, devices: devices})
+	if err != nil {
+		return nil, err
 	}
 	return &Services{
 		Audit: log, Auth: authService, Tenancy: tenancyService, Documents: docs, Releases: releases,
 		Devices: devices, Events: events, Idempotency: store, Pages: pages, DeviceTrust: trust,
 	}, nil
+}
+
+// releaseDeps are the services the release service is built on.
+type releaseDeps struct {
+	ids       interface{ New() (string, error) }
+	audit     *audit.Log
+	tenancy   *tenancy.Service
+	documents *document.Service
+	devices   *device.Service
+}
+
+// buildReleases assembles the release service, or returns nil when the
+// installation has no object store to publish into.
+func buildReleases(cfg *config.Config, db *storage.DB, set limits.Set, work WorkDeps, deps releaseDeps) (*release.Service, error) {
+	if work.Objects == nil {
+		return nil, nil
+	}
+	releases, err := release.NewService(release.Options{
+		DB: db, Audit: deps.audit, Tenancy: deps.tenancy, Documents: deps.documents, Objects: work.Objects, IDs: deps.ids,
+		Jobs: publishQueue{work.Queue}, Signer: work.Signer, ProductionSigning: work.ProductionSigning, Limits: set,
+		Devices: deps.devices, PublicBaseURL: cfg.Server.PublicBaseURL,
+		CompilerVersion: buildinfo.Get().Version, DevelopmentDays: cfg.Retention.DevelopmentReleaseDays,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("server: %w", err)
+	}
+	deps.tenancy.RegisterUsage(releases.Usage)
+	return releases, nil
 }
 
 // verificationURI is where a person approves `plux login`: Studio's
