@@ -186,11 +186,15 @@ func (a DeviceAuth) authenticate(ctx context.Context, c Call) (device.Identity, 
 	if err != nil {
 		return device.Identity{}, err //nolint:wrapcheck // a domain error
 	}
-	proof, err := a.Proofs.Verify(rawProof, a.expect(c, token))
-	if err != nil {
-		return device.Identity{}, err //nolint:wrapcheck // a domain error
+	if claims.JKT == "" {
+		return device.Identity{}, plxerr.New(plxerr.TokenBindingMismatch, "access token is not bound to a device key")
 	}
-	if err := dpop.CheckBinding(claims.JKT, proof.JKT); err != nil {
+	// The proof's key is checked against the token's binding before
+	// anything else in the proof is trusted (ADR-0012).
+	expect := a.expect(c, token)
+	expect.JKT = claims.JKT
+	proof, err := a.Proofs.Verify(rawProof, expect)
+	if err != nil {
 		return device.Identity{}, err //nolint:wrapcheck // a domain error
 	}
 	if err := a.checkReplay(ctx, proof); err != nil {

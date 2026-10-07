@@ -296,15 +296,16 @@ func (c *deviceClient) sign(h http.Header, procedure string) {
 	h.Set("DPoP", devicetest.SignProof(c.t, c.key, p))
 }
 
-// remember keeps the nonce a response or a refusal carried.
-func (c *deviceClient) remember(header http.Header) (string, bool) {
+// remember keeps the nonce a response or a refusal carried and reports
+// whether there was one.
+func (c *deviceClient) remember(header http.Header) bool {
 	nonce := header.Get("DPoP-Nonce")
 	if nonce != "" {
 		c.mu.Lock()
 		c.nonce = nonce
 		c.mu.Unlock()
 	}
-	return nonce, nonce != ""
+	return nonce != ""
 }
 
 // WrapUnary signs each unary call and retries it once with a new nonce.
@@ -318,7 +319,7 @@ func (c *deviceClient) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 			case err == nil:
 				c.remember(res.Header())
 			case errors.As(err, &refusal):
-				_, fresh := c.remember(refusal.Meta())
+				fresh := c.remember(refusal.Meta())
 				if attempt == 0 && fresh && strings.Contains(refusal.Meta().Get("WWW-Authenticate"), "use_dpop_nonce") {
 					continue
 				}

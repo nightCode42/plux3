@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	tokenIssuer    = "https://plux.test"
+	tokenIssuer    = "https://plux.test" //nolint:gosec // G101: an issuer URL in a test fixture, not a credential
 	androidPackage = "com.example.app"
 	iosAppID       = "TEAMID.com.example.app"
 )
