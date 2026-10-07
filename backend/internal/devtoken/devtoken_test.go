@@ -129,7 +129,7 @@ func verifierFor(s signing.TokenSigner) *devtoken.Verifier {
 
 func baseClaims(production bool) devtoken.Claims {
 	return devtoken.Claims{
-		DeviceID: "dev_123", AppID: "app_456", Environment: "prod-eu", Production: production,
+		DeviceID: "dev_123", AppID: "app_456", Environment: "prod-eu", OrganizationID: "org_789", HostBuild: "42", Production: production,
 		Assurance: "AL2", JKT: "0ZcOCORZNYy-DWpqq30jZyJGHTN0d2HglBV3uiguA4I",
 	}
 }
@@ -138,7 +138,7 @@ func baseClaims(production bool) devtoken.Claims {
 func payload() map[string]any {
 	return map[string]any{
 		"iss": testIssuer, "aud": testAudience, "sub": "dev_123", "client_id": "app_456",
-		"env": "prod-eu", "al": "AL2", "cnf": map[string]any{"jkt": "thumb"},
+		"env": "prod-eu", "org": "org_789", "hb": "42", "al": "AL2", "cnf": map[string]any{"jkt": "thumb"},
 		"iat": epoch.Unix(), "exp": epoch.Add(10 * time.Minute).Unix(), "jti": "abc",
 	}
 }
@@ -256,6 +256,7 @@ func TestIssueRefusesBadInput(t *testing.T) {
 		"device":    func(c *devtoken.Claims) { c.DeviceID = "" },
 		"app":       func(c *devtoken.Claims) { c.AppID = "" },
 		"env":       func(c *devtoken.Claims) { c.Environment = "" },
+		"org":       func(c *devtoken.Claims) { c.OrganizationID = "" },
 		"jkt":       func(c *devtoken.Claims) { c.JKT = "" },
 		"assurance": func(c *devtoken.Claims) { c.Assurance = "AL4" },
 	} {
@@ -492,6 +493,7 @@ func TestVerifyChecksIssuerAudienceAndRequiredClaims(t *testing.T) {
 		{"no sub", func(p map[string]any) { delete(p, "sub") }, "sub"},
 		{"no client_id", func(p map[string]any) { delete(p, "client_id") }, "client_id"},
 		{"no env", func(p map[string]any) { delete(p, "env") }, "env"},
+		{"no org", func(p map[string]any) { delete(p, "org") }, "org"},
 		{"no al", func(p map[string]any) { delete(p, "al") }, "al"},
 		{"bad al", func(p map[string]any) { p["al"] = "AL9" }, "al"},
 		{"no cnf", func(p map[string]any) { delete(p, "cnf") }, "cnf"},
@@ -552,6 +554,71 @@ func TestVerifySizeKeysAndConfiguration(t *testing.T) {
 		if _, err := odd.Verify(ctx, token, production); err == nil {
 			t.Errorf("a key of an unknown class verified (production=%v)", production)
 		}
+	}
+}
+
+// Verifies: SEC-020.
+// VerifyFor takes the key class from the environment the token names and
+// still refuses a token signed with the other class's key.
+func TestVerifyForSelectsTheClassByEnvironment(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	signer := newFakeSigner(t)
+	prod, _, err := issuerFor(signer).Issue(ctx, baseClaims(true))
+	if err != nil {
+		t.Fatal(err)
+	}
+	dev, _, err := issuerFor(signer).Issue(ctx, baseClaims(false))
+	if err != nil {
+		t.Fatal(err)
+	}
+	v := verifierFor(signer)
+	classOf := func(production bool) func(context.Context, string) (bool, error) {
+		return func(_ context.Context, env string) (bool, error) {
+			if env != "prod-eu" {
+				t.Errorf("the environment looked up = %q", env)
+			}
+			return production, nil
+		}
+	}
+	if c, err := v.VerifyFor(ctx, prod, classOf(true)); err != nil || !c.Production || c.OrganizationID != "org_789" || c.HostBuild != "42" {
+		t.Errorf("production token: %+v, %v", c, err)
+	}
+	if c, err := v.VerifyFor(ctx, dev, classOf(false)); err != nil || c.Production {
+		t.Errorf("development token: %+v, %v", c, err)
+	}
+	_, err = v.VerifyFor(ctx, dev, classOf(true))
+	requireInvalid(t, err, "key class")
+	lookup := errors.New("the lookup failed")
+	if _, err := v.VerifyFor(ctx, prod, func(context.Context, string) (bool, error) { return false, lookup }); !errors.Is(err, lookup) {
+		t.Errorf("a failed lookup: %v", err)
+	}
+	for bad, check := range map[string]string{"": "format", "a.b.c": "format", strings.Repeat("x", devtoken.MaxTokenSize+1): "size"} {
+		_, err := v.VerifyFor(ctx, bad, classOf(false))
+		requireInvalid(t, err, check)
+	}
+	k := signer.keys[signing.TokenDevelopment][0]
+	p := payload()
+	delete(p, "env")
+	_, err = v.VerifyFor(ctx, forge(t, k, header(t, k), p), classOf(false))
+	requireInvalid(t, err, "env")
+}
+
+// Verifies: SEC-020.
+// A claim set may set its own lifetime, within the maximum.
+func TestIssueHonoursAClaimLifetime(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	signer := newFakeSigner(t)
+	c := baseClaims(false)
+	c.Lifetime = 5 * time.Minute
+	_, expires, err := issuerFor(signer).Issue(ctx, c)
+	if err != nil || !expires.Equal(epoch.Add(5*time.Minute)) {
+		t.Errorf("expires = %v, %v", expires, err)
+	}
+	c.Lifetime = devtoken.MaxLifetime + time.Second
+	if _, _, err := issuerFor(signer).Issue(ctx, c); err == nil {
+		t.Error("a lifetime past the maximum was accepted")
 	}
 }
 

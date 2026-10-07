@@ -64,6 +64,33 @@ func (v *Verifier) Verify(ctx context.Context, token string, production bool) (C
 	return v.checkClaims(payload, production)
 }
 
+// VerifyFor checks a token whose environment is not known beforehand. The
+// environment it names, read before its signature is checked, selects the
+// key class through production; a token that lies about its environment
+// fails because the key of the class production names did not sign it.
+// Nothing else of the unverified payload is used. A failure of production
+// is returned as it is.
+func (v *Verifier) VerifyFor(ctx context.Context, token string, production func(ctx context.Context, environment string) (bool, error)) (Claims, error) {
+	if len(token) > MaxTokenSize {
+		return Claims{}, invalid("size")
+	}
+	jws, err := jose.ParseSignedCompact(token, []jose.SignatureAlgorithm{jose.ES256})
+	if err != nil || len(jws.Signatures) != 1 {
+		return Claims{}, invalid("format")
+	}
+	var peek struct {
+		Env string `json:"env"`
+	}
+	if err := json.Unmarshal(jws.UnsafePayloadWithoutVerification(), &peek); err != nil || peek.Env == "" {
+		return Claims{}, invalid("env")
+	}
+	class, err := production(ctx, peek.Env)
+	if err != nil {
+		return Claims{}, err
+	}
+	return v.Verify(ctx, token, class)
+}
+
 // checkHeader requires the access-token type and a key identifier, and
 // refuses a header that carries a key of its own (jwk).
 func checkHeader(h jose.Header) (string, error) {
@@ -111,6 +138,8 @@ func (v *Verifier) checkClaims(payload []byte, production bool) (Claims, error) 
 		Sub      string   `json:"sub"`
 		ClientID string   `json:"client_id"`
 		Env      string   `json:"env"`
+		Org      string   `json:"org"`
+		HB       string   `json:"hb"`
 		AL       string   `json:"al"`
 		Cnf      wireCnf  `json:"cnf"`
 		IAT      *float64 `json:"iat"`
@@ -131,6 +160,8 @@ func (v *Verifier) checkClaims(payload []byte, production bool) (Claims, error) 
 		return Claims{}, invalid("client_id")
 	case w.Env == "":
 		return Claims{}, invalid("env")
+	case w.Org == "":
+		return Claims{}, invalid("org")
 	case !validAssurance(w.AL):
 		return Claims{}, invalid("al")
 	case w.Cnf.JKT == "":
@@ -143,7 +174,7 @@ func (v *Verifier) checkClaims(payload []byte, production bool) (Claims, error) 
 		return Claims{}, err
 	}
 	return Claims{
-		DeviceID: w.Sub, AppID: w.ClientID, Environment: w.Env, Production: production,
+		DeviceID: w.Sub, AppID: w.ClientID, Environment: w.Env, OrganizationID: w.Org, HostBuild: w.HB, Production: production,
 		Assurance: w.AL, JKT: w.Cnf.JKT, IssuedAt: iat, ExpiresAt: exp, ID: w.JTI,
 	}, nil
 }
