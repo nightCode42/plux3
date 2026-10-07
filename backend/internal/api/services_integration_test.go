@@ -114,8 +114,26 @@ type world struct {
 	issuer *devtoken.Issuer
 }
 
-func newWorld(t *testing.T) *world {
+func newWorld(t *testing.T) *world { return newWorldWith(t, worldConfig{}) }
+
+// worldConfig adjusts a world for tests that need to control time or the
+// security profile of an environment.
+type worldConfig struct {
+	// Now is the clock the device side runs on: the shared cache, the
+	// device service, the tokens, the proofs, the nonces and the replay
+	// memory. Nil means the wall clock.
+	Now func() time.Time
+	// Profiles returns an environment's security profile; nil means every
+	// environment is standard.
+	Profiles device.Profiles
+}
+
+// newWorldWith is newWorld with the configuration applied.
+func newWorldWith(t *testing.T, cfg worldConfig) *world {
 	t.Helper()
+	if cfg.Now == nil {
+		cfg.Now = time.Now
+	}
 	ctx := context.Background()
 	db := storagetest.Open(t)
 	backend, err := signing.NewFile(t.TempDir())
@@ -124,7 +142,7 @@ func newWorld(t *testing.T) *world {
 	}
 	gen := uuids{g: uuid7.NewGenerator(time.Now, rand.Reader)}
 	log := audit.NewLog(gen, nil)
-	shared := cache.NewMemory(nil)
+	shared := cache.NewMemory(cfg.Now)
 	authService, err := auth.NewService(auth.Options{
 		DB: db, Audit: log, Cache: shared, Crypter: backend, IDs: gen, VerificationURI: "https://p.example/device",
 	})
@@ -160,9 +178,9 @@ func newWorld(t *testing.T) *world {
 	t.Cleanup(srv.Close)
 	base := "http://" + srv.Listener.Addr().String()
 	tokenSigner := devicetest.NewTokenSigner(t)
-	issuer := &devtoken.Issuer{Signer: tokenSigner, Issuer: base, Audience: base, Lifetime: 5 * time.Minute}
+	issuer := &devtoken.Issuer{Signer: tokenSigner, Issuer: base, Audience: base, Lifetime: 5 * time.Minute, Now: cfg.Now}
 	devices, err := device.NewService(device.Options{
-		DB: db, IDs: gen, Cache: shared, Audit: log, Tokens: issuer,
+		DB: db, IDs: gen, Now: cfg.Now, Cache: shared, Audit: log, Tokens: issuer, Profiles: cfg.Profiles,
 		Attestors: device.Attestors{KeyAttestation: fakes.key, PlayIntegrity: fakes.play, AppAttest: fakes.apple, AppAssertions: fakes.assert},
 		AppTrust: func(context.Context, string) (device.TrustConfig, error) {
 			return device.TrustConfig{AndroidPackages: []string{"com.example.app"}, PlayIntegrity: &playintegrity.Keys{}, IOSAppID: "TEAMID.com.example.app"}, nil
@@ -209,13 +227,13 @@ func newWorld(t *testing.T) *world {
 	if _, err := rand.Read(nonceKey); err != nil {
 		t.Fatal(err)
 	}
-	nonces, err := dpop.NewNonces(nonceKey, 5*time.Minute, time.Now)
+	nonces, err := dpop.NewNonces(nonceKey, 5*time.Minute, cfg.Now)
 	if err != nil {
 		t.Fatal(err)
 	}
 	deviceAuth := api.DeviceAuth{
-		Devices: devices, Tokens: &devtoken.Verifier{Keys: tokenSigner.TokenKeys, Issuer: base, Audience: base},
-		Proofs: &dpop.Verifier{Nonces: nonces}, Nonces: nonces, Replay: dpop.NewReplay(shared, dpop.FailClosed, 1000, nil, nil),
+		Devices: devices, Tokens: &devtoken.Verifier{Keys: tokenSigner.TokenKeys, Issuer: base, Audience: base, Now: cfg.Now},
+		Proofs: &dpop.Verifier{Nonces: nonces, Now: cfg.Now}, Nonces: nonces, Replay: dpop.NewReplay(shared, dpop.FailClosed, 1000, cfg.Now, nil), Now: cfg.Now,
 		BaseURL: base, Window: time.Minute, FallbackWindow: 15 * time.Second,
 		Limiter: limiter, PerDevice: set.Get(limits.APIRequestsPerMinutePerDevice), People: people,
 	}
