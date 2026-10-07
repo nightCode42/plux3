@@ -58,6 +58,9 @@ type Services struct {
 	Events      *telemetry.Service
 	Idempotency *idempotency.Store
 	Pages       *api.Pages
+	// DeviceTrust authenticates device calls; nil where the process does
+	// not run the api role.
+	DeviceTrust *DeviceTrust
 	// KMS checks the key management service, when the signing backend
 	// is one; nil for the development file backend (SRV-007).
 	KMS func(context.Context) error
@@ -77,6 +80,9 @@ type WorkDeps struct {
 	// ProductionSigning reports whether the signer may sign for
 	// production environments (SEC-056).
 	ProductionSigning bool
+	// Log receives the warnings of the services; nil uses the default
+	// logger.
+	Log *slog.Logger
 }
 
 // scanner returns the configured malware scanner, or nil (SRV-060).
@@ -245,6 +251,10 @@ func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shar
 	if db == nil || shared == nil {
 		return nil, errors.New("server: the services need a database and a cache")
 	}
+	tokenSigner, err := tokenSignerFor(cfg, backend)
+	if err != nil {
+		return nil, err
+	}
 	backend = signing.CrypterOnly(backend)
 	gen := NewIDs()
 	log := audit.NewLog(gen, nil)
@@ -299,9 +309,11 @@ func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shar
 	if err != nil {
 		return nil, fmt.Errorf("server: %w", err)
 	}
-	devices, err := device.NewService(device.Options{DB: db, IDs: gen})
+	devices, trust, err := buildDeviceSide(ctx, cfg, db, shared, set, deviceDeps{
+		crypter: backend, signer: tokenSigner, ids: gen, audit: log, log: work.Log,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("server: %w", err)
+		return nil, err
 	}
 	events, err := telemetry.NewService(telemetry.Options{DB: db, IDs: gen, Limits: set})
 	if err != nil {
@@ -321,7 +333,7 @@ func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shar
 	}
 	return &Services{
 		Audit: log, Auth: authService, Tenancy: tenancyService, Documents: docs, Releases: releases,
-		Devices: devices, Events: events, Idempotency: store, Pages: pages,
+		Devices: devices, Events: events, Idempotency: store, Pages: pages, DeviceTrust: trust,
 	}, nil
 }
 
@@ -382,8 +394,12 @@ func trustedIssuers(cfg *config.Config) (map[string]auth.TrustedIssuer, error) {
 }
 
 // RegisterAPI mounts the services of this phase on the api role's mux,
-// each behind the standard interceptor chain with authentication.
-func (s *Server) RegisterAPI(svc *Services) {
+// each behind the standard interceptor chain with authentication. It
+// refuses services built without the device trust the api role needs.
+func (s *Server) RegisterAPI(svc *Services) error {
+	if svc.DeviceTrust == nil {
+		return errors.New("server: the api role needs services built with device trust (the api role in the configuration)")
+	}
 	limiter := api.RateLimiter{Window: time.Minute}
 	if s.cache != nil {
 		limiter.Count = s.cache.Increment
@@ -394,7 +410,12 @@ func (s *Server) RegisterAPI(svc *Services) {
 		Limiter: limiter, Limits: s.limits,
 	}
 	people := api.Authentication(svc.Auth, api.IdentityPublic, s.trusted, limiter, s.limits.Get(limits.APIRequestsPerMinute))
-	authn := api.DeviceAuthentication(svc.Devices, limiter, s.limits.Get(limits.APIRequestsPerMinutePerDevice), people)
+	trust := svc.DeviceTrust
+	authn := api.DeviceAuthentication(api.DeviceAuth{
+		Devices: svc.Devices, Tokens: trust.Tokens, Proofs: trust.Proofs, Nonces: trust.Nonces, Replay: trust.Replay,
+		BaseURL: s.cfg.Server.PublicBaseURL, Window: trust.Window, FallbackWindow: trust.FallbackWindow,
+		Limiter: limiter, PerDevice: s.limits.Get(limits.APIRequestsPerMinutePerDevice), People: people,
+	})
 	// api.requestSize bounds a body as sent, before a handler reads it
 	// (httpx.MaxBytes), and also each message after decompression: Connect
 	// accepts gzip bodies, and a small one could otherwise expand without
@@ -433,6 +454,7 @@ func (s *Server) RegisterAPI(svc *Services) {
 	if s.objects != nil {
 		s.Register("GET "+release.ObjectsPath, s.objectHandler())
 	}
+	return nil
 }
 
 // Maintenance is the periodic sweep of the worker role: it purges the

@@ -103,7 +103,9 @@ func Build(ctx context.Context, cfg *config.Config, log *slog.Logger, version st
 		return fail(err)
 	}
 	if cfg.Has(config.RoleAPI) {
-		srv.RegisterAPI(services)
+		if err := srv.RegisterAPI(services); err != nil {
+			return fail(err)
+		}
 	}
 	return &Built{Server: srv, Close: closeAll}, nil
 }
@@ -120,7 +122,7 @@ func buildWork(ctx context.Context, cfg *config.Config, log *slog.Logger, db *st
 			slog.String("directory", cfg.Signing.Directory))
 	}
 	queue := &JobQueue{}
-	deps := WorkDeps{Objects: store, Queue: queue}
+	deps := WorkDeps{Objects: store, Queue: queue, Log: log}
 	if cfg.Has(config.RoleWorker) {
 		// Only the worker transcodes and signs: compiling the codecs costs
 		// seconds of CPU the api role need not pay, and the api role must

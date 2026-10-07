@@ -16,6 +16,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/auth"
 	"github.com/nightCode42/plux3/backend/internal/cache"
 	"github.com/nightCode42/plux3/backend/internal/device"
+	"github.com/nightCode42/plux3/backend/internal/device/devicetest"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 	"github.com/nightCode42/plux3/backend/internal/schema/uuid7"
@@ -80,11 +81,19 @@ func TestIngestListPurge(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	devices, err := device.NewService(device.Options{DB: db, IDs: gen})
+	devices, err := device.NewService(device.Options{DB: db, IDs: gen, Cache: cache.NewMemory(nil)})
 	if err != nil {
 		t.Fatal(err)
 	}
-	d, _, err := devices.Register(ctx, device.Registration{AppID: app.ID, Environment: "production", Platform: "ios"})
+	challenge, _, err := devices.CreateChallenge(ctx, app.ID, "development")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, jwk := devicetest.NewKey(t)
+	d, err := devices.RegisterAttested(ctx, device.AttestedRegistration{
+		AppID: app.ID, Environment: "development", Platform: "ios", Challenge: challenge, DPoPKeyJWK: jwk,
+		KeyStorage: device.KeyStorageSoftware, Evidence: device.Evidence{Development: &device.DevelopmentEvidence{BuildID: "test"}},
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
