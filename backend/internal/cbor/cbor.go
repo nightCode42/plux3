@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Plux contributors
 // SPDX-License-Identifier: AGPL-3.0-only
 
-package auth
+package cbor
 
 import (
 	"encoding/binary"
@@ -10,31 +10,32 @@ import (
 	"math"
 )
 
-// This file decodes the subset of CBOR (RFC 8949) that WebAuthn uses:
-// attestation objects and COSE keys. It accepts definite lengths only,
+// This file decodes the subset of CBOR (RFC 8949) that WebAuthn and
+// App Attest use: attestation objects and COSE keys. It accepts definite lengths only,
 // bounds nesting and item counts, and reads maps into Go maps keyed by
 // int64 or string. Anything else — tags, floats, indefinite lengths — is
 // refused, since no authenticator response needs it.
 
-// errCBOR is returned for input this decoder refuses.
-var errCBOR = errors.New("auth: malformed CBOR")
+// ErrMalformed is returned for input this decoder refuses.
+var ErrMalformed = errors.New("cbor: malformed CBOR")
 
 const (
-	cborMaxDepth = 8
-	cborMaxItems = 256
+	maxDepth = 8
+	maxItems = 256
 )
 
-// cborDecoder reads one CBOR item after another from a buffer.
-type cborDecoder struct {
+// decoder reads one CBOR item after another from a buffer.
+type decoder struct {
 	data  []byte
 	pos   int
 	items int
 }
 
-// decodeCBOR decodes the first item of data and returns it with the
-// number of bytes it took.
-func decodeCBOR(data []byte) (any, int, error) {
-	d := &cborDecoder{data: data}
+// Decode decodes the first item of data and returns it with the
+// number of bytes it took. The value is an int64, a string, a []byte, a
+// bool, nil, a []any or a map[any]any keyed by int64 or string.
+func Decode(data []byte) (any, int, error) {
+	d := &decoder{data: data}
 	v, err := d.item(0)
 	if err != nil {
 		return nil, 0, err
@@ -43,9 +44,9 @@ func decodeCBOR(data []byte) (any, int, error) {
 }
 
 // head reads an item's major type and argument.
-func (d *cborDecoder) head() (byte, uint64, error) {
+func (d *decoder) head() (byte, uint64, error) {
 	if d.pos >= len(d.data) {
-		return 0, 0, fmt.Errorf("%w: truncated", errCBOR)
+		return 0, 0, fmt.Errorf("%w: truncated", ErrMalformed)
 	}
 	b := d.data[d.pos]
 	d.pos++
@@ -63,10 +64,10 @@ func (d *cborDecoder) head() (byte, uint64, error) {
 	case info == 27:
 		n = 8
 	default:
-		return 0, 0, fmt.Errorf("%w: unsupported additional information %d", errCBOR, info)
+		return 0, 0, fmt.Errorf("%w: unsupported additional information %d", ErrMalformed, info)
 	}
 	if len(d.data)-d.pos < n {
-		return 0, 0, fmt.Errorf("%w: truncated", errCBOR)
+		return 0, 0, fmt.Errorf("%w: truncated", ErrMalformed)
 	}
 	var buf [8]byte
 	copy(buf[8-n:], d.data[d.pos:d.pos+n])
@@ -75,13 +76,13 @@ func (d *cborDecoder) head() (byte, uint64, error) {
 }
 
 // item decodes one item at a nesting depth.
-func (d *cborDecoder) item(depth int) (any, error) {
-	if depth > cborMaxDepth {
-		return nil, fmt.Errorf("%w: nested too deeply", errCBOR)
+func (d *decoder) item(depth int) (any, error) {
+	if depth > maxDepth {
+		return nil, fmt.Errorf("%w: nested too deeply", ErrMalformed)
 	}
 	d.items++
-	if d.items > cborMaxItems {
-		return nil, fmt.Errorf("%w: too many items", errCBOR)
+	if d.items > maxItems {
+		return nil, fmt.Errorf("%w: too many items", ErrMalformed)
 	}
 	major, arg, err := d.head()
 	if err != nil {
@@ -90,18 +91,18 @@ func (d *cborDecoder) item(depth int) (any, error) {
 	switch major {
 	case 0:
 		if arg > math.MaxInt64 {
-			return nil, fmt.Errorf("%w: integer out of range", errCBOR)
+			return nil, fmt.Errorf("%w: integer out of range", ErrMalformed)
 		}
 		return int64(arg), nil
 	case 1:
 		if arg > math.MaxInt64 {
-			return nil, fmt.Errorf("%w: integer out of range", errCBOR)
+			return nil, fmt.Errorf("%w: integer out of range", ErrMalformed)
 		}
 		return -1 - int64(arg), nil
 	case 2, 3:
 		remaining := len(d.data) - d.pos
 		if arg > uint64(remaining) { //nolint:gosec // remaining is not negative
-			return nil, fmt.Errorf("%w: truncated string", errCBOR)
+			return nil, fmt.Errorf("%w: truncated string", ErrMalformed)
 		}
 		n := int(arg) //nolint:gosec // bounded by the input's length above
 		b := d.data[d.pos : d.pos+n]
@@ -124,12 +125,12 @@ func (d *cborDecoder) item(depth int) (any, error) {
 			return nil, nil
 		}
 	}
-	return nil, fmt.Errorf("%w: unsupported major type %d", errCBOR, major)
+	return nil, fmt.Errorf("%w: unsupported major type %d", ErrMalformed, major)
 }
 
-func (d *cborDecoder) array(n uint64, depth int) (any, error) {
-	if n > cborMaxItems {
-		return nil, fmt.Errorf("%w: too many items", errCBOR)
+func (d *decoder) array(n uint64, depth int) (any, error) {
+	if n > maxItems {
+		return nil, fmt.Errorf("%w: too many items", ErrMalformed)
 	}
 	out := make([]any, 0, n)
 	for range n {
@@ -142,9 +143,9 @@ func (d *cborDecoder) array(n uint64, depth int) (any, error) {
 	return out, nil
 }
 
-func (d *cborDecoder) mapping(n uint64, depth int) (any, error) {
-	if n > cborMaxItems {
-		return nil, fmt.Errorf("%w: too many items", errCBOR)
+func (d *decoder) mapping(n uint64, depth int) (any, error) {
+	if n > maxItems {
+		return nil, fmt.Errorf("%w: too many items", ErrMalformed)
 	}
 	out := make(map[any]any, n)
 	for range n {
@@ -155,10 +156,10 @@ func (d *cborDecoder) mapping(n uint64, depth int) (any, error) {
 		switch k.(type) {
 		case int64, string:
 		default:
-			return nil, fmt.Errorf("%w: a map key is neither an integer nor a text string", errCBOR)
+			return nil, fmt.Errorf("%w: a map key is neither an integer nor a text string", ErrMalformed)
 		}
 		if _, dup := out[k]; dup {
-			return nil, fmt.Errorf("%w: a repeated map key", errCBOR)
+			return nil, fmt.Errorf("%w: a repeated map key", ErrMalformed)
 		}
 		v, err := d.item(depth + 1)
 		if err != nil {
