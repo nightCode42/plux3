@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/sha256"
@@ -24,13 +25,16 @@ import (
 // refused for production environments (SEC-056).
 //
 // Each signing key is a file <ref>.ed25519 holding the 64-byte private
-// key; the wrapping key is master.key, 32 bytes. Missing keys are
+// key; the wrapping key is master.key, 32 bytes; the development token
+// key is token-development.p256, a 32-byte P-256 scalar. Missing keys are
 // created on first use, so a developer needs no ceremony.
 type File struct {
 	dir string
 
 	mu    sync.Mutex
 	cache map[string]ed25519.PrivateKey
+	// tokens holds the device access token keys, by class.
+	tokens map[TokenClass]*ecdsa.PrivateKey
 	// master wraps data keys; it is read once.
 	master []byte
 }
@@ -51,7 +55,7 @@ func NewFile(dir string) (*File, error) {
 	if err := os.MkdirAll(abs, 0o700); err != nil {
 		return nil, fmt.Errorf("signing: create %s: %w", abs, err)
 	}
-	return &File{dir: abs, cache: map[string]ed25519.PrivateKey{}}, nil
+	return &File{dir: abs, cache: map[string]ed25519.PrivateKey{}, tokens: map[TokenClass]*ecdsa.PrivateKey{}}, nil
 }
 
 // Name identifies the backend.
