@@ -98,3 +98,15 @@ stays open.
 
 Simplest to operate, but it puts signing keys in the same process as the public API and
 gives function sandboxes a database pool, which `SEC-120`, L-3 and L-4 forbid. Rejected.
+
+## Revision (2026-10-07, P6: device access tokens)
+
+Device access tokens (`SEC-020`, ADR-0012) are ES256 JWTs issued by the `api` role, on
+registration and refresh, so the `api` role must be able to sign them. Maintainer decision
+(2026-10-07): `signing/` holds a separate ES256 **token key** per environment class
+(production, development), and the `api` role is given a sign-only token capability
+(`signing.TokenOnly`) that exposes token signing and the token public keys and nothing
+else. The private key never leaves `signing/` (L-3 holds). The rule above narrows to: a
+process without `worker` is never given the **release** signer, so a bug in an API handler
+cannot sign a release, update metadata or a bundle. Minting tokens in the `worker` instead
+was rejected: it puts the worker on the path of every refresh.
