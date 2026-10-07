@@ -58,7 +58,7 @@ func (v *Vault) SignToken(ctx context.Context, class TokenClass, signingInput []
 	body := map[string]any{
 		"input":                base64.StdEncoding.EncodeToString(signingInput),
 		"hash_algorithm":       "sha2-256",
-		"marshaling_algorithm": "jws",
+		"marshaling_algorithm": "jws", //nolint:misspell // Vault Transit's parameter name
 	}
 	if err := v.call(ctx, http.MethodPost, "sign/"+name, body, &out); err != nil {
 		return nil, "", err

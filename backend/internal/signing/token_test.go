@@ -309,7 +309,7 @@ func TestVaultSignsTokensPerClass(t *testing.T) {
 			t.Errorf("%s: key %s is not that class's, or the signature does not verify", class, id)
 		}
 	}
-	if f.lastSign["hash_algorithm"] != "sha2-256" || f.lastSign["marshaling_algorithm"] != "jws" {
+	if f.lastSign["hash_algorithm"] != "sha2-256" || f.lastSign["marshaling_algorithm"] != "jws" { //nolint:misspell // Vault Transit's parameter name
 		t.Errorf("sign request = %v", f.lastSign)
 	}
 	if keys[0].ID == keys[1].ID {
