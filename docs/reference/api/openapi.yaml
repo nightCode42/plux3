@@ -1272,6 +1272,48 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.SetControlResponse'
+  /plux.v1.DeviceService/CreateRegistrationChallenge:
+    post:
+      tags:
+        - plux.v1.DeviceService
+      summary: CreateRegistrationChallenge
+      description: |-
+        CreateRegistrationChallenge issues the single-use, short-lived
+         challenge a registration binds its attestation to (SEC-005). It is
+         anonymous: the device has no identity yet.
+      operationId: plux.v1.DeviceService.CreateRegistrationChallenge
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.CreateRegistrationChallengeRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.CreateRegistrationChallengeResponse'
   /plux.v1.DeviceService/GetDevice:
     post:
       tags:
@@ -1348,6 +1390,89 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.ListDevicesResponse'
+  /plux.v1.DeviceService/ReattestDevice:
+    post:
+      tags:
+        - plux.v1.DeviceService
+      summary: ReattestDevice
+      description: |-
+        ReattestDevice replaces a device's attestation with a fresh one, bound
+         to a new challenge (SEC-006).
+      operationId: plux.v1.DeviceService.ReattestDevice
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.ReattestDeviceRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.ReattestDeviceResponse'
+  /plux.v1.DeviceService/RegisterAttestedDevice:
+    post:
+      tags:
+        - plux.v1.DeviceService
+      summary: RegisterAttestedDevice
+      description: |-
+        RegisterAttestedDevice registers a device whose DPoP key and platform
+         attestation the server verifies (SEC-001–SEC-005). From P6 the server
+         refuses RegisterDevice; it stays declared so the contract only grows.
+      operationId: plux.v1.DeviceService.RegisterAttestedDevice
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.RegisterAttestedDeviceRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.RegisterAttestedDeviceResponse'
   /plux.v1.DeviceService/RegisterDevice:
     post:
       tags:
@@ -1425,6 +1550,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.ReportInstalledResponse'
+  /plux.v1.DeviceService/RevokeDevice:
+    post:
+      tags:
+        - plux.v1.DeviceService
+      summary: RevokeDevice
+      description: |-
+        RevokeDevice withdraws a device's trust: its tokens stop working and
+         it can no longer refresh them. Administrators only (SEC-006).
+      operationId: plux.v1.DeviceService.RevokeDevice
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.RevokeDeviceRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.RevokeDeviceResponse'
   /plux.v1.DocumentService/CompareSnapshots:
     post:
       tags:
@@ -1859,6 +2025,49 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.ValidatePageResponse'
+  /plux.v1.GatewayService/Call:
+    post:
+      tags:
+        - plux.v1.GatewayService
+      summary: Call
+      description: |-
+        Call forwards one request to a configured upstream and returns its
+         response. The device never sees the upstream's credentials, and the
+         server refuses an operation the environment has not allowed
+         (SEC-030).
+      operationId: plux.v1.GatewayService.Call
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.CallRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.CallResponse'
   /plux.v1.IdentityService/AcceptInvitation:
     post:
       tags:
@@ -4690,6 +4899,363 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.RollbackReleaseResponse'
+  /plux.v1.ScaService/CreateTransactionChallenge:
+    post:
+      tags:
+        - plux.v1.ScaService
+      summary: CreateTransactionChallenge
+      description: |-
+        CreateTransactionChallenge returns a single-use challenge bound to one
+         transaction summary, which the device shows the user before signing
+         (SEC-027, SEC-028).
+      operationId: plux.v1.ScaService.CreateTransactionChallenge
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.CreateTransactionChallengeRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.CreateTransactionChallengeResponse'
+  /plux.v1.SecurityAdminService/CreateUpstream:
+    post:
+      tags:
+        - plux.v1.SecurityAdminService
+      summary: CreateUpstream
+      operationId: plux.v1.SecurityAdminService.CreateUpstream
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.CreateUpstreamRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.CreateUpstreamResponse'
+  /plux.v1.SecurityAdminService/DeleteUpstream:
+    post:
+      tags:
+        - plux.v1.SecurityAdminService
+      summary: DeleteUpstream
+      operationId: plux.v1.SecurityAdminService.DeleteUpstream
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.DeleteUpstreamRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.DeleteUpstreamResponse'
+  /plux.v1.SecurityAdminService/GetEffectiveSecurityConfig:
+    post:
+      tags:
+        - plux.v1.SecurityAdminService
+      summary: GetEffectiveSecurityConfig
+      description: |-
+        GetEffectiveSecurityConfig returns the profile merged with the
+         overrides, which is what the manifest pins (SEC-182).
+      operationId: plux.v1.SecurityAdminService.GetEffectiveSecurityConfig
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.GetEffectiveSecurityConfigRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.GetEffectiveSecurityConfigResponse'
+  /plux.v1.SecurityAdminService/GetUpstream:
+    post:
+      tags:
+        - plux.v1.SecurityAdminService
+      summary: GetUpstream
+      operationId: plux.v1.SecurityAdminService.GetUpstream
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.GetUpstreamRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.GetUpstreamResponse'
+  /plux.v1.SecurityAdminService/ListAuditCheckpoints:
+    post:
+      tags:
+        - plux.v1.SecurityAdminService
+      summary: ListAuditCheckpoints
+      description: |-
+        ListAuditCheckpoints lists the signed checkpoints over the audit
+         log's hash chain, which let anyone verify that no entry was removed
+         (SEC-141).
+      operationId: plux.v1.SecurityAdminService.ListAuditCheckpoints
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.ListAuditCheckpointsRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.ListAuditCheckpointsResponse'
+  /plux.v1.SecurityAdminService/ListUpstreams:
+    post:
+      tags:
+        - plux.v1.SecurityAdminService
+      summary: ListUpstreams
+      operationId: plux.v1.SecurityAdminService.ListUpstreams
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.ListUpstreamsRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.ListUpstreamsResponse'
+  /plux.v1.SecurityAdminService/SetSecurityConfig:
+    post:
+      tags:
+        - plux.v1.SecurityAdminService
+      summary: SetSecurityConfig
+      description: |-
+        SetSecurityConfig sets an environment's profile and overrides. It
+         fails when expected_version is not the current version, so two
+         administrators cannot overwrite each other (SEC-180).
+      operationId: plux.v1.SecurityAdminService.SetSecurityConfig
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.SetSecurityConfigRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.SetSecurityConfigResponse'
+  /plux.v1.SecurityAdminService/UpdateUpstream:
+    post:
+      tags:
+        - plux.v1.SecurityAdminService
+      summary: UpdateUpstream
+      operationId: plux.v1.SecurityAdminService.UpdateUpstream
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.UpdateUpstreamRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.UpdateUpstreamResponse'
   /plux.v1.TelemetryService/IngestEvents:
     post:
       tags:
@@ -4883,6 +5449,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.ListTemplatesResponse'
+  /plux.v1.TokenService/ExchangeUserToken:
+    post:
+      tags:
+        - plux.v1.TokenService
+      summary: ExchangeUserToken
+      description: |-
+        ExchangeUserToken trades an end-user token for a short-lived token
+         scoped to one upstream audience, following RFC 8693 (SEC-026).
+      operationId: plux.v1.TokenService.ExchangeUserToken
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.ExchangeUserTokenRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.ExchangeUserTokenResponse'
   /plux.v1.TokenService/IssueDeviceToken:
     post:
       tags:
@@ -4921,6 +5528,50 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/plux.v1.IssueDeviceTokenResponse'
+  /plux.v1.TokenService/RefreshDeviceToken:
+    post:
+      tags:
+        - plux.v1.TokenService
+      summary: RefreshDeviceToken
+      description: |-
+        RefreshDeviceToken issues a new token to an attested device (SEC-025).
+         The proof of possession of the device key travels in the DPoP header
+         (RFC 9449), not in the body. A request without a valid proof is
+         answered with the "use_dpop_nonce" error and a DPoP-Nonce header
+         to retry with (SEC-024).
+      operationId: plux.v1.TokenService.RefreshDeviceToken
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          description: Define the version of the Connect protocol
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+          example: 1
+        - name: Connect-Timeout-Ms
+          in: header
+          description: Define the timeout, in ms
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+          example: 1000
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/plux.v1.RefreshDeviceTokenRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/plux.v1.RefreshDeviceTokenResponse'
 components:
   schemas:
     connect-protocol-version:
@@ -5178,6 +5829,27 @@ components:
              exactly once and expires after seven days.
       title: AddMemberResponse
       additionalProperties: false
+    plux.v1.AndroidEvidence:
+      type: object
+      properties:
+        keyAttestationChain:
+          type: array
+          items:
+            type: string
+            format: byte
+          title: key_attestation_chain
+          description: |-
+            key_attestation_chain is the X.509 certificate chain of the Android
+             Key Attestation for the DPoP key, leaf first, DER-encoded.
+        playIntegrityToken:
+          type: string
+          title: play_integrity_token
+          description: |-
+            play_integrity_token is the Play Integrity verdict token, bound to
+             the challenge.
+      title: AndroidEvidence
+      additionalProperties: false
+      description: AndroidEvidence is the proof an Android device offers (SEC-003).
     plux.v1.App:
       type: object
       properties:
@@ -5334,6 +6006,119 @@ components:
       title: AssetVariant
       additionalProperties: false
       description: AssetVariant is one processed form of an asset (CMP-030, CMP-033).
+    plux.v1.AttestationEvidence:
+      type: object
+      anyOf:
+        - type: object
+          properties:
+            android:
+              allOf:
+                - $ref: '#/components/schemas/plux.v1.AndroidEvidence'
+              title: android
+          title: android
+        - type: object
+          properties:
+            development:
+              allOf:
+                - $ref: '#/components/schemas/plux.v1.DevelopmentEvidence'
+              title: development
+          title: development
+        - type: object
+          properties:
+            ios:
+              allOf:
+                - $ref: '#/components/schemas/plux.v1.IosEvidence'
+              title: ios
+          title: ios
+      unevaluatedProperties: false
+      not:
+        allOf:
+          - anyOf:
+              - required:
+                  - android
+              - required:
+                  - development
+              - required:
+                  - ios
+          - not:
+              oneOf:
+                - required:
+                    - android
+                - required:
+                    - development
+                - required:
+                    - ios
+      title: AttestationEvidence
+      description: |-
+        AttestationEvidence is the platform evidence for one key: exactly one
+         of the provider forms (SEC-003, SEC-004).
+    plux.v1.AttestationSummary:
+      type: object
+      properties:
+        provider:
+          type: string
+          title: provider
+          description: |-
+            provider is "key_attestation", "play_integrity", "app_attest" or
+             "development".
+        verifiedAt:
+          allOf:
+            - $ref: '#/components/schemas/google.protobuf.Timestamp'
+          title: verified_at
+          description: verified_at is when the server last verified the evidence.
+        verdicts:
+          type: array
+          items:
+            type: string
+          title: verdicts
+          description: |-
+            verdicts are the provider's verdicts the server accepted, such as
+             "MEETS_STRONG_INTEGRITY".
+        riskMetric:
+          type: integer
+          title: risk_metric
+          format: int32
+          description: |-
+            risk_metric is the provider's risk figure, such as App Attest's
+             receipt risk metric; zero when the provider reports none.
+      title: AttestationSummary
+      additionalProperties: false
+      description: |-
+        AttestationSummary is what the server keeps of a verified attestation
+         (SEC-003). It carries verdicts, never the raw evidence.
+    plux.v1.AuditCheckpoint:
+      type: object
+      properties:
+        sequence:
+          type: string
+          title: sequence
+          format: int64
+          description: |-
+            sequence is the sequence number of the last entry the checkpoint
+             covers.
+        entryHash:
+          type: string
+          title: entry_hash
+          format: byte
+          description: entry_hash is the chain hash at that entry.
+        signature:
+          type: string
+          title: signature
+          format: byte
+          description: signature signs sequence and entry_hash.
+        keyId:
+          type: string
+          title: key_id
+          description: key_id identifies the audit signing key.
+        createdAt:
+          allOf:
+            - $ref: '#/components/schemas/google.protobuf.Timestamp'
+          title: created_at
+      title: AuditCheckpoint
+      additionalProperties: false
+      description: |-
+        AuditCheckpoint is a signed point in the audit log's hash chain
+         (SEC-141).
     plux.v1.AuditEntry:
       type: object
       properties:
@@ -5451,6 +6236,85 @@ components:
           title: sync
           description: sync names how this device gets from what it has to this bundle.
       title: BundleDescriptor
+      additionalProperties: false
+    plux.v1.CallRequest:
+      type: object
+      properties:
+        upstream:
+          type: string
+          title: upstream
+          description: |-
+            upstream names a configured upstream of the device's app and
+             environment (SEC-030).
+        operation:
+          type: string
+          title: operation
+          description: |-
+            operation names the allowed operation, so the server can apply its
+             policy and require a transaction confirmation where one is set
+             (SEC-031).
+        method:
+          type: string
+          title: method
+          description: method is the HTTP method.
+        path:
+          type: string
+          title: path
+          description: |-
+            path is the request path and query, relative to the upstream's base
+             URL.
+        headers:
+          type: object
+          title: headers
+          additionalProperties:
+            type: string
+            title: value
+          description: |-
+            headers are the request headers the upstream may receive; the server
+             drops any it does not allow (SEC-031).
+        body:
+          type: string
+          title: body
+          format: byte
+          description: body is the request body.
+        transactionChallengeId:
+          type: string
+          title: transaction_challenge_id
+          description: |-
+            transaction_challenge_id names the challenge from
+             ScaService.CreateTransactionChallenge that transaction_signature
+             answers; empty for an operation that needs no confirmation
+             (SEC-032).
+        transactionSignature:
+          type: string
+          title: transaction_signature
+          format: byte
+          description: |-
+            transaction_signature is the signature of the device's SCA key over
+             the challenge and the transaction summary (SEC-032).
+      title: CallRequest
+      additionalProperties: false
+    plux.v1.CallResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          title: status
+          format: int32
+          description: status is the upstream's HTTP status code.
+        headers:
+          type: object
+          title: headers
+          additionalProperties:
+            type: string
+            title: value
+          description: headers are the response headers the server passes on.
+        body:
+          type: string
+          title: body
+          format: byte
+          description: body is the upstream's response body.
+      title: CallResponse
       additionalProperties: false
     plux.v1.CancelPublishJobRequest:
       type: object
@@ -5926,6 +6790,32 @@ components:
           title: plugin
       title: CreatePluginResponse
       additionalProperties: false
+    plux.v1.CreateRegistrationChallengeRequest:
+      type: object
+      properties:
+        appId:
+          type: string
+          title: app_id
+        environment:
+          type: string
+          title: environment
+      title: CreateRegistrationChallengeRequest
+      additionalProperties: false
+    plux.v1.CreateRegistrationChallengeResponse:
+      type: object
+      properties:
+        challenge:
+          type: string
+          title: challenge
+          format: byte
+          description: challenge is random, single-use and bound to the app and environment.
+        expiresAt:
+          allOf:
+            - $ref: '#/components/schemas/google.protobuf.Timestamp'
+          title: expires_at
+          description: expires_at is when the challenge stops being accepted.
+      title: CreateRegistrationChallengeResponse
+      additionalProperties: false
     plux.v1.CreateReleaseRequest:
       type: object
       properties:
@@ -5986,6 +6876,72 @@ components:
             - $ref: '#/components/schemas/plux.v1.Team'
           title: team
       title: CreateTeamResponse
+      additionalProperties: false
+    plux.v1.CreateTransactionChallengeRequest:
+      type: object
+      properties:
+        deviceId:
+          type: string
+          title: device_id
+        dataSource:
+          type: string
+          title: data_source
+          description: data_source names the data source or upstream the transaction is for.
+        operation:
+          type: string
+          title: operation
+          description: operation names the operation to confirm.
+        transactionSummaryJcs:
+          type: string
+          title: transaction_summary_jcs
+          format: byte
+          description: |-
+            transaction_summary_jcs is the RFC 8785 canonical JSON of what the
+             user confirms; the server binds the challenge to its hash, so the
+             confirmed transaction cannot be swapped (SEC-028).
+      title: CreateTransactionChallengeRequest
+      additionalProperties: false
+    plux.v1.CreateTransactionChallengeResponse:
+      type: object
+      properties:
+        challengeId:
+          type: string
+          title: challenge_id
+          description: |-
+            challenge_id is what CallRequest.transaction_challenge_id
+             carries back.
+        challenge:
+          type: string
+          title: challenge
+          format: byte
+          description: |-
+            challenge is random and single-use; the SCA key signs it together
+             with the summary hash (SEC-027).
+        expiresAt:
+          allOf:
+            - $ref: '#/components/schemas/google.protobuf.Timestamp'
+          title: expires_at
+          description: expires_at is when the challenge stops being accepted.
+      title: CreateTransactionChallengeResponse
+      additionalProperties: false
+    plux.v1.CreateUpstreamRequest:
+      type: object
+      properties:
+        upstream:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Upstream'
+          title: upstream
+          description: upstream is the new upstream; its id is assigned by the server.
+      title: CreateUpstreamRequest
+      additionalProperties: false
+    plux.v1.CreateUpstreamResponse:
+      type: object
+      properties:
+        upstream:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Upstream'
+          title: upstream
+      title: CreateUpstreamResponse
       additionalProperties: false
     plux.v1.CreateWorkloadIdentityRequest:
       type: object
@@ -6159,6 +7115,18 @@ components:
       type: object
       title: DeleteTeamResponse
       additionalProperties: false
+    plux.v1.DeleteUpstreamRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+      title: DeleteUpstreamRequest
+      additionalProperties: false
+    plux.v1.DeleteUpstreamResponse:
+      type: object
+      title: DeleteUpstreamResponse
+      additionalProperties: false
     plux.v1.DeleteWorkloadIdentityRequest:
       type: object
       properties:
@@ -6183,6 +7151,19 @@ components:
       type: object
       title: DenyDeviceAuthorizationResponse
       additionalProperties: false
+    plux.v1.DevelopmentEvidence:
+      type: object
+      properties:
+        buildId:
+          type: string
+          title: build_id
+          description: build_id identifies the development build.
+      title: DevelopmentEvidence
+      additionalProperties: false
+      description: |-
+        DevelopmentEvidence marks a development build. The server accepts it
+         only where the environment's security configuration allows it, and
+         the device's assurance stays the lowest (SEC-004).
     plux.v1.Device:
       type: object
       properties:
@@ -6223,6 +7204,34 @@ components:
           allOf:
             - $ref: '#/components/schemas/google.protobuf.Timestamp'
           title: last_seen_at
+        keyStorage:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.KeyStorage'
+          title: key_storage
+          description: |-
+            key_storage is where the device's DPoP private key lives, as the
+             attestation proved it (SEC-002).
+        attestation:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.AttestationSummary'
+          title: attestation
+          description: |-
+            attestation summarises the last verified attestation (SEC-003); unset
+             for a device registered without one.
+        revokedAt:
+          allOf:
+            - $ref: '#/components/schemas/google.protobuf.Timestamp'
+          title: revoked_at
+          description: |-
+            revoked_at is when the device was revoked; unset while it is trusted
+             (SEC-006).
+        dpopJkt:
+          type: string
+          title: dpop_jkt
+          description: |-
+            dpop_jkt is the RFC 7638 thumbprint of the device's DPoP public key,
+             base64url-encoded; every token issued to the device is bound to it
+             (SEC-020).
       title: Device
       additionalProperties: false
     plux.v1.Diagnostic:
@@ -6419,6 +7428,39 @@ components:
             fields are the event's declared non-sensitive properties, as
              canonical JSON.
       title: Event
+      additionalProperties: false
+    plux.v1.ExchangeUserTokenRequest:
+      type: object
+      properties:
+        subjectToken:
+          type: string
+          title: subject_token
+          description: subject_token is the end user's token (RFC 8693 `subject_token`).
+        subjectTokenType:
+          type: string
+          title: subject_token_type
+          description: subject_token_type is the RFC 8693 token type URN of subject_token.
+        audience:
+          type: string
+          title: audience
+          description: audience is the upstream the new token is for (RFC 8693 `audience`).
+      title: ExchangeUserTokenRequest
+      additionalProperties: false
+    plux.v1.ExchangeUserTokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          title: access_token
+        issuedTokenType:
+          type: string
+          title: issued_token_type
+          description: issued_token_type is the RFC 8693 token type URN of access_token.
+        expiresAt:
+          allOf:
+            - $ref: '#/components/schemas/google.protobuf.Timestamp'
+          title: expires_at
+      title: ExchangeUserTokenResponse
       additionalProperties: false
     plux.v1.ExchangeWorkloadIdentityRequest:
       type: object
@@ -6730,6 +7772,41 @@ components:
           title: document
       title: GetDocumentResponse
       additionalProperties: false
+    plux.v1.GetEffectiveSecurityConfigRequest:
+      type: object
+      properties:
+        appId:
+          type: string
+          title: app_id
+        environmentId:
+          type: string
+          title: environment_id
+      title: GetEffectiveSecurityConfigRequest
+      additionalProperties: false
+    plux.v1.GetEffectiveSecurityConfigResponse:
+      type: object
+      properties:
+        profile:
+          type: string
+          title: profile
+        version:
+          type: string
+          title: version
+          format: int64
+        effectiveJson:
+          type: string
+          title: effective_json
+          format: byte
+          description: effective_json is the canonical JSON of the merged configuration.
+        sha256:
+          type: string
+          title: sha256
+          format: byte
+          description: |-
+            sha256 is the hash of effective_json, the value the manifest pins
+             (SEC-182).
+      title: GetEffectiveSecurityConfigResponse
+      additionalProperties: false
     plux.v1.GetLockRequest:
       type: object
       properties:
@@ -6786,6 +7863,13 @@ components:
              (NFR-006, ADR-0037): the SHA-256 of one line `<key>:<sha256 hex>\n`
              per installed bundle, sorted by key, the app bundle's key empty. A
              device that sends it with if_none_match sends no installed list.
+        configVersion:
+          type: string
+          title: config_version
+          format: int64
+          description: |-
+            config_version is the security configuration version the device
+             holds, zero for none (SEC-182).
       title: GetManifestRequest
       additionalProperties: false
     plux.v1.GetManifestResponse:
@@ -6809,6 +7893,21 @@ components:
             installed_required is true when a request with installed_digest
              found the manifest changed: manifest is unset, and the device asks
              again with installed, from which the server plans its deltas.
+        configPatch:
+          type: string
+          title: config_patch
+          format: byte
+          description: |-
+            config_patch is an RFC 7396 merge patch, as JSON, from the
+             configuration version the device sent to the one the manifest names.
+             It is outside the signed part: the device verifies the patched
+             result against the manifest's config hash (SEC-182).
+        configFullRequired:
+          type: boolean
+          title: config_full_required
+          description: |-
+            config_full_required is true when no patch can be given, so the
+             device fetches the whole configuration (SEC-182).
       title: GetManifestResponse
       additionalProperties: false
     plux.v1.GetNativeCatalogueRequest:
@@ -7003,6 +8102,23 @@ components:
           title: content
           format: byte
       title: GetTemplateResponse
+      additionalProperties: false
+    plux.v1.GetUpstreamRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          title: id
+      title: GetUpstreamRequest
+      additionalProperties: false
+    plux.v1.GetUpstreamResponse:
+      type: object
+      properties:
+        upstream:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Upstream'
+          title: upstream
+      title: GetUpstreamResponse
       additionalProperties: false
     plux.v1.GrantAccessRequest:
       type: object
@@ -7222,6 +8338,24 @@ components:
           title: diagnostics
       title: InstantiateResponse
       additionalProperties: false
+    plux.v1.IosEvidence:
+      type: object
+      properties:
+        appAttestKeyId:
+          type: string
+          title: app_attest_key_id
+          format: byte
+          description: app_attest_key_id is the App Attest key identifier.
+        attestationObject:
+          type: string
+          title: attestation_object
+          format: byte
+          description: |-
+            attestation_object is the CBOR attestation object App Attest
+             returned for the challenge.
+      title: IosEvidence
+      additionalProperties: false
+      description: IosEvidence is the proof an iOS device offers (SEC-003).
     plux.v1.IssueDeviceTokenRequest:
       type: object
       properties:
@@ -7244,8 +8378,24 @@ components:
           allOf:
             - $ref: '#/components/schemas/google.protobuf.Timestamp'
           title: expires_at
+        tokenType:
+          type: string
+          title: token_type
+          description: |-
+            token_type is "DPoP": the token is bound to the device's key and is
+             sent as `Authorization: DPoP <token>` with a proof (SEC-020).
       title: IssueDeviceTokenResponse
       additionalProperties: false
+    plux.v1.KeyStorage:
+      type: string
+      title: KeyStorage
+      enum:
+        - KEY_STORAGE_UNSPECIFIED
+        - KEY_STORAGE_SOFTWARE
+        - KEY_STORAGE_TEE
+        - KEY_STORAGE_STRONGBOX
+        - KEY_STORAGE_SECURE_ENCLAVE
+      description: KeyStorage says where a device key is held (SEC-002).
     plux.v1.LimitUsage:
       type: object
       properties:
@@ -7405,6 +8555,29 @@ components:
             - $ref: '#/components/schemas/plux.v1.PageResult'
           title: page
       title: ListAssetsResponse
+      additionalProperties: false
+    plux.v1.ListAuditCheckpointsRequest:
+      type: object
+      properties:
+        page:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Page'
+          title: page
+      title: ListAuditCheckpointsRequest
+      additionalProperties: false
+    plux.v1.ListAuditCheckpointsResponse:
+      type: object
+      properties:
+        checkpoints:
+          type: array
+          items:
+            $ref: '#/components/schemas/plux.v1.AuditCheckpoint'
+          title: checkpoints
+        page:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.PageResult'
+          title: page
+      title: ListAuditCheckpointsResponse
       additionalProperties: false
     plux.v1.ListAuditEntriesRequest:
       type: object
@@ -7997,6 +9170,35 @@ components:
           title: page
       title: ListTrashResponse
       additionalProperties: false
+    plux.v1.ListUpstreamsRequest:
+      type: object
+      properties:
+        appId:
+          type: string
+          title: app_id
+        environmentId:
+          type: string
+          title: environment_id
+        page:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Page'
+          title: page
+      title: ListUpstreamsRequest
+      additionalProperties: false
+    plux.v1.ListUpstreamsResponse:
+      type: object
+      properties:
+        upstreams:
+          type: array
+          items:
+            $ref: '#/components/schemas/plux.v1.Upstream'
+          title: upstreams
+        page:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.PageResult'
+          title: page
+      title: ListUpstreamsResponse
+      additionalProperties: false
     plux.v1.ListUsagesRequest:
       type: object
       properties:
@@ -8204,6 +9406,21 @@ components:
           description: |-
             signatures sign `signed`. There may be several, so that keys can be
              rotated and thresholds applied (ADR-0004).
+        config:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.SecurityConfigRef'
+          title: config
+          description: |-
+            config is the security configuration this release requires; it is
+             part of the signed document (SEC-182).
+        metadata:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.UpdateMetadataRef'
+          title: metadata
+          description: |-
+            metadata names the update-metadata versions the manifest belongs to,
+             for rollback and freeze checks; part of the signed document
+             (SEC-050).
       title: Manifest
       additionalProperties: false
       description: |-
@@ -8759,6 +9976,171 @@ components:
       title: Range
       additionalProperties: false
       description: Range is a half-open range of Unicode code points inside an expression.
+    plux.v1.ReattestDeviceRequest:
+      type: object
+      properties:
+        deviceId:
+          type: string
+          title: device_id
+        challenge:
+          type: string
+          title: challenge
+          format: byte
+          description: challenge is a fresh challenge from CreateRegistrationChallenge.
+        evidence:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.AttestationEvidence'
+          title: evidence
+          description: |-
+            evidence is the new attestation of the device's existing DPoP key
+             (SEC-006).
+      title: ReattestDeviceRequest
+      additionalProperties: false
+    plux.v1.ReattestDeviceResponse:
+      type: object
+      properties:
+        device:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Device'
+          title: device
+      title: ReattestDeviceResponse
+      additionalProperties: false
+    plux.v1.RefreshDeviceTokenRequest:
+      type: object
+      anyOf:
+        - type: object
+          properties:
+            appAttestAssertion:
+              type: string
+              title: app_attest_assertion
+              format: byte
+              description: app_attest_assertion is the App Attest assertion over the request.
+          title: app_attest_assertion
+        - type: object
+          properties:
+            playIntegrityToken:
+              type: string
+              title: play_integrity_token
+              description: play_integrity_token is a Play Integrity verdict token.
+          title: play_integrity_token
+      unevaluatedProperties: false
+      not:
+        allOf:
+          - anyOf:
+              - required:
+                  - appAttestAssertion
+              - required:
+                  - playIntegrityToken
+          - not:
+              oneOf:
+                - required:
+                    - appAttestAssertion
+                - required:
+                    - playIntegrityToken
+      properties:
+        deviceId:
+          type: string
+          title: device_id
+      title: RefreshDeviceTokenRequest
+    plux.v1.RefreshDeviceTokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          title: access_token
+        expiresAt:
+          allOf:
+            - $ref: '#/components/schemas/google.protobuf.Timestamp'
+          title: expires_at
+        tokenType:
+          type: string
+          title: token_type
+          description: token_type is "DPoP" (SEC-020).
+      title: RefreshDeviceTokenResponse
+      additionalProperties: false
+      description: |-
+        RefreshDeviceTokenResponse carries the new token; it has the same
+         fields as IssueDeviceTokenResponse (SEC-025).
+    plux.v1.RegisterAttestedDeviceRequest:
+      type: object
+      properties:
+        appId:
+          type: string
+          title: app_id
+        environment:
+          type: string
+          title: environment
+        platform:
+          type: string
+          title: platform
+        osVersion:
+          type: string
+          title: os_version
+        runtimeVersion:
+          type: string
+          title: runtime_version
+        hostBuild:
+          type: string
+          title: host_build
+        challenge:
+          type: string
+          title: challenge
+          format: byte
+          description: |-
+            challenge is the value CreateRegistrationChallenge returned; the
+             attestation must be bound to it (SEC-005).
+        dpopPublicKeyJwk:
+          type: string
+          title: dpop_public_key_jwk
+          format: byte
+          description: |-
+            dpop_public_key_jwk is the device's DPoP public key as a JSON Web Key
+             (RFC 7517) (SEC-001).
+        keyStorage:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.KeyStorage'
+          title: key_storage
+          description: |-
+            key_storage is where the device claims the key lives; the attestation
+             must prove at least that (SEC-002).
+        evidence:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.AttestationEvidence'
+          title: evidence
+          description: evidence is the attestation of the DPoP key (SEC-003).
+        keyAgreementPublicKeyJwk:
+          type: string
+          title: key_agreement_public_key_jwk
+          format: byte
+          description: |-
+            key_agreement_public_key_jwk is the device's key-agreement public key
+             for sealed payloads, as a JWK; empty when the device has none
+             (SEC-053).
+        scaPublicKeyJwk:
+          type: string
+          title: sca_public_key_jwk
+          format: byte
+          description: |-
+            sca_public_key_jwk is the public key that signs transaction
+             confirmations, as a JWK; empty when the device has none (SEC-027).
+        scaEvidence:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.AttestationEvidence'
+          title: sca_evidence
+          description: |-
+            sca_evidence is the attestation of the SCA key, in the same forms as
+             evidence; set when sca_public_key_jwk is (SEC-027).
+      title: RegisterAttestedDeviceRequest
+      additionalProperties: false
+    plux.v1.RegisterAttestedDeviceResponse:
+      type: object
+      properties:
+        device:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Device'
+          title: device
+      title: RegisterAttestedDeviceResponse
+      additionalProperties: false
     plux.v1.RegisterDeviceRequest:
       type: object
       properties:
@@ -9004,6 +10386,27 @@ components:
       type: object
       title: RevokeAccessTokenResponse
       additionalProperties: false
+    plux.v1.RevokeDeviceRequest:
+      type: object
+      properties:
+        deviceId:
+          type: string
+          title: device_id
+        reason:
+          type: string
+          title: reason
+          description: reason is recorded in the audit log (SEC-006).
+      title: RevokeDeviceRequest
+      additionalProperties: false
+    plux.v1.RevokeDeviceResponse:
+      type: object
+      properties:
+        device:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Device'
+          title: device
+      title: RevokeDeviceResponse
+      additionalProperties: false
     plux.v1.RollbackReleaseRequest:
       type: object
       properties:
@@ -9056,6 +10459,23 @@ components:
       title: Secret
       additionalProperties: false
       description: Secret never carries its value after creation (SEC-106).
+    plux.v1.SecurityConfigRef:
+      type: object
+      properties:
+        version:
+          type: string
+          title: version
+          format: int64
+        sha256:
+          type: string
+          title: sha256
+          format: byte
+          description: sha256 is the hash of the canonical configuration at that version.
+      title: SecurityConfigRef
+      additionalProperties: false
+      description: |-
+        SecurityConfigRef pins one version of the effective security
+         configuration (SEC-182).
     plux.v1.Session:
       type: object
       properties:
@@ -9214,6 +10634,45 @@ components:
             - $ref: '#/components/schemas/plux.v1.Secret'
           title: secret
       title: SetSecretResponse
+      additionalProperties: false
+    plux.v1.SetSecurityConfigRequest:
+      type: object
+      properties:
+        appId:
+          type: string
+          title: app_id
+        environmentId:
+          type: string
+          title: environment_id
+        profile:
+          type: string
+          title: profile
+          description: profile names the security profile, such as "maximum" (SEC-180).
+        overridesJson:
+          type: string
+          title: overrides_json
+          format: byte
+          description: |-
+            overrides_json is a JSON object of settings that differ from the
+             profile (SEC-181).
+        expectedVersion:
+          type: string
+          title: expected_version
+          format: int64
+          description: |-
+            expected_version is the version the caller read; zero for an
+             environment with no configuration yet.
+      title: SetSecurityConfigRequest
+      additionalProperties: false
+    plux.v1.SetSecurityConfigResponse:
+      type: object
+      properties:
+        version:
+          type: string
+          title: version
+          format: int64
+          description: version is the new configuration version.
+      title: SetSecurityConfigResponse
       additionalProperties: false
     plux.v1.SetVariableRequest:
       type: object
@@ -9559,6 +11018,26 @@ components:
           title: environment
       title: UpdateEnvironmentResponse
       additionalProperties: false
+    plux.v1.UpdateMetadataRef:
+      type: object
+      properties:
+        rootVersion:
+          type: string
+          title: root_version
+          format: int64
+        snapshotVersion:
+          type: string
+          title: snapshot_version
+          format: int64
+        timestampVersion:
+          type: string
+          title: timestamp_version
+          format: int64
+      title: UpdateMetadataRef
+      additionalProperties: false
+      description: |-
+        UpdateMetadataRef names the TUF-style metadata versions a manifest was
+         signed under (SEC-050, ADR-0004).
     plux.v1.UpdateOrganizationRequest:
       type: object
       properties:
@@ -9618,6 +11097,25 @@ components:
             - $ref: '#/components/schemas/plux.v1.Team'
           title: team
       title: UpdateTeamResponse
+      additionalProperties: false
+    plux.v1.UpdateUpstreamRequest:
+      type: object
+      properties:
+        upstream:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Upstream'
+          title: upstream
+          description: upstream replaces the stored upstream with the same id.
+      title: UpdateUpstreamRequest
+      additionalProperties: false
+    plux.v1.UpdateUpstreamResponse:
+      type: object
+      properties:
+        upstream:
+          allOf:
+            - $ref: '#/components/schemas/plux.v1.Upstream'
+          title: upstream
+      title: UpdateUpstreamResponse
       additionalProperties: false
     plux.v1.UploadAssetRequest:
       type: object
@@ -9682,6 +11180,133 @@ components:
              the same content.
       title: UploadNativeCatalogueResponse
       additionalProperties: false
+    plux.v1.Upstream:
+      type: object
+      anyOf:
+        - type: object
+          properties:
+            apiKey:
+              allOf:
+                - $ref: '#/components/schemas/plux.v1.UpstreamApiKey'
+              title: api_key
+          title: api_key
+        - type: object
+          properties:
+            mtls:
+              allOf:
+                - $ref: '#/components/schemas/plux.v1.UpstreamMtls'
+              title: mtls
+          title: mtls
+        - type: object
+          properties:
+            oauthClientCredentials:
+              allOf:
+                - $ref: '#/components/schemas/plux.v1.UpstreamOAuthClientCredentials'
+              title: oauth_client_credentials
+          title: oauth_client_credentials
+      unevaluatedProperties: false
+      not:
+        allOf:
+          - anyOf:
+              - required:
+                  - apiKey
+              - required:
+                  - mtls
+              - required:
+                  - oauthClientCredentials
+          - not:
+              oneOf:
+                - required:
+                    - apiKey
+                - required:
+                    - mtls
+                - required:
+                    - oauthClientCredentials
+      properties:
+        id:
+          type: string
+          title: id
+        appId:
+          type: string
+          title: app_id
+        environmentId:
+          type: string
+          title: environment_id
+        name:
+          type: string
+          title: name
+          description: name is what GatewayCallRequest.upstream refers to.
+        baseUrl:
+          type: string
+          title: base_url
+          description: base_url is the upstream's base URL.
+        allowPrivateAddresses:
+          type: boolean
+          title: allow_private_addresses
+          description: |-
+            allow_private_addresses lets the upstream resolve to a private or
+             loopback address. It is off by default, because the gateway would
+             otherwise reach the server's own network (SEC-105).
+        timeoutMs:
+          type: integer
+          title: timeout_ms
+          format: int32
+          description: |-
+            timeout_ms bounds one call to the upstream; zero uses the registry's
+             default (LIM-001).
+      title: Upstream
+      description: |-
+        Upstream is an API the gateway may reach for an environment's devices
+         (SEC-030).
+    plux.v1.UpstreamApiKey:
+      type: object
+      properties:
+        header:
+          type: string
+          title: header
+          description: header is the header that carries the key.
+        secretRef:
+          type: string
+          title: secret_ref
+          description: secret_ref names the secret that holds the key.
+      title: UpstreamApiKey
+      additionalProperties: false
+      description: UpstreamApiKey authenticates with a static key in a header.
+    plux.v1.UpstreamMtls:
+      type: object
+      properties:
+        clientCertSecretRef:
+          type: string
+          title: client_cert_secret_ref
+          description: |-
+            client_cert_secret_ref names the secret that holds the certificate
+             and key.
+      title: UpstreamMtls
+      additionalProperties: false
+      description: UpstreamMtls authenticates with a client certificate.
+    plux.v1.UpstreamOAuthClientCredentials:
+      type: object
+      properties:
+        tokenUrl:
+          type: string
+          title: token_url
+        clientId:
+          type: string
+          title: client_id
+        clientSecretRef:
+          type: string
+          title: client_secret_ref
+          description: client_secret_ref names the secret that holds the client secret.
+        scopes:
+          type: array
+          items:
+            type: string
+          title: scopes
+      title: UpstreamOAuthClientCredentials
+      additionalProperties: false
+      description: |-
+        UpstreamOAuthClientCredentials authenticates with the OAuth 2.0 client
+         credentials grant (RFC 6749 §4.4).
     plux.v1.Usage:
       type: object
       properties:
@@ -9902,6 +11527,19 @@ tags:
        write appends a snapshot (SRV-031); writing requires the editing lock
        (SRV-040). Content travels as canonical JSON bytes, never as protobuf
        structures, so a document's hash is a property of the bytes (SCH-003).
+  - name: plux.v1.GatewayService
+    description: |-
+      GatewayService lets an attested device reach an upstream API through the
+       server, which holds the upstream's credentials and applies the
+       environment's security configuration (SEC-030–SEC-032). Call is the
+       typed form for bodies that fit in one message; a request or response
+       body that must stream uses the equivalent HTTP route, because a unary
+       message is bounded by the request size limit (LIM-001).
+  - name: plux.v1.ScaService
+    description: |-
+      ScaService issues the challenges behind strong customer authentication:
+       the user confirms the exact transaction on the device and its SCA key
+       signs it (SEC-027).
   - name: plux.v1.OrgService
     description: |-
       OrgService manages the Installation → Organization → Teams hierarchy
@@ -9946,6 +11584,11 @@ tags:
     description: |-
       ReleaseService manages immutable plugin versions and app releases, their
        promotion between environments and their rollback (ADR-0020).
+  - name: plux.v1.SecurityAdminService
+    description: |-
+      SecurityAdminService is the administrators' side of device security: an
+       environment's security configuration, the upstreams its gateway
+       reaches, and the signed audit checkpoints. Devices never call it.
   - name: plux.v1.TelemetryService
     description: |-
       TelemetryService ingests the runtime's batched events (Appendix G.2).

@@ -25,6 +25,69 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// KeyStorage says where a device key is held (SEC-002).
+type KeyStorage int32
+
+const (
+	KeyStorage_KEY_STORAGE_UNSPECIFIED KeyStorage = 0
+	// KEY_STORAGE_SOFTWARE is a key in application-readable storage: the
+	// lowest assurance.
+	KeyStorage_KEY_STORAGE_SOFTWARE KeyStorage = 1
+	// KEY_STORAGE_TEE is an Android key in the trusted execution
+	// environment.
+	KeyStorage_KEY_STORAGE_TEE KeyStorage = 2
+	// KEY_STORAGE_STRONGBOX is an Android key in a dedicated secure
+	// element.
+	KeyStorage_KEY_STORAGE_STRONGBOX KeyStorage = 3
+	// KEY_STORAGE_SECURE_ENCLAVE is an iOS key in the Secure Enclave.
+	KeyStorage_KEY_STORAGE_SECURE_ENCLAVE KeyStorage = 4
+)
+
+// Enum value maps for KeyStorage.
+var (
+	KeyStorage_name = map[int32]string{
+		0: "KEY_STORAGE_UNSPECIFIED",
+		1: "KEY_STORAGE_SOFTWARE",
+		2: "KEY_STORAGE_TEE",
+		3: "KEY_STORAGE_STRONGBOX",
+		4: "KEY_STORAGE_SECURE_ENCLAVE",
+	}
+	KeyStorage_value = map[string]int32{
+		"KEY_STORAGE_UNSPECIFIED":    0,
+		"KEY_STORAGE_SOFTWARE":       1,
+		"KEY_STORAGE_TEE":            2,
+		"KEY_STORAGE_STRONGBOX":      3,
+		"KEY_STORAGE_SECURE_ENCLAVE": 4,
+	}
+)
+
+func (x KeyStorage) Enum() *KeyStorage {
+	p := new(KeyStorage)
+	*p = x
+	return p
+}
+
+func (x KeyStorage) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (KeyStorage) Descriptor() protoreflect.EnumDescriptor {
+	return file_plux_v1_device_proto_enumTypes[0].Descriptor()
+}
+
+func (KeyStorage) Type() protoreflect.EnumType {
+	return &file_plux_v1_device_proto_enumTypes[0]
+}
+
+func (x KeyStorage) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use KeyStorage.Descriptor instead.
+func (KeyStorage) EnumDescriptor() ([]byte, []int) {
+	return file_plux_v1_device_proto_rawDescGZIP(), []int{0}
+}
+
 type Device struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -39,8 +102,21 @@ type Device struct {
 	InstalledSequence int64                  `protobuf:"varint,9,opt,name=installed_sequence,json=installedSequence,proto3" json:"installed_sequence,omitempty"`
 	RegisteredAt      *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=registered_at,json=registeredAt,proto3" json:"registered_at,omitempty"`
 	LastSeenAt        *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=last_seen_at,json=lastSeenAt,proto3" json:"last_seen_at,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// key_storage is where the device's DPoP private key lives, as the
+	// attestation proved it (SEC-002).
+	KeyStorage KeyStorage `protobuf:"varint,12,opt,name=key_storage,json=keyStorage,proto3,enum=plux.v1.KeyStorage" json:"key_storage,omitempty"`
+	// attestation summarises the last verified attestation (SEC-003); unset
+	// for a device registered without one.
+	Attestation *AttestationSummary `protobuf:"bytes,13,opt,name=attestation,proto3" json:"attestation,omitempty"`
+	// revoked_at is when the device was revoked; unset while it is trusted
+	// (SEC-006).
+	RevokedAt *timestamppb.Timestamp `protobuf:"bytes,14,opt,name=revoked_at,json=revokedAt,proto3" json:"revoked_at,omitempty"`
+	// dpop_jkt is the RFC 7638 thumbprint of the device's DPoP public key,
+	// base64url-encoded; every token issued to the device is bound to it
+	// (SEC-020).
+	DpopJkt       string `protobuf:"bytes,15,opt,name=dpop_jkt,json=dpopJkt,proto3" json:"dpop_jkt,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Device) Reset() {
@@ -150,6 +226,880 @@ func (x *Device) GetLastSeenAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Device) GetKeyStorage() KeyStorage {
+	if x != nil {
+		return x.KeyStorage
+	}
+	return KeyStorage_KEY_STORAGE_UNSPECIFIED
+}
+
+func (x *Device) GetAttestation() *AttestationSummary {
+	if x != nil {
+		return x.Attestation
+	}
+	return nil
+}
+
+func (x *Device) GetRevokedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.RevokedAt
+	}
+	return nil
+}
+
+func (x *Device) GetDpopJkt() string {
+	if x != nil {
+		return x.DpopJkt
+	}
+	return ""
+}
+
+// AttestationSummary is what the server keeps of a verified attestation
+// (SEC-003). It carries verdicts, never the raw evidence.
+type AttestationSummary struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// provider is "key_attestation", "play_integrity", "app_attest" or
+	// "development".
+	Provider string `protobuf:"bytes,1,opt,name=provider,proto3" json:"provider,omitempty"`
+	// verified_at is when the server last verified the evidence.
+	VerifiedAt *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=verified_at,json=verifiedAt,proto3" json:"verified_at,omitempty"`
+	// verdicts are the provider's verdicts the server accepted, such as
+	// "MEETS_STRONG_INTEGRITY".
+	Verdicts []string `protobuf:"bytes,3,rep,name=verdicts,proto3" json:"verdicts,omitempty"`
+	// risk_metric is the provider's risk figure, such as App Attest's
+	// receipt risk metric; zero when the provider reports none.
+	RiskMetric    int32 `protobuf:"varint,4,opt,name=risk_metric,json=riskMetric,proto3" json:"risk_metric,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AttestationSummary) Reset() {
+	*x = AttestationSummary{}
+	mi := &file_plux_v1_device_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AttestationSummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AttestationSummary) ProtoMessage() {}
+
+func (x *AttestationSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_device_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AttestationSummary.ProtoReflect.Descriptor instead.
+func (*AttestationSummary) Descriptor() ([]byte, []int) {
+	return file_plux_v1_device_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *AttestationSummary) GetProvider() string {
+	if x != nil {
+		return x.Provider
+	}
+	return ""
+}
+
+func (x *AttestationSummary) GetVerifiedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.VerifiedAt
+	}
+	return nil
+}
+
+func (x *AttestationSummary) GetVerdicts() []string {
+	if x != nil {
+		return x.Verdicts
+	}
+	return nil
+}
+
+func (x *AttestationSummary) GetRiskMetric() int32 {
+	if x != nil {
+		return x.RiskMetric
+	}
+	return 0
+}
+
+// AndroidEvidence is the proof an Android device offers (SEC-003).
+type AndroidEvidence struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// key_attestation_chain is the X.509 certificate chain of the Android
+	// Key Attestation for the DPoP key, leaf first, DER-encoded.
+	KeyAttestationChain [][]byte `protobuf:"bytes,1,rep,name=key_attestation_chain,json=keyAttestationChain,proto3" json:"key_attestation_chain,omitempty"`
+	// play_integrity_token is the Play Integrity verdict token, bound to
+	// the challenge.
+	PlayIntegrityToken string `protobuf:"bytes,2,opt,name=play_integrity_token,json=playIntegrityToken,proto3" json:"play_integrity_token,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *AndroidEvidence) Reset() {
+	*x = AndroidEvidence{}
+	mi := &file_plux_v1_device_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AndroidEvidence) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AndroidEvidence) ProtoMessage() {}
+
+func (x *AndroidEvidence) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_device_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AndroidEvidence.ProtoReflect.Descriptor instead.
+func (*AndroidEvidence) Descriptor() ([]byte, []int) {
+	return file_plux_v1_device_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *AndroidEvidence) GetKeyAttestationChain() [][]byte {
+	if x != nil {
+		return x.KeyAttestationChain
+	}
+	return nil
+}
+
+func (x *AndroidEvidence) GetPlayIntegrityToken() string {
+	if x != nil {
+		return x.PlayIntegrityToken
+	}
+	return ""
+}
+
+// IosEvidence is the proof an iOS device offers (SEC-003).
+type IosEvidence struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// app_attest_key_id is the App Attest key identifier.
+	AppAttestKeyId []byte `protobuf:"bytes,1,opt,name=app_attest_key_id,json=appAttestKeyId,proto3" json:"app_attest_key_id,omitempty"`
+	// attestation_object is the CBOR attestation object App Attest
+	// returned for the challenge.
+	AttestationObject []byte `protobuf:"bytes,2,opt,name=attestation_object,json=attestationObject,proto3" json:"attestation_object,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *IosEvidence) Reset() {
+	*x = IosEvidence{}
+	mi := &file_plux_v1_device_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IosEvidence) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IosEvidence) ProtoMessage() {}
+
+func (x *IosEvidence) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_device_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IosEvidence.ProtoReflect.Descriptor instead.
+func (*IosEvidence) Descriptor() ([]byte, []int) {
+	return file_plux_v1_device_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *IosEvidence) GetAppAttestKeyId() []byte {
+	if x != nil {
+		return x.AppAttestKeyId
+	}
+	return nil
+}
+
+func (x *IosEvidence) GetAttestationObject() []byte {
+	if x != nil {
+		return x.AttestationObject
+	}
+	return nil
+}
+
+// DevelopmentEvidence marks a development build. The server accepts it
+// only where the environment's security configuration allows it, and
+// the device's assurance stays the lowest (SEC-004).
+type DevelopmentEvidence struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// build_id identifies the development build.
+	BuildId       string `protobuf:"bytes,1,opt,name=build_id,json=buildId,proto3" json:"build_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DevelopmentEvidence) Reset() {
+	*x = DevelopmentEvidence{}
+	mi := &file_plux_v1_device_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DevelopmentEvidence) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DevelopmentEvidence) ProtoMessage() {}
+
+func (x *DevelopmentEvidence) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_device_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DevelopmentEvidence.ProtoReflect.Descriptor instead.
+func (*DevelopmentEvidence) Descriptor() ([]byte, []int) {
+	return file_plux_v1_device_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *DevelopmentEvidence) GetBuildId() string {
+	if x != nil {
+		return x.BuildId
+	}
+	return ""
+}
+
+// AttestationEvidence is the platform evidence for one key: exactly one
+// of the provider forms (SEC-003, SEC-004).
+type AttestationEvidence struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Evidence:
+	//
+	//	*AttestationEvidence_Android
+	//	*AttestationEvidence_Ios
+	//	*AttestationEvidence_Development
+	Evidence      isAttestationEvidence_Evidence `protobuf_oneof:"evidence"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AttestationEvidence) Reset() {
+	*x = AttestationEvidence{}
+	mi := &file_plux_v1_device_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AttestationEvidence) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AttestationEvidence) ProtoMessage() {}
+
+func (x *AttestationEvidence) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_device_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AttestationEvidence.ProtoReflect.Descriptor instead.
+func (*AttestationEvidence) Descriptor() ([]byte, []int) {
+	return file_plux_v1_device_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *AttestationEvidence) GetEvidence() isAttestationEvidence_Evidence {
+	if x != nil {
+		return x.Evidence
+	}
+	return nil
+}
+
+func (x *AttestationEvidence) GetAndroid() *AndroidEvidence {
+	if x != nil {
+		if x, ok := x.Evidence.(*AttestationEvidence_Android); ok {
+			return x.Android
+		}
+	}
+	return nil
+}
+
+func (x *AttestationEvidence) GetIos() *IosEvidence {
+	if x != nil {
+		if x, ok := x.Evidence.(*AttestationEvidence_Ios); ok {
+			return x.Ios
+		}
+	}
+	return nil
+}
+
+func (x *AttestationEvidence) GetDevelopment() *DevelopmentEvidence {
+	if x != nil {
+		if x, ok := x.Evidence.(*AttestationEvidence_Development); ok {
+			return x.Development
+		}
+	}
+	return nil
+}
+
+type isAttestationEvidence_Evidence interface {
+	isAttestationEvidence_Evidence()
+}
+
+type AttestationEvidence_Android struct {
+	Android *AndroidEvidence `protobuf:"bytes,1,opt,name=android,proto3,oneof"`
+}
+
+type AttestationEvidence_Ios struct {
+	Ios *IosEvidence `protobuf:"bytes,2,opt,name=ios,proto3,oneof"`
+}
+
+type AttestationEvidence_Development struct {
+	Development *DevelopmentEvidence `protobuf:"bytes,3,opt,name=development,proto3,oneof"`
+}
+
+func (*AttestationEvidence_Android) isAttestationEvidence_Evidence() {}
+
+func (*AttestationEvidence_Ios) isAttestationEvidence_Evidence() {}
+
+func (*AttestationEvidence_Development) isAttestationEvidence_Evidence() {}
+
+type CreateRegistrationChallengeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	AppId         string                 `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
+	Environment   string                 `protobuf:"bytes,2,opt,name=environment,proto3" json:"environment,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateRegistrationChallengeRequest) Reset() {
+	*x = CreateRegistrationChallengeRequest{}
+	mi := &file_plux_v1_device_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateRegistrationChallengeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateRegistrationChallengeRequest) ProtoMessage() {}
+
+func (x *CreateRegistrationChallengeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_device_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateRegistrationChallengeRequest.ProtoReflect.Descriptor instead.
+func (*CreateRegistrationChallengeRequest) Descriptor() ([]byte, []int) {
+	return file_plux_v1_device_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *CreateRegistrationChallengeRequest) GetAppId() string {
+	if x != nil {
+		return x.AppId
+	}
+	return ""
+}
+
+func (x *CreateRegistrationChallengeRequest) GetEnvironment() string {
+	if x != nil {
+		return x.Environment
+	}
+	return ""
+}
+
+type CreateRegistrationChallengeResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// challenge is random, single-use and bound to the app and environment.
+	Challenge []byte `protobuf:"bytes,1,opt,name=challenge,proto3" json:"challenge,omitempty"`
+	// expires_at is when the challenge stops being accepted.
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CreateRegistrationChallengeResponse) Reset() {
+	*x = CreateRegistrationChallengeResponse{}
+	mi := &file_plux_v1_device_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CreateRegistrationChallengeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CreateRegistrationChallengeResponse) ProtoMessage() {}
+
+func (x *CreateRegistrationChallengeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_device_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CreateRegistrationChallengeResponse.ProtoReflect.Descriptor instead.
+func (*CreateRegistrationChallengeResponse) Descriptor() ([]byte, []int) {
+	return file_plux_v1_device_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *CreateRegistrationChallengeResponse) GetChallenge() []byte {
+	if x != nil {
+		return x.Challenge
+	}
+	return nil
+}
+
+func (x *CreateRegistrationChallengeResponse) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
+type RegisterAttestedDeviceRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	AppId          string                 `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
+	Environment    string                 `protobuf:"bytes,2,opt,name=environment,proto3" json:"environment,omitempty"`
+	Platform       string                 `protobuf:"bytes,3,opt,name=platform,proto3" json:"platform,omitempty"`
+	OsVersion      string                 `protobuf:"bytes,4,opt,name=os_version,json=osVersion,proto3" json:"os_version,omitempty"`
+	RuntimeVersion string                 `protobuf:"bytes,5,opt,name=runtime_version,json=runtimeVersion,proto3" json:"runtime_version,omitempty"`
+	HostBuild      string                 `protobuf:"bytes,6,opt,name=host_build,json=hostBuild,proto3" json:"host_build,omitempty"`
+	// challenge is the value CreateRegistrationChallenge returned; the
+	// attestation must be bound to it (SEC-005).
+	Challenge []byte `protobuf:"bytes,7,opt,name=challenge,proto3" json:"challenge,omitempty"`
+	// dpop_public_key_jwk is the device's DPoP public key as a JSON Web Key
+	// (RFC 7517) (SEC-001).
+	DpopPublicKeyJwk []byte `protobuf:"bytes,8,opt,name=dpop_public_key_jwk,json=dpopPublicKeyJwk,proto3" json:"dpop_public_key_jwk,omitempty"`
+	// key_storage is where the device claims the key lives; the attestation
+	// must prove at least that (SEC-002).
+	KeyStorage KeyStorage `protobuf:"varint,9,opt,name=key_storage,json=keyStorage,proto3,enum=plux.v1.KeyStorage" json:"key_storage,omitempty"`
+	// evidence is the attestation of the DPoP key (SEC-003).
+	Evidence *AttestationEvidence `protobuf:"bytes,10,opt,name=evidence,proto3" json:"evidence,omitempty"`
+	// key_agreement_public_key_jwk is the device's key-agreement public key
+	// for sealed payloads, as a JWK; empty when the device has none
+	// (SEC-053).
+	KeyAgreementPublicKeyJwk []byte `protobuf:"bytes,11,opt,name=key_agreement_public_key_jwk,json=keyAgreementPublicKeyJwk,proto3" json:"key_agreement_public_key_jwk,omitempty"`
+	// sca_public_key_jwk is the public key that signs transaction
+	// confirmations, as a JWK; empty when the device has none (SEC-027).
+	ScaPublicKeyJwk []byte `protobuf:"bytes,12,opt,name=sca_public_key_jwk,json=scaPublicKeyJwk,proto3" json:"sca_public_key_jwk,omitempty"`
+	// sca_evidence is the attestation of the SCA key, in the same forms as
+	// evidence; set when sca_public_key_jwk is (SEC-027).
+	ScaEvidence   *AttestationEvidence `protobuf:"bytes,13,opt,name=sca_evidence,json=scaEvidence,proto3" json:"sca_evidence,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterAttestedDeviceRequest) Reset() {
+	*x = RegisterAttestedDeviceRequest{}
+	mi := &file_plux_v1_device_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterAttestedDeviceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterAttestedDeviceRequest) ProtoMessage() {}
+
+func (x *RegisterAttestedDeviceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_device_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterAttestedDeviceRequest.ProtoReflect.Descriptor instead.
+func (*RegisterAttestedDeviceRequest) Descriptor() ([]byte, []int) {
+	return file_plux_v1_device_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *RegisterAttestedDeviceRequest) GetAppId() string {
+	if x != nil {
+		return x.AppId
+	}
+	return ""
+}
+
+func (x *RegisterAttestedDeviceRequest) GetEnvironment() string {
+	if x != nil {
+		return x.Environment
+	}
+	return ""
+}
+
+func (x *RegisterAttestedDeviceRequest) GetPlatform() string {
+	if x != nil {
+		return x.Platform
+	}
+	return ""
+}
+
+func (x *RegisterAttestedDeviceRequest) GetOsVersion() string {
+	if x != nil {
+		return x.OsVersion
+	}
+	return ""
+}
+
+func (x *RegisterAttestedDeviceRequest) GetRuntimeVersion() string {
+	if x != nil {
+		return x.RuntimeVersion
+	}
+	return ""
+}
+
+func (x *RegisterAttestedDeviceRequest) GetHostBuild() string {
+	if x != nil {
+		return x.HostBuild
+	}
+	return ""
+}
+
+func (x *RegisterAttestedDeviceRequest) GetChallenge() []byte {
+	if x != nil {
+		return x.Challenge
+	}
+	return nil
+}
+
+func (x *RegisterAttestedDeviceRequest) GetDpopPublicKeyJwk() []byte {
+	if x != nil {
+		return x.DpopPublicKeyJwk
+	}
+	return nil
+}
+
+func (x *RegisterAttestedDeviceRequest) GetKeyStorage() KeyStorage {
+	if x != nil {
+		return x.KeyStorage
+	}
+	return KeyStorage_KEY_STORAGE_UNSPECIFIED
+}
+
+func (x *RegisterAttestedDeviceRequest) GetEvidence() *AttestationEvidence {
+	if x != nil {
+		return x.Evidence
+	}
+	return nil
+}
+
+func (x *RegisterAttestedDeviceRequest) GetKeyAgreementPublicKeyJwk() []byte {
+	if x != nil {
+		return x.KeyAgreementPublicKeyJwk
+	}
+	return nil
+}
+
+func (x *RegisterAttestedDeviceRequest) GetScaPublicKeyJwk() []byte {
+	if x != nil {
+		return x.ScaPublicKeyJwk
+	}
+	return nil
+}
+
+func (x *RegisterAttestedDeviceRequest) GetScaEvidence() *AttestationEvidence {
+	if x != nil {
+		return x.ScaEvidence
+	}
+	return nil
+}
+
+type RegisterAttestedDeviceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Device        *Device                `protobuf:"bytes,1,opt,name=device,proto3" json:"device,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RegisterAttestedDeviceResponse) Reset() {
+	*x = RegisterAttestedDeviceResponse{}
+	mi := &file_plux_v1_device_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RegisterAttestedDeviceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RegisterAttestedDeviceResponse) ProtoMessage() {}
+
+func (x *RegisterAttestedDeviceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_device_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RegisterAttestedDeviceResponse.ProtoReflect.Descriptor instead.
+func (*RegisterAttestedDeviceResponse) Descriptor() ([]byte, []int) {
+	return file_plux_v1_device_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *RegisterAttestedDeviceResponse) GetDevice() *Device {
+	if x != nil {
+		return x.Device
+	}
+	return nil
+}
+
+type ReattestDeviceRequest struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	// challenge is a fresh challenge from CreateRegistrationChallenge.
+	Challenge []byte `protobuf:"bytes,2,opt,name=challenge,proto3" json:"challenge,omitempty"`
+	// evidence is the new attestation of the device's existing DPoP key
+	// (SEC-006).
+	Evidence      *AttestationEvidence `protobuf:"bytes,3,opt,name=evidence,proto3" json:"evidence,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReattestDeviceRequest) Reset() {
+	*x = ReattestDeviceRequest{}
+	mi := &file_plux_v1_device_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReattestDeviceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReattestDeviceRequest) ProtoMessage() {}
+
+func (x *ReattestDeviceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_device_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReattestDeviceRequest.ProtoReflect.Descriptor instead.
+func (*ReattestDeviceRequest) Descriptor() ([]byte, []int) {
+	return file_plux_v1_device_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ReattestDeviceRequest) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
+}
+
+func (x *ReattestDeviceRequest) GetChallenge() []byte {
+	if x != nil {
+		return x.Challenge
+	}
+	return nil
+}
+
+func (x *ReattestDeviceRequest) GetEvidence() *AttestationEvidence {
+	if x != nil {
+		return x.Evidence
+	}
+	return nil
+}
+
+type ReattestDeviceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Device        *Device                `protobuf:"bytes,1,opt,name=device,proto3" json:"device,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReattestDeviceResponse) Reset() {
+	*x = ReattestDeviceResponse{}
+	mi := &file_plux_v1_device_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReattestDeviceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReattestDeviceResponse) ProtoMessage() {}
+
+func (x *ReattestDeviceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_device_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReattestDeviceResponse.ProtoReflect.Descriptor instead.
+func (*ReattestDeviceResponse) Descriptor() ([]byte, []int) {
+	return file_plux_v1_device_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ReattestDeviceResponse) GetDevice() *Device {
+	if x != nil {
+		return x.Device
+	}
+	return nil
+}
+
+type RevokeDeviceRequest struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	DeviceId string                 `protobuf:"bytes,1,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	// reason is recorded in the audit log (SEC-006).
+	Reason        string `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeDeviceRequest) Reset() {
+	*x = RevokeDeviceRequest{}
+	mi := &file_plux_v1_device_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeDeviceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeDeviceRequest) ProtoMessage() {}
+
+func (x *RevokeDeviceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_device_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeDeviceRequest.ProtoReflect.Descriptor instead.
+func (*RevokeDeviceRequest) Descriptor() ([]byte, []int) {
+	return file_plux_v1_device_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *RevokeDeviceRequest) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
+}
+
+func (x *RevokeDeviceRequest) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+type RevokeDeviceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Device        *Device                `protobuf:"bytes,1,opt,name=device,proto3" json:"device,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeDeviceResponse) Reset() {
+	*x = RevokeDeviceResponse{}
+	mi := &file_plux_v1_device_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeDeviceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeDeviceResponse) ProtoMessage() {}
+
+func (x *RevokeDeviceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_device_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeDeviceResponse.ProtoReflect.Descriptor instead.
+func (*RevokeDeviceResponse) Descriptor() ([]byte, []int) {
+	return file_plux_v1_device_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *RevokeDeviceResponse) GetDevice() *Device {
+	if x != nil {
+		return x.Device
+	}
+	return nil
+}
+
 type RegisterDeviceRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	AppId          string                 `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
@@ -164,7 +1114,7 @@ type RegisterDeviceRequest struct {
 
 func (x *RegisterDeviceRequest) Reset() {
 	*x = RegisterDeviceRequest{}
-	mi := &file_plux_v1_device_proto_msgTypes[1]
+	mi := &file_plux_v1_device_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -176,7 +1126,7 @@ func (x *RegisterDeviceRequest) String() string {
 func (*RegisterDeviceRequest) ProtoMessage() {}
 
 func (x *RegisterDeviceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_device_proto_msgTypes[1]
+	mi := &file_plux_v1_device_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -189,7 +1139,7 @@ func (x *RegisterDeviceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterDeviceRequest.ProtoReflect.Descriptor instead.
 func (*RegisterDeviceRequest) Descriptor() ([]byte, []int) {
-	return file_plux_v1_device_proto_rawDescGZIP(), []int{1}
+	return file_plux_v1_device_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *RegisterDeviceRequest) GetAppId() string {
@@ -246,7 +1196,7 @@ type RegisterDeviceResponse struct {
 
 func (x *RegisterDeviceResponse) Reset() {
 	*x = RegisterDeviceResponse{}
-	mi := &file_plux_v1_device_proto_msgTypes[2]
+	mi := &file_plux_v1_device_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -258,7 +1208,7 @@ func (x *RegisterDeviceResponse) String() string {
 func (*RegisterDeviceResponse) ProtoMessage() {}
 
 func (x *RegisterDeviceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_device_proto_msgTypes[2]
+	mi := &file_plux_v1_device_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -271,7 +1221,7 @@ func (x *RegisterDeviceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegisterDeviceResponse.ProtoReflect.Descriptor instead.
 func (*RegisterDeviceResponse) Descriptor() ([]byte, []int) {
-	return file_plux_v1_device_proto_rawDescGZIP(), []int{2}
+	return file_plux_v1_device_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *RegisterDeviceResponse) GetDevice() *Device {
@@ -297,7 +1247,7 @@ type GetDeviceRequest struct {
 
 func (x *GetDeviceRequest) Reset() {
 	*x = GetDeviceRequest{}
-	mi := &file_plux_v1_device_proto_msgTypes[3]
+	mi := &file_plux_v1_device_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -309,7 +1259,7 @@ func (x *GetDeviceRequest) String() string {
 func (*GetDeviceRequest) ProtoMessage() {}
 
 func (x *GetDeviceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_device_proto_msgTypes[3]
+	mi := &file_plux_v1_device_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -322,7 +1272,7 @@ func (x *GetDeviceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceRequest.ProtoReflect.Descriptor instead.
 func (*GetDeviceRequest) Descriptor() ([]byte, []int) {
-	return file_plux_v1_device_proto_rawDescGZIP(), []int{3}
+	return file_plux_v1_device_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *GetDeviceRequest) GetId() string {
@@ -341,7 +1291,7 @@ type GetDeviceResponse struct {
 
 func (x *GetDeviceResponse) Reset() {
 	*x = GetDeviceResponse{}
-	mi := &file_plux_v1_device_proto_msgTypes[4]
+	mi := &file_plux_v1_device_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -353,7 +1303,7 @@ func (x *GetDeviceResponse) String() string {
 func (*GetDeviceResponse) ProtoMessage() {}
 
 func (x *GetDeviceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_device_proto_msgTypes[4]
+	mi := &file_plux_v1_device_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -366,7 +1316,7 @@ func (x *GetDeviceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDeviceResponse.ProtoReflect.Descriptor instead.
 func (*GetDeviceResponse) Descriptor() ([]byte, []int) {
-	return file_plux_v1_device_proto_rawDescGZIP(), []int{4}
+	return file_plux_v1_device_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *GetDeviceResponse) GetDevice() *Device {
@@ -387,7 +1337,7 @@ type ListDevicesRequest struct {
 
 func (x *ListDevicesRequest) Reset() {
 	*x = ListDevicesRequest{}
-	mi := &file_plux_v1_device_proto_msgTypes[5]
+	mi := &file_plux_v1_device_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -399,7 +1349,7 @@ func (x *ListDevicesRequest) String() string {
 func (*ListDevicesRequest) ProtoMessage() {}
 
 func (x *ListDevicesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_device_proto_msgTypes[5]
+	mi := &file_plux_v1_device_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -412,7 +1362,7 @@ func (x *ListDevicesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDevicesRequest.ProtoReflect.Descriptor instead.
 func (*ListDevicesRequest) Descriptor() ([]byte, []int) {
-	return file_plux_v1_device_proto_rawDescGZIP(), []int{5}
+	return file_plux_v1_device_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ListDevicesRequest) GetAppId() string {
@@ -446,7 +1396,7 @@ type ListDevicesResponse struct {
 
 func (x *ListDevicesResponse) Reset() {
 	*x = ListDevicesResponse{}
-	mi := &file_plux_v1_device_proto_msgTypes[6]
+	mi := &file_plux_v1_device_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -458,7 +1408,7 @@ func (x *ListDevicesResponse) String() string {
 func (*ListDevicesResponse) ProtoMessage() {}
 
 func (x *ListDevicesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_device_proto_msgTypes[6]
+	mi := &file_plux_v1_device_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -471,7 +1421,7 @@ func (x *ListDevicesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListDevicesResponse.ProtoReflect.Descriptor instead.
 func (*ListDevicesResponse) Descriptor() ([]byte, []int) {
-	return file_plux_v1_device_proto_rawDescGZIP(), []int{6}
+	return file_plux_v1_device_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ListDevicesResponse) GetDevices() []*Device {
@@ -498,7 +1448,7 @@ type ReportInstalledRequest struct {
 
 func (x *ReportInstalledRequest) Reset() {
 	*x = ReportInstalledRequest{}
-	mi := &file_plux_v1_device_proto_msgTypes[7]
+	mi := &file_plux_v1_device_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -510,7 +1460,7 @@ func (x *ReportInstalledRequest) String() string {
 func (*ReportInstalledRequest) ProtoMessage() {}
 
 func (x *ReportInstalledRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_device_proto_msgTypes[7]
+	mi := &file_plux_v1_device_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -523,7 +1473,7 @@ func (x *ReportInstalledRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportInstalledRequest.ProtoReflect.Descriptor instead.
 func (*ReportInstalledRequest) Descriptor() ([]byte, []int) {
-	return file_plux_v1_device_proto_rawDescGZIP(), []int{7}
+	return file_plux_v1_device_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *ReportInstalledRequest) GetDeviceId() string {
@@ -548,7 +1498,7 @@ type ReportInstalledResponse struct {
 
 func (x *ReportInstalledResponse) Reset() {
 	*x = ReportInstalledResponse{}
-	mi := &file_plux_v1_device_proto_msgTypes[8]
+	mi := &file_plux_v1_device_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -560,7 +1510,7 @@ func (x *ReportInstalledResponse) String() string {
 func (*ReportInstalledResponse) ProtoMessage() {}
 
 func (x *ReportInstalledResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_device_proto_msgTypes[8]
+	mi := &file_plux_v1_device_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -573,14 +1523,14 @@ func (x *ReportInstalledResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ReportInstalledResponse.ProtoReflect.Descriptor instead.
 func (*ReportInstalledResponse) Descriptor() ([]byte, []int) {
-	return file_plux_v1_device_proto_rawDescGZIP(), []int{8}
+	return file_plux_v1_device_proto_rawDescGZIP(), []int{21}
 }
 
 var File_plux_v1_device_proto protoreflect.FileDescriptor
 
 const file_plux_v1_device_proto_rawDesc = "" +
 	"\n" +
-	"\x14plux/v1/device.proto\x12\aplux.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14plux/v1/common.proto\"\xb0\x03\n" +
+	"\x14plux/v1/device.proto\x12\aplux.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x14plux/v1/common.proto\"\xfb\x04\n" +
 	"\x06Device\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x15\n" +
 	"\x06app_id\x18\x02 \x01(\tR\x05appId\x12%\n" +
@@ -596,7 +1546,72 @@ const file_plux_v1_device_proto_rawDesc = "" +
 	"\rregistered_at\x18\n" +
 	" \x01(\v2\x1a.google.protobuf.TimestampR\fregisteredAt\x12<\n" +
 	"\flast_seen_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"lastSeenAt\"\xd3\x01\n" +
+	"lastSeenAt\x124\n" +
+	"\vkey_storage\x18\f \x01(\x0e2\x13.plux.v1.KeyStorageR\n" +
+	"keyStorage\x12=\n" +
+	"\vattestation\x18\r \x01(\v2\x1b.plux.v1.AttestationSummaryR\vattestation\x129\n" +
+	"\n" +
+	"revoked_at\x18\x0e \x01(\v2\x1a.google.protobuf.TimestampR\trevokedAt\x12\x19\n" +
+	"\bdpop_jkt\x18\x0f \x01(\tR\adpopJkt\"\xaa\x01\n" +
+	"\x12AttestationSummary\x12\x1a\n" +
+	"\bprovider\x18\x01 \x01(\tR\bprovider\x12;\n" +
+	"\vverified_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"verifiedAt\x12\x1a\n" +
+	"\bverdicts\x18\x03 \x03(\tR\bverdicts\x12\x1f\n" +
+	"\vrisk_metric\x18\x04 \x01(\x05R\n" +
+	"riskMetric\"w\n" +
+	"\x0fAndroidEvidence\x122\n" +
+	"\x15key_attestation_chain\x18\x01 \x03(\fR\x13keyAttestationChain\x120\n" +
+	"\x14play_integrity_token\x18\x02 \x01(\tR\x12playIntegrityToken\"g\n" +
+	"\vIosEvidence\x12)\n" +
+	"\x11app_attest_key_id\x18\x01 \x01(\fR\x0eappAttestKeyId\x12-\n" +
+	"\x12attestation_object\x18\x02 \x01(\fR\x11attestationObject\"0\n" +
+	"\x13DevelopmentEvidence\x12\x19\n" +
+	"\bbuild_id\x18\x01 \x01(\tR\abuildId\"\xc3\x01\n" +
+	"\x13AttestationEvidence\x124\n" +
+	"\aandroid\x18\x01 \x01(\v2\x18.plux.v1.AndroidEvidenceH\x00R\aandroid\x12(\n" +
+	"\x03ios\x18\x02 \x01(\v2\x14.plux.v1.IosEvidenceH\x00R\x03ios\x12@\n" +
+	"\vdevelopment\x18\x03 \x01(\v2\x1c.plux.v1.DevelopmentEvidenceH\x00R\vdevelopmentB\n" +
+	"\n" +
+	"\bevidence\"]\n" +
+	"\"CreateRegistrationChallengeRequest\x12\x15\n" +
+	"\x06app_id\x18\x01 \x01(\tR\x05appId\x12 \n" +
+	"\venvironment\x18\x02 \x01(\tR\venvironment\"~\n" +
+	"#CreateRegistrationChallengeResponse\x12\x1c\n" +
+	"\tchallenge\x18\x01 \x01(\fR\tchallenge\x129\n" +
+	"\n" +
+	"expires_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\xc6\x04\n" +
+	"\x1dRegisterAttestedDeviceRequest\x12\x15\n" +
+	"\x06app_id\x18\x01 \x01(\tR\x05appId\x12 \n" +
+	"\venvironment\x18\x02 \x01(\tR\venvironment\x12\x1a\n" +
+	"\bplatform\x18\x03 \x01(\tR\bplatform\x12\x1d\n" +
+	"\n" +
+	"os_version\x18\x04 \x01(\tR\tosVersion\x12'\n" +
+	"\x0fruntime_version\x18\x05 \x01(\tR\x0eruntimeVersion\x12\x1d\n" +
+	"\n" +
+	"host_build\x18\x06 \x01(\tR\thostBuild\x12\x1c\n" +
+	"\tchallenge\x18\a \x01(\fR\tchallenge\x12-\n" +
+	"\x13dpop_public_key_jwk\x18\b \x01(\fR\x10dpopPublicKeyJwk\x124\n" +
+	"\vkey_storage\x18\t \x01(\x0e2\x13.plux.v1.KeyStorageR\n" +
+	"keyStorage\x128\n" +
+	"\bevidence\x18\n" +
+	" \x01(\v2\x1c.plux.v1.AttestationEvidenceR\bevidence\x12>\n" +
+	"\x1ckey_agreement_public_key_jwk\x18\v \x01(\fR\x18keyAgreementPublicKeyJwk\x12+\n" +
+	"\x12sca_public_key_jwk\x18\f \x01(\fR\x0fscaPublicKeyJwk\x12?\n" +
+	"\fsca_evidence\x18\r \x01(\v2\x1c.plux.v1.AttestationEvidenceR\vscaEvidence\"I\n" +
+	"\x1eRegisterAttestedDeviceResponse\x12'\n" +
+	"\x06device\x18\x01 \x01(\v2\x0f.plux.v1.DeviceR\x06device\"\x8c\x01\n" +
+	"\x15ReattestDeviceRequest\x12\x1b\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x1c\n" +
+	"\tchallenge\x18\x02 \x01(\fR\tchallenge\x128\n" +
+	"\bevidence\x18\x03 \x01(\v2\x1c.plux.v1.AttestationEvidenceR\bevidence\"A\n" +
+	"\x16ReattestDeviceResponse\x12'\n" +
+	"\x06device\x18\x01 \x01(\v2\x0f.plux.v1.DeviceR\x06device\"J\n" +
+	"\x13RevokeDeviceRequest\x12\x1b\n" +
+	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12\x16\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\"?\n" +
+	"\x14RevokeDeviceResponse\x12'\n" +
+	"\x06device\x18\x01 \x01(\v2\x0f.plux.v1.DeviceR\x06device\"\xd3\x01\n" +
 	"\x15RegisterDeviceRequest\x12\x15\n" +
 	"\x06app_id\x18\x01 \x01(\tR\x05appId\x12 \n" +
 	"\venvironment\x18\x02 \x01(\tR\venvironment\x12\x1a\n" +
@@ -623,12 +1638,23 @@ const file_plux_v1_device_proto_rawDesc = "" +
 	"\x16ReportInstalledRequest\x12\x1b\n" +
 	"\tdevice_id\x18\x01 \x01(\tR\bdeviceId\x12)\n" +
 	"\x10release_sequence\x18\x02 \x01(\x03R\x0freleaseSequence\"\x19\n" +
-	"\x17ReportInstalledResponse2\xce\x02\n" +
+	"\x17ReportInstalledResponse*\x93\x01\n" +
+	"\n" +
+	"KeyStorage\x12\x1b\n" +
+	"\x17KEY_STORAGE_UNSPECIFIED\x10\x00\x12\x18\n" +
+	"\x14KEY_STORAGE_SOFTWARE\x10\x01\x12\x13\n" +
+	"\x0fKEY_STORAGE_TEE\x10\x02\x12\x19\n" +
+	"\x15KEY_STORAGE_STRONGBOX\x10\x03\x12\x1e\n" +
+	"\x1aKEY_STORAGE_SECURE_ENCLAVE\x10\x042\xdb\x05\n" +
 	"\rDeviceService\x12S\n" +
 	"\x0eRegisterDevice\x12\x1e.plux.v1.RegisterDeviceRequest\x1a\x1f.plux.v1.RegisterDeviceResponse\"\x00\x12D\n" +
 	"\tGetDevice\x12\x19.plux.v1.GetDeviceRequest\x1a\x1a.plux.v1.GetDeviceResponse\"\x00\x12J\n" +
 	"\vListDevices\x12\x1b.plux.v1.ListDevicesRequest\x1a\x1c.plux.v1.ListDevicesResponse\"\x00\x12V\n" +
-	"\x0fReportInstalled\x12\x1f.plux.v1.ReportInstalledRequest\x1a .plux.v1.ReportInstalledResponse\"\x00B=Z;github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1b\x06proto3"
+	"\x0fReportInstalled\x12\x1f.plux.v1.ReportInstalledRequest\x1a .plux.v1.ReportInstalledResponse\"\x00\x12z\n" +
+	"\x1bCreateRegistrationChallenge\x12+.plux.v1.CreateRegistrationChallengeRequest\x1a,.plux.v1.CreateRegistrationChallengeResponse\"\x00\x12k\n" +
+	"\x16RegisterAttestedDevice\x12&.plux.v1.RegisterAttestedDeviceRequest\x1a'.plux.v1.RegisterAttestedDeviceResponse\"\x00\x12S\n" +
+	"\x0eReattestDevice\x12\x1e.plux.v1.ReattestDeviceRequest\x1a\x1f.plux.v1.ReattestDeviceResponse\"\x00\x12M\n" +
+	"\fRevokeDevice\x12\x1c.plux.v1.RevokeDeviceRequest\x1a\x1d.plux.v1.RevokeDeviceResponse\"\x00B=Z;github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1b\x06proto3"
 
 var (
 	file_plux_v1_device_proto_rawDescOnce sync.Once
@@ -642,42 +1668,80 @@ func file_plux_v1_device_proto_rawDescGZIP() []byte {
 	return file_plux_v1_device_proto_rawDescData
 }
 
-var file_plux_v1_device_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_plux_v1_device_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_plux_v1_device_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_plux_v1_device_proto_goTypes = []any{
-	(*Device)(nil),                  // 0: plux.v1.Device
-	(*RegisterDeviceRequest)(nil),   // 1: plux.v1.RegisterDeviceRequest
-	(*RegisterDeviceResponse)(nil),  // 2: plux.v1.RegisterDeviceResponse
-	(*GetDeviceRequest)(nil),        // 3: plux.v1.GetDeviceRequest
-	(*GetDeviceResponse)(nil),       // 4: plux.v1.GetDeviceResponse
-	(*ListDevicesRequest)(nil),      // 5: plux.v1.ListDevicesRequest
-	(*ListDevicesResponse)(nil),     // 6: plux.v1.ListDevicesResponse
-	(*ReportInstalledRequest)(nil),  // 7: plux.v1.ReportInstalledRequest
-	(*ReportInstalledResponse)(nil), // 8: plux.v1.ReportInstalledResponse
-	(*timestamppb.Timestamp)(nil),   // 9: google.protobuf.Timestamp
-	(*Page)(nil),                    // 10: plux.v1.Page
-	(*PageResult)(nil),              // 11: plux.v1.PageResult
+	(KeyStorage)(0),                             // 0: plux.v1.KeyStorage
+	(*Device)(nil),                              // 1: plux.v1.Device
+	(*AttestationSummary)(nil),                  // 2: plux.v1.AttestationSummary
+	(*AndroidEvidence)(nil),                     // 3: plux.v1.AndroidEvidence
+	(*IosEvidence)(nil),                         // 4: plux.v1.IosEvidence
+	(*DevelopmentEvidence)(nil),                 // 5: plux.v1.DevelopmentEvidence
+	(*AttestationEvidence)(nil),                 // 6: plux.v1.AttestationEvidence
+	(*CreateRegistrationChallengeRequest)(nil),  // 7: plux.v1.CreateRegistrationChallengeRequest
+	(*CreateRegistrationChallengeResponse)(nil), // 8: plux.v1.CreateRegistrationChallengeResponse
+	(*RegisterAttestedDeviceRequest)(nil),       // 9: plux.v1.RegisterAttestedDeviceRequest
+	(*RegisterAttestedDeviceResponse)(nil),      // 10: plux.v1.RegisterAttestedDeviceResponse
+	(*ReattestDeviceRequest)(nil),               // 11: plux.v1.ReattestDeviceRequest
+	(*ReattestDeviceResponse)(nil),              // 12: plux.v1.ReattestDeviceResponse
+	(*RevokeDeviceRequest)(nil),                 // 13: plux.v1.RevokeDeviceRequest
+	(*RevokeDeviceResponse)(nil),                // 14: plux.v1.RevokeDeviceResponse
+	(*RegisterDeviceRequest)(nil),               // 15: plux.v1.RegisterDeviceRequest
+	(*RegisterDeviceResponse)(nil),              // 16: plux.v1.RegisterDeviceResponse
+	(*GetDeviceRequest)(nil),                    // 17: plux.v1.GetDeviceRequest
+	(*GetDeviceResponse)(nil),                   // 18: plux.v1.GetDeviceResponse
+	(*ListDevicesRequest)(nil),                  // 19: plux.v1.ListDevicesRequest
+	(*ListDevicesResponse)(nil),                 // 20: plux.v1.ListDevicesResponse
+	(*ReportInstalledRequest)(nil),              // 21: plux.v1.ReportInstalledRequest
+	(*ReportInstalledResponse)(nil),             // 22: plux.v1.ReportInstalledResponse
+	(*timestamppb.Timestamp)(nil),               // 23: google.protobuf.Timestamp
+	(*Page)(nil),                                // 24: plux.v1.Page
+	(*PageResult)(nil),                          // 25: plux.v1.PageResult
 }
 var file_plux_v1_device_proto_depIdxs = []int32{
-	9,  // 0: plux.v1.Device.registered_at:type_name -> google.protobuf.Timestamp
-	9,  // 1: plux.v1.Device.last_seen_at:type_name -> google.protobuf.Timestamp
-	0,  // 2: plux.v1.RegisterDeviceResponse.device:type_name -> plux.v1.Device
-	0,  // 3: plux.v1.GetDeviceResponse.device:type_name -> plux.v1.Device
-	10, // 4: plux.v1.ListDevicesRequest.page:type_name -> plux.v1.Page
-	0,  // 5: plux.v1.ListDevicesResponse.devices:type_name -> plux.v1.Device
-	11, // 6: plux.v1.ListDevicesResponse.page:type_name -> plux.v1.PageResult
-	1,  // 7: plux.v1.DeviceService.RegisterDevice:input_type -> plux.v1.RegisterDeviceRequest
-	3,  // 8: plux.v1.DeviceService.GetDevice:input_type -> plux.v1.GetDeviceRequest
-	5,  // 9: plux.v1.DeviceService.ListDevices:input_type -> plux.v1.ListDevicesRequest
-	7,  // 10: plux.v1.DeviceService.ReportInstalled:input_type -> plux.v1.ReportInstalledRequest
-	2,  // 11: plux.v1.DeviceService.RegisterDevice:output_type -> plux.v1.RegisterDeviceResponse
-	4,  // 12: plux.v1.DeviceService.GetDevice:output_type -> plux.v1.GetDeviceResponse
-	6,  // 13: plux.v1.DeviceService.ListDevices:output_type -> plux.v1.ListDevicesResponse
-	8,  // 14: plux.v1.DeviceService.ReportInstalled:output_type -> plux.v1.ReportInstalledResponse
-	11, // [11:15] is the sub-list for method output_type
-	7,  // [7:11] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	23, // 0: plux.v1.Device.registered_at:type_name -> google.protobuf.Timestamp
+	23, // 1: plux.v1.Device.last_seen_at:type_name -> google.protobuf.Timestamp
+	0,  // 2: plux.v1.Device.key_storage:type_name -> plux.v1.KeyStorage
+	2,  // 3: plux.v1.Device.attestation:type_name -> plux.v1.AttestationSummary
+	23, // 4: plux.v1.Device.revoked_at:type_name -> google.protobuf.Timestamp
+	23, // 5: plux.v1.AttestationSummary.verified_at:type_name -> google.protobuf.Timestamp
+	3,  // 6: plux.v1.AttestationEvidence.android:type_name -> plux.v1.AndroidEvidence
+	4,  // 7: plux.v1.AttestationEvidence.ios:type_name -> plux.v1.IosEvidence
+	5,  // 8: plux.v1.AttestationEvidence.development:type_name -> plux.v1.DevelopmentEvidence
+	23, // 9: plux.v1.CreateRegistrationChallengeResponse.expires_at:type_name -> google.protobuf.Timestamp
+	0,  // 10: plux.v1.RegisterAttestedDeviceRequest.key_storage:type_name -> plux.v1.KeyStorage
+	6,  // 11: plux.v1.RegisterAttestedDeviceRequest.evidence:type_name -> plux.v1.AttestationEvidence
+	6,  // 12: plux.v1.RegisterAttestedDeviceRequest.sca_evidence:type_name -> plux.v1.AttestationEvidence
+	1,  // 13: plux.v1.RegisterAttestedDeviceResponse.device:type_name -> plux.v1.Device
+	6,  // 14: plux.v1.ReattestDeviceRequest.evidence:type_name -> plux.v1.AttestationEvidence
+	1,  // 15: plux.v1.ReattestDeviceResponse.device:type_name -> plux.v1.Device
+	1,  // 16: plux.v1.RevokeDeviceResponse.device:type_name -> plux.v1.Device
+	1,  // 17: plux.v1.RegisterDeviceResponse.device:type_name -> plux.v1.Device
+	1,  // 18: plux.v1.GetDeviceResponse.device:type_name -> plux.v1.Device
+	24, // 19: plux.v1.ListDevicesRequest.page:type_name -> plux.v1.Page
+	1,  // 20: plux.v1.ListDevicesResponse.devices:type_name -> plux.v1.Device
+	25, // 21: plux.v1.ListDevicesResponse.page:type_name -> plux.v1.PageResult
+	15, // 22: plux.v1.DeviceService.RegisterDevice:input_type -> plux.v1.RegisterDeviceRequest
+	17, // 23: plux.v1.DeviceService.GetDevice:input_type -> plux.v1.GetDeviceRequest
+	19, // 24: plux.v1.DeviceService.ListDevices:input_type -> plux.v1.ListDevicesRequest
+	21, // 25: plux.v1.DeviceService.ReportInstalled:input_type -> plux.v1.ReportInstalledRequest
+	7,  // 26: plux.v1.DeviceService.CreateRegistrationChallenge:input_type -> plux.v1.CreateRegistrationChallengeRequest
+	9,  // 27: plux.v1.DeviceService.RegisterAttestedDevice:input_type -> plux.v1.RegisterAttestedDeviceRequest
+	11, // 28: plux.v1.DeviceService.ReattestDevice:input_type -> plux.v1.ReattestDeviceRequest
+	13, // 29: plux.v1.DeviceService.RevokeDevice:input_type -> plux.v1.RevokeDeviceRequest
+	16, // 30: plux.v1.DeviceService.RegisterDevice:output_type -> plux.v1.RegisterDeviceResponse
+	18, // 31: plux.v1.DeviceService.GetDevice:output_type -> plux.v1.GetDeviceResponse
+	20, // 32: plux.v1.DeviceService.ListDevices:output_type -> plux.v1.ListDevicesResponse
+	22, // 33: plux.v1.DeviceService.ReportInstalled:output_type -> plux.v1.ReportInstalledResponse
+	8,  // 34: plux.v1.DeviceService.CreateRegistrationChallenge:output_type -> plux.v1.CreateRegistrationChallengeResponse
+	10, // 35: plux.v1.DeviceService.RegisterAttestedDevice:output_type -> plux.v1.RegisterAttestedDeviceResponse
+	12, // 36: plux.v1.DeviceService.ReattestDevice:output_type -> plux.v1.ReattestDeviceResponse
+	14, // 37: plux.v1.DeviceService.RevokeDevice:output_type -> plux.v1.RevokeDeviceResponse
+	30, // [30:38] is the sub-list for method output_type
+	22, // [22:30] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_plux_v1_device_proto_init() }
@@ -686,18 +1750,24 @@ func file_plux_v1_device_proto_init() {
 		return
 	}
 	file_plux_v1_common_proto_init()
+	file_plux_v1_device_proto_msgTypes[5].OneofWrappers = []any{
+		(*AttestationEvidence_Android)(nil),
+		(*AttestationEvidence_Ios)(nil),
+		(*AttestationEvidence_Development)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_plux_v1_device_proto_rawDesc), len(file_plux_v1_device_proto_rawDesc)),
-			NumEnums:      0,
-			NumMessages:   9,
+			NumEnums:      1,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_plux_v1_device_proto_goTypes,
 		DependencyIndexes: file_plux_v1_device_proto_depIdxs,
+		EnumInfos:         file_plux_v1_device_proto_enumTypes,
 		MessageInfos:      file_plux_v1_device_proto_msgTypes,
 	}.Build()
 	File_plux_v1_device_proto = out.File

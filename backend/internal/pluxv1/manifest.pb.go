@@ -47,7 +47,14 @@ type Manifest struct {
 	Signed []byte `protobuf:"bytes,11,opt,name=signed,proto3" json:"signed,omitempty"`
 	// signatures sign `signed`. There may be several, so that keys can be
 	// rotated and thresholds applied (ADR-0004).
-	Signatures    []*Signature `protobuf:"bytes,12,rep,name=signatures,proto3" json:"signatures,omitempty"`
+	Signatures []*Signature `protobuf:"bytes,12,rep,name=signatures,proto3" json:"signatures,omitempty"`
+	// config is the security configuration this release requires; it is
+	// part of the signed document (SEC-182).
+	Config *SecurityConfigRef `protobuf:"bytes,13,opt,name=config,proto3" json:"config,omitempty"`
+	// metadata names the update-metadata versions the manifest belongs to,
+	// for rollback and freeze checks; part of the signed document
+	// (SEC-050).
+	Metadata      *UpdateMetadataRef `protobuf:"bytes,14,opt,name=metadata,proto3" json:"metadata,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -166,6 +173,137 @@ func (x *Manifest) GetSignatures() []*Signature {
 	return nil
 }
 
+func (x *Manifest) GetConfig() *SecurityConfigRef {
+	if x != nil {
+		return x.Config
+	}
+	return nil
+}
+
+func (x *Manifest) GetMetadata() *UpdateMetadataRef {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+// SecurityConfigRef pins one version of the effective security
+// configuration (SEC-182).
+type SecurityConfigRef struct {
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Version int64                  `protobuf:"varint,1,opt,name=version,proto3" json:"version,omitempty"`
+	// sha256 is the hash of the canonical configuration at that version.
+	Sha256        []byte `protobuf:"bytes,2,opt,name=sha256,proto3" json:"sha256,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SecurityConfigRef) Reset() {
+	*x = SecurityConfigRef{}
+	mi := &file_plux_v1_manifest_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SecurityConfigRef) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SecurityConfigRef) ProtoMessage() {}
+
+func (x *SecurityConfigRef) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_manifest_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SecurityConfigRef.ProtoReflect.Descriptor instead.
+func (*SecurityConfigRef) Descriptor() ([]byte, []int) {
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *SecurityConfigRef) GetVersion() int64 {
+	if x != nil {
+		return x.Version
+	}
+	return 0
+}
+
+func (x *SecurityConfigRef) GetSha256() []byte {
+	if x != nil {
+		return x.Sha256
+	}
+	return nil
+}
+
+// UpdateMetadataRef names the TUF-style metadata versions a manifest was
+// signed under (SEC-050, ADR-0004).
+type UpdateMetadataRef struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	RootVersion      int64                  `protobuf:"varint,1,opt,name=root_version,json=rootVersion,proto3" json:"root_version,omitempty"`
+	SnapshotVersion  int64                  `protobuf:"varint,2,opt,name=snapshot_version,json=snapshotVersion,proto3" json:"snapshot_version,omitempty"`
+	TimestampVersion int64                  `protobuf:"varint,3,opt,name=timestamp_version,json=timestampVersion,proto3" json:"timestamp_version,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *UpdateMetadataRef) Reset() {
+	*x = UpdateMetadataRef{}
+	mi := &file_plux_v1_manifest_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateMetadataRef) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateMetadataRef) ProtoMessage() {}
+
+func (x *UpdateMetadataRef) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_v1_manifest_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateMetadataRef.ProtoReflect.Descriptor instead.
+func (*UpdateMetadataRef) Descriptor() ([]byte, []int) {
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *UpdateMetadataRef) GetRootVersion() int64 {
+	if x != nil {
+		return x.RootVersion
+	}
+	return 0
+}
+
+func (x *UpdateMetadataRef) GetSnapshotVersion() int64 {
+	if x != nil {
+		return x.SnapshotVersion
+	}
+	return 0
+}
+
+func (x *UpdateMetadataRef) GetTimestampVersion() int64 {
+	if x != nil {
+		return x.TimestampVersion
+	}
+	return 0
+}
+
 // Signature is one signature over a signed document (ADR-0004).
 type Signature struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -180,7 +318,7 @@ type Signature struct {
 
 func (x *Signature) Reset() {
 	*x = Signature{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[1]
+	mi := &file_plux_v1_manifest_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -192,7 +330,7 @@ func (x *Signature) String() string {
 func (*Signature) ProtoMessage() {}
 
 func (x *Signature) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[1]
+	mi := &file_plux_v1_manifest_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -205,7 +343,7 @@ func (x *Signature) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Signature.ProtoReflect.Descriptor instead.
 func (*Signature) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{1}
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Signature) GetKeyId() string {
@@ -246,7 +384,7 @@ type BundleDescriptor struct {
 
 func (x *BundleDescriptor) Reset() {
 	*x = BundleDescriptor{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[2]
+	mi := &file_plux_v1_manifest_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -258,7 +396,7 @@ func (x *BundleDescriptor) String() string {
 func (*BundleDescriptor) ProtoMessage() {}
 
 func (x *BundleDescriptor) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[2]
+	mi := &file_plux_v1_manifest_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -271,7 +409,7 @@ func (x *BundleDescriptor) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BundleDescriptor.ProtoReflect.Descriptor instead.
 func (*BundleDescriptor) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{2}
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *BundleDescriptor) GetSha256() string {
@@ -327,7 +465,7 @@ type PluginDescriptor struct {
 
 func (x *PluginDescriptor) Reset() {
 	*x = PluginDescriptor{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[3]
+	mi := &file_plux_v1_manifest_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -339,7 +477,7 @@ func (x *PluginDescriptor) String() string {
 func (*PluginDescriptor) ProtoMessage() {}
 
 func (x *PluginDescriptor) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[3]
+	mi := &file_plux_v1_manifest_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -352,7 +490,7 @@ func (x *PluginDescriptor) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PluginDescriptor.ProtoReflect.Descriptor instead.
 func (*PluginDescriptor) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{3}
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *PluginDescriptor) GetKey() string {
@@ -393,7 +531,7 @@ type SyncStep struct {
 
 func (x *SyncStep) Reset() {
 	*x = SyncStep{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[4]
+	mi := &file_plux_v1_manifest_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -405,7 +543,7 @@ func (x *SyncStep) String() string {
 func (*SyncStep) ProtoMessage() {}
 
 func (x *SyncStep) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[4]
+	mi := &file_plux_v1_manifest_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -418,7 +556,7 @@ func (x *SyncStep) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SyncStep.ProtoReflect.Descriptor instead.
 func (*SyncStep) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{4}
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *SyncStep) GetAction() string {
@@ -465,7 +603,7 @@ type ControlFlags struct {
 
 func (x *ControlFlags) Reset() {
 	*x = ControlFlags{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[5]
+	mi := &file_plux_v1_manifest_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -477,7 +615,7 @@ func (x *ControlFlags) String() string {
 func (*ControlFlags) ProtoMessage() {}
 
 func (x *ControlFlags) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[5]
+	mi := &file_plux_v1_manifest_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -490,7 +628,7 @@ func (x *ControlFlags) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ControlFlags.ProtoReflect.Descriptor instead.
 func (*ControlFlags) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{5}
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ControlFlags) GetKillSwitchPlugins() []string {
@@ -526,7 +664,7 @@ type ExperimentAssignment struct {
 
 func (x *ExperimentAssignment) Reset() {
 	*x = ExperimentAssignment{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[6]
+	mi := &file_plux_v1_manifest_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -538,7 +676,7 @@ func (x *ExperimentAssignment) String() string {
 func (*ExperimentAssignment) ProtoMessage() {}
 
 func (x *ExperimentAssignment) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[6]
+	mi := &file_plux_v1_manifest_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -551,7 +689,7 @@ func (x *ExperimentAssignment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExperimentAssignment.ProtoReflect.Descriptor instead.
 func (*ExperimentAssignment) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{6}
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ExperimentAssignment) GetKey() string {
@@ -587,7 +725,7 @@ type InstalledBundle struct {
 
 func (x *InstalledBundle) Reset() {
 	*x = InstalledBundle{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[7]
+	mi := &file_plux_v1_manifest_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -599,7 +737,7 @@ func (x *InstalledBundle) String() string {
 func (*InstalledBundle) ProtoMessage() {}
 
 func (x *InstalledBundle) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[7]
+	mi := &file_plux_v1_manifest_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -612,7 +750,7 @@ func (x *InstalledBundle) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InstalledBundle.ProtoReflect.Descriptor instead.
 func (*InstalledBundle) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{7}
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *InstalledBundle) GetKey() string {
@@ -645,13 +783,16 @@ type GetManifestRequest struct {
 	// per installed bundle, sorted by key, the app bundle's key empty. A
 	// device that sends it with if_none_match sends no installed list.
 	InstalledDigest []byte `protobuf:"bytes,7,opt,name=installed_digest,json=installedDigest,proto3" json:"installed_digest,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// config_version is the security configuration version the device
+	// holds, zero for none (SEC-182).
+	ConfigVersion int64 `protobuf:"varint,8,opt,name=config_version,json=configVersion,proto3" json:"config_version,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *GetManifestRequest) Reset() {
 	*x = GetManifestRequest{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[8]
+	mi := &file_plux_v1_manifest_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -663,7 +804,7 @@ func (x *GetManifestRequest) String() string {
 func (*GetManifestRequest) ProtoMessage() {}
 
 func (x *GetManifestRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[8]
+	mi := &file_plux_v1_manifest_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -676,7 +817,7 @@ func (x *GetManifestRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetManifestRequest.ProtoReflect.Descriptor instead.
 func (*GetManifestRequest) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{8}
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *GetManifestRequest) GetAppId() string {
@@ -728,6 +869,13 @@ func (x *GetManifestRequest) GetInstalledDigest() []byte {
 	return nil
 }
 
+func (x *GetManifestRequest) GetConfigVersion() int64 {
+	if x != nil {
+		return x.ConfigVersion
+	}
+	return 0
+}
+
 type GetManifestResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// not_modified is true when if_none_match matched; manifest is unset.
@@ -738,13 +886,21 @@ type GetManifestResponse struct {
 	// found the manifest changed: manifest is unset, and the device asks
 	// again with installed, from which the server plans its deltas.
 	InstalledRequired bool `protobuf:"varint,4,opt,name=installed_required,json=installedRequired,proto3" json:"installed_required,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	// config_patch is an RFC 7396 merge patch, as JSON, from the
+	// configuration version the device sent to the one the manifest names.
+	// It is outside the signed part: the device verifies the patched
+	// result against the manifest's config hash (SEC-182).
+	ConfigPatch []byte `protobuf:"bytes,5,opt,name=config_patch,json=configPatch,proto3" json:"config_patch,omitempty"`
+	// config_full_required is true when no patch can be given, so the
+	// device fetches the whole configuration (SEC-182).
+	ConfigFullRequired bool `protobuf:"varint,6,opt,name=config_full_required,json=configFullRequired,proto3" json:"config_full_required,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *GetManifestResponse) Reset() {
 	*x = GetManifestResponse{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[9]
+	mi := &file_plux_v1_manifest_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -756,7 +912,7 @@ func (x *GetManifestResponse) String() string {
 func (*GetManifestResponse) ProtoMessage() {}
 
 func (x *GetManifestResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[9]
+	mi := &file_plux_v1_manifest_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -769,7 +925,7 @@ func (x *GetManifestResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetManifestResponse.ProtoReflect.Descriptor instead.
 func (*GetManifestResponse) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{9}
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *GetManifestResponse) GetNotModified() bool {
@@ -800,6 +956,20 @@ func (x *GetManifestResponse) GetInstalledRequired() bool {
 	return false
 }
 
+func (x *GetManifestResponse) GetConfigPatch() []byte {
+	if x != nil {
+		return x.ConfigPatch
+	}
+	return nil
+}
+
+func (x *GetManifestResponse) GetConfigFullRequired() bool {
+	if x != nil {
+		return x.ConfigFullRequired
+	}
+	return false
+}
+
 type GetRootKeysRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AppId         string                 `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
@@ -810,7 +980,7 @@ type GetRootKeysRequest struct {
 
 func (x *GetRootKeysRequest) Reset() {
 	*x = GetRootKeysRequest{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[10]
+	mi := &file_plux_v1_manifest_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -822,7 +992,7 @@ func (x *GetRootKeysRequest) String() string {
 func (*GetRootKeysRequest) ProtoMessage() {}
 
 func (x *GetRootKeysRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[10]
+	mi := &file_plux_v1_manifest_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -835,7 +1005,7 @@ func (x *GetRootKeysRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRootKeysRequest.ProtoReflect.Descriptor instead.
 func (*GetRootKeysRequest) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{10}
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetRootKeysRequest) GetAppId() string {
@@ -861,7 +1031,7 @@ type GetRootKeysResponse struct {
 
 func (x *GetRootKeysResponse) Reset() {
 	*x = GetRootKeysResponse{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[11]
+	mi := &file_plux_v1_manifest_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -873,7 +1043,7 @@ func (x *GetRootKeysResponse) String() string {
 func (*GetRootKeysResponse) ProtoMessage() {}
 
 func (x *GetRootKeysResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[11]
+	mi := &file_plux_v1_manifest_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -886,7 +1056,7 @@ func (x *GetRootKeysResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetRootKeysResponse.ProtoReflect.Descriptor instead.
 func (*GetRootKeysResponse) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{11}
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetRootKeysResponse) GetKeys() []*PublicKey {
@@ -910,7 +1080,7 @@ type PublicKey struct {
 
 func (x *PublicKey) Reset() {
 	*x = PublicKey{}
-	mi := &file_plux_v1_manifest_proto_msgTypes[12]
+	mi := &file_plux_v1_manifest_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -922,7 +1092,7 @@ func (x *PublicKey) String() string {
 func (*PublicKey) ProtoMessage() {}
 
 func (x *PublicKey) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_v1_manifest_proto_msgTypes[12]
+	mi := &file_plux_v1_manifest_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -935,7 +1105,7 @@ func (x *PublicKey) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PublicKey.ProtoReflect.Descriptor instead.
 func (*PublicKey) Descriptor() ([]byte, []int) {
-	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{12}
+	return file_plux_v1_manifest_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *PublicKey) GetKeyId() string {
@@ -970,7 +1140,7 @@ var File_plux_v1_manifest_proto protoreflect.FileDescriptor
 
 const file_plux_v1_manifest_proto_rawDesc = "" +
 	"\n" +
-	"\x16plux/v1/manifest.proto\x12\aplux.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa9\x04\n" +
+	"\x16plux/v1/manifest.proto\x12\aplux.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x95\x05\n" +
 	"\bManifest\x12\x15\n" +
 	"\x06app_id\x18\x01 \x01(\tR\x05appId\x12 \n" +
 	"\venvironment\x18\x02 \x01(\tR\venvironment\x12\x18\n" +
@@ -988,7 +1158,16 @@ const file_plux_v1_manifest_proto_rawDesc = "" +
 	"\x06signed\x18\v \x01(\fR\x06signed\x122\n" +
 	"\n" +
 	"signatures\x18\f \x03(\v2\x12.plux.v1.SignatureR\n" +
-	"signatures\"^\n" +
+	"signatures\x122\n" +
+	"\x06config\x18\r \x01(\v2\x1a.plux.v1.SecurityConfigRefR\x06config\x126\n" +
+	"\bmetadata\x18\x0e \x01(\v2\x1a.plux.v1.UpdateMetadataRefR\bmetadata\"E\n" +
+	"\x11SecurityConfigRef\x12\x18\n" +
+	"\aversion\x18\x01 \x01(\x03R\aversion\x12\x16\n" +
+	"\x06sha256\x18\x02 \x01(\fR\x06sha256\"\x8e\x01\n" +
+	"\x11UpdateMetadataRef\x12!\n" +
+	"\froot_version\x18\x01 \x01(\x03R\vrootVersion\x12)\n" +
+	"\x10snapshot_version\x18\x02 \x01(\x03R\x0fsnapshotVersion\x12+\n" +
+	"\x11timestamp_version\x18\x03 \x01(\x03R\x10timestampVersion\"^\n" +
 	"\tSignature\x12\x15\n" +
 	"\x06key_id\x18\x01 \x01(\tR\x05keyId\x12\x1c\n" +
 	"\talgorithm\x18\x02 \x01(\tR\talgorithm\x12\x1c\n" +
@@ -1020,7 +1199,7 @@ const file_plux_v1_manifest_proto_rawDesc = "" +
 	"\avariant\x18\x03 \x01(\tR\avariant\";\n" +
 	"\x0fInstalledBundle\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x16\n" +
-	"\x06sha256\x18\x02 \x01(\tR\x06sha256\"\x9d\x02\n" +
+	"\x06sha256\x18\x02 \x01(\tR\x06sha256\"\xc4\x02\n" +
 	"\x12GetManifestRequest\x12\x15\n" +
 	"\x06app_id\x18\x01 \x01(\tR\x05appId\x12 \n" +
 	"\venvironment\x18\x02 \x01(\tR\venvironment\x12\x18\n" +
@@ -1028,12 +1207,15 @@ const file_plux_v1_manifest_proto_rawDesc = "" +
 	"\x12installed_sequence\x18\x04 \x01(\x03R\x11installedSequence\x126\n" +
 	"\tinstalled\x18\x05 \x03(\v2\x18.plux.v1.InstalledBundleR\tinstalled\x12\"\n" +
 	"\rif_none_match\x18\x06 \x01(\tR\vifNoneMatch\x12)\n" +
-	"\x10installed_digest\x18\a \x01(\fR\x0finstalledDigest\"\xaa\x01\n" +
+	"\x10installed_digest\x18\a \x01(\fR\x0finstalledDigest\x12%\n" +
+	"\x0econfig_version\x18\b \x01(\x03R\rconfigVersion\"\xff\x01\n" +
 	"\x13GetManifestResponse\x12!\n" +
 	"\fnot_modified\x18\x01 \x01(\bR\vnotModified\x12-\n" +
 	"\bmanifest\x18\x02 \x01(\v2\x11.plux.v1.ManifestR\bmanifest\x12\x12\n" +
 	"\x04etag\x18\x03 \x01(\tR\x04etag\x12-\n" +
-	"\x12installed_required\x18\x04 \x01(\bR\x11installedRequired\"M\n" +
+	"\x12installed_required\x18\x04 \x01(\bR\x11installedRequired\x12!\n" +
+	"\fconfig_patch\x18\x05 \x01(\fR\vconfigPatch\x120\n" +
+	"\x14config_full_required\x18\x06 \x01(\bR\x12configFullRequired\"M\n" +
 	"\x12GetRootKeysRequest\x12\x15\n" +
 	"\x06app_id\x18\x01 \x01(\tR\x05appId\x12 \n" +
 	"\venvironment\x18\x02 \x01(\tR\venvironment\"=\n" +
@@ -1061,45 +1243,49 @@ func file_plux_v1_manifest_proto_rawDescGZIP() []byte {
 	return file_plux_v1_manifest_proto_rawDescData
 }
 
-var file_plux_v1_manifest_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_plux_v1_manifest_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_plux_v1_manifest_proto_goTypes = []any{
 	(*Manifest)(nil),              // 0: plux.v1.Manifest
-	(*Signature)(nil),             // 1: plux.v1.Signature
-	(*BundleDescriptor)(nil),      // 2: plux.v1.BundleDescriptor
-	(*PluginDescriptor)(nil),      // 3: plux.v1.PluginDescriptor
-	(*SyncStep)(nil),              // 4: plux.v1.SyncStep
-	(*ControlFlags)(nil),          // 5: plux.v1.ControlFlags
-	(*ExperimentAssignment)(nil),  // 6: plux.v1.ExperimentAssignment
-	(*InstalledBundle)(nil),       // 7: plux.v1.InstalledBundle
-	(*GetManifestRequest)(nil),    // 8: plux.v1.GetManifestRequest
-	(*GetManifestResponse)(nil),   // 9: plux.v1.GetManifestResponse
-	(*GetRootKeysRequest)(nil),    // 10: plux.v1.GetRootKeysRequest
-	(*GetRootKeysResponse)(nil),   // 11: plux.v1.GetRootKeysResponse
-	(*PublicKey)(nil),             // 12: plux.v1.PublicKey
-	(*timestamppb.Timestamp)(nil), // 13: google.protobuf.Timestamp
+	(*SecurityConfigRef)(nil),     // 1: plux.v1.SecurityConfigRef
+	(*UpdateMetadataRef)(nil),     // 2: plux.v1.UpdateMetadataRef
+	(*Signature)(nil),             // 3: plux.v1.Signature
+	(*BundleDescriptor)(nil),      // 4: plux.v1.BundleDescriptor
+	(*PluginDescriptor)(nil),      // 5: plux.v1.PluginDescriptor
+	(*SyncStep)(nil),              // 6: plux.v1.SyncStep
+	(*ControlFlags)(nil),          // 7: plux.v1.ControlFlags
+	(*ExperimentAssignment)(nil),  // 8: plux.v1.ExperimentAssignment
+	(*InstalledBundle)(nil),       // 9: plux.v1.InstalledBundle
+	(*GetManifestRequest)(nil),    // 10: plux.v1.GetManifestRequest
+	(*GetManifestResponse)(nil),   // 11: plux.v1.GetManifestResponse
+	(*GetRootKeysRequest)(nil),    // 12: plux.v1.GetRootKeysRequest
+	(*GetRootKeysResponse)(nil),   // 13: plux.v1.GetRootKeysResponse
+	(*PublicKey)(nil),             // 14: plux.v1.PublicKey
+	(*timestamppb.Timestamp)(nil), // 15: google.protobuf.Timestamp
 }
 var file_plux_v1_manifest_proto_depIdxs = []int32{
-	13, // 0: plux.v1.Manifest.issued_at:type_name -> google.protobuf.Timestamp
-	13, // 1: plux.v1.Manifest.expires_at:type_name -> google.protobuf.Timestamp
-	2,  // 2: plux.v1.Manifest.app_bundle:type_name -> plux.v1.BundleDescriptor
-	3,  // 3: plux.v1.Manifest.plugins:type_name -> plux.v1.PluginDescriptor
-	5,  // 4: plux.v1.Manifest.control:type_name -> plux.v1.ControlFlags
-	6,  // 5: plux.v1.Manifest.experiments:type_name -> plux.v1.ExperimentAssignment
-	1,  // 6: plux.v1.Manifest.signatures:type_name -> plux.v1.Signature
-	4,  // 7: plux.v1.BundleDescriptor.sync:type_name -> plux.v1.SyncStep
-	2,  // 8: plux.v1.PluginDescriptor.bundle:type_name -> plux.v1.BundleDescriptor
-	7,  // 9: plux.v1.GetManifestRequest.installed:type_name -> plux.v1.InstalledBundle
-	0,  // 10: plux.v1.GetManifestResponse.manifest:type_name -> plux.v1.Manifest
-	12, // 11: plux.v1.GetRootKeysResponse.keys:type_name -> plux.v1.PublicKey
-	8,  // 12: plux.v1.ManifestService.GetManifest:input_type -> plux.v1.GetManifestRequest
-	10, // 13: plux.v1.ManifestService.GetRootKeys:input_type -> plux.v1.GetRootKeysRequest
-	9,  // 14: plux.v1.ManifestService.GetManifest:output_type -> plux.v1.GetManifestResponse
-	11, // 15: plux.v1.ManifestService.GetRootKeys:output_type -> plux.v1.GetRootKeysResponse
-	14, // [14:16] is the sub-list for method output_type
-	12, // [12:14] is the sub-list for method input_type
-	12, // [12:12] is the sub-list for extension type_name
-	12, // [12:12] is the sub-list for extension extendee
-	0,  // [0:12] is the sub-list for field type_name
+	15, // 0: plux.v1.Manifest.issued_at:type_name -> google.protobuf.Timestamp
+	15, // 1: plux.v1.Manifest.expires_at:type_name -> google.protobuf.Timestamp
+	4,  // 2: plux.v1.Manifest.app_bundle:type_name -> plux.v1.BundleDescriptor
+	5,  // 3: plux.v1.Manifest.plugins:type_name -> plux.v1.PluginDescriptor
+	7,  // 4: plux.v1.Manifest.control:type_name -> plux.v1.ControlFlags
+	8,  // 5: plux.v1.Manifest.experiments:type_name -> plux.v1.ExperimentAssignment
+	3,  // 6: plux.v1.Manifest.signatures:type_name -> plux.v1.Signature
+	1,  // 7: plux.v1.Manifest.config:type_name -> plux.v1.SecurityConfigRef
+	2,  // 8: plux.v1.Manifest.metadata:type_name -> plux.v1.UpdateMetadataRef
+	6,  // 9: plux.v1.BundleDescriptor.sync:type_name -> plux.v1.SyncStep
+	4,  // 10: plux.v1.PluginDescriptor.bundle:type_name -> plux.v1.BundleDescriptor
+	9,  // 11: plux.v1.GetManifestRequest.installed:type_name -> plux.v1.InstalledBundle
+	0,  // 12: plux.v1.GetManifestResponse.manifest:type_name -> plux.v1.Manifest
+	14, // 13: plux.v1.GetRootKeysResponse.keys:type_name -> plux.v1.PublicKey
+	10, // 14: plux.v1.ManifestService.GetManifest:input_type -> plux.v1.GetManifestRequest
+	12, // 15: plux.v1.ManifestService.GetRootKeys:input_type -> plux.v1.GetRootKeysRequest
+	11, // 16: plux.v1.ManifestService.GetManifest:output_type -> plux.v1.GetManifestResponse
+	13, // 17: plux.v1.ManifestService.GetRootKeys:output_type -> plux.v1.GetRootKeysResponse
+	16, // [16:18] is the sub-list for method output_type
+	14, // [14:16] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_plux_v1_manifest_proto_init() }
@@ -1113,7 +1299,7 @@ func file_plux_v1_manifest_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_plux_v1_manifest_proto_rawDesc), len(file_plux_v1_manifest_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

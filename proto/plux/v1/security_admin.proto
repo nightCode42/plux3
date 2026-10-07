@@ -1,0 +1,178 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package plux.v1;
+
+import "google/protobuf/timestamp.proto";
+import "plux/v1/common.proto";
+
+option go_package = "github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1";
+
+// SecurityAdminService is the administrators' side of device security: an
+// environment's security configuration, the upstreams its gateway
+// reaches, and the signed audit checkpoints. Devices never call it.
+service SecurityAdminService {
+  // SetSecurityConfig sets an environment's profile and overrides. It
+  // fails when expected_version is not the current version, so two
+  // administrators cannot overwrite each other (SEC-180).
+  rpc SetSecurityConfig(SetSecurityConfigRequest) returns (SetSecurityConfigResponse) {}
+  // GetEffectiveSecurityConfig returns the profile merged with the
+  // overrides, which is what the manifest pins (SEC-182).
+  rpc GetEffectiveSecurityConfig(GetEffectiveSecurityConfigRequest) returns (GetEffectiveSecurityConfigResponse) {}
+
+  rpc CreateUpstream(CreateUpstreamRequest) returns (CreateUpstreamResponse) {}
+  rpc GetUpstream(GetUpstreamRequest) returns (GetUpstreamResponse) {}
+  rpc ListUpstreams(ListUpstreamsRequest) returns (ListUpstreamsResponse) {}
+  rpc UpdateUpstream(UpdateUpstreamRequest) returns (UpdateUpstreamResponse) {}
+  rpc DeleteUpstream(DeleteUpstreamRequest) returns (DeleteUpstreamResponse) {}
+
+  // ListAuditCheckpoints lists the signed checkpoints over the audit
+  // log's hash chain, which let anyone verify that no entry was removed
+  // (SEC-141).
+  rpc ListAuditCheckpoints(ListAuditCheckpointsRequest) returns (ListAuditCheckpointsResponse) {}
+}
+
+message SetSecurityConfigRequest {
+  string app_id = 1;
+  string environment_id = 2;
+  // profile names the security profile, such as "maximum" (SEC-180).
+  string profile = 3;
+  // overrides_json is a JSON object of settings that differ from the
+  // profile (SEC-181).
+  bytes overrides_json = 4;
+  // expected_version is the version the caller read; zero for an
+  // environment with no configuration yet.
+  int64 expected_version = 5;
+}
+message SetSecurityConfigResponse {
+  // version is the new configuration version.
+  int64 version = 1;
+}
+
+message GetEffectiveSecurityConfigRequest {
+  string app_id = 1;
+  string environment_id = 2;
+}
+message GetEffectiveSecurityConfigResponse {
+  string profile = 1;
+  int64 version = 2;
+  // effective_json is the canonical JSON of the merged configuration.
+  bytes effective_json = 3;
+  // sha256 is the hash of effective_json, the value the manifest pins
+  // (SEC-182).
+  bytes sha256 = 4;
+}
+
+// Upstream is an API the gateway may reach for an environment's devices
+// (SEC-030).
+message Upstream {
+  string id = 1;
+  string app_id = 2;
+  string environment_id = 3;
+  // name is what GatewayCallRequest.upstream refers to.
+  string name = 4;
+  // base_url is the upstream's base URL.
+  string base_url = 5;
+  // auth is how the server authenticates to the upstream. Secrets are
+  // referenced, never carried (SEC-092).
+  oneof auth {
+    UpstreamMtls mtls = 6;
+    UpstreamOAuthClientCredentials oauth_client_credentials = 7;
+    UpstreamApiKey api_key = 8;
+  }
+  // allow_private_addresses lets the upstream resolve to a private or
+  // loopback address. It is off by default, because the gateway would
+  // otherwise reach the server's own network (SEC-105).
+  bool allow_private_addresses = 9;
+  // timeout_ms bounds one call to the upstream; zero uses the registry's
+  // default (LIM-001).
+  int32 timeout_ms = 10;
+}
+
+// UpstreamMtls authenticates with a client certificate.
+message UpstreamMtls {
+  // client_cert_secret_ref names the secret that holds the certificate
+  // and key.
+  string client_cert_secret_ref = 1;
+}
+
+// UpstreamOAuthClientCredentials authenticates with the OAuth 2.0 client
+// credentials grant (RFC 6749 §4.4).
+message UpstreamOAuthClientCredentials {
+  string token_url = 1;
+  string client_id = 2;
+  // client_secret_ref names the secret that holds the client secret.
+  string client_secret_ref = 3;
+  repeated string scopes = 4;
+}
+
+// UpstreamApiKey authenticates with a static key in a header.
+message UpstreamApiKey {
+  // header is the header that carries the key.
+  string header = 1;
+  // secret_ref names the secret that holds the key.
+  string secret_ref = 2;
+}
+
+message CreateUpstreamRequest {
+  // upstream is the new upstream; its id is assigned by the server.
+  Upstream upstream = 1;
+}
+message CreateUpstreamResponse {
+  Upstream upstream = 1;
+}
+
+message GetUpstreamRequest {
+  string id = 1;
+}
+message GetUpstreamResponse {
+  Upstream upstream = 1;
+}
+
+message ListUpstreamsRequest {
+  string app_id = 1;
+  string environment_id = 2;
+  Page page = 3;
+}
+message ListUpstreamsResponse {
+  repeated Upstream upstreams = 1;
+  PageResult page = 2;
+}
+
+message UpdateUpstreamRequest {
+  // upstream replaces the stored upstream with the same id.
+  Upstream upstream = 1;
+}
+message UpdateUpstreamResponse {
+  Upstream upstream = 1;
+}
+
+message DeleteUpstreamRequest {
+  string id = 1;
+}
+message DeleteUpstreamResponse {}
+
+// AuditCheckpoint is a signed point in the audit log's hash chain
+// (SEC-141).
+message AuditCheckpoint {
+  // sequence is the sequence number of the last entry the checkpoint
+  // covers.
+  int64 sequence = 1;
+  // entry_hash is the chain hash at that entry.
+  bytes entry_hash = 2;
+  // signature signs sequence and entry_hash.
+  bytes signature = 3;
+  // key_id identifies the audit signing key.
+  string key_id = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message ListAuditCheckpointsRequest {
+  Page page = 1;
+}
+message ListAuditCheckpointsResponse {
+  repeated AuditCheckpoint checkpoints = 1;
+  PageResult page = 2;
+}
