@@ -11,6 +11,9 @@ import 'package:plux_flutter/plux_flutter.dart';
 // ignore: implementation_imports
 import 'package:plux_flutter/src/core/runtime.dart' show RuntimeOverrides;
 // ignore: implementation_imports
+import 'package:plux_flutter/src/security/software_keys.dart'
+    show DevelopmentAttestation, SoftwareDeviceKeys;
+// ignore: implementation_imports
 import 'package:plux_flutter/src/sync/sync_engine.dart'
     show MemoryCredentialStore;
 
@@ -54,6 +57,8 @@ void main() {
       c,
       RuntimeOverrides(
         credentials: MemoryCredentialStore.new,
+        deviceKeys: SoftwareDeviceKeys.new,
+        attestation: () => const DevelopmentAttestation('e2e'),
         secrets: _MemorySecrets.new,
       ),
     ),
