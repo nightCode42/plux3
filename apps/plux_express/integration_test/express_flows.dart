@@ -185,7 +185,18 @@ void expressFlows({
 
       await tapSettled(tester, find.text('Product 01'));
       await waitFor(tester, find.text('In cart: 0'));
-      await waitFor(tester, find.text('1.99 EUR'));
+      // The product page's own price: the catalogue's row under the page
+      // shows the same text, and a tap before the product loaded would put
+      // its fallbacks, the id and no price, into the cart.
+      await waitFor(
+        tester,
+        find.descendant(
+          of: find.byWidgetPredicate(
+            (w) => w is Semantics && w.properties.identifier == 'product-price',
+          ),
+          matching: find.text('1.99 EUR'),
+        ),
+      );
       await tapSettled(tester, find.text('Add to cart'));
       await waitFor(tester, find.text('In cart: 1'));
 
