@@ -834,7 +834,22 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
           key: e2e-gradle-${{ runner.os }}-${{ env.FLUTTER_VERSION }}-${{ hashFiles('pubspec.lock', 'apps/*/pubspec.lock', 'apps/*/android/**/*.gradle.kts', 'apps/*/android/gradle/wrapper/gradle-wrapper.properties', 'apps/add_to_app/android_host/**/*.gradle.kts', 'packages/*/android/**') }}
-          restore-keys: e2e-gradle-${{ runner.os }}-${{ env.FLUTTER_VERSION }}-
+          # main's Gradle cache from before the shards (key gradle-…) is the
+          # fallback: run 37644772933 started with none, and Maven Central
+          # answered ten parallel builds with 429 Too Many Requests.
+          restore-keys: |
+            e2e-gradle-${{ runner.os }}-${{ env.FLUTTER_VERSION }}-
+            gradle-${{ runner.os }}-${{ env.FLUTTER_VERSION }}-
+      # The emulator and its system image, per API level: downloading them
+      # in ten jobs at once broke an archive in run 37644772933.
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        id: android-sdk
+        with:
+          path: |
+            /usr/local/lib/android/sdk/emulator
+            /usr/local/lib/android/sdk/system-images/android-${{ matrix.api }}
+          key: e2e-android-sdk-${{ matrix.api }}-${{ runner.os }}-${{ hashFiles('test/e2e/android.sh') }}
+          restore-keys: e2e-android-sdk-${{ matrix.api }}-${{ runner.os }}-
       - name: Let the emulator use KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -862,6 +877,14 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
           key: ${{ steps.gradle.outputs.cache-primary-key }}
+      # One shard per API level saves the SDK packages, as for Gradle.
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        if: github.event_name != 'pull_request' && matrix.shard == 'starter' && steps.android-sdk.outputs.cache-hit != 'true'
+        with:
+          path: |
+            /usr/local/lib/android/sdk/emulator
+            /usr/local/lib/android/sdk/system-images/android-${{ matrix.api }}
+          key: ${{ steps.android-sdk.outputs.cache-primary-key }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: always()
         with:

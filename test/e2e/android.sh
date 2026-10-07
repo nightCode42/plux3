@@ -41,9 +41,19 @@ mkdir -p "$out"
 
 yes | "$tools/sdkmanager" --licenses >/dev/null || true
 # A download that arrives broken ("Error on ZipFile unknown archive", CI
-# run 36743012409) is fetched once more before the job gives up.
-"$tools/sdkmanager" --install emulator platform-tools "$image" >"$out/sdkmanager.log" ||
-	"$tools/sdkmanager" --install emulator platform-tools "$image" >>"$out/sdkmanager.log"
+# runs 36743012409 and 37644772933, where ten emulator jobs downloaded the
+# same packages at once) is fetched again after 15 and 45 seconds before
+# the job gives up. CI restores the packages from its cache first, so a
+# download is the exception.
+: >"$out/sdkmanager.log"
+for wait in 0 15 45; do
+	sleep "$wait"
+	if "$tools/sdkmanager" --install emulator platform-tools "$image" >>"$out/sdkmanager.log" 2>&1; then
+		installed=true; break
+	fi
+	installed=false
+done
+$installed || { tail -n 20 "$out/sdkmanager.log"; echo "✗ the Android SDK packages did not install"; exit 1; }
 # One AVD home for avdmanager and the emulator, whatever the runner sets.
 export ANDROID_AVD_HOME=${ANDROID_AVD_HOME:-$HOME/.android/avd}
 mkdir -p "$ANDROID_AVD_HOME"

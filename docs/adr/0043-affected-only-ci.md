@@ -260,6 +260,11 @@ Maintainer decision (2026-10-07), with a target of 13 to 15 minutes for the devi
   branch, so no branch or pull request can write a cache `main` reads (cache poisoning),
   and a broken build is never saved. First cut: only `main` saved, which left every
   branch run cold (runs 147–150: iOS jobs of 15 to 25 minutes, nearly all of it
-  building); the maintainer chose branch-scoped saves (2026-10-07). A
+  building); the maintainer chose branch-scoped saves (2026-10-07).
+- **Downloads.** Ten emulator jobs at once overloaded the shared sources (run 37644772933:
+  Maven Central answered 429 Too Many Requests, and an emulator archive arrived broken).
+  The Gradle cache falls back to `main`'s cache from before the shards, the emulator and
+  its system image are cached per API level, and the SDK install retries after 15 and 45
+  seconds. A
   miss is a clean build, as before. Incremental builds are Xcode's and Gradle's own, which
   track inputs by content.
