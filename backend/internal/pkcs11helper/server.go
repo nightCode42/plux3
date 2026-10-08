@@ -146,6 +146,10 @@ func (s *Server) respond(ctx context.Context, req *pkcs11pb.Request) *pkcs11pb.R
 		return s.sign(ctx, r.Sign)
 	case *pkcs11pb.Request_PublicKey:
 		return s.publicKey(ctx, r.PublicKey)
+	case *pkcs11pb.Request_Wrap:
+		return s.wrap(ctx, r.Wrap)
+	case *pkcs11pb.Request_Unwrap:
+		return s.unwrap(ctx, r.Unwrap)
 	default:
 		return failure(pkcs11pb.ErrorCode_ERROR_CODE_INVALID_REQUEST, "the request names no operation")
 	}
@@ -241,6 +245,8 @@ func (s *Server) tokenFailure(ctx context.Context, op string, err error) *pkcs11
 		return failure(pkcs11pb.ErrorCode_ERROR_CODE_KEY_NOT_FOUND, "no such key")
 	case errors.Is(err, ErrAmbiguousKey):
 		return failure(pkcs11pb.ErrorCode_ERROR_CODE_INVALID_REQUEST, "the key reference matches more than one key")
+	case errors.Is(err, ErrDecryptFailed):
+		return failure(pkcs11pb.ErrorCode_ERROR_CODE_DECRYPT_FAILED, "the wrapped key does not decrypt")
 	default:
 		s.log.ErrorContext(ctx, "pkcs11 helper: the token failed", slog.String("operation", op), slog.Any("error", err))
 		return failure(pkcs11pb.ErrorCode_ERROR_CODE_INTERNAL, "the token failed")

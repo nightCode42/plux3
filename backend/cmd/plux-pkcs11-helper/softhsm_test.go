@@ -6,6 +6,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"crypto/ed25519"
@@ -16,6 +17,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -94,6 +96,8 @@ func provision(t *testing.T, library string) {
 	}
 	generate(t, ctx, session, ckmECEdwardsKeyPairGen, oidEd25519, "targets-test", []byte{1})
 	generate(t, ctx, session, pkcs11.CKM_EC_KEY_PAIR_GEN, oidP256, "plux-tokens-development", []byte{2})
+	generateAES(t, ctx, session, "plux-secrets")
+	generateAES(t, ctx, session, "other-secrets")
 }
 
 // tokenSlot finds the slot of the initialised token.
@@ -110,6 +114,26 @@ func tokenSlot(t *testing.T, ctx *pkcs11.Ctx) uint {
 	}
 	t.Fatal("the initialised token is not listed")
 	return 0
+}
+
+// generateAES creates an AES-256 key that stays on the token.
+func generateAES(t *testing.T, ctx *pkcs11.Ctx, session pkcs11.SessionHandle, label string) {
+	t.Helper()
+	template := []*pkcs11.Attribute{
+		pkcs11.NewAttribute(pkcs11.CKA_CLASS, pkcs11.CKO_SECRET_KEY),
+		pkcs11.NewAttribute(pkcs11.CKA_KEY_TYPE, pkcs11.CKK_AES),
+		pkcs11.NewAttribute(pkcs11.CKA_VALUE_LEN, 32),
+		pkcs11.NewAttribute(pkcs11.CKA_TOKEN, true),
+		pkcs11.NewAttribute(pkcs11.CKA_PRIVATE, true),
+		pkcs11.NewAttribute(pkcs11.CKA_ENCRYPT, true),
+		pkcs11.NewAttribute(pkcs11.CKA_DECRYPT, true),
+		pkcs11.NewAttribute(pkcs11.CKA_SENSITIVE, true),
+		pkcs11.NewAttribute(pkcs11.CKA_EXTRACTABLE, false),
+		pkcs11.NewAttribute(pkcs11.CKA_LABEL, label),
+	}
+	if _, err := ctx.GenerateKey(session, []*pkcs11.Mechanism{pkcs11.NewMechanism(pkcs11.CKM_AES_KEY_GEN, nil)}, template); err != nil {
+		t.Fatalf("generate %s: %v", label, err)
+	}
 }
 
 // generate creates a key pair that stays on the token.
@@ -179,6 +203,7 @@ func TestSoftHSMSignsThroughTheHelper(t *testing.T) {
 	checkRelease(t, backend)
 	checkTokens(t, backend)
 	checkSelectors(t, socket)
+	checkWrap(t, backend, socket)
 
 	// An HSM ends an idle session; the next call logs in again.
 	mod.mu.Lock()
@@ -229,6 +254,49 @@ func checkTokens(t *testing.T, backend *signing.PKCS11) {
 	}
 	if _, _, err := backend.SignToken(bg, signing.TokenProduction, input); !errors.Is(err, signing.ErrNoKey) {
 		t.Errorf("SignToken without the production key: %v, want ErrNoKey", err)
+	}
+}
+
+// checkWrap wraps and unwraps a data key with the AES key on the token.
+func checkWrap(t *testing.T, backend *signing.PKCS11, socket string) {
+	t.Helper()
+	bg := context.Background()
+	dataKey := bytes.Repeat([]byte{7}, 32)
+	wrapped, id, err := backend.Wrap(bg, dataKey)
+	if err != nil {
+		t.Fatalf("Wrap: %v", err)
+	}
+	if len(wrapped) != 12+len(dataKey)+16 || bytes.Contains(wrapped, dataKey) {
+		t.Errorf("wrapped key of %d bytes", len(wrapped))
+	}
+	got, err := backend.Unwrap(bg, wrapped, id)
+	if err != nil || !bytes.Equal(got, dataKey) {
+		t.Errorf("Unwrap = %x, %v", got, err)
+	}
+	again, _, err := backend.Wrap(bg, dataKey)
+	if err != nil || bytes.Equal(again[:12], wrapped[:12]) {
+		t.Errorf("a second wrap reuses the IV (%v)", err)
+	}
+	for _, i := range []int{0, 12, len(wrapped) - 1} {
+		tampered := bytes.Clone(wrapped)
+		tampered[i] ^= 1
+		if _, err := backend.Unwrap(bg, tampered, id); err == nil || !strings.Contains(err.Error(), "DECRYPT_FAILED") {
+			t.Errorf("a wrapped key altered at byte %d: %v", i, err)
+		}
+	}
+	other, err := signing.NewPKCS11(signing.PKCS11Options{Socket: socket, WrapKey: "other-secrets", Timeout: 20 * time.Second})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := other.Unwrap(bg, wrapped, "pkcs11:other-secrets"); err == nil || !strings.Contains(err.Error(), "DECRYPT_FAILED") {
+		t.Errorf("the wrong key: %v", err)
+	}
+	absent, err := signing.NewPKCS11(signing.PKCS11Options{Socket: socket, WrapKey: "absent", Timeout: 20 * time.Second})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := absent.Wrap(bg, dataKey); !errors.Is(err, signing.ErrNoKey) {
+		t.Errorf("Wrap with a missing key: %v, want ErrNoKey", err)
 	}
 }
 

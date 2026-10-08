@@ -246,7 +246,7 @@ func BuildSigning(cfg *config.Config) (signing.Backend, error) {
 		}
 		return b, nil
 	case "pkcs11":
-		b, err := signing.NewPKCS11(signing.PKCS11Options{Socket: cfg.Signing.PKCS11.Socket})
+		b, err := signing.NewPKCS11(signing.PKCS11Options{Socket: cfg.Signing.PKCS11.Socket, WrapKey: cfg.Signing.PKCS11.WrapKey})
 		if err != nil {
 			return nil, fmt.Errorf("server: signing: %w", err)
 		}

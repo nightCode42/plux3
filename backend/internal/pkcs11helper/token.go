@@ -24,6 +24,9 @@ var (
 	// ErrAmbiguousKey is returned by a Token for a selector that matches
 	// more than one key.
 	ErrAmbiguousKey = errors.New("pkcs11helper: the key reference matches more than one key")
+	// ErrDecryptFailed is returned by a Token when a ciphertext does not
+	// decrypt: the wrong key, or an altered ciphertext or tag.
+	ErrDecryptFailed = errors.New("pkcs11helper: the ciphertext does not decrypt")
 )
 
 // Token is a PKCS#11 token as the server needs it: two operations, and
@@ -38,6 +41,14 @@ type Token interface {
 	// ECDSA P-256 (data is the SHA-256 digest). The result is the
 	// token's raw signature.
 	Sign(sel Selector, alg pkcs11pb.Algorithm, data []byte) ([]byte, error)
+	// Encrypt encrypts plaintext with the AES key the selector names,
+	// using CKM_AES_GCM with the 96-bit iv and a 128-bit tag. It returns
+	// the IV the token used, which a module may choose for itself, and
+	// the ciphertext followed by the tag.
+	Encrypt(sel Selector, iv, plaintext []byte) (usedIV, sealed []byte, err error)
+	// Decrypt reverses Encrypt. A ciphertext that does not authenticate
+	// is ErrDecryptFailed.
+	Decrypt(sel Selector, iv, sealed []byte) ([]byte, error)
 }
 
 // PublicAttributes are the PKCS#11 attributes of an elliptic-curve

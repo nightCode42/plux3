@@ -94,6 +94,9 @@ const (
 	ErrorCode_ERROR_CODE_UNSUPPORTED_ALGORITHM ErrorCode = 3
 	// ERROR_CODE_INTERNAL is a failure of the token or of the helper.
 	ErrorCode_ERROR_CODE_INTERNAL ErrorCode = 4
+	// ERROR_CODE_DECRYPT_FAILED is a wrapped key that does not decrypt: the
+	// wrong key, or a ciphertext or tag that was altered.
+	ErrorCode_ERROR_CODE_DECRYPT_FAILED ErrorCode = 5
 )
 
 // Enum value maps for ErrorCode.
@@ -104,6 +107,7 @@ var (
 		2: "ERROR_CODE_KEY_NOT_FOUND",
 		3: "ERROR_CODE_UNSUPPORTED_ALGORITHM",
 		4: "ERROR_CODE_INTERNAL",
+		5: "ERROR_CODE_DECRYPT_FAILED",
 	}
 	ErrorCode_value = map[string]int32{
 		"ERROR_CODE_UNSPECIFIED":           0,
@@ -111,6 +115,7 @@ var (
 		"ERROR_CODE_KEY_NOT_FOUND":         2,
 		"ERROR_CODE_UNSUPPORTED_ALGORITHM": 3,
 		"ERROR_CODE_INTERNAL":              4,
+		"ERROR_CODE_DECRYPT_FAILED":        5,
 	}
 )
 
@@ -148,6 +153,8 @@ type Request struct {
 	//
 	//	*Request_Sign
 	//	*Request_PublicKey
+	//	*Request_Wrap
+	//	*Request_Unwrap
 	Request       isRequest_Request `protobuf_oneof:"request"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -208,6 +215,24 @@ func (x *Request) GetPublicKey() *PublicKeyRequest {
 	return nil
 }
 
+func (x *Request) GetWrap() *WrapRequest {
+	if x != nil {
+		if x, ok := x.Request.(*Request_Wrap); ok {
+			return x.Wrap
+		}
+	}
+	return nil
+}
+
+func (x *Request) GetUnwrap() *UnwrapRequest {
+	if x != nil {
+		if x, ok := x.Request.(*Request_Unwrap); ok {
+			return x.Unwrap
+		}
+	}
+	return nil
+}
+
 type isRequest_Request interface {
 	isRequest_Request()
 }
@@ -220,9 +245,21 @@ type Request_PublicKey struct {
 	PublicKey *PublicKeyRequest `protobuf:"bytes,2,opt,name=public_key,json=publicKey,proto3,oneof"`
 }
 
+type Request_Wrap struct {
+	Wrap *WrapRequest `protobuf:"bytes,3,opt,name=wrap,proto3,oneof"`
+}
+
+type Request_Unwrap struct {
+	Unwrap *UnwrapRequest `protobuf:"bytes,4,opt,name=unwrap,proto3,oneof"`
+}
+
 func (*Request_Sign) isRequest_Request() {}
 
 func (*Request_PublicKey) isRequest_Request() {}
+
+func (*Request_Wrap) isRequest_Request() {}
+
+func (*Request_Unwrap) isRequest_Request() {}
 
 // Response is the one message the helper answers with.
 type Response struct {
@@ -232,6 +269,8 @@ type Response struct {
 	//	*Response_Sign
 	//	*Response_PublicKey
 	//	*Response_Error
+	//	*Response_Wrap
+	//	*Response_Unwrap
 	Response      isResponse_Response `protobuf_oneof:"response"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -301,6 +340,24 @@ func (x *Response) GetError() *Error {
 	return nil
 }
 
+func (x *Response) GetWrap() *WrapResponse {
+	if x != nil {
+		if x, ok := x.Response.(*Response_Wrap); ok {
+			return x.Wrap
+		}
+	}
+	return nil
+}
+
+func (x *Response) GetUnwrap() *UnwrapResponse {
+	if x != nil {
+		if x, ok := x.Response.(*Response_Unwrap); ok {
+			return x.Unwrap
+		}
+	}
+	return nil
+}
+
 type isResponse_Response interface {
 	isResponse_Response()
 }
@@ -317,11 +374,23 @@ type Response_Error struct {
 	Error *Error `protobuf:"bytes,3,opt,name=error,proto3,oneof"`
 }
 
+type Response_Wrap struct {
+	Wrap *WrapResponse `protobuf:"bytes,4,opt,name=wrap,proto3,oneof"`
+}
+
+type Response_Unwrap struct {
+	Unwrap *UnwrapResponse `protobuf:"bytes,5,opt,name=unwrap,proto3,oneof"`
+}
+
 func (*Response_Sign) isResponse_Response() {}
 
 func (*Response_PublicKey) isResponse_Response() {}
 
 func (*Response_Error) isResponse_Response() {}
+
+func (*Response_Wrap) isResponse_Response() {}
+
+func (*Response_Unwrap) isResponse_Response() {}
 
 // SignRequest asks the token to sign with a named key.
 type SignRequest struct {
@@ -550,6 +619,209 @@ func (x *PublicKeyResponse) GetKeyId() string {
 	return ""
 }
 
+// WrapRequest asks the token to encrypt a data key (SEC-106) with a named
+// AES key, using CKM_AES_GCM with a 96-bit IV and a 128-bit tag.
+type WrapRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// key_ref names the AES key, as for signing keys.
+	KeyRef string `protobuf:"bytes,1,opt,name=key_ref,json=keyRef,proto3" json:"key_ref,omitempty"`
+	// plaintext is the data key.
+	Plaintext     []byte `protobuf:"bytes,2,opt,name=plaintext,proto3" json:"plaintext,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WrapRequest) Reset() {
+	*x = WrapRequest{}
+	mi := &file_plux_internal_pkcs11_v1_helper_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WrapRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WrapRequest) ProtoMessage() {}
+
+func (x *WrapRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_internal_pkcs11_v1_helper_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WrapRequest.ProtoReflect.Descriptor instead.
+func (*WrapRequest) Descriptor() ([]byte, []int) {
+	return file_plux_internal_pkcs11_v1_helper_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *WrapRequest) GetKeyRef() string {
+	if x != nil {
+		return x.KeyRef
+	}
+	return ""
+}
+
+func (x *WrapRequest) GetPlaintext() []byte {
+	if x != nil {
+		return x.Plaintext
+	}
+	return nil
+}
+
+// WrapResponse carries the wrapped data key.
+type WrapResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// wrapped is the IV (12 bytes), the ciphertext and the tag (16 bytes),
+	// in that order.
+	Wrapped       []byte `protobuf:"bytes,1,opt,name=wrapped,proto3" json:"wrapped,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *WrapResponse) Reset() {
+	*x = WrapResponse{}
+	mi := &file_plux_internal_pkcs11_v1_helper_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WrapResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WrapResponse) ProtoMessage() {}
+
+func (x *WrapResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_internal_pkcs11_v1_helper_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WrapResponse.ProtoReflect.Descriptor instead.
+func (*WrapResponse) Descriptor() ([]byte, []int) {
+	return file_plux_internal_pkcs11_v1_helper_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *WrapResponse) GetWrapped() []byte {
+	if x != nil {
+		return x.Wrapped
+	}
+	return nil
+}
+
+// UnwrapRequest asks the token to decrypt a data key that WrapRequest
+// produced.
+type UnwrapRequest struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	KeyRef string                 `protobuf:"bytes,1,opt,name=key_ref,json=keyRef,proto3" json:"key_ref,omitempty"`
+	// wrapped is in the form of WrapResponse.wrapped.
+	Wrapped       []byte `protobuf:"bytes,2,opt,name=wrapped,proto3" json:"wrapped,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UnwrapRequest) Reset() {
+	*x = UnwrapRequest{}
+	mi := &file_plux_internal_pkcs11_v1_helper_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnwrapRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnwrapRequest) ProtoMessage() {}
+
+func (x *UnwrapRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_internal_pkcs11_v1_helper_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnwrapRequest.ProtoReflect.Descriptor instead.
+func (*UnwrapRequest) Descriptor() ([]byte, []int) {
+	return file_plux_internal_pkcs11_v1_helper_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *UnwrapRequest) GetKeyRef() string {
+	if x != nil {
+		return x.KeyRef
+	}
+	return ""
+}
+
+func (x *UnwrapRequest) GetWrapped() []byte {
+	if x != nil {
+		return x.Wrapped
+	}
+	return nil
+}
+
+// UnwrapResponse carries the data key.
+type UnwrapResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Plaintext     []byte                 `protobuf:"bytes,1,opt,name=plaintext,proto3" json:"plaintext,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UnwrapResponse) Reset() {
+	*x = UnwrapResponse{}
+	mi := &file_plux_internal_pkcs11_v1_helper_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnwrapResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnwrapResponse) ProtoMessage() {}
+
+func (x *UnwrapResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_plux_internal_pkcs11_v1_helper_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnwrapResponse.ProtoReflect.Descriptor instead.
+func (*UnwrapResponse) Descriptor() ([]byte, []int) {
+	return file_plux_internal_pkcs11_v1_helper_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *UnwrapResponse) GetPlaintext() []byte {
+	if x != nil {
+		return x.Plaintext
+	}
+	return nil
+}
+
 // Error is a failed request.
 type Error struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -562,7 +834,7 @@ type Error struct {
 
 func (x *Error) Reset() {
 	*x = Error{}
-	mi := &file_plux_internal_pkcs11_v1_helper_proto_msgTypes[6]
+	mi := &file_plux_internal_pkcs11_v1_helper_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -574,7 +846,7 @@ func (x *Error) String() string {
 func (*Error) ProtoMessage() {}
 
 func (x *Error) ProtoReflect() protoreflect.Message {
-	mi := &file_plux_internal_pkcs11_v1_helper_proto_msgTypes[6]
+	mi := &file_plux_internal_pkcs11_v1_helper_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -587,7 +859,7 @@ func (x *Error) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Error.ProtoReflect.Descriptor instead.
 func (*Error) Descriptor() ([]byte, []int) {
-	return file_plux_internal_pkcs11_v1_helper_proto_rawDescGZIP(), []int{6}
+	return file_plux_internal_pkcs11_v1_helper_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *Error) GetCode() ErrorCode {
@@ -608,17 +880,21 @@ var File_plux_internal_pkcs11_v1_helper_proto protoreflect.FileDescriptor
 
 const file_plux_internal_pkcs11_v1_helper_proto_rawDesc = "" +
 	"\n" +
-	"$plux/internal/pkcs11/v1/helper.proto\x12\x17plux.internal.pkcs11.v1\"\x9c\x01\n" +
+	"$plux/internal/pkcs11/v1/helper.proto\x12\x17plux.internal.pkcs11.v1\"\x9a\x02\n" +
 	"\aRequest\x12:\n" +
 	"\x04sign\x18\x01 \x01(\v2$.plux.internal.pkcs11.v1.SignRequestH\x00R\x04sign\x12J\n" +
 	"\n" +
-	"public_key\x18\x02 \x01(\v2).plux.internal.pkcs11.v1.PublicKeyRequestH\x00R\tpublicKeyB\t\n" +
-	"\arequest\"\xd8\x01\n" +
+	"public_key\x18\x02 \x01(\v2).plux.internal.pkcs11.v1.PublicKeyRequestH\x00R\tpublicKey\x12:\n" +
+	"\x04wrap\x18\x03 \x01(\v2$.plux.internal.pkcs11.v1.WrapRequestH\x00R\x04wrap\x12@\n" +
+	"\x06unwrap\x18\x04 \x01(\v2&.plux.internal.pkcs11.v1.UnwrapRequestH\x00R\x06unwrapB\t\n" +
+	"\arequest\"\xd8\x02\n" +
 	"\bResponse\x12;\n" +
 	"\x04sign\x18\x01 \x01(\v2%.plux.internal.pkcs11.v1.SignResponseH\x00R\x04sign\x12K\n" +
 	"\n" +
 	"public_key\x18\x02 \x01(\v2*.plux.internal.pkcs11.v1.PublicKeyResponseH\x00R\tpublicKey\x126\n" +
-	"\x05error\x18\x03 \x01(\v2\x1e.plux.internal.pkcs11.v1.ErrorH\x00R\x05errorB\n" +
+	"\x05error\x18\x03 \x01(\v2\x1e.plux.internal.pkcs11.v1.ErrorH\x00R\x05error\x12;\n" +
+	"\x04wrap\x18\x04 \x01(\v2%.plux.internal.pkcs11.v1.WrapResponseH\x00R\x04wrap\x12A\n" +
+	"\x06unwrap\x18\x05 \x01(\v2'.plux.internal.pkcs11.v1.UnwrapResponseH\x00R\x06unwrapB\n" +
 	"\n" +
 	"\bresponse\"\x80\x01\n" +
 	"\vSignRequest\x12\x17\n" +
@@ -633,20 +909,31 @@ const file_plux_internal_pkcs11_v1_helper_proto_rawDesc = "" +
 	"\x11PublicKeyResponse\x12$\n" +
 	"\x0epublic_key_der\x18\x01 \x01(\fR\fpublicKeyDer\x12@\n" +
 	"\talgorithm\x18\x02 \x01(\x0e2\".plux.internal.pkcs11.v1.AlgorithmR\talgorithm\x12\x15\n" +
-	"\x06key_id\x18\x03 \x01(\tR\x05keyId\"Y\n" +
+	"\x06key_id\x18\x03 \x01(\tR\x05keyId\"D\n" +
+	"\vWrapRequest\x12\x17\n" +
+	"\akey_ref\x18\x01 \x01(\tR\x06keyRef\x12\x1c\n" +
+	"\tplaintext\x18\x02 \x01(\fR\tplaintext\"(\n" +
+	"\fWrapResponse\x12\x18\n" +
+	"\awrapped\x18\x01 \x01(\fR\awrapped\"B\n" +
+	"\rUnwrapRequest\x12\x17\n" +
+	"\akey_ref\x18\x01 \x01(\tR\x06keyRef\x12\x18\n" +
+	"\awrapped\x18\x02 \x01(\fR\awrapped\".\n" +
+	"\x0eUnwrapResponse\x12\x1c\n" +
+	"\tplaintext\x18\x01 \x01(\fR\tplaintext\"Y\n" +
 	"\x05Error\x126\n" +
 	"\x04code\x18\x01 \x01(\x0e2\".plux.internal.pkcs11.v1.ErrorCodeR\x04code\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage*^\n" +
 	"\tAlgorithm\x12\x19\n" +
 	"\x15ALGORITHM_UNSPECIFIED\x10\x00\x12\x15\n" +
 	"\x11ALGORITHM_ED25519\x10\x01\x12\x1f\n" +
-	"\x1bALGORITHM_ECDSA_P256_SHA256\x10\x02*\xa4\x01\n" +
+	"\x1bALGORITHM_ECDSA_P256_SHA256\x10\x02*\xc3\x01\n" +
 	"\tErrorCode\x12\x1a\n" +
 	"\x16ERROR_CODE_UNSPECIFIED\x10\x00\x12\x1e\n" +
 	"\x1aERROR_CODE_INVALID_REQUEST\x10\x01\x12\x1c\n" +
 	"\x18ERROR_CODE_KEY_NOT_FOUND\x10\x02\x12$\n" +
 	" ERROR_CODE_UNSUPPORTED_ALGORITHM\x10\x03\x12\x17\n" +
-	"\x13ERROR_CODE_INTERNAL\x10\x04BAZ?github.com/nightCode42/plux3/backend/internal/pkcs11pb;pkcs11pbb\x06proto3"
+	"\x13ERROR_CODE_INTERNAL\x10\x04\x12\x1d\n" +
+	"\x19ERROR_CODE_DECRYPT_FAILED\x10\x05BAZ?github.com/nightCode42/plux3/backend/internal/pkcs11pb;pkcs11pbb\x06proto3"
 
 var (
 	file_plux_internal_pkcs11_v1_helper_proto_rawDescOnce sync.Once
@@ -661,7 +948,7 @@ func file_plux_internal_pkcs11_v1_helper_proto_rawDescGZIP() []byte {
 }
 
 var file_plux_internal_pkcs11_v1_helper_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_plux_internal_pkcs11_v1_helper_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_plux_internal_pkcs11_v1_helper_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_plux_internal_pkcs11_v1_helper_proto_goTypes = []any{
 	(Algorithm)(0),            // 0: plux.internal.pkcs11.v1.Algorithm
 	(ErrorCode)(0),            // 1: plux.internal.pkcs11.v1.ErrorCode
@@ -671,22 +958,30 @@ var file_plux_internal_pkcs11_v1_helper_proto_goTypes = []any{
 	(*SignResponse)(nil),      // 5: plux.internal.pkcs11.v1.SignResponse
 	(*PublicKeyRequest)(nil),  // 6: plux.internal.pkcs11.v1.PublicKeyRequest
 	(*PublicKeyResponse)(nil), // 7: plux.internal.pkcs11.v1.PublicKeyResponse
-	(*Error)(nil),             // 8: plux.internal.pkcs11.v1.Error
+	(*WrapRequest)(nil),       // 8: plux.internal.pkcs11.v1.WrapRequest
+	(*WrapResponse)(nil),      // 9: plux.internal.pkcs11.v1.WrapResponse
+	(*UnwrapRequest)(nil),     // 10: plux.internal.pkcs11.v1.UnwrapRequest
+	(*UnwrapResponse)(nil),    // 11: plux.internal.pkcs11.v1.UnwrapResponse
+	(*Error)(nil),             // 12: plux.internal.pkcs11.v1.Error
 }
 var file_plux_internal_pkcs11_v1_helper_proto_depIdxs = []int32{
-	4, // 0: plux.internal.pkcs11.v1.Request.sign:type_name -> plux.internal.pkcs11.v1.SignRequest
-	6, // 1: plux.internal.pkcs11.v1.Request.public_key:type_name -> plux.internal.pkcs11.v1.PublicKeyRequest
-	5, // 2: plux.internal.pkcs11.v1.Response.sign:type_name -> plux.internal.pkcs11.v1.SignResponse
-	7, // 3: plux.internal.pkcs11.v1.Response.public_key:type_name -> plux.internal.pkcs11.v1.PublicKeyResponse
-	8, // 4: plux.internal.pkcs11.v1.Response.error:type_name -> plux.internal.pkcs11.v1.Error
-	0, // 5: plux.internal.pkcs11.v1.SignRequest.algorithm:type_name -> plux.internal.pkcs11.v1.Algorithm
-	0, // 6: plux.internal.pkcs11.v1.PublicKeyResponse.algorithm:type_name -> plux.internal.pkcs11.v1.Algorithm
-	1, // 7: plux.internal.pkcs11.v1.Error.code:type_name -> plux.internal.pkcs11.v1.ErrorCode
-	8, // [8:8] is the sub-list for method output_type
-	8, // [8:8] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+	4,  // 0: plux.internal.pkcs11.v1.Request.sign:type_name -> plux.internal.pkcs11.v1.SignRequest
+	6,  // 1: plux.internal.pkcs11.v1.Request.public_key:type_name -> plux.internal.pkcs11.v1.PublicKeyRequest
+	8,  // 2: plux.internal.pkcs11.v1.Request.wrap:type_name -> plux.internal.pkcs11.v1.WrapRequest
+	10, // 3: plux.internal.pkcs11.v1.Request.unwrap:type_name -> plux.internal.pkcs11.v1.UnwrapRequest
+	5,  // 4: plux.internal.pkcs11.v1.Response.sign:type_name -> plux.internal.pkcs11.v1.SignResponse
+	7,  // 5: plux.internal.pkcs11.v1.Response.public_key:type_name -> plux.internal.pkcs11.v1.PublicKeyResponse
+	12, // 6: plux.internal.pkcs11.v1.Response.error:type_name -> plux.internal.pkcs11.v1.Error
+	9,  // 7: plux.internal.pkcs11.v1.Response.wrap:type_name -> plux.internal.pkcs11.v1.WrapResponse
+	11, // 8: plux.internal.pkcs11.v1.Response.unwrap:type_name -> plux.internal.pkcs11.v1.UnwrapResponse
+	0,  // 9: plux.internal.pkcs11.v1.SignRequest.algorithm:type_name -> plux.internal.pkcs11.v1.Algorithm
+	0,  // 10: plux.internal.pkcs11.v1.PublicKeyResponse.algorithm:type_name -> plux.internal.pkcs11.v1.Algorithm
+	1,  // 11: plux.internal.pkcs11.v1.Error.code:type_name -> plux.internal.pkcs11.v1.ErrorCode
+	12, // [12:12] is the sub-list for method output_type
+	12, // [12:12] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_plux_internal_pkcs11_v1_helper_proto_init() }
@@ -697,11 +992,15 @@ func file_plux_internal_pkcs11_v1_helper_proto_init() {
 	file_plux_internal_pkcs11_v1_helper_proto_msgTypes[0].OneofWrappers = []any{
 		(*Request_Sign)(nil),
 		(*Request_PublicKey)(nil),
+		(*Request_Wrap)(nil),
+		(*Request_Unwrap)(nil),
 	}
 	file_plux_internal_pkcs11_v1_helper_proto_msgTypes[1].OneofWrappers = []any{
 		(*Response_Sign)(nil),
 		(*Response_PublicKey)(nil),
 		(*Response_Error)(nil),
+		(*Response_Wrap)(nil),
+		(*Response_Unwrap)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -709,7 +1008,7 @@ func file_plux_internal_pkcs11_v1_helper_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_plux_internal_pkcs11_v1_helper_proto_rawDesc), len(file_plux_internal_pkcs11_v1_helper_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   7,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

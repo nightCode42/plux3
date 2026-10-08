@@ -21,11 +21,12 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/pkcs11wire"
 )
 
-// ErrNoWrapKey is returned by the PKCS#11 backend's Wrap and Unwrap. The
-// helper signs and reads public keys; it does not wrap data keys, so the
-// envelope encryption of stored secrets (SEC-106) is served by another
-// Crypter.
-var ErrNoWrapKey = errors.New("signing: the pkcs11 backend does not wrap data keys; use another backend for envelope encryption")
+// Sizes of the wrapped data key: the 96-bit IV before the ciphertext and
+// the 128-bit tag after it.
+const (
+	pkcs11IVSize  = 12
+	pkcs11TagSize = 16
+)
 
 // pkcs11Timeout is the default time allowed for one helper call.
 const pkcs11Timeout = 15 * time.Second
@@ -40,14 +41,18 @@ const pkcs11Timeout = 15 * time.Second
 // the release key of a reference is the key labelled with it, and the
 // device access token keys are labelled "<prefix>-production" and
 // "<prefix>-development". Nothing is created on first use, so a missing
-// key is ErrNoKey. A key may be Ed25519 (release signing) or ECDSA P-256
-// (device access tokens); the helper refuses a key of the other kind.
+// key is ErrNoKey. A signing key may be Ed25519 (release signing) or
+// ECDSA P-256 (device access tokens); the helper refuses a key of the
+// other kind. Data keys (SEC-106) are wrapped by an AES key on the token,
+// labelled "plux-secrets" unless configured, with AES-GCM: the wrapped
+// key is the 96-bit IV, the ciphertext and the 128-bit tag.
 //
 // The helper is trusted to hold the key, not to sign correctly: every
 // signature is verified against the public key before it is returned.
 type PKCS11 struct {
 	socket   string
 	tokenKey string
+	wrapKey  string
 	timeout  time.Duration
 
 	mu sync.Mutex
@@ -72,6 +77,9 @@ type PKCS11Options struct {
 	// sign device access tokens, one per environment class; "" uses
 	// "plux-tokens".
 	TokenKey string
+	// WrapKey is the label of the AES key that wraps data keys (SEC-106);
+	// "" uses "plux-secrets".
+	WrapKey string
 	// Timeout bounds one call to the helper; 0 uses 15 seconds.
 	Timeout time.Duration
 }
@@ -89,11 +97,18 @@ func NewPKCS11(opts PKCS11Options) (*PKCS11, error) {
 	if !keyRef.MatchString(prefix + "-development") {
 		return nil, fmt.Errorf("signing: %q is not a valid key reference", prefix)
 	}
+	wrap := opts.WrapKey
+	if wrap == "" {
+		wrap = "plux-secrets"
+	}
+	if !keyRef.MatchString(wrap) {
+		return nil, fmt.Errorf("signing: %q is not a valid key reference", wrap)
+	}
 	timeout := opts.Timeout
 	if timeout <= 0 {
 		timeout = pkcs11Timeout
 	}
-	return &PKCS11{socket: opts.Socket, tokenKey: prefix, timeout: timeout, public: map[string]pkcs11Public{}}, nil
+	return &PKCS11{socket: opts.Socket, tokenKey: prefix, wrapKey: wrap, timeout: timeout, public: map[string]pkcs11Public{}}, nil
 }
 
 // Name identifies the backend.
@@ -113,15 +128,50 @@ func (p *PKCS11) Ping(ctx context.Context) error {
 	return nil
 }
 
-// Wrap is refused: see ErrNoWrapKey.
-func (*PKCS11) Wrap(context.Context, []byte) ([]byte, string, error) {
-	return nil, "", ErrNoWrapKey
+// Wrap encrypts a data key with the wrapping key on the token. The key
+// identifier names the key, so that Unwrap refuses a secret wrapped
+// under another.
+func (p *PKCS11) Wrap(ctx context.Context, dataKey []byte) ([]byte, string, error) {
+	resp, err := p.call(ctx, &pkcs11pb.Request{Request: &pkcs11pb.Request_Wrap{
+		Wrap: &pkcs11pb.WrapRequest{KeyRef: pkcs11URI(p.wrapKey), Plaintext: dataKey},
+	}})
+	if err != nil {
+		return nil, "", err
+	}
+	reply, ok := resp.GetResponse().(*pkcs11pb.Response_Wrap)
+	if !ok {
+		return nil, "", errors.New("signing: the helper answered a wrap request with another kind of response")
+	}
+	if len(reply.Wrap.GetWrapped()) != pkcs11IVSize+len(dataKey)+pkcs11TagSize {
+		return nil, "", errors.New("signing: the helper returned a wrapped key of the wrong length")
+	}
+	return reply.Wrap.GetWrapped(), p.wrapKeyID(), nil
 }
 
-// Unwrap is refused: see ErrNoWrapKey.
-func (*PKCS11) Unwrap(context.Context, []byte, string) ([]byte, error) {
-	return nil, ErrNoWrapKey
+// Unwrap decrypts a data key that Wrap produced. A wrapped key that was
+// altered, or wrapped under another key, fails.
+func (p *PKCS11) Unwrap(ctx context.Context, wrapped []byte, keyID string) ([]byte, error) {
+	if keyID != p.wrapKeyID() {
+		return nil, fmt.Errorf("signing: the secret was wrapped with key %s, this backend uses %s", keyID, p.wrapKeyID())
+	}
+	resp, err := p.call(ctx, &pkcs11pb.Request{Request: &pkcs11pb.Request_Unwrap{
+		Unwrap: &pkcs11pb.UnwrapRequest{KeyRef: pkcs11URI(p.wrapKey), Wrapped: wrapped},
+	}})
+	if err != nil {
+		return nil, err
+	}
+	reply, ok := resp.GetResponse().(*pkcs11pb.Response_Unwrap)
+	if !ok {
+		return nil, errors.New("signing: the helper answered an unwrap request with another kind of response")
+	}
+	if len(reply.Unwrap.GetPlaintext()) != len(wrapped)-pkcs11IVSize-pkcs11TagSize {
+		return nil, errors.New("signing: the helper returned a data key of the wrong length")
+	}
+	return reply.Unwrap.GetPlaintext(), nil
 }
+
+// wrapKeyID is the identifier Wrap stores with a secret.
+func (p *PKCS11) wrapKeyID() string { return "pkcs11:" + p.wrapKey }
 
 // Sign signs a message with the Ed25519 key labelled ref.
 func (p *PKCS11) Sign(ctx context.Context, ref string, message []byte) ([]byte, string, error) {
