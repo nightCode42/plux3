@@ -27,6 +27,22 @@ const (
 	AL3 Level = "AL3"
 )
 
+// Rank orders the levels from AL0 (0) to AL3 (3); a value that is not a
+// level ranks -1, so it satisfies nothing.
+func (l Level) Rank() int {
+	switch l {
+	case AL0:
+		return 0
+	case AL1:
+		return 1
+	case AL2:
+		return 2
+	case AL3:
+		return 3
+	}
+	return -1
+}
+
 // KeyStorage says where a device key is held (SEC-002). Its values are
 // those the devices table accepts.
 type KeyStorage string
@@ -103,6 +119,9 @@ type Settings struct {
 	// AndroidRefreshRequiresIntegrity makes every Android refresh carry a
 	// Play Integrity token (SEC-025).
 	AndroidRefreshRequiresIntegrity bool
+	// MinAssuranceForSync is the lowest assurance level a device must hold
+	// to fetch a manifest (SEC-007).
+	MinAssuranceForSync Level
 }
 
 // SettingsFor resolves the settings of a profile from the registry's
@@ -137,7 +156,14 @@ func resolveSettings(p settings.Profile, read func(settings.Key) (settings.Value
 	if verdictRank(label) == 0 {
 		return Settings{}, fmt.Errorf("device: the setting %s names no device verdict", settings.AndroidDeviceVerdictAL2)
 	}
-	out := Settings{Profile: p, AllowSoftwareKeys: allow.Bool(), AndroidDeviceVerdictAL2: label}
+	minimum, err := read(settings.MinAssuranceForSync)
+	if err != nil {
+		return Settings{}, err
+	}
+	out := Settings{Profile: p, AllowSoftwareKeys: allow.Bool(), AndroidDeviceVerdictAL2: label, MinAssuranceForSync: Level(minimum.Text())}
+	if out.MinAssuranceForSync.Rank() < 0 {
+		return Settings{}, fmt.Errorf("device: the setting %s names no assurance level", settings.MinAssuranceForSync)
+	}
 	if err := out.resolveTokens(read); err != nil {
 		return Settings{}, err
 	}

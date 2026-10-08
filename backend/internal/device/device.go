@@ -161,6 +161,8 @@ type Identity struct {
 	// HostBuild is the host app build the device registered or last
 	// reported, which chooses its manifest (REL-080).
 	HostBuild string
+	// Assurance is the assurance level the access token carries (SEC-007).
+	Assurance string
 }
 
 // Installed is one bundle a device holds; Key is "" for the app bundle.

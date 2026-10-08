@@ -219,7 +219,7 @@ func (a DeviceAuth) authenticate(ctx context.Context, c Call) (device.Identity, 
 	}
 	return device.Identity{
 		DeviceID: claims.DeviceID, OrganizationID: claims.OrganizationID, AppID: claims.AppID,
-		EnvironmentID: claims.Environment, HostBuild: claims.HostBuild,
+		EnvironmentID: claims.Environment, HostBuild: claims.HostBuild, Assurance: claims.Assurance,
 	}, nil
 }
 

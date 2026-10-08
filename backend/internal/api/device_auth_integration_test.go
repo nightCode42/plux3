@@ -173,7 +173,7 @@ func TestDeviceAuthenticationMiddleware(t *testing.T) {
 	// proof is accepted once.
 	h := good(nil)
 	c, id, err := f.run(h)
-	want := device.Identity{DeviceID: f.dev.id, OrganizationID: f.admin.org, AppID: f.app, EnvironmentID: f.envs["production"], HostBuild: "42"}
+	want := device.Identity{DeviceID: f.dev.id, OrganizationID: f.admin.org, AppID: f.app, EnvironmentID: f.envs["production"], HostBuild: "42", Assurance: "AL2"}
 	if err != nil || id != want || c.ResponseHeader.Get("DPoP-Nonce") != nonce || c.ResponseHeader.Get("WWW-Authenticate") != "" {
 		t.Fatalf("a good call: %+v, %v, headers %v", id, err, c.ResponseHeader)
 	}

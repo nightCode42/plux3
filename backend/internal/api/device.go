@@ -268,7 +268,7 @@ func (s Token) RefreshDeviceToken(ctx context.Context, req *connect.Request[plux
 	if err != nil {
 		return nil, err //nolint:wrapcheck // a domain error
 	}
-	return connect.NewResponse(&pluxv1.RefreshDeviceTokenResponse{AccessToken: t.Value, ExpiresAt: ts(t.ExpiresAt), TokenType: "DPoP"}), nil
+	return connect.NewResponse(&pluxv1.RefreshDeviceTokenResponse{AccessToken: t.Value, ExpiresAt: ts(t.ExpiresAt), TokenType: "DPoP", AssuranceLevel: t.Assurance}), nil
 }
 
 // Manifest serves ManifestService.
@@ -290,6 +290,9 @@ func (s Manifest) GetManifest(ctx context.Context, req *connect.Request[pluxv1.G
 	m := req.Msg
 	if m.GetAppId() != "" && m.GetAppId() != d.AppID {
 		return nil, plxerr.New(plxerr.PermissionDenied, "a device reads only its own app's manifest")
+	}
+	if err := s.h.Devices.CheckSyncAssurance(ctx, d); err != nil {
+		return nil, err //nolint:wrapcheck // a domain error
 	}
 	installed := make(map[string][]byte, len(m.GetInstalled()))
 	var bundles []device.Installed
