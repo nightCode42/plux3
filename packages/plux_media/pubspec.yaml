@@ -18,7 +18,7 @@ dependencies:
   flutter:
     sdk: flutter
   image_picker: ^1.2.3
-  plux_flutter: ^0.3.0
+  plux_flutter: ^0.4.0
 
 dev_dependencies:
   flutter_test:

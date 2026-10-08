@@ -5,6 +5,35 @@ SPDX-License-Identifier: Apache-2.0
 
 # Changelog
 
+## 0.4.0
+
+The runtime of Plux Phase 6, milestones S0–S6: device trust, configuration, update
+metadata and transport. Not released yet.
+
+- **Device keys and DPoP (SEC-001, SEC-021):** the DPoP key is created in StrongBox, the
+  TEE or the Secure Enclave, falling back to a flagged software key only where no secure
+  hardware exists; every device request carries `Authorization: DPoP` and a proof, retried
+  once with the server's nonce on `use_dpop_nonce`.
+- **Attested registration (SEC-002–SEC-005, SEC-008):** registration sends Android Key
+  Attestation and a Play Integrity token, or an App Attest attestation, bound to the
+  server's challenge and the key's thumbprint; debug and profile builds on emulators and
+  simulators use the development provider. `PluxConfig.playIntegrityCloudProjectNumber`
+  is new. The device-secret registration is removed (B17).
+- **Tokens (SEC-020, SEC-025):** access tokens are refreshed by proof, with an App Attest
+  assertion on iOS; `PLX-6007` re-attests and `PLX-6006` registers again.
+- **Remote security configuration (SEC-182):** the manifest request carries the applied
+  configuration version; a merge patch is applied only when the result matches the hash in
+  the signed manifest, kept encrypted, and exposed as `PluxRuntime.settings`.
+- **Update metadata (SEC-050, SEC-051, SEC-056):** timestamp → snapshot → targets →
+  manifest verification on every sync, root rotation, an embedded `root.json`, and the last
+  good release kept when metadata is expired or invalid.
+- **Certificate pinning (SEC-041, SEC-042):** `PluxConfig.pins` (at least two SPKI hashes;
+  required for https endpoints in release builds), updated only by the verified root;
+  Cronet and URLSession pin natively and keep HTTP/2; customer domains can be pinned from
+  the app document; a mismatch fails with `PLX-6020` and records `pin_failure`.
+- **Testing:** `SoftwareDeviceKeys`, `DevelopmentAttestation` and `MemorySecretStore` for
+  host-side tests; release code never selects them.
+
 ## 0.3.0
 
 The runtime of Plux Phase 5: actions, state, data, local database and animation. Not

@@ -17,7 +17,7 @@ resolution: workspace
 dependencies:
   flutter:
     sdk: flutter
-  plux_flutter: ^0.3.0
+  plux_flutter: ^0.4.0
   rive: ^0.14.11
 
 dev_dependencies:
