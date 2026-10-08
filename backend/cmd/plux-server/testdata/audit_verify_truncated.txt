@@ -1,0 +1,2 @@
+✗ organisation 0198f6a2-0000-7000-8000-0000000000a1: broken at checkpoint 3: it points past the end of the chain, which stops at entry 2: later entries were removed
+✗ audit verification failed

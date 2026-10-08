@@ -34,6 +34,7 @@ Commands:
   config validate   Check a configuration file without connecting to anything
   migrate           Apply pending database migrations and exit
   bootstrap         Create the first installation administrator
+  audit verify      Verify the audit chains and their signed checkpoints
   seed              Development only: an administrator, organisation, app and token
   version           Print version information
   help              Show this help
@@ -41,6 +42,8 @@ Commands:
 Flags:
   -config <path>    Configuration file (default plux-server.yaml)
   -email <address>  The administrator's email address (bootstrap only)
+  -org <id>         Verify one organisation only (audit verify)
+  -json             Print the result as JSON (audit verify)
 
 Every value may also come from the environment; run
 'plux-server config validate -h' for the variables that are read.
@@ -85,6 +88,8 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		return seed(ctx, args[1:], stdout, stderr)
 	case "bootstrap":
 		return bootstrap(ctx, args[1:], stdout, stderr)
+	case "audit":
+		return auditCommand(ctx, args[1:], stdout, stderr)
 	case "config":
 		return configCommand(args[1:], stdout, stderr)
 	default:
