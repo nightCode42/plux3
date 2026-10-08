@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"slices"
@@ -18,6 +19,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
+	"github.com/nightCode42/plux3/backend/internal/audit"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/signing"
 	"github.com/nightCode42/plux3/backend/internal/storage"
@@ -431,7 +433,7 @@ func (s *Service) UploadRoot(ctx context.Context, org, environment string, raw [
 			return err
 		}
 		out = root
-		return nil
+		return s.auditRoot(ctx, tx, env, root, doc)
 	})
 	if err != nil {
 		return updatemeta.Root{}, fmt.Errorf("release: %w", err)
@@ -439,6 +441,26 @@ func (s *Service) UploadRoot(ctx context.Context, org, environment string, raw [
 	s.manifests.clear()
 	s.metadata.clear()
 	return out, nil
+}
+
+// OperatorActor is who an administrative command of plux-server acts as
+// in the audit log: there is no signed-in person, and the operator's
+// access to the host is the credential.
+var OperatorActor = audit.Actor{Kind: "system", ID: "plux-server", Display: "plux-server operator command"}
+
+// auditRoot records an uploaded root: its version, threshold and key
+// identifiers, never key material (SEC-140).
+func (s *Service) auditRoot(ctx context.Context, tx pgx.Tx, env dbgen.Environment, root updatemeta.Root, doc []byte) error {
+	sum := sha256.Sum256(doc)
+	_, err := s.o.Audit.Append(ctx, tx, audit.Entry{
+		OrganizationID: storage.ID(env.OrganizationID), Actor: OperatorActor, Action: audit.UpdateMetadataRootUploaded,
+		TargetKind: "environment", TargetID: storage.ID(env.ID), AfterHash: hex.EncodeToString(sum[:]),
+		Detail: fmt.Sprintf("version=%d threshold=%d keys=%s", root.Version, root.Roles.Root.Threshold, strings.Join(root.Roles.Root.KeyIDs, ",")),
+	})
+	if err != nil {
+		return fmt.Errorf("release: %w", err)
+	}
+	return nil
 }
 
 // acceptRoot verifies an uploaded root against the environment's current

@@ -10,13 +10,19 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"slices"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/jackc/pgx/v5"
 
 	"github.com/nightCode42/plux3/backend/internal/audit"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/release"
 	"github.com/nightCode42/plux3/backend/internal/schema/uuid7"
+	"github.com/nightCode42/plux3/backend/internal/storage"
+	"github.com/nightCode42/plux3/backend/internal/storage/dbgen"
 	"github.com/nightCode42/plux3/backend/internal/updatemeta"
 )
 
@@ -354,7 +360,7 @@ func TestExpiredRootStopsSigning_SEC_050(t *testing.T) {
 	}
 }
 
-// Verifies: SEC-051.
+// Verifies: SEC-051, SEC-140.
 // An uploaded root must be verifiable: the first is version 1 and signed
 // by its own threshold; a later one is the next version, signed by the
 // previous root's threshold and its own. Anything else is refused and
@@ -415,6 +421,38 @@ func TestRootUploadAndRotation_SEC_051(t *testing.T) {
 	third := []offlineKey{old[0], fresh[0], fresh[1]}
 	if err := upload(c.root(3, third, 2, old[0], fresh[0], fresh[1])); err != nil {
 		t.Fatalf("a second rotation: %v", err)
+	}
+
+	// Every stored root is audited with its version, threshold and key
+	// identifiers, and no key material (SEC-140); refused roots are not.
+	var entries []dbgen.AuditLog
+	err := f.db.InTx(ctx, storage.Tenant{OrganizationID: f.org}, func(ctx context.Context, tx pgx.Tx) error {
+		var err error
+		entries, err = dbgen.New(tx).ListAuditEntries(ctx, dbgen.ListAuditEntriesParams{OrganizationID: storage.MustUUID(f.org), PageSize: 1000})
+		return err //nolint:wrapcheck // a test
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var uploads []dbgen.AuditLog
+	for _, e := range entries {
+		if e.Action == string(audit.UpdateMetadataRootUploaded) {
+			uploads = append(uploads, e)
+		}
+	}
+	if len(uploads) != 3 {
+		t.Fatalf("%d root uploads audited, want 3", len(uploads))
+	}
+	last := uploads[2]
+	wantDetail := "version=3 threshold=2 keys=" + strings.Join(sortedIDs(third), ",")
+	if last.TargetKind != "environment" || last.TargetID != f.prod || last.ActorKind != "system" || last.AfterHash == "" ||
+		strings.Split(last.Detail, " keys=")[0] != "version=3 threshold=2" || !sameKeys(last.Detail, third) {
+		t.Errorf("audit entry: %+v (want detail like %q)", last, wantDetail)
+	}
+	for _, k := range third {
+		if strings.Contains(last.Detail, base64.StdEncoding.EncodeToString(k.pub)) {
+			t.Error("the audit entry carries key material")
+		}
 	}
 
 	for since, want := range map[int64]int{0: 3, 1: 2, 2: 1, 3: 0} {
@@ -537,4 +575,23 @@ func TestMetadataNames_SEC_050(t *testing.T) {
 			t.Errorf("%q: %q %d %v", name, role, version, err)
 		}
 	}
+}
+
+// sortedIDs are the key identifiers of keys.
+func sortedIDs(keys []offlineKey) []string {
+	ids := make([]string, len(keys))
+	for i, k := range keys {
+		ids[i] = k.id()
+	}
+	return ids
+}
+
+// sameKeys reports whether a detail line lists exactly keys' identifiers.
+func sameKeys(detail string, keys []offlineKey) bool {
+	_, list, _ := strings.Cut(detail, " keys=")
+	got := strings.Split(list, ",")
+	want := sortedIDs(keys)
+	slices.Sort(got)
+	slices.Sort(want)
+	return slices.Equal(got, want)
 }
