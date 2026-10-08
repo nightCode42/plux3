@@ -103,15 +103,30 @@ type Settings struct {
 }
 
 // SettingsFor resolves the settings of a profile from the registry's
-// defaults. Per-environment overrides arrive with the security
-// configuration; until then a profile's defaults are the environment's
-// values.
+// defaults.
 func SettingsFor(p settings.Profile) (Settings, error) {
-	allow, err := profileValue(settings.AllowSoftwareKeys, p)
+	return resolveSettings(p, func(k settings.Key) (settings.Value, error) { return profileValue(k, p) })
+}
+
+// SettingsOf resolves the settings of an environment's configuration:
+// each setting takes the operator's override or else the profile's preset
+// (SEC-182).
+func SettingsOf(v Values) (Settings, error) {
+	return resolveSettings(v.Profile(), func(k settings.Key) (settings.Value, error) {
+		if _, ok := settings.Lookup(k); !ok {
+			return settings.Value{}, fmt.Errorf("device: the setting %s is not in the registry", k)
+		}
+		return v.Get(k), nil
+	})
+}
+
+// resolveSettings reads the settings the device service acts on.
+func resolveSettings(p settings.Profile, read func(settings.Key) (settings.Value, error)) (Settings, error) {
+	allow, err := read(settings.AllowSoftwareKeys)
 	if err != nil {
 		return Settings{}, err
 	}
-	verdict, err := profileValue(settings.AndroidDeviceVerdictAL2, p)
+	verdict, err := read(settings.AndroidDeviceVerdictAL2)
 	if err != nil {
 		return Settings{}, err
 	}
@@ -120,24 +135,24 @@ func SettingsFor(p settings.Profile) (Settings, error) {
 		return Settings{}, fmt.Errorf("device: the setting %s names no device verdict", settings.AndroidDeviceVerdictAL2)
 	}
 	out := Settings{Profile: p, AllowSoftwareKeys: allow.Bool(), AndroidDeviceVerdictAL2: label}
-	if err := out.resolveTokens(); err != nil {
+	if err := out.resolveTokens(read); err != nil {
 		return Settings{}, err
 	}
 	return out, nil
 }
 
 // resolveTokens reads the settings that govern access tokens and their
-// refresh for the profile.
-func (s *Settings) resolveTokens() error {
-	lifetime, err := profileValue(settings.AccessTokenLifetime, s.Profile)
+// refresh.
+func (s *Settings) resolveTokens(read func(settings.Key) (settings.Value, error)) error {
+	lifetime, err := read(settings.AccessTokenLifetime)
 	if err != nil {
 		return err
 	}
-	interval, err := profileValue(settings.ReattestationInterval, s.Profile)
+	interval, err := read(settings.ReattestationInterval)
 	if err != nil {
 		return err
 	}
-	integrity, err := profileValue(settings.AndroidRefreshRequiresIntegrity, s.Profile)
+	integrity, err := read(settings.AndroidRefreshRequiresIntegrity)
 	if err != nil {
 		return err
 	}

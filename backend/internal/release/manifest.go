@@ -63,6 +63,17 @@ type SignedManifest struct {
 	Plugins         []SignedPlugin  `json:"plugins"`
 	Control         SignedControl   `json:"control"`
 	Experiments     []SignedVariant `json:"experiments"`
+	// Config pins the security configuration of the environment when the
+	// manifest was signed; it is absent while the environment has only
+	// the built-in defaults (SEC-182).
+	Config *SignedConfig `json:"config,omitempty"`
+}
+
+// SignedConfig names a version of the device document of the security
+// configuration and its hash, "sha256:<hex>" of the canonical JSON.
+type SignedConfig struct {
+	Version int64  `json:"version"`
+	SHA256  string `json:"sha256"`
 }
 
 // SignedBundle describes one bundle a device must end up with.
@@ -277,7 +288,18 @@ func (s *Service) manifestDocument(ctx context.Context, q *dbgen.Queries, ch dbg
 	if err != nil {
 		return SignedManifest{}, err
 	}
-	return newManifest(env, ch, rel.Sequence, appVersion, versions, control, at), nil
+	doc := newManifest(env, ch, rel.Sequence, appVersion, versions, control, at)
+	if s.o.SecurityConfig == nil {
+		return doc, nil
+	}
+	ref, err := s.o.SecurityConfig.Current(ctx, q, env.ID)
+	if err != nil {
+		return SignedManifest{}, fmt.Errorf("release: %w", err)
+	}
+	if ref.Version > 0 {
+		doc.Config = &SignedConfig{Version: ref.Version, SHA256: hashRef(ref.SHA256[:])}
+	}
+	return doc, nil
 }
 
 // newManifest builds the signed part of a channel's manifest. Every list
@@ -358,6 +380,29 @@ func (s *Service) PurgeManifests(ctx context.Context, org string) (int64, error)
 		return 0, fmt.Errorf("release: %w", err)
 	}
 	return n, nil
+}
+
+// EnqueueEnvironmentManifests asks the worker to sign the manifests of
+// every channel of an environment, in the transaction that changed what
+// they say; a change of the security configuration needs it (SEC-182).
+func (s *Service) EnqueueEnvironmentManifests(ctx context.Context, tx pgx.Tx, organizationID, environmentID string) error {
+	if s.o.Jobs == nil {
+		return nil
+	}
+	env, err := storage.UUID(environmentID)
+	if err != nil {
+		return fmt.Errorf("release: %w", err)
+	}
+	channels, err := dbgen.New(tx).ListEnvironmentChannelIDs(ctx, env)
+	if err != nil {
+		return failure(err, "channel")
+	}
+	for _, c := range channels {
+		if err := s.o.Jobs.Enqueue(ctx, tx, ManifestJob{OrganizationID: organizationID, ChannelID: storage.ID(c)}); err != nil {
+			return fmt.Errorf("release: %w", err)
+		}
+	}
+	return nil
 }
 
 // enqueueManifest asks the worker to sign a channel's manifest, in the

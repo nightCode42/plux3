@@ -37,6 +37,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/release"
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 	"github.com/nightCode42/plux3/backend/internal/schema/uuid7"
+	"github.com/nightCode42/plux3/backend/internal/seccfg"
 	"github.com/nightCode42/plux3/backend/internal/signing"
 	"github.com/nightCode42/plux3/backend/internal/storage"
 	"github.com/nightCode42/plux3/backend/internal/storage/idempotency"
@@ -63,6 +64,9 @@ type Services struct {
 	// Checkpointer signs them; nil where the process holds no signer,
 	// which is every process without the worker role (ADR-0006).
 	Checkpointer *audit.Checkpointer
+	// SecurityConfig holds the environments' security configurations
+	// (SEC-182).
+	SecurityConfig *seccfg.Service
 	// DeviceTrust authenticates device calls; nil where the process does
 	// not run the api role.
 	DeviceTrust *DeviceTrust
@@ -312,9 +316,11 @@ func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shar
 	if err != nil {
 		return nil, err
 	}
-	devices, trust, err := buildDeviceSide(ctx, cfg, db, shared, set, deviceDeps{
-		crypter: backend, signer: tokenSigner, ids: gen, audit: log, log: work.Log,
-	})
+	configs, err := seccfg.New(seccfg.Options{DB: db, Audit: log, Limits: set, Tenancy: tenancyService})
+	if err != nil {
+		return nil, fmt.Errorf("server: %w", err)
+	}
+	devices, trust, err := buildDeviceSide(ctx, cfg, db, shared, set, deviceDeps{crypter: backend, signer: tokenSigner, ids: gen, audit: log, log: work.Log, configs: configs})
 	if err != nil {
 		return nil, err
 	}
@@ -322,7 +328,7 @@ func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shar
 	if err != nil {
 		return nil, fmt.Errorf("server: %w", err)
 	}
-	releases, err := buildReleases(cfg, db, set, work, releaseDeps{ids: gen, audit: log, tenancy: tenancyService, documents: docs, devices: devices})
+	releases, err := buildReleases(cfg, db, set, work, releaseDeps{ids: gen, audit: log, tenancy: tenancyService, documents: docs, devices: devices, configs: configs})
 	if err != nil {
 		return nil, err
 	}
@@ -333,7 +339,7 @@ func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shar
 	return &Services{
 		Audit: log, Auth: authService, Tenancy: tenancyService, Documents: docs, Releases: releases,
 		Devices: devices, Events: events, Idempotency: store, Pages: pages, DeviceTrust: trust,
-		AuditCheckpoints: audit.NewCheckpointReader(db, log), Checkpointer: checkpointer,
+		AuditCheckpoints: audit.NewCheckpointReader(db, log), Checkpointer: checkpointer, SecurityConfig: configs,
 	}, nil
 }
 
@@ -377,6 +383,7 @@ type releaseDeps struct {
 	tenancy   *tenancy.Service
 	documents *document.Service
 	devices   *device.Service
+	configs   *seccfg.Service
 }
 
 // buildReleases assembles the release service, or returns nil when the
@@ -388,13 +395,16 @@ func buildReleases(cfg *config.Config, db *storage.DB, set limits.Set, work Work
 	releases, err := release.NewService(release.Options{
 		DB: db, Audit: deps.audit, Tenancy: deps.tenancy, Documents: deps.documents, Objects: work.Objects, IDs: deps.ids,
 		Jobs: publishQueue{work.Queue}, Signer: work.Signer, ProductionSigning: work.ProductionSigning, Limits: set,
-		Devices: deps.devices, PublicBaseURL: cfg.Server.PublicBaseURL,
+		Devices: deps.devices, SecurityConfig: deps.configs, PublicBaseURL: cfg.Server.PublicBaseURL,
 		CompilerVersion: buildinfo.Get().Version, DevelopmentDays: cfg.Retention.DevelopmentReleaseDays,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("server: %w", err)
 	}
 	deps.tenancy.RegisterUsage(releases.Usage)
+	// A change of an environment's configuration has its manifests signed
+	// again, so that they pin the new version (SEC-182).
+	deps.configs.OnChange(releases.EnqueueEnvironmentManifests)
 	return releases, nil
 }
 
@@ -467,14 +477,17 @@ func (s *Server) RegisterAPI(svc *Services) error {
 	}
 	h := &api.Handlers{
 		Auth: svc.Auth, Tenancy: svc.Tenancy, Documents: svc.Documents, Releases: svc.Releases, Devices: svc.Devices, Events: svc.Events,
-		Idempotency: svc.Idempotency, Pages: svc.Pages,
+		Idempotency: svc.Idempotency, Pages: svc.Pages, SecurityConfig: svc.SecurityConfig,
 		Limiter: limiter, Limits: s.limits,
+	}
+	if svc.AuditCheckpoints != nil {
+		h.AuditCheckpoints = svc.AuditCheckpoints
 	}
 	people := api.Authentication(svc.Auth, api.IdentityPublic, s.trusted, limiter, s.limits.Get(limits.APIRequestsPerMinute))
 	trust := svc.DeviceTrust
 	authn := api.DeviceAuthentication(api.DeviceAuth{
 		Devices: svc.Devices, Tokens: trust.Tokens, Proofs: trust.Proofs, Nonces: trust.Nonces, Replay: trust.Replay,
-		BaseURL: s.cfg.Server.PublicBaseURL, Window: trust.Window, FallbackWindow: trust.FallbackWindow,
+		BaseURL: s.cfg.Server.PublicBaseURL, Window: trust.Window, FallbackWindow: trust.FallbackWindow, Windows: trust.Windows,
 		Limiter: limiter, PerDevice: s.limits.Get(limits.APIRequestsPerMinutePerDevice), People: people,
 	})
 	// api.requestSize bounds a body as sent, before a handler reads it
@@ -507,6 +520,11 @@ func (s *Server) RegisterAPI(svc *Services) error {
 				return pluxv1connect.NewNativeCatalogueServiceHandler(h.NativeCatalogue(), opts)
 			},
 			func() (string, http.Handler) { return pluxv1connect.NewControlServiceHandler(h.Control(), opts) })
+	}
+	if svc.SecurityConfig != nil {
+		registrations = append(registrations, func() (string, http.Handler) {
+			return pluxv1connect.NewSecurityAdminServiceHandler(h.SecurityAdmin(), opts)
+		})
 	}
 	for _, register := range registrations {
 		path, handler := register()

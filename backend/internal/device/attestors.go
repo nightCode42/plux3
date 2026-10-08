@@ -98,3 +98,14 @@ type AppTrust func(ctx context.Context, appID string) (TrustConfig, error)
 // Profiles returns the security profile of an environment. A nil Profiles
 // means every environment is standard.
 type Profiles func(ctx context.Context, appID, envID string) (settings.Profile, error)
+
+// Values gives the value each security setting takes in an environment:
+// its profile's preset, or the operator's override (SEC-182).
+type Values interface {
+	Profile() settings.Profile
+	Get(settings.Key) settings.Value
+}
+
+// Config returns the security configuration in force for an environment.
+// It takes precedence over Profiles.
+type Config func(ctx context.Context, appID, envID string) (Values, error)

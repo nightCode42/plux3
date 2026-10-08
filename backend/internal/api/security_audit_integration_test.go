@@ -92,8 +92,8 @@ func TestListAuditCheckpoints(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	h := &api.Handlers{Auth: authService, Tenancy: tenancyService, Pages: pages}
-	service := api.NewSecurityAdmin(h, audit.NewCheckpointReader(db, log))
+	h := &api.Handlers{Auth: authService, Tenancy: tenancyService, Pages: pages, AuditCheckpoints: audit.NewCheckpointReader(db, log)}
+	service := h.SecurityAdmin()
 	list := func(ctx context.Context, page *pluxv1.Page) (*pluxv1.ListAuditCheckpointsResponse, error) {
 		r := connect.NewRequest(&pluxv1.ListAuditCheckpointsRequest{Page: page})
 		r.Header().Set(api.OrganizationHeader, org.ID)

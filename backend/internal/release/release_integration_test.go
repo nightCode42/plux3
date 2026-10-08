@@ -32,7 +32,9 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/document"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/release"
+	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 	"github.com/nightCode42/plux3/backend/internal/schema/uuid7"
+	"github.com/nightCode42/plux3/backend/internal/seccfg"
 	"github.com/nightCode42/plux3/backend/internal/signing"
 	"github.com/nightCode42/plux3/backend/internal/storage"
 	"github.com/nightCode42/plux3/backend/internal/storage/objects"
@@ -93,6 +95,7 @@ type fixture struct {
 	tenancy *tenancy.Service
 	docs    *document.Service
 	rel     *release.Service
+	sec     *seccfg.Service
 	signer  *signing.File
 	store   *objects.Filesystem
 	q       *queue
@@ -117,6 +120,13 @@ func newFixture(t *testing.T) *fixture {
 // newFixtureOf is newFixture with the conformance project of that name;
 // loans is then its first plugin.
 func newFixtureOf(t *testing.T, name string) *fixture {
+	t.Helper()
+	return newFixtureWith(t, name, limits.Set{})
+}
+
+// newFixtureWith is newFixtureOf with the limits the security
+// configuration service applies; the zero set uses the defaults.
+func newFixtureWith(t *testing.T, name string, securityLimits limits.Set) *fixture {
 	t.Helper()
 	ctx := context.Background()
 	db := storagetest.Open(t)
@@ -146,13 +156,17 @@ func newFixtureOf(t *testing.T, name string) *fixture {
 	if f.docs, err = document.NewService(document.Options{DB: db, Audit: log, Tenancy: f.tenancy, IDs: gen, Objects: store, Jobs: f.assets, Codecs: codecs, Now: clock}); err != nil {
 		t.Fatal(err)
 	}
+	if f.sec, err = seccfg.New(seccfg.Options{DB: db, Audit: log, Limits: securityLimits, Now: clock}); err != nil {
+		t.Fatal(err)
+	}
 	if f.rel, err = release.NewService(release.Options{
 		DB: db, Audit: log, Tenancy: f.tenancy, Documents: f.docs, Objects: store, IDs: gen,
 		Jobs: f.q, Signer: backend, ProductionSigning: true, Now: clock, DevelopmentDays: 90,
-		PublicBaseURL: "https://plux.example.com",
+		PublicBaseURL: "https://plux.example.com", SecurityConfig: f.sec,
 	}); err != nil {
 		t.Fatal(err)
 	}
+	f.sec.OnChange(f.rel.EnqueueEnvironmentManifests)
 	admin, invitation, err := authService.Bootstrap(ctx, "admin@example.com")
 	if err != nil {
 		t.Fatal(err)
