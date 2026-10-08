@@ -56,7 +56,7 @@ func entropy() io.Reader { return bytes.NewReader(bytes.Repeat([]byte("plux-test
 
 func prepare(t *testing.T, project fs.FS) *Plan {
 	t.Helper()
-	plan, err := Prepare(Options{Project: project, Compiler: compiler.DefaultOptions(), Entropy: entropy(), Runtime: Dependency{Version: "^0.3.0"}})
+	plan, err := Prepare(Options{Project: project, Compiler: compiler.DefaultOptions(), Entropy: entropy(), Runtime: Dependency{Version: "^0.4.0"}})
 	if err != nil {
 		t.Fatal(err)
 	}
