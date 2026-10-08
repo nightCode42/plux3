@@ -141,6 +141,18 @@ final class ControlFlags {
   final String message;
 }
 
+/// The security configuration a manifest pins (SEC-182): its version and
+/// the SHA-256 of the canonical device document at that version.
+final class SecurityConfigRef {
+  const SecurityConfigRef._(this.version, this.sha256);
+
+  /// The configuration version; 0 is the built-in defaults.
+  final int version;
+
+  /// The hash of the canonical device document (32 bytes).
+  final Uint8List sha256;
+}
+
 /// A verified manifest: the fields of its signed part, and the bytes.
 final class VerifiedManifest {
   const VerifiedManifest._({
@@ -154,6 +166,7 @@ final class VerifiedManifest {
     required this.appBundle,
     required this.plugins,
     required this.control,
+    this.config,
   });
 
   /// The canonical bytes the signatures cover.
@@ -185,6 +198,10 @@ final class VerifiedManifest {
 
   /// The control switches.
   final ControlFlags control;
+
+  /// The security configuration the manifest pins; null when it names none
+  /// (SEC-182).
+  final SecurityConfigRef? config;
 
   /// The app bundle followed by every plugin bundle.
   Iterable<BundleRef> get bundles sync* {
@@ -372,12 +389,25 @@ VerifiedManifest parseManifest(Uint8List signed) {
         control['mandatory'] as bool? ?? false,
         control['message'] as String? ?? '',
       ),
+      config: _configRef(m['config']),
     );
   } on TypeError {
     throw _invalid('a field of the manifest is missing or of the wrong type');
   } on FormatException {
     throw _invalid('a time of the manifest is not RFC 3339');
   }
+}
+
+SecurityConfigRef? _configRef(Object? json) {
+  if (json == null) return null;
+  final c = json as Map<String, Object?>;
+  final version = c['version']! as int;
+  var hash = c['sha256']! as String;
+  if (hash.startsWith('sha256:')) hash = hash.substring(7);
+  if (version < 0 || hash.length != 64 || !_hex.hasMatch(hash)) {
+    throw _invalid('config is not {version >= 0, sha256: 64 hex digits}');
+  }
+  return SecurityConfigRef._(version, hexDecode(hash));
 }
 
 BundleRef _bundle(Map<String, Object?> b) {
