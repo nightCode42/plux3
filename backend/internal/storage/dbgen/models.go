@@ -457,6 +457,19 @@ type ReleaseVersion struct {
 	PluginVersionID pgtype.UUID
 }
 
+type SecurityConfigVersion struct {
+	OrganizationID pgtype.UUID
+	AppID          pgtype.UUID
+	EnvironmentID  pgtype.UUID
+	Version        int64
+	Profile        string
+	Overrides      []byte
+	CreatedAt      pgtype.Timestamptz
+	CreatedByKind  string
+	CreatedByID    string
+	CreatedBy      string
+}
+
 type Session struct {
 	ID         pgtype.UUID
 	UserID     pgtype.UUID

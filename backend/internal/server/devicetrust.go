@@ -25,6 +25,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/devtoken"
 	"github.com/nightCode42/plux3/backend/internal/dpop"
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
+	"github.com/nightCode42/plux3/backend/internal/seccfg"
 	"github.com/nightCode42/plux3/backend/internal/security/settings"
 	"github.com/nightCode42/plux3/backend/internal/signing"
 	"github.com/nightCode42/plux3/backend/internal/storage"
@@ -51,6 +52,10 @@ type DeviceTrust struct {
 	// iat from the clock, normally and while the replay cache is
 	// degraded.
 	Window, FallbackWindow time.Duration
+	// Windows returns the windows of one environment, which an operator
+	// may have tightened (SEC-182); nil where the installation's apply.
+	// The nonce rotation and the replay policy stay the installation's.
+	Windows func(ctx context.Context, appID, environmentID string) (window, fallback time.Duration, err error)
 }
 
 // tokenSignerFor narrows the signing backend to token signing for the api
@@ -130,7 +135,7 @@ func issuerFor(cfg *config.Config, signer signing.TokenSigner) (*devtoken.Issuer
 
 // buildDeviceTrust assembles the verification side of device
 // authentication: tokens, proofs, nonces and the replay cache.
-func buildDeviceTrust(ctx context.Context, cfg *config.Config, db *storage.DB, shared cache.Cache, set limits.Set, crypter signing.Crypter, signer signing.TokenSigner, log *slog.Logger) (*DeviceTrust, error) {
+func buildDeviceTrust(ctx context.Context, cfg *config.Config, db *storage.DB, shared cache.Cache, set limits.Set, crypter signing.Crypter, signer signing.TokenSigner, log *slog.Logger, configs *seccfg.Service) (*DeviceTrust, error) {
 	if signer == nil {
 		return nil, nil //nolint:nilnil // no api role, no device authentication
 	}
@@ -171,8 +176,24 @@ func buildDeviceTrust(ctx context.Context, cfg *config.Config, db *storage.DB, s
 			log.WarnContext(ctx, "the DPoP replay cache is unavailable; this replica remembers proofs itself and applies the narrower issued-at window (SEC-023)",
 				slog.Any("error", err))
 		}),
-		Window: window, FallbackWindow: fallback,
+		Window: window, FallbackWindow: fallback, Windows: windowsOf(configs),
 	}, nil
+}
+
+// windowsOf reads the DPoP issued-at windows of an environment from its
+// security configuration; nil when there is no store to read.
+func windowsOf(configs *seccfg.Service) func(context.Context, string, string) (time.Duration, time.Duration, error) {
+	if configs == nil {
+		return nil
+	}
+	return func(ctx context.Context, appID, environmentID string) (time.Duration, time.Duration, error) {
+		v, _, err := configs.Effective(ctx, appID, environmentID)
+		if err != nil {
+			return 0, 0, fmt.Errorf("server: the security configuration: %w", err)
+		}
+		return time.Duration(v.Get(settings.DPOPIatWindow).Int()) * time.Second,
+			time.Duration(v.Get(settings.DPOPIatWindowFallback).Int()) * time.Second, nil
+	}
 }
 
 // deviceDeps are the collaborators of the device side of the services.
@@ -182,6 +203,8 @@ type deviceDeps struct {
 	ids     interface{ New() (string, error) }
 	audit   *audit.Log
 	log     *slog.Logger
+	// configs holds the environments' security configurations.
+	configs *seccfg.Service
 }
 
 // buildDeviceSide assembles the device service and the trust that
@@ -191,11 +214,11 @@ func buildDeviceSide(ctx context.Context, cfg *config.Config, db *storage.DB, sh
 	if log == nil {
 		log = slog.Default()
 	}
-	devices, err := buildDevices(db, d.ids, shared, d.audit, cfg, d.signer)
+	devices, err := buildDevices(db, d.ids, shared, d.audit, cfg, d.signer, d.configs)
 	if err != nil {
 		return nil, nil, err
 	}
-	trust, err := buildDeviceTrust(ctx, cfg, db, shared, set, d.crypter, d.signer, log)
+	trust, err := buildDeviceTrust(ctx, cfg, db, shared, set, d.crypter, d.signer, log, d.configs)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -204,7 +227,7 @@ func buildDeviceSide(ctx context.Context, cfg *config.Config, db *storage.DB, sh
 
 // buildDevices assembles the device service, whose registrations verify
 // attestation and whose refreshes issue access tokens.
-func buildDevices(db *storage.DB, gen interface{ New() (string, error) }, shared cache.Cache, auditLog *audit.Log, cfg *config.Config, signer signing.TokenSigner) (*device.Service, error) {
+func buildDevices(db *storage.DB, gen interface{ New() (string, error) }, shared cache.Cache, auditLog *audit.Log, cfg *config.Config, signer signing.TokenSigner, configs *seccfg.Service) (*device.Service, error) {
 	attestors, err := buildAttestors()
 	if err != nil {
 		return nil, err
@@ -214,6 +237,12 @@ func buildDevices(db *storage.DB, gen interface{ New() (string, error) }, shared
 		return nil, err
 	}
 	opts := device.Options{DB: db, IDs: gen, Cache: shared, Audit: auditLog, Attestors: attestors, AppTrust: trust}
+	if configs != nil {
+		opts.Config = func(ctx context.Context, appID, envID string) (device.Values, error) {
+			v, _, err := configs.Effective(ctx, appID, envID)
+			return v, err //nolint:wrapcheck // a domain error
+		}
+	}
 	if signer != nil {
 		if opts.Tokens, err = issuerFor(cfg, signer); err != nil {
 			return nil, err

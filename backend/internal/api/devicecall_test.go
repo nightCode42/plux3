@@ -99,15 +99,9 @@ func challengeOf(err error) string {
 // refresh obtains an access token the way the runtime does: the first
 // attempt carries no nonce and is told to use the server's, the second
 // succeeds.
-func (d *testDevice) refresh(t *testing.T, extra ...func(*pluxv1.RefreshDeviceTokenRequest)) *pluxv1.RefreshDeviceTokenResponse {
+func (d *testDevice) refresh(t *testing.T) *pluxv1.RefreshDeviceTokenResponse {
 	t.Helper()
-	msg := func() *pluxv1.RefreshDeviceTokenRequest {
-		m := &pluxv1.RefreshDeviceTokenRequest{DeviceId: d.id}
-		for _, f := range extra {
-			f(m)
-		}
-		return m
-	}
+	msg := func() *pluxv1.RefreshDeviceTokenRequest { return &pluxv1.RefreshDeviceTokenRequest{DeviceId: d.id} }
 	d.nonce = ""
 	_, err := d.w.token.RefreshDeviceToken(t.Context(), proven(t, d, pluxv1connect.TokenServiceRefreshDeviceTokenProcedure, msg()))
 	if codeOf(err) != connect.CodeUnauthenticated {

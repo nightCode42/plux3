@@ -28,6 +28,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/schema"
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
+	"github.com/nightCode42/plux3/backend/internal/seccfg"
 	"github.com/nightCode42/plux3/backend/internal/signing"
 	"github.com/nightCode42/plux3/backend/internal/storage"
 	"github.com/nightCode42/plux3/backend/internal/storage/objects"
@@ -86,6 +87,9 @@ type Options struct {
 	PublicBaseURL string
 	// Devices answers REL-080's question; nil counts none.
 	Devices Devices
+	// SecurityConfig supplies the security configuration a manifest pins
+	// and the patch that brings a device to it (SEC-182); nil pins none.
+	SecurityConfig *seccfg.Service
 	// Limits are the installation's limits.
 	Limits limits.Set
 	// CompilerVersion is recorded in every bundle (CMP-005).

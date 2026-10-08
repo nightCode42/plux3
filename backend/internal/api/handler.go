@@ -20,6 +20,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/release"
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
+	"github.com/nightCode42/plux3/backend/internal/seccfg"
 	"github.com/nightCode42/plux3/backend/internal/storage/idempotency"
 	"github.com/nightCode42/plux3/backend/internal/telemetry"
 	"github.com/nightCode42/plux3/backend/internal/tenancy"
@@ -30,14 +31,17 @@ import (
 // the wire and the domain, and delegate; nothing here decides what is
 // allowed or stores anything (L-1).
 type Handlers struct {
-	Auth        *auth.Service
-	Tenancy     *tenancy.Service
-	Documents   *document.Service
-	Releases    *release.Service
-	Devices     *device.Service
-	Events      *telemetry.Service
-	Idempotency *idempotency.Store
-	Pages       *Pages
+	Auth      *auth.Service
+	Tenancy   *tenancy.Service
+	Documents *document.Service
+	Releases  *release.Service
+	Devices   *device.Service
+	Events    *telemetry.Service
+	// SecurityConfig serves SecurityAdminService (SEC-182); nil leaves
+	// the service unmounted.
+	SecurityConfig *seccfg.Service
+	Idempotency    *idempotency.Store
+	Pages          *Pages
 	// Limiter counts calls per principal and organisation when an
 	// organisation tightens api.requestsPerMinute (SRV-065, LIM-002).
 	Limiter RateLimiter

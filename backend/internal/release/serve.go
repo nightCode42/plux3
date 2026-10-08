@@ -20,6 +20,7 @@ import (
 
 	"github.com/nightCode42/plux3/backend/internal/bundle"
 	"github.com/nightCode42/plux3/backend/internal/delta"
+	"github.com/nightCode42/plux3/backend/internal/seccfg"
 	"github.com/nightCode42/plux3/backend/internal/storage"
 	"github.com/nightCode42/plux3/backend/internal/storage/dbgen"
 	"github.com/nightCode42/plux3/backend/internal/storage/objects"
@@ -72,6 +73,9 @@ type ManifestRequest struct {
 	// InstalledDigest stands for Installed on an up-to-date check
 	// (NFR-006): InstalledDigest of the bundles the device holds.
 	InstalledDigest []byte
+	// ConfigVersion is the version of the security configuration the
+	// device holds, 0 for the built-in defaults (SEC-182).
+	ConfigVersion int64
 }
 
 // SyncStep tells a device how to obtain one bundle.
@@ -98,6 +102,13 @@ type ServedManifest struct {
 	Plan map[string]SyncStep
 	// URLs holds the full bundle's location per key.
 	URLs map[string]string
+	// ConfigPatch is the RFC 7396 merge patch, as JSON, that brings the
+	// device's security configuration to the version the manifest pins; it
+	// is empty when the device holds that version (SEC-182).
+	ConfigPatch []byte
+	// ConfigFullRequired is set when ConfigPatch is not a patch from the
+	// device's version but from nothing, or when there is none.
+	ConfigFullRequired bool
 }
 
 // GetManifest returns the newest signed manifest of a channel with the
@@ -110,7 +121,9 @@ type ServedManifest struct {
 // again. A device may send InstalledDigest in place of its bundles
 // (NFR-006): it matches when the device holds exactly the manifest's
 // bundles, and otherwise the device is asked for them (InstalledRequired),
-// since the plan's deltas depend on them.
+// since the plan's deltas depend on them. A device whose security
+// configuration is not the one the manifest pins is not answered "not
+// modified" and receives the patch to it (SEC-182).
 func (s *Service) GetManifest(ctx context.Context, r ManifestRequest) (ServedManifest, error) {
 	base, err := s.latestManifest(ctx, r.OrganizationID, r.EnvironmentID, channelOrDefault(r.Channel), r.HostBuild)
 	if err != nil {
@@ -121,8 +134,15 @@ func (s *Service) GetManifest(ctx context.Context, r ManifestRequest) (ServedMan
 	for _, p := range out.Document.Plugins {
 		targets[p.Key] = p.SignedBundle
 	}
+	// The manifest pins its configuration, so its identity, and with it
+	// the ETag, covers the configuration version.
 	out.ETag = etag(base.id[:])
-	if r.IfNoneMatch != "" && r.IfNoneMatch == out.ETag && (holds(targets, r.Installed) || digestHolds(targets, r.InstalledDigest)) {
+	pinned := int64(0)
+	if base.doc.Config != nil {
+		pinned = base.doc.Config.Version
+	}
+	if r.IfNoneMatch != "" && r.IfNoneMatch == out.ETag && r.ConfigVersion == pinned &&
+		(holds(targets, r.Installed) || digestHolds(targets, r.InstalledDigest)) {
 		return ServedManifest{NotModified: true, ETag: out.ETag}, nil
 	}
 	if len(r.Installed) == 0 && len(r.InstalledDigest) > 0 {
@@ -137,7 +157,26 @@ func (s *Service) GetManifest(ctx context.Context, r ManifestRequest) (ServedMan
 		}
 		out.Plan[key], out.URLs[key] = step, full
 	}
+	if err := s.deliverConfig(ctx, r, pinned, &out); err != nil {
+		return ServedManifest{}, err
+	}
 	return out, nil
+}
+
+// deliverConfig adds the configuration patch for a device that holds
+// another version than the manifest pins.
+func (s *Service) deliverConfig(ctx context.Context, r ManifestRequest, pinned int64, out *ServedManifest) error {
+	if s.o.SecurityConfig == nil {
+		return nil
+	}
+	d, err := s.o.SecurityConfig.Deliver(ctx, seccfg.Scope{
+		OrganizationID: r.OrganizationID, AppID: r.AppID, EnvironmentID: r.EnvironmentID,
+	}, r.ConfigVersion, pinned)
+	if err != nil {
+		return fmt.Errorf("release: %w", err)
+	}
+	out.ConfigPatch, out.ConfigFullRequired = d.Patch, d.FullRequired
+	return nil
 }
 
 // manifestTTL is how long a replica reuses a channel's newest manifest

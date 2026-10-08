@@ -5,6 +5,7 @@ package device
 
 import (
 	"testing"
+	"time"
 
 	"github.com/nightCode42/plux3/backend/internal/attest/playintegrity"
 	"github.com/nightCode42/plux3/backend/internal/security/settings"
@@ -114,5 +115,45 @@ func TestCovers(t *testing.T) {
 		if got := c.proven.covers(c.claim); got != c.want {
 			t.Errorf("%s covers %s = %v", c.proven, c.claim, got)
 		}
+	}
+}
+
+// fixedValues is a configuration: a profile and the values that differ.
+type fixedValues struct {
+	profile settings.Profile
+	set     map[settings.Key]settings.Value
+}
+
+func (f fixedValues) Profile() settings.Profile { return f.profile }
+
+func (f fixedValues) Get(k settings.Key) settings.Value {
+	if v, ok := f.set[k]; ok {
+		return v
+	}
+	s, _ := settings.Lookup(k)
+	v, _ := s.Defaults.For(f.profile)
+	return v
+}
+
+// Verifies: SEC-182.
+// An operator's override replaces the profile's preset for the settings
+// the device service acts on.
+func TestSettingsOf(t *testing.T) {
+	t.Parallel()
+	s, err := SettingsOf(fixedValues{profile: settings.Standard, set: map[settings.Key]settings.Value{
+		settings.AllowSoftwareKeys:               settings.BoolValue(false),
+		settings.AndroidDeviceVerdictAL2:         settings.TextValue("MEETS_DEVICE_INTEGRITY"),
+		settings.AccessTokenLifetime:             settings.IntValue(120),
+		settings.AndroidRefreshRequiresIntegrity: settings.BoolValue(true),
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !s.requireHardware() || s.AndroidDeviceVerdictAL2 != playintegrity.LabelDevice ||
+		s.AccessTokenLifetime != 120*time.Second || !s.AndroidRefreshRequiresIntegrity || s.Profile != settings.Standard {
+		t.Errorf("SettingsOf = %+v", s)
+	}
+	if plain, err := SettingsOf(fixedValues{profile: settings.Strict}); err != nil || plain != mustSettings(t, settings.Strict) {
+		t.Errorf("a configuration with no overrides: %+v %v", plain, err)
 	}
 }

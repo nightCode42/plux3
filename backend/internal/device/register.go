@@ -235,6 +235,13 @@ func parseKey(raw []byte) (*ecdsa.PublicKey, []byte, string, error) {
 
 // settingsFor resolves the security settings of an environment.
 func (s *Service) settingsFor(ctx context.Context, appID, envID string) (Settings, error) {
+	if s.config != nil {
+		v, err := s.config(ctx, appID, envID)
+		if err != nil {
+			return Settings{}, fmt.Errorf("device: the security configuration: %w", err)
+		}
+		return SettingsOf(v)
+	}
 	profile := settings.Standard
 	if s.profiles != nil {
 		p, err := s.profiles(ctx, appID, envID)
