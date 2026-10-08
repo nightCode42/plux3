@@ -132,6 +132,7 @@ The capabilities the app approves for its plugins (SEC-080, ADR-0051); a release
 |---|---|---|---|
 | `deviceApis` | list of [DeviceAPI](#deviceapi) |  |  |
 | `networkDomains` | list of string |  |  |
+| `networkPins` | map of list of string |  | Optional certificate pins for customer API domains the runtime calls directly (SEC-042): a domain from `networkDomains`, without a wildcard, and at least two distinct pins, each the base64 of the SHA-256 of a certificate's SubjectPublicKeyInfo (RFC 7469), one of them a backup key. A connection to the domain is accepted only when a certificate of its chain has a pinned key, and fails closed otherwise (`PLX-6020`). |
 | `functions` | list of string |  |  |
 
 ### AssetEntry

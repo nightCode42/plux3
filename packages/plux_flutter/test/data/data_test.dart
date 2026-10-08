@@ -8,6 +8,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:plux_flutter/plux_flutter.dart';
 import 'package:plux_flutter/src/actions/handlers.dart';
 import 'package:plux_flutter/src/data/cache.dart';
@@ -145,8 +146,9 @@ void main() {
     PluxAuthDelegate? auth,
     DataMocks mocks = const DataMocks(),
     CacheStore? store,
+    http.Client? client,
   }) => DataServices(
-    transport: ClientTransport(http.Client()),
+    transport: ClientTransport(client ?? http.Client()),
     authDelegate: () => auth,
     environment: 'production',
     record: (name, {fields = const {}, route = '', pluginKey = ''}) =>
@@ -638,6 +640,27 @@ void main() {
     expect(fields['status'], 200);
     expect(jsonEncode(fields), isNot(contains('open')));
     expect(jsonEncode(fields), isNot(contains('One')));
+  });
+
+  // Verifies: SEC-042.
+  test('a pinned domain whose certificate matches no pin fails the load and '
+      'is reported as pin_failure with the host only [SEC-042]', () async {
+    services = make(
+      client: MockClient(
+        (_) async => throw const PluxException(
+          PluxErrorCode.certificatePinMismatch,
+          'the certificate of 127.0.0.1 matches none of the pins',
+          details: {'host': '127.0.0.1'},
+        ),
+      ),
+    );
+    final c = controller(tasks());
+    await c.load(roots);
+    expect(c.snapshot['status'], 'error');
+    expect(events.map((e) => e.$1), contains('pin_failure'));
+    final pin = events.firstWhere((e) => e.$1 == 'pin_failure');
+    expect(pin.$2, {'host': '127.0.0.1'});
+    expect(reports.map((e) => e.code), [PluxErrorCode.certificatePinMismatch]);
   });
 
   test('apiCall and refreshData run on the page data through the engine table [DAT-001] [DAT-011]', () async {

@@ -120,18 +120,26 @@ final class PlatformHttpClients {
 /// plugin's own Cronet or `URLSession` client, still HTTP/2 and pinned
 /// against every certificate of the chain (`cronet_http` offers no pins and
 /// `cupertino_http` no server-trust hook, so the plugin makes the
-/// requests); elsewhere it is `dart:io`, which shows only the leaf.
+/// requests); elsewhere it is `dart:io`, which shows only the leaf. The
+/// customer domains an app pins (SEC-042) get a pinned client of their own
+/// through [DomainPinned].
 http.Client platformHttpClient({Uri? endpoint, PinSet? pins}) {
   final agent = PluxRuntimeInfo.userAgent;
-  final other = _unpinnedHttpClient(agent);
+  http.Client pinned(PinSet set) => Platform.isAndroid || Platform.isIOS
+      ? NativePinnedClient(pins: set, userAgent: agent)
+      : IOClient(pinnedHttpClient(set, userAgent: agent));
+  // Customer domains the app pins (SEC-042) are told to the client later,
+  // through [DomainPinned].
+  final other = DomainPinsClient(
+    other: _unpinnedHttpClient(agent),
+    pinned: pinned,
+  );
   if (endpoint == null || pins == null || endpoint.scheme != 'https') {
     return other;
   }
   return PinRoutingClient(
     host: endpoint.host,
-    pinned: Platform.isAndroid || Platform.isIOS
-        ? NativePinnedClient(pins: pins, userAgent: agent)
-        : IOClient(pinnedHttpClient(pins, userAgent: agent)),
+    pinned: pinned(pins),
     other: other,
   );
 }

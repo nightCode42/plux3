@@ -84,11 +84,84 @@ HttpClient pinnedHttpClient(
     ..connectionFactory = connect;
 }
 
+/// A client that takes the pins of customer API domains (SEC-042).
+abstract interface class DomainPinned {
+  /// Replaces the pins of the domains: each host with its pins, at least
+  /// two distinct ones. A host left out is no longer pinned; a host whose
+  /// pins are not valid fails closed.
+  void pinDomains(Map<String, List<String>> pins);
+}
+
+/// Sends the requests to the domains an app pins (SEC-042) through a
+/// client made for each domain's pins, and every other request through
+/// [other]. The pins come from the active release, so they change at run
+/// time; a domain whose pins change gets a new client, since a pooled
+/// connection was accepted under the old pins.
+final class DomainPinsClient extends http.BaseClient implements DomainPinned {
+  /// Creates a client over [other]; [pinned] makes the client of a domain.
+  DomainPinsClient({required this._other, required this._pinned});
+
+  final http.Client _other;
+  final http.Client Function(PinSet pins) _pinned;
+  final Map<String, PinSet> _sets = {};
+  final Map<String, PluxException> _invalid = {};
+  final Map<String, http.Client> _clients = {};
+
+  @override
+  void pinDomains(Map<String, List<String>> pins) {
+    final wanted = {for (final e in pins.entries) e.key.toLowerCase(): e.value};
+    for (final host in [..._sets.keys, ..._invalid.keys]) {
+      if (!wanted.containsKey(host)) _forget(host);
+    }
+    for (final MapEntry(key: host, value: list) in wanted.entries) {
+      try {
+        final next = validatedPins(list);
+        final held = _sets[host];
+        if (held != null &&
+            held.pins.length == next.length &&
+            held.pins.containsAll(next)) {
+          continue;
+        }
+        _forget(host);
+        _sets[host] = PinSet(next);
+      } on PluxException catch (e) {
+        _forget(host);
+        _invalid[host] = e;
+      }
+    }
+  }
+
+  void _forget(String host) {
+    _sets.remove(host);
+    _invalid.remove(host);
+    _clients.remove(host)?.close();
+  }
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) {
+    final host = request.url.host.toLowerCase();
+    final invalid = _invalid[host];
+    if (invalid != null) return Future.error(invalid);
+    final pins = _sets[host];
+    if (pins == null) return _other.send(request);
+    return (_clients[host] ??= _pinned(pins)).send(request);
+  }
+
+  @override
+  void close() {
+    for (final c in _clients.values) {
+      c.close();
+    }
+    _clients.clear();
+    _other.close();
+  }
+}
+
 /// Sends requests to [host] through [pinned] and every other request
 /// through [other]: the platform's HTTP/2 client keeps serving CDNs and
 /// customer APIs, while the Plux server is reached only over a pinned
 /// connection.
-final class PinRoutingClient extends http.BaseClient {
+final class PinRoutingClient extends http.BaseClient implements DomainPinned {
   /// Creates a client that routes by the host of each request.
   PinRoutingClient({
     required String host,
@@ -105,6 +178,12 @@ final class PinRoutingClient extends http.BaseClient {
       (request.url.host.toLowerCase() == _host ? _pinned : _other).send(
         request,
       );
+
+  @override
+  void pinDomains(Map<String, List<String>> pins) {
+    final other = _other;
+    if (other is DomainPinned) (other as DomainPinned).pinDomains(pins);
+  }
 
   @override
   void close() {
