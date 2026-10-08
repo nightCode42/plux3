@@ -133,6 +133,9 @@ func configCommand(args []string, stdout, stderr io.Writer) int {
 		return code
 	}
 	_, _ = fmt.Fprintf(stdout, "✓ configuration is valid: %s\n", cfg)
+	for _, w := range cfg.Warnings() {
+		_, _ = fmt.Fprintf(stderr, "warning: %s\n", w)
+	}
 	_, _ = fmt.Fprintf(stdout, "  environment variables read: %v\n", config.EnvironNames())
 	return exitOK
 }

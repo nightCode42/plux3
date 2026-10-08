@@ -23,6 +23,9 @@ func Defaults() Config {
 			Roles:         []Role{RoleAPI, RoleWorker},
 			Listen:        ":8080",
 			ShutdownGrace: Duration(30e9),
+			// Two years, with subdomains: the HSTS preload minimum plus
+			// a margin (SEC-040). Preload itself is a deliberate opt-in.
+			HSTS: HSTS{MaxAge: Duration(17520 * 3600e9), IncludeSubDomains: true},
 		},
 		Database: Database{MaxConnections: 50, MigrateOnStart: true},
 		ObjectStorage: ObjectStorage{

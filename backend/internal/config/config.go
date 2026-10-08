@@ -96,6 +96,67 @@ type Server struct {
 	// the header only when the immediate peer is one of them; otherwise
 	// a client could claim any address it liked.
 	TrustedProxies []string `json:"trustedProxies"`
+	// Production declares a production installation. It makes validation
+	// refuse an unprotected transport to PostgreSQL, to Valkey and from
+	// clients (SEC-040, SEC-041).
+	Production bool `json:"production"`
+	// BehindTLSProxy states that a proxy in front of the api role
+	// terminates TLS 1.3 for it. A production installation without
+	// server.tls must set it explicitly.
+	BehindTLSProxy bool `json:"behindTLSProxy"`
+	// TLS makes the api role terminate TLS itself; absent, it speaks
+	// plain HTTP behind a terminating proxy.
+	TLS TLS `json:"tls"`
+	// HSTS configures the Strict-Transport-Security header.
+	HSTS HSTS `json:"hsts"`
+	// InternalListen is the address of the listener for the traffic
+	// between roles; empty serves none. It requires InternalTLS.
+	InternalListen string `json:"internalListen"`
+	// InternalTLS is the identity of this role on the internal network:
+	// the CA every role's certificate is signed by, and this role's own
+	// certificate and key (SEC-043).
+	InternalTLS InternalTLS `json:"internalTLS"`
+}
+
+// TLS is the certificate the api role terminates TLS with (SEC-040).
+type TLS struct {
+	// CertFile and KeyFile are PEM files; both or neither.
+	CertFile string `json:"certFile"`
+	KeyFile  string `json:"keyFile"`
+	// AllowTLS12 accepts TLS 1.2 with AEAD ECDHE suites besides TLS 1.3.
+	// It is the installation default of the tls12Allowed setting, which
+	// is false, and every start with it set logs a warning.
+	AllowTLS12 bool `json:"allowTLS12"`
+}
+
+// Enabled reports whether the api role terminates TLS itself.
+func (t TLS) Enabled() bool { return t.CertFile != "" || t.KeyFile != "" }
+
+// HSTS configures Strict-Transport-Security (SEC-040).
+type HSTS struct {
+	// MaxAge is how long a browser remembers to use HTTPS only; zero
+	// disables the header, with a warning.
+	MaxAge Duration `json:"maxAge"`
+	// IncludeSubDomains extends the policy to every subdomain.
+	IncludeSubDomains bool `json:"includeSubDomains"`
+	// Preload consents to browser preload lists, which are hard to leave;
+	// it needs IncludeSubDomains and a MaxAge of at least a year.
+	Preload bool `json:"preload"`
+}
+
+// InternalTLS is a role's identity for mutual TLS between roles
+// (SEC-043).
+type InternalTLS struct {
+	// CAFile signs every role's certificate; CertFile and KeyFile are
+	// this role's own. All three or none.
+	CAFile   string `json:"caFile"`
+	CertFile string `json:"certFile"`
+	KeyFile  string `json:"keyFile"`
+}
+
+// Enabled reports whether an internal identity is configured.
+func (t InternalTLS) Enabled() bool {
+	return t.CAFile != "" || t.CertFile != "" || t.KeyFile != ""
 }
 
 // Database is PostgreSQL, the system of record (SRV-020).
