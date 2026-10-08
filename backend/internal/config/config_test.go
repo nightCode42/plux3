@@ -141,6 +141,8 @@ func TestValidateReportsEveryProblem(t *testing.T) {
 		{"vault without token", minimal + "signing:\n  backend: vault\n  vault:\n    address: \"https://vault:8200\"\n", "PLUX_SIGNING_VAULT_TOKEN"},
 		{"vault wrap key", minimal + "signing:\n  backend: vault\n  vault:\n    address: \"https://vault:8200\"\n    token: t\n    wrapKey: \"Bad Key\"\n", "signing.vault.wrapKey"},
 		{"a later signing backend", minimal + "signing:\n  backend: awskms\n", "arrives in P6"},
+		{"pkcs11 without socket", minimal + "signing:\n  backend: pkcs11\n", "signing.pkcs11.socket"},
+		{"pkcs11 relative socket", minimal + "signing:\n  backend: pkcs11\n  pkcs11:\n    socket: helper.sock\n", "absolute path"},
 		{"targets prefix", minimal + "signing:\n  keys:\n    targets: \"Targets\"\n", "signing.keys.targets"},
 		{"unknown mfa capability", minimal + "auth:\n  studio:\n    mfaRequiredFor: [publish, nonsense]\n", "mfaRequiredFor[1]"},
 		{"zero session lifetime", minimal + "auth:\n  studio:\n    sessionTTL: 0s\n", "auth.studio.sessionTTL"},
@@ -166,6 +168,15 @@ func TestValidateReportsEveryProblem(t *testing.T) {
 		{"Play Integrity without packages", minimal + "attestation:\n  apps:\n    0190a1b2-0000-7000-8000-000000000001:\n      playIntegrityDecryptionKey: k\n      playIntegrityVerificationKey: v\n", "androidPackages"},
 		{"bad trusted proxy", withServer("  trustedProxies: [\"10.0.0.0/8\", \"proxy\"]\n"), "trustedProxies[1]"},
 	})
+}
+
+// Verifies: SEC-120.
+func TestPKCS11BackendParses(t *testing.T) {
+	t.Parallel()
+	c := parse(t, minimal+"signing:\n  backend: pkcs11\n  pkcs11:\n    socket: /run/plux/pkcs11.sock\n")
+	if c.Signing.PKCS11.Socket != "/run/plux/pkcs11.sock" {
+		t.Errorf("socket = %q", c.Signing.PKCS11.Socket)
+	}
 }
 
 // Verifies: SEC-003.

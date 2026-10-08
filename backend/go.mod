@@ -16,6 +16,7 @@ require (
 	github.com/google/flatbuffers v25.9.23+incompatible
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/klauspost/compress v1.20.1
+	github.com/miekg/pkcs11 v1.1.2
 	github.com/prometheus/client_golang v1.24.1
 	github.com/riverqueue/river v0.47.0
 	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.47.0

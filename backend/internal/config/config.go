@@ -228,6 +228,8 @@ type Signing struct {
 	Directory string `json:"directory"`
 	// Vault configures the HashiCorp Vault Transit backend.
 	Vault Vault `json:"vault"`
+	// PKCS11 configures the PKCS#11 backend.
+	PKCS11 PKCS11 `json:"pkcs11"`
 }
 
 // SigningKeys names the keys of each update-metadata role.
@@ -256,6 +258,14 @@ type Vault struct {
 	// WrapKey names the key that wraps the data keys of stored secrets
 	// (SEC-106); "" is "plux-secrets".
 	WrapKey string `json:"wrapKey"`
+}
+
+// PKCS11 is a hardware security module reached through the PKCS#11 helper
+// process (SEC-120, ADR-0060). The PIN and the vendor module belong to the
+// helper, never to the server's configuration.
+type PKCS11 struct {
+	// Socket is the absolute path of the helper's Unix socket.
+	Socket string `json:"socket"`
 }
 
 // Auth configures who may call the server.

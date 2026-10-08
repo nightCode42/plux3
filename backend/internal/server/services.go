@@ -245,6 +245,12 @@ func BuildSigning(cfg *config.Config) (signing.Backend, error) {
 			return nil, fmt.Errorf("server: signing: %w", err)
 		}
 		return b, nil
+	case "pkcs11":
+		b, err := signing.NewPKCS11(signing.PKCS11Options{Socket: cfg.Signing.PKCS11.Socket})
+		if err != nil {
+			return nil, fmt.Errorf("server: signing: %w", err)
+		}
+		return b, nil
 	default:
 		return nil, fmt.Errorf("server: signing backend %q is not available in this phase", cfg.Signing.Backend)
 	}

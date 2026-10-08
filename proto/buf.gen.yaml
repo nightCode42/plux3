@@ -24,3 +24,7 @@ plugins:
       - format=yaml
       - path=openapi.yaml
       - base=openapi.base.yaml
+    # The internal helper protocol is not part of the public API
+    # description (SEC-120).
+    exclude_types:
+      - plux.internal.pkcs11.v1

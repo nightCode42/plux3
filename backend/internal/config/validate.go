@@ -185,6 +185,12 @@ func (c *Config) validateSigning(p *problems) {
 		if v.WrapKey != "" && !keyPattern.MatchString(v.WrapKey) {
 			p.addf("signing.vault.wrapKey", "must be lower-case letters, digits and hyphens")
 		}
+	case "pkcs11":
+		if s := c.Signing.PKCS11.Socket; s == "" {
+			p.addf("signing.pkcs11.socket", "must be set for the pkcs11 backend")
+		} else if !filepath.IsAbs(s) {
+			p.addf("signing.pkcs11.socket", "must be an absolute path")
+		}
 	default:
 		p.addf("signing.backend", "%q arrives in P6; P2 supports vault and the file backend, which is refused for production environments", c.Signing.Backend)
 	}

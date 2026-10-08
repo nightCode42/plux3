@@ -15,6 +15,7 @@ GO_MODULES    := backend tools test/refapi
 GEN_PATHS     := backend tools docs/reference packages studio/packages schema
 PROTO_DIR     := proto
 PROTO_GO_DIR  := backend/internal/pluxv1
+PROTO_INTERNAL_GO_DIR := backend/internal/pkcs11pb
 PROTO_API_DIR := docs/reference/api
 # The base of `buf breaking`: the last tagged release of the contract
 # (SRV-000). Override to compare with another ref.
@@ -62,7 +63,7 @@ gen: ## Regenerate all generated code and reference documents (CI-003)
 # (SRV-002, CI-003).
 proto: ## Regenerate the API contract's Go code and OpenAPI description (SRV-002)
 	@command -v "$(BUF)" >/dev/null || { echo "✗ buf not found at $(BUF); run 'make install-buf'" >&2; exit 1; }
-	rm -rf $(PROTO_GO_DIR) $(PROTO_API_DIR)
+	rm -rf $(PROTO_GO_DIR) $(PROTO_INTERNAL_GO_DIR) $(PROTO_API_DIR)
 	@mkdir -p $(PROTO_API_DIR)
 	cd $(PROTO_DIR) && PATH="$(TOOLS_BIN):$$PATH" "$(BUF)" format -w .
 	cd $(PROTO_DIR) && PATH="$(TOOLS_BIN):$$PATH" "$(BUF)" generate
