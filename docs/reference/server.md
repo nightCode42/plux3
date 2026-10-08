@@ -77,7 +77,9 @@ cache:
   backend: "memory"             # memory (single-node only) | valkey
   valkeyURL: "rediss://valkey:6379"
 signing:
-  backend: "file"               # file (development only) | vault; PKCS#11 and cloud KMS arrive in P6
+  backend: "file"               # file (development only) | vault | pkcs11 (HSMs and cloud HSMs through plux-pkcs11-helper, SEC-120)
+  pkcs11:
+    socket: "/run/plux/pkcs11.sock"   # the helper's Unix socket (ADR-0060)
   directory: "data/keys"        # the file backend's keys
   vault:                        # HashiCorp Vault Transit (SEC-120)
     address: "https://vault:8200"
