@@ -139,6 +139,8 @@ export interface AppSecuritySettings {
 export interface ApprovedCapabilities {
   readonly deviceApis?: readonly DeviceAPI[];
   readonly networkDomains?: readonly string[];
+  /** Optional certificate pins for customer API domains the runtime calls directly (SEC-042): a domain from `networkDomains`, without a wildcard, and at least two distinct pins, each the base64 of the SHA-256 of a certificate's SubjectPublicKeyInfo (RFC 7469), one of them a backup key. A connection to the domain is accepted only when a certificate of its chain has a pinned key, and fails closed otherwise (`PLX-6020`). */
+  readonly networkPins?: { readonly [key: string]: readonly string[] };
   readonly functions?: readonly string[];
   /** Extension properties are preserved and ignored by the compiler (SCH-004). */
   readonly [extension: `x-${string}`]: unknown;

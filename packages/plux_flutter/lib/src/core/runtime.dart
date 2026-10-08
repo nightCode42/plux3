@@ -155,6 +155,8 @@ final class PluxRuntime with WidgetsBindingObserver {
       telemetry
         ..releaseSequence = r?.sequence ?? 0
         ..appSampling = r?.telemetrySampling ?? const {};
+      // The pins of customer domains follow the active release (SEC-042).
+      _dataWorker.pinDomains(r?.domainPins ?? const {});
     });
   }
 

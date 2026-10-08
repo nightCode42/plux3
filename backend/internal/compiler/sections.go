@@ -1118,13 +1118,13 @@ func (u *unit) metaSection(o *out) {
 	e := &valueEnc{u: u, o: o, b: b, strs: o.shared}
 	features := stringVector(b, featureList(o.features))
 	lv := u.runtimeLimits(b)
-	var pages, exported, capabilities, plugins, locales, flags, sampling, hostEvents flatbuffers.UOffsetT
+	var pages, exported, capabilities, pinned, plugins, locales, flags, sampling, hostEvents flatbuffers.UOffsetT
 	name, key := app.Name, app.Key
 	if o.pl != nil {
 		name, key = o.pl.doc.Name, o.pl.key
 		pages = pageEntries(b, o.pl)
 		exported = componentEntries(b, o.pl)
-		capabilities = capabilitiesTable(b, o.pl.doc.Capabilities)
+		capabilities = capabilitiesTable(b, o.pl.doc.Capabilities, nil)
 	} else {
 		var ids [][16]byte
 		for _, k := range app.Plugins {
@@ -1142,7 +1142,12 @@ func (u *unit) metaSection(o *out) {
 		// The approved device APIs and domains: what the app's own
 		// triggers may use (SEC-080).
 		if c := app.Capabilities; c != nil {
-			capabilities = capabilitiesTable(b, &schema.Capabilities{DeviceApis: c.DeviceApis, NetworkDomains: c.NetworkDomains})
+			capabilities = capabilitiesTable(b, &schema.Capabilities{DeviceApis: c.DeviceApis, NetworkDomains: c.NetworkDomains}, nil)
+		}
+		// The pins of customer domains (SEC-042) are the only part of the
+		// app's capabilities the app bundle's meta carries.
+		if c := app.Capabilities; c != nil && len(c.NetworkPins) > 0 {
+			pinned = capabilitiesTable(b, nil, c.NetworkPins)
 		}
 	}
 	nameOff, keyOff := b.CreateString(name), b.CreateString(key)
@@ -1183,6 +1188,7 @@ func (u *unit) metaSection(o *out) {
 		fbs.MetaAddSupportedLocales(b, locales)
 		fbs.MetaAddEntryRoute(b, entryRoute)
 		fbs.MetaAddFlags(b, flags)
+		addOptional(b, pinned, fbs.MetaAddCapabilities)
 		if app.NativeCatalogue != "" {
 			fbs.MetaAddNativeCatalogue(b, createUUID(b, app.NativeCatalogue))
 		}
@@ -1329,8 +1335,10 @@ func componentEntries(b *flatbuffers.Builder, pl *plugin) flatbuffers.UOffsetT {
 	return offsetVector(b, offs)
 }
 
-// capabilitiesTable writes what a plugin may use (SEC-080, SEC-102).
-func capabilitiesTable(b *flatbuffers.Builder, c *schema.Capabilities) flatbuffers.UOffsetT {
+// capabilitiesTable writes what a plugin may use (SEC-080, SEC-102), and
+// for the app the pins of its customer API domains (SEC-042), by domain
+// and sorted, so equal documents give equal bytes (CMP-002).
+func capabilitiesTable(b *flatbuffers.Builder, c *schema.Capabilities, pins map[string][]string) flatbuffers.UOffsetT {
 	if c == nil {
 		c = &schema.Capabilities{}
 	}
@@ -1352,11 +1360,30 @@ func capabilitiesTable(b *flatbuffers.Builder, c *schema.Capabilities) flatbuffe
 	}
 	devices := stringVector(b, apis)
 	routes := stringVector(b, c.NativeRoutes)
+	hosts := make([]string, 0, len(pins))
+	for h := range pins {
+		hosts = append(hosts, h)
+	}
+	slices.Sort(hosts)
+	pinOffs := make([]flatbuffers.UOffsetT, len(hosts))
+	for i, h := range hosts {
+		list := stringVector(b, slices.Sorted(slices.Values(pins[h])))
+		host := b.CreateString(h)
+		fbs.DomainPinsStart(b)
+		fbs.DomainPinsAddHost(b, host)
+		fbs.DomainPinsAddPins(b, list)
+		pinOffs[i] = fbs.DomainPinsEnd(b)
+	}
+	var networkPins flatbuffers.UOffsetT
+	if len(pinOffs) > 0 {
+		networkPins = offsetVector(b, pinOffs)
+	}
 	fbs.CapabilitiesStart(b)
 	fbs.CapabilitiesAddNetworkDomains(b, domains)
 	fbs.CapabilitiesAddFunctions(b, fns)
 	fbs.CapabilitiesAddDeviceApis(b, devices)
 	fbs.CapabilitiesAddNativeRoutes(b, routes)
+	addOptional(b, networkPins, fbs.CapabilitiesAddNetworkPins)
 	return fbs.CapabilitiesEnd(b)
 }
 

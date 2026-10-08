@@ -22,6 +22,7 @@ import 'package:plux_flutter/src/data/stream_transport.dart';
 import 'package:plux_flutter/src/data/transfer_transport.dart';
 import 'package:plux_flutter/src/data/transport.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/platform/pinned_http.dart';
 import 'package:plux_flutter/src/store/kv_store.dart';
 
 /// The key that encrypts cached responses of sources marked `encrypted`
@@ -99,6 +100,11 @@ final class _StartTransfer extends _Command {
 final class _SetKey extends _Command {
   const _SetKey(super.reply, this.key);
   final Uint8List key;
+}
+
+final class _PinDomains extends _Command {
+  const _PinDomains(super.reply, this.pins);
+  final Map<String, List<String>> pins;
 }
 
 final class _Close extends _Command {
@@ -232,6 +238,13 @@ final class DataWorker
     await _call((r) => _SetKey(r, key));
   }();
 
+  /// Tells the isolate's client the pins of the customer domains the active
+  /// release sets (SEC-042); a host left out is no longer pinned. Requests
+  /// sent after this completes see them.
+  Future<void> pinDomains(Map<String, List<String>> pins) async {
+    await _call((r) => _PinDomains(r, pins));
+  }
+
   @override
   Future<void> close() async {
     await _call(_Close.new);
@@ -332,6 +345,7 @@ Future<void> _main(
       _Send(:final request) => transport.send(request),
       _OpenStream() || _StartTransfer() => null,
       _SetKey(:final key) => secure = FileCacheStore('$dir/secure', key: key),
+      _PinDomains(:final pins) => _pinDomains(http, pins),
       _Close() => transport.close(),
       final _Store s => _store(
         s.secure
@@ -353,6 +367,11 @@ Future<void> _main(
       port.close();
     }
   }
+}
+
+Future<void> _pinDomains(Object client, Map<String, List<String>> pins) async {
+  // A host's own client (PluxConfig.httpClient) is the host's to pin.
+  if (client is DomainPinned) client.pinDomains(pins);
 }
 
 /// Runs one stream connection on the data isolate: the frames go to the
@@ -469,8 +488,20 @@ final class LazyDataWorker
 
   final Future<DataWorker> Function() _start;
   Future<DataWorker>? _worker;
+  Map<String, List<String>> _pins = const {};
 
-  Future<DataWorker> get _started => _worker ??= _start();
+  Future<DataWorker> get _started => _worker ??= _start().then((w) async {
+    if (_pins.isNotEmpty) await w.pinDomains(_pins);
+    return w;
+  });
+
+  /// The pins of the customer domains the active release sets (SEC-042),
+  /// handed to the isolate once it runs and again whenever they change.
+  void pinDomains(Map<String, List<String>> pins) {
+    _pins = pins;
+    final w = _worker;
+    if (w != null) unawaited(w.then((w) => w.pinDomains(pins)));
+  }
 
   @override
   Future<DataResponse> send(DataRequest request) async =>

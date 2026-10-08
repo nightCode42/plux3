@@ -2628,10 +2628,11 @@ class Capabilities {
   List<FunctionGrant>? get functions => const fb.ListReader<FunctionGrant>(FunctionGrant.reader).vTableGetNullable(_bc, _bcOffset, 6);
   List<String>? get deviceApis => const fb.ListReader<String>(fb.StringReader()).vTableGetNullable(_bc, _bcOffset, 8);
   List<String>? get nativeRoutes => const fb.ListReader<String>(fb.StringReader()).vTableGetNullable(_bc, _bcOffset, 10);
+  List<DomainPins>? get networkPins => const fb.ListReader<DomainPins>(DomainPins.reader).vTableGetNullable(_bc, _bcOffset, 12);
 
   @override
   String toString() {
-    return 'Capabilities{networkDomains: ${networkDomains}, functions: ${functions}, deviceApis: ${deviceApis}, nativeRoutes: ${nativeRoutes}}';
+    return 'Capabilities{networkDomains: ${networkDomains}, functions: ${functions}, deviceApis: ${deviceApis}, nativeRoutes: ${nativeRoutes}, networkPins: ${networkPins}}';
   }
 }
 
@@ -2649,7 +2650,7 @@ class CapabilitiesBuilder {
   final fb.Builder fbBuilder;
 
   void begin() {
-    fbBuilder.startTable(4);
+    fbBuilder.startTable(5);
   }
 
   int addNetworkDomainsOffset(int? offset) {
@@ -2668,6 +2669,10 @@ class CapabilitiesBuilder {
     fbBuilder.addOffset(3, offset);
     return fbBuilder.offset;
   }
+  int addNetworkPinsOffset(int? offset) {
+    fbBuilder.addOffset(4, offset);
+    return fbBuilder.offset;
+  }
 
   int finish() {
     return fbBuilder.endTable();
@@ -2679,17 +2684,20 @@ class CapabilitiesObjectBuilder extends fb.ObjectBuilder {
   final List<FunctionGrantObjectBuilder>? _functions;
   final List<String>? _deviceApis;
   final List<String>? _nativeRoutes;
+  final List<DomainPinsObjectBuilder>? _networkPins;
 
   CapabilitiesObjectBuilder({
     List<String>? networkDomains,
     List<FunctionGrantObjectBuilder>? functions,
     List<String>? deviceApis,
     List<String>? nativeRoutes,
+    List<DomainPinsObjectBuilder>? networkPins,
   })
       : _networkDomains = networkDomains,
         _functions = functions,
         _deviceApis = deviceApis,
-        _nativeRoutes = nativeRoutes;
+        _nativeRoutes = nativeRoutes,
+        _networkPins = networkPins;
 
   /// Finish building, and store into the [fbBuilder].
   @override
@@ -2702,11 +2710,98 @@ class CapabilitiesObjectBuilder extends fb.ObjectBuilder {
         : fbBuilder.writeList(_deviceApis!.map(fbBuilder.writeString).toList());
     final int? nativeRoutesOffset = _nativeRoutes == null ? null
         : fbBuilder.writeList(_nativeRoutes!.map(fbBuilder.writeString).toList());
-    fbBuilder.startTable(4);
+    final int? networkPinsOffset = _networkPins == null ? null
+        : fbBuilder.writeList(_networkPins!.map((b) => b.getOrCreateOffset(fbBuilder)).toList());
+    fbBuilder.startTable(5);
     fbBuilder.addOffset(0, networkDomainsOffset);
     fbBuilder.addOffset(1, functionsOffset);
     fbBuilder.addOffset(2, deviceApisOffset);
     fbBuilder.addOffset(3, nativeRoutesOffset);
+    fbBuilder.addOffset(4, networkPinsOffset);
+    return fbBuilder.endTable();
+  }
+
+  /// Convenience method to serialize to byte list.
+  @override
+  Uint8List toBytes([String? fileIdentifier]) {
+    final fbBuilder = fb.Builder(deduplicateTables: false);
+    fbBuilder.finish(finish(fbBuilder), fileIdentifier);
+    return fbBuilder.buffer;
+  }
+}
+class DomainPins {
+  DomainPins._(this._bc, this._bcOffset);
+  factory DomainPins(List<int> bytes) {
+    final rootRef = fb.BufferContext.fromBytes(bytes);
+    return reader.read(rootRef, 0);
+  }
+
+  static const fb.Reader<DomainPins> reader = _DomainPinsReader();
+
+  final fb.BufferContext _bc;
+  final int _bcOffset;
+
+  String? get host => const fb.StringReader().vTableGetNullable(_bc, _bcOffset, 4);
+  List<String>? get pins => const fb.ListReader<String>(fb.StringReader()).vTableGetNullable(_bc, _bcOffset, 6);
+
+  @override
+  String toString() {
+    return 'DomainPins{host: ${host}, pins: ${pins}}';
+  }
+}
+
+class _DomainPinsReader extends fb.TableReader<DomainPins> {
+  const _DomainPinsReader();
+
+  @override
+  DomainPins createObject(fb.BufferContext bc, int offset) => 
+    DomainPins._(bc, offset);
+}
+
+class DomainPinsBuilder {
+  DomainPinsBuilder(this.fbBuilder);
+
+  final fb.Builder fbBuilder;
+
+  void begin() {
+    fbBuilder.startTable(2);
+  }
+
+  int addHostOffset(int? offset) {
+    fbBuilder.addOffset(0, offset);
+    return fbBuilder.offset;
+  }
+  int addPinsOffset(int? offset) {
+    fbBuilder.addOffset(1, offset);
+    return fbBuilder.offset;
+  }
+
+  int finish() {
+    return fbBuilder.endTable();
+  }
+}
+
+class DomainPinsObjectBuilder extends fb.ObjectBuilder {
+  final String? _host;
+  final List<String>? _pins;
+
+  DomainPinsObjectBuilder({
+    String? host,
+    List<String>? pins,
+  })
+      : _host = host,
+        _pins = pins;
+
+  /// Finish building, and store into the [fbBuilder].
+  @override
+  int finish(fb.Builder fbBuilder) {
+    final int? hostOffset = _host == null ? null
+        : fbBuilder.writeString(_host!);
+    final int? pinsOffset = _pins == null ? null
+        : fbBuilder.writeList(_pins!.map(fbBuilder.writeString).toList());
+    fbBuilder.startTable(2);
+    fbBuilder.addOffset(0, hostOffset);
+    fbBuilder.addOffset(1, pinsOffset);
     return fbBuilder.endTable();
   }
 

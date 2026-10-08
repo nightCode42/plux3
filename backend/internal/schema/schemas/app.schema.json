@@ -222,6 +222,23 @@
           },
           "uniqueItems": true
         },
+        "networkPins": {
+          "type": "object",
+          "description": "Optional certificate pins for customer API domains the runtime calls directly (SEC-042): a domain from `networkDomains`, without a wildcard, and at least two distinct pins, each the base64 of the SHA-256 of a certificate's SubjectPublicKeyInfo (RFC 7469), one of them a backup key. A connection to the domain is accepted only when a certificate of its chain has a pinned key, and fails closed otherwise (`PLX-6020`).",
+          "propertyNames": {
+            "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$",
+            "maxLength": 253
+          },
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9+/]{43}=$"
+            },
+            "minItems": 2,
+            "uniqueItems": true
+          }
+        },
         "functions": {
           "type": "array",
           "items": {

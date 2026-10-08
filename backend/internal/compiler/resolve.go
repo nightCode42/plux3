@@ -38,6 +38,7 @@ func resolve(u *unit) {
 		u.resolvePlugin(pl)
 	}
 	u.resolveApp()
+	u.checkNetworkPins()
 	u.finishGraph()
 }
 

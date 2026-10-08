@@ -64,6 +64,13 @@ final class PageRef {
   final Section section;
 }
 
+/// The pins an app bundle's [meta] sets for customer API domains, by host
+/// (SEC-042); empty when it sets none.
+Map<String, List<String>> domainPinsOf(fbs.Meta meta) => {
+  for (final d in meta.capabilities?.networkPins ?? const <fbs.DomainPins>[])
+    ?d.host: d.pins ?? const <String>[],
+};
+
 /// The active release.
 final class ActiveRelease {
   ActiveRelease._(
@@ -209,6 +216,10 @@ final class ActiveRelease {
     for (final e in meta('').telemetrySampling ?? const <fbs.Sampling>[])
       ?e.event: e.rate / 1000,
   };
+
+  /// The pins the app bundle sets for customer API domains, by host
+  /// (SEC-042).
+  Map<String, List<String>> get domainPins => domainPinsOf(meta(''));
 
   /// The limits the app bundle carries (LIM-004).
   Map<String, int> get limits => {

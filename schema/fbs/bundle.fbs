@@ -297,6 +297,16 @@ table Capabilities {
   functions: [FunctionGrant];
   device_apis: [string];
   native_routes: [string];
+  // The app bundle's pins for customer API domains (SEC-042); appended
+  // as the last field, so older readers ignore it.
+  network_pins: [DomainPins];
+}
+
+// Pins for one domain: the base64 SHA-256 hashes of certificate
+// SubjectPublicKeyInfo, at least two (SEC-042), sorted.
+table DomainPins {
+  host: string;
+  pins: [string];
 }
 
 // A limit value in force for the bundle (LIM-001).
