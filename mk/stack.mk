@@ -10,13 +10,16 @@
 
 COMPOSE_DIR := deploy/compose
 COMPOSE     := docker compose -f $(COMPOSE_DIR)/compose.yaml
+# The development CA the server's certificate chains to. Go clients on Linux
+# read it from SSL_CERT_FILE; elsewhere trust it first (deploy/compose/README.md).
+DEV_CA      := $(abspath $(COMPOSE_DIR))/.secrets/tls/ca.crt
 
 compose-secrets: ## Generate the stack's credentials into deploy/compose/.secrets on first run
 	@$(COMPOSE_DIR)/init-secrets.sh
 
 compose-up: compose-secrets ## Start the single-node stack: server, PostgreSQL, SeaweedFS, Valkey, OTel, Prometheus, Grafana (DEP-002)
 	$(COMPOSE) up -d --build --wait
-	@echo "Plux Server: http://localhost:8080  Grafana: http://localhost:3000  Prometheus: http://localhost:9090"
+	@echo "Plux Server: https://localhost:8080  Grafana: http://localhost:3000  Prometheus: http://localhost:9090"
 
 compose-down: ## Stop the stack (volumes are kept; add -v by hand to delete them)
 	$(COMPOSE) down
@@ -30,7 +33,7 @@ test-db-down: ## Remove the test database and its data
 # The starter app under `make dev`: where the device reaches the stack
 # (after `adb reverse`, localhost works on Android too) and the defines
 # file dev-starter writes from the seeded installation.
-DEV_ENDPOINT    ?= http://localhost:8080
+DEV_ENDPOINT    ?= https://localhost:8080
 STARTER_DEFINES := apps/starter/.dart_defines.json
 # A connected Android or iOS device, emulator or simulator for the starter.
 STARTER_DEVICE  := flutter devices --machine 2>/dev/null | grep -Eq '"targetPlatform": *"(android|ios)'
@@ -55,7 +58,7 @@ dev-starter: ## Point the starter app at the seeded dev stack: write its defines
 	@. ./$(COMPOSE_DIR)/.secrets/dev.env && \
 		{ test -n "$$PLUX_DEV_STARTER" || { echo "✗ this stack was seeded before the starter app: delete its volumes (docker compose down -v) and run 'make dev'"; exit 1; }; } && \
 		printf '{"PLUX_ENDPOINT":"%s","PLUX_APP_ID":"%s","PLUX_ENVIRONMENT":"staging"}\n' "$(DEV_ENDPOINT)" "$$PLUX_DEV_STARTER" > $(STARTER_DEFINES) && \
-		cd backend && PLUX_TOKEN="$$PLUX_DEV_TOKEN" $(GO) run ./cmd/plux pull --server http://localhost:8080 --org "$$PLUX_DEV_ORGANIZATION" \
+		cd backend && PLUX_TOKEN="$$PLUX_DEV_TOKEN" $(GO) run -exec "env SSL_CERT_FILE=$(DEV_CA)" ./cmd/plux pull --server https://localhost:8080 --org "$$PLUX_DEV_ORGANIZATION" \
 			--app "$$PLUX_DEV_STARTER" --env staging -o ../apps/starter/assets/plux
 	@echo "Starter: $(STARTER_DEFINES) and its baseline in apps/starter/assets/plux"
 
@@ -72,9 +75,9 @@ compose-seed: compose-secrets ## Start the stack and, on first run, seed an admi
 		umask 077; \
 		$(COMPOSE) $(if $(COMPOSE_OVERLAY),-f $(COMPOSE_OVERLAY)) run --rm --no-deps plux-server seed -config /etc/plux/plux.yaml -out - > $(COMPOSE_DIR)/.secrets/dev.env && \
 		. ./$(COMPOSE_DIR)/.secrets/dev.env && \
-		(cd backend && PLUX_TOKEN="$$PLUX_DEV_TOKEN" $(GO) run ./cmd/plux publish --server http://localhost:8080 --org "$$PLUX_DEV_ORGANIZATION" \
+		(cd backend && PLUX_TOKEN="$$PLUX_DEV_TOKEN" $(GO) run -exec "env SSL_CERT_FILE=$(DEV_CA)" ./cmd/plux publish --server https://localhost:8080 --org "$$PLUX_DEV_ORGANIZATION" \
 			--app "$$PLUX_DEV_APP" -C ../schema/testdata/documents/loan-calculator --promote staging && \
-		 PLUX_TOKEN="$$PLUX_DEV_TOKEN" $(GO) run ./cmd/plux publish --server http://localhost:8080 --org "$$PLUX_DEV_ORGANIZATION" \
+		 PLUX_TOKEN="$$PLUX_DEV_TOKEN" $(GO) run -exec "env SSL_CERT_FILE=$(DEV_CA)" ./cmd/plux publish --server https://localhost:8080 --org "$$PLUX_DEV_ORGANIZATION" \
 			--app "$$PLUX_DEV_STARTER" -C ../schema/testdata/documents/starter --env staging --promote staging); \
 		echo "Seeded dev@plux.localhost; password and token in $(COMPOSE_DIR)/.secrets/dev.env"; \
 	fi
