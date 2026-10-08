@@ -52,6 +52,7 @@ func (p *problems) positive(path string, v int64) {
 func (c *Config) Validate() error {
 	var p problems
 	c.validateServer(&p)
+	c.validateTransport(&p)
 	c.validateDatabase(&p)
 	c.validateObjectStorage(&p)
 	c.validateCache(&p)

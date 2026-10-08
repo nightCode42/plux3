@@ -61,6 +61,12 @@ type Server struct {
 	mux *http.ServeMux
 	// http is the listener of the api role; nil without it.
 	http *http.Server
+	// internalMux and internal serve the traffic between roles over
+	// mutual TLS (SEC-043); internal is nil unless one is configured.
+	internalMux *http.ServeMux
+	internal    *http.Server
+	// hsts is the Strict-Transport-Security value; empty disables it.
+	hsts string
 }
 
 // Deps are the already-built dependencies a Server is assembled from.
@@ -92,7 +98,7 @@ func New(d Deps) (*Server, error) {
 	s := &Server{
 		cfg: d.Config, log: d.Log, metrics: d.Metrics, tracer: d.Tracer,
 		db: d.DB, objects: d.Objects, cache: d.Cache, jobs: d.Jobs, limits: d.Limits,
-		health: NewHealth(), mux: http.NewServeMux(), kms: d.KMS,
+		health: NewHealth(), mux: http.NewServeMux(), internalMux: http.NewServeMux(), kms: d.KMS,
 	}
 	if s.limits.IsZero() {
 		s.limits = limits.Defaults()
@@ -106,7 +112,9 @@ func New(d Deps) (*Server, error) {
 	}
 	s.registerChecks()
 	if s.cfg.Has(config.RoleAPI) {
-		s.buildHTTP()
+		if err := s.buildHTTP(); err != nil {
+			return nil, err
+		}
 	}
 	if s.cfg.Has(config.RoleWorker) && s.jobs != nil {
 		s.components = append(s.components, jobComponent{client: s.jobs})
@@ -180,8 +188,16 @@ func (s *Server) Register(path string, h http.Handler) { s.mux.Handle(path, h) }
 // AddComponent adds a component to start and stop with the process.
 func (s *Server) AddComponent(c Component) { s.components = append(s.components, c) }
 
-// buildHTTP registers the endpoints the api role always serves.
-func (s *Server) buildHTTP() {
+// RegisterInternal adds a handler to the internal listener, which only a
+// role holding a certificate of the internal CA can reach (SEC-043). It
+// is served only when server.internalListen is configured.
+func (s *Server) RegisterInternal(path string, h http.Handler) { s.internalMux.Handle(path, h) }
+
+// buildHTTP registers the endpoints the api role always serves and
+// prepares its listeners.
+func (s *Server) buildHTTP() error {
+	h := s.cfg.Server.HSTS
+	s.hsts = httpx.HSTSValue(h.MaxAge.Duration(), h.IncludeSubDomains, h.Preload)
 	s.mux.HandleFunc("GET /livez", s.health.Live)
 	s.mux.HandleFunc("GET /readyz", s.health.Ready)
 	if s.metrics != nil && s.cfg.Observability.MetricsListen == "" {
@@ -199,11 +215,13 @@ func (s *Server) buildHTTP() {
 		ReadHeaderTimeout: 10 * time.Second,
 		IdleTimeout:       120 * time.Second,
 	}
+	return s.buildTLS()
 }
 
-// wrap applies the HTTP-level guards every request passes.
+// wrap applies the HTTP-level guards every request passes. HSTS is the
+// outermost, so that every response carries it (SEC-040).
 func (s *Server) wrap(h http.Handler) http.Handler {
-	return httpx.MaxBytes(h, s.limits.Get(limits.APIRequestSize))
+	return httpx.HSTS(httpx.MaxBytes(h, s.limits.Get(limits.APIRequestSize)), s.hsts)
 }
 
 // Run starts every component, serves until the context is cancelled,
@@ -213,6 +231,9 @@ func (s *Server) Run(ctx context.Context) error {
 		slog.String("listen", s.cfg.Server.Listen),
 		slog.String("role", RoleLabel(s.cfg)),
 	)
+	for _, w := range s.cfg.Warnings() {
+		s.log.WarnContext(ctx, w)
+	}
 	started, err := s.startComponents(ctx)
 	if err != nil {
 		s.health.SetReady(false)
@@ -270,19 +291,31 @@ func (s *Server) stopComponents(ctx context.Context, started []Component) {
 // listen serves the api role in the background and reports why it
 // stopped. A process without the api role never sends on the channel.
 func (s *Server) listen(ctx context.Context) <-chan error {
-	errs := make(chan error, 1)
-	if s.http == nil {
-		return errs
-	}
-	go func() {
-		s.log.InfoContext(ctx, "listening", slog.String("address", s.http.Addr))
-		if err := s.http.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			errs <- fmt.Errorf("listen: %w", err)
-			return
+	errs := make(chan error, 2)
+	for _, srv := range []*http.Server{s.http, s.internal} {
+		if srv != nil {
+			go s.serve(ctx, srv, errs)
 		}
-		errs <- nil
-	}()
+	}
 	return errs
+}
+
+// serve runs one listener until it stops, over TLS when it has a TLS
+// configuration.
+func (s *Server) serve(ctx context.Context, srv *http.Server, errs chan<- error) {
+	s.log.InfoContext(ctx, "listening", slog.String("address", srv.Addr), slog.Bool("tls", srv.TLSConfig != nil))
+	var err error
+	if srv.TLSConfig != nil {
+		// The certificate is in TLSConfig, so the file names stay empty.
+		err = srv.ListenAndServeTLS("", "")
+	} else {
+		err = srv.ListenAndServe()
+	}
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		errs <- fmt.Errorf("listen %s: %w", srv.Addr, err)
+		return
+	}
+	errs <- nil
 }
 
 // shutdown closes the listener and flushes traces.
@@ -290,8 +323,11 @@ func (s *Server) shutdown(ctx context.Context) error {
 	grace, cancel := context.WithTimeout(context.WithoutCancel(ctx), s.cfg.Server.ShutdownGrace.Duration())
 	defer cancel()
 	var err error
-	if s.http != nil {
-		if shutdownErr := s.http.Shutdown(grace); shutdownErr != nil {
+	for _, srv := range []*http.Server{s.http, s.internal} {
+		if srv == nil {
+			continue
+		}
+		if shutdownErr := srv.Shutdown(grace); shutdownErr != nil && err == nil {
 			err = fmt.Errorf("shut down the listener: %w", shutdownErr)
 		}
 	}
