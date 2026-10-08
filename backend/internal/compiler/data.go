@@ -573,6 +573,11 @@ func (u *unit) encodeDataConfig(s *schema.DataSource, file, ptr string, sc *scop
 		return nil
 	}
 	obj["baseUrls"] = baseURLs
+	// The device holds the source to its assurance level (SEC-007): the
+	// level travels in the configuration the runtime reads.
+	if lvl := s.RequiresAssurance; lvl != "" && lvl != schema.AssuranceLevelAL0 {
+		obj["requiresAssurance"] = string(lvl)
+	}
 	// Mocks are for tests and development builds (DAT-080): a release
 	// bundle carries none, so a release can never answer from one.
 	if u.opts.Mode != Development {
