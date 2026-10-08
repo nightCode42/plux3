@@ -81,7 +81,7 @@ func TestIngestListPurge(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	devices, err := device.NewService(device.Options{DB: db, IDs: gen, Cache: cache.NewMemory(nil)})
+	devices, err := device.NewService(device.Options{DB: db, IDs: gen, Cache: cache.NewMemory(nil), DevelopmentProvider: true})
 	if err != nil {
 		t.Fatal(err)
 	}

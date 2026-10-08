@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/nightCode42/plux3/backend/internal/cache"
@@ -41,6 +42,13 @@ type Replay struct {
 	now        func() time.Time
 	onDegraded func(err error)
 
+	// health hears the shared cache fail and recover; nil hears nothing.
+	health   *Health
+	healthMu sync.Mutex
+	// degraded is true from the first fallback decision until the shared
+	// cache answers again. It changes only under healthMu.
+	degraded atomic.Bool
+
 	mu       sync.Mutex
 	limit    int
 	seen     map[string]*list.Element
@@ -54,15 +62,36 @@ type seenEntry struct {
 	expires time.Time
 }
 
+// Health hears how the shared replay cache fares. Both functions are
+// called synchronously and must be quick; the Replay serialises them, so a
+// Recovered never overtakes a later Fallback.
+type Health struct {
+	// Fallback is called for every check the per-replica store decided
+	// because the shared cache failed.
+	Fallback func()
+	// Recovered is called once when the shared cache answers again after
+	// a Fallback.
+	Recovered func()
+}
+
+// ReplayOption configures a Replay.
+type ReplayOption func(*Replay)
+
+// WithHealth reports the shared cache's failures and recoveries to h
+// (SEC-023). Under FailClosed the cache's failure is an error to the
+// caller, not a fallback, so h hears nothing.
+func WithHealth(h Health) ReplayOption { return func(r *Replay) { r.health = &h } }
+
 // NewReplay returns a replay check over the shared cache. entries bounds
 // the fallback store (the limit dpop.replayCacheEntries); now supplies the
 // clock, time.Now when nil; onDegraded, when set, is called with the cache
-// error at most once every ten seconds while the fallback is in use.
-func NewReplay(shared cache.Cache, policy Fallback, entries int, now func() time.Time, onDegraded func(err error)) *Replay {
+// error at most once every ten seconds while the fallback is in use. Options
+// add observers.
+func NewReplay(shared cache.Cache, policy Fallback, entries int, now func() time.Time, onDegraded func(err error), opts ...ReplayOption) *Replay {
 	if now == nil {
 		now = time.Now
 	}
-	return &Replay{
+	r := &Replay{
 		shared:     shared,
 		policy:     policy,
 		now:        now,
@@ -71,6 +100,10 @@ func NewReplay(shared cache.Cache, policy Fallback, entries int, now func() time
 		seen:       make(map[string]*list.Element),
 		order:      list.New(),
 	}
+	for _, o := range opts {
+		o(r)
+	}
+	return r
 }
 
 // replayKey returns the cache key of a proof: the hash of the key
@@ -95,16 +128,44 @@ func (r *Replay) Check(ctx context.Context, jkt, jti string, ttl time.Duration) 
 	key := replayKey(jkt, jti)
 	fresh, cacheErr := r.shared.SetNX(ctx, key, []byte{1}, ttl)
 	if cacheErr == nil {
+		r.recovered()
 		return false, r.afterShared(key, fresh)
 	}
 	if r.policy != PerReplica {
 		return false, plxerr.Wrap(plxerr.ReplayCacheUnavailable, cacheErr, "dpop replay cache unavailable")
 	}
+	r.fellBack()
 	r.notify(cacheErr)
 	if !r.record(key, ttl) {
 		return true, plxerr.New(plxerr.DPoPReplay, "dpop proof was already used")
 	}
 	return true, nil
+}
+
+// fellBack tells the health observer that the fallback decided a check.
+func (r *Replay) fellBack() {
+	if r.health == nil {
+		return
+	}
+	r.healthMu.Lock()
+	defer r.healthMu.Unlock()
+	r.degraded.Store(true)
+	if r.health.Fallback != nil {
+		r.health.Fallback()
+	}
+}
+
+// recovered tells the health observer that the shared cache answered, if
+// it had failed before.
+func (r *Replay) recovered() {
+	if r.health == nil || !r.degraded.Load() {
+		return
+	}
+	r.healthMu.Lock()
+	defer r.healthMu.Unlock()
+	if r.degraded.CompareAndSwap(true, false) && r.health.Recovered != nil {
+		r.health.Recovered()
+	}
 }
 
 // afterShared turns the shared cache's answer into the result. A proof the

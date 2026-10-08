@@ -6,6 +6,7 @@ package server
 import (
 	"bytes"
 	"context"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -45,7 +46,25 @@ type stackOptions struct {
 	serverYAML string
 }
 
-// startStack starts the stack listening on addr. With
+// freeAddr returns a loopback address nothing listens on, which the caller
+// is about to bind. A fixed port would let a second process (another test
+// run, another checkout) answer the readiness probe of a server that never
+// got the port, and every call would then reach the wrong installation.
+func freeAddr(t *testing.T) string {
+	t.Helper()
+	l, err := (&net.ListenConfig{}).Listen(context.Background(), "tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	addr := l.Addr().String()
+	if err := l.Close(); err != nil {
+		t.Fatal(err)
+	}
+	return addr
+}
+
+// startStack starts the stack listening on addr; "127.0.0.1:0" picks a
+// free port, which st.server then names. With
 // PLUX_TEST_S3_ENDPOINT and PLUX_TEST_VALKEY_URL set it runs as the
 // Compose stack does: objects in S3 served through the server's own
 // route, the cache in Valkey (QA-005, DEP-041).
@@ -59,6 +78,9 @@ func startStackWith(t *testing.T, addr string, o stackOptions) *stack {
 	t.Helper()
 	url := storagetest.SchemaURL(t)
 	dir := t.TempDir()
+	if strings.HasSuffix(addr, ":0") {
+		addr = freeAddr(t)
+	}
 	server := "http://" + addr
 	public := server
 	if o.publicBaseURL != "" {
@@ -75,7 +97,8 @@ func startStackWith(t *testing.T, addr string, o stackOptions) *stack {
 	}
 	cfg := testConfig(t, "server:\n  roles: [api, worker]\n  listen: \""+addr+"\"\n  publicBaseURL: \""+public+"\"\n"+o.serverYAML+
 		"database:\n  url: \""+url+"\"\n"+stores+
-		"signing:\n  directory: \""+filepath.Join(dir, "keys")+"\"\n")
+		"signing:\n  directory: \""+filepath.Join(dir, "keys")+"\"\n"+
+		"attestation:\n  developmentProvider: true\n")
 	ctx, cancel := context.WithCancel(context.Background())
 	built, err := Build(ctx, cfg, discard(), "test")
 	if err != nil {
@@ -86,6 +109,13 @@ func startStackWith(t *testing.T, addr string, o stackOptions) *stack {
 	go func() { done <- built.Server.Run(ctx) }()
 	t.Cleanup(func() { cancel(); <-done; built.Close() })
 	waitReady(t, server)
+	select {
+	case err := <-done:
+		// The readiness probe was answered by some other server.
+		cancel()
+		t.Fatalf("the server stopped while starting: %v", err)
+	default:
+	}
 
 	// An administrator with a token, an organisation and an app, made
 	// with the services directly.

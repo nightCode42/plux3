@@ -10,10 +10,14 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"encoding/base64"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/nightCode42/plux3/backend/internal/config"
+	"github.com/nightCode42/plux3/backend/internal/observability"
 	"github.com/nightCode42/plux3/backend/internal/signing"
 )
 
@@ -128,5 +132,31 @@ func TestTokenSignerIsForTheAPIRoleOnly(t *testing.T) {
 	cfg.Server.Roles = []config.Role{config.RoleAPI}
 	if _, err := tokenSignerFor(cfg, crypterOnly{backend}); err == nil {
 		t.Error("a backend that cannot sign tokens was accepted")
+	}
+}
+
+// Verifies: SEC-023, OBS-002.
+// The replay cache's health reaches the metrics: the gauge rises with a
+// fallback and falls on recovery, the counter counts the fallbacks.
+func TestReplayHealthFeedsTheMetrics(t *testing.T) {
+	t.Parallel()
+	m := observability.NewMetrics()
+	h := replayHealth(m)
+	scrape := func() string {
+		rec := httptest.NewRecorder()
+		m.Handler().ServeHTTP(rec, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/metrics", nil))
+		return rec.Body.String()
+	}
+	h.Fallback()
+	h.Fallback()
+	if body := scrape(); !strings.Contains(body, "plux_dpop_replay_cache_degraded 1\n") || !strings.Contains(body, "plux_dpop_replay_cache_fallback_total 2\n") {
+		t.Errorf("after two fallbacks:\n%s", body)
+	}
+	h.Recovered()
+	if body := scrape(); !strings.Contains(body, "plux_dpop_replay_cache_degraded 0\n") || !strings.Contains(body, "plux_dpop_replay_cache_fallback_total 2\n") {
+		t.Errorf("after recovery:\n%s", body)
+	}
+	if none := replayHealth(nil); none.Fallback != nil || none.Recovered != nil {
+		t.Error("without metrics the observer is not empty")
 	}
 }

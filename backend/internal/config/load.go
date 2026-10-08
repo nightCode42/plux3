@@ -42,7 +42,7 @@ func Defaults() Config {
 				MFARequiredFor:     []string{"publish", "approve", "keys", "members"},
 				SessionTTL:         Duration(12 * 3600e9),
 			},
-			Device: DeviceAuth{AccessTokenTTL: Duration(5 * 60e9), RefreshTokenTTL: Duration(30 * 24 * 3600e9)},
+			Device: DeviceAuth{AccessTokenTTL: Duration(5 * 60e9)},
 			CI:     CIAuth{TokenTTL: Duration(60 * 60e9)},
 		},
 		Observability: Observability{LogLevel: "info", LogFormat: "json", TraceSampleRatio: 1},

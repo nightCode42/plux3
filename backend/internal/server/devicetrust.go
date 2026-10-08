@@ -24,6 +24,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/device"
 	"github.com/nightCode42/plux3/backend/internal/devtoken"
 	"github.com/nightCode42/plux3/backend/internal/dpop"
+	"github.com/nightCode42/plux3/backend/internal/observability"
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 	"github.com/nightCode42/plux3/backend/internal/seccfg"
 	"github.com/nightCode42/plux3/backend/internal/security/settings"
@@ -123,19 +124,17 @@ func seconds(k settings.Key) (time.Duration, error) {
 }
 
 // issuerFor builds the issuer of device access tokens: the public base
-// URL is both issuer and audience.
-func issuerFor(cfg *config.Config, signer signing.TokenSigner) (*devtoken.Issuer, error) {
-	lifetime, err := seconds(settings.AccessTokenLifetime)
-	if err != nil {
-		return nil, err
-	}
+// URL is both issuer and audience, and the installation's default of the
+// accessTokenLifetime setting is the lifetime.
+func issuerFor(cfg *config.Config, signer signing.TokenSigner) *devtoken.Issuer {
 	base := strings.TrimSuffix(cfg.Server.PublicBaseURL, "/")
-	return &devtoken.Issuer{Signer: signer, Issuer: base, Audience: base, Lifetime: lifetime}, nil
+	return &devtoken.Issuer{Signer: signer, Issuer: base, Audience: base, Lifetime: cfg.Auth.Device.AccessTokenTTL.Duration()}
 }
 
 // buildDeviceTrust assembles the verification side of device
 // authentication: tokens, proofs, nonces and the replay cache.
-func buildDeviceTrust(ctx context.Context, cfg *config.Config, db *storage.DB, shared cache.Cache, set limits.Set, crypter signing.Crypter, signer signing.TokenSigner, log *slog.Logger, configs *seccfg.Service) (*DeviceTrust, error) {
+func buildDeviceTrust(ctx context.Context, cfg *config.Config, db *storage.DB, shared cache.Cache, set limits.Set, d deviceDeps) (*DeviceTrust, error) {
+	crypter, signer, log := d.crypter, d.signer, d.log
 	if signer == nil {
 		return nil, nil //nolint:nilnil // no api role, no device authentication
 	}
@@ -175,8 +174,8 @@ func buildDeviceTrust(ctx context.Context, cfg *config.Config, db *storage.DB, s
 		Replay: dpop.NewReplay(shared, fail, int(min(set.Get(limits.DPOPReplayCacheEntries), 1<<30)), time.Now, func(err error) { //nolint:gosec // G115: bounded by min
 			log.WarnContext(ctx, "the DPoP replay cache is unavailable; this replica remembers proofs itself and applies the narrower issued-at window (SEC-023)",
 				slog.Any("error", err))
-		}),
-		Window: window, FallbackWindow: fallback, Windows: windowsOf(configs),
+		}, dpop.WithHealth(replayHealth(d.metrics))),
+		Window: window, FallbackWindow: fallback, Windows: windowsOf(d.configs),
 	}, nil
 }
 
@@ -196,6 +195,15 @@ func windowsOf(configs *seccfg.Service) func(context.Context, string, string) (t
 	}
 }
 
+// replayHealth feeds the replay cache's health into the metrics of
+// SEC-023; without metrics it hears nothing.
+func replayHealth(m *observability.Metrics) dpop.Health {
+	if m == nil {
+		return dpop.Health{}
+	}
+	return dpop.Health{Fallback: m.ReplayCacheFallback, Recovered: m.ReplayCacheRecovered}
+}
+
 // deviceDeps are the collaborators of the device side of the services.
 type deviceDeps struct {
 	crypter signing.Crypter
@@ -205,20 +213,21 @@ type deviceDeps struct {
 	log     *slog.Logger
 	// configs holds the environments' security configurations.
 	configs *seccfg.Service
+	// metrics receives the replay cache's health; nil records nothing.
+	metrics *observability.Metrics
 }
 
 // buildDeviceSide assembles the device service and the trust that
 // authenticates device calls.
 func buildDeviceSide(ctx context.Context, cfg *config.Config, db *storage.DB, shared cache.Cache, set limits.Set, d deviceDeps) (*device.Service, *DeviceTrust, error) {
-	log := d.log
-	if log == nil {
-		log = slog.Default()
+	if d.log == nil {
+		d.log = slog.Default()
 	}
 	devices, err := buildDevices(db, d.ids, shared, d.audit, cfg, d.signer, d.configs)
 	if err != nil {
 		return nil, nil, err
 	}
-	trust, err := buildDeviceTrust(ctx, cfg, db, shared, set, d.crypter, d.signer, log, d.configs)
+	trust, err := buildDeviceTrust(ctx, cfg, db, shared, set, d)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -236,7 +245,11 @@ func buildDevices(db *storage.DB, gen interface{ New() (string, error) }, shared
 	if err != nil {
 		return nil, err
 	}
-	opts := device.Options{DB: db, IDs: gen, Cache: shared, Audit: auditLog, Attestors: attestors, AppTrust: trust}
+	opts := device.Options{
+		DB: db, IDs: gen, Cache: shared, Audit: auditLog, Attestors: attestors, AppTrust: trust,
+		AccessTokenLifetime: cfg.Auth.Device.AccessTokenTTL.Duration(),
+		DevelopmentProvider: cfg.Attestation.DevelopmentProvider,
+	}
 	if configs != nil {
 		opts.Config = func(ctx context.Context, appID, envID string) (device.Values, error) {
 			v, _, err := configs.Effective(ctx, appID, envID)
@@ -244,9 +257,7 @@ func buildDevices(db *storage.DB, gen interface{ New() (string, error) }, shared
 		}
 	}
 	if signer != nil {
-		if opts.Tokens, err = issuerFor(cfg, signer); err != nil {
-			return nil, err
-		}
+		opts.Tokens = issuerFor(cfg, signer)
 	}
 	svc, err := device.NewService(opts)
 	if err != nil {

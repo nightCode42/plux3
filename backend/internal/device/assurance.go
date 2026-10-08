@@ -94,6 +94,9 @@ type Settings struct {
 	AndroidDeviceVerdictAL2 playintegrity.DeviceLabel
 	// AccessTokenLifetime is how long an access token lives (SEC-020).
 	AccessTokenLifetime time.Duration
+	// RegistrationChallengeTTL is how long a registration challenge is
+	// accepted (SEC-005).
+	RegistrationChallengeTTL time.Duration
 	// ReattestationInterval is how long an attestation stays good before
 	// the device must attest again (SEC-006).
 	ReattestationInterval time.Duration
@@ -141,8 +144,8 @@ func resolveSettings(p settings.Profile, read func(settings.Key) (settings.Value
 	return out, nil
 }
 
-// resolveTokens reads the settings that govern access tokens and their
-// refresh.
+// resolveTokens reads the settings that govern access tokens, their
+// refresh and the registration challenge.
 func (s *Settings) resolveTokens(read func(settings.Key) (settings.Value, error)) error {
 	lifetime, err := read(settings.AccessTokenLifetime)
 	if err != nil {
@@ -156,7 +159,12 @@ func (s *Settings) resolveTokens(read func(settings.Key) (settings.Value, error)
 	if err != nil {
 		return err
 	}
+	challenge, err := read(settings.RegistrationChallengeTtl)
+	if err != nil {
+		return err
+	}
 	s.AccessTokenLifetime = time.Duration(lifetime.Int()) * time.Second
+	s.RegistrationChallengeTTL = time.Duration(challenge.Int()) * time.Second
 	s.ReattestationInterval = time.Duration(interval.Int()) * time.Second
 	s.AndroidRefreshRequiresIntegrity = integrity.Bool()
 	return nil

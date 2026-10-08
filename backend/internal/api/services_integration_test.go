@@ -185,7 +185,7 @@ func newWorldWith(t *testing.T, cfg worldConfig) *world {
 	tokenSigner := devicetest.NewTokenSigner(t)
 	issuer := &devtoken.Issuer{Signer: tokenSigner, Issuer: base, Audience: base, Lifetime: 5 * time.Minute, Now: cfg.Now}
 	devices, err := device.NewService(device.Options{
-		DB: db, IDs: gen, Now: cfg.Now, Cache: shared, Audit: log, Tokens: issuer, Profiles: cfg.Profiles,
+		DB: db, IDs: gen, Now: cfg.Now, Cache: shared, Audit: log, Tokens: issuer, Profiles: cfg.Profiles, DevelopmentProvider: true,
 		Attestors: device.Attestors{KeyAttestation: fakes.key, PlayIntegrity: fakes.play, AppAttest: fakes.apple, AppAssertions: fakes.assert},
 		AppTrust: func(context.Context, string) (device.TrustConfig, error) {
 			return device.TrustConfig{AndroidPackages: []string{"com.example.app"}, PlayIntegrity: &playintegrity.Keys{}, IOSAppID: "TEAMID.com.example.app"}, nil

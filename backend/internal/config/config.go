@@ -75,9 +75,14 @@ type MetadataExpiry struct {
 // (SEC-003). It is the interim source of that trust: the remote security
 // configuration replaces it, and an app it does not list has no
 // attestation configured, so Android and iOS evidence is refused as
-// unavailable while development evidence still works outside production
+// unavailable. Development evidence is refused too unless
+// DevelopmentProvider enables it, and production refuses it regardless
 // (SEC-008).
 type Attestation struct {
+	// DevelopmentProvider accepts development evidence in environments
+	// that are not production ones. It is off by default, so a server
+	// trusts no device it cannot verify until an operator says so.
+	DevelopmentProvider bool `json:"developmentProvider"`
 	// Apps maps an app identifier (a UUID) to its builds.
 	Apps map[string]AppAttestation `json:"apps"`
 }
@@ -339,11 +344,12 @@ type OIDC struct {
 	RedirectURL string `json:"redirectURL"`
 }
 
-// DeviceAuth is how devices authenticate. DPoP and attestation arrive in
-// P6; in P2 a device token is a short-lived bearer token.
+// DeviceAuth is how devices authenticate.
 type DeviceAuth struct {
-	AccessTokenTTL  Duration `json:"accessTokenTTL"`
-	RefreshTokenTTL Duration `json:"refreshTokenTTL"`
+	// AccessTokenTTL is the installation's default of the
+	// accessTokenLifetime setting (SEC-020): between one and fifteen
+	// minutes.
+	AccessTokenTTL Duration `json:"accessTokenTTL"`
 }
 
 // CIAuth federates workload identity, so pipelines need no long-lived
