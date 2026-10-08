@@ -51,6 +51,18 @@ server:
   publicBaseURL: "https://plux.acme.example"
   shutdownGrace: "30s"
   trustedProxies: ["10.0.0.0/8"] # whose X-Forwarded-For is believed
+  production: false             # true refuses unencrypted database and Valkey links and a missing TLS setup (SEC-043)
+  tls:                          # optional: the server terminates TLS itself (SEC-040)
+    certFile: "/etc/plux/tls/server.crt"
+    keyFile: "/etc/plux/tls/server.key"
+    allowTLS12: false           # TLS 1.3 only; true adds TLS 1.2 with AEAD ECDHE suites, with a warning
+  behindTLSProxy: false         # true when a proxy in front terminates TLS (required in production without tls)
+  hsts:                         # on every response (SEC-040)
+    maxAge: "17520h"            # 0s disables, with a warning
+    includeSubDomains: true
+    preload: false
+  internalListen: ""            # optional listener for role-to-role HTTP, mutual TLS only (SEC-043)
+  internalTLS: { caFile: "", certFile: "", keyFile: "" }
 database:
   url: "postgres://plux@db:5432/plux?sslmode=verify-full"
   maxConnections: 50
