@@ -22,6 +22,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/device/devicetest"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/schema/uuid7"
+	"github.com/nightCode42/plux3/backend/internal/security/settings"
 	"github.com/nightCode42/plux3/backend/internal/storage"
 )
 
@@ -91,6 +92,9 @@ func TestRefreshIssuesATokenBoundToTheKey(t *testing.T) {
 	}
 	if want := r.now.Add(5 * time.Minute).UTC().Truncate(time.Second); !tok.ExpiresAt.Equal(want) || !claims.ExpiresAt.Equal(want) {
 		t.Errorf("the token expires at %v (claims %v), want %v", tok.ExpiresAt, claims.ExpiresAt, want)
+	}
+	if tok.Assurance != claims.Assurance {
+		t.Errorf("the response says %q, the token's al claim %q", tok.Assurance, claims.Assurance)
 	}
 
 	// A production environment gets a production key, and the assurance
@@ -333,5 +337,40 @@ func (r *rig) setCounter(t *testing.T, deviceID string, n int64) {
 	})
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+// Verifies: SEC-007.
+// A device whose token carries a level below the environment's
+// minAssuranceForSync is refused with PLX-6002; one at or above it, or
+// any device under a profile that asks for AL0, is not.
+func TestCheckSyncAssurance(t *testing.T) {
+	t.Parallel()
+	r := newRig(t)
+	ctx := context.Background()
+	env := r.envs["development"]
+	id := func(level string) device.Identity {
+		return device.Identity{AppID: r.app, EnvironmentID: env, Assurance: level}
+	}
+
+	if err := r.svc.CheckSyncAssurance(ctx, id("AL0")); err != nil {
+		t.Errorf("AL0 under standard: %v", err)
+	}
+	r.profiles[env] = settings.Strict
+	if err := r.svc.CheckSyncAssurance(ctx, id("AL0")); code(err) != plxerr.AssuranceInsufficient {
+		t.Errorf("AL0 under strict: %v", err)
+	}
+	if err := r.svc.CheckSyncAssurance(ctx, id("")); code(err) != plxerr.AssuranceInsufficient {
+		t.Errorf("a token with no level under strict: %v", err)
+	}
+	if err := r.svc.CheckSyncAssurance(ctx, id("AL1")); err != nil {
+		t.Errorf("AL1 under strict: %v", err)
+	}
+	r.profiles[env] = settings.Maximum
+	if err := r.svc.CheckSyncAssurance(ctx, id("AL1")); code(err) != plxerr.AssuranceInsufficient {
+		t.Errorf("AL1 under maximum: %v", err)
+	}
+	if err := r.svc.CheckSyncAssurance(ctx, id("AL3")); err != nil {
+		t.Errorf("AL3 under maximum: %v", err)
 	}
 }

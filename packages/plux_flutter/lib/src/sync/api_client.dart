@@ -13,6 +13,7 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/security/assurance.dart';
 import 'package:plux_flutter/src/security/attestation.dart';
 import 'package:plux_flutter/src/security/device_keys.dart';
 import 'package:plux_flutter/src/security/dpop.dart';
@@ -83,7 +84,12 @@ final class DeviceCredential {
 /// token alone is useless without the device's key.
 final class DeviceToken {
   /// Creates a token.
-  const DeviceToken(this.value, this.expiresAt, this.proofs);
+  const DeviceToken(
+    this.value,
+    this.expiresAt,
+    this.proofs, {
+    this.assurance = 0,
+  });
 
   /// The access token; never logged or reported (SEC-092).
   final String value;
@@ -93,6 +99,10 @@ final class DeviceToken {
 
   /// Builds the DPoP proofs of the device key the token is bound to.
   final DpopProofs proofs;
+
+  /// The device's assurance level, 0 to 3 for `AL0` to `AL3`, as the
+  /// server computed it (SEC-007); 0 when the server named none.
+  final int assurance;
 
   @override
   String toString() => 'DeviceToken([redacted])';
@@ -412,7 +422,12 @@ final class PluxApiClient {
       throw const ApiError(0, 'unknown', 'the server sent no access token');
     }
     final expires = DateTime.tryParse(r['expiresAt'] as String? ?? '');
-    return DeviceToken(token, expires ?? now, proofs);
+    return DeviceToken(
+      token,
+      expires ?? now,
+      proofs,
+      assurance: assuranceOf(r['assuranceLevel']),
+    );
   }
 
   /// Fetches the channel's manifest with this device's plan (REL-032).

@@ -34,9 +34,10 @@ final class GuardEnter extends GuardVerdict {
   final Map<String, Object?> params;
 }
 
-/// Show the fallback of [route] of [plugin]: a guard refused it, it asks
-/// for an assurance level this device does not have, or its redirects
-/// come back to a route already visited. [reason] is `PLX-4102`.
+/// Show the fallback of [route] of [plugin]: a guard refused it, its
+/// redirects come back to a route already visited (`PLX-4102`), or it asks
+/// for an assurance level this device does not have (`PLX-6002`). [reason]
+/// says which.
 final class GuardRefused extends GuardVerdict {
   /// Creates the verdict.
   const GuardRefused(this.route, this.plugin, this.reason);
@@ -102,11 +103,6 @@ typedef TextParams = Map<String, Object?> Function(
   Map<String, String> params,
 );
 
-/// The assurance level the runtime knows this device has. Attestation
-/// arrives in P6 (SEC-007); until then it is `AL0`, so a page that asks
-/// for more always takes its fallback: guards fail closed.
-const int deviceAssurance = 0;
-
 /// What a page asks of its entry: its guard graphs and the assurance level
 /// it requires.
 typedef GuardRequirements = ({List<UuidKey> guards, int assurance});
@@ -119,6 +115,7 @@ final class RouteGuards {
     required this.run,
     required this.convert,
     required this.report,
+    required this.assurance,
   });
 
   /// The active release, or null before the first one.
@@ -132,6 +129,10 @@ final class RouteGuards {
 
   /// Reports a refusal.
   final void Function(PluxException error) report;
+
+  /// The assurance level (0 to 3) this device has now, read at every
+  /// decision: a page that asks for more takes its fallback (SEC-007).
+  final int Function() assurance;
 
   /// What [page] requires, when that can be read now: its section is
   /// small or already checked, so reading it does no large hashing on the
@@ -158,11 +159,16 @@ final class RouteGuards {
   }
 
   /// Whether entering [page] needs [decide]: it has guards or asks for an
-  /// assurance level, or what it asks cannot be read without waiting.
-  static bool needsDecision(ActiveRelease release, PageRef page) {
+  /// assurance level above this device's [assurance], or what it asks
+  /// cannot be read without waiting.
+  static bool needsDecision(
+    ActiveRelease release,
+    PageRef page,
+    int assurance,
+  ) {
     if (release.disabled(page.plugin)) return false; // the kill switch first
     final r = requirementsNow(release, page);
-    return r == null || r.guards.isNotEmpty || r.assurance > deviceAssurance;
+    return r == null || r.guards.isNotEmpty || r.assurance > assurance;
   }
 
   /// Decides the entry of [route] with [params]: the kill switch is seen
@@ -205,13 +211,15 @@ final class RouteGuards {
       }
       final needs = requirementsNow(r, ref);
       if (needs == null) return GuardEnter(name, current);
-      if (needs.assurance > deviceAssurance) {
+      final have = assurance();
+      if (needs.assurance > have) {
         return _refuse(
           name,
           r,
           'it requires assurance AL${needs.assurance}, and this device has '
-          'AL$deviceAssurance (SEC-007)',
+          'AL$have (SEC-007)',
           plugin: ref.plugin,
+          code: PluxErrorCode.assuranceInsufficient,
         );
       }
       GuardRedirects? redirect;
@@ -269,10 +277,11 @@ final class RouteGuards {
     ActiveRelease release,
     String why, {
     String? plugin,
+    PluxErrorCode code = PluxErrorCode.navigationRefused,
   }) {
     final p = plugin ?? _pluginOf(release, route);
     final e = PluxException(
-      PluxErrorCode.navigationRefused,
+      code,
       'route $route: $why',
       details: {'route': route, 'plugin': p},
     );

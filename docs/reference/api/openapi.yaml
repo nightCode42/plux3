@@ -10080,6 +10080,14 @@ components:
           type: string
           title: token_type
           description: token_type is "DPoP" (SEC-020).
+        assuranceLevel:
+          type: string
+          title: assurance_level
+          description: |-
+            assurance_level is the device's assurance level, "AL0" to "AL3": the
+             value of the token's `al` claim, which the server computed from the
+             device's verified evidence (SEC-007). The runtime enforces pages,
+             routes and data sources against it.
       title: RefreshDeviceTokenResponse
       additionalProperties: false
       description: |-

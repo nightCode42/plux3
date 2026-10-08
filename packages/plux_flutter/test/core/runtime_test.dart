@@ -311,12 +311,12 @@ void main() {
         await tester.pumpWidget(PluxScope(child: PluxView(route)));
         await tester.pump();
         if (route == 'loan-calculator') {
-          // It requires assurance AL1, which no device has before P6: it
-          // resolves offline and fails closed (NAV-009).
+          // It requires assurance AL1, which this device has not proved
+          // offline: it resolves and fails closed (NAV-009, SEC-007).
           expect(find.text('page $route of 10 '), findsNothing);
           expect(
             errors.map((e) => e.code),
-            contains(PluxErrorCode.navigationRefused),
+            contains(PluxErrorCode.assuranceInsufficient),
           );
         } else {
           expect(find.text('page $route of 10 '), findsOneWidget);

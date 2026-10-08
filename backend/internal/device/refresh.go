@@ -44,6 +44,9 @@ type RefreshRequest struct {
 type AccessToken struct {
 	Value     string
 	ExpiresAt time.Time
+	// Assurance is the device's assurance level, the same value as the
+	// token's `al` claim (SEC-007).
+	Assurance string
 }
 
 // Refresh issues a new access token to a device that proves possession of
@@ -89,7 +92,7 @@ func (s *Service) Refresh(ctx context.Context, r RefreshRequest) (AccessToken, e
 	if err != nil {
 		return AccessToken{}, fmt.Errorf("device: %w", err)
 	}
-	return AccessToken{Value: value, ExpiresAt: expires}, nil
+	return AccessToken{Value: value, ExpiresAt: expires, Assurance: row.AssuranceLevel}, nil
 }
 
 // deviceForKey reads the device a proof speaks for. An unknown device and
@@ -227,4 +230,18 @@ func (s *Service) recordRefresh(ctx context.Context, row dbgen.Device, counter *
 func (s *Service) VerifyKey(ctx context.Context, deviceID, jkt string) error {
 	_, err := s.deviceForKey(ctx, deviceID, jkt)
 	return err
+}
+
+// CheckSyncAssurance refuses a manifest request from a device whose
+// assurance level, as its access token carries it, is below the
+// environment's minAssuranceForSync (SEC-007, PLX-6002).
+func (s *Service) CheckSyncAssurance(ctx context.Context, d Identity) error {
+	conf, err := s.settingsFor(ctx, d.AppID, d.EnvironmentID)
+	if err != nil {
+		return err
+	}
+	if have := Level(d.Assurance); have.Rank() < conf.MinAssuranceForSync.Rank() {
+		return plxerr.New(plxerr.AssuranceInsufficient, "syncing needs assurance %s, and this device has %s", conf.MinAssuranceForSync, have)
+	}
+	return nil
 }

@@ -27,6 +27,7 @@ import 'package:plux_flutter/src/assets/fonts.dart';
 import 'package:plux_flutter/src/assets/icon_fonts.dart';
 import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/core/active_release.dart';
+import 'package:plux_flutter/src/core/app_state.dart';
 import 'package:plux_flutter/src/core/config.dart';
 import 'package:plux_flutter/src/core/fallback.dart';
 import 'package:plux_flutter/src/core/features.dart';
@@ -391,6 +392,13 @@ final class PluxRuntime with WidgetsBindingObserver {
     SecuritySettings.builtIn,
   );
 
+  /// The assurance level of this device, 0 to 3 for `AL0` to `AL3`, as the
+  /// server computed it and the latest token carried it (SEC-007). `AL0`
+  /// until a token arrived, and again at once when the server refuses the
+  /// device with `PLX-6002` or `PLX-6006`. Pages, routes and data sources
+  /// that ask for more are refused; read-only.
+  final ValueNotifier<int> assurance = ValueNotifier(0);
+
   late final LazyDataWorker _dataWorker = LazyDataWorker(
     () => DataWorker.start(
       httpClient: _httpClient,
@@ -421,6 +429,7 @@ final class PluxRuntime with WidgetsBindingObserver {
     runtimeRoot: _root,
     downloadDirectory: '$_root/downloads',
     database: database,
+    assurance: () => assurance.value,
   );
 
   /// The offline outbox's store: encrypted under a key of this
@@ -600,6 +609,7 @@ final class PluxRuntime with WidgetsBindingObserver {
   );
 
   OwnerLifetime? _owners;
+  ProviderContainer? _container;
 
   Future<bool> _ownerErrors(String plugin, ActionError error) =>
       _owners?.current?.errors(plugin, error) ?? Future.value(false);
@@ -608,6 +618,7 @@ final class PluxRuntime with WidgetsBindingObserver {
   /// ACT-020) with the active release, reaching state through
   /// [container]; `Plux.initialize` connects it.
   void connect(ProviderContainer container) {
+    _container = container;
     _owners?.dispose();
     _owners = OwnerLifetime(active, (release) {
       final r = renderer;
@@ -637,7 +648,14 @@ final class PluxRuntime with WidgetsBindingObserver {
   late final RouteGuards guards = RouteGuards(
     release: () => active.value,
     run: (release, page, guard, params) =>
-        renderer?.runGuard(release, page, guard, params, environment()) ??
+        renderer?.runGuard(
+          release,
+          page,
+          guard,
+          params,
+          environment(),
+          state: _guardState,
+        ) ??
         Future.value(const GuardFallsBack('no renderer runs guards')),
     convert: (release, page, params) {
       final r = renderer;
@@ -647,7 +665,20 @@ final class PluxRuntime with WidgetsBindingObserver {
       return r.textParams(release, page, params);
     },
     report: _report,
+    assurance: () => assurance.value,
   );
+
+  /// The app's state and the state of plugin [plugin] ('' for the app), the
+  /// roots `app` and `plugin` a guard reads (NAV-009); empty before
+  /// [connect] gives the runtime its container.
+  Map<String, Object?> _guardState(String plugin) {
+    final c = _container;
+    if (c == null) return const {};
+    return {
+      'app': c.read(appStateProvider),
+      if (plugin.isNotEmpty) 'plugin': c.read(pluginStateProvider(plugin)),
+    };
+  }
 
   /// The active release's native catalogue, or null before one
   /// (ADR-0041).
@@ -962,6 +993,7 @@ final class PluxRuntime with WidgetsBindingObserver {
       try {
         final r = await _worker.sync(_emit);
         if (r.settings != null) settings.value = r.settings!;
+        if (r.assurance != null) assurance.value = r.assurance!;
         if (r.configError != null) _report(r.configError!);
         if (r.outcome == SyncOutcome.staged) _onStaged();
         // The radio is awake: record the result and send what is buffered

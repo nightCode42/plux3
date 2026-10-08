@@ -236,6 +236,11 @@ final class SyncEngine {
   /// is a [SyncResult] with [SyncOutcome.failed], and the active release
   /// is untouched.
   Future<SyncResult> run(void Function(SyncEvent) emit) async {
+    final r = await _run(emit);
+    return r.withAssurance(_auth.assurance);
+  }
+
+  Future<SyncResult> _run(void Function(SyncEvent) emit) async {
     final started = _clock();
     final bytes = _Counter();
     try {
@@ -483,7 +488,7 @@ final class SyncEngine {
     } on PluxException catch (e) {
       return _failed(emit, e, started, bytes.n);
     } on ApiError catch (e) {
-      return _failed(emit, e.toException('sync'), started, bytes.n);
+      return _failed(emit, _refusal(e), started, bytes.n);
     } on DownloadFailed catch (e) {
       return _failed(
         emit,
@@ -499,6 +504,27 @@ final class SyncEngine {
         bytes.n,
       );
     }
+  }
+
+  /// The failure of an API call: a refusal for assurance (`PLX-6002`) or a
+  /// revoked device (`PLX-6006`) keeps its own code, so the app can tell
+  /// them from a network failure; others are sync failures.
+  PluxException _refusal(ApiError e) {
+    final code = e.plxCode;
+    for (final c in [
+      PluxErrorCode.assuranceInsufficient,
+      PluxErrorCode.deviceRevoked,
+    ]) {
+      if (code == c.code) {
+        _auth.lowerAssurance();
+        return PluxException(
+          c,
+          e.message,
+          details: {'call': 'sync', 'status': '${e.status}', 'code': e.code},
+        );
+      }
+    }
+    return e.toException('sync');
   }
 
   SyncResult _failed(

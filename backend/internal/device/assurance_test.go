@@ -73,13 +73,14 @@ func TestSettingsFor(t *testing.T) {
 		profile  settings.Profile
 		hardware bool
 		verdict  playintegrity.DeviceLabel
+		minSync  Level
 	}{
-		{settings.Standard, false, playintegrity.LabelBasic},
-		{settings.Strict, true, playintegrity.LabelDevice},
-		{settings.Maximum, true, playintegrity.LabelDevice},
+		{settings.Standard, false, playintegrity.LabelBasic, AL0},
+		{settings.Strict, true, playintegrity.LabelDevice, AL1},
+		{settings.Maximum, true, playintegrity.LabelDevice, AL2},
 	} {
 		s := mustSettings(t, c.profile)
-		if s.requireHardware() != c.hardware || s.AndroidDeviceVerdictAL2 != c.verdict {
+		if s.requireHardware() != c.hardware || s.AndroidDeviceVerdictAL2 != c.verdict || s.MinAssuranceForSync != c.minSync {
 			t.Errorf("%s: %+v", c.profile, s)
 		}
 	}
@@ -155,5 +156,20 @@ func TestSettingsOf(t *testing.T) {
 	}
 	if plain, err := SettingsOf(fixedValues{profile: settings.Strict}); err != nil || plain != mustSettings(t, settings.Strict) {
 		t.Errorf("a configuration with no overrides: %+v %v", plain, err)
+	}
+}
+
+// Verifies: SEC-007.
+// The levels are ordered AL0 to AL3, and a value that is no level ranks
+// below all of them.
+func TestLevelRank(t *testing.T) {
+	t.Parallel()
+	for i, l := range []Level{AL0, AL1, AL2, AL3} {
+		if l.Rank() != i {
+			t.Errorf("%s ranks %d, want %d", l, l.Rank(), i)
+		}
+	}
+	if Level("AL9").Rank() >= 0 || Level("").Rank() >= 0 {
+		t.Error("an unknown level ranks as a level")
 	}
 }

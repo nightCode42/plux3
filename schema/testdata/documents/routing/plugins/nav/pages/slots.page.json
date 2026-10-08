@@ -41,6 +41,13 @@
     "type": "Scaffold"
   },
   "route": "slots",
+  "routeOptions": {
+    "guards": [
+      {
+        "$graph": "01f0c450-6c00-7000-8000-0000000009a0"
+      }
+    ]
+  },
   "schemaVersion": "1.0.0",
   "title": "Slots"
 }

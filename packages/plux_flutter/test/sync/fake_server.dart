@@ -255,6 +255,13 @@ final class FakePluxServer {
   /// Whether tokens are refused as for an unknown device.
   bool forgetDevices = false;
 
+  /// The assurance level the token responses name (SEC-007).
+  String assuranceLevel = 'AL0';
+
+  /// When set, the lowest level GetManifest accepts: below it the server
+  /// answers `PLX-6002` (SEC-007).
+  String? syncMinimum;
+
   /// Whether the signed manifest pins a security configuration (SEC-182).
   bool pinsConfig = false;
 
@@ -489,6 +496,7 @@ final class FakePluxServer {
             'accessToken': 'plux_dat_${body['deviceId']}',
             'expiresAt': '2100-01-01T00:00:00Z',
             'tokenType': 'DPoP',
+            'assuranceLevel': assuranceLevel,
           },
         );
       case '/plux.v1.DeviceService/ReportInstalled':
@@ -512,6 +520,18 @@ final class FakePluxServer {
       case '/plux.v1.ManifestService/GetManifest':
         if (!authed) {
           return (401, {'code': 'unauthenticated', 'message': 'no token'});
+        }
+        if (syncMinimum case final minimum?
+            when assuranceLevel.compareTo(minimum) < 0) {
+          return (
+            403,
+            {
+              'code': 'permission_denied',
+              'message':
+                  'PLX-6002: syncing needs assurance $minimum, and this '
+                  'device has $assuranceLevel',
+            },
+          );
         }
         if (release == null) {
           return (404, {'code': 'not_found', 'message': 'no release'});

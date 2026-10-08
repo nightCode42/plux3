@@ -306,7 +306,7 @@ void main() {
       expect(await link(tester, 'plux-routing://account'), isTrue);
       expect(find.text('Login from account'), findsOneWidget);
       expect(await link(tester, 'https://routing.plux.dev/vault'), isTrue);
-      expect(find.text('fallback PLX-4102'), findsOneWidget);
+      expect(find.text('fallback PLX-6002'), findsOneWidget);
     },
   );
 
