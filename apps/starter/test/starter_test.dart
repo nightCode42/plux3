@@ -31,7 +31,7 @@ void main() {
         'PLUX_ENDPOINT': '',
       });
       expect(c.appId, 'a1');
-      expect(c.endpoint, Uri.parse('http://localhost:8080'));
+      expect(c.endpoint, Uri.parse('https://localhost:8080'));
       expect(c.environment, 'staging');
       expect(c.route, 'welcome');
       expect(c.hostBuild, 'dev');
