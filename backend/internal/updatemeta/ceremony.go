@@ -27,6 +27,9 @@ type RootSpec struct {
 	Version                            int64
 	Expires                            time.Time
 	Root, Targets, Snapshot, Timestamp RoleSpec
+	// Pins are the certificate pins the root carries, per host: at least
+	// two each (SEC-041). Nil pins nothing.
+	Pins map[string][]string
 }
 
 // NewRoot builds the unsigned root a spec describes. Key identifiers are
@@ -36,7 +39,7 @@ type RootSpec struct {
 func NewRoot(spec RootSpec) (Root, error) {
 	r := Root{
 		Type: RoleRoot, Version: spec.Version, Expires: FormatTime(spec.Expires), SpecVersion: SpecVersion,
-		Keys: map[string]Key{},
+		Keys: map[string]Key{}, Pins: spec.Pins,
 	}
 	for _, role := range []struct {
 		name string

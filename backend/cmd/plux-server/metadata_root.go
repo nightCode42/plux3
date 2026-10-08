@@ -12,6 +12,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/hex"
+	"encoding/json"
 	"encoding/pem"
 	"errors"
 	"flag"
@@ -30,7 +31,7 @@ import (
 // rootUsage is the usage of the offline root ceremony commands.
 const rootUsage = `usage: metadata root-key-export -key <ref> [-pkcs11-socket <path>] [-key-dir <dir>]
        metadata root-new -type production|development -version <n> -expires <time|duration>
-                         -threshold <n> -key <public key file|ref> ... -online-keys <file> -out <file>
+                         -threshold <n> -key <public key file|ref> ... -online-keys <file> [-pins <file>] -out <file>
        metadata root-sign -in <file> -out <file> -key <ref> [-previous <file>]
        metadata root-verify -in <file> [-previous <file>]
 A <ref> is pkcs11:object=<label> (with -pkcs11-socket) or file:<name> (with -key-dir, development only).
@@ -88,12 +89,12 @@ var errRootUsage = errors.New("missing or invalid flags; see the usage")
 
 // rootOptions are the flags of the ceremony subcommands; each uses some.
 type rootOptions struct {
-	in, out, previous, onlineKeys string
-	typ, expires, socket, keyDir  string
-	version                       int64
-	threshold                     int
-	key                           string
-	keys                          []string
+	in, out, previous, onlineKeys, pins string
+	typ, expires, socket, keyDir        string
+	version                             int64
+	threshold                           int
+	key                                 string
+	keys                                []string
 }
 
 // register declares the flags.
@@ -102,6 +103,7 @@ func (o *rootOptions) register(fs *flag.FlagSet) {
 	fs.StringVar(&o.out, "out", "", "the file to write")
 	fs.StringVar(&o.previous, "previous", "", "the root this one replaces")
 	fs.StringVar(&o.onlineKeys, "online-keys", "", "the output of 'metadata keys'")
+	fs.StringVar(&o.pins, "pins", "", "a JSON object of host name to at least two SPKI SHA-256 pins")
 	fs.StringVar(&o.typ, "type", "", "production or development")
 	fs.StringVar(&o.expires, "expires", "", "RFC 3339 time, or a duration from now")
 	fs.StringVar(&o.socket, "pkcs11-socket", "", "the PKCS#11 helper's socket")
@@ -236,6 +238,9 @@ func (o *rootOptions) newRoot(ctx context.Context, now time.Time, stdout, stderr
 	if err := o.addOnlineKeys(&spec); err != nil {
 		return err
 	}
+	if spec.Pins, err = o.readPins(); err != nil {
+		return err
+	}
 	root, err := updatemeta.NewRoot(spec)
 	if err != nil {
 		return fmt.Errorf("root: %w", err)
@@ -253,6 +258,25 @@ func (o *rootOptions) newRoot(ctx context.Context, now time.Time, stdout, stderr
 		_, _ = fmt.Fprintf(stdout, "root key %s\n", id)
 	}
 	return nil
+}
+
+// readPins reads the file of -pins, a JSON object of host name to pins; the
+// root checks the hosts and pins as it does for any upload (SEC-041).
+func (o *rootOptions) readPins() (map[string][]string, error) {
+	if o.pins == "" {
+		return nil, nil
+	}
+	raw, err := readLimited(o.pins)
+	if err != nil {
+		return nil, err
+	}
+	dec := json.NewDecoder(bytes.NewReader(raw))
+	dec.DisallowUnknownFields()
+	var pins map[string][]string
+	if err := dec.Decode(&pins); err != nil || dec.More() || len(pins) == 0 {
+		return nil, fmt.Errorf("%s must be a JSON object of host name to a list of pins", o.pins)
+	}
+	return pins, nil
 }
 
 // expiry reads -expires: an RFC 3339 time, or a duration from now.
