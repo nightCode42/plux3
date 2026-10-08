@@ -1,0 +1,100 @@
+// SPDX-FileCopyrightText: 2026 Plux contributors
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package plux.internal.pkcs11.v1;
+
+option go_package = "github.com/nightCode42/plux3/backend/internal/pkcs11pb;pkcs11pb";
+
+// The wire protocol between the server and the PKCS#11 helper (SEC-120,
+// ADR-0060). It is internal: only plux-server and plux-pkcs11-helper speak
+// it, over a Unix socket, so it is not part of the public API contract and
+// carries no compatibility promise beyond the two binaries of one release.
+//
+// Each message travels as a 4-byte big-endian length followed by that many
+// bytes of protobuf, at most 64 KiB. A connection carries one request and
+// one response.
+
+// Algorithm is a signature algorithm of the helper.
+enum Algorithm {
+  ALGORITHM_UNSPECIFIED = 0;
+  // ALGORITHM_ED25519 is pure Ed25519 (CKM_EDDSA); the "digest" of a sign
+  // request is the whole message.
+  ALGORITHM_ED25519 = 1;
+  // ALGORITHM_ECDSA_P256_SHA256 is ECDSA over P-256 (CKM_ECDSA); the
+  // "digest" of a sign request is the 32-byte SHA-256 of the message, and
+  // the signature is returned as 64 bytes, r followed by s.
+  ALGORITHM_ECDSA_P256_SHA256 = 2;
+}
+
+// ErrorCode classifies a failure without revealing token detail.
+enum ErrorCode {
+  ERROR_CODE_UNSPECIFIED = 0;
+  // ERROR_CODE_INVALID_REQUEST is a malformed key reference, digest or
+  // request.
+  ERROR_CODE_INVALID_REQUEST = 1;
+  // ERROR_CODE_KEY_NOT_FOUND is a key reference that names no key.
+  ERROR_CODE_KEY_NOT_FOUND = 2;
+  // ERROR_CODE_UNSUPPORTED_ALGORITHM is an algorithm the helper does not
+  // know, or one that does not match the key.
+  ERROR_CODE_UNSUPPORTED_ALGORITHM = 3;
+  // ERROR_CODE_INTERNAL is a failure of the token or of the helper.
+  ERROR_CODE_INTERNAL = 4;
+}
+
+// Request is the one message a client sends.
+message Request {
+  oneof request {
+    SignRequest sign = 1;
+    PublicKeyRequest public_key = 2;
+  }
+}
+
+// Response is the one message the helper answers with.
+message Response {
+  oneof response {
+    SignResponse sign = 1;
+    PublicKeyResponse public_key = 2;
+    Error error = 3;
+  }
+}
+
+// SignRequest asks the token to sign with a named key.
+message SignRequest {
+  // key_ref names the key as a PKCS#11 URI (RFC 7512), such as
+  // "pkcs11:object=plux-targets" or "pkcs11:id=%01%02".
+  string key_ref = 1;
+  // digest is what the token signs: the message for Ed25519, the SHA-256
+  // of the message for ECDSA P-256.
+  bytes digest = 2;
+  Algorithm algorithm = 3;
+}
+
+// SignResponse carries a signature.
+message SignResponse {
+  // signature is 64 bytes for both algorithms.
+  bytes signature = 1;
+  // key_id identifies the key that signed.
+  string key_id = 2;
+}
+
+// PublicKeyRequest asks for the public half of a named key.
+message PublicKeyRequest {
+  string key_ref = 1;
+}
+
+// PublicKeyResponse carries a public key.
+message PublicKeyResponse {
+  // public_key_der is the PKIX (SubjectPublicKeyInfo) encoding.
+  bytes public_key_der = 1;
+  Algorithm algorithm = 2;
+  string key_id = 3;
+}
+
+// Error is a failed request.
+message Error {
+  ErrorCode code = 1;
+  // message is safe to show: it never holds a PIN, a key or token detail.
+  string message = 2;
+}
