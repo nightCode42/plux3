@@ -66,6 +66,17 @@ type Asset struct {
 	DeletedAt      pgtype.Timestamptz
 }
 
+type AuditCheckpoint struct {
+	ID             pgtype.UUID
+	OrganizationID pgtype.UUID
+	Sequence       int64
+	EntryHash      string
+	KeyID          string
+	Algorithm      string
+	Signature      []byte
+	CreatedAt      pgtype.Timestamptz
+}
+
 type AuditLog struct {
 	ID             pgtype.UUID
 	OrganizationID pgtype.UUID

@@ -1,0 +1,14 @@
+{
+  "organizations": [
+    {
+      "organization_id": "0198f6a2-0000-7000-8000-0000000000a1",
+      "entries": 1,
+      "checkpoints": 0,
+      "break": {
+        "kind": "entry",
+        "sequence": 2,
+        "reason": "entry 2 was changed after it was written"
+      }
+    }
+  ]
+}

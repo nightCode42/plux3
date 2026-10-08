@@ -62,6 +62,7 @@ func (c *Config) Validate() error {
 	c.validateTelemetry(&p)
 	c.validateLimits(&p)
 	c.validateRetention(&p)
+	p.positive("audit.checkpointInterval", int64(c.Audit.CheckpointInterval))
 	c.validateAssets(&p)
 	c.validateAttestation(&p)
 	return errors.Join(p.errs...)
@@ -191,6 +192,9 @@ func (c *Config) validateSigning(p *problems) {
 	// the 64 characters a key reference may have.
 	if !keyPattern.MatchString(c.Signing.Keys.Targets) || len(c.Signing.Keys.Targets) > 27 {
 		p.addf("signing.keys.targets", "must be a prefix of at most 27 lower-case letters, digits and hyphens")
+	}
+	if !keyPattern.MatchString(c.Signing.Keys.Audit) {
+		p.addf("signing.keys.audit", "must be lower-case letters, digits and hyphens")
 	}
 }
 

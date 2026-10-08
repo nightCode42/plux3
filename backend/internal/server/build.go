@@ -155,11 +155,13 @@ func buildWork(ctx context.Context, cfg *config.Config, log *slog.Logger, db *st
 		jobs.AddWorker(workers, &manifestWorker{svc: services})
 		jobs.AddWorker(workers, &deltaWorker{svc: services})
 	}
+	periodic := append(MaintenanceJobs(workers, services, log),
+		CheckpointJobs(workers, services, cfg.Audit.CheckpointInterval.Duration(), log)...)
 	jobClient, err := jobs.New(jobs.Options{
 		Pool:     db.Pool(),
 		Workers:  workers,
 		Run:      cfg.Has(config.RoleWorker),
-		Periodic: MaintenanceJobs(workers, services, log),
+		Periodic: periodic,
 		Log:      log,
 	})
 	if err != nil {

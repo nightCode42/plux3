@@ -34,6 +34,16 @@ type Config struct {
 	Retention     Retention         `json:"retention"`
 	Assets        Assets            `json:"assets"`
 	Attestation   Attestation       `json:"attestation"`
+	Audit         Audit             `json:"audit"`
+}
+
+// Audit configures the audit log's signed checkpoints (SEC-141).
+type Audit struct {
+	// CheckpointInterval is how often the worker signs a checkpoint over
+	// each organisation's chain, for those with new entries. It bounds
+	// how many entries could be removed from the end of a chain before a
+	// signed checkpoint betrays it.
+	CheckpointInterval Duration `json:"checkpointInterval"`
 }
 
 // Attestation says what the server trusts about the builds of each app
@@ -227,6 +237,10 @@ type SigningKeys struct {
 	// environment has its own key, "<prefix>-<environment ID>"
 	// (ADR-0004, GOV-010).
 	Targets string `json:"targets"`
+	// Audit is the key that signs the audit log's checkpoints (SEC-141).
+	// One key serves the installation: the checkpoints name it, so it can
+	// be rotated without invalidating the old ones.
+	Audit string `json:"audit"`
 }
 
 // Vault is a HashiCorp Vault Transit engine (SEC-120).

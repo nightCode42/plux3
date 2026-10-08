@@ -28,3 +28,23 @@ SELECT * FROM audit_log
 SELECT * FROM audit_log
  WHERE organization_id IS NOT DISTINCT FROM sqlc.narg(organization_id)::uuid
    AND sequence = $1;
+
+-- name: InsertAuditCheckpoint :execrows
+-- A second worker signing the same point changes nothing (SEC-141).
+INSERT INTO audit_checkpoints (
+    id, organization_id, sequence, entry_hash, key_id, algorithm, signature, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+ON CONFLICT (organization_id, sequence) DO NOTHING;
+
+-- name: LatestAuditCheckpoint :one
+SELECT * FROM audit_checkpoints
+ WHERE organization_id = $1
+ ORDER BY sequence DESC
+ LIMIT 1;
+
+-- name: ListAuditCheckpoints :many
+SELECT * FROM audit_checkpoints
+ WHERE organization_id = sqlc.arg(organization_id)
+   AND sequence > sqlc.arg(after_sequence)
+ ORDER BY sequence
+ LIMIT sqlc.arg(page_size);
