@@ -216,7 +216,10 @@ func (*fake) GetRootKeys(_ context.Context, req *connect.Request[pluxv1.GetRootK
 	if req.Msg.GetEnvironment() == "fresh" { // an environment nothing was promoted to
 		return connect.NewResponse(&pluxv1.GetRootKeysResponse{}), nil
 	}
-	return connect.NewResponse(&pluxv1.GetRootKeysResponse{Keys: []*pluxv1.PublicKey{{KeyId: "k1", Algorithm: "ed25519", Role: "targets", PublicKey: []byte{1, 2}}}}), nil
+	return connect.NewResponse(&pluxv1.GetRootKeysResponse{
+		Keys:  []*pluxv1.PublicKey{{KeyId: "k1", Algorithm: "ed25519", Role: "targets", PublicKey: []byte{1, 2}}},
+		Roots: [][]byte{[]byte(`{"root":1}`), []byte(`{"root":2}`)},
+	}), nil
 }
 
 // newFake starts the fake server and returns it with its URL.
@@ -351,6 +354,10 @@ func TestServerCommands(t *testing.T) { //nolint:paralleltest // the keychain mo
 		if _, err := os.Stat(filepath.Join(host, p)); err != nil {
 			t.Errorf("pull did not write %s", p)
 		}
+	}
+	// The newest root is embedded beside the keys, the runtime's anchor (SEC-051).
+	if data, err := os.ReadFile(filepath.Join(host, "root.json")); err != nil || string(data) != `{"root":2}` {
+		t.Errorf("root.json: %v %s", err, data)
 	}
 	// Each bundle carries its publish signature, so the runtime can verify
 	// the baseline under the embedded keys (SEC-052, ADR-0029).

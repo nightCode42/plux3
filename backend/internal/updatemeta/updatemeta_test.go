@@ -15,6 +15,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/big"
 	"os"
 	"path/filepath"
@@ -712,5 +713,72 @@ func TestDocumentsMatchTheSchemas_SEC_122(t *testing.T) {
 		if err := s.Validate(inst); err != nil {
 			t.Errorf("%s does not match its schema: %v\n%s", kind, err, doc)
 		}
+	}
+}
+
+// Verifies: SEC-041, SEC-051, SEC-122.
+// A root may carry the certificate pins of the servers an app talks to: per
+// host at least two distinct SPKI SHA-256 pins. They are part of what the
+// root's threshold signs, a rotation carries them, and a root with fewer,
+// repeated or malformed pins is refused, on upload as on the device.
+func TestRootPins_SEC_041(t *testing.T) {
+	t.Parallel()
+	on := newOnline(t)
+	off := offline(t)
+	pinA := base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{1}, 32))
+	pinB := base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{2}, 32))
+	build := func(version int64, pins map[string][]string) updatemeta.Root {
+		r := rootSigned(version, at.Add(time.Hour), off, on)
+		r.Pins = pins
+		return r
+	}
+	good := build(1, map[string][]string{"plux.example.com": {pinA, pinB}})
+	doc := signRoot(t, good, off[0], off[1])
+	root, _, err := updatemeta.FirstRoot(doc)
+	if err != nil {
+		t.Fatalf("a root with pins: %v", err)
+	}
+	if got := root.Pins["plux.example.com"]; len(got) != 2 || got[0] != pinA {
+		t.Errorf("pins read back: %v", got)
+	}
+	// A root without pins still reads, and writes no member for them.
+	plain := signRoot(t, build(1, nil), off[0], off[1])
+	if bytes.Contains(plain, []byte("pins")) {
+		t.Errorf("a root without pins has a pins member: %s", plain)
+	}
+	// The pins are covered by the signatures: changing them breaks the root.
+	d, _ := updatemeta.ParseDocument(doc)
+	forged := build(1, map[string][]string{"plux.example.com": {pinB, pinA}})
+	forgedDoc, err := updatemeta.Marshal(forged, d.Signatures)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := updatemeta.FirstRoot(forgedDoc); !errors.Is(err, updatemeta.ErrThreshold) {
+		t.Errorf("pins changed under the signatures: %v", err)
+	}
+	// The next root carries pins on, and may replace them.
+	next := build(2, map[string][]string{"plux.example.com": {pinB, pinA}})
+	if _, _, err := updatemeta.NextRoot(root, signRoot(t, next, off[0], off[1])); err != nil {
+		t.Errorf("a rotation with new pins: %v", err)
+	}
+	for name, pins := range map[string]map[string][]string{
+		"one pin":         {"plux.example.com": {pinA}},
+		"a repeated pin":  {"plux.example.com": {pinA, pinA}},
+		"a short pin":     {"plux.example.com": {pinA, "AAAA"}},
+		"a non-canonical": {"plux.example.com": {pinA, pinB[:42] + "B="}},
+		"a bad host":      {"Plux Example": {pinA, pinB}},
+		"no pins":         {"plux.example.com": {}},
+		"nine pins":       {"plux.example.com": {pinA, pinB, "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwM=", "BAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ=", "BQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQU=", "BgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgY=", "BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc=", "CAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg=", "CQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQkJCQk="}},
+	} {
+		if _, _, err := updatemeta.FirstRoot(signRoot(t, build(1, pins), off[0], off[1])); !errors.Is(err, updatemeta.ErrFormat) {
+			t.Errorf("%s: %v", name, err)
+		}
+	}
+	hosts := map[string][]string{}
+	for i := range updatemeta.MaxPinHosts + 1 {
+		hosts[fmt.Sprintf("h%d.example.com", i)] = []string{pinA, pinB}
+	}
+	if _, _, err := updatemeta.FirstRoot(signRoot(t, build(1, hosts), off[0], off[1])); !errors.Is(err, updatemeta.ErrFormat) {
+		t.Errorf("too many hosts: %v", err)
 	}
 }

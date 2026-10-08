@@ -149,6 +149,24 @@
             }
           },
           "additionalProperties": false
+        },
+        "pins": {
+          "type": "object",
+          "description": "Certificate pins of the servers an app talks to (SEC-041): per host name, at least two distinct SPKI pins, the key in use and a backup. Signed offline with the root, so an online key cannot change them.",
+          "maxProperties": 16,
+          "propertyNames": {
+            "pattern": "^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$",
+            "maxLength": 253
+          },
+          "additionalProperties": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 8,
+            "uniqueItems": true,
+            "items": {
+              "$ref": "common.schema.json#/$defs/spkiPin"
+            }
+          }
         }
       },
       "additionalProperties": false

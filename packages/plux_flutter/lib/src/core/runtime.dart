@@ -66,9 +66,11 @@ import 'package:plux_flutter/src/state/persistence.dart';
 import 'package:plux_flutter/src/state/providers.dart';
 import 'package:plux_flutter/src/store/baseline.dart';
 import 'package:plux_flutter/src/store/kv_store.dart';
+import 'package:plux_flutter/src/store/metadata_state.dart';
 import 'package:plux_flutter/src/store/pointer.dart';
 import 'package:plux_flutter/src/store/release_store.dart';
 import 'package:plux_flutter/src/sync/api_client.dart';
+import 'package:plux_flutter/src/sync/metadata_sync.dart';
 import 'package:plux_flutter/src/sync/sync_engine.dart';
 import 'package:plux_flutter/src/sync/sync_event.dart';
 import 'package:plux_flutter/src/sync/sync_worker.dart';
@@ -181,17 +183,22 @@ final class PluxRuntime with WidgetsBindingObserver {
     try {
       // Refuses an unpinned release build before anything is started
       // (SEC-041); a host's own client is the host's to pin.
+      final pinSet = config.httpClient == null
+          ? pinSetFor(config.endpoint, config.pins)
+          : null;
       final httpClient =
           config.httpClient ??
-          PlatformHttpClients(
-            config.endpoint,
-            pinSetFor(config.endpoint, config.pins),
-          ).create;
+          PlatformHttpClients(config.endpoint, pinSet).create;
       final features = RuntimeFeatures();
       final base = config.storageDirectory ?? await platformStorageDirectory();
       final root =
           '$base/${_safe(config.appId)}/${_safe(config.environment)}/${_safe(config.channel)}';
       Directory(root).createSync(recursive: true);
+      // The pins a verified root gave an earlier sync hold from the first
+      // connection on (SEC-041).
+      if (pinSet != null) {
+        MetadataSync.applyStoredPins(pinSet, MetadataStore(root).read());
+      }
       final keys = config.rootKeys.isNotEmpty
           ? config.rootKeys
           : await _bundledKeys(config.baseline);
@@ -229,6 +236,8 @@ final class PluxRuntime with WidgetsBindingObserver {
             environment: config.environment,
             channel: config.channel,
             keys: [for (final k in keys) k.toTrustedKey()],
+            rootDocument: await _bundledRoot(config.baseline),
+            pins: pinSet,
             device: DeviceInfo(
               platform: Platform.operatingSystem,
               osVersion: deviceOsVersion(Platform.operatingSystemVersion),
@@ -1173,6 +1182,18 @@ final class PluxRuntime with WidgetsBindingObserver {
       );
     } on FlutterError {
       return const [];
+    }
+  }
+
+  /// The root file `plux pull` writes beside `keys.json`, the anchor of the
+  /// update metadata (SEC-051), or null when the app has none.
+  static Future<Uint8List?> _bundledRoot(String? baseline) async {
+    if (baseline == null) return null;
+    try {
+      final data = await rootBundle.load('$baseline/root.json');
+      return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+    } on FlutterError {
+      return null;
     }
   }
 

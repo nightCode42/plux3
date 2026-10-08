@@ -312,3 +312,63 @@ func onlineKeysFile(t *testing.T) string {
 	}
 	return b.String()
 }
+
+// Verifies: SEC-041, SEC-051.
+// The ceremony sets the pins a root carries from a file: a host name to at
+// least two SPKI SHA-256 pins, which signing and verification then cover,
+// and which are checked as an upload checks them.
+func TestRootNewPins_SEC_041(t *testing.T) {
+	dir := t.TempDir()
+	c := cli{t: t, ctx: context.Background()}
+	backend, refs := fileHolders(dir)
+	var pubs []string
+	for i, ref := range refs[:2] {
+		pubs = append(pubs, write(t, dir, "p"+strconv.Itoa(i)+".pem", c.must(append([]string{"metadata", "root-key-export", "-key", ref}, backend...)...)))
+	}
+	online := write(t, dir, "online.txt", onlineKeysFile(t))
+	pinA := base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{1}, 32))
+	pinB := base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{2}, 32))
+	out := filepath.Join(dir, "root.json")
+	args := func(pins string) []string {
+		a := []string{
+			"metadata", "root-new", "-type", "production", "-version", "1", "-expires", "720h", "-threshold", "2",
+			"-online-keys", online, "-out", out, "-key", pubs[0], "-key", pubs[1],
+		}
+		if pins != "" {
+			a = append(a, "-pins", write(t, dir, "pins.json", pins))
+		}
+		return a
+	}
+	for name, pins := range map[string]string{
+		"one pin":       `{"plux.example.com":["` + pinA + `"]}`,
+		"a repeat":      `{"plux.example.com":["` + pinA + `","` + pinA + `"]}`,
+		"a bad pin":     `{"plux.example.com":["` + pinA + `","nope"]}`,
+		"a bad host":    `{"Plux Example":["` + pinA + `","` + pinB + `"]}`,
+		"not an object": `["` + pinA + `","` + pinB + `"]`,
+		"empty":         `{}`,
+		"extra data":    `{"plux.example.com":["` + pinA + `","` + pinB + `"]} 1`,
+	} {
+		if got := c.refuses(args(pins)...); got == "" {
+			t.Errorf("%s was accepted", name)
+		}
+	}
+	c.must(args(`{"plux.example.com":["` + pinA + `","` + pinB + `"]}`)...)
+	doc, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	d, err := updatemeta.ParseDocument(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, err := updatemeta.ParseRoot(d.Signed)
+	if err != nil || len(root.Pins["plux.example.com"]) != 2 {
+		t.Errorf("the pins in the root: %v %v", root.Pins, err)
+	}
+	// Without the flag the root carries none.
+	c.must(args("")...)
+	plain, _ := os.ReadFile(out)
+	if bytes.Contains(plain, []byte("pins")) {
+		t.Errorf("a root without -pins has pins: %s", plain)
+	}
+}

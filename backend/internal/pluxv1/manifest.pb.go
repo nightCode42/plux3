@@ -249,8 +249,11 @@ type UpdateMetadataRef struct {
 	RootVersion      int64                  `protobuf:"varint,1,opt,name=root_version,json=rootVersion,proto3" json:"root_version,omitempty"`
 	SnapshotVersion  int64                  `protobuf:"varint,2,opt,name=snapshot_version,json=snapshotVersion,proto3" json:"snapshot_version,omitempty"`
 	TimestampVersion int64                  `protobuf:"varint,3,opt,name=timestamp_version,json=timestampVersion,proto3" json:"timestamp_version,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// environment_id names the environment's metadata files, served at
+	// /v1/metadata/{environment_id}/{file} (SEC-050).
+	EnvironmentId string `protobuf:"bytes,4,opt,name=environment_id,json=environmentId,proto3" json:"environment_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UpdateMetadataRef) Reset() {
@@ -302,6 +305,13 @@ func (x *UpdateMetadataRef) GetTimestampVersion() int64 {
 		return x.TimestampVersion
 	}
 	return 0
+}
+
+func (x *UpdateMetadataRef) GetEnvironmentId() string {
+	if x != nil {
+		return x.EnvironmentId
+	}
+	return ""
 }
 
 // Signature is one signature over a signed document (ADR-0004).
@@ -1195,11 +1205,12 @@ const file_plux_v1_manifest_proto_rawDesc = "" +
 	"\bmetadata\x18\x0e \x01(\v2\x1a.plux.v1.UpdateMetadataRefR\bmetadata\"E\n" +
 	"\x11SecurityConfigRef\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\x03R\aversion\x12\x16\n" +
-	"\x06sha256\x18\x02 \x01(\fR\x06sha256\"\x8e\x01\n" +
+	"\x06sha256\x18\x02 \x01(\fR\x06sha256\"\xb5\x01\n" +
 	"\x11UpdateMetadataRef\x12!\n" +
 	"\froot_version\x18\x01 \x01(\x03R\vrootVersion\x12)\n" +
 	"\x10snapshot_version\x18\x02 \x01(\x03R\x0fsnapshotVersion\x12+\n" +
-	"\x11timestamp_version\x18\x03 \x01(\x03R\x10timestampVersion\"^\n" +
+	"\x11timestamp_version\x18\x03 \x01(\x03R\x10timestampVersion\x12%\n" +
+	"\x0eenvironment_id\x18\x04 \x01(\tR\renvironmentId\"^\n" +
 	"\tSignature\x12\x15\n" +
 	"\x06key_id\x18\x01 \x01(\tR\x05keyId\x12\x1c\n" +
 	"\talgorithm\x18\x02 \x01(\tR\talgorithm\x12\x1c\n" +

@@ -100,3 +100,4 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | `state.secureBytes` | bytes | 65536 | 80% | 1048576 | installation, organization, app | P5 | STA-003, LIM-004 | Bytes the secure state of one app may take in the runtime's local store (plain; secure state is the encrypted one, plan p5 B6); writes beyond it stay in memory and are reported. |
 | `telemetry.bufferBytes` | bytes | 262144 | 80% | 4194304 | installation, organization, app | P3 | ANL-002 | The size of the runtime's buffer of unsent telemetry events; the oldest are dropped first. |
 | `telemetry.eventsPerRequest` | count | 500 | 80% | 5000 | installation, organization, app | P2 | SEC-104 | Runtime events one telemetry request may carry. |
+| `updateMetadata.bytes` | bytes | 1048576 | 80% | 4194304 | installation | P6 | SEC-050 | Size of one update metadata file (root, snapshot or timestamp) a device accepts and the server serves. |

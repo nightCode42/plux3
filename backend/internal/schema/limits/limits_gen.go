@@ -284,6 +284,9 @@ const (
 	// TelemetryEventsPerRequest: Runtime events one telemetry request may carry.
 	// (SEC-104)
 	TelemetryEventsPerRequest Key = "telemetry.eventsPerRequest"
+	// UpdateMetadataBytes: Size of one update metadata file (root, snapshot or
+	// timestamp) a device accepts and the server serves. (SEC-050)
+	UpdateMetadataBytes Key = "updateMetadata.bytes"
 )
 
 // registry holds every definition in key order. It is read-only.
@@ -382,4 +385,5 @@ var registry = [...]Definition{
 	{Key: StateSecureBytes, Unit: UnitBytes, Default: 65536, Warning: 0, Max: 1048576, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the secure state of one app may take in the runtime's local store (plain; secure state is the encrypted one, plan p5 B6); writes beyond it stay in memory and are reported."},
 	{Key: TelemetryBufferBytes, Unit: UnitBytes, Default: 262144, Warning: 0, Max: 4194304, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "The size of the runtime's buffer of unsent telemetry events; the oldest are dropped first."},
 	{Key: TelemetryEventsPerRequest, Unit: UnitCount, Default: 500, Warning: 0, Max: 5000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerServer, Phase: "P2", Description: "Runtime events one telemetry request may carry."},
+	{Key: UpdateMetadataBytes, Unit: UnitBytes, Default: 1048576, Warning: 0, Max: 4194304, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer | EnforcerRuntime, Phase: "P6", Description: "Size of one update metadata file (root, snapshot or timestamp) a device accepts and the server serves."},
 }

@@ -11057,6 +11057,12 @@ components:
           type: string
           title: timestamp_version
           format: int64
+        environmentId:
+          type: string
+          title: environment_id
+          description: |-
+            environment_id names the environment's metadata files, served at
+             /v1/metadata/{environment_id}/{file} (SEC-050).
       title: UpdateMetadataRef
       additionalProperties: false
       description: |-

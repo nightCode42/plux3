@@ -21,80 +21,7 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:plux_flutter/src/security/attestation.dart';
 import 'package:plux_flutter/src/security/device_keys.dart';
-
-// The NIST P-256 domain parameters (FIPS 186-4 D.1.2.3): the curve
-// y^2 = x^3 - 3x + b over the prime field p, with base point g of prime
-// order n. The point arithmetic needs a = -3 and p, not b.
-final _p = BigInt.parse(
-  'ffffffff00000001000000000000000000000000ffffffffffffffffffffffff',
-  radix: 16,
-);
-final _n = BigInt.parse(
-  'ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551',
-  radix: 16,
-);
-final _g = _Point(
-  BigInt.parse(
-    '6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296',
-    radix: 16,
-  ),
-  BigInt.parse(
-    '4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5',
-    radix: 16,
-  ),
-);
-
-/// A point of the curve in affine coordinates; the point at infinity is
-/// represented by null wherever a point is optional.
-final class _Point {
-  const _Point(this.x, this.y);
-
-  final BigInt x;
-  final BigInt y;
-}
-
-_Point? _add(_Point? a, _Point? b) {
-  if (a == null) return b;
-  if (b == null) return a;
-  final BigInt slope;
-  if (a.x == b.x) {
-    if ((a.y + b.y) % _p == BigInt.zero) return null;
-    slope =
-        (BigInt.from(3) *
-            (a.x * a.x - BigInt.one) *
-            (BigInt.two * a.y).modInverse(_p)) %
-        _p;
-  } else {
-    slope = ((b.y - a.y) * (b.x - a.x).modInverse(_p)) % _p;
-  }
-  final x = (slope * slope - a.x - b.x) % _p;
-  return _Point(x, (slope * (a.x - x) - a.y) % _p);
-}
-
-/// [k] times [point] by double-and-add. It is not constant time: the keys
-/// here are throwaway test keys, and nothing about them is secret from the
-/// process that holds them.
-_Point? _multiply(BigInt k, _Point point) {
-  _Point? result;
-  _Point? addend = point;
-  for (var i = 0; i < k.bitLength; i++) {
-    if ((k >> i).isOdd) result = _add(result, addend);
-    addend = _add(addend, addend);
-  }
-  return result;
-}
-
-Uint8List _bytes32(BigInt v) {
-  final out = Uint8List(32);
-  for (var i = 31; i >= 0; i--) {
-    out[i] = (v & BigInt.from(0xff)).toInt();
-    v >>= 8;
-  }
-  return out;
-}
-
-BigInt _int(List<int> bytes) =>
-    bytes.fold(BigInt.zero, (acc, b) => (acc << 8) | BigInt.from(b));
+import 'package:plux_flutter/src/security/p256.dart';
 
 /// An in-memory P-256 key store implemented in pure Dart.
 ///
@@ -113,7 +40,7 @@ final class SoftwareDeviceKeys implements DeviceKeys {
   @visibleForTesting
   SoftwareDeviceKeys.withScalar(String alias, BigInt d)
     : _random = Random.secure() {
-    if (d < BigInt.one || d >= _n) {
+    if (d < BigInt.one || d >= p256Order) {
       throw ArgumentError.value(d, 'd', 'a P-256 scalar lies in [1, n-1]');
     }
     _scalars[alias] = d;
@@ -141,13 +68,13 @@ final class SoftwareDeviceKeys implements DeviceKeys {
   Future<Uint8List> sign(String alias, Uint8List data) async {
     final d = _scalars[alias];
     if (d == null) throw StateError('no software key under "$alias"');
-    final z = _int(sha256.convert(data).bytes);
+    final z = p256Int(sha256.convert(data).bytes);
     while (true) {
       final k = _randomScalar();
-      final r = _multiply(k, _g)!.x % _n;
-      final s = (k.modInverse(_n) * (z + r * d)) % _n;
+      final r = p256Multiply(k, p256Base)!.x % p256Order;
+      final s = (k.modInverse(p256Order) * (z + r * d)) % p256Order;
       if (r != BigInt.zero && s != BigInt.zero) {
-        return Uint8List.fromList([..._bytes32(r), ..._bytes32(s)]);
+        return Uint8List.fromList([...p256Bytes32(r), ...p256Bytes32(s)]);
       }
     }
   }
@@ -160,19 +87,19 @@ final class SoftwareDeviceKeys implements DeviceKeys {
   /// A scalar drawn uniformly from [1, n-1] by rejection.
   BigInt _randomScalar() {
     while (true) {
-      final k = _int([for (var i = 0; i < 32; i++) _random.nextInt(256)]);
-      if (k >= BigInt.one && k < _n) return k;
+      final k = p256Int([for (var i = 0; i < 32; i++) _random.nextInt(256)]);
+      if (k >= BigInt.one && k < p256Order) return k;
     }
   }
 
   DeviceKey? _describe(String alias, KeyPurpose purpose) {
     final d = _scalars[alias];
     if (d == null) return null;
-    final q = _multiply(d, _g)!;
+    final q = p256Multiply(d, p256Base)!;
     return DeviceKey(
       alias: alias,
       purpose: purpose,
-      publicKey: EcPublicKey(_bytes32(q.x), _bytes32(q.y)),
+      publicKey: EcPublicKey(p256Bytes32(q.x), p256Bytes32(q.y)),
       storage: KeyStorage.software,
     );
   }

@@ -21,6 +21,7 @@ import (
 
 	"github.com/nightCode42/plux3/backend/internal/audit"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
+	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 	"github.com/nightCode42/plux3/backend/internal/signing"
 	"github.com/nightCode42/plux3/backend/internal/storage"
 	"github.com/nightCode42/plux3/backend/internal/storage/dbgen"
@@ -412,6 +413,9 @@ func (s *Service) PurgeMetadata(ctx context.Context, org string) (int64, error) 
 // must list the environment's online keys, or the worker could not sign
 // under it. The server never holds a root key.
 func (s *Service) UploadRoot(ctx context.Context, org, environment string, raw []byte) (updatemeta.Root, error) {
+	if max := s.o.Limits.Get(limits.UpdateMetadataBytes); int64(len(raw)) > max {
+		return updatemeta.Root{}, plxerr.New(plxerr.UpdateMetadataInvalid, "the root is %d bytes; a metadata file may have at most %d (updateMetadata.bytes)", len(raw), max)
+	}
 	envID, err := parseID(environment, "environment")
 	if err != nil {
 		return updatemeta.Root{}, err
@@ -675,6 +679,10 @@ func (s *Service) Metadata(ctx context.Context, environment, name string) (Metad
 	})
 	if err != nil {
 		return MetadataFile{}, failure(err, "metadata file")
+	}
+	if max := s.o.Limits.Get(limits.UpdateMetadataBytes); int64(len(row.Document)) > max {
+		// A device would refuse it; the limit was lowered after it was stored.
+		return MetadataFile{}, failure(fmt.Errorf("%d bytes exceed updateMetadata.bytes (%d)", len(row.Document), max), "metadata file")
 	}
 	file := MetadataFile{Document: row.Document, Version: row.Version, Versioned: version != 0}
 	copy(file.SHA256[:], row.Sha256)

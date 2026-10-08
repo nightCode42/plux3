@@ -13,6 +13,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:plux_flutter/src/assets/assets.dart';
 import 'package:plux_flutter/src/bundle/container.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
@@ -22,13 +23,16 @@ import 'package:plux_flutter/src/mmap/mapped_file.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
 import 'package:plux_flutter/src/security/attestation.dart';
 import 'package:plux_flutter/src/security/device_keys.dart';
+import 'package:plux_flutter/src/security/pins.dart';
 import 'package:plux_flutter/src/security/security_config.dart';
 import 'package:plux_flutter/src/store/kv_store.dart' show SecretStore;
+import 'package:plux_flutter/src/store/metadata_state.dart';
 import 'package:plux_flutter/src/store/release_record.dart';
 import 'package:plux_flutter/src/store/release_store.dart';
 import 'package:plux_flutter/src/sync/api_client.dart';
 import 'package:plux_flutter/src/sync/device_auth.dart';
 import 'package:plux_flutter/src/sync/downloader.dart';
+import 'package:plux_flutter/src/sync/metadata_sync.dart';
 import 'package:plux_flutter/src/sync/sync_event.dart';
 import 'package:plux_flutter/src/verify/bundle_verifier.dart';
 import 'package:plux_flutter/src/verify/manifest.dart';
@@ -90,6 +94,9 @@ final class SyncConfig {
     this.diskQuota = 200 * 1024 * 1024,
     this.maxBundleSize = 20 * 1024 * 1024,
     this.assets = AssetDevice.plain,
+    this.production = kReleaseMode,
+    this.rootDocument,
+    this.pins,
   });
 
   /// The app.
@@ -124,6 +131,21 @@ final class SyncConfig {
 
   /// What decides which file of each asset this device downloads.
   final AssetDevice assets;
+
+  /// Whether this is a production runtime, which refuses update metadata
+  /// and keys of the `development` environment type (SEC-056). A release
+  /// build by default.
+  final bool production;
+
+  /// The root file the app embeds (`root.json` beside `keys.json`), the
+  /// trust anchor of the update metadata in preference to the root made
+  /// from [keys] (SEC-051).
+  final Uint8List? rootDocument;
+
+  /// The pins of the Plux server the HTTP client enforces; the pins of a
+  /// verified root replace them (SEC-041). It must be the very object the
+  /// client was made with.
+  final PinSet? pins;
 }
 
 /// Runs syncs against one store.
@@ -157,6 +179,18 @@ final class SyncEngine {
       device: config.device,
       clock: _clock,
     );
+    _metadata = MetadataSync(
+      api: api,
+      store: MetadataStore(store.root),
+      keys: config.keys,
+      embeddedRoot: config.rootDocument,
+      host: api.endpoint.host,
+      pins: config.pins,
+      appId: config.appId,
+      environment: config.environment,
+      production: config.production,
+      clock: _clock,
+    );
   }
 
   /// The configuration.
@@ -182,6 +216,7 @@ final class SyncEngine {
 
   final DateTime Function() _clock;
   late final DeviceAuth _auth;
+  late final MetadataSync _metadata;
   final SecurityConfigStore? _configs;
 
   /// The settings in force: the verified stored configuration, or the
@@ -249,6 +284,10 @@ final class SyncEngine {
         res = await ask(list: true);
       }
       if (res.notModified) {
+        // The timestamp is looked at on every sync (SEC-050): a server that
+        // goes on answering "not modified" cannot hold the device on
+        // metadata that has expired.
+        await _metadata.checkTimestamp(token);
         emit(SyncUpToDate(pointer.active));
         return SyncResult(
           outcome: SyncOutcome.upToDate,
@@ -257,20 +296,27 @@ final class SyncEngine {
           settings: settings,
         );
       }
-      Future<VerifiedManifest> verify(ManifestResponse r) => verifyManifest(
-        r.signed!,
-        [for (final s in r.signatures) DocumentSignature.fromJson(s)],
-        VerificationContext(
-          keys: config.keys,
-          app: config.appId,
-          environment: config.environment,
-          channel: config.channel,
-          now: _clock(),
-          highestAccepted: pointer.highestAccepted,
-          runtimeVersion: config.device.runtimeVersion,
-          supportsFeature: config.supportsFeature,
-        ),
-      );
+      // The metadata chain first (SEC-050): its root, not the app's
+      // embedded keys, says who signs the manifest once keys rotate.
+      MetadataTrust? trust;
+      Future<VerifiedManifest> verify(ManifestResponse r) async {
+        trust = await _metadata.verify(token, r);
+        return verifyManifest(
+          r.signed!,
+          [for (final s in r.signatures) DocumentSignature.fromJson(s)],
+          VerificationContext(
+            keys: trust?.targetsKeys ?? config.keys,
+            app: config.appId,
+            environment: config.environment,
+            channel: config.channel,
+            now: _clock(),
+            highestAccepted: pointer.highestAccepted,
+            runtimeVersion: config.device.runtimeVersion,
+            supportsFeature: config.supportsFeature,
+          ),
+        );
+      }
+
       var m = await verify(res);
       if (_configs != null && m.config != null) {
         ConfigApplied applied = applyConfigUpdate(
@@ -309,6 +355,8 @@ final class SyncEngine {
             configError = error;
         }
       }
+      final accepted = trust;
+      if (accepted != null) _metadata.commit(accepted);
       store.accept(m.releaseSequence, res.etag);
       final control = ControlState(
         sequence: m.releaseSequence,

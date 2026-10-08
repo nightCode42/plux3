@@ -730,7 +730,26 @@ func pullBaseline(ctx context.Context, cl *clients, c common, envKey, channel, d
 			return baseline{}, err
 		}
 	}
+	if err := writeRoot(dir, keys.Msg.GetRoots()); err != nil {
+		return baseline{}, err
+	}
 	return out, nil
+}
+
+// writeRoot writes the newest root of the environment as root.json beside
+// keys.json, so that the runtime starts from the exact root the app was
+// built with and follows rotations from there (SEC-051). The environment's
+// roots come oldest first. An environment with no root has none, and a file
+// left by an earlier pull is removed.
+func writeRoot(dir string, roots [][]byte) error {
+	path := filepath.Join(dir, "root.json")
+	if len(roots) == 0 {
+		if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("remove %s: %w", path, err)
+		}
+		return nil
+	}
+	return writeFile(path, roots[len(roots)-1])
 }
 
 // channelSequence is the release a channel points at, 0 for none.

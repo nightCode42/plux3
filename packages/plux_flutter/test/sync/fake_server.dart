@@ -21,6 +21,8 @@ import 'package:plux_flutter/src/sync/api_client.dart' show installedDigest;
 import 'package:plux_flutter/src/verify/jcs.dart';
 import 'package:plux_flutter/src/verify/manifest.dart';
 
+import 'fake_metadata.dart';
+
 /// The compiled golden bundles and the Go deltas between them.
 final class Goldens {
   Goldens._(this.bundles, this.deltas);
@@ -213,6 +215,10 @@ final class FakePluxServer {
   /// The release it serves.
   FakeRelease? release;
 
+  /// The update metadata it serves, when its environment has a root
+  /// (SEC-050); the manifest then carries the targets version.
+  FakeMetadata? metadata;
+
   /// Deltas it can serve, by `from→to` bundle hashes.
   final Map<String, Uint8List> deltas = {};
 
@@ -385,7 +391,12 @@ final class FakePluxServer {
       await res.close();
       return;
     }
-    final data = _objects[req.uri.path];
+    final meta = metadata;
+    final named = meta == null
+        ? null
+        : RegExp('^/v1/metadata/${meta.environmentId}/(.+)\$')
+              .firstMatch(req.uri.path);
+    final data = named == null ? _objects[req.uri.path] : meta!.files[named[1]];
     if (data == null) {
       res.statusCode = 404;
       await res.close();
@@ -490,6 +501,14 @@ final class FakePluxServer {
             .cast<Map<String, Object?>>();
         events.addAll(batch);
         return (200, {'accepted': batch.length});
+      case '/plux.v1.ManifestService/GetRootKeys':
+        if (!authed || metadata == null) {
+          return (401, {'code': 'unauthenticated', 'message': 'no token'});
+        }
+        return (
+          200,
+          metadata!.rootKeys(int.parse(body['sinceRootVersion']! as String)),
+        );
       case '/plux.v1.ManifestService/GetManifest':
         if (!authed) {
           return (401, {'code': 'unauthenticated', 'message': 'no token'});
@@ -565,6 +584,7 @@ final class FakePluxServer {
         'message': r.message,
       },
       'experiments': <Object?>[],
+      if (metadata != null) 'version': metadata!.targetsVersion,
       if (pinsConfig)
         'config': {
           'version': configVersion,
@@ -615,6 +635,7 @@ final class FakePluxServer {
         'appId': app,
         'releaseSequence': '${r.sequence}',
         'signed': base64.encode(signed),
+        if (metadata != null) 'metadata': metadata!.reference,
         'signatures': [
           {
             'keyId': keyId,

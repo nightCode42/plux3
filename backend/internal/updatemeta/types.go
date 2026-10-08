@@ -81,7 +81,23 @@ type Root struct {
 	SpecVersion string         `json:"specVersion"`
 	Keys        map[string]Key `json:"keys"`
 	Roles       Roles          `json:"roles"`
+	// Pins are the certificate pins of the servers an app talks to, per
+	// host name: at least two SPKI SHA-256 pins each, in the base64 of
+	// RFC 7469 (SEC-041). They sit in the root so that only the offline
+	// root keys can change them.
+	Pins map[string][]string `json:"pins,omitempty"`
 }
+
+// Bounds of the pins a root carries; schema/update/root.schema.json
+// says the same.
+const (
+	// MinPins is the fewest pins of a host: the key in use and a backup.
+	MinPins = 2
+	// MaxPins is the most pins of a host.
+	MaxPins = 8
+	// MaxPinHosts is the most hosts a root pins.
+	MaxPinHosts = 16
+)
 
 // VersionRef names a version of another document.
 type VersionRef struct {
@@ -250,6 +266,7 @@ var (
 	specPattern    = regexp.MustCompile(`^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$`)
 	sha256Pattern  = regexp.MustCompile(`^[0-9a-f]{64}$`)
 	algNamePattern = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$`)
+	hostPattern    = regexp.MustCompile(`^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$`)
 )
 
 // header checks the properties every signed part carries.
@@ -292,7 +309,38 @@ func ParseRoot(signed []byte) (Root, error) {
 			return Root{}, err
 		}
 	}
+	if err := r.checkPins(); err != nil {
+		return Root{}, err
+	}
 	return r, nil
+}
+
+// checkPins checks the pins of a root: a host name each, and for each
+// between MinPins and MaxPins distinct, canonical base64 SHA-256 values.
+func (r Root) checkPins() error {
+	if len(r.Pins) > MaxPinHosts {
+		return fmt.Errorf("%w: %d pinned hosts, at most %d", ErrFormat, len(r.Pins), MaxPinHosts)
+	}
+	for host, pins := range r.Pins {
+		if len(host) > 253 || !hostPattern.MatchString(host) {
+			return fmt.Errorf("%w: %q is not a host name to pin", ErrFormat, host)
+		}
+		if len(pins) < MinPins || len(pins) > MaxPins {
+			return fmt.Errorf("%w: host %s has %d pins, between %d and %d are needed", ErrFormat, host, len(pins), MinPins, MaxPins)
+		}
+		seen := map[string]bool{}
+		for _, p := range pins {
+			raw, err := base64.StdEncoding.DecodeString(p)
+			if err != nil || len(raw) != sha256.Size || base64.StdEncoding.EncodeToString(raw) != p {
+				return fmt.Errorf("%w: host %s has a pin that is not the base64 of a SHA-256 hash", ErrFormat, host)
+			}
+			if seen[p] {
+				return fmt.Errorf("%w: host %s repeats a pin", ErrFormat, host)
+			}
+			seen[p] = true
+		}
+	}
+	return nil
 }
 
 // checkRole checks a role's keys against the root's key list: every key
