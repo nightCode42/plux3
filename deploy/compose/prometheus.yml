@@ -5,5 +5,9 @@ global:
   scrape_interval: 15s
 scrape_configs:
   - job_name: plux-server
+    scheme: https
+    tls_config:
+      ca_file: /etc/prometheus/plux-ca.crt
+      server_name: plux-server
     static_configs:
       - targets: ["plux-server:8080"]
