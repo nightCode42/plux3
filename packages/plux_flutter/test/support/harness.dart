@@ -103,6 +103,7 @@ final class Harness {
         baseline: _reader(baseline),
         healthyAfter: const Duration(hours: 1),
         secrets: () => secrets,
+        configSecrets: MemorySecretStore.new,
       ),
     );
   }

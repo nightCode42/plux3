@@ -59,6 +59,7 @@ import 'package:plux_flutter/src/schema/limits.g.dart';
 import 'package:plux_flutter/src/security/attestation.dart';
 import 'package:plux_flutter/src/security/device_keys.dart';
 import 'package:plux_flutter/src/security/platform_attestation.dart';
+import 'package:plux_flutter/src/security/security_config.dart';
 import 'package:plux_flutter/src/state/persistence.dart';
 import 'package:plux_flutter/src/state/providers.dart';
 import 'package:plux_flutter/src/store/baseline.dart';
@@ -104,6 +105,7 @@ final class RuntimeOverrides {
     this.clock,
     this.random,
     this.secrets,
+    this.configSecrets,
   });
 
   /// Creates the credential store on the sync isolate.
@@ -132,6 +134,10 @@ final class RuntimeOverrides {
   /// The secure storage that keeps the state stores' keys; the platform's
   /// when null (plan p5 D6).
   final SecretStore Function()? secrets;
+
+  /// Creates, on the sync isolate, the secret store that keeps the remote
+  /// security configuration (SEC-182); the platform's when null.
+  final SecretStore Function()? configSecrets;
 }
 
 /// The runtime.
@@ -195,6 +201,12 @@ final class PluxRuntime with WidgetsBindingObserver {
           endpoint: config.endpoint,
           httpClient: config.httpClient ?? platformHttpClient,
           credentials: credentials,
+          // Host tests replace the platform's services, including this one;
+          // without that replacement they run on the built-in defaults
+          // rather than wait on a platform that is not there.
+          configSecrets:
+              overrides.configSecrets ??
+              (overrides.credentials == null ? PlatformSecretStore.new : null),
           deviceKeys: overrides.deviceKeys ?? PlatformDeviceKeys.new,
           attestation: overrides.attestation ?? _platformAttestation(config),
           parallelism: config.downloadParallelism,
@@ -347,6 +359,15 @@ final class PluxRuntime with WidgetsBindingObserver {
 
   /// The latest sync event, for status displays.
   final ValueNotifier<SyncEvent?> lastEvent = ValueNotifier(null);
+
+  /// The security settings in force (SEC-182): the built-in defaults until
+  /// the stored configuration has been read, then the verified remote
+  /// configuration on top of them. Read-only; it changes when a sync
+  /// applies a new configuration, so what shapes a running session can
+  /// listen and apply at once.
+  final ValueNotifier<SecuritySettings> settings = ValueNotifier(
+    SecuritySettings.builtIn,
+  );
 
   late final LazyDataWorker _dataWorker = LazyDataWorker(
     () => DataWorker.start(
@@ -860,6 +881,13 @@ final class PluxRuntime with WidgetsBindingObserver {
     if (_reopen().staged != null) {
       pointer = await _worker.activate();
     }
+    try {
+      settings.value = await _worker.loadSettings() ?? settings.value;
+    } on StateError catch (e) {
+      _report(
+        PluxException(PluxErrorCode.syncFailed, 'settings: ${e.message}'),
+      );
+    }
     final before = _reopen().active;
     pointer = await _worker.beginLaunch();
     if (before != null && pointer.active != before) {
@@ -909,6 +937,8 @@ final class PluxRuntime with WidgetsBindingObserver {
     Future<SyncResult> run() async {
       try {
         final r = await _worker.sync(_emit);
+        if (r.settings != null) settings.value = r.settings!;
+        if (r.configError != null) _report(r.configError!);
         if (r.outcome == SyncOutcome.staged) _onStaged();
         // The radio is awake: record the result and send what is buffered
         // (SYN-015, ADR-0034).

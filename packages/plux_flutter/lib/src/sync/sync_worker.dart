@@ -16,8 +16,10 @@ import 'package:http/http.dart' as http;
 import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/security/attestation.dart';
 import 'package:plux_flutter/src/security/device_keys.dart';
+import 'package:plux_flutter/src/security/security_config.dart';
 import 'package:plux_flutter/src/store/baseline.dart';
 import 'package:plux_flutter/src/store/directory_sync.dart';
+import 'package:plux_flutter/src/store/kv_store.dart' show SecretStore;
 import 'package:plux_flutter/src/store/pointer.dart';
 import 'package:plux_flutter/src/store/release_store.dart';
 import 'package:plux_flutter/src/sync/api_client.dart';
@@ -38,6 +40,7 @@ final class SyncWorkerConfig {
     required this.credentials,
     required this.deviceKeys,
     required this.attestation,
+    this.configSecrets,
     this.parallelism = 4,
     this.baseline,
     this.rootIsolateToken,
@@ -64,6 +67,11 @@ final class SyncWorkerConfig {
 
   /// Creates the platform attestation, inside the isolate (SEC-002).
   final Attestation Function() attestation;
+
+  /// Creates the secret store that keeps the remote security
+  /// configuration, inside the isolate (SEC-182); without it the device
+  /// runs on the built-in defaults.
+  final SecretStore Function()? configSecrets;
 
   /// Downloads at once (SYN-010).
   final int parallelism;
@@ -99,6 +107,11 @@ final class _Baseline extends _Command {
 
 final class _Settle extends _Command {
   const _Settle(super.reply);
+}
+
+/// Reads the security settings in force.
+final class _Settings extends _Command {
+  const _Settings(super.reply);
 }
 
 final class _Flush extends _Command {
@@ -186,6 +199,12 @@ final class SyncWorker {
     }
   }
 
+  /// The security settings in force: the stored configuration once it has
+  /// verified against its hash again, else the built-in defaults; null
+  /// when the worker keeps no configuration (SEC-182).
+  Future<SecuritySettings?> loadSettings() async =>
+      await _ask(_Settings.new) as SecuritySettings?;
+
   /// Activates the staged release (SYN-004).
   Future<StorePointer> activate() => _store('activate');
 
@@ -261,6 +280,7 @@ Future<void> _main((SyncWorkerConfig, SendPort) args) async {
     credentials: config.credentials(),
     keys: config.deviceKeys(),
     attestation: config.attestation(),
+    configSecrets: config.configSecrets?.call(),
   );
   final outbox = TelemetryOutbox(config.storeRoot);
   final commands = ReceivePort();
@@ -269,6 +289,12 @@ Future<void> _main((SyncWorkerConfig, SendPort) args) async {
     switch (c) {
       case _Settle(:final reply):
         reply.send(null);
+      case _Settings(:final reply):
+        try {
+          reply.send(await engine.loadSettings());
+        } on Object catch (e) {
+          reply.send(_Failure('$e'));
+        }
       case _Record(:final lines, :final maxBytes):
         try {
           outbox.append(lines, maxBytes);

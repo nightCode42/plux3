@@ -22,6 +22,8 @@ import 'package:plux_flutter/src/mmap/mapped_file.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
 import 'package:plux_flutter/src/security/attestation.dart';
 import 'package:plux_flutter/src/security/device_keys.dart';
+import 'package:plux_flutter/src/security/security_config.dart';
+import 'package:plux_flutter/src/store/kv_store.dart' show SecretStore;
 import 'package:plux_flutter/src/store/release_record.dart';
 import 'package:plux_flutter/src/store/release_store.dart';
 import 'package:plux_flutter/src/sync/api_client.dart';
@@ -119,8 +121,16 @@ final class SyncEngine {
     required this.credentials,
     required this.keys,
     required this.attestation,
+    SecretStore? configSecrets,
     DateTime Function()? clock,
-  }) : _clock = clock ?? DateTime.now {
+  }) : _clock = clock ?? DateTime.now,
+       _configs = configSecrets == null
+           ? null
+           : SecurityConfigStore(
+               configSecrets,
+               config.appId,
+               config.environment,
+             ) {
     _auth = DeviceAuth(
       api: api,
       keys: keys,
@@ -156,6 +166,20 @@ final class SyncEngine {
 
   final DateTime Function() _clock;
   late final DeviceAuth _auth;
+  final SecurityConfigStore? _configs;
+
+  /// The settings in force: the verified stored configuration, or the
+  /// built-in defaults when there is none or it no longer verifies
+  /// (SEC-182). Null when the engine keeps no configuration.
+  Future<SecuritySettings?> loadSettings() async =>
+      _settingsOf(await _configs?.read());
+
+  SecuritySettings? _settingsOf(StoredSecurityConfig? stored) =>
+      _configs == null
+      ? null
+      : stored == null
+      ? SecuritySettings.builtIn
+      : SecuritySettings.fromDocument(stored.document, version: stored.version);
 
   /// Syncs once, reporting [SyncEvent]s to [emit]. Never throws: a failure
   /// is a [SyncResult] with [SyncOutcome.failed], and the active release
@@ -176,10 +200,20 @@ final class SyncEngine {
           b.key: b.hash,
       };
       final etag = active == null ? '' : pointer.etag;
+      // The configuration the device holds, verified again against the
+      // hash stored with it, and its version for the request (SEC-182).
+      final stored = await _configs?.read();
+      final sentConfig = stored?.version ?? 0;
+      var settings = _settingsOf(stored);
+      PluxException? configError;
       // An up-to-date check sends the digest of the installed bundles,
       // and the bundles themselves only when the server asks: when the
       // manifest changed, its plan's deltas depend on them (NFR-006).
-      Future<ManifestResponse> ask({required bool list}) => api.manifest(
+      Future<ManifestResponse> ask({
+        required bool list,
+        String? ifNoneMatch,
+        int configVersion = -1,
+      }) => api.manifest(
         token: token,
         appId: config.appId,
         environment: config.environment,
@@ -190,8 +224,9 @@ final class SyncEngine {
             for (final MapEntry(:key, :value) in hashes.entries)
               key: 'sha256:$value',
         },
-        ifNoneMatch: etag,
+        ifNoneMatch: ifNoneMatch ?? etag,
         installedDigest: list ? const [] : installedDigest(hashes),
+        configVersion: configVersion < 0 ? sentConfig : configVersion,
       );
       var res = await ask(list: etag.isEmpty);
       if (res.installedRequired) {
@@ -203,11 +238,12 @@ final class SyncEngine {
           outcome: SyncOutcome.upToDate,
           sequence: pointer.active,
           duration: _clock().difference(started),
+          settings: settings,
         );
       }
-      final m = await verifyManifest(
-        res.signed!,
-        [for (final s in res.signatures) DocumentSignature.fromJson(s)],
+      Future<VerifiedManifest> verify(ManifestResponse r) => verifyManifest(
+        r.signed!,
+        [for (final s in r.signatures) DocumentSignature.fromJson(s)],
         VerificationContext(
           keys: config.keys,
           app: config.appId,
@@ -219,6 +255,44 @@ final class SyncEngine {
           supportsFeature: config.supportsFeature,
         ),
       );
+      var m = await verify(res);
+      if (_configs != null && m.config != null) {
+        ConfigApplied applied = applyConfigUpdate(
+          ref: m.config!,
+          current: stored,
+          sentVersion: sentConfig,
+          patch: res.configPatch,
+          fullRequired: res.configFullRequired,
+        );
+        if (applied is ConfigRejected) {
+          // Ask once more for the whole configuration, from version 0,
+          // and a manifest to match (SEC-182, PLX-6040).
+          res = await ask(list: true, ifNoneMatch: '', configVersion: 0);
+          m = await verify(res);
+          applied = m.config == null
+              ? const ConfigCurrent()
+              : applyConfigUpdate(
+                  ref: m.config!,
+                  current: stored,
+                  sentVersion: 0,
+                  patch: res.configPatch,
+                  fullRequired: res.configFullRequired,
+                );
+        }
+        switch (applied) {
+          case ConfigCurrent():
+            break;
+          case ConfigUpdated(:final config):
+            try {
+              await _configs.write(config);
+              settings = _settingsOf(config);
+            } on PluxException catch (e) {
+              configError = e;
+            }
+          case ConfigRejected(:final error):
+            configError = error;
+        }
+      }
       store.accept(m.releaseSequence, res.etag);
       final control = ControlState(
         sequence: m.releaseSequence,
@@ -237,6 +311,8 @@ final class SyncEngine {
           outcome: SyncOutcome.upToDate,
           sequence: pointer.active,
           duration: _clock().difference(started),
+          settings: settings,
+          configError: configError,
         );
       }
       final served = {for (final b in res.bundles) b.key: b};
@@ -337,6 +413,8 @@ final class SyncEngine {
         bytes: bytes.n,
         fullBytes: total,
         pluginsUpdated: missing.where((w) => w.key.isNotEmpty).length,
+        settings: settings,
+        configError: configError,
       );
     } on PluxException catch (e) {
       return _failed(emit, e, started, bytes.n);

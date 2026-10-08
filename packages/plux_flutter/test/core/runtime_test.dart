@@ -46,6 +46,20 @@ final class _TestRenderer with AllowsEveryGuard implements PageRenderer {
 
 http.Client _client() => http.Client();
 
+/// The secrets of the sync isolate, in memory.
+final class _MemorySecrets implements SecretStore {
+  final Map<String, String> values = {};
+
+  @override
+  Future<String?> read(String name) async => values[name];
+
+  @override
+  Future<void> write(String name, String value) async => values[name] = value;
+
+  @override
+  Future<void> delete(String name) async => values.remove(name);
+}
+
 final _hostValue = Provider<int>((ref) => 0);
 
 /// A baseline reader whose closure holds only the files, so it can be sent
@@ -123,6 +137,7 @@ void main() {
         attestation: FakeAttestation.new,
         baseline: _reader(files),
         healthyAfter: healthy,
+        configSecrets: _MemorySecrets.new,
       ),
     );
     Plux.container.read(pluxRuntimeProvider)!.renderer = renderer;
@@ -265,6 +280,29 @@ void main() {
       expect(startup!.sequence, 10, reason: '${startup.error} $errors');
       expect(Plux.container.read(activeReleaseProvider)!.sequence, 10);
       expect(Plux.container.read(syncStatusProvider), isA<SyncActivated>());
+    },
+  );
+
+  testWidgets(
+    'the runtime exposes the settings of the configuration its first sync applied [SEC-182]',
+    (tester) async {
+      await tester.runAsync(() async {
+        server
+          ..release = FakeRelease(10, demo, {'loans': loans})
+          ..pinsConfig = true
+          ..configVersion = 1
+          ..configDocument = {
+            'profile': 'strict',
+            'overrides': {'inactivityLockTimeout': 120},
+          }
+          ..configPatches[0] = server.configDocument;
+        await start(config());
+      });
+      final s = rt().settings.value;
+      expect(errors, isEmpty);
+      expect(s.version, 1);
+      expect(s.profile, SecurityProfile.strict);
+      expect(s.number(SecuritySetting.inactivityLockTimeout), 120);
     },
   );
 

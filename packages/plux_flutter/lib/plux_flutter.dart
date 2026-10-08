@@ -80,6 +80,12 @@ export 'src/navigation/shell.dart' show PluxShell, PluxShellScope, PluxShellTab;
 export 'src/platform/platform_services.dart'
     show PlatformSecretStore, platformStorageDirectory;
 export 'src/runtime_info.dart';
+export 'src/security/security_config.dart'
+    show
+        SecurityProfile,
+        SecuritySetting,
+        SecuritySettingType,
+        SecuritySettings;
 export 'src/store/kv_store.dart'
     show SecretStore, StoreException, StoreFailure, installationKey;
 export 'src/sync/sync_event.dart'
