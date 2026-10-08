@@ -51,8 +51,10 @@ make dev-app    # this app alone, against a running `make dev` stack (r: hot rel
 `make dev` seeds an installation on first run, publishes the starter fixture to its
 `starter` app, writes `.dart_defines.json` and pulls the baseline into `assets/plux`
 (`make dev-starter`). On Android, `make dev-app` forwards the device's port 8080 to the
-machine with `adb reverse`; debug builds allow plain HTTP for it, profile and release
-builds do not. Against another server, pass the defines yourself:
+machine with `adb reverse`. The stack serves HTTPS with a development CA (TLS 1.3); debug
+builds trust user-installed CAs, so install the CA on the emulator or simulator as
+`deploy/compose/README.md` ("Development TLS") describes; profile and release builds trust
+only the system's CAs. Against another server, pass the defines yourself:
 
 ```bash
 flutter run --dart-define=PLUX_ENDPOINT=https://plux.example.com \
@@ -61,7 +63,7 @@ flutter run --dart-define=PLUX_ENDPOINT=https://plux.example.com \
 
 | Define | Meaning | Default |
 |---|---|---|
-| `PLUX_ENDPOINT` | the server's base URL | `http://localhost:8080` |
+| `PLUX_ENDPOINT` | the server's base URL | `https://localhost:8080` |
 | `PLUX_APP_ID` | the app's ID | required |
 | `PLUX_ENVIRONMENT` | the environment key | `staging` |
 | `PLUX_ROUTE` | the page the home screen shows | `welcome` |
