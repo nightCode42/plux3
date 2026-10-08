@@ -4,7 +4,7 @@
 # Included by the Makefile. A change to this file runs the benchmark and
 # size jobs on a pull request (ci/affected.json, ADR-0043).
 
-.PHONY: bench-runtime bench-runtime-ab bench-sync bench-steps bench-pxl bench-db bench-pull size-android size-ios
+.PHONY: bench-runtime bench-runtime-ab bench-sync bench-steps bench-pxl bench-db bench-pull bench-dpop size-android size-ios
 
 ##@ Benchmarks and size (QA-007)
 
@@ -45,6 +45,10 @@ bench-db: ## Measure the time from a write to a watched query's update (DB-007; 
 # Verifies: SEC-041, SYN-010.
 bench-pull: ## Measure the Dart side of the pinned client's pull loop for a 10 MiB body (SEC-041; prints JSON)
 	cd packages/plux_flutter && PLUX_BENCH_PULL=1 flutter test --reporter expanded test/platform/pull_bench_test.dart
+
+# Verifies: NFR-012, SEC-021.
+bench-dpop: ## Measure DPoP proof creation on the host: Dart side alone, and with pure-Dart P-256 (NFR-012; prints JSON)
+	cd packages/plux_flutter && PLUX_BENCH_DPOP=1 flutter test --reporter expanded test/security/dpop_bench_test.dart
 
 # Verifies: RT-061, NFR-009.
 size-android: ## Check what plux_flutter adds to the release APKs and App Bundle downloads (RT-061; needs the Android SDK)
