@@ -33,6 +33,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/document"
 	"github.com/nightCode42/plux3/backend/internal/httpx"
 	"github.com/nightCode42/plux3/backend/internal/jobs"
+	"github.com/nightCode42/plux3/backend/internal/observability"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1/pluxv1connect"
 	"github.com/nightCode42/plux3/backend/internal/release"
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
@@ -83,6 +84,9 @@ type WorkDeps struct {
 	// Log receives the warnings of the services; nil uses the default
 	// logger.
 	Log *slog.Logger
+	// Metrics receives the device side's metrics, the DPoP replay cache's
+	// health among them; nil records none.
+	Metrics *observability.Metrics
 }
 
 // scanner returns the configured malware scanner, or nil (SRV-060).
@@ -310,7 +314,7 @@ func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shar
 		return nil, fmt.Errorf("server: %w", err)
 	}
 	devices, trust, err := buildDeviceSide(ctx, cfg, db, shared, set, deviceDeps{
-		crypter: backend, signer: tokenSigner, ids: gen, audit: log, log: work.Log,
+		crypter: backend, signer: tokenSigner, ids: gen, audit: log, log: work.Log, metrics: work.Metrics,
 	})
 	if err != nil {
 		return nil, err

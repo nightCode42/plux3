@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -121,6 +122,7 @@ func TestMetricsExposeTheCatalogue(t *testing.T) {
 	m.PublishFinished("succeeded")
 	m.PublishStage("encode", 5*time.Millisecond)
 	m.QueueDepth("publish", 3)
+	m.ReplayCacheFallback()
 
 	rec := httptest.NewRecorder()
 	m.Handler().ServeHTTP(rec, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/metrics", nil))
@@ -129,6 +131,7 @@ func TestMetricsExposeTheCatalogue(t *testing.T) {
 		"plux_rpc_requests_total", "plux_rpc_duration_seconds", "plux_manifest_requests_total",
 		"plux_delta_bytes", "plux_delta_generation_seconds", "plux_publish_jobs_total",
 		"plux_publish_duration_seconds", "plux_jobs_queue_depth",
+		"plux_dpop_replay_cache_degraded", "plux_dpop_replay_cache_fallback_total",
 	} {
 		if !strings.Contains(body, name) {
 			t.Errorf("%s is missing from /metrics", name)
@@ -136,6 +139,44 @@ func TestMetricsExposeTheCatalogue(t *testing.T) {
 	}
 	if m.Registry() == nil {
 		t.Error("Registry must be available for component collectors")
+	}
+}
+
+// Verifies: OBS-002, SEC-023.
+// The replay-cache gauge rises with a fallback, falls when the shared
+// cache answers again, and the counter only ever counts fallbacks.
+func TestReplayCacheMetricsTransitions(t *testing.T) {
+	t.Parallel()
+	m := NewMetrics()
+	read := func() (degraded, fallbacks float64) {
+		t.Helper()
+		rec := httptest.NewRecorder()
+		m.Handler().ServeHTTP(rec, httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/metrics", nil))
+		for _, line := range strings.Split(rec.Body.String(), "\n") {
+			if v, ok := strings.CutPrefix(line, "plux_dpop_replay_cache_degraded "); ok {
+				degraded, _ = strconv.ParseFloat(v, 64)
+			}
+			if v, ok := strings.CutPrefix(line, "plux_dpop_replay_cache_fallback_total "); ok {
+				fallbacks, _ = strconv.ParseFloat(v, 64)
+			}
+		}
+		return degraded, fallbacks
+	}
+	if d, f := read(); d != 0 || f != 0 {
+		t.Fatalf("at start degraded=%v fallbacks=%v, want 0 and 0", d, f)
+	}
+	m.ReplayCacheFallback()
+	m.ReplayCacheFallback()
+	if d, f := read(); d != 1 || f != 2 {
+		t.Errorf("after two fallbacks degraded=%v fallbacks=%v, want 1 and 2", d, f)
+	}
+	m.ReplayCacheRecovered()
+	if d, f := read(); d != 0 || f != 2 {
+		t.Errorf("after recovery degraded=%v fallbacks=%v, want 0 and 2", d, f)
+	}
+	m.ReplayCacheFallback()
+	if d, f := read(); d != 1 || f != 3 {
+		t.Errorf("after a second outage degraded=%v fallbacks=%v, want 1 and 3", d, f)
 	}
 }
 

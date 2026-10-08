@@ -348,3 +348,60 @@ func raceSameProof(t *testing.T, r *Replay) int {
 	wg.Wait()
 	return int(accepted.Load())
 }
+
+// Verifies: SEC-023.
+// The health observer hears every fallback decision, and hears the
+// recovery once when the shared cache answers again.
+func TestReplayHealthTransitions(t *testing.T) {
+	f := newFakeCache()
+	var fallbacks, recoveries int
+	r := NewReplay(f, PerReplica, 100, nil, nil, WithHealth(Health{
+		Fallback:  func() { fallbacks++ },
+		Recovered: func() { recoveries++ },
+	}))
+	ctx := context.Background()
+	check := func(jti string) {
+		t.Helper()
+		if _, err := r.Check(ctx, "k", jti, replayTTL); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	check("healthy")
+	if fallbacks != 0 || recoveries != 0 {
+		t.Fatalf("a healthy cache: fallbacks=%d recoveries=%d", fallbacks, recoveries)
+	}
+	f.fail(errCacheDown)
+	check("down-1")
+	check("down-2")
+	if fallbacks != 2 || recoveries != 0 {
+		t.Fatalf("an outage: fallbacks=%d recoveries=%d, want 2 and 0", fallbacks, recoveries)
+	}
+	f.fail(nil)
+	check("up-1")
+	check("up-2")
+	if fallbacks != 2 || recoveries != 1 {
+		t.Fatalf("after recovery: fallbacks=%d recoveries=%d, want 2 and 1", fallbacks, recoveries)
+	}
+	f.fail(errCacheDown)
+	check("down-3")
+	if fallbacks != 3 {
+		t.Fatalf("a second outage: fallbacks=%d, want 3", fallbacks)
+	}
+}
+
+// Verifies: SEC-023.
+// Under FailClosed the cache's failure is an error, not a fallback, and
+// the health observer hears nothing.
+func TestReplayHealthIgnoresFailClosed(t *testing.T) {
+	f := newFakeCache()
+	f.fail(errCacheDown)
+	heard := false
+	r := NewReplay(f, FailClosed, 10, nil, nil, WithHealth(Health{
+		Fallback:  func() { heard = true },
+		Recovered: func() { heard = true },
+	}))
+	if _, err := r.Check(context.Background(), "k", "j", replayTTL); err == nil || heard {
+		t.Fatalf("err=%v heard=%v, want an error and silence", err, heard)
+	}
+}

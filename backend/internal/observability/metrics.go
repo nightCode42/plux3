@@ -27,6 +27,9 @@ type Metrics struct {
 	publishJobs      *prometheus.CounterVec
 	publishDuration  *prometheus.HistogramVec
 	jobsQueueDepth   *prometheus.GaugeVec
+
+	replayDegraded prometheus.Gauge
+	replayFallback prometheus.Counter
 }
 
 // NewMetrics builds the registry with the process collectors and the
@@ -72,9 +75,18 @@ func NewMetrics() *Metrics {
 			Name: "plux_jobs_queue_depth",
 			Help: "Jobs waiting in each queue.",
 		}, []string{"queue"}),
+		replayDegraded: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: "plux_dpop_replay_cache_degraded",
+			Help: "1 while the shared DPoP replay cache is unreachable and this replica decides alone, 0 otherwise.",
+		}),
+		replayFallback: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: "plux_dpop_replay_cache_fallback_total",
+			Help: "DPoP replay checks the per-replica store decided because the shared cache failed.",
+		}),
 	}
 	r.MustRegister(m.rpcRequests, m.rpcDuration, m.manifestRequests, m.deltaBytes,
-		m.deltaGeneration, m.publishJobs, m.publishDuration, m.jobsQueueDepth)
+		m.deltaGeneration, m.publishJobs, m.publishDuration, m.jobsQueueDepth,
+		m.replayDegraded, m.replayFallback)
 	return m
 }
 
@@ -124,3 +136,15 @@ func (m *Metrics) PublishStage(stage string, d time.Duration) {
 func (m *Metrics) QueueDepth(queue string, n int) {
 	m.jobsQueueDepth.WithLabelValues(queue).Set(float64(n))
 }
+
+// ReplayCacheFallback records one DPoP replay check that the per-replica
+// store decided because the shared cache failed (SEC-023). It raises the
+// degraded gauge, which ReplayCacheRecovered lowers.
+func (m *Metrics) ReplayCacheFallback() {
+	m.replayFallback.Inc()
+	m.replayDegraded.Set(1)
+}
+
+// ReplayCacheRecovered records that the shared DPoP replay cache answered
+// again after a fallback (SEC-023).
+func (m *Metrics) ReplayCacheRecovered() { m.replayDegraded.Set(0) }
