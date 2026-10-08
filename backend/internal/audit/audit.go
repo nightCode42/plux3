@@ -229,13 +229,22 @@ func Verify(entries []Entry, previousHash string) error {
 			return fmt.Errorf("audit: sequence jumps from %d to %d: an entry is missing",
 				entries[i-1].Sequence, e.Sequence)
 		}
-		if e.PreviousHash != previousHash {
-			return fmt.Errorf("audit: entry %d does not follow the one before it", e.Sequence)
-		}
-		if e.EntryHash != e.Hash() {
-			return fmt.Errorf("audit: entry %d was changed after it was written", e.Sequence)
+		if err := e.follows(previousHash); err != nil {
+			return err
 		}
 		previousHash = e.EntryHash
+	}
+	return nil
+}
+
+// follows reports why an entry does not follow from the entry whose hash
+// is previousHash, or is not what was written.
+func (e Entry) follows(previousHash string) error {
+	if e.PreviousHash != previousHash {
+		return fmt.Errorf("audit: entry %d does not follow the one before it", e.Sequence)
+	}
+	if e.EntryHash != e.Hash() {
+		return fmt.Errorf("audit: entry %d was changed after it was written", e.Sequence)
 	}
 	return nil
 }

@@ -31,7 +31,7 @@ func Defaults() Config {
 			SignedURLTTL: Duration(15 * 60e9),
 		},
 		Cache:   Cache{Backend: "memory"},
-		Signing: Signing{Backend: "file", Directory: "data/keys", Keys: SigningKeys{Targets: "targets"}},
+		Signing: Signing{Backend: "file", Directory: "data/keys", Keys: SigningKeys{Targets: "targets", Audit: "audit"}},
 		Auth: Auth{
 			Studio: StudioAuth{
 				AllowPasswordLogin: true,
@@ -45,6 +45,7 @@ func Defaults() Config {
 		Telemetry:     Telemetry{Store: "postgres"},
 		// Where the server image installs them (backend/Dockerfile).
 		Assets: Assets{SVGCompiler: "/usr/local/bin/plux-svgc", PathOps: "/usr/local/lib/plux/libpath_ops.so"},
+		Audit:  Audit{CheckpointInterval: Duration(3600e9)},
 		Retention: Retention{
 			AuditYears:             10,
 			DevelopmentReleaseDays: 90,
@@ -57,7 +58,7 @@ func Defaults() Config {
 // knownSections are the top-level keys this phase accepts.
 var knownSections = []string{
 	"server", "database", "objectStorage", "cache", "signing", "auth",
-	"observability", "telemetry", "limits", "retention", "assets", "attestation",
+	"observability", "telemetry", "limits", "retention", "assets", "attestation", "audit",
 }
 
 // futureSections are sections of Appendix H that belong to a later phase.

@@ -76,6 +76,21 @@ func TestParseAppliesDefaults(t *testing.T) {
 	}
 }
 
+// Verifies: SEC-141.
+// The audit checkpoint key and interval default to "audit" and an hour,
+// and the interval can be set.
+func TestAuditCheckpointSettings(t *testing.T) {
+	t.Parallel()
+	c := parse(t, minimal)
+	if c.Signing.Keys.Audit != "audit" || c.Audit.CheckpointInterval.Duration().String() != "1h0m0s" {
+		t.Errorf("defaults = %q, %s", c.Signing.Keys.Audit, c.Audit.CheckpointInterval)
+	}
+	c = parse(t, minimal+"audit:\n  checkpointInterval: 15m\nsigning:\n  keys:\n    audit: audit-2\n")
+	if c.Signing.Keys.Audit != "audit-2" || c.Audit.CheckpointInterval.Duration().String() != "15m0s" {
+		t.Errorf("configured = %q, %s", c.Signing.Keys.Audit, c.Audit.CheckpointInterval)
+	}
+}
+
 // Verifies: SRV-008.
 func TestParseRejectsUnknownKeys(t *testing.T) {
 	t.Parallel()
@@ -141,6 +156,8 @@ func TestValidateReportsEveryProblem(t *testing.T) {
 		{"short snapshot retention", minimal + "retention:\n  snapshotDays: 10\n", "at least 90"},
 		{"short trash retention", minimal + "retention:\n  trashDays: 7\n", "at least 30"},
 		{"no audit retention", minimal + "retention:\n  auditYears: 0\n", "retention.auditYears"},
+		{"audit key name", minimal + "signing:\n  keys:\n    audit: \"Audit Key\"\n", "signing.keys.audit"},
+		{"zero checkpoint interval", minimal + "audit:\n  checkpointInterval: 0s\n", "audit.checkpointInterval"},
 		{"bad duration", withServer("  shutdownGrace: soon\n"), "invalid duration"},
 		{"negative duration", withServer("  shutdownGrace: -1s\n"), "must not be negative"},
 		{"an app key that is not an identifier", minimal + "attestation:\n  apps:\n    demo:\n      iosAppID: \"T.com.example\"\n", "attestation.apps[demo]"},
