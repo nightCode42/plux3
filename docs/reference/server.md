@@ -80,6 +80,7 @@ signing:
   backend: "file"               # file (development only) | vault | pkcs11 (HSMs and cloud HSMs through plux-pkcs11-helper, SEC-120)
   pkcs11:
     socket: "/run/plux/pkcs11.sock"   # the helper's Unix socket (ADR-0060)
+    wrapKey: "plux-secrets"           # AES key on the token that wraps data keys (SEC-106)
   directory: "data/keys"        # the file backend's keys
   vault:                        # HashiCorp Vault Transit (SEC-120)
     address: "https://vault:8200"
