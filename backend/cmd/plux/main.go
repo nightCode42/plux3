@@ -36,6 +36,7 @@ Commands:
   mock        Serve an OpenAPI document as a mock API
   keys        List an environment's public keys
   native      scan | sync the host app's native catalogue
+  security    config show | set | diff an environment's security configuration
   create      Generate the Flutter project of a no-code app
   completion  Print a shell completion script (bash, zsh, fish, powershell)
   version     Print version information
@@ -99,6 +100,6 @@ func (e env) commands() map[string]func([]string) int {
 	return map[string]func([]string) int{
 		"login": e.login, "logout": e.logout, "whoami": e.whoami, "init": e.initProject, "doctor": e.doctor,
 		"diff": e.diff, "publish": e.publish, "pull": e.pull, "release": e.release, "export": e.export,
-		"import": e.importCmd, "mock": e.mockCmd, "keys": e.keys, "native": e.native, "create": e.create, "completion": e.completion,
+		"import": e.importCmd, "mock": e.mockCmd, "keys": e.keys, "native": e.native, "security": e.security, "create": e.create, "completion": e.completion,
 	}
 }
