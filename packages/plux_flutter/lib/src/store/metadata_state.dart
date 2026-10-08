@@ -22,6 +22,8 @@ final class MetadataState {
     this.root,
     this.keyEnvironments = const {},
     this.floor = const MetadataFloor(),
+    this.pins = const [],
+    this.pinsVersion = 0,
   });
 
   /// The environment identifier that names the metadata files; empty when
@@ -38,17 +40,28 @@ final class MetadataState {
   /// The versions already trusted.
   final MetadataFloor floor;
 
+  /// The pins of the Plux server the newest pinning root carried, kept so
+  /// that the next launch connects under them before any sync (SEC-041).
+  final List<String> pins;
+
+  /// The version of the root those [pins] came from; 0 for none.
+  final int pinsVersion;
+
   /// A copy with the given fields replaced.
   MetadataState copyWith({
     String? environmentId,
     Uint8List? root,
     Map<String, String>? keyEnvironments,
     MetadataFloor? floor,
+    List<String>? pins,
+    int? pinsVersion,
   }) => MetadataState(
     environmentId: environmentId ?? this.environmentId,
     root: root ?? this.root,
     keyEnvironments: keyEnvironments ?? this.keyEnvironments,
     floor: floor ?? this.floor,
+    pins: pins ?? this.pins,
+    pinsVersion: pinsVersion ?? this.pinsVersion,
   );
 
   /// The state as it is stored.
@@ -58,6 +71,8 @@ final class MetadataState {
         'environmentId': environmentId,
         'root': ?(root == null ? null : base64.encode(root!)),
         'keyEnvironments': keyEnvironments,
+        'pins': pins,
+        'pinsVersion': pinsVersion,
         'floor': {
           'timestamp': floor.timestamp,
           'snapshot': floor.snapshot,
@@ -83,6 +98,8 @@ final class MetadataState {
           snapshot: f['snapshot']! as int,
           targets: f['targets']! as int,
         ),
+        pins: (j['pins']! as List<Object?>).cast<String>(),
+        pinsVersion: j['pinsVersion']! as int,
       );
     } on Object {
       return const MetadataState();

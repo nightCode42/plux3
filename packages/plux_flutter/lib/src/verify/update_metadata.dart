@@ -28,7 +28,9 @@ import 'package:cryptography/cryptography.dart'
     show KeyPairType, Signature, SimplePublicKey;
 import 'package:cryptography/dart.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/schema/limits.g.dart';
 import 'package:plux_flutter/src/security/p256.dart';
+import 'package:plux_flutter/src/security/pins.dart';
 import 'package:plux_flutter/src/verify/jcs.dart';
 import 'package:plux_flutter/src/verify/manifest.dart';
 
@@ -51,9 +53,13 @@ const String environmentProduction = 'production';
 /// The environment type of a development key (SEC-056).
 const String environmentDevelopment = 'development';
 
-/// The largest metadata document accepted, in bytes: the bound of the
-/// manifest's signed part.
-const int metadataMaxBytes = 1 << 20;
+/// The largest metadata document accepted, in bytes: the limit
+/// `updateMetadata.bytes` of the registry (LIM-001).
+final int metadataMaxBytes = PluxLimit.updateMetadataBytes.defaultValue;
+
+/// The most hosts a root pins, and the fewest and most pins of a host
+/// (`schema/update/root.schema.json`).
+const int maxPinHosts = 16, maxPinsPerHost = 8;
 
 /// The deepest nesting a metadata document has (the root's).
 const int _maxDepth = 9;
@@ -148,6 +154,7 @@ final class RootMetadata {
     required this.expires,
     required this.keys,
     required this.roles,
+    this.pins = const {},
   });
 
   /// The root's version; the first is 1.
@@ -162,6 +169,11 @@ final class RootMetadata {
 
   /// Each role's keys, by role name.
   final Map<String, RoleKeys> roles;
+
+  /// The certificate pins of the servers the app talks to, per host name:
+  /// at least [minPins] distinct ones each (SEC-041). Empty when the root
+  /// pins nothing, which leaves the pins the device holds as they are.
+  final Map<String, List<String>> pins;
 
   /// The keys of [role].
   RoleKeys role(String role) => roles[role] ?? const RoleKeys([], 1);
@@ -259,6 +271,7 @@ final _base64Pattern = RegExp(r'^[A-Za-z0-9+/]+={0,2}$');
 final _specPattern = RegExp(
   r'^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$',
 );
+final _hostPattern = RegExp(r'^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$');
 final _sha256Pattern = RegExp(r'^[0-9a-f]{64}$');
 final _algNamePattern = RegExp(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,31}$');
 final _rfc3339 = RegExp(
@@ -409,13 +422,14 @@ DateTime _time(Object? v, String what) {
 /// each role names listed, distinct keys, enough of them usable to meet its
 /// threshold.
 RootMetadata parseRoot(MetadataDocument document) {
-  final signed = _object(document._fields, 'the root', const {
+  final signed = _object(document._fields, 'the root', {
     '_type',
     'version',
     'expires',
     'specVersion',
     'keys',
     'roles',
+    if (document._fields.containsKey('pins')) 'pins',
   });
   final h = _header(signed, 'root');
   final keys = <String, MetadataKey>{};
@@ -471,7 +485,34 @@ RootMetadata parseRoot(MetadataDocument document) {
     expires: h.expires,
     keys: Map.unmodifiable(keys),
     roles: Map.unmodifiable(roles),
+    pins: _pins(signed['pins']),
   );
+}
+
+/// The pins a root carries: per host name between [minPins] and
+/// [maxPinsPerHost] distinct, canonical SPKI SHA-256 pins (SEC-041).
+Map<String, List<String>> _pins(Object? v) {
+  if (v == null) return const {};
+  final hosts = _map(v, 'pins');
+  if (hosts.length > maxPinHosts) throw _format('the root pins too many hosts');
+  final out = <String, List<String>>{};
+  for (final MapEntry(:key, :value) in hosts.entries) {
+    if (key.length > 253 || !_hostPattern.hasMatch(key)) {
+      throw _format('$key is not a host name to pin');
+    }
+    if (value is! List<Object?> ||
+        value.length < minPins ||
+        value.length > maxPinsPerHost ||
+        value.any((p) => p is! String || !isWellFormedPin(p))) {
+      throw _format('host $key needs $minPins to $maxPinsPerHost pins');
+    }
+    final list = value.cast<String>();
+    if (list.toSet().length != list.length) {
+      throw _format('host $key repeats a pin');
+    }
+    out[key] = List.unmodifiable(list);
+  }
+  return Map.unmodifiable(out);
 }
 
 /// Reads the signed part of a timestamp.

@@ -94,6 +94,9 @@ final class FakeMetadata {
   /// a snapshot that does not belong to the manifest.
   int? pinnedTargets;
 
+  /// The certificate pins the next root carries, per host (SEC-041).
+  Map<String, List<String>>? pins;
+
   /// The root version the manifest's reference claims, when it is not
   /// [rootVersion].
   int? hintedRoot;
@@ -168,6 +171,7 @@ final class FakeMetadata {
       'expires': _time(rootExpires),
       'specVersion': '1.0.0',
       'keys': keys,
+      'pins': ?pins,
       'roles': {
         'root': role(_offline, 2),
         'targets': role([targets], 1),
@@ -245,6 +249,7 @@ final class FakeMetadata {
     'rootVersion': '${hintedRoot ?? rootVersion}',
     'snapshotVersion': '$snapshotVersion',
     'timestampVersion': '$timestampVersion',
+    'environmentId': environmentId,
   };
 
   /// The answer of `GetRootKeys` for a device holding root [since].

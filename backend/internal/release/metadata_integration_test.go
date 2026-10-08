@@ -117,7 +117,8 @@ func newMetadataFixture(t *testing.T) *metadataFixture {
 
 func newMetadataFixtureWith(t *testing.T, set limits.Set) *metadataFixture {
 	t.Helper()
-	f := newFixtureWith(t, "loan-calculator", set, func(o *release.Options) {
+	f := newFixtureWith(t, "loan-calculator", limits.Set{}, func(o *release.Options) {
+		o.Limits = set
 		o.Metadata = release.MetadataOptions{Expiry: updatemeta.DefaultExpiry(), RootThreshold: 2}
 	})
 	ctx := context.Background()

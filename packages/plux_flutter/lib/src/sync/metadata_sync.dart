@@ -1,11 +1,17 @@
 // SPDX-FileCopyrightText: 2026 Plux contributors
 // SPDX-License-Identifier: Apache-2.0
 
-/// The update metadata part of a sync (SEC-050, SEC-051, SEC-056, B11): the
-/// device follows the root chain from the root it embeds, then verifies
-/// `timestamp`, `snapshot` and the manifest against it, before the manifest
-/// is accepted. A failure means the new release is not activated; the
-/// release that runs is untouched, and an expired document never stops it.
+/// The update metadata part of a sync (SEC-050, SEC-051, SEC-056, SEC-041,
+/// B11): the device follows the root chain from the root it embeds, then
+/// verifies `timestamp`, `snapshot` and the manifest against it, before the
+/// manifest is accepted. The timestamp is checked on every sync, also when
+/// the manifest has not changed, so that a server that stops answering with
+/// fresh metadata is noticed. A failure means the new release is not
+/// activated; the release that runs is untouched, and an expired document
+/// never stops it.
+///
+/// The certificate pins a verified root carries replace the Plux host's
+/// pins (SEC-041).
 ///
 /// It runs on the sync isolate (L-6); the engine calls it between receiving
 /// the manifest and verifying it (SEC-052).
@@ -14,6 +20,7 @@ library;
 import 'dart:typed_data';
 
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/security/pins.dart';
 import 'package:plux_flutter/src/store/metadata_state.dart';
 import 'package:plux_flutter/src/sync/api_client.dart';
 import 'package:plux_flutter/src/verify/manifest.dart';
@@ -35,15 +42,21 @@ final class MetadataTrust {
 /// Verifies the update metadata of a sync against the state kept on the
 /// device.
 final class MetadataSync {
-  /// Creates the verifier for one app and environment. [anchor] is the root
-  /// the app embeds; [production] refuses development keys (SEC-056).
+  /// Creates the verifier for one app and environment. The trust anchor is
+  /// the root document the app embeds ([embeddedRoot], `root.json`), or
+  /// else the root made from its [keys] (SEC-051). [production] refuses
+  /// development keys (SEC-056). The pins of a verified root for [host]
+  /// replace those of [pins].
   MetadataSync({
     required this.api,
     required this.store,
-    required this.anchor,
+    required this.keys,
     required this.appId,
     required this.environment,
     required this.production,
+    this.embeddedRoot,
+    this.host = '',
+    this.pins,
     DateTime Function()? clock,
   }) : _clock = clock ?? DateTime.now;
 
@@ -53,8 +66,11 @@ final class MetadataSync {
   /// Where the accepted state is kept.
   final MetadataStore store;
 
-  /// The root made from the keys the app embeds (SEC-051).
-  final RootMetadata anchor;
+  /// The keys the app embeds (`keys.json`).
+  final List<TrustedKey> keys;
+
+  /// The root file the app embeds, or null.
+  final Uint8List? embeddedRoot;
 
   /// The app.
   final String appId;
@@ -65,15 +81,19 @@ final class MetadataSync {
   /// Whether this is a production runtime (SEC-056).
   final bool production;
 
+  /// The Plux server's host name, whose pins a root may carry.
+  final String host;
+
+  /// The pins in force for the Plux host, replaced from verified roots.
+  final PinSet? pins;
+
   final DateTime Function() _clock;
 
-  /// Remembers the environment identifier the server named at
-  /// registration, which names the metadata files.
-  void learnEnvironment() {
-    final id = api.registeredEnvironmentId;
-    final state = store.read();
-    if (id != null && id != state.environmentId) {
-      store.write(state.copyWith(environmentId: id));
+  /// Applies the pins a previous sync stored to [set], at launch, so that
+  /// the first connection already uses them (SEC-041).
+  static void applyStoredPins(PinSet set, MetadataState state) {
+    if (state.pins.length >= minPins && state.pinsVersion > set.version) {
+      set.replace(state.pins, version: state.pinsVersion);
     }
   }
 
@@ -82,54 +102,79 @@ final class MetadataSync {
   /// a [PluxException] when the chain does not hold; the caller then keeps
   /// the release that runs and activates nothing new.
   Future<MetadataTrust?> verify(DeviceToken token, ManifestResponse res) async {
-    final state = store.read();
+    var state = store.read();
     final ref = res.metadata;
     if (ref == null) {
       if (state.floor.timestamp > 0) {
         // An environment that had metadata does not lose it (SEC-050).
-        throw PluxException(
+        throw const PluxException(
           PluxErrorCode.updateMetadataInvalid,
           'the manifest carries no update metadata, which this environment '
           'had before',
-          details: const {'fault': MetadataFault.rollback},
+          details: {'fault': MetadataFault.rollback},
         );
       }
       return null;
     }
-    final environmentId = state.environmentId;
-    if (environmentId.isEmpty) {
+    if (ref.environmentId.isNotEmpty &&
+        ref.environmentId != state.environmentId) {
+      state = state.copyWith(environmentId: ref.environmentId);
+      store.write(state);
+    }
+    if (state.environmentId.isEmpty) {
       throw const PluxException(
         PluxErrorCode.updateMetadataInvalid,
-        'the device does not know its environment identifier; it learns it '
-        'when it registers',
+        'the manifest names no environment for its update metadata',
         details: {'fault': MetadataFault.format},
       );
     }
-    final now = _clock();
-    var current = _Trusted(
-      state.root == null ? anchor : await loadRoot(state.root!),
-      state,
-    );
-    var refreshed = false;
-    Future<void> refresh() async {
-      current = await _refreshRoots(token, current, now);
-      refreshed = true;
-    }
+    final environmentId = state.environmentId;
+    return _underRoot(token, state, ref.rootVersion, (trusted, now) async {
+      final floor = await _chain(environmentId, trusted, now, (
+        timestamp,
+        snapshot,
+        verifier,
+      ) async {
+        final targets = await verifier.targets(res.signed!, [
+          for (final s in res.signatures) _signature(s),
+        ], snapshot);
+        return MetadataFloor(
+          timestamp: timestamp.version,
+          snapshot: snapshot.version,
+          targets: targets.version,
+        );
+      });
+      return MetadataTrust._(_targetsKeys(trusted.root), trusted.state, floor);
+    });
+  }
 
-    final expires = current.root.expires;
-    if (ref.rootVersion > current.root.version ||
-        current.state.keyEnvironments.isEmpty ||
-        (expires != null && !now.isBefore(expires))) {
-      await refresh();
-    }
-    try {
-      return await _chain(environmentId, res, current, now);
-    } on PluxException catch (e) {
-      // Keys may have rotated since the root held: look once more.
-      if (refreshed || metadataFault(e) != MetadataFault.threshold) rethrow;
-      await refresh();
-      return _chain(environmentId, res, current, now);
-    }
+  /// Checks the newest timestamp when the manifest has not changed: it must
+  /// verify under the root, be unexpired and not older than the one seen
+  /// before. Nothing is checked for an environment that has no metadata.
+  Future<void> checkTimestamp(DeviceToken token) async {
+    final state = store.read();
+    if (state.floor.timestamp == 0 || state.environmentId.isEmpty) return;
+    final version = await _underRoot(token, state, 0, (trusted, now) async {
+      final verifier = MetadataVerifier(
+        root: trusted.root,
+        now: now,
+        production: production,
+        keyEnvironments: trusted.state.keyEnvironments,
+        floor: trusted.state.floor,
+      );
+      final bytes = await api.metadataFile(
+        state.environmentId,
+        'timestamp.json',
+        maxBytes: metadataMaxBytes,
+      );
+      return (await verifier.timestamp(bytes)).version;
+    });
+    final latest = store.read();
+    store.write(
+      latest.copyWith(
+        floor: latest.floor.raisedTo(MetadataFloor(timestamp: version)),
+      ),
+    );
   }
 
   /// Records the versions of a chain whose manifest has been accepted, so
@@ -138,6 +183,54 @@ final class MetadataSync {
     store.write(
       trust._state.copyWith(floor: trust._state.floor.raisedTo(trust._floor)),
     );
+  }
+
+  /// Runs [action] under the trusted root, first following the root chain
+  /// when the manifest names a newer root, when the key environments are
+  /// not yet known or the root has expired, and once more when the action
+  /// fails the signature threshold, since the keys may have rotated.
+  Future<T> _underRoot<T>(
+    DeviceToken token,
+    MetadataState state,
+    int rootHint,
+    Future<T> Function(_Trusted trusted, DateTime now) action,
+  ) async {
+    final now = _clock();
+    var current = await _start(state);
+    var refreshed = false;
+    Future<void> refresh() async {
+      current = await _refreshRoots(token, current, now);
+      refreshed = true;
+    }
+
+    final expires = current.root.expires;
+    if (rootHint > current.root.version ||
+        current.state.keyEnvironments.isEmpty ||
+        (expires != null && !now.isBefore(expires))) {
+      await refresh();
+    }
+    current = _withPins(current);
+    try {
+      return await action(current, now);
+    } on PluxException catch (e) {
+      if (refreshed || metadataFault(e) != MetadataFault.threshold) rethrow;
+      await refresh();
+      current = _withPins(current);
+      return action(current, now);
+    }
+  }
+
+  /// The root to start from: the one stored, unless the app embeds a newer
+  /// one, then the embedded one.
+  Future<_Trusted> _start(MetadataState state) async {
+    final embedded = embeddedRoot == null
+        ? rootFromKeys(keys)
+        : await loadRoot(embeddedRoot!);
+    final stored = state.root == null ? null : await loadRoot(state.root!);
+    final root = stored != null && stored.version >= embedded.version
+        ? stored
+        : embedded;
+    return _Trusted(root, state);
   }
 
   /// Follows the root chain since the trusted root (SEC-051) and learns the
@@ -172,11 +265,34 @@ final class MetadataSync {
     return _Trusted(root, next);
   }
 
-  Future<MetadataTrust> _chain(
+  /// Puts the pins of the root in use into force when it carries pins for
+  /// the Plux host and is newer than the root they came from (SEC-041). A
+  /// root without pins leaves the pins as they are; there are never fewer
+  /// than [minPins].
+  _Trusted _withPins(_Trusted t) {
+    final list = t.root.pins[host];
+    if (list == null || t.root.version <= t.state.pinsVersion) return t;
+    final set = pins;
+    if (set != null && t.root.version > set.version) {
+      set.replace(list, version: t.root.version);
+    }
+    final next = t.state.copyWith(pins: list, pinsVersion: t.root.version);
+    store.write(next);
+    return _Trusted(t.root, next);
+  }
+
+  /// Fetches and verifies the timestamp and the snapshot it names, then
+  /// calls [last] with them to verify what the snapshot pins.
+  Future<MetadataFloor> _chain(
     String environmentId,
-    ManifestResponse res,
     _Trusted trusted,
     DateTime now,
+    Future<MetadataFloor> Function(
+      TimestampMetadata timestamp,
+      SnapshotMetadata snapshot,
+      MetadataVerifier verifier,
+    )
+    last,
   ) async {
     checkRootUnexpired(trusted.root, now);
     final verifier = MetadataVerifier(
@@ -193,18 +309,7 @@ final class MetadataSync {
       await fetch('${timestamp.snapshotVersion}.snapshot.json'),
       timestamp,
     );
-    final targets = await verifier.targets(res.signed!, [
-      for (final s in res.signatures) _signature(s),
-    ], snapshot);
-    return MetadataTrust._(
-      _targetsKeys(trusted.root),
-      trusted.state,
-      MetadataFloor(
-        timestamp: timestamp.version,
-        snapshot: snapshot.version,
-        targets: targets.version,
-      ),
-    );
+    return last(timestamp, snapshot, verifier);
   }
 
   DocumentSignature _signature(Map<String, Object?> json) {

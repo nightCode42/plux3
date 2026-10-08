@@ -3,6 +3,7 @@
 
 // Verifies: SEC-050, SEC-051, SEC-056, SEC-122 (the device side, B11).
 
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
@@ -10,10 +11,12 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/security/pins.dart';
 import 'package:plux_flutter/src/store/metadata_state.dart';
 import 'package:plux_flutter/src/store/release_store.dart';
 import 'package:plux_flutter/src/sync/api_client.dart';
 import 'package:plux_flutter/src/sync/downloader.dart';
+import 'package:plux_flutter/src/sync/metadata_sync.dart';
 import 'package:plux_flutter/src/sync/sync_engine.dart';
 import 'package:plux_flutter/src/sync/sync_event.dart';
 import 'package:plux_flutter/src/verify/bundle_verifier.dart';
@@ -52,7 +55,11 @@ void main() {
     Directory(root).deleteSync(recursive: true);
   });
 
-  Future<SyncResult> sync({bool production = false}) => SyncEngine(
+  Future<SyncResult> sync({
+    bool production = false,
+    Uint8List? rootDocument,
+    PinSet? pins,
+  }) => SyncEngine(
     config: SyncConfig(
       appId: FakePluxServer.app,
       environment: FakePluxServer.environment,
@@ -67,6 +74,8 @@ void main() {
       supportsFeature: (_) => true,
       verifierLimits: const VerifierLimits(maxDepth: 64, maxVisits: 1000000),
       production: production,
+      rootDocument: rootDocument,
+      pins: pins,
     ),
     store: ReleaseStore.open(root),
     api: PluxApiClient(client, server.endpoint),
@@ -271,6 +280,115 @@ void main() {
     server.release = FakeRelease(10, demo, {'loans': loans});
     final r = await sync(production: true);
     expect(r.error!.code, PluxErrorCode.developmentKeyInProduction);
+  });
+
+  test('the timestamp is checked on every sync, also when the manifest has '
+      'not changed, so a frozen server cannot hold the device [SEC-050] '
+      '[B11]', () async {
+    await firstRelease();
+    final before = server.requests.length;
+    expect((await sync()).outcome, SyncOutcome.upToDate);
+    expect(
+      server.requests.sublist(before),
+      contains('/v1/metadata/env_0001/timestamp.json'),
+    );
+    // The same manifest, but the timestamp has run out: refused, and the
+    // release that runs is untouched.
+    now = DateTime.utc(2026, 10, 10);
+    final r = await sync();
+    expect(r.outcome, SyncOutcome.failed);
+    expect(r.error!.code, PluxErrorCode.updateMetadataInvalid);
+    expect(r.error!.details['fault'], MetadataFault.expired);
+    expect(ReleaseStore.open(root).pointer.active, 10);
+    // An older timestamp than the one seen is a rollback.
+    now = DateTime.utc(2026, 10, 8, 13);
+    metadata.timestampVersion = 8;
+    await metadata.publish();
+    final old = await sync();
+    expect(old.error!.code, PluxErrorCode.rollbackRejected);
+    // A newer one raises the floor.
+    metadata.timestampVersion = 12;
+    await metadata.publish();
+    expect((await sync()).outcome, SyncOutcome.upToDate);
+    expect(state().floor.timestamp, 12);
+  });
+
+  test('an environment without metadata is not asked for a timestamp on an '
+      'unchanged manifest [SEC-050]', () async {
+    server.metadata = null;
+    server.release = FakeRelease(10, demo, {'loans': loans});
+    expect((await sync()).outcome, SyncOutcome.staged);
+    ReleaseStore.open(root).activate();
+    expect((await sync()).outcome, SyncOutcome.upToDate);
+    expect(server.requests.where((p) => p.startsWith('/v1/metadata')), isEmpty);
+  });
+
+  test('starts from the root the app embeds, in preference to the keys, and '
+      'refuses one that does not verify [SEC-051]', () async {
+    await metadata.rotate();
+    metadata
+      ..timestampVersion = 10
+      ..snapshotVersion = 4
+      ..targetsVersion = 6;
+    await metadata.publish();
+    server.release = FakeRelease(11, demo, {'loans': loans});
+    final bad = Uint8List.fromList(metadata.roots.last)
+      ..[metadata.roots.last.length - 20] ^= 1;
+    final refused = await sync(rootDocument: bad);
+    expect(refused.outcome, SyncOutcome.failed);
+    expect(refused.error!.code, PluxErrorCode.updateMetadataInvalid);
+    final r = await sync(rootDocument: metadata.roots.last);
+    expect(r.outcome, SyncOutcome.staged, reason: '${r.error}');
+    expect(state().root, isNull, reason: 'no rotation to follow');
+    expect(state().floor.targets, 6);
+  });
+
+  test('the pins of a verified root replace the Plux host pins, and survive '
+      'a restart; a root without pins leaves them [SEC-041]', () async {
+    String pin(int n) => base64.encode(List.filled(32, n));
+    final set = PinSet([pin(1), pin(2)]);
+    await firstRelease();
+    metadata.pins = {
+      '127.0.0.1': [pin(3), pin(4)],
+      'other.example.com': [pin(5), pin(6)],
+    };
+    await metadata.rotate();
+    metadata.timestampVersion = 10;
+    await metadata.publish();
+    server.release = FakeRelease(11, demo, {'loans': loans});
+    final r = await sync(pins: set);
+    expect(r.outcome, SyncOutcome.staged, reason: '${r.error}');
+    expect(set.pins, {pin(3), pin(4)});
+    expect(set.version, 2);
+    expect(state().pins, [pin(3), pin(4)]);
+    final restarted = PinSet([pin(1), pin(2)]);
+    MetadataSync.applyStoredPins(restarted, state());
+    expect(restarted.pins, {pin(3), pin(4)});
+    // The next root pins nothing for the host: the pins stay.
+    metadata.pins = null;
+    await metadata.rotate();
+    metadata.timestampVersion = 11;
+    await metadata.publish();
+    ReleaseStore.open(root).activate();
+    server.release = FakeRelease(12, demo, {'loans': loans});
+    expect((await sync(pins: set)).outcome, SyncOutcome.staged);
+    expect(set.pins, {pin(3), pin(4)});
+    expect(set.version, 2);
+  });
+
+  test('the pins of an older root cannot bring back a retired pin '
+      '[SEC-041]', () async {
+    String pin(int n) => base64.encode(List.filled(32, n));
+    final set = PinSet([pin(1), pin(2)], version: 5);
+    metadata.pins = {
+      '127.0.0.1': [pin(3), pin(4)],
+    };
+    await metadata.rotate();
+    metadata.timestampVersion = 10;
+    await metadata.publish();
+    server.release = FakeRelease(10, demo, {'loans': loans});
+    expect((await sync(pins: set)).outcome, SyncOutcome.staged);
+    expect(set.pins, {pin(1), pin(2)}, reason: 'version 2 is not above 5');
   });
 
   test('the accepted state survives a restart, and unreadable bytes give '

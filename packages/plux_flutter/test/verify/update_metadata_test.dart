@@ -9,6 +9,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/schema/limits.g.dart';
 import 'package:plux_flutter/src/verify/jcs.dart';
 import 'package:plux_flutter/src/verify/manifest.dart';
 import 'package:plux_flutter/src/verify/update_metadata.dart';
@@ -390,6 +391,64 @@ void main() {
     });
   });
 
+  group('pins in the root [SEC-041]', () {
+    final pins = (_v['pins']! as List<Object?>).cast<String>();
+
+    test('a root carries at least two pins per host, signed with the rest '
+        'of the root', () async {
+      final r1 = await loadRoot(_doc('root1Pins'));
+      expect(r1.pins, {
+        'plux.example.com': [pins[0], pins[1]],
+      });
+      final r2 = await nextRoot(r1, _doc('root2Pins'));
+      expect(r2.pins['plux.example.com'], [pins[1], pins[2]]);
+      expect((await loadRoot(_doc('root1'))).pins, isEmpty);
+      await expectLater(
+        loadRoot(_tampered(_doc('root1Pins'))),
+        _fails(MetadataFault.threshold, PluxErrorCode.updateMetadataInvalid),
+      );
+    });
+
+    test('a root with one pin, a repeated pin, a malformed pin or a bad '
+        'host is refused', () async {
+      for (final name in ['root1OnePin', 'root1DupPin']) {
+        await expectLater(
+          loadRoot(_doc(name)),
+          _fails(MetadataFault.format, PluxErrorCode.updateMetadataInvalid),
+          reason: name,
+        );
+      }
+      for (final edit in <void Function(Map<String, List<Object?>>)>[
+        (p) => p['plux.example.com'] = [pins[0], 'AAAA'],
+        (p) => p['Plux Example'] = [pins[0], pins[1]],
+        (p) => p['plux.example.com'] = [
+          pins[0],
+          pins[1],
+          ...List.filled(7, pins[2]),
+        ],
+        (p) =>
+            p['plux.example.com'] = [pins[0], '${pins[1].substring(0, 42)}h='],
+      ]) {
+        final doc = _edited(_doc('root1Pins'), (s) {
+          final p = (s['pins']! as Map<String, Object?>).map(
+            (k, v) => MapEntry(k, v! as List<Object?>),
+          );
+          edit(p);
+          s['pins'] = p;
+        });
+        expect(
+          () => parseRoot(parseMetadataDocument(doc)),
+          throwsA(isA<PluxException>()),
+        );
+      }
+    });
+  });
+
+  test('the size bound is the limit of the registry [LIM-001]', () {
+    expect(metadataMaxBytes, PluxLimit.updateMetadataBytes.defaultValue);
+    expect(metadataMaxBytes, 1 << 20);
+  });
+
   group('the formats [SEC-122]', () {
     test('algorithm names read as the schema spells them', () {
       expect(canonicalAlgorithm('ed25519'), algEd25519);
@@ -472,7 +531,7 @@ void main() {
           refused++;
         }
       }
-      expect(refused, 27);
+      expect(refused, 32);
     });
 
     test('the valid timestamp and snapshot vectors parse', () {

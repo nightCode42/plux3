@@ -469,10 +469,7 @@ final class FakePluxServer {
         return (
           200,
           {
-            'device': {
-              'id': 'dev_$registrations',
-              if (metadata != null) 'environmentId': metadata!.environmentId,
-            },
+            'device': {'id': 'dev_$registrations'},
           },
         );
       case '/plux.v1.TokenService/RefreshDeviceToken':

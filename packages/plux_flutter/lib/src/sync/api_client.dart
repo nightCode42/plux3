@@ -184,6 +184,7 @@ final class MetadataRef {
     required this.rootVersion,
     required this.snapshotVersion,
     required this.timestampVersion,
+    this.environmentId = '',
   });
 
   /// The root the metadata was signed under.
@@ -194,6 +195,9 @@ final class MetadataRef {
 
   /// The timestamp that named that snapshot.
   final int timestampVersion;
+
+  /// The environment whose files hold the metadata.
+  final String environmentId;
 }
 
 /// A key of the environment's current root, as `GetRootKeys` lists it.
@@ -315,10 +319,6 @@ final class PluxApiClient {
   /// (RFC 9449 §8).
   String? _nonce;
 
-  /// The environment identifier the server named at the last registration
-  /// this client made, which names the environment's metadata files.
-  String? registeredEnvironmentId;
-
   /// Asks for a registration challenge (SEC-002): bytes the evidence and
   /// the DPoP key are bound to, valid once and briefly.
   Future<Uint8List> registrationChallenge({
@@ -365,8 +365,6 @@ final class PluxApiClient {
     if (id is! String) {
       throw const ApiError(0, 'unknown', 'the server sent no device');
     }
-    final env = (d as Map<String, Object?>)['environmentId'];
-    if (env is String && env.isNotEmpty) registeredEnvironmentId = env;
     return id;
   }
 
@@ -491,6 +489,7 @@ final class PluxApiClient {
               rootVersion: _int(ref['rootVersion']),
               snapshotVersion: _int(ref['snapshotVersion']),
               timestampVersion: _int(ref['timestampVersion']),
+              environmentId: ref['environmentId'] as String? ?? '',
             )
           : null,
       configPatch: patch,

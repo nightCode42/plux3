@@ -23,6 +23,7 @@ import 'package:plux_flutter/src/mmap/mapped_file.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
 import 'package:plux_flutter/src/security/attestation.dart';
 import 'package:plux_flutter/src/security/device_keys.dart';
+import 'package:plux_flutter/src/security/pins.dart';
 import 'package:plux_flutter/src/security/security_config.dart';
 import 'package:plux_flutter/src/store/kv_store.dart' show SecretStore;
 import 'package:plux_flutter/src/store/metadata_state.dart';
@@ -35,7 +36,6 @@ import 'package:plux_flutter/src/sync/metadata_sync.dart';
 import 'package:plux_flutter/src/sync/sync_event.dart';
 import 'package:plux_flutter/src/verify/bundle_verifier.dart';
 import 'package:plux_flutter/src/verify/manifest.dart';
-import 'package:plux_flutter/src/verify/update_metadata.dart';
 
 /// Keeps the device credential; the platform implementation encrypts it
 /// under a platform-held key (ADR-0029).
@@ -95,6 +95,8 @@ final class SyncConfig {
     this.maxBundleSize = 20 * 1024 * 1024,
     this.assets = AssetDevice.plain,
     this.production = kReleaseMode,
+    this.rootDocument,
+    this.pins,
   });
 
   /// The app.
@@ -134,6 +136,16 @@ final class SyncConfig {
   /// and keys of the `development` environment type (SEC-056). A release
   /// build by default.
   final bool production;
+
+  /// The root file the app embeds (`root.json` beside `keys.json`), the
+  /// trust anchor of the update metadata in preference to the root made
+  /// from [keys] (SEC-051).
+  final Uint8List? rootDocument;
+
+  /// The pins of the Plux server the HTTP client enforces; the pins of a
+  /// verified root replace them (SEC-041). It must be the very object the
+  /// client was made with.
+  final PinSet? pins;
 }
 
 /// Runs syncs against one store.
@@ -170,7 +182,10 @@ final class SyncEngine {
     _metadata = MetadataSync(
       api: api,
       store: MetadataStore(store.root),
-      anchor: rootFromKeys(config.keys),
+      keys: config.keys,
+      embeddedRoot: config.rootDocument,
+      host: api.endpoint.host,
+      pins: config.pins,
       appId: config.appId,
       environment: config.environment,
       production: config.production,
@@ -227,7 +242,6 @@ final class SyncEngine {
       emit(const SyncChecking());
       _auth.beginSync();
       final token = await _auth.token();
-      _metadata.learnEnvironment();
       final pointer = store.pointer;
       final active = pointer.active == null
           ? null
@@ -270,6 +284,10 @@ final class SyncEngine {
         res = await ask(list: true);
       }
       if (res.notModified) {
+        // The timestamp is looked at on every sync (SEC-050): a server that
+        // goes on answering "not modified" cannot hold the device on
+        // metadata that has expired.
+        await _metadata.checkTimestamp(token);
         emit(SyncUpToDate(pointer.active));
         return SyncResult(
           outcome: SyncOutcome.upToDate,
