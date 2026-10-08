@@ -23,7 +23,7 @@ type configFixture struct {
 func newConfigFixture(t *testing.T, securityLimits limits.Set) *configFixture {
 	t.Helper()
 	ctx := context.Background()
-	f := newFixtureWith(t, "loan-calculator", securityLimits)
+	f := newFixtureWith(t, "loan-calculator", securityLimits, nil)
 	prod := f.envs["production"]
 	f.publish(t, "", false)
 	f.publish(t, f.loans, false)

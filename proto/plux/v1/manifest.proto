@@ -177,10 +177,18 @@ message GetManifestResponse {
 message GetRootKeysRequest {
   string app_id = 1;
   string environment = 2;
+  // since_root_version is the version of the root the caller trusts; the
+  // response carries every later root (SEC-051). Zero asks for them all.
+  int64 since_root_version = 3;
 }
 
 message GetRootKeysResponse {
   repeated PublicKey keys = 1;
+  // roots are the root metadata files after since_root_version, oldest
+  // first. Each is signed by the previous root's threshold and by its own
+  // (SEC-051, ADR-0054); the caller verifies the chain from the root it
+  // embeds.
+  repeated bytes roots = 2;
 }
 
 message PublicKey {
@@ -190,4 +198,7 @@ message PublicKey {
   bytes public_key = 3;
   // role is the update-metadata role this key holds (ADR-0004).
   string role = 4;
+  // environment_type is "production" or "development"; a production
+  // runtime refuses metadata signed by a development key (SEC-056).
+  string environment_type = 5;
 }

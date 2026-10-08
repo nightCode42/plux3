@@ -35,6 +35,9 @@ type Config struct {
 	Assets        Assets            `json:"assets"`
 	Attestation   Attestation       `json:"attestation"`
 	Audit         Audit             `json:"audit"`
+	// UpdateMetadata sets the expiries and the root threshold of the
+	// update metadata (SEC-050, ADR-0054).
+	UpdateMetadata UpdateMetadata `json:"updateMetadata"`
 }
 
 // Audit configures the audit log's signed checkpoints (SEC-141).
@@ -44,6 +47,28 @@ type Audit struct {
 	// how many entries could be removed from the end of a chain before a
 	// signed checkpoint betrays it.
 	CheckpointInterval Duration `json:"checkpointInterval"`
+}
+
+// UpdateMetadata configures the four roles of the update metadata
+// (SEC-050, Appendix H.1).
+type UpdateMetadata struct {
+	// RootThreshold is the least number of offline root keys that must
+	// sign a root document, 2 of 3 by default; a root that asks for fewer
+	// is refused on upload.
+	RootThreshold int `json:"rootThreshold"`
+	// Expiry is how long each role's metadata stays valid.
+	Expiry MetadataExpiry `json:"expiry"`
+}
+
+// MetadataExpiry is the lifetime of each role's metadata. The worker
+// signs a fresh timestamp before its expiry, a fresh snapshot when a
+// quarter of its lifetime remains, and fresh manifests (the targets
+// role) likewise; a root is signed offline.
+type MetadataExpiry struct {
+	Timestamp Duration `json:"timestamp"`
+	Snapshot  Duration `json:"snapshot"`
+	Targets   Duration `json:"targets"`
+	Root      Duration `json:"root"`
 }
 
 // Attestation says what the server trusts about the builds of each app
@@ -221,8 +246,8 @@ type Signing struct {
 	// Backend is "file", "pkcs11", "awskms", "gcpkms", "azurekv" or
 	// "vault". "file" is refused for production environments (SEC-056).
 	Backend string `json:"backend"`
-	// Keys names the keys of the update-metadata roles. P2 uses the
-	// targets role only (ADR-0004); the others arrive in P6.
+	// Keys names the online keys of the update-metadata roles; the root
+	// role is signed offline and has none here (SEC-050).
 	Keys SigningKeys `json:"keys"`
 	// Directory is the root of the file backend's keys.
 	Directory string `json:"directory"`
@@ -243,6 +268,12 @@ type SigningKeys struct {
 	// One key serves the installation: the checkpoints name it, so it can
 	// be rotated without invalidating the old ones.
 	Audit string `json:"audit"`
+	// Snapshot and Timestamp are the prefixes of the snapshot and
+	// timestamp keys, named like the targets key. Every environment has
+	// its own key per role, so a development key never signs for
+	// production (SEC-050, SEC-056).
+	Snapshot  string `json:"snapshot"`
+	Timestamp string `json:"timestamp"`
 }
 
 // Vault is a HashiCorp Vault Transit engine (SEC-120).

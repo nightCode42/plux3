@@ -10,6 +10,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"time"
 
 	"sigs.k8s.io/yaml"
 )
@@ -34,7 +35,7 @@ func Defaults() Config {
 			SignedURLTTL: Duration(15 * 60e9),
 		},
 		Cache:   Cache{Backend: "memory"},
-		Signing: Signing{Backend: "file", Directory: "data/keys", Keys: SigningKeys{Targets: "targets", Audit: "audit"}},
+		Signing: Signing{Backend: "file", Directory: "data/keys", Keys: SigningKeys{Targets: "targets", Snapshot: "snapshot", Timestamp: "timestamp", Audit: "audit"}},
 		Auth: Auth{
 			Studio: StudioAuth{
 				AllowPasswordLogin: true,
@@ -46,6 +47,10 @@ func Defaults() Config {
 		},
 		Observability: Observability{LogLevel: "info", LogFormat: "json", TraceSampleRatio: 1},
 		Telemetry:     Telemetry{Store: "postgres"},
+		UpdateMetadata: UpdateMetadata{RootThreshold: 2, Expiry: MetadataExpiry{
+			Timestamp: Duration(24 * time.Hour), Snapshot: Duration(7 * 24 * time.Hour),
+			Targets: Duration(30 * 24 * time.Hour), Root: Duration(365 * 24 * time.Hour),
+		}},
 		// Where the server image installs them (backend/Dockerfile).
 		Assets: Assets{SVGCompiler: "/usr/local/bin/plux-svgc", PathOps: "/usr/local/lib/plux/libpath_ops.so"},
 		Audit:  Audit{CheckpointInterval: Duration(3600e9)},
@@ -61,7 +66,7 @@ func Defaults() Config {
 // knownSections are the top-level keys this phase accepts.
 var knownSections = []string{
 	"server", "database", "objectStorage", "cache", "signing", "auth",
-	"observability", "telemetry", "limits", "retention", "assets", "attestation", "audit",
+	"observability", "telemetry", "limits", "retention", "assets", "attestation", "audit", "updateMetadata",
 }
 
 // futureSections are sections of Appendix H that belong to a later phase.

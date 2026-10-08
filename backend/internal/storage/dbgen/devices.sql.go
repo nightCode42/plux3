@@ -770,7 +770,7 @@ func (q *Queries) ListDevices(ctx context.Context, arg ListDevicesParams) ([]Dev
 }
 
 const listEnvironmentKeys = `-- name: ListEnvironmentKeys :many
-SELECT environment_id, organization_id, key_id, algorithm, public_key, created_at FROM environment_keys WHERE environment_id = $1 ORDER BY created_at, key_id
+SELECT environment_id, organization_id, key_id, algorithm, public_key, created_at, role, environment_type FROM environment_keys WHERE environment_id = $1 ORDER BY created_at, key_id
 `
 
 func (q *Queries) ListEnvironmentKeys(ctx context.Context, environmentID pgtype.UUID) ([]EnvironmentKey, error) {
@@ -789,6 +789,8 @@ func (q *Queries) ListEnvironmentKeys(ctx context.Context, environmentID pgtype.
 			&i.Algorithm,
 			&i.PublicKey,
 			&i.CreatedAt,
+			&i.Role,
+			&i.EnvironmentType,
 		); err != nil {
 			return nil, err
 		}
@@ -1184,17 +1186,19 @@ func (q *Queries) UpsertDeviceBundle(ctx context.Context, arg UpsertDeviceBundle
 }
 
 const upsertEnvironmentKey = `-- name: UpsertEnvironmentKey :exec
-INSERT INTO environment_keys (environment_id, organization_id, key_id, algorithm, public_key)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO environment_keys (environment_id, organization_id, key_id, algorithm, public_key, role, environment_type)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 ON CONFLICT DO NOTHING
 `
 
 type UpsertEnvironmentKeyParams struct {
-	EnvironmentID  pgtype.UUID
-	OrganizationID pgtype.UUID
-	KeyID          string
-	Algorithm      string
-	PublicKey      []byte
+	EnvironmentID   pgtype.UUID
+	OrganizationID  pgtype.UUID
+	KeyID           string
+	Algorithm       string
+	PublicKey       []byte
+	Role            string
+	EnvironmentType string
 }
 
 func (q *Queries) UpsertEnvironmentKey(ctx context.Context, arg UpsertEnvironmentKeyParams) error {
@@ -1204,6 +1208,8 @@ func (q *Queries) UpsertEnvironmentKey(ctx context.Context, arg UpsertEnvironmen
 		arg.KeyID,
 		arg.Algorithm,
 		arg.PublicKey,
+		arg.Role,
+		arg.EnvironmentType,
 	)
 	return err
 }
