@@ -148,7 +148,7 @@ func TestGeneratedAppAgainstTheServer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	st := startStack(t, "127.0.0.1:18095")
+	st := startStack(t, "127.0.0.1:0")
 	project := st.project(t, "starter")
 	st.run(t, 0, "publish", "-C", project, "--env", "staging", "--promote", "staging")
 

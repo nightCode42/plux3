@@ -42,7 +42,7 @@ func TestPublishWithTheCLIAndSyncADevice(t *testing.T) {
 	if testing.Short() {
 		t.Skip("builds the CLI")
 	}
-	st := startStack(t, "127.0.0.1:18093")
+	st := startStack(t, "127.0.0.1:0")
 	server, dir, app := st.server, st.dir, st.app
 	run := func(want int, args ...string) []byte {
 		t.Helper()
