@@ -291,4 +291,31 @@ void main() {
     );
     expect(failed.toTelemetry()['code'], 'PLX-3002');
   });
+
+  // Verifies: SEC-041.
+  test(
+    'a failed certificate pin is not mistaken for an outage [SEC-041]',
+    () async {
+      final client = PluxApiClient(
+        MockClient(
+          (_) async => throw const PluxException(
+            PluxErrorCode.certificatePinMismatch,
+            'pinned',
+            details: {'host': 'plux.example'},
+          ),
+        ),
+        Uri.parse('https://plux.example/'),
+      );
+      await expectLater(
+        client.registrationChallenge(appId: 'a', environment: 'e'),
+        throwsA(
+          isA<PluxException>().having(
+            (e) => e.code,
+            'code',
+            PluxErrorCode.certificatePinMismatch,
+          ),
+        ),
+      );
+    },
+  );
 }
