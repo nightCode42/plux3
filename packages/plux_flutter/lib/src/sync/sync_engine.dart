@@ -60,6 +60,22 @@ final class MemoryCredentialStore implements CredentialStore {
   Future<void> clear() async => _value = null;
 }
 
+/// A secret store in memory, for tests and development; the platform's
+/// keeps secrets encrypted under a key it holds (ADR-0029).
+final class MemorySecretStore implements SecretStore {
+  /// The secrets, by name.
+  final Map<String, String> values = {};
+
+  @override
+  Future<String?> read(String name) async => values[name];
+
+  @override
+  Future<void> write(String name, String value) async => values[name] = value;
+
+  @override
+  Future<void> delete(String name) async => values.remove(name);
+}
+
 /// What a sync needs to know about the app and this runtime.
 final class SyncConfig {
   /// Creates the configuration.

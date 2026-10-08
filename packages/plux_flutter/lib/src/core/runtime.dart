@@ -201,12 +201,7 @@ final class PluxRuntime with WidgetsBindingObserver {
           endpoint: config.endpoint,
           httpClient: config.httpClient ?? platformHttpClient,
           credentials: credentials,
-          // Host tests replace the platform's services, including this one;
-          // without that replacement they run on the built-in defaults
-          // rather than wait on a platform that is not there.
-          configSecrets:
-              overrides.configSecrets ??
-              (overrides.credentials == null ? PlatformSecretStore.new : null),
+          configSecrets: overrides.configSecrets ?? PlatformSecretStore.new,
           deviceKeys: overrides.deviceKeys ?? PlatformDeviceKeys.new,
           attestation: overrides.attestation ?? _platformAttestation(config),
           parallelism: config.downloadParallelism,

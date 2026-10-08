@@ -20,7 +20,7 @@ import 'package:plux_flutter/plux_flutter.dart';
 import 'package:plux_flutter/src/core/runtime.dart' show RuntimeOverrides;
 // ignore: implementation_imports
 import 'package:plux_flutter/src/sync/sync_engine.dart'
-    show MemoryCredentialStore;
+    show MemoryCredentialStore, MemorySecretStore;
 
 const _control = String.fromEnvironment('PLUX_BENCH_SYNC_CONTROL');
 const _endpoint = String.fromEnvironment('PLUX_ENDPOINT');
@@ -88,7 +88,10 @@ void main() {
         await _ask('phase', {'name': 'first'});
         final startup = await Plux.initializeWith(
           config,
-          const RuntimeOverrides(credentials: MemoryCredentialStore.new),
+          const RuntimeOverrides(
+            credentials: MemoryCredentialStore.new,
+            configSecrets: MemorySecretStore.new,
+          ),
         );
         expect(startup.sequence, 1, reason: '$startup');
 

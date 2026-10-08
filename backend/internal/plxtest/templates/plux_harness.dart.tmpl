@@ -18,7 +18,7 @@ import 'package:plux_flutter/src/security/software_keys.dart'
     show DevelopmentAttestation, SoftwareDeviceKeys;
 import 'package:plux_flutter/src/store/kv_store.dart' show SecretStore;
 import 'package:plux_flutter/src/sync/sync_engine.dart'
-    show MemoryCredentialStore;
+    show MemoryCredentialStore, MemorySecretStore;
 
 import 'plux_project.dart';
 
@@ -170,6 +170,7 @@ final class ScenarioSession {
         ),
         RuntimeOverrides(
           credentials: MemoryCredentialStore.new,
+          configSecrets: MemorySecretStore.new,
           deviceKeys: SoftwareDeviceKeys.new,
           attestation: () => const DevelopmentAttestation('plux-test'),
           baseline: _reader(files),

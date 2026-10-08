@@ -46,20 +46,6 @@ final class _TestRenderer with AllowsEveryGuard implements PageRenderer {
 
 http.Client _client() => http.Client();
 
-/// The secrets of the sync isolate, in memory.
-final class _MemorySecrets implements SecretStore {
-  final Map<String, String> values = {};
-
-  @override
-  Future<String?> read(String name) async => values[name];
-
-  @override
-  Future<void> write(String name, String value) async => values[name] = value;
-
-  @override
-  Future<void> delete(String name) async => values.remove(name);
-}
-
 final _hostValue = Provider<int>((ref) => 0);
 
 /// A baseline reader whose closure holds only the files, so it can be sent
@@ -133,11 +119,11 @@ void main() {
       c,
       RuntimeOverrides(
         credentials: MemoryCredentialStore.new,
+        configSecrets: MemorySecretStore.new,
         deviceKeys: FakeDeviceKeys.new,
         attestation: FakeAttestation.new,
         baseline: _reader(files),
         healthyAfter: healthy,
-        configSecrets: _MemorySecrets.new,
       ),
     );
     Plux.container.read(pluxRuntimeProvider)!.renderer = renderer;
@@ -211,6 +197,7 @@ void main() {
           config(),
           const RuntimeOverrides(
             credentials: MemoryCredentialStore.new,
+            configSecrets: MemorySecretStore.new,
             deviceKeys: FakeDeviceKeys.new,
             attestation: FakeAttestation.new,
           ),

@@ -8,7 +8,6 @@
 /// [SecretStore]; the sync engine drives it on the sync isolate (L-6, L-7).
 library;
 
-import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -96,10 +95,6 @@ final class StoredSecurityConfig {
   });
 }
 
-/// How long the secure storage may take before it counts as failed: a
-/// platform that never answers must not hold the sync.
-const _storageWait = Duration(seconds: 5);
-
 /// Keeps the verified configuration in the platform's secret store, one
 /// per app and environment, as a single secret that is replaced whole.
 final class SecurityConfigStore {
@@ -123,7 +118,7 @@ final class SecurityConfigStore {
   Future<StoredSecurityConfig?> read() async {
     final String? text;
     try {
-      text = await secrets.read(name).timeout(_storageWait);
+      text = await secrets.read(name);
     } on Object {
       return null;
     }
@@ -138,7 +133,7 @@ final class SecurityConfigStore {
   /// written whole, so a reader sees the old value or the new one.
   Future<void> write(StoredSecurityConfig config) async {
     try {
-      await secrets.write(name, config.encode()).timeout(_storageWait);
+      await secrets.write(name, config.encode());
     } on Object {
       throw const PluxException(
         PluxErrorCode.syncFailed,
@@ -150,7 +145,7 @@ final class SecurityConfigStore {
   /// Removes the stored configuration.
   Future<void> clear() async {
     try {
-      await secrets.delete(name).timeout(_storageWait);
+      await secrets.delete(name);
     } on Object {
       // Nothing to remove, or storage that fails reads as none anyway.
     }

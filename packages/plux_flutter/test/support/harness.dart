@@ -16,6 +16,8 @@ import 'package:plux_flutter/src/sync/sync_engine.dart';
 import '../sync/fake_device.dart';
 import '../sync/fake_server.dart';
 
+export 'package:plux_flutter/src/sync/sync_engine.dart' show MemorySecretStore;
+
 http.Client _client() => http.Client();
 
 /// A baseline reader whose closure holds only the files, so it can be sent
@@ -143,19 +145,4 @@ Future<void> settle(WidgetTester tester, [int rounds = 3]) async {
     );
     await tester.pump();
   }
-}
-
-/// Secure storage in memory, for tests.
-final class MemorySecretStore implements SecretStore {
-  /// The secrets, by name.
-  final Map<String, String> values = {};
-
-  @override
-  Future<String?> read(String name) async => values[name];
-
-  @override
-  Future<void> write(String name, String value) async => values[name] = value;
-
-  @override
-  Future<void> delete(String name) async => values.remove(name);
 }

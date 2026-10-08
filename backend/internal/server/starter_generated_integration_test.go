@@ -77,7 +77,7 @@ import 'package:plux_flutter/plux_flutter.dart';
 import 'package:plux_flutter/src/core/runtime.dart' show RuntimeOverrides;
 import 'package:plux_flutter/src/security/software_keys.dart'
     show DevelopmentAttestation, SoftwareDeviceKeys;
-import 'package:plux_flutter/src/sync/sync_engine.dart' show MemoryCredentialStore;
+import 'package:plux_flutter/src/sync/sync_engine.dart' show MemoryCredentialStore, MemorySecretStore;
 
 Future<void> pumpUntil(WidgetTester tester, Finder finder) async {
   final end = DateTime.now().add(const Duration(seconds: 60));
@@ -101,6 +101,7 @@ void main() {
           nativeConfig(storage: dir.path, onError: (e, _) => problems.add(e)),
           RuntimeOverrides(
             credentials: MemoryCredentialStore.new,
+            configSecrets: MemorySecretStore.new,
             deviceKeys: SoftwareDeviceKeys.new,
             attestation: () => const DevelopmentAttestation('e2e'),
           ),
