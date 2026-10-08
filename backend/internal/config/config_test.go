@@ -143,6 +143,7 @@ func TestValidateReportsEveryProblem(t *testing.T) {
 		{"a later signing backend", minimal + "signing:\n  backend: awskms\n", "arrives in P6"},
 		{"pkcs11 without socket", minimal + "signing:\n  backend: pkcs11\n", "signing.pkcs11.socket"},
 		{"pkcs11 relative socket", minimal + "signing:\n  backend: pkcs11\n  pkcs11:\n    socket: helper.sock\n", "absolute path"},
+		{"pkcs11 wrap key", minimal + "signing:\n  backend: pkcs11\n  pkcs11:\n    socket: /run/h.sock\n    wrapKey: \"Bad Key\"\n", "signing.pkcs11.wrapKey"},
 		{"targets prefix", minimal + "signing:\n  keys:\n    targets: \"Targets\"\n", "signing.keys.targets"},
 		{"unknown mfa capability", minimal + "auth:\n  studio:\n    mfaRequiredFor: [publish, nonsense]\n", "mfaRequiredFor[1]"},
 		{"zero session lifetime", minimal + "auth:\n  studio:\n    sessionTTL: 0s\n", "auth.studio.sessionTTL"},
@@ -173,9 +174,9 @@ func TestValidateReportsEveryProblem(t *testing.T) {
 // Verifies: SEC-120.
 func TestPKCS11BackendParses(t *testing.T) {
 	t.Parallel()
-	c := parse(t, minimal+"signing:\n  backend: pkcs11\n  pkcs11:\n    socket: /run/plux/pkcs11.sock\n")
-	if c.Signing.PKCS11.Socket != "/run/plux/pkcs11.sock" {
-		t.Errorf("socket = %q", c.Signing.PKCS11.Socket)
+	c := parse(t, minimal+"signing:\n  backend: pkcs11\n  pkcs11:\n    socket: /run/plux/pkcs11.sock\n    wrapKey: secrets-2\n")
+	if c.Signing.PKCS11.Socket != "/run/plux/pkcs11.sock" || c.Signing.PKCS11.WrapKey != "secrets-2" {
+		t.Errorf("pkcs11 = %+v", c.Signing.PKCS11)
 	}
 }
 

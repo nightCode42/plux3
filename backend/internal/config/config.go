@@ -266,6 +266,9 @@ type Vault struct {
 type PKCS11 struct {
 	// Socket is the absolute path of the helper's Unix socket.
 	Socket string `json:"socket"`
+	// WrapKey is the label of the AES key on the token that wraps the data
+	// keys of stored secrets (SEC-106); "" is "plux-secrets".
+	WrapKey string `json:"wrapKey"`
 }
 
 // Auth configures who may call the server.

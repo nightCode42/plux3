@@ -4,7 +4,10 @@
 package pkcs11helper
 
 import (
+	"bytes"
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/elliptic"
@@ -28,6 +31,8 @@ type fakeKey struct {
 	ed        ed25519.PrivateKey
 	ec        *ecdsa.PrivateKey
 	ambiguous bool
+	// aes is a secret key for AES-GCM.
+	aes []byte
 	// bare returns the public point without its OCTET STRING wrapper.
 	bare bool
 }
@@ -40,6 +45,12 @@ type fakeToken struct {
 	signErr error
 	// shortSignature makes Sign return a truncated signature.
 	shortSignature bool
+	// forceIV, when set, is the IV the token uses whatever it is given, as
+	// some modules do.
+	forceIV []byte
+	// badLength makes Encrypt and Decrypt return a result of the wrong
+	// length.
+	badLength bool
 	// gate, when set, makes every call wait until it is closed.
 	gate chan struct{}
 }
@@ -58,6 +69,7 @@ func newFakeToken(t *testing.T) *fakeToken {
 	}
 	return &fakeToken{keys: map[string]fakeKey{
 		"release": {ed: priv}, "token": {ec: ec}, "twin": {ed: priv, ambiguous: true},
+		"wrap": {aes: bytes.Repeat([]byte{1}, 32)}, "wrap2": {aes: bytes.Repeat([]byte{2}, 32)},
 	}}
 }
 
@@ -187,3 +199,46 @@ func errorCode(resp *pkcs11pb.Response) pkcs11pb.ErrorCode {
 // isClosed reports whether err is the error of using a closed
 // connection.
 func isClosed(err error) bool { return errors.Is(err, net.ErrClosed) }
+
+// gcm returns AES-GCM over the secret key of a selector.
+func (f *fakeToken) gcm(sel Selector) (cipher.AEAD, error) {
+	key, err := f.lookup(sel)
+	if err != nil {
+		return nil, err
+	}
+	block, err := aes.NewCipher(key.aes)
+	if err != nil {
+		return nil, err
+	}
+	return cipher.NewGCM(block)
+}
+
+func (f *fakeToken) Encrypt(sel Selector, iv, plaintext []byte) ([]byte, []byte, error) {
+	aead, err := f.gcm(sel)
+	if err != nil {
+		return nil, nil, err
+	}
+	if f.forceIV != nil {
+		iv = f.forceIV
+	}
+	sealed := aead.Seal(nil, iv, plaintext, nil)
+	if f.badLength {
+		sealed = sealed[:len(sealed)-1]
+	}
+	return iv, sealed, nil
+}
+
+func (f *fakeToken) Decrypt(sel Selector, iv, sealed []byte) ([]byte, error) {
+	aead, err := f.gcm(sel)
+	if err != nil {
+		return nil, err
+	}
+	plaintext, err := aead.Open(nil, iv, sealed, nil)
+	if err != nil {
+		return nil, ErrDecryptFailed
+	}
+	if f.badLength {
+		plaintext = append(plaintext, 0)
+	}
+	return plaintext, nil
+}

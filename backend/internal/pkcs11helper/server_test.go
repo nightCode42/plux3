@@ -241,3 +241,107 @@ func TestServeStopsWhenTheContextIsDone(t *testing.T) {
 		t.Errorf("the listener is still open: %v", err)
 	}
 }
+
+// wrapRoundTrip wraps a data key through the socket and returns the
+// wrapped key.
+func wrapOnce(t *testing.T, path, ref string, dataKey []byte) *pkcs11pb.Response {
+	t.Helper()
+	req := &pkcs11pb.Request{Request: &pkcs11pb.Request_Wrap{Wrap: &pkcs11pb.WrapRequest{KeyRef: "pkcs11:object=" + ref, Plaintext: dataKey}}}
+	return roundTrip(t, path, frameOf(t, req))
+}
+
+// unwrapOnce unwraps through the socket.
+func unwrapOnce(t *testing.T, path, ref string, wrapped []byte) *pkcs11pb.Response {
+	t.Helper()
+	req := &pkcs11pb.Request{Request: &pkcs11pb.Request_Unwrap{Unwrap: &pkcs11pb.UnwrapRequest{KeyRef: "pkcs11:object=" + ref, Wrapped: wrapped}}}
+	return roundTrip(t, path, frameOf(t, req))
+}
+
+// Verifies: SEC-120, SEC-106.
+func TestServerWrapsAndUnwrapsDataKeys(t *testing.T) {
+	t.Parallel()
+	path := serveFake(t, newFakeToken(t), Options{})
+	dataKey := bytes.Repeat([]byte{7}, 32)
+	wrapped := wrapOnce(t, path, "wrap", dataKey).GetWrap().GetWrapped()
+	if len(wrapped) != ivSize+len(dataKey)+tagSize {
+		t.Fatalf("wrapped key is %d bytes", len(wrapped))
+	}
+	if bytes.Contains(wrapped, dataKey) {
+		t.Error("the data key appears in the wrapped key")
+	}
+	if got := unwrapOnce(t, path, "wrap", wrapped).GetUnwrap().GetPlaintext(); !bytes.Equal(got, dataKey) {
+		t.Errorf("unwrapped = %x", got)
+	}
+	// A fresh IV every time.
+	again := wrapOnce(t, path, "wrap", dataKey).GetWrap().GetWrapped()
+	if bytes.Equal(wrapped[:ivSize], again[:ivSize]) {
+		t.Error("two wraps share an IV")
+	}
+}
+
+// Verifies: SEC-120, SEC-106.
+func TestServerRefusesWhatDoesNotUnwrap(t *testing.T) {
+	t.Parallel()
+	path := serveFake(t, newFakeToken(t), Options{})
+	wrapped := wrapOnce(t, path, "wrap", bytes.Repeat([]byte{7}, 32)).GetWrap().GetWrapped()
+	flip := func(i int) []byte {
+		out := bytes.Clone(wrapped)
+		out[i] ^= 1
+		return out
+	}
+	decrypt := pkcs11pb.ErrorCode_ERROR_CODE_DECRYPT_FAILED
+	invalid := pkcs11pb.ErrorCode_ERROR_CODE_INVALID_REQUEST
+	for name, tc := range map[string]struct {
+		ref     string
+		wrapped []byte
+		want    pkcs11pb.ErrorCode
+	}{
+		"another key":       {"wrap2", wrapped, decrypt},
+		"a tampered tag":    {"wrap", flip(len(wrapped) - 1), decrypt},
+		"a tampered cipher": {"wrap", flip(ivSize), decrypt},
+		"a tampered IV":     {"wrap", flip(0), decrypt},
+		"too short":         {"wrap", wrapped[:ivSize+tagSize], invalid},
+		"no such key":       {"absent", wrapped, pkcs11pb.ErrorCode_ERROR_CODE_KEY_NOT_FOUND},
+	} {
+		if got := errorCode(unwrapOnce(t, path, tc.ref, tc.wrapped)); got != tc.want {
+			t.Errorf("%s: code = %v, want %v", name, got, tc.want)
+		}
+	}
+	if got := errorCode(wrapOnce(t, path, "wrap", nil)); got != invalid {
+		t.Errorf("an empty data key: %v", got)
+	}
+	if got := errorCode(wrapOnce(t, path, "absent", []byte("k"))); got != pkcs11pb.ErrorCode_ERROR_CODE_KEY_NOT_FOUND {
+		t.Errorf("wrap with a missing key: %v", got)
+	}
+}
+
+// Verifies: SEC-120, SEC-106.
+func TestServerUsesTheIVTheTokenChose(t *testing.T) {
+	t.Parallel()
+	token := newFakeToken(t)
+	token.forceIV = bytes.Repeat([]byte{9}, ivSize)
+	path := serveFake(t, token, Options{})
+	wrapped := wrapOnce(t, path, "wrap", []byte("a data key")).GetWrap().GetWrapped()
+	if !bytes.HasPrefix(wrapped, token.forceIV) {
+		t.Errorf("the wrapped key does not start with the token's IV: %x", wrapped)
+	}
+	if got := unwrapOnce(t, path, "wrap", wrapped).GetUnwrap().GetPlaintext(); string(got) != "a data key" {
+		t.Errorf("unwrapped = %q", got)
+	}
+}
+
+// Verifies: SEC-120, SEC-106.
+func TestServerRefusesAMalformedTokenAnswer(t *testing.T) {
+	t.Parallel()
+	good := serveFake(t, newFakeToken(t), Options{})
+	wrapped := wrapOnce(t, good, "wrap", []byte("a data key")).GetWrap().GetWrapped()
+	token := newFakeToken(t)
+	token.badLength = true
+	path := serveFake(t, token, Options{})
+	if got := errorCode(wrapOnce(t, path, "wrap", []byte("a data key"))); got != pkcs11pb.ErrorCode_ERROR_CODE_INTERNAL {
+		t.Errorf("wrap: %v", got)
+	}
+	if got := errorCode(unwrapOnce(t, path, "wrap", wrapped)); got != pkcs11pb.ErrorCode_ERROR_CODE_INTERNAL {
+		t.Errorf("unwrap: %v", got)
+	}
+}

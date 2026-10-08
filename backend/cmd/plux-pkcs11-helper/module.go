@@ -213,3 +213,75 @@ func (m *module) find(sel pkcs11helper.Selector, class uint) (pkcs11.ObjectHandl
 		return 0, pkcs11helper.ErrAmbiguousKey
 	}
 }
+
+// gcmTagBits is the 128-bit tag of the wrapping format.
+const gcmTagBits = 128
+
+// Encrypt encrypts with CKM_AES_GCM under the secret key a selector
+// names. It returns the IV the module used, read back after the
+// operation, since some modules write their own.
+func (m *module) Encrypt(sel pkcs11helper.Selector, iv, plaintext []byte) ([]byte, []byte, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	var used, sealed []byte
+	err := m.retry(func() error {
+		obj, err := m.find(sel, pkcs11.CKO_SECRET_KEY)
+		if err != nil {
+			return err
+		}
+		params := pkcs11.NewGCMParams(iv, nil, gcmTagBits)
+		defer params.Free()
+		mechanism := []*pkcs11.Mechanism{pkcs11.NewMechanism(pkcs11.CKM_AES_GCM, params)}
+		if err := m.ctx.EncryptInit(m.session, mechanism, obj); err != nil {
+			return fmt.Errorf("start an encryption: %w", err)
+		}
+		sealed, err = m.ctx.Encrypt(m.session, plaintext)
+		if err != nil {
+			return fmt.Errorf("encrypt: %w", err)
+		}
+		used = params.IV()
+		return nil
+	})
+	return used, sealed, err
+}
+
+// Decrypt decrypts with CKM_AES_GCM. A ciphertext the token refuses as
+// invalid is ErrDecryptFailed.
+func (m *module) Decrypt(sel pkcs11helper.Selector, iv, sealed []byte) ([]byte, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	var plaintext []byte
+	err := m.retry(func() error {
+		obj, err := m.find(sel, pkcs11.CKO_SECRET_KEY)
+		if err != nil {
+			return err
+		}
+		params := pkcs11.NewGCMParams(iv, nil, gcmTagBits)
+		defer params.Free()
+		mechanism := []*pkcs11.Mechanism{pkcs11.NewMechanism(pkcs11.CKM_AES_GCM, params)}
+		if err := m.ctx.DecryptInit(m.session, mechanism, obj); err != nil {
+			return fmt.Errorf("start a decryption: %w", err)
+		}
+		plaintext, err = m.ctx.Decrypt(m.session, sealed)
+		if invalidCiphertext(err) {
+			return pkcs11helper.ErrDecryptFailed
+		}
+		if err != nil {
+			return fmt.Errorf("decrypt: %w", err)
+		}
+		return nil
+	})
+	return plaintext, err
+}
+
+// invalidCiphertext reports whether err is the token saying the
+// ciphertext or its tag is wrong. SoftHSM reports a failed GCM tag check
+// as CKR_GENERAL_ERROR, so that is read as a failed decryption too: only
+// after a successful DecryptInit does it reach here, and the answer is
+// the same either way, a data key that cannot be had.
+func invalidCiphertext(err error) bool {
+	return isCode(err, pkcs11.CKR_GENERAL_ERROR) ||
+		isCode(err, pkcs11.CKR_ENCRYPTED_DATA_INVALID) ||
+		isCode(err, pkcs11.CKR_ENCRYPTED_DATA_LEN_RANGE) ||
+		isCode(err, pkcs11.CKR_DATA_INVALID)
+}
