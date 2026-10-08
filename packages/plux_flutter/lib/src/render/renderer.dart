@@ -81,6 +81,7 @@ final class PluxRenderer implements PageRenderer, RenderServices {
     required this.report,
     required this.failure,
     required this.imageCacheDirectory,
+    this.httpClient,
     this.assets = AssetDevice.plain,
     this.actions,
     this.data,
@@ -99,6 +100,10 @@ final class PluxRenderer implements PageRenderer, RenderServices {
 
   /// The configuration.
   final PluxConfig config;
+
+  /// Creates the HTTP client images are fetched with; the platform's, or
+  /// the configuration's, when null.
+  final http.Client Function()? httpClient;
 
   /// Reports a problem.
   final void Function(PluxException error) report;
@@ -894,7 +899,8 @@ final class PluxRenderer implements PageRenderer, RenderServices {
         imageCacheDirectory,
         maxBytes: limits.valueOf(PluxLimit.runtimeImageDiskCacheBytes),
       ),
-      client: _client ??= (config.httpClient ?? platformHttpClient)(),
+      client: _client ??=
+          (httpClient ?? config.httpClient ?? platformHttpClient)(),
       maxBytes: limits.valueOf(PluxLimit.runtimeImageSize),
     );
   }

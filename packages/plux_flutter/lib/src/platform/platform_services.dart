@@ -15,7 +15,10 @@ import 'package:cupertino_http/cupertino_http.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
+import 'package:plux_flutter/src/platform/native_pinned_http.dart';
+import 'package:plux_flutter/src/platform/pinned_http.dart';
 import 'package:plux_flutter/src/runtime_info.dart';
+import 'package:plux_flutter/src/security/pins.dart';
 import 'package:plux_flutter/src/store/kv_store.dart';
 import 'package:plux_flutter/src/sync/api_client.dart';
 import 'package:plux_flutter/src/sync/sync_engine.dart';
@@ -90,10 +93,50 @@ final class PlatformSecretStore implements SecretStore {
       _channel.invokeMethod<void>('secretDelete', {'name': name});
 }
 
+/// Creates [platformHttpClient]s for one server; a callable that can be
+/// sent to another isolate, since the sync and data isolates make their own
+/// clients.
+final class PlatformHttpClients {
+  /// Creates the factory for the server at [endpoint], pinned by [pins]
+  /// (SEC-041), or unpinned when [pins] is null.
+  PlatformHttpClients(this.endpoint, this.pins);
+
+  /// The Plux server.
+  final Uri endpoint;
+
+  /// The pins of the server; null to run without pinning.
+  final PinSet? pins;
+
+  /// A new client.
+  http.Client create() => platformHttpClient(endpoint: endpoint, pins: pins);
+}
+
 /// The platform's HTTP/2 client (SYN-010): Cronet on Android, `URLSession`
 /// on iOS, `dart:io` elsewhere (tests and desktop development).
-http.Client platformHttpClient() {
+///
+/// With [pins] and an `https` [endpoint], requests to the endpoint's host
+/// are sent by a client that enforces the pins (SEC-041), and requests to
+/// any other host keep the platform client. On Android and iOS that is the
+/// plugin's own Cronet or `URLSession` client, still HTTP/2 and pinned
+/// against every certificate of the chain (`cronet_http` offers no pins and
+/// `cupertino_http` no server-trust hook, so the plugin makes the
+/// requests); elsewhere it is `dart:io`, which shows only the leaf.
+http.Client platformHttpClient({Uri? endpoint, PinSet? pins}) {
   final agent = PluxRuntimeInfo.userAgent;
+  final other = _unpinnedHttpClient(agent);
+  if (endpoint == null || pins == null || endpoint.scheme != 'https') {
+    return other;
+  }
+  return PinRoutingClient(
+    host: endpoint.host,
+    pinned: Platform.isAndroid || Platform.isIOS
+        ? NativePinnedClient(pins: pins, userAgent: agent)
+        : IOClient(pinnedHttpClient(pins, userAgent: agent)),
+    other: other,
+  );
+}
+
+http.Client _unpinnedHttpClient(String agent) {
   try {
     if (Platform.isAndroid) {
       return CronetClient.fromCronetEngine(

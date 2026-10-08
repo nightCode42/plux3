@@ -221,6 +221,27 @@ void main() {
     ], contains(PluxErrorCode.syncFailed.id));
   });
 
+  // Verifies: SEC-041.
+  testWidgets('a pin mismatch is reported as pin_failure with the host '
+      'only, without consent [SEC-041] [ANL-001]', (tester) async {
+    await start(tester);
+    rt().reportProblem(
+      const PluxException(
+        PluxErrorCode.certificatePinMismatch,
+        'the certificate of plux.example matches none of the pins',
+        details: {'host': 'plux.example'},
+      ),
+    );
+    await flush(tester);
+    final event = only('pin_failure');
+    expect(fieldsOf(event), {'host': 'plux.example'});
+    expect(event['time'], isNotNull);
+    expect([
+      for (final e in server.events)
+        if (e['name'] == 'error') fieldsOf(e)['code'],
+    ], contains('PLX-6020'));
+  });
+
   testWidgets('the app bundle sets the sampling rates; the host lowers '
       'them [ANL-003]', (tester) async {
     await start(

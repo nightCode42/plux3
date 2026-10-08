@@ -9,7 +9,8 @@ import Security
 /// store lives, and secrets kept in the Keychain, readable only on this
 /// device after its first unlock, so that no secret is ever written in the
 /// clear. The device keys (SEC-001) are served by PluxKeys, App Attest
-/// (SEC-004) by PluxAttestation. The device actions that need the platform,
+/// (SEC-004) by PluxAttestation, the pinned HTTP/2 client of the Plux
+/// server (SEC-041) by PluxPinnedHttp. The device actions that need the platform,
 /// the share sheet and permission prompts, run here too (SEC-080). Bundle
 /// data never crosses this channel.
 public class PluxFlutterPlugin: NSObject, FlutterPlugin {
@@ -17,6 +18,7 @@ public class PluxFlutterPlugin: NSObject, FlutterPlugin {
   private let device = PluxDevice()
   private let keys = PluxKeys()
   private let attestation = PluxAttestation()
+  private let http = PluxPinnedHttp()
 
   public static func register(with registrar: FlutterPluginRegistrar) {
     let channel = FlutterMethodChannel(name: "dev.plux/runtime", binaryMessenger: registrar.messenger())
@@ -43,6 +45,8 @@ public class PluxFlutterPlugin: NSObject, FlutterPlugin {
       keys.handle(call.method, args, result: result)
     case "attestationSupported", "appAttestKey", "appAttestAttest", "appAttestAssert":
       attestation.handle(call.method, args, result: result)
+    case "httpOpen", "httpRead", "httpClose":
+      http.handle(call.method, args, result: result)
     case "share":
       device.share(args, result: result)
     case "permissionRequest":

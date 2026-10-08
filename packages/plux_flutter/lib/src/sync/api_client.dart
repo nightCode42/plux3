@@ -475,6 +475,9 @@ final class PluxApiClient {
           },
           body: compress ? gzip.encode(json) : json,
         );
+      } on PluxException {
+        // A failed certificate pin is not an outage (SEC-041).
+        rethrow;
       } on Exception catch (e) {
         throw ApiError(0, 'unavailable', '$e');
       }

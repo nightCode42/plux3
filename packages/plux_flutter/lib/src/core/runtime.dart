@@ -16,6 +16,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 import 'package:plux_flutter/src/actions/action_error.dart';
 import 'package:plux_flutter/src/actions/engine.dart';
 import 'package:plux_flutter/src/actions/trace.dart';
@@ -58,6 +59,7 @@ import 'package:plux_flutter/src/schema/limit_values.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
 import 'package:plux_flutter/src/security/attestation.dart';
 import 'package:plux_flutter/src/security/device_keys.dart';
+import 'package:plux_flutter/src/security/pins.dart';
 import 'package:plux_flutter/src/security/platform_attestation.dart';
 import 'package:plux_flutter/src/state/persistence.dart';
 import 'package:plux_flutter/src/state/providers.dart';
@@ -145,6 +147,7 @@ final class PluxRuntime with WidgetsBindingObserver {
     this._limits,
     this._root,
     this.assets,
+    this._httpClient,
   ) {
     active.addListener(() => unawaited(_loadFonts(active.value)));
     active.addListener(() {
@@ -155,6 +158,10 @@ final class PluxRuntime with WidgetsBindingObserver {
     });
   }
 
+  /// Creates the HTTP client of the data layer and of images, pinned to the
+  /// Plux server (SEC-041).
+  final http.Client Function() _httpClient;
+
   /// Starts the runtime: opens the store, starts the sync isolate, imports
   /// the baseline when there is no release, counts the launch, and syncs
   /// per the startup policy.
@@ -164,6 +171,14 @@ final class PluxRuntime with WidgetsBindingObserver {
   }) async {
     final task = developer.TimelineTask()..start('plux.initialize');
     try {
+      // Refuses an unpinned release build before anything is started
+      // (SEC-041); a host's own client is the host's to pin.
+      final httpClient =
+          config.httpClient ??
+          PlatformHttpClients(
+            config.endpoint,
+            pinSetFor(config.endpoint, config.pins),
+          ).create;
       final features = RuntimeFeatures();
       final base = config.storageDirectory ?? await platformStorageDirectory();
       final root =
@@ -193,7 +208,7 @@ final class PluxRuntime with WidgetsBindingObserver {
         SyncWorkerConfig(
           storeRoot: root,
           endpoint: config.endpoint,
-          httpClient: config.httpClient ?? platformHttpClient,
+          httpClient: httpClient,
           credentials: credentials,
           deviceKeys: overrides.deviceKeys ?? PlatformDeviceKeys.new,
           attestation: overrides.attestation ?? _platformAttestation(config),
@@ -228,6 +243,7 @@ final class PluxRuntime with WidgetsBindingObserver {
         limits,
         root,
         assets,
+        httpClient,
       );
       await rt.statePersistence.load();
       final startup = await rt._startup();
@@ -350,7 +366,8 @@ final class PluxRuntime with WidgetsBindingObserver {
 
   late final LazyDataWorker _dataWorker = LazyDataWorker(
     () => DataWorker.start(
-      httpClient: config.httpClient ?? platformHttpClient,
+      httpClient: _httpClient,
+      rootIsolateToken: RootIsolateToken.instance,
       webSocketClient: config.webSocketClient,
       cacheDirectory: '$_root/data',
       // The encrypted cache's key, kept like the secure state store's
@@ -506,6 +523,7 @@ final class PluxRuntime with WidgetsBindingObserver {
     report: _report,
     failure: (e) => unawaited(failure(e)),
     imageCacheDirectory: '$_root/images',
+    httpClient: _httpClient,
     statePersistence: statePersistence,
     assets: assets,
     verified: _verified,
@@ -1082,6 +1100,11 @@ final class PluxRuntime with WidgetsBindingObserver {
     developer.log(e.toString(), name: 'plux');
     diagnostics.record(e);
     telemetry.error(e);
+    // A pin mismatch is a security event of its own (SEC-041): the host
+    // and the time, never the certificate.
+    if (e.code == PluxErrorCode.certificatePinMismatch) {
+      telemetry.record('pin_failure', fields: {'host': e.details['host']});
+    }
     config.onError?.call(e, null);
   }
 
