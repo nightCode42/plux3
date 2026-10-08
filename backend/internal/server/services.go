@@ -58,6 +58,11 @@ type Services struct {
 	Events      *telemetry.Service
 	Idempotency *idempotency.Store
 	Pages       *api.Pages
+	// AuditCheckpoints lists the signed audit checkpoints (SEC-141).
+	AuditCheckpoints *audit.CheckpointReader
+	// Checkpointer signs them; nil where the process holds no signer,
+	// which is every process without the worker role (ADR-0006).
+	Checkpointer *audit.Checkpointer
 	// DeviceTrust authenticates device calls; nil where the process does
 	// not run the api role.
 	DeviceTrust *DeviceTrust
@@ -297,17 +302,9 @@ func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shar
 	for kind, k := range docs.TrashKinds() {
 		tenancyService.RegisterTrashKind(kind, k)
 	}
-	store, err := idempotency.NewStore(db, backend, nil)
+	store, pages, err := buildEdge(ctx, db, backend, set)
 	if err != nil {
-		return nil, fmt.Errorf("server: %w", err)
-	}
-	key, err := signing.InstallationKey(ctx, db, backend, "page-token")
-	if err != nil {
-		return nil, fmt.Errorf("server: %w", err)
-	}
-	pages, err := api.NewPages(key, int32(min(set.Get(limits.APIPageSize), 1<<30)), nil) //nolint:gosec // bounded by min
-	if err != nil {
-		return nil, fmt.Errorf("server: %w", err)
+		return nil, err
 	}
 	devices, trust, err := buildDeviceSide(ctx, cfg, db, shared, set, deviceDeps{
 		crypter: backend, signer: tokenSigner, ids: gen, audit: log, log: work.Log,
@@ -323,10 +320,48 @@ func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shar
 	if err != nil {
 		return nil, err
 	}
+	checkpointer, err := buildCheckpointer(cfg, db, log, gen, work.Signer)
+	if err != nil {
+		return nil, err
+	}
 	return &Services{
 		Audit: log, Auth: authService, Tenancy: tenancyService, Documents: docs, Releases: releases,
 		Devices: devices, Events: events, Idempotency: store, Pages: pages, DeviceTrust: trust,
+		AuditCheckpoints: audit.NewCheckpointReader(db, log), Checkpointer: checkpointer,
 	}, nil
+}
+
+// buildEdge builds what the API edge keeps beside the domain services:
+// the idempotency store and the page-token authenticator.
+func buildEdge(ctx context.Context, db *storage.DB, backend signing.Crypter, set limits.Set) (*idempotency.Store, *api.Pages, error) {
+	store, err := idempotency.NewStore(db, backend, nil)
+	if err != nil {
+		return nil, nil, fmt.Errorf("server: %w", err)
+	}
+	key, err := signing.InstallationKey(ctx, db, backend, "page-token")
+	if err != nil {
+		return nil, nil, fmt.Errorf("server: %w", err)
+	}
+	pages, err := api.NewPages(key, int32(min(set.Get(limits.APIPageSize), 1<<30)), nil) //nolint:gosec // bounded by min
+	if err != nil {
+		return nil, nil, fmt.Errorf("server: %w", err)
+	}
+	return store, pages, nil
+}
+
+// buildCheckpointer returns the audit checkpointer, or nil where there is
+// no signer to give it.
+func buildCheckpointer(cfg *config.Config, db *storage.DB, log *audit.Log, gen audit.IDs, signer signing.Signer) (*audit.Checkpointer, error) {
+	if signer == nil {
+		return nil, nil
+	}
+	c, err := audit.NewCheckpointer(audit.CheckpointerOptions{
+		DB: db, Log: log, Signer: signer, Key: cfg.Signing.Keys.Audit, IDs: gen,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("server: %w", err)
+	}
+	return c, nil
 }
 
 // releaseDeps are the services the release service is built on.
