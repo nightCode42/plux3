@@ -222,15 +222,18 @@ type Environment struct {
 	Production     bool
 	SigningKeyRef  string
 	CreatedAt      pgtype.Timestamptz
+	TargetsVersion int64
 }
 
 type EnvironmentKey struct {
-	EnvironmentID  pgtype.UUID
-	OrganizationID pgtype.UUID
-	KeyID          string
-	Algorithm      string
-	PublicKey      []byte
-	CreatedAt      pgtype.Timestamptz
+	EnvironmentID   pgtype.UUID
+	OrganizationID  pgtype.UUID
+	KeyID           string
+	Algorithm       string
+	PublicKey       []byte
+	CreatedAt       pgtype.Timestamptz
+	Role            string
+	EnvironmentType string
 }
 
 type EnvironmentSecret struct {
@@ -526,6 +529,17 @@ type Trash struct {
 	DeletedAt      pgtype.Timestamptz
 	PurgeAfter     pgtype.Timestamptz
 	RestoredAt     pgtype.Timestamptz
+}
+
+type UpdateMetadatum struct {
+	EnvironmentID  pgtype.UUID
+	OrganizationID pgtype.UUID
+	Role           string
+	Version        int64
+	Document       []byte
+	Sha256         []byte
+	IssuedAt       pgtype.Timestamptz
+	ExpiresAt      pgtype.Timestamptz
 }
 
 type User struct {

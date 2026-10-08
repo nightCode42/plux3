@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // The pieces a configuration is built from in these tests. YAML refuses a
@@ -309,5 +310,36 @@ func TestBytesAndDurationRoundTrip(t *testing.T) {
 	}
 	if j, err := Duration(90e9).MarshalJSON(); err != nil || string(j) != `"1m30s"` {
 		t.Errorf("Duration.MarshalJSON = %s, %v", j, err)
+	}
+}
+
+// Verifies: SEC-050.
+// The update-metadata expiries and the root threshold default to the
+// specification's, are settable, and are checked.
+func TestUpdateMetadataSettings_SEC_050(t *testing.T) {
+	t.Parallel()
+	c := parse(t, minimal)
+	e := c.UpdateMetadata.Expiry
+	if c.UpdateMetadata.RootThreshold != 2 || e.Timestamp.Duration() != 24*time.Hour || e.Snapshot.Duration() != 168*time.Hour ||
+		e.Targets.Duration() != 720*time.Hour || e.Root.Duration() != 8760*time.Hour {
+		t.Errorf("defaults: %+v", c.UpdateMetadata)
+	}
+	k := c.Signing.Keys
+	if k.Targets != "targets" || k.Snapshot != "snapshot" || k.Timestamp != "timestamp" {
+		t.Errorf("key prefixes: %+v", k)
+	}
+	set := parse(t, minimal+"updateMetadata:\n  rootThreshold: 3\n  expiry: { timestamp: \"12h\", targets: \"240h\" }\n")
+	if set.UpdateMetadata.RootThreshold != 3 || set.UpdateMetadata.Expiry.Timestamp.Duration() != 12*time.Hour ||
+		set.UpdateMetadata.Expiry.Snapshot.Duration() != 168*time.Hour {
+		t.Errorf("overrides: %+v", set.UpdateMetadata)
+	}
+	msg := refuse(t, minimal+"updateMetadata:\n  rootThreshold: 0\n  expiry: { timestamp: \"1m\" }\n")
+	for _, want := range []string{"updateMetadata.rootThreshold", "updateMetadata.expiry.timestamp"} {
+		if !strings.Contains(msg, want) {
+			t.Errorf("no problem reported for %s: %s", want, msg)
+		}
+	}
+	if msg := refuse(t, minimal+"signing:\n  keys: { targets: \"k\", snapshot: \"k\" }\n"); !strings.Contains(msg, "must differ from signing.keys") {
+		t.Errorf("two roles sharing a key prefix: %s", msg)
 	}
 }

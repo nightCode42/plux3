@@ -182,8 +182,8 @@ DELETE FROM manifests m
                  ORDER BY n.issued_at DESC, n.id DESC LIMIT 1);
 
 -- name: UpsertEnvironmentKey :exec
-INSERT INTO environment_keys (environment_id, organization_id, key_id, algorithm, public_key)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO environment_keys (environment_id, organization_id, key_id, algorithm, public_key, role, environment_type)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 ON CONFLICT DO NOTHING;
 
 -- name: ListEnvironmentKeys :many
