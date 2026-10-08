@@ -19,6 +19,7 @@ import (
 
 	"github.com/nightCode42/plux3/backend/internal/compiler/media"
 	"github.com/nightCode42/plux3/backend/internal/storage/objects"
+	"github.com/nightCode42/plux3/backend/internal/updatemeta"
 
 	"connectrpc.com/connect"
 	"github.com/riverqueue/river"
@@ -349,12 +350,27 @@ func buildReleases(cfg *config.Config, db *storage.DB, set limits.Set, work Work
 		Jobs: publishQueue{work.Queue}, Signer: work.Signer, ProductionSigning: work.ProductionSigning, Limits: set,
 		Devices: deps.devices, PublicBaseURL: cfg.Server.PublicBaseURL,
 		CompilerVersion: buildinfo.Get().Version, DevelopmentDays: cfg.Retention.DevelopmentReleaseDays,
+		Metadata: metadataOptions(cfg),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("server: %w", err)
 	}
 	deps.tenancy.RegisterUsage(releases.Usage)
 	return releases, nil
+}
+
+// metadataOptions are the update-metadata settings of the configuration
+// (SEC-050).
+func metadataOptions(cfg *config.Config) release.MetadataOptions {
+	e := cfg.UpdateMetadata.Expiry
+	return release.MetadataOptions{
+		Expiry: updatemeta.Expiry{
+			Timestamp: e.Timestamp.Duration(), Snapshot: e.Snapshot.Duration(),
+			Targets: e.Targets.Duration(), Root: e.Root.Duration(),
+		},
+		RootThreshold:     cfg.UpdateMetadata.RootThreshold,
+		SnapshotKeyPrefix: cfg.Signing.Keys.Snapshot, TimestampKeyPrefix: cfg.Signing.Keys.Timestamp,
+	}
 }
 
 // verificationURI is where a person approves `plux login`: Studio's
@@ -474,6 +490,9 @@ func (s *Server) RegisterAPI(svc *Services) error {
 	if s.objects != nil {
 		s.Register("GET "+release.ObjectsPath, s.objectHandler())
 	}
+	if svc.Releases != nil {
+		s.Register(MetadataRoute, s.metadataHandler(svc.Releases))
+	}
 	return nil
 }
 
@@ -508,6 +527,7 @@ func (w *maintenanceWorker) Work(ctx context.Context, _ *river.Job[Maintenance])
 	snapshots := 0
 	released := 0
 	signed := 0
+	var resign []error
 	err = w.svc.Tenancy.ForEachOrganization(ctx, func(org string) error {
 		if w.svc.Releases != nil {
 			n, err := w.svc.Releases.PurgeReleases(ctx, org)
@@ -515,12 +535,21 @@ func (w *maintenanceWorker) Work(ctx context.Context, _ *river.Job[Maintenance])
 			if err != nil {
 				return err //nolint:wrapcheck // a domain error
 			}
+			// Signing failures of one organisation, such as an expired
+			// root, are reported without stopping the sweep of the others;
+			// the job still fails, so River retries it.
 			m, err := w.svc.Releases.RefreshManifests(ctx, org)
 			signed += m
-			if err != nil {
+			resign = append(resign, err)
+			// The timestamp and snapshot are re-signed before they
+			// expire (SEC-050).
+			m, err = w.svc.Releases.RefreshMetadata(ctx, org)
+			signed += m
+			resign = append(resign, err)
+			if _, err := w.svc.Releases.PurgeManifests(ctx, org); err != nil {
 				return err //nolint:wrapcheck // a domain error
 			}
-			if _, err := w.svc.Releases.PurgeManifests(ctx, org); err != nil {
+			if _, err := w.svc.Releases.PurgeMetadata(ctx, org); err != nil {
 				return err //nolint:wrapcheck // a domain error
 			}
 		}
@@ -538,6 +567,7 @@ func (w *maintenanceWorker) Work(ctx context.Context, _ *river.Job[Maintenance])
 		return err //nolint:wrapcheck // a domain error
 	})
 	errs = append(errs, err)
+	errs = append(errs, resign...)
 	keys, err := w.svc.Idempotency.Expire(ctx)
 	errs = append(errs, err)
 	creds, err := w.svc.Auth.Expire(ctx)

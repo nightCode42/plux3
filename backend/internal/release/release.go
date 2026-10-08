@@ -93,6 +93,8 @@ type Options struct {
 	// DevelopmentDays is how long a release never promoted to production
 	// is kept (REL-007).
 	DevelopmentDays int
+	// Metadata configures the update metadata roles (SEC-050).
+	Metadata MetadataOptions
 	// Now is the clock; nil uses time.Now.
 	Now func() time.Time
 }
@@ -103,6 +105,7 @@ type Service struct {
 	now       func() time.Time
 	flights   *flightGroup
 	manifests *manifestCache
+	metadata  *metadataCache
 	// validator checks uploaded native catalogues.
 	validator *schema.Validator
 }
@@ -124,6 +127,7 @@ func NewService(o Options) (*Service, error) {
 	if o.DevelopmentDays <= 0 {
 		o.DevelopmentDays = 90
 	}
+	o.Metadata = o.Metadata.withDefaults()
 	now := o.Now
 	if now == nil {
 		now = time.Now
@@ -132,7 +136,7 @@ func NewService(o Options) (*Service, error) {
 	if err != nil {
 		return nil, fmt.Errorf("release: %w", err)
 	}
-	return &Service{o: o, now: now, flights: &flightGroup{}, manifests: &manifestCache{}, validator: validator}, nil
+	return &Service{o: o, now: now, flights: &flightGroup{}, manifests: &manifestCache{}, metadata: &metadataCache{}, validator: validator}, nil
 }
 
 // inOrg runs f in a transaction bound to the principal's organisation.

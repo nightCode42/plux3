@@ -91,7 +91,11 @@ type ServedManifest struct {
 	InstalledRequired bool
 	ETag              string
 	// Signed is the canonical JSON the signatures cover.
-	Signed     []byte
+	Signed []byte
+	// Metadata names the update-metadata versions current for the
+	// environment: where the device fetches the timestamp and snapshot
+	// that vouch for this manifest (SEC-050). Zero before its root.
+	Metadata   MetadataRef
 	Document   SignedManifest
 	Signatures []ManifestSignature
 	// Plan holds a step per plugin key, and "" for the app bundle.
@@ -116,7 +120,7 @@ func (s *Service) GetManifest(ctx context.Context, r ManifestRequest) (ServedMan
 	if err != nil {
 		return ServedManifest{}, err
 	}
-	out := ServedManifest{Document: base.doc, Signatures: base.signatures, Signed: base.signed}
+	out := ServedManifest{Document: base.doc, Signatures: base.signatures, Signed: base.signed, Metadata: base.metadata}
 	targets := map[string]SignedBundle{"": out.Document.AppBundle}
 	for _, p := range out.Document.Plugins {
 		targets[p.Key] = p.SignedBundle
@@ -152,6 +156,7 @@ type cachedManifest struct {
 	doc        SignedManifest
 	signatures []ManifestSignature
 	signed     []byte
+	metadata   MetadataRef
 	until      time.Time
 }
 
@@ -183,6 +188,7 @@ func (s *Service) latestManifest(ctx context.Context, org, env, channel, build s
 		return c, nil
 	}
 	var row dbgen.Manifest
+	var ref MetadataRef
 	err := s.o.DB.InTx(ctx, storage.Tenant{OrganizationID: org}, func(ctx context.Context, tx pgx.Tx) error {
 		q := dbgen.New(tx)
 		ch, err := q.GetChannel(ctx, dbgen.GetChannelParams{EnvironmentID: storage.MustUUID(env), Key: channel})
@@ -197,12 +203,17 @@ func (s *Service) latestManifest(ctx context.Context, org, env, channel, build s
 		if err != nil {
 			return failure(err, "manifest")
 		}
+		v, err := q.LatestMetadataVersions(ctx, ch.EnvironmentID)
+		if err != nil {
+			return failure(err, "metadata")
+		}
+		ref = MetadataRef{Root: v.RootVersion, Snapshot: v.SnapshotVersion, Timestamp: v.TimestampVersion}
 		return nil
 	})
 	if err != nil {
 		return cachedManifest{}, fmt.Errorf("release: %w", err)
 	}
-	c = cachedManifest{id: row.ID.Bytes, signed: row.Signed, until: now.Add(manifestTTL)}
+	c = cachedManifest{id: row.ID.Bytes, signed: row.Signed, metadata: ref, until: now.Add(manifestTTL)}
 	if err := json.Unmarshal(row.Signed, &c.doc); err != nil {
 		return cachedManifest{}, fmt.Errorf("release: a stored manifest: %w", err)
 	}
@@ -459,20 +470,33 @@ func (s *Service) PrecomputeDeltas(ctx context.Context, job DeltaJob) error {
 type RootKey struct {
 	KeyID, Algorithm, Role string
 	PublicKey              []byte
+	// EnvironmentType is "production" or "development" (SEC-056).
+	EnvironmentType string
 }
 
-// RootKeys returns the keys an environment has signed with (SEC-051).
-// They are public; a host project embeds them (CLI-004).
+// RootKeys returns the keys an environment has signed with and, when an
+// operator has uploaded a root, the keys that root lists for each role
+// (SEC-051). They are public; a host project embeds them (CLI-004).
 func (s *Service) RootKeys(ctx context.Context, org, envID string) ([]RootKey, error) {
 	var out []RootKey
 	err := s.o.DB.InTx(ctx, storage.Tenant{OrganizationID: org}, func(ctx context.Context, tx pgx.Tx) error {
-		rows, err := dbgen.New(tx).ListEnvironmentKeys(ctx, storage.MustUUID(envID))
+		q := dbgen.New(tx)
+		env, err := q.GetEnvironment(ctx, storage.MustUUID(envID))
+		if err != nil {
+			return failure(err, "environment")
+		}
+		rows, err := q.ListEnvironmentKeys(ctx, env.ID)
 		if err != nil {
 			return fmt.Errorf("release: %w", err)
 		}
 		for _, r := range rows {
-			out = append(out, RootKey{KeyID: r.KeyID, Algorithm: r.Algorithm, Role: "targets", PublicKey: r.PublicKey})
+			out = append(out, RootKey{KeyID: r.KeyID, Algorithm: r.Algorithm, Role: r.Role, PublicKey: r.PublicKey, EnvironmentType: r.EnvironmentType})
 		}
+		listed, err := rootKeys(ctx, q, env)
+		if err != nil {
+			return err
+		}
+		out = append(out, listed...)
 		return nil
 	})
 	if err != nil {

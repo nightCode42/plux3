@@ -118,6 +118,13 @@ func newFixture(t *testing.T) *fixture {
 // loans is then its first plugin.
 func newFixtureOf(t *testing.T, name string) *fixture {
 	t.Helper()
+	return newFixtureWith(t, name, nil)
+}
+
+// newFixtureWith is newFixtureOf with the release service's options
+// adjusted by tweak, which may be nil.
+func newFixtureWith(t *testing.T, name string, tweak func(*release.Options)) *fixture {
+	t.Helper()
 	ctx := context.Background()
 	db := storagetest.Open(t)
 	backend, err := signing.NewFile(t.TempDir())
@@ -146,11 +153,15 @@ func newFixtureOf(t *testing.T, name string) *fixture {
 	if f.docs, err = document.NewService(document.Options{DB: db, Audit: log, Tenancy: f.tenancy, IDs: gen, Objects: store, Jobs: f.assets, Codecs: codecs, Now: clock}); err != nil {
 		t.Fatal(err)
 	}
-	if f.rel, err = release.NewService(release.Options{
+	opts := release.Options{
 		DB: db, Audit: log, Tenancy: f.tenancy, Documents: f.docs, Objects: store, IDs: gen,
 		Jobs: f.q, Signer: backend, ProductionSigning: true, Now: clock, DevelopmentDays: 90,
 		PublicBaseURL: "https://plux.example.com",
-	}); err != nil {
+	}
+	if tweak != nil {
+		tweak(&opts)
+	}
+	if f.rel, err = release.NewService(opts); err != nil {
 		t.Fatal(err)
 	}
 	admin, invitation, err := authService.Bootstrap(ctx, "admin@example.com")

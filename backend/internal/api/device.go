@@ -348,9 +348,15 @@ func (s Manifest) GetRootKeys(ctx context.Context, req *connect.Request[pluxv1.G
 	if err != nil {
 		return nil, err //nolint:wrapcheck // a domain error
 	}
-	out := &pluxv1.GetRootKeysResponse{}
+	roots, err := s.h.Releases.RootChain(ctx, org, env, req.Msg.GetSinceRootVersion())
+	if err != nil {
+		return nil, err //nolint:wrapcheck // a domain error
+	}
+	out := &pluxv1.GetRootKeysResponse{Roots: roots}
 	for _, k := range keys {
-		out.Keys = append(out.Keys, &pluxv1.PublicKey{KeyId: k.KeyID, Algorithm: k.Algorithm, PublicKey: k.PublicKey, Role: k.Role})
+		out.Keys = append(out.Keys, &pluxv1.PublicKey{
+			KeyId: k.KeyID, Algorithm: k.Algorithm, PublicKey: k.PublicKey, Role: k.Role, EnvironmentType: k.EnvironmentType,
+		})
 	}
 	return connect.NewResponse(out), nil
 }
@@ -365,6 +371,11 @@ func manifestProto(d device.Identity, m release.ServedManifest) *pluxv1.Manifest
 			KillSwitchPlugins: doc.Control.KillSwitches, Mandatory: doc.Control.Mandatory, Message: doc.Control.Message,
 		},
 		Signed: m.Signed,
+	}
+	if m.Metadata.Timestamp > 0 {
+		out.Metadata = &pluxv1.UpdateMetadataRef{
+			RootVersion: m.Metadata.Root, SnapshotVersion: m.Metadata.Snapshot, TimestampVersion: m.Metadata.Timestamp,
+		}
 	}
 	if t, err := parseRFC3339(doc.IssuedAt); err == nil {
 		out.IssuedAt = ts(t)
