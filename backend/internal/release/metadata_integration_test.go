@@ -54,6 +54,8 @@ type ceremony struct {
 	t      *testing.T
 	online []release.OnlineKey
 	expiry time.Time
+	// pins are the certificate pins the root carries, when set (SEC-041).
+	pins map[string][]string
 }
 
 // root builds and signs a root of the given version with the root keys
@@ -64,6 +66,7 @@ func (c ceremony) root(version int64, rootKeys []offlineKey, threshold int, sign
 		Type: updatemeta.RoleRoot, Version: version, Expires: updatemeta.FormatTime(c.expiry), SpecVersion: updatemeta.SpecVersion,
 		Keys: map[string]updatemeta.Key{},
 	}
+	r.Pins = c.pins
 	var rootIDs []string
 	for _, k := range rootKeys {
 		r.Keys[k.id()] = updatemeta.Key{Alg: updatemeta.AlgEd25519, Public: base64.StdEncoding.EncodeToString(k.pub)}
@@ -109,7 +112,12 @@ type metadataFixture struct {
 
 func newMetadataFixture(t *testing.T) *metadataFixture {
 	t.Helper()
-	f := newFixtureWith(t, "loan-calculator", limits.Set{}, func(o *release.Options) {
+	return newMetadataFixtureWith(t, limits.Set{})
+}
+
+func newMetadataFixtureWith(t *testing.T, set limits.Set) *metadataFixture {
+	t.Helper()
+	f := newFixtureWith(t, "loan-calculator", set, func(o *release.Options) {
 		o.Metadata = release.MetadataOptions{Expiry: updatemeta.DefaultExpiry(), RootThreshold: 2}
 	})
 	ctx := context.Background()
@@ -596,4 +604,49 @@ func sameKeys(detail string, keys []offlineKey) bool {
 	slices.Sort(got)
 	slices.Sort(want)
 	return slices.Equal(got, want)
+}
+
+// Verifies: SEC-041, SEC-050, LIM-001.
+// A root carries the certificate pins to the device, unchanged; one with
+// too few pins is refused; and no metadata file is accepted or served beyond
+// the updateMetadata.bytes limit.
+func TestRootPinsAndTheSizeLimit_SEC_041(t *testing.T) {
+	t.Parallel()
+	f := newMetadataFixture(t)
+	ctx := context.Background()
+	keys := newOfflineKeys(t, 3)
+	pinA := base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{1}, 32))
+	pinB := base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{2}, 32))
+
+	few := f.ceremony
+	few.pins = map[string][]string{"plux.example.com": {pinA}}
+	if _, err := f.rel.UploadRoot(ctx, f.org, f.prod, few.root(1, keys, 2, keys[0], keys[1])); code(err) != plxerr.UpdateMetadataInvalid {
+		t.Errorf("a root with one pin: %v", err)
+	}
+	c := f.ceremony
+	c.pins = map[string][]string{"plux.example.com": {pinA, pinB}}
+	if _, err := f.rel.UploadRoot(ctx, f.org, f.prod, c.root(1, keys, 2, keys[0], keys[1])); err != nil {
+		t.Fatalf("a root with pins: %v", err)
+	}
+	chain, err := f.rel.RootChain(ctx, f.org, f.prod, 0)
+	if err != nil || len(chain) != 1 {
+		t.Fatalf("the root chain: %d %v", len(chain), err)
+	}
+	d, err := updatemeta.ParseDocument(chain[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	root, err := updatemeta.ParseRoot(d.Signed)
+	if err != nil || len(root.Pins["plux.example.com"]) != 2 {
+		t.Errorf("the stored root's pins: %v %v", root.Pins, err)
+	}
+
+	small, err := limits.Defaults().Tighten(limits.UpdateMetadataBytes, limits.ScopeInstallation, 500)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g := newMetadataFixtureWith(t, small)
+	if _, err := g.rel.UploadRoot(ctx, g.org, g.prod, g.ceremony.root(1, keys, 2, keys[0], keys[1])); code(err) != plxerr.UpdateMetadataInvalid {
+		t.Errorf("a root over the limit: %v", err)
+	}
 }

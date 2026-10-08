@@ -963,6 +963,16 @@ export const limits = [
     phase: "P2",
     description: "Runtime events one telemetry request may carry.",
   },
+  {
+    key: "updateMetadata.bytes",
+    unit: "bytes",
+    default: 1048576,
+    warning: 0,
+    max: 4194304,
+    scopes: ["installation"],
+    phase: "P6",
+    description: "Size of one update metadata file (root, snapshot or timestamp) a device accepts and the server serves.",
+  },
 ] as const satisfies readonly LimitDefinition[];
 
 /** A key of the limits registry. */

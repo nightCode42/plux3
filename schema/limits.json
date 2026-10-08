@@ -1878,6 +1878,24 @@
         "SEC-104"
       ],
       "description": "Runtime events one telemetry request may carry."
+    },
+    {
+      "key": "updateMetadata.bytes",
+      "unit": "bytes",
+      "default": 1048576,
+      "max": 4194304,
+      "scopes": [
+        "installation"
+      ],
+      "enforcedBy": [
+        "server",
+        "runtime"
+      ],
+      "phase": "P6",
+      "requirements": [
+        "SEC-050"
+      ],
+      "description": "Size of one update metadata file (root, snapshot or timestamp) a device accepts and the server serves."
     }
   ]
 }

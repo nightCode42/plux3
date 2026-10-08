@@ -109,6 +109,66 @@
             }
           ]
         }
+      },
+      {
+        "name": "pins",
+        "document": {
+          "signed": {
+            "_type": "root",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "keys": {
+              "00000000000000000000000000000001": {
+                "alg": "Ed25519",
+                "public": "Zm9vYmFy"
+              },
+              "00000000000000000000000000000002": {
+                "alg": "ES256",
+                "public": "Zm9vYmFy"
+              }
+            },
+            "roles": {
+              "root": {
+                "keyids": [
+                  "00000000000000000000000000000001"
+                ],
+                "threshold": 1
+              },
+              "targets": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "snapshot": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "timestamp": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              }
+            },
+            "pins": {
+              "plux.example.com": [
+                "47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+              ]
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000001",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
       }
     ],
     "invalid": [
@@ -632,6 +692,303 @@
                 "threshold": 1
               }
             }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000001",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "one-pin",
+        "document": {
+          "signed": {
+            "_type": "root",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "keys": {
+              "00000000000000000000000000000001": {
+                "alg": "Ed25519",
+                "public": "Zm9vYmFy"
+              },
+              "00000000000000000000000000000002": {
+                "alg": "ES256",
+                "public": "Zm9vYmFy"
+              }
+            },
+            "roles": {
+              "root": {
+                "keyids": [
+                  "00000000000000000000000000000001"
+                ],
+                "threshold": 1
+              },
+              "targets": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "snapshot": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "timestamp": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              }
+            },
+            "pins": {
+              "plux.example.com": [
+                "47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU="
+              ]
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000001",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "duplicate-pins",
+        "document": {
+          "signed": {
+            "_type": "root",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "keys": {
+              "00000000000000000000000000000001": {
+                "alg": "Ed25519",
+                "public": "Zm9vYmFy"
+              },
+              "00000000000000000000000000000002": {
+                "alg": "ES256",
+                "public": "Zm9vYmFy"
+              }
+            },
+            "roles": {
+              "root": {
+                "keyids": [
+                  "00000000000000000000000000000001"
+                ],
+                "threshold": 1
+              },
+              "targets": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "snapshot": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "timestamp": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              }
+            },
+            "pins": {
+              "plux.example.com": [
+                "47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
+                "47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU="
+              ]
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000001",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "bad-pin",
+        "document": {
+          "signed": {
+            "_type": "root",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "keys": {
+              "00000000000000000000000000000001": {
+                "alg": "Ed25519",
+                "public": "Zm9vYmFy"
+              },
+              "00000000000000000000000000000002": {
+                "alg": "ES256",
+                "public": "Zm9vYmFy"
+              }
+            },
+            "roles": {
+              "root": {
+                "keyids": [
+                  "00000000000000000000000000000001"
+                ],
+                "threshold": 1
+              },
+              "targets": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "snapshot": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "timestamp": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              }
+            },
+            "pins": {
+              "plux.example.com": [
+                "47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
+                "not-a-pin"
+              ]
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000001",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "bad-host",
+        "document": {
+          "signed": {
+            "_type": "root",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "keys": {
+              "00000000000000000000000000000001": {
+                "alg": "Ed25519",
+                "public": "Zm9vYmFy"
+              },
+              "00000000000000000000000000000002": {
+                "alg": "ES256",
+                "public": "Zm9vYmFy"
+              }
+            },
+            "roles": {
+              "root": {
+                "keyids": [
+                  "00000000000000000000000000000001"
+                ],
+                "threshold": 1
+              },
+              "targets": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "snapshot": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "timestamp": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              }
+            },
+            "pins": {
+              "Plux Example": [
+                "47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
+                "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+              ]
+            }
+          },
+          "signatures": [
+            {
+              "keyid": "00000000000000000000000000000001",
+              "alg": "Ed25519",
+              "sig": "AAAAZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9vZm9v"
+            }
+          ]
+        }
+      },
+      {
+        "name": "pins-not-an-object",
+        "document": {
+          "signed": {
+            "_type": "root",
+            "version": 1,
+            "expires": "2027-01-01T00:00:00Z",
+            "specVersion": "1.0.0",
+            "keys": {
+              "00000000000000000000000000000001": {
+                "alg": "Ed25519",
+                "public": "Zm9vYmFy"
+              },
+              "00000000000000000000000000000002": {
+                "alg": "ES256",
+                "public": "Zm9vYmFy"
+              }
+            },
+            "roles": {
+              "root": {
+                "keyids": [
+                  "00000000000000000000000000000001"
+                ],
+                "threshold": 1
+              },
+              "targets": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "snapshot": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              },
+              "timestamp": {
+                "keyids": [
+                  "00000000000000000000000000000002"
+                ],
+                "threshold": 1
+              }
+            },
+            "pins": [
+              "47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=",
+              "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+            ]
           },
           "signatures": [
             {

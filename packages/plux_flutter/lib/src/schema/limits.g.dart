@@ -252,7 +252,10 @@ enum PluxLimit {
   /// are dropped first.
   telemetryBufferBytes('telemetry.bufferBytes', PluxLimitUnit.bytes, 262144, 0, 4194304),
   /// Runtime events one telemetry request may carry.
-  telemetryEventsPerRequest('telemetry.eventsPerRequest', PluxLimitUnit.count, 500, 0, 5000);
+  telemetryEventsPerRequest('telemetry.eventsPerRequest', PluxLimitUnit.count, 500, 0, 5000),
+  /// Size of one update metadata file (root, snapshot or timestamp) a device
+  /// accepts and the server serves.
+  updateMetadataBytes('updateMetadata.bytes', PluxLimitUnit.bytes, 1048576, 0, 4194304);
 
   const PluxLimit(this.key, this.unit, this.defaultValue, this.warning, this.max);
 

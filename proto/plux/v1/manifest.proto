@@ -69,6 +69,9 @@ message UpdateMetadataRef {
   int64 root_version = 1;
   int64 snapshot_version = 2;
   int64 timestamp_version = 3;
+  // environment_id names the environment's metadata files, served at
+  // /v1/metadata/{environment_id}/{file} (SEC-050).
+  string environment_id = 4;
 }
 
 // Signature is one signature over a signed document (ADR-0004).
