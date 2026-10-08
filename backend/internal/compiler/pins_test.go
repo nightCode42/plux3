@@ -83,6 +83,44 @@ func TestNetworkPinsReachTheAppBundle(t *testing.T) {
 	}
 }
 
+// TestAppCapabilitiesReachTheAppBundle checks that the device APIs, the
+// network domains and the pins an app approves are all in the one
+// capabilities table of the app bundle's meta, which the runtime reads
+// for the app's own triggers (deny by default otherwise).
+// Verifies: SEC-080, SEC-042.
+func TestAppCapabilitiesReachTheAppBundle(t *testing.T) {
+	t.Parallel()
+	m := project(t, widgetsDir)
+	appPins(t, m, []any{"example.com", "api.example.com"}, map[string]any{
+		"api.example.com": []any{pinA, pinB},
+	})
+	edit(t, m, "app.json", func(doc map[string]any) {
+		doc["capabilities"].(map[string]any)["deviceApis"] = []any{"location", "haptics"}
+	})
+	res := compileFS(m)
+	clean(t, res)
+	caps := metaOf(t, readAll(t, res)[0]).Capabilities(nil)
+	if caps == nil {
+		t.Fatal("the app bundle has no capabilities")
+	}
+	strs := func(n int, at func(int) []byte) []string {
+		var out []string
+		for i := range n {
+			out = append(out, string(at(i)))
+		}
+		return out
+	}
+	if got, want := strs(caps.NetworkDomainsLength(), caps.NetworkDomains), []string{"example.com", "api.example.com"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("network domains %v, want %v", got, want)
+	}
+	if got, want := strs(caps.DeviceApisLength(), caps.DeviceApis), []string{"location", "haptics"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("device APIs %v, want %v", got, want)
+	}
+	if caps.NetworkPinsLength() != 1 {
+		t.Errorf("%d pinned domains, want 1", caps.NetworkPinsLength())
+	}
+}
+
 // TestNetworkPinsAreChecked checks that a domain needs two distinct pins
 // and has to be one the app declares, and that a pin is a SHA-256 hash.
 // Verifies: SEC-042.
