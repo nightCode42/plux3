@@ -56,6 +56,11 @@ dependencies {
     implementation("androidx.core:core:1.13.1")
     // Play Integrity standard requests (SEC-003, ADR-0012).
     implementation("com.google.android.play:integrity:1.6.0")
+    // The Cronet API of the pinned HTTP/2 client (SEC-041). cronet_http
+    // ships the implementation and these same versions into the app;
+    // compileOnly adds nothing to the runtime and must follow its pins.
+    compileOnly("com.google.android.gms:play-services-cronet:18.1.1")
+    compileOnly("org.chromium.net:cronet-embedded:143.7445.0")
 }
 
 kotlin {

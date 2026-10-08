@@ -15,6 +15,7 @@ import 'package:cupertino_http/cupertino_http.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
+import 'package:plux_flutter/src/platform/native_pinned_http.dart';
 import 'package:plux_flutter/src/platform/pinned_http.dart';
 import 'package:plux_flutter/src/runtime_info.dart';
 import 'package:plux_flutter/src/security/pins.dart';
@@ -114,11 +115,12 @@ final class PlatformHttpClients {
 /// on iOS, `dart:io` elsewhere (tests and desktop development).
 ///
 /// With [pins] and an `https` [endpoint], requests to the endpoint's host
-/// go through a `dart:io` client that enforces the pins (SEC-041); requests
-/// to any other host keep the platform client. `cronet_http` offers no way
-/// to add public-key pins to its engine and `cupertino_http` none to
-/// answer a server-trust challenge, so on Android and iOS the Plux server
-/// is reached over HTTP/1.1 and the leaf key is the pinned one.
+/// are sent by a client that enforces the pins (SEC-041), and requests to
+/// any other host keep the platform client. On Android and iOS that is the
+/// plugin's own Cronet or `URLSession` client, still HTTP/2 and pinned
+/// against every certificate of the chain (`cronet_http` offers no pins and
+/// `cupertino_http` no server-trust hook, so the plugin makes the
+/// requests); elsewhere it is `dart:io`, which shows only the leaf.
 http.Client platformHttpClient({Uri? endpoint, PinSet? pins}) {
   final agent = PluxRuntimeInfo.userAgent;
   final other = _unpinnedHttpClient(agent);
@@ -127,7 +129,9 @@ http.Client platformHttpClient({Uri? endpoint, PinSet? pins}) {
   }
   return PinRoutingClient(
     host: endpoint.host,
-    pinned: IOClient(pinnedHttpClient(pins, userAgent: agent)),
+    pinned: Platform.isAndroid || Platform.isIOS
+        ? NativePinnedClient(pins: pins, userAgent: agent)
+        : IOClient(pinnedHttpClient(pins, userAgent: agent)),
     other: other,
   );
 }

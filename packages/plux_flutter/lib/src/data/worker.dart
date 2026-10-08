@@ -12,6 +12,8 @@ import 'dart:io' show HttpClient;
 import 'dart:isolate';
 import 'dart:typed_data';
 
+import 'package:flutter/services.dart'
+    show BackgroundIsolateBinaryMessenger, RootIsolateToken;
 import 'package:http/http.dart' as http;
 import 'package:plux_flutter/src/actions/action_error.dart';
 import 'package:plux_flutter/src/data/cache.dart';
@@ -112,11 +114,14 @@ final class DataWorker
   /// top-level or static function) and its cache under [cacheDirectory].
   /// WebSockets connect with the `dart:io` client [webSocketClient] creates
   /// (also top-level or static), or `dart:io`'s default when null.
+  /// [rootIsolateToken] lets the isolate use platform channels, which the
+  /// pinned HTTP client of the Plux server needs (SEC-041).
   static Future<DataWorker> start({
     required http.Client Function() httpClient,
     required String cacheDirectory,
     HttpClient Function()? webSocketClient,
     DataCacheKeyProvider? keys,
+    RootIsolateToken? rootIsolateToken,
   }) async {
     final ready = ReceivePort();
     final isolate = await Isolate.spawn(_main, (
@@ -124,6 +129,7 @@ final class DataWorker
       webSocketClient,
       cacheDirectory,
       ready.sendPort,
+      rootIsolateToken,
     ), debugName: 'plux-data');
     final commands = await ready.first as SendPort;
     ready.close();
@@ -294,9 +300,17 @@ final class _WorkerStore implements CacheStore {
 }
 
 Future<void> _main(
-  (http.Client Function(), HttpClient Function()?, String, SendPort) args,
+  (
+    http.Client Function(),
+    HttpClient Function()?,
+    String,
+    SendPort,
+    RootIsolateToken?,
+  )
+  args,
 ) async {
-  final (client, socketClient, dir, ready) = args;
+  final (client, socketClient, dir, ready, token) = args;
+  if (token != null) BackgroundIsolateBinaryMessenger.ensureInitialized(token);
   final http = client();
   final transport = ClientTransport(http);
   final streams = SocketStreamTransport(http, webSocketClient: socketClient);

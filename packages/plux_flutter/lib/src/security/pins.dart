@@ -62,6 +62,11 @@ Set<String> validatedPins(Iterable<String> pins) {
 /// update metadata (SEC-050), by [replace]: a replacement keeps at least
 /// [minPins] distinct pins and its version must exceed the current one, so
 /// older metadata cannot bring back a retired pin.
+///
+/// On Android and iOS a connection is accepted when any certificate of its
+/// chain has a pinned key; on `dart:io` platforms only the leaf is visible,
+/// so there the pins must name leaf keys and the backup pin the leaf key
+/// that replaces the one in use.
 final class PinSet {
   /// Creates a set of [pins] (see [validatedPins]) at [version].
   PinSet(Iterable<String> pins, {this._version = 0})

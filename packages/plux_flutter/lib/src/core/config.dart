@@ -260,10 +260,10 @@ final class PluxConfig {
   /// fails `Plux.initialize`. Debug and profile builds, and endpoints that
   /// are not `https` (a local development server), may leave it empty and
   /// run unpinned. A custom [httpClient] is the host's own and is not
-  /// pinned by Plux. On Android and iOS the Plux server is reached over
-  /// HTTP/1.1 while pins are set, and `dart:io` shows only the leaf
-  /// certificate, so the pins are hashes of the leaf's key and the backup
-  /// pin is the key that will replace it.
+  /// pinned by Plux. On Android and iOS a pin may be the key of any
+  /// certificate in the server's chain, such as the intermediate that
+  /// issues it; on `dart:io` platforms (desktop development) only the leaf
+  /// is visible, so a pin there is a leaf key.
   final List<String> pins;
 
   /// The asset directory `plux pull` wrote the baseline to (SYN-007), or

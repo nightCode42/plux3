@@ -8,7 +8,9 @@
 ///
 /// `dart:io` shows a client only the leaf certificate of a TLS connection,
 /// so on this path a pin is the SPKI hash of the leaf's key; the backup pin
-/// is the hash of the leaf key that replaces it.
+/// is the hash of the leaf key that replaces it. It serves the platforms
+/// without Cronet or `URLSession` (desktop and tests); Android and iOS pin
+/// the whole chain in `native_pinned_http.dart`.
 library;
 
 import 'dart:async';
