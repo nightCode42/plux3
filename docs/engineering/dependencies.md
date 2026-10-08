@@ -64,7 +64,7 @@ Valkey is reached with a small RESP client in `backend/internal/cache`, so no Re
 | `cryptography` 2.9.0 | Ed25519 verification of manifests and baseline bundles, pure-Dart implementation only ([ADR-0029](../adr/0029-on-device-verification.md)) | Apache-2.0 | In use (P3) |
 | `crypto` 3.0.7 | SHA-256 of bundles, sections and assets ([ADR-0029](../adr/0029-on-device-verification.md)) | BSD-3-Clause | In use (P3) |
 | `http` 1.6.0 | HTTP client interface for sync and telemetry ([ADR-0021](../adr/0021-sync-all-plugins-at-start.md)) | BSD-3-Clause | In use (P3) |
-| `cronet_http` 1.9.0 | HTTP/2 client on Android (Cronet), behind `http` (`SYN-010`) | BSD-3-Clause | In use (P3) |
+| `cronet_http` 1.9.0 | HTTP/2 client on Android (Cronet), behind `http` (`SYN-010`); the plugin compiles against the same Cronet artifacts it ships (`play-services-cronet`, `cronet-embedded`, `compileOnly`, versions follow cronet_http) to pin the Plux host (`SEC-041`) | BSD-3-Clause | In use (P3) |
 | `cupertino_http` 3.1.0 | HTTP/2 client on iOS (`URLSession`), behind `http` (`SYN-010`) | BSD-3-Clause | In use (P3) |
 | `vector_graphics` 1.2.3 | Renders SVG assets compiled at publish time (`CMP-031`, [ADR-0027](../adr/0027-asset-pipeline.md) Revision) | BSD-3-Clause | In use (P3) |
 | `hooks` 2.2.0, `code_assets` 1.2.1, `native_toolchain_c` 0.19.3 | The build hook that compiles `plux_native` (mmap and zstd) for every target; build time only, never imported by `lib/` ([ADR-0030](../adr/0030-native-code-in-plux-flutter.md)) | BSD-3-Clause | In use (P3, build) |
