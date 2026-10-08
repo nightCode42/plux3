@@ -4,7 +4,10 @@
 package signing_test
 
 import (
+	"bytes"
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/elliptic"
@@ -65,6 +68,8 @@ func newFakeHelper(t *testing.T) *fakeHelper {
 		}
 		f.keys[label] = priv
 	}
+	f.keys["plux-secrets"] = bytes.Repeat([]byte{1}, 32)
+	f.keys["other-secrets"] = bytes.Repeat([]byte{2}, 32)
 	for _, label := range []string{"plux-tokens-development", "plux-tokens-production"} {
 		priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 		if err != nil {
@@ -126,6 +131,10 @@ func (f *fakeHelper) answer(req *pkcs11pb.Request) *pkcs11pb.Response {
 		return f.publicKey(r.PublicKey.GetKeyRef())
 	case *pkcs11pb.Request_Sign:
 		return f.sign(r.Sign)
+	case *pkcs11pb.Request_Wrap:
+		return f.wrap(r.Wrap)
+	case *pkcs11pb.Request_Unwrap:
+		return f.unwrap(r.Unwrap)
 	}
 	return helperError(pkcs11pb.ErrorCode_ERROR_CODE_INVALID_REQUEST)
 }
@@ -187,6 +196,45 @@ func (f *fakeHelper) sign(req *pkcs11pb.SignRequest) *pkcs11pb.Response {
 		id, _ = signing.TokenKeyID(&k.PublicKey)
 	}
 	return &pkcs11pb.Response{Response: &pkcs11pb.Response_Sign{Sign: &pkcs11pb.SignResponse{Signature: sig, KeyId: id}}}
+}
+
+// aead returns AES-GCM over the secret key of a reference.
+func (f *fakeHelper) aead(ref string) (cipher.AEAD, bool) {
+	key, ok := f.key(ref)
+	secret, isSecret := key.([]byte)
+	if !ok || !isSecret {
+		return nil, false
+	}
+	block, _ := aes.NewCipher(secret)
+	gcm, _ := cipher.NewGCM(block)
+	return gcm, true
+}
+
+func (f *fakeHelper) wrap(req *pkcs11pb.WrapRequest) *pkcs11pb.Response {
+	gcm, ok := f.aead(req.GetKeyRef())
+	if !ok {
+		return helperError(pkcs11pb.ErrorCode_ERROR_CODE_KEY_NOT_FOUND)
+	}
+	iv := make([]byte, gcm.NonceSize())
+	_, _ = rand.Read(iv)
+	wrapped := gcm.Seal(iv, iv, req.GetPlaintext(), nil)
+	return &pkcs11pb.Response{Response: &pkcs11pb.Response_Wrap{Wrap: &pkcs11pb.WrapResponse{Wrapped: wrapped}}}
+}
+
+func (f *fakeHelper) unwrap(req *pkcs11pb.UnwrapRequest) *pkcs11pb.Response {
+	gcm, ok := f.aead(req.GetKeyRef())
+	if !ok {
+		return helperError(pkcs11pb.ErrorCode_ERROR_CODE_KEY_NOT_FOUND)
+	}
+	wrapped := req.GetWrapped()
+	if len(wrapped) <= gcm.NonceSize() {
+		return helperError(pkcs11pb.ErrorCode_ERROR_CODE_INVALID_REQUEST)
+	}
+	plaintext, err := gcm.Open(nil, wrapped[:gcm.NonceSize()], wrapped[gcm.NonceSize():], nil)
+	if err != nil {
+		return helperError(pkcs11pb.ErrorCode_ERROR_CODE_DECRYPT_FAILED)
+	}
+	return &pkcs11pb.Response{Response: &pkcs11pb.Response_Unwrap{Unwrap: &pkcs11pb.UnwrapResponse{Plaintext: plaintext}}}
 }
 
 // callCount is the number of requests the helper received.
@@ -507,14 +555,97 @@ func TestPKCS11Ping(t *testing.T) {
 }
 
 // Verifies: SEC-120, SEC-106.
-func TestPKCS11DoesNotWrapDataKeys(t *testing.T) {
+func TestPKCS11WrapsDataKeys(t *testing.T) {
 	t.Parallel()
 	b := newPKCS11(t, newFakeHelper(t))
-	if _, _, err := b.Wrap(context.Background(), make([]byte, 32)); !errors.Is(err, signing.ErrNoWrapKey) {
-		t.Errorf("Wrap = %v, want ErrNoWrapKey", err)
+	ctx := context.Background()
+	dataKey := bytes.Repeat([]byte{7}, 32)
+	wrapped, id, err := b.Wrap(ctx, dataKey)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if _, err := b.Unwrap(context.Background(), []byte("x"), "id"); !errors.Is(err, signing.ErrNoWrapKey) {
-		t.Errorf("Unwrap = %v, want ErrNoWrapKey", err)
+	if id != "pkcs11:plux-secrets" || len(wrapped) != 12+len(dataKey)+16 || bytes.Contains(wrapped, dataKey) {
+		t.Errorf("key ID %q, %d wrapped bytes", id, len(wrapped))
+	}
+	got, err := b.Unwrap(ctx, wrapped, id)
+	if err != nil || !bytes.Equal(got, dataKey) {
+		t.Errorf("Unwrap = %x, %v", got, err)
+	}
+	// It serves the envelope encryption of stored secrets.
+	sealed, err := signing.Seal(ctx, b, []byte("a stored secret"), []byte("binding"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if opened, err := signing.Open(ctx, b, sealed, []byte("binding")); err != nil || string(opened) != "a stored secret" {
+		t.Errorf("Open = %q, %v", opened, err)
+	}
+}
+
+// Verifies: SEC-120, SEC-106.
+func TestPKCS11RefusesWhatDoesNotUnwrap(t *testing.T) {
+	t.Parallel()
+	f := newFakeHelper(t)
+	b := newPKCS11(t, f)
+	ctx := context.Background()
+	wrapped, id, err := b.Wrap(ctx, bytes.Repeat([]byte{7}, 32))
+	if err != nil {
+		t.Fatal(err)
+	}
+	tampered := bytes.Clone(wrapped)
+	tampered[len(tampered)-1] ^= 1
+	if _, err := b.Unwrap(ctx, tampered, id); err == nil || !strings.Contains(err.Error(), "DECRYPT_FAILED") {
+		t.Errorf("a tampered tag: %v", err)
+	}
+	// The same ciphertext under the other key fails in the helper...
+	other, err := signing.NewPKCS11(signing.PKCS11Options{Socket: f.path, WrapKey: "other-secrets"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := other.Unwrap(ctx, wrapped, "pkcs11:other-secrets"); err == nil || !strings.Contains(err.Error(), "DECRYPT_FAILED") {
+		t.Errorf("the wrong key: %v", err)
+	}
+	// ...and a secret that names another key never reaches it.
+	calls := f.callCount()
+	if _, err := other.Unwrap(ctx, wrapped, id); err == nil {
+		t.Error("unwrapped a secret wrapped under another key")
+	}
+	if f.callCount() != calls {
+		t.Error("a mismatched key identifier reached the helper")
+	}
+	missing, err := signing.NewPKCS11(signing.PKCS11Options{Socket: f.path, WrapKey: "absent"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := missing.Wrap(ctx, []byte("k")); !errors.Is(err, signing.ErrNoKey) {
+		t.Errorf("Wrap without the key: %v, want ErrNoKey", err)
+	}
+}
+
+// Verifies: SEC-120, SEC-106.
+func TestPKCS11DistrustsAMalformedWrapAnswer(t *testing.T) {
+	t.Parallel()
+	f := newFakeHelper(t)
+	f.override = func(r *pkcs11pb.Request) *pkcs11pb.Response {
+		switch {
+		case r.GetWrap() != nil:
+			return &pkcs11pb.Response{Response: &pkcs11pb.Response_Wrap{Wrap: &pkcs11pb.WrapResponse{Wrapped: []byte("short")}}}
+		case r.GetUnwrap() != nil:
+			return &pkcs11pb.Response{Response: &pkcs11pb.Response_Unwrap{Unwrap: &pkcs11pb.UnwrapResponse{Plaintext: []byte("x")}}}
+		}
+		return nil
+	}
+	b := newPKCS11(t, f)
+	if _, _, err := b.Wrap(context.Background(), make([]byte, 32)); err == nil {
+		t.Error("accepted a wrapped key of the wrong length")
+	}
+	if _, err := b.Unwrap(context.Background(), make([]byte, 60), "pkcs11:plux-secrets"); err == nil {
+		t.Error("accepted a data key of the wrong length")
+	}
+	f.override = func(*pkcs11pb.Request) *pkcs11pb.Response {
+		return &pkcs11pb.Response{Response: &pkcs11pb.Response_Sign{}}
+	}
+	if _, _, err := b.Wrap(context.Background(), make([]byte, 32)); err == nil {
+		t.Error("accepted another kind of response")
 	}
 }
 
@@ -526,6 +657,9 @@ func TestNewPKCS11ChecksItsOptions(t *testing.T) {
 	}
 	if _, err := signing.NewPKCS11(signing.PKCS11Options{Socket: "/s", TokenKey: "Bad Key"}); err == nil {
 		t.Error("accepted a bad token key prefix")
+	}
+	if _, err := signing.NewPKCS11(signing.PKCS11Options{Socket: "/s", WrapKey: "Bad Key"}); err == nil {
+		t.Error("accepted a bad wrap key")
 	}
 }
 

@@ -107,6 +107,13 @@ const (
 
 	// DeviceRevoked: a device's trust was withdrawn (SEC-006).
 	DeviceRevoked Action = "device.revoked"
+	// SecurityConfigSet: an environment's security profile or overrides
+	// changed (SEC-182).
+	SecurityConfigSet Action = "security_config.set"
+
+	// UpdateMetadataRootUploaded: an operator stored a root signed
+	// offline (SEC-051, SEC-140).
+	UpdateMetadataRootUploaded Action = "update_metadata.root_uploaded"
 )
 
 // actions is the registry, sorted, so that Registered can search it and
@@ -125,7 +132,7 @@ var actions = sorted(
 	DocumentWritten, DocumentDeleted, DocumentRestored, DocumentPurged, DraftImported, AssetUploaded, AssetDeleted,
 	VersionPublished, PublishCancelled, ReleaseCreated, ReleasePromoted, ReleaseRolledBack, ReleasesPurged, ControlChanged, NativeCatalogueUploaded,
 	SnapshotRestored, TemplateInstantiated, LockAcquired, LockTakenOver, LockReleased, LockRequested,
-	DeviceRevoked,
+	DeviceRevoked, SecurityConfigSet, UpdateMetadataRootUploaded,
 )
 
 // sorted returns its arguments in order.

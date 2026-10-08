@@ -78,7 +78,7 @@ func TestSyncOnSlowNetwork(t *testing.T) {
 	// through it too. The server trusts the proxy's X-Forwarded-For, so
 	// the device's requests have a rate budget of their own and are never
 	// refused for the CLI's publishes.
-	const addr, public = "127.0.0.1:18095", "127.0.0.1:18096"
+	addr, public := freeAddr(t), freeAddr(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 	proxy, err := netsim.New(netsim.Slow3G()).Proxy(ctx, public, "http://"+addr, "192.0.2.10")

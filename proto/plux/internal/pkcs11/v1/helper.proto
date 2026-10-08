@@ -41,6 +41,9 @@ enum ErrorCode {
   ERROR_CODE_UNSUPPORTED_ALGORITHM = 3;
   // ERROR_CODE_INTERNAL is a failure of the token or of the helper.
   ERROR_CODE_INTERNAL = 4;
+  // ERROR_CODE_DECRYPT_FAILED is a wrapped key that does not decrypt: the
+  // wrong key, or a ciphertext or tag that was altered.
+  ERROR_CODE_DECRYPT_FAILED = 5;
 }
 
 // Request is the one message a client sends.
@@ -48,6 +51,8 @@ message Request {
   oneof request {
     SignRequest sign = 1;
     PublicKeyRequest public_key = 2;
+    WrapRequest wrap = 3;
+    UnwrapRequest unwrap = 4;
   }
 }
 
@@ -57,6 +62,8 @@ message Response {
     SignResponse sign = 1;
     PublicKeyResponse public_key = 2;
     Error error = 3;
+    WrapResponse wrap = 4;
+    UnwrapResponse unwrap = 5;
   }
 }
 
@@ -90,6 +97,35 @@ message PublicKeyResponse {
   bytes public_key_der = 1;
   Algorithm algorithm = 2;
   string key_id = 3;
+}
+
+// WrapRequest asks the token to encrypt a data key (SEC-106) with a named
+// AES key, using CKM_AES_GCM with a 96-bit IV and a 128-bit tag.
+message WrapRequest {
+  // key_ref names the AES key, as for signing keys.
+  string key_ref = 1;
+  // plaintext is the data key.
+  bytes plaintext = 2;
+}
+
+// WrapResponse carries the wrapped data key.
+message WrapResponse {
+  // wrapped is the IV (12 bytes), the ciphertext and the tag (16 bytes),
+  // in that order.
+  bytes wrapped = 1;
+}
+
+// UnwrapRequest asks the token to decrypt a data key that WrapRequest
+// produced.
+message UnwrapRequest {
+  string key_ref = 1;
+  // wrapped is in the form of WrapResponse.wrapped.
+  bytes wrapped = 2;
+}
+
+// UnwrapResponse carries the data key.
+message UnwrapResponse {
+  bytes plaintext = 1;
 }
 
 // Error is a failed request.

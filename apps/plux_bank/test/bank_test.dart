@@ -17,7 +17,7 @@ import 'package:plux_flutter/src/security/software_keys.dart'
     show DevelopmentAttestation, SoftwareDeviceKeys;
 // ignore: implementation_imports
 import 'package:plux_flutter/src/sync/sync_engine.dart'
-    show MemoryCredentialStore;
+    show MemoryCredentialStore, MemorySecretStore;
 
 const _key =
     'k1:00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff';
@@ -199,6 +199,7 @@ void main() {
         config.toPluxConfig(host: host, storageDirectory: dir.path),
         RuntimeOverrides(
           credentials: MemoryCredentialStore.new,
+          configSecrets: MemorySecretStore.new,
           deviceKeys: SoftwareDeviceKeys.new,
           attestation: () => const DevelopmentAttestation('e2e'),
         ),

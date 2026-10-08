@@ -80,7 +80,7 @@ func (q *Queries) CreateChannel(ctx context.Context, arg CreateChannelParams) (C
 const createEnvironment = `-- name: CreateEnvironment :one
 INSERT INTO environments (id, organization_id, app_id, key, name, production, signing_key_ref)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
-RETURNING id, organization_id, app_id, key, name, production, signing_key_ref, created_at
+RETURNING id, organization_id, app_id, key, name, production, signing_key_ref, created_at, targets_version
 `
 
 type CreateEnvironmentParams struct {
@@ -113,6 +113,7 @@ func (q *Queries) CreateEnvironment(ctx context.Context, arg CreateEnvironmentPa
 		&i.Production,
 		&i.SigningKeyRef,
 		&i.CreatedAt,
+		&i.TargetsVersion,
 	)
 	return i, err
 }
@@ -377,7 +378,7 @@ func (q *Queries) GetChannelByIDForUpdate(ctx context.Context, id pgtype.UUID) (
 }
 
 const getEnvironment = `-- name: GetEnvironment :one
-SELECT id, organization_id, app_id, key, name, production, signing_key_ref, created_at FROM environments WHERE id = $1
+SELECT id, organization_id, app_id, key, name, production, signing_key_ref, created_at, targets_version FROM environments WHERE id = $1
 `
 
 func (q *Queries) GetEnvironment(ctx context.Context, id pgtype.UUID) (Environment, error) {
@@ -392,12 +393,13 @@ func (q *Queries) GetEnvironment(ctx context.Context, id pgtype.UUID) (Environme
 		&i.Production,
 		&i.SigningKeyRef,
 		&i.CreatedAt,
+		&i.TargetsVersion,
 	)
 	return i, err
 }
 
 const getEnvironmentByKey = `-- name: GetEnvironmentByKey :one
-SELECT id, organization_id, app_id, key, name, production, signing_key_ref, created_at FROM environments WHERE app_id = $1 AND key = $2
+SELECT id, organization_id, app_id, key, name, production, signing_key_ref, created_at, targets_version FROM environments WHERE app_id = $1 AND key = $2
 `
 
 type GetEnvironmentByKeyParams struct {
@@ -417,6 +419,7 @@ func (q *Queries) GetEnvironmentByKey(ctx context.Context, arg GetEnvironmentByK
 		&i.Production,
 		&i.SigningKeyRef,
 		&i.CreatedAt,
+		&i.TargetsVersion,
 	)
 	return i, err
 }
@@ -711,7 +714,7 @@ func (q *Queries) ListChannels(ctx context.Context, arg ListChannelsParams) ([]L
 }
 
 const listEnvironments = `-- name: ListEnvironments :many
-SELECT id, organization_id, app_id, key, name, production, signing_key_ref, created_at FROM environments WHERE app_id = $1 AND key > $2::text ORDER BY key LIMIT $3
+SELECT id, organization_id, app_id, key, name, production, signing_key_ref, created_at, targets_version FROM environments WHERE app_id = $1 AND key > $2::text ORDER BY key LIMIT $3
 `
 
 type ListEnvironmentsParams struct {
@@ -738,6 +741,7 @@ func (q *Queries) ListEnvironments(ctx context.Context, arg ListEnvironmentsPara
 			&i.Production,
 			&i.SigningKeyRef,
 			&i.CreatedAt,
+			&i.TargetsVersion,
 		); err != nil {
 			return nil, err
 		}
@@ -1235,7 +1239,7 @@ func (q *Queries) UpdateAppAccess(ctx context.Context, arg UpdateAppAccessParams
 }
 
 const updateEnvironment = `-- name: UpdateEnvironment :one
-UPDATE environments SET name = $2 WHERE id = $1 RETURNING id, organization_id, app_id, key, name, production, signing_key_ref, created_at
+UPDATE environments SET name = $2 WHERE id = $1 RETURNING id, organization_id, app_id, key, name, production, signing_key_ref, created_at, targets_version
 `
 
 type UpdateEnvironmentParams struct {
@@ -1255,6 +1259,7 @@ func (q *Queries) UpdateEnvironment(ctx context.Context, arg UpdateEnvironmentPa
 		&i.Production,
 		&i.SigningKeyRef,
 		&i.CreatedAt,
+		&i.TargetsVersion,
 	)
 	return i, err
 }

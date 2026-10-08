@@ -34,6 +34,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/release"
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 	"github.com/nightCode42/plux3/backend/internal/schema/uuid7"
+	"github.com/nightCode42/plux3/backend/internal/seccfg"
 	"github.com/nightCode42/plux3/backend/internal/signing"
 	"github.com/nightCode42/plux3/backend/internal/storage/idempotency"
 	"github.com/nightCode42/plux3/backend/internal/storage/objects"
@@ -101,6 +102,7 @@ type world struct {
 	token    pluxv1connect.TokenServiceClient
 	manifest pluxv1connect.ManifestServiceClient
 	native   pluxv1connect.NativeCatalogueServiceClient
+	secAdmin pluxv1connect.SecurityAdminServiceClient
 	control  pluxv1connect.ControlServiceClient
 	events   pluxv1connect.TelemetryServiceClient
 	devices  *device.Service
@@ -126,6 +128,9 @@ type worldConfig struct {
 	// Profiles returns an environment's security profile; nil means every
 	// environment is standard.
 	Profiles device.Profiles
+	// Windows, when set, gives the DPoP windows of an environment, as the
+	// security configuration does.
+	Windows func(ctx context.Context, appID, environmentID string) (time.Duration, time.Duration, error)
 }
 
 // newWorldWith is newWorld with the configuration applied.
@@ -180,7 +185,7 @@ func newWorldWith(t *testing.T, cfg worldConfig) *world {
 	tokenSigner := devicetest.NewTokenSigner(t)
 	issuer := &devtoken.Issuer{Signer: tokenSigner, Issuer: base, Audience: base, Lifetime: 5 * time.Minute, Now: cfg.Now}
 	devices, err := device.NewService(device.Options{
-		DB: db, IDs: gen, Now: cfg.Now, Cache: shared, Audit: log, Tokens: issuer, Profiles: cfg.Profiles,
+		DB: db, IDs: gen, Now: cfg.Now, Cache: shared, Audit: log, Tokens: issuer, Profiles: cfg.Profiles, DevelopmentProvider: true,
 		Attestors: device.Attestors{KeyAttestation: fakes.key, PlayIntegrity: fakes.play, AppAttest: fakes.apple, AppAssertions: fakes.assert},
 		AppTrust: func(context.Context, string) (device.TrustConfig, error) {
 			return device.TrustConfig{AndroidPackages: []string{"com.example.app"}, PlayIntegrity: &playintegrity.Keys{}, IOSAppID: "TEAMID.com.example.app"}, nil
@@ -189,13 +194,18 @@ func newWorldWith(t *testing.T, cfg worldConfig) *world {
 	if err != nil {
 		t.Fatal(err)
 	}
+	secConfig, err := seccfg.New(seccfg.Options{DB: db, Audit: log, Tenancy: tenancyService, Now: cfg.Now})
+	if err != nil {
+		t.Fatal(err)
+	}
 	releases, err := release.NewService(release.Options{
 		DB: db, Audit: log, Tenancy: tenancyService, Documents: docs, Objects: files, IDs: gen, Jobs: queue, Signer: backend,
-		ProductionSigning: true, PublicBaseURL: "https://plux.example.com", Devices: devices,
+		ProductionSigning: true, PublicBaseURL: "https://plux.example.com", Devices: devices, SecurityConfig: secConfig,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
+	secConfig.OnChange(releases.EnqueueEnvironmentManifests)
 	store, err := idempotency.NewStore(db, backend, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -220,7 +230,7 @@ func newWorldWith(t *testing.T, cfg worldConfig) *world {
 	}
 	h := &api.Handlers{
 		Auth: authService, Tenancy: tenancyService, Documents: docs, Releases: releases, Devices: devices, Events: events,
-		Idempotency: store, Pages: pages, Limiter: limiter, Limits: set,
+		Idempotency: store, Pages: pages, Limiter: limiter, Limits: set, SecurityConfig: secConfig,
 	}
 	people := api.Authentication(authService, api.IdentityPublic, nil, limiter, set.Get(limits.APIRequestsPerMinute))
 	nonceKey := make([]byte, 32)
@@ -234,7 +244,7 @@ func newWorldWith(t *testing.T, cfg worldConfig) *world {
 	deviceAuth := api.DeviceAuth{
 		Devices: devices, Tokens: &devtoken.Verifier{Keys: tokenSigner.TokenKeys, Issuer: base, Audience: base, Now: cfg.Now},
 		Proofs: &dpop.Verifier{Nonces: nonces, Now: cfg.Now}, Nonces: nonces, Replay: dpop.NewReplay(shared, dpop.FailClosed, 1000, cfg.Now, nil), Now: cfg.Now,
-		BaseURL: base, Window: time.Minute, FallbackWindow: 15 * time.Second,
+		BaseURL: base, Window: time.Minute, FallbackWindow: 15 * time.Second, Windows: cfg.Windows,
 		Limiter: limiter, PerDevice: set.Get(limits.APIRequestsPerMinutePerDevice), People: people,
 	}
 	authn := api.DeviceAuthentication(deviceAuth)
@@ -258,6 +268,9 @@ func newWorldWith(t *testing.T, cfg worldConfig) *world {
 			return pluxv1connect.NewNativeCatalogueServiceHandler(h.NativeCatalogue(), opts)
 		},
 		func() (string, http.Handler) { return pluxv1connect.NewControlServiceHandler(h.Control(), opts) },
+		func() (string, http.Handler) {
+			return pluxv1connect.NewSecurityAdminServiceHandler(h.SecurityAdmin(), opts)
+		},
 		func() (string, http.Handler) { return pluxv1connect.NewTelemetryServiceHandler(h.Telemetry(), opts) },
 	} {
 		path, handler := r()
@@ -284,6 +297,7 @@ func newWorldWith(t *testing.T, cfg worldConfig) *world {
 		manifest: pluxv1connect.NewManifestServiceClient(srv.Client(), srv.URL),
 		native:   pluxv1connect.NewNativeCatalogueServiceClient(srv.Client(), srv.URL),
 		control:  pluxv1connect.NewControlServiceClient(srv.Client(), srv.URL),
+		secAdmin: pluxv1connect.NewSecurityAdminServiceClient(srv.Client(), srv.URL),
 		events:   pluxv1connect.NewTelemetryServiceClient(srv.Client(), srv.URL),
 		devices:  devices,
 		fakes:    fakes,

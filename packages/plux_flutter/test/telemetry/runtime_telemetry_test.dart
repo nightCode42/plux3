@@ -101,6 +101,7 @@ void main() {
         ),
         RuntimeOverrides(
           credentials: MemoryCredentialStore.new,
+          configSecrets: MemorySecretStore.new,
           deviceKeys: FakeDeviceKeys.new,
           attestation: FakeAttestation.new,
           baseline: _reader(

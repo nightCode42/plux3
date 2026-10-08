@@ -8,6 +8,7 @@ library;
 import 'dart:async';
 
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/security/security_config.dart';
 
 /// Something that happened during a sync.
 sealed class SyncEvent {
@@ -134,6 +135,8 @@ final class SyncResult {
     this.fullBytes = 0,
     this.pluginsUpdated = 0,
     this.error,
+    this.settings,
+    this.configError,
   });
 
   /// How it ended.
@@ -156,6 +159,14 @@ final class SyncResult {
 
   /// The failure, when [outcome] is [SyncOutcome.failed].
   final PluxException? error;
+
+  /// The security settings in force after the sync (SEC-182); null when the
+  /// sync did not get as far as the configuration.
+  final SecuritySettings? settings;
+
+  /// Why the manifest's security configuration was not applied, keeping
+  /// the last good one (`PLX-6040`, `PLX-6042`); the sync itself went on.
+  final PluxException? configError;
 
   /// Bytes downloaded as a share of the full bundles (1 without deltas).
   double get deltaRatio => fullBytes == 0 ? 0 : bytes / fullBytes;

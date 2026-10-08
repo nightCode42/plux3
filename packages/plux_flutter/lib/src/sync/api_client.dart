@@ -247,6 +247,8 @@ final class ManifestResponse {
     this.signatures = const [],
     this.bundles = const [],
     this.metadata,
+    this.configPatch,
+    this.configFullRequired = false,
   });
 
   /// Whether the manifest matches the ETag the device sent (NFR-006).
@@ -271,6 +273,15 @@ final class ManifestResponse {
   /// The update metadata the manifest belongs to; null for an environment
   /// without a root (SEC-050).
   final MetadataRef? metadata;
+
+  /// The RFC 7396 merge patch, as UTF-8 JSON, from the configuration
+  /// version the device sent to the one the manifest names; outside the
+  /// signed part, so it is checked against the manifest's hash (SEC-182).
+  final Uint8List? configPatch;
+
+  /// Whether the server could give no patch from the version the device
+  /// sent: the device asks again from version 0 (SEC-182).
+  final bool configFullRequired;
 }
 
 /// What a device sends in place of its installed bundles on an
@@ -416,6 +427,7 @@ final class PluxApiClient {
     required Map<String, String> installed,
     required String ifNoneMatch,
     List<int> installedDigest = const [],
+    int configVersion = 0,
   }) async {
     final r = await _call('plux.v1.ManifestService/GetManifest', {
       'appId': appId,
@@ -427,6 +439,7 @@ final class PluxApiClient {
           {'key': key, 'sha256': value},
       ],
       'ifNoneMatch': ifNoneMatch,
+      'configVersion': '$configVersion',
       if (installedDigest.isNotEmpty)
         'installedDigest': base64.encode(installedDigest),
     }, token: token);
@@ -442,6 +455,16 @@ final class PluxApiClient {
       );
     }
     final m = r['manifest']! as Map<String, Object?>;
+    Uint8List? patch;
+    final encoded = r['configPatch'];
+    if (encoded is String && encoded.isNotEmpty) {
+      try {
+        patch = base64.decode(encoded);
+      } on FormatException {
+        // Not a patch: the device asks for the whole configuration.
+        patch = null;
+      }
+    }
     ServedBundle bundle(String key, Map<String, Object?> b) {
       final step = b['sync'] as Map<String, Object?>? ?? const {};
       final stepUrl = step['url'] as String?;
@@ -470,6 +493,8 @@ final class PluxApiClient {
               timestampVersion: _int(ref['timestampVersion']),
             )
           : null,
+      configPatch: patch,
+      configFullRequired: r['configFullRequired'] == true,
       signed: base64.decode(m['signed']! as String),
       signatures: [
         for (final s

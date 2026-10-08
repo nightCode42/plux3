@@ -12,7 +12,6 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/audit"
 	"github.com/nightCode42/plux3/backend/internal/auth"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1"
-	"github.com/nightCode42/plux3/backend/internal/pluxv1/pluxv1connect"
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/storage"
 )
@@ -22,25 +21,12 @@ type CheckpointSource interface {
 	List(ctx context.Context, organizationID string, afterSequence int64, limit int32) ([]audit.Checkpoint, error)
 }
 
-// SecurityAdmin serves SecurityAdminService. This file adds the audit
-// checkpoints (SEC-141); the rest of the service is added beside it.
-type SecurityAdmin struct {
-	pluxv1connect.UnimplementedSecurityAdminServiceHandler
-	h           *Handlers
-	checkpoints CheckpointSource
-}
-
-var _ pluxv1connect.SecurityAdminServiceHandler = SecurityAdmin{}
-
-// NewSecurityAdmin returns the SecurityAdminService handler. The server
-// mounts it with pluxv1connect.NewSecurityAdminServiceHandler.
-func NewSecurityAdmin(h *Handlers, checkpoints CheckpointSource) SecurityAdmin {
-	return SecurityAdmin{h: h, checkpoints: checkpoints}
-}
-
 // ListAuditCheckpoints lists the signed checkpoints over the calling
 // organisation's audit chain, oldest first (SEC-141).
 func (s SecurityAdmin) ListAuditCheckpoints(ctx context.Context, req *connect.Request[pluxv1.ListAuditCheckpointsRequest]) (*connect.Response[pluxv1.ListAuditCheckpointsResponse], error) {
+	if s.checkpoints == nil {
+		return s.UnimplementedSecurityAdminServiceHandler.ListAuditCheckpoints(ctx, req) //nolint:wrapcheck // the generated refusal
+	}
 	return read(ctx, func(ctx context.Context) (*pluxv1.ListAuditCheckpointsResponse, error) {
 		p, err := s.h.principal(ctx, req.Header(), "")
 		if err != nil {

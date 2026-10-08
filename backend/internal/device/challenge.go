@@ -20,9 +20,6 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/storage/dbgen"
 )
 
-// ChallengeTTL is how long a registration challenge is accepted (SEC-005).
-const ChallengeTTL = 5 * time.Minute
-
 // challengeBytes is the entropy of a challenge.
 const challengeBytes = 32
 
@@ -35,8 +32,8 @@ const (
 
 // CreateChallenge issues a single-use challenge bound to an app and an
 // environment, which a registration or a re-attestation must present
-// within ChallengeTTL (SEC-005). It returns the challenge and when it
-// stops being accepted.
+// within the registrationChallengeTtl setting of its environment
+// (SEC-005). It returns the challenge and when it stops being accepted.
 func (s *Service) CreateChallenge(ctx context.Context, appID, environment string) ([]byte, time.Time, error) {
 	if s.cache == nil {
 		return nil, time.Time{}, plxerr.New(plxerr.AttestationUnavailable, "the challenge store is not configured")
@@ -45,21 +42,26 @@ func (s *Service) CreateChallenge(ctx context.Context, appID, environment string
 	if err != nil {
 		return nil, time.Time{}, err
 	}
+	conf, err := s.settingsFor(ctx, canonicalID(appID), storage.ID(found.EnvironmentID))
+	if err != nil {
+		return nil, time.Time{}, err
+	}
 	challenge := make([]byte, challengeBytes)
 	if _, err := io.ReadFull(s.random, challenge); err != nil {
 		return nil, time.Time{}, fmt.Errorf("device: challenge: %w", err)
 	}
 	value := challengeValue(canonicalID(appID), storage.ID(found.EnvironmentID))
-	if err := s.cache.Set(ctx, challengeKey(challengePrefix, challenge), value, ChallengeTTL); err != nil {
+	if err := s.cache.Set(ctx, challengeKey(challengePrefix, challenge), value, conf.RegistrationChallengeTTL); err != nil {
 		return nil, time.Time{}, plxerr.Wrap(plxerr.AttestationUnavailable, err, "the challenge store is unavailable")
 	}
-	return challenge, s.now().Add(ChallengeTTL).UTC().Truncate(time.Second), nil
+	return challenge, s.now().Add(conf.RegistrationChallengeTTL).UTC().Truncate(time.Second), nil
 }
 
 // consumeChallenge accepts a challenge exactly once, and only for the
-// app and environment it was issued for. A challenge presented for
-// another app is refused without being spent.
-func (s *Service) consumeChallenge(ctx context.Context, challenge []byte, appID, envID string) error {
+// app and environment it was issued for, and remembers it as spent for
+// ttl. A challenge presented for another app is refused without being
+// spent.
+func (s *Service) consumeChallenge(ctx context.Context, challenge []byte, appID, envID string, ttl time.Duration) error {
 	if s.cache == nil {
 		return plxerr.New(plxerr.AttestationUnavailable, "the challenge store is not configured")
 	}
@@ -76,7 +78,7 @@ func (s *Service) consumeChallenge(ctx context.Context, challenge []byte, appID,
 	if subtle.ConstantTimeCompare(issued, challengeValue(appID, envID)) != 1 {
 		return plxerr.New(plxerr.RegistrationChallengeInvalid, "the challenge was issued for another app or environment")
 	}
-	first, err := s.cache.SetNX(ctx, challengeKey(challengeUsedPrefix, challenge), []byte{1}, ChallengeTTL)
+	first, err := s.cache.SetNX(ctx, challengeKey(challengeUsedPrefix, challenge), []byte{1}, ttl)
 	if err != nil {
 		return plxerr.Wrap(plxerr.AttestationUnavailable, err, "the challenge store is unavailable")
 	}

@@ -119,6 +119,7 @@ void main() {
       c,
       RuntimeOverrides(
         credentials: MemoryCredentialStore.new,
+        configSecrets: MemorySecretStore.new,
         deviceKeys: FakeDeviceKeys.new,
         attestation: FakeAttestation.new,
         baseline: _reader(files),
@@ -196,6 +197,7 @@ void main() {
           config(),
           const RuntimeOverrides(
             credentials: MemoryCredentialStore.new,
+            configSecrets: MemorySecretStore.new,
             deviceKeys: FakeDeviceKeys.new,
             attestation: FakeAttestation.new,
           ),
@@ -265,6 +267,29 @@ void main() {
       expect(startup!.sequence, 10, reason: '${startup.error} $errors');
       expect(Plux.container.read(activeReleaseProvider)!.sequence, 10);
       expect(Plux.container.read(syncStatusProvider), isA<SyncActivated>());
+    },
+  );
+
+  testWidgets(
+    'the runtime exposes the settings of the configuration its first sync applied [SEC-182]',
+    (tester) async {
+      await tester.runAsync(() async {
+        server
+          ..release = FakeRelease(10, demo, {'loans': loans})
+          ..pinsConfig = true
+          ..configVersion = 1
+          ..configDocument = {
+            'profile': 'strict',
+            'overrides': {'inactivityLockTimeout': 120},
+          }
+          ..configPatches[0] = server.configDocument;
+        await start(config());
+      });
+      final s = rt().settings.value;
+      expect(errors, isEmpty);
+      expect(s.version, 1);
+      expect(s.profile, SecurityProfile.strict);
+      expect(s.number(SecuritySetting.inactivityLockTimeout), 120);
     },
   );
 

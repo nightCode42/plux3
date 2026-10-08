@@ -45,11 +45,11 @@ func (s *Service) Reattest(ctx context.Context, deviceID string, challenge []byt
 	if err != nil {
 		return Device{}, err
 	}
-	if err := s.consumeChallenge(ctx, challenge, appID, envID); err != nil {
-		return Device{}, err
-	}
 	conf, err := s.settingsFor(ctx, appID, envID)
 	if err != nil {
+		return Device{}, err
+	}
+	if err := s.consumeChallenge(ctx, challenge, appID, envID, conf.RegistrationChallengeTTL); err != nil {
 		return Device{}, err
 	}
 	v, err := s.verify(ctx, subject{

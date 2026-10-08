@@ -16,7 +16,7 @@ import 'package:plux_flutter/src/security/software_keys.dart'
     show DevelopmentAttestation, SoftwareDeviceKeys;
 // ignore: implementation_imports
 import 'package:plux_flutter/src/sync/sync_engine.dart'
-    show MemoryCredentialStore;
+    show MemoryCredentialStore, MemorySecretStore;
 import 'package:plux_module/plux_module.dart';
 
 const _appId = String.fromEnvironment('PLUX_APP_ID');
@@ -102,6 +102,7 @@ final class _Host {
         c,
         RuntimeOverrides(
           credentials: MemoryCredentialStore.new,
+          configSecrets: MemorySecretStore.new,
           deviceKeys: SoftwareDeviceKeys.new,
           attestation: () => const DevelopmentAttestation('e2e'),
         ),

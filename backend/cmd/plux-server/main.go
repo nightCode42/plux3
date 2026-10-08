@@ -35,6 +35,7 @@ Commands:
   migrate           Apply pending database migrations and exit
   bootstrap         Create the first installation administrator
   audit verify      Verify the audit chains and their signed checkpoints
+  metadata          Update metadata: print the online keys, upload an offline-signed root
   seed              Development only: an administrator, organisation, app and token
   version           Print version information
   help              Show this help
@@ -86,6 +87,8 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		return migrate(ctx, args[1:], stdout, stderr)
 	case "seed":
 		return seed(ctx, args[1:], stdout, stderr)
+	case "metadata":
+		return metadataCommand(ctx, args[1:], stdout, stderr)
 	case "bootstrap":
 		return bootstrap(ctx, args[1:], stdout, stderr)
 	case "audit":

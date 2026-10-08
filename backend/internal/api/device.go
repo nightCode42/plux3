@@ -304,10 +304,13 @@ func (s Manifest) GetManifest(ctx context.Context, req *connect.Request[pluxv1.G
 	if d := m.GetInstalledDigest(); len(d) != 0 && len(d) != 32 {
 		return nil, plxerr.New(plxerr.InvalidFormat, "installed_digest is not a SHA-256")
 	}
+	if m.GetConfigVersion() < 0 {
+		return nil, plxerr.New(plxerr.InvalidFormat, "config_version is not negative")
+	}
 	served, err := s.h.Releases.GetManifest(ctx, release.ManifestRequest{
 		OrganizationID: d.OrganizationID, AppID: d.AppID, EnvironmentID: d.EnvironmentID, Channel: m.GetChannel(), HostBuild: d.HostBuild,
 		InstalledSequence: m.GetInstalledSequence(), Installed: installed, IfNoneMatch: m.GetIfNoneMatch(),
-		InstalledDigest: m.GetInstalledDigest(),
+		InstalledDigest: m.GetInstalledDigest(), ConfigVersion: m.GetConfigVersion(),
 	})
 	if err != nil {
 		return nil, err //nolint:wrapcheck // a domain error
@@ -323,6 +326,7 @@ func (s Manifest) GetManifest(ctx context.Context, req *connect.Request[pluxv1.G
 		return nil, err //nolint:wrapcheck // a domain error
 	}
 	res.Msg.Manifest = manifestProto(d, served)
+	res.Msg.ConfigPatch, res.Msg.ConfigFullRequired = served.ConfigPatch, served.ConfigFullRequired
 	return res, nil
 }
 
@@ -348,9 +352,15 @@ func (s Manifest) GetRootKeys(ctx context.Context, req *connect.Request[pluxv1.G
 	if err != nil {
 		return nil, err //nolint:wrapcheck // a domain error
 	}
-	out := &pluxv1.GetRootKeysResponse{}
+	roots, err := s.h.Releases.RootChain(ctx, org, env, req.Msg.GetSinceRootVersion())
+	if err != nil {
+		return nil, err //nolint:wrapcheck // a domain error
+	}
+	out := &pluxv1.GetRootKeysResponse{Roots: roots}
 	for _, k := range keys {
-		out.Keys = append(out.Keys, &pluxv1.PublicKey{KeyId: k.KeyID, Algorithm: k.Algorithm, PublicKey: k.PublicKey, Role: k.Role})
+		out.Keys = append(out.Keys, &pluxv1.PublicKey{
+			KeyId: k.KeyID, Algorithm: k.Algorithm, PublicKey: k.PublicKey, Role: k.Role, EnvironmentType: k.EnvironmentType,
+		})
 	}
 	return connect.NewResponse(out), nil
 }
@@ -366,6 +376,11 @@ func manifestProto(d device.Identity, m release.ServedManifest) *pluxv1.Manifest
 		},
 		Signed: m.Signed,
 	}
+	if m.Metadata.Timestamp > 0 {
+		out.Metadata = &pluxv1.UpdateMetadataRef{
+			RootVersion: m.Metadata.Root, SnapshotVersion: m.Metadata.Snapshot, TimestampVersion: m.Metadata.Timestamp,
+		}
+	}
 	if t, err := parseRFC3339(doc.IssuedAt); err == nil {
 		out.IssuedAt = ts(t)
 	}
@@ -380,6 +395,11 @@ func manifestProto(d device.Identity, m release.ServedManifest) *pluxv1.Manifest
 	for _, e := range doc.Experiments {
 		out.Experiments = append(out.Experiments, &pluxv1.ExperimentAssignment{Key: e.Key, Layer: e.Layer, Variant: e.Variant})
 	}
+	if c := doc.Config; c != nil {
+		if sum, ok := hashOf(c.SHA256); ok {
+			out.Config = &pluxv1.SecurityConfigRef{Version: c.Version, Sha256: sum}
+		}
+	}
 	for _, sig := range m.Signatures {
 		raw, err := decodeBase64(sig.Signature)
 		if err != nil {
@@ -388,6 +408,16 @@ func manifestProto(d device.Identity, m release.ServedManifest) *pluxv1.Manifest
 		out.Signatures = append(out.Signatures, &pluxv1.Signature{KeyId: sig.KeyID, Algorithm: sig.Algorithm, Signature: raw})
 	}
 	return out
+}
+
+// hashOf reads a "sha256:<hex>" reference.
+func hashOf(ref string) ([]byte, bool) {
+	h, ok := strings.CutPrefix(ref, "sha256:")
+	if !ok {
+		return nil, false
+	}
+	sum, err := hex.DecodeString(h)
+	return sum, err == nil && len(sum) == 32
 }
 
 func bundleProto(b release.SignedBundle, url string, step release.SyncStep) *pluxv1.BundleDescriptor {

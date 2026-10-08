@@ -255,6 +255,29 @@ final class FakePluxServer {
   /// Whether tokens are refused as for an unknown device.
   bool forgetDevices = false;
 
+  /// Whether the signed manifest pins a security configuration (SEC-182).
+  bool pinsConfig = false;
+
+  /// The configuration version the manifest pins.
+  int configVersion = 0;
+
+  /// The device document at [configVersion].
+  Map<String, Object?> configDocument = {};
+
+  /// The merge patch from a device's version to [configVersion], by that
+  /// version; a device whose version has none gets no patch.
+  final Map<int, Object?> configPatches = {};
+
+  /// Device versions the server cannot patch from: the answer says so.
+  final Set<int> configFullRequiredFor = {};
+
+  /// Hashes (hex) the manifest pins instead of the document's, one per
+  /// manifest served, until used up.
+  final List<String> wrongConfigHashes = [];
+
+  /// The `configVersion` of each manifest request, in order.
+  final List<Object?> configVersionsSeen = [];
+
   /// Stops the server.
   Future<void> close() => _server.close(force: true);
 
@@ -503,6 +526,8 @@ final class FakePluxServer {
 
   Future<Map<String, Object?>> _manifest(Map<String, Object?> req) async {
     final r = release!;
+    configVersionsSeen.add(req['configVersion']);
+    final deviceConfig = int.parse('${req['configVersion'] ?? 0}');
     final installed = {
       for (final i
           in (req['installed']! as List<Object?>).cast<Map<String, Object?>>())
@@ -515,7 +540,7 @@ final class FakePluxServer {
     // needs the device to hold exactly its bundles, by list or by digest,
     // and a digest that does not match asks for the list (NFR-006).
     final etag =
-        '"${sha256.convert(utf8.encode('${r.sequence}|${r.killSwitches}|${r.appKillSwitch}')).toString().substring(0, 16)}"';
+        '"${sha256.convert(utf8.encode('${r.sequence}|${r.killSwitches}|${r.appKillSwitch}|$configVersion')).toString().substring(0, 16)}"';
     final targets = {
       '': Goldens.hashOf(r.app),
       for (final MapEntry(:key, :value) in r.plugins.entries)
@@ -526,7 +551,9 @@ final class FakePluxServer {
         ? digest == base64.encode(installedDigest(targets))
         : targets.length == installed.length &&
               targets.entries.every((e) => installed[e.key] == e.value);
-    if (req['ifNoneMatch'] == etag && holds) {
+    if (req['ifNoneMatch'] == etag &&
+        holds &&
+        (!pinsConfig || deviceConfig == configVersion)) {
       return {'notModified': true, 'etag': etag};
     }
     if (digest != null) return {'installedRequired': true, 'etag': etag};
@@ -561,6 +588,15 @@ final class FakePluxServer {
       },
       'experiments': <Object?>[],
       if (metadata != null) 'version': metadata!.targetsVersion,
+      if (pinsConfig)
+        'config': {
+          'version': configVersion,
+          'sha256': wrongConfigHashes.isNotEmpty
+              ? wrongConfigHashes.removeAt(0)
+              : sha256
+                    .convert(utf8.encode(canonicalJson(configDocument)))
+                    .toString(),
+        },
     };
     final signed = utf8.encode(canonicalJson(signedDoc));
     final sig = await DartEd25519(sha512: const DartSha512())
@@ -591,8 +627,13 @@ final class FakePluxServer {
       };
     }
 
+    final patch = configPatches[deviceConfig];
     return {
       'etag': etag,
+      if (pinsConfig && deviceConfig != configVersion && patch != null)
+        'configPatch': base64.encode(utf8.encode(jsonEncode(patch))),
+      if (pinsConfig && configFullRequiredFor.contains(deviceConfig))
+        'configFullRequired': true,
       'manifest': {
         'appId': app,
         'releaseSequence': '${r.sequence}',

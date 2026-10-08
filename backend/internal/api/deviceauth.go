@@ -105,6 +105,10 @@ type DeviceAuth struct {
 	// FallbackWindow the narrower window that applies while the replay
 	// cache runs degraded (SEC-023).
 	Window, FallbackWindow time.Duration
+	// Windows, when set, returns the windows of the environment a token
+	// names, which an operator may have tightened (SEC-182); Window and
+	// FallbackWindow apply to calls without a token, and when it is nil.
+	Windows func(ctx context.Context, appID, environmentID string) (window, fallback time.Duration, err error)
 	// Now is the clock; nil uses time.Now.
 	Now func() time.Time
 	// Limiter and PerDevice rate limit a device on its own allowance
@@ -191,13 +195,19 @@ func (a DeviceAuth) authenticate(ctx context.Context, c Call) (device.Identity, 
 	}
 	// The proof's key is checked against the token's binding before
 	// anything else in the proof is trusted (ADR-0012).
-	expect := a.expect(c, token)
+	window, fallback := a.Window, a.FallbackWindow
+	if a.Windows != nil {
+		if window, fallback, err = a.Windows(ctx, claims.AppID, claims.Environment); err != nil {
+			return device.Identity{}, err
+		}
+	}
+	expect := a.expect(c, token, window)
 	expect.JKT = claims.JKT
 	proof, err := a.Proofs.Verify(rawProof, expect)
 	if err != nil {
 		return device.Identity{}, err //nolint:wrapcheck // a domain error
 	}
-	if err := a.checkReplay(ctx, proof); err != nil {
+	if err := a.checkReplay(ctx, proof, window, fallback); err != nil {
 		return device.Identity{}, err
 	}
 	revoked, err := a.Devices.IsRevoked(ctx, claims.JKT)
@@ -220,11 +230,11 @@ func (a DeviceAuth) authenticateProof(ctx context.Context, c Call) (context.Cont
 	if err != nil {
 		return ctx, err
 	}
-	proof, err := a.Proofs.Verify(rawProof, a.expect(c, ""))
+	proof, err := a.Proofs.Verify(rawProof, a.expect(c, "", a.Window))
 	if err != nil {
 		return ctx, err //nolint:wrapcheck // a domain error
 	}
-	if err := a.checkReplay(ctx, proof); err != nil {
+	if err := a.checkReplay(ctx, proof, a.Window, a.FallbackWindow); err != nil {
 		return ctx, err
 	}
 	if a.Limiter.Count != nil {
@@ -240,10 +250,10 @@ func (a DeviceAuth) authenticateProof(ctx context.Context, c Call) (context.Cont
 }
 
 // expect is what a call's proof must be bound to.
-func (a DeviceAuth) expect(c Call, token string) dpop.Expect {
+func (a DeviceAuth) expect(c Call, token string, window time.Duration) dpop.Expect {
 	return dpop.Expect{
 		Method: proofMethod, URL: strings.TrimSuffix(a.BaseURL, "/") + c.Procedure,
-		AccessToken: token, Window: a.Window,
+		AccessToken: token, Window: window,
 	}
 }
 
@@ -251,12 +261,12 @@ func (a DeviceAuth) expect(c Call, token string) dpop.Expect {
 // remembered for as long as it could be accepted: it may be dated a
 // window ahead, and stays acceptable a window past its date. While the
 // shared cache is down the narrower fallback window applies (SEC-023).
-func (a DeviceAuth) checkReplay(ctx context.Context, p dpop.Proof) error {
-	degraded, err := a.Replay.Check(ctx, p.JKT, p.JTI, 2*a.Window+replayMargin)
+func (a DeviceAuth) checkReplay(ctx context.Context, p dpop.Proof, window, fallback time.Duration) error {
+	degraded, err := a.Replay.Check(ctx, p.JKT, p.JTI, 2*window+replayMargin)
 	if err != nil {
 		return err //nolint:wrapcheck // a domain error
 	}
-	if degraded && a.distance(p.IssuedAt) > a.FallbackWindow {
+	if degraded && a.distance(p.IssuedAt) > fallback {
 		return plxerr.New(plxerr.DPoPProofInvalid, "dpop proof is outside the window that applies while the replay cache is degraded")
 	}
 	return nil

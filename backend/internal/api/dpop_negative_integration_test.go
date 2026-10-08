@@ -125,11 +125,15 @@ type negativeFixture struct {
 	strict *sync.Map
 }
 
-func newNegativeFixture(t *testing.T) *negativeFixture {
+func newNegativeFixture(t *testing.T) *negativeFixture { return newNegativeFixtureWith(t, nil) }
+
+// newNegativeFixtureWith is newNegativeFixture with the per-environment
+// DPoP windows of the security configuration.
+func newNegativeFixtureWith(t *testing.T, windows func(ctx context.Context, appID, environmentID string) (time.Duration, time.Duration, error)) *negativeFixture {
 	t.Helper()
 	f := &negativeFixture{clock: newStepClock(), rec: &recorder{}, strict: &sync.Map{}}
 	f.w = newWorldWith(t, worldConfig{
-		Now: f.clock.Now,
+		Now: f.clock.Now, Windows: windows,
 		Profiles: func(_ context.Context, _, env string) (settings.Profile, error) {
 			if _, ok := f.strict.Load(env); ok {
 				return settings.Strict, nil
