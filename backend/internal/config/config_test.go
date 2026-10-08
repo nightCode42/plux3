@@ -147,8 +147,38 @@ func TestValidateReportsEveryProblem(t *testing.T) {
 		{"a certificate digest that is not SHA-256", minimal + "attestation:\n  apps:\n    0190a1b2-0000-7000-8000-000000000001:\n      androidCertDigests: [\"abcd\"]\n", "androidCertDigests[0]"},
 		{"half the Play Integrity keys", minimal + "attestation:\n  apps:\n    0190a1b2-0000-7000-8000-000000000001:\n      androidPackages: [com.example]\n      playIntegrityDecryptionKey: k\n", "set together"},
 		{"Play Integrity without packages", minimal + "attestation:\n  apps:\n    0190a1b2-0000-7000-8000-000000000001:\n      playIntegrityDecryptionKey: k\n      playIntegrityVerificationKey: v\n", "androidPackages"},
+		{"an access token lifetime under a minute", minimal + "auth:\n  device:\n    accessTokenTTL: 30s\n", "auth.device.accessTokenTTL"},
+		{"an access token lifetime over fifteen minutes", minimal + "auth:\n  device:\n    accessTokenTTL: 16m\n", "between 1m0s and 15m0s"},
+		{"the retired refresh token lifetime", minimal + "auth:\n  device:\n    refreshTokenTTL: 720h\n", "refreshTokenTTL"},
 		{"bad trusted proxy", withServer("  trustedProxies: [\"10.0.0.0/8\", \"proxy\"]\n"), "trustedProxies[1]"},
 	})
+}
+
+// Verifies: SEC-008.
+// The development provider is off unless the operator enables it.
+func TestDevelopmentProviderDefaultsOff(t *testing.T) {
+	t.Parallel()
+	if parse(t, minimal).Attestation.DevelopmentProvider {
+		t.Error("the development provider is on by default")
+	}
+	if !parse(t, minimal+"attestation:\n  developmentProvider: true\n").Attestation.DevelopmentProvider {
+		t.Error("developmentProvider: true was not read")
+	}
+}
+
+// Verifies: SEC-020.
+// The access token lifetime defaults to five minutes and accepts the
+// bounds of the accessTokenLifetime setting.
+func TestAccessTokenTTL(t *testing.T) {
+	t.Parallel()
+	if got := parse(t, minimal).Auth.Device.AccessTokenTTL.Duration().String(); got != "5m0s" {
+		t.Errorf("default accessTokenTTL = %s", got)
+	}
+	for _, ttl := range []string{"1m", "15m"} {
+		if got := parse(t, minimal+"auth:\n  device:\n    accessTokenTTL: "+ttl+"\n").Auth.Device.AccessTokenTTL.Duration(); got.String() != ttl[:len(ttl)-1]+"m0s" {
+			t.Errorf("accessTokenTTL %s read as %s", ttl, got)
+		}
+	}
 }
 
 // Verifies: SEC-003.

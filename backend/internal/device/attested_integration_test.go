@@ -9,6 +9,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -34,6 +35,8 @@ const (
 	tokenIssuer    = "https://plux.test" //nolint:gosec // G101: an issuer URL in a test fixture, not a credential
 	androidPackage = "com.example.app"
 	iosAppID       = "TEAMID.com.example.app"
+	// challengeTTL is the default of the registrationChallengeTtl setting.
+	challengeTTL = 5 * time.Minute
 )
 
 // rig is a fixture whose service verifies evidence with fakes, on a cache
@@ -53,7 +56,10 @@ type rig struct {
 	verifier *devtoken.Verifier
 }
 
-func newRig(t *testing.T) *rig {
+func newRig(t *testing.T) *rig { return newRigWith(t, nil) }
+
+// newRigWith is newRig with a say over the service's options.
+func newRigWith(t *testing.T, configure func(*device.Options)) *rig {
 	t.Helper()
 	r := &rig{
 		key: &devicetest.KeyAttestor{}, play: &devicetest.IntegrityChecker{}, apple: &devicetest.AppAttestor{},
@@ -77,6 +83,9 @@ func newRig(t *testing.T) *rig {
 				return p, nil
 			}
 			return settings.Standard, nil
+		}
+		if configure != nil {
+			configure(o)
 		}
 	})
 	return r
@@ -396,6 +405,45 @@ func TestRegisterDevelopment(t *testing.T) {
 	}
 }
 
+// Verifies: SEC-008.
+// Without the installation's say-so the development provider is refused in
+// every environment; production refuses it regardless.
+func TestDevelopmentProviderIsOffUnlessEnabled(t *testing.T) {
+	t.Parallel()
+	r := newRigWith(t, func(o *device.Options) { o.DevelopmentProvider = false })
+	_, jwk := devicetest.NewKey(t)
+	_, err := r.register(t, "development", "linux", jwk, device.KeyStorageSoftware, developmentEvidence())
+	if code(err) != plxerr.AttestationFailed || !strings.Contains(err.Error(), "the development provider is not enabled") {
+		t.Errorf("development evidence while the provider is off: %v", err)
+	}
+	if _, err := r.register(t, "production", "linux", jwk, device.KeyStorageSoftware, developmentEvidence()); code(err) != plxerr.DevProviderInProduction {
+		t.Errorf("development evidence in production while the provider is off: %v", err)
+	}
+}
+
+// Verifies: SEC-005.
+// The lifetime of a registration challenge is the registrationChallengeTtl
+// setting of its environment's profile.
+func TestChallengeLifetimeFollowsTheSetting(t *testing.T) {
+	t.Parallel()
+	r := newRig(t)
+	r.profiles[r.envs["development"]] = settings.Maximum
+	_, expires, err := r.svc.CreateChallenge(context.Background(), r.app, "development")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := r.now.Add(120 * time.Second).UTC().Truncate(time.Second); !expires.Equal(want) {
+		t.Errorf("a maximum-profile challenge expires at %v, want %v", expires, want)
+	}
+	_, expires, err = r.svc.CreateChallenge(context.Background(), r.app, "production")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := r.now.Add(challengeTTL).UTC().Truncate(time.Second); !expires.Equal(want) {
+		t.Errorf("a standard-profile challenge expires at %v, want %v", expires, want)
+	}
+}
+
 // Verifies: SEC-005.
 // A challenge is random, bound to its app and environment, valid for five
 // minutes and usable once; the cache holds its hash, not its value.
@@ -409,7 +457,7 @@ func TestChallenges(t *testing.T) {
 		t.Fatal(err)
 	}
 	second := r.challenge(t, "production")
-	if len(first) != 32 || string(first) == string(second) || !expires.Equal(r.now.Add(device.ChallengeTTL).UTC().Truncate(time.Second)) {
+	if len(first) != 32 || string(first) == string(second) || !expires.Equal(r.now.Add(challengeTTL).UTC().Truncate(time.Second)) {
 		t.Errorf("challenges %x %x expire %v", first, second, expires)
 	}
 	sum := sha256.Sum256(first)
@@ -463,7 +511,7 @@ func TestChallenges(t *testing.T) {
 
 	// Expiry.
 	stale := r.challenge(t, "development")
-	r.now = r.now.Add(device.ChallengeTTL + time.Second)
+	r.now = r.now.Add(challengeTTL + time.Second)
 	if _, err := r.registerWith("development", "linux", stale, jwk, device.KeyStorageSoftware, developmentEvidence()); code(err) != plxerr.RegistrationChallengeInvalid {
 		t.Errorf("an expired challenge: %v", err)
 	}

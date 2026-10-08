@@ -24,6 +24,10 @@ cache:
 signing:
   backend: "file"
   directory: "/var/lib/plux/keys"
+# The development provider accepts the dev app's unattested builds in this
+# non-production stack (SEC-008); a real installation leaves it off.
+attestation:
+  developmentProvider: true
 observability:
   logFormat: "json"
   otlpEndpoint: "http://otel-collector:4318"

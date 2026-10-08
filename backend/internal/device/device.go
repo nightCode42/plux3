@@ -74,6 +74,14 @@ type Options struct {
 	// Tokens issues access tokens (SEC-020). Without it, no token can be
 	// refreshed.
 	Tokens *devtoken.Issuer
+	// AccessTokenLifetime is the installation's default of the
+	// accessTokenLifetime setting, which applies where an app has no value
+	// of its own; zero uses the registry default of the profile.
+	AccessTokenLifetime time.Duration
+	// DevelopmentProvider accepts development evidence (SEC-008). It is
+	// off unless the installation enables it, and production environments
+	// refuse it regardless.
+	DevelopmentProvider bool
 }
 
 // Service is the domain logic of devices.
@@ -88,6 +96,10 @@ type Service struct {
 	appTrust  AppTrust
 	profiles  Profiles
 	tokens    *devtoken.Issuer
+	// accessTokenLifetime and developmentProvider are the installation's
+	// choices from Options.
+	accessTokenLifetime time.Duration
+	developmentProvider bool
 	// production remembers which environments are production ones.
 	production *productionCache
 }
@@ -108,6 +120,7 @@ func NewService(o Options) (*Service, error) {
 	return &Service{
 		db: o.DB, ids: o.IDs, now: now, random: random, cache: o.Cache, audit: o.Audit,
 		attestors: o.Attestors, appTrust: o.AppTrust, profiles: o.Profiles, tokens: o.Tokens, production: &productionCache{},
+		accessTokenLifetime: o.AccessTokenLifetime, developmentProvider: o.DevelopmentProvider,
 	}, nil
 }
 

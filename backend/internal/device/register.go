@@ -130,11 +130,11 @@ func (s *Service) RegisterAttested(ctx context.Context, r AttestedRegistration) 
 		return Device{}, err
 	}
 	appID, envID := canonicalID(r.AppID), storage.ID(found.EnvironmentID)
-	if err := s.consumeChallenge(ctx, r.Challenge, appID, envID); err != nil {
-		return Device{}, err
-	}
 	conf, err := s.settingsFor(ctx, appID, envID)
 	if err != nil {
+		return Device{}, err
+	}
+	if err := s.consumeChallenge(ctx, r.Challenge, appID, envID, conf.RegistrationChallengeTTL); err != nil {
 		return Device{}, err
 	}
 	sub := subject{
@@ -243,7 +243,16 @@ func (s *Service) settingsFor(ctx context.Context, appID, envID string) (Setting
 		}
 		profile = p
 	}
-	return SettingsFor(profile)
+	conf, err := SettingsFor(profile)
+	if err != nil {
+		return Settings{}, err
+	}
+	if s.accessTokenLifetime > 0 {
+		// No per-app value exists yet, so the installation's default
+		// stands for every environment.
+		conf.AccessTokenLifetime = s.accessTokenLifetime
+	}
+	return conf, nil
 }
 
 // trustOf returns the trust configuration of an app.
@@ -266,7 +275,7 @@ func (s *Service) verify(ctx context.Context, sub subject, e Evidence) (verified
 		err error
 	)
 	if e.Development != nil {
-		v, err = verifyDevelopment(sub, *e.Development)
+		v, err = s.verifyDevelopment(sub, *e.Development)
 	} else {
 		var trust TrustConfig
 		if trust, err = s.trustOf(ctx, sub.appID); err != nil {
@@ -400,11 +409,15 @@ func (s *Service) verifyIOS(sub subject, trust TrustConfig, e IOSEvidence) (veri
 }
 
 // verifyDevelopment accepts a development build, in an environment that
-// is not production only (SEC-008). It proves nothing, so the device
-// stays at AL0 with a software key.
-func verifyDevelopment(sub subject, e DevelopmentEvidence) (verified, error) {
+// is not production only and only where the installation enables the
+// development provider (SEC-008). It proves nothing, so the device stays
+// at AL0 with a software key.
+func (s *Service) verifyDevelopment(sub subject, e DevelopmentEvidence) (verified, error) {
 	if sub.production {
 		return verified{}, plxerr.New(plxerr.DevProviderInProduction, "the development provider is not accepted in a production environment")
+	}
+	if !s.developmentProvider {
+		return verified{}, plxerr.New(plxerr.AttestationFailed, "the development provider is not enabled")
 	}
 	if e.BuildID == "" || len(e.BuildID) > maxBuildID {
 		return verified{}, plxerr.New(plxerr.InvalidFormat, "the development build identifier is empty or longer than %d characters", maxBuildID)

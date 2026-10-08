@@ -30,6 +30,26 @@ func (r *rig) refresh(d device.Device, jkt, proof string) (device.AccessToken, e
 	return r.svc.Refresh(context.Background(), device.RefreshRequest{DeviceID: d.ID, ProofJKT: jkt, Proof: proof})
 }
 
+// Verifies: SEC-020.
+// The installation's default of the accessTokenLifetime setting is how long
+// a token lives where no app value exists.
+func TestRefreshUsesTheInstallationDefaultLifetime(t *testing.T) {
+	t.Parallel()
+	r := newRigWith(t, func(o *device.Options) { o.AccessTokenLifetime = 11 * time.Minute })
+	_, jwk := devicetest.NewKey(t)
+	dev, err := r.register(t, "development", "linux", jwk, device.KeyStorageSoftware, developmentEvidence())
+	if err != nil {
+		t.Fatal(err)
+	}
+	tok, err := r.refresh(dev, dev.DPoPJKT, "proof")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := r.now.Add(11 * time.Minute).UTC().Truncate(time.Second); !tok.ExpiresAt.Equal(want) {
+		t.Errorf("the token expires at %v, want %v", tok.ExpiresAt, want)
+	}
+}
+
 // Verifies: SEC-020, SEC-025.
 // A device that proves its key gets a token bound to that key, carrying
 // its identity and assurance, signed with the class of key its

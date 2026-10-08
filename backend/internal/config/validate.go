@@ -17,8 +17,10 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
+	"github.com/nightCode42/plux3/backend/internal/security/settings"
 )
 
 // problems collects validation failures so that one run reports every
@@ -235,8 +237,7 @@ func (c *Config) validateAuth(p *problems) {
 		}
 	}
 	p.positive("auth.studio.sessionTTL", int64(s.SessionTTL))
-	p.positive("auth.device.accessTokenTTL", int64(c.Auth.Device.AccessTokenTTL))
-	p.positive("auth.device.refreshTokenTTL", int64(c.Auth.Device.RefreshTokenTTL))
+	validateAccessTokenTTL(p, c.Auth.Device.AccessTokenTTL.Duration())
 	p.positive("auth.ci.tokenTTL", int64(c.Auth.CI.TokenTTL))
 	for i, is := range c.Auth.CI.Issuers {
 		path := "auth.ci.issuers[" + strconv.Itoa(i) + "]"
@@ -375,6 +376,21 @@ func (c *Config) validateAssets(p *problems) {
 	case u.Scheme == "unix" && u.Path != "":
 	default:
 		p.addf("assets.malwareScanner", "must be tcp://host:port or unix:///path")
+	}
+}
+
+// validateAccessTokenTTL keeps the installation default of the
+// accessTokenLifetime setting inside the bounds the registry gives that
+// setting (SEC-020).
+func validateAccessTokenTTL(p *problems, ttl time.Duration) {
+	s, ok := settings.Lookup(settings.AccessTokenLifetime)
+	if !ok {
+		p.addf("auth.device.accessTokenTTL", "the %s setting is not in the registry", settings.AccessTokenLifetime)
+		return
+	}
+	lo, hi := time.Duration(s.Min)*time.Second, time.Duration(s.Max)*time.Second
+	if ttl < lo || ttl > hi {
+		p.addf("auth.device.accessTokenTTL", "must be between %s and %s", lo, hi)
 	}
 }
 

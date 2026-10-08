@@ -68,7 +68,7 @@ func newFixtureWith(t *testing.T, configure func(f *fixture, o *device.Options))
 	if err != nil {
 		t.Fatal(err)
 	}
-	opts := device.Options{DB: db, IDs: gen, Now: func() time.Time { return f.now }, Audit: log}
+	opts := device.Options{DB: db, IDs: gen, Now: func() time.Time { return f.now }, Audit: log, DevelopmentProvider: true}
 	if configure != nil {
 		configure(f, &opts)
 	}
