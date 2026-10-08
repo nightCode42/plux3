@@ -13,6 +13,7 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:plux_flutter/src/assets/assets.dart';
 import 'package:plux_flutter/src/bundle/container.dart';
 import 'package:plux_flutter/src/bundle/fbs/bundle_fbs_generated.dart' as fbs;
@@ -22,14 +23,17 @@ import 'package:plux_flutter/src/mmap/mapped_file.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
 import 'package:plux_flutter/src/security/attestation.dart';
 import 'package:plux_flutter/src/security/device_keys.dart';
+import 'package:plux_flutter/src/store/metadata_state.dart';
 import 'package:plux_flutter/src/store/release_record.dart';
 import 'package:plux_flutter/src/store/release_store.dart';
 import 'package:plux_flutter/src/sync/api_client.dart';
 import 'package:plux_flutter/src/sync/device_auth.dart';
 import 'package:plux_flutter/src/sync/downloader.dart';
+import 'package:plux_flutter/src/sync/metadata_sync.dart';
 import 'package:plux_flutter/src/sync/sync_event.dart';
 import 'package:plux_flutter/src/verify/bundle_verifier.dart';
 import 'package:plux_flutter/src/verify/manifest.dart';
+import 'package:plux_flutter/src/verify/update_metadata.dart';
 
 /// Keeps the device credential; the platform implementation encrypts it
 /// under a platform-held key (ADR-0029).
@@ -72,6 +76,7 @@ final class SyncConfig {
     this.diskQuota = 200 * 1024 * 1024,
     this.maxBundleSize = 20 * 1024 * 1024,
     this.assets = AssetDevice.plain,
+    this.production = kReleaseMode,
   });
 
   /// The app.
@@ -106,6 +111,11 @@ final class SyncConfig {
 
   /// What decides which file of each asset this device downloads.
   final AssetDevice assets;
+
+  /// Whether this is a production runtime, which refuses update metadata
+  /// and keys of the `development` environment type (SEC-056). A release
+  /// build by default.
+  final bool production;
 }
 
 /// Runs syncs against one store.
@@ -129,6 +139,15 @@ final class SyncEngine {
       appId: config.appId,
       environment: config.environment,
       device: config.device,
+      clock: _clock,
+    );
+    _metadata = MetadataSync(
+      api: api,
+      store: MetadataStore(store.root),
+      anchor: rootFromKeys(config.keys),
+      appId: config.appId,
+      environment: config.environment,
+      production: config.production,
       clock: _clock,
     );
   }
@@ -156,6 +175,7 @@ final class SyncEngine {
 
   final DateTime Function() _clock;
   late final DeviceAuth _auth;
+  late final MetadataSync _metadata;
 
   /// Syncs once, reporting [SyncEvent]s to [emit]. Never throws: a failure
   /// is a [SyncResult] with [SyncOutcome.failed], and the active release
@@ -167,6 +187,7 @@ final class SyncEngine {
       emit(const SyncChecking());
       _auth.beginSync();
       final token = await _auth.token();
+      _metadata.learnEnvironment();
       final pointer = store.pointer;
       final active = pointer.active == null
           ? null
@@ -205,11 +226,14 @@ final class SyncEngine {
           duration: _clock().difference(started),
         );
       }
+      // The metadata chain first (SEC-050): its root, not the app's
+      // embedded keys, says who signs the manifest once keys rotate.
+      final trust = await _metadata.verify(token, res);
       final m = await verifyManifest(
         res.signed!,
         [for (final s in res.signatures) DocumentSignature.fromJson(s)],
         VerificationContext(
-          keys: config.keys,
+          keys: trust?.targetsKeys ?? config.keys,
           app: config.appId,
           environment: config.environment,
           channel: config.channel,
@@ -219,6 +243,7 @@ final class SyncEngine {
           supportsFeature: config.supportsFeature,
         ),
       );
+      if (trust != null) _metadata.commit(trust);
       store.accept(m.releaseSequence, res.etag);
       final control = ControlState(
         sequence: m.releaseSequence,

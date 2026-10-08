@@ -176,6 +176,66 @@ final class ServedBundle {
   final int stepSize;
 }
 
+/// The update metadata versions a manifest belongs to (SEC-050): hints for
+/// what to fetch, never trusted; the signed documents decide.
+final class MetadataRef {
+  /// Creates the reference.
+  const MetadataRef({
+    required this.rootVersion,
+    required this.snapshotVersion,
+    required this.timestampVersion,
+  });
+
+  /// The root the metadata was signed under.
+  final int rootVersion;
+
+  /// The snapshot that pins the manifest.
+  final int snapshotVersion;
+
+  /// The timestamp that named that snapshot.
+  final int timestampVersion;
+}
+
+/// A key of the environment's current root, as `GetRootKeys` lists it.
+final class RootKeyInfo {
+  /// Creates the description.
+  const RootKeyInfo({
+    required this.keyId,
+    required this.algorithm,
+    required this.role,
+    required this.environmentType,
+    required this.publicKey,
+  });
+
+  /// The key's ID.
+  final String keyId;
+
+  /// The algorithm name.
+  final String algorithm;
+
+  /// The role the key holds.
+  final String role;
+
+  /// `production` or `development` (SEC-056).
+  final String environmentType;
+
+  /// The raw public key.
+  final Uint8List publicKey;
+}
+
+/// The answer of `GetRootKeys`: the keys, and the root files after the
+/// version the device trusts, oldest first (SEC-051).
+final class RootKeys {
+  /// Creates the answer.
+  const RootKeys(this.keys, this.roots);
+
+  /// The keys of the current root.
+  final List<RootKeyInfo> keys;
+
+  /// The root files after the version asked for.
+  final List<Uint8List> roots;
+}
+
 /// A manifest response: not modified, or the signed document with this
 /// device's plan.
 final class ManifestResponse {
@@ -186,6 +246,7 @@ final class ManifestResponse {
     this.signed,
     this.signatures = const [],
     this.bundles = const [],
+    this.metadata,
   });
 
   /// Whether the manifest matches the ETag the device sent (NFR-006).
@@ -206,6 +267,10 @@ final class ManifestResponse {
 
   /// The plan per bundle: the app bundle and every plugin.
   final List<ServedBundle> bundles;
+
+  /// The update metadata the manifest belongs to; null for an environment
+  /// without a root (SEC-050).
+  final MetadataRef? metadata;
 }
 
 /// What a device sends in place of its installed bundles on an
@@ -238,6 +303,10 @@ final class PluxApiClient {
   /// The latest `DPoP-Nonce` the server sent; every proof carries it
   /// (RFC 9449 §8).
   String? _nonce;
+
+  /// The environment identifier the server named at the last registration
+  /// this client made, which names the environment's metadata files.
+  String? registeredEnvironmentId;
 
   /// Asks for a registration challenge (SEC-002): bytes the evidence and
   /// the DPoP key are bound to, valid once and briefly.
@@ -285,6 +354,8 @@ final class PluxApiClient {
     if (id is! String) {
       throw const ApiError(0, 'unknown', 'the server sent no device');
     }
+    final env = (d as Map<String, Object?>)['environmentId'];
+    if (env is String && env.isNotEmpty) registeredEnvironmentId = env;
     return id;
   }
 
@@ -388,9 +459,17 @@ final class PluxApiClient {
       );
     }
 
+    final ref = m['metadata'];
     return ManifestResponse._(
       notModified: false,
       etag: etag,
+      metadata: ref is Map<String, Object?>
+          ? MetadataRef(
+              rootVersion: _int(ref['rootVersion']),
+              snapshotVersion: _int(ref['snapshotVersion']),
+              timestampVersion: _int(ref['timestampVersion']),
+            )
+          : null,
       signed: base64.decode(m['signed']! as String),
       signatures: [
         for (final s
@@ -406,6 +485,76 @@ final class PluxApiClient {
           bundle(p['key']! as String, p['bundle']! as Map<String, Object?>),
       ],
     );
+  }
+
+  /// Fetches the root files after [sinceRootVersion] and the keys of the
+  /// current root (SEC-051).
+  Future<RootKeys> rootKeys({
+    required DeviceToken token,
+    required String appId,
+    required String environment,
+    required int sinceRootVersion,
+  }) async {
+    final r = await _call('plux.v1.ManifestService/GetRootKeys', {
+      'appId': appId,
+      'environment': environment,
+      'sinceRootVersion': '$sinceRootVersion',
+    }, token: token);
+    Uint8List bytes(Object? v) => base64.decode(v as String? ?? '');
+    return RootKeys(
+      [
+        for (final k
+            in (r['keys'] as List<Object?>? ?? const [])
+                .cast<Map<String, Object?>>())
+          RootKeyInfo(
+            keyId: k['keyId'] as String? ?? '',
+            algorithm: k['algorithm'] as String? ?? '',
+            role: k['role'] as String? ?? '',
+            environmentType: k['environmentType'] as String? ?? '',
+            publicKey: bytes(k['publicKey']),
+          ),
+      ],
+      [
+        for (final root in r['roots'] as List<Object?>? ?? const [])
+          bytes(root),
+      ],
+    );
+  }
+
+  /// Fetches a metadata file of an environment, such as `timestamp.json`
+  /// or `7.snapshot.json`, at most [maxBytes] long. The files are public
+  /// and signed, so no credential is sent (SEC-050).
+  Future<Uint8List> metadataFile(
+    String environmentId,
+    String file, {
+    required int maxBytes,
+  }) async {
+    final http.Response res;
+    try {
+      res = await _http.get(
+        endpoint.resolve('v1/metadata/$environmentId/$file'),
+      );
+    } on PluxException {
+      // A failed certificate pin is not an outage (SEC-041).
+      rethrow;
+    } on Exception catch (e) {
+      throw ApiError(0, 'unavailable', '$e');
+    }
+    if (res.statusCode != 200) {
+      throw ApiError(
+        res.statusCode,
+        res.statusCode == 404 ? 'not_found' : 'unavailable',
+        'metadata file $file: ${res.reasonPhrase ?? res.statusCode}',
+      );
+    }
+    if (res.bodyBytes.length > maxBytes) {
+      throw ApiError(
+        res.statusCode,
+        'unknown',
+        'metadata file $file is too large',
+      );
+    }
+    return res.bodyBytes;
   }
 
   /// Reports the release this device activated.

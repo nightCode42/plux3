@@ -1,0 +1,108 @@
+{
+  "chain1": {
+    "timestamp": "{\"signatures\":[{\"alg\":\"ES256\",\"keyid\":\"40fdbacddb8b2252d73763bc40cc13b6\",\"sig\":\"FeA5cjoacdxUm6mM1tpwmbyXzo8RvJl4sFMSYcrHaAKWWlxJAFXGAzXx3NUzpz/Q3zfDCflFCfM2tYiCXraDIw==\"}],\"signed\":{\"_type\":\"timestamp\",\"expires\":\"2026-10-09T12:00:00Z\",\"meta\":{\"snapshot.json\":{\"sha256\":\"c4e4f49a4095980135b2b958b0e2d1c740cc76feb87462af2e38718dd51bf4a5\",\"version\":3}},\"specVersion\":\"1.0.0\",\"version\":9}}",
+    "snapshot": "{\"signatures\":[{\"alg\":\"Ed25519\",\"keyid\":\"fd86089625cbd467fc4366a11fe2a6b6\",\"sig\":\"sjQC3ZY/f1cXKbwV+bUEpT2VXYYhbpGT9NZ8by+FfSog2K4Z5RfK+oR7RFw8kfYjt5pGcjccF4IOhC7BYWFhDw==\"}],\"signed\":{\"_type\":\"snapshot\",\"expires\":\"2026-10-15T12:00:00Z\",\"meta\":{\"targets.json\":{\"version\":5}},\"specVersion\":\"1.0.0\",\"version\":3}}",
+    "manifestSigned": "eyJleHBpcmVzIjoiMjAyNi0xMS0wN1QxMjowMDowMFoiLCJyZWxlYXNlU2VxdWVuY2UiOjcsInJvbGUiOiJ0YXJnZXRzIiwic3BlY1ZlcnNpb24iOjEsInR5cGUiOiJtYW5pZmVzdCIsInZlcnNpb24iOjV9",
+    "manifestSignatures": [
+      {
+        "keyid": "4f60ad7afb8d134bfcad3da9adc5a995",
+        "alg": "ed25519",
+        "sig": "KUbk0UaCNGQWv1UyHc3caxGbgQIGzSgaGuCo6PReb3A5DTtYsYA5uimITUN9nro4yiwmgvFxIs8kUBPQbnpNDA=="
+      }
+    ]
+  },
+  "chain1Targets4": {
+    "timestamp": "{\"signatures\":[{\"alg\":\"ES256\",\"keyid\":\"40fdbacddb8b2252d73763bc40cc13b6\",\"sig\":\"Di/JPqRQliAquFmaby1Ys45kX5gwMqbRG2j9HIP0czdQrHY/LJR2RhAK0/JhBYRXq0mJxGNYd5cHj2iSf/zFDg==\"}],\"signed\":{\"_type\":\"timestamp\",\"expires\":\"2026-10-09T12:00:00Z\",\"meta\":{\"snapshot.json\":{\"sha256\":\"8384ef118567195dcf97c16d57a3cba908ccb0f22d746386b4813e64ee5f5116\",\"version\":3}},\"specVersion\":\"1.0.0\",\"version\":9}}",
+    "snapshot": "{\"signatures\":[{\"alg\":\"Ed25519\",\"keyid\":\"fd86089625cbd467fc4366a11fe2a6b6\",\"sig\":\"2Rq9JAvCwth9/fPZeFTOzG61p1bJoZ2B2ki84Uhsl20fK5Dx+EYs4sKoKexZl6HjNTAf+1qFRSFf83jFyYuDBQ==\"}],\"signed\":{\"_type\":\"snapshot\",\"expires\":\"2026-10-15T12:00:00Z\",\"meta\":{\"targets.json\":{\"version\":4}},\"specVersion\":\"1.0.0\",\"version\":3}}",
+    "manifestSigned": "eyJleHBpcmVzIjoiMjAyNi0xMS0wN1QxMjowMDowMFoiLCJyZWxlYXNlU2VxdWVuY2UiOjcsInJvbGUiOiJ0YXJnZXRzIiwic3BlY1ZlcnNpb24iOjEsInR5cGUiOiJtYW5pZmVzdCIsInZlcnNpb24iOjR9",
+    "manifestSignatures": [
+      {
+        "keyid": "4f60ad7afb8d134bfcad3da9adc5a995",
+        "alg": "ed25519",
+        "sig": "FqWd90w9lN6FC4EK7JuPnVGtmnI+qqHyVKrQx4EcpXQRegWLE1gNa6XSOx11LkhtwJgEnmaR0N0fOjYECIzwBQ=="
+      }
+    ]
+  },
+  "chain2": {
+    "timestamp": "{\"signatures\":[{\"alg\":\"Ed25519\",\"keyid\":\"9a8403304efe80fe3242e29144a7bf4f\",\"sig\":\"m/lYXCTwLEDBjTucpx1NDq7pSlMJrucM2k82JxYeKSI080Qyy40QoO0CqKuaD2Q2VXiO+bYgi0an3WjWaMUcDA==\"}],\"signed\":{\"_type\":\"timestamp\",\"expires\":\"2026-10-09T12:00:00Z\",\"meta\":{\"snapshot.json\":{\"sha256\":\"e824ee947b65549c287511e28449c69cde4b71f5e0f522b21e2efd022de99c83\",\"version\":4}},\"specVersion\":\"1.0.0\",\"version\":10}}",
+    "snapshot": "{\"signatures\":[{\"alg\":\"ES256\",\"keyid\":\"b2516e0e3c28445c7a771205009e6d30\",\"sig\":\"fE6LPbhnzbX+ByHkPUboRXcyGqRi/JnDM6q+bMc0GE+ewQA4Lh6WKdCcPJrYLJzkVs5TVScsfdpX7J9mUHc/sA==\"}],\"signed\":{\"_type\":\"snapshot\",\"expires\":\"2026-10-15T12:00:00Z\",\"meta\":{\"targets.json\":{\"version\":6}},\"specVersion\":\"1.0.0\",\"version\":4}}",
+    "manifestSigned": "eyJleHBpcmVzIjoiMjAyNi0xMS0wN1QxMjowMDowMFoiLCJyZWxlYXNlU2VxdWVuY2UiOjcsInJvbGUiOiJ0YXJnZXRzIiwic3BlY1ZlcnNpb24iOjEsInR5cGUiOiJtYW5pZmVzdCIsInZlcnNpb24iOjZ9",
+    "manifestSignatures": [
+      {
+        "keyid": "74408f25897669f3b7b455885d202647",
+        "alg": "ed25519",
+        "sig": "dKUHMD+ga3UZZIXg0tikB5iN6IfWCOMrcoWbF2DYIwVhTnqt9kjZYUmC+H9XQzy18Gm7k0u3RO/Tmus3yuC9BQ=="
+      }
+    ]
+  },
+  "ids": {
+    "newRoot": [
+      "ee4da67aa4a6831819a1dcd91154b59a",
+      "cc473b6455d9b90a83c9a11812ace71e"
+    ],
+    "online1": [
+      "4f60ad7afb8d134bfcad3da9adc5a995",
+      "fd86089625cbd467fc4366a11fe2a6b6",
+      "40fdbacddb8b2252d73763bc40cc13b6"
+    ],
+    "online2": [
+      "74408f25897669f3b7b455885d202647",
+      "b2516e0e3c28445c7a771205009e6d30",
+      "9a8403304efe80fe3242e29144a7bf4f"
+    ],
+    "root1": [
+      "3de75ea1fe50a3dfc3b74645db9ea4db",
+      "a30a5fffde3d209518954dbe1f75abd8",
+      "c55a32495e0cdfce8be2068ae08156b3"
+    ]
+  },
+  "keys1": [
+    {
+      "algorithm": "Ed25519",
+      "keyId": "3de75ea1fe50a3dfc3b74645db9ea4db",
+      "publicKey": "cd3a3d1bcd825d5d5214215569c1b30e89d79b95219ab2fe4c02e021afc9a7a4",
+      "role": "root"
+    },
+    {
+      "algorithm": "ES256",
+      "keyId": "a30a5fffde3d209518954dbe1f75abd8",
+      "publicKey": "042ed9b8d2507b610b42d16f5337ee8d23c58918823029f00b11981c45caf9eac3b94ea05354c38c9a071efc99ae2d85e0193af4b991950054e5df0717e642cd6b",
+      "role": "root"
+    },
+    {
+      "algorithm": "Ed25519",
+      "keyId": "c55a32495e0cdfce8be2068ae08156b3",
+      "publicKey": "5990748e61de8d7099608fc8fb6c32b4f900bf67855ccf400af2b9ef35fc999b",
+      "role": "root"
+    },
+    {
+      "algorithm": "Ed25519",
+      "keyId": "4f60ad7afb8d134bfcad3da9adc5a995",
+      "publicKey": "9ffb9ba99855ad97921d7f622b592385e6e147e007d30411f0614042d8adc07f",
+      "role": "targets"
+    },
+    {
+      "algorithm": "Ed25519",
+      "keyId": "fd86089625cbd467fc4366a11fe2a6b6",
+      "publicKey": "4f44d9b01435574a84aac4aeba459c74cfaea8436859d5ed2b325509e46a9de2",
+      "role": "snapshot"
+    },
+    {
+      "algorithm": "ES256",
+      "keyId": "40fdbacddb8b2252d73763bc40cc13b6",
+      "publicKey": "04b4af1062d06f11eef1b3ef79b5db23320ac76085ffc682a7606e4fc65dcb4517c7613c226f83574bcf1f3ba24ac7c71725cf52c57eeefd78adbd31506f26dfbf",
+      "role": "timestamp"
+    }
+  ],
+  "now": "2026-10-08T13:00:00Z",
+  "root1": "{\"signatures\":[{\"alg\":\"Ed25519\",\"keyid\":\"3de75ea1fe50a3dfc3b74645db9ea4db\",\"sig\":\"keFCDoOQlaKphz9G4gNGKC2qzNge3rzZ1Oz9KmnFKhWJe5VYeIw5AYQP++VhS5YW3s/JRZYaOoAQwnRzbVisCQ==\"},{\"alg\":\"ES256\",\"keyid\":\"a30a5fffde3d209518954dbe1f75abd8\",\"sig\":\"Z9i8U7kHsZTdASxoWgwgpXK+BpGxBBN9JkEWk9V1PaDepc8ZON5LZg/DQ0LXpiK/YH85lU/Wn3GRtekGL8htxg==\"}],\"signed\":{\"_type\":\"root\",\"expires\":\"2027-10-08T12:00:00Z\",\"keys\":{\"3de75ea1fe50a3dfc3b74645db9ea4db\":{\"alg\":\"Ed25519\",\"public\":\"zTo9G82CXV1SFCFVacGzDonXm5UhmrL+TALgIa/Jp6Q=\"},\"40fdbacddb8b2252d73763bc40cc13b6\":{\"alg\":\"ES256\",\"public\":\"BLSvEGLQbxHu8bPvebXbIzIKx2CF/8aCp2BuT8Zdy0UXx2E8Im+DV0vPHzuiSsfHFyXPUsV+7v14rb0xUG8m378=\"},\"4f60ad7afb8d134bfcad3da9adc5a995\":{\"alg\":\"Ed25519\",\"public\":\"n/ubqZhVrZeSHX9iK1kjhebhR+AH0wQR8GFAQtitwH8=\"},\"a30a5fffde3d209518954dbe1f75abd8\":{\"alg\":\"ES256\",\"public\":\"BC7ZuNJQe2ELQtFvUzfujSPFiRiCMCnwCxGYHEXK+erDuU6gU1TDjJoHHvyZri2F4Bk69LmRlQBU5d8HF+ZCzWs=\"},\"c55a32495e0cdfce8be2068ae08156b3\":{\"alg\":\"Ed25519\",\"public\":\"WZB0jmHejXCZYI/I+2wytPkAv2eFXM9ACvK57zX8mZs=\"},\"fd86089625cbd467fc4366a11fe2a6b6\":{\"alg\":\"Ed25519\",\"public\":\"T0TZsBQ1V0qEqsSuukWcdM+uqENoWdXtKzJVCeRqneI=\"}},\"roles\":{\"root\":{\"keyids\":[\"3de75ea1fe50a3dfc3b74645db9ea4db\",\"a30a5fffde3d209518954dbe1f75abd8\",\"c55a32495e0cdfce8be2068ae08156b3\"],\"threshold\":2},\"snapshot\":{\"keyids\":[\"fd86089625cbd467fc4366a11fe2a6b6\"],\"threshold\":1},\"targets\":{\"keyids\":[\"4f60ad7afb8d134bfcad3da9adc5a995\"],\"threshold\":1},\"timestamp\":{\"keyids\":[\"40fdbacddb8b2252d73763bc40cc13b6\"],\"threshold\":1}},\"specVersion\":\"1.0.0\",\"version\":1}}",
+  "root2": "{\"signatures\":[{\"alg\":\"Ed25519\",\"keyid\":\"3de75ea1fe50a3dfc3b74645db9ea4db\",\"sig\":\"CFxXo8Xf4rfoDTzXY9aZa9Mi+U8VNBoP3vcTWAYEvJqH9ICZQjdS0SHPPhhYywRP5IdTUbg6ma7eNTYLTjufBw==\"},{\"alg\":\"ES256\",\"keyid\":\"a30a5fffde3d209518954dbe1f75abd8\",\"sig\":\"TY06B+2sNk8Pb+F0ZvyWaV07aNTu5br5iKS78idk/nRHmAdveoGfPQ0L3xEP74qoGMBbQdWfYar8wQPrNmpusQ==\"},{\"alg\":\"ES256\",\"keyid\":\"ee4da67aa4a6831819a1dcd91154b59a\",\"sig\":\"9G9cL+w2us8wZutkgRMeMPAw8Fds1pM1dbfjBjipt3ayBAjAidzaiaIgzvPp1veK2keV7q6cB6/IVMI4INOf0w==\"}],\"signed\":{\"_type\":\"root\",\"expires\":\"2027-10-08T12:00:00Z\",\"keys\":{\"3de75ea1fe50a3dfc3b74645db9ea4db\":{\"alg\":\"Ed25519\",\"public\":\"zTo9G82CXV1SFCFVacGzDonXm5UhmrL+TALgIa/Jp6Q=\"},\"74408f25897669f3b7b455885d202647\":{\"alg\":\"Ed25519\",\"public\":\"qaSJxGzylZX4+N8ZtHbvQ2K+jSB9bdwRF8PBooo6Rg8=\"},\"9a8403304efe80fe3242e29144a7bf4f\":{\"alg\":\"Ed25519\",\"public\":\"Q4voMsYJQSKugTAppMfahpw5UE3PzLm04Pt3KXa0vwU=\"},\"b2516e0e3c28445c7a771205009e6d30\":{\"alg\":\"ES256\",\"public\":\"BMEuRXjf3pUhDlndUPjvSt3dRCJThlyBnOYuL4ksAEAyRTMGp1FQa/BtfE6sDIxPntsiL7V9NHPK/Fjz84Pv+3g=\"},\"cc473b6455d9b90a83c9a11812ace71e\":{\"alg\":\"Ed25519\",\"public\":\"XKmf8byIWPcjXozVnNQxh711v0FbtHsxCHLTALx2THE=\"},\"ee4da67aa4a6831819a1dcd91154b59a\":{\"alg\":\"ES256\",\"public\":\"BBxJDfU0DUabkqgLIiVzEIyvRC5Dpu+MFtzyvAhxwABnzYB+QSYYvCsrGdajHtwRdWKMgEvxbQxWgvIUhJTurPk=\"}},\"roles\":{\"root\":{\"keyids\":[\"3de75ea1fe50a3dfc3b74645db9ea4db\",\"ee4da67aa4a6831819a1dcd91154b59a\",\"cc473b6455d9b90a83c9a11812ace71e\"],\"threshold\":2},\"snapshot\":{\"keyids\":[\"b2516e0e3c28445c7a771205009e6d30\"],\"threshold\":1},\"targets\":{\"keyids\":[\"74408f25897669f3b7b455885d202647\"],\"threshold\":1},\"timestamp\":{\"keyids\":[\"9a8403304efe80fe3242e29144a7bf4f\"],\"threshold\":1}},\"specVersion\":\"1.0.0\",\"version\":2}}",
+  "root2Expired": "{\"signatures\":[{\"alg\":\"Ed25519\",\"keyid\":\"3de75ea1fe50a3dfc3b74645db9ea4db\",\"sig\":\"XHcXm/ys16iAQWRvdSdYFxcZn0ryk5/BjN2Y4CmRbhb4OHKH7IMQHlctnm8CIqOdKEQk1hazRb21nPsIseyaDQ==\"},{\"alg\":\"ES256\",\"keyid\":\"a30a5fffde3d209518954dbe1f75abd8\",\"sig\":\"HgFv7Cqva7eWQTg6A6BmdWlMiVEl3xbggwn4QxfhXPi5m2HEP5cADj6YTgYG7bsLRdL4qyXzql+4xqA6K6JchA==\"},{\"alg\":\"ES256\",\"keyid\":\"ee4da67aa4a6831819a1dcd91154b59a\",\"sig\":\"XrpVhPOy7U1ffVnt/SzYyOnNuNX04xJk6O3SL1F5mhqSIIOjSJ7/5pL/CWA84Jtj3ZK6kUfZJnF4Zlr7gFO8iA==\"}],\"signed\":{\"_type\":\"root\",\"expires\":\"2026-10-08T11:00:00Z\",\"keys\":{\"3de75ea1fe50a3dfc3b74645db9ea4db\":{\"alg\":\"Ed25519\",\"public\":\"zTo9G82CXV1SFCFVacGzDonXm5UhmrL+TALgIa/Jp6Q=\"},\"74408f25897669f3b7b455885d202647\":{\"alg\":\"Ed25519\",\"public\":\"qaSJxGzylZX4+N8ZtHbvQ2K+jSB9bdwRF8PBooo6Rg8=\"},\"9a8403304efe80fe3242e29144a7bf4f\":{\"alg\":\"Ed25519\",\"public\":\"Q4voMsYJQSKugTAppMfahpw5UE3PzLm04Pt3KXa0vwU=\"},\"b2516e0e3c28445c7a771205009e6d30\":{\"alg\":\"ES256\",\"public\":\"BMEuRXjf3pUhDlndUPjvSt3dRCJThlyBnOYuL4ksAEAyRTMGp1FQa/BtfE6sDIxPntsiL7V9NHPK/Fjz84Pv+3g=\"},\"cc473b6455d9b90a83c9a11812ace71e\":{\"alg\":\"Ed25519\",\"public\":\"XKmf8byIWPcjXozVnNQxh711v0FbtHsxCHLTALx2THE=\"},\"ee4da67aa4a6831819a1dcd91154b59a\":{\"alg\":\"ES256\",\"public\":\"BBxJDfU0DUabkqgLIiVzEIyvRC5Dpu+MFtzyvAhxwABnzYB+QSYYvCsrGdajHtwRdWKMgEvxbQxWgvIUhJTurPk=\"}},\"roles\":{\"root\":{\"keyids\":[\"3de75ea1fe50a3dfc3b74645db9ea4db\",\"ee4da67aa4a6831819a1dcd91154b59a\",\"cc473b6455d9b90a83c9a11812ace71e\"],\"threshold\":2},\"snapshot\":{\"keyids\":[\"b2516e0e3c28445c7a771205009e6d30\"],\"threshold\":1},\"targets\":{\"keyids\":[\"74408f25897669f3b7b455885d202647\"],\"threshold\":1},\"timestamp\":{\"keyids\":[\"9a8403304efe80fe3242e29144a7bf4f\"],\"threshold\":1}},\"specVersion\":\"1.0.0\",\"version\":2}}",
+  "root2OneOld": "{\"signatures\":[{\"alg\":\"Ed25519\",\"keyid\":\"3de75ea1fe50a3dfc3b74645db9ea4db\",\"sig\":\"CFxXo8Xf4rfoDTzXY9aZa9Mi+U8VNBoP3vcTWAYEvJqH9ICZQjdS0SHPPhhYywRP5IdTUbg6ma7eNTYLTjufBw==\"},{\"alg\":\"ES256\",\"keyid\":\"ee4da67aa4a6831819a1dcd91154b59a\",\"sig\":\"G51sEiMDbdeqtSOGdrIh3RsNPQuhKQGahv4vXoOziUrUv/5uLnrFU56dd881+UfkvKslpMxYP/tec5Z7qXXl0w==\"}],\"signed\":{\"_type\":\"root\",\"expires\":\"2027-10-08T12:00:00Z\",\"keys\":{\"3de75ea1fe50a3dfc3b74645db9ea4db\":{\"alg\":\"Ed25519\",\"public\":\"zTo9G82CXV1SFCFVacGzDonXm5UhmrL+TALgIa/Jp6Q=\"},\"74408f25897669f3b7b455885d202647\":{\"alg\":\"Ed25519\",\"public\":\"qaSJxGzylZX4+N8ZtHbvQ2K+jSB9bdwRF8PBooo6Rg8=\"},\"9a8403304efe80fe3242e29144a7bf4f\":{\"alg\":\"Ed25519\",\"public\":\"Q4voMsYJQSKugTAppMfahpw5UE3PzLm04Pt3KXa0vwU=\"},\"b2516e0e3c28445c7a771205009e6d30\":{\"alg\":\"ES256\",\"public\":\"BMEuRXjf3pUhDlndUPjvSt3dRCJThlyBnOYuL4ksAEAyRTMGp1FQa/BtfE6sDIxPntsiL7V9NHPK/Fjz84Pv+3g=\"},\"cc473b6455d9b90a83c9a11812ace71e\":{\"alg\":\"Ed25519\",\"public\":\"XKmf8byIWPcjXozVnNQxh711v0FbtHsxCHLTALx2THE=\"},\"ee4da67aa4a6831819a1dcd91154b59a\":{\"alg\":\"ES256\",\"public\":\"BBxJDfU0DUabkqgLIiVzEIyvRC5Dpu+MFtzyvAhxwABnzYB+QSYYvCsrGdajHtwRdWKMgEvxbQxWgvIUhJTurPk=\"}},\"roles\":{\"root\":{\"keyids\":[\"3de75ea1fe50a3dfc3b74645db9ea4db\",\"ee4da67aa4a6831819a1dcd91154b59a\",\"cc473b6455d9b90a83c9a11812ace71e\"],\"threshold\":2},\"snapshot\":{\"keyids\":[\"b2516e0e3c28445c7a771205009e6d30\"],\"threshold\":1},\"targets\":{\"keyids\":[\"74408f25897669f3b7b455885d202647\"],\"threshold\":1},\"timestamp\":{\"keyids\":[\"9a8403304efe80fe3242e29144a7bf4f\"],\"threshold\":1}},\"specVersion\":\"1.0.0\",\"version\":2}}",
+  "root2OnlyNew": "{\"signatures\":[{\"alg\":\"Ed25519\",\"keyid\":\"3de75ea1fe50a3dfc3b74645db9ea4db\",\"sig\":\"CFxXo8Xf4rfoDTzXY9aZa9Mi+U8VNBoP3vcTWAYEvJqH9ICZQjdS0SHPPhhYywRP5IdTUbg6ma7eNTYLTjufBw==\"},{\"alg\":\"Ed25519\",\"keyid\":\"cc473b6455d9b90a83c9a11812ace71e\",\"sig\":\"9bligdMcg5VIA7WBJVmPA6KU77APXn+3Uqp2itKAnw1Hdc72NWUsoMvP9PbF0NFk5pfZxzJ25WS97LdEx/ttBw==\"},{\"alg\":\"ES256\",\"keyid\":\"ee4da67aa4a6831819a1dcd91154b59a\",\"sig\":\"wrWD0GNjq5WqLOs7iW20Pe7vtqHHDtdXRFoGXX4Bl+bpx9/dkCbUhAnvqDXDWxexIll0U/b9JSD/5TOQk1wNhQ==\"}],\"signed\":{\"_type\":\"root\",\"expires\":\"2027-10-08T12:00:00Z\",\"keys\":{\"3de75ea1fe50a3dfc3b74645db9ea4db\":{\"alg\":\"Ed25519\",\"public\":\"zTo9G82CXV1SFCFVacGzDonXm5UhmrL+TALgIa/Jp6Q=\"},\"74408f25897669f3b7b455885d202647\":{\"alg\":\"Ed25519\",\"public\":\"qaSJxGzylZX4+N8ZtHbvQ2K+jSB9bdwRF8PBooo6Rg8=\"},\"9a8403304efe80fe3242e29144a7bf4f\":{\"alg\":\"Ed25519\",\"public\":\"Q4voMsYJQSKugTAppMfahpw5UE3PzLm04Pt3KXa0vwU=\"},\"b2516e0e3c28445c7a771205009e6d30\":{\"alg\":\"ES256\",\"public\":\"BMEuRXjf3pUhDlndUPjvSt3dRCJThlyBnOYuL4ksAEAyRTMGp1FQa/BtfE6sDIxPntsiL7V9NHPK/Fjz84Pv+3g=\"},\"cc473b6455d9b90a83c9a11812ace71e\":{\"alg\":\"Ed25519\",\"public\":\"XKmf8byIWPcjXozVnNQxh711v0FbtHsxCHLTALx2THE=\"},\"ee4da67aa4a6831819a1dcd91154b59a\":{\"alg\":\"ES256\",\"public\":\"BBxJDfU0DUabkqgLIiVzEIyvRC5Dpu+MFtzyvAhxwABnzYB+QSYYvCsrGdajHtwRdWKMgEvxbQxWgvIUhJTurPk=\"}},\"roles\":{\"root\":{\"keyids\":[\"3de75ea1fe50a3dfc3b74645db9ea4db\",\"ee4da67aa4a6831819a1dcd91154b59a\",\"cc473b6455d9b90a83c9a11812ace71e\"],\"threshold\":2},\"snapshot\":{\"keyids\":[\"b2516e0e3c28445c7a771205009e6d30\"],\"threshold\":1},\"targets\":{\"keyids\":[\"74408f25897669f3b7b455885d202647\"],\"threshold\":1},\"timestamp\":{\"keyids\":[\"9a8403304efe80fe3242e29144a7bf4f\"],\"threshold\":1}},\"specVersion\":\"1.0.0\",\"version\":2}}",
+  "root2OnlyOld": "{\"signatures\":[{\"alg\":\"Ed25519\",\"keyid\":\"3de75ea1fe50a3dfc3b74645db9ea4db\",\"sig\":\"CFxXo8Xf4rfoDTzXY9aZa9Mi+U8VNBoP3vcTWAYEvJqH9ICZQjdS0SHPPhhYywRP5IdTUbg6ma7eNTYLTjufBw==\"},{\"alg\":\"ES256\",\"keyid\":\"a30a5fffde3d209518954dbe1f75abd8\",\"sig\":\"Y8/+EAIm3PgawX+cxhiztQ5jA6kp++d1NgooPfKV0rTLnEDy0iYsykZZwV9AuMKxLjqkrMVheL78UyHf2X0BrA==\"}],\"signed\":{\"_type\":\"root\",\"expires\":\"2027-10-08T12:00:00Z\",\"keys\":{\"3de75ea1fe50a3dfc3b74645db9ea4db\":{\"alg\":\"Ed25519\",\"public\":\"zTo9G82CXV1SFCFVacGzDonXm5UhmrL+TALgIa/Jp6Q=\"},\"74408f25897669f3b7b455885d202647\":{\"alg\":\"Ed25519\",\"public\":\"qaSJxGzylZX4+N8ZtHbvQ2K+jSB9bdwRF8PBooo6Rg8=\"},\"9a8403304efe80fe3242e29144a7bf4f\":{\"alg\":\"Ed25519\",\"public\":\"Q4voMsYJQSKugTAppMfahpw5UE3PzLm04Pt3KXa0vwU=\"},\"b2516e0e3c28445c7a771205009e6d30\":{\"alg\":\"ES256\",\"public\":\"BMEuRXjf3pUhDlndUPjvSt3dRCJThlyBnOYuL4ksAEAyRTMGp1FQa/BtfE6sDIxPntsiL7V9NHPK/Fjz84Pv+3g=\"},\"cc473b6455d9b90a83c9a11812ace71e\":{\"alg\":\"Ed25519\",\"public\":\"XKmf8byIWPcjXozVnNQxh711v0FbtHsxCHLTALx2THE=\"},\"ee4da67aa4a6831819a1dcd91154b59a\":{\"alg\":\"ES256\",\"public\":\"BBxJDfU0DUabkqgLIiVzEIyvRC5Dpu+MFtzyvAhxwABnzYB+QSYYvCsrGdajHtwRdWKMgEvxbQxWgvIUhJTurPk=\"}},\"roles\":{\"root\":{\"keyids\":[\"3de75ea1fe50a3dfc3b74645db9ea4db\",\"ee4da67aa4a6831819a1dcd91154b59a\",\"cc473b6455d9b90a83c9a11812ace71e\"],\"threshold\":2},\"snapshot\":{\"keyids\":[\"b2516e0e3c28445c7a771205009e6d30\"],\"threshold\":1},\"targets\":{\"keyids\":[\"74408f25897669f3b7b455885d202647\"],\"threshold\":1},\"timestamp\":{\"keyids\":[\"9a8403304efe80fe3242e29144a7bf4f\"],\"threshold\":1}},\"specVersion\":\"1.0.0\",\"version\":2}}",
+  "root3": "{\"signatures\":[{\"alg\":\"Ed25519\",\"keyid\":\"3de75ea1fe50a3dfc3b74645db9ea4db\",\"sig\":\"8zaS9ql/6hF+KXfHUv5tHSA4l+sphpjJL0VE6GykUPMwbjivuklWGxpG79pqbXTZIh29LwJStzuNbR58kegSBw==\"},{\"alg\":\"ES256\",\"keyid\":\"ee4da67aa4a6831819a1dcd91154b59a\",\"sig\":\"fdx14RYta4rkLIHWPWfmcy6/WYA6O5iHrd8tN2Lea9qVsVSfyFnDt3YRol6swQhbL8plpyjMqWc+OOPMWKQc9g==\"}],\"signed\":{\"_type\":\"root\",\"expires\":\"2027-10-08T12:00:00Z\",\"keys\":{\"3de75ea1fe50a3dfc3b74645db9ea4db\":{\"alg\":\"Ed25519\",\"public\":\"zTo9G82CXV1SFCFVacGzDonXm5UhmrL+TALgIa/Jp6Q=\"},\"74408f25897669f3b7b455885d202647\":{\"alg\":\"Ed25519\",\"public\":\"qaSJxGzylZX4+N8ZtHbvQ2K+jSB9bdwRF8PBooo6Rg8=\"},\"9a8403304efe80fe3242e29144a7bf4f\":{\"alg\":\"Ed25519\",\"public\":\"Q4voMsYJQSKugTAppMfahpw5UE3PzLm04Pt3KXa0vwU=\"},\"b2516e0e3c28445c7a771205009e6d30\":{\"alg\":\"ES256\",\"public\":\"BMEuRXjf3pUhDlndUPjvSt3dRCJThlyBnOYuL4ksAEAyRTMGp1FQa/BtfE6sDIxPntsiL7V9NHPK/Fjz84Pv+3g=\"},\"cc473b6455d9b90a83c9a11812ace71e\":{\"alg\":\"Ed25519\",\"public\":\"XKmf8byIWPcjXozVnNQxh711v0FbtHsxCHLTALx2THE=\"},\"ee4da67aa4a6831819a1dcd91154b59a\":{\"alg\":\"ES256\",\"public\":\"BBxJDfU0DUabkqgLIiVzEIyvRC5Dpu+MFtzyvAhxwABnzYB+QSYYvCsrGdajHtwRdWKMgEvxbQxWgvIUhJTurPk=\"}},\"roles\":{\"root\":{\"keyids\":[\"3de75ea1fe50a3dfc3b74645db9ea4db\",\"ee4da67aa4a6831819a1dcd91154b59a\",\"cc473b6455d9b90a83c9a11812ace71e\"],\"threshold\":2},\"snapshot\":{\"keyids\":[\"b2516e0e3c28445c7a771205009e6d30\"],\"threshold\":1},\"targets\":{\"keyids\":[\"74408f25897669f3b7b455885d202647\"],\"threshold\":1},\"timestamp\":{\"keyids\":[\"9a8403304efe80fe3242e29144a7bf4f\"],\"threshold\":1}},\"specVersion\":\"1.0.0\",\"version\":3}}",
+  "root4": "{\"signatures\":[{\"alg\":\"Ed25519\",\"keyid\":\"3de75ea1fe50a3dfc3b74645db9ea4db\",\"sig\":\"wJbcULUlvnmbXh2pk2SnpvOpfhMRylbFm3gQ8MYE/x3x1zmaxycQfyv1tvqxlcXvISCtCIR3z4DwytPaGaSXDg==\"},{\"alg\":\"ES256\",\"keyid\":\"ee4da67aa4a6831819a1dcd91154b59a\",\"sig\":\"JmsbpfPd0W0p7gPxo1eJYpykXWmKvEudmqMsjpNw1RR6LV0cmGO9WkcWy4XDGSm8USHfOkEOKpMSu+qNUzJMxg==\"}],\"signed\":{\"_type\":\"root\",\"expires\":\"2027-10-08T12:00:00Z\",\"keys\":{\"3de75ea1fe50a3dfc3b74645db9ea4db\":{\"alg\":\"Ed25519\",\"public\":\"zTo9G82CXV1SFCFVacGzDonXm5UhmrL+TALgIa/Jp6Q=\"},\"74408f25897669f3b7b455885d202647\":{\"alg\":\"Ed25519\",\"public\":\"qaSJxGzylZX4+N8ZtHbvQ2K+jSB9bdwRF8PBooo6Rg8=\"},\"9a8403304efe80fe3242e29144a7bf4f\":{\"alg\":\"Ed25519\",\"public\":\"Q4voMsYJQSKugTAppMfahpw5UE3PzLm04Pt3KXa0vwU=\"},\"b2516e0e3c28445c7a771205009e6d30\":{\"alg\":\"ES256\",\"public\":\"BMEuRXjf3pUhDlndUPjvSt3dRCJThlyBnOYuL4ksAEAyRTMGp1FQa/BtfE6sDIxPntsiL7V9NHPK/Fjz84Pv+3g=\"},\"cc473b6455d9b90a83c9a11812ace71e\":{\"alg\":\"Ed25519\",\"public\":\"XKmf8byIWPcjXozVnNQxh711v0FbtHsxCHLTALx2THE=\"},\"ee4da67aa4a6831819a1dcd91154b59a\":{\"alg\":\"ES256\",\"public\":\"BBxJDfU0DUabkqgLIiVzEIyvRC5Dpu+MFtzyvAhxwABnzYB+QSYYvCsrGdajHtwRdWKMgEvxbQxWgvIUhJTurPk=\"}},\"roles\":{\"root\":{\"keyids\":[\"3de75ea1fe50a3dfc3b74645db9ea4db\",\"ee4da67aa4a6831819a1dcd91154b59a\",\"cc473b6455d9b90a83c9a11812ace71e\"],\"threshold\":2},\"snapshot\":{\"keyids\":[\"b2516e0e3c28445c7a771205009e6d30\"],\"threshold\":1},\"targets\":{\"keyids\":[\"74408f25897669f3b7b455885d202647\"],\"threshold\":1},\"timestamp\":{\"keyids\":[\"9a8403304efe80fe3242e29144a7bf4f\"],\"threshold\":1}},\"specVersion\":\"1.0.0\",\"version\":4}}",
+  "timestampMLDSA": "{\"signatures\":[{\"alg\":\"ML-DSA-65\",\"keyid\":\"40fdbacddb8b2252d73763bc40cc13b6\",\"sig\":\"4tIjmC4AHZJy/8n5kLJXcGC4T11X51625CJaHGK6NtmAUzcnbAl38V5XgtIFDA7VXQfnoccuLupSzaeiflTp/A==\"}],\"signed\":{\"_type\":\"timestamp\",\"expires\":\"2026-10-09T12:00:00Z\",\"meta\":{\"snapshot.json\":{\"sha256\":\"c4e4f49a4095980135b2b958b0e2d1c740cc76feb87462af2e38718dd51bf4a5\",\"version\":3}},\"specVersion\":\"1.0.0\",\"version\":9}}",
+  "timestampWrongKey": "{\"signatures\":[{\"alg\":\"Ed25519\",\"keyid\":\"fd86089625cbd467fc4366a11fe2a6b6\",\"sig\":\"L7HcN+bYGlx+OAjkfEiHDg8NqkAqv8U5WoqiSAEsA2ynDvcILDaMZUoIMdnFKJ5gVA/1gQLJZMd3Blq3J7U9Ag==\"}],\"signed\":{\"_type\":\"timestamp\",\"expires\":\"2026-10-09T12:00:00Z\",\"meta\":{\"snapshot.json\":{\"sha256\":\"c4e4f49a4095980135b2b958b0e2d1c740cc76feb87462af2e38718dd51bf4a5\",\"version\":3}},\"specVersion\":\"1.0.0\",\"version\":9}}"
+}
