@@ -193,7 +193,7 @@ void delegateSuite(String name, DelegateHost Function() newHost) {
         expect(find.text('Login from account'), findsOneWidget);
         unawaited(Plux.open<Object?>(run.context, 'vault'));
         await run.settled(tester);
-        expect(find.text('fallback PLX-4102'), findsOneWidget);
+        expect(find.text('fallback PLX-6002'), findsOneWidget);
       },
     );
   });

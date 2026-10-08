@@ -87,6 +87,7 @@ final class _Rig {
   var now = DateTime.utc(2026, 9, 28, 12);
   var devices = 0;
   var lifetime = const Duration(minutes: 15);
+  Object? assuranceLevel;
 
   DeviceAuth get auth => _auth ??= DeviceAuth(
     api: api,
@@ -118,6 +119,7 @@ final class _Rig {
       'accessToken': 'tok-$devices',
       'expiresAt': now.add(lifetime).toIso8601String(),
       'tokenType': 'DPoP',
+      'assuranceLevel': ?assuranceLevel,
     }),
     _ => _json(<String, Object?>{}),
   };
@@ -607,6 +609,68 @@ void main() {
       expect(const ApiError(403, 'x', 'PLX-60').plxCode, isNull);
       expect(const ApiError(403, 'x', '').plxCode, isNull);
     });
+  });
+
+  group('assurance', () {
+    test('is AL0 until a token arrives, then the level the server named '
+        '[SEC-007]', () async {
+      final rig = _Rig()..assuranceLevel = 'AL2';
+      expect(rig.auth.assurance, 0);
+      final token = await rig.auth.token();
+      expect(token.assurance, 2);
+      expect(rig.auth.assurance, 2);
+    });
+
+    for (final level in <Object?>[null, '', 'AL4', 'high', 2]) {
+      test(
+        'a response naming $level means AL0, never more [SEC-007]',
+        () async {
+          final rig = _Rig()..assuranceLevel = level;
+          expect((await rig.auth.token()).assurance, 0);
+          expect(rig.auth.assurance, 0);
+        },
+      );
+    }
+
+    test('PLX-6002 lowers the level to AL0 at once [SEC-007]', () async {
+      final rig = _Rig()..assuranceLevel = 'AL3';
+      await rig.auth.token();
+      expect(rig.auth.assurance, 3);
+      rig.auth.forgetToken();
+      rig.script[_refreshPath] = [
+        () => _error(403, 'permission_denied', 'PLX-6002: not enough'),
+      ];
+      await expectLater(rig.auth.token(), throwsA(isA<ApiError>()));
+      expect(rig.auth.assurance, 0);
+    });
+
+    test(
+      'a revoked device the server no longer registers is AL0 [SEC-007]',
+      () async {
+        final rig = _Rig()..assuranceLevel = 'AL1';
+        await rig.auth.token();
+        rig.auth.forgetToken();
+        rig.script[_refreshPath] = [
+          () => _error(403, 'permission_denied', 'PLX-6006: device revoked'),
+          () => _error(403, 'permission_denied', 'PLX-6006: device revoked'),
+        ];
+        await expectLater(rig.auth.token(), throwsA(isA<ApiError>()));
+        expect(rig.auth.assurance, 0);
+      },
+    );
+
+    test(
+      'lowerAssurance drops the level until the next token [SEC-007]',
+      () async {
+        final rig = _Rig()..assuranceLevel = 'AL2';
+        await rig.auth.token();
+        rig.auth.lowerAssurance();
+        expect(rig.auth.assurance, 0);
+        rig.auth.forgetToken();
+        await rig.auth.token();
+        expect(rig.auth.assurance, 2);
+      },
+    );
   });
 
   group('secrets', () {

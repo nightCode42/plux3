@@ -67,6 +67,17 @@ final class DeviceAuth {
   DeviceToken? _token;
   Future<DeviceToken>? _pending;
   var _reregistered = false;
+  var _assurance = 0;
+
+  /// The assurance level (0 to 3) of the latest token, `AL0` until one
+  /// arrived, and again after the server refused the device with `PLX-6002`
+  /// or `PLX-6006` (SEC-007).
+  int get assurance => _assurance;
+
+  /// Lowers the level to `AL0` at once, after the server refused the device
+  /// for its assurance or revoked it; the next token restores what the
+  /// server says.
+  void lowerAssurance() => _assurance = 0;
 
   String get _alias => dpopKeyAlias(appId, environment);
 
@@ -87,6 +98,20 @@ final class DeviceAuth {
   }
 
   Future<DeviceToken> _obtain() async {
+    try {
+      final t = await _obtainToken();
+      _assurance = t.assurance;
+      return t;
+    } on ApiError catch (e) {
+      if (e.plxCode == PluxErrorCode.assuranceInsufficient.code ||
+          e.plxCode == PluxErrorCode.deviceRevoked.code) {
+        lowerAssurance();
+      }
+      rethrow;
+    }
+  }
+
+  Future<DeviceToken> _obtainToken() async {
     var session = await _session() ?? await _register();
     try {
       return _token = await _refresh(session);

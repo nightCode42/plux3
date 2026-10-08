@@ -57,9 +57,16 @@ final class DataServices implements DataContext {
     this.database,
     int Function()? now,
     this.allowCleartext = false,
+    int Function()? assurance,
   }) : _report = report, // ignore: prefer_initializing_formals
+       _assurance = assurance ?? (() => 0),
        _auth = AuthSession(authDelegate),
        now = now ?? (() => DateTime.now().millisecondsSinceEpoch);
+
+  final int Function() _assurance;
+
+  @override
+  int get assurance => _assurance();
 
   /// Sends requests (the data isolate in apps).
   final DataTransport transport;
@@ -434,6 +441,8 @@ final class DataScope extends ChangeNotifier implements DataActions {
           .toActionError();
     }
     if (mock != null) return null;
+    final refusal = c.assuranceRefusal();
+    if (refusal != null) throw refusal.toActionError();
     try {
       if (spec.transfer != null) return await _transfer(c, spec, input, cancel);
       final Object? raw;

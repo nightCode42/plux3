@@ -15,6 +15,7 @@ import 'package:plux_flutter/src/errors/plux_exception.dart';
 import 'package:plux_flutter/src/pxl/vm.dart' show PxlLimits;
 import 'package:plux_flutter/src/render/sections.dart';
 import 'package:plux_flutter/src/render/values.dart';
+import 'package:plux_flutter/src/security/assurance.dart';
 
 /// Evaluates a configured value against PXL roots.
 typedef DataValue = Object? Function(Map<String, Object?> roots);
@@ -287,6 +288,7 @@ final class DataSourceSpec {
     this.subscribeMessage,
     this.offlineCapable = false,
     this.database,
+    this.requiresAssurance = 0,
   });
 
   /// Decodes a source of a bundle; [strings] is the table of the section
@@ -372,6 +374,7 @@ final class DataSourceSpec {
         database: kind == DataKind.database
             ? DatabaseQuerySpec.fromConfig(literal)
             : null,
+        requiresAssurance: assuranceOf(literal['requiresAssurance']),
       );
     } on TypeError catch (e) {
       throw PluxException(
@@ -392,6 +395,10 @@ final class DataSourceSpec {
 
   /// Its declared type expression.
   final String type;
+
+  /// The assurance level (0 to 3) the device must have for the source to
+  /// load or be called (SEC-007); 0 asks for nothing.
+  final int requiresAssurance;
 
   /// The base URL per environment key (DAT-003).
   final Map<String, String> baseUrls;

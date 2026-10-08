@@ -10,6 +10,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:plux_flutter/plux_flutter.dart';
+import 'package:plux_flutter/src/actions/action_error.dart';
 import 'package:plux_flutter/src/actions/handlers.dart';
 import 'package:plux_flutter/src/data/cache.dart';
 import 'package:plux_flutter/src/data/client.dart';
@@ -147,6 +148,7 @@ void main() {
     DataMocks mocks = const DataMocks(),
     CacheStore? store,
     http.Client? client,
+    int assurance = 0,
   }) => DataServices(
     transport: ClientTransport(client ?? http.Client()),
     authDelegate: () => auth,
@@ -160,13 +162,16 @@ void main() {
     events: sourceEvents,
     now: () => now,
     allowCleartext: true,
+    assurance: () => assurance,
   );
 
   DataSourceSpec tasks({
     CacheSpec cache = const CacheSpec(),
     String path = '/tasks',
     bool auth = false,
+    int requiresAssurance = 0,
   }) => DataSourceSpec(
+    requiresAssurance: requiresAssurance,
     id: 'tasks-id',
     name: 'tasks',
     kind: DataKind.rest,
@@ -286,6 +291,62 @@ void main() {
     expect(reports.first.code, PluxErrorCode.dataDomainBlocked);
     expect(c.snapshot['status'], 'error');
     expect((c.snapshot['error']! as Map)['kind'], 'permission');
+  });
+
+  test('a source that requires more assurance than the device has is refused with PLX-6002 and sends nothing [SEC-007]', () async {
+    services = make(assurance: 1);
+    final c = controller(tasks(requiresAssurance: 2));
+    await c.load(roots);
+    expect(api.requests, isEmpty);
+    expect(reports.single.code, PluxErrorCode.assuranceInsufficient);
+    expect(reports.single.message, contains('requires assurance AL2'));
+    expect(c.snapshot['status'], 'error');
+    expect(c.snapshot['value'], isNull);
+    await expectLater(
+      c.load(roots, rethrowing: true),
+      throwsA(
+        isA<DataFailure>().having(
+          (f) => f.code,
+          'code',
+          PluxErrorCode.assuranceInsufficient,
+        ),
+      ),
+    );
+    expect(api.requests, isEmpty);
+  });
+
+  test('a source loads when the device has the assurance it requires, and one that requires none always does [SEC-007]', () async {
+    for (final (have, requires) in [(2, 2), (3, 2), (0, 0), (1, 0)]) {
+      api.requests.clear();
+      services = make(assurance: have);
+      final c = controller(tasks(requiresAssurance: requires));
+      await c.load(roots);
+      expect(api.requests, hasLength(1), reason: 'AL$have asks AL$requires');
+      expect(c.snapshot['status'], 'ready');
+    }
+    expect(reports, isEmpty);
+  });
+
+  test('an operation of a source that requires more assurance is refused with PLX-6002 [SEC-007]', () async {
+    services = make(assurance: 0);
+    final c = controller(tasks(requiresAssurance: 1));
+    final scope = DataScope(
+      services: services,
+      own: [c],
+      shared: const [],
+      roots: roots,
+    );
+    await expectLater(
+      scope.callOperation('tasks.create', const {}),
+      throwsA(
+        isA<ActionError>().having(
+          (e) => e.code,
+          'code',
+          PluxErrorCode.assuranceInsufficient,
+        ),
+      ),
+    );
+    expect(api.requests, isEmpty);
   });
 
   test('cleartext is blocked in apps [DAT-030]', () async {
