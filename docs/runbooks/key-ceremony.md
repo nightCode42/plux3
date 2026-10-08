@@ -41,10 +41,13 @@ Root keys are Ed25519. A key reference is `pkcs11:object=<label>` with
 
    ```bash
    plux-server metadata root-new -type production -version 1 -expires 8760h -threshold 2 \
-     -key holder1.pem -key holder2.pem -key holder3.pem -online-keys online-keys.txt -out root.json
+     -key holder1.pem -key holder2.pem -key holder3.pem -online-keys online-keys.txt -pins pins.json -out root.json
    ```
 
    A production root needs a threshold of at least 2 and an expiry of at most 365 days.
+   `pins.json` maps the Plux server's host to at least two base64 SHA-256 SPKI pins, one
+   of them a backup key not yet in use; devices take their pins from the verified root
+   (`SEC-041`). Omit `-pins` to keep the pins the app embeds.
 4. Holder 1 signs on their machine; the command prints the SHA-256 of the signed part,
    which every holder compares out of band before signing:
 
