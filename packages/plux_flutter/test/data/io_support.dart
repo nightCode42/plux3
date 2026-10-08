@@ -78,10 +78,14 @@ final class TopRandom implements Random {
   int nextInt(int max) => max - 1;
 }
 
-/// Polls [condition] until it holds; fails with [what] after five
-/// seconds.
+/// Polls [condition] until it holds; fails with [what] after a minute.
+///
+/// The bound only stops a test that hangs: what these tests check is the
+/// order of outcomes, not their speed, and with real file I/O under a
+/// loaded full-suite run five seconds was not always enough (the DAT-020
+/// outbox test failed only under load).
 Future<void> eventually(bool Function() condition, String what) async {
-  final stop = DateTime.now().add(const Duration(seconds: 5));
+  final stop = DateTime.now().add(const Duration(seconds: 60));
   while (!condition()) {
     if (DateTime.now().isAfter(stop)) throw StateError('timed out: $what');
     await Future<void>.delayed(const Duration(milliseconds: 5));

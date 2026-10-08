@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
+	"time"
 
 	"github.com/nightCode42/plux3/backend/internal/config"
 	"github.com/nightCode42/plux3/backend/internal/release"
@@ -23,6 +25,7 @@ const maxRootFile = 1 << 20
 // metadataUsage is the usage of the metadata command.
 const metadataUsage = `usage: metadata keys -organization <id> -environment <id> [-config <path>]
        metadata upload-root -organization <id> -environment <id> [-config <path>] <file>
+       metadata root-key-export | root-new | root-sign | root-verify   (offline; no database)
 `
 
 // metadataCommand runs the update-metadata administration (SEC-050,
@@ -30,6 +33,9 @@ const metadataUsage = `usage: metadata keys -organization <id> -environment <id>
 // and `upload-root` stores a root signed offline after verifying it. The
 // server never holds a root key; the ceremony runs elsewhere.
 func metadataCommand(ctx context.Context, args []string, stdout, stderr io.Writer) int {
+	if len(args) > 0 && slices.Contains(rootCommands, args[0]) {
+		return rootCommand(ctx, args, time.Now, stdout, stderr)
+	}
 	if len(args) == 0 || (args[0] != "keys" && args[0] != "upload-root") {
 		_, _ = fmt.Fprint(stderr, name+": "+metadataUsage)
 		return exitUsage
@@ -86,17 +92,9 @@ func printOnlineKeys(ctx context.Context, releases *release.Service, org, env st
 
 // uploadRoot verifies a root file and stores it.
 func uploadRoot(ctx context.Context, releases *release.Service, org, env, file string, stdout io.Writer, fail func(error) int) int {
-	f, err := os.Open(file) //nolint:gosec // the operator names the file
+	raw, err := readLimited(file)
 	if err != nil {
 		return fail(err)
-	}
-	defer func() { _ = f.Close() }()
-	raw, err := io.ReadAll(io.LimitReader(f, maxRootFile+1))
-	if err != nil {
-		return fail(err)
-	}
-	if len(raw) > maxRootFile {
-		return fail(fmt.Errorf("%s is larger than %d bytes", file, maxRootFile))
 	}
 	root, err := releases.UploadRoot(ctx, org, env, raw)
 	if err != nil {

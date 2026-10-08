@@ -240,7 +240,14 @@ type AppSecuritySettings struct {
 type ApprovedCapabilities struct {
 	DeviceApis     []DeviceAPI `json:"deviceApis,omitempty"`
 	NetworkDomains []string    `json:"networkDomains,omitempty"`
-	Functions      []string    `json:"functions,omitempty"`
+	// NetworkPins: Optional certificate pins for customer API domains the
+	// runtime calls directly (SEC-042): a domain from `networkDomains`, without
+	// a wildcard, and at least two distinct pins, each the base64 of the SHA-256
+	// of a certificate's SubjectPublicKeyInfo (RFC 7469), one of them a backup
+	// key. A connection to the domain is accepted only when a certificate of its
+	// chain has a pinned key, and fails closed otherwise (`PLX-6020`).
+	NetworkPins map[string][]string `json:"networkPins,omitempty"`
+	Functions   []string            `json:"functions,omitempty"`
 }
 
 // AssetEntry — An asset file.

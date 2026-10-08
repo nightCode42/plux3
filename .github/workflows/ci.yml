@@ -519,7 +519,7 @@ jobs:
         run: make compose-up
       - name: The server answers ready
         run: |
-          for _ in $(seq 60); do curl -fsS http://127.0.0.1:8080/readyz && exit 0; sleep 2; done
+          for _ in $(seq 60); do curl -fsS --cacert deploy/compose/.secrets/tls/ca.crt https://localhost:8080/readyz && exit 0; sleep 2; done
           docker compose -f deploy/compose/compose.yaml logs plux-server; exit 1
       # Verifies: SEC-108.
       - name: The server container is hardened

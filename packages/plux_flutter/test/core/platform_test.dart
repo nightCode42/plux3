@@ -5,9 +5,10 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:http/io_client.dart';
 import 'package:plux_flutter/src/core/features.dart';
+import 'package:plux_flutter/src/platform/pinned_http.dart';
 import 'package:plux_flutter/src/platform/platform_services.dart';
+import 'package:plux_flutter/src/security/pins.dart';
 import 'package:plux_flutter/src/sync/api_client.dart';
 
 void main() {
@@ -77,8 +78,31 @@ void main() {
 
   test('off Android and iOS the HTTP client is dart:io [SYN-010]', () {
     final client = platformHttpClient();
-    expect(client, isA<IOClient>());
+    // dart:io behind the router that pins the domains an app lists
+    // (SEC-042).
+    expect(client, isA<DomainPinned>());
     client.close();
+  });
+
+  // Verifies: SEC-041.
+  test('the Plux server is reached through the pinning router only over '
+      'https [SEC-041]', () {
+    final pins = PinSet([
+      'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
+      'AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQE=',
+    ]);
+    final secure = platformHttpClient(
+      endpoint: Uri.parse('https://plux.example.com'),
+      pins: pins,
+    );
+    expect(secure, isA<PinRoutingClient>());
+    final local = platformHttpClient(
+      endpoint: Uri.parse('http://localhost:8080'),
+      pins: pins,
+    );
+    expect(local, isNot(isA<PinRoutingClient>()));
+    secure.close();
+    local.close();
   });
 
   test('required features: PXL and registry revisions [BND-008]', () {

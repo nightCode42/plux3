@@ -31,16 +31,18 @@ import java.util.concurrent.atomic.AtomicInteger
  * anchors, so a user-installed CA cannot stand in for a pin.
  *
  * Dart pulls: `httpOpen` starts a request and answers with the status and
- * headers, `httpRead` answers with the next chunk of the body (Cronet
+ * headers, `httpRead` answers with the next chunk of the body, at most 256 KiB (Cronet
  * reads only when asked, which is the download's flow control), and
  * `httpClose` ends the request. A chain that matches no pin is reported as
  * `PLUX_PIN_MISMATCH`; every other failure as `PLUX_HTTP` with Cronet's
  * numeric error code and nothing of the request. `MethodChannel.Result`
  * is always answered on the main thread.
  *
- * An engine serves one set of pins. When Dart sends a different set (signed
- * metadata replaced the pins), a new engine is built; the old one is shut
- * down once its requests have finished.
+ * An engine serves one host and one set of pins; the Plux server and each
+ * customer domain the app pins (SEC-042) have their own. When Dart sends a
+ * different set for a host (signed metadata or a new release replaced the
+ * pins), a new engine is built; the old one is shut down once its requests
+ * have finished.
  */
 class PluxPinnedHttp(private val context: Context) {
     private val main = Handler(Looper.getMainLooper())
@@ -48,10 +50,10 @@ class PluxPinnedHttp(private val context: Context) {
     private val requests = ConcurrentHashMap<Int, Exchange>()
     private val ids = AtomicInteger()
     private val lock = Any()
-    private var current: Engine? = null
+    private val engines = HashMap<String, Engine>()
 
     /** An engine for one host, user agent and set of pins. */
-    private class Engine(val key: String, val engine: CronetEngine) {
+    private class Engine(val host: String, val key: String, val engine: CronetEngine) {
         val active = AtomicInteger()
         @Volatile var retired = false
     }
@@ -78,8 +80,8 @@ class PluxPinnedHttp(private val context: Context) {
         requests.values.forEach { it.cancel() }
         requests.clear()
         synchronized(lock) {
-            current?.let { retire(it) }
-            current = null
+            engines.values.forEach { retire(it) }
+            engines.clear()
         }
     }
 
@@ -131,12 +133,13 @@ class PluxPinnedHttp(private val context: Context) {
     }
 
     /**
-     * The engine for [key], built when the pins differ from those of the
-     * engine in use.
+     * The engine for [host], built when the pins differ from those of the
+     * host's engine in use; the Plux server and each pinned customer domain
+     * have their own.
      */
     private fun engineFor(key: String, host: String, agent: String, pins: Set<ByteArray>): Engine {
         synchronized(lock) {
-            current?.let { if (it.key == key) { it.active.incrementAndGet(); return it } }
+            engines[host]?.let { if (it.key == key) { it.active.incrementAndGet(); return it } }
             val builder = CronetEngine.Builder(context)
                 .enableHttp2(true)
                 .enableQuic(false)
@@ -146,9 +149,9 @@ class PluxPinnedHttp(private val context: Context) {
                 // Far in the future: a pin that lapsed would unpin silently.
                 .addPublicKeyPins(host, pins, false, Date(FAR_FUTURE))
             if (agent.isNotEmpty()) builder.setUserAgent(agent)
-            val next = Engine(key, builder.build())
-            current?.let { retire(it) }
-            current = next
+            val next = Engine(host, key, builder.build())
+            engines[host]?.let { retire(it) }
+            engines[host] = next
             next.active.incrementAndGet()
             return next
         }
@@ -203,7 +206,10 @@ class PluxPinnedHttp(private val context: Context) {
         }
 
         override fun onRedirectReceived(request: UrlRequest, info: UrlResponseInfo, newLocationUrl: String) {
-            if (follow && ++redirects <= maxRedirects) {
+            // The engine pins only its own host: a redirect elsewhere is
+            // delivered, not followed.
+            val sameHost = try { URI(newLocationUrl).host.equals(engine.host, ignoreCase = true) } catch (e: Exception) { false }
+            if (follow && sameHost && ++redirects <= maxRedirects) {
                 request.followRedirect()
             } else {
                 // Deliver the redirect itself as the response.
@@ -278,7 +284,7 @@ class PluxPinnedHttp(private val context: Context) {
         const val HTTP = "PLUX_HTTP"
         const val PIN_MISMATCH = "PLUX_PIN_MISMATCH"
         const val PINNED_KEY_NOT_IN_CHAIN = -150
-        const val CHUNK = 32 * 1024
+        const val CHUNK = 256 * 1024 // the most one httpRead answers with
         const val FAR_FUTURE = 253402300799000L // 9999-12-31
     }
 }

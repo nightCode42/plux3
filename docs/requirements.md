@@ -2685,6 +2685,8 @@ Every error and diagnostic has a stable code `PLX-NNNN` (`DX-003`). Codes are gr
 | `plux_publish_duration_seconds` | histogram | stage |
 | `plux_dpop_rejections_total` | counter | reason |
 | `plux_attestation_results_total` | counter | platform, verdict |
+| `plux_dpop_replay_cache_degraded` | gauge | — (1 while a replica uses its in-memory fallback, `SEC-023`) |
+| `plux_dpop_replay_cache_fallback_total` | counter | — |
 | `plux_devices_by_assurance` | gauge | app, level |
 | `plux_function_invocations_total` | counter | function, result |
 | `plux_function_duration_seconds` | histogram | function |
@@ -2976,7 +2978,7 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | Field | Value |
 |---|---|
 | Document ID | `SRS-PLUX-001` |
-| Version | 1.4.1 |
+| Version | 1.4.1 App. G.1 lists the replay cache's health metrics (`SEC-023`). |
 | Status | Draft (living document) |
 | Date | 2026-10-08 |
 | Supersedes | 1.4.0 |

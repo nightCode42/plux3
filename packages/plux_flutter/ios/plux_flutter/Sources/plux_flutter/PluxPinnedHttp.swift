@@ -18,17 +18,19 @@ import Security
 /// Dart pulls (a platform channel reaches only the root isolate from
 /// native code, and the sync and data isolates are background isolates):
 /// `httpOpen` starts a request and answers with the status and headers,
-/// `httpRead` with the next chunk of the body or null at its end, and
-/// `httpClose` ends the request. The task is suspended while a few chunks
-/// wait unread, which is the download's flow control. All state lives on
+/// `httpRead` with the next chunk of the body, at most 256 KiB, or null at
+/// its end, and `httpClose` ends the request. The task is suspended while
+/// 1 MiB is buffered unread, which is the download's flow control. All state lives on
 /// one serial queue; `result` is called on the main queue.
 ///
-/// A session serves one set of pins. When Dart sends a different set
-/// (signed metadata replaced the pins), a new session is made, and the old
-/// one finishes the requests it has.
+/// A session serves one host and one set of pins; the Plux server and each
+/// customer domain the app pins (SEC-042) have their own. When Dart sends a
+/// different set for a host (signed metadata or a new release replaced the
+/// pins), a new session is made, and the old one finishes the requests it
+/// has. A redirect to another host meets the same pins and fails closed.
 final class PluxPinnedHttp {
   private static let queue = DispatchQueue(label: "dev.plux.pinned-http")
-  private var current: PluxPinnedSession?
+  private var sessions: [String: PluxPinnedSession] = [:]
   private var exchanges: [Int: PluxExchange] = [:]
   private var nextId = 0
 
@@ -60,9 +62,9 @@ final class PluxPinnedHttp {
     let digests = pinned.compactMap { Data(base64Encoded: $0) }.filter { $0.count == 32 }
     guard !digests.isEmpty, digests.count == pinned.count else { return Self.reply(result, Self.error("pins")) }
     let key = host + "|" + pinned.sorted().joined(separator: ",")
-    if current?.key != key {
-      current?.retire()
-      current = PluxPinnedSession(key: key, pins: Set(digests), queue: Self.queue)
+    if sessions[host]?.key != key {
+      sessions[host]?.retire()
+      sessions[host] = PluxPinnedSession(key: key, pins: Set(digests), queue: Self.queue)
     }
     var request = URLRequest(url: url)
     request.httpMethod = args["method"] as? String ?? "GET"
@@ -82,7 +84,7 @@ final class PluxPinnedHttp {
     exchanges[nextId] = exchange
     let id = nextId
     exchange.discard = { [weak self] in _ = self?.exchanges.removeValue(forKey: id) }
-    current!.start(request, exchange)
+    sessions[host]!.start(request, exchange)
   }
 
   fileprivate static func reply(_ result: @escaping FlutterResult, _ value: Any?) {
@@ -96,8 +98,12 @@ final class PluxPinnedHttp {
 
 /// One request: the task's callbacks on one side, Dart's pulls on the other.
 fileprivate final class PluxExchange {
-  static let high = 256 * 1024
-  static let low = 64 * 1024
+  /// The most one `httpRead` answers with.
+  static let maxChunk = 256 * 1024
+  /// The task is suspended while this much is buffered, and resumed below
+  /// `low`.
+  static let high = 1024 * 1024
+  static let low = 512 * 1024
 
   let id: Int
   let follow: Bool
@@ -107,6 +113,8 @@ fileprivate final class PluxExchange {
   var opened: FlutterResult?
   var pending: FlutterResult?
   var chunks: [Data] = []
+  /// How much of `chunks[0]` has been taken already.
+  var head = 0
   var buffered = 0
   var suspended = false
   var finished = false
@@ -130,13 +138,21 @@ fileprivate final class PluxExchange {
 
   func read(_ result: @escaping FlutterResult) {
     if !chunks.isEmpty {
-      let chunk = chunks.removeFirst()
-      buffered -= chunk.count
+      let chunk = chunks[0]
+      let n = min(chunk.count - head, Self.maxChunk)
+      let from = chunk.startIndex + head
+      let out = chunk.subdata(in: from..<(from + n))
+      head += n
+      if head == chunk.count {
+        chunks.removeFirst()
+        head = 0
+      }
+      buffered -= n
       if suspended && buffered < Self.low {
         suspended = false
         task?.resume()
       }
-      PluxPinnedHttp.reply(result, FlutterStandardTypedData(bytes: chunk))
+      PluxPinnedHttp.reply(result, FlutterStandardTypedData(bytes: out))
     } else if finished {
       PluxPinnedHttp.reply(result, failureValue())
     } else if pending != nil {

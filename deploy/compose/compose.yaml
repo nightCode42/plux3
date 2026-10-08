@@ -8,7 +8,9 @@
 # plux-server runs every role; PostgreSQL, SeaweedFS (S3), Valkey, the
 # OpenTelemetry Collector, Prometheus and Grafana run beside it. Optional
 # profiles add Keycloak (an OpenID Connect provider) and Ollama. Studio
-# joins the stack in P11. Images are pinned by digest.
+# joins the stack in P11. Images are pinned by digest. The API serves
+# TLS 1.3 with HSTS on https://localhost:8080 under a development
+# certificate that init-secrets.sh issues (README.md, "Development TLS").
 #
 # The signing backend is the file backend, which never signs for an
 # environment marked production (SEC-056): a production installation
@@ -40,6 +42,7 @@ services:
     volumes:
       - ./plux-server.yaml:/etc/plux/plux.yaml:ro
       - plux-keys:/var/lib/plux/keys
+      - ./.secrets/tls:/etc/plux/tls:ro
     tmpfs: [/tmp]
     ports: ["127.0.0.1:8080:8080"]
     restart: unless-stopped
@@ -98,6 +101,7 @@ services:
     image: prom/prometheus:v3.6.0@sha256:76947e7ef22f8a698fc638f706685909be425dbe09bd7a2cd7aca849f79b5f64
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./.secrets/tls/ca.crt:/etc/prometheus/plux-ca.crt:ro
       - prometheus:/prometheus
     ports: ["127.0.0.1:9090:9090"]
     restart: unless-stopped

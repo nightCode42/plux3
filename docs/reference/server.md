@@ -75,7 +75,7 @@ objectStorage:
   signedURLTTL: "15m"
 cache:
   backend: "memory"             # memory (single-node only) | valkey
-  valkeyURL: "rediss://valkey:6379"
+  valkeyURL: "rediss://valkey:6379"  # or a Sentinel URL: "valkeys+sentinel://s1:26379,s2:26379/plux" (SEC-023)
 signing:
   backend: "file"               # file (development only) | vault | pkcs11 (HSMs and cloud HSMs through plux-pkcs11-helper, SEC-120)
   pkcs11:
@@ -100,8 +100,7 @@ auth:
     mfaRequiredFor: [publish, approve, keys, members]   # at least these four (SEC-100)
     sessionTTL: "12h"
   device:
-    accessTokenTTL: "5m"
-    refreshTokenTTL: "720h"
+    accessTokenTTL: "5m"        # the installation's accessTokenLifetime; may only shorten a profile's (SEC-020)
   ci:
     tokenTTL: "1h"
     issuers:
@@ -115,6 +114,21 @@ observability:
   traceSampleRatio: 1.0
 telemetry:
   store: "postgres"             # clickhouse arrives in P9
+attestation:
+  developmentProvider: false    # true only for development and test installations; production environments refuse it (SEC-008)
+  apps:                         # per app ID, until the per-app security configuration carries it (ADR-0012)
+    "01d0c450-…":
+      androidPackages: ["com.acme.app"]
+      androidCertDigests: ["…"] # hex SHA-256 of the signing certificates
+      playIntegrityDecryptionKey: "…"   # Play Console keys, verified locally; secrets
+      playIntegrityVerificationKey: "…"
+      iosAppID: "ABCDE12345.com.acme.app"
+      appAttestProduction: true
+updateMetadata:                 # SEC-050, ADR-0054
+  rootThreshold: 2
+  expiry: { timestamp: "24h", snapshot: "168h", targets: "720h", root: "8760h" }
+audit:
+  checkpointInterval: "1h"      # signed checkpoints over each organisation's audit chain (SEC-141)
 limits:                         # installation-level tightenings (LIM-001, LIM-002)
   "bundle.pluginSize": "8MiB"
   "page.nodes": "2000"
