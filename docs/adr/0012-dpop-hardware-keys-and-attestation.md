@@ -206,3 +206,17 @@ Simple, but Play Integrity's quota and latency rule it out, and tokens stay repl
 - **Sentinel:** the Valkey client follows Sentinel failover to the promoted replica; it
   never reads from replicas, since rate-limit counters and the replay cache need the
   master's view.
+- **Configuration (maintainer, 2026-10-08):** attestation trust is configured per app
+  (`attestation.apps.<appID>`: Android packages and signing-certificate digests, the Play
+  Console keys, the iOS App ID and App Attest environment) until the per-app security
+  configuration API carries it; `attestation.developmentProvider` (default `false`) enables
+  the development provider for an installation, and production environments refuse it
+  regardless. The replay cache uses `cache.valkeyURL`, which accepts a Sentinel URL
+  (`valkeys+sentinel://…/<master>`); there is no second Sentinel list (spec 1.4.1, App. H.1).
+- **Wire details:** token refresh and re-attestation are authenticated by the DPoP proof
+  alone; an iOS refresh carries an App Attest assertion over SHA-256 of that proof, and an
+  Android refresh that requires Play Integrity binds the token's request hash to the same
+  digest. A replayed `jti` is remembered for twice the `iat` window plus 60 seconds, since a
+  proof dated ahead stays acceptable for two windows. Revocation is published to the shared
+  cache (`device:revoked:<jkt>`, kept for the longest token lifetime), so every replica
+  refuses a revoked device at once.

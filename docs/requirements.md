@@ -1,9 +1,9 @@
 # Plux — System Requirements Specification
 
 **Document ID:** `SRS-PLUX-001`
-**Version:** 1.4.0
+**Version:** 1.4.1
 **Status:** Draft — living document, revised as implementation proceeds
-**Date:** 2026-10-07
+**Date:** 2026-10-08
 **Applies to:** Plux Schema, Plux Compiler, Plux Server, Plux Functions, `plux_flutter` runtime, Plux Dev app, Plux Studio, Plux CLI, Plux AI
 
 > **Plux — Plugin Experience.** Build native Flutter screens visually, compile them into signed binary plugins, and ship them to every device in seconds — with high-assurance security, zero parse cost, and full control over who changes what.
@@ -2732,7 +2732,7 @@ objectStorage:
   bucket: "plux"
   cdnBaseURL: ""                     # optional
 cache:
-  valkeyURL: "rediss://valkey:6379"  # required for multi-replica api
+  valkeyURL: "rediss://valkey:6379"  # required for multi-replica api; Sentinel: "valkeys+sentinel://s1:26379,s2:26379/plux"
 signing:
   backend: "pkcs11"                  # pkcs11 | awskms | gcpkms | azurekv | vault | file (dev only)
   keys:
@@ -2745,11 +2745,17 @@ auth:
     mfaRequiredFor: [publish, approve, keys, members]
   device:
     accessTokenTTL: "5m"             # default of accessTokenLifetime (SEC-020)
-    dpop: { iatWindow: "60s", nonceRotation: "5m", replayCache: { sentinel: ["valkey-s1:26379"], fallback: "memory" } }
+    dpop: { iatWindow: "60s", nonceRotation: "5m", replayCache: { fallback: "memory" } }  # installation defaults; the replay cache uses cache.valkeyURL
 attestation:
-  android: { packageNames: ["com.acme.app"], certDigests: ["…"], playIntegrity: { decryptionKeyRef: "secret:pi-dec", verificationKeyRef: "secret:pi-ver" } }  # verified locally (ADR-0012)
-  ios: { teamID: "ABCDE12345", bundleIDs: ["com.acme.app"], environment: "production" }
-  developmentProvider: false         # refused by production environments (SEC-008)
+  developmentProvider: false         # true only for development and test installations; production environments refuse it regardless (SEC-008)
+  apps:                              # per app, keyed by app ID; moves to the per-app security configuration API (SEC-182)
+    "01d0c450-…":
+      androidPackages: ["com.acme.app"]
+      androidCertDigests: ["…"]      # hex SHA-256 of the signing certificates
+      playIntegrityDecryptionKey: "…"     # Play Console keys, verified locally (ADR-0012); secrets
+      playIntegrityVerificationKey: "…"
+      iosAppID: "ABCDE12345.com.acme.app"
+      appAttestProduction: true
 securityConfig:                      # installation defaults; per app and environment via the API (SEC-182)
   profile: "strict"                  # standard | strict | maximum
 updateMetadata:
@@ -2970,10 +2976,11 @@ The distribution is deliberate. Phases P1–P3 carry the largest share of the en
 | Field | Value |
 |---|---|
 | Document ID | `SRS-PLUX-001` |
-| Version | 1.4.0 |
+| Version | 1.4.1 |
 | Status | Draft (living document) |
-| Date | 2026-10-07 |
-| Supersedes | 1.3.2 |
+| Date | 2026-10-08 |
+| Supersedes | 1.4.0 |
+| 1.4.1 | 2026-10-08 | App. H.1: attestation is configured per app (`attestation.apps`) with an installation-wide `developmentProvider` switch, and the replay cache uses `cache.valkeyURL`, which takes a Sentinel URL, instead of a separate Sentinel list (maintainer decisions; ADR-0012, Revision). |
 | Change process | Amendments are made by pull request against `docs/requirements.md`. A change to a `MUST` requirement requires a corresponding ADR. The version is incremented per Semantic Versioning: a breaking change to an existing requirement is a major increment, a new requirement is a minor increment, and a clarification is a patch increment. |
 
 ### Revision history
