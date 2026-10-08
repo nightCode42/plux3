@@ -1118,38 +1118,20 @@ func (u *unit) metaSection(o *out) {
 	e := &valueEnc{u: u, o: o, b: b, strs: o.shared}
 	features := stringVector(b, featureList(o.features))
 	lv := u.runtimeLimits(b)
-	var pages, exported, capabilities, pinned, plugins, locales, flags, sampling, hostEvents flatbuffers.UOffsetT
+	var pages, exported, plugins, locales, flags, sampling, hostEvents flatbuffers.UOffsetT
 	name, key := app.Name, app.Key
 	if o.pl != nil {
 		name, key = o.pl.doc.Name, o.pl.key
 		pages = pageEntries(b, o.pl)
 		exported = componentEntries(b, o.pl)
-		capabilities = capabilitiesTable(b, o.pl.doc.Capabilities, nil)
 	} else {
-		var ids [][16]byte
-		for _, k := range app.Plugins {
-			for _, pl := range u.plugins {
-				if pl.key == k {
-					ids = append(ids, uuidBytes(pl.doc.ID))
-				}
-			}
-		}
-		plugins = uuidVector(b, ids)
+		plugins = u.pluginIDs(b)
 		locales = stringVector(b, app.SupportedLocales)
 		flags = u.flagTables(e, app.Flags)
 		sampling = samplingTables(b, app.Telemetry)
 		hostEvents = hostEventTables(b, app.HostEvents)
-		// The approved device APIs and domains: what the app's own
-		// triggers may use (SEC-080).
-		if c := app.Capabilities; c != nil {
-			capabilities = capabilitiesTable(b, &schema.Capabilities{DeviceApis: c.DeviceApis, NetworkDomains: c.NetworkDomains}, nil)
-		}
-		// The pins of customer domains (SEC-042) are the only part of the
-		// app's capabilities the app bundle's meta carries.
-		if c := app.Capabilities; c != nil && len(c.NetworkPins) > 0 {
-			pinned = capabilitiesTable(b, nil, c.NetworkPins)
-		}
 	}
+	capabilities := u.capabilitiesOf(b, o)
 	nameOff, keyOff := b.CreateString(name), b.CreateString(key)
 	compiler, schemaVersion, minRuntime := b.CreateString(u.opts.Version), b.CreateString(schema.CurrentVersion), b.CreateString(app.MinRuntimeVersion)
 	tv := triggerTables(b, u.ownTriggers(o))
@@ -1188,7 +1170,7 @@ func (u *unit) metaSection(o *out) {
 		fbs.MetaAddSupportedLocales(b, locales)
 		fbs.MetaAddEntryRoute(b, entryRoute)
 		fbs.MetaAddFlags(b, flags)
-		addOptional(b, pinned, fbs.MetaAddCapabilities)
+		addOptional(b, capabilities, fbs.MetaAddCapabilities)
 		if app.NativeCatalogue != "" {
 			fbs.MetaAddNativeCatalogue(b, createUUID(b, app.NativeCatalogue))
 		}
@@ -1201,6 +1183,35 @@ func (u *unit) metaSection(o *out) {
 		addOptional(b, push, fbs.MetaAddPush)
 	}
 	o.add(bundle.SectionMeta, o.id, finish(b, fbs.MetaEnd(b), bundle.SectionMeta))
+}
+
+// capabilitiesOf writes the capabilities table of a bundle's meta: a
+// plugin's declaration (SEC-080), or for the app the device APIs and
+// domains it approves, which its own triggers may use (SEC-080), and the
+// pins of its customer domains (SEC-042). 0 when an app declares none.
+func (u *unit) capabilitiesOf(b *flatbuffers.Builder, o *out) flatbuffers.UOffsetT {
+	if o.pl != nil {
+		return capabilitiesTable(b, o.pl.doc.Capabilities, nil)
+	}
+	c := u.project.App.Doc.Capabilities
+	if c == nil {
+		return 0
+	}
+	return capabilitiesTable(b, &schema.Capabilities{DeviceApis: c.DeviceApis, NetworkDomains: c.NetworkDomains}, c.NetworkPins)
+}
+
+// pluginIDs writes the ids of the plugins the app lists, in the app's
+// order.
+func (u *unit) pluginIDs(b *flatbuffers.Builder) flatbuffers.UOffsetT {
+	var ids [][16]byte
+	for _, k := range u.project.App.Doc.Plugins {
+		for _, pl := range u.plugins {
+			if pl.key == k {
+				ids = append(ids, uuidBytes(pl.doc.ID))
+			}
+		}
+	}
+	return uuidVector(b, ids)
 }
 
 // addOptional adds an optional field to the table being built, unless its
@@ -1336,8 +1347,8 @@ func componentEntries(b *flatbuffers.Builder, pl *plugin) flatbuffers.UOffsetT {
 }
 
 // capabilitiesTable writes what a plugin may use (SEC-080, SEC-102), and
-// for the app the pins of its customer API domains (SEC-042), by domain
-// and sorted, so equal documents give equal bytes (CMP-002).
+// for the app also the pins of its customer API domains (SEC-042), by
+// domain and sorted, so equal documents give equal bytes (CMP-002).
 func capabilitiesTable(b *flatbuffers.Builder, c *schema.Capabilities, pins map[string][]string) flatbuffers.UOffsetT {
 	if c == nil {
 		c = &schema.Capabilities{}
