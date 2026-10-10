@@ -12,18 +12,18 @@ import 'dart:io';
 
 import 'package:cronet_http/cronet_http.dart';
 import 'package:cupertino_http/cupertino_http.dart';
-import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:plux_flutter/src/platform/native_pinned_http.dart';
 import 'package:plux_flutter/src/platform/pinned_http.dart';
+import 'package:plux_flutter/src/platform/runtime_channel.dart';
 import 'package:plux_flutter/src/runtime_info.dart';
 import 'package:plux_flutter/src/security/pins.dart';
 import 'package:plux_flutter/src/store/kv_store.dart';
 import 'package:plux_flutter/src/sync/api_client.dart';
 import 'package:plux_flutter/src/sync/sync_engine.dart';
 
-const _channel = MethodChannel('dev.plux/runtime');
+const _channel = RuntimeChannel();
 
 /// The non-backed-up directory the platform gives the runtime.
 Future<String> platformStorageDirectory() async {

@@ -77,7 +77,7 @@ void main() {
         );
         router.go('/plux/vault');
         await run.settled(tester);
-        expect(find.text('fallback PLX-4102'), findsOneWidget);
+        expect(find.text('fallback PLX-6002'), findsOneWidget);
         router.go('/plux/count?n=3');
         await run.settled(tester);
         expect(find.text('Count 3'), findsOneWidget);

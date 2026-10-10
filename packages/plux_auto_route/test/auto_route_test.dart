@@ -71,7 +71,7 @@ void main() {
         expect(find.text('Login from account'), findsOneWidget);
         unawaited(router.pushPath<void>('/plux/vault'));
         await run.settled(tester);
-        expect(find.text('fallback PLX-4102'), findsOneWidget);
+        expect(find.text('fallback PLX-6002'), findsOneWidget);
         unawaited(router.pushPath<void>('/plux/count?n=3'));
         await run.settled(tester);
         expect(find.text('Count 3'), findsOneWidget);

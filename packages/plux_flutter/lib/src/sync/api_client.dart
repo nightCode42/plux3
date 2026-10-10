@@ -367,7 +367,11 @@ final class PluxApiClient {
       'dpopPublicKeyJwk': base64.encode(
         utf8.encode(jsonEncode(key.publicKey.jwk)),
       ),
-      'keyStorage': _keyStorage(key.storage),
+      // Development evidence proves nothing about the key, so the device
+      // claims only software storage with it (SEC-008).
+      'keyStorage': _keyStorage(
+        evidence is DevelopmentEvidence ? KeyStorage.software : key.storage,
+      ),
       'evidence': _evidence(evidence),
     });
     final d = r['device'];

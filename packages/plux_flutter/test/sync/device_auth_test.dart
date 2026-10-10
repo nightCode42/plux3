@@ -254,8 +254,9 @@ void main() {
       expect(rig.attestation.assertedHashes, hasLength(1));
     });
 
-    test('development evidence registers a software key [SEC-008]', () async {
-      final rig = _Rig()..keys.storage = KeyStorage.software;
+    test('development evidence registers a software key, whatever the key '
+        'storage, since it proves nothing about the key [SEC-008]', () async {
+      final rig = _Rig()..keys.storage = KeyStorage.secureEnclave;
       await rig.auth.token();
       final register = rig.at(_registerPath).single.body;
       expect(register['keyStorage'], 'KEY_STORAGE_SOFTWARE');
@@ -272,6 +273,10 @@ void main() {
         (KeyStorage.software, 'KEY_STORAGE_SOFTWARE'),
       ]) {
         final rig = _Rig()..keys.storage = storage;
+        rig.attestation.evidence = AndroidEvidence(
+          keyAttestationChain: [Uint8List(1)],
+          playIntegrityToken: 'token',
+        );
         await rig.auth.token();
         expect(rig.at(_registerPath).single.body['keyStorage'], name);
       }

@@ -19,9 +19,10 @@ import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/platform/runtime_channel.dart';
 import 'package:plux_flutter/src/security/attestation.dart';
 
-const _channel = MethodChannel('dev.plux/runtime');
+const _channel = RuntimeChannel();
 
 /// The platform's answer when it has no attestation service.
 const _unsupported = 'UNSUPPORTED';
@@ -90,7 +91,15 @@ final class PlatformAttestation implements Attestation {
   }) async {
     if (!_release) {
       try {
-        if (!await _supported()) return DevelopmentEvidence(buildId);
+        // A debug or profile build with no attestation service, or on
+        // Android with no Play Integrity project configured, offers
+        // development evidence; the server accepts it only where the
+        // development provider is enabled (SEC-008).
+        if (!await _supported() ||
+            (_platform == TargetPlatform.android &&
+                cloudProjectNumber == null)) {
+          return DevelopmentEvidence(buildId);
+        }
         return await _attest(challenge, jkt, keyAttestationChain);
       } on PluxException catch (e) {
         if (e.details['platformCode'] == _unsupported) {

@@ -46,6 +46,16 @@ type stackOptions struct {
 	serverYAML string
 }
 
+// deviceAddr is fixed when a device runs the flows (PLUX_E2E_DEVICE): the
+// device reaches the server through a reverse forward of that port
+// (test/e2e/android.sh). Otherwise the stack takes a free port.
+func deviceAddr(fixed string) string {
+	if os.Getenv("PLUX_E2E_DEVICE") != "" {
+		return fixed
+	}
+	return "127.0.0.1:0"
+}
+
 // freeAddr returns a loopback address nothing listens on, which the caller
 // is about to bind. A fixed port would let a second process (another test
 // run, another checkout) answer the readiness probe of a server that never

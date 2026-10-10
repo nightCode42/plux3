@@ -259,6 +259,17 @@ void main() {
       },
     );
 
+    test('a debug build on Android with no Play Integrity project gets '
+        'development evidence [SEC-008]', () async {
+      platform({'attestationSupported': true});
+      final evidence = await _attestation(
+        TargetPlatform.android,
+        cloudProjectNumber: null,
+      ).attest(challenge: _challenge, jkt: _jkt, keyAttestationChain: _chain);
+      expect(evidence, isA<DevelopmentEvidence>());
+      expect(calls.map((c) => c.method), isNot(contains('integrityToken')));
+    });
+
     test('a debug build does not fall back on other failures', () async {
       platform({
         'attestationSupported': true,
