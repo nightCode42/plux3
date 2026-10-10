@@ -189,6 +189,7 @@ final class PluxConfig {
     this.environment = 'production',
     this.channel = 'production',
     this.rootKeys = const [],
+    this.pins = const [],
     this.baseline = 'assets/plux',
     this.startup = const StartupPolicy.useCacheThenSync(),
     this.activation = ActivationPolicy.atSafePoint,
@@ -204,6 +205,7 @@ final class PluxConfig {
     this.container,
     this.parentContainer,
     this.hostBuild = '',
+    this.playIntegrityCloudProjectNumber,
     this.storageDirectory,
     this.httpClient,
     this.webSocketClient,
@@ -245,6 +247,24 @@ final class PluxConfig {
   /// The embedded public keys (SEC-051). When empty, the runtime reads
   /// `keys.json` from the [baseline] directory of the host's assets.
   final List<PluxPublicKey> rootKeys;
+
+  /// The pins of the Plux server's TLS key (SEC-041): the base64 of the
+  /// SHA-256 of a certificate's SubjectPublicKeyInfo, as in RFC 7469, at
+  /// least two distinct ones, one of them a backup key not yet in use.
+  /// Connections to the [endpoint]'s host are accepted only after the
+  /// platform has validated the certificate chain and the key matches a
+  /// pin; a mismatch fails the request with `PLX-6020` and is reported.
+  /// Pins are updated later only through signed update metadata (SEC-050).
+  ///
+  /// A release build whose [endpoint] is `https` and that has no pins
+  /// fails `Plux.initialize`. Debug and profile builds, and endpoints that
+  /// are not `https` (a local development server), may leave it empty and
+  /// run unpinned. A custom [httpClient] is the host's own and is not
+  /// pinned by Plux. On Android and iOS a pin may be the key of any
+  /// certificate in the server's chain, such as the intermediate that
+  /// issues it; on `dart:io` platforms (desktop development) only the leaf
+  /// is visible, so a pin there is a leaf key.
+  final List<String> pins;
 
   /// The asset directory `plux pull` wrote the baseline to (SYN-007), or
   /// null for none.
@@ -295,6 +315,11 @@ final class PluxConfig {
   /// The host app's build, reported at registration; at most 64 ASCII
   /// characters, the server's limit.
   final String hostBuild;
+
+  /// The Google Cloud project number Play Integrity standard requests are
+  /// made under (SEC-003); required on Android release builds, ignored
+  /// elsewhere.
+  final int? playIntegrityCloudProjectNumber;
 
   /// Where the release store lives; the platform's non-backed-up app
   /// storage when null.

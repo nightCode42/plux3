@@ -25,6 +25,9 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | `app.plugins` | count | 200 | 80% | 1000 | installation, organization, app | P1 | SCH-005 | Plugins per app. |
 | `asset.fileSize` | bytes | 10485760 | 80% | 104857600 | installation, organization, app | P2 | SRV-060, AST-003 | Size of one asset file, checked at upload and again at publish. |
 | `asset.imagePixels` | count | 40000000 | 80% | 100000000 | installation | P2 | SRV-060, CMP-030 | Pixels of one image asset, width times height, checked before it is decoded so that a small file cannot expand into a huge image. |
+| `attest.appAttestObjectBytes` | bytes | 65536 | 80% | 262144 | installation | P6 | SEC-004 | Size of an App Attest attestation object or assertion. |
+| `attest.keyAttestationChainCerts` | count | 10 | 80% | 16 | installation | P6 | SEC-002 | Certificates an Android Key Attestation chain may hold. |
+| `attest.playIntegrityTokenBytes` | bytes | 16384 | 80% | 65536 | installation | P6 | SEC-003 | Size of a Play Integrity token the server accepts. |
 | `auth.failedSignIns` | count | 10 | 80% | 1000 | installation | P2 | SEC-100 | Failed passwords or one-time codes one account may present in fifteen minutes before sign-in is refused. |
 | `bundle.deviceFunctionModuleSize` | bytes | 4194304 | 80% | 67108864 | installation, organization, app, plugin | P7 | FN-050 | Size of the WebAssembly module of the device-placed functions of one plugin. |
 | `bundle.pageSectionSize` | bytes | 1048576 | 80% | 16777216 | installation, organization, app, plugin | P1 | BND-010 | Size of one page section in a bundle. |
@@ -60,6 +63,8 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | `document.fileSize` | bytes | 8388608 | 80% | 67108864 | installation, organization | P1 | SCH-006 | Size of one document file in the project layout, checked before parsing. |
 | `document.jsonDepth` | count | 512 | 80% | 4096 | installation | P1 | SCH-003 | Nesting of arrays and objects in one document, checked while parsing. |
 | `document.stringPropSize` | bytes | 65536 | 80% | 1048576 | installation, organization, app, plugin | P1 | SCH-005 | Size of one string prop value, in UTF-8 bytes. |
+| `dpop.jtiBytes` | bytes | 64 | 80% | 256 | installation | P6 | SEC-021 | Length of a DPoP proof identifier. |
+| `dpop.proofBytes` | bytes | 8192 | 80% | 32768 | installation | P6 | SEC-021 | Size of a DPoP proof. |
 | `dpop.replayCacheEntries` | count | 1000000 | 80% | 100000000 | installation | P6 | SEC-023, LIM-004 | Proof identifiers the DPoP replay cache holds. |
 | `gateway.requestBytes` | bytes | 1048576 | 80% | 33554432 | installation, organization, app | P6 | SEC-031, LIM-004 | Bytes of request body the gateway forwards to an upstream. |
 | `gateway.requestsPerMinutePerDevice` | count | 600 | 80% | 10000 | installation, organization, app | P6 | SEC-031, LIM-004 | Gateway requests one device may send per minute. |
@@ -95,3 +100,4 @@ Every size and count in Plux is governed by one registry, `schema/limits.json` (
 | `state.secureBytes` | bytes | 65536 | 80% | 1048576 | installation, organization, app | P5 | STA-003, LIM-004 | Bytes the secure state of one app may take in the runtime's local store (plain; secure state is the encrypted one, plan p5 B6); writes beyond it stay in memory and are reported. |
 | `telemetry.bufferBytes` | bytes | 262144 | 80% | 4194304 | installation, organization, app | P3 | ANL-002 | The size of the runtime's buffer of unsent telemetry events; the oldest are dropped first. |
 | `telemetry.eventsPerRequest` | count | 500 | 80% | 5000 | installation, organization, app | P2 | SEC-104 | Runtime events one telemetry request may carry. |
+| `updateMetadata.bytes` | bytes | 1048576 | 80% | 4194304 | installation | P6 | SEC-050 | Size of one update metadata file (root, snapshot or timestamp) a device accepts and the server serves. |

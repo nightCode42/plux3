@@ -241,9 +241,14 @@ type RefreshDeviceTokenResponse struct {
 	AccessToken string                 `protobuf:"bytes,1,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
 	ExpiresAt   *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	// token_type is "DPoP" (SEC-020).
-	TokenType     string `protobuf:"bytes,3,opt,name=token_type,json=tokenType,proto3" json:"token_type,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	TokenType string `protobuf:"bytes,3,opt,name=token_type,json=tokenType,proto3" json:"token_type,omitempty"`
+	// assurance_level is the device's assurance level, "AL0" to "AL3": the
+	// value of the token's `al` claim, which the server computed from the
+	// device's verified evidence (SEC-007). The runtime enforces pages,
+	// routes and data sources against it.
+	AssuranceLevel string `protobuf:"bytes,4,opt,name=assurance_level,json=assuranceLevel,proto3" json:"assurance_level,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *RefreshDeviceTokenResponse) Reset() {
@@ -293,6 +298,13 @@ func (x *RefreshDeviceTokenResponse) GetExpiresAt() *timestamppb.Timestamp {
 func (x *RefreshDeviceTokenResponse) GetTokenType() string {
 	if x != nil {
 		return x.TokenType
+	}
+	return ""
+}
+
+func (x *RefreshDeviceTokenResponse) GetAssuranceLevel() string {
+	if x != nil {
+		return x.AssuranceLevel
 	}
 	return ""
 }
@@ -440,13 +452,14 @@ const file_plux_v1_token_proto_rawDesc = "" +
 	"\x14app_attest_assertion\x18\x02 \x01(\fH\x00R\x12appAttestAssertion\x122\n" +
 	"\x14play_integrity_token\x18\x03 \x01(\tH\x00R\x12playIntegrityTokenB\n" +
 	"\n" +
-	"\bevidence\"\x99\x01\n" +
+	"\bevidence\"\xc2\x01\n" +
 	"\x1aRefreshDeviceTokenResponse\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x129\n" +
 	"\n" +
 	"expires_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12\x1d\n" +
 	"\n" +
-	"token_type\x18\x03 \x01(\tR\ttokenType\"\x89\x01\n" +
+	"token_type\x18\x03 \x01(\tR\ttokenType\x12'\n" +
+	"\x0fassurance_level\x18\x04 \x01(\tR\x0eassuranceLevel\"\x89\x01\n" +
 	"\x18ExchangeUserTokenRequest\x12#\n" +
 	"\rsubject_token\x18\x01 \x01(\tR\fsubjectToken\x12,\n" +
 	"\x12subject_token_type\x18\x02 \x01(\tR\x10subjectTokenType\x12\x1a\n" +

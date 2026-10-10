@@ -12,7 +12,7 @@ import 'package:plux_flutter/plux_flutter.dart';
 import 'package:plux_flutter/src/core/runtime.dart' show RuntimeOverrides;
 // ignore: implementation_imports
 import 'package:plux_flutter/src/sync/sync_engine.dart'
-    show MemoryCredentialStore;
+    show MemoryCredentialStore, MemorySecretStore;
 
 void main() {
   final binding = LiveTestWidgetsFlutterBinding.ensureInitialized();
@@ -32,7 +32,10 @@ void main() {
       binding: binding,
       initialize: (c) => Plux.initializeWith(
         c,
-        const RuntimeOverrides(credentials: MemoryCredentialStore.new),
+        const RuntimeOverrides(
+          credentials: MemoryCredentialStore.new,
+          configSecrets: MemorySecretStore.new,
+        ),
       ),
     ).run();
     expect(result.plugins, 50);
@@ -74,7 +77,10 @@ void main() {
       binding: binding,
       initialize: (c) => Plux.initializeWith(
         c,
-        const RuntimeOverrides(credentials: MemoryCredentialStore.new),
+        const RuntimeOverrides(
+          credentials: MemoryCredentialStore.new,
+          configSecrets: MemorySecretStore.new,
+        ),
       ),
     ).run();
     expect(result.samples.keys.toSet(), {

@@ -13,6 +13,8 @@ import 'package:plux_flutter/src/sync/api_client.dart';
 import 'package:plux_flutter/src/sync/downloader.dart';
 import 'package:plux_flutter/src/sync/sync_event.dart';
 
+import 'fake_device.dart';
+
 void main() {
   test('the installed digest matches the server\'s vector [NFR-006]', () {
     final digest = installedDigest({'loans': 'bb' * 32, '': 'aa' * 32});
@@ -68,7 +70,10 @@ void main() {
     final client = PluxApiClient(
       MockClient((req) async {
         expect(req.headers['connect-protocol-version'], '1');
-        expect(req.url.path, '/base/plux.v1.TokenService/IssueDeviceToken');
+        expect(
+          req.url.path,
+          '/base/plux.v1.DeviceService/CreateRegistrationChallenge',
+        );
         return http.Response(
           jsonEncode({'code': 'permission_denied', 'message': 'no'}),
           403,
@@ -78,7 +83,7 @@ void main() {
       Uri.parse('https://plux.example/base'),
     );
     try {
-      await client.token(const DeviceCredential('d', 's'));
+      await client.registrationChallenge(appId: 'a', environment: 'e');
       fail('no error');
     } on ApiError catch (e) {
       expect(
@@ -110,7 +115,7 @@ void main() {
       Uri.parse('https://x/'),
     );
     await expectLater(
-      broken.token(const DeviceCredential('d', 's')),
+      broken.registrationChallenge(appId: 'a', environment: 'e'),
       throwsA(isA<ApiError>().having((e) => e.status, 'status', 0)),
     );
     final garbage = PluxApiClient(
@@ -118,12 +123,12 @@ void main() {
       Uri.parse('https://x/'),
     );
     await expectLater(
-      garbage.token(const DeviceCredential('d', 's')),
+      garbage.registrationChallenge(appId: 'a', environment: 'e'),
       throwsA(isA<ApiError>().having((e) => e.code, 'code', 'unknown')),
     );
     expect(
-      const DeviceCredential('d', 'secret').toString(),
-      isNot(contains('secret')),
+      DeviceCredential('d', 'jkt-value').toString(),
+      isNot(contains('jkt-value')),
     );
   });
 
@@ -150,9 +155,9 @@ void main() {
         }),
         Uri.parse('https://x'),
       );
-      await client.reportInstalled('t', 'd', 3);
+      await client.reportInstalled(fakeToken('t'), 'd', 3);
       final m = await client.manifest(
-        token: 't',
+        token: fakeToken('t'),
         appId: 'a',
         environment: 'e',
         channel: 'c',
@@ -286,4 +291,31 @@ void main() {
     );
     expect(failed.toTelemetry()['code'], 'PLX-3002');
   });
+
+  // Verifies: SEC-041.
+  test(
+    'a failed certificate pin is not mistaken for an outage [SEC-041]',
+    () async {
+      final client = PluxApiClient(
+        MockClient(
+          (_) async => throw const PluxException(
+            PluxErrorCode.certificatePinMismatch,
+            'pinned',
+            details: {'host': 'plux.example'},
+          ),
+        ),
+        Uri.parse('https://plux.example/'),
+      );
+      await expectLater(
+        client.registrationChallenge(appId: 'a', environment: 'e'),
+        throwsA(
+          isA<PluxException>().having(
+            (e) => e.code,
+            'code',
+            PluxErrorCode.certificatePinMismatch,
+          ),
+        ),
+      );
+    },
+  );
 }

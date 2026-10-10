@@ -243,9 +243,22 @@ func (u *unit) checkSources(pl *plugin, sources []schema.DataSource, file string
 		case len(s.Config) > 0:
 			d.config = u.inferred(literalCtx(pl, file, ptr+"/config"), s.Config)
 		}
+		u.checkDirectAssurance(s, file, ptr)
 		out = append(out, d)
 	}
 	return out
+}
+
+// checkDirectAssurance warns about a source that reaches its origin
+// directly and asks for an assurance level: only the gateway can enforce
+// the level on the server, so on a direct call the device alone does
+// (PLX-1504, SEC-030).
+func (u *unit) checkDirectAssurance(s *schema.DataSource, file, ptr string) {
+	if s.Route != schema.DataSourceRouteDirect || s.RequiresAssurance == "" || s.RequiresAssurance == schema.AssuranceLevelAL0 {
+		return
+	}
+	u.report(plxerr.DirectSourceAssuranceUnenforceable, file, ptr+"/requiresAssurance",
+		"data source %q is direct and requires %s, which only the device enforces", s.Name, s.RequiresAssurance)
 }
 
 // checkDecls checks the app's and each plugin's declarations that the

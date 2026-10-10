@@ -89,7 +89,7 @@ func Build(ctx context.Context, cfg *config.Config, log *slog.Logger, version st
 		return fail(err)
 	}
 
-	services, jobClient, err := buildWork(ctx, cfg, log, db, shared, limitSet, store)
+	services, jobClient, err := buildWork(ctx, cfg, log, metrics, db, shared, limitSet, store)
 	if err != nil {
 		return fail(err)
 	}
@@ -103,14 +103,16 @@ func Build(ctx context.Context, cfg *config.Config, log *slog.Logger, version st
 		return fail(err)
 	}
 	if cfg.Has(config.RoleAPI) {
-		srv.RegisterAPI(services)
+		if err := srv.RegisterAPI(services); err != nil {
+			return fail(err)
+		}
 	}
 	return &Built{Server: srv, Close: closeAll}, nil
 }
 
 // buildWork assembles the domain services and the job client that runs
 // their background work (SRV-024).
-func buildWork(ctx context.Context, cfg *config.Config, log *slog.Logger, db *storage.DB, shared cache.Cache, set limits.Set, store objects.Store) (*Services, *jobs.Client, error) {
+func buildWork(ctx context.Context, cfg *config.Config, log *slog.Logger, metrics *observability.Metrics, db *storage.DB, shared cache.Cache, set limits.Set, store objects.Store) (*Services, *jobs.Client, error) {
 	backend, err := BuildSigning(cfg)
 	if err != nil {
 		return nil, nil, err
@@ -120,7 +122,7 @@ func buildWork(ctx context.Context, cfg *config.Config, log *slog.Logger, db *st
 			slog.String("directory", cfg.Signing.Directory))
 	}
 	queue := &JobQueue{}
-	deps := WorkDeps{Objects: store, Queue: queue}
+	deps := WorkDeps{Objects: store, Queue: queue, Log: log, Metrics: metrics}
 	if cfg.Has(config.RoleWorker) {
 		// Only the worker transcodes and signs: compiling the codecs costs
 		// seconds of CPU the api role need not pay, and the api role must
@@ -153,11 +155,13 @@ func buildWork(ctx context.Context, cfg *config.Config, log *slog.Logger, db *st
 		jobs.AddWorker(workers, &manifestWorker{svc: services})
 		jobs.AddWorker(workers, &deltaWorker{svc: services})
 	}
+	periodic := append(MaintenanceJobs(workers, services, log),
+		CheckpointJobs(workers, services, cfg.Audit.CheckpointInterval.Duration(), log)...)
 	jobClient, err := jobs.New(jobs.Options{
 		Pool:     db.Pool(),
 		Workers:  workers,
 		Run:      cfg.Has(config.RoleWorker),
-		Periodic: MaintenanceJobs(workers, services, log),
+		Periodic: periodic,
 		Log:      log,
 	})
 	if err != nil {

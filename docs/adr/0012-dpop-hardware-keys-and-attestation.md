@@ -182,3 +182,41 @@ balancers lose the binding; no nonce or per-request freshness.
 ### Option 3: bearer tokens plus attestation per request
 
 Simple, but Play Integrity's quota and latency rule it out, and tokens stay replayable.
+
+## Revision (2026-10-07, P6 S2: decisions taken while building the verifiers)
+
+- **Token key (maintainer):** the token signing key is a dedicated ES256 key per
+  environment class held by `signing/`, reached by the `api` role through a sign-only
+  capability (ADR-0006, Revision). Tokens carry `typ: at+jwt` and a `kid`; a production
+  environment refuses a development-class token and the reverse (`SEC-056`).
+- **CBOR:** in-house. The decoder the WebAuthn code already had (ADR-0026) moved to
+  `internal/cbor`, bounded and fuzzed, and App Attest uses it; `fxamacker/cbor` is not a
+  dependency.
+- **Binding:** Play Integrity's `requestHash` is base64url(SHA-256(challenge ‖ `jkt`)) and
+  App Attest's `clientDataHash` is SHA-256(challenge ‖ `jkt`), so both bind the evidence to
+  the registration challenge and to the DPoP key. Android Key Attestation attests the DPoP
+  key itself: the chain's leaf key must equal the registered key.
+- **Roots (maintainer):** Google's two Key Attestation roots and Apple's App Attestation
+  root are committed unmodified under `backend/internal/attest/*/roots/` and embedded; a
+  test pins each SHA-256 fingerprint. `.gitignore`, `AGENTS.md` and the security practices
+  name this as the one exception to "no certificates in the repository".
+- **Input bounds (maintainer):** the size and count bounds of the verifiers are registry
+  limits (`LIM-001`): `attest.keyAttestationChainCerts`, `attest.playIntegrityTokenBytes`,
+  `attest.appAttestObjectBytes`, `dpop.proofBytes`, `dpop.jtiBytes`.
+- **Sentinel:** the Valkey client follows Sentinel failover to the promoted replica; it
+  never reads from replicas, since rate-limit counters and the replay cache need the
+  master's view.
+- **Configuration (maintainer, 2026-10-08):** attestation trust is configured per app
+  (`attestation.apps.<appID>`: Android packages and signing-certificate digests, the Play
+  Console keys, the iOS App ID and App Attest environment) until the per-app security
+  configuration API carries it; `attestation.developmentProvider` (default `false`) enables
+  the development provider for an installation, and production environments refuse it
+  regardless. The replay cache uses `cache.valkeyURL`, which accepts a Sentinel URL
+  (`valkeys+sentinel://…/<master>`); there is no second Sentinel list (spec 1.4.1, App. H.1).
+- **Wire details:** token refresh and re-attestation are authenticated by the DPoP proof
+  alone; an iOS refresh carries an App Attest assertion over SHA-256 of that proof, and an
+  Android refresh that requires Play Integrity binds the token's request hash to the same
+  digest. A replayed `jti` is remembered for twice the `iat` window plus 60 seconds, since a
+  proof dated ahead stays acceptable for two windows. Revocation is published to the shared
+  cache (`device:revoked:<jkt>`, kept for the longest token lifetime), so every replica
+  refuses a revoked device at once.

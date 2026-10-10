@@ -7,17 +7,20 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/ecdsa"
 	"crypto/ed25519"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"io"
 	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -25,6 +28,7 @@ import (
 
 	"github.com/nightCode42/plux3/backend/internal/bundle"
 	"github.com/nightCode42/plux3/backend/internal/delta"
+	"github.com/nightCode42/plux3/backend/internal/device/devicetest"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1/pluxv1connect"
 )
@@ -38,8 +42,8 @@ func TestPublishWithTheCLIAndSyncADevice(t *testing.T) {
 	if testing.Short() {
 		t.Skip("builds the CLI")
 	}
-	st := startStack(t, "127.0.0.1:18093")
-	ctx, server, dir, app := st.ctx, st.server, st.dir, st.app
+	st := startStack(t, "127.0.0.1:0")
+	server, dir, app := st.server, st.dir, st.app
 	run := func(want int, args ...string) []byte {
 		t.Helper()
 		return st.run(t, want, args...)
@@ -109,20 +113,14 @@ func TestPublishWithTheCLIAndSyncADevice(t *testing.T) {
 	}
 	run(2, "release", "promote", "-C", project, "1") // --env missing
 
-	// A device registers and syncs from nothing.
+	// A device registers with a key and a development build's evidence,
+	// refreshes its token with a DPoP proof and syncs from nothing
+	// (SEC-021, SEC-025).
 	hc := &http.Client{Timeout: 30 * time.Second}
-	devices := pluxv1connect.NewDeviceServiceClient(hc, server)
-	reg, err := devices.RegisterDevice(ctx, connect.NewRequest(&pluxv1.RegisterDeviceRequest{AppId: app.ID, Environment: "staging", Platform: "android", RuntimeVersion: "1.0.0"}))
-	if err != nil {
-		t.Fatal(err)
-	}
-	tok, err := pluxv1connect.NewTokenServiceClient(hc, server).IssueDeviceToken(ctx, connect.NewRequest(&pluxv1.IssueDeviceTokenRequest{DeviceId: reg.Msg.GetDevice().GetId(), DeviceSecret: reg.Msg.GetDeviceSecret()}))
-	if err != nil {
-		t.Fatal(err)
-	}
-	manifests := pluxv1connect.NewManifestServiceClient(hc, server, connect.WithInterceptors(bearer(tok.Msg.GetAccessToken())))
+	dev := registerDevice(t, hc, server, app.ID, "staging")
+	manifests := pluxv1connect.NewManifestServiceClient(hc, server, connect.WithInterceptors(dev))
 	m1 := manifest(t, manifests, 1, nil)
-	ingestGzip(t, hc, server, tok.Msg.GetAccessToken())
+	ingestGzip(t, hc, server, dev)
 	pub0, _ := hex.DecodeString(keys.Keys[0].PublicKey)
 	if !ed25519.Verify(pub0, m1.GetSigned(), m1.GetSignatures()[0].GetSignature()) {
 		t.Fatal("the manifest does not verify with the pulled key")
@@ -168,7 +166,7 @@ func TestPublishWithTheCLIAndSyncADevice(t *testing.T) {
 // A device sends its events as a gzip-compressed Connect request (ADR-0034);
 // the decompressed message is bounded by api.requestSize, so a small body
 // that expands without bound is refused.
-func ingestGzip(t *testing.T, hc *http.Client, server, token string) {
+func ingestGzip(t *testing.T, hc *http.Client, server string, dev *deviceClient) {
 	t.Helper()
 	post := func(body []byte) (int, string) {
 		t.Helper()
@@ -183,7 +181,7 @@ func ingestGzip(t *testing.T, hc *http.Client, server, token string) {
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Content-Encoding", "gzip")
 		req.Header.Set("Connect-Protocol-Version", "1")
-		req.Header.Set("Authorization", "Bearer "+token)
+		dev.sign(req.Header, pluxv1connect.TelemetryServiceIngestEventsProcedure)
 		res, err := hc.Do(req)
 		if err != nil {
 			t.Fatal(err)
@@ -273,20 +271,102 @@ func copyTree(t *testing.T, from, to string) {
 	}
 }
 
-// bearer adds a device token to every call.
-type bearer string
+// deviceClient adds a device's credentials to every call the way the
+// runtime does: a DPoP proof bound to the access token (or none for the
+// token endpoint), the server's latest nonce, and one retry when the
+// server asks for a new one.
+type deviceClient struct {
+	t      *testing.T
+	key    *ecdsa.PrivateKey
+	server string
 
-func (b bearer) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
+	mu           sync.Mutex
+	token, nonce string
+}
+
+// sign adds the credentials for a procedure to a request header.
+func (c *deviceClient) sign(h http.Header, procedure string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	p := devicetest.Proof{Method: http.MethodPost, URL: c.server + procedure, Nonce: c.nonce}
+	if c.token != "" && procedure != pluxv1connect.TokenServiceRefreshDeviceTokenProcedure {
+		p.AccessToken = c.token
+		h.Set("Authorization", "DPoP "+c.token)
+	}
+	h.Set("DPoP", devicetest.SignProof(c.t, c.key, p))
+}
+
+// remember keeps the nonce a response or a refusal carried and reports
+// whether there was one.
+func (c *deviceClient) remember(header http.Header) bool {
+	nonce := header.Get("DPoP-Nonce")
+	if nonce != "" {
+		c.mu.Lock()
+		c.nonce = nonce
+		c.mu.Unlock()
+	}
+	return nonce != ""
+}
+
+// WrapUnary signs each unary call and retries it once with a new nonce.
+func (c *deviceClient) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
 	return func(ctx context.Context, r connect.AnyRequest) (connect.AnyResponse, error) {
-		r.Header().Set("Authorization", "Bearer "+string(b))
-		return next(ctx, r)
+		for attempt := 0; ; attempt++ {
+			c.sign(r.Header(), r.Spec().Procedure)
+			res, err := next(ctx, r)
+			var refusal *connect.Error
+			switch {
+			case err == nil:
+				c.remember(res.Header())
+			case errors.As(err, &refusal):
+				fresh := c.remember(refusal.Meta())
+				if attempt == 0 && fresh && strings.Contains(refusal.Meta().Get("WWW-Authenticate"), "use_dpop_nonce") {
+					continue
+				}
+			}
+			return res, err
+		}
 	}
 }
 
-func (bearer) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
+func (*deviceClient) WrapStreamingClient(next connect.StreamingClientFunc) connect.StreamingClientFunc {
 	return next
 }
 
-func (bearer) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
+func (*deviceClient) WrapStreamingHandler(next connect.StreamingHandlerFunc) connect.StreamingHandlerFunc {
 	return next
+}
+
+// registerDevice registers a development-build device in an environment
+// that is not production and refreshes its first access token.
+func registerDevice(t *testing.T, hc *http.Client, server, appID, environment string) *deviceClient {
+	t.Helper()
+	ctx := context.Background()
+	key, jwk := devicetest.NewKey(t)
+	dev := &deviceClient{t: t, key: key, server: server}
+	devices := pluxv1connect.NewDeviceServiceClient(hc, server)
+	challenge, err := devices.CreateRegistrationChallenge(ctx, connect.NewRequest(&pluxv1.CreateRegistrationChallengeRequest{AppId: appID, Environment: environment}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	reg, err := devices.RegisterAttestedDevice(ctx, connect.NewRequest(&pluxv1.RegisterAttestedDeviceRequest{
+		AppId: appID, Environment: environment, Platform: "android", RuntimeVersion: "1.0.0", HostBuild: "1",
+		Challenge: challenge.Msg.GetChallenge(), DpopPublicKeyJwk: jwk, KeyStorage: pluxv1.KeyStorage_KEY_STORAGE_SOFTWARE,
+		Evidence: &pluxv1.AttestationEvidence{Evidence: &pluxv1.AttestationEvidence_Development{Development: &pluxv1.DevelopmentEvidence{BuildId: "e2e"}}},
+	}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	tokens := pluxv1connect.NewTokenServiceClient(hc, server, connect.WithInterceptors(dev))
+	tok, err := tokens.RefreshDeviceToken(ctx, connect.NewRequest(&pluxv1.RefreshDeviceTokenRequest{DeviceId: reg.Msg.GetDevice().GetId()}))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if tok.Msg.GetTokenType() != "DPoP" {
+		t.Fatalf("the token type is %q", tok.Msg.GetTokenType())
+	}
+	dev.mu.Lock()
+	dev.token = tok.Msg.GetAccessToken()
+	dev.mu.Unlock()
+	return dev
 }

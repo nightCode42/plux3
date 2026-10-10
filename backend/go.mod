@@ -2,7 +2,7 @@ module github.com/nightCode42/plux3/backend
 
 go 1.27.0
 
-toolchain go1.27.1
+toolchain go1.27.2
 
 require (
 	connectrpc.com/connect v1.21.0
@@ -11,10 +11,12 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.20.6
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.113.4
 	github.com/getkin/kin-openapi v0.149.0
+	github.com/go-jose/go-jose/v4 v4.1.5
 	github.com/goccy/go-yaml v1.19.2
 	github.com/google/flatbuffers v25.9.23+incompatible
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/klauspost/compress v1.20.1
+	github.com/miekg/pkcs11 v1.1.2
 	github.com/prometheus/client_golang v1.24.1
 	github.com/riverqueue/river v0.47.0
 	github.com/riverqueue/river/riverdriver/riverpgxv5 v0.47.0

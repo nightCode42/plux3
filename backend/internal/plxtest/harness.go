@@ -25,7 +25,7 @@ var harnessTemplate string
 // Dependency says where the generated project gets plux_flutter from: a
 // version constraint from pub.dev, or a local checkout of the runtime.
 type Dependency struct {
-	// Version is a pub constraint such as ^0.3.0; used when Path is empty.
+	// Version is a pub constraint such as ^0.4.0; used when Path is empty.
 	Version string
 	// Path is the directory of a plux_flutter checkout.
 	Path string

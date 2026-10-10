@@ -19,17 +19,22 @@ import (
 	"google.golang.org/protobuf/types/known/fieldmaskpb"
 
 	"github.com/nightCode42/plux3/backend/internal/api"
+	"github.com/nightCode42/plux3/backend/internal/attest/playintegrity"
 	"github.com/nightCode42/plux3/backend/internal/audit"
 	"github.com/nightCode42/plux3/backend/internal/auth"
 	"github.com/nightCode42/plux3/backend/internal/cache"
 	"github.com/nightCode42/plux3/backend/internal/compiler/media"
 	"github.com/nightCode42/plux3/backend/internal/device"
+	"github.com/nightCode42/plux3/backend/internal/device/devicetest"
+	"github.com/nightCode42/plux3/backend/internal/devtoken"
 	"github.com/nightCode42/plux3/backend/internal/document"
+	"github.com/nightCode42/plux3/backend/internal/dpop"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1/pluxv1connect"
 	"github.com/nightCode42/plux3/backend/internal/release"
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 	"github.com/nightCode42/plux3/backend/internal/schema/uuid7"
+	"github.com/nightCode42/plux3/backend/internal/seccfg"
 	"github.com/nightCode42/plux3/backend/internal/signing"
 	"github.com/nightCode42/plux3/backend/internal/storage/idempotency"
 	"github.com/nightCode42/plux3/backend/internal/storage/objects"
@@ -97,13 +102,43 @@ type world struct {
 	token    pluxv1connect.TokenServiceClient
 	manifest pluxv1connect.ManifestServiceClient
 	native   pluxv1connect.NativeCatalogueServiceClient
+	secAdmin pluxv1connect.SecurityAdminServiceClient
 	control  pluxv1connect.ControlServiceClient
 	events   pluxv1connect.TelemetryServiceClient
 	devices  *device.Service
+	fakes    *deviceFakes
+	// base is the URL the world is served at, which proofs are bound to.
+	base string
+	// deviceAuth is the device authentication in front of the handlers.
+	deviceAuth api.DeviceAuth
+	// issuer mints access tokens, as the device service does, for tests
+	// that need a token the service would not issue.
+	issuer *devtoken.Issuer
 }
 
-func newWorld(t *testing.T) *world {
+func newWorld(t *testing.T) *world { return newWorldWith(t, worldConfig{}) }
+
+// worldConfig adjusts a world for tests that need to control time or the
+// security profile of an environment.
+type worldConfig struct {
+	// Now is the clock the device side runs on: the shared cache, the
+	// device service, the tokens, the proofs, the nonces and the replay
+	// memory. Nil means the wall clock.
+	Now func() time.Time
+	// Profiles returns an environment's security profile; nil means every
+	// environment is standard.
+	Profiles device.Profiles
+	// Windows, when set, gives the DPoP windows of an environment, as the
+	// security configuration does.
+	Windows func(ctx context.Context, appID, environmentID string) (time.Duration, time.Duration, error)
+}
+
+// newWorldWith is newWorld with the configuration applied.
+func newWorldWith(t *testing.T, cfg worldConfig) *world {
 	t.Helper()
+	if cfg.Now == nil {
+		cfg.Now = time.Now
+	}
 	ctx := context.Background()
 	db := storagetest.Open(t)
 	backend, err := signing.NewFile(t.TempDir())
@@ -112,7 +147,7 @@ func newWorld(t *testing.T) *world {
 	}
 	gen := uuids{g: uuid7.NewGenerator(time.Now, rand.Reader)}
 	log := audit.NewLog(gen, nil)
-	shared := cache.NewMemory(nil)
+	shared := cache.NewMemory(cfg.Now)
 	authService, err := auth.NewService(auth.Options{
 		DB: db, Audit: log, Cache: shared, Crypter: backend, IDs: gen, VerificationURI: "https://p.example/device",
 	})
@@ -142,17 +177,35 @@ func newWorld(t *testing.T) *world {
 		tenancyService.RegisterTrashKind(kind, k)
 	}
 	queue := &publishQueue{}
-	devices, err := device.NewService(device.Options{DB: db, IDs: gen})
+	fakes := &deviceFakes{key: &devicetest.KeyAttestor{}, play: &devicetest.IntegrityChecker{}, apple: &devicetest.AppAttestor{}, assert: &devicetest.AppAssertor{}}
+	// The server is created first so that the URL proofs are bound to is known.
+	srv := httptest.NewUnstartedServer(nil)
+	t.Cleanup(srv.Close)
+	base := "http://" + srv.Listener.Addr().String()
+	tokenSigner := devicetest.NewTokenSigner(t)
+	issuer := &devtoken.Issuer{Signer: tokenSigner, Issuer: base, Audience: base, Lifetime: 5 * time.Minute, Now: cfg.Now}
+	devices, err := device.NewService(device.Options{
+		DB: db, IDs: gen, Now: cfg.Now, Cache: shared, Audit: log, Tokens: issuer, Profiles: cfg.Profiles, DevelopmentProvider: true,
+		Attestors: device.Attestors{KeyAttestation: fakes.key, PlayIntegrity: fakes.play, AppAttest: fakes.apple, AppAssertions: fakes.assert},
+		AppTrust: func(context.Context, string) (device.TrustConfig, error) {
+			return device.TrustConfig{AndroidPackages: []string{"com.example.app"}, PlayIntegrity: &playintegrity.Keys{}, IOSAppID: "TEAMID.com.example.app"}, nil
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	secConfig, err := seccfg.New(seccfg.Options{DB: db, Audit: log, Tenancy: tenancyService, Now: cfg.Now})
 	if err != nil {
 		t.Fatal(err)
 	}
 	releases, err := release.NewService(release.Options{
 		DB: db, Audit: log, Tenancy: tenancyService, Documents: docs, Objects: files, IDs: gen, Jobs: queue, Signer: backend,
-		ProductionSigning: true, PublicBaseURL: "https://plux.example.com", Devices: devices,
+		ProductionSigning: true, PublicBaseURL: "https://plux.example.com", Devices: devices, SecurityConfig: secConfig,
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
+	secConfig.OnChange(releases.EnqueueEnvironmentManifests)
 	store, err := idempotency.NewStore(db, backend, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -177,10 +230,24 @@ func newWorld(t *testing.T) *world {
 	}
 	h := &api.Handlers{
 		Auth: authService, Tenancy: tenancyService, Documents: docs, Releases: releases, Devices: devices, Events: events,
-		Idempotency: store, Pages: pages, Limiter: limiter, Limits: set,
+		Idempotency: store, Pages: pages, Limiter: limiter, Limits: set, SecurityConfig: secConfig,
 	}
 	people := api.Authentication(authService, api.IdentityPublic, nil, limiter, set.Get(limits.APIRequestsPerMinute))
-	authn := api.DeviceAuthentication(devices, limiter, set.Get(limits.APIRequestsPerMinutePerDevice), people)
+	nonceKey := make([]byte, 32)
+	if _, err := rand.Read(nonceKey); err != nil {
+		t.Fatal(err)
+	}
+	nonces, err := dpop.NewNonces(nonceKey, 5*time.Minute, cfg.Now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	deviceAuth := api.DeviceAuth{
+		Devices: devices, Tokens: &devtoken.Verifier{Keys: tokenSigner.TokenKeys, Issuer: base, Audience: base, Now: cfg.Now},
+		Proofs: &dpop.Verifier{Nonces: nonces, Now: cfg.Now}, Nonces: nonces, Replay: dpop.NewReplay(shared, dpop.FailClosed, 1000, cfg.Now, nil), Now: cfg.Now,
+		BaseURL: base, Window: time.Minute, FallbackWindow: 15 * time.Second, Windows: cfg.Windows,
+		Limiter: limiter, PerDevice: set.Get(limits.APIRequestsPerMinutePerDevice), People: people,
+	}
+	authn := api.DeviceAuthentication(deviceAuth)
 	opts := connect.WithInterceptors(api.Interceptors(api.Deps{Before: []api.Around{authn}})...)
 	mux := http.NewServeMux()
 	for _, r := range []func() (string, http.Handler){
@@ -201,13 +268,16 @@ func newWorld(t *testing.T) *world {
 			return pluxv1connect.NewNativeCatalogueServiceHandler(h.NativeCatalogue(), opts)
 		},
 		func() (string, http.Handler) { return pluxv1connect.NewControlServiceHandler(h.Control(), opts) },
+		func() (string, http.Handler) {
+			return pluxv1connect.NewSecurityAdminServiceHandler(h.SecurityAdmin(), opts)
+		},
 		func() (string, http.Handler) { return pluxv1connect.NewTelemetryServiceHandler(h.Telemetry(), opts) },
 	} {
 		path, handler := r()
 		mux.Handle(path, handler)
 	}
-	srv := httptest.NewServer(mux)
-	t.Cleanup(srv.Close)
+	srv.Config.Handler = mux
+	srv.Start()
 	return &world{
 		auth:     authService,
 		assets:   assets,
@@ -227,10 +297,16 @@ func newWorld(t *testing.T) *world {
 		manifest: pluxv1connect.NewManifestServiceClient(srv.Client(), srv.URL),
 		native:   pluxv1connect.NewNativeCatalogueServiceClient(srv.Client(), srv.URL),
 		control:  pluxv1connect.NewControlServiceClient(srv.Client(), srv.URL),
+		secAdmin: pluxv1connect.NewSecurityAdminServiceClient(srv.Client(), srv.URL),
 		events:   pluxv1connect.NewTelemetryServiceClient(srv.Client(), srv.URL),
 		devices:  devices,
-		releases: releases,
-		queue:    queue,
+		fakes:    fakes,
+		base:     base,
+
+		deviceAuth: deviceAuth,
+		issuer:     issuer,
+		releases:   releases,
+		queue:      queue,
 	}
 }
 

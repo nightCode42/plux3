@@ -1,0 +1,37 @@
+{
+  "id": "01f0c450-6c00-7000-8000-0000000009a0",
+  "key": "state-gate",
+  "kind": "actionGraph",
+  "output": "GuardResult",
+  "page": "01f0c450-6c00-7000-8000-000000000242",
+  "schemaVersion": "1.0.0",
+  "steps": [
+    {
+      "action": "condition",
+      "branches": {
+        "else": "no",
+        "then": "yes"
+      },
+      "id": "gate",
+      "input": {
+        "when": {
+          "$expr": "app.counter >= 0"
+        }
+      }
+    },
+    {
+      "action": "stop",
+      "id": "yes",
+      "input": {
+        "result": "allow"
+      }
+    },
+    {
+      "action": "stop",
+      "id": "no",
+      "input": {
+        "result": "fallback"
+      }
+    }
+  ]
+}

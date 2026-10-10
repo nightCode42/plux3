@@ -128,6 +128,9 @@ abstract interface class DataContext {
 
   /// The local database that `database` sources watch, or null.
   PluxDatabase? get database;
+
+  /// The assurance level (0 to 3) this device has now (SEC-007).
+  int get assurance;
 }
 
 /// The state and loading of one source for one plugin.
@@ -196,6 +199,8 @@ final class DataSourceController extends ChangeNotifier {
     final gen = ++_generation;
     final mock = context.mocks.of(caller.pluginKey, spec.name);
     if (mock != null) return _mock(mock, rethrowing);
+    final refusal = assuranceRefusal();
+    if (refusal != null) return _fail(refusal, rethrowing);
     if (spec.kind == DataKind.webSocket || spec.kind == DataKind.sse) {
       // A stream's value is its latest message: it loads nothing, and
       // `subscribe` opens it (DAT-012).
@@ -222,6 +227,19 @@ final class DataSourceController extends ChangeNotifier {
     } on DataFailure catch (f) {
       if (gen == _generation) _fail(f, rethrowing);
     }
+  }
+
+  /// The failure that refuses the source on this device, or null: it asks
+  /// for an assurance level the device does not have (`PLX-6002`, SEC-007).
+  /// Nothing is requested then, so the refusal does not depend on the
+  /// server, which cannot enforce it on a direct call (`PLX-1504`).
+  DataFailure? assuranceRefusal() {
+    final have = context.assurance;
+    if (spec.requiresAssurance <= have) return null;
+    return DataFailure.assurance(
+      'source ${spec.name} requires assurance AL${spec.requiresAssurance}, '
+      'and this device has AL$have',
+    );
   }
 
   StreamSubscription<DbRows>? _watch;
@@ -295,6 +313,8 @@ final class DataSourceController extends ChangeNotifier {
     final page = spec.page;
     if (page == null || !_hasMore || _loading || _loadingMore) return;
     if (context.mocks.of(caller.pluginKey, spec.name) != null) return;
+    final refusal = assuranceRefusal();
+    if (refusal != null) return _fail(refusal, rethrowing);
     final gen = _generation;
     _set(() => _loadingMore = true);
     try {
@@ -332,6 +352,7 @@ final class DataSourceController extends ChangeNotifier {
       throw DataFailure.unavailable('source ${spec.name} is not a stream');
     }
     if (context.mocks.of(caller.pluginKey, spec.name) != null) return;
+    if (assuranceRefusal() case final refusal?) throw refusal;
     await unsubscribe();
     final params = {..._params(roots), ...input};
     _started = true;

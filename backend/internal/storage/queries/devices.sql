@@ -4,10 +4,68 @@ SELECT a.organization_id, e.id AS environment_id
   FROM apps a JOIN environments e ON e.app_id = a.id
  WHERE a.id = $1 AND e.key = $2 AND a.deleted_at IS NULL;
 
+-- name: FindEnvironmentForRegistration :one
+-- Runs in the registration scope, like FindAppForRegistration; it also
+-- says whether the environment is a production one (SEC-008).
+SELECT a.organization_id, e.id AS environment_id, e.production
+  FROM apps a JOIN environments e ON e.app_id = a.id
+ WHERE a.id = $1 AND e.key = $2 AND a.deleted_at IS NULL;
+
+-- name: FindEnvironmentForReattestation :one
+-- Runs in the registration scope; it says whether a device's environment
+-- is a production one (SEC-008).
+SELECT e.production FROM environments e JOIN apps a ON a.id = e.app_id
+ WHERE e.id = $1 AND a.deleted_at IS NULL;
+
 -- name: InsertDevice :one
 INSERT INTO devices (id, organization_id, app_id, environment_id, platform, os_version, runtime_version, host_build, secret_hash)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 RETURNING *;
+
+-- name: InsertAttestedDevice :one
+-- A device that registered with a DPoP key and verified attestation
+-- (SEC-001, SEC-003). It has no secret: its secret hash is empty, which
+-- no secret matches, until the column goes (DEP-030).
+INSERT INTO devices (id, organization_id, app_id, environment_id, platform, os_version, runtime_version, host_build,
+                     secret_hash, assurance_level, dpop_jkt, dpop_public_key, key_storage,
+                     attestation_provider, attestation_verdicts, attestation_risk_metric, attested_at,
+                     app_attest_key_id, app_attest_public_key, app_attest_counter, app_attest_receipt)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, ''::bytea, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+RETURNING *;
+
+-- name: UpdateDeviceAttestation :one
+-- Replaces what a fresh attestation proved (SEC-006). The App Attest
+-- columns change only for an iOS attestation, which brings a new key.
+UPDATE devices
+   SET assurance_level = sqlc.arg(assurance_level), key_storage = sqlc.arg(key_storage),
+       attestation_provider = sqlc.arg(attestation_provider), attestation_verdicts = sqlc.arg(attestation_verdicts)::text[],
+       attestation_risk_metric = sqlc.arg(attestation_risk_metric), attested_at = sqlc.arg(attested_at),
+       app_attest_key_id = COALESCE(sqlc.narg(app_attest_key_id)::bytea, app_attest_key_id),
+       app_attest_public_key = COALESCE(sqlc.narg(app_attest_public_key)::bytea, app_attest_public_key),
+       app_attest_counter = CASE WHEN sqlc.narg(app_attest_key_id)::bytea IS NULL THEN app_attest_counter
+                                 ELSE sqlc.arg(app_attest_counter)::bigint END,
+       app_attest_receipt = COALESCE(sqlc.narg(app_attest_receipt)::bytea, app_attest_receipt)
+ WHERE id = sqlc.arg(id) AND revoked_at IS NULL
+RETURNING *;
+
+-- name: RevokeDevice :execrows
+-- Does nothing for a device that is already revoked, so the first reason
+-- stands (SEC-006).
+UPDATE devices SET revoked_at = $2, revoked_reason = $3 WHERE id = $1 AND revoked_at IS NULL;
+
+-- name: DeleteDeviceTokens :execrows
+DELETE FROM device_tokens WHERE device_id = $1;
+
+-- name: GetDeviceByJKT :one
+-- Runs in the authentication scope.
+SELECT * FROM devices WHERE dpop_jkt = $1;
+
+-- name: AdvanceAppAttestCounter :execrows
+-- Stores the counter of a verified App Attest assertion only while the
+-- stored one is still the one it was checked against, so two concurrent
+-- refreshes with the same assertion cannot both succeed (SEC-025).
+UPDATE devices SET app_attest_counter = sqlc.arg(counter), last_seen_at = now()
+ WHERE id = sqlc.arg(id) AND app_attest_counter = sqlc.arg(previous) AND revoked_at IS NULL;
 
 -- name: GetDevice :one
 SELECT * FROM devices WHERE id = $1;
@@ -66,11 +124,11 @@ VALUES ($1, $2, $3, $4, $5);
 -- Runs in the authentication scope.
 SELECT t.id, t.organization_id, t.device_id, t.expires_at, d.app_id, d.environment_id, d.host_build
   FROM device_tokens t JOIN devices d ON d.id = t.device_id
- WHERE t.secret_hash = $1;
+ WHERE t.secret_hash = $1 AND d.revoked_at IS NULL;
 
 -- name: FindDeviceSecret :one
 -- Runs in the authentication scope.
-SELECT id, organization_id, secret_hash FROM devices WHERE id = $1;
+SELECT id, organization_id, secret_hash FROM devices WHERE id = $1 AND revoked_at IS NULL;
 
 -- name: ExpireDeviceTokens :execrows
 DELETE FROM device_tokens WHERE expires_at < $1;
@@ -124,8 +182,8 @@ DELETE FROM manifests m
                  ORDER BY n.issued_at DESC, n.id DESC LIMIT 1);
 
 -- name: UpsertEnvironmentKey :exec
-INSERT INTO environment_keys (environment_id, organization_id, key_id, algorithm, public_key)
-VALUES ($1, $2, $3, $4, $5)
+INSERT INTO environment_keys (environment_id, organization_id, key_id, algorithm, public_key, role, environment_type)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 ON CONFLICT DO NOTHING;
 
 -- name: ListEnvironmentKeys :many

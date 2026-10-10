@@ -81,6 +81,7 @@ final class PluxRenderer implements PageRenderer, RenderServices {
     required this.report,
     required this.failure,
     required this.imageCacheDirectory,
+    this.httpClient,
     this.assets = AssetDevice.plain,
     this.actions,
     this.data,
@@ -99,6 +100,10 @@ final class PluxRenderer implements PageRenderer, RenderServices {
 
   /// The configuration.
   final PluxConfig config;
+
+  /// Creates the HTTP client images are fetched with; the platform's, or
+  /// the configuration's, when null.
+  final http.Client Function()? httpClient;
 
   /// Reports a problem.
   final void Function(PluxException error) report;
@@ -454,7 +459,8 @@ final class PluxRenderer implements PageRenderer, RenderServices {
 
   /// Runs guard graph [guard] of [page] over the page's [params] (NAV-009,
   /// ADR-0040): its roots are the page's parameters and declared initial
-  /// state, `device`, `user` and `flags`; it may not navigate, and decides
+  /// state, `device`, `user` and `flags`, and the `app` and `plugin` state
+  /// [state] gives (B19 (a)); it may not navigate, and decides
   /// with the GuardResult it returns with `stop`. A guard that fails, or
   /// ends without a result, shows the fallback: guards fail closed. Pages
   /// with parameters that do not fit enter unguarded and show their error
@@ -465,8 +471,9 @@ final class PluxRenderer implements PageRenderer, RenderServices {
     PageRef page,
     UuidKey guard,
     Map<String, Object?> params,
-    PluxEnvironment? env,
-  ) async {
+    PluxEnvironment? env, {
+    Map<String, Object?> Function(String plugin)? state,
+  }) async {
     final services = actions;
     if (services == null) {
       return const GuardFallsBack('this runtime runs no action graphs');
@@ -493,7 +500,7 @@ final class PluxRenderer implements PageRenderer, RenderServices {
           ).resolve(v, pluginView.string),
         ),
       );
-      roots = _guardRoots(release, page, params, env, limits);
+      roots = _guardRoots(release, page, params, env, limits, state);
     } on PluxException catch (e) {
       report(e);
       return GuardFallsBack(e.message);
@@ -540,6 +547,7 @@ final class PluxRenderer implements PageRenderer, RenderServices {
     Map<String, Object?> params,
     PluxEnvironment? env,
     PxlLimits limits,
+    Map<String, Object?> Function(String plugin)? state,
   ) {
     final p = fbs.Page(page.section.data);
     final strings = p.strings ?? const <String>[];
@@ -577,7 +585,7 @@ final class PluxRenderer implements PageRenderer, RenderServices {
         }
       }
       if (params.keys.any((k) => !declared.contains(k))) return null;
-      final state = {
+      final pageState = {
         for (final e in p.state ?? const <fbs.StateEntry>[])
           if (e.computed == 0)
             str(e.name): toPxl(literal.resolve(e.$default, str)),
@@ -586,8 +594,9 @@ final class PluxRenderer implements PageRenderer, RenderServices {
       final view0 = dispatcher.views.isEmpty ? null : dispatcher.views.first;
       final locale = env?.locale ?? dispatcher.locale;
       return {
+        ...?state?.call(page.plugin),
         'params': typed,
-        'page': state,
+        'page': pageState,
         'device': deviceRoot(
           width: view0 == null
               ? 0
@@ -894,7 +903,8 @@ final class PluxRenderer implements PageRenderer, RenderServices {
         imageCacheDirectory,
         maxBytes: limits.valueOf(PluxLimit.runtimeImageDiskCacheBytes),
       ),
-      client: _client ??= (config.httpClient ?? platformHttpClient)(),
+      client: _client ??=
+          (httpClient ?? config.httpClient ?? platformHttpClient)(),
       maxBytes: limits.valueOf(PluxLimit.runtimeImageSize),
     );
   }

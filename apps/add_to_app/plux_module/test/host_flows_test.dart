@@ -12,8 +12,11 @@ import 'package:plux_flutter/plux_flutter.dart';
 // ignore: implementation_imports
 import 'package:plux_flutter/src/core/runtime.dart' show RuntimeOverrides;
 // ignore: implementation_imports
+import 'package:plux_flutter/src/security/software_keys.dart'
+    show DevelopmentAttestation, SoftwareDeviceKeys;
+// ignore: implementation_imports
 import 'package:plux_flutter/src/sync/sync_engine.dart'
-    show MemoryCredentialStore;
+    show MemoryCredentialStore, MemorySecretStore;
 import 'package:plux_module/plux_module.dart';
 
 const _appId = String.fromEnvironment('PLUX_APP_ID');
@@ -97,7 +100,12 @@ final class _Host {
     final module = PluxModule(
       initialize: (c) => Plux.initializeWith(
         c,
-        const RuntimeOverrides(credentials: MemoryCredentialStore.new),
+        RuntimeOverrides(
+          credentials: MemoryCredentialStore.new,
+          configSecrets: MemorySecretStore.new,
+          deviceKeys: SoftwareDeviceKeys.new,
+          attestation: () => const DevelopmentAttestation('e2e'),
+        ),
       ),
       storageDirectory: dir.path,
     );

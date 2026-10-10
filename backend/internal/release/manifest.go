@@ -24,10 +24,14 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/signing"
 	"github.com/nightCode42/plux3/backend/internal/storage"
 	"github.com/nightCode42/plux3/backend/internal/storage/dbgen"
+	"github.com/nightCode42/plux3/backend/internal/updatemeta"
 )
 
-// ManifestLifetime is how long a signed manifest is valid; the worker
-// signs a fresh one when fewer than ManifestRefresh remain (REL-031).
+// ManifestLifetime is how long a signed manifest is valid when the
+// service is given no targets expiry; the worker signs a fresh one when
+// fewer than ManifestRefresh remain (REL-031). A configured
+// updateMetadata.expiry.targets replaces both, and the refresh is then a
+// quarter of the lifetime (SEC-050).
 const (
 	ManifestLifetime = 7 * 24 * time.Hour
 	ManifestRefresh  = 2 * 24 * time.Hour
@@ -50,9 +54,12 @@ func (ManifestJob) Kind() string { return "manifest.sign" }
 // carries the metadata fields of ADR-0004 so that the P6 roles can be
 // added without changing it.
 type SignedManifest struct {
-	Type            string          `json:"type"`
-	SpecVersion     int             `json:"specVersion"`
-	Role            string          `json:"role"`
+	Type        string `json:"type"`
+	SpecVersion int    `json:"specVersion"`
+	Role        string `json:"role"`
+	// Version is the targets version the snapshot pins (SEC-050). It is
+	// absent from a manifest signed before its environment has a root.
+	Version         int64           `json:"version,omitempty"`
 	App             string          `json:"app"`
 	Environment     string          `json:"environment"`
 	Channel         string          `json:"channel"`
@@ -63,6 +70,17 @@ type SignedManifest struct {
 	Plugins         []SignedPlugin  `json:"plugins"`
 	Control         SignedControl   `json:"control"`
 	Experiments     []SignedVariant `json:"experiments"`
+	// Config pins the security configuration of the environment when the
+	// manifest was signed; it is absent while the environment has only
+	// the built-in defaults (SEC-182).
+	Config *SignedConfig `json:"config,omitempty"`
+}
+
+// SignedConfig names a version of the device document of the security
+// configuration and its hash, "sha256:<hex>" of the canonical JSON.
+type SignedConfig struct {
+	Version int64  `json:"version"`
+	SHA256  string `json:"sha256"`
 }
 
 // SignedBundle describes one bundle a device must end up with.
@@ -147,7 +165,14 @@ func (s *Service) SignManifest(ctx context.Context, job ManifestJob) error {
 		if env.Production && !s.o.ProductionSigning {
 			return plxerr.New(plxerr.PermissionDenied, "the signing backend keeps keys on disk and cannot sign for production environment %s (SEC-056)", env.Key)
 		}
-		return s.signAndStore(ctx, q, channel, env)
+		root, enrolled, err := currentRoot(ctx, q, env)
+		if err != nil {
+			return err
+		}
+		if !enrolled {
+			return s.signAndStore(ctx, q, channel, env, 0)
+		}
+		return s.publishMetadata(ctx, q, channel, env, root)
 	})
 	if err != nil {
 		return fmt.Errorf("release: sign a manifest: %w", err)
@@ -155,6 +180,7 @@ func (s *Service) SignManifest(ctx context.Context, job ManifestJob) error {
 	// A process with both roles serves the new manifest at once; other
 	// replicas pick it up within manifestTTL.
 	s.manifests.clear()
+	s.metadata.clear()
 	return nil
 }
 
@@ -162,13 +188,13 @@ func (s *Service) SignManifest(ctx context.Context, job ManifestJob) error {
 // records the public key it was signed with. For each host build that
 // cannot run the channel's release it also signs a manifest of the newest
 // release the build can run, which its devices receive instead (REL-080).
-func (s *Service) signAndStore(ctx context.Context, q *dbgen.Queries, channel dbgen.Channel, env dbgen.Environment) error {
+func (s *Service) signAndStore(ctx context.Context, q *dbgen.Queries, channel dbgen.Channel, env dbgen.Environment, version int64) error {
 	at := s.now()
 	rel, err := q.GetRelease(ctx, dbgen.GetReleaseParams{AppID: env.AppID, Sequence: channel.ReleaseSequence})
 	if err != nil {
 		return failure(err, "release")
 	}
-	own, err := s.signRelease(ctx, q, channel, env, rel, at, "", pgtype.UUID{})
+	own, err := s.signRelease(ctx, q, channel, env, rel, signAt{at: at, version: version}, "", pgtype.UUID{})
 	if err != nil {
 		return err
 	}
@@ -196,19 +222,26 @@ func (s *Service) signAndStore(ctx context.Context, q *dbgen.Queries, channel db
 		if i < 0 {
 			continue // no release the build can run: it gets the channel's
 		}
-		if _, err := s.signRelease(ctx, q, channel, env, all[i], at, b.build, own); err != nil {
+		if _, err := s.signRelease(ctx, q, channel, env, all[i], signAt{at: at, version: version}, b.build, own); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
+// signAt is when a manifest is signed and the targets version it carries,
+// 0 before the environment has a root.
+type signAt struct {
+	at      time.Time
+	version int64
+}
+
 // signRelease signs and stores the manifest of one release on a channel:
 // the channel's own when build is "", else build's, signed with own.
 func (s *Service) signRelease(ctx context.Context, q *dbgen.Queries, channel dbgen.Channel, env dbgen.Environment,
-	rel dbgen.Release, at time.Time, build string, own pgtype.UUID,
+	rel dbgen.Release, when signAt, build string, own pgtype.UUID,
 ) (pgtype.UUID, error) {
-	doc, err := s.manifestDocument(ctx, q, channel, env, rel, at)
+	doc, err := s.manifestDocument(ctx, q, channel, env, rel, when)
 	if err != nil {
 		return pgtype.UUID{}, err
 	}
@@ -230,6 +263,7 @@ func (s *Service) signRelease(ctx context.Context, q *dbgen.Queries, channel dbg
 	}
 	if err := q.UpsertEnvironmentKey(ctx, dbgen.UpsertEnvironmentKeyParams{
 		EnvironmentID: env.ID, OrganizationID: env.OrganizationID, KeyID: keyID, Algorithm: signing.Algorithm, PublicKey: pub,
+		Role: updatemeta.RoleTargets, EnvironmentType: environmentType(env),
 	}); err != nil {
 		return pgtype.UUID{}, failure(err, "environment key")
 	}
@@ -264,7 +298,7 @@ func (s *Service) signRelease(ctx context.Context, q *dbgen.Queries, channel dbg
 }
 
 // manifestDocument builds the signed part for a release on a channel.
-func (s *Service) manifestDocument(ctx context.Context, q *dbgen.Queries, ch dbgen.Channel, env dbgen.Environment, rel dbgen.Release, at time.Time) (SignedManifest, error) {
+func (s *Service) manifestDocument(ctx context.Context, q *dbgen.Queries, ch dbgen.Channel, env dbgen.Environment, rel dbgen.Release, when signAt) (SignedManifest, error) {
 	appVersion, err := q.GetVersionByID(ctx, rel.AppVersionID)
 	if err != nil {
 		return SignedManifest{}, failure(err, "version")
@@ -277,7 +311,22 @@ func (s *Service) manifestDocument(ctx context.Context, q *dbgen.Queries, ch dbg
 	if err != nil {
 		return SignedManifest{}, err
 	}
-	return newManifest(env, ch, rel.Sequence, appVersion, versions, control, at), nil
+	doc := newManifest(env, ch, rel.Sequence, appVersion, versions, control, when.at)
+	doc.Version = when.version
+	if lifetime := s.o.Metadata.Expiry.Targets; lifetime > 0 {
+		doc.Expires = updatemeta.FormatTime(when.at.Add(lifetime))
+	}
+	if s.o.SecurityConfig == nil {
+		return doc, nil
+	}
+	ref, err := s.o.SecurityConfig.Current(ctx, q, env.ID)
+	if err != nil {
+		return SignedManifest{}, fmt.Errorf("release: %w", err)
+	}
+	if ref.Version > 0 {
+		doc.Config = &SignedConfig{Version: ref.Version, SHA256: hashRef(ref.SHA256[:])}
+	}
+	return doc, nil
 }
 
 // newManifest builds the signed part of a channel's manifest. Every list
@@ -332,7 +381,7 @@ func (s *Service) RefreshManifests(ctx context.Context, org string) (int, error)
 	var channels []dbgen.Channel
 	err := s.o.DB.InTx(ctx, storage.Tenant{OrganizationID: org}, func(ctx context.Context, tx pgx.Tx) error {
 		var err error
-		channels, err = dbgen.New(tx).ExpiringChannels(ctx, storage.Timestamp(s.now().Add(ManifestRefresh)))
+		channels, err = dbgen.New(tx).ExpiringChannels(ctx, storage.Timestamp(s.now().Add(s.manifestRefresh())))
 		return err //nolint:wrapcheck // one statement
 	})
 	if err != nil {
@@ -358,6 +407,29 @@ func (s *Service) PurgeManifests(ctx context.Context, org string) (int64, error)
 		return 0, fmt.Errorf("release: %w", err)
 	}
 	return n, nil
+}
+
+// EnqueueEnvironmentManifests asks the worker to sign the manifests of
+// every channel of an environment, in the transaction that changed what
+// they say; a change of the security configuration needs it (SEC-182).
+func (s *Service) EnqueueEnvironmentManifests(ctx context.Context, tx pgx.Tx, organizationID, environmentID string) error {
+	if s.o.Jobs == nil {
+		return nil
+	}
+	env, err := storage.UUID(environmentID)
+	if err != nil {
+		return fmt.Errorf("release: %w", err)
+	}
+	channels, err := dbgen.New(tx).ListEnvironmentChannelIDs(ctx, env)
+	if err != nil {
+		return failure(err, "channel")
+	}
+	for _, c := range channels {
+		if err := s.o.Jobs.Enqueue(ctx, tx, ManifestJob{OrganizationID: organizationID, ChannelID: storage.ID(c)}); err != nil {
+			return fmt.Errorf("release: %w", err)
+		}
+	}
+	return nil
 }
 
 // enqueueManifest asks the worker to sign a channel's manifest, in the

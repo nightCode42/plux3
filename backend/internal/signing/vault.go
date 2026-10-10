@@ -28,13 +28,16 @@ import (
 // Signing keys are Ed25519 Transit keys named by their reference; one
 // that does not exist is created, not exportable, on first use, so each
 // environment's key appears when the environment first signs. Data keys
-// are wrapped with one AES-256-GCM Transit key.
+// are wrapped with one AES-256-GCM Transit key. Device access tokens
+// are signed by two ecdsa-p256 Transit keys, one per environment class,
+// created the same way.
 type Vault struct {
 	address   string
 	mount     string
 	namespace string
 	token     string
 	wrapKey   string
+	tokenKey  string
 	client    *http.Client
 
 	mu sync.Mutex
@@ -42,6 +45,9 @@ type Vault struct {
 	// public key never changes for a version, and a rotation shows as a
 	// new version in the signature, which clears the entry.
 	public map[string]vaultPublic
+	// tokenPub caches each token key's public versions, by Transit key
+	// name; a version Vault has not described yet triggers a new read.
+	tokenPub map[string]vaultTokenKeys
 }
 
 // vaultPublic is a cached public key with its Transit version.
@@ -64,6 +70,10 @@ type VaultOptions struct {
 	// WrapKey names the AES-256-GCM Transit key that wraps data keys;
 	// "" uses "plux-secrets".
 	WrapKey string
+	// TokenKey is the prefix of the ecdsa-p256 Transit keys that sign
+	// device access tokens, one per environment class, such as
+	// "plux-tokens-production"; "" uses "plux-tokens".
+	TokenKey string
 	// Client is the HTTP client; nil uses one with a 15-second timeout.
 	// Vault is operator configuration on a private network, so the
 	// SSRF-safe client, which refuses private addresses, is not used.
@@ -90,6 +100,13 @@ func NewVault(opts VaultOptions) (*Vault, error) {
 	if !keyRef.MatchString(wrap) {
 		return nil, fmt.Errorf("signing: %q is not a valid key reference", wrap)
 	}
+	tokenKey := opts.TokenKey
+	if tokenKey == "" {
+		tokenKey = "plux-tokens"
+	}
+	if !keyRef.MatchString(tokenKey + "-development") {
+		return nil, fmt.Errorf("signing: %q is not a valid key reference", tokenKey)
+	}
 	client := opts.Client
 	if client == nil {
 		client = &http.Client{Timeout: 15 * time.Second}
@@ -97,7 +114,8 @@ func NewVault(opts VaultOptions) (*Vault, error) {
 	return &Vault{
 		address: strings.TrimSuffix(opts.Address, "/"), mount: mount,
 		namespace: opts.Namespace, token: opts.Token, wrapKey: wrap,
-		client: client, public: map[string]vaultPublic{},
+		tokenKey: tokenKey, client: client, public: map[string]vaultPublic{},
+		tokenPub: map[string]vaultTokenKeys{},
 	}, nil
 }
 

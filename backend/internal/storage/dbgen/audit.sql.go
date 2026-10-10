@@ -123,6 +123,42 @@ func (q *Queries) GetAuditEntry(ctx context.Context, arg GetAuditEntryParams) (A
 	return i, err
 }
 
+const insertAuditCheckpoint = `-- name: InsertAuditCheckpoint :execrows
+INSERT INTO audit_checkpoints (
+    id, organization_id, sequence, entry_hash, key_id, algorithm, signature, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+ON CONFLICT (organization_id, sequence) DO NOTHING
+`
+
+type InsertAuditCheckpointParams struct {
+	ID             pgtype.UUID
+	OrganizationID pgtype.UUID
+	Sequence       int64
+	EntryHash      string
+	KeyID          string
+	Algorithm      string
+	Signature      []byte
+	CreatedAt      pgtype.Timestamptz
+}
+
+// A second worker signing the same point changes nothing (SEC-141).
+func (q *Queries) InsertAuditCheckpoint(ctx context.Context, arg InsertAuditCheckpointParams) (int64, error) {
+	result, err := q.db.Exec(ctx, insertAuditCheckpoint,
+		arg.ID,
+		arg.OrganizationID,
+		arg.Sequence,
+		arg.EntryHash,
+		arg.KeyID,
+		arg.Algorithm,
+		arg.Signature,
+		arg.CreatedAt,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const lastAuditEntry = `-- name: LastAuditEntry :one
 SELECT id, organization_id, sequence, occurred_at, actor_kind, actor_id, actor_display, action, target_kind, target_id, source_ip, user_agent, request_id, before_hash, after_hash, previous_hash, entry_hash, detail FROM audit_log
  WHERE organization_id IS NOT DISTINCT FROM $1::uuid
@@ -154,6 +190,72 @@ func (q *Queries) LastAuditEntry(ctx context.Context, organizationID pgtype.UUID
 		&i.Detail,
 	)
 	return i, err
+}
+
+const latestAuditCheckpoint = `-- name: LatestAuditCheckpoint :one
+SELECT id, organization_id, sequence, entry_hash, key_id, algorithm, signature, created_at FROM audit_checkpoints
+ WHERE organization_id = $1
+ ORDER BY sequence DESC
+ LIMIT 1
+`
+
+func (q *Queries) LatestAuditCheckpoint(ctx context.Context, organizationID pgtype.UUID) (AuditCheckpoint, error) {
+	row := q.db.QueryRow(ctx, latestAuditCheckpoint, organizationID)
+	var i AuditCheckpoint
+	err := row.Scan(
+		&i.ID,
+		&i.OrganizationID,
+		&i.Sequence,
+		&i.EntryHash,
+		&i.KeyID,
+		&i.Algorithm,
+		&i.Signature,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const listAuditCheckpoints = `-- name: ListAuditCheckpoints :many
+SELECT id, organization_id, sequence, entry_hash, key_id, algorithm, signature, created_at FROM audit_checkpoints
+ WHERE organization_id = $1
+   AND sequence > $2
+ ORDER BY sequence
+ LIMIT $3
+`
+
+type ListAuditCheckpointsParams struct {
+	OrganizationID pgtype.UUID
+	AfterSequence  int64
+	PageSize       int32
+}
+
+func (q *Queries) ListAuditCheckpoints(ctx context.Context, arg ListAuditCheckpointsParams) ([]AuditCheckpoint, error) {
+	rows, err := q.db.Query(ctx, listAuditCheckpoints, arg.OrganizationID, arg.AfterSequence, arg.PageSize)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []AuditCheckpoint{}
+	for rows.Next() {
+		var i AuditCheckpoint
+		if err := rows.Scan(
+			&i.ID,
+			&i.OrganizationID,
+			&i.Sequence,
+			&i.EntryHash,
+			&i.KeyID,
+			&i.Algorithm,
+			&i.Signature,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listAuditEntries = `-- name: ListAuditEntries :many

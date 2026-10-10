@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Plux contributors -->
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Debug builds only: besides the system's, trust certificate authorities
+     installed on the device, such as the development CA of `make dev`
+     (deploy/compose/README.md). HTTPS only, except to the development
+     machine's loopback addresses, which the end-to-end tests reach over
+     `adb reverse` with plain HTTP; release builds have no such
+     configuration. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">127.0.0.1</domain>
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>

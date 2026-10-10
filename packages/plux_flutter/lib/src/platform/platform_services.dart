@@ -12,15 +12,18 @@ import 'dart:io';
 
 import 'package:cronet_http/cronet_http.dart';
 import 'package:cupertino_http/cupertino_http.dart';
-import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
+import 'package:plux_flutter/src/platform/native_pinned_http.dart';
+import 'package:plux_flutter/src/platform/pinned_http.dart';
+import 'package:plux_flutter/src/platform/runtime_channel.dart';
 import 'package:plux_flutter/src/runtime_info.dart';
+import 'package:plux_flutter/src/security/pins.dart';
 import 'package:plux_flutter/src/store/kv_store.dart';
 import 'package:plux_flutter/src/sync/api_client.dart';
 import 'package:plux_flutter/src/sync/sync_engine.dart';
 
-const _channel = MethodChannel('dev.plux/runtime');
+const _channel = RuntimeChannel();
 
 /// The non-backed-up directory the platform gives the runtime.
 Future<String> platformStorageDirectory() async {
@@ -46,7 +49,11 @@ final class PlatformCredentialStore implements CredentialStore {
     if (v == null) return null;
     try {
       final j = jsonDecode(v) as Map<String, Object?>;
-      return DeviceCredential(j['deviceId']! as String, j['secret']! as String);
+      // A credential from before DPoP holds a secret and no key
+      // thumbprint: the device registers again.
+      final jkt = j['jkt'];
+      if (jkt is! String) return null;
+      return DeviceCredential(j['deviceId']! as String, jkt);
     } on Object {
       return null;
     }
@@ -56,7 +63,7 @@ final class PlatformCredentialStore implements CredentialStore {
   Future<void> write(DeviceCredential c) =>
       _channel.invokeMethod<void>('secretWrite', {
         'name': name,
-        'value': jsonEncode({'deviceId': c.deviceId, 'secret': c.secret}),
+        'value': jsonEncode({'deviceId': c.deviceId, 'jkt': c.jkt}),
       });
 
   @override
@@ -86,10 +93,58 @@ final class PlatformSecretStore implements SecretStore {
       _channel.invokeMethod<void>('secretDelete', {'name': name});
 }
 
+/// Creates [platformHttpClient]s for one server; a callable that can be
+/// sent to another isolate, since the sync and data isolates make their own
+/// clients.
+final class PlatformHttpClients {
+  /// Creates the factory for the server at [endpoint], pinned by [pins]
+  /// (SEC-041), or unpinned when [pins] is null.
+  PlatformHttpClients(this.endpoint, this.pins);
+
+  /// The Plux server.
+  final Uri endpoint;
+
+  /// The pins of the server; null to run without pinning.
+  final PinSet? pins;
+
+  /// A new client.
+  http.Client create() => platformHttpClient(endpoint: endpoint, pins: pins);
+}
+
 /// The platform's HTTP/2 client (SYN-010): Cronet on Android, `URLSession`
 /// on iOS, `dart:io` elsewhere (tests and desktop development).
-http.Client platformHttpClient() {
+///
+/// With [pins] and an `https` [endpoint], requests to the endpoint's host
+/// are sent by a client that enforces the pins (SEC-041), and requests to
+/// any other host keep the platform client. On Android and iOS that is the
+/// plugin's own Cronet or `URLSession` client, still HTTP/2 and pinned
+/// against every certificate of the chain (`cronet_http` offers no pins and
+/// `cupertino_http` no server-trust hook, so the plugin makes the
+/// requests); elsewhere it is `dart:io`, which shows only the leaf. The
+/// customer domains an app pins (SEC-042) get a pinned client of their own
+/// through [DomainPinned].
+http.Client platformHttpClient({Uri? endpoint, PinSet? pins}) {
   final agent = PluxRuntimeInfo.userAgent;
+  http.Client pinned(PinSet set) => Platform.isAndroid || Platform.isIOS
+      ? NativePinnedClient(pins: set, userAgent: agent)
+      : IOClient(pinnedHttpClient(set, userAgent: agent));
+  // Customer domains the app pins (SEC-042) are told to the client later,
+  // through [DomainPinned].
+  final other = DomainPinsClient(
+    other: _unpinnedHttpClient(agent),
+    pinned: pinned,
+  );
+  if (endpoint == null || pins == null || endpoint.scheme != 'https') {
+    return other;
+  }
+  return PinRoutingClient(
+    host: endpoint.host,
+    pinned: pinned(pins),
+    other: other,
+  );
+}
+
+http.Client _unpinnedHttpClient(String agent) {
   try {
     if (Platform.isAndroid) {
       return CronetClient.fromCronetEngine(

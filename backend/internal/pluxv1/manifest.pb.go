@@ -249,8 +249,11 @@ type UpdateMetadataRef struct {
 	RootVersion      int64                  `protobuf:"varint,1,opt,name=root_version,json=rootVersion,proto3" json:"root_version,omitempty"`
 	SnapshotVersion  int64                  `protobuf:"varint,2,opt,name=snapshot_version,json=snapshotVersion,proto3" json:"snapshot_version,omitempty"`
 	TimestampVersion int64                  `protobuf:"varint,3,opt,name=timestamp_version,json=timestampVersion,proto3" json:"timestamp_version,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// environment_id names the environment's metadata files, served at
+	// /v1/metadata/{environment_id}/{file} (SEC-050).
+	EnvironmentId string `protobuf:"bytes,4,opt,name=environment_id,json=environmentId,proto3" json:"environment_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UpdateMetadataRef) Reset() {
@@ -302,6 +305,13 @@ func (x *UpdateMetadataRef) GetTimestampVersion() int64 {
 		return x.TimestampVersion
 	}
 	return 0
+}
+
+func (x *UpdateMetadataRef) GetEnvironmentId() string {
+	if x != nil {
+		return x.EnvironmentId
+	}
+	return ""
 }
 
 // Signature is one signature over a signed document (ADR-0004).
@@ -971,11 +981,14 @@ func (x *GetManifestResponse) GetConfigFullRequired() bool {
 }
 
 type GetRootKeysRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	AppId         string                 `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
-	Environment   string                 `protobuf:"bytes,2,opt,name=environment,proto3" json:"environment,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state       protoimpl.MessageState `protogen:"open.v1"`
+	AppId       string                 `protobuf:"bytes,1,opt,name=app_id,json=appId,proto3" json:"app_id,omitempty"`
+	Environment string                 `protobuf:"bytes,2,opt,name=environment,proto3" json:"environment,omitempty"`
+	// since_root_version is the version of the root the caller trusts; the
+	// response carries every later root (SEC-051). Zero asks for them all.
+	SinceRootVersion int64 `protobuf:"varint,3,opt,name=since_root_version,json=sinceRootVersion,proto3" json:"since_root_version,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *GetRootKeysRequest) Reset() {
@@ -1022,9 +1035,21 @@ func (x *GetRootKeysRequest) GetEnvironment() string {
 	return ""
 }
 
+func (x *GetRootKeysRequest) GetSinceRootVersion() int64 {
+	if x != nil {
+		return x.SinceRootVersion
+	}
+	return 0
+}
+
 type GetRootKeysResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Keys          []*PublicKey           `protobuf:"bytes,1,rep,name=keys,proto3" json:"keys,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Keys  []*PublicKey           `protobuf:"bytes,1,rep,name=keys,proto3" json:"keys,omitempty"`
+	// roots are the root metadata files after since_root_version, oldest
+	// first. Each is signed by the previous root's threshold and by its own
+	// (SEC-051, ADR-0054); the caller verifies the chain from the root it
+	// embeds.
+	Roots         [][]byte `protobuf:"bytes,2,rep,name=roots,proto3" json:"roots,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1066,6 +1091,13 @@ func (x *GetRootKeysResponse) GetKeys() []*PublicKey {
 	return nil
 }
 
+func (x *GetRootKeysResponse) GetRoots() [][]byte {
+	if x != nil {
+		return x.Roots
+	}
+	return nil
+}
+
 type PublicKey struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	KeyId     string                 `protobuf:"bytes,1,opt,name=key_id,json=keyId,proto3" json:"key_id,omitempty"`
@@ -1073,9 +1105,12 @@ type PublicKey struct {
 	// public_key is the raw key; an Ed25519 key is 32 bytes.
 	PublicKey []byte `protobuf:"bytes,3,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
 	// role is the update-metadata role this key holds (ADR-0004).
-	Role          string `protobuf:"bytes,4,opt,name=role,proto3" json:"role,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Role string `protobuf:"bytes,4,opt,name=role,proto3" json:"role,omitempty"`
+	// environment_type is "production" or "development"; a production
+	// runtime refuses metadata signed by a development key (SEC-056).
+	EnvironmentType string `protobuf:"bytes,5,opt,name=environment_type,json=environmentType,proto3" json:"environment_type,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *PublicKey) Reset() {
@@ -1136,6 +1171,13 @@ func (x *PublicKey) GetRole() string {
 	return ""
 }
 
+func (x *PublicKey) GetEnvironmentType() string {
+	if x != nil {
+		return x.EnvironmentType
+	}
+	return ""
+}
+
 var File_plux_v1_manifest_proto protoreflect.FileDescriptor
 
 const file_plux_v1_manifest_proto_rawDesc = "" +
@@ -1163,11 +1205,12 @@ const file_plux_v1_manifest_proto_rawDesc = "" +
 	"\bmetadata\x18\x0e \x01(\v2\x1a.plux.v1.UpdateMetadataRefR\bmetadata\"E\n" +
 	"\x11SecurityConfigRef\x12\x18\n" +
 	"\aversion\x18\x01 \x01(\x03R\aversion\x12\x16\n" +
-	"\x06sha256\x18\x02 \x01(\fR\x06sha256\"\x8e\x01\n" +
+	"\x06sha256\x18\x02 \x01(\fR\x06sha256\"\xb5\x01\n" +
 	"\x11UpdateMetadataRef\x12!\n" +
 	"\froot_version\x18\x01 \x01(\x03R\vrootVersion\x12)\n" +
 	"\x10snapshot_version\x18\x02 \x01(\x03R\x0fsnapshotVersion\x12+\n" +
-	"\x11timestamp_version\x18\x03 \x01(\x03R\x10timestampVersion\"^\n" +
+	"\x11timestamp_version\x18\x03 \x01(\x03R\x10timestampVersion\x12%\n" +
+	"\x0eenvironment_id\x18\x04 \x01(\tR\renvironmentId\"^\n" +
 	"\tSignature\x12\x15\n" +
 	"\x06key_id\x18\x01 \x01(\tR\x05keyId\x12\x1c\n" +
 	"\talgorithm\x18\x02 \x01(\tR\talgorithm\x12\x1c\n" +
@@ -1215,18 +1258,21 @@ const file_plux_v1_manifest_proto_rawDesc = "" +
 	"\x04etag\x18\x03 \x01(\tR\x04etag\x12-\n" +
 	"\x12installed_required\x18\x04 \x01(\bR\x11installedRequired\x12!\n" +
 	"\fconfig_patch\x18\x05 \x01(\fR\vconfigPatch\x120\n" +
-	"\x14config_full_required\x18\x06 \x01(\bR\x12configFullRequired\"M\n" +
+	"\x14config_full_required\x18\x06 \x01(\bR\x12configFullRequired\"{\n" +
 	"\x12GetRootKeysRequest\x12\x15\n" +
 	"\x06app_id\x18\x01 \x01(\tR\x05appId\x12 \n" +
-	"\venvironment\x18\x02 \x01(\tR\venvironment\"=\n" +
+	"\venvironment\x18\x02 \x01(\tR\venvironment\x12,\n" +
+	"\x12since_root_version\x18\x03 \x01(\x03R\x10sinceRootVersion\"S\n" +
 	"\x13GetRootKeysResponse\x12&\n" +
-	"\x04keys\x18\x01 \x03(\v2\x12.plux.v1.PublicKeyR\x04keys\"s\n" +
+	"\x04keys\x18\x01 \x03(\v2\x12.plux.v1.PublicKeyR\x04keys\x12\x14\n" +
+	"\x05roots\x18\x02 \x03(\fR\x05roots\"\x9e\x01\n" +
 	"\tPublicKey\x12\x15\n" +
 	"\x06key_id\x18\x01 \x01(\tR\x05keyId\x12\x1c\n" +
 	"\talgorithm\x18\x02 \x01(\tR\talgorithm\x12\x1d\n" +
 	"\n" +
 	"public_key\x18\x03 \x01(\fR\tpublicKey\x12\x12\n" +
-	"\x04role\x18\x04 \x01(\tR\x04role2\xa9\x01\n" +
+	"\x04role\x18\x04 \x01(\tR\x04role\x12)\n" +
+	"\x10environment_type\x18\x05 \x01(\tR\x0fenvironmentType2\xa9\x01\n" +
 	"\x0fManifestService\x12J\n" +
 	"\vGetManifest\x12\x1b.plux.v1.GetManifestRequest\x1a\x1c.plux.v1.GetManifestResponse\"\x00\x12J\n" +
 	"\vGetRootKeys\x12\x1b.plux.v1.GetRootKeysRequest\x1a\x1c.plux.v1.GetRootKeysResponse\"\x00B=Z;github.com/nightCode42/plux3/backend/internal/pluxv1;pluxv1b\x06proto3"

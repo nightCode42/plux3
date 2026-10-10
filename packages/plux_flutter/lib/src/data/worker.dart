@@ -12,6 +12,8 @@ import 'dart:io' show HttpClient;
 import 'dart:isolate';
 import 'dart:typed_data';
 
+import 'package:flutter/services.dart'
+    show BackgroundIsolateBinaryMessenger, RootIsolateToken;
 import 'package:http/http.dart' as http;
 import 'package:plux_flutter/src/actions/action_error.dart';
 import 'package:plux_flutter/src/data/cache.dart';
@@ -20,6 +22,7 @@ import 'package:plux_flutter/src/data/stream_transport.dart';
 import 'package:plux_flutter/src/data/transfer_transport.dart';
 import 'package:plux_flutter/src/data/transport.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/platform/pinned_http.dart';
 import 'package:plux_flutter/src/store/kv_store.dart';
 
 /// The key that encrypts cached responses of sources marked `encrypted`
@@ -99,6 +102,11 @@ final class _SetKey extends _Command {
   final Uint8List key;
 }
 
+final class _PinDomains extends _Command {
+  const _PinDomains(super.reply, this.pins);
+  final Map<String, List<String>> pins;
+}
+
 final class _Close extends _Command {
   const _Close(super.reply);
 }
@@ -112,11 +120,14 @@ final class DataWorker
   /// top-level or static function) and its cache under [cacheDirectory].
   /// WebSockets connect with the `dart:io` client [webSocketClient] creates
   /// (also top-level or static), or `dart:io`'s default when null.
+  /// [rootIsolateToken] lets the isolate use platform channels, which the
+  /// pinned HTTP client of the Plux server needs (SEC-041).
   static Future<DataWorker> start({
     required http.Client Function() httpClient,
     required String cacheDirectory,
     HttpClient Function()? webSocketClient,
     DataCacheKeyProvider? keys,
+    RootIsolateToken? rootIsolateToken,
   }) async {
     final ready = ReceivePort();
     final isolate = await Isolate.spawn(_main, (
@@ -124,6 +135,7 @@ final class DataWorker
       webSocketClient,
       cacheDirectory,
       ready.sendPort,
+      rootIsolateToken,
     ), debugName: 'plux-data');
     final commands = await ready.first as SendPort;
     ready.close();
@@ -226,6 +238,13 @@ final class DataWorker
     await _call((r) => _SetKey(r, key));
   }();
 
+  /// Tells the isolate's client the pins of the customer domains the active
+  /// release sets (SEC-042); a host left out is no longer pinned. Requests
+  /// sent after this completes see them.
+  Future<void> pinDomains(Map<String, List<String>> pins) async {
+    await _call((r) => _PinDomains(r, pins));
+  }
+
   @override
   Future<void> close() async {
     await _call(_Close.new);
@@ -294,9 +313,17 @@ final class _WorkerStore implements CacheStore {
 }
 
 Future<void> _main(
-  (http.Client Function(), HttpClient Function()?, String, SendPort) args,
+  (
+    http.Client Function(),
+    HttpClient Function()?,
+    String,
+    SendPort,
+    RootIsolateToken?,
+  )
+  args,
 ) async {
-  final (client, socketClient, dir, ready) = args;
+  final (client, socketClient, dir, ready, token) = args;
+  if (token != null) BackgroundIsolateBinaryMessenger.ensureInitialized(token);
   final http = client();
   final transport = ClientTransport(http);
   final streams = SocketStreamTransport(http, webSocketClient: socketClient);
@@ -318,6 +345,7 @@ Future<void> _main(
       _Send(:final request) => transport.send(request),
       _OpenStream() || _StartTransfer() => null,
       _SetKey(:final key) => secure = FileCacheStore('$dir/secure', key: key),
+      _PinDomains(:final pins) => _pinDomains(http, pins),
       _Close() => transport.close(),
       final _Store s => _store(
         s.secure
@@ -339,6 +367,11 @@ Future<void> _main(
       port.close();
     }
   }
+}
+
+Future<void> _pinDomains(Object client, Map<String, List<String>> pins) async {
+  // A host's own client (PluxConfig.httpClient) is the host's to pin.
+  if (client is DomainPinned) client.pinDomains(pins);
 }
 
 /// Runs one stream connection on the data isolate: the frames go to the
@@ -455,8 +488,20 @@ final class LazyDataWorker
 
   final Future<DataWorker> Function() _start;
   Future<DataWorker>? _worker;
+  Map<String, List<String>> _pins = const {};
 
-  Future<DataWorker> get _started => _worker ??= _start();
+  Future<DataWorker> get _started => _worker ??= _start().then((w) async {
+    if (_pins.isNotEmpty) await w.pinDomains(_pins);
+    return w;
+  });
+
+  /// The pins of the customer domains the active release sets (SEC-042),
+  /// handed to the isolate once it runs and again whenever they change.
+  void pinDomains(Map<String, List<String>> pins) {
+    _pins = pins;
+    final w = _worker;
+    if (w != null) unawaited(w.then((w) => w.pinDomains(pins)));
+  }
 
   @override
   Future<DataResponse> send(DataRequest request) async =>

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // The pieces a configuration is built from in these tests. YAML refuses a
@@ -76,6 +77,21 @@ func TestParseAppliesDefaults(t *testing.T) {
 	}
 }
 
+// Verifies: SEC-141.
+// The audit checkpoint key and interval default to "audit" and an hour,
+// and the interval can be set.
+func TestAuditCheckpointSettings(t *testing.T) {
+	t.Parallel()
+	c := parse(t, minimal)
+	if c.Signing.Keys.Audit != "audit" || c.Audit.CheckpointInterval.Duration().String() != "1h0m0s" {
+		t.Errorf("defaults = %q, %s", c.Signing.Keys.Audit, c.Audit.CheckpointInterval)
+	}
+	c = parse(t, minimal+"audit:\n  checkpointInterval: 15m\nsigning:\n  keys:\n    audit: audit-2\n")
+	if c.Signing.Keys.Audit != "audit-2" || c.Audit.CheckpointInterval.Duration().String() != "15m0s" {
+		t.Errorf("configured = %q, %s", c.Signing.Keys.Audit, c.Audit.CheckpointInterval)
+	}
+}
+
 // Verifies: SRV-008.
 func TestParseRejectsUnknownKeys(t *testing.T) {
 	t.Parallel()
@@ -126,6 +142,9 @@ func TestValidateReportsEveryProblem(t *testing.T) {
 		{"vault without token", minimal + "signing:\n  backend: vault\n  vault:\n    address: \"https://vault:8200\"\n", "PLUX_SIGNING_VAULT_TOKEN"},
 		{"vault wrap key", minimal + "signing:\n  backend: vault\n  vault:\n    address: \"https://vault:8200\"\n    token: t\n    wrapKey: \"Bad Key\"\n", "signing.vault.wrapKey"},
 		{"a later signing backend", minimal + "signing:\n  backend: awskms\n", "arrives in P6"},
+		{"pkcs11 without socket", minimal + "signing:\n  backend: pkcs11\n", "signing.pkcs11.socket"},
+		{"pkcs11 relative socket", minimal + "signing:\n  backend: pkcs11\n  pkcs11:\n    socket: helper.sock\n", "absolute path"},
+		{"pkcs11 wrap key", minimal + "signing:\n  backend: pkcs11\n  pkcs11:\n    socket: /run/h.sock\n    wrapKey: \"Bad Key\"\n", "signing.pkcs11.wrapKey"},
 		{"targets prefix", minimal + "signing:\n  keys:\n    targets: \"Targets\"\n", "signing.keys.targets"},
 		{"unknown mfa capability", minimal + "auth:\n  studio:\n    mfaRequiredFor: [publish, nonsense]\n", "mfaRequiredFor[1]"},
 		{"zero session lifetime", minimal + "auth:\n  studio:\n    sessionTTL: 0s\n", "auth.studio.sessionTTL"},
@@ -141,10 +160,65 @@ func TestValidateReportsEveryProblem(t *testing.T) {
 		{"short snapshot retention", minimal + "retention:\n  snapshotDays: 10\n", "at least 90"},
 		{"short trash retention", minimal + "retention:\n  trashDays: 7\n", "at least 30"},
 		{"no audit retention", minimal + "retention:\n  auditYears: 0\n", "retention.auditYears"},
+		{"audit key name", minimal + "signing:\n  keys:\n    audit: \"Audit Key\"\n", "signing.keys.audit"},
+		{"zero checkpoint interval", minimal + "audit:\n  checkpointInterval: 0s\n", "audit.checkpointInterval"},
 		{"bad duration", withServer("  shutdownGrace: soon\n"), "invalid duration"},
 		{"negative duration", withServer("  shutdownGrace: -1s\n"), "must not be negative"},
+		{"an app key that is not an identifier", minimal + "attestation:\n  apps:\n    demo:\n      iosAppID: \"T.com.example\"\n", "attestation.apps[demo]"},
+		{"a certificate digest that is not SHA-256", minimal + "attestation:\n  apps:\n    0190a1b2-0000-7000-8000-000000000001:\n      androidCertDigests: [\"abcd\"]\n", "androidCertDigests[0]"},
+		{"half the Play Integrity keys", minimal + "attestation:\n  apps:\n    0190a1b2-0000-7000-8000-000000000001:\n      androidPackages: [com.example]\n      playIntegrityDecryptionKey: k\n", "set together"},
+		{"Play Integrity without packages", minimal + "attestation:\n  apps:\n    0190a1b2-0000-7000-8000-000000000001:\n      playIntegrityDecryptionKey: k\n      playIntegrityVerificationKey: v\n", "androidPackages"},
+		{"an access token lifetime under a minute", minimal + "auth:\n  device:\n    accessTokenTTL: 30s\n", "auth.device.accessTokenTTL"},
+		{"an access token lifetime over fifteen minutes", minimal + "auth:\n  device:\n    accessTokenTTL: 16m\n", "between 1m0s and 15m0s"},
+		{"the retired refresh token lifetime", minimal + "auth:\n  device:\n    refreshTokenTTL: 720h\n", "refreshTokenTTL"},
 		{"bad trusted proxy", withServer("  trustedProxies: [\"10.0.0.0/8\", \"proxy\"]\n"), "trustedProxies[1]"},
 	})
+}
+
+// Verifies: SEC-120.
+func TestPKCS11BackendParses(t *testing.T) {
+	t.Parallel()
+	c := parse(t, minimal+"signing:\n  backend: pkcs11\n  pkcs11:\n    socket: /run/plux/pkcs11.sock\n    wrapKey: secrets-2\n")
+	if c.Signing.PKCS11.Socket != "/run/plux/pkcs11.sock" || c.Signing.PKCS11.WrapKey != "secrets-2" {
+		t.Errorf("pkcs11 = %+v", c.Signing.PKCS11)
+	}
+}
+
+// Verifies: SEC-008.
+// The development provider is off unless the operator enables it.
+func TestDevelopmentProviderDefaultsOff(t *testing.T) {
+	t.Parallel()
+	if parse(t, minimal).Attestation.DevelopmentProvider {
+		t.Error("the development provider is on by default")
+	}
+	if !parse(t, minimal+"attestation:\n  developmentProvider: true\n").Attestation.DevelopmentProvider {
+		t.Error("developmentProvider: true was not read")
+	}
+}
+
+// Verifies: SEC-020.
+// The access token lifetime defaults to five minutes and accepts the
+// bounds of the accessTokenLifetime setting.
+func TestAccessTokenTTL(t *testing.T) {
+	t.Parallel()
+	if got := parse(t, minimal).Auth.Device.AccessTokenTTL.Duration().String(); got != "5m0s" {
+		t.Errorf("default accessTokenTTL = %s", got)
+	}
+	for _, ttl := range []string{"1m", "15m"} {
+		if got := parse(t, minimal+"auth:\n  device:\n    accessTokenTTL: "+ttl+"\n").Auth.Device.AccessTokenTTL.Duration(); got.String() != ttl[:len(ttl)-1]+"m0s" {
+			t.Errorf("accessTokenTTL %s read as %s", ttl, got)
+		}
+	}
+}
+
+// Verifies: SEC-003.
+func TestAttestationAppsParse(t *testing.T) {
+	t.Parallel()
+	c := parse(t, minimal+"attestation:\n  apps:\n    0190a1b2-0000-7000-8000-000000000001:\n      androidPackages: [com.example.app]\n      androidCertDigests: [\""+strings.Repeat("ab", 32)+"\"]\n      iosAppID: \"TEAMID.com.example.app\"\n      appAttestProduction: true\n")
+	a := c.Attestation.Apps["0190a1b2-0000-7000-8000-000000000001"]
+	if len(a.AndroidPackages) != 1 || a.IOSAppID != "TEAMID.com.example.app" || !a.AppAttestProduction {
+		t.Errorf("apps = %+v", c.Attestation.Apps)
+	}
 }
 
 // Verifies: LIM-001, LIM-002.
@@ -295,5 +369,36 @@ func TestBytesAndDurationRoundTrip(t *testing.T) {
 	}
 	if j, err := Duration(90e9).MarshalJSON(); err != nil || string(j) != `"1m30s"` {
 		t.Errorf("Duration.MarshalJSON = %s, %v", j, err)
+	}
+}
+
+// Verifies: SEC-050.
+// The update-metadata expiries and the root threshold default to the
+// specification's, are settable, and are checked.
+func TestUpdateMetadataSettings_SEC_050(t *testing.T) {
+	t.Parallel()
+	c := parse(t, minimal)
+	e := c.UpdateMetadata.Expiry
+	if c.UpdateMetadata.RootThreshold != 2 || e.Timestamp.Duration() != 24*time.Hour || e.Snapshot.Duration() != 168*time.Hour ||
+		e.Targets.Duration() != 720*time.Hour || e.Root.Duration() != 8760*time.Hour {
+		t.Errorf("defaults: %+v", c.UpdateMetadata)
+	}
+	k := c.Signing.Keys
+	if k.Targets != "targets" || k.Snapshot != "snapshot" || k.Timestamp != "timestamp" {
+		t.Errorf("key prefixes: %+v", k)
+	}
+	set := parse(t, minimal+"updateMetadata:\n  rootThreshold: 3\n  expiry: { timestamp: \"12h\", targets: \"240h\" }\n")
+	if set.UpdateMetadata.RootThreshold != 3 || set.UpdateMetadata.Expiry.Timestamp.Duration() != 12*time.Hour ||
+		set.UpdateMetadata.Expiry.Snapshot.Duration() != 168*time.Hour {
+		t.Errorf("overrides: %+v", set.UpdateMetadata)
+	}
+	msg := refuse(t, minimal+"updateMetadata:\n  rootThreshold: 0\n  expiry: { timestamp: \"1m\" }\n")
+	for _, want := range []string{"updateMetadata.rootThreshold", "updateMetadata.expiry.timestamp"} {
+		if !strings.Contains(msg, want) {
+			t.Errorf("no problem reported for %s: %s", want, msg)
+		}
+	}
+	if msg := refuse(t, minimal+"signing:\n  keys: { targets: \"k\", snapshot: \"k\" }\n"); !strings.Contains(msg, "must differ from signing.keys") {
+		t.Errorf("two roles sharing a key prefix: %s", msg)
 	}
 }

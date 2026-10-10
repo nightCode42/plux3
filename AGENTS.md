@@ -172,7 +172,7 @@ When you stop, state the question, the options, and your recommendation with its
 - Leave `TODO`, `FIXME`, placeholders or commented-out code. A deferred item is tracked as an issue and referenced as `TODO(#<issue>): …`.
 - Introduce global mutable state, import-time side effects, or panics/exceptions across package boundaries.
 - Skip git hooks (`--no-verify`) or bypass CI.
-- Commit secrets, credentials, certificates, keystores or `.env` files.
+- Commit secrets, credentials, private keys, certificates, keystores or `.env` files. The one exception is a public trust anchor an ADR pins (the attestation roots of [ADR-0012](docs/adr/0012-dpop-hardware-keys-and-attestation.md)), committed unmodified with its fingerprint tested.
 
 ---
 

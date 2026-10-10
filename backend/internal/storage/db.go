@@ -142,6 +142,10 @@ const (
 	// ScopeRegistration lets a registering device find its app and
 	// environment before its organisation is known.
 	ScopeRegistration Scope = "registration"
+	// ScopeMetadata lets the update metadata of an environment be read
+	// by its identifier alone: the files are signed and public, and a
+	// device fetches them before it can authenticate (SEC-050).
+	ScopeMetadata Scope = "metadata"
 )
 
 // InTx runs f in a transaction bound to a tenant. The settings are set

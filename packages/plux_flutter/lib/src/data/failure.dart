@@ -23,6 +23,15 @@ final class DataFailure implements Exception {
         message,
       );
 
+  /// The device's assurance level is below the one the source asks for
+  /// (`PLX-6002`, SEC-007): nothing was requested.
+  const DataFailure.assurance(String message)
+    : this(
+        ActionErrorKind.custom,
+        PluxErrorCode.assuranceInsufficient,
+        message,
+      );
+
   /// A response did not map to its declared type (PLX-5104).
   const DataFailure.mapping(String message)
     : this(

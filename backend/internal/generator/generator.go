@@ -106,7 +106,7 @@ type File struct {
 }
 
 // RuntimeConstraint is the plux_flutter version generated projects use.
-const RuntimeConstraint = "^0.3.0"
+const RuntimeConstraint = "^0.4.0"
 
 // FlutterVersion is the Flutter the templates are written against: the
 // repository's pin (a test keeps them in step).

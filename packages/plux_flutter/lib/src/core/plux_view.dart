@@ -196,13 +196,13 @@ final class PluxView extends ConsumerWidget {
       final needs = RouteGuards.requirementsNow(release, declared);
       if (needs == null ||
           needs.guards.isNotEmpty ||
-          needs.assurance > deviceAssurance) {
+          needs.assurance > rt.assurance.value) {
         return fallback(off, page.plugin);
       }
       shown = declared;
     } else if (!component &&
         !_guarded &&
-        RouteGuards.needsDecision(release, page)) {
+        RouteGuards.needsDecision(release, page, rt.assurance.value)) {
       // An entry nothing decided yet: an embedded view, a declarative page
       // or a shell's tab runs the route's guards here (NAV-009).
       return _GuardGate(
@@ -213,7 +213,7 @@ final class PluxView extends ConsumerWidget {
       );
     }
     final events = onEvent;
-    return PluxPageHost(
+    final host = PluxPageHost(
       key: ValueKey((release.sequence, name, shown.pageKey)),
       runtime: rt,
       page: shown,
@@ -226,6 +226,22 @@ final class PluxView extends ConsumerWidget {
           ? null
           : (name, payload) => events(PluxViewEvent(name, payload)),
       fallback: (e) => fallback(e, shown.plugin),
+    );
+    // A page that asks for an assurance level is checked again whenever
+    // the level changes: a page already shown that now asks for more is
+    // replaced by its fallback (SEC-007, NAV-009).
+    final asks = component
+        ? null
+        : RouteGuards.requirementsNow(release, shown)?.assurance;
+    if (asks == null || asks == 0) return host;
+    return _AssuranceGate(
+      key: ValueKey((release.sequence, name, 'assurance')),
+      runtime: rt,
+      route: name,
+      plugin: shown.plugin,
+      required: asks,
+      fallback: fallback,
+      child: host,
     );
   }
 
@@ -322,6 +338,69 @@ final class _GuardGateState extends State<_GuardGate> {
       ),
     };
   }
+}
+
+/// Shows [child] while the device's assurance level is at least [required]
+/// and the fallback with `PLX-6002` while it is not, whatever the page was
+/// doing when the level fell (SEC-007, NAV-009).
+final class _AssuranceGate extends StatefulWidget {
+  const _AssuranceGate({
+    super.key,
+    required this.runtime,
+    required this.route,
+    required this.plugin,
+    required this.required,
+    required this.fallback,
+    required this.child,
+  });
+
+  final PluxRuntime runtime;
+  final String route;
+  final String plugin;
+  final int required;
+  final Widget Function(PluxException e, [String? plugin]) fallback;
+  final Widget child;
+
+  @override
+  State<_AssuranceGate> createState() => _AssuranceGateState();
+}
+
+final class _AssuranceGateState extends State<_AssuranceGate> {
+  bool _refused = false;
+
+  ValueNotifier<int> get _level => widget.runtime.assurance;
+
+  PluxException _error() => PluxException(
+    PluxErrorCode.assuranceInsufficient,
+    'route ${widget.route} requires assurance AL${widget.required}, and this '
+    'device has AL${_level.value} (SEC-007)',
+    details: {'route': widget.route, 'plugin': widget.plugin},
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _refused = _level.value < widget.required;
+    if (_refused) widget.runtime.reportProblem(_error());
+    _level.addListener(_changed);
+  }
+
+  void _changed() {
+    final refused = _level.value < widget.required;
+    if (refused == _refused) return;
+    if (refused) widget.runtime.reportProblem(_error());
+    setState(() => _refused = refused);
+  }
+
+  @override
+  void dispose() {
+    _level.removeListener(_changed);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      _refused ? widget.fallback(_error(), widget.plugin) : widget.child;
 }
 
 /// Hosts one page: holds a lease on its release while mounted, checks the

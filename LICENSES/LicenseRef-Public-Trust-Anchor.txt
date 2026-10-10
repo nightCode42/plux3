@@ -1,0 +1,12 @@
+Public trust anchor
+
+This file is a root certificate that its issuer publishes so that anyone
+can verify what it signs. It is reproduced unmodified, only so that the
+software can verify attestations against it. Plux claims no copyright in
+it and grants no licence to it; any rights remain with the issuer.
+
+Issuers and sources:
+- Google LLC: Android Key Attestation roots,
+  https://android.googleapis.com/attestation/root
+- Apple Inc.: Apple App Attestation Root CA,
+  https://www.apple.com/certificateauthority/Apple_App_Attestation_Root_CA.pem

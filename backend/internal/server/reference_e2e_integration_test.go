@@ -34,7 +34,7 @@ type referenceApp struct {
 // a validated transfer, its result and the server-sent notification on the
 // dashboard. See runReferenceApp.
 func TestPluxBankAgainstTheServer(t *testing.T) {
-	runReferenceApp(t, referenceApp{fixture: "plux_bank", dir: "plux_bank", addr: "127.0.0.1:18097"})
+	runReferenceApp(t, referenceApp{fixture: "plux_bank", dir: "plux_bank", addr: deviceAddr("127.0.0.1:18097")})
 }
 
 // Verifies: DX-004, QA-006.
@@ -44,7 +44,7 @@ func TestPluxBankAgainstTheServer(t *testing.T) {
 // and a courier's confirmation queued offline and replayed once. See
 // runReferenceApp.
 func TestPluxExpressAgainstTheServer(t *testing.T) {
-	runReferenceApp(t, referenceApp{fixture: "plux_express", dir: "plux_express", addr: "127.0.0.1:18098"})
+	runReferenceApp(t, referenceApp{fixture: "plux_express", dir: "plux_express", addr: deviceAddr("127.0.0.1:18098")})
 }
 
 // runReferenceApp builds and starts the reference backend (test/refapi),

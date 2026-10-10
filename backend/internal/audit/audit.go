@@ -104,6 +104,16 @@ const (
 	LockTakenOver           Action = "plugin.lock.override"
 	LockReleased            Action = "plugin.lock.released"
 	LockRequested           Action = "plugin.lock.requested"
+
+	// DeviceRevoked: a device's trust was withdrawn (SEC-006).
+	DeviceRevoked Action = "device.revoked"
+	// SecurityConfigSet: an environment's security profile or overrides
+	// changed (SEC-182).
+	SecurityConfigSet Action = "security_config.set"
+
+	// UpdateMetadataRootUploaded: an operator stored a root signed
+	// offline (SEC-051, SEC-140).
+	UpdateMetadataRootUploaded Action = "update_metadata.root_uploaded"
 )
 
 // actions is the registry, sorted, so that Registered can search it and
@@ -122,6 +132,7 @@ var actions = sorted(
 	DocumentWritten, DocumentDeleted, DocumentRestored, DocumentPurged, DraftImported, AssetUploaded, AssetDeleted,
 	VersionPublished, PublishCancelled, ReleaseCreated, ReleasePromoted, ReleaseRolledBack, ReleasesPurged, ControlChanged, NativeCatalogueUploaded,
 	SnapshotRestored, TemplateInstantiated, LockAcquired, LockTakenOver, LockReleased, LockRequested,
+	DeviceRevoked, SecurityConfigSet, UpdateMetadataRootUploaded,
 )
 
 // sorted returns its arguments in order.
@@ -225,13 +236,22 @@ func Verify(entries []Entry, previousHash string) error {
 			return fmt.Errorf("audit: sequence jumps from %d to %d: an entry is missing",
 				entries[i-1].Sequence, e.Sequence)
 		}
-		if e.PreviousHash != previousHash {
-			return fmt.Errorf("audit: entry %d does not follow the one before it", e.Sequence)
-		}
-		if e.EntryHash != e.Hash() {
-			return fmt.Errorf("audit: entry %d was changed after it was written", e.Sequence)
+		if err := e.follows(previousHash); err != nil {
+			return err
 		}
 		previousHash = e.EntryHash
+	}
+	return nil
+}
+
+// follows reports why an entry does not follow from the entry whose hash
+// is previousHash, or is not what was written.
+func (e Entry) follows(previousHash string) error {
+	if e.PreviousHash != previousHash {
+		return fmt.Errorf("audit: entry %d does not follow the one before it", e.Sequence)
+	}
+	if e.EntryHash != e.Hash() {
+		return fmt.Errorf("audit: entry %d was changed after it was written", e.Sequence)
 	}
 	return nil
 }

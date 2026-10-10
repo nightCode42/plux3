@@ -16,8 +16,9 @@ mixin AllowsEveryGuard {
     PageRef page,
     UuidKey guard,
     Map<String, Object?> params,
-    PluxEnvironment? env,
-  ) => Future.value(const GuardAllows());
+    PluxEnvironment? env, {
+    Map<String, Object?> Function(String plugin)? state,
+  }) => Future.value(const GuardAllows());
 
   /// None.
   Set<String> paramNames(ActiveRelease release, PageRef page) => const {};

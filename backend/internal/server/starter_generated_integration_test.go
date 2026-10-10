@@ -75,7 +75,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plux_flutter/plux_flutter.dart';
 import 'package:plux_flutter/src/core/runtime.dart' show RuntimeOverrides;
-import 'package:plux_flutter/src/sync/sync_engine.dart' show MemoryCredentialStore;
+import 'package:plux_flutter/src/security/software_keys.dart'
+    show DevelopmentAttestation, SoftwareDeviceKeys;
+import 'package:plux_flutter/src/sync/sync_engine.dart' show MemoryCredentialStore, MemorySecretStore;
 
 Future<void> pumpUntil(WidgetTester tester, Finder finder) async {
   final end = DateTime.now().add(const Duration(seconds: 60));
@@ -97,7 +99,12 @@ void main() {
       await tester.runAsync(
         () => Plux.initializeWith(
           nativeConfig(storage: dir.path, onError: (e, _) => problems.add(e)),
-          const RuntimeOverrides(credentials: MemoryCredentialStore.new),
+          RuntimeOverrides(
+            credentials: MemoryCredentialStore.new,
+            configSecrets: MemorySecretStore.new,
+            deviceKeys: SoftwareDeviceKeys.new,
+            attestation: () => const DevelopmentAttestation('e2e'),
+          ),
         ),
       );
       await tester.pumpWidget(const App());
@@ -142,7 +149,7 @@ func TestGeneratedAppAgainstTheServer(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	st := startStack(t, "127.0.0.1:18095")
+	st := startStack(t, "127.0.0.1:0")
 	project := st.project(t, "starter")
 	st.run(t, 0, "publish", "-C", project, "--env", "staging", "--promote", "staging")
 

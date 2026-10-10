@@ -448,21 +448,34 @@ final class DataClient {
           'data.requestSize = ${limits.requestSize}',
         );
       }
-      Future<DataResponse> send(String? token) => transport.send(
-        DataRequest(
-          method: method,
-          url: url,
-          headers: {
-            'accept': 'application/json',
-            if (encoded != null) 'content-type': 'application/json',
-            ...headers,
-            if (token != null) 'authorization': 'Bearer $token',
-          },
-          body: encoded,
-          maxResponseBytes: limits.responseSize,
-          timeout: limits.requestTimeout,
-        ),
-      );
+      Future<DataResponse> send(String? token) async {
+        try {
+          return await transport.send(
+            DataRequest(
+              method: method,
+              url: url,
+              headers: {
+                'accept': 'application/json',
+                if (encoded != null) 'content-type': 'application/json',
+                ...headers,
+                if (token != null) 'authorization': 'Bearer $token',
+              },
+              body: encoded,
+              maxResponseBytes: limits.responseSize,
+              timeout: limits.requestTimeout,
+            ),
+          );
+        } on DataFailure catch (f) {
+          // The domain is pinned and its certificate matches no pin
+          // (SEC-042): a security event of its own, the host only; the
+          // failure itself is reported where loads are.
+          if (f.code == PluxErrorCode.certificatePinMismatch) {
+            record('pin_failure', fields: {'host': url.host});
+          }
+          rethrow;
+        }
+      }
+
       String? token;
       if (withAuth) {
         token = await auth.token();

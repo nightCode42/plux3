@@ -17,7 +17,7 @@ dependencies:
   flutter:
     sdk: flutter
   mobile_scanner: ^7.4.2
-  plux_flutter: ^0.3.0
+  plux_flutter: ^0.4.0
 
 dev_dependencies:
   flutter_test:

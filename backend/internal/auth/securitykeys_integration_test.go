@@ -21,12 +21,13 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 )
 
-// cbor encodes the values a software authenticator writes: unsigned and
-// negative integers, byte and text strings, and maps with integer or
-// string keys in the order given.
+// cborMap is a CBOR map with its keys in the order given.
 type cborMap [][2]any
 
-func cbor(v any) []byte {
+// cborBytes encodes the values a software authenticator writes: unsigned and
+// negative integers, byte and text strings, and maps with integer or
+// string keys in the order given.
+func cborBytes(v any) []byte {
 	head := func(major byte, n uint64) []byte {
 		switch {
 		case n < 24:
@@ -52,8 +53,8 @@ func cbor(v any) []byte {
 	case cborMap:
 		out := head(5, uint64(len(x)))
 		for _, kv := range x {
-			out = append(out, cbor(kv[0])...)
-			out = append(out, cbor(kv[1])...)
+			out = append(out, cborBytes(kv[0])...)
+			out = append(out, cborBytes(kv[1])...)
 		}
 		return out
 	}
@@ -88,10 +89,10 @@ func newAuthenticator(t *testing.T, ed bool) *authenticator {
 
 func (a *authenticator) coseKey() []byte {
 	if a.ed != nil {
-		return cbor(cborMap{{1, 1}, {3, -8}, {-1, 6}, {-2, []byte(a.ed.Public().(ed25519.PublicKey))}})
+		return cborBytes(cborMap{{1, 1}, {3, -8}, {-1, 6}, {-2, []byte(a.ed.Public().(ed25519.PublicKey))}})
 	}
 	pub, _ := a.ec.PublicKey.Bytes()
-	return cbor(cborMap{{1, 2}, {3, -7}, {-1, 1}, {-2, pub[1:33]}, {-3, pub[33:]}})
+	return cborBytes(cborMap{{1, 2}, {3, -7}, {-1, 1}, {-2, pub[1:33]}, {-3, pub[33:]}})
 }
 
 func (a *authenticator) authData(attested bool) []byte {
@@ -127,7 +128,7 @@ func (a *authenticator) clientData(t *testing.T, ceremony string, options []byte
 func (a *authenticator) register(t *testing.T, options []byte) ([]byte, []byte) {
 	t.Helper()
 	cd := a.clientData(t, "webauthn.create", options)
-	obj := cbor(cborMap{{"fmt", "none"}, {"attStmt", cborMap{}}, {"authData", a.authData(true)}})
+	obj := cborBytes(cborMap{{"fmt", "none"}, {"attStmt", cborMap{}}, {"authData", a.authData(true)}})
 	return cd, obj
 }
 

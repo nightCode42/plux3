@@ -8042,6 +8042,13 @@ components:
         environment:
           type: string
           title: environment
+        sinceRootVersion:
+          type: string
+          title: since_root_version
+          format: int64
+          description: |-
+            since_root_version is the version of the root the caller trusts; the
+             response carries every later root (SEC-051). Zero asks for them all.
       title: GetRootKeysRequest
       additionalProperties: false
     plux.v1.GetRootKeysResponse:
@@ -8052,6 +8059,17 @@ components:
           items:
             $ref: '#/components/schemas/plux.v1.PublicKey'
           title: keys
+        roots:
+          type: array
+          items:
+            type: string
+            format: byte
+          title: roots
+          description: |-
+            roots are the root metadata files after since_root_version, oldest
+             first. Each is signed by the previous root's threshold and by its own
+             (SEC-051, ADR-0054); the caller verifies the chain from the root it
+             embeds.
       title: GetRootKeysResponse
       additionalProperties: false
     plux.v1.GetSnapshotRequest:
@@ -9809,6 +9827,12 @@ components:
           type: string
           title: role
           description: role is the update-metadata role this key holds (ADR-0004).
+        environmentType:
+          type: string
+          title: environment_type
+          description: |-
+            environment_type is "production" or "development"; a production
+             runtime refuses metadata signed by a development key (SEC-056).
       title: PublicKey
       additionalProperties: false
     plux.v1.PublishJob:
@@ -10056,6 +10080,14 @@ components:
           type: string
           title: token_type
           description: token_type is "DPoP" (SEC-020).
+        assuranceLevel:
+          type: string
+          title: assurance_level
+          description: |-
+            assurance_level is the device's assurance level, "AL0" to "AL3": the
+             value of the token's `al` claim, which the server computed from the
+             device's verified evidence (SEC-007). The runtime enforces pages,
+             routes and data sources against it.
       title: RefreshDeviceTokenResponse
       additionalProperties: false
       description: |-
@@ -11033,6 +11065,12 @@ components:
           type: string
           title: timestamp_version
           format: int64
+        environmentId:
+          type: string
+          title: environment_id
+          description: |-
+            environment_id names the environment's metadata files, served at
+             /v1/metadata/{environment_id}/{file} (SEC-050).
       title: UpdateMetadataRef
       additionalProperties: false
       description: |-

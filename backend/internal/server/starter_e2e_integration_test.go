@@ -42,7 +42,7 @@ func TestStarterAppAgainstTheServer(t *testing.T) {
 	if starter == "" {
 		starter = filepath.Join("..", "..", "..", "apps", "starter")
 	}
-	st := startStack(t, "127.0.0.1:18094")
+	st := startStack(t, deviceAddr("127.0.0.1:18094"))
 	project := st.project(t, "starter")
 	var pub struct {
 		OK      bool

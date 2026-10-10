@@ -11,7 +11,7 @@ import 'package:plux_starter/src/map_card.dart';
 ///
 /// | Define | Meaning | Default |
 /// |---|---|---|
-/// | `PLUX_ENDPOINT` | the server's base URL | `http://localhost:8080` |
+/// | `PLUX_ENDPOINT` | the server's base URL | `https://localhost:8080` |
 /// | `PLUX_APP_ID` | the app's ID | none: required |
 /// | `PLUX_ENVIRONMENT` | the environment key | `staging` |
 /// | `PLUX_ROUTE` | the page the home screen shows | `welcome` |
@@ -52,7 +52,7 @@ final class StarterConfig {
       );
     }
     final endpoint = Uri.tryParse(
-      get('PLUX_ENDPOINT', 'http://localhost:8080'),
+      get('PLUX_ENDPOINT', 'https://localhost:8080'),
     );
     if (endpoint == null ||
         !endpoint.hasAuthority ||

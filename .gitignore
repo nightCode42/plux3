@@ -17,6 +17,8 @@ coverage.html
 # Secrets and local credentials — never commit these
 certs/
 *.pem
+# Public attestation roots pinned by ADR-0012: trust anchors, not secrets.
+!backend/internal/attest/*/roots/*.pem
 *.key
 *.crt
 *.p12

@@ -17,6 +17,7 @@ import 'package:plux_flutter/src/state/providers.dart';
 import 'package:plux_flutter/src/sync/sync_engine.dart';
 
 import '../support/entering.dart';
+import '../sync/fake_device.dart';
 import '../sync/fake_server.dart';
 
 final class _Renderer with AllowsEveryGuard implements PageRenderer {
@@ -100,6 +101,9 @@ void main() {
         ),
         RuntimeOverrides(
           credentials: MemoryCredentialStore.new,
+          configSecrets: MemorySecretStore.new,
+          deviceKeys: FakeDeviceKeys.new,
+          attestation: FakeAttestation.new,
           baseline: _reader(
             await server.baseline(5, goldens.bundles[app]!, {
               for (final MapEntry(:key, :value) in plugins.entries)
@@ -216,6 +220,27 @@ void main() {
       for (final e in server.events)
         if (e['name'] == 'error') fieldsOf(e)['code'],
     ], contains(PluxErrorCode.syncFailed.id));
+  });
+
+  // Verifies: SEC-041.
+  testWidgets('a pin mismatch is reported as pin_failure with the host '
+      'only, without consent [SEC-041] [ANL-001]', (tester) async {
+    await start(tester);
+    rt().reportProblem(
+      const PluxException(
+        PluxErrorCode.certificatePinMismatch,
+        'the certificate of plux.example matches none of the pins',
+        details: {'host': 'plux.example'},
+      ),
+    );
+    await flush(tester);
+    final event = only('pin_failure');
+    expect(fieldsOf(event), {'host': 'plux.example'});
+    expect(event['time'], isNotNull);
+    expect([
+      for (final e in server.events)
+        if (e['name'] == 'error') fieldsOf(e)['code'],
+    ], contains('PLX-6020'));
   });
 
   testWidgets('the app bundle sets the sampling rates; the host lowers '

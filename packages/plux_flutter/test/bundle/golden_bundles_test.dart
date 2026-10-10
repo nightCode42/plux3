@@ -187,4 +187,22 @@ void main() {
       reason: 'repaint boundaries and static subtrees',
     );
   });
+
+  // The device guard and the renderer read an app's own capabilities from
+  // the app bundle's meta (SEC-080); a bundle without them approves nothing.
+  test(
+    'the app bundle carries the capabilities the app approves [SEC-080]',
+    () {
+      final app = BundleContainer.parse(bundles['widgets/widgets.pxb']!);
+      final caps = fbs.Meta(app.ofKind(SectionKind.meta).single.data)
+          .capabilities;
+      expect(caps, isNotNull);
+      expect(caps!.deviceApis, ['haptics']);
+      expect(caps.networkDomains ?? const <String>[], isEmpty);
+      final plugin = BundleContainer.parse(bundles['widgets/gallery.pxb']!);
+      final declared = fbs.Meta(plugin.ofKind(SectionKind.meta).single.data)
+          .capabilities;
+      expect(declared?.deviceApis, ['haptics']);
+    },
+  );
 }

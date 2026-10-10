@@ -21,6 +21,8 @@ import 'package:plux_flutter/src/sync/api_client.dart' show installedDigest;
 import 'package:plux_flutter/src/verify/jcs.dart';
 import 'package:plux_flutter/src/verify/manifest.dart';
 
+import 'fake_metadata.dart';
+
 /// The compiled golden bundles and the Go deltas between them.
 final class Goldens {
   Goldens._(this.bundles, this.deltas);
@@ -213,6 +215,10 @@ final class FakePluxServer {
   /// The release it serves.
   FakeRelease? release;
 
+  /// The update metadata it serves, when its environment has a root
+  /// (SEC-050); the manifest then carries the targets version.
+  FakeMetadata? metadata;
+
   /// Deltas it can serve, by `from→to` bundle hashes.
   final Map<String, Uint8List> deltas = {};
 
@@ -237,6 +243,9 @@ final class FakePluxServer {
   /// Devices registered.
   int registrations = 0;
 
+  /// Registration challenges issued.
+  int challenges = 0;
+
   /// Telemetry events received, in the order they arrived.
   final List<Map<String, Object?>> events = [];
 
@@ -245,6 +254,36 @@ final class FakePluxServer {
 
   /// Whether tokens are refused as for an unknown device.
   bool forgetDevices = false;
+
+  /// The assurance level the token responses name (SEC-007).
+  String assuranceLevel = 'AL0';
+
+  /// When set, the lowest level GetManifest accepts: below it the server
+  /// answers `PLX-6002` (SEC-007).
+  String? syncMinimum;
+
+  /// Whether the signed manifest pins a security configuration (SEC-182).
+  bool pinsConfig = false;
+
+  /// The configuration version the manifest pins.
+  int configVersion = 0;
+
+  /// The device document at [configVersion].
+  Map<String, Object?> configDocument = {};
+
+  /// The merge patch from a device's version to [configVersion], by that
+  /// version; a device whose version has none gets no patch.
+  final Map<int, Object?> configPatches = {};
+
+  /// Device versions the server cannot patch from: the answer says so.
+  final Set<int> configFullRequiredFor = {};
+
+  /// Hashes (hex) the manifest pins instead of the document's, one per
+  /// manifest served, until used up.
+  final List<String> wrongConfigHashes = [];
+
+  /// The `configVersion` of each manifest request, in order.
+  final List<Object?> configVersionsSeen = [];
 
   /// Stops the server.
   Future<void> close() => _server.close(force: true);
@@ -348,11 +387,7 @@ final class FakePluxServer {
       final body = jsonDecode(
         utf8.decode(gzipped ? gzip.decode(raw) : raw),
       ) as Map<String, Object?>;
-      final out = await _rpc(
-        req.uri.path,
-        body,
-        req.headers.value('authorization'),
-      );
+      final out = await _rpc(req.uri.path, body, req.headers);
       res.statusCode = out.$1;
       res.headers.contentType = ContentType.json;
       final text = jsonEncode(out.$2);
@@ -363,7 +398,12 @@ final class FakePluxServer {
       await res.close();
       return;
     }
-    final data = _objects[req.uri.path];
+    final meta = metadata;
+    final named = meta == null
+        ? null
+        : RegExp('^/v1/metadata/${meta.environmentId}/(.+)\$')
+              .firstMatch(req.uri.path);
+    final data = named == null ? _objects[req.uri.path] : meta!.files[named[1]];
     if (data == null) {
       res.statusCode = 404;
       await res.close();
@@ -412,19 +452,37 @@ final class FakePluxServer {
   Future<(int, Map<String, Object?>)> _rpc(
     String path,
     Map<String, Object?> body,
-    String? auth,
+    HttpHeaders headers,
   ) async {
+    // As the server does: a device token is a DPoP token, and a request
+    // with it carries a proof (the fake does not check the signature).
+    final auth = headers.value('authorization');
+    final authed =
+        auth != null &&
+        auth.startsWith('DPoP plux_dat_') &&
+        headers.value('dpop') != null;
     switch (path) {
-      case '/plux.v1.DeviceService/RegisterDevice':
+      case '/plux.v1.DeviceService/CreateRegistrationChallenge':
+        challenges++;
+        return (
+          200,
+          {
+            'challenge': base64.encode(List.filled(32, challenges)),
+            'expiresAt': '2100-01-01T00:00:00Z',
+          },
+        );
+      case '/plux.v1.DeviceService/RegisterAttestedDevice':
         registrations++;
         return (
           200,
           {
             'device': {'id': 'dev_$registrations'},
-            'deviceSecret': 'plux_dsec_$registrations',
           },
         );
-      case '/plux.v1.TokenService/IssueDeviceToken':
+      case '/plux.v1.TokenService/RefreshDeviceToken':
+        if (auth != null || headers.value('dpop') == null) {
+          return (401, {'code': 'unauthenticated', 'message': 'no proof'});
+        }
         if (forgetDevices) {
           forgetDevices = false;
           return (
@@ -432,20 +490,48 @@ final class FakePluxServer {
             {'code': 'unauthenticated', 'message': 'unknown device'},
           );
         }
-        return (200, {'accessToken': 'plux_dat_${body['deviceId']}'});
+        return (
+          200,
+          {
+            'accessToken': 'plux_dat_${body['deviceId']}',
+            'expiresAt': '2100-01-01T00:00:00Z',
+            'tokenType': 'DPoP',
+            'assuranceLevel': assuranceLevel,
+          },
+        );
       case '/plux.v1.DeviceService/ReportInstalled':
         return (200, <String, Object?>{});
       case '/plux.v1.TelemetryService/IngestEvents':
-        if (auth == null || !auth.startsWith('Bearer plux_dat_')) {
+        if (!authed) {
           return (401, {'code': 'unauthenticated', 'message': 'no token'});
         }
         final batch = (body['events']! as List<Object?>)
             .cast<Map<String, Object?>>();
         events.addAll(batch);
         return (200, {'accepted': batch.length});
-      case '/plux.v1.ManifestService/GetManifest':
-        if (auth == null || !auth.startsWith('Bearer plux_dat_')) {
+      case '/plux.v1.ManifestService/GetRootKeys':
+        if (!authed || metadata == null) {
           return (401, {'code': 'unauthenticated', 'message': 'no token'});
+        }
+        return (
+          200,
+          metadata!.rootKeys(int.parse(body['sinceRootVersion']! as String)),
+        );
+      case '/plux.v1.ManifestService/GetManifest':
+        if (!authed) {
+          return (401, {'code': 'unauthenticated', 'message': 'no token'});
+        }
+        if (syncMinimum case final minimum?
+            when assuranceLevel.compareTo(minimum) < 0) {
+          return (
+            403,
+            {
+              'code': 'permission_denied',
+              'message':
+                  'PLX-6002: syncing needs assurance $minimum, and this '
+                  'device has $assuranceLevel',
+            },
+          );
         }
         if (release == null) {
           return (404, {'code': 'not_found', 'message': 'no release'});
@@ -457,6 +543,8 @@ final class FakePluxServer {
 
   Future<Map<String, Object?>> _manifest(Map<String, Object?> req) async {
     final r = release!;
+    configVersionsSeen.add(req['configVersion']);
+    final deviceConfig = int.parse('${req['configVersion'] ?? 0}');
     final installed = {
       for (final i
           in (req['installed']! as List<Object?>).cast<Map<String, Object?>>())
@@ -469,7 +557,7 @@ final class FakePluxServer {
     // needs the device to hold exactly its bundles, by list or by digest,
     // and a digest that does not match asks for the list (NFR-006).
     final etag =
-        '"${sha256.convert(utf8.encode('${r.sequence}|${r.killSwitches}|${r.appKillSwitch}')).toString().substring(0, 16)}"';
+        '"${sha256.convert(utf8.encode('${r.sequence}|${r.killSwitches}|${r.appKillSwitch}|$configVersion')).toString().substring(0, 16)}"';
     final targets = {
       '': Goldens.hashOf(r.app),
       for (final MapEntry(:key, :value) in r.plugins.entries)
@@ -480,7 +568,9 @@ final class FakePluxServer {
         ? digest == base64.encode(installedDigest(targets))
         : targets.length == installed.length &&
               targets.entries.every((e) => installed[e.key] == e.value);
-    if (req['ifNoneMatch'] == etag && holds) {
+    if (req['ifNoneMatch'] == etag &&
+        holds &&
+        (!pinsConfig || deviceConfig == configVersion)) {
       return {'notModified': true, 'etag': etag};
     }
     if (digest != null) return {'installedRequired': true, 'etag': etag};
@@ -514,6 +604,16 @@ final class FakePluxServer {
         'message': r.message,
       },
       'experiments': <Object?>[],
+      if (metadata != null) 'version': metadata!.targetsVersion,
+      if (pinsConfig)
+        'config': {
+          'version': configVersion,
+          'sha256': wrongConfigHashes.isNotEmpty
+              ? wrongConfigHashes.removeAt(0)
+              : sha256
+                    .convert(utf8.encode(canonicalJson(configDocument)))
+                    .toString(),
+        },
     };
     final signed = utf8.encode(canonicalJson(signedDoc));
     final sig = await DartEd25519(sha512: const DartSha512())
@@ -544,12 +644,18 @@ final class FakePluxServer {
       };
     }
 
+    final patch = configPatches[deviceConfig];
     return {
       'etag': etag,
+      if (pinsConfig && deviceConfig != configVersion && patch != null)
+        'configPatch': base64.encode(utf8.encode(jsonEncode(patch))),
+      if (pinsConfig && configFullRequiredFor.contains(deviceConfig))
+        'configFullRequired': true,
       'manifest': {
         'appId': app,
         'releaseSequence': '${r.sequence}',
         'signed': base64.encode(signed),
+        if (metadata != null) 'metadata': metadata!.reference,
         'signatures': [
           {
             'keyId': keyId,

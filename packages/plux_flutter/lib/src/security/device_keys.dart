@@ -15,8 +15,9 @@ import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/services.dart';
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/platform/runtime_channel.dart';
 
-const _channel = MethodChannel('dev.plux/runtime');
+const _channel = RuntimeChannel();
 
 /// What a device key is used for.
 enum KeyPurpose {

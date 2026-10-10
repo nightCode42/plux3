@@ -5,6 +5,7 @@ package compiler
 
 import (
 	"cmp"
+	"encoding/base64"
 	"encoding/json"
 	"net/url"
 	"slices"
@@ -84,6 +85,36 @@ func (u *unit) checkApproved(pl *plugin) {
 			if !slices.Contains(approved.Functions, f.Function) {
 				u.report(plxerr.CapabilityNotApproved, pl.file, plxerr.Pointer("capabilities", "functions", strconv.Itoa(i), "function"),
 					"the app does not approve the function %q", f.Function)
+			}
+		}
+	}
+}
+
+// checkNetworkPins checks the pins the app sets for customer API domains
+// (SEC-042): each domain is one the app declares in networkDomains, and
+// each pin is the canonical base64 of a SHA-256 hash. That a domain has at
+// least two distinct pins is the document schema's minItems and
+// uniqueItems.
+func (u *unit) checkNetworkPins() {
+	c := u.project.App.Doc.Capabilities
+	if c == nil {
+		return
+	}
+	hosts := make([]string, 0, len(c.NetworkPins))
+	for h := range c.NetworkPins {
+		hosts = append(hosts, h)
+	}
+	slices.Sort(hosts)
+	for _, h := range hosts {
+		ptr := plxerr.Pointer("capabilities", "networkPins", h)
+		if !domainAllowed(h, c.NetworkDomains) {
+			u.report(plxerr.CapabilityNotApproved, "app.json", ptr,
+				"%q is pinned but not declared in capabilities.networkDomains", h)
+		}
+		for i, p := range c.NetworkPins[h] {
+			if raw, err := base64.StdEncoding.DecodeString(p); err != nil || len(raw) != 32 || base64.StdEncoding.EncodeToString(raw) != p {
+				u.report(plxerr.InvalidFormat, "app.json", plxerr.Pointer("capabilities", "networkPins", h, strconv.Itoa(i)),
+					"a pin is the canonical base64 of a SHA-256 hash (44 characters)")
 			}
 		}
 	}

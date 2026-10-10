@@ -20,12 +20,16 @@ void main() {
     String route,
     Map<String, Object?> params, {
     bool guarded = false,
+    int assurance = 0,
   }) async {
+    h.server.assuranceLevel = 'AL$assurance';
     await tester.runAsync(
       () => h.startFrom(g.bundles['loan-calculator/demo.pxb']!, {
         'loans': g.bundles['loan-calculator/loans.pxb']!,
       }),
     );
+    // What the first token will say, known before it arrives.
+    h.runtime.assurance.value = assurance;
     await tester.pumpWidget(
       MaterialApp(
         home: PluxScope(
@@ -72,12 +76,12 @@ void main() {
   );
 
   testWidgets(
-    'the calculator requires assurance AL1, so it shows its fallback until attestation arrives (P6) [NAV-009]',
+    'the calculator requires assurance AL1, so it shows its fallback with PLX-6002 at AL0 [NAV-009] [SEC-007]',
     (tester) async {
       await open(tester, 'loan-calculator', {'productId': 'personal-12m'});
-      expect(find.text('fallback PLX-4102'), findsOneWidget);
+      expect(find.text('fallback PLX-6002'), findsOneWidget);
       final e = h.errors.singleWhere(
-        (e) => e.code == PluxErrorCode.navigationRefused,
+        (e) => e.code == PluxErrorCode.assuranceInsufficient,
       );
       expect(e.message, contains('requires assurance AL1'));
     },
@@ -86,9 +90,14 @@ void main() {
   testWidgets(
     'past its guards, the calculator shows its fallback: a state entry without a default is set by actions (P5) [RT-020]',
     (tester) async {
-      await open(tester, 'loan-calculator', {
-        'productId': 'personal-12m',
-      }, guarded: true);
+      // AL1 is the level the calculator asks for.
+      await open(
+        tester,
+        'loan-calculator',
+        {'productId': 'personal-12m'},
+        guarded: true,
+        assurance: 1,
+      );
       expect(find.text('fallback PLX-4001'), findsOneWidget);
       expect(
         h.errors.map((e) => e.message),

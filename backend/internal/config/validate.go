@@ -4,8 +4,11 @@
 package config
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"maps"
 	"net/netip"
 	"net/url"
 	"path/filepath"
@@ -14,8 +17,10 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
+	"github.com/nightCode42/plux3/backend/internal/security/settings"
 )
 
 // problems collects validation failures so that one run reports every
@@ -49,6 +54,7 @@ func (p *problems) positive(path string, v int64) {
 func (c *Config) Validate() error {
 	var p problems
 	c.validateServer(&p)
+	c.validateTransport(&p)
 	c.validateDatabase(&p)
 	c.validateObjectStorage(&p)
 	c.validateCache(&p)
@@ -58,7 +64,10 @@ func (c *Config) Validate() error {
 	c.validateTelemetry(&p)
 	c.validateLimits(&p)
 	c.validateRetention(&p)
+	p.positive("audit.checkpointInterval", int64(c.Audit.CheckpointInterval))
 	c.validateAssets(&p)
+	c.validateAttestation(&p)
+	c.validateUpdateMetadata(&p)
 	return errors.Join(p.errs...)
 }
 
@@ -179,13 +188,67 @@ func (c *Config) validateSigning(p *problems) {
 		if v.WrapKey != "" && !keyPattern.MatchString(v.WrapKey) {
 			p.addf("signing.vault.wrapKey", "must be lower-case letters, digits and hyphens")
 		}
+	case "pkcs11":
+		c.validatePKCS11(p)
 	default:
 		p.addf("signing.backend", "%q arrives in P6; P2 supports vault and the file backend, which is refused for production environments", c.Signing.Backend)
 	}
 	// The prefix leaves room for "-" and a 36-character identifier within
 	// the 64 characters a key reference may have.
-	if !keyPattern.MatchString(c.Signing.Keys.Targets) || len(c.Signing.Keys.Targets) > 27 {
-		p.addf("signing.keys.targets", "must be a prefix of at most 27 lower-case letters, digits and hyphens")
+	prefixes := map[string]string{
+		"signing.keys.targets": c.Signing.Keys.Targets, "signing.keys.snapshot": c.Signing.Keys.Snapshot,
+		"signing.keys.timestamp": c.Signing.Keys.Timestamp,
+	}
+	seen := map[string]string{}
+	for _, path := range slices.Sorted(maps.Keys(prefixes)) {
+		prefix := prefixes[path]
+		if !keyPattern.MatchString(prefix) || len(prefix) > 27 {
+			p.addf(path, "must be a prefix of at most 27 lower-case letters, digits and hyphens")
+			continue
+		}
+		// One key must never serve two roles: a compromise of an online
+		// role would then reach the others (SEC-050).
+		if other, ok := seen[prefix]; ok {
+			p.addf(path, "must differ from %s", other)
+		}
+		seen[prefix] = path
+	}
+}
+
+// validateUpdateMetadata checks the thresholds and expiries of the update
+// metadata (SEC-050).
+func (c *Config) validateUpdateMetadata(p *problems) {
+	u := c.UpdateMetadata
+	if u.RootThreshold < 1 {
+		p.addf("updateMetadata.rootThreshold", "must be at least 1")
+	}
+	for _, e := range []struct {
+		path string
+		d    Duration
+	}{
+		{"updateMetadata.expiry.timestamp", u.Expiry.Timestamp},
+		{"updateMetadata.expiry.snapshot", u.Expiry.Snapshot},
+		{"updateMetadata.expiry.targets", u.Expiry.Targets},
+		{"updateMetadata.expiry.root", u.Expiry.Root},
+	} {
+		if e.d.Duration() < time.Hour {
+			p.addf(e.path, "must be at least one hour")
+		}
+	}
+	if !keyPattern.MatchString(c.Signing.Keys.Audit) {
+		p.addf("signing.keys.audit", "must be lower-case letters, digits and hyphens")
+	}
+}
+
+// validatePKCS11 checks the PKCS#11 helper's socket and the wrapping key.
+func (c *Config) validatePKCS11(p *problems) {
+	if s := c.Signing.PKCS11.Socket; s == "" {
+		p.addf("signing.pkcs11.socket", "must be set for the pkcs11 backend")
+	} else if !filepath.IsAbs(s) {
+		p.addf("signing.pkcs11.socket", "must be an absolute path")
+	}
+	if w := c.Signing.PKCS11.WrapKey; w != "" && !keyPattern.MatchString(w) {
+		p.addf("signing.pkcs11.wrapKey", "must be lower-case letters, digits and hyphens")
 	}
 }
 
@@ -231,8 +294,7 @@ func (c *Config) validateAuth(p *problems) {
 		}
 	}
 	p.positive("auth.studio.sessionTTL", int64(s.SessionTTL))
-	p.positive("auth.device.accessTokenTTL", int64(c.Auth.Device.AccessTokenTTL))
-	p.positive("auth.device.refreshTokenTTL", int64(c.Auth.Device.RefreshTokenTTL))
+	validateAccessTokenTTL(p, c.Auth.Device.AccessTokenTTL.Duration())
 	p.positive("auth.ci.tokenTTL", int64(c.Auth.CI.TokenTTL))
 	for i, is := range c.Auth.CI.Issuers {
 		path := "auth.ci.issuers[" + strconv.Itoa(i) + "]"
@@ -371,5 +433,47 @@ func (c *Config) validateAssets(p *problems) {
 	case u.Scheme == "unix" && u.Path != "":
 	default:
 		p.addf("assets.malwareScanner", "must be tcp://host:port or unix:///path")
+	}
+}
+
+// validateAccessTokenTTL keeps the installation default of the
+// accessTokenLifetime setting inside the bounds the registry gives that
+// setting (SEC-020).
+func validateAccessTokenTTL(p *problems, ttl time.Duration) {
+	s, ok := settings.Lookup(settings.AccessTokenLifetime)
+	if !ok {
+		p.addf("auth.device.accessTokenTTL", "the %s setting is not in the registry", settings.AccessTokenLifetime)
+		return
+	}
+	lo, hi := time.Duration(s.Min)*time.Second, time.Duration(s.Max)*time.Second
+	if ttl < lo || ttl > hi {
+		p.addf("auth.device.accessTokenTTL", "must be between %s and %s", lo, hi)
+	}
+}
+
+// appIDPattern is the canonical text form of an app identifier.
+var appIDPattern = regexp.MustCompile(`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
+
+// validateAttestation checks the per-app attestation trust. The Play
+// Console keys are decoded where they are used; here they only have to
+// come as a pair.
+func (c *Config) validateAttestation(p *problems) {
+	for _, id := range slices.Sorted(maps.Keys(c.Attestation.Apps)) {
+		a := c.Attestation.Apps[id]
+		path := "attestation.apps[" + id + "]"
+		if !appIDPattern.MatchString(id) {
+			p.addf(path, "the key must be an app identifier (a UUID)")
+		}
+		for i, d := range a.AndroidCertDigests {
+			if raw, err := hex.DecodeString(d); err != nil || len(raw) != sha256.Size {
+				p.addf(path+".androidCertDigests["+strconv.Itoa(i)+"]", "must be the hex SHA-256 digest of a certificate")
+			}
+		}
+		if (a.PlayIntegrityDecryptionKey == "") != (a.PlayIntegrityVerificationKey == "") {
+			p.addf(path+".playIntegrityDecryptionKey", "and playIntegrityVerificationKey must be set together")
+		}
+		if a.PlayIntegrityDecryptionKey != "" && len(a.AndroidPackages) == 0 {
+			p.addf(path+".androidPackages", "must name the app's packages when Play Integrity is configured")
+		}
 	}
 }

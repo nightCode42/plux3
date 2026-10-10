@@ -71,6 +71,12 @@ enum PluxLimit {
   /// Pixels of one image asset, width times height, checked before it is
   /// decoded so that a small file cannot expand into a huge image.
   assetImagePixels('asset.imagePixels', PluxLimitUnit.count, 40000000, 0, 100000000),
+  /// Size of an App Attest attestation object or assertion.
+  attestAppAttestObjectBytes('attest.appAttestObjectBytes', PluxLimitUnit.bytes, 65536, 0, 262144),
+  /// Certificates an Android Key Attestation chain may hold.
+  attestKeyAttestationChainCerts('attest.keyAttestationChainCerts', PluxLimitUnit.count, 10, 0, 16),
+  /// Size of a Play Integrity token the server accepts.
+  attestPlayIntegrityTokenBytes('attest.playIntegrityTokenBytes', PluxLimitUnit.bytes, 16384, 0, 65536),
   /// Failed passwords or one-time codes one account may present in fifteen
   /// minutes before sign-in is refused.
   authFailedSignIns('auth.failedSignIns', PluxLimitUnit.count, 10, 0, 1000),
@@ -159,6 +165,10 @@ enum PluxLimit {
   documentJsonDepth('document.jsonDepth', PluxLimitUnit.count, 512, 0, 4096),
   /// Size of one string prop value, in UTF-8 bytes.
   documentStringPropSize('document.stringPropSize', PluxLimitUnit.bytes, 65536, 0, 1048576),
+  /// Length of a DPoP proof identifier.
+  dpopJtiBytes('dpop.jtiBytes', PluxLimitUnit.bytes, 64, 0, 256),
+  /// Size of a DPoP proof.
+  dpopProofBytes('dpop.proofBytes', PluxLimitUnit.bytes, 8192, 0, 32768),
   /// Proof identifiers the DPoP replay cache holds.
   dpopReplayCacheEntries('dpop.replayCacheEntries', PluxLimitUnit.count, 1000000, 0, 100000000),
   /// Bytes of request body the gateway forwards to an upstream.
@@ -242,7 +252,10 @@ enum PluxLimit {
   /// are dropped first.
   telemetryBufferBytes('telemetry.bufferBytes', PluxLimitUnit.bytes, 262144, 0, 4194304),
   /// Runtime events one telemetry request may carry.
-  telemetryEventsPerRequest('telemetry.eventsPerRequest', PluxLimitUnit.count, 500, 0, 5000);
+  telemetryEventsPerRequest('telemetry.eventsPerRequest', PluxLimitUnit.count, 500, 0, 5000),
+  /// Size of one update metadata file (root, snapshot or timestamp) a device
+  /// accepts and the server serves.
+  updateMetadataBytes('updateMetadata.bytes', PluxLimitUnit.bytes, 1048576, 0, 4194304);
 
   const PluxLimit(this.key, this.unit, this.defaultValue, this.warning, this.max);
 

@@ -51,6 +51,18 @@ server:
   publicBaseURL: "https://plux.acme.example"
   shutdownGrace: "30s"
   trustedProxies: ["10.0.0.0/8"] # whose X-Forwarded-For is believed
+  production: false             # true refuses unencrypted database and Valkey links and a missing TLS setup (SEC-043)
+  tls:                          # optional: the server terminates TLS itself (SEC-040)
+    certFile: "/etc/plux/tls/server.crt"
+    keyFile: "/etc/plux/tls/server.key"
+    allowTLS12: false           # TLS 1.3 only; true adds TLS 1.2 with AEAD ECDHE suites, with a warning
+  behindTLSProxy: false         # true when a proxy in front terminates TLS (required in production without tls)
+  hsts:                         # on every response (SEC-040)
+    maxAge: "17520h"            # 0s disables, with a warning
+    includeSubDomains: true
+    preload: false
+  internalListen: ""            # optional listener for role-to-role HTTP, mutual TLS only (SEC-043)
+  internalTLS: { caFile: "", certFile: "", keyFile: "" }
 database:
   url: "postgres://plux@db:5432/plux?sslmode=verify-full"
   maxConnections: 50
@@ -63,9 +75,12 @@ objectStorage:
   signedURLTTL: "15m"
 cache:
   backend: "memory"             # memory (single-node only) | valkey
-  valkeyURL: "rediss://valkey:6379"
+  valkeyURL: "rediss://valkey:6379"  # or a Sentinel URL: "valkeys+sentinel://s1:26379,s2:26379/plux" (SEC-023)
 signing:
-  backend: "file"               # file (development only) | vault; PKCS#11 and cloud KMS arrive in P6
+  backend: "file"               # file (development only) | vault | pkcs11 (HSMs and cloud HSMs through plux-pkcs11-helper, SEC-120)
+  pkcs11:
+    socket: "/run/plux/pkcs11.sock"   # the helper's Unix socket (ADR-0060)
+    wrapKey: "plux-secrets"           # AES key on the token that wraps data keys (SEC-106)
   directory: "data/keys"        # the file backend's keys
   vault:                        # HashiCorp Vault Transit (SEC-120)
     address: "https://vault:8200"
@@ -85,8 +100,7 @@ auth:
     mfaRequiredFor: [publish, approve, keys, members]   # at least these four (SEC-100)
     sessionTTL: "12h"
   device:
-    accessTokenTTL: "5m"
-    refreshTokenTTL: "720h"
+    accessTokenTTL: "5m"        # the installation's accessTokenLifetime; may only shorten a profile's (SEC-020)
   ci:
     tokenTTL: "1h"
     issuers:
@@ -100,6 +114,21 @@ observability:
   traceSampleRatio: 1.0
 telemetry:
   store: "postgres"             # clickhouse arrives in P9
+attestation:
+  developmentProvider: false    # true only for development and test installations; production environments refuse it (SEC-008)
+  apps:                         # per app ID, until the per-app security configuration carries it (ADR-0012)
+    "01d0c450-…":
+      androidPackages: ["com.acme.app"]
+      androidCertDigests: ["…"] # hex SHA-256 of the signing certificates
+      playIntegrityDecryptionKey: "…"   # Play Console keys, verified locally; secrets
+      playIntegrityVerificationKey: "…"
+      iosAppID: "ABCDE12345.com.acme.app"
+      appAttestProduction: true
+updateMetadata:                 # SEC-050, ADR-0054
+  rootThreshold: 2
+  expiry: { timestamp: "24h", snapshot: "168h", targets: "720h", root: "8760h" }
+audit:
+  checkpointInterval: "1h"      # signed checkpoints over each organisation's audit chain (SEC-141)
 limits:                         # installation-level tightenings (LIM-001, LIM-002)
   "bundle.pluginSize": "8MiB"
   "page.nodes": "2000"

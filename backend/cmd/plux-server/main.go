@@ -34,6 +34,8 @@ Commands:
   config validate   Check a configuration file without connecting to anything
   migrate           Apply pending database migrations and exit
   bootstrap         Create the first installation administrator
+  audit verify      Verify the audit chains and their signed checkpoints
+  metadata          Update metadata: print the online keys, upload an offline-signed root
   seed              Development only: an administrator, organisation, app and token
   version           Print version information
   help              Show this help
@@ -41,6 +43,8 @@ Commands:
 Flags:
   -config <path>    Configuration file (default plux-server.yaml)
   -email <address>  The administrator's email address (bootstrap only)
+  -org <id>         Verify one organisation only (audit verify)
+  -json             Print the result as JSON (audit verify)
 
 Every value may also come from the environment; run
 'plux-server config validate -h' for the variables that are read.
@@ -83,8 +87,12 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		return migrate(ctx, args[1:], stdout, stderr)
 	case "seed":
 		return seed(ctx, args[1:], stdout, stderr)
+	case "metadata":
+		return metadataCommand(ctx, args[1:], stdout, stderr)
 	case "bootstrap":
 		return bootstrap(ctx, args[1:], stdout, stderr)
+	case "audit":
+		return auditCommand(ctx, args[1:], stdout, stderr)
 	case "config":
 		return configCommand(args[1:], stdout, stderr)
 	default:
@@ -133,6 +141,9 @@ func configCommand(args []string, stdout, stderr io.Writer) int {
 		return code
 	}
 	_, _ = fmt.Fprintf(stdout, "✓ configuration is valid: %s\n", cfg)
+	for _, w := range cfg.Warnings() {
+		_, _ = fmt.Fprintf(stderr, "warning: %s\n", w)
+	}
 	_, _ = fmt.Fprintf(stdout, "  environment variables read: %v\n", config.EnvironNames())
 	return exitOK
 }

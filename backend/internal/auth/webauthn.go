@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"math/big"
 	"slices"
+
+	"github.com/nightCode42/plux3/backend/internal/cbor"
 )
 
 // This file verifies WebAuthn (Web Authentication Level 2) responses: a
@@ -117,7 +119,7 @@ func parseAuthenticatorData(b []byte) (authenticatorData, error) {
 		return authenticatorData{}, fmt.Errorf("%w: the credential identifier is malformed", errWebAuthn)
 	}
 	a.credentialID = rest[:n]
-	_, used, err := decodeCBOR(rest[n:])
+	_, used, err := cbor.Decode(rest[n:])
 	if err != nil {
 		return authenticatorData{}, fmt.Errorf("%w: the public key: %w", errWebAuthn, err)
 	}
@@ -151,7 +153,7 @@ func (c WebAuthnConfig) verifyRegistration(challenge, clientDataJSON, attestatio
 	if err := c.checkClientData(clientDataJSON, "webauthn.create", challenge); err != nil {
 		return registered{}, err
 	}
-	v, _, err := decodeCBOR(attestationObject)
+	v, _, err := cbor.Decode(attestationObject)
 	if err != nil {
 		return registered{}, fmt.Errorf("%w: the attestation object: %w", errWebAuthn, err)
 	}
@@ -211,7 +213,7 @@ func (c WebAuthnConfig) verifyAssertion(challenge, publicKey []byte, storedCount
 
 // parseCOSEKey reads a COSE_Key (RFC 9052) of an accepted algorithm.
 func parseCOSEKey(b []byte) (crypto.PublicKey, int64, error) {
-	v, _, err := decodeCBOR(b)
+	v, _, err := cbor.Decode(b)
 	if err != nil {
 		return nil, 0, fmt.Errorf("%w: the public key: %w", errWebAuthn, err)
 	}

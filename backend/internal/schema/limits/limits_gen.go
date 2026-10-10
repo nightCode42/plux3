@@ -59,6 +59,15 @@ const (
 	// before it is decoded so that a small file cannot expand into a huge image.
 	// (SRV-060, CMP-030)
 	AssetImagePixels Key = "asset.imagePixels"
+	// AttestAppAttestObjectBytes: Size of an App Attest attestation object or
+	// assertion. (SEC-004)
+	AttestAppAttestObjectBytes Key = "attest.appAttestObjectBytes"
+	// AttestKeyAttestationChainCerts: Certificates an Android Key Attestation
+	// chain may hold. (SEC-002)
+	AttestKeyAttestationChainCerts Key = "attest.keyAttestationChainCerts"
+	// AttestPlayIntegrityTokenBytes: Size of a Play Integrity token the server
+	// accepts. (SEC-003)
+	AttestPlayIntegrityTokenBytes Key = "attest.playIntegrityTokenBytes"
 	// AuthFailedSignIns: Failed passwords or one-time codes one account may
 	// present in fifteen minutes before sign-in is refused. (SEC-100)
 	AuthFailedSignIns Key = "auth.failedSignIns"
@@ -167,6 +176,10 @@ const (
 	// DocumentStringPropSize: Size of one string prop value, in UTF-8 bytes.
 	// (SCH-005)
 	DocumentStringPropSize Key = "document.stringPropSize"
+	// DPOPJtiBytes: Length of a DPoP proof identifier. (SEC-021)
+	DPOPJtiBytes Key = "dpop.jtiBytes"
+	// DPOPProofBytes: Size of a DPoP proof. (SEC-021)
+	DPOPProofBytes Key = "dpop.proofBytes"
 	// DPOPReplayCacheEntries: Proof identifiers the DPoP replay cache holds.
 	// (SEC-023, LIM-004)
 	DPOPReplayCacheEntries Key = "dpop.replayCacheEntries"
@@ -271,6 +284,9 @@ const (
 	// TelemetryEventsPerRequest: Runtime events one telemetry request may carry.
 	// (SEC-104)
 	TelemetryEventsPerRequest Key = "telemetry.eventsPerRequest"
+	// UpdateMetadataBytes: Size of one update metadata file (root, snapshot or
+	// timestamp) a device accepts and the server serves. (SEC-050)
+	UpdateMetadataBytes Key = "updateMetadata.bytes"
 )
 
 // registry holds every definition in key order. It is read-only.
@@ -294,6 +310,9 @@ var registry = [...]Definition{
 	{Key: AppPlugins, Unit: UnitCount, Default: 200, Warning: 0, Max: 1000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Plugins per app."},
 	{Key: AssetFileSize, Unit: UnitBytes, Default: 10485760, Warning: 0, Max: 104857600, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P2", Description: "Size of one asset file, checked at upload and again at publish."},
 	{Key: AssetImagePixels, Unit: UnitCount, Default: 40000000, Warning: 0, Max: 100000000, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P2", Description: "Pixels of one image asset, width times height, checked before it is decoded so that a small file cannot expand into a huge image."},
+	{Key: AttestAppAttestObjectBytes, Unit: UnitBytes, Default: 65536, Warning: 0, Max: 262144, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P6", Description: "Size of an App Attest attestation object or assertion."},
+	{Key: AttestKeyAttestationChainCerts, Unit: UnitCount, Default: 10, Warning: 0, Max: 16, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P6", Description: "Certificates an Android Key Attestation chain may hold."},
+	{Key: AttestPlayIntegrityTokenBytes, Unit: UnitBytes, Default: 16384, Warning: 0, Max: 65536, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P6", Description: "Size of a Play Integrity token the server accepts."},
 	{Key: AuthFailedSignIns, Unit: UnitCount, Default: 10, Warning: 0, Max: 1000, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P2", Description: "Failed passwords or one-time codes one account may present in fifteen minutes before sign-in is refused."},
 	{Key: BundleDeviceFunctionModuleSize, Unit: UnitBytes, Default: 4194304, Warning: 0, Max: 67108864, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P7", Description: "Size of the WebAssembly module of the device-placed functions of one plugin."},
 	{Key: BundlePageSectionSize, Unit: UnitBytes, Default: 1048576, Warning: 0, Max: 16777216, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Size of one page section in a bundle."},
@@ -329,6 +348,8 @@ var registry = [...]Definition{
 	{Key: DocumentFileSize, Unit: UnitBytes, Default: 8388608, Warning: 0, Max: 67108864, Scopes: ScopeInstallation | ScopeOrganization, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Size of one document file in the project layout, checked before parsing."},
 	{Key: DocumentJSONDepth, Unit: UnitCount, Default: 512, Warning: 0, Max: 4096, Scopes: ScopeInstallation, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Nesting of arrays and objects in one document, checked while parsing."},
 	{Key: DocumentStringPropSize, Unit: UnitBytes, Default: 65536, Warning: 0, Max: 1048576, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp | ScopePlugin, EnforcedBy: EnforcerCompiler | EnforcerServer, Phase: "P1", Description: "Size of one string prop value, in UTF-8 bytes."},
+	{Key: DPOPJtiBytes, Unit: UnitBytes, Default: 64, Warning: 0, Max: 256, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P6", Description: "Length of a DPoP proof identifier."},
+	{Key: DPOPProofBytes, Unit: UnitBytes, Default: 8192, Warning: 0, Max: 32768, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P6", Description: "Size of a DPoP proof."},
 	{Key: DPOPReplayCacheEntries, Unit: UnitCount, Default: 1000000, Warning: 0, Max: 100000000, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer, Phase: "P6", Description: "Proof identifiers the DPoP replay cache holds."},
 	{Key: GatewayRequestBytes, Unit: UnitBytes, Default: 1048576, Warning: 0, Max: 33554432, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerServer, Phase: "P6", Description: "Bytes of request body the gateway forwards to an upstream."},
 	{Key: GatewayRequestsPerMinutePerDevice, Unit: UnitCount, Default: 600, Warning: 0, Max: 10000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerServer, Phase: "P6", Description: "Gateway requests one device may send per minute."},
@@ -364,4 +385,5 @@ var registry = [...]Definition{
 	{Key: StateSecureBytes, Unit: UnitBytes, Default: 65536, Warning: 0, Max: 1048576, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P5", Description: "Bytes the secure state of one app may take in the runtime's local store (plain; secure state is the encrypted one, plan p5 B6); writes beyond it stay in memory and are reported."},
 	{Key: TelemetryBufferBytes, Unit: UnitBytes, Default: 262144, Warning: 0, Max: 4194304, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerRuntime, Phase: "P3", Description: "The size of the runtime's buffer of unsent telemetry events; the oldest are dropped first."},
 	{Key: TelemetryEventsPerRequest, Unit: UnitCount, Default: 500, Warning: 0, Max: 5000, Scopes: ScopeInstallation | ScopeOrganization | ScopeApp, EnforcedBy: EnforcerServer, Phase: "P2", Description: "Runtime events one telemetry request may carry."},
+	{Key: UpdateMetadataBytes, Unit: UnitBytes, Default: 1048576, Warning: 0, Max: 4194304, Scopes: ScopeInstallation, EnforcedBy: EnforcerServer | EnforcerRuntime, Phase: "P6", Description: "Size of one update metadata file (root, snapshot or timestamp) a device accepts and the server serves."},
 }

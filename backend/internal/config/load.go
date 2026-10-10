@@ -10,6 +10,7 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"time"
 
 	"sigs.k8s.io/yaml"
 )
@@ -23,6 +24,9 @@ func Defaults() Config {
 			Roles:         []Role{RoleAPI, RoleWorker},
 			Listen:        ":8080",
 			ShutdownGrace: Duration(30e9),
+			// Two years, with subdomains: the HSTS preload minimum plus
+			// a margin (SEC-040). Preload itself is a deliberate opt-in.
+			HSTS: HSTS{MaxAge: Duration(17520 * 3600e9), IncludeSubDomains: true},
 		},
 		Database: Database{MaxConnections: 50, MigrateOnStart: true},
 		ObjectStorage: ObjectStorage{
@@ -31,20 +35,25 @@ func Defaults() Config {
 			SignedURLTTL: Duration(15 * 60e9),
 		},
 		Cache:   Cache{Backend: "memory"},
-		Signing: Signing{Backend: "file", Directory: "data/keys", Keys: SigningKeys{Targets: "targets"}},
+		Signing: Signing{Backend: "file", Directory: "data/keys", Keys: SigningKeys{Targets: "targets", Snapshot: "snapshot", Timestamp: "timestamp", Audit: "audit"}},
 		Auth: Auth{
 			Studio: StudioAuth{
 				AllowPasswordLogin: true,
 				MFARequiredFor:     []string{"publish", "approve", "keys", "members"},
 				SessionTTL:         Duration(12 * 3600e9),
 			},
-			Device: DeviceAuth{AccessTokenTTL: Duration(5 * 60e9), RefreshTokenTTL: Duration(30 * 24 * 3600e9)},
+			Device: DeviceAuth{AccessTokenTTL: Duration(5 * 60e9)},
 			CI:     CIAuth{TokenTTL: Duration(60 * 60e9)},
 		},
 		Observability: Observability{LogLevel: "info", LogFormat: "json", TraceSampleRatio: 1},
 		Telemetry:     Telemetry{Store: "postgres"},
+		UpdateMetadata: UpdateMetadata{RootThreshold: 2, Expiry: MetadataExpiry{
+			Timestamp: Duration(24 * time.Hour), Snapshot: Duration(7 * 24 * time.Hour),
+			Targets: Duration(30 * 24 * time.Hour), Root: Duration(365 * 24 * time.Hour),
+		}},
 		// Where the server image installs them (backend/Dockerfile).
 		Assets: Assets{SVGCompiler: "/usr/local/bin/plux-svgc", PathOps: "/usr/local/lib/plux/libpath_ops.so"},
+		Audit:  Audit{CheckpointInterval: Duration(3600e9)},
 		Retention: Retention{
 			AuditYears:             10,
 			DevelopmentReleaseDays: 90,
@@ -57,7 +66,7 @@ func Defaults() Config {
 // knownSections are the top-level keys this phase accepts.
 var knownSections = []string{
 	"server", "database", "objectStorage", "cache", "signing", "auth",
-	"observability", "telemetry", "limits", "retention", "assets",
+	"observability", "telemetry", "limits", "retention", "assets", "attestation", "audit", "updateMetadata",
 }
 
 // futureSections are sections of Appendix H that belong to a later phase.
@@ -65,10 +74,9 @@ var knownSections = []string{
 // is told when the section starts working instead of being told it does
 // not exist.
 var futureSections = map[string]string{
-	"attestation": "P6",
-	"functions":   "P7",
-	"ai":          "P12",
-	"payments":    "P13",
+	"functions": "P7",
+	"ai":        "P12",
+	"payments":  "P13",
 }
 
 // Load reads the configuration file at path, applies the environment

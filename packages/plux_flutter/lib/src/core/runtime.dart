@@ -16,6 +16,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
 import 'package:plux_flutter/src/actions/action_error.dart';
 import 'package:plux_flutter/src/actions/engine.dart';
 import 'package:plux_flutter/src/actions/trace.dart';
@@ -26,6 +27,7 @@ import 'package:plux_flutter/src/assets/fonts.dart';
 import 'package:plux_flutter/src/assets/icon_fonts.dart';
 import 'package:plux_flutter/src/assets/image_providers.dart';
 import 'package:plux_flutter/src/core/active_release.dart';
+import 'package:plux_flutter/src/core/app_state.dart';
 import 'package:plux_flutter/src/core/config.dart';
 import 'package:plux_flutter/src/core/fallback.dart';
 import 'package:plux_flutter/src/core/features.dart';
@@ -56,13 +58,20 @@ import 'package:plux_flutter/src/render/renderer.dart';
 import 'package:plux_flutter/src/runtime_info.dart';
 import 'package:plux_flutter/src/schema/limit_values.dart';
 import 'package:plux_flutter/src/schema/limits.g.dart';
+import 'package:plux_flutter/src/security/attestation.dart';
+import 'package:plux_flutter/src/security/device_keys.dart';
+import 'package:plux_flutter/src/security/pins.dart';
+import 'package:plux_flutter/src/security/platform_attestation.dart';
+import 'package:plux_flutter/src/security/security_config.dart';
 import 'package:plux_flutter/src/state/persistence.dart';
 import 'package:plux_flutter/src/state/providers.dart';
 import 'package:plux_flutter/src/store/baseline.dart';
 import 'package:plux_flutter/src/store/kv_store.dart';
+import 'package:plux_flutter/src/store/metadata_state.dart';
 import 'package:plux_flutter/src/store/pointer.dart';
 import 'package:plux_flutter/src/store/release_store.dart';
 import 'package:plux_flutter/src/sync/api_client.dart';
+import 'package:plux_flutter/src/sync/metadata_sync.dart';
 import 'package:plux_flutter/src/sync/sync_engine.dart';
 import 'package:plux_flutter/src/sync/sync_event.dart';
 import 'package:plux_flutter/src/sync/sync_worker.dart';
@@ -94,15 +103,25 @@ final class RuntimeOverrides {
   /// Creates overrides.
   const RuntimeOverrides({
     this.credentials,
+    this.deviceKeys,
+    this.attestation,
     this.baseline,
     this.healthyAfter = const Duration(seconds: 10),
     this.clock,
     this.random,
     this.secrets,
+    this.configSecrets,
   });
 
   /// Creates the credential store on the sync isolate.
   final CredentialStore Function()? credentials;
+
+  /// Creates the device keys on the sync isolate; the platform's when null.
+  final DeviceKeys Function()? deviceKeys;
+
+  /// Creates the platform attestation on the sync isolate; the platform's
+  /// when null.
+  final Attestation Function()? attestation;
 
   /// Reads the baseline on the sync isolate.
   final BaselineReader? baseline;
@@ -120,6 +139,10 @@ final class RuntimeOverrides {
   /// The secure storage that keeps the state stores' keys; the platform's
   /// when null (plan p5 D6).
   final SecretStore Function()? secrets;
+
+  /// Creates, on the sync isolate, the secret store that keeps the remote
+  /// security configuration (SEC-182); the platform's when null.
+  final SecretStore Function()? configSecrets;
 }
 
 /// The runtime.
@@ -133,6 +156,7 @@ final class PluxRuntime with WidgetsBindingObserver {
     this._limits,
     this._root,
     this.assets,
+    this._httpClient,
   ) {
     active.addListener(() => unawaited(_loadFonts(active.value)));
     active.addListener(() {
@@ -140,8 +164,14 @@ final class PluxRuntime with WidgetsBindingObserver {
       telemetry
         ..releaseSequence = r?.sequence ?? 0
         ..appSampling = r?.telemetrySampling ?? const {};
+      // The pins of customer domains follow the active release (SEC-042).
+      _dataWorker.pinDomains(r?.domainPins ?? const {});
     });
   }
+
+  /// Creates the HTTP client of the data layer and of images, pinned to the
+  /// Plux server (SEC-041).
+  final http.Client Function() _httpClient;
 
   /// Starts the runtime: opens the store, starts the sync isolate, imports
   /// the baseline when there is no release, counts the launch, and syncs
@@ -152,11 +182,24 @@ final class PluxRuntime with WidgetsBindingObserver {
   }) async {
     final task = developer.TimelineTask()..start('plux.initialize');
     try {
+      // Refuses an unpinned release build before anything is started
+      // (SEC-041); a host's own client is the host's to pin.
+      final pinSet = config.httpClient == null
+          ? pinSetFor(config.endpoint, config.pins)
+          : null;
+      final httpClient =
+          config.httpClient ??
+          PlatformHttpClients(config.endpoint, pinSet).create;
       final features = RuntimeFeatures();
       final base = config.storageDirectory ?? await platformStorageDirectory();
       final root =
           '$base/${_safe(config.appId)}/${_safe(config.environment)}/${_safe(config.channel)}';
       Directory(root).createSync(recursive: true);
+      // The pins a verified root gave an earlier sync hold from the first
+      // connection on (SEC-041).
+      if (pinSet != null) {
+        MetadataSync.applyStoredPins(pinSet, MetadataStore(root).read());
+      }
       final keys = config.rootKeys.isNotEmpty
           ? config.rootKeys
           : await _bundledKeys(config.baseline);
@@ -181,8 +224,11 @@ final class PluxRuntime with WidgetsBindingObserver {
         SyncWorkerConfig(
           storeRoot: root,
           endpoint: config.endpoint,
-          httpClient: config.httpClient ?? platformHttpClient,
+          httpClient: httpClient,
           credentials: credentials,
+          configSecrets: overrides.configSecrets ?? PlatformSecretStore.new,
+          deviceKeys: overrides.deviceKeys ?? PlatformDeviceKeys.new,
+          attestation: overrides.attestation ?? _platformAttestation(config),
           parallelism: config.downloadParallelism,
           baseline: overrides.baseline,
           rootIsolateToken: RootIsolateToken.instance,
@@ -191,6 +237,8 @@ final class PluxRuntime with WidgetsBindingObserver {
             environment: config.environment,
             channel: config.channel,
             keys: [for (final k in keys) k.toTrustedKey()],
+            rootDocument: await _bundledRoot(config.baseline),
+            pins: pinSet,
             device: DeviceInfo(
               platform: Platform.operatingSystem,
               osVersion: deviceOsVersion(Platform.operatingSystemVersion),
@@ -214,6 +262,7 @@ final class PluxRuntime with WidgetsBindingObserver {
         limits,
         root,
         assets,
+        httpClient,
       );
       await rt.statePersistence.load();
       final startup = await rt._startup();
@@ -334,9 +383,26 @@ final class PluxRuntime with WidgetsBindingObserver {
   /// The latest sync event, for status displays.
   final ValueNotifier<SyncEvent?> lastEvent = ValueNotifier(null);
 
+  /// The security settings in force (SEC-182): the built-in defaults until
+  /// the stored configuration has been read, then the verified remote
+  /// configuration on top of them. Read-only; it changes when a sync
+  /// applies a new configuration, so what shapes a running session can
+  /// listen and apply at once.
+  final ValueNotifier<SecuritySettings> settings = ValueNotifier(
+    SecuritySettings.builtIn,
+  );
+
+  /// The assurance level of this device, 0 to 3 for `AL0` to `AL3`, as the
+  /// server computed it and the latest token carried it (SEC-007). `AL0`
+  /// until a token arrived, and again at once when the server refuses the
+  /// device with `PLX-6002` or `PLX-6006`. Pages, routes and data sources
+  /// that ask for more are refused; read-only.
+  final ValueNotifier<int> assurance = ValueNotifier(0);
+
   late final LazyDataWorker _dataWorker = LazyDataWorker(
     () => DataWorker.start(
-      httpClient: config.httpClient ?? platformHttpClient,
+      httpClient: _httpClient,
+      rootIsolateToken: RootIsolateToken.instance,
       webSocketClient: config.webSocketClient,
       cacheDirectory: '$_root/data',
       // The encrypted cache's key, kept like the secure state store's
@@ -363,6 +429,7 @@ final class PluxRuntime with WidgetsBindingObserver {
     runtimeRoot: _root,
     downloadDirectory: '$_root/downloads',
     database: database,
+    assurance: () => assurance.value,
   );
 
   /// The offline outbox's store: encrypted under a key of this
@@ -492,6 +559,7 @@ final class PluxRuntime with WidgetsBindingObserver {
     report: _report,
     failure: (e) => unawaited(failure(e)),
     imageCacheDirectory: '$_root/images',
+    httpClient: _httpClient,
     statePersistence: statePersistence,
     assets: assets,
     verified: _verified,
@@ -541,6 +609,7 @@ final class PluxRuntime with WidgetsBindingObserver {
   );
 
   OwnerLifetime? _owners;
+  ProviderContainer? _container;
 
   Future<bool> _ownerErrors(String plugin, ActionError error) =>
       _owners?.current?.errors(plugin, error) ?? Future.value(false);
@@ -549,6 +618,7 @@ final class PluxRuntime with WidgetsBindingObserver {
   /// ACT-020) with the active release, reaching state through
   /// [container]; `Plux.initialize` connects it.
   void connect(ProviderContainer container) {
+    _container = container;
     _owners?.dispose();
     _owners = OwnerLifetime(active, (release) {
       final r = renderer;
@@ -578,7 +648,14 @@ final class PluxRuntime with WidgetsBindingObserver {
   late final RouteGuards guards = RouteGuards(
     release: () => active.value,
     run: (release, page, guard, params) =>
-        renderer?.runGuard(release, page, guard, params, environment()) ??
+        renderer?.runGuard(
+          release,
+          page,
+          guard,
+          params,
+          environment(),
+          state: _guardState,
+        ) ??
         Future.value(const GuardFallsBack('no renderer runs guards')),
     convert: (release, page, params) {
       final r = renderer;
@@ -588,7 +665,20 @@ final class PluxRuntime with WidgetsBindingObserver {
       return r.textParams(release, page, params);
     },
     report: _report,
+    assurance: () => assurance.value,
   );
+
+  /// The app's state and the state of plugin [plugin] ('' for the app), the
+  /// roots `app` and `plugin` a guard reads (NAV-009); empty before
+  /// [connect] gives the runtime its container.
+  Map<String, Object?> _guardState(String plugin) {
+    final c = _container;
+    if (c == null) return const {};
+    return {
+      'app': c.read(appStateProvider),
+      if (plugin.isNotEmpty) 'plugin': c.read(pluginStateProvider(plugin)),
+    };
+  }
 
   /// The active release's native catalogue, or null before one
   /// (ADR-0041).
@@ -846,6 +936,13 @@ final class PluxRuntime with WidgetsBindingObserver {
     if (_reopen().staged != null) {
       pointer = await _worker.activate();
     }
+    try {
+      settings.value = await _worker.loadSettings() ?? settings.value;
+    } on StateError catch (e) {
+      _report(
+        PluxException(PluxErrorCode.syncFailed, 'settings: ${e.message}'),
+      );
+    }
     final before = _reopen().active;
     pointer = await _worker.beginLaunch();
     if (before != null && pointer.active != before) {
@@ -895,6 +992,9 @@ final class PluxRuntime with WidgetsBindingObserver {
     Future<SyncResult> run() async {
       try {
         final r = await _worker.sync(_emit);
+        if (r.settings != null) settings.value = r.settings!;
+        if (r.assurance != null) assurance.value = r.assurance!;
+        if (r.configError != null) _report(r.configError!);
         if (r.outcome == SyncOutcome.staged) _onStaged();
         // The radio is awake: record the result and send what is buffered
         // (SYN-015, ADR-0034).
@@ -1068,6 +1168,11 @@ final class PluxRuntime with WidgetsBindingObserver {
     developer.log(e.toString(), name: 'plux');
     diagnostics.record(e);
     telemetry.error(e);
+    // A pin mismatch is a security event of its own (SEC-041): the host
+    // and the time, never the certificate.
+    if (e.code == PluxErrorCode.certificatePinMismatch) {
+      telemetry.record('pin_failure', fields: {'host': e.details['host']});
+    }
     config.onError?.call(e, null);
   }
 
@@ -1110,6 +1215,36 @@ final class PluxRuntime with WidgetsBindingObserver {
     } on FlutterError {
       return const [];
     }
+  }
+
+  /// The root file `plux pull` writes beside `keys.json`, the anchor of the
+  /// update metadata (SEC-051), or null when the app has none.
+  static Future<Uint8List?> _bundledRoot(String? baseline) async {
+    if (baseline == null) return null;
+    try {
+      final data = await rootBundle.load('$baseline/root.json');
+      return data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
+    } on FlutterError {
+      return null;
+    }
+  }
+
+  /// The platform's attestation, created on the sync isolate. This is the
+  /// one place `PlatformAttestation` is constructed, from the app, the
+  /// environment, `playIntegrityCloudProjectNumber` and `hostBuild`.
+  static Attestation Function() _platformAttestation(PluxConfig c) {
+    // Copied out of the config: the closure runs on the sync isolate and
+    // must not capture PluxConfig, which is not sendable.
+    final appId = c.appId;
+    final environment = c.environment;
+    final cloudProjectNumber = c.playIntegrityCloudProjectNumber;
+    final buildId = c.hostBuild;
+    return () => PlatformAttestation(
+      appId: appId,
+      environment: environment,
+      cloudProjectNumber: cloudProjectNumber,
+      buildId: buildId,
+    );
   }
 
   static CredentialStore Function() _platformCredentials(PluxConfig c) {

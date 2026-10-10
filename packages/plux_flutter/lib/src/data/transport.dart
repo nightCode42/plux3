@@ -108,6 +108,14 @@ final class ClientTransport implements DataTransport {
       throw _network(r, e.message);
     } on http.ClientException catch (e) {
       throw _network(r, e.message);
+    } on PluxException catch (e) {
+      // A pinned domain whose certificate matches no pin (SEC-042), or
+      // whose pins are not valid: the request fails closed.
+      throw DataFailure(
+        ActionErrorKind.network,
+        e.code,
+        '${r.method} ${_where(r.url)} failed: ${e.message}',
+      );
     }
     final ok = res.statusCode >= 200 && res.statusCode < 300;
     final declared = res.contentLength;

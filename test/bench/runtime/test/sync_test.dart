@@ -19,8 +19,11 @@ import 'package:plux_flutter/plux_flutter.dart';
 // ignore: implementation_imports
 import 'package:plux_flutter/src/core/runtime.dart' show RuntimeOverrides;
 // ignore: implementation_imports
+import 'package:plux_flutter/src/security/software_keys.dart'
+    show DevelopmentAttestation, SoftwareDeviceKeys;
+// ignore: implementation_imports
 import 'package:plux_flutter/src/sync/sync_engine.dart'
-    show MemoryCredentialStore;
+    show MemoryCredentialStore, MemorySecretStore;
 
 const _control = String.fromEnvironment('PLUX_BENCH_SYNC_CONTROL');
 const _endpoint = String.fromEnvironment('PLUX_ENDPOINT');
@@ -88,7 +91,14 @@ void main() {
         await _ask('phase', {'name': 'first'});
         final startup = await Plux.initializeWith(
           config,
-          const RuntimeOverrides(credentials: MemoryCredentialStore.new),
+          RuntimeOverrides(
+            credentials: MemoryCredentialStore.new,
+            configSecrets: MemorySecretStore.new,
+            // The desktop has no platform keys or attestation; the server
+            // enables the development provider (SEC-008).
+            deviceKeys: SoftwareDeviceKeys.new,
+            attestation: () => const DevelopmentAttestation('bench'),
+          ),
         );
         expect(startup.sequence, 1, reason: '$startup');
 

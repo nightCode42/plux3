@@ -33,6 +33,77 @@ type Config struct {
 	Limits        map[string]string `json:"limits"`
 	Retention     Retention         `json:"retention"`
 	Assets        Assets            `json:"assets"`
+	Attestation   Attestation       `json:"attestation"`
+	Audit         Audit             `json:"audit"`
+	// UpdateMetadata sets the expiries and the root threshold of the
+	// update metadata (SEC-050, ADR-0054).
+	UpdateMetadata UpdateMetadata `json:"updateMetadata"`
+}
+
+// Audit configures the audit log's signed checkpoints (SEC-141).
+type Audit struct {
+	// CheckpointInterval is how often the worker signs a checkpoint over
+	// each organisation's chain, for those with new entries. It bounds
+	// how many entries could be removed from the end of a chain before a
+	// signed checkpoint betrays it.
+	CheckpointInterval Duration `json:"checkpointInterval"`
+}
+
+// UpdateMetadata configures the four roles of the update metadata
+// (SEC-050, Appendix H.1).
+type UpdateMetadata struct {
+	// RootThreshold is the least number of offline root keys that must
+	// sign a root document, 2 of 3 by default; a root that asks for fewer
+	// is refused on upload.
+	RootThreshold int `json:"rootThreshold"`
+	// Expiry is how long each role's metadata stays valid.
+	Expiry MetadataExpiry `json:"expiry"`
+}
+
+// MetadataExpiry is the lifetime of each role's metadata. The worker
+// signs a fresh timestamp before its expiry, a fresh snapshot when a
+// quarter of its lifetime remains, and fresh manifests (the targets
+// role) likewise; a root is signed offline.
+type MetadataExpiry struct {
+	Timestamp Duration `json:"timestamp"`
+	Snapshot  Duration `json:"snapshot"`
+	Targets   Duration `json:"targets"`
+	Root      Duration `json:"root"`
+}
+
+// Attestation says what the server trusts about the builds of each app
+// (SEC-003). It is the interim source of that trust: the remote security
+// configuration replaces it, and an app it does not list has no
+// attestation configured, so Android and iOS evidence is refused as
+// unavailable. Development evidence is refused too unless
+// DevelopmentProvider enables it, and production refuses it regardless
+// (SEC-008).
+type Attestation struct {
+	// DevelopmentProvider accepts development evidence in environments
+	// that are not production ones. It is off by default, so a server
+	// trusts no device it cannot verify until an operator says so.
+	DevelopmentProvider bool `json:"developmentProvider"`
+	// Apps maps an app identifier (a UUID) to its builds.
+	Apps map[string]AppAttestation `json:"apps"`
+}
+
+// AppAttestation is what the server trusts about one app's builds.
+type AppAttestation struct {
+	// AndroidPackages are the application identifiers the app ships as.
+	AndroidPackages []string `json:"androidPackages"`
+	// AndroidCertDigests are the hex SHA-256 digests of the app's signing
+	// certificates; empty skips the certificate check.
+	AndroidCertDigests []string `json:"androidCertDigests"`
+	// PlayIntegrityDecryptionKey and PlayIntegrityVerificationKey are the
+	// app's Play Console keys, in standard base64; both or neither.
+	PlayIntegrityDecryptionKey   Secret `json:"playIntegrityDecryptionKey"`
+	PlayIntegrityVerificationKey Secret `json:"playIntegrityVerificationKey"`
+	// IOSAppID is the team and bundle identifier, "TEAMID.com.example.app";
+	// empty means App Attest is not configured.
+	IOSAppID string `json:"iosAppID"`
+	// AppAttestProduction selects App Attest's production environment
+	// rather than its sandbox.
+	AppAttestProduction bool `json:"appAttestProduction"`
 }
 
 // Assets configures the handling of uploaded asset files (SRV-060).
@@ -65,6 +136,67 @@ type Server struct {
 	// the header only when the immediate peer is one of them; otherwise
 	// a client could claim any address it liked.
 	TrustedProxies []string `json:"trustedProxies"`
+	// Production declares a production installation. It makes validation
+	// refuse an unprotected transport to PostgreSQL, to Valkey and from
+	// clients (SEC-040, SEC-041).
+	Production bool `json:"production"`
+	// BehindTLSProxy states that a proxy in front of the api role
+	// terminates TLS 1.3 for it. A production installation without
+	// server.tls must set it explicitly.
+	BehindTLSProxy bool `json:"behindTLSProxy"`
+	// TLS makes the api role terminate TLS itself; absent, it speaks
+	// plain HTTP behind a terminating proxy.
+	TLS TLS `json:"tls"`
+	// HSTS configures the Strict-Transport-Security header.
+	HSTS HSTS `json:"hsts"`
+	// InternalListen is the address of the listener for the traffic
+	// between roles; empty serves none. It requires InternalTLS.
+	InternalListen string `json:"internalListen"`
+	// InternalTLS is the identity of this role on the internal network:
+	// the CA every role's certificate is signed by, and this role's own
+	// certificate and key (SEC-043).
+	InternalTLS InternalTLS `json:"internalTLS"`
+}
+
+// TLS is the certificate the api role terminates TLS with (SEC-040).
+type TLS struct {
+	// CertFile and KeyFile are PEM files; both or neither.
+	CertFile string `json:"certFile"`
+	KeyFile  string `json:"keyFile"`
+	// AllowTLS12 accepts TLS 1.2 with AEAD ECDHE suites besides TLS 1.3.
+	// It is the installation default of the tls12Allowed setting, which
+	// is false, and every start with it set logs a warning.
+	AllowTLS12 bool `json:"allowTLS12"`
+}
+
+// Enabled reports whether the api role terminates TLS itself.
+func (t TLS) Enabled() bool { return t.CertFile != "" || t.KeyFile != "" }
+
+// HSTS configures Strict-Transport-Security (SEC-040).
+type HSTS struct {
+	// MaxAge is how long a browser remembers to use HTTPS only; zero
+	// disables the header, with a warning.
+	MaxAge Duration `json:"maxAge"`
+	// IncludeSubDomains extends the policy to every subdomain.
+	IncludeSubDomains bool `json:"includeSubDomains"`
+	// Preload consents to browser preload lists, which are hard to leave;
+	// it needs IncludeSubDomains and a MaxAge of at least a year.
+	Preload bool `json:"preload"`
+}
+
+// InternalTLS is a role's identity for mutual TLS between roles
+// (SEC-043).
+type InternalTLS struct {
+	// CAFile signs every role's certificate; CertFile and KeyFile are
+	// this role's own. All three or none.
+	CAFile   string `json:"caFile"`
+	CertFile string `json:"certFile"`
+	KeyFile  string `json:"keyFile"`
+}
+
+// Enabled reports whether an internal identity is configured.
+func (t InternalTLS) Enabled() bool {
+	return t.CAFile != "" || t.CertFile != "" || t.KeyFile != ""
 }
 
 // Database is PostgreSQL, the system of record (SRV-020).
@@ -119,13 +251,15 @@ type Signing struct {
 	// Backend is "file", "pkcs11", "awskms", "gcpkms", "azurekv" or
 	// "vault". "file" is refused for production environments (SEC-056).
 	Backend string `json:"backend"`
-	// Keys names the keys of the update-metadata roles. P2 uses the
-	// targets role only (ADR-0004); the others arrive in P6.
+	// Keys names the online keys of the update-metadata roles; the root
+	// role is signed offline and has none here (SEC-050).
 	Keys SigningKeys `json:"keys"`
 	// Directory is the root of the file backend's keys.
 	Directory string `json:"directory"`
 	// Vault configures the HashiCorp Vault Transit backend.
 	Vault Vault `json:"vault"`
+	// PKCS11 configures the PKCS#11 backend.
+	PKCS11 PKCS11 `json:"pkcs11"`
 }
 
 // SigningKeys names the keys of each update-metadata role.
@@ -135,6 +269,16 @@ type SigningKeys struct {
 	// environment has its own key, "<prefix>-<environment ID>"
 	// (ADR-0004, GOV-010).
 	Targets string `json:"targets"`
+	// Audit is the key that signs the audit log's checkpoints (SEC-141).
+	// One key serves the installation: the checkpoints name it, so it can
+	// be rotated without invalidating the old ones.
+	Audit string `json:"audit"`
+	// Snapshot and Timestamp are the prefixes of the snapshot and
+	// timestamp keys, named like the targets key. Every environment has
+	// its own key per role, so a development key never signs for
+	// production (SEC-050, SEC-056).
+	Snapshot  string `json:"snapshot"`
+	Timestamp string `json:"timestamp"`
 }
 
 // Vault is a HashiCorp Vault Transit engine (SEC-120).
@@ -149,6 +293,17 @@ type Vault struct {
 	Namespace string `json:"namespace"`
 	// WrapKey names the key that wraps the data keys of stored secrets
 	// (SEC-106); "" is "plux-secrets".
+	WrapKey string `json:"wrapKey"`
+}
+
+// PKCS11 is a hardware security module reached through the PKCS#11 helper
+// process (SEC-120, ADR-0060). The PIN and the vendor module belong to the
+// helper, never to the server's configuration.
+type PKCS11 struct {
+	// Socket is the absolute path of the helper's Unix socket.
+	Socket string `json:"socket"`
+	// WrapKey is the label of the AES key on the token that wraps the data
+	// keys of stored secrets (SEC-106); "" is "plux-secrets".
 	WrapKey string `json:"wrapKey"`
 }
 
@@ -189,11 +344,12 @@ type OIDC struct {
 	RedirectURL string `json:"redirectURL"`
 }
 
-// DeviceAuth is how devices authenticate. DPoP and attestation arrive in
-// P6; in P2 a device token is a short-lived bearer token.
+// DeviceAuth is how devices authenticate.
 type DeviceAuth struct {
-	AccessTokenTTL  Duration `json:"accessTokenTTL"`
-	RefreshTokenTTL Duration `json:"refreshTokenTTL"`
+	// AccessTokenTTL is the installation's default of the
+	// accessTokenLifetime setting (SEC-020): between one and fifteen
+	// minutes.
+	AccessTokenTTL Duration `json:"accessTokenTTL"`
 }
 
 // CIAuth federates workload identity, so pipelines need no long-lived

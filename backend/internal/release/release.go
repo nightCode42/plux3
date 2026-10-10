@@ -28,6 +28,7 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/plxerr"
 	"github.com/nightCode42/plux3/backend/internal/schema"
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
+	"github.com/nightCode42/plux3/backend/internal/seccfg"
 	"github.com/nightCode42/plux3/backend/internal/signing"
 	"github.com/nightCode42/plux3/backend/internal/storage"
 	"github.com/nightCode42/plux3/backend/internal/storage/objects"
@@ -86,6 +87,9 @@ type Options struct {
 	PublicBaseURL string
 	// Devices answers REL-080's question; nil counts none.
 	Devices Devices
+	// SecurityConfig supplies the security configuration a manifest pins
+	// and the patch that brings a device to it (SEC-182); nil pins none.
+	SecurityConfig *seccfg.Service
 	// Limits are the installation's limits.
 	Limits limits.Set
 	// CompilerVersion is recorded in every bundle (CMP-005).
@@ -93,6 +97,8 @@ type Options struct {
 	// DevelopmentDays is how long a release never promoted to production
 	// is kept (REL-007).
 	DevelopmentDays int
+	// Metadata configures the update metadata roles (SEC-050).
+	Metadata MetadataOptions
 	// Now is the clock; nil uses time.Now.
 	Now func() time.Time
 }
@@ -103,6 +109,7 @@ type Service struct {
 	now       func() time.Time
 	flights   *flightGroup
 	manifests *manifestCache
+	metadata  *metadataCache
 	// validator checks uploaded native catalogues.
 	validator *schema.Validator
 }
@@ -124,6 +131,7 @@ func NewService(o Options) (*Service, error) {
 	if o.DevelopmentDays <= 0 {
 		o.DevelopmentDays = 90
 	}
+	o.Metadata = o.Metadata.withDefaults()
 	now := o.Now
 	if now == nil {
 		now = time.Now
@@ -132,7 +140,7 @@ func NewService(o Options) (*Service, error) {
 	if err != nil {
 		return nil, fmt.Errorf("release: %w", err)
 	}
-	return &Service{o: o, now: now, flights: &flightGroup{}, manifests: &manifestCache{}, validator: validator}, nil
+	return &Service{o: o, now: now, flights: &flightGroup{}, manifests: &manifestCache{}, metadata: &metadataCache{}, validator: validator}, nil
 }
 
 // inOrg runs f in a transaction bound to the principal's organisation.

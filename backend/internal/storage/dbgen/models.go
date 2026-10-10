@@ -66,6 +66,17 @@ type Asset struct {
 	DeletedAt      pgtype.Timestamptz
 }
 
+type AuditCheckpoint struct {
+	ID             pgtype.UUID
+	OrganizationID pgtype.UUID
+	Sequence       int64
+	EntryHash      string
+	KeyID          string
+	Algorithm      string
+	Signature      []byte
+	CreatedAt      pgtype.Timestamptz
+}
+
 type AuditLog struct {
 	ID             pgtype.UUID
 	OrganizationID pgtype.UUID
@@ -128,19 +139,32 @@ type Delta struct {
 }
 
 type Device struct {
-	ID                pgtype.UUID
-	OrganizationID    pgtype.UUID
-	AppID             pgtype.UUID
-	EnvironmentID     pgtype.UUID
-	Platform          string
-	OsVersion         string
-	RuntimeVersion    string
-	HostBuild         string
-	AssuranceLevel    string
-	SecretHash        []byte
-	InstalledSequence int64
-	RegisteredAt      pgtype.Timestamptz
-	LastSeenAt        pgtype.Timestamptz
+	ID                    pgtype.UUID
+	OrganizationID        pgtype.UUID
+	AppID                 pgtype.UUID
+	EnvironmentID         pgtype.UUID
+	Platform              string
+	OsVersion             string
+	RuntimeVersion        string
+	HostBuild             string
+	AssuranceLevel        string
+	SecretHash            []byte
+	InstalledSequence     int64
+	RegisteredAt          pgtype.Timestamptz
+	LastSeenAt            pgtype.Timestamptz
+	DpopJkt               *string
+	DpopPublicKey         []byte
+	KeyStorage            string
+	AttestationProvider   *string
+	AttestationVerdicts   []string
+	AttestationRiskMetric int32
+	AttestedAt            pgtype.Timestamptz
+	AppAttestKeyID        []byte
+	AppAttestPublicKey    []byte
+	AppAttestCounter      int64
+	AppAttestReceipt      []byte
+	RevokedAt             pgtype.Timestamptz
+	RevokedReason         string
 }
 
 type DeviceAuthorization struct {
@@ -209,15 +233,18 @@ type Environment struct {
 	Production     bool
 	SigningKeyRef  string
 	CreatedAt      pgtype.Timestamptz
+	TargetsVersion int64
 }
 
 type EnvironmentKey struct {
-	EnvironmentID  pgtype.UUID
-	OrganizationID pgtype.UUID
-	KeyID          string
-	Algorithm      string
-	PublicKey      []byte
-	CreatedAt      pgtype.Timestamptz
+	EnvironmentID   pgtype.UUID
+	OrganizationID  pgtype.UUID
+	KeyID           string
+	Algorithm       string
+	PublicKey       []byte
+	CreatedAt       pgtype.Timestamptz
+	Role            string
+	EnvironmentType string
 }
 
 type EnvironmentSecret struct {
@@ -444,6 +471,19 @@ type ReleaseVersion struct {
 	PluginVersionID pgtype.UUID
 }
 
+type SecurityConfigVersion struct {
+	OrganizationID pgtype.UUID
+	AppID          pgtype.UUID
+	EnvironmentID  pgtype.UUID
+	Version        int64
+	Profile        string
+	Overrides      []byte
+	CreatedAt      pgtype.Timestamptz
+	CreatedByKind  string
+	CreatedByID    string
+	CreatedBy      string
+}
+
 type Session struct {
 	ID         pgtype.UUID
 	UserID     pgtype.UUID
@@ -513,6 +553,17 @@ type Trash struct {
 	DeletedAt      pgtype.Timestamptz
 	PurgeAfter     pgtype.Timestamptz
 	RestoredAt     pgtype.Timestamptz
+}
+
+type UpdateMetadatum struct {
+	EnvironmentID  pgtype.UUID
+	OrganizationID pgtype.UUID
+	Role           string
+	Version        int64
+	Document       []byte
+	Sha256         []byte
+	IssuedAt       pgtype.Timestamptz
+	ExpiresAt      pgtype.Timestamptz
 }
 
 type User struct {

@@ -19,6 +19,7 @@ import (
 
 	"github.com/nightCode42/plux3/backend/internal/compiler/media"
 	"github.com/nightCode42/plux3/backend/internal/storage/objects"
+	"github.com/nightCode42/plux3/backend/internal/updatemeta"
 
 	"connectrpc.com/connect"
 	"github.com/riverqueue/river"
@@ -33,10 +34,12 @@ import (
 	"github.com/nightCode42/plux3/backend/internal/document"
 	"github.com/nightCode42/plux3/backend/internal/httpx"
 	"github.com/nightCode42/plux3/backend/internal/jobs"
+	"github.com/nightCode42/plux3/backend/internal/observability"
 	"github.com/nightCode42/plux3/backend/internal/pluxv1/pluxv1connect"
 	"github.com/nightCode42/plux3/backend/internal/release"
 	"github.com/nightCode42/plux3/backend/internal/schema/limits"
 	"github.com/nightCode42/plux3/backend/internal/schema/uuid7"
+	"github.com/nightCode42/plux3/backend/internal/seccfg"
 	"github.com/nightCode42/plux3/backend/internal/signing"
 	"github.com/nightCode42/plux3/backend/internal/storage"
 	"github.com/nightCode42/plux3/backend/internal/storage/idempotency"
@@ -58,6 +61,17 @@ type Services struct {
 	Events      *telemetry.Service
 	Idempotency *idempotency.Store
 	Pages       *api.Pages
+	// AuditCheckpoints lists the signed audit checkpoints (SEC-141).
+	AuditCheckpoints *audit.CheckpointReader
+	// Checkpointer signs them; nil where the process holds no signer,
+	// which is every process without the worker role (ADR-0006).
+	Checkpointer *audit.Checkpointer
+	// SecurityConfig holds the environments' security configurations
+	// (SEC-182).
+	SecurityConfig *seccfg.Service
+	// DeviceTrust authenticates device calls; nil where the process does
+	// not run the api role.
+	DeviceTrust *DeviceTrust
 	// KMS checks the key management service, when the signing backend
 	// is one; nil for the development file backend (SRV-007).
 	KMS func(context.Context) error
@@ -77,6 +91,12 @@ type WorkDeps struct {
 	// ProductionSigning reports whether the signer may sign for
 	// production environments (SEC-056).
 	ProductionSigning bool
+	// Log receives the warnings of the services; nil uses the default
+	// logger.
+	Log *slog.Logger
+	// Metrics receives the device side's metrics, the DPoP replay cache's
+	// health among them; nil records none.
+	Metrics *observability.Metrics
 }
 
 // scanner returns the configured malware scanner, or nil (SRV-060).
@@ -234,6 +254,12 @@ func BuildSigning(cfg *config.Config) (signing.Backend, error) {
 			return nil, fmt.Errorf("server: signing: %w", err)
 		}
 		return b, nil
+	case "pkcs11":
+		b, err := signing.NewPKCS11(signing.PKCS11Options{Socket: cfg.Signing.PKCS11.Socket, WrapKey: cfg.Signing.PKCS11.WrapKey})
+		if err != nil {
+			return nil, fmt.Errorf("server: signing: %w", err)
+		}
+		return b, nil
 	default:
 		return nil, fmt.Errorf("server: signing backend %q is not available in this phase", cfg.Signing.Backend)
 	}
@@ -244,6 +270,10 @@ func BuildSigning(cfg *config.Config) (signing.Backend, error) {
 func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shared cache.Cache, set limits.Set, backend signing.Crypter, work WorkDeps) (*Services, error) {
 	if db == nil || shared == nil {
 		return nil, errors.New("server: the services need a database and a cache")
+	}
+	tokenSigner, err := tokenSignerFor(cfg, backend)
+	if err != nil {
+		return nil, err
 	}
 	backend = signing.CrypterOnly(backend)
 	gen := NewIDs()
@@ -287,42 +317,117 @@ func BuildServices(ctx context.Context, cfg *config.Config, db *storage.DB, shar
 	for kind, k := range docs.TrashKinds() {
 		tenancyService.RegisterTrashKind(kind, k)
 	}
-	store, err := idempotency.NewStore(db, backend, nil)
+	store, pages, err := buildEdge(ctx, db, backend, set)
+	if err != nil {
+		return nil, err
+	}
+	configs, err := seccfg.New(seccfg.Options{DB: db, Audit: log, Limits: set, Tenancy: tenancyService})
 	if err != nil {
 		return nil, fmt.Errorf("server: %w", err)
 	}
-	key, err := signing.InstallationKey(ctx, db, backend, "page-token")
+	devices, trust, err := buildDeviceSide(ctx, cfg, db, shared, set, deviceDeps{
+		crypter: backend, signer: tokenSigner, ids: gen, audit: log, log: work.Log, configs: configs, metrics: work.Metrics,
+	})
 	if err != nil {
-		return nil, fmt.Errorf("server: %w", err)
-	}
-	pages, err := api.NewPages(key, int32(min(set.Get(limits.APIPageSize), 1<<30)), nil) //nolint:gosec // bounded by min
-	if err != nil {
-		return nil, fmt.Errorf("server: %w", err)
-	}
-	devices, err := device.NewService(device.Options{DB: db, IDs: gen})
-	if err != nil {
-		return nil, fmt.Errorf("server: %w", err)
+		return nil, err
 	}
 	events, err := telemetry.NewService(telemetry.Options{DB: db, IDs: gen, Limits: set})
 	if err != nil {
 		return nil, fmt.Errorf("server: %w", err)
 	}
-	var releases *release.Service
-	if work.Objects != nil {
-		if releases, err = release.NewService(release.Options{
-			DB: db, Audit: log, Tenancy: tenancyService, Documents: docs, Objects: work.Objects, IDs: gen,
-			Jobs: publishQueue{work.Queue}, Signer: work.Signer, ProductionSigning: work.ProductionSigning, Limits: set,
-			Devices: devices, PublicBaseURL: cfg.Server.PublicBaseURL,
-			CompilerVersion: buildinfo.Get().Version, DevelopmentDays: cfg.Retention.DevelopmentReleaseDays,
-		}); err != nil {
-			return nil, fmt.Errorf("server: %w", err)
-		}
-		tenancyService.RegisterUsage(releases.Usage)
+	releases, err := buildReleases(cfg, db, set, work, releaseDeps{ids: gen, audit: log, tenancy: tenancyService, documents: docs, devices: devices, configs: configs})
+	if err != nil {
+		return nil, err
+	}
+	checkpointer, err := buildCheckpointer(cfg, db, log, gen, work.Signer)
+	if err != nil {
+		return nil, err
 	}
 	return &Services{
 		Audit: log, Auth: authService, Tenancy: tenancyService, Documents: docs, Releases: releases,
-		Devices: devices, Events: events, Idempotency: store, Pages: pages,
+		Devices: devices, Events: events, Idempotency: store, Pages: pages, DeviceTrust: trust,
+		AuditCheckpoints: audit.NewCheckpointReader(db, log), Checkpointer: checkpointer, SecurityConfig: configs,
 	}, nil
+}
+
+// buildEdge builds what the API edge keeps beside the domain services:
+// the idempotency store and the page-token authenticator.
+func buildEdge(ctx context.Context, db *storage.DB, backend signing.Crypter, set limits.Set) (*idempotency.Store, *api.Pages, error) {
+	store, err := idempotency.NewStore(db, backend, nil)
+	if err != nil {
+		return nil, nil, fmt.Errorf("server: %w", err)
+	}
+	key, err := signing.InstallationKey(ctx, db, backend, "page-token")
+	if err != nil {
+		return nil, nil, fmt.Errorf("server: %w", err)
+	}
+	pages, err := api.NewPages(key, int32(min(set.Get(limits.APIPageSize), 1<<30)), nil) //nolint:gosec // bounded by min
+	if err != nil {
+		return nil, nil, fmt.Errorf("server: %w", err)
+	}
+	return store, pages, nil
+}
+
+// buildCheckpointer returns the audit checkpointer, or nil where there is
+// no signer to give it.
+func buildCheckpointer(cfg *config.Config, db *storage.DB, log *audit.Log, gen audit.IDs, signer signing.Signer) (*audit.Checkpointer, error) {
+	if signer == nil {
+		return nil, nil
+	}
+	c, err := audit.NewCheckpointer(audit.CheckpointerOptions{
+		DB: db, Log: log, Signer: signer, Key: cfg.Signing.Keys.Audit, IDs: gen,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("server: %w", err)
+	}
+	return c, nil
+}
+
+// releaseDeps are the services the release service is built on.
+type releaseDeps struct {
+	ids       interface{ New() (string, error) }
+	audit     *audit.Log
+	tenancy   *tenancy.Service
+	documents *document.Service
+	devices   *device.Service
+	configs   *seccfg.Service
+}
+
+// buildReleases assembles the release service, or returns nil when the
+// installation has no object store to publish into.
+func buildReleases(cfg *config.Config, db *storage.DB, set limits.Set, work WorkDeps, deps releaseDeps) (*release.Service, error) {
+	if work.Objects == nil {
+		return nil, nil
+	}
+	releases, err := release.NewService(release.Options{
+		DB: db, Audit: deps.audit, Tenancy: deps.tenancy, Documents: deps.documents, Objects: work.Objects, IDs: deps.ids,
+		Jobs: publishQueue{work.Queue}, Signer: work.Signer, ProductionSigning: work.ProductionSigning, Limits: set,
+		Devices: deps.devices, SecurityConfig: deps.configs, PublicBaseURL: cfg.Server.PublicBaseURL,
+		CompilerVersion: buildinfo.Get().Version, DevelopmentDays: cfg.Retention.DevelopmentReleaseDays,
+		Metadata: metadataOptions(cfg),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("server: %w", err)
+	}
+	deps.tenancy.RegisterUsage(releases.Usage)
+	// A change of an environment's configuration has its manifests signed
+	// again, so that they pin the new version (SEC-182).
+	deps.configs.OnChange(releases.EnqueueEnvironmentManifests)
+	return releases, nil
+}
+
+// metadataOptions are the update-metadata settings of the configuration
+// (SEC-050).
+func metadataOptions(cfg *config.Config) release.MetadataOptions {
+	e := cfg.UpdateMetadata.Expiry
+	return release.MetadataOptions{
+		Expiry: updatemeta.Expiry{
+			Timestamp: e.Timestamp.Duration(), Snapshot: e.Snapshot.Duration(),
+			Targets: e.Targets.Duration(), Root: e.Root.Duration(),
+		},
+		RootThreshold:     cfg.UpdateMetadata.RootThreshold,
+		SnapshotKeyPrefix: cfg.Signing.Keys.Snapshot, TimestampKeyPrefix: cfg.Signing.Keys.Timestamp,
+	}
 }
 
 // verificationURI is where a person approves `plux login`: Studio's
@@ -382,19 +487,31 @@ func trustedIssuers(cfg *config.Config) (map[string]auth.TrustedIssuer, error) {
 }
 
 // RegisterAPI mounts the services of this phase on the api role's mux,
-// each behind the standard interceptor chain with authentication.
-func (s *Server) RegisterAPI(svc *Services) {
+// each behind the standard interceptor chain with authentication. It
+// refuses services built without the device trust the api role needs.
+func (s *Server) RegisterAPI(svc *Services) error {
+	if svc.DeviceTrust == nil {
+		return errors.New("server: the api role needs services built with device trust (the api role in the configuration)")
+	}
 	limiter := api.RateLimiter{Window: time.Minute}
 	if s.cache != nil {
 		limiter.Count = s.cache.Increment
 	}
 	h := &api.Handlers{
 		Auth: svc.Auth, Tenancy: svc.Tenancy, Documents: svc.Documents, Releases: svc.Releases, Devices: svc.Devices, Events: svc.Events,
-		Idempotency: svc.Idempotency, Pages: svc.Pages,
+		Idempotency: svc.Idempotency, Pages: svc.Pages, SecurityConfig: svc.SecurityConfig,
 		Limiter: limiter, Limits: s.limits,
 	}
+	if svc.AuditCheckpoints != nil {
+		h.AuditCheckpoints = svc.AuditCheckpoints
+	}
 	people := api.Authentication(svc.Auth, api.IdentityPublic, s.trusted, limiter, s.limits.Get(limits.APIRequestsPerMinute))
-	authn := api.DeviceAuthentication(svc.Devices, limiter, s.limits.Get(limits.APIRequestsPerMinutePerDevice), people)
+	trust := svc.DeviceTrust
+	authn := api.DeviceAuthentication(api.DeviceAuth{
+		Devices: svc.Devices, Tokens: trust.Tokens, Proofs: trust.Proofs, Nonces: trust.Nonces, Replay: trust.Replay,
+		BaseURL: s.cfg.Server.PublicBaseURL, Window: trust.Window, FallbackWindow: trust.FallbackWindow, Windows: trust.Windows,
+		Limiter: limiter, PerDevice: s.limits.Get(limits.APIRequestsPerMinutePerDevice), People: people,
+	})
 	// api.requestSize bounds a body as sent, before a handler reads it
 	// (httpx.MaxBytes), and also each message after decompression: Connect
 	// accepts gzip bodies, and a small one could otherwise expand without
@@ -426,6 +543,11 @@ func (s *Server) RegisterAPI(svc *Services) {
 			},
 			func() (string, http.Handler) { return pluxv1connect.NewControlServiceHandler(h.Control(), opts) })
 	}
+	if svc.SecurityConfig != nil {
+		registrations = append(registrations, func() (string, http.Handler) {
+			return pluxv1connect.NewSecurityAdminServiceHandler(h.SecurityAdmin(), opts)
+		})
+	}
 	for _, register := range registrations {
 		path, handler := register()
 		s.Register(path, handler)
@@ -433,6 +555,10 @@ func (s *Server) RegisterAPI(svc *Services) {
 	if s.objects != nil {
 		s.Register("GET "+release.ObjectsPath, s.objectHandler())
 	}
+	if svc.Releases != nil {
+		s.Register(MetadataRoute, s.metadataHandler(svc.Releases))
+	}
+	return nil
 }
 
 // Maintenance is the periodic sweep of the worker role: it purges the
@@ -466,6 +592,7 @@ func (w *maintenanceWorker) Work(ctx context.Context, _ *river.Job[Maintenance])
 	snapshots := 0
 	released := 0
 	signed := 0
+	var resign []error
 	err = w.svc.Tenancy.ForEachOrganization(ctx, func(org string) error {
 		if w.svc.Releases != nil {
 			n, err := w.svc.Releases.PurgeReleases(ctx, org)
@@ -473,12 +600,21 @@ func (w *maintenanceWorker) Work(ctx context.Context, _ *river.Job[Maintenance])
 			if err != nil {
 				return err //nolint:wrapcheck // a domain error
 			}
+			// Signing failures of one organisation, such as an expired
+			// root, are reported without stopping the sweep of the others;
+			// the job still fails, so River retries it.
 			m, err := w.svc.Releases.RefreshManifests(ctx, org)
 			signed += m
-			if err != nil {
+			resign = append(resign, err)
+			// The timestamp and snapshot are re-signed before they
+			// expire (SEC-050).
+			m, err = w.svc.Releases.RefreshMetadata(ctx, org)
+			signed += m
+			resign = append(resign, err)
+			if _, err := w.svc.Releases.PurgeManifests(ctx, org); err != nil {
 				return err //nolint:wrapcheck // a domain error
 			}
-			if _, err := w.svc.Releases.PurgeManifests(ctx, org); err != nil {
+			if _, err := w.svc.Releases.PurgeMetadata(ctx, org); err != nil {
 				return err //nolint:wrapcheck // a domain error
 			}
 		}
@@ -496,6 +632,7 @@ func (w *maintenanceWorker) Work(ctx context.Context, _ *river.Job[Maintenance])
 		return err //nolint:wrapcheck // a domain error
 	})
 	errs = append(errs, err)
+	errs = append(errs, resign...)
 	keys, err := w.svc.Idempotency.Expire(ctx)
 	errs = append(errs, err)
 	creds, err := w.svc.Auth.Expire(ctx)

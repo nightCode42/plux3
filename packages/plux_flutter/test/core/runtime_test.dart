@@ -19,6 +19,7 @@ import 'package:plux_flutter/src/store/release_store.dart';
 import 'package:plux_flutter/src/sync/sync_engine.dart';
 
 import '../support/entering.dart';
+import '../sync/fake_device.dart';
 import '../sync/fake_server.dart';
 
 /// Renders a page as its route, or throws when told to.
@@ -118,6 +119,9 @@ void main() {
       c,
       RuntimeOverrides(
         credentials: MemoryCredentialStore.new,
+        configSecrets: MemorySecretStore.new,
+        deviceKeys: FakeDeviceKeys.new,
+        attestation: FakeAttestation.new,
         baseline: _reader(files),
         healthyAfter: healthy,
       ),
@@ -191,7 +195,12 @@ void main() {
       final startup = await tester.runAsync(
         () => Plux.initializeWith(
           config(),
-          const RuntimeOverrides(credentials: MemoryCredentialStore.new),
+          const RuntimeOverrides(
+            credentials: MemoryCredentialStore.new,
+            configSecrets: MemorySecretStore.new,
+            deviceKeys: FakeDeviceKeys.new,
+            attestation: FakeAttestation.new,
+          ),
         ),
       );
       expect(startup!.sequence, 5, reason: '${startup.error} $errors');
@@ -262,6 +271,29 @@ void main() {
   );
 
   testWidgets(
+    'the runtime exposes the settings of the configuration its first sync applied [SEC-182]',
+    (tester) async {
+      await tester.runAsync(() async {
+        server
+          ..release = FakeRelease(10, demo, {'loans': loans})
+          ..pinsConfig = true
+          ..configVersion = 1
+          ..configDocument = {
+            'profile': 'strict',
+            'overrides': {'inactivityLockTimeout': 120},
+          }
+          ..configPatches[0] = server.configDocument;
+        await start(config());
+      });
+      final s = rt().settings.value;
+      expect(errors, isEmpty);
+      expect(s.version, 1);
+      expect(s.profile, SecurityProfile.strict);
+      expect(s.number(SecuritySetting.inactivityLockTimeout), 120);
+    },
+  );
+
+  testWidgets(
     'every page of every plugin of the active release opens offline after a restart [SYN-008]',
     (tester) async {
       await tester.runAsync(() async {
@@ -279,12 +311,12 @@ void main() {
         await tester.pumpWidget(PluxScope(child: PluxView(route)));
         await tester.pump();
         if (route == 'loan-calculator') {
-          // It requires assurance AL1, which no device has before P6: it
-          // resolves offline and fails closed (NAV-009).
+          // It requires assurance AL1, which this device has not proved
+          // offline: it resolves and fails closed (NAV-009, SEC-007).
           expect(find.text('page $route of 10 '), findsNothing);
           expect(
             errors.map((e) => e.code),
-            contains(PluxErrorCode.navigationRefused),
+            contains(PluxErrorCode.assuranceInsufficient),
           );
         } else {
           expect(find.text('page $route of 10 '), findsOneWidget);

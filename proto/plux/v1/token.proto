@@ -60,6 +60,11 @@ message RefreshDeviceTokenResponse {
   google.protobuf.Timestamp expires_at = 2;
   // token_type is "DPoP" (SEC-020).
   string token_type = 3;
+  // assurance_level is the device's assurance level, "AL0" to "AL3": the
+  // value of the token's `al` claim, which the server computed from the
+  // device's verified evidence (SEC-007). The runtime enforces pages,
+  // routes and data sources against it.
+  string assurance_level = 4;
 }
 
 message ExchangeUserTokenRequest {

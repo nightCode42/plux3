@@ -6,7 +6,17 @@
 server:
   roles: [api, worker]
   listen: ":8080"
-  publicBaseURL: "http://localhost:8080"
+  publicBaseURL: "https://localhost:8080"
+  # The api role terminates TLS 1.3 itself, as a production installation
+  # does; init-secrets.sh issues this development-only certificate.
+  tls:
+    certFile: "/etc/plux/tls/server.crt"
+    keyFile: "/etc/plux/tls/server.key"
+  # Browsers apply HSTS to a host on every port, so a long policy for
+  # localhost would also force https on Grafana and Prometheus here.
+  hsts:
+    maxAge: "10m"
+    includeSubDomains: false
   shutdownGrace: "30s"
   trustedProxies: ["172.16.0.0/12", "192.168.0.0/16"]
 database:
@@ -16,12 +26,16 @@ objectStorage:
   endpoint: "http://seaweedfs:8333"
   bucket: "plux"
   pathStyle: true
-  cdnBaseURL: "http://localhost:8080/v1/objects"
+  cdnBaseURL: "https://localhost:8080/v1/objects"
 cache:
   backend: "valkey"
   valkeyURL: "redis://valkey:6379"
 signing:
   backend: "file"
   directory: "/var/lib/plux/keys"
+# The development provider accepts the dev app's unattested builds in this
+# non-production stack (SEC-008); a real installation leaves it off.
+attestation:
+  developmentProvider: true
 observability:
   logFormat: "json"

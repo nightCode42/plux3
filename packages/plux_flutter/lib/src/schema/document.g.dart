@@ -377,7 +377,7 @@ final class AppSecuritySettings {
 /// when listed, narrow what plugins may declare. Native routes are approved by
 /// the host's registration, not here.
 final class ApprovedCapabilities {
-  const ApprovedCapabilities({this.deviceApis, this.networkDomains, this.functions});
+  const ApprovedCapabilities({this.deviceApis, this.networkDomains, this.networkPins, this.functions});
 
   /// Decodes a JSON object.
   factory ApprovedCapabilities.fromJson(Object json) {
@@ -385,18 +385,27 @@ final class ApprovedCapabilities {
     return ApprovedCapabilities(
       deviceApis: m['deviceApis'] == null ? null : [for (final e in m['deviceApis']! as List<Object?>) DeviceAPI.fromJson(e!)],
       networkDomains: m['networkDomains'] == null ? null : [for (final e in m['networkDomains']! as List<Object?>) e! as String],
+      networkPins: m['networkPins'] == null ? null : {for (final e in (m['networkPins']! as Map<String, Object?>).entries) e.key: [for (final e in e.value! as List<Object?>) e! as String]},
       functions: m['functions'] == null ? null : [for (final e in m['functions']! as List<Object?>) e! as String],
     );
   }
 
   final List<DeviceAPI>? deviceApis;
   final List<String>? networkDomains;
+  /// Optional certificate pins for customer API domains the runtime calls
+  /// directly (SEC-042): a domain from `networkDomains`, without a wildcard,
+  /// and at least two distinct pins, each the base64 of the SHA-256 of a
+  /// certificate's SubjectPublicKeyInfo (RFC 7469), one of them a backup key. A
+  /// connection to the domain is accepted only when a certificate of its chain
+  /// has a pinned key, and fails closed otherwise (`PLX-6020`).
+  final Map<String, List<String>>? networkPins;
   final List<String>? functions;
 
   /// Encodes a JSON object.
   Map<String, Object?> toJson() => {
         if (deviceApis != null) 'deviceApis': [for (final e in deviceApis!) e.toJson()],
         if (networkDomains != null) 'networkDomains': [for (final e in networkDomains!) e],
+        if (networkPins != null) 'networkPins': {for (final e in networkPins!.entries) e.key: [for (final e in e.value) e]},
         if (functions != null) 'functions': [for (final e in functions!) e],
       };
 }

@@ -13,7 +13,10 @@ import 'package:plux_flutter/src/render/renderer.dart';
 import 'package:plux_flutter/src/state/providers.dart';
 import 'package:plux_flutter/src/sync/sync_engine.dart';
 
+import '../sync/fake_device.dart';
 import '../sync/fake_server.dart';
+
+export 'package:plux_flutter/src/sync/sync_engine.dart' show MemorySecretStore;
 
 http.Client _client() => http.Client();
 
@@ -97,9 +100,12 @@ final class Harness {
       ),
       RuntimeOverrides(
         credentials: MemoryCredentialStore.new,
+        deviceKeys: FakeDeviceKeys.new,
+        attestation: FakeAttestation.new,
         baseline: _reader(baseline),
         healthyAfter: const Duration(hours: 1),
         secrets: () => secrets,
+        configSecrets: MemorySecretStore.new,
       ),
     );
   }
@@ -139,19 +145,4 @@ Future<void> settle(WidgetTester tester, [int rounds = 3]) async {
     );
     await tester.pump();
   }
-}
-
-/// Secure storage in memory, for tests.
-final class MemorySecretStore implements SecretStore {
-  /// The secrets, by name.
-  final Map<String, String> values = {};
-
-  @override
-  Future<String?> read(String name) async => values[name];
-
-  @override
-  Future<void> write(String name, String value) async => values[name] = value;
-
-  @override
-  Future<void> delete(String name) async => values.remove(name);
 }

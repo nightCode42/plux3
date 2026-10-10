@@ -33,14 +33,16 @@ abstract interface class PageRenderer {
 
   /// Runs guard graph [guard] of [page] over the page's [params], in the
   /// environment [env], and decides with the GuardResult it returns
-  /// (NAV-009).
+  /// (NAV-009). [state] gives the roots `app` and `plugin` of a plugin
+  /// ('' for the app) a guard may read; without it a guard sees neither.
   Future<GuardOutcome> runGuard(
     ActiveRelease release,
     PageRef page,
     UuidKey guard,
     Map<String, Object?> params,
-    PluxEnvironment? env,
-  );
+    PluxEnvironment? env, {
+    Map<String, Object?> Function(String plugin)? state,
+  });
 
   /// The parameter names [page] declares.
   Set<String> paramNames(ActiveRelease release, PageRef page);

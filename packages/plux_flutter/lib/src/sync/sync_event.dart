@@ -8,6 +8,7 @@ library;
 import 'dart:async';
 
 import 'package:plux_flutter/src/errors/plux_exception.dart';
+import 'package:plux_flutter/src/security/security_config.dart';
 
 /// Something that happened during a sync.
 sealed class SyncEvent {
@@ -134,6 +135,9 @@ final class SyncResult {
     this.fullBytes = 0,
     this.pluginsUpdated = 0,
     this.error,
+    this.settings,
+    this.configError,
+    this.assurance,
   });
 
   /// How it ended.
@@ -156,6 +160,33 @@ final class SyncResult {
 
   /// The failure, when [outcome] is [SyncOutcome.failed].
   final PluxException? error;
+
+  /// The security settings in force after the sync (SEC-182); null when the
+  /// sync did not get as far as the configuration.
+  final SecuritySettings? settings;
+
+  /// Why the manifest's security configuration was not applied, keeping
+  /// the last good one (`PLX-6040`, `PLX-6042`); the sync itself went on.
+  final PluxException? configError;
+
+  /// The device's assurance level, 0 to 3, as the latest token named it
+  /// (SEC-007); 0 after the server refused the device with `PLX-6002` or
+  /// `PLX-6006`; null when the sync never asked for a token.
+  final int? assurance;
+
+  /// This result with [assurance] set.
+  SyncResult withAssurance(int assurance) => SyncResult(
+    outcome: outcome,
+    duration: duration,
+    sequence: sequence,
+    bytes: bytes,
+    fullBytes: fullBytes,
+    pluginsUpdated: pluginsUpdated,
+    error: error,
+    settings: settings,
+    configError: configError,
+    assurance: assurance,
+  );
 
   /// Bytes downloaded as a share of the full bundles (1 without deltas).
   double get deltaRatio => fullBytes == 0 ? 0 : bytes / fullBytes;
