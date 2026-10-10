@@ -2,7 +2,7 @@ module github.com/nightCode42/plux3/backend
 
 go 1.27.0
 
-toolchain go1.27.1
+toolchain go1.27.2
 
 require (
 	connectrpc.com/connect v1.21.0
