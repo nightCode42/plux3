@@ -300,15 +300,14 @@ String? nameCrossAxisAlignment(Decoding d, Object? v) => switch (v) {
 };
 
 /// Decodes a CrossAxisAlignment.
-CrossAxisAlignment? decodeCrossAxisAlignment(Decoding d, Object? v) =>
-    switch (v) {
-      1 || 'start' => CrossAxisAlignment.start,
-      2 || 'end' => CrossAxisAlignment.end,
-      3 || 'center' => CrossAxisAlignment.center,
-      4 || 'stretch' => CrossAxisAlignment.stretch,
-      5 || 'baseline' => CrossAxisAlignment.baseline,
-      _ => null,
-    };
+CrossAxisAlignment? decodeCrossAxisAlignment(Decoding d, Object? v) => switch (v) {
+  1 || 'start' => CrossAxisAlignment.start,
+  2 || 'end' => CrossAxisAlignment.end,
+  3 || 'center' => CrossAxisAlignment.center,
+  4 || 'stretch' => CrossAxisAlignment.stretch,
+  5 || 'baseline' => CrossAxisAlignment.baseline,
+  _ => null,
+};
 
 /// The member name of a CupertinoButtonSize, from its permanent value ID or name.
 String? nameCupertinoButtonSize(Decoding d, Object? v) => switch (v) {
@@ -319,13 +318,12 @@ String? nameCupertinoButtonSize(Decoding d, Object? v) => switch (v) {
 };
 
 /// Decodes a CupertinoButtonSize.
-CupertinoButtonSize? decodeCupertinoButtonSize(Decoding d, Object? v) =>
-    switch (v) {
-      1 || 'small' => CupertinoButtonSize.small,
-      2 || 'medium' => CupertinoButtonSize.medium,
-      3 || 'large' => CupertinoButtonSize.large,
-      _ => null,
-    };
+CupertinoButtonSize? decodeCupertinoButtonSize(Decoding d, Object? v) => switch (v) {
+  1 || 'small' => CupertinoButtonSize.small,
+  2 || 'medium' => CupertinoButtonSize.medium,
+  3 || 'large' => CupertinoButtonSize.large,
+  _ => null,
+};
 
 /// The member name of a DecorationPosition, from its permanent value ID or name.
 String? nameDecorationPosition(Decoding d, Object? v) => switch (v) {
@@ -335,12 +333,11 @@ String? nameDecorationPosition(Decoding d, Object? v) => switch (v) {
 };
 
 /// Decodes a DecorationPosition.
-DecorationPosition? decodeDecorationPosition(Decoding d, Object? v) =>
-    switch (v) {
-      1 || 'background' => DecorationPosition.background,
-      2 || 'foreground' => DecorationPosition.foreground,
-      _ => null,
-    };
+DecorationPosition? decodeDecorationPosition(Decoding d, Object? v) => switch (v) {
+  1 || 'background' => DecorationPosition.background,
+  2 || 'foreground' => DecorationPosition.foreground,
+  _ => null,
+};
 
 /// The member name of a DragStartBehavior, from its permanent value ID or name.
 String? nameDragStartBehavior(Decoding d, Object? v) => switch (v) {
@@ -350,12 +347,11 @@ String? nameDragStartBehavior(Decoding d, Object? v) => switch (v) {
 };
 
 /// Decodes a DragStartBehavior.
-DragStartBehavior? decodeDragStartBehavior(Decoding d, Object? v) =>
-    switch (v) {
-      1 || 'down' => DragStartBehavior.down,
-      2 || 'start' => DragStartBehavior.start,
-      _ => null,
-    };
+DragStartBehavior? decodeDragStartBehavior(Decoding d, Object? v) => switch (v) {
+  1 || 'down' => DragStartBehavior.down,
+  2 || 'start' => DragStartBehavior.start,
+  _ => null,
+};
 
 /// The member name of a DropdownMenuCloseBehavior, from its permanent value ID or name.
 String? nameDropdownMenuCloseBehavior(Decoding d, Object? v) => switch (v) {
@@ -366,10 +362,7 @@ String? nameDropdownMenuCloseBehavior(Decoding d, Object? v) => switch (v) {
 };
 
 /// Decodes a DropdownMenuCloseBehavior.
-DropdownMenuCloseBehavior? decodeDropdownMenuCloseBehavior(
-  Decoding d,
-  Object? v,
-) => switch (v) {
+DropdownMenuCloseBehavior? decodeDropdownMenuCloseBehavior(Decoding d, Object? v) => switch (v) {
   1 || 'all' => DropdownMenuCloseBehavior.all,
   2 || 'self' => DropdownMenuCloseBehavior.self,
   3 || 'none' => DropdownMenuCloseBehavior.none,
@@ -448,13 +441,12 @@ String? nameFloatingLabelBehavior(Decoding d, Object? v) => switch (v) {
 };
 
 /// Decodes a FloatingLabelBehavior.
-FloatingLabelBehavior? decodeFloatingLabelBehavior(Decoding d, Object? v) =>
-    switch (v) {
-      1 || 'never' => FloatingLabelBehavior.never,
-      2 || 'auto' => FloatingLabelBehavior.auto,
-      3 || 'always' => FloatingLabelBehavior.always,
-      _ => null,
-    };
+FloatingLabelBehavior? decodeFloatingLabelBehavior(Decoding d, Object? v) => switch (v) {
+  1 || 'never' => FloatingLabelBehavior.never,
+  2 || 'auto' => FloatingLabelBehavior.auto,
+  3 || 'always' => FloatingLabelBehavior.always,
+  _ => null,
+};
 
 /// The member name of a FontStyle, from its permanent value ID or name.
 String? nameFontStyle(Decoding d, Object? v) => switch (v) {
@@ -597,13 +589,12 @@ String? nameListTileControlAffinity(Decoding d, Object? v) => switch (v) {
 };
 
 /// Decodes a ListTileControlAffinity.
-ListTileControlAffinity? decodeListTileControlAffinity(Decoding d, Object? v) =>
-    switch (v) {
-      1 || 'leading' => ListTileControlAffinity.leading,
-      2 || 'trailing' => ListTileControlAffinity.trailing,
-      3 || 'platform' => ListTileControlAffinity.platform,
-      _ => null,
-    };
+ListTileControlAffinity? decodeListTileControlAffinity(Decoding d, Object? v) => switch (v) {
+  1 || 'leading' => ListTileControlAffinity.leading,
+  2 || 'trailing' => ListTileControlAffinity.trailing,
+  3 || 'platform' => ListTileControlAffinity.platform,
+  _ => null,
+};
 
 /// The member name of a ListTileStyle, from its permanent value ID or name.
 String? nameListTileStyle(Decoding d, Object? v) => switch (v) {
@@ -630,15 +621,14 @@ String? nameListTileTitleAlignment(Decoding d, Object? v) => switch (v) {
 };
 
 /// Decodes a ListTileTitleAlignment.
-ListTileTitleAlignment? decodeListTileTitleAlignment(Decoding d, Object? v) =>
-    switch (v) {
-      1 || 'threeLine' => ListTileTitleAlignment.threeLine,
-      2 || 'titleHeight' => ListTileTitleAlignment.titleHeight,
-      3 || 'top' => ListTileTitleAlignment.top,
-      4 || 'center' => ListTileTitleAlignment.center,
-      5 || 'bottom' => ListTileTitleAlignment.bottom,
-      _ => null,
-    };
+ListTileTitleAlignment? decodeListTileTitleAlignment(Decoding d, Object? v) => switch (v) {
+  1 || 'threeLine' => ListTileTitleAlignment.threeLine,
+  2 || 'titleHeight' => ListTileTitleAlignment.titleHeight,
+  3 || 'top' => ListTileTitleAlignment.top,
+  4 || 'center' => ListTileTitleAlignment.center,
+  5 || 'bottom' => ListTileTitleAlignment.bottom,
+  _ => null,
+};
 
 /// The member name of a LocationAccuracy, from its permanent value ID or name.
 String? nameLocationAccuracy(Decoding d, Object? v) => switch (v) {
@@ -660,16 +650,15 @@ String? nameMainAxisAlignment(Decoding d, Object? v) => switch (v) {
 };
 
 /// Decodes a MainAxisAlignment.
-MainAxisAlignment? decodeMainAxisAlignment(Decoding d, Object? v) =>
-    switch (v) {
-      1 || 'start' => MainAxisAlignment.start,
-      2 || 'end' => MainAxisAlignment.end,
-      3 || 'center' => MainAxisAlignment.center,
-      4 || 'spaceBetween' => MainAxisAlignment.spaceBetween,
-      5 || 'spaceAround' => MainAxisAlignment.spaceAround,
-      6 || 'spaceEvenly' => MainAxisAlignment.spaceEvenly,
-      _ => null,
-    };
+MainAxisAlignment? decodeMainAxisAlignment(Decoding d, Object? v) => switch (v) {
+  1 || 'start' => MainAxisAlignment.start,
+  2 || 'end' => MainAxisAlignment.end,
+  3 || 'center' => MainAxisAlignment.center,
+  4 || 'spaceBetween' => MainAxisAlignment.spaceBetween,
+  5 || 'spaceAround' => MainAxisAlignment.spaceAround,
+  6 || 'spaceEvenly' => MainAxisAlignment.spaceEvenly,
+  _ => null,
+};
 
 /// The member name of a MainAxisSize, from its permanent value ID or name.
 String? nameMainAxisSize(Decoding d, Object? v) => switch (v) {
@@ -693,12 +682,11 @@ String? nameMaterialTapTargetSize(Decoding d, Object? v) => switch (v) {
 };
 
 /// Decodes a MaterialTapTargetSize.
-MaterialTapTargetSize? decodeMaterialTapTargetSize(Decoding d, Object? v) =>
-    switch (v) {
-      1 || 'padded' => MaterialTapTargetSize.padded,
-      2 || 'shrinkWrap' => MaterialTapTargetSize.shrinkWrap,
-      _ => null,
-    };
+MaterialTapTargetSize? decodeMaterialTapTargetSize(Decoding d, Object? v) => switch (v) {
+  1 || 'padded' => MaterialTapTargetSize.padded,
+  2 || 'shrinkWrap' => MaterialTapTargetSize.shrinkWrap,
+  _ => null,
+};
 
 /// The member name of a MaxLengthEnforcement, from its permanent value ID or name.
 String? nameMaxLengthEnforcement(Decoding d, Object? v) => switch (v) {
@@ -709,14 +697,12 @@ String? nameMaxLengthEnforcement(Decoding d, Object? v) => switch (v) {
 };
 
 /// Decodes a MaxLengthEnforcement.
-MaxLengthEnforcement? decodeMaxLengthEnforcement(Decoding d, Object? v) =>
-    switch (v) {
-      1 || 'none' => MaxLengthEnforcement.none,
-      2 || 'enforced' => MaxLengthEnforcement.enforced,
-      3 || 'truncateAfterCompositionEnds' =>
-        MaxLengthEnforcement.truncateAfterCompositionEnds,
-      _ => null,
-    };
+MaxLengthEnforcement? decodeMaxLengthEnforcement(Decoding d, Object? v) => switch (v) {
+  1 || 'none' => MaxLengthEnforcement.none,
+  2 || 'enforced' => MaxLengthEnforcement.enforced,
+  3 || 'truncateAfterCompositionEnds' => MaxLengthEnforcement.truncateAfterCompositionEnds,
+  _ => null,
+};
 
 /// The member name of a NavigationMode, from its permanent value ID or name.
 String? nameNavigationMode(Decoding d, Object? v) => switch (v) {
@@ -744,14 +730,13 @@ String? nameOverlayVisibilityMode(Decoding d, Object? v) => switch (v) {
 };
 
 /// Decodes a OverlayVisibilityMode.
-OverlayVisibilityMode? decodeOverlayVisibilityMode(Decoding d, Object? v) =>
-    switch (v) {
-      1 || 'never' => OverlayVisibilityMode.never,
-      2 || 'editing' => OverlayVisibilityMode.editing,
-      3 || 'notEditing' => OverlayVisibilityMode.notEditing,
-      4 || 'always' => OverlayVisibilityMode.always,
-      _ => null,
-    };
+OverlayVisibilityMode? decodeOverlayVisibilityMode(Decoding d, Object? v) => switch (v) {
+  1 || 'never' => OverlayVisibilityMode.never,
+  2 || 'editing' => OverlayVisibilityMode.editing,
+  3 || 'notEditing' => OverlayVisibilityMode.notEditing,
+  4 || 'always' => OverlayVisibilityMode.always,
+  _ => null,
+};
 
 /// The member name of a ScrollPhysics, from its permanent value ID or name.
 String? nameScrollPhysics(Decoding d, Object? v) => switch (v) {
@@ -765,18 +750,14 @@ String? nameScrollPhysics(Decoding d, Object? v) => switch (v) {
 };
 
 /// The member name of a ScrollViewKeyboardDismissBehavior, from its permanent value ID or name.
-String? nameScrollViewKeyboardDismissBehavior(Decoding d, Object? v) =>
-    switch (v) {
-      1 || 'manual' => 'manual',
-      2 || 'onDrag' => 'onDrag',
-      _ => null,
-    };
+String? nameScrollViewKeyboardDismissBehavior(Decoding d, Object? v) => switch (v) {
+  1 || 'manual' => 'manual',
+  2 || 'onDrag' => 'onDrag',
+  _ => null,
+};
 
 /// Decodes a ScrollViewKeyboardDismissBehavior.
-ScrollViewKeyboardDismissBehavior? decodeScrollViewKeyboardDismissBehavior(
-  Decoding d,
-  Object? v,
-) => switch (v) {
+ScrollViewKeyboardDismissBehavior? decodeScrollViewKeyboardDismissBehavior(Decoding d, Object? v) => switch (v) {
   1 || 'manual' => ScrollViewKeyboardDismissBehavior.manual,
   2 || 'onDrag' => ScrollViewKeyboardDismissBehavior.onDrag,
   _ => null,
@@ -792,14 +773,13 @@ String? nameScrollbarOrientation(Decoding d, Object? v) => switch (v) {
 };
 
 /// Decodes a ScrollbarOrientation.
-ScrollbarOrientation? decodeScrollbarOrientation(Decoding d, Object? v) =>
-    switch (v) {
-      1 || 'left' => ScrollbarOrientation.left,
-      2 || 'right' => ScrollbarOrientation.right,
-      3 || 'top' => ScrollbarOrientation.top,
-      4 || 'bottom' => ScrollbarOrientation.bottom,
-      _ => null,
-    };
+ScrollbarOrientation? decodeScrollbarOrientation(Decoding d, Object? v) => switch (v) {
+  1 || 'left' => ScrollbarOrientation.left,
+  2 || 'right' => ScrollbarOrientation.right,
+  3 || 'top' => ScrollbarOrientation.top,
+  4 || 'bottom' => ScrollbarOrientation.bottom,
+  _ => null,
+};
 
 /// The member name of a ShapeKind, from its permanent value ID or name.
 String? nameShapeKind(Decoding d, Object? v) => switch (v) {
@@ -823,16 +803,15 @@ String? nameShowValueIndicator(Decoding d, Object? v) => switch (v) {
 };
 
 /// Decodes a ShowValueIndicator.
-ShowValueIndicator? decodeShowValueIndicator(Decoding d, Object? v) =>
-    switch (v) {
-      1 || 'onlyForDiscrete' => ShowValueIndicator.onlyForDiscrete,
-      2 || 'onlyForContinuous' => ShowValueIndicator.onlyForContinuous,
-      3 || 'always' => ShowValueIndicator.always,
-      4 || 'onDrag' => ShowValueIndicator.onDrag,
-      5 || 'alwaysVisible' => ShowValueIndicator.alwaysVisible,
-      6 || 'never' => ShowValueIndicator.never,
-      _ => null,
-    };
+ShowValueIndicator? decodeShowValueIndicator(Decoding d, Object? v) => switch (v) {
+  1 || 'onlyForDiscrete' => ShowValueIndicator.onlyForDiscrete,
+  2 || 'onlyForContinuous' => ShowValueIndicator.onlyForContinuous,
+  3 || 'always' => ShowValueIndicator.always,
+  4 || 'onDrag' => ShowValueIndicator.onDrag,
+  5 || 'alwaysVisible' => ShowValueIndicator.alwaysVisible,
+  6 || 'never' => ShowValueIndicator.never,
+  _ => null,
+};
 
 /// The member name of a SliderInteraction, from its permanent value ID or name.
 String? nameSliderInteraction(Decoding d, Object? v) => switch (v) {
@@ -844,14 +823,13 @@ String? nameSliderInteraction(Decoding d, Object? v) => switch (v) {
 };
 
 /// Decodes a SliderInteraction.
-SliderInteraction? decodeSliderInteraction(Decoding d, Object? v) =>
-    switch (v) {
-      1 || 'tapAndSlide' => SliderInteraction.tapAndSlide,
-      2 || 'tapOnly' => SliderInteraction.tapOnly,
-      3 || 'slideOnly' => SliderInteraction.slideOnly,
-      4 || 'slideThumb' => SliderInteraction.slideThumb,
-      _ => null,
-    };
+SliderInteraction? decodeSliderInteraction(Decoding d, Object? v) => switch (v) {
+  1 || 'tapAndSlide' => SliderInteraction.tapAndSlide,
+  2 || 'tapOnly' => SliderInteraction.tapOnly,
+  3 || 'slideOnly' => SliderInteraction.slideOnly,
+  4 || 'slideThumb' => SliderInteraction.slideThumb,
+  _ => null,
+};
 
 /// The member name of a SliverPaintOrder, from its permanent value ID or name.
 String? nameSliverPaintOrder(Decoding d, Object? v) => switch (v) {
@@ -981,14 +959,13 @@ String? nameTextCapitalization(Decoding d, Object? v) => switch (v) {
 };
 
 /// Decodes a TextCapitalization.
-TextCapitalization? decodeTextCapitalization(Decoding d, Object? v) =>
-    switch (v) {
-      1 || 'words' => TextCapitalization.words,
-      2 || 'sentences' => TextCapitalization.sentences,
-      3 || 'characters' => TextCapitalization.characters,
-      4 || 'none' => TextCapitalization.none,
-      _ => null,
-    };
+TextCapitalization? decodeTextCapitalization(Decoding d, Object? v) => switch (v) {
+  1 || 'words' => TextCapitalization.words,
+  2 || 'sentences' => TextCapitalization.sentences,
+  3 || 'characters' => TextCapitalization.characters,
+  4 || 'none' => TextCapitalization.none,
+  _ => null,
+};
 
 /// The member name of a TextDecoration, from its permanent value ID or name.
 String? nameTextDecoration(Decoding d, Object? v) => switch (v) {
@@ -1010,15 +987,14 @@ String? nameTextDecorationStyle(Decoding d, Object? v) => switch (v) {
 };
 
 /// Decodes a TextDecorationStyle.
-TextDecorationStyle? decodeTextDecorationStyle(Decoding d, Object? v) =>
-    switch (v) {
-      1 || 'solid' => TextDecorationStyle.solid,
-      2 || 'double' => TextDecorationStyle.double,
-      3 || 'dotted' => TextDecorationStyle.dotted,
-      4 || 'dashed' => TextDecorationStyle.dashed,
-      5 || 'wavy' => TextDecorationStyle.wavy,
-      _ => null,
-    };
+TextDecorationStyle? decodeTextDecorationStyle(Decoding d, Object? v) => switch (v) {
+  1 || 'solid' => TextDecorationStyle.solid,
+  2 || 'double' => TextDecorationStyle.double,
+  3 || 'dotted' => TextDecorationStyle.dotted,
+  4 || 'dashed' => TextDecorationStyle.dashed,
+  5 || 'wavy' => TextDecorationStyle.wavy,
+  _ => null,
+};
 
 /// The member name of a TextDirection, from its permanent value ID or name.
 String? nameTextDirection(Decoding d, Object? v) => switch (v) {
@@ -1096,12 +1072,11 @@ String? nameTextLeadingDistribution(Decoding d, Object? v) => switch (v) {
 };
 
 /// Decodes a TextLeadingDistribution.
-TextLeadingDistribution? decodeTextLeadingDistribution(Decoding d, Object? v) =>
-    switch (v) {
-      1 || 'proportional' => TextLeadingDistribution.proportional,
-      2 || 'even' => TextLeadingDistribution.even,
-      _ => null,
-    };
+TextLeadingDistribution? decodeTextLeadingDistribution(Decoding d, Object? v) => switch (v) {
+  1 || 'proportional' => TextLeadingDistribution.proportional,
+  2 || 'even' => TextLeadingDistribution.even,
+  _ => null,
+};
 
 /// The member name of a TextOverflow, from its permanent value ID or name.
 String? nameTextOverflow(Decoding d, Object? v) => switch (v) {
@@ -1178,13 +1153,12 @@ String? nameTooltipTriggerMode(Decoding d, Object? v) => switch (v) {
 };
 
 /// Decodes a TooltipTriggerMode.
-TooltipTriggerMode? decodeTooltipTriggerMode(Decoding d, Object? v) =>
-    switch (v) {
-      1 || 'manual' => TooltipTriggerMode.manual,
-      2 || 'longPress' => TooltipTriggerMode.longPress,
-      3 || 'tap' => TooltipTriggerMode.tap,
-      _ => null,
-    };
+TooltipTriggerMode? decodeTooltipTriggerMode(Decoding d, Object? v) => switch (v) {
+  1 || 'manual' => TooltipTriggerMode.manual,
+  2 || 'longPress' => TooltipTriggerMode.longPress,
+  3 || 'tap' => TooltipTriggerMode.tap,
+  _ => null,
+};
 
 /// The member name of a VerticalDirection, from its permanent value ID or name.
 String? nameVerticalDirection(Decoding d, Object? v) => switch (v) {
@@ -1194,12 +1168,11 @@ String? nameVerticalDirection(Decoding d, Object? v) => switch (v) {
 };
 
 /// Decodes a VerticalDirection.
-VerticalDirection? decodeVerticalDirection(Decoding d, Object? v) =>
-    switch (v) {
-      1 || 'up' => VerticalDirection.up,
-      2 || 'down' => VerticalDirection.down,
-      _ => null,
-    };
+VerticalDirection? decodeVerticalDirection(Decoding d, Object? v) => switch (v) {
+  1 || 'up' => VerticalDirection.up,
+  2 || 'down' => VerticalDirection.down,
+  _ => null,
+};
 
 /// The member name of a VisualDensity, from its permanent value ID or name.
 String? nameVisualDensity(Decoding d, Object? v) => switch (v) {
@@ -1241,38 +1214,17 @@ String? nameWrapCrossAlignment(Decoding d, Object? v) => switch (v) {
 };
 
 /// Decodes a WrapCrossAlignment.
-WrapCrossAlignment? decodeWrapCrossAlignment(Decoding d, Object? v) =>
-    switch (v) {
-      1 || 'start' => WrapCrossAlignment.start,
-      2 || 'end' => WrapCrossAlignment.end,
-      3 || 'center' => WrapCrossAlignment.center,
-      _ => null,
-    };
+WrapCrossAlignment? decodeWrapCrossAlignment(Decoding d, Object? v) => switch (v) {
+  1 || 'start' => WrapCrossAlignment.start,
+  2 || 'end' => WrapCrossAlignment.end,
+  3 || 'center' => WrapCrossAlignment.center,
+  _ => null,
+};
 
 // ── Value types ───────────────────────────────────────────────────────────
 
 /// Value types whose decoders are written by hand (decoders.dart).
-const List<String> handWrittenDecoders = [
-  'Alignment',
-  'Border',
-  'BorderRadius',
-  'ButtonSegment',
-  'DropdownMenuEntry',
-  'EdgeInsets',
-  'Gradient',
-  'IconData',
-  'ImageSource',
-  'InputBorder',
-  'Radius',
-  'ShapeBorder',
-  'WidgetStateBorderSide',
-  'WidgetStateColor',
-  'WidgetStateDouble',
-  'WidgetStateEdgeInsets',
-  'WidgetStateShapeBorder',
-  'WidgetStateSize',
-  'WidgetStateTextStyle',
-];
+const List<String> handWrittenDecoders = ['Alignment', 'Border', 'BorderRadius', 'ButtonSegment', 'DropdownMenuEntry', 'EdgeInsets', 'Gradient', 'IconData', 'ImageSource', 'InputBorder', 'Radius', 'ShapeBorder', 'WidgetStateBorderSide', 'WidgetStateColor', 'WidgetStateDouble', 'WidgetStateEdgeInsets', 'WidgetStateShapeBorder', 'WidgetStateSize', 'WidgetStateTextStyle'];
 
 /// Decodes a BorderSide.
 BorderSide? decodeBorderSide(Decoding d, Object? v) {
@@ -1282,8 +1234,7 @@ BorderSide? decodeBorderSide(Decoding d, Object? v) {
     color: asColor(d, f.get(1, 'color')) ?? const Color(0xFF000000),
     width: asDouble(d, f.get(2, 'width')) ?? 1.0,
     style: decodeBorderStyle(d, f.get(3, 'style')) ?? BorderStyle.solid,
-    strokeAlign:
-        asDouble(d, f.get(4, 'strokeAlign')) ?? BorderSide.strokeAlignInside,
+    strokeAlign: asDouble(d, f.get(4, 'strokeAlign')) ?? BorderSide.strokeAlignInside,
   );
 }
 
@@ -1321,20 +1272,18 @@ BoxShadow? decodeBoxShadow(Decoding d, Object? v) {
   final o0 = asColor(d, f.get(1, 'color'));
   return o0 == null
       ? BoxShadow(
-          offset: decodeOffset(d, f.get(2, 'offset')) ?? _default0,
-          blurRadius: asDouble(d, f.get(3, 'blurRadius')) ?? 0.0,
-          spreadRadius: asDouble(d, f.get(4, 'spreadRadius')) ?? 0.0,
-          blurStyle:
-              decodeBlurStyle(d, f.get(5, 'blurStyle')) ?? BlurStyle.normal,
-        )
+    offset: decodeOffset(d, f.get(2, 'offset')) ?? _default0,
+    blurRadius: asDouble(d, f.get(3, 'blurRadius')) ?? 0.0,
+    spreadRadius: asDouble(d, f.get(4, 'spreadRadius')) ?? 0.0,
+    blurStyle: decodeBlurStyle(d, f.get(5, 'blurStyle')) ?? BlurStyle.normal,
+  )
       : BoxShadow(
-          color: o0,
-          offset: decodeOffset(d, f.get(2, 'offset')) ?? _default0,
-          blurRadius: asDouble(d, f.get(3, 'blurRadius')) ?? 0.0,
-          spreadRadius: asDouble(d, f.get(4, 'spreadRadius')) ?? 0.0,
-          blurStyle:
-              decodeBlurStyle(d, f.get(5, 'blurStyle')) ?? BlurStyle.normal,
-        );
+    color: o0,
+    offset: decodeOffset(d, f.get(2, 'offset')) ?? _default0,
+    blurRadius: asDouble(d, f.get(3, 'blurRadius')) ?? 0.0,
+    spreadRadius: asDouble(d, f.get(4, 'spreadRadius')) ?? 0.0,
+    blurStyle: decodeBlurStyle(d, f.get(5, 'blurStyle')) ?? BlurStyle.normal,
+  );
 }
 
 /// Decodes a ButtonStyle.
@@ -1389,22 +1338,13 @@ InputDecoration? decodeInputDecoration(Decoding d, Object? v) {
     errorText: asString(d, f.get(16, 'errorText')),
     errorStyle: decodeTextStyle(d, f.get(17, 'errorStyle')),
     errorMaxLines: asInt(d, f.get(18, 'errorMaxLines')),
-    floatingLabelBehavior: decodeFloatingLabelBehavior(
-      d,
-      f.get(19, 'floatingLabelBehavior'),
-    ),
-    floatingLabelAlignment: decodeFloatingLabelAlignment(
-      d,
-      f.get(20, 'floatingLabelAlignment'),
-    ),
+    floatingLabelBehavior: decodeFloatingLabelBehavior(d, f.get(19, 'floatingLabelBehavior')),
+    floatingLabelAlignment: decodeFloatingLabelAlignment(d, f.get(20, 'floatingLabelAlignment')),
     isCollapsed: asBool(d, f.get(21, 'isCollapsed')),
     isDense: asBool(d, f.get(22, 'isDense')),
     contentPadding: decodeEdgeInsets(d, f.get(23, 'contentPadding')),
     prefixIcon: decodeIconWidget(d, f.get(24, 'prefixIcon')),
-    prefixIconConstraints: decodeBoxConstraints(
-      d,
-      f.get(25, 'prefixIconConstraints'),
-    ),
+    prefixIconConstraints: decodeBoxConstraints(d, f.get(25, 'prefixIconConstraints')),
     prefixText: asString(d, f.get(26, 'prefixText')),
     prefixStyle: decodeTextStyle(d, f.get(27, 'prefixStyle')),
     prefixIconColor: asColor(d, f.get(28, 'prefixIconColor')),
@@ -1412,10 +1352,7 @@ InputDecoration? decodeInputDecoration(Decoding d, Object? v) {
     suffixText: asString(d, f.get(30, 'suffixText')),
     suffixStyle: decodeTextStyle(d, f.get(31, 'suffixStyle')),
     suffixIconColor: asColor(d, f.get(32, 'suffixIconColor')),
-    suffixIconConstraints: decodeBoxConstraints(
-      d,
-      f.get(33, 'suffixIconConstraints'),
-    ),
+    suffixIconConstraints: decodeBoxConstraints(d, f.get(33, 'suffixIconConstraints')),
     counterText: asString(d, f.get(34, 'counterText')),
     counterStyle: decodeTextStyle(d, f.get(35, 'counterStyle')),
     filled: asBool(d, f.get(36, 'filled')),
@@ -1473,14 +1410,14 @@ Shadow? decodeShadow(Decoding d, Object? v) {
   final o0 = asColor(d, f.get(1, 'color'));
   return o0 == null
       ? Shadow(
-          offset: decodeOffset(d, f.get(2, 'offset')) ?? _default0,
-          blurRadius: asDouble(d, f.get(3, 'blurRadius')) ?? 0.0,
-        )
+    offset: decodeOffset(d, f.get(2, 'offset')) ?? _default0,
+    blurRadius: asDouble(d, f.get(3, 'blurRadius')) ?? 0.0,
+  )
       : Shadow(
-          color: o0,
-          offset: decodeOffset(d, f.get(2, 'offset')) ?? _default0,
-          blurRadius: asDouble(d, f.get(3, 'blurRadius')) ?? 0.0,
-        );
+    color: o0,
+    offset: decodeOffset(d, f.get(2, 'offset')) ?? _default0,
+    blurRadius: asDouble(d, f.get(3, 'blurRadius')) ?? 0.0,
+  );
 }
 
 /// Decodes a Size.
@@ -1523,10 +1460,7 @@ TextStyle? decodeTextStyle(Decoding d, Object? v) {
     wordSpacing: asDouble(d, f.get(8, 'wordSpacing')),
     textBaseline: decodeTextBaseline(d, f.get(9, 'textBaseline')),
     height: asDouble(d, f.get(10, 'height')),
-    leadingDistribution: decodeTextLeadingDistribution(
-      d,
-      f.get(11, 'leadingDistribution'),
-    ),
+    leadingDistribution: decodeTextLeadingDistribution(d, f.get(11, 'leadingDistribution')),
     locale: asLocale(d, f.get(12, 'locale')),
     shadows: listOfShadow(d, f.get(13, 'shadows')),
     decoration: decodeTextDecoration(d, f.get(14, 'decoration')),
@@ -1540,25 +1474,19 @@ TextStyle? decodeTextStyle(Decoding d, Object? v) {
 }
 
 /// A list of BoxShadow.
-List<BoxShadow>? listOfBoxShadow(Decoding d, Object? v) =>
-    asList(d, v, decodeBoxShadow);
+List<BoxShadow>? listOfBoxShadow(Decoding d, Object? v) => asList(d, v, decodeBoxShadow);
 
 /// A list of ButtonSegment.
-List<ButtonSegment<String>>? listOfButtonSegment(Decoding d, Object? v) =>
-    asList(d, v, decodeButtonSegment);
+List<ButtonSegment<String>>? listOfButtonSegment(Decoding d, Object? v) => asList(d, v, decodeButtonSegment);
 
 /// A list of DropdownMenuEntry.
-List<DropdownMenuEntry<String>>? listOfDropdownMenuEntry(
-  Decoding d,
-  Object? v,
-) => asList(d, v, decodeDropdownMenuEntry);
+List<DropdownMenuEntry<String>>? listOfDropdownMenuEntry(Decoding d, Object? v) => asList(d, v, decodeDropdownMenuEntry);
 
 /// A list of Shadow.
 List<Shadow>? listOfShadow(Decoding d, Object? v) => asList(d, v, decodeShadow);
 
 /// A list of TextSpan.
-List<TextSpan>? listOfTextSpan(Decoding d, Object? v) =>
-    asList(d, v, decodeTextSpan);
+List<TextSpan>? listOfTextSpan(Decoding d, Object? v) => asList(d, v, decodeTextSpan);
 
 // ── Widgets ───────────────────────────────────────────────────────────────
 
@@ -1724,43 +1652,43 @@ Widget _buildCheckbox(NodeContext c) {
     c.decode(1, asBool),
     (value, onChanged) => c.decode(17, asBool) == true
         ? Checkbox.adaptive(
-            value: value,
-            tristate: c.decode(2, asBool) ?? false,
-            onChanged: onChanged,
-            activeColor: c.decode(3, asColor),
-            fillColor: c.decode(4, decodeWidgetStateColor),
-            checkColor: c.decode(5, asColor),
-            focusColor: c.decode(6, asColor),
-            hoverColor: c.decode(7, asColor),
-            overlayColor: c.decode(8, decodeWidgetStateColor),
-            splashRadius: c.decode(9, asDouble),
-            materialTapTargetSize: c.decode(10, decodeMaterialTapTargetSize),
-            visualDensity: c.decode(11, decodeVisualDensity),
-            autofocus: c.decode(12, asBool) ?? false,
-            shape: c.decode(13, decodeOutlinedBorder),
-            side: c.decode(14, decodeBorderSide),
-            isError: c.decode(15, asBool) ?? false,
-            semanticLabel: c.decode(16, asString),
-          )
+          value: value,
+          tristate: c.decode(2, asBool) ?? false,
+          onChanged: onChanged,
+          activeColor: c.decode(3, asColor),
+          fillColor: c.decode(4, decodeWidgetStateColor),
+          checkColor: c.decode(5, asColor),
+          focusColor: c.decode(6, asColor),
+          hoverColor: c.decode(7, asColor),
+          overlayColor: c.decode(8, decodeWidgetStateColor),
+          splashRadius: c.decode(9, asDouble),
+          materialTapTargetSize: c.decode(10, decodeMaterialTapTargetSize),
+          visualDensity: c.decode(11, decodeVisualDensity),
+          autofocus: c.decode(12, asBool) ?? false,
+          shape: c.decode(13, decodeOutlinedBorder),
+          side: c.decode(14, decodeBorderSide),
+          isError: c.decode(15, asBool) ?? false,
+          semanticLabel: c.decode(16, asString),
+        )
         : Checkbox(
-            value: value,
-            tristate: c.decode(2, asBool) ?? false,
-            onChanged: onChanged,
-            activeColor: c.decode(3, asColor),
-            fillColor: c.decode(4, decodeWidgetStateColor),
-            checkColor: c.decode(5, asColor),
-            focusColor: c.decode(6, asColor),
-            hoverColor: c.decode(7, asColor),
-            overlayColor: c.decode(8, decodeWidgetStateColor),
-            splashRadius: c.decode(9, asDouble),
-            materialTapTargetSize: c.decode(10, decodeMaterialTapTargetSize),
-            visualDensity: c.decode(11, decodeVisualDensity),
-            autofocus: c.decode(12, asBool) ?? false,
-            shape: c.decode(13, decodeOutlinedBorder),
-            side: c.decode(14, decodeBorderSide),
-            isError: c.decode(15, asBool) ?? false,
-            semanticLabel: c.decode(16, asString),
-          ),
+          value: value,
+          tristate: c.decode(2, asBool) ?? false,
+          onChanged: onChanged,
+          activeColor: c.decode(3, asColor),
+          fillColor: c.decode(4, decodeWidgetStateColor),
+          checkColor: c.decode(5, asColor),
+          focusColor: c.decode(6, asColor),
+          hoverColor: c.decode(7, asColor),
+          overlayColor: c.decode(8, decodeWidgetStateColor),
+          splashRadius: c.decode(9, asDouble),
+          materialTapTargetSize: c.decode(10, decodeMaterialTapTargetSize),
+          visualDensity: c.decode(11, decodeVisualDensity),
+          autofocus: c.decode(12, asBool) ?? false,
+          shape: c.decode(13, decodeOutlinedBorder),
+          side: c.decode(14, decodeBorderSide),
+          isError: c.decode(15, asBool) ?? false,
+          semanticLabel: c.decode(16, asString),
+        ),
   );
 }
 
@@ -1771,81 +1699,81 @@ Widget _buildCheckboxListTile(NodeContext c) {
     c.decode(1, asBool),
     (value, onChanged) => c.decode(32, asBool) == true
         ? CheckboxListTile.adaptive(
-            value: value,
-            onChanged: onChanged,
-            activeColor: c.decode(2, asColor),
-            fillColor: c.decode(3, decodeWidgetStateColor),
-            checkColor: c.decode(4, asColor),
-            hoverColor: c.decode(5, asColor),
-            overlayColor: c.decode(6, decodeWidgetStateColor),
-            splashRadius: c.decode(7, asDouble),
-            materialTapTargetSize: c.decode(8, decodeMaterialTapTargetSize),
-            visualDensity: c.decode(9, decodeVisualDensity),
-            autofocus: c.decode(10, asBool) ?? false,
-            shape: c.decode(11, decodeShapeBorder),
-            side: c.decode(12, decodeBorderSide),
-            isError: c.decode(13, asBool) ?? false,
-            enabled: c.decode(14, asBool),
-            tileColor: c.decode(15, asColor),
-            title: c.slot(1),
-            subtitle: c.slot(2),
-            isThreeLine: c.decode(16, asBool),
-            dense: c.decode(17, asBool),
-            secondary: c.slot(3),
-            selected: c.decode(18, asBool) ?? false,
-            controlAffinity: c.decode(19, decodeListTileControlAffinity),
-            contentPadding: c.decode(20, decodeEdgeInsets),
-            tristate: c.decode(21, asBool) ?? false,
-            checkboxShape: c.decode(22, decodeOutlinedBorder),
-            selectedTileColor: c.decode(23, asColor),
-            onFocusChange: c.handles(2) ? (v) => c.fire(2, v) : null,
-            enableFeedback: c.decode(24, asBool),
-            horizontalTitleGap: c.decode(25, asDouble),
-            minVerticalPadding: c.decode(26, asDouble),
-            minLeadingWidth: c.decode(27, asDouble),
-            minTileHeight: c.decode(28, asDouble),
-            checkboxSemanticLabel: c.decode(29, asString),
-            checkboxScaleFactor: c.decode(30, asDouble) ?? 1.0,
-            titleAlignment: c.decode(31, decodeListTileTitleAlignment),
-          )
+          value: value,
+          onChanged: onChanged,
+          activeColor: c.decode(2, asColor),
+          fillColor: c.decode(3, decodeWidgetStateColor),
+          checkColor: c.decode(4, asColor),
+          hoverColor: c.decode(5, asColor),
+          overlayColor: c.decode(6, decodeWidgetStateColor),
+          splashRadius: c.decode(7, asDouble),
+          materialTapTargetSize: c.decode(8, decodeMaterialTapTargetSize),
+          visualDensity: c.decode(9, decodeVisualDensity),
+          autofocus: c.decode(10, asBool) ?? false,
+          shape: c.decode(11, decodeShapeBorder),
+          side: c.decode(12, decodeBorderSide),
+          isError: c.decode(13, asBool) ?? false,
+          enabled: c.decode(14, asBool),
+          tileColor: c.decode(15, asColor),
+          title: c.slot(1),
+          subtitle: c.slot(2),
+          isThreeLine: c.decode(16, asBool),
+          dense: c.decode(17, asBool),
+          secondary: c.slot(3),
+          selected: c.decode(18, asBool) ?? false,
+          controlAffinity: c.decode(19, decodeListTileControlAffinity),
+          contentPadding: c.decode(20, decodeEdgeInsets),
+          tristate: c.decode(21, asBool) ?? false,
+          checkboxShape: c.decode(22, decodeOutlinedBorder),
+          selectedTileColor: c.decode(23, asColor),
+          onFocusChange: c.handles(2) ? (v) => c.fire(2, v) : null,
+          enableFeedback: c.decode(24, asBool),
+          horizontalTitleGap: c.decode(25, asDouble),
+          minVerticalPadding: c.decode(26, asDouble),
+          minLeadingWidth: c.decode(27, asDouble),
+          minTileHeight: c.decode(28, asDouble),
+          checkboxSemanticLabel: c.decode(29, asString),
+          checkboxScaleFactor: c.decode(30, asDouble) ?? 1.0,
+          titleAlignment: c.decode(31, decodeListTileTitleAlignment),
+        )
         : CheckboxListTile(
-            value: value,
-            onChanged: onChanged,
-            activeColor: c.decode(2, asColor),
-            fillColor: c.decode(3, decodeWidgetStateColor),
-            checkColor: c.decode(4, asColor),
-            hoverColor: c.decode(5, asColor),
-            overlayColor: c.decode(6, decodeWidgetStateColor),
-            splashRadius: c.decode(7, asDouble),
-            materialTapTargetSize: c.decode(8, decodeMaterialTapTargetSize),
-            visualDensity: c.decode(9, decodeVisualDensity),
-            autofocus: c.decode(10, asBool) ?? false,
-            shape: c.decode(11, decodeShapeBorder),
-            side: c.decode(12, decodeBorderSide),
-            isError: c.decode(13, asBool) ?? false,
-            enabled: c.decode(14, asBool),
-            tileColor: c.decode(15, asColor),
-            title: c.slot(1),
-            subtitle: c.slot(2),
-            isThreeLine: c.decode(16, asBool),
-            dense: c.decode(17, asBool),
-            secondary: c.slot(3),
-            selected: c.decode(18, asBool) ?? false,
-            controlAffinity: c.decode(19, decodeListTileControlAffinity),
-            contentPadding: c.decode(20, decodeEdgeInsets),
-            tristate: c.decode(21, asBool) ?? false,
-            checkboxShape: c.decode(22, decodeOutlinedBorder),
-            selectedTileColor: c.decode(23, asColor),
-            onFocusChange: c.handles(2) ? (v) => c.fire(2, v) : null,
-            enableFeedback: c.decode(24, asBool),
-            horizontalTitleGap: c.decode(25, asDouble),
-            minVerticalPadding: c.decode(26, asDouble),
-            minLeadingWidth: c.decode(27, asDouble),
-            minTileHeight: c.decode(28, asDouble),
-            checkboxSemanticLabel: c.decode(29, asString),
-            checkboxScaleFactor: c.decode(30, asDouble) ?? 1.0,
-            titleAlignment: c.decode(31, decodeListTileTitleAlignment),
-          ),
+          value: value,
+          onChanged: onChanged,
+          activeColor: c.decode(2, asColor),
+          fillColor: c.decode(3, decodeWidgetStateColor),
+          checkColor: c.decode(4, asColor),
+          hoverColor: c.decode(5, asColor),
+          overlayColor: c.decode(6, decodeWidgetStateColor),
+          splashRadius: c.decode(7, asDouble),
+          materialTapTargetSize: c.decode(8, decodeMaterialTapTargetSize),
+          visualDensity: c.decode(9, decodeVisualDensity),
+          autofocus: c.decode(10, asBool) ?? false,
+          shape: c.decode(11, decodeShapeBorder),
+          side: c.decode(12, decodeBorderSide),
+          isError: c.decode(13, asBool) ?? false,
+          enabled: c.decode(14, asBool),
+          tileColor: c.decode(15, asColor),
+          title: c.slot(1),
+          subtitle: c.slot(2),
+          isThreeLine: c.decode(16, asBool),
+          dense: c.decode(17, asBool),
+          secondary: c.slot(3),
+          selected: c.decode(18, asBool) ?? false,
+          controlAffinity: c.decode(19, decodeListTileControlAffinity),
+          contentPadding: c.decode(20, decodeEdgeInsets),
+          tristate: c.decode(21, asBool) ?? false,
+          checkboxShape: c.decode(22, decodeOutlinedBorder),
+          selectedTileColor: c.decode(23, asColor),
+          onFocusChange: c.handles(2) ? (v) => c.fire(2, v) : null,
+          enableFeedback: c.decode(24, asBool),
+          horizontalTitleGap: c.decode(25, asDouble),
+          minVerticalPadding: c.decode(26, asDouble),
+          minLeadingWidth: c.decode(27, asDouble),
+          minTileHeight: c.decode(28, asDouble),
+          checkboxSemanticLabel: c.decode(29, asString),
+          checkboxScaleFactor: c.decode(30, asDouble) ?? 1.0,
+          titleAlignment: c.decode(31, decodeListTileTitleAlignment),
+        ),
   );
 }
 
@@ -1930,30 +1858,30 @@ Widget _buildCircleAvatar(NodeContext c) {
 Widget _buildCircularProgressIndicator(NodeContext c) {
   return c.decode(12, asBool) == true
       ? CircularProgressIndicator.adaptive(
-          value: c.decode(1, asDouble),
-          backgroundColor: c.decode(2, asColor),
-          strokeWidth: c.decode(4, asDouble),
-          semanticsLabel: c.decode(6, asString),
-          semanticsValue: c.decode(7, asString),
-          strokeCap: c.decode(8, decodeStrokeCap),
-          strokeAlign: c.decode(5, asDouble),
-          constraints: c.decode(9, decodeBoxConstraints),
-          trackGap: c.decode(10, asDouble),
-          padding: c.decode(11, decodeEdgeInsets),
-        )
+        value: c.decode(1, asDouble),
+        backgroundColor: c.decode(2, asColor),
+        strokeWidth: c.decode(4, asDouble),
+        semanticsLabel: c.decode(6, asString),
+        semanticsValue: c.decode(7, asString),
+        strokeCap: c.decode(8, decodeStrokeCap),
+        strokeAlign: c.decode(5, asDouble),
+        constraints: c.decode(9, decodeBoxConstraints),
+        trackGap: c.decode(10, asDouble),
+        padding: c.decode(11, decodeEdgeInsets),
+      )
       : CircularProgressIndicator(
-          value: c.decode(1, asDouble),
-          backgroundColor: c.decode(2, asColor),
-          color: c.decode(3, asColor),
-          strokeWidth: c.decode(4, asDouble),
-          strokeAlign: c.decode(5, asDouble),
-          semanticsLabel: c.decode(6, asString),
-          semanticsValue: c.decode(7, asString),
-          strokeCap: c.decode(8, decodeStrokeCap),
-          constraints: c.decode(9, decodeBoxConstraints),
-          trackGap: c.decode(10, asDouble),
-          padding: c.decode(11, decodeEdgeInsets),
-        );
+        value: c.decode(1, asDouble),
+        backgroundColor: c.decode(2, asColor),
+        color: c.decode(3, asColor),
+        strokeWidth: c.decode(4, asDouble),
+        strokeAlign: c.decode(5, asDouble),
+        semanticsLabel: c.decode(6, asString),
+        semanticsValue: c.decode(7, asString),
+        strokeCap: c.decode(8, decodeStrokeCap),
+        constraints: c.decode(9, decodeBoxConstraints),
+        trackGap: c.decode(10, asDouble),
+        padding: c.decode(11, decodeEdgeInsets),
+      );
 }
 
 /// Builds a ClipOval node.
@@ -1994,14 +1922,11 @@ Widget _buildColoredBox(NodeContext c) {
 /// Builds a Column node.
 Widget _buildColumn(NodeContext c) {
   return Column(
-    mainAxisAlignment:
-        c.decode(1, decodeMainAxisAlignment) ?? MainAxisAlignment.start,
+    mainAxisAlignment: c.decode(1, decodeMainAxisAlignment) ?? MainAxisAlignment.start,
     mainAxisSize: c.decode(2, decodeMainAxisSize) ?? MainAxisSize.max,
-    crossAxisAlignment:
-        c.decode(3, decodeCrossAxisAlignment) ?? CrossAxisAlignment.center,
+    crossAxisAlignment: c.decode(3, decodeCrossAxisAlignment) ?? CrossAxisAlignment.center,
     textDirection: c.decode(4, decodeTextDirection),
-    verticalDirection:
-        c.decode(5, decodeVerticalDirection) ?? VerticalDirection.down,
+    verticalDirection: c.decode(5, decodeVerticalDirection) ?? VerticalDirection.down,
     textBaseline: c.decode(6, decodeTextBaseline),
     spacing: c.decode(7, asDouble) ?? 0.0,
     children: c.children(),
@@ -2040,22 +1965,21 @@ Widget _buildCupertinoActivityIndicator(NodeContext c) {
   final o0 = c.decode(3, asDouble);
   return o0 == null
       ? CupertinoActivityIndicator(
-          color: c.decode(1, asColor),
-          animating: c.decode(2, asBool) ?? true,
-        )
+    color: c.decode(1, asColor),
+    animating: c.decode(2, asBool) ?? true,
+  )
       : CupertinoActivityIndicator(
-          color: c.decode(1, asColor),
-          animating: c.decode(2, asBool) ?? true,
-          radius: o0,
-        );
+    color: c.decode(1, asColor),
+    animating: c.decode(2, asBool) ?? true,
+    radius: o0,
+  );
 }
 
 /// Builds a CupertinoButton node.
 Widget _buildCupertinoButton(NodeContext c) {
   return CupertinoButton(
     child: c.slot(1) ?? c.missing('child'),
-    sizeStyle:
-        c.decode(1, decodeCupertinoButtonSize) ?? CupertinoButtonSize.large,
+    sizeStyle: c.decode(1, decodeCupertinoButtonSize) ?? CupertinoButtonSize.large,
     padding: c.decode(2, decodeEdgeInsets),
     color: c.decode(3, asColor),
     foregroundColor: c.decode(4, asColor),
@@ -2078,65 +2002,59 @@ Widget _buildCupertinoListSection(NodeContext c) {
   final o1 = c.decode(5, asDouble);
   return o0 == null
       ? o1 == null
-            ? CupertinoListSection(
-                children: c.slotList(3),
-                header: c.slot(1),
-                footer: c.slot(2),
-                backgroundColor:
-                    c.decode(2, asColor) ??
-                    CupertinoColors.systemGroupedBackground,
-                decoration: c.decode(3, decodeBoxDecoration),
-                clipBehavior: c.decode(4, decodeClip) ?? Clip.none,
-                additionalDividerMargin: c.decode(6, asDouble),
-                topMargin: c.decode(7, asDouble),
-                hasLeading: c.decode(8, asBool) ?? true,
-                separatorColor: c.decode(9, asColor),
-              )
-            : CupertinoListSection(
-                children: c.slotList(3),
-                header: c.slot(1),
-                footer: c.slot(2),
-                backgroundColor:
-                    c.decode(2, asColor) ??
-                    CupertinoColors.systemGroupedBackground,
-                decoration: c.decode(3, decodeBoxDecoration),
-                clipBehavior: c.decode(4, decodeClip) ?? Clip.none,
-                dividerMargin: o1,
-                additionalDividerMargin: c.decode(6, asDouble),
-                topMargin: c.decode(7, asDouble),
-                hasLeading: c.decode(8, asBool) ?? true,
-                separatorColor: c.decode(9, asColor),
-              )
+      ? CupertinoListSection(
+    children: c.slotList(3),
+    header: c.slot(1),
+    footer: c.slot(2),
+    backgroundColor: c.decode(2, asColor) ?? CupertinoColors.systemGroupedBackground,
+    decoration: c.decode(3, decodeBoxDecoration),
+    clipBehavior: c.decode(4, decodeClip) ?? Clip.none,
+    additionalDividerMargin: c.decode(6, asDouble),
+    topMargin: c.decode(7, asDouble),
+    hasLeading: c.decode(8, asBool) ?? true,
+    separatorColor: c.decode(9, asColor),
+  )
+      : CupertinoListSection(
+    children: c.slotList(3),
+    header: c.slot(1),
+    footer: c.slot(2),
+    backgroundColor: c.decode(2, asColor) ?? CupertinoColors.systemGroupedBackground,
+    decoration: c.decode(3, decodeBoxDecoration),
+    clipBehavior: c.decode(4, decodeClip) ?? Clip.none,
+    dividerMargin: o1,
+    additionalDividerMargin: c.decode(6, asDouble),
+    topMargin: c.decode(7, asDouble),
+    hasLeading: c.decode(8, asBool) ?? true,
+    separatorColor: c.decode(9, asColor),
+  )
       : o1 == null
       ? CupertinoListSection(
-          children: c.slotList(3),
-          header: c.slot(1),
-          footer: c.slot(2),
-          margin: o0,
-          backgroundColor:
-              c.decode(2, asColor) ?? CupertinoColors.systemGroupedBackground,
-          decoration: c.decode(3, decodeBoxDecoration),
-          clipBehavior: c.decode(4, decodeClip) ?? Clip.none,
-          additionalDividerMargin: c.decode(6, asDouble),
-          topMargin: c.decode(7, asDouble),
-          hasLeading: c.decode(8, asBool) ?? true,
-          separatorColor: c.decode(9, asColor),
-        )
+    children: c.slotList(3),
+    header: c.slot(1),
+    footer: c.slot(2),
+    margin: o0,
+    backgroundColor: c.decode(2, asColor) ?? CupertinoColors.systemGroupedBackground,
+    decoration: c.decode(3, decodeBoxDecoration),
+    clipBehavior: c.decode(4, decodeClip) ?? Clip.none,
+    additionalDividerMargin: c.decode(6, asDouble),
+    topMargin: c.decode(7, asDouble),
+    hasLeading: c.decode(8, asBool) ?? true,
+    separatorColor: c.decode(9, asColor),
+  )
       : CupertinoListSection(
-          children: c.slotList(3),
-          header: c.slot(1),
-          footer: c.slot(2),
-          margin: o0,
-          backgroundColor:
-              c.decode(2, asColor) ?? CupertinoColors.systemGroupedBackground,
-          decoration: c.decode(3, decodeBoxDecoration),
-          clipBehavior: c.decode(4, decodeClip) ?? Clip.none,
-          dividerMargin: o1,
-          additionalDividerMargin: c.decode(6, asDouble),
-          topMargin: c.decode(7, asDouble),
-          hasLeading: c.decode(8, asBool) ?? true,
-          separatorColor: c.decode(9, asColor),
-        );
+    children: c.slotList(3),
+    header: c.slot(1),
+    footer: c.slot(2),
+    margin: o0,
+    backgroundColor: c.decode(2, asColor) ?? CupertinoColors.systemGroupedBackground,
+    decoration: c.decode(3, decodeBoxDecoration),
+    clipBehavior: c.decode(4, decodeClip) ?? Clip.none,
+    dividerMargin: o1,
+    additionalDividerMargin: c.decode(6, asDouble),
+    topMargin: c.decode(7, asDouble),
+    hasLeading: c.decode(8, asBool) ?? true,
+    separatorColor: c.decode(9, asColor),
+  );
 }
 
 /// Builds a CupertinoListTile node.
@@ -2145,55 +2063,55 @@ Widget _buildCupertinoListTile(NodeContext c) {
   final o1 = c.decode(5, asDouble);
   return o0 == null
       ? o1 == null
-            ? CupertinoListTile(
-                title: c.slot(1) ?? c.missing('title'),
-                subtitle: c.slot(2),
-                additionalInfo: c.slot(3),
-                leading: c.slot(4),
-                trailing: c.slot(5),
-                onTap: c.handles(1) ? () async => c.fire(1) : null,
-                backgroundColor: c.decode(1, asColor),
-                backgroundColorActivated: c.decode(2, asColor),
-                padding: c.decode(3, decodeEdgeInsets),
-              )
-            : CupertinoListTile(
-                title: c.slot(1) ?? c.missing('title'),
-                subtitle: c.slot(2),
-                additionalInfo: c.slot(3),
-                leading: c.slot(4),
-                trailing: c.slot(5),
-                onTap: c.handles(1) ? () async => c.fire(1) : null,
-                backgroundColor: c.decode(1, asColor),
-                backgroundColorActivated: c.decode(2, asColor),
-                padding: c.decode(3, decodeEdgeInsets),
-                leadingToTitle: o1,
-              )
+      ? CupertinoListTile(
+    title: c.slot(1) ?? c.missing('title'),
+    subtitle: c.slot(2),
+    additionalInfo: c.slot(3),
+    leading: c.slot(4),
+    trailing: c.slot(5),
+    onTap: c.handles(1) ? () async => c.fire(1) : null,
+    backgroundColor: c.decode(1, asColor),
+    backgroundColorActivated: c.decode(2, asColor),
+    padding: c.decode(3, decodeEdgeInsets),
+  )
+      : CupertinoListTile(
+    title: c.slot(1) ?? c.missing('title'),
+    subtitle: c.slot(2),
+    additionalInfo: c.slot(3),
+    leading: c.slot(4),
+    trailing: c.slot(5),
+    onTap: c.handles(1) ? () async => c.fire(1) : null,
+    backgroundColor: c.decode(1, asColor),
+    backgroundColorActivated: c.decode(2, asColor),
+    padding: c.decode(3, decodeEdgeInsets),
+    leadingToTitle: o1,
+  )
       : o1 == null
       ? CupertinoListTile(
-          title: c.slot(1) ?? c.missing('title'),
-          subtitle: c.slot(2),
-          additionalInfo: c.slot(3),
-          leading: c.slot(4),
-          trailing: c.slot(5),
-          onTap: c.handles(1) ? () async => c.fire(1) : null,
-          backgroundColor: c.decode(1, asColor),
-          backgroundColorActivated: c.decode(2, asColor),
-          padding: c.decode(3, decodeEdgeInsets),
-          leadingSize: o0,
-        )
+    title: c.slot(1) ?? c.missing('title'),
+    subtitle: c.slot(2),
+    additionalInfo: c.slot(3),
+    leading: c.slot(4),
+    trailing: c.slot(5),
+    onTap: c.handles(1) ? () async => c.fire(1) : null,
+    backgroundColor: c.decode(1, asColor),
+    backgroundColorActivated: c.decode(2, asColor),
+    padding: c.decode(3, decodeEdgeInsets),
+    leadingSize: o0,
+  )
       : CupertinoListTile(
-          title: c.slot(1) ?? c.missing('title'),
-          subtitle: c.slot(2),
-          additionalInfo: c.slot(3),
-          leading: c.slot(4),
-          trailing: c.slot(5),
-          onTap: c.handles(1) ? () async => c.fire(1) : null,
-          backgroundColor: c.decode(1, asColor),
-          backgroundColorActivated: c.decode(2, asColor),
-          padding: c.decode(3, decodeEdgeInsets),
-          leadingSize: o0,
-          leadingToTitle: o1,
-        );
+    title: c.slot(1) ?? c.missing('title'),
+    subtitle: c.slot(2),
+    additionalInfo: c.slot(3),
+    leading: c.slot(4),
+    trailing: c.slot(5),
+    onTap: c.handles(1) ? () async => c.fire(1) : null,
+    backgroundColor: c.decode(1, asColor),
+    backgroundColorActivated: c.decode(2, asColor),
+    padding: c.decode(3, decodeEdgeInsets),
+    leadingSize: o0,
+    leadingToTitle: o1,
+  );
 }
 
 /// Builds a CupertinoSlider node.
@@ -2239,8 +2157,7 @@ Widget _buildCupertinoSwitch(NodeContext c) {
       trackOutlineWidth: c.decode(13, decodeWidgetStateDouble),
       onFocusChange: c.handles(4) ? (v) => c.fire(4, v) : null,
       autofocus: c.decode(14, asBool) ?? false,
-      dragStartBehavior:
-          c.decode(15, decodeDragStartBehavior) ?? DragStartBehavior.start,
+      dragStartBehavior: c.decode(15, decodeDragStartBehavior) ?? DragStartBehavior.start,
     ),
   );
 }
@@ -2256,23 +2173,15 @@ Widget _buildCupertinoTextField(NodeContext c) {
       placeholder: c.decode(4, asString),
       placeholderStyle: c.decode(5, decodeTextStyle),
       prefix: c.slot(1),
-      prefixMode:
-          c.decode(6, decodeOverlayVisibilityMode) ??
-          OverlayVisibilityMode.always,
+      prefixMode: c.decode(6, decodeOverlayVisibilityMode) ?? OverlayVisibilityMode.always,
       suffix: c.slot(2),
-      suffixMode:
-          c.decode(7, decodeOverlayVisibilityMode) ??
-          OverlayVisibilityMode.always,
-      crossAxisAlignment:
-          c.decode(8, decodeCrossAxisAlignment) ?? CrossAxisAlignment.center,
-      clearButtonMode:
-          c.decode(9, decodeOverlayVisibilityMode) ??
-          OverlayVisibilityMode.never,
+      suffixMode: c.decode(7, decodeOverlayVisibilityMode) ?? OverlayVisibilityMode.always,
+      crossAxisAlignment: c.decode(8, decodeCrossAxisAlignment) ?? CrossAxisAlignment.center,
+      clearButtonMode: c.decode(9, decodeOverlayVisibilityMode) ?? OverlayVisibilityMode.never,
       clearButtonSemanticLabel: c.decode(10, asString),
       keyboardType: c.decode(11, decodeTextInputType),
       textInputAction: c.decode(12, decodeTextInputAction),
-      textCapitalization:
-          c.decode(13, decodeTextCapitalization) ?? TextCapitalization.none,
+      textCapitalization: c.decode(13, decodeTextCapitalization) ?? TextCapitalization.none,
       style: c.decode(14, decodeTextStyle),
       textAlign: c.decode(15, decodeTextAlign) ?? TextAlign.start,
       textAlignVertical: c.decode(16, decodeTextAlignVertical),
@@ -2306,16 +2215,14 @@ Widget _buildCupertinoTextField(NodeContext c) {
       selectionWidthStyle: c.decode(39, decodeBoxWidthStyle),
       keyboardAppearance: c.decode(40, decodeBrightness),
       scrollPadding: c.decode(41, decodeEdgeInsetsResolved) ?? _default4,
-      dragStartBehavior:
-          c.decode(42, decodeDragStartBehavior) ?? DragStartBehavior.start,
+      dragStartBehavior: c.decode(42, decodeDragStartBehavior) ?? DragStartBehavior.start,
       enableInteractiveSelection: c.decode(43, asBool),
       selectAllOnFocus: c.decode(44, asBool),
       onTap: c.handles(6) ? () => c.fire(6) : null,
       scrollPhysics: c.decode(45, decodeScrollPhysics),
       autofillHints: c.decode(46, asStrings),
       clipBehavior: c.decode(47, decodeClip) ?? Clip.hardEdge,
-      stylusHandwritingEnabled:
-          c.decode(48, asBool) ?? EditableText.defaultStylusHandwritingEnabled,
+      stylusHandwritingEnabled: c.decode(48, asBool) ?? EditableText.defaultStylusHandwritingEnabled,
       enableIMEPersonalizedLearning: c.decode(49, asBool) ?? true,
       enableInlinePrediction: c.decode(50, asBool),
     ),
@@ -2331,19 +2238,13 @@ Widget _buildCustomScrollView(NodeContext c) {
     physics: c.decode(4, decodeScrollPhysics),
     shrinkWrap: c.decode(5, asBool) ?? false,
     anchor: c.decode(6, asDouble) ?? 0.0,
-    paintOrder:
-        c.decode(7, decodeSliverPaintOrder) ?? SliverPaintOrder.firstIsTop,
+    paintOrder: c.decode(7, decodeSliverPaintOrder) ?? SliverPaintOrder.firstIsTop,
     slivers: c.slotList(1),
     semanticChildCount: c.decode(8, asInt),
-    dragStartBehavior:
-        c.decode(9, decodeDragStartBehavior) ?? DragStartBehavior.start,
-    keyboardDismissBehavior: c.decode(
-      10,
-      decodeScrollViewKeyboardDismissBehavior,
-    ),
+    dragStartBehavior: c.decode(9, decodeDragStartBehavior) ?? DragStartBehavior.start,
+    keyboardDismissBehavior: c.decode(10, decodeScrollViewKeyboardDismissBehavior),
     clipBehavior: c.decode(11, decodeClip) ?? Clip.hardEdge,
-    hitTestBehavior:
-        c.decode(12, decodeHitTestBehavior) ?? HitTestBehavior.opaque,
+    hitTestBehavior: c.decode(12, decodeHitTestBehavior) ?? HitTestBehavior.opaque,
   );
 }
 
@@ -2351,8 +2252,7 @@ Widget _buildCustomScrollView(NodeContext c) {
 Widget _buildDecoratedBox(NodeContext c) {
   return DecoratedBox(
     decoration: c.decode(1, decodeBoxDecoration) ?? c.missing('decoration'),
-    position:
-        c.decode(2, decodeDecorationPosition) ?? DecorationPosition.background,
+    position: c.decode(2, decodeDecorationPosition) ?? DecorationPosition.background,
     child: c.slot(1),
   );
 }
@@ -2397,12 +2297,8 @@ Widget _buildDropdownMenu(NodeContext c) {
       selectOnly: c.decode(15, asBool) ?? false,
       expandedInsets: c.decode(16, decodeEdgeInsets),
       alignmentOffset: c.decode(17, decodeOffset),
-      dropdownMenuEntries:
-          c.decode(18, listOfDropdownMenuEntry) ??
-          c.missing('dropdownMenuEntries'),
-      closeBehavior:
-          c.decode(19, decodeDropdownMenuCloseBehavior) ??
-          DropdownMenuCloseBehavior.all,
+      dropdownMenuEntries: c.decode(18, listOfDropdownMenuEntry) ?? c.missing('dropdownMenuEntries'),
+      closeBehavior: c.decode(19, decodeDropdownMenuCloseBehavior) ?? DropdownMenuCloseBehavior.all,
       maxLines: c.decode(20, asInt) ?? 1,
       textInputAction: c.decode(21, decodeTextInputAction),
       cursorHeight: c.decode(22, asDouble),
@@ -2534,14 +2430,11 @@ Widget _buildFittedBox(NodeContext c) {
 Widget _buildFlex(NodeContext c) {
   return Flex(
     direction: c.decode(1, decodeAxis) ?? c.missing('direction'),
-    mainAxisAlignment:
-        c.decode(2, decodeMainAxisAlignment) ?? MainAxisAlignment.start,
+    mainAxisAlignment: c.decode(2, decodeMainAxisAlignment) ?? MainAxisAlignment.start,
     mainAxisSize: c.decode(3, decodeMainAxisSize) ?? MainAxisSize.max,
-    crossAxisAlignment:
-        c.decode(4, decodeCrossAxisAlignment) ?? CrossAxisAlignment.center,
+    crossAxisAlignment: c.decode(4, decodeCrossAxisAlignment) ?? CrossAxisAlignment.center,
     textDirection: c.decode(5, decodeTextDirection),
-    verticalDirection:
-        c.decode(6, decodeVerticalDirection) ?? VerticalDirection.down,
+    verticalDirection: c.decode(6, decodeVerticalDirection) ?? VerticalDirection.down,
     textBaseline: c.decode(7, decodeTextBaseline),
     clipBehavior: c.decode(8, decodeClip) ?? Clip.none,
     spacing: c.decode(9, asDouble) ?? 0.0,
@@ -2632,11 +2525,9 @@ Widget _buildGestureDetector(NodeContext c) {
     onScaleEnd: c.handles(58) ? (v) => c.fire(58, v) : null,
     behavior: c.decode(1, decodeHitTestBehavior),
     excludeFromSemantics: c.decode(2, asBool) ?? false,
-    dragStartBehavior:
-        c.decode(3, decodeDragStartBehavior) ?? DragStartBehavior.start,
+    dragStartBehavior: c.decode(3, decodeDragStartBehavior) ?? DragStartBehavior.start,
     trackpadScrollCausesScale: c.decode(4, asBool) ?? false,
-    trackpadScrollToScaleFactor:
-        c.decode(5, decodeOffset) ?? kDefaultTrackpadScrollToScaleFactor,
+    trackpadScrollToScaleFactor: c.decode(5, decodeOffset) ?? kDefaultTrackpadScrollToScaleFactor,
   );
 }
 
@@ -2869,44 +2760,44 @@ Widget _buildRadio(NodeContext c) {
     c.decode(2, asString),
     (value, onChanged) => c.decode(17, asBool) == true
         ? Radio<String>.adaptive(
-            value: c.decode(1, asString) ?? c.missing('value'),
-            groupValue: value,
-            onChanged: onChanged,
-            toggleable: c.decode(3, asBool) ?? false,
-            activeColor: c.decode(4, asColor),
-            fillColor: c.decode(5, decodeWidgetStateColor),
-            focusColor: c.decode(6, asColor),
-            hoverColor: c.decode(7, asColor),
-            overlayColor: c.decode(8, decodeWidgetStateColor),
-            splashRadius: c.decode(9, asDouble),
-            materialTapTargetSize: c.decode(10, decodeMaterialTapTargetSize),
-            visualDensity: c.decode(11, decodeVisualDensity),
-            autofocus: c.decode(12, asBool) ?? false,
-            useCupertinoCheckmarkStyle: c.decode(18, asBool) ?? false,
-            enabled: c.decode(13, asBool),
-            backgroundColor: c.decode(14, decodeWidgetStateColor),
-            side: c.decode(15, decodeBorderSide),
-            innerRadius: c.decode(16, decodeWidgetStateDouble),
-          )
+          value: c.decode(1, asString) ?? c.missing('value'),
+          groupValue: value,
+          onChanged: onChanged,
+          toggleable: c.decode(3, asBool) ?? false,
+          activeColor: c.decode(4, asColor),
+          fillColor: c.decode(5, decodeWidgetStateColor),
+          focusColor: c.decode(6, asColor),
+          hoverColor: c.decode(7, asColor),
+          overlayColor: c.decode(8, decodeWidgetStateColor),
+          splashRadius: c.decode(9, asDouble),
+          materialTapTargetSize: c.decode(10, decodeMaterialTapTargetSize),
+          visualDensity: c.decode(11, decodeVisualDensity),
+          autofocus: c.decode(12, asBool) ?? false,
+          useCupertinoCheckmarkStyle: c.decode(18, asBool) ?? false,
+          enabled: c.decode(13, asBool),
+          backgroundColor: c.decode(14, decodeWidgetStateColor),
+          side: c.decode(15, decodeBorderSide),
+          innerRadius: c.decode(16, decodeWidgetStateDouble),
+        )
         : Radio<String>(
-            value: c.decode(1, asString) ?? c.missing('value'),
-            groupValue: value,
-            onChanged: onChanged,
-            toggleable: c.decode(3, asBool) ?? false,
-            activeColor: c.decode(4, asColor),
-            fillColor: c.decode(5, decodeWidgetStateColor),
-            focusColor: c.decode(6, asColor),
-            hoverColor: c.decode(7, asColor),
-            overlayColor: c.decode(8, decodeWidgetStateColor),
-            splashRadius: c.decode(9, asDouble),
-            materialTapTargetSize: c.decode(10, decodeMaterialTapTargetSize),
-            visualDensity: c.decode(11, decodeVisualDensity),
-            autofocus: c.decode(12, asBool) ?? false,
-            enabled: c.decode(13, asBool),
-            backgroundColor: c.decode(14, decodeWidgetStateColor),
-            side: c.decode(15, decodeBorderSide),
-            innerRadius: c.decode(16, decodeWidgetStateDouble),
-          ),
+          value: c.decode(1, asString) ?? c.missing('value'),
+          groupValue: value,
+          onChanged: onChanged,
+          toggleable: c.decode(3, asBool) ?? false,
+          activeColor: c.decode(4, asColor),
+          fillColor: c.decode(5, decodeWidgetStateColor),
+          focusColor: c.decode(6, asColor),
+          hoverColor: c.decode(7, asColor),
+          overlayColor: c.decode(8, decodeWidgetStateColor),
+          splashRadius: c.decode(9, asDouble),
+          materialTapTargetSize: c.decode(10, decodeMaterialTapTargetSize),
+          visualDensity: c.decode(11, decodeVisualDensity),
+          autofocus: c.decode(12, asBool) ?? false,
+          enabled: c.decode(13, asBool),
+          backgroundColor: c.decode(14, decodeWidgetStateColor),
+          side: c.decode(15, decodeBorderSide),
+          innerRadius: c.decode(16, decodeWidgetStateDouble),
+        ),
   );
 }
 
@@ -2917,80 +2808,80 @@ Widget _buildRadioListTile(NodeContext c) {
     c.decode(2, asString),
     (value, onChanged) => c.decode(31, asBool) == true
         ? RadioListTile<String>.adaptive(
-            value: c.decode(1, asString) ?? c.missing('value'),
-            groupValue: value,
-            onChanged: onChanged,
-            toggleable: c.decode(3, asBool) ?? false,
-            activeColor: c.decode(4, asColor),
-            fillColor: c.decode(5, decodeWidgetStateColor),
-            hoverColor: c.decode(6, asColor),
-            overlayColor: c.decode(7, decodeWidgetStateColor),
-            splashRadius: c.decode(8, asDouble),
-            materialTapTargetSize: c.decode(9, decodeMaterialTapTargetSize),
-            title: c.slot(1),
-            subtitle: c.slot(2),
-            isThreeLine: c.decode(10, asBool),
-            dense: c.decode(11, asBool),
-            secondary: c.slot(3),
-            selected: c.decode(12, asBool) ?? false,
-            controlAffinity: c.decode(13, decodeListTileControlAffinity),
-            autofocus: c.decode(14, asBool) ?? false,
-            contentPadding: c.decode(15, decodeEdgeInsets),
-            shape: c.decode(16, decodeShapeBorder),
-            tileColor: c.decode(17, asColor),
-            selectedTileColor: c.decode(18, asColor),
-            visualDensity: c.decode(19, decodeVisualDensity),
-            onFocusChange: c.handles(2) ? (v) => c.fire(2, v) : null,
-            enableFeedback: c.decode(20, asBool),
-            horizontalTitleGap: c.decode(21, asDouble),
-            minVerticalPadding: c.decode(22, asDouble),
-            minLeadingWidth: c.decode(23, asDouble),
-            minTileHeight: c.decode(24, asDouble),
-            radioScaleFactor: c.decode(25, asDouble) ?? 1.0,
-            enabled: c.decode(27, asBool),
-            useCupertinoCheckmarkStyle: c.decode(32, asBool) ?? false,
-            titleAlignment: c.decode(26, decodeListTileTitleAlignment),
-            radioBackgroundColor: c.decode(28, decodeWidgetStateColor),
-            radioSide: c.decode(29, decodeBorderSide),
-            radioInnerRadius: c.decode(30, decodeWidgetStateDouble),
-          )
+          value: c.decode(1, asString) ?? c.missing('value'),
+          groupValue: value,
+          onChanged: onChanged,
+          toggleable: c.decode(3, asBool) ?? false,
+          activeColor: c.decode(4, asColor),
+          fillColor: c.decode(5, decodeWidgetStateColor),
+          hoverColor: c.decode(6, asColor),
+          overlayColor: c.decode(7, decodeWidgetStateColor),
+          splashRadius: c.decode(8, asDouble),
+          materialTapTargetSize: c.decode(9, decodeMaterialTapTargetSize),
+          title: c.slot(1),
+          subtitle: c.slot(2),
+          isThreeLine: c.decode(10, asBool),
+          dense: c.decode(11, asBool),
+          secondary: c.slot(3),
+          selected: c.decode(12, asBool) ?? false,
+          controlAffinity: c.decode(13, decodeListTileControlAffinity),
+          autofocus: c.decode(14, asBool) ?? false,
+          contentPadding: c.decode(15, decodeEdgeInsets),
+          shape: c.decode(16, decodeShapeBorder),
+          tileColor: c.decode(17, asColor),
+          selectedTileColor: c.decode(18, asColor),
+          visualDensity: c.decode(19, decodeVisualDensity),
+          onFocusChange: c.handles(2) ? (v) => c.fire(2, v) : null,
+          enableFeedback: c.decode(20, asBool),
+          horizontalTitleGap: c.decode(21, asDouble),
+          minVerticalPadding: c.decode(22, asDouble),
+          minLeadingWidth: c.decode(23, asDouble),
+          minTileHeight: c.decode(24, asDouble),
+          radioScaleFactor: c.decode(25, asDouble) ?? 1.0,
+          enabled: c.decode(27, asBool),
+          useCupertinoCheckmarkStyle: c.decode(32, asBool) ?? false,
+          titleAlignment: c.decode(26, decodeListTileTitleAlignment),
+          radioBackgroundColor: c.decode(28, decodeWidgetStateColor),
+          radioSide: c.decode(29, decodeBorderSide),
+          radioInnerRadius: c.decode(30, decodeWidgetStateDouble),
+        )
         : RadioListTile<String>(
-            value: c.decode(1, asString) ?? c.missing('value'),
-            groupValue: value,
-            onChanged: onChanged,
-            toggleable: c.decode(3, asBool) ?? false,
-            activeColor: c.decode(4, asColor),
-            fillColor: c.decode(5, decodeWidgetStateColor),
-            hoverColor: c.decode(6, asColor),
-            overlayColor: c.decode(7, decodeWidgetStateColor),
-            splashRadius: c.decode(8, asDouble),
-            materialTapTargetSize: c.decode(9, decodeMaterialTapTargetSize),
-            title: c.slot(1),
-            subtitle: c.slot(2),
-            isThreeLine: c.decode(10, asBool),
-            dense: c.decode(11, asBool),
-            secondary: c.slot(3),
-            selected: c.decode(12, asBool) ?? false,
-            controlAffinity: c.decode(13, decodeListTileControlAffinity),
-            autofocus: c.decode(14, asBool) ?? false,
-            contentPadding: c.decode(15, decodeEdgeInsets),
-            shape: c.decode(16, decodeShapeBorder),
-            tileColor: c.decode(17, asColor),
-            selectedTileColor: c.decode(18, asColor),
-            visualDensity: c.decode(19, decodeVisualDensity),
-            onFocusChange: c.handles(2) ? (v) => c.fire(2, v) : null,
-            enableFeedback: c.decode(20, asBool),
-            horizontalTitleGap: c.decode(21, asDouble),
-            minVerticalPadding: c.decode(22, asDouble),
-            minLeadingWidth: c.decode(23, asDouble),
-            minTileHeight: c.decode(24, asDouble),
-            radioScaleFactor: c.decode(25, asDouble) ?? 1.0,
-            titleAlignment: c.decode(26, decodeListTileTitleAlignment),
-            enabled: c.decode(27, asBool),
-            radioBackgroundColor: c.decode(28, decodeWidgetStateColor),
-            radioSide: c.decode(29, decodeBorderSide),
-            radioInnerRadius: c.decode(30, decodeWidgetStateDouble),
-          ),
+          value: c.decode(1, asString) ?? c.missing('value'),
+          groupValue: value,
+          onChanged: onChanged,
+          toggleable: c.decode(3, asBool) ?? false,
+          activeColor: c.decode(4, asColor),
+          fillColor: c.decode(5, decodeWidgetStateColor),
+          hoverColor: c.decode(6, asColor),
+          overlayColor: c.decode(7, decodeWidgetStateColor),
+          splashRadius: c.decode(8, asDouble),
+          materialTapTargetSize: c.decode(9, decodeMaterialTapTargetSize),
+          title: c.slot(1),
+          subtitle: c.slot(2),
+          isThreeLine: c.decode(10, asBool),
+          dense: c.decode(11, asBool),
+          secondary: c.slot(3),
+          selected: c.decode(12, asBool) ?? false,
+          controlAffinity: c.decode(13, decodeListTileControlAffinity),
+          autofocus: c.decode(14, asBool) ?? false,
+          contentPadding: c.decode(15, decodeEdgeInsets),
+          shape: c.decode(16, decodeShapeBorder),
+          tileColor: c.decode(17, asColor),
+          selectedTileColor: c.decode(18, asColor),
+          visualDensity: c.decode(19, decodeVisualDensity),
+          onFocusChange: c.handles(2) ? (v) => c.fire(2, v) : null,
+          enableFeedback: c.decode(20, asBool),
+          horizontalTitleGap: c.decode(21, asDouble),
+          minVerticalPadding: c.decode(22, asDouble),
+          minLeadingWidth: c.decode(23, asDouble),
+          minTileHeight: c.decode(24, asDouble),
+          radioScaleFactor: c.decode(25, asDouble) ?? 1.0,
+          titleAlignment: c.decode(26, decodeListTileTitleAlignment),
+          enabled: c.decode(27, asBool),
+          radioBackgroundColor: c.decode(28, decodeWidgetStateColor),
+          radioSide: c.decode(29, decodeBorderSide),
+          radioInnerRadius: c.decode(30, decodeWidgetStateDouble),
+        ),
   );
 }
 
@@ -3033,14 +2924,11 @@ Widget _buildRichText(NodeContext c) {
 /// Builds a Row node.
 Widget _buildRow(NodeContext c) {
   return Row(
-    mainAxisAlignment:
-        c.decode(1, decodeMainAxisAlignment) ?? MainAxisAlignment.start,
+    mainAxisAlignment: c.decode(1, decodeMainAxisAlignment) ?? MainAxisAlignment.start,
     mainAxisSize: c.decode(2, decodeMainAxisSize) ?? MainAxisSize.max,
-    crossAxisAlignment:
-        c.decode(3, decodeCrossAxisAlignment) ?? CrossAxisAlignment.center,
+    crossAxisAlignment: c.decode(3, decodeCrossAxisAlignment) ?? CrossAxisAlignment.center,
     textDirection: c.decode(4, decodeTextDirection),
-    verticalDirection:
-        c.decode(5, decodeVerticalDirection) ?? VerticalDirection.down,
+    verticalDirection: c.decode(5, decodeVerticalDirection) ?? VerticalDirection.down,
     textBaseline: c.decode(6, decodeTextBaseline),
     spacing: c.decode(7, asDouble) ?? 0.0,
     children: c.children(),
@@ -3066,13 +2954,9 @@ Widget _buildScaffold(NodeContext c) {
     appBar: c.preferredSizeSlot(1),
     body: c.slot(2),
     floatingActionButton: c.slot(3),
-    floatingActionButtonLocation: c.decode(
-      1,
-      decodeFloatingActionButtonLocation,
-    ),
+    floatingActionButtonLocation: c.decode(1, decodeFloatingActionButtonLocation),
     persistentFooterButtons: c.slotList(4),
-    persistentFooterAlignment:
-        c.decode(2, decodeAlignmentDirectional) ?? _default7,
+    persistentFooterAlignment: c.decode(2, decodeAlignmentDirectional) ?? _default7,
     persistentFooterDecoration: c.decode(3, decodeBoxDecoration),
     drawer: c.slot(5),
     onDrawerChanged: c.handles(1) ? (v) => c.fire(1, v) : null,
@@ -3083,8 +2967,7 @@ Widget _buildScaffold(NodeContext c) {
     backgroundColor: c.decode(4, asColor),
     resizeToAvoidBottomInset: c.decode(5, asBool),
     primary: c.decode(6, asBool) ?? true,
-    drawerDragStartBehavior:
-        c.decode(7, decodeDragStartBehavior) ?? DragStartBehavior.start,
+    drawerDragStartBehavior: c.decode(7, decodeDragStartBehavior) ?? DragStartBehavior.start,
     extendBody: c.decode(8, asBool) ?? false,
     drawerBarrierDismissible: c.decode(9, asBool) ?? true,
     extendBodyBehindAppBar: c.decode(10, asBool) ?? false,
@@ -3146,8 +3029,7 @@ Widget _buildSelectableText(NodeContext c) {
     selectionColor: c.decode(13, asColor),
     selectionHeightStyle: c.decode(14, decodeBoxHeightStyle),
     selectionWidthStyle: c.decode(15, decodeBoxWidthStyle),
-    dragStartBehavior:
-        c.decode(16, decodeDragStartBehavior) ?? DragStartBehavior.start,
+    dragStartBehavior: c.decode(16, decodeDragStartBehavior) ?? DragStartBehavior.start,
     enableInteractiveSelection: c.decode(17, asBool) ?? true,
     onTap: c.handles(1) ? () => c.fire(1) : null,
     scrollPhysics: c.decode(18, decodeScrollPhysics),
@@ -3165,15 +3047,10 @@ Widget _buildSingleChildScrollView(NodeContext c) {
     primary: c.decode(4, asBool),
     physics: c.decode(5, decodeScrollPhysics),
     child: c.slot(1),
-    dragStartBehavior:
-        c.decode(6, decodeDragStartBehavior) ?? DragStartBehavior.start,
+    dragStartBehavior: c.decode(6, decodeDragStartBehavior) ?? DragStartBehavior.start,
     clipBehavior: c.decode(7, decodeClip) ?? Clip.hardEdge,
-    hitTestBehavior:
-        c.decode(8, decodeHitTestBehavior) ?? HitTestBehavior.opaque,
-    keyboardDismissBehavior: c.decode(
-      9,
-      decodeScrollViewKeyboardDismissBehavior,
-    ),
+    hitTestBehavior: c.decode(8, decodeHitTestBehavior) ?? HitTestBehavior.opaque,
+    keyboardDismissBehavior: c.decode(9, decodeScrollViewKeyboardDismissBehavior),
   );
 }
 
@@ -3193,44 +3070,44 @@ Widget _buildSlider(NodeContext c) {
     c.decode(1, asDouble) ?? c.missing('value'),
     (value, onChanged) => c.decode(16, asBool) == true
         ? Slider.adaptive(
-            value: value,
-            secondaryTrackValue: c.decode(2, asDouble),
-            onChanged: onChanged,
-            onChangeStart: c.handles(2) ? (v) => c.fire(2, v) : null,
-            onChangeEnd: c.handles(3) ? (v) => c.fire(3, v) : null,
-            min: c.decode(3, asDouble) ?? 0.0,
-            max: c.decode(4, asDouble) ?? 1.0,
-            divisions: c.decode(5, asInt),
-            label: c.decode(6, asString),
-            activeColor: c.decode(7, asColor),
-            inactiveColor: c.decode(8, asColor),
-            secondaryActiveColor: c.decode(9, asColor),
-            thumbColor: c.decode(10, asColor),
-            overlayColor: c.decode(11, decodeWidgetStateColor),
-            autofocus: c.decode(12, asBool) ?? false,
-            allowedInteraction: c.decode(13, decodeSliderInteraction),
-            showValueIndicator: c.decode(15, decodeShowValueIndicator),
-          )
+          value: value,
+          secondaryTrackValue: c.decode(2, asDouble),
+          onChanged: onChanged,
+          onChangeStart: c.handles(2) ? (v) => c.fire(2, v) : null,
+          onChangeEnd: c.handles(3) ? (v) => c.fire(3, v) : null,
+          min: c.decode(3, asDouble) ?? 0.0,
+          max: c.decode(4, asDouble) ?? 1.0,
+          divisions: c.decode(5, asInt),
+          label: c.decode(6, asString),
+          activeColor: c.decode(7, asColor),
+          inactiveColor: c.decode(8, asColor),
+          secondaryActiveColor: c.decode(9, asColor),
+          thumbColor: c.decode(10, asColor),
+          overlayColor: c.decode(11, decodeWidgetStateColor),
+          autofocus: c.decode(12, asBool) ?? false,
+          allowedInteraction: c.decode(13, decodeSliderInteraction),
+          showValueIndicator: c.decode(15, decodeShowValueIndicator),
+        )
         : Slider(
-            value: value,
-            secondaryTrackValue: c.decode(2, asDouble),
-            onChanged: onChanged,
-            onChangeStart: c.handles(2) ? (v) => c.fire(2, v) : null,
-            onChangeEnd: c.handles(3) ? (v) => c.fire(3, v) : null,
-            min: c.decode(3, asDouble) ?? 0.0,
-            max: c.decode(4, asDouble) ?? 1.0,
-            divisions: c.decode(5, asInt),
-            label: c.decode(6, asString),
-            activeColor: c.decode(7, asColor),
-            inactiveColor: c.decode(8, asColor),
-            secondaryActiveColor: c.decode(9, asColor),
-            thumbColor: c.decode(10, asColor),
-            overlayColor: c.decode(11, decodeWidgetStateColor),
-            autofocus: c.decode(12, asBool) ?? false,
-            allowedInteraction: c.decode(13, decodeSliderInteraction),
-            padding: c.decode(14, decodeEdgeInsets),
-            showValueIndicator: c.decode(15, decodeShowValueIndicator),
-          ),
+          value: value,
+          secondaryTrackValue: c.decode(2, asDouble),
+          onChanged: onChanged,
+          onChangeStart: c.handles(2) ? (v) => c.fire(2, v) : null,
+          onChangeEnd: c.handles(3) ? (v) => c.fire(3, v) : null,
+          min: c.decode(3, asDouble) ?? 0.0,
+          max: c.decode(4, asDouble) ?? 1.0,
+          divisions: c.decode(5, asInt),
+          label: c.decode(6, asString),
+          activeColor: c.decode(7, asColor),
+          inactiveColor: c.decode(8, asColor),
+          secondaryActiveColor: c.decode(9, asColor),
+          thumbColor: c.decode(10, asColor),
+          overlayColor: c.decode(11, decodeWidgetStateColor),
+          autofocus: c.decode(12, asBool) ?? false,
+          allowedInteraction: c.decode(13, decodeSliderInteraction),
+          padding: c.decode(14, decodeEdgeInsets),
+          showValueIndicator: c.decode(15, decodeShowValueIndicator),
+        ),
   );
 }
 
@@ -3294,12 +3171,16 @@ Widget _buildSliverPadding(NodeContext c) {
 
 /// Builds a SliverToBoxAdapter node.
 Widget _buildSliverToBoxAdapter(NodeContext c) {
-  return SliverToBoxAdapter(child: c.slot(1));
+  return SliverToBoxAdapter(
+    child: c.slot(1),
+  );
 }
 
 /// Builds a Spacer node.
 Widget _buildSpacer(NodeContext c) {
-  return Spacer(flex: c.decode(1, asInt) ?? 1);
+  return Spacer(
+    flex: c.decode(1, asInt) ?? 1,
+  );
 }
 
 /// Builds a Stack node.
@@ -3320,68 +3201,56 @@ Widget _buildSwitch(NodeContext c) {
     c.decode(1, asBool) ?? c.missing('value'),
     (value, onChanged) => c.decode(20, asBool) == true
         ? Switch.adaptive(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: c.decode(2, asColor),
-            activeTrackColor: c.decode(3, asColor),
-            inactiveThumbColor: c.decode(4, asColor),
-            inactiveTrackColor: c.decode(5, asColor),
-            activeThumbImage: c.decode(6, decodeImageSource),
-            onActiveThumbImageError: c.handles(2)
-                ? (v, _) => c.fire(2, v)
-                : null,
-            inactiveThumbImage: c.decode(7, decodeImageSource),
-            onInactiveThumbImageError: c.handles(3)
-                ? (v, _) => c.fire(3, v)
-                : null,
-            materialTapTargetSize: c.decode(12, decodeMaterialTapTargetSize),
-            thumbColor: c.decode(8, decodeWidgetStateColor),
-            trackColor: c.decode(9, decodeWidgetStateColor),
-            trackOutlineColor: c.decode(10, decodeWidgetStateColor),
-            trackOutlineWidth: c.decode(11, decodeWidgetStateDouble),
-            dragStartBehavior:
-                c.decode(13, decodeDragStartBehavior) ??
-                DragStartBehavior.start,
-            focusColor: c.decode(14, asColor),
-            hoverColor: c.decode(15, asColor),
-            overlayColor: c.decode(16, decodeWidgetStateColor),
-            splashRadius: c.decode(17, asDouble),
-            onFocusChange: c.handles(4) ? (v) => c.fire(4, v) : null,
-            autofocus: c.decode(18, asBool) ?? false,
-            padding: c.decode(19, decodeEdgeInsets),
-            applyCupertinoTheme: c.decode(21, asBool),
-          )
+          value: value,
+          onChanged: onChanged,
+          activeThumbColor: c.decode(2, asColor),
+          activeTrackColor: c.decode(3, asColor),
+          inactiveThumbColor: c.decode(4, asColor),
+          inactiveTrackColor: c.decode(5, asColor),
+          activeThumbImage: c.decode(6, decodeImageSource),
+          onActiveThumbImageError: c.handles(2) ? (v, _) => c.fire(2, v) : null,
+          inactiveThumbImage: c.decode(7, decodeImageSource),
+          onInactiveThumbImageError: c.handles(3) ? (v, _) => c.fire(3, v) : null,
+          materialTapTargetSize: c.decode(12, decodeMaterialTapTargetSize),
+          thumbColor: c.decode(8, decodeWidgetStateColor),
+          trackColor: c.decode(9, decodeWidgetStateColor),
+          trackOutlineColor: c.decode(10, decodeWidgetStateColor),
+          trackOutlineWidth: c.decode(11, decodeWidgetStateDouble),
+          dragStartBehavior: c.decode(13, decodeDragStartBehavior) ?? DragStartBehavior.start,
+          focusColor: c.decode(14, asColor),
+          hoverColor: c.decode(15, asColor),
+          overlayColor: c.decode(16, decodeWidgetStateColor),
+          splashRadius: c.decode(17, asDouble),
+          onFocusChange: c.handles(4) ? (v) => c.fire(4, v) : null,
+          autofocus: c.decode(18, asBool) ?? false,
+          padding: c.decode(19, decodeEdgeInsets),
+          applyCupertinoTheme: c.decode(21, asBool),
+        )
         : Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: c.decode(2, asColor),
-            activeTrackColor: c.decode(3, asColor),
-            inactiveThumbColor: c.decode(4, asColor),
-            inactiveTrackColor: c.decode(5, asColor),
-            activeThumbImage: c.decode(6, decodeImageSource),
-            onActiveThumbImageError: c.handles(2)
-                ? (v, _) => c.fire(2, v)
-                : null,
-            inactiveThumbImage: c.decode(7, decodeImageSource),
-            onInactiveThumbImageError: c.handles(3)
-                ? (v, _) => c.fire(3, v)
-                : null,
-            thumbColor: c.decode(8, decodeWidgetStateColor),
-            trackColor: c.decode(9, decodeWidgetStateColor),
-            trackOutlineColor: c.decode(10, decodeWidgetStateColor),
-            trackOutlineWidth: c.decode(11, decodeWidgetStateDouble),
-            materialTapTargetSize: c.decode(12, decodeMaterialTapTargetSize),
-            dragStartBehavior:
-                c.decode(13, decodeDragStartBehavior) ??
-                DragStartBehavior.start,
-            focusColor: c.decode(14, asColor),
-            hoverColor: c.decode(15, asColor),
-            overlayColor: c.decode(16, decodeWidgetStateColor),
-            splashRadius: c.decode(17, asDouble),
-            onFocusChange: c.handles(4) ? (v) => c.fire(4, v) : null,
-            autofocus: c.decode(18, asBool) ?? false,
-            padding: c.decode(19, decodeEdgeInsets),
-          ),
+          value: value,
+          onChanged: onChanged,
+          activeThumbColor: c.decode(2, asColor),
+          activeTrackColor: c.decode(3, asColor),
+          inactiveThumbColor: c.decode(4, asColor),
+          inactiveTrackColor: c.decode(5, asColor),
+          activeThumbImage: c.decode(6, decodeImageSource),
+          onActiveThumbImageError: c.handles(2) ? (v, _) => c.fire(2, v) : null,
+          inactiveThumbImage: c.decode(7, decodeImageSource),
+          onInactiveThumbImageError: c.handles(3) ? (v, _) => c.fire(3, v) : null,
+          thumbColor: c.decode(8, decodeWidgetStateColor),
+          trackColor: c.decode(9, decodeWidgetStateColor),
+          trackOutlineColor: c.decode(10, decodeWidgetStateColor),
+          trackOutlineWidth: c.decode(11, decodeWidgetStateDouble),
+          materialTapTargetSize: c.decode(12, decodeMaterialTapTargetSize),
+          dragStartBehavior: c.decode(13, decodeDragStartBehavior) ?? DragStartBehavior.start,
+          focusColor: c.decode(14, asColor),
+          hoverColor: c.decode(15, asColor),
+          overlayColor: c.decode(16, decodeWidgetStateColor),
+          splashRadius: c.decode(17, asDouble),
+          onFocusChange: c.handles(4) ? (v) => c.fire(4, v) : null,
+          autofocus: c.decode(18, asBool) ?? false,
+          padding: c.decode(19, decodeEdgeInsets),
+        ),
   );
 }
 
@@ -3392,96 +3261,84 @@ Widget _buildSwitchListTile(NodeContext c) {
     c.decode(1, asBool) ?? c.missing('value'),
     (value, onChanged) => c.decode(31, asBool) == true
         ? SwitchListTile.adaptive(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: c.decode(2, asColor),
-            activeTrackColor: c.decode(3, asColor),
-            inactiveThumbColor: c.decode(4, asColor),
-            inactiveTrackColor: c.decode(5, asColor),
-            activeThumbImage: c.decode(6, decodeImageSource),
-            onActiveThumbImageError: c.handles(2)
-                ? (v, _) => c.fire(2, v)
-                : null,
-            inactiveThumbImage: c.decode(7, decodeImageSource),
-            onInactiveThumbImageError: c.handles(3)
-                ? (v, _) => c.fire(3, v)
-                : null,
-            thumbColor: c.decode(8, decodeWidgetStateColor),
-            trackColor: c.decode(9, decodeWidgetStateColor),
-            trackOutlineColor: c.decode(10, decodeWidgetStateColor),
-            materialTapTargetSize: c.decode(11, decodeMaterialTapTargetSize),
-            dragStartBehavior:
-                c.decode(12, decodeDragStartBehavior) ??
-                DragStartBehavior.start,
-            overlayColor: c.decode(13, decodeWidgetStateColor),
-            splashRadius: c.decode(14, asDouble),
-            onFocusChange: c.handles(4) ? (v) => c.fire(4, v) : null,
-            autofocus: c.decode(15, asBool) ?? false,
-            applyCupertinoTheme: c.decode(32, asBool),
-            tileColor: c.decode(16, asColor),
-            title: c.slot(1),
-            subtitle: c.slot(2),
-            isThreeLine: c.decode(17, asBool),
-            dense: c.decode(18, asBool),
-            contentPadding: c.decode(19, decodeEdgeInsets),
-            secondary: c.slot(3),
-            selected: c.decode(20, asBool) ?? false,
-            controlAffinity: c.decode(21, decodeListTileControlAffinity),
-            shape: c.decode(22, decodeShapeBorder),
-            selectedTileColor: c.decode(23, asColor),
-            visualDensity: c.decode(24, decodeVisualDensity),
-            enableFeedback: c.decode(25, asBool),
-            horizontalTitleGap: c.decode(26, asDouble),
-            minVerticalPadding: c.decode(27, asDouble),
-            minLeadingWidth: c.decode(28, asDouble),
-            minTileHeight: c.decode(29, asDouble),
-            hoverColor: c.decode(30, asColor),
-          )
+          value: value,
+          onChanged: onChanged,
+          activeThumbColor: c.decode(2, asColor),
+          activeTrackColor: c.decode(3, asColor),
+          inactiveThumbColor: c.decode(4, asColor),
+          inactiveTrackColor: c.decode(5, asColor),
+          activeThumbImage: c.decode(6, decodeImageSource),
+          onActiveThumbImageError: c.handles(2) ? (v, _) => c.fire(2, v) : null,
+          inactiveThumbImage: c.decode(7, decodeImageSource),
+          onInactiveThumbImageError: c.handles(3) ? (v, _) => c.fire(3, v) : null,
+          thumbColor: c.decode(8, decodeWidgetStateColor),
+          trackColor: c.decode(9, decodeWidgetStateColor),
+          trackOutlineColor: c.decode(10, decodeWidgetStateColor),
+          materialTapTargetSize: c.decode(11, decodeMaterialTapTargetSize),
+          dragStartBehavior: c.decode(12, decodeDragStartBehavior) ?? DragStartBehavior.start,
+          overlayColor: c.decode(13, decodeWidgetStateColor),
+          splashRadius: c.decode(14, asDouble),
+          onFocusChange: c.handles(4) ? (v) => c.fire(4, v) : null,
+          autofocus: c.decode(15, asBool) ?? false,
+          applyCupertinoTheme: c.decode(32, asBool),
+          tileColor: c.decode(16, asColor),
+          title: c.slot(1),
+          subtitle: c.slot(2),
+          isThreeLine: c.decode(17, asBool),
+          dense: c.decode(18, asBool),
+          contentPadding: c.decode(19, decodeEdgeInsets),
+          secondary: c.slot(3),
+          selected: c.decode(20, asBool) ?? false,
+          controlAffinity: c.decode(21, decodeListTileControlAffinity),
+          shape: c.decode(22, decodeShapeBorder),
+          selectedTileColor: c.decode(23, asColor),
+          visualDensity: c.decode(24, decodeVisualDensity),
+          enableFeedback: c.decode(25, asBool),
+          horizontalTitleGap: c.decode(26, asDouble),
+          minVerticalPadding: c.decode(27, asDouble),
+          minLeadingWidth: c.decode(28, asDouble),
+          minTileHeight: c.decode(29, asDouble),
+          hoverColor: c.decode(30, asColor),
+        )
         : SwitchListTile(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: c.decode(2, asColor),
-            activeTrackColor: c.decode(3, asColor),
-            inactiveThumbColor: c.decode(4, asColor),
-            inactiveTrackColor: c.decode(5, asColor),
-            activeThumbImage: c.decode(6, decodeImageSource),
-            onActiveThumbImageError: c.handles(2)
-                ? (v, _) => c.fire(2, v)
-                : null,
-            inactiveThumbImage: c.decode(7, decodeImageSource),
-            onInactiveThumbImageError: c.handles(3)
-                ? (v, _) => c.fire(3, v)
-                : null,
-            thumbColor: c.decode(8, decodeWidgetStateColor),
-            trackColor: c.decode(9, decodeWidgetStateColor),
-            trackOutlineColor: c.decode(10, decodeWidgetStateColor),
-            materialTapTargetSize: c.decode(11, decodeMaterialTapTargetSize),
-            dragStartBehavior:
-                c.decode(12, decodeDragStartBehavior) ??
-                DragStartBehavior.start,
-            overlayColor: c.decode(13, decodeWidgetStateColor),
-            splashRadius: c.decode(14, asDouble),
-            onFocusChange: c.handles(4) ? (v) => c.fire(4, v) : null,
-            autofocus: c.decode(15, asBool) ?? false,
-            tileColor: c.decode(16, asColor),
-            title: c.slot(1),
-            subtitle: c.slot(2),
-            isThreeLine: c.decode(17, asBool),
-            dense: c.decode(18, asBool),
-            contentPadding: c.decode(19, decodeEdgeInsets),
-            secondary: c.slot(3),
-            selected: c.decode(20, asBool) ?? false,
-            controlAffinity: c.decode(21, decodeListTileControlAffinity),
-            shape: c.decode(22, decodeShapeBorder),
-            selectedTileColor: c.decode(23, asColor),
-            visualDensity: c.decode(24, decodeVisualDensity),
-            enableFeedback: c.decode(25, asBool),
-            horizontalTitleGap: c.decode(26, asDouble),
-            minVerticalPadding: c.decode(27, asDouble),
-            minLeadingWidth: c.decode(28, asDouble),
-            minTileHeight: c.decode(29, asDouble),
-            hoverColor: c.decode(30, asColor),
-          ),
+          value: value,
+          onChanged: onChanged,
+          activeThumbColor: c.decode(2, asColor),
+          activeTrackColor: c.decode(3, asColor),
+          inactiveThumbColor: c.decode(4, asColor),
+          inactiveTrackColor: c.decode(5, asColor),
+          activeThumbImage: c.decode(6, decodeImageSource),
+          onActiveThumbImageError: c.handles(2) ? (v, _) => c.fire(2, v) : null,
+          inactiveThumbImage: c.decode(7, decodeImageSource),
+          onInactiveThumbImageError: c.handles(3) ? (v, _) => c.fire(3, v) : null,
+          thumbColor: c.decode(8, decodeWidgetStateColor),
+          trackColor: c.decode(9, decodeWidgetStateColor),
+          trackOutlineColor: c.decode(10, decodeWidgetStateColor),
+          materialTapTargetSize: c.decode(11, decodeMaterialTapTargetSize),
+          dragStartBehavior: c.decode(12, decodeDragStartBehavior) ?? DragStartBehavior.start,
+          overlayColor: c.decode(13, decodeWidgetStateColor),
+          splashRadius: c.decode(14, asDouble),
+          onFocusChange: c.handles(4) ? (v) => c.fire(4, v) : null,
+          autofocus: c.decode(15, asBool) ?? false,
+          tileColor: c.decode(16, asColor),
+          title: c.slot(1),
+          subtitle: c.slot(2),
+          isThreeLine: c.decode(17, asBool),
+          dense: c.decode(18, asBool),
+          contentPadding: c.decode(19, decodeEdgeInsets),
+          secondary: c.slot(3),
+          selected: c.decode(20, asBool) ?? false,
+          controlAffinity: c.decode(21, decodeListTileControlAffinity),
+          shape: c.decode(22, decodeShapeBorder),
+          selectedTileColor: c.decode(23, asColor),
+          visualDensity: c.decode(24, decodeVisualDensity),
+          enableFeedback: c.decode(25, asBool),
+          horizontalTitleGap: c.decode(26, asDouble),
+          minVerticalPadding: c.decode(27, asDouble),
+          minLeadingWidth: c.decode(28, asDouble),
+          minTileHeight: c.decode(29, asDouble),
+          hoverColor: c.decode(30, asColor),
+        ),
   );
 }
 
@@ -3527,8 +3384,7 @@ Widget _buildTextField(NodeContext c) {
       decoration: c.decode(2, decodeInputDecoration),
       keyboardType: c.decode(3, decodeTextInputType),
       textInputAction: c.decode(4, decodeTextInputAction),
-      textCapitalization:
-          c.decode(5, decodeTextCapitalization) ?? TextCapitalization.none,
+      textCapitalization: c.decode(5, decodeTextCapitalization) ?? TextCapitalization.none,
       style: c.decode(6, decodeTextStyle),
       textAlign: c.decode(7, decodeTextAlign) ?? TextAlign.start,
       textAlignVertical: c.decode(8, decodeTextAlignVertical),
@@ -3562,8 +3418,7 @@ Widget _buildTextField(NodeContext c) {
       selectionWidthStyle: c.decode(33, decodeBoxWidthStyle),
       keyboardAppearance: c.decode(34, decodeBrightness),
       scrollPadding: c.decode(35, decodeEdgeInsetsResolved) ?? _default4,
-      dragStartBehavior:
-          c.decode(36, decodeDragStartBehavior) ?? DragStartBehavior.start,
+      dragStartBehavior: c.decode(36, decodeDragStartBehavior) ?? DragStartBehavior.start,
       enableInteractiveSelection: c.decode(37, asBool),
       selectAllOnFocus: c.decode(38, asBool),
       onTap: c.handles(4) ? () => c.fire(4) : null,
@@ -3573,8 +3428,7 @@ Widget _buildTextField(NodeContext c) {
       scrollPhysics: c.decode(40, decodeScrollPhysics),
       autofillHints: c.decode(41, asStrings),
       clipBehavior: c.decode(42, decodeClip) ?? Clip.hardEdge,
-      stylusHandwritingEnabled:
-          c.decode(43, asBool) ?? EditableText.defaultStylusHandwritingEnabled,
+      stylusHandwritingEnabled: c.decode(43, asBool) ?? EditableText.defaultStylusHandwritingEnabled,
       enableIMEPersonalizedLearning: c.decode(44, asBool) ?? true,
       enableInlinePrediction: c.decode(45, asBool),
       canRequestFocus: c.decode(46, asBool) ?? true,
@@ -3593,8 +3447,7 @@ Widget _buildTextFormField(NodeContext c) {
       forceErrorText: c.decode(3, asString),
       decoration: c.decode(4, decodeInputDecoration),
       keyboardType: c.decode(5, decodeTextInputType),
-      textCapitalization:
-          c.decode(6, decodeTextCapitalization) ?? TextCapitalization.none,
+      textCapitalization: c.decode(6, decodeTextCapitalization) ?? TextCapitalization.none,
       textInputAction: c.decode(7, decodeTextInputAction),
       style: c.decode(8, decodeTextStyle),
       textDirection: c.decode(9, decodeTextDirection),
@@ -3640,11 +3493,9 @@ Widget _buildTextFormField(NodeContext c) {
       cursorOpacityAnimates: c.decode(42, asBool),
       selectionHeightStyle: c.decode(43, decodeBoxHeightStyle),
       selectionWidthStyle: c.decode(44, decodeBoxWidthStyle),
-      dragStartBehavior:
-          c.decode(45, decodeDragStartBehavior) ?? DragStartBehavior.start,
+      dragStartBehavior: c.decode(45, decodeDragStartBehavior) ?? DragStartBehavior.start,
       clipBehavior: c.decode(46, decodeClip) ?? Clip.hardEdge,
-      stylusHandwritingEnabled:
-          c.decode(47, asBool) ?? EditableText.defaultStylusHandwritingEnabled,
+      stylusHandwritingEnabled: c.decode(47, asBool) ?? EditableText.defaultStylusHandwritingEnabled,
       canRequestFocus: c.decode(48, asBool) ?? true,
       hintLocales: c.decode(49, asLocales),
     ),
@@ -3697,11 +3548,9 @@ Widget _buildWrap(NodeContext c) {
     spacing: c.decode(3, asDouble) ?? 0.0,
     runAlignment: c.decode(4, decodeWrapAlignment) ?? WrapAlignment.start,
     runSpacing: c.decode(5, asDouble) ?? 0.0,
-    crossAxisAlignment:
-        c.decode(6, decodeWrapCrossAlignment) ?? WrapCrossAlignment.start,
+    crossAxisAlignment: c.decode(6, decodeWrapCrossAlignment) ?? WrapCrossAlignment.start,
     textDirection: c.decode(7, decodeTextDirection),
-    verticalDirection:
-        c.decode(8, decodeVerticalDirection) ?? VerticalDirection.down,
+    verticalDirection: c.decode(8, decodeVerticalDirection) ?? VerticalDirection.down,
     clipBehavior: c.decode(9, decodeClip) ?? Clip.none,
     children: c.children(),
   );
@@ -3824,58 +3673,40 @@ const Map<int, String> handWrittenBuilders = {
 abstract final class WidgetIds {
   /// CupertinoSlidingSegmentedControl.
   static const int cupertinoSlidingSegmentedControl = 94;
-
   /// EmptyState.
   static const int emptyState = 100;
-
   /// ErrorState.
   static const int errorState = 101;
-
   /// FloatingActionButton.
   static const int floatingActionButton = 83;
-
   /// ForEach.
   static const int forEach = 3;
-
   /// GridView.
   static const int gridView = 37;
-
   /// Icon.
   static const int icon = 49;
-
   /// If.
   static const int if_ = 1;
-
   /// Image.
   static const int image = 50;
-
   /// ListView.
   static const int listView = 36;
-
   /// Match.
   static const int match = 2;
-
   /// OfflineBanner.
   static const int offlineBanner = 102;
-
   /// PageView.
   static const int pageView = 38;
-
   /// Responsive.
   static const int responsive = 4;
-
   /// SkeletonLoader.
   static const int skeletonLoader = 99;
-
   /// SliverGrid.
   static const int sliverGrid = 40;
-
   /// SliverList.
   static const int sliverList = 39;
-
   /// Slot.
   static const int slot = 5;
-
   /// Transform.
   static const int transform = 17;
 }
@@ -3884,25 +3715,18 @@ abstract final class WidgetIds {
 abstract final class CupertinoSlidingSegmentedControlProps {
   /// values.
   static const int values = 1;
-
   /// disabledChildren.
   static const int disabledChildren = 2;
-
   /// groupValue.
   static const int groupValue = 3;
-
   /// thumbColor.
   static const int thumbColor = 4;
-
   /// padding.
   static const int padding = 5;
-
   /// backgroundColor.
   static const int backgroundColor = 6;
-
   /// proportionalWidth.
   static const int proportionalWidth = 7;
-
   /// isMomentary.
   static const int isMomentary = 8;
 }
@@ -3923,10 +3747,8 @@ abstract final class CupertinoSlidingSegmentedControlSlots {
 abstract final class EmptyStateProps {
   /// icon.
   static const int icon = 1;
-
   /// title.
   static const int title = 2;
-
   /// message.
   static const int message = 3;
 }
@@ -3941,13 +3763,10 @@ abstract final class EmptyStateSlots {
 abstract final class ErrorStateProps {
   /// icon.
   static const int icon = 1;
-
   /// title.
   static const int title = 2;
-
   /// message.
   static const int message = 3;
-
   /// retryLabel.
   static const int retryLabel = 4;
 }
@@ -3968,64 +3787,44 @@ abstract final class ErrorStateSlots {
 abstract final class FloatingActionButtonProps {
   /// tooltip.
   static const int tooltip = 1;
-
   /// foregroundColor.
   static const int foregroundColor = 2;
-
   /// backgroundColor.
   static const int backgroundColor = 3;
-
   /// focusColor.
   static const int focusColor = 4;
-
   /// hoverColor.
   static const int hoverColor = 5;
-
   /// splashColor.
   static const int splashColor = 6;
-
   /// elevation.
   static const int elevation = 7;
-
   /// focusElevation.
   static const int focusElevation = 8;
-
   /// hoverElevation.
   static const int hoverElevation = 9;
-
   /// highlightElevation.
   static const int highlightElevation = 10;
-
   /// disabledElevation.
   static const int disabledElevation = 11;
-
   /// mini.
   static const int mini = 12;
-
   /// shape.
   static const int shape = 13;
-
   /// clipBehavior.
   static const int clipBehavior = 14;
-
   /// autofocus.
   static const int autofocus = 15;
-
   /// materialTapTargetSize.
   static const int materialTapTargetSize = 16;
-
   /// isExtended.
   static const int isExtended = 17;
-
   /// enableFeedback.
   static const int enableFeedback = 18;
-
   /// extendedIconLabelSpacing.
   static const int extendedIconLabelSpacing = 19;
-
   /// extendedPadding.
   static const int extendedPadding = 20;
-
   /// extendedTextStyle.
   static const int extendedTextStyle = 21;
 }
@@ -4040,10 +3839,8 @@ abstract final class FloatingActionButtonEvents {
 abstract final class FloatingActionButtonSlots {
   /// child.
   static const int child = 1;
-
   /// icon.
   static const int icon = 2;
-
   /// label.
   static const int label = 3;
 }
@@ -4064,70 +3861,48 @@ abstract final class ForEachSlots {
 abstract final class GridViewProps {
   /// items.
   static const int items = 1;
-
   /// scrollDirection.
   static const int scrollDirection = 2;
-
   /// reverse.
   static const int reverse = 3;
-
   /// primary.
   static const int primary = 4;
-
   /// physics.
   static const int physics = 5;
-
   /// shrinkWrap.
   static const int shrinkWrap = 6;
-
   /// padding.
   static const int padding = 7;
-
   /// addAutomaticKeepAlives.
   static const int addAutomaticKeepAlives = 8;
-
   /// addRepaintBoundaries.
   static const int addRepaintBoundaries = 9;
-
   /// addSemanticIndexes.
   static const int addSemanticIndexes = 10;
-
   /// semanticChildCount.
   static const int semanticChildCount = 11;
-
   /// dragStartBehavior.
   static const int dragStartBehavior = 12;
-
   /// keyboardDismissBehavior.
   static const int keyboardDismissBehavior = 13;
-
   /// clipBehavior.
   static const int clipBehavior = 14;
-
   /// hitTestBehavior.
   static const int hitTestBehavior = 15;
-
   /// status.
   static const int status = 16;
-
   /// hasMore.
   static const int hasMore = 17;
-
   /// crossAxisCount.
   static const int crossAxisCount = 18;
-
   /// maxCrossAxisExtent.
   static const int maxCrossAxisExtent = 19;
-
   /// mainAxisSpacing.
   static const int mainAxisSpacing = 20;
-
   /// crossAxisSpacing.
   static const int crossAxisSpacing = 21;
-
   /// childAspectRatio.
   static const int childAspectRatio = 22;
-
   /// mainAxisExtent.
   static const int mainAxisExtent = 23;
 }
@@ -4142,13 +3917,10 @@ abstract final class GridViewEvents {
 abstract final class GridViewSlots {
   /// item.
   static const int item = 1;
-
   /// empty.
   static const int empty = 2;
-
   /// loading.
   static const int loading = 3;
-
   /// error.
   static const int error = 4;
 }
@@ -4157,40 +3929,28 @@ abstract final class GridViewSlots {
 abstract final class IconProps {
   /// icon.
   static const int icon = 1;
-
   /// size.
   static const int size = 2;
-
   /// fill.
   static const int fill = 3;
-
   /// weight.
   static const int weight = 4;
-
   /// grade.
   static const int grade = 5;
-
   /// opticalSize.
   static const int opticalSize = 6;
-
   /// color.
   static const int color = 7;
-
   /// shadows.
   static const int shadows = 8;
-
   /// semanticLabel.
   static const int semanticLabel = 9;
-
   /// textDirection.
   static const int textDirection = 10;
-
   /// applyTextScaling.
   static const int applyTextScaling = 11;
-
   /// blendMode.
   static const int blendMode = 12;
-
   /// fontWeight.
   static const int fontWeight = 13;
 }
@@ -4205,7 +3965,6 @@ abstract final class IfProps {
 abstract final class IfSlots {
   /// then.
   static const int then = 1;
-
   /// else.
   static const int else_ = 2;
 }
@@ -4214,52 +3973,36 @@ abstract final class IfSlots {
 abstract final class ImageProps {
   /// source.
   static const int source = 1;
-
   /// semanticLabel.
   static const int semanticLabel = 2;
-
   /// excludeFromSemantics.
   static const int excludeFromSemantics = 3;
-
   /// scale.
   static const int scale = 4;
-
   /// width.
   static const int width = 5;
-
   /// height.
   static const int height = 6;
-
   /// color.
   static const int color = 7;
-
   /// colorBlendMode.
   static const int colorBlendMode = 8;
-
   /// fit.
   static const int fit = 9;
-
   /// alignment.
   static const int alignment = 10;
-
   /// repeat.
   static const int repeat = 11;
-
   /// matchTextDirection.
   static const int matchTextDirection = 12;
-
   /// gaplessPlayback.
   static const int gaplessPlayback = 13;
-
   /// isAntiAlias.
   static const int isAntiAlias = 14;
-
   /// filterQuality.
   static const int filterQuality = 15;
-
   /// cacheWidth.
   static const int cacheWidth = 16;
-
   /// cacheHeight.
   static const int cacheHeight = 17;
 }
@@ -4268,7 +4011,6 @@ abstract final class ImageProps {
 abstract final class ImageSlots {
   /// loading.
   static const int loading = 1;
-
   /// error.
   static const int error = 2;
 }
@@ -4277,55 +4019,38 @@ abstract final class ImageSlots {
 abstract final class ListViewProps {
   /// items.
   static const int items = 1;
-
   /// scrollDirection.
   static const int scrollDirection = 2;
-
   /// reverse.
   static const int reverse = 3;
-
   /// primary.
   static const int primary = 4;
-
   /// physics.
   static const int physics = 5;
-
   /// shrinkWrap.
   static const int shrinkWrap = 6;
-
   /// padding.
   static const int padding = 7;
-
   /// itemExtent.
   static const int itemExtent = 8;
-
   /// addAutomaticKeepAlives.
   static const int addAutomaticKeepAlives = 9;
-
   /// addRepaintBoundaries.
   static const int addRepaintBoundaries = 10;
-
   /// addSemanticIndexes.
   static const int addSemanticIndexes = 11;
-
   /// semanticChildCount.
   static const int semanticChildCount = 12;
-
   /// dragStartBehavior.
   static const int dragStartBehavior = 13;
-
   /// keyboardDismissBehavior.
   static const int keyboardDismissBehavior = 14;
-
   /// clipBehavior.
   static const int clipBehavior = 15;
-
   /// hitTestBehavior.
   static const int hitTestBehavior = 16;
-
   /// status.
   static const int status = 17;
-
   /// hasMore.
   static const int hasMore = 18;
 }
@@ -4340,16 +4065,12 @@ abstract final class ListViewEvents {
 abstract final class ListViewSlots {
   /// item.
   static const int item = 1;
-
   /// prototypeItem.
   static const int prototypeItem = 2;
-
   /// empty.
   static const int empty = 3;
-
   /// loading.
   static const int loading = 4;
-
   /// error.
   static const int error = 5;
 }
@@ -4358,7 +4079,6 @@ abstract final class ListViewSlots {
 abstract final class MatchProps {
   /// value.
   static const int value = 1;
-
   /// cases.
   static const int cases = 2;
 }
@@ -4367,7 +4087,6 @@ abstract final class MatchProps {
 abstract final class MatchSlots {
   /// branches.
   static const int branches = 1;
-
   /// otherwise.
   static const int otherwise = 2;
 }
@@ -4376,7 +4095,6 @@ abstract final class MatchSlots {
 abstract final class OfflineBannerProps {
   /// message.
   static const int message = 1;
-
   /// visible.
   static const int visible = 2;
 }
@@ -4385,37 +4103,26 @@ abstract final class OfflineBannerProps {
 abstract final class PageViewProps {
   /// items.
   static const int items = 1;
-
   /// scrollDirection.
   static const int scrollDirection = 2;
-
   /// reverse.
   static const int reverse = 3;
-
   /// physics.
   static const int physics = 4;
-
   /// pageSnapping.
   static const int pageSnapping = 5;
-
   /// dragStartBehavior.
   static const int dragStartBehavior = 6;
-
   /// allowImplicitScrolling.
   static const int allowImplicitScrolling = 7;
-
   /// clipBehavior.
   static const int clipBehavior = 8;
-
   /// hitTestBehavior.
   static const int hitTestBehavior = 9;
-
   /// padEnds.
   static const int padEnds = 10;
-
   /// status.
   static const int status = 11;
-
   /// hasMore.
   static const int hasMore = 12;
 }
@@ -4424,7 +4131,6 @@ abstract final class PageViewProps {
 abstract final class PageViewEvents {
   /// onPageChanged.
   static const int onPageChanged = 1;
-
   /// onEndReached.
   static const int onEndReached = 2;
 }
@@ -4433,13 +4139,10 @@ abstract final class PageViewEvents {
 abstract final class PageViewSlots {
   /// item.
   static const int item = 1;
-
   /// empty.
   static const int empty = 2;
-
   /// loading.
   static const int loading = 3;
-
   /// error.
   static const int error = 4;
 }
@@ -4448,10 +4151,8 @@ abstract final class PageViewSlots {
 abstract final class ResponsiveSlots {
   /// compact.
   static const int compact = 1;
-
   /// medium.
   static const int medium = 2;
-
   /// expanded.
   static const int expanded = 3;
 }
@@ -4460,10 +4161,8 @@ abstract final class ResponsiveSlots {
 abstract final class SkeletonLoaderProps {
   /// lines.
   static const int lines = 1;
-
   /// avatar.
   static const int avatar = 2;
-
   /// shimmer.
   static const int shimmer = 3;
 }
@@ -4472,40 +4171,28 @@ abstract final class SkeletonLoaderProps {
 abstract final class SliverGridProps {
   /// items.
   static const int items = 1;
-
   /// addAutomaticKeepAlives.
   static const int addAutomaticKeepAlives = 2;
-
   /// addRepaintBoundaries.
   static const int addRepaintBoundaries = 3;
-
   /// addSemanticIndexes.
   static const int addSemanticIndexes = 4;
-
   /// semanticIndexOffset.
   static const int semanticIndexOffset = 5;
-
   /// status.
   static const int status = 6;
-
   /// hasMore.
   static const int hasMore = 7;
-
   /// crossAxisCount.
   static const int crossAxisCount = 8;
-
   /// maxCrossAxisExtent.
   static const int maxCrossAxisExtent = 9;
-
   /// mainAxisSpacing.
   static const int mainAxisSpacing = 10;
-
   /// crossAxisSpacing.
   static const int crossAxisSpacing = 11;
-
   /// childAspectRatio.
   static const int childAspectRatio = 12;
-
   /// mainAxisExtent.
   static const int mainAxisExtent = 13;
 }
@@ -4520,13 +4207,10 @@ abstract final class SliverGridEvents {
 abstract final class SliverGridSlots {
   /// item.
   static const int item = 1;
-
   /// empty.
   static const int empty = 2;
-
   /// loading.
   static const int loading = 3;
-
   /// error.
   static const int error = 4;
 }
@@ -4535,22 +4219,16 @@ abstract final class SliverGridSlots {
 abstract final class SliverListProps {
   /// items.
   static const int items = 1;
-
   /// addAutomaticKeepAlives.
   static const int addAutomaticKeepAlives = 2;
-
   /// addRepaintBoundaries.
   static const int addRepaintBoundaries = 3;
-
   /// addSemanticIndexes.
   static const int addSemanticIndexes = 4;
-
   /// semanticIndexOffset.
   static const int semanticIndexOffset = 5;
-
   /// status.
   static const int status = 6;
-
   /// hasMore.
   static const int hasMore = 7;
 }
@@ -4565,13 +4243,10 @@ abstract final class SliverListEvents {
 abstract final class SliverListSlots {
   /// item.
   static const int item = 1;
-
   /// empty.
   static const int empty = 2;
-
   /// loading.
   static const int loading = 3;
-
   /// error.
   static const int error = 4;
 }
@@ -4592,34 +4267,24 @@ abstract final class SlotSlots {
 abstract final class TransformProps {
   /// origin.
   static const int origin = 1;
-
   /// alignment.
   static const int alignment = 2;
-
   /// transformHitTests.
   static const int transformHitTests = 3;
-
   /// filterQuality.
   static const int filterQuality = 4;
-
   /// flipX.
   static const int flipX = 5;
-
   /// flipY.
   static const int flipY = 6;
-
   /// angle.
   static const int angle = 7;
-
   /// scale.
   static const int scale = 8;
-
   /// scaleX.
   static const int scaleX = 9;
-
   /// scaleY.
   static const int scaleY = 10;
-
   /// offset.
   static const int offset = 11;
 }
@@ -4634,10 +4299,8 @@ abstract final class TransformSlots {
 abstract final class AlignmentFields {
   /// x.
   static const int x = 1;
-
   /// y.
   static const int y = 2;
-
   /// start.
   static const int start = 3;
 }
@@ -4646,16 +4309,12 @@ abstract final class AlignmentFields {
 abstract final class BorderFields {
   /// all.
   static const int all = 1;
-
   /// top.
   static const int top = 2;
-
   /// right.
   static const int right = 3;
-
   /// bottom.
   static const int bottom = 4;
-
   /// left.
   static const int left = 5;
 }
@@ -4664,16 +4323,12 @@ abstract final class BorderFields {
 abstract final class BorderRadiusFields {
   /// all.
   static const int all = 1;
-
   /// topLeft.
   static const int topLeft = 2;
-
   /// topRight.
   static const int topRight = 3;
-
   /// bottomLeft.
   static const int bottomLeft = 4;
-
   /// bottomRight.
   static const int bottomRight = 5;
 }
@@ -4682,16 +4337,12 @@ abstract final class BorderRadiusFields {
 abstract final class ButtonSegmentFields {
   /// value.
   static const int value = 1;
-
   /// icon.
   static const int icon = 2;
-
   /// label.
   static const int label = 3;
-
   /// tooltip.
   static const int tooltip = 4;
-
   /// enabled.
   static const int enabled = 5;
 }
@@ -4700,19 +4351,14 @@ abstract final class ButtonSegmentFields {
 abstract final class DropdownMenuEntryFields {
   /// value.
   static const int value = 1;
-
   /// label.
   static const int label = 2;
-
   /// leadingIcon.
   static const int leadingIcon = 3;
-
   /// trailingIcon.
   static const int trailingIcon = 4;
-
   /// enabled.
   static const int enabled = 5;
-
   /// style.
   static const int style = 6;
 }
@@ -4721,28 +4367,20 @@ abstract final class DropdownMenuEntryFields {
 abstract final class EdgeInsetsFields {
   /// all.
   static const int all = 1;
-
   /// horizontal.
   static const int horizontal = 2;
-
   /// vertical.
   static const int vertical = 3;
-
   /// left.
   static const int left = 4;
-
   /// top.
   static const int top = 5;
-
   /// right.
   static const int right = 6;
-
   /// bottom.
   static const int bottom = 7;
-
   /// start.
   static const int start = 8;
-
   /// end.
   static const int end = 9;
 }
@@ -4751,37 +4389,26 @@ abstract final class EdgeInsetsFields {
 abstract final class GradientFields {
   /// kind.
   static const int kind = 1;
-
   /// colors.
   static const int colors = 2;
-
   /// stops.
   static const int stops = 3;
-
   /// tileMode.
   static const int tileMode = 4;
-
   /// begin.
   static const int begin = 5;
-
   /// end.
   static const int end = 6;
-
   /// center.
   static const int center = 7;
-
   /// radius.
   static const int radius = 8;
-
   /// focal.
   static const int focal = 9;
-
   /// focalRadius.
   static const int focalRadius = 10;
-
   /// startAngle.
   static const int startAngle = 11;
-
   /// endAngle.
   static const int endAngle = 12;
 }
@@ -4790,7 +4417,6 @@ abstract final class GradientFields {
 abstract final class IconDataFields {
   /// name.
   static const int name = 1;
-
   /// set.
   static const int set = 2;
 }
@@ -4799,10 +4425,8 @@ abstract final class IconDataFields {
 abstract final class ImageSourceFields {
   /// asset.
   static const int asset = 1;
-
   /// url.
   static const int url = 2;
-
   /// thumbHash.
   static const int thumbHash = 3;
 }
@@ -4811,13 +4435,10 @@ abstract final class ImageSourceFields {
 abstract final class InputBorderFields {
   /// kind.
   static const int kind = 1;
-
   /// borderSide.
   static const int borderSide = 2;
-
   /// borderRadius.
   static const int borderRadius = 3;
-
   /// gapPadding.
   static const int gapPadding = 4;
 }
@@ -4826,10 +4447,8 @@ abstract final class InputBorderFields {
 abstract final class RadiusFields {
   /// circular.
   static const int circular = 1;
-
   /// x.
   static const int x = 2;
-
   /// y.
   static const int y = 3;
 }
@@ -4838,13 +4457,10 @@ abstract final class RadiusFields {
 abstract final class ShapeBorderFields {
   /// kind.
   static const int kind = 1;
-
   /// side.
   static const int side = 2;
-
   /// borderRadius.
   static const int borderRadius = 3;
-
   /// eccentricity.
   static const int eccentricity = 4;
 }
@@ -4853,25 +4469,18 @@ abstract final class ShapeBorderFields {
 abstract final class WidgetStateBorderSideFields {
   /// value.
   static const int value = 1;
-
   /// disabled.
   static const int disabled = 2;
-
   /// error.
   static const int error = 3;
-
   /// dragged.
   static const int dragged = 4;
-
   /// pressed.
   static const int pressed = 5;
-
   /// hovered.
   static const int hovered = 6;
-
   /// focused.
   static const int focused = 7;
-
   /// selected.
   static const int selected = 8;
 }
@@ -4880,25 +4489,18 @@ abstract final class WidgetStateBorderSideFields {
 abstract final class WidgetStateColorFields {
   /// value.
   static const int value = 1;
-
   /// disabled.
   static const int disabled = 2;
-
   /// error.
   static const int error = 3;
-
   /// dragged.
   static const int dragged = 4;
-
   /// pressed.
   static const int pressed = 5;
-
   /// hovered.
   static const int hovered = 6;
-
   /// focused.
   static const int focused = 7;
-
   /// selected.
   static const int selected = 8;
 }
@@ -4907,25 +4509,18 @@ abstract final class WidgetStateColorFields {
 abstract final class WidgetStateDoubleFields {
   /// value.
   static const int value = 1;
-
   /// disabled.
   static const int disabled = 2;
-
   /// error.
   static const int error = 3;
-
   /// dragged.
   static const int dragged = 4;
-
   /// pressed.
   static const int pressed = 5;
-
   /// hovered.
   static const int hovered = 6;
-
   /// focused.
   static const int focused = 7;
-
   /// selected.
   static const int selected = 8;
 }
@@ -4934,25 +4529,18 @@ abstract final class WidgetStateDoubleFields {
 abstract final class WidgetStateEdgeInsetsFields {
   /// value.
   static const int value = 1;
-
   /// disabled.
   static const int disabled = 2;
-
   /// error.
   static const int error = 3;
-
   /// dragged.
   static const int dragged = 4;
-
   /// pressed.
   static const int pressed = 5;
-
   /// hovered.
   static const int hovered = 6;
-
   /// focused.
   static const int focused = 7;
-
   /// selected.
   static const int selected = 8;
 }
@@ -4961,25 +4549,18 @@ abstract final class WidgetStateEdgeInsetsFields {
 abstract final class WidgetStateShapeBorderFields {
   /// value.
   static const int value = 1;
-
   /// disabled.
   static const int disabled = 2;
-
   /// error.
   static const int error = 3;
-
   /// dragged.
   static const int dragged = 4;
-
   /// pressed.
   static const int pressed = 5;
-
   /// hovered.
   static const int hovered = 6;
-
   /// focused.
   static const int focused = 7;
-
   /// selected.
   static const int selected = 8;
 }
@@ -4988,25 +4569,18 @@ abstract final class WidgetStateShapeBorderFields {
 abstract final class WidgetStateSizeFields {
   /// value.
   static const int value = 1;
-
   /// disabled.
   static const int disabled = 2;
-
   /// error.
   static const int error = 3;
-
   /// dragged.
   static const int dragged = 4;
-
   /// pressed.
   static const int pressed = 5;
-
   /// hovered.
   static const int hovered = 6;
-
   /// focused.
   static const int focused = 7;
-
   /// selected.
   static const int selected = 8;
 }
@@ -5015,58 +4589,30 @@ abstract final class WidgetStateSizeFields {
 abstract final class WidgetStateTextStyleFields {
   /// value.
   static const int value = 1;
-
   /// disabled.
   static const int disabled = 2;
-
   /// error.
   static const int error = 3;
-
   /// dragged.
   static const int dragged = 4;
-
   /// pressed.
   static const int pressed = 5;
-
   /// hovered.
   static const int hovered = 6;
-
   /// focused.
   static const int focused = 7;
-
   /// selected.
   static const int selected = 8;
 }
 
+
 // ── Default values ────────────────────────────────────────────────────────
 
-final _default0 = decodeOffset(plainDecoding, const <String, Object?>{
-  'dx': 0.0,
-  'dy': 0.0,
-})!;
-final _default1 = decodeAlignment(plainDecoding, const <String, Object?>{
-  'x': 0.0,
-  'y': 0.0,
-})!;
-final _default2 = decodeBorderRadius(plainDecoding, const <String, Object?>{
-  'all': 0.0,
-})!;
-final _default3 = decodeEdgeInsets(plainDecoding, const <String, Object?>{
-  'all': 7.0,
-})!;
-final _default4 = decodeEdgeInsetsResolved(
-  plainDecoding,
-  const <String, Object?>{'all': 20.0},
-)!;
-final _default5 = decodeAlignment(plainDecoding, const <String, Object?>{
-  'start': -1.0,
-  'y': -1.0,
-})!;
-final _default6 = decodeEdgeInsetsResolved(
-  plainDecoding,
-  const <String, Object?>{'all': 0.0},
-)!;
-final _default7 = decodeAlignmentDirectional(
-  plainDecoding,
-  const <String, Object?>{'start': 1.0, 'y': 0.0},
-)!;
+final _default0 = decodeOffset(plainDecoding, const <String, Object?>{'dx': 0.0, 'dy': 0.0})!;
+final _default1 = decodeAlignment(plainDecoding, const <String, Object?>{'x': 0.0, 'y': 0.0})!;
+final _default2 = decodeBorderRadius(plainDecoding, const <String, Object?>{'all': 0.0})!;
+final _default3 = decodeEdgeInsets(plainDecoding, const <String, Object?>{'all': 7.0})!;
+final _default4 = decodeEdgeInsetsResolved(plainDecoding, const <String, Object?>{'all': 20.0})!;
+final _default5 = decodeAlignment(plainDecoding, const <String, Object?>{'start': -1.0, 'y': -1.0})!;
+final _default6 = decodeEdgeInsetsResolved(plainDecoding, const <String, Object?>{'all': 0.0})!;
+final _default7 = decodeAlignmentDirectional(plainDecoding, const <String, Object?>{'start': 1.0, 'y': 0.0})!;
